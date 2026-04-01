@@ -1,0 +1,21 @@
+# Track only the harness — ignore everything else
+*
+
+# Harness components
+!.gitignore
+!README.md
+!ROADMAP.md
+!rules/
+!rules/**
+!skills/
+!skills/**
+!hooks/
+!hooks/**
+!commands/
+!commands/**
+!docs/
+!docs/**
+
+# Settings contain machine-specific paths and permissions
+# Track a template, not the live file
+!settings.template.json
