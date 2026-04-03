@@ -1,6 +1,6 @@
 {
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "max",
+  "effortLevel": "high",
   "hooks": {
     "SessionStart": [
       {
@@ -22,6 +22,40 @@
             "type": "command",
             "command": "$HOME/.claude/hooks/guard-destructive-bash.sh",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git commit*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/guard-commit-on-main.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/lint-on-edit.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/check-tests-on-stop.sh",
+            "timeout": 10
           }
         ]
       }
