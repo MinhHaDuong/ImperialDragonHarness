@@ -1,6 +1,12 @@
 {
   "skipDangerousModePermissionPrompt": true,
   "effortLevel": "high",
+  "permissions": {
+    "allow": [
+      "EnterWorktree",
+      "ExitWorktree"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
