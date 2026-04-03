@@ -4,12 +4,21 @@
 
 # Read tool input from stdin (JSON with tool_input.command)
 input=$(cat)
+
+# Require jq — if missing, deny by default rather than silently allowing all
+if ! command -v jq &>/dev/null; then
+    echo "BLOCKED: jq not found — guard-destructive-bash.sh cannot parse tool input." >&2
+    exit 2
+fi
+
 cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
 [ -z "$cmd" ] && exit 0
 
 # Patterns that are destructive and hard to reverse
-if echo "$cmd" | grep -qE '(rm\s+-[a-zA-Z]*r[a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*r)\b'; then
-    echo "BLOCKED: rm -rf detected. Use targeted rm or move to trash instead." >&2
+
+# rm -rf / rm -fr / rm --force (any combination)
+if echo "$cmd" | grep -qE '\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|.*--force)\b'; then
+    echo "BLOCKED: rm -rf/--force detected. Use targeted rm or move to trash instead." >&2
     exit 2
 fi
 
@@ -18,7 +27,8 @@ if echo "$cmd" | grep -qE '\bgit\s+reset\s+--hard\b'; then
     exit 2
 fi
 
-if echo "$cmd" | grep -qE '\bgit\s+push\s+.*--force\b|\bgit\s+push\s+-f\b'; then
+# git push --force / -f (but NOT --force-with-lease)
+if echo "$cmd" | grep -qE '\bgit\s+push\s+.*--force($|\s)|\bgit\s+push\s+.*\s-f($|\s)'; then
     echo "BLOCKED: force push can destroy remote history. Use --force-with-lease if needed." >&2
     exit 2
 fi
@@ -33,7 +43,7 @@ if echo "$cmd" | grep -qE '\bsudo\s+rm\b'; then
     exit 2
 fi
 
-if echo "$cmd" | grep -qE '\bdrop\s+(table|database)\b' -i; then
+if echo "$cmd" | grep -qEi '\bdrop\s+(table|database)\b'; then
     echo "BLOCKED: DROP TABLE/DATABASE detected. Run manually if intended." >&2
     exit 2
 fi
