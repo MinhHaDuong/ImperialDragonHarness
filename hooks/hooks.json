@@ -1,12 +1,4 @@
 {
-  "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "high",
-  "permissions": {
-    "allow": [
-      "EnterWorktree",
-      "ExitWorktree"
-    ]
-  },
   "hooks": {
     "SessionStart": [
       {
@@ -14,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/on-start.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-start.sh",
             "timeout": 30
           }
         ]
@@ -26,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/guard-destructive-bash.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/guard-destructive-bash.sh",
             "timeout": 5
           }
         ]
@@ -36,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/guard-commit-on-main.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/guard-commit-on-main.sh",
             "timeout": 5
           }
         ]
@@ -46,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/block-pr-merge-in-worktree.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/block-pr-merge-in-worktree.sh",
             "timeout": 5
           }
         ]
@@ -58,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/lint-on-edit.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/lint-on-edit.sh",
             "timeout": 15
           }
         ]
@@ -70,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/check-tests-on-stop.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check-tests-on-stop.sh",
             "timeout": 10
           }
         ]

@@ -1,0 +1,11 @@
+{
+  "name": "idh",
+  "description": "Science-backed harness for AI-assisted research: Five Claws workflow with TDD, worktree isolation, and structured review.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Minh Ha-Duong"
+  },
+  "repository": "https://github.com/MinhHaDuong/ImperialDragonHarness",
+  "license": "MIT",
+  "keywords": ["research", "workflow", "tdd", "code-review", "harness"]
+}
