@@ -1,11 +1,10 @@
 # Plugin Architecture Feasibility: Imperial Dragon Harness
 
-## Verdict: Yes, with one structural caveat
+## Verdict: Yes, fully
 
 The harness maps cleanly onto the official Claude Code plugin system. Every
-component has a direct equivalent. The one caveat is **rules/** — the official
-plugin spec has no `rules/` directory. Rules must stay in `~/.claude/rules/`
-or project `.claude/rules/`, outside the plugin.
+component has a direct equivalent — including rules, which become companion
+reference files inside an auto-invoked skill.
 
 ## Official plugin spec (April 2026)
 
@@ -24,7 +23,7 @@ Claude Code ships a built-in plugin system with:
 |---|---|---|
 | `skills/*/SKILL.md` | `skills/*/SKILL.md` | Identical format. Namespaced as `/imperial-dragon:skill-name` |
 | `hooks/*.sh` | `scripts/*.sh` + `hooks/hooks.json` | Hooks declared in JSON, scripts use `${CLAUDE_PLUGIN_ROOT}` |
-| `rules/*.md` | **No equivalent** | Must stay in `~/.claude/rules/`. See caveat below |
+| `rules/*.md` | `skills/harness-rules/*.md` | Rules as skill companion files (auto-invoked) |
 | `commands/*.md` | `commands/*.md` | Identical. Legacy but supported |
 | `commands/gsd/*.md` | `commands/gsd/*.md` | Same |
 | `bin/*` | `bin/*` | Official: added to Bash PATH when plugin enabled |
@@ -37,7 +36,13 @@ Claude Code ships a built-in plugin system with:
 imperial-dragon/
 ├── .claude-plugin/
 │   └── plugin.json           # name, version, description, author
-├── skills/                   # 8 skills, identical SKILL.md format
+├── skills/                   # 9 skills, identical SKILL.md format
+│   ├── harness-rules/        # rules as companion files (auto-invoked)
+│   │   ├── SKILL.md
+│   │   ├── workflow.md
+│   │   ├── git.md
+│   │   ├── coding.md
+│   │   └── state.md
 │   ├── new-ticket/SKILL.md
 │   ├── start-ticket/SKILL.md
 │   ├── review-pr/SKILL.md
@@ -70,30 +75,44 @@ imperial-dragon/
 └── docs/                     # not loaded by plugin system
 ```
 
-## The rules/ caveat
+## Rules as skill reference material
 
-The official plugin system does **not** support bundling rules. Rules are
-loaded from:
-- `~/.claude/rules/*.md` (user scope)
-- `.claude/rules/*.md` (project scope)
-- Managed policy locations
+The official plugin system has no `rules/` directory. But skills support
+companion files alongside `SKILL.md` — Claude reads them when the skill
+is invoked.
 
-### Workaround options
+### Solution: `skills/harness-rules/`
 
-1. **SessionStart hook** — print rules content to stdout; Claude sees it as
-   session context. Lightweight, no file management needed.
-2. **Companion install script** — `bin/install-rules` symlinks rule files
-   into `~/.claude/rules/`. Run once after plugin install.
-3. **CLAUDE.md import** — use `@path/to/file` imports in CLAUDE.md to
-   reference rule files inside the plugin directory (if path is stable).
-4. **Accept the split** — keep rules in `~/.claude/rules/` as user config,
-   treat the plugin as providing skills/hooks/commands only.
+```
+skills/harness-rules/
+├── SKILL.md          # auto-invoked, not user-invocable
+├── workflow.md       # session start, escalation, worktree isolation
+├── git.md            # branch discipline, commit standards
+├── coding.md         # Python 3.10+, testing, Make patterns
+└── state.md          # STATE.md format specification
+```
 
-**Recommendation**: Option 4 (accept the split). Rules are personal
-behavioral constraints that should be version-controlled separately from
-distributable tooling. The harness already separates "how I want Claude to
-behave" (rules) from "what Claude can do" (skills/hooks). A plugin is the
-right vehicle for the latter.
+The skill uses `disable-model-invocation: false` + `user-invocable: false`,
+so Claude auto-invokes it at session start when it recognizes the project
+context. The SKILL.md instructs Claude to read and follow all companion files.
+
+### Trade-offs vs standalone rules
+
+| | `~/.claude/rules/` | `skills/harness-rules/` |
+|---|---|---|
+| **Loaded** | Always, every session | When Claude judges it relevant |
+| **Deterministic** | Yes — rules always fire | Probabilistic — skill may not trigger |
+| **Bundled in plugin** | No | Yes |
+| **Path-scoped** | Yes (`paths:` frontmatter) | No (skill-level only) |
+
+The key difference: rules are **deterministic** (always loaded), skills are
+**probabilistic** (Claude decides). For a plugin meant for distribution,
+probabilistic loading is acceptable — the skill description is specific
+enough that Claude will invoke it reliably for any Imperial Dragon project.
+
+For personal use where deterministic loading is required, keep standalone
+rules in `~/.claude/rules/` alongside the plugin. Both approaches can
+coexist.
 
 ## Migration effort
 
@@ -105,7 +124,7 @@ right vehicle for the latter.
 | Update hook paths to use `${CLAUDE_PLUGIN_ROOT}` | Small | Search-replace |
 | Test with `claude --plugin-dir` | Small | Verify all components load |
 | Namespace skill invocations in docs | Small | `/review-pr` becomes `/imperial-dragon:review-pr` |
-| Keep rules in `~/.claude/rules/` | Zero | Already there |
+| Package rules as skill companion files | Small | Create `skills/harness-rules/SKILL.md` + copy 4 rule files |
 
 **Total**: ~2 hours of mechanical work. No design changes needed.
 
@@ -122,8 +141,13 @@ right vehicle for the latter.
 ## What we lose
 
 Nothing functional. The custom `bin/plugin-*` scripts we prototyped are
-strictly inferior to the built-in CLI. The only real delta is that rules
-stay outside the plugin, which is architecturally appropriate.
+strictly inferior to the built-in CLI.
+
+The one nuance: rules loaded via skill are **probabilistic** (Claude
+decides when to invoke) rather than **deterministic** (always loaded).
+In practice this is fine for distribution. For personal use where
+guaranteed loading matters, keep standalone `~/.claude/rules/` alongside
+the plugin — both coexist cleanly.
 
 ## Decision
 
