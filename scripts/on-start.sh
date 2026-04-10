@@ -20,6 +20,11 @@ persist_env() {
 # User-level env loaded unconditionally (before project-dir check)
 persist_env "$HOME/.claude/.env"
 
+# Tell uv to load API keys automatically (no --env-file needed)
+if [ -n "$CLAUDE_ENV_FILE" ] && [ -f "$HOME/.claude/.env" ]; then
+    echo "UV_ENV_FILE=$HOME/.claude/.env" >> "$CLAUDE_ENV_FILE"
+fi
+
 # Everything below requires a project directory
 [ -n "$CLAUDE_PROJECT_DIR" ] && cd "$CLAUDE_PROJECT_DIR" || exit 0
 
@@ -59,3 +64,20 @@ echo "Agent identity configured."
 if [ -f STATE.md ]; then
     cat STATE.md
 fi
+
+# Git context for session orientation
+echo ""
+echo "## Git context"
+_branch=$(git branch --show-current 2>/dev/null || echo "detached HEAD")
+echo "- Branch: $_branch"
+
+_git_dir=$(git rev-parse --git-dir 2>/dev/null)
+_common_dir=$(git rev-parse --git-common-dir 2>/dev/null)
+if [ "$_git_dir" != "$_common_dir" ]; then
+    echo "- Worktree: linked ($(pwd))"
+else
+    echo "- Worktree: main working tree"
+fi
+
+echo "- All worktrees:"
+git worktree list 2>/dev/null | sed 's/^/    /'
