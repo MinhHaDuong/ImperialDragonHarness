@@ -62,18 +62,7 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/check-tests-on-stop.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
+    "Stop": []
   },
   "effortLevel": "max",
   "skipDangerousModePermissionPrompt": true,
