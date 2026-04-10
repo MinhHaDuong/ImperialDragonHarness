@@ -41,3 +41,4 @@ When writing new tests:
 - **One output per rule.** Each target should produce a known file so timestamps work.
 - **Sentinel stamps for dynamic outputs.** Use a stamp file when a script produces data-dependent filenames.
 - **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
+- **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.
