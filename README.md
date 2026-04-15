@@ -34,8 +34,7 @@ ImperialDragonHarness/
 │   ├── celebrate/          # Post-task wrap-up
 │   ├── end-session/        # Day wrap-up
 │   ├── memory/             # Persistent memory management
-│   ├── orchestrator/       # Batch across multiple tickets
-│   └── autonomous/         # Unsupervised exploration session
+│   └── orchestrator/       # Autonomous batch across multiple tickets
 ├── hooks/
 │   └── hooks.json          # Plugin-mode hooks (mirrors settings.json)
 ├── scripts/                # Hook implementations

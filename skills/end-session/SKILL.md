@@ -28,4 +28,4 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    c. Prune: delete items checked off before this session.
    d. Commit, merge to main via fast-forward, delete branch.
 10. **Memory sweep** — follow `/memory` skill (includes staleness check + rule cross-reference).
-11. **Autonomous session** — offer to launch `/autonomous` if user wants unsupervised work.
+11. **Autonomous session** — offer to launch `/orchestrator all open` if user wants unsupervised work overnight.

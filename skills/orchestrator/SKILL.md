@@ -1,16 +1,27 @@
 ---
 name: orchestrator
-description: Run Imperial Dragon batch across multiple tickets. Delegates to existing skills, manages waves, enforces isolation.
+description: Run Imperial Dragon batch across multiple tickets. Picks targets, manages waves, enforces isolation. Always autonomous — never merges.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
+model: claude-opus-4-6
+effort: max
 ---
 
 # Orchestrate $ARGUMENTS — Imperial Dragon batch
 
 The orchestrator does not redefine skills. It calls `/start-ticket`,
 `/review-pr`, `/celebrate`, etc. Its job is sequencing, wave management,
-and enforcing invariants.
+and enforcing invariants. It never merges — all work lands as merge requests
+for the author to review.
+
+## Balance rule
+
+**Deliverable work ≥60%, tooling ≤40%.** If two consecutive tickets were tooling, the next must advance a deliverable. Track in session log.
+
+**Deliverables**: items in `STATE.md` under current milestone — papers, slides, reading notes, figures, responses to reviewers. Tooling: tests, hygiene, refactoring, harness improvements.
+
+**Escape hatch**: if `make check-fast` fails and blocks all deliverable work, tooling may exceed 40%. Document why.
 
 ## Checkpointing
 
@@ -20,28 +31,30 @@ completed last. The checkpoint is the repo, not session state.
 
 ## Phase 1: Select
 
-If $ARGUMENTS is "all open": `/start-ticket`.
+If $ARGUMENTS is "all open": read open tickets from git-erg `tickets/` or forge.
 Otherwise: parse comma-separated ticket IDs.
 
-Read each ticket + STATE.md + MASTERPLAN.md.
-Group by milestone. Identify dependency order and wave structure.
-Commit the wave plan to a scratch file or ticket log.
+Prioritize:
+1. Scientific deliverables first
+2. Gaps with north star (STATE.md)
+3. Ripest open issues
+4. Inline markers (FIXME, TODO, HACK)
+
+Read each ticket + STATE.md. Group by milestone. Identify dependency order and wave structure.
 
 ## Phase 2: Imagine (parallel)
 
-For each ticket, launch an Opus agent (background, no isolation needed — read-only + ticket rewrite):
-- Read ticket + STATE.md + MASTERPLAN.md + surrounding code
-- WHY NOW, WHY THIS SCOPE, FIVE RADICALS, HYBRID, REWRITE
-- Append log: `{timestamp} claude status reimagined by IDD imagine`
+For each ticket, launch an agent (background, no isolation needed — read-only):
+- Read ticket + STATE.md + surrounding code
+- Reimagine: why now, why this scope, what's the simplest path
 
 Wait for all. Commit reimagined tickets. Report scorecard.
 
 ## Phase 3: Plan (parallel)
 
-For each reimagined ticket, launch an Opus agent (background):
+For each reimagined ticket, launch an agent (background):
 - Read ticket + actual source code
-- Write Actions, first test, Blocked-by, track label
-- Append log: `{timestamp} claude status planned by IDD plan`
+- Write Actions, first test, dependencies
 
 Wait for all. Commit planned tickets. Report scorecard.
 
@@ -57,76 +70,53 @@ Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
 ## Phase 5: Execute (waves, worktree-isolated)
 
 Group tickets into waves:
-- Wave N: no unmerged dependencies, no API keys (or keys available)
+- Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
 
-For each wave, launch agents with MANDATORY rules:
-- `isolation: "worktree"` — non-negotiable
-- Branch from main: `ticket-{NNNN}-{slug}`
-- TDD: red, green, refactor, commit
-- `ruff check` on changed files before push
-- `make check` as final gate
-- Doc propagation (report/slides) in the same merge request, not a follow-up
-- Push branch — do NOT create merge request, do NOT merge
-- No cross-branch imports
+For each wave, launch agents with `isolation: "worktree"`.
+Each agent follows `/start-ticket` workflow. Push branch when done — do NOT create merge request, do NOT merge.
 
-Wait for wave to complete. Commit wave status to ticket logs.
+Wait for wave to complete.
 
 ## Phase 6: Verify (per-ticket `/review-pr`)
 
 For each executed ticket, run `/review-pr` with proportional depth.
-ALL review agents use `isolation: "worktree"`.
-
-Synthesize findings. Every finding is actionable.
+Self-review: single agent, correctness focus. Max 4 active worktrees.
 
 Launch fix agents (`isolation: "worktree"`) for all findings.
 Create merge requests after fixes land.
 
-## Phase 7: TLC
-
-One final `/review-pr` pass per merge request (`isolation: "worktree"`):
-- Verify previous fixes landed
-- `ruff check` + `make check`
-- Fix anything found
-
-Commit. Report verdicts.
-
-## Phase 8: Scope audit
+## Phase 7: Scope audit
 
 Check each merge request for scope creep:
 - Did Execute exceed the Plan?
 - Split out-of-scope work to new tickets (`/new-ticket`)
-- Split branches if needed (`isolation: "worktree"`)
 
-## Phase 9: Merge
+## Mid-session checkpoint (~50% effort)
 
-Present merge order (respecting file overlaps).
-Merge on user approval only. Then `/celebrate`.
+- [ ] Opened at least one deliverable-forward merge request?
+- [ ] Tooling/deliverable ratio within bounds?
+- [ ] Self-reviewed at least one merge request?
+- [ ] `make check` passes on main?
 
-## Invariants
+## Wrap up
 
-- ALL agents that write code use `isolation: "worktree"`
-- ALL agents run `ruff check` before pushing
-- ALL Execute agents stop at push — never open merge request, never merge
-- Doc propagation belongs in the Execute merge request
-- "Assume noncompliance" on all review verdicts
-- Checkpoints are git commits, not session state
+1. `make check` on main — compare against baseline. New failures → ticket.
+2. Clean up worktrees.
+3. All work pushed, merge requests open.
+4. Write briefing (session log + merge request list + test delta).
+5. Do NOT run `/end-session`.
 
 ## Circuit breakers
 
 **Agent timeout**: If an agent has not pushed within 10 minutes,
-kill it. Assess whether the task is too large, then either split
-the ticket or relaunch with a narrower scope.
+kill it. Split the ticket or relaunch with narrower scope.
 
 **Ping-pong detector**: If two agents edit the same file on the
-same branch (detected via `git log --diff-filter=M`), STOP.
-The branch is contaminated. Reset to last known-good commit,
-relaunch ONE agent with worktree isolation.
+same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
 
 **Redirect ban**: Do not use SendMessage to redirect a running
-agent's approach. By the time the message arrives, the agent is
-committed to its plan. Kill and relaunch with corrected instructions.
+agent. Kill and relaunch with corrected instructions.
 
-**Escalation**: If the same fix fails twice, escalate to the user
-with the two failed approaches and ask for direction. Do not
-attempt a third time autonomously.
+**Escalation**: If the same fix fails twice, stop and leave a
+ticket comment with the two failed approaches.
