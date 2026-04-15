@@ -58,15 +58,49 @@ ImperialDragonHarness/
 └── docs/                   # Reference material (not loaded)
 ```
 
-## How it works
+## Installation
 
-This repo is an official Claude Code plugin. Load it with:
+Load the plugin with:
 
 ```bash
 claude --plugin-dir ./ImperialDragonHarness
 ```
 
 Skills are namespaced as `/idh:<skill>`. Hooks fire automatically via `hooks/hooks.json`. Rules are delivered as companion files in the auto-invoked `harness-rules` skill.
+
+### Optional: daily auto-update via systemd
+
+To keep the harness up to date without a network hit on every session start:
+
+```bash
+# Create the service and timer
+mkdir -p ~/.config/systemd/user
+
+cat > ~/.config/systemd/user/claude-harness-pull.service << 'EOF'
+[Unit]
+Description=Pull ImperialDragonHarness updates
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/git -C %h/.claude pull --ff-only --quiet
+EOF
+
+cat > ~/.config/systemd/user/claude-harness-pull.timer << 'EOF'
+[Unit]
+Description=Daily pull of ImperialDragonHarness
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+# Enable and start
+systemctl --user daemon-reload
+systemctl --user enable --now claude-harness-pull.timer
+```
 
 ## Backed by
 
