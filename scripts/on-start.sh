@@ -25,6 +25,9 @@ if [ -n "$CLAUDE_ENV_FILE" ] && [ -f "$HOME/.claude/.env" ]; then
     echo "UV_ENV_FILE=$HOME/.claude/.env" >> "$CLAUDE_ENV_FILE"
 fi
 
+# The worktree instruction must always print, regardless of project dir
+echo "Worktree isolation is enabled for this project. Every new conversation must start in its own worktree. Use EnterWorktree as your first action before responding to the user."
+
 # Everything below requires a project directory
 [ -n "$CLAUDE_PROJECT_DIR" ] && cd "$CLAUDE_PROJECT_DIR" || exit 0
 
@@ -59,25 +62,3 @@ _script_dir="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
     bash "$_script_dir/warn-stale-rules.sh"
 fi
-
-echo "Agent identity configured."
-if [ -f STATE.md ]; then
-    cat STATE.md
-fi
-
-# Git context for session orientation
-echo ""
-echo "## Git context"
-_branch=$(git branch --show-current 2>/dev/null || echo "detached HEAD")
-echo "- Branch: $_branch"
-
-_git_dir=$(git rev-parse --git-dir 2>/dev/null)
-_common_dir=$(git rev-parse --git-common-dir 2>/dev/null)
-if [ "$_git_dir" != "$_common_dir" ]; then
-    echo "- Worktree: linked ($(pwd))"
-else
-    echo "- Worktree: main working tree"
-fi
-
-echo "- All worktrees:"
-git worktree list 2>/dev/null | sed 's/^/    /'
