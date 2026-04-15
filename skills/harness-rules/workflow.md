@@ -35,6 +35,13 @@ Save a feedback memory at each escalation (what failed, why). Stop if repeating 
 - You're stuck after three different approaches (including expert fan-out).
 - The task requires a judgment call outside your domain docs.
 
+# Subagents
+
+- **Don't spawn for simple tasks.** Single-file edits, grep, reading files — work directly.
+- **Reviewers use a different model than the coder.** Sonnet reviews Opus's work; different blind spots catch more.
+- **Max 4 concurrent agents.** Beyond that, coordination overhead exceeds the gains.
+- **One well-prompted agent first.** Only add agents when a single agent clearly can't handle the task.
+
 # Compaction
 
 When compacting, preserve the list of modified files, test commands, and current implementation plan.

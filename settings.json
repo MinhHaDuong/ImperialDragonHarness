@@ -67,7 +67,7 @@
   "env": {
     "UV_ENV_FILE": "/home/haduong/.claude/.env"
   },
-  "effortLevel": "max",
+  "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "voiceEnabled": true,
   "voice": {

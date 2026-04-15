@@ -42,7 +42,8 @@ ImperialDragonHarness/
 │   ├── guard-destructive-bash.sh
 │   ├── guard-commit-on-main.sh
 │   ├── block-pr-merge-in-worktree.sh
-│   └── lint-on-edit.sh
+│   ├── lint-on-edit.sh
+│   └── warn-stale-rules.sh
 ├── commands/               # Guidance documents
 │   ├── choose-journal.md
 │   └── gsd/                    # 33 research workflow commands

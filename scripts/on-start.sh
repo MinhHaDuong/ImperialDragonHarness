@@ -17,6 +17,12 @@ persist_env "$HOME/.claude/.env"
 # Worktree instruction — must always print, before any early exit
 echo "Worktree isolation is enabled for this project. Every new conversation must start in its own worktree. Use EnterWorktree as your first action before responding to the user."
 
+# Check for stale rules (advisory — prints warnings if any)
+_script_dir="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
+    _stale=$(bash "$_script_dir/warn-stale-rules.sh" 2>/dev/null)
+    [ -n "$_stale" ] && echo "$_stale"
+fi
 
 # --- Nothing below this line may produce stdout (hook output = conversation context) ---
 exec >/dev/null 2>&1
