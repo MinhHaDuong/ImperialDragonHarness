@@ -15,9 +15,9 @@ Run after the branch has been merged. Do not skip steps.
 
 Verify the branch has been merged before proceeding:
 ```bash
-git branch --merged main | grep -q "$(git branch --show-current)"
+git fetch origin && git merge-base --is-ancestor HEAD origin/main
 ```
-If the current branch is not merged into main, stop and tell the user. Do not continue with celebrate.
+If the current branch is not merged into origin/main, stop and tell the user. Do not continue with celebrate.
 
 ## Reflect and update
 

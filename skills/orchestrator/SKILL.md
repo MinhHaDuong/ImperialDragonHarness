@@ -8,7 +8,7 @@ argument-hint: [ticket-ids or "all open"]
 
 # Orchestrate $ARGUMENTS — Imperial Dragon batch
 
-The orchestrator does not redefine skills. It calls `/ticket-ready`,
+The orchestrator does not redefine skills. It calls `/start-ticket`,
 `/review-pr`, `/celebrate`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
 
@@ -20,7 +20,7 @@ completed last. The checkpoint is the repo, not session state.
 
 ## Phase 1: Select
 
-If $ARGUMENTS is "all open": `/ticket-ready`.
+If $ARGUMENTS is "all open": `/start-ticket`.
 Otherwise: parse comma-separated ticket IDs.
 
 Read each ticket + STATE.md + MASTERPLAN.md.
@@ -66,8 +66,8 @@ For each wave, launch agents with MANDATORY rules:
 - TDD: red, green, refactor, commit
 - `ruff check` on changed files before push
 - `make check` as final gate
-- Doc propagation (report/slides) in the same PR, not a follow-up
-- Push branch — do NOT create PR, do NOT merge
+- Doc propagation (report/slides) in the same merge request, not a follow-up
+- Push branch — do NOT create merge request, do NOT merge
 - No cross-branch imports
 
 Wait for wave to complete. Commit wave status to ticket logs.
@@ -80,11 +80,11 @@ ALL review agents use `isolation: "worktree"`.
 Synthesize findings. Every finding is actionable.
 
 Launch fix agents (`isolation: "worktree"`) for all findings.
-Create PRs after fixes land.
+Create merge requests after fixes land.
 
 ## Phase 7: TLC
 
-One final `/review-pr` pass per PR (`isolation: "worktree"`):
+One final `/review-pr` pass per merge request (`isolation: "worktree"`):
 - Verify previous fixes landed
 - `ruff check` + `make check`
 - Fix anything found
@@ -93,9 +93,9 @@ Commit. Report verdicts.
 
 ## Phase 8: Scope audit
 
-Check each PR for scope creep:
+Check each merge request for scope creep:
 - Did Execute exceed the Plan?
-- Split out-of-scope work to new tickets (`/ticket-new`)
+- Split out-of-scope work to new tickets (`/new-ticket`)
 - Split branches if needed (`isolation: "worktree"`)
 
 ## Phase 9: Merge
@@ -107,8 +107,8 @@ Merge on user approval only. Then `/celebrate`.
 
 - ALL agents that write code use `isolation: "worktree"`
 - ALL agents run `ruff check` before pushing
-- ALL Execute agents stop at push — never PR, never merge
-- Doc propagation belongs in the Execute PR
+- ALL Execute agents stop at push — never open merge request, never merge
+- Doc propagation belongs in the Execute merge request
 - "Assume noncompliance" on all review verdicts
 - Checkpoints are git commits, not session state
 

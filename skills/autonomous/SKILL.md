@@ -10,7 +10,7 @@ effort: max
 
 # Autonomous exploration session
 
-Unsupervised session — work autonomously, review your own PRs, push forward on deliverables. Author reviews results when the session ends.
+Unsupervised session — work autonomously, review your own merge requests, push forward on deliverables. Author reviews results when the session ends.
 
 ## Balance rule
 
@@ -49,28 +49,28 @@ Up to 3 implementations in parallel for each idea.
 
 ### Mid-session checkpoint (~50% effort)
 
-- [ ] Opened at least one deliverable-forward PR?
+- [ ] Opened at least one deliverable-forward merge request?
 - [ ] Tooling/deliverable ratio within bounds?
-- [ ] Self-reviewed at least one PR?
+- [ ] Self-reviewed at least one merge request?
 - [ ] `make check` passes on main?
 
 ### Wrap up
 
 1. `make check` on main — compare against baseline. New failures → ticket.
 2. Clean up worktrees.
-3. All work pushed, PRs open.
-4. Write briefing (session log + PR list + test delta).
+3. All work pushed, merge requests open.
+4. Write briefing (session log + merge request list + test delta).
 5. Do NOT run `/end-session` (would re-trigger autonomous).
 
 ## Invariants
 
-- **Never merge to main.** All changes as PRs.
+- **Never merge to main.** All changes as merge requests.
 - **One ticket per worktree.**
 - **Commit messages explain why.**
 
 ## Anti-patterns
 
 - Entire session on tooling, zero deliverable progress.
-- Did not self-review PRs.
+- Did not self-review merge requests.
 - Did not recurse into new dreams after completing existing ones.
 - Moved failing tests out of sight instead of fixing.
