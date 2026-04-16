@@ -80,11 +80,20 @@ Wait for wave to complete.
 
 ## Phase 6: Verify (per-ticket `/review-pr`)
 
-For each executed ticket, run `/review-pr` with proportional depth.
-Self-review: single agent, correctness focus. Max 4 active worktrees.
+Mood: Be strict, assume noncompliance, aim for code excellence and integrity:
+Verify with proportional depth, the default being all of the following:
+Reviewers should be skeptical, nit-picky, and detail-oriented.
 
-Launch fix agents (`isolation: "worktree"`) for all findings.
-Create merge requests after fixes land.
+Review each executed ticket :
+- Check adherence to coding rules and architecture.md.
+- Use the `\review` built-in tool
+- Use the `\simplify` built-in tool
+
+Create merge requests after all fixes land, then:
+- Use either the `\review-pr` or `\review-pr-prose` skill.
+- Subagent specifically instructed to check for integration and testing at merge time, not just code quality.
+
+Launch fix agents (`isolation: "worktree"`) for all findings. No nit is too small to fix. Push fixes to execution branch, do NOT merge.
 
 ## Phase 7: Scope audit
 
