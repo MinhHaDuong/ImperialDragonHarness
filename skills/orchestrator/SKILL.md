@@ -74,26 +74,28 @@ Group tickets into waves:
 - Wave N+1: depends on Wave N results
 
 For each wave, launch agents with `isolation: "worktree"`.
-Each agent follows `/start-ticket` workflow. Push branch when done — do NOT create merge request, do NOT merge.
+Each agent follows `/start-ticket` workflow. Push branch when done, create merge request.
 
 Wait for wave to complete.
 
 ## Phase 6: Verify (per-ticket `/review-pr`)
 
-Mood: Be strict, assume noncompliance, aim for code excellence and integrity:
-Verify with proportional depth, the default being all of the following:
-Reviewers should be skeptical, nit-picky, and detail-oriented.
+Mood: Be strict, Skeptical, nit-picky, detail-oriented, aim for code excellence and integrity.
+Verify with proportional depth, the autonomous mode default is all of the following.
 
 Review each executed ticket :
 - Check adherence to coding rules and architecture.md.
 - Use the `\review` built-in tool
+- Use either the `\review-pr` or `\review-pr-prose` skill.
 - Use the `\simplify` built-in tool
 
-Create merge requests after all fixes land, then:
-- Use either the `\review-pr` or `\review-pr-prose` skill.
+Review the wave as a whole:
 - Subagent specifically instructed to check for integration and testing at merge time, not just code quality.
 
-Launch fix agents (`isolation: "worktree"`) for all findings. No nit is too small to fix. Push fixes to execution branch, do NOT merge.
+Launch fix agents (`isolation: "worktree"`) for all findings. No nit is too small to fix.
+
+In autonomous unattended mode, merge when all fixes are applied and verified, and an independent Sonnet subagent reviewer approves.
+In interactive mode, author reviews fixes and merges when ready.
 
 ## Phase 7: Scope audit
 
