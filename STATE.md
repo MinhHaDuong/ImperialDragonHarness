@@ -17,6 +17,7 @@ None
 - Pull main on ~/.claude to pick up all merged changes
 - Apply pruned settings.local.json (docs/20260404-review/settings-local-pruned.json)
 - Test new hooks in a real session (lint-on-edit, guard-commit-on-main, check-tests-on-stop)
+- **CI batch across active repos (0015 here + git-erg 0003 + AEDIST 0111 + Climate-finance 0081)**; once green, enable branch protection; then new IDH ticket to trim `/verify` to trust CI signals and scope `/verify-wave`.
 
 ## North star
 

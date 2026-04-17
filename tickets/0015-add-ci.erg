@@ -39,3 +39,13 @@ broken /verify, a malformed ticket) propagates.
 - PRs show the check status.
 - Branch protection requiring `validate-tickets` can be enabled
   without blocking current main.
+
+## Follow-on (after this ticket closes)
+
+1. Enable branch protection requiring `validate-tickets` on `main`.
+2. New IDH ticket: trim `skills/verify/SKILL.md` to short-circuit
+   its review fan-out (phase 2–4) when CI has already run lint +
+   validator. Goal: cut /verify token spend without losing coverage.
+3. Scope `/verify-wave` for multi-PR integration review (listed as
+   "not in scope" in current SKILL.md — a mechanical green signal on
+   the integration branch is the precondition that makes it feasible).
