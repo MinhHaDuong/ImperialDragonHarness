@@ -6,10 +6,6 @@ Last updated: 2026-04-17
 
 Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg ticket system all shipped.
 
-## Conventions
-
-- **Tickets live in `tickets/*.erg`** (see `tickets/FORMAT.md`). GitHub Issues only for cross-repo coordination.
-
 ## Blockers
 
 None
