@@ -4,7 +4,12 @@ Last updated: 2026-04-17
 
 ## Status
 
-Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg ticket system all shipped.
+Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only (916→325 lines across 5 skills).
+
+## Open tickets (2)
+
+- 0013 — bib-to-zotero (push refs.bib to Zotero via API at submission)
+- 0015 — add CI (validator + skill sanity on PR/push)
 
 ## Blockers
 
@@ -12,29 +17,17 @@ None
 
 ## Next actions
 
-- Merge REALF guidelines and business rules
-- Implement #23: streamline settings.json hook configuration
-- Pull main on ~/.claude to pick up all merged changes
-- Apply pruned settings.local.json (docs/20260404-review/settings-local-pruned.json)
-- Test new hooks in a real session (lint-on-edit, guard-commit-on-main, check-tests-on-stop)
-- **CI batch across active repos (0015 here + git-erg 0003 + AEDIST 0111 + Climate-finance 0081)**; once green, enable branch protection; then new IDH ticket to trim `/verify` to trust CI signals and scope `/verify-wave`.
+- **CI batch**: 0015 here + git-erg 0003 + AEDIST 0111 + Climate-finance 0081. Once green, enable branch protection.
+- Build 0013 (bib-to-zotero) when a manuscript reaches submission.
+- Merge REALF guidelines and business rules.
 
 ## North star
 
 A reusable, science-backed harness for AI-assisted research: code and prose, day and night, across projects and machines.
-
-## Current milestone: Self-improvement loop
-
-- [x] Review against references (5 levels, 10 principles, deep research)
-- [x] Implement tier 1 fixes (on-start.sh bug, destructive guard, settings audit)
-- [x] Implement tier 2 (PostToolUse lint, Stop hook, branch guard, effortLevel)
-- [x] Implement tier 3 (telemetry wiring, compaction instruction, staleness warning)
-- [x] Clean up docs/ and organize telemetry scripts
-- [ ] Merge REALF guidelines and business rules
-- [ ] Measure compliance rates (context hygiene, review quality, token economy)
 
 ## Backlog
 
 - Streamline settings.json hook configuration (#23)
 - Multi-machine sync (doudou ↔ padme)
 - Second project onboarding (CIRED.digital or activity reports)
+- Measure compliance rates (context hygiene, review quality, token economy)
