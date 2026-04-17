@@ -105,7 +105,7 @@ conventions:
     (e.g., `Gotzens2019`, `Smith2021a`),
   - `other` — anything else.
   Take the majority class as the project's style. If the file has
-  fewer than three entries or no majority, treat the style as
+  no clear majority, treat the style as
   `unknown` and keep the note's key verbatim (a matching style is
   best-effort; blocking the merge on ambiguity would be worse than
   a cosmetic mismatch — record this in the report).
