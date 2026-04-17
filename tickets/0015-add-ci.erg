@@ -1,0 +1,41 @@
+%erg v1
+Title: add CI — validator + skill sanity on PR/push
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T15:36Z claude created — part of the "CI across active repos" batch
+
+--- body ---
+## Context
+
+IDH has no remote CI. The local pre-commit hook runs the %erg
+validator on committed files, but web edits, fork PRs, and rebased
+history bypass that path. Defense-in-depth matters here because
+downstream repos vendor these skills and a silent regression (a
+broken /verify, a malformed ticket) propagates.
+
+## Actions
+
+1. Add `.github/workflows/CI.yml` on `pull_request` and `push: main`.
+2. Jobs:
+   - `validate-tickets`: run the erg validator against every
+     `tickets/**/*.erg` and `tickets/archive/**/*.erg`.
+   - `skill-lint`: sanity-check SKILL.md frontmatter (required
+     fields: name, description) across `skills/*/SKILL.md`.
+3. Keep it cheap — no LLM calls, no network beyond `actions/checkout`.
+
+## Test
+
+- Break a ticket's magic first line on a branch; expect
+  `validate-tickets` red.
+- Strip `description:` from a SKILL.md frontmatter; expect
+  `skill-lint` red.
+
+## Exit criteria
+
+- CI green on `main`.
+- PRs show the check status.
+- Branch protection requiring `validate-tickets` can be enabled
+  without blocking current main.
