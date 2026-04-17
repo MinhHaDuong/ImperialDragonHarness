@@ -93,7 +93,8 @@ Run web and scholar searches to surface:
   (pre-2015). Example: Lewis et al. 2020 for RAG; BERT 2019 for
   transformer-era IE.
 - **Review / survey papers** — to let the author drill down later.
-  Prefer recent surveys (≤3 years old) with strong citation counts.
+  Prefer recent surveys with strong citation counts; note the field's
+  pace when assessing currency.
 - **Recent frontier works** — 2024–2026 results. Preprints allowed
   when no peer-reviewed equivalent exists; flag them as such.
 - **Superseded or widely-critiqued works** — so "related but not
@@ -381,5 +382,5 @@ Style notes (aligned with `~/CNRS/html/src/Ha-Duong.bib`):
   the reference under a different key. Always check first.
 - Omitting the preprint-acceptability note or the freshness cutoff
   from Methods.
-- Padding the bibliography. 15 well-justified citations beats 30
-  noisy ones; fewer is fine if the paragraph's claim is narrow.
+- Padding the bibliography. Every entry must be directly justified;
+  do not add references for coverage.
