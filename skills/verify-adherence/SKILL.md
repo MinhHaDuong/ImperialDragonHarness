@@ -31,6 +31,11 @@ One argument: a branch name or PR number. Resolve PR → branch via `gh pr view 
 
 ## Phases
 
+**Label skip.** When called from `/verify`, if the PR carries the
+`verify:adherence-passed` label (set by `/start-ticket`'s pre-PR
+gate), the caller skips this entire skill — the adherence check
+already ran clean before the PR was opened.
+
 ### 1.0 Cheap static checks (always first, budget <10 s)
 
 Runs before anything else in the mechanical phase. Two sub-checks, both **blocking**;
