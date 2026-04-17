@@ -3,7 +3,7 @@ name: related-work-note
 description: When writing a Related Work section (or any paragraph with non-trivial citations) — produce an author's due-diligence note for one cited paragraph of a manuscript. Seven required sections: relevance, history-of-science context, cited works (detailed), related-but-not-cited (justified), methods, author-verification checklist, formal bibliography with DOI/URL. Deep-researched with snowballing and grey-literature policy; fresh each invocation.
 disable-model-invocation: false
 user-invocable: true
-argument-hint: [paragraph-topic] [manuscript-path] [section-id] [output-path]
+argument-hint: free-form inline — see "Inputs" section
 ---
 
 # Related-work due-diligence note
@@ -37,6 +37,10 @@ file. Do not modify any other project file.
 
 ## Inputs
 
+**Invocation style.** Pass all inputs as free-form labelled prose
+inside the skill's args — positional parsing is impractical because
+paragraph topics contain spaces. The skill extracts the labels.
+
 The caller must provide:
 
 1. **Paragraph topic or claim** — a phrase or sentence describing the
@@ -46,12 +50,24 @@ The caller must provide:
    manuscript being written. Example:
    `publications/journal-article/paper_benchmark_merged.md`.
 3. **Section identifier** — the section and paragraph number within
-   the manuscript. Example: *"§2 Related Work, paragraph 1"*.
+   the manuscript. Example: *"§2 Related Work, paragraph 1"*. For a
+   pilot run, use *"PILOT — not for inclusion in paper"*.
 4. **Output path** — where the note file should be written. Example:
    `publications/journal-article/notes/02_related_work/01_llm_benchmarks.md`.
 5. *(Optional)* **Citation budget** — the maximum number of citations
    the paragraph will use. If supplied, the skill still proposes more
-   in "Related but not cited"; the operator cuts down later.
+   in "Related but not cited"; the operator cuts down later. Recorded
+   in the output note's frontmatter as `citation-budget: N`.
+
+Example invocation:
+
+```
+Paragraph topic: "…"
+Manuscript path: …
+Section identifier: "§2 Related Work, paragraph 1"
+Output path: …
+Citation budget: 5
+```
 
 If the caller provides these inline, use them. If any is missing, ask
 the caller once before proceeding.
@@ -63,6 +79,11 @@ the caller once before proceeding.
 Read the target manuscript (at minimum the section the paragraph sits
 in, ideally also the abstract and introduction) so the note is
 tailored to *this* paper's argument, not the general field.
+
+**Pilot or not-yet-written section.** If the section identifier is
+a pilot label ("PILOT — …") or points at a section that does not
+yet exist, read the abstract and introduction instead. Record the
+fallback in Methods.
 
 ### 2. Deep-research the paragraph topic
 
@@ -106,11 +127,16 @@ anchors) and record the stop condition.
 ### 3. Check the operator's existing bibliography
 
 Before minting new BibTeX keys, check whether the reference already
-exists in the project. Scan `report/refs.bib` (if present) and the
-operator's Zotero library (see `memory/reference_zotero.md` for
-access details). If a match exists, reuse the key. If not, mint a
-new key matching the library's style, and note in the bibliography
-that the entry is new.
+exists in the project. Scan `report/refs.bib` (if present) and
+inspect its key style (e.g., 8-character uppercase Zotero-style
+keys, or author-year style). If a match exists, reuse the key.
+
+If no match, mint a new key. **Matching the existing library's key
+style is a best-effort**: if the scan was conclusive, match it; if
+the library is inaccessible or ambiguous, mint a readable
+`AuthorYEAR` key and record in Methods that final key reconciliation
+is deferred to the `bib-merge` skill (IDH issue #33) at import time.
+Do not block the note on key-style uncertainty.
 
 ### 4. Draft the note
 
@@ -121,10 +147,13 @@ rejects its own output if:
 - any of the seven sections is missing,
 - any cited-work entry lacks one of the four required fields,
 - any non-cited entry lacks a justification,
-- any bibliography entry lacks both DOI and stable URL, or
+- any bibliography entry lacks a stable URL (DOI is encouraged when
+  the published version has one, but not required — not every paper
+  is indexed by DOI), or
 - the Methods section omits the preprint-acceptability note, the
-  grey-literature note, the inclusion/exclusion rule, or the
-  freshness cutoff.
+  inclusion/exclusion rule, the identifier-resolution log, or the
+  freshness cutoff. (The grey-literature bullet is included only
+  when grey literature is cited.)
 
 ### 5. Resolve every identifier before emitting
 
@@ -170,6 +199,7 @@ author: Claude prompted by Ha-Duong Minh
 date: {YYYY-MM-DD — the invocation date}
 paper: {manuscript path as provided}
 section: {section identifier as provided, e.g., "§2 Related Work, paragraph 1"}
+citation-budget: {N, or "unset"}
 ---
 
 ## Relevance
@@ -219,8 +249,10 @@ One or two sentences: what the work is, and why it was not cited
 proprietary/closed, not yet peer-reviewed, too narrow, too broad,
 etc.).
 
-Aim for at least two entries. A thin "not cited" list is a red flag
-that the search was shallow.
+Aim for at least two entries when the field has plausible
+alternatives; more when the field is crowded. A thin list for a
+tight sub-literature is fine if the search was thorough — say so
+in Methods rather than padding.
 
 ## Methods
 
@@ -246,11 +278,13 @@ How this note was written (the LLM-side record):
 - **Preprint policy.** arXiv preprints are cited when no
   peer-reviewed equivalent exists; each such entry is flagged in
   the bibliography. Preferred when covering 2024–2026 frontier.
-- **Grey-literature policy.** Tech reports, working papers,
-  government documents, and project websites may be cited when
-  they are the primary source for a closely-related artefact.
+- **Grey-literature policy.** Include this bullet only if grey
+  literature is actually cited in this note. Tech reports, working
+  papers, government documents, and project websites may be cited
+  when they are the primary source for a closely-related artefact.
   Prefer a versioned URL (release tag, Zenodo DOI, Wayback
-  snapshot) over a bare homepage.
+  snapshot) over a bare homepage. If no grey literature is cited,
+  omit this bullet — do not write "N/A" placeholder text.
 - **Identifier resolution.** "All N bibliography entries were
   fetched on {YYYY-MM-DD} and returned a 200 (or 30x to a 200).
   Entries that failed to resolve: {list, or 'none'}."
@@ -277,8 +311,10 @@ This is distinct from the LLM-side Methods disclosure above.
 ## Bibliography
 
 Alphabetical by first author, BibTeX-compatible. Every entry carries
-a DOI (when available) **and** a stable URL. Entries flagged
-`[preprint]` in the key comment when they are not yet peer-reviewed.
+a stable URL. Include a DOI when the published version has one;
+arXiv-only entries, older conference papers, and grey literature may
+have only a URL. Entries flagged `[preprint]` in the key comment
+when they are not yet peer-reviewed.
 
 ```bibtex
 @article{AuthorYEAR,
