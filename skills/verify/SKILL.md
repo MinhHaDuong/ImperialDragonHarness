@@ -188,15 +188,26 @@ Explicit human override. Usage: `/verify <pr-number> --force-approve <reason>`.
 
 ## Output shape
 
-Post a single top-level PR comment at end of skill. Template:
+Post a single top-level PR comment at end of skill. Two sections,
+always both present. No interim "started"/"finished" chatter — the
+final report is the signal.
 
 ```
-/verify round=<n> verdict=<V>
+## /verify actions
+
+round: <n>
+adherence: PASS|FAIL — <n_blocking> blocking
+review-pr: <n_comments_posted>
+simplify: <n_fixes_applied>
+fix agent: <n_commits> commits (round 2 only, omit if round 1)
+
+## /verify-gate verdict
+
+verdict: APPROVED|REROLL|ESCALATE
 
 Exit criteria:
 - <criterion 1>: ADDRESSED — <evidence>
 - <criterion 2>: MISSING — <gap>
-...
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
@@ -207,3 +218,6 @@ Rationale:
 
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
+
+On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
+and Part B shows the gate's would-have-been verdict before override.
