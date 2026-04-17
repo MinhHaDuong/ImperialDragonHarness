@@ -18,8 +18,6 @@ Every task passes through five phases:
 
 ```
 ImperialDragonHarness/
-├── .claude-plugin/
-│   └── plugin.json         # Plugin manifest (kept for future use)
 ├── skills/                 # Slash commands: /celebrate, /review-pr, etc.
 │   ├── harness-rules/      # Auto-invoked rules (companion .md files)
 │   │   ├── SKILL.md
@@ -35,8 +33,6 @@ ImperialDragonHarness/
 │   ├── end-session/        # Day wrap-up
 │   ├── memory/             # Persistent memory management
 │   └── orchestrator/       # Autonomous batch across multiple tickets
-├── hooks/
-│   └── hooks.json          # Plugin-mode hooks (mirrors settings.json)
 ├── scripts/                # Hook implementations
 │   ├── on-start.sh             # Session start: env loading, worktree gate
 │   ├── guard-destructive-bash.sh
@@ -116,7 +112,7 @@ systemctl --user enable --now claude-harness-pull.timer
 
 ## Why not a plugin?
 
-Claude Code supports a plugin system (`--plugin-dir`, `.claude-plugin/`, namespaced skills). This repo has plugin scaffolding but is not used as a plugin. Instead, it *is* the `~/.claude` directory.
+Claude Code supports a plugin system (`--plugin-dir`, `.claude-plugin/`, namespaced skills). IDH does not use it — the repo clones directly to `~/.claude`.
 
 Reasons:
 
@@ -124,5 +120,3 @@ Reasons:
 - **Memory and state are user-level**. The `projects/` memory directory and `.env` file belong in `~/.claude`. A plugin would need symlinks or copies.
 - **No namespace friction**. As `~/.claude`, skills register as `/celebrate`, not `/idh:celebrate`. Shorter to type, easier to remember.
 - **Simpler mental model**. "The harness is my Claude config" vs. "the harness is a plugin loaded into my Claude config."
-
-The plugin manifest (`.claude-plugin/plugin.json`) is kept for potential future use — loading the harness on machines where `~/.claude` already exists for other purposes.
