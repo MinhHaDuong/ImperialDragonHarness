@@ -316,6 +316,11 @@ arXiv-only entries, older conference papers, and grey literature may
 have only a URL. Entries flagged `[preprint]` in the key comment
 when they are not yet peer-reviewed.
 
+Non-English titles must include a bracketed English translation in
+the `title` field: `{Original title [Translated title]}`. This
+ensures the note remains readable without requiring the reader to
+know the source language.
+
 ```bibtex
 @article{AuthorYEAR,
   author = {Author, A. and Author, B.},
@@ -324,6 +329,16 @@ when they are not yet peer-reviewed.
   journal = {Venue},
   doi    = {10.xxxx/yyyy},
   url    = {https://stable-url/},
+}
+
+% Non-English example:
+@article{MüllerYEAR,
+  author  = {Müller, K.},
+  title   = {{Ursprünglicher Titel [Original title in English]}},
+  year    = {YEAR},
+  journal = {Venue},
+  doi     = {10.xxxx/yyyy},
+  url     = {https://stable-url/},
 }
 
 % ... more entries ...
