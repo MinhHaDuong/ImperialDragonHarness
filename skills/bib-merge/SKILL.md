@@ -140,10 +140,9 @@ four outcomes by checking in order:
    - If both entries have a DOI and they differ → confirmed dedupe
      with a **conflict** (same work, metadata disagrees). Both DOI
      values are reported; the note entry is **not** appended.
-   - If no DOI on either side, compare titles: lowercase both,
-     strip punctuation and whitespace, compute token overlap. If
-     ≥50% of tokens are shared → confirmed dedupe. If below
-     threshold → different work, proceed to step 2.
+   - If no DOI on either side, compare titles. If the titles
+     clearly refer to the same work → confirmed dedupe. If they
+     look like different papers → different work, proceed to step 2.
    On confirmed dedupe:
    - Mark the note entry as **deduped**.
    - Propose the existing `refs.bib` key as the canonical one.
@@ -295,9 +294,8 @@ outcome appears in the report.
   initials-vs-full-first-name, and accent encodings vary between
   BibTeX sources. Match on normalized surname (ASCII-fold,
   lowercase) + four-digit year only. When no DOI is available on
-  either side, title similarity (≥50% token overlap) is the
-  tiebreaker. Below the threshold, the entries are treated as
-  different works and the note's key is suffix-bumped.
+  either side, title similarity is the tiebreaker. Different
+  titles → different works, suffix-bump the note's key.
 - **Minting keys the project's style does not use.** If the
   library is `zotero8`, this skill does not invent an 8-char key
   — it keeps the note's `AuthorYEAR` key and flags the style
