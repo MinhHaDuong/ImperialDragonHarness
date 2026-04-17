@@ -123,16 +123,19 @@ Stderr only — never posted to the PR. Intended for log capture, not review.
 Append exactly one line to the verdict comment (APPROVED / REROLL / ESCALATE):
 
 ```
-telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost≈$<usd>
+telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
 - `wall` — seconds from phase-1 start to verdict post.
 - `agents` — count of sub-agent invocations (review, review-pr, simplify,
   verify-adherence, fix agent, gate).
 - `tokens` — sum of input + output across all sub-agents and the driver,
-  as reported by the SDK/agent results.
-- `cost≈` — best-effort USD estimate using current model rates; prefix with
-  `≈` since it's an approximation, not a billed figure.
+  as reported by the SDK/agent results. If a sub-agent crashes or does not
+  report token counts, use `na` for the missing component (e.g.,
+  `tokens=15230+na`); never silently drop the field.
+- `cost~=` — best-effort USD estimate using current model rates; `~=` signals
+  approximation (ASCII-safe, grep-friendly). If token data is incomplete,
+  emit `cost~=na`.
 
 ### Thresholds (configurable)
 
@@ -192,5 +195,5 @@ Adherence: PASS | FAIL (<count>)
 Rationale:
 <paragraph>
 
-telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost≈$<usd>
+telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
