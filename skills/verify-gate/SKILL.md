@@ -118,6 +118,7 @@ second_round_needed:
 - Any `UNRESOLVED` review comment from a human author → REROLL (round 1) / ESCALATE (round 2).
 - Any `UNRESOLVED` review comment from `/review-pr` labelled severity ≥ medium →
   REROLL (round 1) / ESCALATE (round 2).
+  Severity triggers apply to blockers (request-changes). Tagged minors are triaged by tag, not severity.
 - Any unresolved `verifiable:` minor (failing assertion still reproduces) → treated as
   blocker-adjacent: REROLL (round 1) / ESCALATE (round 2).
 - `consider:` minors are informational. They appear in the verdict comment but do not
@@ -150,6 +151,7 @@ readers" without a line pointer) are a process failure, not a finding. The gate:
 2. Does not let them bounce the PR on their own.
 3. Flags the review author for retag — either promote to `verifiable:` with a failing
    test, or downgrade to `consider:`.
+4. On round 2, any untagged minor still present → ESCALATE. Ignoring retag requests is not free.
 
 The gate itself also refuses to author hedged language in its own rationale. If the
 gate wants to raise a concern, it either attaches a reproducible check (making it a
@@ -164,7 +166,7 @@ blocker or a `verifiable:` minor) or files it as `consider:`.
 | "Reviewer concern filed as follow-up" with no ticket ID | Unverifiable; ticket must exist |
 | "Addressed in PR body" without commit | PR body is narrative; need the actual change |
 | "Edge case out of scope" without Scope audit confirmation | The Scope phase is Phase 7; gate cannot waive unilaterally |
-| "X might break" / "could cause Y" as a minor | Ambiguous middle ground. Require `verifiable:` with a failing assertion, or `consider:` as explicit hypothesis. |
+| "X might break" / "could cause Y" as a minor | Ambiguous hypothesis with no reproducible evidence. |
 
 ## Standalone invocation
 

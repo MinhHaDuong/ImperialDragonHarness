@@ -66,7 +66,7 @@ Rules:
 - Ambiguous "this might break X" / "could cause Y" language is forbidden. Either produce the failing assertion (`verifiable:`) or downgrade to `consider:`.
 - A `verifiable:` finding without attached evidence is a posting bug — hold the review until the evidence exists or retag.
 - Blockers (`request-changes`) are not tagged; tags are for the minor/comment tier only.
-- The tag set is shared with `/review-pr-prose` and `/verify-gate`. Keep all three in sync.
+- The tag set is shared with `/review-pr-prose` and `/verify-gate`. Keep all three in sync. Evidence forms differ by domain: code reviews use test_id/SHA:file:line; prose reviews use line citations and numeric rechecks.
 
 ## Code-quality escalation
 
