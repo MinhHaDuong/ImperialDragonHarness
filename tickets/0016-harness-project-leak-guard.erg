@@ -1,0 +1,64 @@
+%erg v1
+Title: standing guard — IDH tickets/skills must not encode project-specific assumptions
+Status: open
+Created: 2026-04-17
+Author: claude
+
+--- log ---
+2026-04-17T16:30Z claude created — /celebrate sweep found a recurring class: tickets 0001, 0002, 0003, 0006 were all carved out after leaking consumer-project pain into harness-generic skills.
+
+--- body ---
+## Context
+
+Sweep during /celebrate (session closing IDH ticket 0006) found four
+prior tickets carved out of IDH after they were discovered to encode
+consumer-project assumptions:
+
+- 0001: migrated from Climate_finance 0079 (misfiled).
+- 0002: mis-filed; statistical rules belong in Climate_finance.
+- 0003: auto-stub generation design — rejected; TDD/celebrate
+  generalization handles it cheaper. Superseded by 0014.
+- 0006: pre-existing-failure separation + body-claim audit — both
+  project-specific; carved out to Climate_finance 0079/0081 and
+  dropped, respectively.
+
+The class shape: *consumer-project reflection memos flow upstream
+into IDH tickets, and the fix bakes consumer-specific assumptions
+(pytest, PR numbers, body conventions) into harness-generic skills.*
+
+Carving out after the fact works, but catches the regression only
+during human review. A standing mechanical check would catch it at
+commit time.
+
+## Actions
+
+Not auto-written. Filed for future work. Candidate designs:
+
+1. **Grep rule in verify-adherence for IDH**: reject commits to
+   `skills/*/SKILL.md` or `tickets/*.erg` that mention
+   `uv run pytest`, `Climate[-_]finance`, `PR \d+` from another
+   repo, or hard-coded project paths. Warn on first occurrence,
+   require explicit `<!-- harness-extension-point -->` marker to
+   allow.
+2. **CI job in IDH's 0015 CI.yml**: run the grep rule. Fails loud on
+   new leakage.
+3. **Ticket template**: add a "generic? or consumer-project?"
+   checkbox to the new-ticket skill for IDH.
+
+Decide at implementation time; all three are cheap.
+
+## Test
+
+- Add a test IDH ticket body containing `uv run pytest tests/`;
+  expect the grep rule to flag it.
+- Add an explicit `<!-- harness-extension-point -->` marker above
+  the same line; expect the rule to pass.
+
+## Exit criteria
+
+- Mechanical check exists that catches project-specific strings in
+  IDH tickets/skills.
+- Check runs in CI (requires 0015) and/or pre-commit.
+- A deliberate leak is caught in a test fixture.
+- Documented escape hatch for legitimate harness-extension-point
+  references.
