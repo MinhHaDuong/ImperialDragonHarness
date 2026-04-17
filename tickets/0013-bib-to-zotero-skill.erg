@@ -1,0 +1,50 @@
+%erg v1
+Title: Build skill — bib-to-zotero (push refs.bib entries to Zotero via API)
+Status: open
+Created: 2026-04-17
+Author: user
+
+--- log ---
+2026-04-17T15:30Z claude created from review session discussion
+
+--- body ---
+## Context
+
+The bibliography pipeline is: related-work-note → bib-merge → local refs.bib.
+Local .bib is staging. The canonical library is Zotero. Today the last step
+(refs.bib → Zotero) is manual (File → Import). This ticket automates it.
+
+The user has a Zotero PAT and Zotero v9+ (fast release cycle, API stable).
+Pyzotero is the mature Python client. The Zotero Web API supports item
+creation and file attachment.
+
+## Actions
+
+1. Research Zotero Web API item-creation endpoint and Pyzotero's
+   `create_items()` / `upload_attachments()` methods.
+2. Build `skills/bib-to-zotero/SKILL.md` that:
+   - Reads a local `.bib` file (default `report/refs.bib`).
+   - Parses biblatex entries (same parser contract as bib-merge).
+   - For each entry, checks Zotero for an existing item by DOI or title
+     (dedupe against the canonical library, not just the local .bib).
+   - Creates new Zotero items for entries not already present.
+   - Attaches fulltext PDFs when found locally (convention: `file` field
+     in the .bib entry, or a matching filename in the repo).
+   - Reports: created / skipped (already in Zotero) / failed.
+   - Supports `--dry-run`.
+3. PAT is read from env var (e.g., `ZOTERO_API_KEY`), never hardcoded.
+   Library ID from env var (`ZOTERO_LIBRARY_ID`) or Zotero user profile.
+4. Target collection is optional (default: unfiled items).
+
+## Test
+
+Write a test that creates a Zotero item via the API with a known DOI,
+then runs the skill and confirms it reports "skipped: 1 (already in Zotero)".
+
+## Exit criteria
+
+- `skills/bib-to-zotero/SKILL.md` committed, invocable via Skill tool.
+- Dry-run mode reports without writing to Zotero.
+- Dedupe against existing Zotero library by DOI or title.
+- PDF attachment works for entries with a local file.
+- Env-var auth, no hardcoded secrets.
