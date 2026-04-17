@@ -1,10 +1,14 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-04
+Last updated: 2026-04-17
 
 ## Status
 
-Review cycle complete. Harness at Level 4 (Hooks). 15 tickets raised, all resolved.
+Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg ticket system all shipped.
+
+## Conventions
+
+- **Tickets live in `tickets/*.erg`** (see `tickets/FORMAT.md`). GitHub Issues only for cross-repo coordination.
 
 ## Blockers
 
@@ -35,6 +39,5 @@ A reusable, science-backed harness for AI-assisted research: code and prose, day
 ## Backlog
 
 - Streamline settings.json hook configuration (#23)
-- Offline ticket system (file-based, gh-optional)
 - Multi-machine sync (doudou ↔ padme)
 - Second project onboarding (CIRED.digital or activity reports)
