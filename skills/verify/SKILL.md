@@ -26,18 +26,53 @@ Merge is always the human's or the orchestrator's call.
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
+- Only one `/verify` may run per PR per machine at a time. Enforced by an L1 file lock
+  (see `## Claim file (L1)`). Cross-machine coordination is out of scope.
+
+## Claim file (L1)
+
+A same-machine concurrency guard that mirrors the `.git/ticket-wip/` pattern used for
+ticket claims. Prevents the common collision: two chats / two terminals running
+`/verify <same-pr>` simultaneously on the same workstation.
+
+- **Path:** `.git/verify-wip/<pr>.wip` (inside `.git/`, never committed, shared across
+  worktrees via `git-common-dir`).
+- **Content:** one line — `{ISO-8601-timestamp} {session_id} {worktree-path} round={n}`.
+- **Acquire (Phase 1, step 1a):**
+  1. If the file does not exist → create it with the current timestamp, session id,
+     worktree path, and `round=1`. Proceed.
+  2. If the file exists and its timestamp is < 30 minutes old → abort. Print the
+     lock file path and its single-line content so the user can find the owning
+     session. Do not post a PR comment (the other session is still running and
+     will post its own).
+  3. If the file exists and its timestamp is ≥ 30 minutes old → treat as stale.
+     Delete, recreate with current metadata, and record `L1: stale lock reclaimed
+     (previous: <content>)` as an informational line in the final verdict comment.
+- **Round 2 re-entry:** the lock is held across rounds. Rewrite the file with
+  `round=2` when entering round 2 (same session, updated round marker). Do not
+  re-acquire.
+- **Release:** delete the file on every terminal path — APPROVED, ESCALATE (including
+  round-2 REROLL upgraded to ESCALATE), telemetry-threshold escalation, and
+  `--force-approve`. Release must happen **after** the verdict comment is posted,
+  so an observer sees the lock tied to the posted outcome.
+- **Cross-machine:** not covered. If multi-machine `/verify` collisions become real,
+  add a GitHub-label layer (L2) and a monotonic round counter (L3) as a follow-up.
+  See ticket 0001 body for the deferred design.
 
 ## Phases
 
 ### 1. Setup
 
+- **1a. Acquire L1 lock** (see `## Claim file (L1)`). If held by another live session,
+  abort before doing any work. If stale, reclaim and record for the verdict comment.
 - `gh pr checkout $ARGUMENTS` into an isolated worktree. Abort if the PR is not mergeable
-  or if there are open merge conflicts.
+  or if there are open merge conflicts. On abort, release L1.
 - Collect:
   - The ticket file referenced in the PR title or body (`tickets/*.erg`).
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
-- If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
+- If any of these cannot be located, ESCALATE with a clear message and release L1.
+  Do not proceed.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -73,15 +108,15 @@ round: 1 | 2
 
 ## Branch on verdict
 
-- **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
-  the skill. The caller merges.
+- **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence.
+  Release L1. End the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`, feeding it the
-  unresolved lists as input. Fix agent gets ≤10 min. On push, re-enter phase 6 with
-  `round=2`.
+  unresolved lists as input. Fix agent gets ≤10 min. On push, rewrite the L1 file with
+  `round=2` and re-enter phase 6. L1 stays held across the round transition.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
-  still-unresolved items and the gate's rationale. End the skill.
+  still-unresolved items and the gate's rationale. Release L1. End the skill.
 - **ESCALATE** → post a PR comment tagged `/verify stopped:` listing what needs human
-  judgment. End the skill.
+  judgment. Release L1. End the skill.
 
 ## Fix-agent contract
 
@@ -159,7 +194,7 @@ Behaviour on breach:
 - **Escalate** → stop the run, post a `/verify stopped:` comment explaining
   which threshold tripped and the measured value, skip remaining phases. Add
   the telemetry footer before exit so the human sees the numbers that caused
-  the escalation.
+  the escalation. Release L1 after posting.
 
 Escalate takes precedence over warn: if both thresholds are breached at the
 same boundary, only escalate. Check thresholds at phase boundaries, not
@@ -169,10 +204,11 @@ inside phases — a mid-phase abort leaves the PR in an unclear state.
 
 Explicit human override. Usage: `/verify <pr-number> --force-approve <reason>`.
 
-- Skips phase 6 gate.
+- Still acquires L1 at setup, then skips phase 6 gate.
 - Posts a loud PR comment: `/verify: force-approved — reason: <reason>`. Includes the
   outputs of phases 2–5 so reviewers see what was waived.
 - Logs the override in the skill transcript.
+- Releases L1 after posting the comment.
 - Still does not merge.
 
 ## Not in scope

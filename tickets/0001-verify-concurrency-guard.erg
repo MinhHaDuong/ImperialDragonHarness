@@ -1,6 +1,6 @@
 %erg v1
 Title: /verify L1 file-lock concurrency guard (same-machine)
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: user
 
@@ -8,6 +8,9 @@ Author: user
 2026-04-17T10:00Z claude created
 2026-04-17T10:00Z claude note migrated from Climate_finance ticket 0079 (misfiled) and IDH issue #34
 2026-04-17T17:00Z claude note rescoped to L1 only (orchestrator-001 reimagine); L2 label/claim-comment and L3 monotonic counter deferred — speculative for single-user harness, multi-machine sync is STATE.md backlog, and /verify-gate already caps rounds by comment scan. Body updated with Rescope section.
+2026-04-17T17:10Z claude claimed
+2026-04-17T17:15Z claude note added L1 file-lock contract to skills/verify/SKILL.md — Claim file section, Phase 1 step 1a acquire, release on APPROVED/ESCALATE/force-approve/telemetry-escalate, round 2 re-entry holds lock
+2026-04-17T17:15Z claude status closed exit criteria met for L1 scope
 
 --- body ---
 ## Rescope (2026-04-17, orchestrator-001)
