@@ -137,12 +137,13 @@ four outcomes by checking in order:
    first-author surname and year match. If found, confirm the
    match using DOI or title similarity:
    - If both entries have a DOI and they match → confirmed dedupe.
-   - If DOIs differ → not a dedupe (different work). Proceed to
-     step 2 (key collision).
+   - If both entries have a DOI and they differ → confirmed dedupe
+     with a **conflict** (same work, metadata disagrees). Both DOI
+     values are reported; the note entry is **not** appended.
    - If no DOI on either side, compare titles: lowercase both,
      strip punctuation and whitespace, compute token overlap. If
-     ≥50% of tokens are shared → confirmed dedupe. Otherwise →
-     different work, proceed to step 2.
+     ≥50% of tokens are shared → confirmed dedupe. If below
+     threshold → different work, proceed to step 2.
    On confirmed dedupe:
    - Mark the note entry as **deduped**.
    - Propose the existing `refs.bib` key as the canonical one.
@@ -206,7 +207,8 @@ new with a suffix-bumped key):
 - Append to the end of `refs.bib`, preceded by exactly one blank
   line if the file does not already end with one. Use `Edit` with
   the last existing entry as the anchor; do not rewrite the file
-  with `Write`.
+  with `Write`. If refs.bib is empty (no existing entries), use
+  Write to create the first entry rather than Edit.
 - If `--dry-run` is set, collect the would-be-appended text but
   do not modify the file.
 
@@ -220,6 +222,7 @@ bib-merge: {note-file} → {refs.bib}
   deduped:  K entries matched existing keys (list: note-key → existing-key)
   renamed:  R entries suffix-bumped (list: old-key → new-key)
   conflicts: C entries flagged (list: key — field: note-value vs bib-value)
+  suggestions: F field-adds (list: key — field: value)
   skipped:  S entries malformed (list: key — reason)
   style:    key-style={detected}, field-order=[…], indent={n spaces|tab}
 ```
