@@ -1,5 +1,5 @@
 %erg v1
-Title: /verify three-layer concurrency guard (file + label + counter)
+Title: /verify L1 file-lock concurrency guard (same-machine)
 Status: open
 Created: 2026-04-17
 Author: user
@@ -7,8 +7,27 @@ Author: user
 --- log ---
 2026-04-17T10:00Z claude created
 2026-04-17T10:00Z claude note migrated from Climate_finance ticket 0079 (misfiled) and IDH issue #34
+2026-04-17T17:00Z claude note rescoped to L1 only (orchestrator-001 reimagine); L2 label/claim-comment and L3 monotonic counter deferred — speculative for single-user harness, multi-machine sync is STATE.md backlog, and /verify-gate already caps rounds by comment scan. Body updated with Rescope section.
 
 --- body ---
+## Rescope (2026-04-17, orchestrator-001)
+
+Scope reduced from three layers to L1 only.
+
+- **L1 (this ticket):** `.git/verify-wip/<pr>.wip` file lock, matching the
+  existing `.git/ticket-wip/<ID>.wip` pattern. Catches the real collision:
+  two chats / two terminals on the same machine.
+- **L2 (deferred):** GitHub label + claim comment. Cross-machine authority.
+  Defer until multi-machine sync leaves STATE.md backlog.
+- **L3 (deferred / partial):** Monotonic round counter inside `/verify-gate`.
+  The gate already caps at round 2 by scanning PR comments; making it
+  strictly monotonic is incremental tightening, not new protection.
+  Revisit if L1+L2 ever deployed together.
+
+The rest of this body (threat model, original three-layer design, test plan,
+rejected alternatives) is kept for historical context. Only the L1 portion is
+in scope for implementation.
+
 ## Context
 
 `/verify` has no concurrency control. Two parallel `/verify <same-pr>`
