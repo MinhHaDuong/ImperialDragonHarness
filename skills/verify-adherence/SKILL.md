@@ -48,7 +48,9 @@ under `scripts/`. For each `(module, name)` pair:
 uv run python -c "import sys; sys.path.insert(0, 'scripts'); import <module>; getattr(<module>, '<symbol>')"
 ```
 
-Scope: touched `.py` files under `scripts/`. Modules outside that tree are not probed.
+Scope: touched `.py` files under `scripts/`. Use dotted import paths for
+nested packages (e.g., `data.loader` for `scripts/data/loader.py`).
+Modules outside `scripts/` are not probed.
 
 Catches the formatter-strip-import class of bug: tests are green, but the first real run
 `NameError`s because an auto-formatter dropped the import line for a just-used symbol.
@@ -65,10 +67,11 @@ Catches per-module regressions seconds after the edit, before the full hygiene s
 deep review pays the cost. Failures record as `{test_id, rule_ref, file:line}` with rule
 ref `verify-adherence#per-module-tests`.
 
-Both checks are intentionally cheap. If either exceeds the 10 s budget, trim scope (fewer
-symbols, fewer test files) rather than skipping.
+Both checks are intentionally cheap. If either exceeds the 10 s budget,
+ESCALATE rather than silently trimming scope (a trimmed check that drops
+a failing test is worse than no check).
 
-### 1. Mechanical suite (always first, never skip)
+### 1. Mechanical suite (never skip)
 
 Run the hygiene + discipline tests. These are cheap and definitive:
 
@@ -156,8 +159,8 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Circuit breakers
 
-- Phase 1.0 cannot run (e.g., `uv` missing, `scripts/` unreadable) → ESCALATE; don't
-  silently skip. A broken cheap-check layer defeats the point.
+- `uv` missing → ESCALATE (environment broken, all phases need it).
+- No `scripts/` directory → skip phase 1.0 silently (legitimate repo layout).
 - Phase 1 fails to run (env broken) → ESCALATE; don't fall through.
 - Semantic subagent output lacks `file:line` or `suggested_test` → reject the output and
   flag as adherence-infrastructure bug. Don't silently accept.
