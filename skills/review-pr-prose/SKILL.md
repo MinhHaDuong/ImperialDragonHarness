@@ -50,6 +50,7 @@ Every minor or suggestion item in the posted review carries exactly one prefix:
 Rules:
 - Hedged prose like "readers may find X confusing" without a concrete pointer is forbidden. Either cite the line and the confusable construction (`verifiable:`) or downgrade to `consider:`.
 - Majors are not tagged; tags are for the minor/suggestion tier only.
+- The tag set is shared with `/review-pr` and `/verify-gate`. Keep all three in sync.
 
 ## Proportional depth
 

@@ -134,7 +134,8 @@ If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third rou
 ## Minor tag handling
 
 Incoming `/review-pr` and `/review-pr-prose` comments at the minor/suggestion tier are
-expected to be prefixed `verifiable:`, `consider:`, or `nofollow:`.
+expected to be prefixed `verifiable:`, `consider:`, or `nofollow:`. The tag set is
+defined in `/review-pr` and `/review-pr-prose`. Keep all three in sync.
 
 | Tag | Gate treatment |
 |---|---|
