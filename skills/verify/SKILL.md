@@ -37,6 +37,11 @@ Merge is always the human's or the orchestrator's call.
   - The ticket file referenced in the PR title or body (`tickets/*.erg`).
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
+- Run `gh pr checks $ARGUMENTS`. If the output says no checks are reported (repo has
+  none configured), post a one-off informational comment `verify: CI gap — no CI
+  checks reported for this PR` and continue. Not a bounce — visible to the reviewer,
+  not a blocker. Skip if any prior `verify: CI gap` comment already exists on the PR
+  (idempotency across round 2). Pending or completed checks are not a gap; say nothing.
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
 
 ### 2–4. Read-only review fan-out (parallel)

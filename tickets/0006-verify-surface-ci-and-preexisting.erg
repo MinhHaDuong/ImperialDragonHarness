@@ -1,12 +1,13 @@
 %erg v1
 Title: /verify surfaces CI absence
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: user
 
 --- log ---
 2026-04-17T10:00Z claude created from two reflection memos (PR 691 + PR 692)
 2026-04-17T15:16Z claude note scope narrowed — pre-existing-failure separation carved out to climate-finance 0079 (project-specific: needs its test runner + a cached failure set). Body-claim audit dropped (conventions handle it cheaper than tooling).
+2026-04-17T15:20Z claude status closed — patched skills/verify/SKILL.md setup phase with idempotent `verify: CI gap` comment on `gh pr checks` reporting none.
 
 --- body ---
 ## Context
