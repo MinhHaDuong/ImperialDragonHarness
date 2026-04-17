@@ -112,11 +112,4 @@ systemctl --user enable --now claude-harness-pull.timer
 
 ## Why not a plugin?
 
-Claude Code supports a plugin system (`--plugin-dir`, `.claude-plugin/`, namespaced skills). IDH does not use it — the repo clones directly to `~/.claude`.
-
-Reasons:
-
-- **Hooks and settings live in `~/.claude/settings.json`**. A plugin can ship `hooks.json` and its own settings, but user-level hooks and `env` vars must be in the user config directory. Running as `~/.claude` means one source of truth.
-- **Memory and state are user-level**. The `projects/` memory directory and `.env` file belong in `~/.claude`. A plugin would need symlinks or copies.
-- **No namespace friction**. As `~/.claude`, skills register as `/celebrate`, not `/idh:celebrate`. Shorter to type, easier to remember.
-- **Simpler mental model**. "The harness is my Claude config" vs. "the harness is a plugin loaded into my Claude config."
+Because it's **my** harness. IDH is my personal Claude config, cloned to `~/.claude` on every machine I use. The plugin system exists for shareable, redistributable tooling — that's not this. Fork the repo if you want your own.
