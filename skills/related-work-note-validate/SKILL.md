@@ -1,6 +1,6 @@
 ---
 name: related-work-note-validate
-description: Post-hoc validator for a `related-work-note` output. Re-resolves every DOI/URL in the note's Bibliography via WebFetch, compares against the note's own "Identifier resolution" claim in Methods, and appends a validator-provenance line in place. Does not rewrite the note. Prints a one-line verdict (PASS / FAIL / MISSING).
+description: Post-hoc validator for a `related-work-note` output. Scans the Bibliography for DOI/URL patterns, re-resolves each via WebFetch, flags entries with no identifier as unverifiable, and appends a provenance line to Methods. Does not rewrite the note. Prints a one-line verdict (PASS / WARN / FAIL).
 disable-model-invocation: false
 user-invocable: true
 argument-hint: <note-file-path>
@@ -11,10 +11,10 @@ argument-hint: <note-file-path>
 **Purpose.** The `related-work-note` skill specifies that every DOI
 and URL in the Bibliography must resolve via `WebFetch` before the
 note is emitted. This validator **enforces** that claim after the
-fact: it re-resolves every identifier in the note's Bibliography,
-compares its own result against the note's Methods "Identifier
-resolution" line, and records the external check alongside the
-LLM-side claim. Specify (in `related-work-note`) + enforce (here).
+fact: it scans the Bibliography for DOI and URL patterns,
+re-resolves each one, flags entries that have neither identifier as
+unverifiable, and records the result in the note's Methods section.
+Specify (in `related-work-note`) + enforce (here).
 
 **Scope.** One invocation = one note file. The validator touches
 only the note's Methods section (a single appended line). It never
@@ -63,8 +63,9 @@ entry, collect:
 Build a list of `(key, identifier, kind)` tuples where `kind` is
 `doi` or `url`. For entries with both a DOI and a URL, prefer the
 DOI (resolve `https://doi.org/{DOI}`); the URL is a backup only if
-the DOI check fails. Entries with neither a DOI nor a URL count as
-failures with reason `no identifier`.
+the DOI check fails. Entries with neither a DOI nor a URL are
+classified as `unverifiable` — they cannot be resolved by this
+validator and are flagged in the report (see step 4).
 
 ### 3. Resolve every identifier
 
@@ -82,40 +83,23 @@ received, back off for 5 seconds and retry once before counting
 the entry as failed. Stop after three consecutive network errors
 and escalate: network failure is not a note failure.
 
-### 4. Parse the note's resolution claim
+### 4. Emit verdict
 
-Scan the `## Methods` section for the line the upstream skill was
-supposed to write. The canonical form is:
+Classify every Bibliography entry into one of three buckets:
 
-```
-- **Identifier resolution.** "All N bibliography entries were
-  fetched on {YYYY-MM-DD} and returned a 200 (or 30x to a 200).
-  Entries that failed to resolve: {list, or 'none'}."
-```
+- **resolved** — fetched OK (2xx or 30x→2xx).
+- **failed** — fetch returned non-2xx, DNS error, or timeout.
+- **unverifiable** — entry has no DOI and no URL.
 
-Extract:
+Verdict logic:
 
-- the declared count `N`,
-- the declared failure list (empty / "none" / a list of keys).
+| Failed | Unverifiable | Verdict |
+|--------|-------------|---------|
+| 0      | 0           | `PASS`  |
+| 0      | ≥1          | `WARN`  |
+| ≥1     | any         | `FAIL`  |
 
-If no line matching `Identifier resolution` is present in Methods,
-the claim is missing — go to step 5 with verdict `MISSING`.
-
-### 5. Compare and emit verdict
-
-Three cases:
-
-| Note's claim                         | Validator result | Verdict  |
-|--------------------------------------|------------------|----------|
-| "All N resolved" (N matches, none failed) | all fetched OK | `PASS` |
-| "All N resolved" (or similar)        | ≥1 fetch failed  | `FAIL`   |
-| No "Identifier resolution" line      | (any)            | `MISSING` |
-
-`N` mismatch between the note's declared count and the actual
-number of Bibliography entries is also a `FAIL` — record as
-`count mismatch: note claims N, bibliography has M`.
-
-### 6. Append the validator line to Methods — in place
+### 5. Append the validator line to Methods — in place
 
 Open the note file and append a single bullet to the end of the
 `## Methods` section (before the next `##` header, or at EOF if
@@ -128,29 +112,28 @@ the file. The appended line uses one of these forms:
 ```
 
 ```
-- **Validator (external check).** FAIL — {K} of {N} identifiers
-  failed to re-resolve on {YYYY-MM-DDThh:mmZ}. Failing entries:
-  {key1 (reason1), key2 (reason2), ...}. Caller should re-run the
-  upstream skill or fix the note manually.
+- **Validator (external check).** WARN — all resolvable
+  identifiers OK, but {U} of {N} entries have no DOI or URL:
+  {key1, key2, ...}. Checked {YYYY-MM-DDThh:mmZ}.
 ```
 
 ```
-- **Validator (external check).** MISSING — note has no
-  "Identifier resolution" line in Methods; upstream skill
-  misbehaved. Validator re-resolved {N} Bibliography entries:
-  {K} failures. Checked {YYYY-MM-DDThh:mmZ}.
+- **Validator (external check).** FAIL — {K} of {N} identifiers
+  failed to re-resolve on {YYYY-MM-DDThh:mmZ}. Failing entries:
+  {key1 (reason1), key2 (reason2), ...}. Unverifiable (no
+  DOI/URL): {list, or 'none'}.
 ```
 
 Use `Edit` with a unique anchor (the last line of Methods before
 the next section) to append. Never overwrite the file with `Write`.
 
-### 7. Print the one-line verdict
+### 6. Print the one-line verdict
 
 Print exactly one of:
 
 - `PASS`
-- `FAIL: {N} entries unresolved`
-- `MISSING: no resolution line in note`
+- `WARN: {U} entries have no DOI/URL`
+- `FAIL: {K} entries unresolved, {U} unverifiable`
 
 followed by the path of the note file that was annotated. Nothing
 else goes to stdout — downstream tooling greps this line.
@@ -160,7 +143,7 @@ else goes to stdout — downstream tooling greps this line.
 Side effect: one appended bullet in the note's `## Methods`
 section.
 
-Stdout: one verdict line (see step 7).
+Stdout: one verdict line (see step 6).
 
 No other file is touched. No cited-work entry is edited. No
 Bibliography entry is reformatted.
@@ -169,21 +152,20 @@ Bibliography entry is reformatted.
 
 1. **Clean pilot note → PASS.** Feed the 2026-04-17 pilot at
    `/tmp/skill-pilot/table-understanding-benchmarks.md` (or a
-   regenerated equivalent). Every DOI/URL resolves. Methods
-   contains the expected "Identifier resolution" line. Validator
-   prints `PASS` and appends the PASS bullet to Methods.
+   regenerated equivalent). Every entry has a DOI or URL, and all
+   resolve. Validator prints `PASS` and appends the PASS bullet
+   to Methods.
 
 2. **Note with a deliberately broken DOI → FAIL.** Edit the pilot
-   to replace one DOI with `10.9999/definitely-not-real`. The
-   note's own Methods still claims "all N resolved". Validator
-   prints `FAIL: 1 entries unresolved` and appends a FAIL bullet
-   naming the bad entry key and the failure reason.
+   to replace one DOI with `10.9999/definitely-not-real`.
+   Validator prints `FAIL: 1 entries unresolved` and appends a
+   FAIL bullet naming the bad entry key and the failure reason.
 
-3. **Note missing the resolution line → MISSING.** Edit the pilot
-   to delete the `**Identifier resolution.**` bullet from Methods.
-   Validator prints `MISSING: no resolution line in note` and
-   appends a MISSING bullet to Methods (including the validator's
-   own re-resolution summary, so the author still sees the truth).
+3. **Entry with no DOI or URL → WARN.** Edit the pilot to strip
+   the `doi` and `url` fields from one BibTeX entry. Validator
+   prints `WARN: 1 entries have no DOI/URL` and appends a WARN
+   bullet listing the unverifiable entry key. All other entries
+   still resolve normally.
 
 Each case confirms the validator never touched cited-work bodies
 or the Bibliography.
@@ -193,8 +175,8 @@ or the Bibliography.
 - Rewriting the note with `Write`. Always use `Edit` to append a
   single bullet — preserving author edits between upstream
   emission and validator invocation.
-- Silently passing when the bibliography count differs from the
-  note's declared `N`. Count mismatch is a `FAIL`.
+- Silently skipping entries that lack a DOI or URL. These are
+  `unverifiable` and must be flagged in the report.
 - Treating a network glitch as a citation failure. Three
   consecutive network errors → abort with an escalation message,
   not a `FAIL` verdict.
