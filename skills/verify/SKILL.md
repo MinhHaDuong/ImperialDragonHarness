@@ -43,7 +43,10 @@ Merge is always the human's or the orchestrator's call.
 
 Launch in a single message, as background agents:
 
-- `/verify-adherence <branch>` — mechanical-first rule check.
+- `/verify-adherence <branch>` — mechanical-first rule check. If the PR
+  carries the `verify:adherence-passed` label (set by `/start-ticket`'s
+  pre-PR gate, see PR #40), skip this invocation — the adherence check
+  already ran clean before the PR was opened.
 - `/review` (built-in) — standard review.
 - `/review-pr` or `/review-pr-prose` — file-type heuristic: if any `*.qmd` changed → prose; else code.
 
