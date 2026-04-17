@@ -1,11 +1,12 @@
 %erg v1
 Title: /celebrate prompts for bug-class regression tests
-Status: open
+Status: closed
 Created: 2026-04-17
 Author: claude
 
 --- log ---
 2026-04-17T14:51Z claude created — supersedes 0003 after design discussion
+2026-04-17T14:55Z claude status closed — patched skills/celebrate/SKILL.md step 4 with bugfix-only regression-guard prompt.
 
 --- body ---
 ## Context
