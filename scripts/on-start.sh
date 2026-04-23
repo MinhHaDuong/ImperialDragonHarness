@@ -24,6 +24,13 @@ if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
     [ -n "$_stale" ] && echo "$_stale"
 fi
 
+# Check shell-init.sh is sourced in the user's shell config
+_shell_init="$HOME/.claude/scripts/shell-init.sh"
+if ! grep -qlF "shell-init.sh" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
+    echo "SETUP REMINDER: shell-init.sh is not sourced in your shell config. Add this line to ~/.bashrc or ~/.zshrc:"
+    echo "  [ -f \"$_shell_init\" ] && source \"$_shell_init\""
+fi
+
 # --- Nothing below this line may produce stdout (hook output = conversation context) ---
 exec >/dev/null 2>&1
 

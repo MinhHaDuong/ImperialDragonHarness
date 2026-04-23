@@ -33,7 +33,8 @@ ImperialDragonHarness/
 │   ├── end-session/        # Day wrap-up
 │   ├── memory/             # Persistent memory management
 │   └── orchestrator/       # Autonomous batch across multiple tickets
-├── scripts/                # Hook implementations
+├── scripts/                # Hook implementations + shell init
+│   ├── shell-init.sh           # Source from ~/.bashrc — claude wrapper
 │   ├── on-start.sh             # Session start: env loading, worktree gate
 │   ├── guard-destructive-bash.sh
 │   ├── guard-commit-on-main.sh
@@ -64,11 +65,11 @@ ImperialDragonHarness/
    OPENAI_API_KEY=sk-...
    ```
 
-3. Add the shell alias to your `~/.bashrc` (or `~/.zshrc`):
+3. Add one line to your `~/.bashrc` (or `~/.zshrc`) to source the harness shell init:
    ```bash
-   alias claude='claude --dangerously-skip-permissions'
+   [ -f "$HOME/.claude/scripts/shell-init.sh" ] && source "$HOME/.claude/scripts/shell-init.sh"
    ```
-   The harness enforces worktree isolation via a SessionStart hook, so every new chat automatically enters its own worktree.
+   This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
 
 Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automatically via `settings.json`.
 
