@@ -2,9 +2,15 @@
 
 Last updated: 2026-04-23
 
+## North star
+
+A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
+
 ## Status
 
 Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only. Shell init now harness-tracked (`scripts/shell-init.sh`): sources from `~/.bashrc`, auto-names sessions after project, warns on new machines.
+
+Field testing on a handful of projects: data analysis in Python and academic writing in LaTeX and QMD.
 
 ## Open tickets (2)
 
@@ -22,13 +28,9 @@ None
 - Build 0013 (bib-to-zotero) when a manuscript reaches submission.
 - Merge REALF guidelines and business rules.
 
-## North star
-
-A reusable, science-backed harness for AI-assisted research: code and prose, day and night, across projects and machines.
-
 ## Backlog
 
 - Streamline settings.json hook configuration (#23)
 - streamline-onboard branch: open PR pending
-- Second project onboarding (CIRED.digital or activity reports)
-- Measure compliance rates (context hygiene, review quality, token economy)
+- Install the daily systemd harness update on all machines
+- Actually make use of the built-in self-monitoring

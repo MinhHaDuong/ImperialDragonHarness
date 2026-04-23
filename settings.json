@@ -5,7 +5,15 @@
   "permissions": {
     "allow": [
       "EnterWorktree",
-      "ExitWorktree"
+      "ExitWorktree",
+      "Bash(git fetch *)",
+      "Bash(git rebase *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)"
     ]
   },
   "model": "sonnet",
