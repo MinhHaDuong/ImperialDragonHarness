@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-04-04 -->
+<!-- last-reviewed: 2026-04-23 -->
 # Coding Rules
 
 ## Python (3.10+)
@@ -42,3 +42,4 @@ When writing new tests:
 - **Sentinel stamps for dynamic outputs.** Use a stamp file when a script produces data-dependent filenames.
 - **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
 - **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.
+- **Split the build by workpackage.** Analysis (Python/R, data access) and writing (LaTeX, Quarto) workpackages live in separate Makefiles. A writing-side build must produce the manuscript from handoff artifacts alone — no `uv run`, no data fetch. Enables clean-room builds and enforces the artifact discipline in [git.md](./git.md).
