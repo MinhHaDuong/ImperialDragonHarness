@@ -19,3 +19,4 @@ Read and internalize each file before proceeding with any work:
 2. **git.md** — Branch discipline, commit message standards, worktree lifecycle, PR workflow.
 3. **coding.md** — Python 3.10+ style, testing markers, build patterns, dependency management.
 4. **state.md** — STATE.md format specification, pruning rules, section structure.
+5. **tickets.md** — Ticket log verb set including bump categories, when to emit bump vs note.

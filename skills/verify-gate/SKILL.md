@@ -130,6 +130,9 @@ second_round_needed:
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
+**On REROLL**: append to the ticket file at `~/.claude/tickets/{ticket-id}-*.erg`:
+`{ISO8601} claude bump verify-reroll — round {n}: {top unresolved criterion}`
+
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
 
 ## Minor tag handling

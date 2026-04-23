@@ -122,6 +122,11 @@ Autonomous mode: ralph loop to next wave.
 ## Wrap up
 
 1. `make check` on main — compare against baseline. New failures → ticket.
+1b. Scan all tickets for bump lines and print a tally:
+    ```
+    grep -h ' bump ' tickets/*.erg | awk '{print $4}' | sort | uniq -c | sort -rn
+    ```
+    Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
 2. Clean up worktrees.
 3a. Interactive mode: All work pushed, merge requests open.
 3b. Autonomous mode: All merge requests merged, main green.
@@ -130,14 +135,21 @@ Autonomous mode: ralph loop to next wave.
 
 ## Circuit breakers
 
+All three triggers below require a bump log line written to the **main-repo**
+`tickets/` directory (not the killed agent's worktree copy), committed before
+relaunching: `{ISO8601} claude bump circuit-breaker — {reason}`.
+
 **Agent timeout**: If an agent has not pushed within 10 minutes,
 kill it. Split the ticket or relaunch with narrower scope.
+Bump reason: `agent timeout`.
 
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
+Bump reason: `ping-pong on {file}`.
 
 **Redirect ban**: Do not use SendMessage to redirect a running
 agent. Kill and relaunch with corrected instructions.
+Bump reason: `redirect ban triggered`.
 
 **Escalation**: If the same fix fails twice, stop and leave a
 ticket comment with the two failed approaches.
