@@ -1,10 +1,14 @@
 {
+  "env": {
+    "UV_ENV_FILE": "/home/haduong/.claude/.env"
+  },
   "permissions": {
     "allow": [
       "EnterWorktree",
       "ExitWorktree"
     ]
   },
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -64,14 +68,12 @@
     ],
     "Stop": []
   },
-  "env": {
-    "UV_ENV_FILE": "/home/haduong/.claude/.env"
-  },
   "effortLevel": "high",
-  "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true,
   "voice": {
     "enabled": true,
     "mode": "hold"
-  }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true,
+  "advisorModel": "opus"
 }
