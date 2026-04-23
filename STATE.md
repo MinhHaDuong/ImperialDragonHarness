@@ -8,14 +8,15 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Status
 
-Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only. Shell init now harness-tracked (`scripts/shell-init.sh`): sources from `~/.bashrc`, auto-names sessions after project, warns on new machines.
+Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only. Shell init harness-tracked (`scripts/shell-init.sh`). CI live on main (validate-tickets + skill-lint + leak-guard). Harness-rules now cover build structure: split by workpackage, commit handoff artifacts.
 
-Field testing on a handful of projects: data analysis in Python and academic writing in LaTeX and QMD.
+Field testing on a handful of projects: data analysis in Python and academic writing in LaTeX and QMD. Four projects have ticketed split-build work (Cadens 0022, Fuzzy Corpus 0023, AEDIST 0112, Climate Finance 0093).
 
-## Open tickets (2)
+## Open tickets (3)
 
 - 0013 — bib-to-zotero (push refs.bib to Zotero via API at submission)
-- 0015 — add CI (validator + skill sanity on PR/push)
+- 0018 — shell-pipefail-guard (add `set -euo pipefail` to 7 hook scripts + CI check)
+- 0019+ — four project-side split-build tickets (filed, not yet committed in project repos)
 
 ## Blockers
 
@@ -23,14 +24,15 @@ None
 
 ## Next actions
 
-- **doudou setup**: add source line to `~/.bashrc` after pulling harness
-- **CI batch**: 0015 here + git-erg 0003 + AEDIST 0111 + Climate-finance 0081. Once green, enable branch protection.
+- **0018 (pipefail guard)**: quick: 7 scripts + one CI job. Safe to run anytime.
+- **doudou setup**: add source line to `~/.bashrc` after pulling harness.
+- **Project split-build tickets**: commit the four project-side `.erg` files and open PRs.
 - Build 0013 (bib-to-zotero) when a manuscript reaches submission.
-- Merge REALF guidelines and business rules.
+- Enable branch protection requiring `validate-tickets` on main.
 
 ## Backlog
 
 - Streamline settings.json hook configuration (#23)
-- streamline-onboard branch: open PR pending
 - Install the daily systemd harness update on all machines
 - Actually make use of the built-in self-monitoring
+- Merge REALF guidelines and business rules
