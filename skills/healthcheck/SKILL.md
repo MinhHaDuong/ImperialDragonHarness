@@ -53,3 +53,31 @@ Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `s
 If docs freshness is warn/fail, list each stale finding under the table as one bullet per finding, with the doc, line reference, and the fix (e.g., `STATE.md:39 — ticket 0095 listed as TODO but Status: closed (PR #259)`). This detail is the point of the deep check — do not compress it into a single line.
 
 After the table (and any stale-findings list), add a one-line summary verdict.
+
+## Action plan
+
+After the verdict, if any findings are warn or fail, emit an **Action plan** section.
+Classify every finding into exactly one of three categories:
+
+- `fix-now` — trivial, no branch needed, reversible, no design decision: do it in the
+  current session immediately after the user says "do it"
+- `open-ticket` — multi-file, needs a branch, requires a design decision, or worth
+  tracking across sessions: create a ticket
+- `skip` — cosmetic, already tracked elsewhere, or not worth acting on now: note why
+
+Format:
+
+```
+## Action plan
+
+**fix-now**
+- {one-line description of fix}
+
+**open-ticket**
+- {title} — {one-line reason it needs a ticket}
+
+**skip**
+- {finding} — {reason}
+```
+
+Omit a heading if it has no entries. If all checks are `ok`, omit the Action plan entirely.
