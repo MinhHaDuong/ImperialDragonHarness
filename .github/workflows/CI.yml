@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: All hook scripts must have set -euo pipefail
         run: |
-          missing=$(grep -L 'set -euo pipefail' scripts/*.sh | grep -v 'shell-init\.sh')
+          missing=$(grep -L 'set -euo pipefail' scripts/*.sh | grep -v 'shell-init\.sh' || true)
           if [ -n "$missing" ]; then
             echo "FAIL: missing set -euo pipefail in:"
             echo "$missing"
@@ -84,9 +84,21 @@ jobs:
           tmp=$(mktemp --suffix=.sh)
           echo '#!/bin/bash' > "$tmp"
           echo 'echo hello' >> "$tmp"
-          missing=$(grep -L 'set -euo pipefail' "$tmp")
+          missing=$(grep -L 'set -euo pipefail' "$tmp" || true)
           if [ -z "$missing" ]; then
             echo "FAIL: guard did not catch missing pipefail"
             exit 1
           fi
           echo "OK: guard catches missing pipefail"
+      - name: Self-test — guard must pass when all scripts are compliant
+        run: |
+          tmp=$(mktemp --suffix=.sh)
+          echo '#!/bin/bash' > "$tmp"
+          echo 'set -euo pipefail' >> "$tmp"
+          echo 'echo hello' >> "$tmp"
+          missing=$(grep -L 'set -euo pipefail' "$tmp" || true)
+          if [ -n "$missing" ]; then
+            echo "FAIL: guard reported false positive on compliant script"
+            exit 1
+          fi
+          echo "OK: guard passes compliant script"
