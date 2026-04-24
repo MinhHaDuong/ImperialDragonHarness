@@ -1,0 +1,31 @@
+%erg v1
+Title: test fixture — harness neutrality guard
+Status: closed
+Created: 2026-04-23
+Author: claude
+
+--- log ---
+2026-04-23T00:00Z claude created — test fixture only, not a real ticket
+
+--- body ---
+This file tests the harness neutrality guard script. It must never be
+archived or validated as a real ticket. The patterns below are intentionally
+present for test purposes.
+
+## Should be caught (no escape hatch)
+
+The Climate_finance pipeline uses uv run pytest tests/.
+
+## Should pass (escape hatch present)
+
+<!-- harness-extension-point -->
+The Climate_finance repo is a downstream consumer of this harness.
+
+## Should be caught
+
+AEDIST PR #42 uses a different approach.
+
+## Should pass
+
+<!-- harness-extension-point -->
+AEDIST is a consumer project example.

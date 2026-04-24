@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Imperial Dragon Harness pre-commit hook
+# Installed via: git config core.hooksPath hooks (see scripts/on-start.sh)
+
+set -euo pipefail
+
+# Check for consumer-project leakage in skills/ and tickets/
+if [ -f "$(git rev-parse --show-toplevel)/scripts/check-harness-neutrality.sh" ]; then
+    bash "$(git rev-parse --show-toplevel)/scripts/check-harness-neutrality.sh" HEAD
+fi
