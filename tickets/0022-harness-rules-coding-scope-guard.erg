@@ -1,0 +1,36 @@
+%erg v1
+Title: Add scope guard to harness-rules/coding.md — Python section noisy for non-Python projects
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T00:00Z claude created — harness sweep: coding.md auto-invoked for all projects but is headed "## Python (3.10+)" with uv/pytest/subprocess rules
+
+--- body ---
+## Context
+
+`skills/harness-rules/coding.md` is auto-invoked for every project via the
+harness-rules skill. It opens with `## Python (3.10+)` and encodes uv sync,
+pytest mark conventions, and subprocess patterns. LaTeX, R, and Go projects
+receive these rules even though they are irrelevant.
+
+The file is not wrong for Python projects — the rules are sound. But loading
+it unconditionally adds noise and risks confusing the agent on non-Python work.
+
+## Actions
+
+Option A (light): Add a frontmatter scope note: "Apply only when the project
+has a pyproject.toml or requirements.txt." The agent skips irrelevant sections.
+
+Option B (split): Extract Python rules to `coding-python.md` alongside a
+`coding-latex.md`, `coding-r.md`. The SKILL.md auto-invokes only the files
+relevant to the current project's detected stack.
+
+Option A is cheaper; Option B is more principled. Decide at implementation time.
+
+## Exit criteria
+
+- Non-Python projects do not receive Python-specific coding rules.
+- Python projects still receive them.
+- No regression on existing Python project workflows.

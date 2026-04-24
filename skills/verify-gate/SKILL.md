@@ -61,7 +61,7 @@ relevant file, or a test exists that covers the behaviour, or a rationale is pos
 For each review comment, the gate searches:
 
 - **Commits made AFTER the comment timestamp** for changes to the commented file/line.
-- **Comment resolution status** (GitHub's `resolved`/`outdated` flag).
+- **Comment resolution status** (forge's resolved/outdated flag, where available).
 - **Reply threads** for author acknowledgment + follow-up ticket reference.
 
 A comment is UNRESOLVED if none of the above applies.
