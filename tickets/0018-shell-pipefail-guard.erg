@@ -1,6 +1,6 @@
 %erg v1
 Title: Add set -euo pipefail to all hook scripts
-Status: open
+Status: closed
 Created: 2026-04-23
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-23T12:30Z claude created — celebrate sweep on 0015; 7 scripts lack error handling
 2026-04-24T00:00Z claude note reimagine — 6 scripts, not 7: shell-init.sh is sourced (not executed), adding pipefail would break interactive shells. lint-on-edit.sh and warn-stale-rules.sh need || true on ruff/grep calls. CI check: grep -L with named exclusion for shell-init.sh.
 2026-04-24T00:00Z claude note plan — 3 scripts need || true (not 2): guard-commit-on-main.sh:19 (git branch in non-git context), on-start.sh:11 (grep returns 1 on all-empty .env), lint-on-edit.sh:17,20 (ruff returns 1 on violations). CI job: pipefail-guard with self-test fixture mirroring leak-guard pattern.
+2026-04-24T09:52Z claude status closed — PR #56 merged (squash), all exit criteria met
 
 --- body ---
 ## Context
