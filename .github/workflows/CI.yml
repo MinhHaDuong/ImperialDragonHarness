@@ -49,7 +49,7 @@ jobs:
         run: |
           tmp=$(mktemp -d)
           mkdir -p "$tmp/skills"
-          echo '/home/haduong/CNRS/papiers/actif/SomeProject' > "$tmp/skills/SKILL.md"
+          echo '/home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
           if bash scripts/check-project-leak.sh "$tmp/skills"; then
             echo "FAIL: leak-guard did not catch the deliberate leak"
             exit 1
@@ -59,7 +59,7 @@ jobs:
         run: |
           tmp=$(mktemp -d)
           mkdir -p "$tmp/skills"
-          echo '<!-- harness-extension-point --> /home/haduong/CNRS/papiers/actif/SomeProject' > "$tmp/skills/SKILL.md"
+          echo '<!-- harness-extension-point --> /home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
           if ! bash scripts/check-project-leak.sh "$tmp/skills"; then
             echo "FAIL: escape hatch did not suppress the leak"
             exit 1

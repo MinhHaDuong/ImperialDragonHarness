@@ -10,14 +10,20 @@ else
     DIRS=("$@")
 fi
 
-# Patterns checked everywhere (skills + tickets)
+# Patterns checked everywhere (skills + tickets).
+# Use class-level patterns — never hardcode a specific username, path, or project name.
 GLOBAL_PATTERNS=(
-    '/home/haduong/CNRS/papiers'
+    '/home/[a-z]'   # any absolute home path (use ~/.claude or $HOME instead)
+    '/Users/[A-Z]'  # macOS equivalent
 )
 
-# Patterns checked only in skills/ (not ticket bodies, where examples are expected)
+# Patterns checked only in skills/ (ticket bodies may legitimately name consumer projects
+# when documenting mis-filed or related work).
 SKILL_PATTERNS=(
     'uv run pytest'
+    'Climate[-_]finance'
+    'AEDIST'
+    'CIRED\.digital'
 )
 
 fail=0
