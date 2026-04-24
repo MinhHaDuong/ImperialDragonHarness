@@ -179,11 +179,16 @@ the gate uses only existing PR state (comments, commits, reviews) — no phase 2
 This is useful for sanity-checking a PR the human is considering, or for re-running the
 gate after manual fixes.
 
-**Round derivation (standalone and `/verify` both use this rule):** count existing PR
-comments that match the pattern `/verify-gate round=N verdict=V`. The current round is
-`prior_verdict_count + 1`. If the derived round exceeds 2, immediately emit ESCALATE —
-do not run the full gate. This makes the round budget self-enforcing from PR state alone,
-regardless of how many sessions or agents have called the gate.
+**Round derivation:** count existing PR comments matching `/verify-gate round=N verdict=V`.
+The current round is `prior_verdict_count + 1`. The budget is then enforced differently
+by invocation mode:
+
+- **Called from `/verify`** (structured bundle input): if derived round > 2, immediately
+  ESCALATE — do not run the full gate. The pipeline is exhausted.
+- **Standalone** (PR number only): if derived round > 2, warn ("round budget exceeded —
+  N prior rounds detected") and proceed, but label the verdict `standalone-override`.
+  A standalone-override verdict does not count as a pipeline round and cannot unblock
+  a `/verify` sequence that already ESCALATED. It is for human re-inspection only.
 
 ## Output destinations
 
