@@ -42,9 +42,10 @@ standalone-callable for debugging.
 
 Either:
 - `<pr-number>` (standalone mode): the gate resolves ticket, diff, comments itself.
-- A structured bundle from `/verify` (preferred): `{pr, ticket, diff, phase_outputs, round}`.
+- A structured bundle from `/verify` (preferred): `{pr, ticket, diff, phase_outputs}`.
 
-Both paths produce the same verdict shape.
+Both paths produce the same verdict shape. Round is always derived from PR comment
+history (see "Standalone invocation"), never passed by the caller.
 
 ## Evidence discovery
 
@@ -178,8 +179,11 @@ the gate uses only existing PR state (comments, commits, reviews) — no phase 2
 This is useful for sanity-checking a PR the human is considering, or for re-running the
 gate after manual fixes.
 
-Standalone mode is always **round=1** regardless of history. The retry-budget semantics
-apply only when called from `/verify`.
+**Round derivation (standalone and `/verify` both use this rule):** count existing PR
+comments that match the pattern `/verify-gate round=N verdict=V`. The current round is
+`prior_verdict_count + 1`. If the derived round exceeds 2, immediately emit ESCALATE —
+do not run the full gate. This makes the round budget self-enforcing from PR state alone,
+regardless of how many sessions or agents have called the gate.
 
 ## Output destinations
 
