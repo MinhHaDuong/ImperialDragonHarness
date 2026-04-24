@@ -108,6 +108,29 @@ are picked up by the old filename convention (`test_hygiene_*.py`,
 migrated when every such file carries the marker and `pytest -m adherence`
 matches the full suite. Drop the fallback per project once migrated.
 
+### 1.1 Missing ruff adherence test (Python projects only)
+
+If `pyproject.toml` exists and `ruff` appears in it (under `[tool.ruff]` or as a
+dependency), check whether any adherence test calls `ruff`:
+
+```bash
+grep -r "ruff" tests/ --include="*.py" -l
+```
+
+If no match: emit one `untested_rules` entry:
+
+```yaml
+rule: harness-rules/coding-python.md#testing
+suggested_test: |
+  @pytest.mark.adherence
+  def test_ruff():
+      result = subprocess.run(["uv", "run", "ruff", "check", "."], capture_output=True)
+      assert result.returncode == 0, result.stdout.decode()
+```
+
+This is non-blocking — it does not set `adherence: FAIL`. It triggers the ratchet
+so the next `/verify` cycle opens a follow-up ticket.
+
 ### 2. Grep rules live as adherence tests (no central bank)
 
 Grep-based checks are just adherence tests that call `rg` or use a regex

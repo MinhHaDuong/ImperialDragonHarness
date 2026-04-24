@@ -25,6 +25,15 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 - `make check-fast`: unit tests + lint, < 30 s — run during development.
 - `make check`: full suite including integration + slow tests — run before opening a PR.
 
+Every Python project must have a ruff adherence test so lint failures are caught locally before CI:
+
+```python
+@pytest.mark.adherence
+def test_ruff():
+    result = subprocess.run(["uv", "run", "ruff", "check", "."], capture_output=True)
+    assert result.returncode == 0, result.stdout.decode()
+```
+
 | Marker | Meaning | Excluded from |
 |--------|---------|---------------|
 | *(none)* | Unit test — pure logic, no subprocess, no sleep | — |
