@@ -18,21 +18,34 @@ Every task passes through five phases:
 
 ```
 ImperialDragonHarness/
-├── skills/                 # Slash commands: /celebrate, /review-pr, etc.
+├── skills/                 # Slash commands — 21 total: /celebrate, /verify, /orchestrator, etc.
 │   ├── harness-rules/      # Auto-invoked rules (companion .md files)
 │   │   ├── SKILL.md
 │   │   ├── workflow.md         # Session start, escalation, worktree
 │   │   ├── git.md              # Branch, commit, PR discipline
 │   │   ├── coding.md           # Python style, testing, Make
-│   │   └── state.md            # STATE.md format spec
-│   ├── new-ticket/         # GitHub issue template
-│   ├── start-ticket/       # Begin work on issue (TDD)
+│   │   ├── state.md            # STATE.md format spec
+│   │   └── tickets.md          # Ticket log verbs including bump categories
+│   ├── orchestrator/       # Autonomous batch across multiple tickets
+│   ├── verify/             # Full PR verification loop (adherence + review + gate)
+│   ├── verify-adherence/   # Mechanical rule check on branch diff
+│   ├── verify-gate/        # Anti-rubber-stamp merge gate
 │   ├── review-pr/          # Multi-agent code review
 │   ├── review-pr-prose/    # Peer review panel for prose
 │   ├── celebrate/          # Post-task wrap-up
-│   ├── end-session/        # Day wrap-up
+│   ├── end-session/        # Day wrap-up + STATE.md refresh
+│   ├── new-ticket/         # Create git-erg ticket with TDD spec
+│   ├── start-ticket/       # Begin work on a ticket (TDD red step)
+│   ├── ticket-claim/       # Claim a ticket for work (cross-worktree safe)
+│   ├── ticket-close/       # Close ticket and release claim
+│   ├── ticket-new/         # Low-level: create a raw .erg file
+│   ├── ticket-ready/       # List unblocked, unclaimed tickets
+│   ├── ticket-release/     # Abandon work, restore ticket to open
+│   ├── healthcheck/        # Git hygiene + doc freshness check
 │   ├── memory/             # Persistent memory management
-│   └── orchestrator/       # Autonomous batch across multiple tickets
+│   ├── bib-merge/          # Merge approved bib entries into refs.bib
+│   ├── related-work-note/  # Due-diligence note for a cited paragraph
+│   └── related-work-note-validate/ # Re-resolve all DOIs/URLs in a note
 ├── scripts/                # Hook implementations + shell init
 │   ├── shell-init.sh           # Source from ~/.bashrc — claude wrapper
 │   ├── on-start.sh             # Session start: env loading, worktree gate

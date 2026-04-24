@@ -22,8 +22,7 @@ This skill is user-level and must **gracefully degrade**: each check runs only i
 6. **Orphan commits** — count unreachable commits
 7. **Working tree** — clean or list uncommitted changes
 8. **Tests green** — autodetect test runner (make/pytest/npm), report pass/fail
-9. **Docs freshness (deep verification)** — run `scripts/docs_freshness.sh`,
-   then cross-check status/directive docs (`STATE.md`, `README.md`, etc.):
+9. **Docs freshness (deep verification)** — cross-check status/directive docs (`STATE.md`, `README.md`, etc.):
    - **Staleness** — flag docs whose content predates recent repo activity
    - **Ticket cross-check** — references to tickets whose status contradicts
      the doc (todo but closed, done but open, broken ref). Skip if no `.erg` tickets.
