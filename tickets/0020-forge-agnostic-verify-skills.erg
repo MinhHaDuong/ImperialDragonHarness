@@ -1,0 +1,38 @@
+%erg v1
+Title: Make verify/verify-adherence/verify-gate forge-agnostic
+Status: open
+Created: 2026-04-24
+Author: claude
+
+--- log ---
+2026-04-24T00:00Z claude created — leak-guard now catches \bgh \b in skills; three escape hatches mark the remaining violations
+
+--- body ---
+## Context
+
+The leak-guard now enforces forge-agnosticism in skills via the `\bgh ` pattern.
+Three operational `gh` usages survive behind `<!-- harness-extension-point -->` markers:
+
+- `skills/verify/SKILL.md` — forge CLI checkout of MR branch
+- `skills/verify/SKILL.md` — forge CI status check (`gh pr checks`)
+- `skills/verify-adherence/SKILL.md` — resolve MR number → branch name
+
+These are the core of the verify workflow and currently assume GitHub CLI.
+
+## Actions
+
+1. Replace `gh pr checkout` with a forge-agnostic equivalent:
+   `git fetch origin refs/pull/$PR/head && git checkout FETCH_HEAD` for GitHub;
+   abstract behind a wrapper or document the pattern per forge.
+
+2. Replace `gh pr checks` with reading CI status from the git notes or a
+   forge-neutral mechanism. Alternative: document as optional — skip gracefully
+   if forge CLI unavailable.
+
+3. Replace `gh pr view --json headRefName` in verify-adherence with accepting
+   only branch names as input (callers resolve PR → branch before calling).
+
+## Exit criteria
+
+- `check-project-leak.sh` passes with no escape hatches in verify skills.
+- Skills work on a Forgejo/Gitea instance (or document what degrades gracefully).

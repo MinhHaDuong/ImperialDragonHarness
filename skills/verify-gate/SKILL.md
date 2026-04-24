@@ -218,6 +218,6 @@ apply only when called from `/verify`.
 
 ## Not in scope
 
-- **Merging.** The gate never calls `gh pr merge`.
+- **Merging.** The gate never merges.
 - **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them.
 - **Scope audit.** That's Phase 7 of the orchestrator, handled separately.

@@ -22,7 +22,7 @@ Merge is always the human's or the orchestrator's call.
 
 - Runs on exactly one PR.
 - Two gate rounds maximum. Third round is forbidden — escalate instead.
-- Never calls `gh pr merge`. The verdict is structured output; the caller decides.
+- Never merges. The verdict is structured output; the caller decides.
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
@@ -31,13 +31,15 @@ Merge is always the human's or the orchestrator's call.
 
 ### 1. Setup
 
-- `gh pr checkout $ARGUMENTS` into an isolated worktree. Abort if the PR is not mergeable
+<!-- harness-extension-point: forge CLI checkout — currently gh pr checkout; rework tracked in IDH ticket 0020 -->
+- Check out the merge-request branch into an isolated worktree. Abort if not mergeable
   or if there are open merge conflicts.
 - Collect:
   - The ticket file referenced in the PR title or body (`tickets/*.erg`).
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
-- Run `gh pr checks $ARGUMENTS`. If the output says no checks are reported (repo has
+<!-- harness-extension-point: gh pr checks — forge-agnostic rework tracked in IDH ticket 0020 -->
+- Run CI status checks for the merge request. If no checks are reported (repo has
   none configured), post a one-off informational comment `verify: CI gap — no CI
   checks reported for this PR` and continue. Not a bounce — visible to the reviewer,
   not a blocker. Skip if any prior `verify: CI gap` comment already exists on the PR

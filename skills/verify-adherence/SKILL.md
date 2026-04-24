@@ -27,7 +27,8 @@ rule is permanently enforced → never needs LLM again.
 
 ## Input
 
-One argument: a branch name or PR number. Resolve PR → branch via `gh pr view --json headRefName`.
+<!-- harness-extension-point: gh pr view — forge-agnostic rework tracked in IDH ticket 0020 -->
+One argument: a branch name or merge-request number. Resolve MR → branch via forge CLI (currently: `gh pr view --json headRefName`).
 
 ## Phases
 

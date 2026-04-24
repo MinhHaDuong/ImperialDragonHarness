@@ -22,7 +22,9 @@ GLOBAL_PATTERNS=(
 # Note: consumer project *names* cannot be caught by static grep — the list would be
 # instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
-    'uv run pytest'   # stack-specific test invocation; skills must be stack-agnostic
+    'uv run pytest'   # stack-specific; skills must be stack-agnostic
+    '\bgh '           # GitHub CLI; skills must be forge-agnostic
+    'github\.com'     # GitHub URL; skills must be forge-agnostic
 )
 
 fail=0
