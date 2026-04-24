@@ -19,11 +19,10 @@ GLOBAL_PATTERNS=(
 
 # Patterns checked only in skills/ (ticket bodies may legitimately name consumer projects
 # when documenting mis-filed or related work).
+# Note: consumer project *names* cannot be caught by static grep — the list would be
+# instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
-    'uv run pytest'
-    'Climate[-_]finance'
-    'AEDIST'
-    'CIRED\.digital'
+    'uv run pytest'   # stack-specific test invocation; skills must be stack-agnostic
 )
 
 fail=0
