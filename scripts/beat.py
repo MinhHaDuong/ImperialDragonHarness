@@ -37,11 +37,13 @@ LOGDIR = HARNESS_DIR / "logs" / "nightbeat"
 COUNTER_FILE = LOGDIR / ".run-counter"
 
 _runtime_dir = os.environ.get("RUNTIME_DIRECTORY") or os.environ.get("XDG_RUNTIME_DIR")
-LOCKFILE = (
-    Path(_runtime_dir) / "nightbeat.lock"
-    if _runtime_dir
-    else Path.home() / ".cache" / "nightbeat.lock"
-)
+_LOCK_DIR = Path(_runtime_dir) if _runtime_dir else Path.home() / ".cache"
+
+
+def _lockfile(project: Path) -> Path:
+    """Per-project lock so concurrent beats on different projects are allowed."""
+    return _LOCK_DIR / f"nightbeat-{project.name}.lock"
+
 
 HOUSEKEEPING_INTERVAL_S: int = 12 * 3600
 HOUSEKEEPING_TIMEOUT_S: int = 10 * 60
@@ -430,18 +432,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _on_sigterm)
     _setup_env()
 
-    # Lock: skip if another run is active
-    LOCKFILE.parent.mkdir(parents=True, exist_ok=True)
-    lock_fd = LOCKFILE.open("w")  # held open until process exits
-    try:
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        print(
-            f"{_now_iso()}: another beat run still running, skipping.", file=sys.stderr
-        )
-        sys.exit(0)
-
-    # Per-run logfile
+    # Per-run logfile (opened before lock so startup messages are captured)
     LOGDIR.mkdir(parents=True, exist_ok=True)
     logfile = LOGDIR / f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.log"
     _state.log_fh = logfile.open("a")
@@ -453,6 +444,16 @@ def main() -> None:
     # Project rotation
     count, project = _pick_project()
     _state.project = project
+
+    # Per-project lock: allows concurrent beats on different projects
+    _LOCK_DIR.mkdir(parents=True, exist_ok=True)
+    lock_fh = _lockfile(project).open("w")  # held open until process exits
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        _log(f"beat already running for {project.name}, skipping.")
+        lock_fh.close()
+        sys.exit(0)
 
     _log(f"=== beat start {_now_iso()} ===")
     _log(f"Run {count}  →  project slot {count % len(PROJECTS)}: {project}")

@@ -547,6 +547,39 @@ class TestProjectScopedIsolation:
         assert hk_call["project_scoped"] is False
 
 
+# ── per-project lock ──────────────────────────────────────────────────────────
+
+
+class TestPerProjectLock:
+    def test_lockfile_per_project_name(self, tmp_path):
+        proj_a = tmp_path / "alpha"
+        proj_b = tmp_path / "beta"
+        assert beat._lockfile(proj_a).name != beat._lockfile(proj_b).name
+
+    def test_lockfile_contains_project_name(self, tmp_path):
+        project = tmp_path / "myproject"
+        assert "myproject" in beat._lockfile(project).name
+
+    def test_lockfile_parent_is_lock_dir(self, tmp_path):
+        project = tmp_path / "p"
+        assert beat._lockfile(project).parent == beat._LOCK_DIR
+
+    def test_already_locked_exits_zero(self, tmp_project, tmp_path):
+        """A project already locked by another beat instance causes exit(0)."""
+        fake_lock_dir = tmp_path / "locks"
+        with (
+            patch("beat.signal.signal"),
+            patch("beat._setup_env"),
+            patch.object(beat, "LOGDIR", tmp_path / "logs"),
+            patch("beat._pick_project", return_value=(0, tmp_project)),
+            patch.object(beat, "_LOCK_DIR", fake_lock_dir),
+            patch("beat.fcntl.flock", side_effect=BlockingIOError),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            beat.main()
+        assert exc_info.value.code == 0
+
+
 # ── crash recovery ─────────────────────────────────────────────────────────────
 
 
