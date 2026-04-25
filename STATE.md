@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-24
+Last updated: 2026-04-25 (housekeeping: committed 4 skills + 4 scripts, removed stale worktree)
 
 ## North star
 
