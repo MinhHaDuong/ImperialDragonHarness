@@ -475,6 +475,78 @@ class TestOrchestrate:
         assert not any("housekeeping" in c for c in calls)
 
 
+# ── cross-project isolation (_claude_argv project_scoped) ─────────────────────
+
+
+class TestProjectScopedIsolation:
+    """Guard against cross-project ticket leakage via harness --add-dir."""
+
+    def test_default_argv_includes_harness_add_dir(self):
+        argv = beat._claude_argv("/housekeeping", 0.25)
+        add_dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
+        assert str(beat.HARNESS_DIR) in add_dirs
+
+    def test_project_scoped_argv_excludes_harness_add_dir(self):
+        argv = beat._claude_argv("/pick-ticket", 0.50, project_scoped=True)
+        add_dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
+        assert str(beat.HARNESS_DIR) not in add_dirs
+
+    def test_project_scoped_argv_still_includes_project_add_dir(self):
+        argv = beat._claude_argv("/pick-ticket", 0.50, project_scoped=True)
+        add_dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
+        assert "." in add_dirs
+
+    def test_orchestrate_passes_project_scoped_to_pick_ticket(self, tmp_project):
+        recorded: list[dict] = []
+
+        def fake_run_skill(skill, *, budget, timeout_s, cwd, project_scoped=False):
+            recorded.append({"skill": skill, "project_scoped": project_scoped})
+            return (0, "IDLE: empty")
+
+        with (
+            patch("beat.housekeeping_needed", return_value=False),
+            patch("beat.run_skill", side_effect=fake_run_skill),
+        ):
+            beat._orchestrate(tmp_project)
+
+        pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
+        assert pick_call["project_scoped"] is True
+
+    def test_orchestrate_passes_project_scoped_to_orchestrator(self, tmp_project):
+        recorded: list[dict] = []
+
+        def fake_run_skill(skill, *, budget, timeout_s, cwd, project_scoped=False):
+            recorded.append({"skill": skill, "project_scoped": project_scoped})
+            if "pick-ticket" in skill:
+                return (0, "PICK: 0001")
+            return (0, "")
+
+        with (
+            patch("beat.housekeeping_needed", return_value=False),
+            patch("beat.run_skill", side_effect=fake_run_skill),
+        ):
+            beat._orchestrate(tmp_project)
+
+        oc_call = next(r for r in recorded if "orchestrator" in r["skill"])
+        assert oc_call["project_scoped"] is True
+
+    def test_orchestrate_does_not_scope_housekeeping(self, tmp_project):
+        recorded: list[dict] = []
+
+        def fake_run_skill(skill, *, budget, timeout_s, cwd, project_scoped=False):
+            recorded.append({"skill": skill, "project_scoped": project_scoped})
+            return (0, "IDLE: empty")
+
+        with (
+            patch("beat.housekeeping_needed", return_value=True),
+            patch("beat.run_skill", side_effect=fake_run_skill),
+        ):
+            beat._orchestrate(tmp_project)
+
+        hk_call = next(r for r in recorded if "housekeeping" in r["skill"])
+        assert hk_call["project_scoped"] is False
+
+
 # ── crash recovery ─────────────────────────────────────────────────────────────
 
 
