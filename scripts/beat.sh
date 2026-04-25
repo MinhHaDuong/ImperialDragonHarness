@@ -97,9 +97,11 @@ trap '_on_sigterm' TERM
 # --settings                           destructive-bash + no-push guards
 # --add-dir                            load CLAUDE.md from harness and project
 # CLAUDE_NIGHT_SWEEP=1 tells on-start.sh to skip the worktree isolation message
-# timeout 55m: tertiary fallback — systemd TimeoutStartSec=2160 (36 min) fires first,
-#   beat skill 35-min in-progress guard fires second; this catches anything that slips both
-timeout 55m claude \
+# timeout 52m: primary soft kill — fires before systemd TimeoutStartSec=3420 (57 min);
+#   beat.sh continues after claude exits and writes the aborted record cleanly.
+#   Beat skill 55-min in-progress guard is the next layer; systemd is the hard last resort.
+CLAUDE_RC=0
+timeout 52m claude \
     --print \
     --verbose \
     --output-format stream-json \
@@ -110,18 +112,30 @@ timeout 55m claude \
     --settings "$HARNESS_DIR/scripts/beat-settings.json" \
     --add-dir "$HARNESS_DIR" \
     --add-dir . \
-    -p "$SKILL"
+    -p "$SKILL" || CLAUDE_RC=$?
 
 BEAT_ELAPSED=$(( $(date +%s) - BEAT_START ))
 
-# Patch duration_s into the last beat-log record (written by the skill)
-if [[ -s "$PROJECT/beat-log.jsonl" ]]; then
-    last=$(tail -1 "$PROJECT/beat-log.jsonl")
-    patched=$(printf '%s' "$last" | jq --argjson d "$BEAT_ELAPSED" '. + {duration_s: $d}')
-    tmp=$(mktemp)
-    head -n -1 "$PROJECT/beat-log.jsonl" > "$tmp"
-    printf '%s\n' "$patched" >> "$tmp"
-    mv "$tmp" "$PROJECT/beat-log.jsonl"
+if [[ "$CLAUDE_RC" -eq 124 ]]; then
+    # bash timeout fired: claude ran over the soft limit; write aborted record with duration
+    record=$(jq -cn \
+        --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --argjson d "$BEAT_ELAPSED" \
+        '{"last_run_at":$t,"ticket_id":null,"branch":null,"PR":null,"outcome":"aborted","diagnostics":"bash timeout — claude exceeded 52-minute soft limit","duration_s":$d}') || true
+    [[ -n "$record" ]] && printf '%s\n' "$record" >> "$PROJECT/beat-log.jsonl" 2>/dev/null || true
+    echo "=== $SKILL timeout rc=124 elapsed=${BEAT_ELAPSED}s $(date -u +%FT%TZ) ===" >&2
+elif [[ "$CLAUDE_RC" -ne 0 ]]; then
+    echo "=== $SKILL claude exit rc=$CLAUDE_RC elapsed=${BEAT_ELAPSED}s $(date -u +%FT%TZ) ===" >&2
+else
+    # Clean exit: patch duration_s into the skill's spin-down record
+    if [[ -s "$PROJECT/beat-log.jsonl" ]]; then
+        last=$(tail -1 "$PROJECT/beat-log.jsonl")
+        patched=$(printf '%s' "$last" | jq --argjson d "$BEAT_ELAPSED" '. + {duration_s: $d}')
+        tmp=$(mktemp)
+        head -n -1 "$PROJECT/beat-log.jsonl" > "$tmp"
+        printf '%s\n' "$patched" >> "$tmp"
+        mv "$tmp" "$PROJECT/beat-log.jsonl"
+    fi
 fi
 
 jq -cs 'last' "$PROJECT/beat-log.jsonl" 2>/dev/null || true
