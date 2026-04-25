@@ -18,7 +18,7 @@ The log file is `beat-log.jsonl` in the project root — one JSON record per lin
 
 1. Read the last record of `beat-log.jsonl` (via `jq -s 'last'`). If file missing or empty, cold start.
 2. If that line has `outcome: in_progress` and `last_run_at` is less than 55 minutes ago,
-   go to **Spin down** with `outcome: aborted`, `diagnostics: "previous run still in_progress"`, then stop.
+   go to **Spin down** with `outcome: aborted`, `diagnostics: "crash/SIGKILL recovery — previous run never completed spin-down"`, then stop.
 3. Mark active: append `{"outcome":"in_progress","last_run_at":"<now UTC ISO-8601Z>"}` to `beat-log.jsonl`.
 
 ## Do the work
