@@ -73,6 +73,24 @@ mkdir -p "$PROJECT/.claude/sweep-state"
 
 # ── Run Claude ────────────────────────────────────────────────────────────────
 BEAT_START=$(date +%s)
+
+# SIGTERM trap: systemd TimeoutStartSec fires this; write a timeout spin-down
+# before the process tree is killed so beat-log.jsonl doesn't stay in_progress.
+_on_sigterm() {
+    local elapsed=$(( $(date +%s) - BEAT_START ))
+    local record
+    record=$(jq -cn \
+        --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --argjson d "$elapsed" \
+        '{"last_run_at":$t,"ticket_id":null,"branch":null,"PR":null,
+          "outcome":"aborted","diagnostics":"systemd SIGTERM — beat exceeded time budget",
+          "duration_s":$d}') || true
+    [[ -n "$record" ]] && printf '%s\n' "$record" >> "$PROJECT/beat-log.jsonl" 2>/dev/null || true
+    echo "=== $SKILL SIGTERM elapsed=${elapsed}s $(date -u +%FT%TZ) ===" >&2
+    exit 143
+}
+trap '_on_sigterm' TERM
+
 # --permission-mode bypassPermissions  non-interactive unattended mode
 # --output-format stream-json          structured output; cost in .usage field
 # --no-session-persistence             no writes to harness session store
