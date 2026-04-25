@@ -1,0 +1,53 @@
+%erg v1
+Title: Rewrite beat.sh as beat.py — hardcode the orchestration loop in Python
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T15:10Z claude created
+
+--- body ---
+## Context
+
+`beat.sh` delegates the pick→orchestrate control flow to the `/beat` Claude agent via a
+natural-language SKILL.md. This caused a real failure (2026-04-25 16:00 run): the agent
+ran pick-ticket logic inline via Bash, output "PICK: 0034" as a terminal response, and
+never proceeded to `/orchestrator`. Beat.sh wrote an idle fallback ($0.187, zero work).
+
+A band-aid fix was applied (explicit "via the Skill tool" + "Do not stop here" in SKILL.md,
+commit 66e376f). The structural fix is to move control flow out of the agent and into Python.
+
+## Actions
+
+1. Write `~/.claude/scripts/beat.py`:
+   - flock concurrency guard (`fcntl` or `filelock`)
+   - crash/SIGKILL recovery: if last beat-log entry is `in_progress` < 55 min old, write aborted and exit
+   - spin-in: append `{"outcome":"in_progress","last_run_at":"..."}` to beat-log.jsonl
+   - SIGTERM handler: write aborted record and exit 143
+   - if housekeeping needed (STATE.md last run > 12 h): subprocess `claude --print -p /housekeeping ...`
+   - subprocess `claude --print -p /pick-ticket ...`; parse stdout for `PICK: <id>` or `IDLE:`
+   - on PICK: subprocess `claude --print -p /orchestrator <id> ...`
+   - spin-down: always append final record with outcome/ticket_id/branch/PR/duration_s
+   - `BEAT_DRY_RUN=1` mode: print sequence without calling Claude
+   - preserve all flags: `--permission-mode bypassPermissions`, `--max-budget-usd 1.00`,
+     `--model sonnet`, `--settings beat-settings.json`, `--add-dir $HARNESS_DIR`, `--add-dir .`
+
+2. Update `~/.config/systemd/user/claude-nightbeat.service` `ExecStart` to `python3 %h/.claude/scripts/beat.py`.
+
+3. Run `systemctl --user daemon-reload`.
+
+4. Delete `~/.claude/scripts/beat.sh` and `~/.claude/skills/beat/SKILL.md`.
+
+## Test
+
+`BEAT_DRY_RUN=1 python3 ~/.claude/scripts/beat.py` prints the intended sequence (housekeeping
+check, pick-ticket call, orchestrator call) without invoking Claude.
+
+## Exit criteria
+
+- Dry-run passes.
+- One live beat run completes with `outcome != idle` driven by a real `IDLE:` from pick-ticket,
+  or with `outcome=done/failed` from an actual ticket attempt.
+- `beat.sh` and `skills/beat/SKILL.md` removed.
+- Systemd unit updated and reloaded.
