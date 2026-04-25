@@ -15,8 +15,10 @@ persist_env() {
 # User-level env
 persist_env "$HOME/.claude/.env"
 
-# Worktree instruction — must always print, before any early exit
-echo "Worktree isolation is enabled for this project. Every new conversation must start in its own worktree. Use EnterWorktree as your first action before responding to the user."
+# Worktree instruction — skip in automated night-sweep runs
+if [[ -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
+    echo "Worktree isolation is enabled for this project. Every new conversation must start in its own worktree. Use EnterWorktree as your first action before responding to the user."
+fi
 
 # Check for stale rules (advisory — prints warnings if any)
 _script_dir="$(cd "$(dirname "$0")" && pwd)"

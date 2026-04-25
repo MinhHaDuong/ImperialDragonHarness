@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/haduong/.claude/scripts/guard-destructive-bash.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "/home/haduong/.claude/scripts/guard-no-push.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
