@@ -1,0 +1,38 @@
+%erg v1
+Title: Inject hostname into beat agent context so pick-ticket knows where it runs
+Status: open
+Created: 2026-04-25
+Author: claude
+
+--- log ---
+2026-04-25T20:50Z claude created
+
+--- body ---
+## Context
+
+The autonomous beat agent (beat.py) runs on padme, but the pick-ticket Claude
+instance has no knowledge of this. When a ticket body says "SSH to padme" or
+"run on padme", pick-ticket treats it as an external dependency and skips the
+ticket — even though it is already on padme.
+
+Root cause: beat.py does not inject machine identity into the Claude invocation.
+
+## Actions
+
+1. In `~/.claude/scripts/beat.py`, add the hostname to the pick-ticket (and
+   orchestrator) prompt. Options:
+   a. Append to the `-p` skill argument: `f"/pick-ticket\n\nRunning on: {socket.gethostname()}"`
+   b. Add a `BEAT_HOST` env var and reference it from the pick-ticket skill prompt
+   c. Add a one-line system note in `beat-settings.json` (if it supports a system field)
+
+2. Update the pick-ticket skill to use this context when assessing tickets:
+   "SSH to <hostname>" is not a blocker if hostname matches.
+
+3. Also check `--data-dir` stale paths: if a ticket specifies an explicit path
+   that no longer exists, the agent should check whether the script has a working
+   default before rejecting. Document this in the pick-ticket skill or beat-settings.
+
+## Exit criteria
+
+- A beat run on padme no longer skips tickets gated on "SSH to padme".
+- pick-ticket skill documents the hostname-awareness rule.
