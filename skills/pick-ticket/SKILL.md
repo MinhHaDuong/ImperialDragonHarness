@@ -1,5 +1,5 @@
 ---
-name: sweep-pick
+name: pick-ticket
 description: Pick the lowest-risk available ticket for an autonomous sweep run. Reads attempt history from ticket bodies. Returns PICK:<id> or IDLE.
 user-invocable: true
 argument-hint:

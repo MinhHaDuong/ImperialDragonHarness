@@ -1,7 +1,7 @@
 ---
 name: beat
 description: Autonomous maintenance beat — housekeeping, ticket pick, and attempt.
-user-invocable: false
+user-invocable: true
 argument-hint:
 ---
 
@@ -14,24 +14,24 @@ The amount of work expected is one beat, the elementary division of time in musi
 
 ## Spin up (mandatory)
 
-1. `mkdir -p .claude/sweep-state`
-2. Read `.claude/sweep-state/last-run.json` if it exists. If missing, cold start.
-3. If `outcome` is `in_progress` and `last_run_at` is less than 50 minutes ago,
-   write the aborted state (see Phase 4 schema), emit the trailing JSON line,
-   and stop. Do NOT continue.
-4. Mark active: write `{"outcome":"in_progress","last_run_at":"<now UTC ISO-8601Z>"}` 
-   to `.claude/sweep-state/last-run.json.tmp`, rename to `last-run.json`.
+The log file is `beat-log.jsonl` in the project root — one JSON record per line, newest last.
+
+1. Read the last line of `beat-log.jsonl` (via `tail -1`). If file missing or empty, cold start.
+2. If that line has `outcome: in_progress` and `last_run_at` is less than 35 minutes ago,
+   append the aborted record (see Spin down schema) and stop.
+   Do NOT continue.
+3. Mark active: append `{"outcome":"in_progress","last_run_at":"<now UTC ISO-8601Z>"}` to `beat-log.jsonl`.
 
 ## Do the work
 
 You have three skills on the happy sequence:
 - /housekeeping. Invoke if STATE.md says its last run is more than 12 hours old.
-- /pick-ticket. If you do not get one, go to spin down directly.
+- /pick-ticket. If you do not get one, go to spin down directly -- do not invent work.
 - /orchestrator the ticket.
 
 ## Spin down (mandatory)
 
-Write `.claude/sweep-state/last-run.json.tmp` then rename to `last-run.json`:
+Append one JSON record to `beat-log.jsonl`:
 
 ```json
 {
@@ -43,7 +43,3 @@ Write `.claude/sweep-state/last-run.json.tmp` then rename to `last-run.json`:
   "diagnostics": "<one-line summary>"
 }
 ```
-
-End your final message with exactly this JSON on its own line.
-No prose, no fences, no trailing whitespace after this line:
-{"outcome":"<outcome>","ticket_id":"<id or null>","diagnostics":"<one-line summary>"}

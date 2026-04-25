@@ -92,4 +92,5 @@ timeout 55m claude \
     --add-dir . \
     -p "$SKILL"
 
+tail -1 "$PROJECT/beat-log.jsonl" 2>/dev/null || true
 echo "=== night-sweep done $(date -u +%FT%TZ) ==="
