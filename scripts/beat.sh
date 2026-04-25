@@ -72,6 +72,7 @@ cd "$PROJECT"
 mkdir -p "$PROJECT/.claude/sweep-state"
 
 # ── Run Claude ────────────────────────────────────────────────────────────────
+BEAT_START=$(date +%s)
 # --permission-mode bypassPermissions  non-interactive unattended mode
 # --output-format stream-json          structured output; cost in .usage field
 # --no-session-persistence             no writes to harness session store
@@ -92,6 +93,18 @@ timeout 55m claude \
     --add-dir "$HARNESS_DIR" \
     --add-dir . \
     -p "$SKILL"
+
+BEAT_ELAPSED=$(( $(date +%s) - BEAT_START ))
+
+# Patch duration_s into the last beat-log record (written by the skill)
+if [[ -s "$PROJECT/beat-log.jsonl" ]]; then
+    last=$(tail -1 "$PROJECT/beat-log.jsonl")
+    patched=$(printf '%s' "$last" | jq --argjson d "$BEAT_ELAPSED" '. + {duration_s: $d}')
+    tmp=$(mktemp)
+    head -n -1 "$PROJECT/beat-log.jsonl" > "$tmp"
+    printf '%s\n' "$patched" >> "$tmp"
+    mv "$tmp" "$PROJECT/beat-log.jsonl"
+fi
 
 jq -cs 'last' "$PROJECT/beat-log.jsonl" 2>/dev/null || true
 echo "=== $SKILL done $(date -u +%FT%TZ) ==="

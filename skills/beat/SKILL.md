@@ -35,3 +35,5 @@ Append one JSON record to `beat-log.jsonl`:
 ```json
 {"last_run_at":"<UTC ISO-8601Z>","ticket_id":"<id or null>","branch":"<branch or null>","PR":"<PR# or null>","outcome":"idle|done|failed|blocked|escalated|aborted","diagnostics":"<one-line summary>"}
 ```
+
+`duration_s` (wall-clock seconds) is appended by the launcher after you exit — do not write it yourself.
