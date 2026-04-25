@@ -29,3 +29,5 @@ tickets/tools/go/*.test
 # settings.local.json: machine-specific permissions — gitignored
 !settings.json
 !settings.template.json
+!tests/
+!tests/**
