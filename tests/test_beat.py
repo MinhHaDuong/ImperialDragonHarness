@@ -365,7 +365,7 @@ class TestOrchestrate:
     def _patch_run_skill(self, responses: dict):
         """responses: {skill_substr: (rc, result)}"""
 
-        def fake_run_skill(skill, *, budget, timeout_s, cwd):
+        def fake_run_skill(skill, *, budget, timeout_s, cwd, project_scoped=False):
             for key, val in responses.items():
                 if key in skill:
                     return val

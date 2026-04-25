@@ -219,8 +219,10 @@ def parse_pick(result_text: str) -> str | None:
 # ── Claude subprocess ──────────────────────────────────────────────────────────
 
 
-def _claude_argv(skill: str, budget: float) -> list[str]:
-    return [
+def _claude_argv(
+    skill: str, budget: float, *, project_scoped: bool = False
+) -> list[str]:
+    argv = [
         "claude",
         "--print",
         "--verbose",
@@ -235,24 +237,30 @@ def _claude_argv(skill: str, budget: float) -> list[str]:
         "sonnet",
         "--settings",
         str(HARNESS_DIR / "scripts" / "beat-settings.json"),
-        "--add-dir",
-        str(HARNESS_DIR),
-        "--add-dir",
-        ".",
-        "-p",
-        skill,
     ]
+    if not project_scoped:
+        # Harness context for skills that need workflow awareness (housekeeping).
+        # Omitted for pick-ticket / orchestrator to prevent cross-project ticket leakage.
+        argv += ["--add-dir", str(HARNESS_DIR)]
+    argv += ["--add-dir", ".", "-p", skill]
+    return argv
 
 
 def run_skill(
-    skill: str, *, budget: float, timeout_s: int, cwd: Path
+    skill: str,
+    *,
+    budget: float,
+    timeout_s: int,
+    cwd: Path,
+    project_scoped: bool = False,
 ) -> tuple[int, str]:
     """Invoke a Claude skill; return (exit_code, last_result_text).
 
     Streams stdout line-by-line for live logging.
     Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
+    project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
     """
-    argv = _claude_argv(skill, budget)
+    argv = _claude_argv(skill, budget, project_scoped=project_scoped)
 
     if DRY_RUN:
         _log(f"[dry-run] {' '.join(argv)}")
@@ -374,6 +382,7 @@ def _orchestrate(project: Path) -> tuple[str, str | None]:
         budget=BUDGET_PICK_TICKET,
         timeout_s=PICK_TICKET_TIMEOUT_S,
         cwd=project,
+        project_scoped=True,
     )
 
     if pt_rc == TIMEOUT_EXIT_CODE:
@@ -400,6 +409,7 @@ def _orchestrate(project: Path) -> tuple[str, str | None]:
         budget=BUDGET_ORCHESTRATOR,
         timeout_s=ORCHESTRATOR_TIMEOUT_S,
         cwd=project,
+        project_scoped=True,
     )
 
     if oc_rc == TIMEOUT_EXIT_CODE:
