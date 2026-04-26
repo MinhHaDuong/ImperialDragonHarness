@@ -1,10 +1,11 @@
 %erg v1
 Title: Clarify Phase 7 scope-creep handling: ticket the afterfall, don't rewrite commits
-Status: open
+Status: closed
 Created: 2026-04-26
 Author: claude
 
 --- log ---
+2026-04-26T16:00Z claude closed — replaced Phase 7 lines 107-111 with CLEAN/TICKETED/ESCALATE outcomes; "Scope overflow: #NNNN" PR body convention; "Never rebase or amend" explicit; committed a5e6a61
 2026-04-26T00:00Z claude created
 2026-04-26T15:40Z claude note feasibility WARN — Phase 7 at lines 107-111 confirmed; body still contains old Exception paragraph contradicting log note; execute agent must trust log note (CLEAN/TICKETED/ESCALATE, no orthogonality test) over ticket body
 2026-04-26T15:35Z claude note planned: replace lines 107-111 of orchestrator/SKILL.md with CLEAN/TICKETED/ESCALATE outcomes; PR body field "Scope overflow: #NNNN"; explicit "Never rebase or amend"; ESCALATE trigger = uncertainty (no orthogonality test needed)
