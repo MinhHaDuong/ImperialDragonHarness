@@ -25,6 +25,10 @@ tickets/tools/go/git-erg
 tickets/tools/go/erg
 tickets/tools/go/*.test
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # settings.json: universal config (hooks, effortLevel, universal permissions) — tracked
 # settings.local.json: machine-specific permissions — gitignored
 !settings.json
