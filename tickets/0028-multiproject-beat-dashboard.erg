@@ -1,66 +1,84 @@
 %erg v1
-Title: Build multiproject beat dashboard (git+ticket activity view)
+Title: Build multiproject beat dashboard (git+ticket activity, Views 1-2)
 Status: open
 Created: 2026-04-26
 Author: claude
 
 --- log ---
 2026-04-26T09:00Z claude created
+2026-04-26T09:30Z claude split View 3 (blocker graph) into ticket 0029; patched underspecified actions and tests
 
 --- body ---
 ## Context
 
 PR 61 prototype (`bin/beat-dashboard`) showed a working hourly disc grid + ticket queue panel
-(stdlib-only, 496 lines). The prototype has two weaknesses:
+(stdlib-only, 496 lines). Two weaknesses to fix:
 
 1. Beat-log is not the primary activity signal — most work runs through the orchestrator skill
    in interactive sessions. Git commits and ticket status changes capture all modes.
-2. Cost tracking (cost_usd) is irrelevant — user is on a Claude plan; dollars don't count,
-   tokens/plan limits do.
+2. Cost tracking is irrelevant — user is on a Claude plan.
 
-This ticket builds a revised, three-view dashboard on top of the prototype.
+This ticket covers Views 1 and 2. View 3 (blocker graph SVG) is ticket 0029.
 
 ## Actions
 
 ### View 1 — Overview (extend prototype)
 - Drop cost column
-- Add **Commits today** column: `git log --since=midnight --oneline | wc -l` per project
-- Add **Ticket velocity** column: tickets closed this week vs. last week (from .erg Created/status)
-- Add **Health pill**: green = any done beat in last 24 h, amber = only idle, red = failed/aborted
-- Beat disc grid becomes collapsible secondary panel (default collapsed)
-- Window selector extends to 168 h; at >48 h collapse to day-granularity with sparkline cells
+- Add **Commits today** column: per project, run `git -C <project> log --since=midnight --oneline`
+  and count lines. Cache result per request (compute once per page load, not per auto-refresh tick).
+  On git error or timeout (>2 s), show `—` rather than failing the page.
+- Add **Ticket velocity** column: tickets closed this week vs. last week. Parse from `.erg` log
+  sections — find lines matching `status closed` and extract their timestamp. Do NOT use the
+  `Created:` header (that is creation date, not close date).
+- Add **Health pill**: green = any `done` beat in last 24 h, amber = only `idle` beats, red = last
+  outcome was `failed` or `aborted`, grey = no beats in 24 h.
+- Beat disc grid becomes a `<details>` collapsible panel (default `open` so existing behaviour is
+  preserved; user can collapse).
+- Defer window sparkline extension (>48 h day-granularity) to a follow-up ticket — too large to
+  bundle here.
 
 ### View 2 — Project drill-down (`/project/<name>`)
-- Beat log table: time, outcome, ticket, duration, diagnostics; expandable raw JSON row
-- Ticket list: full status, title, age, blocker chain; sorted by readiness tier then age
-- STATE.md snippet: last-updated date + "Status" section as plain text
-- Back link to overview
-
-### View 3 — Blocker graph (`/blockers`)
-- Cross-project SVG DAG of tickets that block other tickets
-- Nodes coloured by readiness (green=ready, blue=doing, orange=blocked, grey=pending)
-- Edges show dependency direction
-- Surfaces "keystone" tickets blocking multiple chains across projects
+- Route: `/project/<name>` where `<name>` matches `project.name` from the projects list.
+  Return 404 if no matching project.
+- Beat log table: columns time, outcome, ticket, duration\_s, diagnostics. Use `<details
+  open>` per row to expose raw JSON on expand — no JavaScript needed.
+- Ticket list: status badge, ticket ID, title, age in days, blocker chain (follow `Blocked-by`
+  headers up to 3 hops; stop at missing or cross-project refs — show `← ???` for those).
+  Sort: readiness tier (ready → doing → pending → blocked), then descending age within tier.
+- STATE.md snippet: read `<project>/STATE.md`, extract the "Last updated:" line and the paragraph
+  under the first `## Status` heading. Render as `<pre>` (plain text, no markdown parsing).
+- Back link to `/` overview.
 
 ### Infrastructure
-- Single `bin/beat-dashboard` file, stdlib only (no external dependencies)
-- Serve all three views from one HTTPServer subclass
-- Auto-refresh 60 s (meta-refresh, no WebSocket)
-- Projects parsed from `~/.claude/scripts/beat.sh` or `--projects PATH:PATH:...`
+- Single `bin/beat-dashboard` file, stdlib only.
+- Projects parsed from `~/.claude/scripts/beat.py` (hardcoded `PROJECTS: list[Path]` at top of
+  file) — **not** `beat.sh` (does not exist). Fall back to `--projects PATH:PATH:...` CLI arg.
+- Auto-refresh 60 s via `<meta http-equiv="refresh" content="60">`.
+- Per-request git calls are acceptable for now; add a simple in-process dict cache keyed by
+  `(project, date)` so repeated reloads within the same calendar day reuse the count.
 
 ## Test
 
 ```bash
-# Red step: verify View 2 route exists and returns 200
+# Red step: View 2 route returns HTML containing the project name and a ticket list heading
 python - <<'EOF'
 import urllib.request, subprocess, time, signal, os, sys
-srv = subprocess.Popen(["python", "bin/beat-dashboard", "--no-browser",
-                        "--projects", os.path.expanduser("~/.claude")])
-time.sleep(1)
+
+PORT = 18765  # non-default port to avoid conflicts
+srv = subprocess.Popen(
+    ["python", "bin/beat-dashboard", "--no-browser", "--port", str(PORT),
+     "--projects", os.path.expanduser("~/.claude")],
+    stderr=subprocess.DEVNULL,
+)
+time.sleep(1.5)
 try:
-    code = urllib.request.urlopen("http://127.0.0.1:8765/project/.claude").getcode()
-    assert code == 200, f"got {code}"
+    resp = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/project/.claude").read().decode()
+    assert "Tickets" in resp, "ticket list heading missing"
+    assert ".claude" in resp, "project name missing from page"
     print("PASS")
+except AssertionError as e:
+    print(f"FAIL: {e}")
+    sys.exit(1)
 finally:
     srv.send_signal(signal.SIGINT)
 EOF
@@ -68,9 +86,13 @@ EOF
 
 ## Exit criteria
 
-- `bash -n bin/beat-dashboard` passes (syntax clean)
-- Overview loads with commits-today and ticket-velocity columns visible
-- Clicking a project row navigates to `/project/<name>` drill-down
-- `/blockers` renders an SVG with at least one node when any ticket has a Blocked-by header
-- No external imports (stdlib only); `ruff check bin/beat-dashboard` clean
-- Auto-refresh header present in HTML (`<meta http-equiv="refresh" content="60">`)
+- `python -c "import ast, sys; ast.parse(open('bin/beat-dashboard').read()); print('syntax ok')"` passes
+- `ruff check bin/beat-dashboard` clean (no external imports, style clean)
+- GET `/` returns HTML containing `commits-today` or equivalent column header
+- GET `/project/.claude` returns 200 with "Tickets" heading and project name in body
+  (verify with `curl -s http://127.0.0.1:8765/project/.claude | grep -q Tickets && echo ok`)
+- GET `/project/nonexistent` returns 404
+- Ticket velocity column reads from `.erg` log `status closed` lines, confirmed by grep:
+  `grep -n "status closed" ~/.claude/tickets/*.erg` produces matches that align with velocity counts
+- `<meta http-equiv="refresh" content="60">` present in all three route responses
+- No cost/USD anywhere in the rendered HTML

@@ -1,0 +1,91 @@
+%erg v1
+Title: Add cross-project blocker graph to beat dashboard (View 3)
+Status: open
+Created: 2026-04-26
+Author: claude
+Blocked-by: 0028
+
+--- log ---
+2026-04-26T09:30Z claude created; split from ticket 0028
+
+--- body ---
+## Context
+
+Ticket 0028 builds the beat dashboard's Views 1 and 2. This ticket adds View 3: a cross-project
+blocker graph rendered as inline SVG, served at `/blockers`.
+
+The graph surfaces "keystone" tickets — those blocking multiple chains across projects — which
+are worth prioritising even when they appear individually small.
+
+## Scope constraint
+
+The `.erg` `Blocked-by:` header supports intra-project ticket IDs (`0031`) and GitHub issue refs
+(`gh#N`). It does NOT support cross-repo ticket references. View 3 therefore operates on
+intra-project edges only. A node is drawn for every open/doing/pending ticket that appears in any
+`Blocked-by` header or has one. `gh#N` blockers are rendered as grey terminal nodes labeled
+`gh#N` with no further resolution.
+
+## Actions
+
+### Layout algorithm (no external lib)
+- Build adjacency list: for each ticket, collect its `Blocked-by` refs as outgoing edges
+  (edge direction: dependency → dependent, i.e. "A blocks B" → arrow from A to B).
+- Topological sort the DAG. Tickets with no outgoing edges (no blockers) sit at depth 0;
+  each ticket sits one level deeper than its deepest dependency.
+- Assign x-coordinates by depth (column), y-coordinates by index within column. Spacing:
+  `col_width = 160px`, `row_height = 50px`. Origin at `(40, 40)`.
+- Render as `<svg>` with:
+  - `<line>` elements for edges (drawn first, underneath nodes)
+  - `<circle r="18">` for ticket nodes, filled by readiness colour
+  - `<text>` showing ticket ID centered in circle; font-size 9px
+  - Arrowhead via `<marker>` element (standard SVG marker pattern)
+- Colour scheme: ready=#22c55e, doing=#3b82f6, blocked=#f97316, pending=#475569, gh#N=#94a3b8
+
+### Route
+- `GET /blockers` — render full page with the SVG, legend, and back link to `/`.
+- If no tickets have any `Blocked-by` headers, render a page with the message "No blockers found."
+  rather than an empty SVG.
+- SVG `width` and `height` computed from the layout bounding box + 80px padding each side.
+
+### Data loading
+- Reuse `load_tickets(project)` from 0028's implementation.
+- Aggregate tickets across all projects. Prefix IDs with project name in tooltip
+  (`title` attribute on `<circle>`) to disambiguate same-numbered tickets across projects.
+  Node label still shows bare ID (space is tight).
+
+## Test
+
+```bash
+# Red step: /blockers returns HTML with an <svg> element when blockers exist
+python - <<'EOF'
+import urllib.request, subprocess, time, signal, os
+
+PORT = 18766
+srv = subprocess.Popen(
+    ["python", "bin/beat-dashboard", "--no-browser", "--port", str(PORT),
+     "--projects", os.path.expanduser("~/.claude")],
+    stderr=subprocess.DEVNULL,
+)
+time.sleep(1.5)
+try:
+    body = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/blockers").read().decode()
+    assert "<svg" in body, "<svg> element missing from /blockers"
+    assert "0028" in body or "No blockers" in body, "neither graph nor empty-state message found"
+    print("PASS")
+finally:
+    srv.send_signal(signal.SIGINT)
+EOF
+```
+
+## Exit criteria
+
+- `GET /blockers` returns 200 in all cases (never 500).
+- When `~/.claude/tickets/0028-multiproject-beat-dashboard.erg` exists with
+  `Blocked-by: 0027` (or any open ticket), the SVG contains a `<circle>` for each referenced ID.
+  Verify: `curl -s http://127.0.0.1:8765/blockers | grep -o 'circle' | wc -l` ≥ 2.
+- When no tickets have `Blocked-by` headers, page body contains "No blockers".
+- `gh#N` refs appear as grey terminal nodes, not as a crash or missing node.
+- Cycles (ticket A blocked-by B, B blocked-by A) do not cause infinite recursion — the topological
+  sort must detect and break cycles, logging a warning to stderr rather than crashing.
+- `ruff check bin/beat-dashboard` still clean after this addition.
+- SVG is valid: `python -c "import xml.etree.ElementTree as ET; ET.parse(...)"` parses without error.
