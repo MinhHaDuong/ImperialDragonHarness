@@ -106,9 +106,19 @@ individual `/verify` verdicts.
 
 ## Phase 7: Scope audit
 
-Check each merge request for scope creep:
-- Did Execute exceed the Plan?
-- Split out-of-scope work to new tickets (`/new-ticket`)
+Check each merge request for scope creep — did Execute exceed the Plan?
+
+For each out-of-scope finding, choose one outcome:
+
+- **CLEAN** — no scope creep found; continue.
+- **TICKETED** — create a new ticket via `/new-ticket` for the out-of-scope work.
+  Leave commits in the PR. Add a line to the PR body: `Scope overflow: #NNNN`.
+  Do not rewrite git history.
+- **ESCALATE** — scope creep is present but cannot be cleanly ticketed (ambiguous
+  ownership, no clear ticket boundary, or you are uncertain). Stop. Leave a
+  comment on the merge request explaining what was found. Human decides.
+
+**Never** rebase or amend commits to excise scope creep.
 
 ## Mid-session checkpoint (~50% effort)
 
