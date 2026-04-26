@@ -1,0 +1,56 @@
+%erg v1
+Title: Fix validator to always load full ticket set for cycle and ref checking
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T00:00Z claude created
+
+--- body ---
+## Context
+
+The `erg validate` command was changed to accept individual `.erg` file arguments
+(e.g. only staged files in a pre-commit hook). This breaks two correctness
+guarantees that only hold when the full `tickets/` directory is loaded:
+
+1. **Blocked-by reference checking (rule 8)** — `allIDs` is built from loaded
+   tickets only. A valid reference to a non-loaded open ticket is flagged as
+   unknown. False positives block commits.
+
+2. **Cycle detection (rule 9)** — `detectCycles` runs DFS over the loaded set
+   only. A cycle `0001 → 0002 → 0001` is invisible when only `0001` is passed.
+   This is a silent correctness failure: the pre-commit hook passes while a real
+   cycle exists.
+
+3. **Archive IDs not loaded for file args** — the archive-loading block in
+   `cmdValidate` only fires when the arg is a directory. File args leave
+   `extraIDs` empty, so archived ticket refs are also false-positived.
+
+## Actions
+
+1. In `cmdValidate`, when any arg is a file path, resolve its parent directory
+   and load the full directory (plus its `archive/` sibling) for `allIDs` and
+   cycle detection. Validate *only* the passed files for per-ticket rules, but
+   run rule 7 (duplicates), rule 8 (refs), and rule 9 (cycles) against the
+   full set.
+2. Alternatively, add a `--subset` flag: the caller explicitly opts in to
+   partial validation with a warning that ref/cycle checks are skipped.
+3. Update the pre-commit hook invocation to pass the directory, not staged files,
+   or to use the `--subset` flag with awareness of its limits.
+
+## Test
+
+Add a test in `main_test.go`:
+- Two tickets: 0001 with `Blocked-by: 0002`, 0002 with `Blocked-by: 0001`.
+- Call `cmdValidate([]string{"tickets/0001-foo.erg"})`.
+- Assert cycle error is reported (currently it is not).
+
+## Exit criteria
+
+- `erg validate tickets/0001-foo.erg` with a cross-ticket cycle reports the cycle.
+- `erg validate tickets/0001-foo.erg` with a valid `Blocked-by: 0002` does not
+  flag 0002 as unknown when 0002 exists in the same directory.
+- `erg validate tickets/0001-foo.erg` where 0001 references an archived ticket
+  does not false-positive on the archived ref.
+- All existing `main_test.go` tests still pass.

@@ -1,0 +1,58 @@
+%erg v1
+Title: Clarify Phase 7 scope-creep handling: ticket the afterfall, don't rewrite commits
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T00:00Z claude created
+
+--- body ---
+## Context
+
+The orchestrator's Phase 7 (scope audit) says "split out-of-scope work to new
+tickets (`/new-ticket`)" but gives no guidance on what happens to the commits.
+By Phase 7 the work is already done and committed on the PR branch.
+
+The skill is currently ambiguous between:
+- A: Create a ticket for the extra work; leave commits in the PR; human aware.
+- B: `git rebase -i` to excise out-of-scope commits into a separate PR.
+
+Option B is risky and unsuitable for autonomous agents (destructive git ops,
+conflict risk, test coverage across the split). Option A is the default.
+
+Exception: if the out-of-scope commits form a clean orthogonal set (separate
+files, no interleaving with in-scope changes), the agent *may* escalate to the
+human with a proposed split rather than auto-accepting the creep — but this is
+a human decision, not an autonomous one.
+
+## Actions
+
+1. Update `skills/orchestrator/SKILL.md` Phase 7 to state the policy explicitly:
+
+   > **Default:** create a new ticket (via `/new-ticket`) for the out-of-scope
+   > work. Leave the commits in the PR. Note the new ticket ID in the PR body
+   > under "Scope note". Do not rewrite git history.
+   >
+   > **Exception:** if the out-of-scope commits are orthogonal (no shared files,
+   > no interleaved hunks with in-scope changes), escalate with a proposed split
+   > and the relevant commit SHAs. The human decides.
+   >
+   > **Never** rebase or amend autonomously to excise scope creep.
+
+2. Add an ESCALATE path for Phase 7 alongside the existing REROLL/APPROVED paths
+   in the orchestrator wrap-up, so creep that can't be cleanly ticketed stops the
+   run rather than silently including unticketed work.
+
+## Test
+
+No automated test — this is a skill/doc change. Verify by reading the updated
+Phase 7 section and confirming it matches the policy above.
+
+## Exit criteria
+
+- Phase 7 section of `orchestrator/SKILL.md` contains an explicit "Default /
+  Exception / Never" policy on commit handling.
+- The skill references `/new-ticket` and specifies where the new ticket ID is
+  recorded (PR body "Scope note").
+- An ESCALATE path is described for cases where ticketing the creep is not enough.

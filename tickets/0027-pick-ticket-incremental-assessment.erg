@@ -1,0 +1,62 @@
+%erg v1
+Title: Make pick-ticket incremental by caching per-ticket assessments in ticket logs
+Status: open
+Created: 2026-04-26
+Author: claude
+
+--- log ---
+2026-04-26T00:00Z claude created
+
+--- body ---
+## Context
+
+`/pick-ticket` re-reads and re-assesses every open ticket from scratch on every
+beat. For each candidate it checks scope, reads the `## Attempt log`, applies
+exclusion rules, and ranks — all from cold. With many tickets this is wasteful
+and grows linearly.
+
+The fix is to make assessment incremental: cache the picker's per-ticket verdict
+in the ticket's own log section so a future beat can fast-path past tickets whose
+inputs haven't changed.
+
+No separate index file. The ticket log is the right place — it's append-only,
+committed, and already used for attempt outcomes.
+
+Where this logic belongs (beat.py vs. pick-ticket skill) is an open design
+question. The ticket does not prescribe it; the implementer should decide during
+planning.
+
+## Actions
+
+1. Define a new log verb (or reuse `note`) for picker assessments, e.g.:
+   `{ts} claude note sweep-skip: {reason} expires:{date}`
+   or a dedicated verb `assessed` if the FORMAT.md closed set is extended.
+
+2. In the picker, after applying exclusion rules to a candidate:
+   - If excluding, append `sweep-skip` with the reason and a TTL (e.g. 24 h for
+     scope-too-large, 1 h for 24h-cooldown).
+   - On the next beat, read existing `sweep-skip` lines. If the most recent one
+     is within its TTL and the ticket body/status hasn't changed since, skip
+     re-assessment.
+
+3. For the selected ticket (PICK), append a `note sweep-pick` line so the
+   attempt log records the selection event separately from the outcome.
+
+4. Update FORMAT.md or `harness-rules/tickets.md` if a new verb is added.
+
+## Test
+
+- Ticket with a valid unexpired `sweep-skip` line: picker skips without
+  re-reading the body or running scope estimation.
+- Ticket with an expired `sweep-skip` line: picker re-assesses.
+- Ticket body changes after a `sweep-skip` line: picker re-assesses regardless
+  of TTL.
+
+## Exit criteria
+
+- A ticket excluded by the picker has a log line recording why and when.
+- A subsequent beat run skips re-assessment of that ticket if within TTL and
+  body unchanged.
+- The selected ticket has a `sweep-pick` (or equivalent) log line.
+- No separate index file is created.
+- FORMAT.md (or tickets harness rule) reflects any new verb.
