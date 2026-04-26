@@ -25,9 +25,11 @@ Parse two optional tokens on that line:
   hex chars
 
 To compute the body hash: take all bytes from the first character after the
-`--- body ---` separator's terminating newline through end of file, raw UTF-8,
-SHA-256, first 12 hex chars. Example:
-`python3 -c "import hashlib,sys; d=open('tickets/NNNN-slug.erg','rb').read(); body=d.split(b'--- body ---\n',1)[1]; print(hashlib.sha256(body).hexdigest()[:12])"`
+`--- body ---` separator's terminating newline up to (but not including) the
+first `## Picker assessment` line, raw UTF-8, SHA-256, first 12 hex chars.
+This makes the hash stable across repeated picker runs that append assessments.
+Example (no prior assessment):
+`python3 -c "import hashlib,sys; d=open('tickets/NNNN-slug.erg','rb').read(); body=d.split(b'--- body ---\n',1)[1]; core=body.split(b'\n## Picker assessment',1)[0]; print(hashlib.sha256(core).hexdigest()[:12])"`
 
 Skip re-assessment (and skip the ticket entirely this beat) if ALL hold:
 
@@ -72,17 +74,33 @@ full assessment below.
       with no external dependencies
    3. If risk is equal, prefer the simpler one
 
-   After ranking, **write a log line into every candidate** (both the winner
-   and runners-up). Use verb `note` with token `sweep-assess:`:
+   After ranking, **write into every candidate ticket** (both winner and
+   runners-up):
 
-   Runner-up (not selected):
-   `{ISO8601} claude note sweep-assess: candidate; not picked — {one-line reason}`
+   1. Append a `## Picker assessment {ISO8601}` section to the ticket body
+      in markdown. Include: decision (picked / not picked), scope estimate,
+      risk level, one-line reason. Example:
 
-   Winner:
-   `{ISO8601} claude note sweep-pick: selected — {one-line reason}`
+      ```markdown
+      ## Picker assessment 2026-04-26T15:30Z
+      **Decision:** not picked
+      **Scope:** ~30 min, 4 files
+      **Risk:** low
+      **Reason:** ticket 0042 was riper — plan already complete, fewer files
+      ```
 
-   Commit all log writes (winners + runners-up + any sweep-skip lines from
+   2. Add a one-word log line as a pointer:
+      - Runner-up: `{ISO8601} claude note sweep-assess: not picked`
+      - Winner:    `{ISO8601} claude note sweep-pick: selected`
+
+   Commit all body appends + log lines (candidates + any sweep-skip lines from
    steps 2–3) in a single commit on the default branch before emitting output.
+
+   **On the next beat**, before full re-assessment of a candidate, check
+   whether its most recent `## Picker assessment` section exists and its
+   body hash (computed excluding prior assessments — see Step 1.5) still
+   matches. If it does, reuse the scope and risk from that section and skip
+   re-reading the body.
 
 5. If the candidate set is empty, output `IDLE: no eligible tickets` and stop.
 
