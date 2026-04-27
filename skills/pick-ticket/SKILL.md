@@ -74,8 +74,14 @@ full assessment below.
       with no external dependencies
    3. If risk is equal, prefer the simpler one
 
-   After ranking, **write into every candidate ticket** (both winner and
-   runners-up):
+   For each candidate (winner and runners-up), compute its body hash
+   (same formula as Step 1.5: SHA-256 of content before the first
+   `## Picker assessment` line, first 12 hex chars). Then check the most
+   recent `sweep-assess` or `sweep-pick` log line for a matching `hash:`
+   token. **If the hash matches, skip all writes for that ticket** — the
+   prior assessment is still valid.
+
+   For tickets whose hash has changed (or that have no prior assessment):
 
    1. Append a `## Picker assessment {ISO8601}` section to the ticket body
       in markdown. Include: decision (picked / not picked), scope estimate,
@@ -89,18 +95,14 @@ full assessment below.
       **Reason:** ticket 0042 was riper — plan already complete, fewer files
       ```
 
-   2. Add a one-word log line as a pointer:
-      - Runner-up: `{ISO8601} claude note sweep-assess: not picked`
-      - Winner:    `{ISO8601} claude note sweep-pick: selected`
+   2. Add a log line with the current hash:
+      - Runner-up: `{ISO8601} claude note sweep-assess: not picked hash:{12hex}`
+      - Winner:    `{ISO8601} claude note sweep-pick: selected hash:{12hex}`
 
-   Commit all body appends + log lines (candidates + any sweep-skip lines from
-   steps 2–3) in a single commit on the default branch before emitting output.
-
-   **On the next beat**, before full re-assessment of a candidate, check
-   whether its most recent `## Picker assessment` section exists and its
-   body hash (computed excluding prior assessments — see Step 1.5) still
-   matches. If it does, reuse the scope and risk from that section and skip
-   re-reading the body.
+   If no tickets were modified (all hashes matched), skip the commit.
+   Otherwise commit all body appends + log lines (candidates + any
+   sweep-skip lines from steps 2–3) in a single commit on the default
+   branch before emitting output.
 
 5. If the candidate set is empty, output `IDLE: no eligible tickets` and stop.
 
