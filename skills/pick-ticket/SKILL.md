@@ -45,6 +45,9 @@ If the skip does not fire (expired, hash mismatch, or no line), proceed with
 full assessment below.
 
 2. **Exclude:**
+   - If the prompt contains `Running on: <hostname>`, treat any ticket requirement
+     to "SSH to <hostname>" or "run on <hostname>" as already satisfied — it is
+     not an external dependency.
    - Tickets with status or tags: `needs-human`, `post-talk`, `post-conference`,
      `deferred` — **before excluding, append a sweep-skip log line** with
      reason `status-{tag}` (e.g. `status-needs-human`, `status-post-talk`) and

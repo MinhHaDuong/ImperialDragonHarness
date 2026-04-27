@@ -13,6 +13,7 @@ import json
 import os
 import re
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -441,9 +442,10 @@ def _orchestrate(project: Path) -> tuple[str, str | None]:
         )
 
     # Pick ticket
+    hostname = socket.gethostname()
     _log(f"=== pick-ticket: running {_now_iso()} ===")
     pt_rc, pt_result = run_skill(
-        "/pick-ticket",
+        f"/pick-ticket\n\nRunning on: {hostname}",
         budget=BUDGET_PICK_TICKET,
         timeout_s=PICK_TICKET_TIMEOUT_S,
         cwd=project,
@@ -470,7 +472,7 @@ def _orchestrate(project: Path) -> tuple[str, str | None]:
     # Orchestrate
     _log(f"=== orchestrator: running ticket {ticket_id} {_now_iso()} ===")
     oc_rc, _ = run_skill(
-        f"/orchestrator {ticket_id}",
+        f"/orchestrator {ticket_id}\n\nRunning on: {hostname}",
         budget=BUDGET_ORCHESTRATOR,
         timeout_s=ORCHESTRATOR_TIMEOUT_S,
         cwd=project,
