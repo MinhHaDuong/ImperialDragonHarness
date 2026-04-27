@@ -205,6 +205,30 @@ func TestParseSweepCacheSkip(t *testing.T) {
 	}
 }
 
+func TestParseSweepCacheSkipExpired(t *testing.T) {
+	hash := bodyHash("Body.\n")
+	// expires in the past → must demote to miss
+	lines := []string{
+		"2026-04-01T10:00Z claude note sweep-skip: cooldown-24h hash:" + hash + " expires:2026-04-01T11:00",
+	}
+	info := parseSweepCache(lines)
+	if info.cacheType != "miss" {
+		t.Errorf("expected miss for expired skip, got %s", info.cacheType)
+	}
+}
+
+func TestParseSweepCacheSkipNotExpired(t *testing.T) {
+	hash := bodyHash("Body.\n")
+	// expires far in the future → still skip
+	lines := []string{
+		"2099-01-01T00:00Z claude note sweep-skip: cooldown-24h hash:" + hash + " expires:2099-12-31T23:59",
+	}
+	info := parseSweepCache(lines)
+	if info.cacheType != "skip" {
+		t.Errorf("expected skip for non-expired line, got %s", info.cacheType)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // cmdSweepWrite
 // ---------------------------------------------------------------------------

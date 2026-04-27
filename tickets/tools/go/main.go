@@ -622,6 +622,23 @@ func parseSweepCache(logLines []string) sweepCacheInfo {
 		info.scope = extractToken("scope")
 		info.risk = extractToken("risk")
 		info.skipReason = extractToken("reason")
+		// For sweep-skip with an expires: token, demote to miss if expiry passed.
+		if isSkip {
+			if exp := extractToken("expires"); exp != "" {
+				exp = strings.TrimRight(exp, "Z") // tolerate trailing Z
+				layouts := []string{"2006-01-02T15:04:05", "2006-01-02T15:04", "2006-01-02"}
+				var expTime time.Time
+				for _, lay := range layouts {
+					if t, err := time.Parse(lay, exp); err == nil {
+						expTime = t
+						break
+					}
+				}
+				if !expTime.IsZero() && time.Now().UTC().After(expTime) {
+					info.cacheType = "miss" // expired — force reassessment
+				}
+			}
+		}
 		return info
 	}
 	return sweepCacheInfo{cacheType: "miss"}
