@@ -7,11 +7,11 @@ Author: claude
 --- log ---
 2026-04-27T00:00Z claude created
 
+2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:655d2448ed3c expires:2026-04-28T14:32Z
 --- body ---
-## Problem
-
-Housekeeping does two expensive things in one session:
-1. Git hygiene: stale branches, worktrees, STATE.md, commit
+:04Z claude note sweep-skip: scope-too-large hash:655d2448ed3c expires:2026-04-28T14:32Z
+--- body ---
+ktrees, STATE.md, commit
 2. Ticket scan: sweep-skip expiry, pick-assessments
 
 Combining them in a single long session (30–41 turns, $0.50+) means a budget

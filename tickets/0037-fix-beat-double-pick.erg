@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-27T09:00Z claude created
 
+2026-04-27T21:04Z claude note sweep-assess: not-picked hash:a0c7372a77a9 scope:add cooldown guard in pick-ticket skill and warning in beat.py risk:medium
 --- body ---
 ## Context
 
@@ -61,3 +62,8 @@ guard d'exclusion — pick-ticket ne le consulte pas pour éviter les re-picks.
   l'orchestrateur (option B en place).
 - Les logs nightbeat ne montrent plus de double-pick pour le même ticket
   sur deux cycles consécutifs.
+## Picker assessment 2026-04-27T21:04Z
+**Decision:** not-picked
+**Scope:** add cooldown guard in pick-ticket skill and warning in beat.py
+**Risk:** medium
+**Reason:** touches both pick-ticket skill and beat.py with more complex logic

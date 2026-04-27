@@ -8,10 +8,11 @@ Author: claude
 2026-04-26T09:00Z claude created
 2026-04-26T09:30Z claude split View 3 (blocker graph) into ticket 0029; patched underspecified actions and tests
 
+2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:2c7ab3bee4d0 expires:2026-04-28T14:32Z
 --- body ---
-## Context
-
-PR 61 prototype (`bin/beat-dashboard`) showed a working hourly disc grid + ticket queue panel
+:04Z claude note sweep-skip: scope-too-large hash:2c7ab3bee4d0 expires:2026-04-28T14:32Z
+--- body ---
+nel
 (stdlib-only, 496 lines). Two weaknesses to fix:
 
 1. Beat-log is not the primary activity signal — most work runs through the orchestrator skill

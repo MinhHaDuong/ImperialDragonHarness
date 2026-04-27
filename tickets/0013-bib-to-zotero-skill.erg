@@ -7,11 +7,11 @@ Author: user
 --- log ---
 2026-04-17T15:30Z claude created from review session discussion
 
+2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:5337b9e78984 expires:2026-04-28T14:32Z
 --- body ---
-## Context
-
-The bibliography pipeline is: related-work-note → bib-merge → local refs.bib.
-Local .bib is staging. The canonical library is Zotero. Today the last step
+:04Z claude note sweep-skip: scope-too-large hash:5337b9e78984 expires:2026-04-28T14:32Z
+--- body ---
+ib is staging. The canonical library is Zotero. Today the last step
 (refs.bib → Zotero) is manual (File → Import). This ticket automates it.
 
 The user has a Zotero PAT and Zotero v9+ (fast release cycle, API stable).

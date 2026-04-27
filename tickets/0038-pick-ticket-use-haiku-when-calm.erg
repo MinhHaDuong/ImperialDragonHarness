@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-27T12:30Z claude created
 
+2026-04-27T21:04Z claude note sweep-assess: not-picked hash:d914cb8a5a97 scope:add _repo_active() and pick_ticket_model to beat.py, add tests risk:low
 --- body ---
 ## Problem
 
@@ -42,3 +43,8 @@ current Haiku model ID, so per-project overrides remain possible.
 - Sonnet still used on active days
 - Configurable per-project via `ProjectConfig.pick_ticket_model`
 - `test_beat.py` covers both branches (active / idle)
+## Picker assessment 2026-04-27T21:04Z
+**Decision:** not-picked
+**Scope:** add _repo_active() and pick_ticket_model to beat.py, add tests
+**Risk:** low
+**Reason:** touches ProjectConfig in addition to beat.py logic

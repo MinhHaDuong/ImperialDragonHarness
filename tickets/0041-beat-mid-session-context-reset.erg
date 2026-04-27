@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-27T12:30Z claude created
 
+2026-04-27T21:04Z claude note sweep-assess: not-picked hash:984bdefc447d scope:read beat.py and logs, potentially close as no-op risk:low
 --- body ---
 ## Problem
 
@@ -48,3 +49,8 @@ context accumulation doesn't apply and this ticket can be closed.
 - Beat logs or `beat.py` code reviewed to determine session model
 - If long-lived sessions exist: at least one mitigation (A or B) implemented
 - If sessions are already fresh per beat: ticket closed with explanation
+## Picker assessment 2026-04-27T21:04Z
+**Decision:** not-picked
+**Scope:** read beat.py and logs, potentially close as no-op
+**Risk:** low
+**Reason:** may require no code change; deprioritized vs 0039 which has clearer action

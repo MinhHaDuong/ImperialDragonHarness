@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-27T12:30Z claude created
 
+2026-04-27T21:04Z claude note sweep-assess: not-picked hash:bc86b57bc29a scope:extend housekeeping_needed() in beat.py, add tests risk:low
 --- body ---
 ## Problem
 
@@ -54,3 +55,8 @@ Note: ticket 0036 (skip if idle) may overlap — check before implementing.
 - Skip is logged (beat log line or stdout) for observability
 - `test_beat.py` covers the frozen-skip path
 - Still runs normally when commits OR ticket changes are present
+## Picker assessment 2026-04-27T21:04Z
+**Decision:** not-picked
+**Scope:** extend housekeeping_needed() in beat.py, add tests
+**Risk:** low
+**Reason:** small beat.py change with more logic complexity than 0039

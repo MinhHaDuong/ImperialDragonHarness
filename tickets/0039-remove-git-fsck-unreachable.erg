@@ -7,6 +7,7 @@ Author: claude
 --- log ---
 2026-04-27T12:30Z claude created
 
+2026-04-27T21:04Z claude note sweep-pick: picked hash:41f20e1ae05b scope:grep housekeeping skill, edit 1 line risk:low
 --- body ---
 ## Problem
 
@@ -38,3 +39,8 @@ grepping skills/housekeeping/ and close this ticket.
 - Either `git gc --auto` is present, or the decision to omit it entirely
   is documented in a skill comment
 - Housekeeping runs produce no fsck output in their logs
+## Picker assessment 2026-04-27T21:04Z
+**Decision:** picked
+**Scope:** grep housekeeping skill, edit 1 line
+**Risk:** low
+**Reason:** single-line change in 1 skill file, easily reversible, no external deps
