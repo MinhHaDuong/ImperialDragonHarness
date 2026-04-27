@@ -90,21 +90,41 @@ class TestParsePick:
 
 
 class TestHousekeepingNeeded:
+    _SHA = "abc1234567890abcdef1234567890abcdef123456"
+
     def test_no_commits_returns_true(self, tmp_project):
         with patch("beat.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout="", returncode=0)
             assert beat.housekeeping_needed(tmp_project) is True
 
     def test_recent_commit_returns_false(self, tmp_project):
-        recent = str(int(time.time()) - 3600)  # 1 hour ago
+        recent = f"{int(time.time()) - 3600} {self._SHA}"
         with patch("beat.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout=recent + "\n", returncode=0)
             assert beat.housekeeping_needed(tmp_project) is False
 
-    def test_old_commit_returns_true(self, tmp_project):
-        old = str(int(time.time()) - 14 * 3600)  # 14 hours ago
+    def test_old_commit_with_activity_returns_true(self, tmp_project):
+        old = f"{int(time.time()) - 14 * 3600} {self._SHA}"
         with patch("beat.subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(stdout=old + "\n", returncode=0)
+            mock_run.side_effect = [
+                MagicMock(stdout=old + "\n", returncode=0),
+                MagicMock(stdout="3\n", returncode=0),
+            ]
+            assert beat.housekeeping_needed(tmp_project) is True
+
+    def test_old_commit_idle_returns_false(self, tmp_project):
+        old = f"{int(time.time()) - 14 * 3600} {self._SHA}"
+        with patch("beat.subprocess.run") as mock_run:
+            mock_run.side_effect = [
+                MagicMock(stdout=old + "\n", returncode=0),
+                MagicMock(stdout="0\n", returncode=0),
+            ]
+            assert beat.housekeeping_needed(tmp_project) is False
+
+    def test_safety_floor_always_runs(self, tmp_project):
+        very_old = f"{int(time.time()) - 25 * 3600} {self._SHA}"
+        with patch("beat.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(stdout=very_old + "\n", returncode=0)
             assert beat.housekeeping_needed(tmp_project) is True
 
     def test_corrupted_timestamp_returns_true(self, tmp_project):
@@ -113,7 +133,9 @@ class TestHousekeepingNeeded:
             assert beat.housekeeping_needed(tmp_project) is True
 
     def test_exactly_at_threshold_is_not_needed(self, tmp_project):
-        at_threshold = str(int(time.time()) - beat.HOUSEKEEPING_INTERVAL_S + 10)
+        at_threshold = (
+            f"{int(time.time()) - beat.HOUSEKEEPING_INTERVAL_S + 10} {self._SHA}"
+        )
         with patch("beat.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout=at_threshold + "\n", returncode=0)
             assert beat.housekeeping_needed(tmp_project) is False

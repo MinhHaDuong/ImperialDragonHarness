@@ -46,6 +46,7 @@ def _lockfile(project: Path) -> Path:
 
 
 HOUSEKEEPING_INTERVAL_S: int = 12 * 3600
+HOUSEKEEPING_SAFETY_FLOOR_S: int = 24 * 3600
 HOUSEKEEPING_TIMEOUT_S: int = 10 * 60
 PICK_TICKET_TIMEOUT_S: int = 8 * 60
 ORCHESTRATOR_TIMEOUT_S: int = 30 * 60
@@ -229,9 +230,13 @@ def _on_sigterm(_signum: int, _frame: object) -> None:
 
 
 def housekeeping_needed(project: Path) -> bool:
-    """Return True when the last housekeeping git commit is older than the interval."""
+    """Return True when housekeeping should run.
+
+    Skip when the repo is idle (no commits since last housekeeping)
+    but enforce a 24h safety floor.
+    """
     result = subprocess.run(  # noqa: S603
-        ["git", "log", "--grep=housekeeping", "-1", "--format=%ct"],
+        ["git", "log", "--grep=housekeeping", "-1", "--format=%ct %H"],
         capture_output=True,
         text=True,
         check=False,
@@ -240,8 +245,27 @@ def housekeeping_needed(project: Path) -> bool:
     raw = result.stdout.strip()
     if not raw:
         return True
+    parts = raw.split(maxsplit=1)
+    if len(parts) < 2:
+        return True
     try:
-        return (time.time() - int(raw)) > HOUSEKEEPING_INTERVAL_S
+        age = time.time() - int(parts[0])
+    except ValueError:
+        return True
+    if age <= HOUSEKEEPING_INTERVAL_S:
+        return False
+    if age > HOUSEKEEPING_SAFETY_FLOOR_S:
+        return True
+    # Between interval and safety floor: run only if repo has activity.
+    activity = subprocess.run(  # noqa: S603
+        ["git", "rev-list", "--count", f"{parts[1]}..HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=project,
+    )
+    try:
+        return int(activity.stdout.strip()) > 0
     except ValueError:
         return True
 

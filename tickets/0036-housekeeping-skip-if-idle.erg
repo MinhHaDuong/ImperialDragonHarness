@@ -1,11 +1,12 @@
 %erg v1
 Title: Skip housekeeping when repo has no changes since last run
-Status: open
+Status: closed
 Created: 2026-04-27
 Author: claude
 
 --- log ---
 2026-04-27T00:00Z claude created
+2026-04-27T11:00Z claude status closed — implemented in beat.py: housekeeping_needed() checks git rev-list count since last hk commit; 24h safety floor; 2 new tests (62 total)
 
 --- body ---
 ## Problem
