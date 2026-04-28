@@ -8,8 +8,9 @@ Author: claude
 2026-04-27T00:00Z claude created
 
 2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:655d2448ed3c expires:2026-04-28T14:32Z
+2026-04-28T21:03Z claude note sweep-skip: scope-too-large hash:6eff9e1c2548 expires:2026-04-29T21:03Z
 --- body ---
-:04Z claude note sweep-skip: scope-too-large hash:655d2448ed3c expires:2026-04-28T14:32Z
+:03Z claude note sweep-skip: scope-too-large hash:6eff9e1c2548 expires:2026-04-29T21:03Z
 --- body ---
 ktrees, STATE.md, commit
 2. Ticket scan: sweep-skip expiry, pick-assessments
