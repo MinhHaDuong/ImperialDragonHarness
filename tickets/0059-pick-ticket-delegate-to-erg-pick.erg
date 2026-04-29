@@ -20,7 +20,7 @@ mechanical work moves to the binary. The LLM's only remaining job is the
 one step that genuinely requires judgment: ranking the shortlisted candidates
 by scope fit and risk, then recording the winner.
 
-The current N-sequential-Read anti-pattern (one `Read` per cache:miss ticket)
+The current N-sequential-Read anti-pattern (one `Read` per untriaged ticket)
 disappears because the binary returns all candidate bodies in a single JSON
 response.
 
@@ -32,24 +32,24 @@ response.
    ```
    If `"candidates": []`, output `IDLE: no eligible tickets` and stop.
 
-2. For each `cache:miss` candidate, read its `body` from the JSON and
+2. For each `untriaged` candidate, read its `body` from the JSON and
    apply the judgment-based exclusion: if scope won't fit the 50-minute
    beat window, exclude it (do not call `pick-record` for it — the binary
    will handle the `scope-too-large` cache entry on the next `erg pick`
-   call once `pick-record` writes the assessment).
+   call once `pick-record` writes the triage).
 
 3. Rank remaining candidates:
    - `fix-tests` slug first
    - Then by lowest risk (few files, docs/config/tests over core logic,
      no external dependencies)
-   - For `cache:hit` candidates, use the stored `scope`/`risk`/`reason`
-     directly — no re-assessment needed
+   - For candidates with a `triage` object, use its stored `scope`/`risk`/`reason`
+     directly — no re-triage needed
 
 4. For the winner and each runner-up, call:
    ```bash
    $ERG pick-record <id> <picked|not-picked> "<scope>" "<risk>" "<reason>"
    ```
-   The binary writes the assessment to the ticket log. Do not edit `.erg`
+   The binary writes the triage to the ticket log. Do not edit `.erg`
    files directly.
 
 5. Remove `erg sweep-skip` / `erg sweep-write` / 3-strikes prose from the
@@ -65,7 +65,7 @@ installed. Verify:
 - `grep "sweep-pick: picked"` appears in the winner's log with scope/risk
 - `grep "sweep-pick: not-picked"` appears in runner-up logs
 - No sequential `Read` tool calls for individual ticket bodies
-- A second run over unchanged tickets uses `cache:hit` and skips re-ranking
+- A second run over unchanged tickets returns a `triage` object and skips re-ranking
 
 ## Exit criteria
 
@@ -74,6 +74,6 @@ installed. Verify:
   then risk, call `erg pick-record` for winner and runners-up
 - Skill under 40 lines of prose
 - All mechanical exclusion steps removed from the skill
-- Cache round-trip verified: pick-record writes assessment, next erg pick
-  returns it as cache:hit
+- Triage round-trip verified: pick-record writes triage, next erg pick
+  returns it as a `triage` object
 - Tested against live tickets dir with git-erg/0008 installed
