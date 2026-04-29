@@ -285,9 +285,9 @@ class TestRunSkillDryRun:
         assert rc == 0
         assert "dry-run" in result
 
-    def test_orchestrator_returns_ok(self, tmp_project):
+    def test_raid_returns_ok(self, tmp_project):
         rc, result = beat.run_skill(
-            "/orchestrator 0001", budget=0.70, timeout_s=60, cwd=tmp_project
+            "/raid 0001", budget=0.70, timeout_s=60, cwd=tmp_project
         )
         assert rc == 0
 
@@ -380,10 +380,10 @@ class TestRunSkillSubprocess:
         assert result == "IDLE: ok"
 
 
-# ── _orchestrate ───────────────────────────────────────────────────────────────
+# ── _raid ───────────────────────────────────────────────────────────────
 
 
-class TestOrchestrate:
+class TestRaid:
     def setup_method(self):
         beat.DRY_RUN = False
 
@@ -411,7 +411,7 @@ class TestOrchestrate:
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill({"pick-ticket": (0, "IDLE: empty queue")}),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "idle"
         assert ticket is None
 
@@ -421,11 +421,11 @@ class TestOrchestrate:
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0023"),
-                    "orchestrator": (0, ""),
+                    "raid": (0, ""),
                 }
             ),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "done"
         assert ticket == "0023"
 
@@ -434,7 +434,7 @@ class TestOrchestrate:
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill({"pick-ticket": (beat.TIMEOUT_EXIT_CODE, "")}),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "aborted"
         assert ticket is None
 
@@ -443,35 +443,35 @@ class TestOrchestrate:
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill({"pick-ticket": (1, "")}),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "failed"
         assert ticket is None
 
-    def test_orchestrator_timeout(self, tmp_project):
+    def test_raid_timeout(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
-                    "orchestrator": (beat.TIMEOUT_EXIT_CODE, ""),
+                    "raid": (beat.TIMEOUT_EXIT_CODE, ""),
                 }
             ),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "aborted"
         assert ticket == "0005"
 
-    def test_orchestrator_nonzero_exit(self, tmp_project):
+    def test_raid_nonzero_exit(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
-                    "orchestrator": (2, ""),
+                    "raid": (2, ""),
                 }
             ),
         ):
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "failed"
         assert ticket == "0005"
 
@@ -488,7 +488,7 @@ class TestOrchestrate:
             patch("beat.housekeeping_needed", return_value=True),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert any("housekeeping" in c for c in calls)
 
@@ -503,7 +503,7 @@ class TestOrchestrate:
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert not any("housekeeping" in c for c in calls)
 
@@ -529,7 +529,7 @@ class TestProjectScopedIsolation:
         add_dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
         assert "." in add_dirs
 
-    def test_orchestrate_passes_project_scoped_to_pick_ticket(self, tmp_project):
+    def test_raid_passes_project_scoped_to_pick_ticket(self, tmp_project):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -548,12 +548,12 @@ class TestProjectScopedIsolation:
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["project_scoped"] is True
 
-    def test_orchestrate_passes_project_scoped_to_orchestrator(self, tmp_project):
+    def test_raid_passes_project_scoped_to_raid(self, tmp_project):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -574,12 +574,12 @@ class TestProjectScopedIsolation:
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        oc_call = next(r for r in recorded if "orchestrator" in r["skill"])
+        oc_call = next(r for r in recorded if "raid" in r["skill"])
         assert oc_call["project_scoped"] is True
 
-    def test_orchestrate_does_not_scope_housekeeping(self, tmp_project):
+    def test_raid_does_not_scope_housekeeping(self, tmp_project):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -598,7 +598,7 @@ class TestProjectScopedIsolation:
             patch("beat.housekeeping_needed", return_value=True),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         hk_call = next(r for r in recorded if "housekeeping" in r["skill"])
         assert hk_call["project_scoped"] is False
@@ -712,7 +712,7 @@ class TestSpinDown:
             beat._state.project = tmp_project
             beat._state.final_written = False
             beat.DRY_RUN = False
-            outcome, ticket = beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
             beat.finalize_beat_log(
                 tmp_project,
                 {
@@ -779,7 +779,7 @@ class TestPickTicketModelSelection:
             patch("beat._repo_active", return_value=False),
             patch("beat.run_skill", side_effect=fake),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == beat.MODEL_HAIKU
 
@@ -790,7 +790,7 @@ class TestPickTicketModelSelection:
             patch("beat._repo_active", return_value=True),
             patch("beat.run_skill", side_effect=fake),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == beat.MODEL_SONNET
 
@@ -802,7 +802,7 @@ class TestPickTicketModelSelection:
             patch("beat._repo_active", return_value=False),
             patch("beat.run_skill", side_effect=fake),
         ):
-            beat._orchestrate(
+            beat._raid(
                 beat.ProjectConfig(path=tmp_project, pick_ticket_model=custom_model)
             )
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
@@ -816,7 +816,7 @@ class TestPickTicketModelSelection:
             patch("beat._repo_active", return_value=True),
             patch("beat.run_skill", side_effect=fake),
         ):
-            beat._orchestrate(
+            beat._raid(
                 beat.ProjectConfig(
                     path=tmp_project, pick_ticket_model="claude-opus-4-7"
                 )
@@ -926,10 +926,10 @@ class TestLoadProjects:
         assert "error" in capsys.readouterr().err.lower()
 
 
-# ── orchestrator done-but-open warning (ticket 0037) ──────────────────────────
+# ── raid done-but-open warning (ticket 0037) ──────────────────────────────────
 
 
-class TestOrchestratorDoneButOpenWarning:
+class TestRaidDoneButOpenWarning:
     def setup_method(self):
         beat.DRY_RUN = False
 
@@ -963,7 +963,7 @@ class TestOrchestratorDoneButOpenWarning:
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert any(
             "warning" in l and "0001" in l and "not closed" in l for l in log_lines
@@ -992,7 +992,7 @@ class TestOrchestratorDoneButOpenWarning:
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert not any("warning" in l and "not closed" in l for l in log_lines)
 
@@ -1018,6 +1018,6 @@ class TestOrchestratorDoneButOpenWarning:
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
-            beat._orchestrate(beat.ProjectConfig(path=tmp_project))
+            beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert not any("warning" in l and "not closed" in l for l in log_lines)
