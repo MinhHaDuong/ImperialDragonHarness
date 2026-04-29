@@ -14,6 +14,8 @@ argument-hint: <ticket-id>
 
 1. Read the ticket (from git-erg `tickets/` directory or forge).
 2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
+   - If all exit criteria are **already met** (verify by inspection/grep before writing any code),
+     call `/ticket-close $ARGUMENTS` with reason `already-done` and stop. Do not create a branch or PR.
 3. If not already in a worktree, enter one: call `EnterWorktree` with name `t$ARGUMENTS`.
 4. Create or checkout the ticket branch:
    ```bash
