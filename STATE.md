@@ -14,13 +14,13 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires hourly 22:00–06:00 weeknights, all day weekends. `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage.
 
-**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, cadens, harness, chemin-de-voix, git-erg at $0.40/$0.50; Climate_finance, fuzzy-corpus at $0.75/$0.75. 7 targets total (`scripts/projects.json`).
+**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, git-erg at $0.40/$0.50; Climate_finance at default. 3 targets total (`scripts/projects.json`).
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
 **erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 82 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
-**git-erg**: pre-commit hooks installed in all four projects. `erg` binary present in all four. Added as nightbeat target (ticket 0009-add-ci open).
+**git-erg**: pre-commit hooks installed in all projects. Added as nightbeat target (ticket 0009-add-ci open).
 
 ## Open tickets
 
