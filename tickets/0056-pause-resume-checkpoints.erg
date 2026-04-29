@@ -1,0 +1,30 @@
+%erg v1
+Title: Discuss mid-session pause/resume checkpoints
+Status: pending
+Created: 2026-04-29
+Author: claude
+
+--- log ---
+2026-04-29T00:00Z claude created
+
+--- body ---
+## Context
+
+GSD's `pause-work` writes a `.continue-here.md` checkpoint mid-phase (current step,
+decisions made, next action). `resume-work` reads it and restores context. This
+handles the case: "I'm halfway through step 3 of 7, session ends unexpectedly."
+
+IDH has `end-session` (day wrap, natural break point) and `/perch` (read-only
+orientation). Neither writes a mid-execution checkpoint. Recovery relies on reading
+STATE.md and git log, which covers orientation but not fine-grained resume.
+
+A possible IDH version: `perch --save` writes to `.git/session-state.md`
+(local-only, like `.wip` files). `/perch` without `--save` continues to be
+read-only.
+
+## Question
+
+Does IDH actually lose work due to lack of mid-session checkpoints? The case
+arises when: (a) context compaction happens mid-task, or (b) session is interrupted.
+Context compaction already preserves modified files + test commands (per workflow.md).
+So the gap may be narrow. Develop by usage: wait for a real incident before building.
