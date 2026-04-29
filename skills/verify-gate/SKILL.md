@@ -229,4 +229,4 @@ by invocation mode:
 
 - **Merging.** The gate never merges.
 - **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them.
-- **Scope audit.** That's Phase 7 of the orchestrator, handled separately.
+- **Scope audit.** That's Phase 7 of the raid, handled separately.

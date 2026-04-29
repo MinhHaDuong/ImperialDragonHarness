@@ -18,7 +18,7 @@ Every task passes through five phases:
 
 ```
 ImperialDragonHarness/
-├── skills/                 # Slash commands — 26 total: /beat, /celebrate, /verify, /orchestrator, etc.
+├── skills/                 # Slash commands — 26 total: /beat, /celebrate, /verify, /raid, etc.
 │   ├── harness-rules/      # Auto-invoked rules (companion .md files)
 │   │   ├── SKILL.md
 │   │   ├── workflow.md         # Session start, escalation, worktree
@@ -26,7 +26,7 @@ ImperialDragonHarness/
 │   │   ├── coding-python.md    # Python style, testing, Make (load when Python project)
 │   │   ├── state.md            # STATE.md format spec
 │   │   └── tickets.md          # Ticket log verbs including bump categories
-│   ├── orchestrator/       # Autonomous batch across multiple tickets
+│   ├── raid/               # Autonomous batch across multiple tickets
 │   ├── verify/             # Full PR verification loop (adherence + review + gate)
 │   ├── verify-adherence/   # Mechanical rule check on branch diff
 │   ├── verify-gate/        # Anti-rubber-stamp merge gate

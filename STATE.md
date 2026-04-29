@@ -8,7 +8,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Status
 
-Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only. Shell init harness-tracked (`scripts/shell-init.sh`). CI live on main: validate-tickets + skill-lint + leak-guard + pipefail-guard.
+Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipeline all shipped. Skills slimmed to non-obvious constraints only. Shell init harness-tracked (`scripts/shell-init.sh`). CI live on main: validate-tickets + skill-lint + leak-guard + pipefail-guard.
 
 **Forge-agnostic**: leak-guard enforces no `gh`/`github.com` in skills.
 
@@ -28,7 +28,7 @@ Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography
 - 0028 — multiproject beat dashboard (Views 1-2)
 - 0029 — beat dashboard blocker graph (blocked by 0028)
 - 0034 — housekeeping: split git-cleanup and ticket-scan into two phases
-- 0037 — fix beat double-pick (orchestrator rc=0 without closing ticket)
+- 0037 — fix beat double-pick (raid rc=0 without closing ticket)
 - 0038 — use Haiku for pick-ticket when repo has no recent commits
 - 0039 — remove/replace git fsck --unreachable in housekeeping
 - 0040 — skip housekeeping when repo is frozen (overlaps with 0036 — verify scope)

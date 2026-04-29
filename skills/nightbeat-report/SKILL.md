@@ -23,25 +23,25 @@ If you want a different window, accept `--hours N` passed as an argument and app
 python3 ~/.claude/scripts/nightbeat-report.py --full --hours N
 ```
 
-Read the output carefully. It contains four sections: run table, orchestrator results, warnings/issues, totals, and per-project summary.
+Read the output carefully. It contains four sections: run table, raid results, warnings/issues, totals, and per-project summary.
 
 ## Step 2 — Narrate completed work
 
 For each project that had at least one `done` outcome, write one paragraph summarising:
 
-- Which tickets were worked and what was accomplished (draw from the orchestrator result texts)
+- Which tickets were worked and what was accomplished (draw from the raid result texts)
 - Whether any tickets were closed or remain open (look for "ticket closed", "status: closed")
 - Branches ready for push/PR (look for "push blocked by night-sweep guard" or "git push" in the result text)
 
-Keep it factual and brief. If the orchestrator result is ambiguous or incomplete, say so.
+Keep it factual and brief. If the raid result is ambiguous or incomplete, say so.
 
 ## Step 3 — Action items for the user
 
 List concrete things requiring human action:
 
 - **Branches to push**: every branch the agent mentions as blocked-by-guard is ready for a PR — name the branch and the project
-- **Questions left open**: if the orchestrator result ends with a question or asks for a choice (e.g. "Option A / Option B"), flag it — the next session will stall without a decision
-- **Failed tickets**: orchestrator `outcome=failed` — note the ticket, project, and cost spent
+- **Questions left open**: if the raid result ends with a question or asks for a choice (e.g. "Option A / Option B"), flag it — the next session will stall without a decision
+- **Failed tickets**: raid `outcome=failed` — note the ticket, project, and cost spent
 
 Format as a numbered checklist.
 
@@ -61,10 +61,10 @@ If `hk:error_max_budget_usd` appears on multiple runs: the $0.25 housekeeping bu
 A non-zero exit from housekeeping that isn't budget-related means the skill itself failed. Look at the log for that run to identify the cause. Propose a concrete fix or a ticket.
 
 **Same ticket worked multiple times without closing**
-If the same ticket ID appears in multiple runs for the same project: the ticket's exit criteria may be underspecified, or the orchestrator is not committing/closing. Propose reviewing the ticket's exit criteria or adding a stricter close step.
+If the same ticket ID appears in multiple runs for the same project: the ticket's exit criteria may be underspecified, or the raid is not committing/closing. Propose reviewing the ticket's exit criteria or adding a stricter close step.
 
-**Orchestrator asking questions**
-If any orchestrator result ends with a question or multi-option choice, the ticket lacked sufficient specification. Propose adding the missing context to the ticket or to a project-level directive.
+**Raid asking questions**
+If any raid result ends with a question or multi-option choice, the ticket lacked sufficient specification. Propose adding the missing context to the ticket or to a project-level directive.
 
 **Projects consistently idle**
 If a project shows `idle` for every run in the window, its ticket backlog is empty. Note it — the user needs to add tickets or the project can be removed from the beat rotation temporarily.
