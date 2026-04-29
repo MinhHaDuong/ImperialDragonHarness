@@ -104,7 +104,7 @@ _BUILTIN_PROJECTS: list[ProjectConfig] = [
     ProjectConfig(
         path=HARNESS_DIR,
         budget_housekeeping=0.40,
-        budget_pick_ticket=0.75,
+        budget_pick_ticket=0.50,
     ),
 ]
 
