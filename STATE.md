@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-29T20:00Z
+Last updated: 2026-04-29T22:00Z
 
 ## North star
 
@@ -12,13 +12,13 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Forge-agnostic**: leak-guard enforces no `gh`/`github.com` in skills.
 
-**Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires hourly 22:00–06:00 weeknights, all day weekends. `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage.
+**Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires every 30 min 22:00–06:00 weeknights, every 30 min all day weekends (17 runs/night). `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage.
 
-**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, git-erg at $0.40/$0.50; Climate_finance at default. 3 targets total (`scripts/projects.json`).
+**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, chemin-de-voix, git-erg at $0.40/$0.50. 3 targets (`scripts/projects.json`).
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
-**erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 82 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
+**erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 85 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
 **git-erg**: pre-commit hooks installed in all projects. Added as nightbeat target (ticket 0009-add-ci open).
 
@@ -30,21 +30,22 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0034 — housekeeping: split git-cleanup and ticket-scan into two phases
 - 0037 — fix beat double-pick (raid rc=0 without closing ticket)
 - 0038 — use Haiku for pick-ticket when repo has no recent commits
-- 0039 — remove/replace git fsck --unreachable in housekeeping
 - 0040 — skip housekeeping when repo is frozen (overlaps with 0036 — verify scope)
 - 0041 — investigate mid-session context reset between sub-skills
 - 0042 — replace harness-rules with hooks (metaskill panorama finding)
 - 0043 — weekly /fewer-permission-prompts run
-- 0044 — interactive session observer
-- 0046 — extract flying-projects list into projects.json
+- 0044 — interactive session observer (blocked by 0042)
 - 0047 — auto early context compaction in beat and raid
+- 0049 — truth in ticket open status
 - 0051 — beat should try another project when current one is idle or frozen
+- 0052 — beat erg edit permission denied
 - 0057 — route .erg mutations through erg binary (blocked by erg binary exposing mutation commands)
 - 0058 — rewrite README with Imperial Dragon voice (remove GSD, new opener)
+- 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
+- 0060 — fix erg sweep-skip slice-aliasing bug + repair 8 corrupted tickets
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
-- 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
 
 ## Blockers
 
@@ -55,12 +56,11 @@ None
 - Morning review: `/nightbeat-report` — runs the parser and narrates overnight work
 - Fix 0037 (beat double-pick) — highest operational risk
 - Verify 0040 scope vs 0036 — may be redundant; close if so
+- Review Climate_finance PR #773 (`t0124-s4-frechet-schema-fix`) — beat-created, awaiting merge/reject
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
-- Build binary on each machine after erg sweep cache merge (`cd tickets/tools/go && go build -o ../../../bin/erg .`)
 
 ## Backlog
 
-- When beat does nothing, immediately redo with next project
 - Streamline settings.json hook configuration
 - Enable branch protection requiring `validate-tickets` on main
 - Merge REALF guidelines and business rules
