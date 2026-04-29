@@ -18,14 +18,14 @@ A fast, read-only report. Run at any point to re-orient. No files written, no ti
    - Commits and PRs merged.
    - Tickets closed.
    - Decisions reached.
-   Keep it to bullet points. No prose.
+   Items only. No prose.
 
 3. **Report: Open.** Raised but not finished:
    - Work mentioned but not started or deferred to "next session".
    - Issues discovered but not fixed.
    - Docs or state noted as stale.
    - Questions asked and not answered.
-   Keep it to bullet points. Be specific — a vague "follow-up needed" is useless.
+   Items only. Be specific — a vague "follow-up needed" is useless.
 
 4. **Report: Drift** (only if present). Topics that diverged from the original goal:
    - Scope creep or mid-session pivots.
