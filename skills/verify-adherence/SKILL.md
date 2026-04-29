@@ -23,7 +23,7 @@ rule is permanently enforced → never needs LLM again.
 
 - Called by `/verify` as part of phase 2.
 - Called standalone by an author who wants to pre-check their own branch before opening a PR.
-- Called by the orchestrator in an Imagine phase to audit a prototype.
+- Called by the raid in an Imagine phase to audit a prototype.
 
 ## Input
 

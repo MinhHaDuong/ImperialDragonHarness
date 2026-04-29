@@ -1,6 +1,6 @@
 ---
-name: orchestrator
-description: Run Imperial Dragon batch across multiple tickets. Picks targets, manages waves, enforces isolation. Always autonomous — never merges.
+name: raid
+description: Run an Imperial Dragon raid across multiple tickets. Picks targets, manages waves, enforces isolation. Always autonomous — never merges.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
@@ -8,9 +8,9 @@ model: claude-opus-4-6
 effort: max
 ---
 
-# Orchestrate $ARGUMENTS — Imperial Dragon batch
+# Raid $ARGUMENTS — Imperial Dragon hunt
 
-The orchestrator does not redefine skills. It calls `/start-ticket`,
+A raid does not redefine skills. It calls `/start-ticket`,
 `/review-pr`, `/celebrate`, etc. Its job is sequencing, wave management,
 and enforcing invariants. It never merges — all work lands as merge requests
 for the author to review.
@@ -97,7 +97,7 @@ Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence 
 5. `/verify-gate` — anti-rubber-stamp merge gate: APPROVED / REROLL / ESCALATE.
 6. On REROLL (round 1 only), `/verify` spawns a fix agent and re-gates; round 2 escalates.
 
-`/verify` never merges. The orchestrator does not either — merges are always the
+`/verify` never merges. The raid does not either — merges are always the
 author's call (interactive) or the `/celebrate` flow's call (autonomous).
 
 **Per-wave:** after all per-ticket `/verify` runs complete, launch one integration-review

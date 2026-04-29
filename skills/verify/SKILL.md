@@ -10,11 +10,11 @@ context: fork
 # Verify PR $ARGUMENTS — six-phase loop with anti-rubber-stamp gate
 
 One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Never merges.**
-Merge is always the human's or the orchestrator's call.
+Merge is always the human's or the raid's call.
 
 ## When to use
 
-- Orchestrator Phase 6 (per-ticket verification before merge).
+- Raid Phase 6 (per-ticket verification before merge).
 - Any time an author wants a full-depth check on a single PR before asking for merge.
 - **Do NOT** use for quick sanity — use `/review` or `/review-pr` directly.
 

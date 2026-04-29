@@ -6,7 +6,7 @@ Usage:
   nightbeat-report.py                  # since last 22:00 local time
   nightbeat-report.py --hours 12       # last 12 hours
   nightbeat-report.py --since 2026-04-25T22:00:00Z
-  nightbeat-report.py --full           # show full orchestrator result text
+  nightbeat-report.py --full           # show full raid result text
 """
 
 import argparse
@@ -181,8 +181,11 @@ def _handle_marker(label: str, line: str, run: BeatRun, section_ref: list) -> No
                 run.pick_status = "picked"
             section_ref[0] = None
 
-    elif label.startswith("orchestrator:"):
-        status = label.removeprefix("orchestrator:").strip()
+    elif label.startswith(("raid:", "orchestrator:")):
+        # Dual-accept for one quarter post-rename (ticket 0045).
+        # TODO: drop the "orchestrator:" prefix after 2026-07-28.
+        prefix = "raid:" if label.startswith("raid:") else "orchestrator:"
+        status = label.removeprefix(prefix).strip()
         if "running ticket" in status:
             section_ref[0] = "oc"
         else:
@@ -286,7 +289,7 @@ def main() -> None:
     parser.add_argument("--since", help="ISO timestamp, e.g. 2026-04-25T22:00:00Z")
     parser.add_argument("--hours", type=int, help="Last N hours")
     parser.add_argument(
-        "--full", action="store_true", help="Show full orchestrator result text"
+        "--full", action="store_true", help="Show full raid result text"
     )
     args = parser.parse_args()
 
@@ -345,11 +348,11 @@ def main() -> None:
             f"{i:>3}{COL}{time_s:>9}{COL}{proj:<24}{COL}{ticket:>6}{COL}{outcome:<8}{COL}{elapsed:>8}{COL}{cost:>7}{COL}{notes}"
         )
 
-    # ── Orchestrator results ─────────────────────────────────────────────────────
+    # ── Raid results ────────────────────────────────────────────────────────────
     oc_runs = [r for r in runs if r.oc_result and r.oc_result.result_text]
     if oc_runs:
         print(f"\n{'═' * 72}")
-        print("ORCHESTRATOR RESULTS")
+        print("RAID RESULTS")
         print(f"{'═' * 72}")
         TRUNC = 1200
         for run in oc_runs:
@@ -381,9 +384,7 @@ def main() -> None:
         if run.hk_status == "timeout":
             issues.append(f"[{ts}] {proj}: housekeeping TIMEOUT")
         if run.oc_status in ("failed", "aborted"):
-            issues.append(
-                f"[{ts}] {proj}/{run.ticket_id or '—'}: orchestrator {run.oc_status}"
-            )
+            issues.append(f"[{ts}] {proj}/{run.ticket_id or '—'}: raid {run.oc_status}")
         if run.pick_status == "timeout":
             issues.append(f"[{ts}] {proj}: pick-ticket TIMEOUT")
         for r in (run.hk_result, run.pick_result, run.oc_result):

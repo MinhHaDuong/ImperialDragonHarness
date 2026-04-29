@@ -40,7 +40,7 @@ Attempt history is read directly from each ticket's `## Attempt log` section.
    - Tickets whose scope won't fit the 50-minute beat window (read body):
      `$ERG sweep-skip tickets/{file} scope-too-large expires:{now+24h}`
    - Tickets whose log contains a `sweep-pick: picked` entry less than 8 h old
-     **and** whose `Status` is still `open` (orchestrator ran but did not close
+     **and** whose `Status` is still `open` (raid ran but did not close
      the ticket — re-picking immediately wastes a beat):
      `$ERG sweep-skip tickets/{file} cooldown-recent-pick expires:{pick-ts+8h}`
 

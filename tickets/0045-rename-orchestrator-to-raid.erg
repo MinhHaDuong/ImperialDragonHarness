@@ -1,18 +1,26 @@
 %erg v1
 Title: Rename /orchestrator skill to /raid
-Status: open
+Status: closed
 Created: 2026-04-28
 Author: claude
 
 --- log ---
 2026-04-28T14:45Z claude created
-
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:b9aa130954c4 expires:2026-04-30T09:18Z
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:a7d71b4c3d53 expires:2026-04-30T09:21Z
+2026-04-29T15:27Z claude note repaired body corruption from erg sweep-skip bug (see follow-up ticket 0060)
+2026-04-29T15:27Z claude claimed
+2026-04-29T15:27Z claude status doing starting-implementation
+2026-04-29T15:50Z claude note skill renamed, scripts updated, parser dual-accepts, snapshot docs annotated, 85 pytest + structural test pass
+2026-04-29T15:50Z claude note commands/gsd/* left untouched — those use "orchestrator" generically for the GSD command's own role, not IDH's metaskill
+2026-04-29T15:50Z claude status closed implementation-done
+2026-04-29T17:50Z claude note merge with main: incorporated origin/main's 09:25 sweep-skip note for chronology; restored body again after second sweep-skip corruption on main
+
 --- body ---
-:25Z claude note sweep-skip: scope-too-large hash:a7d71b4c3d53 expires:2026-04-30T09:21Z
---- body ---
--panorama.md` §1) but the name is generic
+## Context
+
+`/orchestrator` is the lifecycle metaskill of IDH (pattern E in
+`docs/2026-04-28-metaskill-panorama.md` §1) but the name is generic
 software jargon. The Imperial Dragon Harness already themes its
 phases as the Five Claws and its single-cycle wrapper as `/beat`.
 A dragon raids — multi-target, autonomous, time-bounded, returns to
@@ -46,6 +54,7 @@ flight**.
 - `skills/nightbeat-report/SKILL.md`
 - `skills/verify/SKILL.md`, `verify-adherence/SKILL.md`,
   `verify-gate/SKILL.md`
+- `skills/pick-ticket/SKILL.md`
 
 **Documentation:**
 - `README.md` (skill tree)
@@ -58,6 +67,10 @@ flight**.
   New tickets use `/raid`; closed tickets keep their original prose.
 - Existing `nightbeat.log` lines with `orchestrator:` labels —
   see "log-label compatibility" below.
+- `docs/2026-04-28-metaskill-panorama.md` and
+  `docs/20260404-review/03-five-levels.md` are dated panorama
+  snapshots. Add a cross-reference footnote to ticket 0045 rather
+  than rewriting the prose.
 
 ## Actions
 
@@ -91,18 +104,17 @@ flight**.
    regression test that asserts the parser still accepts
    `orchestrator:` labels (compatibility).
 7. Grep-replace `/orchestrator` → `/raid` across the **active**
-   skill bodies (verify*, beat, nightbeat-report). Do NOT touch
-   ticket files.
+   skill bodies (verify*, beat, nightbeat-report, pick-ticket).
+   Do NOT touch ticket files.
 8. Update `README.md` skill tree and `STATE.md` status section.
 9. Update `docs/20260404-review/03-five-levels.md` (factual record
-   about the harness — this one may move to "see also: 0045" rather
-   than rename, since it's a snapshot review).
+   about the harness — add cross-reference to ticket 0045 rather
+   than rename, since it's a dated snapshot review).
 10. Update `commands/gsd/*` references.
 11. Mention the rename in `docs/2026-04-28-metaskill-panorama.md`
     §R3 — that section recommends documenting `/orchestrator` as
-    the lifecycle metaskill. With the rename, the recommendation
-    becomes "document `/raid`" — fold the rename in or leave a
-    cross-reference.
+    the lifecycle metaskill. Leave the snapshot prose intact and
+    add a cross-reference to ticket 0045.
 
 ## Test
 

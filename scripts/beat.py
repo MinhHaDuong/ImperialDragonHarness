@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""beat.py — autonomous project maintenance orchestrator.
+"""beat.py — autonomous project maintenance loop.
 
 Replaces beat.sh + skills/beat/SKILL.md.
-Control flow: [housekeeping] → pick-ticket → [orchestrator]
+Control flow: [housekeeping] → pick-ticket → [raid]
 
 Environment:
   BEAT_DRY_RUN=1   Print intended sequence without invoking Claude.
@@ -43,14 +43,14 @@ HOUSEKEEPING_INTERVAL_S: int = 12 * 3600
 HOUSEKEEPING_SAFETY_FLOOR_S: int = 24 * 3600
 HOUSEKEEPING_TIMEOUT_S: int = 10 * 60
 PICK_TICKET_TIMEOUT_S: int = 8 * 60
-ORCHESTRATOR_TIMEOUT_S: int = 30 * 60
+RAID_TIMEOUT_S: int = 30 * 60
 CRASH_RECOVERY_WINDOW_S: int = 55 * 60
 LOG_RETAIN_COUNT: int = 60
 TIMEOUT_EXIT_CODE: int = 124  # matches bash `timeout` convention
 
 BUDGET_HOUSEKEEPING: float = 0.75
 BUDGET_PICK_TICKET: float = 0.75
-BUDGET_ORCHESTRATOR: float = 5.00
+BUDGET_RAID: float = 5.00
 
 MODEL_SONNET: str = "sonnet"
 MODEL_HAIKU: str = "claude-haiku-4-5-20251001"
@@ -398,7 +398,7 @@ def _claude_argv(
     ]
     if not project_scoped:
         # Harness context for skills that need workflow awareness (housekeeping).
-        # Omitted for pick-ticket / orchestrator to prevent cross-project ticket leakage.
+        # Omitted for pick-ticket / raid to prevent cross-project ticket leakage.
         argv += ["--add-dir", str(HARNESS_DIR)]
     argv += ["--add-dir", ".", "-p", skill]
     return argv
@@ -519,8 +519,8 @@ def _pick_project() -> tuple[int, ProjectConfig]:
     return count, PROJECTS[idx]
 
 
-def _orchestrate(project: ProjectConfig) -> tuple[str, str | None]:
-    """Run the pick→orchestrate sequence; return (outcome, ticket_id)."""
+def _raid(project: ProjectConfig) -> tuple[str, str | None]:
+    """Run the pick→raid sequence; return (outcome, ticket_id)."""
     ticket_id: str | None = None
     path = project.path
 
@@ -568,12 +568,12 @@ def _orchestrate(project: ProjectConfig) -> tuple[str, str | None]:
 
     _log(f"=== pick-ticket: picked {ticket_id} {_now_iso()} ===")
 
-    # Orchestrate
-    _log(f"=== orchestrator: running ticket {ticket_id} {_now_iso()} ===")
+    # Raid
+    _log(f"=== raid: running ticket {ticket_id} {_now_iso()} ===")
     oc_rc, _ = run_skill(
-        f"/orchestrator {ticket_id}\n\nRunning on: {hostname}",
-        budget=BUDGET_ORCHESTRATOR,
-        timeout_s=ORCHESTRATOR_TIMEOUT_S,
+        f"/raid {ticket_id}\n\nRunning on: {hostname}",
+        budget=BUDGET_RAID,
+        timeout_s=RAID_TIMEOUT_S,
         cwd=path,
         project_scoped=True,
     )
@@ -583,10 +583,10 @@ def _orchestrate(project: ProjectConfig) -> tuple[str, str | None]:
     elif oc_rc != 0:
         outcome = "failed"
     else:
-        # v1 simplification: rc=0 → "done"; orchestrator may write finer-grained
+        # v1 simplification: rc=0 → "done"; raid may write finer-grained
         # outcomes into beat-log itself, but we don't parse those here.
         outcome = "done"
-        # Warn if orchestrator exited cleanly but left the ticket open (double-pick risk).
+        # Warn if raid exited cleanly but left the ticket open (double-pick risk).
         ticket_files = list(path.glob(f"tickets/{ticket_id}-*.erg"))
         if ticket_files:
             status = next(
@@ -599,11 +599,11 @@ def _orchestrate(project: ProjectConfig) -> tuple[str, str | None]:
             )
             if status and status != "closed":
                 _log(
-                    f"=== warning: orchestrator done but ticket {ticket_id}"
+                    f"=== warning: raid done but ticket {ticket_id}"
                     f" Status: {status} (not closed) — double-pick risk ==="
                 )
 
-    _log(f"=== orchestrator: outcome={outcome} {_now_iso()} ===")
+    _log(f"=== raid: outcome={outcome} {_now_iso()} ===")
     return outcome, ticket_id
 
 
@@ -681,7 +681,7 @@ def main() -> None:
     outcome = "idle"
     ticket_id: str | None = None
     try:
-        outcome, ticket_id = _orchestrate(project)
+        outcome, ticket_id = _raid(project)
     except KeyboardInterrupt:
         outcome = "aborted"
 

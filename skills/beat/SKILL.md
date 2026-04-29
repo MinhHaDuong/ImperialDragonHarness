@@ -1,6 +1,6 @@
 ---
 name: beat
-description: Trigger one beat cycle on the current project (housekeeping → pick-ticket → orchestrator).
+description: Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid).
 user-invocable: true
 argument-hint:
 ---
