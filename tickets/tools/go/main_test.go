@@ -481,3 +481,62 @@ func TestAppendToTicketPreservesBody(t *testing.T) {
 		t.Errorf("new body section missing")
 	}
 }
+
+// TestValidateRejectsDuplicateBodySeparator guards rule 11: a ticket with
+// more than one `--- body ---` separator (the fingerprint of the
+// cmdSweepSkip aliasing bug) must fail validation rather than ship.
+func TestValidateRejectsDuplicateBodySeparator(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0001-dup.erg")
+	content := "%erg v1\n" +
+		"Title: dup body sep\n" +
+		"Status: open\n" +
+		"Created: 2026-04-29\n" +
+		"Author: test\n" +
+		"\n--- log ---\n" +
+		"2026-04-29T00:00Z test created\n" +
+		"--- body ---\n" +
+		"first body line\n" +
+		"--- body ---\n" +
+		"after the duplicate separator\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	exit, out := captureValidate([]string{path})
+	if exit == 0 {
+		t.Fatalf("expected validate to fail, got exit 0; output: %s", out)
+	}
+	if !strings.Contains(out, "--- body ---") || !strings.Contains(out, "expected 1") {
+		t.Errorf("error message missing duplicate-separator detail: %s", out)
+	}
+}
+
+// TestValidateRejectsDuplicateLogSeparator covers the symmetric case for
+// the `--- log ---` separator.
+func TestValidateRejectsDuplicateLogSeparator(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0001-duplog.erg")
+	content := "%erg v1\n" +
+		"Title: dup log sep\n" +
+		"Status: open\n" +
+		"Created: 2026-04-29\n" +
+		"Author: test\n" +
+		"\n--- log ---\n" +
+		"2026-04-29T00:00Z test created\n" +
+		"--- log ---\n" +
+		"2026-04-29T00:01Z test note duplicate\n" +
+		"--- body ---\n" +
+		"body\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	exit, out := captureValidate([]string{path})
+	if exit == 0 {
+		t.Fatalf("expected validate to fail, got exit 0; output: %s", out)
+	}
+	if !strings.Contains(out, "--- log ---") || !strings.Contains(out, "expected 1") {
+		t.Errorf("error message missing duplicate-separator detail: %s", out)
+	}
+}
