@@ -1,6 +1,6 @@
 %erg v1
 Title: Remove or replace git fsck --unreachable in housekeeping
-Status: open
+Status: closed
 Created: 2026-04-27
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-27T12:30Z claude created
 
 2026-04-27T21:04Z claude note sweep-pick: picked hash:41f20e1ae05b scope:grep housekeeping skill, edit 1 line risk:low
+2026-04-29T00:00Z claude status closed — already-done: git fsck --unreachable not present in housekeeping skill
 --- body ---
 ## Problem
 
