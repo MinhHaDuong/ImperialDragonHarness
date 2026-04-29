@@ -1,8 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Edit(tickets/*.erg)",
-      "Write(tickets/*.erg)",
+      "Edit(/.claude/tickets/*.erg)",
+      "Write(/.claude/tickets/*.erg)",
+      "Edit(*/tickets/*.erg)",
+      "Write(*/tickets/*.erg)",
       "Bash(git add tickets/*.erg)",
       "Bash(git commit*)",
       "Bash(rm -f *ticket-wip*)"
