@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-29T18:00Z
+Last updated: 2026-04-29T20:00Z
 
 ## North star
 
@@ -18,7 +18,7 @@ Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
-**erg sweep cache**: `erg ready --json` returns `cache`/`hash`/`scope`/`risk` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 62 pytest + 24 Go tests, all green.
+**erg sweep cache**: `erg ready --json` returns `triage`/`hash`/`scope`/`risk` per ticket (renamed from `cache`/`assessment`). `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 82 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
 **git-erg**: pre-commit hooks installed in all four projects. `erg` binary present in all four. Added as nightbeat target (ticket 0009-add-ci open).
 
@@ -38,11 +38,13 @@ Level 4 (Hooks) + orchestrator + `/verify` loop + git-erg tickets + bibliography
 - 0044 — interactive session observer
 - 0045 — rename /orchestrator to /raid
 - 0047 — auto early context compaction in beat and raid
+- 0051 — beat should try another project when current one is idle or frozen
 - 0057 — route .erg mutations through erg binary (blocked by erg binary exposing mutation commands)
 - 0058 — rewrite README with Imperial Dragon voice (remove GSD, new opener)
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
+- 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
 
 ## Blockers
 
