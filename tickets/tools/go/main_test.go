@@ -382,3 +382,161 @@ func TestCmdValidateFileArgValidRefNoFalsePositive(t *testing.T) {
 		t.Errorf("expected exit 0 (valid ref), got %d; output: %s", exit, out)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// sweep-skip / appendToTicket: body must not be mutated by slice aliasing
+// ---------------------------------------------------------------------------
+
+// captureSweepSkip runs cmdSweepSkip(args) and returns exit code + stdout.
+func captureSweepSkip(args []string) (int, string) {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	exit := cmdSweepSkip(args)
+	w.Close()
+	os.Stdout = old
+	out, _ := io.ReadAll(r)
+	return exit, string(out)
+}
+
+// TestSweepSkipPreservesBody guards against the slice-aliasing bug in
+// cmdSweepSkip where `beforeBody := raw[:idx]` shared the backing array
+// with the bytes from os.ReadFile and a subsequent append corrupted the
+// body. A correct implementation leaves the body byte-identical and
+// keeps exactly one `--- body ---` separator.
+func TestSweepSkipPreservesBody(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0001-roundtrip.erg")
+	body := "## Context\n\nThis body must survive sweep-skip without a single byte changed.\n" +
+		"It is long enough that any aliasing append from cmdSweepSkip would visibly\n" +
+		"overwrite the start of the body section.\n\n## Actions\n1. Round-trip.\n"
+	original := minimalErg("0001", "roundtrip", nil)
+	// Replace the placeholder body with our long body.
+	original = strings.Replace(original, "Test body.\n", body, 1)
+	if err := os.WriteFile(path, []byte(original), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	exit, out := captureSweepSkip([]string{path, "scope-too-large", "expires:2026-12-31T00:00Z"})
+	if exit != 0 {
+		t.Fatalf("sweep-skip exit %d, stdout=%q", exit, out)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotStr := string(got)
+
+	sepCount := strings.Count(gotStr, "\n--- body ---\n")
+	if sepCount != 1 {
+		t.Errorf("expected exactly one '--- body ---' separator, got %d", sepCount)
+	}
+
+	idx := strings.Index(gotStr, "\n--- body ---\n")
+	if idx < 0 {
+		t.Fatal("no '--- body ---' separator found")
+	}
+	gotBody := gotStr[idx+len("\n--- body ---\n"):]
+	if gotBody != body {
+		t.Errorf("body corrupted by sweep-skip\nwant: %q\n got: %q", body, gotBody)
+	}
+}
+
+// TestAppendToTicketPreservesBody confirms appendToTicket (used by
+// cmdSweepWrite) does not corrupt body content via slice aliasing.
+func TestAppendToTicketPreservesBody(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0002-append.erg")
+	body := "## Context\n\nAppendToTicket must leave existing body bytes intact and\n" +
+		"only add the new section at the tail.\n"
+	original := minimalErg("0002", "append", nil)
+	original = strings.Replace(original, "Test body.\n", body, 1)
+	if err := os.WriteFile(path, []byte(original), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	logLine := "2026-04-29T10:00Z test note sweep-pick: picked hash:abcdef012345 scope:S risk:R"
+	addition := "## Picker assessment 2026-04-29T10:00Z\n**Decision:** picked\n"
+	if err := appendToTicket(path, logLine, addition); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotStr := string(got)
+
+	if c := strings.Count(gotStr, "\n--- body ---\n"); c != 1 {
+		t.Errorf("expected exactly one '--- body ---' separator, got %d", c)
+	}
+	if !strings.Contains(gotStr, body) {
+		t.Errorf("original body content missing from result:\n%s", gotStr)
+	}
+	if !strings.Contains(gotStr, logLine) {
+		t.Errorf("new log line missing")
+	}
+	if !strings.Contains(gotStr, addition) {
+		t.Errorf("new body section missing")
+	}
+}
+
+// TestValidateRejectsDuplicateBodySeparator guards rule 11: a ticket with
+// more than one `--- body ---` separator (the fingerprint of the
+// cmdSweepSkip aliasing bug) must fail validation rather than ship.
+func TestValidateRejectsDuplicateBodySeparator(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0001-dup.erg")
+	content := "%erg v1\n" +
+		"Title: dup body sep\n" +
+		"Status: open\n" +
+		"Created: 2026-04-29\n" +
+		"Author: test\n" +
+		"\n--- log ---\n" +
+		"2026-04-29T00:00Z test created\n" +
+		"--- body ---\n" +
+		"first body line\n" +
+		"--- body ---\n" +
+		"after the duplicate separator\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	exit, out := captureValidate([]string{path})
+	if exit == 0 {
+		t.Fatalf("expected validate to fail, got exit 0; output: %s", out)
+	}
+	if !strings.Contains(out, "--- body ---") || !strings.Contains(out, "expected 1") {
+		t.Errorf("error message missing duplicate-separator detail: %s", out)
+	}
+}
+
+// TestValidateRejectsDuplicateLogSeparator covers the symmetric case for
+// the `--- log ---` separator.
+func TestValidateRejectsDuplicateLogSeparator(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "0001-duplog.erg")
+	content := "%erg v1\n" +
+		"Title: dup log sep\n" +
+		"Status: open\n" +
+		"Created: 2026-04-29\n" +
+		"Author: test\n" +
+		"\n--- log ---\n" +
+		"2026-04-29T00:00Z test created\n" +
+		"--- log ---\n" +
+		"2026-04-29T00:01Z test note duplicate\n" +
+		"--- body ---\n" +
+		"body\n"
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	exit, out := captureValidate([]string{path})
+	if exit == 0 {
+		t.Fatalf("expected validate to fail, got exit 0; output: %s", out)
+	}
+	if !strings.Contains(out, "--- log ---") || !strings.Contains(out, "expected 1") {
+		t.Errorf("error message missing duplicate-separator detail: %s", out)
+	}
+}

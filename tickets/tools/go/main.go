@@ -39,6 +39,10 @@ type Erg struct {
 	HasMagic bool
 	HasLog   bool
 	HasBody  bool
+	// Separator occurrence counts. A well-formed ticket has exactly 1 of each;
+	// 2+ body separators is the fingerprint of the cmdSweepSkip aliasing bug.
+	LogSepCount  int
+	BodySepCount int
 }
 
 func (t *Erg) Title() string {
@@ -133,6 +137,8 @@ func parseErg(path string) Erg {
 	hasMagic := false
 	hasLog := false
 	hasBody := false
+	logSepCount := 0
+	bodySepCount := 0
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
@@ -152,15 +158,21 @@ func parseErg(path string) Erg {
 			// Fall through to header parsing
 		}
 
-		if !hasBody && trimmed == "--- log ---" {
-			section = "log"
-			hasLog = true
-			continue
+		if trimmed == "--- log ---" {
+			logSepCount++
+			if !hasBody {
+				section = "log"
+				hasLog = true
+				continue
+			}
 		}
-		if !hasBody && trimmed == "--- body ---" {
-			section = "body"
-			hasBody = true
-			continue
+		if trimmed == "--- body ---" {
+			bodySepCount++
+			if !hasBody {
+				section = "body"
+				hasBody = true
+				continue
+			}
 		}
 
 		switch section {
@@ -184,13 +196,15 @@ func parseErg(path string) Erg {
 	}
 
 	return Erg{
-		Path:     path,
-		Headers:  headers,
-		LogLines: logLines,
-		Body:     strings.Join(bodyLines, "\n"),
-		HasMagic: hasMagic,
-		HasLog:   hasLog,
-		HasBody:  hasBody,
+		Path:         path,
+		Headers:      headers,
+		LogLines:     logLines,
+		Body:         strings.Join(bodyLines, "\n"),
+		HasMagic:     hasMagic,
+		HasLog:       hasLog,
+		HasBody:      hasBody,
+		LogSepCount:  logSepCount,
+		BodySepCount: bodySepCount,
 	}
 }
 
@@ -329,12 +343,16 @@ func validateErg(t *Erg, allIDs map[string]bool) []string {
 		}
 	}
 
-	// Rule 11: both separators present
+	// Rule 11: each separator appears exactly once
 	if !t.HasLog {
 		errors = append(errors, fmt.Sprintf("%s: missing '--- log ---' separator", name))
+	} else if t.LogSepCount > 1 {
+		errors = append(errors, fmt.Sprintf("%s: '--- log ---' separator appears %d times (expected 1)", name, t.LogSepCount))
 	}
 	if !t.HasBody {
 		errors = append(errors, fmt.Sprintf("%s: missing '--- body ---' separator", name))
+	} else if t.BodySepCount > 1 {
+		errors = append(errors, fmt.Sprintf("%s: '--- body ---' separator appears %d times (expected 1)", name, t.BodySepCount))
 	}
 
 	return errors
@@ -1300,13 +1318,20 @@ func cmdSweepSkip(args []string) int {
 		fmt.Fprintf(os.Stderr, "error: %s has no --- body --- separator\n", path)
 		return 1
 	}
-	beforeBody := raw[:idx]
-	if !bytes.HasSuffix(beforeBody, []byte("\n")) {
-		beforeBody = append(beforeBody, '\n')
+	// Build result in a fresh buffer. Do NOT take a sub-slice of raw and
+	// append into it: os.ReadFile returns a slice with cap > len, so
+	// `raw[:idx]` shares the backing array and a subsequent append
+	// silently overwrites the body — corrupting it on disk.
+	logAppend := []byte(logLine + "\n")
+	bodyContent := raw[idx+len(sep):]
+	result := make([]byte, 0, idx+1+len(logAppend)+len(sep)+len(bodyContent))
+	result = append(result, raw[:idx]...)
+	if !bytes.HasSuffix(result, []byte("\n")) {
+		result = append(result, '\n')
 	}
-	result := append(beforeBody, []byte(logLine+"\n")...)
+	result = append(result, logAppend...)
 	result = append(result, sep...)
-	result = append(result, raw[idx+len(sep):]...)
+	result = append(result, bodyContent...)
 	if err := os.WriteFile(path, result, 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		return 1
