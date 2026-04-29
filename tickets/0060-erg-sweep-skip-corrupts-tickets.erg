@@ -1,6 +1,6 @@
 %erg v1
 Title: erg sweep-skip corrupts ticket bodies via slice aliasing
-Status: doing
+Status: closed
 Created: 2026-04-29
 Author: claude
 
@@ -8,6 +8,7 @@ Author: claude
 2026-04-29T15:55Z claude created
 2026-04-29T18:54Z claude claimed
 2026-04-29T18:54Z claude status doing starting-implementation
+2026-04-29T19:05Z claude status closed all-exit-criteria-met
 
 --- body ---
 ## Context
