@@ -124,7 +124,10 @@ class TestHousekeepingNeeded:
     def test_safety_floor_always_runs(self, tmp_project):
         very_old = f"{int(time.time()) - 25 * 3600} {self._SHA}"
         with patch("beat.subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(stdout=very_old + "\n", returncode=0)
+            mock_run.side_effect = [
+                MagicMock(stdout=very_old + "\n", returncode=0),  # last hk commit
+                MagicMock(stdout="abc1234 recent work\n", returncode=0),  # not frozen
+            ]
             assert beat.housekeeping_needed(tmp_project) is True
 
     def test_corrupted_timestamp_returns_true(self, tmp_project):
