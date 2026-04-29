@@ -1,0 +1,29 @@
+%erg v1
+Title: Restore Five-Claws phase announcement at session start
+Status: pending
+Created: 2026-04-29
+Author: claude
+
+--- log ---
+2026-04-29T00:00Z claude created
+
+--- body ---
+## Context
+
+`workflow.md` originally announced the current Dragon Dreaming phase at session
+start (`[→ Imagine]`, `[→ Plan]`, `[→ Execute]`, `[→ Verify]`). This was removed
+in commit `be15b29` ("fix: resolve bugs and stale references") as collateral damage
+when the worktree hook plumbing changed. The phase column was dropped from the
+context→worktree table without deliberate intent.
+
+The feature was lightweight: one label emitted after `EnterWorktree`, inferred from
+conversation context (fresh explore → Imagine, ticket ref → Plan, active branch →
+Execute, PR review → Verify). It gave the user an orientation signal at session open.
+
+## Question
+
+Is the phase signal worth restoring? It costs one line of model output per session.
+Benefit: user immediately sees which claw they're in. Risk: model may mis-infer the
+phase, creating noise rather than signal.
+
+Alternative: emit it only on explicit `/perch`, not automatically at session start.

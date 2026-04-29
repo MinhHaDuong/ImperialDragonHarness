@@ -1,0 +1,31 @@
+%erg v1
+Title: Discuss milestone/epic layer above tickets
+Status: pending
+Created: 2026-04-29
+Author: claude
+
+--- log ---
+2026-04-29T00:00Z claude created
+
+--- body ---
+## Context
+
+The ticket system is flat. GSD has a milestone layer (named goal + done condition
+above a group of tickets). GitHub has milestones (time-boxes) and fakes epics with
+labels or meta-issues. Jira has Epics natively.
+
+Two possible surfaces for IDH:
+1. **IDH side** — a `Milestone:` or `Epic:` grouping concept above tickets, visible
+   in STATE.md and pick-ticket.
+2. **git-erg side** — an `Epic:` header in `.erg` format (would need `%erg v2`
+   since v1 rejects unknown headers). `erg ready --epic E` and `erg sweep` scoped
+   to one epic.
+
+## Question
+
+Does IDH need a layer above tickets? Current practice: STATE.md groups tickets
+informally under headings. Is that sufficient, or does the flat structure cause
+real friction at scale?
+
+Develop by usage: wait until a project has enough tickets that flat becomes painful
+before designing the hierarchy.
