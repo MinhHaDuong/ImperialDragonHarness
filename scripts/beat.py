@@ -486,9 +486,8 @@ def run_skill(
 
 
 def _setup_env() -> None:
-    erg_dir = HARNESS_DIR / "tickets" / "tools" / "go"
     os.environ["PATH"] = (
-        f"{Path.home() / '.local' / 'bin'}:{erg_dir}:/usr/local/bin:/usr/bin:/bin"
+        f"{Path.home() / '.local' / 'bin'}:/usr/local/bin:/usr/bin:/bin"
     )
     for var, val in {
         "GIT_AUTHOR_NAME": "claude-agent",
