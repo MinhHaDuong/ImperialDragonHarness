@@ -1,0 +1,89 @@
+%erg v1
+Title: Enforce Truth in Ticket Open Status across the beat pipeline
+Status: open
+Created: 2026-04-29
+Author: claude
+
+--- log ---
+2026-04-29T09:00Z claude created
+
+--- body ---
+## Context
+
+The beat pipeline assumes `Status: open` means the work is not yet done.
+This invariant breaks when a ticket's acceptance criteria are already met
+in the codebase — either because the work was done as a side effect of
+another ticket, or because the ticket described a condition that never
+existed (e.g., 0039: `git fsck --unreachable` was already absent).
+
+When the invariant breaks, pick-ticket keeps selecting the ticket on every
+beat. Each false pick burns ~$5 of orchestrator budget and a 30-minute slot.
+Ticket 0039 was picked three nights in a row before being caught manually.
+
+The fix must span three tiers because each has a different latency:
+
+**Tier 1 — housekeeping** (every 12h, conditional): first line of defense.
+Closes already-done tickets during the hygiene pass, before pick-ticket runs.
+Cannot be the only gate: up to 12h stale, so pick-ticket may visit a
+falsely-open ticket 2–3 times within the gap.
+
+**Tier 2 — pick-ticket** (every beat): lightweight exit-criteria check during
+candidate assessment. For `cache:miss` tickets (body changed) or tickets
+where recent commits touched relevant files — a cheap grep is sufficient
+for most exit criteria. Emit `CLOSED: <id>` (new signal) and loop back to
+pick again. No orchestrator budget burned.
+
+**Tier 3 — start-ticket** (per execution): last resort, already implemented
+(2026-04-29). After reading the ticket and before creating any branch, verify
+exit criteria. If met, call `/ticket-close <id> already-done` and stop.
+Always load-bearing regardless of upper tiers.
+
+### Cache interaction
+
+The `erg` cache hashes only the ticket body. A `cache:hit` means the ticket
+text is unchanged — it says nothing about whether the code it describes has
+been implemented. Housekeeping and pick-ticket therefore need a second signal:
+`git log --since=<last-check>` on files relevant to the ticket. Recent commits
+on those files → re-verify exit criteria even for `cache:hit` tickets.
+
+Housekeeping can use the same log-line cache pattern as sweep:
+```
+{ts} claude note housekeeping-check: exit-criteria-met hash:{bodyhash}
+```
+Body hash stable → skip re-check. Body or relevant files changed → re-check.
+
+## Actions
+
+1. **Housekeeping tier**: add an "open ticket audit" phase to the housekeeping
+   skill. For each open ticket: if body `cache:miss` OR recent commits touch
+   relevant files → grep/check exit criteria → close if met, write
+   `housekeeping-check:` log line with body hash either way.
+
+2. **Pick-ticket tier**: during candidate assessment, for `cache:miss` tickets
+   and tickets with recent relevant commits, check trivially-verifiable exit
+   criteria (grep-based). If met, call `/ticket-close <id> already-done`,
+   write `sweep-skip` log line, and exclude from this run. Emit `CLOSED: <id>`
+   to stdout so beat.py can loop.
+
+3. **beat.py**: handle `CLOSED: <id>` lines from pick-ticket output — loop
+   back and pick again rather than proceeding to orchestrator with a stale pick.
+
+4. **Tier 3** (start-ticket): already in place as of 2026-04-29. No further
+   action needed; it remains the safety net.
+
+## Test
+
+Simulate the 0039 scenario: create an open ticket whose exit criteria are
+"string X does not appear in file F", ensure F does not contain X, run
+pick-ticket → verify ticket is closed and `IDLE` or a different ticket is
+returned rather than the pre-solved one.
+
+## Exit criteria
+
+- An open ticket whose exit criteria are already met is closed by housekeeping
+  on the next run, without being picked by pick-ticket
+- If housekeeping is stale (< 12h), pick-ticket closes the ticket and loops
+  to pick a genuine candidate — no orchestrator invocation for a pre-solved ticket
+- start-ticket remains as final safety net (no regression from 2026-04-29 fix)
+- beat-log shows no `outcome: done` with `branch: null` on a ticket that was
+  already done at pick time
