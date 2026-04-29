@@ -31,3 +31,7 @@ tickets/tools/go/*.test
 !settings.template.json
 !tests/
 !tests/**
+
+# Python build artefacts inside whitelisted dirs
+**/__pycache__/
+*.pyc
