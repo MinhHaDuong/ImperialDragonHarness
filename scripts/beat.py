@@ -104,7 +104,7 @@ _BUILTIN_PROJECTS: list[ProjectConfig] = [
     ProjectConfig(
         path=HARNESS_DIR,
         budget_housekeeping=0.40,
-        budget_pick_ticket=0.50,
+        budget_pick_ticket=0.75,
     ),
 ]
 
@@ -486,8 +486,9 @@ def run_skill(
 
 
 def _setup_env() -> None:
+    erg_dir = HARNESS_DIR / "tickets" / "tools" / "go"
     os.environ["PATH"] = (
-        f"{Path.home() / '.local' / 'bin'}:/usr/local/bin:/usr/bin:/bin"
+        f"{Path.home() / '.local' / 'bin'}:{erg_dir}:/usr/local/bin:/usr/bin:/bin"
     )
     for var, val in {
         "GIT_AUTHOR_NAME": "claude-agent",
