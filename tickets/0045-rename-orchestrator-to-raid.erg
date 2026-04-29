@@ -7,12 +7,14 @@ Author: claude
 --- log ---
 2026-04-28T14:45Z claude created
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:b9aa130954c4 expires:2026-04-30T09:18Z
-2026-04-29T15:27Z claude note repaired body corruption from erg sweep-skip bug (see follow-up ticket)
+2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:a7d71b4c3d53 expires:2026-04-30T09:21Z
+2026-04-29T15:27Z claude note repaired body corruption from erg sweep-skip bug (see follow-up ticket 0060)
 2026-04-29T15:27Z claude claimed
 2026-04-29T15:27Z claude status doing starting-implementation
 2026-04-29T15:50Z claude note skill renamed, scripts updated, parser dual-accepts, snapshot docs annotated, 85 pytest + structural test pass
 2026-04-29T15:50Z claude note commands/gsd/* left untouched — those use "orchestrator" generically for the GSD command's own role, not IDH's metaskill
 2026-04-29T15:50Z claude status closed implementation-done
+2026-04-29T17:50Z claude note merge with main: incorporated origin/main's 09:25 sweep-skip note for chronology; restored body again after second sweep-skip corruption on main
 
 --- body ---
 ## Context

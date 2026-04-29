@@ -1,0 +1,79 @@
+%erg v1
+Title: Simplify pick-ticket skill to delegate mechanical steps to erg pick
+Status: open
+Created: 2026-04-29
+Blocked-by: git-erg/0008
+Author: claude
+
+--- log ---
+2026-04-29T11:20Z claude created
+
+--- body ---
+## Context
+
+The `pick-ticket` skill currently implements mechanical exclusion rules
+(status tags, cooldown checks, 3-strikes) as LLM steps — reading ticket
+bodies one by one and calling `erg sweep-skip`/`erg sweep-write` inline.
+
+Once git-erg/0008 ships `erg pick --json` and `erg pick-record`, all the
+mechanical work moves to the binary. The LLM's only remaining job is the
+one step that genuinely requires judgment: ranking the shortlisted candidates
+by scope fit and risk, then recording the winner.
+
+The current N-sequential-Read anti-pattern (one `Read` per untriaged ticket)
+disappears because the binary returns all candidate bodies in a single JSON
+response.
+
+## Actions
+
+1. Replace Steps 1–3 of `skills/pick-ticket/SKILL.md` with:
+   ```bash
+   $ERG pick --json tickets/
+   ```
+   If `"candidates": []`, output `IDLE: no eligible tickets` and stop.
+
+2. For each `untriaged` candidate, read its `body` from the JSON and
+   apply the judgment-based exclusion: if scope won't fit the 50-minute
+   beat window, exclude it (do not call `pick-record` for it — the binary
+   will handle the `scope-too-large` cache entry on the next `erg pick`
+   call once `pick-record` writes the triage).
+
+3. Rank remaining candidates:
+   - `fix-tests` slug first
+   - Then by lowest risk (few files, docs/config/tests over core logic,
+     no external dependencies)
+   - For candidates with a `triage` object, use its stored `scope`/`risk`/`reason`
+     directly — no re-triage needed
+
+4. For the winner and each runner-up, call:
+   ```bash
+   $ERG pick-record <id> <picked|not-picked> "<scope>" "<risk>" "<reason>"
+   ```
+   The binary writes the triage to the ticket log. Do not edit `.erg`
+   files directly.
+
+5. Remove `erg sweep-skip` / `erg sweep-write` / 3-strikes prose from the
+   skill — those now live in the binary.
+
+6. Commit the updated skill on main.
+
+## Test
+
+Run `pick-ticket` against the local tickets/ dir after git-erg/0008 is
+installed. Verify:
+- Output is `PICK: NNNN` or `IDLE: no eligible tickets`
+- `grep "sweep-pick: picked"` appears in the winner's log with scope/risk
+- `grep "sweep-pick: not-picked"` appears in runner-up logs
+- No sequential `Read` tool calls for individual ticket bodies
+- A second run over unchanged tickets returns a `triage` object and skips re-ranking
+
+## Exit criteria
+
+- `skills/pick-ticket/SKILL.md` reduced to: resolve `$ERG`, call
+  `erg pick --json`, apply scope-too-large judgment, rank by fix-tests
+  then risk, call `erg pick-record` for winner and runners-up
+- Skill under 40 lines of prose
+- All mechanical exclusion steps removed from the skill
+- Triage round-trip verified: pick-record writes triage, next erg pick
+  returns it as a `triage` object
+- Tested against live tickets dir with git-erg/0008 installed

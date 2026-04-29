@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-29T00:00Z
+Last updated: 2026-04-29T20:00Z
 
 ## North star
 
@@ -14,13 +14,13 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires hourly 22:00–06:00 weeknights, all day weekends. `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage.
 
-**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, cadens, harness at $0.40/$0.50; Climate_finance, fuzzy-corpus at $0.75/$0.75.
+**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, cadens, harness, chemin-de-voix, git-erg at $0.40/$0.50; Climate_finance, fuzzy-corpus at $0.75/$0.75. 7 targets total (`scripts/projects.json`).
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
-**erg sweep cache**: `erg ready --json` returns `cache`/`hash`/`scope`/`risk` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 62 pytest + 24 Go tests, all green.
+**erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 82 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
-**git-erg**: pre-commit hooks installed in all four projects. `erg` binary present in all four.
+**git-erg**: pre-commit hooks installed in all four projects. `erg` binary present in all four. Added as nightbeat target (ticket 0009-add-ci open).
 
 ## Open tickets
 
@@ -38,12 +38,14 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0044 — interactive session observer
 - 0046 — extract flying-projects list into projects.json
 - 0047 — auto early context compaction in beat and raid
+- 0051 — beat should try another project when current one is idle or frozen
 - 0057 — route .erg mutations through erg binary (blocked by erg binary exposing mutation commands)
 - 0058 — rewrite README with Imperial Dragon voice (remove GSD, new opener)
 - 0060 — fix erg sweep-skip slice-aliasing bug + repair 8 corrupted tickets
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
+- 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
 
 ## Blockers
 
