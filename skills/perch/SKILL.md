@@ -7,6 +7,8 @@ argument-hint:
 
 # Perch — mid-session position check
 
+Read-only report from conversation context. Run at any point to re-orient.
+
 ## Steps
 
 1. **Report: Done.** What is concretely finished in this conversation:
@@ -16,18 +18,18 @@ argument-hint:
    - Decisions reached.
    Items only. No prose.
 
-3. **Report: Open.** Raised but not finished:
+2. **Report: Open.** Raised but not finished:
    - Work mentioned but not started or deferred.
    - Issues discovered but not fixed.
    - Docs or state noted as stale.
    - Questions asked and not answered.
    Items only. Be specific — a vague "follow-up needed" is useless.
 
-4. **Report: Drift** (only if present). Topics that diverged from the original goal. Omit section entirely if there was no drift.
+3. **Report: Drift** (only if present). Topics that diverged from the original goal. Omit section entirely if there was no drift.
 
-5. **One-line stance.** Where things stand and what the natural next move is.
+4. **One-line stance.** Where things stand and what the natural next move is.
 
-6. **Assess clear-readiness.** After the report, silently evaluate:
+5. **Assess clear-readiness.** Silently evaluate:
    - Is this a natural reset point? (task complete, decision made, milestone reached)
    - Are Open items light enough to close out quickly? (ticket, memorize, or commit each one)
    - Is there uncommitted work that needs a commit first?
