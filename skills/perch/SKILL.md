@@ -1,39 +1,42 @@
 ---
 name: perch
-description: Mid-session orientation — summarize what's done, surface unresolved points. Not a session wrap-up; no side effects.
+description: Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right.
 user-invocable: true
 argument-hint:
 ---
 
 # Perch — mid-session position check
 
-A fast, read-only report. Run at any point to re-orient. No files written, no tickets opened, no branches pushed.
-
 ## Steps
 
-1. **Ground in git.** Run `git log --oneline --since="6am" 2>/dev/null || git log --oneline -10`. List commits made in this session.
+1. **Ground in git.** Run `git log --oneline --since="6am" 2>/dev/null || git log --oneline -10`. Note uncommitted changes (`git status --short`).
 
 2. **Report: Done.** What is concretely finished in this conversation:
-   - Files written or edited (from conversation context).
+   - Files written or edited.
    - Commits and PRs merged.
    - Tickets closed.
    - Decisions reached.
    Items only. No prose.
 
 3. **Report: Open.** Raised but not finished:
-   - Work mentioned but not started or deferred to "next session".
+   - Work mentioned but not started or deferred.
    - Issues discovered but not fixed.
    - Docs or state noted as stale.
    - Questions asked and not answered.
    Items only. Be specific — a vague "follow-up needed" is useless.
 
-4. **Report: Drift** (only if present). Topics that diverged from the original goal:
-   - Scope creep or mid-session pivots.
-   - Side-quests that consumed time.
-   - New tickets or tickets opened during the session that weren't the original target.
-   Omit this section entirely if there was no drift.
+4. **Report: Drift** (only if present). Topics that diverged from the original goal. Omit section entirely if there was no drift.
 
-5. **One-line stance.** End with a single sentence: where things stand right now and what the natural next move is.
+5. **One-line stance.** Where things stand and what the natural next move is.
+
+6. **Assess clear-readiness.** After the report, silently evaluate:
+   - Is this a natural reset point? (task complete, decision made, milestone reached)
+   - Are Open items light enough to close out quickly? (ticket, memorize, or commit each one)
+   - Is there uncommitted work that needs a commit first?
+
+   **If conditions are favorable:** propose a clear offer — one sentence naming exactly what you will do (e.g. "I can ticket X, save memory Y, and commit Z, then we're clear to /clear"). Wait for yes.
+
+   **If not favorable** (deep mid-task, many open threads, risky uncommitted state): say nothing. The report stands alone.
 
 ## Output shape
 
@@ -48,6 +51,8 @@ A fast, read-only report. Run at any point to re-orient. No files written, no ti
 - …
 
 **Stance:** [one sentence]
+
+[Clear offer if conditions are right — else nothing]
 ```
 
 No headers beyond these. No preamble. No "Here is a summary of…" opener.
