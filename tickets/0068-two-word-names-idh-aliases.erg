@@ -1,0 +1,104 @@
+%erg v1
+Title: Give every skill a two-word discoverable name and an IDH-themed alias
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T08:45Z claude created
+
+--- body ---
+## Context
+
+Skills currently have a mix of naming styles: one-word opaque (`beat`, `raid`,
+`perch`, `smoke`), one-word generic (`verify`, `memory`, `celebrate`), and
+two-word descriptive (`pick-ticket`, `end-session`, `nightbeat-report`). There
+is no alias system; the canonical name is the only entry point.
+
+The goal: every skill has exactly two names — a two-word descriptive name that
+is self-explanatory to a newcomer, and a short IDH-themed alias for fluent daily
+use. Both names invoke the same skill. Old names continue to work (backward
+compatibility is a hard constraint — muscle memory and docs are not invalidated).
+
+## Naming rules
+
+- **Canonical name**: two words, kebab-case, verb-noun or noun-noun. Must be
+  discoverable without prior knowledge of the harness (e.g., `end-session`,
+  `pick-ticket`, `night-beat`).
+- **Alias**: one short word, themed to the Imperial Dragon register. Evocative,
+  not explanatory (e.g., `lair`, `roar`, `hunt`). Not required to be unique
+  across projects — unique within IDH is sufficient.
+- **Backward compat**: existing names that are already two-word descriptive
+  (`pick-ticket`, `end-session`, `verify-gate`, etc.) stay as the canonical.
+  Existing single-word names become aliases of the new two-word canonical.
+
+## Proposed mapping (draft — aliases subject to revision)
+
+| Current name | Canonical (two-word) | Alias |
+|---|---|---|
+| `beat` | `night-beat` | `beat` |
+| `celebrate` | `task-done` | `roar` |
+| `end-session` | `end-session` ✓ | `lair` |
+| `healthcheck` | `health-check` | `pulse` |
+| `housekeeping` | `repo-clean` | `groom` |
+| `memory` | `save-memory` | `memory` |
+| `nightbeat-report` | `nightbeat-report` ✓ | `dawn` |
+| `perch` | `mid-session` | `perch` |
+| `pick-ticket` | `pick-ticket` ✓ | `hunt` |
+| `raid` | `run-ticket` | `raid` |
+| `smoke` | `smoke-test` | `smoke` |
+| `verify` | `verify-pr` | `verify` |
+| `harness-rules` | `show-rules` | `codex` |
+| `new-ticket` | `new-ticket` ✓ | — |
+| `ticket-claim` | `ticket-claim` ✓ | — |
+| `ticket-close` | `ticket-close` ✓ | — |
+| `ticket-new` | `ticket-new` ✓ | — |
+| `ticket-ready` | `ticket-ready` ✓ | — |
+| `ticket-release` | `ticket-release` ✓ | — |
+| `review-pr` | `review-pr` ✓ | — |
+| `review-pr-prose` | `review-pr-prose` ✓ | — |
+| `bib-merge` | `bib-merge` ✓ | — |
+| `related-work-note` | `related-work-note` ✓ | — |
+| `related-work-note-validate` | `related-work-note-validate` ✓ | — |
+| `start-ticket` | `start-ticket` ✓ | — |
+| `verify-adherence` | `verify-adherence` ✓ | — |
+| `verify-gate` | `verify-gate` ✓ | — |
+
+Aliases marked — are not yet assigned; add during implementation if useful.
+Alias choices are provisional and should be reviewed before implementation.
+
+## Actions
+
+1. **Design review**: confirm the canonical names and aliases in the table above.
+   Revise any that feel wrong. Decide which skills need aliases at all (daily-use
+   skills vs. plumbing skills).
+
+2. **Implement alias mechanism**. Determine how Claude Code resolves aliases
+   (symlink in `skills/`, entry in a `settings.json` alias map, or a wrapper
+   SKILL.md that calls the canonical). Choose the lightest approach that works.
+
+3. **Create alias entry points** for each row in the table that has an alias.
+
+4. **Rename single-word canonicals** where the two-word form is different (e.g.,
+   `beat` → `night-beat`). Keep the old directory or add a redirect so old
+   invocations still work.
+
+5. **Update STATE.md** "Morning review" and any `/skill-name` references in docs.
+
+6. **Ticket 0067** (`celebrate→roar`, `end-session→lair`) is a subset of this
+   ticket. Close 0067 when this ticket is implemented.
+
+## Test
+
+- `/roar` invokes the same skill as `/task-done`.
+- `/lair` invokes the same skill as `/end-session`.
+- `/end-session` still works unchanged.
+- `/beat` still works unchanged.
+- A newcomer reading the skill list can infer purpose from canonical names alone.
+
+## Exit criteria
+
+- Every daily-use skill has a two-word canonical name and an IDH-themed alias.
+- Both names invoke the skill identically.
+- No existing invocation is broken.
+- Ticket 0067 closed as subset.
