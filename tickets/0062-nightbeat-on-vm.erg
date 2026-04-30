@@ -6,6 +6,7 @@ Author: claude
 
 --- log ---
 2026-04-30T07:30Z claude created
+2026-04-30T09:00Z claude note — evidence lifecycle: on a VM, worktrees created via Agent(isolation:"worktree") are ephemeral; they vanish at session end. The only persistent evidence after a beat is what was pushed (branch commits, PR body, ticket log lines). This sharpens the requirement that raid agents push their branch before session end. The raid skill was updated today (worktrees/nightbeat-report branch) to remove the erroneous "Clean up worktrees" step — worktree lifecycle is harness-managed, not raid-managed. On VM this is even more load-bearing: there is no local disk to fall back on.
 
 --- body ---
 ## Context

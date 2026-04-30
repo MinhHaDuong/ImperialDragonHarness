@@ -143,11 +143,10 @@ Autonomous mode: ralph loop to next wave.
     grep -h ' bump ' tickets/*.erg | awk '{print $4}' | sort | uniq -c | sort -rn
     ```
     Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
-2. Clean up worktrees.
-3a. Interactive mode: All work pushed, merge requests open.
-3b. Autonomous mode: All merge requests merged, main green.
-4. Write briefing (session log + merge request list + test delta).
-5. Do NOT run `/end-session`.
+2a. Interactive mode: All work pushed, merge requests open.
+2b. Autonomous mode: All merge requests merged, main green.
+3. Write briefing (session log + merge request list + test delta).
+4. Do NOT run `/end-session`.
 
 ## Circuit breakers
 
