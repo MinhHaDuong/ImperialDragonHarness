@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-04-29T22:00Z
+Last updated: 2026-04-30T09:30Z
 
 ## North star
 
@@ -14,13 +14,15 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires every 30 min 22:00–06:00 weeknights, every 30 min all day weekends (17 runs/night). `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage.
 
-**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, chemin-de-voix, git-erg at $0.40/$0.50. 3 targets (`scripts/projects.json`).
+**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — aedist-technical-report, chemin-de-voix, git-erg at $0.40/$0.50. 3 targets (`scripts/projects.json`). Ticket 0069 open to move config into per-project `.claude/beat.json`.
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
 **erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 85 pytest + 24 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
-**git-erg**: pre-commit hooks installed in all projects. Added as nightbeat target (ticket 0009-add-ci open).
+**git-erg**: pre-commit hooks installed in all projects. CI added (ticket 0009, PR #4 ready to merge).
+
+**Worktree lifecycle**: worktrees created via `Agent(isolation:"worktree")` are harness-managed. Skills must not rm them manually. Raid wrap-up step "Clean up worktrees" removed (2026-04-30).
 
 ## Open tickets
 
@@ -42,15 +44,15 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0057 — route .erg mutations through erg binary (blocked by erg binary exposing mutation commands)
 - 0058 — rewrite README with Imperial Dragon voice (remove GSD, new opener)
 - 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
-- 0060 — fix erg sweep-skip slice-aliasing bug + repair 8 corrupted tickets
-- 0068 — two-word canonical names + IDH aliases for all skills (0067 is subset)
-- 0067 — rename celebrate→roar and end-session→lair
-- 0066 — redesign ticket state model: formal machine, coherence rules, enforcement
 - 0061 — sequence parallel agents to stay under budget (corpus discovery fanout crash)
 - 0062 — run nightbeat from a VM (uptime + bypass Gallica 403 blocks)
 - 0063 — enforce erg source read-only in IDH; edits go to git-erg
 - 0064 — audit bash/permission denial patterns across last 3 nights
 - 0065 — /nightbeat-risk-review skill (interactive log triage before next night)
+- 0066 — redesign ticket state model: formal machine, coherence rules, enforcement
+- 0067 — rename celebrate→roar and end-session→lair (blocked by 0068)
+- 0068 — two-word canonical names + IDH aliases for all skills
+- 0069 — per-project beat config (.claude/beat.json) with interval_minutes
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
@@ -61,10 +63,13 @@ None
 
 ## Next actions
 
-- Morning review: `/nightbeat-report` — runs the parser and narrates overnight work
+- Merge git-erg PR #4 (ticket 0009 CI) — approved, scope clean
+- Review git-erg PR #5 (ticket 0011 erg update) — scope-flagged files need human review before merge
+- Merge aedist PR #300 (ticket 0129 slides restructure) — verified APPROVED
+- Check aedist PR #301 vs PR #302 (both ticket 0137) — close the older duplicate, merge the latest
+- Retry aedist ticket 0136 (Qwen 3.5 35B) — aborted due to Ollama timeout, not a logic failure
+- Fix chemin-de-voix budget: tickets 0019/0021/0022 hitting $10 cap every run (~$40 wasted overnight)
 - Fix 0037 (beat double-pick) — highest operational risk
-- Verify 0040 scope vs 0036 — may be redundant; close if so
-- Review Climate_finance PR #773 (`t0124-s4-frechet-schema-fix`) — beat-created, awaiting merge/reject
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
 ## Backlog
