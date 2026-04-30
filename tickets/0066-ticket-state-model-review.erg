@@ -1,0 +1,139 @@
+%erg v1
+Title: Design review: ticket state model across all carriers and execution contexts
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:45Z claude created
+
+--- body ---
+## Context
+
+Failed-to-close tickets (ticket 0049) and double-picks (ticket 0037) are
+point symptoms. The deeper problem is that ticket "state" is not one thing —
+it is spread across five distinct carriers, and the real execution context
+adds another five dimensions. No single document maps how they interact or
+what the authoritative source is when they disagree.
+
+### Meta-level state carriers
+
+| Carrier | Scope | Persistence | Authoritative for |
+|---------|-------|-------------|-------------------|
+| `Status:` header in `.erg` | repo-wide | committed, travels with git | canonical completion state |
+| Ticket log section | repo-wide | committed, append-only | audit trail of transitions |
+| `.git/ticket-wip/{ID}.wip` | machine-local | ephemeral, survives session restarts | active claim on this machine |
+| Sweep-skip/sweep-write in log | repo-wide | committed | pick-cache, cost hint, scope-too-large |
+| Ticket body | repo-wide | committed | intent, acceptance criteria, hints |
+
+### Real-level execution contexts
+
+| Context | Who sees it | Diverges from others when |
+|---------|-------------|---------------------------|
+| Local main | same-machine agents | any uncommitted changes anywhere |
+| Local origin (remote) | all machines | unpushed commits |
+| Current branch / active worktree | current session only | branch not merged |
+| Other branches / concurrent worktrees (same machine) | same machine | parallel raids in progress |
+| Other machines (doudou, VM) | that machine only | .wip files invisible cross-machine |
+
+### Known failure modes (observed, not exhaustive)
+
+- **Stale claim**: agent crashes mid-raid, .wip file remains, ticket is
+  effectively locked on this machine forever (no timeout). Other worktrees on
+  this machine skip it; other machines see it as available.
+
+- **Phantom doing**: `Status: doing` was written to a branch but the branch was
+  never merged. Local main still says `open`. Status and .wip are inconsistent.
+
+- **Claim without status update**: .wip written, but `Status: open` unchanged
+  (agent failed before writing to the .erg file). Ticket appears open to erg
+  but is claimed — won't be picked on this machine, will be picked on others.
+
+- **Closed on branch, open on main**: agent closed the ticket on a branch,
+  PR created, but PR not yet merged. Housekeeping on main sees `Status: open`
+  and re-audits it. Another agent on a different machine picks and re-does it.
+
+- **Cross-machine .wip blindness**: Machine A claims a ticket via .wip.
+  Machine B (doudou, VM) has no way to see that claim — it will happily
+  pick the same ticket. The only guard is `Status: doing` (if written) or
+  a recent `sweep-pick` log entry (if the branch is pushed).
+
+- **Sweep cache on stale body**: a sweep-skip entry (with body hash) says
+  "skip this beat". If another machine pushes an updated ticket body and
+  this machine pulls, the hash mismatches and the skip is invalidated —
+  correct behavior. But if the body is updated *locally on a branch not yet
+  merged*, the committed hash still matches and the skip remains in force
+  even though intent changed.
+
+- **Pick cache vs. exit criteria**: 0049 documents the "already done, still
+  open" problem. The sweep cache hashes the ticket body, not the codebase
+  state. A `cache:hit` says "ticket text unchanged" — it says nothing about
+  whether the code it describes has been implemented.
+
+### What is missing
+
+1. A **state machine diagram** mapping valid transitions across all carriers
+   simultaneously (not just the `Status:` header alone).
+
+2. A **conflict resolution protocol**: when carriers disagree, which wins?
+   (Proposed rule: committed main > branch > ephemeral, but not written down.)
+
+3. A **cross-machine deconfliction path**: the .wip mechanism is explicitly
+   same-machine only (FORMAT.md says so). There is no equivalent for
+   cross-machine mutual exclusion. The current implicit fallback is "pick
+   the same ticket on two machines, let the PR conflict sort it out" — fine
+   for low concurrency but fragile.
+
+4. A **.wip timeout / stale claim recovery**: no heartbeat, no expiry, no
+   garbage collection. A crashed agent leaves a permanent ghost claim.
+
+5. A **status consistency check in housekeeping**: housekeeping verifies open
+   tickets against codebase (0049), but does not check for claim/status
+   mismatches (.wip vs `Status:` header).
+
+## Actions
+
+1. **Draw the state machine.** Enumerate all valid (carrier, value) tuples
+   and their valid transitions. Document which transitions are atomic and which
+   are not (multi-step → window for inconsistency).
+
+2. **Audit current code paths.** For each carrier, identify every code path
+   (beat.py, pick-ticket skill, raid skill, ticket-close skill, housekeeping)
+   that reads or writes it. Flag paths that write to one carrier but not
+   the correlated carriers.
+
+3. **Define the authoritative-source rule.** Write it down in FORMAT.md:
+   "When carriers disagree, X wins over Y." Ensure all code paths respect this.
+
+4. **Specify .wip stale-claim recovery.** Proposed: .wip files older than
+   `BEAT_WIP_TTL` (default 4h) are treated as expired. Housekeeping clears
+   expired .wip files and resets `Status: doing → open` if the closing commit
+   is absent from main.
+
+5. **Cross-machine deconfliction options.** Evaluate:
+   a. Push the .wip file to a shared git branch (lightweight, no new infra)
+   b. Write `Status: doing` to a short-lived branch immediately on claim push
+   c. Accept the race, improve the merge-conflict recovery path instead
+
+6. **Produce a revised FORMAT.md section** titled "State model" that
+   consolidates the above. Submit as a PR to IDH.
+
+7. **Create targeted follow-up tickets** for any gap that needs a code change
+   (e.g., .wip timeout in housekeeping, cross-machine claim visibility).
+
+## Test
+
+- Given a ticket with .wip present but Status: open, housekeeping detects and
+  resolves the inconsistency.
+- Given a ticket with Status: doing but no .wip (e.g., after a force-restart),
+  the next pick-ticket run does not skip it indefinitely.
+
+## Exit criteria
+
+- A "State model" section exists in FORMAT.md covering all five carriers and
+  five execution contexts.
+- Authoritative-source rule is written down and referenced in beat.py and
+  pick-ticket skill.
+- .wip stale-claim recovery is implemented and tested.
+- All observed failure modes above have a corresponding note in FORMAT.md
+  explaining expected behavior (or a child ticket tracking the fix).

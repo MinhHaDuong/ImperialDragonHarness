@@ -43,6 +43,7 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0058 — rewrite README with Imperial Dragon voice (remove GSD, new opener)
 - 0059 — simplify pick-ticket to delegate to `erg pick` (blocked by git-erg/0008)
 - 0060 — fix erg sweep-skip slice-aliasing bug + repair 8 corrupted tickets
+- 0066 — design review: ticket state model across all carriers and execution contexts
 - 0061 — sequence parallel agents to stay under budget (corpus discovery fanout crash)
 - 0062 — run nightbeat from a VM (uptime + bypass Gallica 403 blocks)
 - 0063 — enforce erg source read-only in IDH; edits go to git-erg
