@@ -1,0 +1,59 @@
+%erg v1
+Title: Run nightbeat from a VM to improve uptime and bypass web-fetch blocks
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:30Z claude created
+
+--- body ---
+## Context
+
+The nightbeat currently runs on padme (home workstation, systemd timer). Two
+problems observed in overnight logs (2026-04-30):
+
+1. **Web-fetch IP blocks.** Run 82 shows WebFetch returning "Access Denied:
+   403 Access Interdit" from Gallica BNF and similar French library archives.
+   These blocks are likely IP-based (the home IP is not recognized as a research
+   institution). Corpus discovery tickets for chemin-de-voix depend on these
+   sources.
+
+2. **Machine availability.** The nightbeat timer fires 17× per night assuming
+   padme is on and reachable. Suspend/hibernate or power-off silently drops
+   beats.
+
+A dedicated cloud VM provides: (a) stable public IP that can be allowlisted or
+used with a VPN/residential proxy to bypass CDN blocks; (b) always-on execution;
+(c) isolated environment that doesn't compete with interactive workloads on padme.
+
+## Actions
+
+1. **Choose VM provider.** Candidate: Hetzner CX11 (~€4/month) or OVH VPS Starter.
+   Require: Debian/Ubuntu, 1 vCPU, 2 GB RAM, 20 GB disk, public IPv4.
+
+2. **Provision and harden.** Install Claude Code CLI, copy harness config
+   (`~/.claude`), systemd units for nightbeat. Follow existing setup instructions
+   in STATE.md ("doudou setup" section).
+
+3. **IP strategy for blocked sources.** Test whether the VM IP is sufficient
+   for Gallica BNF, or whether a VPN/proxy is needed. Document in scripts/vm-setup.md.
+
+4. **Beat target config.** Update `scripts/projects.json` to reference project
+   paths on the VM. Move chemin-de-voix corpus work to the VM beat; keep
+   aedist/git-erg on padme or dual-run.
+
+5. **Monitoring.** Ensure beat logs are accessible from padme (mount NFS or
+   rsync log dir). Update `nightbeat-report` to merge logs from both machines.
+
+## Test
+
+- Run one full beat cycle on the VM against chemin-de-voix. Verify Gallica
+  fetch succeeds (no 403).
+- Simulate padme offline: confirm VM beats continue uninterrupted.
+
+## Exit criteria
+
+- Nightbeat runs on VM with chemin-de-voix as primary target.
+- Zero "403 Access Interdit" errors from Gallica/BNF in VM beat logs.
+- Beat logs from VM appear in `nightbeat-report` output.

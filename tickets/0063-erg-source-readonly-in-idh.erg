@@ -1,0 +1,62 @@
+%erg v1
+Title: Enforce erg source read-only in IDH; edits must go to git-erg project
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:30Z claude created
+
+--- body ---
+## Context
+
+The `erg` Go source lives in the git-erg project. IDH carries a vendored copy
+at `tickets/tools/go/` (source) and `tickets/tools/go/erg` (compiled binary,
+gitignored). Agents working on IDH tickets have no reason to edit the Go source —
+but nothing currently prevents them from doing so. An accidental edit to
+`tickets/tools/go/` in IDH would diverge the vendored source from the canonical
+git-erg version with no cross-repo tracking.
+
+The intended invariant: **IDH is a consumer of erg, not a developer of it.**
+All erg source changes must be made in the git-erg repo and pulled into IDH
+via a deliberate update step.
+
+This is a separate concern from ticket 0057 (which routes `.erg` file mutations
+through the erg binary). This ticket is about protecting the erg Go *source code*
+in IDH from unintended modification.
+
+## Actions
+
+1. **Add a pre-commit hook in IDH** that rejects any staged change to
+   `tickets/tools/go/**`. Error message: "erg source is read-only in IDH —
+   commit changes to git-erg project instead."
+
+2. **Wire the hook** in `.git/hooks/pre-commit` (or via the existing hook
+   infrastructure in `scripts/`). Ensure it runs in CI (`validate-tickets` job
+   or new job).
+
+3. **Document the update path.** Add a section to `scripts/` or `README` that
+   describes how to pull a new erg binary from git-erg into IDH:
+   ```
+   cd /path/to/git-erg && go build -o /path/to/idh/tickets/tools/go/erg .
+   ```
+   Or, if the binary is distributed as a release artifact, document the download
+   step.
+
+4. **Remove erg source from IDH (stretch goal).** If the Go source is only
+   present to allow local builds, consider removing it entirely and relying solely
+   on the pre-built binary. This eliminates the read-only problem by removing the
+   source. Keep `tickets/tools/go/erg` (binary) but delete `tickets/tools/go/*.go`.
+
+## Test
+
+- Stage a dummy change to `tickets/tools/go/main.go` in IDH. Attempt commit.
+  Verify hook blocks it with the correct error message.
+- Confirm no existing CI workflow is broken by the hook.
+
+## Exit criteria
+
+- Pre-commit hook in IDH blocks any commit touching `tickets/tools/go/**` (except
+  the binary itself, which is gitignored).
+- Hook message clearly directs the developer to git-erg.
+- CI enforces the same constraint.

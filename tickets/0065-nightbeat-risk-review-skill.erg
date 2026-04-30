@@ -1,0 +1,69 @@
+%erg v1
+Title: Skill to interactively de-risk nightbeat by reviewing logs for risky-ticket patterns
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:30Z claude created
+
+--- body ---
+## Context
+
+The nightbeat picks and attempts tickets autonomously. Some tickets are structurally
+risky — they spawn parallel agents, require web fetches from blocked sources, have
+been picked multiple times without progress, or contain sub-tasks that exceed a
+single beat's budget. Currently there is no interactive tool for the operator to
+review and de-risk these before the next night.
+
+The goal: a skill (`/nightbeat-risk-review`) that analyses recent beat logs,
+identifies risky tickets, and presents findings interactively so the operator can
+take immediate action (add sweep-skips, split tickets, mark scope-too-large, etc.).
+
+## Actions
+
+1. **Implement `skills/nightbeat-risk-review.md`** with the following phases:
+
+   a. **Log ingest:** read `logs/nightbeat/` for the last N nights (default: 3).
+      Parse each log for: `total_cost_usd`, `num_turns`, `stop_reason`, `is_error`,
+      `permission_denials`, the picked ticket ID (from `PICK: NNNN` in result).
+
+   b. **Risk signals.** Flag a ticket if any of:
+      - cost > $2 per attempt (parallel fanout risk)
+      - stop_reason is None (session killed by budget or crash)
+      - same ticket picked ≥ 2 times in the window without progress (no new commits)
+      - result contains "Access Denied" or "permission" denial
+      - turns < 5 and cost > $1 (expensive but fast → parallel agents die early)
+
+   c. **Risk table.** Present a ranked table:
+      ```
+      | Ticket | Project | Attempts | Max Cost | Signal |
+      ```
+
+   d. **Interactive triage.** For each flagged ticket, offer actions:
+      - `sweep-skip scope-too-large` (mark for cooldown)
+      - `note` (append explanation to ticket log)
+      - `open ticket` (split into smaller sub-tickets)
+      - `skip` (ignore for now)
+
+   e. **Commit.** After triage, commit all `sweep-skip` and `note` changes in
+      a single housekeeping commit.
+
+2. **Parsers.** Reuse or extend the `nightbeat-report` log parser. Extract
+   the PICK ticket ID from each log's final `result` field.
+
+3. **Integration.** Mention `/nightbeat-risk-review` in `STATE.md` under
+   "Morning review" alongside `/nightbeat-report`.
+
+## Test
+
+- Run the skill against the 3 nights of logs from 2026-04-28 to 2026-04-30.
+  Verify: chemin-de-voix corpus tickets (0019–0022) appear in the risk table
+  with signal "cost > $2, stop_reason None, repeated pick".
+
+## Exit criteria
+
+- `/nightbeat-risk-review` produces a risk table for any N-night window.
+- Interactive triage writes sweep-skip or note entries to flagged tickets.
+- All changes committed in one clean housekeeping commit.
+- Skill listed in STATE.md "Morning review" section.

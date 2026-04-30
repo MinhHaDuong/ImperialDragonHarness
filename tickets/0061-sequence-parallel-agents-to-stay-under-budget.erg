@@ -1,0 +1,59 @@
+%erg v1
+Title: Sequence parallel agents rather than fan out when ticket risks budget ceiling
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:30Z claude created
+
+--- body ---
+## Context
+
+Corpus discovery tickets in chemin-de-voix (0019–0022) each require researching
+3–4 figures in parallel. Each beat attempt ends in catastrophic failure: runs 70,
+76, 79, 85 (2026-04-30) all show turns=1, cost=$7–9, stop_reason=None. The
+pattern is: pick-ticket selects a corpus discovery ticket, raid spawns 3–4
+parallel Agent tool calls in turn 1, their combined cost blows through the
+per-project budget, beat.py kills the session.
+
+Nothing is committed. The ticket stays open. The next beat picks the same ticket
+and repeats the failure. The wasted cost is real: ~$8 × 4 runs = $32 overnight
+for chemin-de-voix alone.
+
+The fix the user specified: sequence the sub-agents rather than fan them out.
+Commit partial results after each agent completes. If the beat hits budget mid-way,
+the completed figures are already committed and the ticket can be continued on
+the next beat without re-doing prior work.
+
+## Actions
+
+1. **Detect fanout pattern at raid entry.** Before launching agents, count how
+   many parallel Agent calls the ticket body implies. If the estimate exceeds
+   the remaining per-project budget by more than 1.5×, switch to sequential mode.
+
+2. **Sequential mode in raid:** work one sub-agent at a time. After each
+   sub-agent returns, commit its result immediately (even if the full ticket
+   isn't done). Update the ticket log with a `note` entry showing what's been
+   completed so far.
+
+3. **Add `parallel-fanout` ticket tag.** Tickets that require ≥3 parallel
+   research agents should carry a `parallel-fanout: N` header or body annotation.
+   Pick-ticket can use this to estimate cost and decide whether to sequence.
+
+4. **Update beat budget accounting.** When beat.py detects a ticket mid-way
+   through sequential execution (partial commit exists), treat remaining cost
+   estimate as (total − already spent by prior beats on this ticket).
+
+## Test
+
+- Dry-run a raid on a chemin-de-voix corpus discovery ticket with a $2 budget
+  ceiling. Verify: only one sub-agent launches per turn, result is committed
+  after each, session terminates cleanly at budget.
+- Verify the ticket's log section records partial progress.
+
+## Exit criteria
+
+- No chemin-de-voix corpus discovery beat ends with turns=1 and stop_reason=None.
+- Each beat makes at least one committed figure before stopping.
+- Full ticket completion spans multiple beats; no work is duplicated.

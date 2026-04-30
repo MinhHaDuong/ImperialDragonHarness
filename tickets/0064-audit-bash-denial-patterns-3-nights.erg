@@ -1,0 +1,67 @@
+%erg v1
+Title: Systematic audit of beat permission-denial patterns across last 3 nights
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T07:30Z claude created
+
+--- body ---
+## Context
+
+Three nights of beat logs (2026-04-28 through 2026-04-30) contain at least four
+distinct categories of permission/access denial that caused beat failures or
+incomplete runs. A systematic audit is needed to produce a full catalog, assess
+which are already addressed by open tickets, and create targeted fixes for
+unaddressed gaps.
+
+Known incidents from quick review:
+- **Runs 59, 64** (2026-04-28T21:00Z, 2026-04-29T02:02Z): Edit denied on `.erg`
+  ticket files in IDH project. → covered by ticket 0052.
+- **Run 80** (2026-04-30T01:02Z): API 403 "Account is no longer a member of the
+  organization" from git-erg GitHub. Token expired or revoked.
+- **Run 82** (2026-04-30T02:01Z): WebFetch 403 "Access Denied: 403 Access Interdit"
+  from Gallica BNF. IP-based block on French library archives.
+- **Runs 67, 68** (2026-04-29 morning): Multiple Bash denials in IDH project
+  pick-ticket session — exact commands and reason not yet parsed.
+
+## Actions
+
+1. **Parse all beat logs** from `logs/nightbeat/202604{28,29,30}*.log`.
+   For each log, extract:
+   - The `permission_denials` array from the `result` JSON event.
+   - Any tool result with `is_error: true` or HTTP 4xx content.
+   - Any assistant message ending with "I need permission" or "I'm blocked".
+
+2. **Build a denial catalog** table:
+   ```
+   | Run | Project | Tool | Reason | Ticket |
+   ```
+
+3. **Categorize** into buckets:
+   - A: `.erg` Edit/Write denied (0052 covers)
+   - B: GitHub API auth failure (token issue — no ticket yet)
+   - C: WebFetch geo/IP block from French archives (0062 covers via VM)
+   - D: Bash command denied (permissioning — check if 0052 covers or new ticket needed)
+   - E: Other
+
+4. **For category B** (GitHub token): diagnose whether the token is expired,
+   revoked, or scoped wrong. Create a new ticket if not covered.
+
+5. **For category D** (Bash denied): identify the specific commands blocked.
+   Check whether they need allowlist entries in `beat-settings.json`.
+
+6. **Update tickets 0052 and 0062** with findings, or create new tickets for
+   unaddressed gaps.
+
+## Test
+
+- Audit script (or manual parse) produces a complete denial catalog with zero
+  "unknown" rows — every denial traced to a root cause.
+
+## Exit criteria
+
+- All denial categories from the 3-night window have a corresponding open ticket
+  or a documented rationale for why no ticket is needed.
+- Catalog committed to `docs/` or appended to STATE.md as a beat-health section.
