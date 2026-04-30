@@ -1,0 +1,81 @@
+%erg v1
+Title: Per-project beat config file (.claude/beat.json)
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T09:15Z claude created
+
+--- body ---
+## Context
+
+`beat.py` currently reads all project config (budget overrides, etc.) from a
+single harness-level `scripts/projects.json`. This couples project-specific
+settings to the harness repo and makes it awkward to give one project a
+different beat cadence.
+
+Motivating use case: chemin-de-voix needs a 30-minute all-day beat (vs the
+default nightbeat cadence) because its tickets are budget-constrained and
+benefit from more frequent short runs.
+
+## Design
+
+Each project may have a `.claude/beat.json` file. `beat.py` reads it after
+loading the `projects.json` entry and overlays any fields present.
+
+**Schema (all fields optional):**
+```json
+{
+  "budget_housekeeping": 0.40,
+  "budget_pick_ticket": 0.50,
+  "budget_raid": 10.00,
+  "interval_minutes": 30
+}
+```
+
+`projects.json` becomes a pure path list:
+```json
+[
+  { "path": "~/aedist-technical-report" },
+  { "path": "~/chemin-de-voix" },
+  { "path": "~/git-erg" }
+]
+```
+
+Existing per-project budget overrides in `projects.json` are migrated to each
+project's `.claude/beat.json` and removed from `projects.json`.
+
+**`interval_minutes` behaviour:** before running a project, `beat.py` checks
+the project's `beat-log.jsonl` for the timestamp of the last completed run. If
+`now - last_run < interval_minutes`, skip the project this tick. This lets a
+30-min global timer serve projects with different cadences without extra
+service/timer pairs.
+
+## Actions
+
+1. Add `interval_minutes` and budget fields to `ProjectConfig` dataclass in
+   `beat.py`. Default `interval_minutes` to 0 (always run).
+2. In `load_projects()`, after reading `projects.json`, check for
+   `<project>/.claude/beat.json` and merge fields.
+3. In the main beat loop, add the interval skip check before housekeeping.
+4. Migrate existing budget overrides from `projects.json` to each project's
+   `.claude/beat.json`.
+5. Add `~/chemin-de-voix/.claude/beat.json` with `"interval_minutes": 30` and
+   the higher `budget_raid` needed for its tickets.
+6. Update `scripts/projects.json` to path-only format.
+
+## Test
+
+- `BEAT_DRY_RUN=1 python3 beat.py` shows correct per-project budgets loaded
+  from `.claude/beat.json`.
+- With `interval_minutes: 30`, a second dry-run within 30 min skips the
+  project; one after 30 min runs it.
+
+## Exit criteria
+
+- `projects.json` contains only `path` keys.
+- Each active project has `.claude/beat.json` with its budget/interval config.
+- chemin-de-voix runs every 30 min; aedist and git-erg run every 60 min (or
+  their configured cadence) from a single 30-min timer.
+- All existing beat tests pass.
