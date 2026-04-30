@@ -1,0 +1,32 @@
+%erg v1
+Title: Rename skill celebrate→roar and end-session→lair
+Status: open
+Created: 2026-04-30
+Author: claude
+
+--- log ---
+2026-04-30T08:30Z claude created
+
+--- body ---
+## Context
+
+Imperial Dragon voice. `celebrate` and `end-session` are generic names.
+`roar` and `lair` fit the harness register.
+
+## Actions
+
+1. `git mv skills/celebrate skills/roar` — rename directory.
+2. Update `skills/roar/SKILL.md`: change any self-references from `celebrate`
+   to `roar`.
+3. `git mv skills/end-session skills/lair` — rename directory.
+4. Update `skills/lair/SKILL.md`: change any self-references from `end-session`
+   to `lair`.
+5. Update `STATE.md` "Morning review" and any other references to the old names.
+6. Search for `celebrate` and `end-session` in all skill files and docs;
+   update call sites (`/celebrate` → `/roar`, `/end-session` → `/lair`).
+
+## Exit criteria
+
+- `skills/celebrate/` and `skills/end-session/` do not exist.
+- `skills/roar/` and `skills/lair/` exist with correct content.
+- No remaining references to the old skill names in skills/, STATE.md, or docs/.
