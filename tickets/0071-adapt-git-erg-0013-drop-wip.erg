@@ -1,0 +1,94 @@
+%erg v1
+Title: Adapt to git-erg 0013 — drop .wip readers and claim/release delegation
+Status: doing
+Created: 2026-05-01
+Author: claude
+
+--- log ---
+2026-05-01T17:30Z claude created — companion to git-erg PR #10 (ticket 0013)
+2026-05-01T17:45Z claude status doing — branch claude/adapt-git-erg-0013-ZAolZ
+
+--- body ---
+## Context
+
+Upstream `git-erg` ticket 0013 (PR #10) removes `.git/ticket-wip/`,
+the `claim`/`release` commands and skills, and the `wip` key from
+`erg ready --json` / `, claimed` from `erg graph`. The spec adds an
+explicit "Coordination is out of scope" paragraph: cross-worktree
+deconfliction is no longer the validator's concern.
+
+This ticket adapts IDH to that change. It is independent of the
+git-erg merge — IDH can land before, after, or alongside.
+
+## Actions
+
+### A. JSON-reader audit
+
+- Find every callsite that reads `erg ready --json`. Confirm each
+  tolerates a missing `wip` key (treat as not-WIP). Add a test if
+  any reader currently assumes presence.
+- Same for `erg graph` plaintext: stop parsing `, claimed` suffixes.
+
+### B. Drop claim/release delegation
+
+- Remove or rewrite any IDH skill that calls `/ticket-claim` or
+  `/ticket-release` (typically `start-ticket`, possibly `pick-ticket`,
+  `sweep` orchestration). Do not reintroduce a local lockfile
+  equivalent in IDH's dotfiles — same mechanism, different home,
+  same problems.
+- Remove the corresponding permission grants
+  (`Bash(*ticket-wip*)` etc.) from IDH settings.
+
+### C. Cross-worktree concurrency — choose policy
+
+Three options, in order of preference:
+
+1. **Accept double-picks (recommended default).** Two agents may pick
+   the same ticket; they diverge onto different branches; the merge
+   sorts it out. Matches git-erg 0013's spirit. Cost when it happens:
+   one wasted branch. Frequency: low (two sweeps within seconds).
+
+2. **Pre-flight branch check in `pick-ticket`.** Before committing to
+   a ticket, run `git branch -a --format='%(refname:short)' | grep -E
+   "(^|[/_-])${ID}([/_-]|$)"`. If any match, skip and pick again.
+   Word-boundary anchored to avoid `0042` matching `10042`. Cheap and
+   accurate; not load-bearing.
+
+3. **IDH-local lockfile.** Rejected — reintroduces the mechanism
+   git-erg just removed. Document the rejection so it doesn't
+   reappear in three months.
+
+**Recommendation:** ship (1) immediately; add (2) if double-picks turn
+out to be observable in practice.
+
+### D. Documentation
+
+- Update IDH STATE / agent-facing docs to remove any "claim before
+  starting" instructions. Replace with: "create a branch whose name
+  contains the ticket ID; that *is* the WIP signal."
+
+## Out of scope
+
+- Changes to git-erg itself (covered by upstream 0013).
+- Codifying a branch-name regex in any spec — IDH's convention is
+  IDH's choice; downstream consumers don't need to agree.
+
+## Exit criteria
+
+- [ ] No IDH callsite reads `wip` from `erg ready --json` or
+      `, claimed` from `erg graph`
+- [ ] No IDH skill or workflow invokes `/ticket-claim` or
+      `/ticket-release`
+- [ ] No `Bash(*ticket-wip*)` or equivalent permission in IDH settings
+- [ ] Cross-worktree policy (option 1, optionally + 2) implemented and
+      documented in IDH STATE
+- [ ] `grep -rni 'ticket-wip' .` in IDH returns zero hits in active
+      code/skills/specs (historical tickets describing past designs
+      retain their content as a record).
+
+## Relationships
+
+- Companion to git-erg PR #10 (ticket 0013).
+- Interacts with IDH ticket 0066 (ticket-state-model-review) — the
+  five-carrier model in 0066 collapses now that the lockfile carrier
+  is gone; that ticket needs revisiting.

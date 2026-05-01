@@ -18,7 +18,7 @@ Every task passes through five phases:
 
 ```
 ImperialDragonHarness/
-├── skills/                 # Slash commands — 26 total: /beat, /celebrate, /verify, /raid, etc.
+├── skills/                 # Slash commands — 24 total: /beat, /celebrate, /verify, /raid, etc.
 │   ├── harness-rules/      # Auto-invoked rules (companion .md files)
 │   │   ├── SKILL.md
 │   │   ├── workflow.md         # Session start, escalation, worktree
@@ -36,11 +36,9 @@ ImperialDragonHarness/
 │   ├── end-session/        # Day wrap-up + STATE.md refresh
 │   ├── new-ticket/         # Create git-erg ticket with TDD spec
 │   ├── start-ticket/       # Begin work on a ticket (TDD red step)
-│   ├── ticket-claim/       # Claim a ticket for work (cross-worktree safe)
-│   ├── ticket-close/       # Close ticket and release claim
+│   ├── ticket-close/       # Close a ticket
 │   ├── ticket-new/         # Low-level: create a raw .erg file
-│   ├── ticket-ready/       # List unblocked, unclaimed tickets
-│   ├── ticket-release/     # Abandon work, restore ticket to open
+│   ├── ticket-ready/       # List unblocked tickets
 │   ├── healthcheck/        # Git hygiene + doc freshness check
 │   ├── memory/             # Persistent memory management
 │   ├── bib-merge/          # Merge approved bib entries into refs.bib

@@ -1,6 +1,6 @@
 ---
 name: ticket-ready
-description: List local tickets that are ready for work (unblocked, unclaimed).
+description: List local tickets that are ready for work (unblocked).
 disable-model-invocation: false
 user-invocable: true
 argument-hint:
@@ -15,12 +15,9 @@ argument-hint:
    tickets/tools/go/erg ready tickets/ --json
    ```
    Returns JSON: `[{"id":"0013","title":"...","file":"..."},...]`
-   The command handles Blocked-by resolution and `.wip` claim exclusion.
+   The command handles Blocked-by resolution.
 
-2. `.wip` claim check — `erg ready` already excludes claimed tickets. No manual
-   check needed unless the binary is absent (see Fallback below).
-
-3. Display ready tickets (unblocked + unclaimed).
+2. Display ready tickets (unblocked).
 
 ## Fallback (if erg binary is absent)
 
@@ -33,10 +30,5 @@ If `tickets/tools/go/erg` does not exist, degrade gracefully:
      - Local ID (4 digits): look up the referenced ticket's status. Ready only if `closed`.
      - `gh#N`: treat as satisfied (no network call).
      - Missing reference: warn, treat as satisfied.
-   - Check for `.wip` claim:
-     ```bash
-     wip_dir="$(git rev-parse --git-common-dir)/ticket-wip"
-     ls "$wip_dir"/*.wip 2>/dev/null
-     ```
 
-3. Display ready tickets (unblocked + unclaimed).
+3. Display ready tickets (unblocked).

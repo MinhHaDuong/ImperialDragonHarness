@@ -6,8 +6,7 @@
       "Edit(*/tickets/*.erg)",
       "Write(*/tickets/*.erg)",
       "Bash(git add tickets/*.erg)",
-      "Bash(git commit*)",
-      "Bash(rm -f *ticket-wip*)"
+      "Bash(git commit*)"
     ]
   },
   "disabledTools": [

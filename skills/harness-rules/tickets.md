@@ -24,8 +24,6 @@ Actor is typically `claude` or `haduong`. Detail is free text after the verb.
 |------|-------|
 | `created` | Ticket was created |
 | `status {new-status}` | Status changed; detail gives reason |
-| `claimed` | Agent starting work (also writes `.wip` file) |
-| `released` | Agent abandoned claim without completing |
 | `note {text}` | Free-form annotation; anything goes |
 | `bump {category} — {detail}` | Agent paused waiting for a signal (see categories below) |
 

@@ -81,3 +81,11 @@ Attempt history is read directly from each ticket's `## Attempt log` section.
 Exactly one line:
 - `PICK: <ticket-id>`
 - `IDLE: no eligible tickets`
+
+## Cross-worktree concurrency
+
+Two concurrent sweeps may pick the same ticket; they diverge onto different
+branches and the merge sorts it out. Cost: one wasted branch. Frequency: low
+(two sweeps within seconds). Do not reintroduce a local lockfile or any
+equivalent — that mechanism was removed upstream (git-erg 0013) and its
+problems travel with the mechanism, not its location.
