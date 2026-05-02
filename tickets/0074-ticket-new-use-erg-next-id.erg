@@ -1,0 +1,28 @@
+%erg v1
+Title: Simplify ticket-new skill to use erg next-id
+Status: open
+Created: 2026-05-02
+Author: MinhHaDuong
+
+--- log ---
+2026-05-02T23:00Z MinhHaDuong created
+
+--- body ---
+## Context
+The ticket-new skill embeds a 5-line bash pipeline to compute the next ticket
+ID by scanning local files and the cached origin/main ref. The erg binary
+already provides `erg next-id` for exactly this purpose. The inline script is
+redundant and contradicts the project principle that the LLM never computes
+hashes or scans ticket bodies.
+
+## Actions
+1. Replace the inline bash ID-computation block in skills/ticket-new/SKILL.md
+   with a single `erg next-id tickets/` call.
+
+## Test
+Read the updated SKILL.md and confirm the five-line bash block is gone and
+`erg next-id tickets/` appears in step 1.
+
+## Exit criteria
+skills/ticket-new/SKILL.md step 1 reads `erg next-id tickets/` with no inline
+shell pipeline.
