@@ -13,17 +13,10 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 
 ## Steps
 
-1. Determine the next ID — take the maximum across local files **and** the cached
-   `origin/main` ref, then increment. No network call; uses whatever the last
-   `git fetch`/`pull`/`push` left in the local ref store.
+1. Determine the next ID:
    ```bash
-   LOCAL=$(ls tickets/*.erg tickets/archive/*.erg 2>/dev/null \
-     | sed 's|.*/||; s|-.*||' | sort -n | tail -1)
-   REMOTE=$(git ls-tree --name-only origin/main tickets/ 2>/dev/null \
-     | grep '\.erg$' | sed 's|-.*||' | sort -n | tail -1)
-   MAX=$(printf '%s\n%s\n' "$LOCAL" "$REMOTE" | grep -v '^$' | sort -n | tail -1)
+   erg next-id tickets/
    ```
-   Increment `MAX` by 1, zero-pad to 4 digits. If both are empty, start at `0001`.
 
 2. Choose a slug: lowercase kebab-case, ASCII only (`[a-z0-9-]`), derived from the title.
 
