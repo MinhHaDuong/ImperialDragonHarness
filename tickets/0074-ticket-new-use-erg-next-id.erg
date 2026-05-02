@@ -1,11 +1,12 @@
 %erg v1
 Title: Simplify ticket-new skill to use erg next-id
-Status: open
+Status: closed
 Created: 2026-05-02
 Author: MinhHaDuong
 
 --- log ---
 2026-05-02T23:00Z MinhHaDuong created
+2026-05-02T23:05Z claude status closed — merged PR #82
 
 --- body ---
 ## Context
