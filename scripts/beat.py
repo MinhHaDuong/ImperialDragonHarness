@@ -508,9 +508,9 @@ def _sync_origin_main(project: Path) -> None:
         else "main"
     )
 
-    # Fetch from origin; skip on network or auth failure.
+    # Fetch only the default branch; skip on network or auth failure.
     fetch = subprocess.run(  # noqa: S603
-        ["git", "fetch", "origin"],
+        ["git", "fetch", "origin", default_branch],
         capture_output=True,
         text=True,
         check=False,
@@ -519,7 +519,7 @@ def _sync_origin_main(project: Path) -> None:
     if fetch.returncode != 0:
         _log(
             f"=== sync: git fetch failed — "
-            f"{fetch.stderr.strip()[:80] or 'network error'} ==="
+            f"{(fetch.stderr.strip().splitlines() or ['network error'])[-1][:80]} ==="
         )
         return
 
@@ -547,9 +547,9 @@ def _sync_origin_main(project: Path) -> None:
         else:
             _log(
                 f"=== sync: ff-merge skipped — "
-                f"{merge.stderr.strip()[:80] or 'local commits ahead'} ==="
+                f"{(merge.stderr.strip().splitlines() or ['local commits ahead'])[-1][:80]} ==="
             )
-    else:
+    elif branch != "HEAD":
         # Not checked out: update local ref without touching HEAD.
         update = subprocess.run(  # noqa: S603
             ["git", "fetch", "origin", f"{default_branch}:{default_branch}"],
@@ -565,8 +565,10 @@ def _sync_origin_main(project: Path) -> None:
         else:
             _log(
                 f"=== sync: {default_branch} update skipped — "
-                f"{update.stderr.strip()[:80] or 'non-fast-forward'} ==="
+                f"{(update.stderr.strip().splitlines() or ['non-fast-forward'])[-1][:80]} ==="
             )
+    else:
+        _log("=== sync: skipped — detached HEAD ===")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
