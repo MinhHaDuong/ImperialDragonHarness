@@ -1,0 +1,30 @@
+%erg v1
+Title: Audit disable-model-invocation setting in ticket-* skills
+Status: open
+Created: 2026-05-02
+Author: claude
+
+--- log ---
+2026-05-02T23:10Z claude created
+
+--- body ---
+## Context
+After PR #82, ticket-new has disable-model-invocation: false while start-ticket
+uses true. The two skills are peers in the ticket lifecycle; the inconsistency
+may be intentional (ticket-new needs LLM to extract intent from free-form input)
+or an oversight. Worth a deliberate decision before the next skill refactor.
+
+## Actions
+1. Read skills/ticket-new/SKILL.md and skills/start-ticket/SKILL.md.
+2. Determine whether ticket-new genuinely requires model invocation (free-form
+   input parsing) or could run without it.
+3. If the difference is intentional, add a comment to ticket-new's frontmatter
+   explaining why. If not, align both to the correct value.
+
+## Test
+Both skill files have a deliberate, consistent disable-model-invocation value
+with reasoning documented if they differ.
+
+## Exit criteria
+No unexplained inconsistency between disable-model-invocation values across
+ticket-* skills.
