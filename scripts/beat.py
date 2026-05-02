@@ -484,6 +484,93 @@ def run_skill(
     return proc.returncode, result_text
 
 
+# ── Origin sync ───────────────────────────────────────────────────────────────
+
+
+def _sync_origin_main(project: Path) -> None:
+    """Update the local default branch from origin.
+
+    Called before housekeeping so that both housekeeping_needed() and
+    pick-ticket see current ticket state from merged PRs.  All failures
+    are non-fatal — the beat continues regardless.
+    """
+    # Detect remote default branch; fall back to "main".
+    head_ref = subprocess.run(  # noqa: S603
+        ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=project,
+    )
+    default_branch = (
+        head_ref.stdout.strip().removeprefix("origin/")
+        if head_ref.returncode == 0
+        else "main"
+    )
+
+    # Fetch only the default branch; skip on network or auth failure.
+    fetch = subprocess.run(  # noqa: S603
+        ["git", "fetch", "origin", default_branch],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=project,
+    )
+    if fetch.returncode != 0:
+        _log(
+            f"=== sync: git fetch failed — "
+            f"{(fetch.stderr.strip().splitlines() or ['network error'])[-1][:80]} ==="
+        )
+        return
+
+    # Advance local default branch.
+    branch = subprocess.run(  # noqa: S603
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+        cwd=project,
+    ).stdout.strip()
+
+    if branch == default_branch:
+        # Checked out: ff-merge to advance HEAD.
+        merge = subprocess.run(  # noqa: S603
+            ["git", "merge", "--ff-only", f"origin/{default_branch}"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=project,
+        )
+        summary = (merge.stdout.strip().splitlines() or ["already up to date"])[0]
+        if merge.returncode == 0:
+            _log(f"=== sync: {default_branch}: {summary} ===")
+        else:
+            _log(
+                f"=== sync: ff-merge skipped — "
+                f"{(merge.stderr.strip().splitlines() or ['local commits ahead'])[-1][:80]} ==="
+            )
+    elif branch != "HEAD":
+        # Not checked out: update local ref without touching HEAD.
+        update = subprocess.run(  # noqa: S603
+            ["git", "fetch", "origin", f"{default_branch}:{default_branch}"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=project,
+        )
+        if update.returncode == 0:
+            _log(
+                f"=== sync: {default_branch} updated from origin (HEAD on {branch}) ==="
+            )
+        else:
+            _log(
+                f"=== sync: {default_branch} update skipped — "
+                f"{(update.stderr.strip().splitlines() or ['non-fast-forward'])[-1][:80]} ==="
+            )
+    else:
+        _log("=== sync: skipped — detached HEAD ===")
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 
@@ -648,12 +735,9 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
 
     if _git("push", "-u", "origin", branch, cwd=path).returncode != 0:
         return "failed"
-    log_lines = _git(
-        "log", "--format=- %s", f"{base}..HEAD", cwd=path
-    ).stdout.strip()
-    body = (
-        "Automated nightbeat housekeeping sweep.\n\n## Changes\n\n"
-        + (log_lines or "(none)")
+    log_lines = _git("log", "--format=- %s", f"{base}..HEAD", cwd=path).stdout.strip()
+    body = "Automated nightbeat housekeeping sweep.\n\n## Changes\n\n" + (
+        log_lines or "(none)"
     )
     pr = subprocess.run(  # noqa: S603, S607
         [
@@ -703,6 +787,10 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     """Run the pick→raid sequence; return (outcome, ticket_id)."""
     ticket_id: str | None = None
     path = project.path
+
+    # Sync default branch from origin so housekeeping and pick-ticket
+    # see current ticket state from merged PRs.
+    _sync_origin_main(path)
 
     # Housekeeping (conditional). Aborts beat on failure/timeout/CI-red so
     # pick-ticket → raid never runs against a known-bad main.
