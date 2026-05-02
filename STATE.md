@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-02T00:00Z
+Last updated: 2026-05-02T22:35Z
 
 ## North star
 
@@ -18,7 +18,7 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
-**erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 85 pytest + 28 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
+**erg sweep cache**: `erg ready --json` returns `cache`/`hash` per ticket. `erg sweep-skip` and `erg sweep-write` compute hash server-side. Pick-ticket reads ticket bodies only on cache:miss. 96 pytest + 27 Go tests, all green. Skills resolve erg binary as `${ERG:-erg}` for PATH portability.
 
 **git-erg**: pre-commit hooks installed in all projects. CI added (ticket 0009, PR #4 ready to merge).
 
@@ -46,11 +46,11 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0063 — enforce erg source read-only in IDH; edits go to git-erg
 - 0064 — audit bash/permission denial patterns across last 3 nights
 - 0065 — /nightbeat-risk-review skill (interactive log triage before next night)
-- 0066 — redesign ticket state model: formal machine, coherence rules, enforcement
 - 0067 — rename celebrate→roar and end-session→lair (blocked by 0068)
 - 0068 — two-word canonical names + IDH aliases for all skills
 - 0069 — per-project beat config (.claude/beat.json) with interval_minutes
 - 0070 — /dream skill — autonomous nightly memory consolidation
+- 0073 — hasBranch unit test (gap found in PR #81 review)
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
