@@ -150,7 +150,7 @@ and continue. A beat is never blocked by a network failure.
 ### State tuple and valid states
 
 State: `(Status, local_branch, remote_branch)`
-where `local_branch` = any local branch name contains the ID,
+where `local_branch` = true iff any local branch name contains the ID,
 `remote_branch` = same for remote (best-effort).
 
 | Status | local | remote | Name | Meaning |
