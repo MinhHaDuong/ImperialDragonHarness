@@ -1,7 +1,7 @@
 ---
 paths:
   - "tickets/"
-  - "tickets/FORMAT.md"
+  - "tickets/spec-erg-v1.md"
 last-reviewed: 2026-04-23
 ---
 

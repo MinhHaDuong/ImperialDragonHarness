@@ -111,7 +111,7 @@ def ticket_state(project):
             "error": "no tickets/ directory",
         }
 
-    erg_bin = shutil.which("erg") or str(project / "tickets/tools/go/erg")
+    erg_bin = shutil.which("erg") or str(project / "tickets/erg")
 
     try:
         r = run([erg_bin, "ready", "--json", str(tickets_dir)], project)

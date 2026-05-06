@@ -7,6 +7,7 @@ Author: haduong
 2026-05-06T00:00Z haduong created
 2026-05-06T00:00Z claude in_progress updating skill fallbacks and memory
 2026-05-06T00:00Z claude closed updated 5 IDH files + 5 project settings.json files; STATE.md and memory also updated
+2026-05-06T12:30Z claude note verify(PR#107) caught 5 missed files: CI.yml, project-state.py, CLAUDE.md, harness-rules/tickets.md, ticket-new/SKILL.md; fixed in follow-up commit
 
 --- body ---
 ## Context
