@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-05T22:00Z
+Last updated: 2026-05-06T14:30Z
 
 ## North star
 
@@ -26,9 +26,7 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **`/merge` skill** (PR #102, 2026-05-05): `skills/merge/erg-pr-merge` atomically closes the linked erg ticket (commits it into the PR branch so it lands in the squash) then merges via GitHub API — works from git worktrees and VMs. Gates on strict mergeability (`MERGEABLE` only), no failing checks, and no in-progress checks. Idempotent on retry. Leak-guard escape hatches on all `gh` calls.
 
-**erg binary convention** (PRs #103–104, 2026-05-05; updated 2026-05-06): erg binary commits under `tickets/erg` (moved from `tickets/tools/go/erg`). All `$ERG` fallbacks in skills updated to `tickets/erg`.
-
-**erg bootstrap artifacts** (2026-05-05): `tickets/README.md`, `tickets/spec-erg-v1.md`, `tickets/integration/` (hooks, skills, settings) committed; bootstrap manifest at `tickets/.erg-bootstrap-manifest.json`. WIP branch `wip/session-2026-05-05-artifacts` also adds `rules(git): require git status before every commit` to `skills/harness-rules/git.md`.
+**git-erg catch-up** (PR #107, 2026-05-06): IDH synced with git-erg changes — erg binary moved to `tickets/erg`, `erg init` simplified (now unpacks `tickets/AGENTS.md`, `tickets/spec-erg-v1.md`, `tickets/integration.md`), FORMAT.md removed, `tickets/tools/go/erg` deleted. All `$ERG` fallbacks, CI, and per-project `settings.json` files updated. Pre-commit hook updated to `${ERG:-tickets/erg}`. `~/.local/bin/erg` updated to revision `1f68c4a`.
 
 **git-erg**: pre-commit hooks installed in all projects. CI live (ticket 0009, PR #4 merged). Validation split: `erg validate <files>` (per-file) vs `erg check [dir]` (corpus) defined in spec; binary implementation tracked by git-erg/0038.
 
