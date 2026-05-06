@@ -11,6 +11,8 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 ## Steps
 
+0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/celebrate-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/celebrate-last-sha)..HEAD --oneline` is empty, skip steps 1 and 10 (nothing new since last celebrate).
+
 1. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
 2. **Log session metrics** — run `~/.claude/skills/end-session/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
 3. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
