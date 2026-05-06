@@ -18,7 +18,7 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 
 1. Determine the next ID:
    ```bash
-   ERG=${ERG:-tickets/tools/go/erg}
+   ERG=${ERG:-tickets/erg}
    $ERG next-id tickets/
    ```
    Always use `erg next-id` — never compute or guess the ID manually.
@@ -64,4 +64,4 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 
 6. Commit the ticket file.
 
-Format spec: `tickets/FORMAT.md` (or global rule `tickets.md`).
+Format spec: `tickets/spec-erg-v1.md` (or global rule `tickets.md`).

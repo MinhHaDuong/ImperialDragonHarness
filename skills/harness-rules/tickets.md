@@ -1,14 +1,14 @@
 ---
 paths:
   - "tickets/"
-  - "tickets/FORMAT.md"
+  - "tickets/spec-erg-v1.md"
 last-reviewed: 2026-04-23
 ---
 
 # Ticket log conventions — %erg v1
 
 Tickets live in `tickets/` as `.erg` files. The log section is append-only.
-Validate with `tickets/tools/go/erg check tickets/`.
+Validate with `tickets/erg check tickets/`.
 
 ## Log line format
 
