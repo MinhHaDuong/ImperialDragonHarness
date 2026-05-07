@@ -847,10 +847,11 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
 
     # Ensure working tree is on main before any read or write.
     # Fails fast with a clear message if the tree is dirty.
-    r = _git("checkout", "main", cwd=path)
+    default_branch = _default_branch(path)
+    r = _git("checkout", default_branch, cwd=path)
     if r.returncode != 0:
         detail = (r.stderr or r.stdout or "").strip().replace("\n", " | ")
-        _log(f"=== beat aborted: cannot checkout main: {detail} ===")
+        _log(f"=== beat aborted: cannot checkout {default_branch}: {detail} ===")
         return "aborted", None
 
     # Housekeeping (conditional). Aborts beat on failure/timeout so
