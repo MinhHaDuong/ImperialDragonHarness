@@ -1,0 +1,42 @@
+%erg v1
+Title: Fix beat.py checkout step hardcodes "main" instead of calling _default_branch()
+Created: 2026-05-07
+Author: claude-agent
+
+--- log ---
+2026-05-07T21:15Z claude-agent created
+
+--- body ---
+## Context
+
+`scripts/beat.py` line 850 calls `git checkout main` unconditionally, but
+`chemin-de-voix` (and any other project with a `master` default branch) does
+not have a `main` branch. This causes the beat to abort every time it
+selects that project slot:
+
+```
+=== beat aborted: cannot checkout main: error: le spécificateur de chemin
+'main' ne correspond à aucun fichier connu de git ===
+```
+
+`_default_branch(path)` already exists and is already called correctly in
+`_sync_origin_main` (line 599) and `_housekeeping_phase` (line 722). The
+checkout step just missed it.
+
+## Actions
+
+1. In `scripts/beat.py`, replace the hardcoded `"main"` at the checkout
+   step (~line 850) with `_default_branch(path)`.
+2. Update the error message string on the next line to use the branch name
+   variable instead of the literal "main".
+
+## Test
+
+Run `python3 scripts/beat.py --help` to confirm the script still loads.
+Verify `_default_branch` is called, not "main" literal, at the checkout step.
+
+## Exit criteria
+
+- `git grep '"main"' scripts/beat.py` does not match the checkout step
+- Beat no longer aborts on `chemin-de-voix`
+- Existing tests pass (`make test` or equivalent)
