@@ -2,10 +2,12 @@
 Title: Rebuild erg binary — enforce no-Status header per ticket-new skill
 Created: 2026-05-05
 Author: claude
+Closed: already resolved by PR #107 — erg binary rev 1f68c4a rejects Status: headers, matching ticket-new skill
 
 --- log ---
 2026-05-05T14:45Z claude created
 
+2026-05-07T01:09Z MinhHaDuong closed — already resolved by PR #107 — erg binary rev 1f68c4a rejects Status: headers, matching ticket-new skill
 --- body ---
 ## Context
 

@@ -2,11 +2,12 @@
 Title: project-state.py: wrap make runner in try/except FileNotFoundError
 Created: 2026-05-05
 Author: claude
-Closed: 2026-05-06 claude fixed
+Closed: already resolved — PR #106 merged the FileNotFoundError guard
 
 --- log ---
 2026-05-05T13:45Z claude created — residual gap from PR #100 verify-gate
 
+2026-05-07T20:09Z MinhHaDuong closed — already resolved — PR #106 merged the FileNotFoundError guard
 --- body ---
 ## Context
 
