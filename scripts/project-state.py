@@ -227,19 +227,16 @@ def test_state(project):
                 "status": "skip",
                 "detail": "no test target in Makefile",
             }
-        try:
-            r = run(["make", target], project)
-            return {
-                "runner": "make",
-                "status": "pass" if r.returncode == 0 else "fail",
-                "detail": r.stdout.strip().splitlines()[-1]
-                if r.stdout.strip()
-                else r.stderr.strip().splitlines()[-1]
-                if r.stderr.strip()
-                else "",
-            }
-        except FileNotFoundError:
-            return {"runner": "make", "status": "skip", "detail": "make not found"}
+        r = run(["make", target], project)
+        return {
+            "runner": "make",
+            "status": "pass" if r.returncode == 0 else "fail",
+            "detail": r.stdout.strip().splitlines()[-1]
+            if r.stdout.strip()
+            else r.stderr.strip().splitlines()[-1]
+            if r.stderr.strip()
+            else "",
+        }
 
     if (project / "pyproject.toml").exists() or (project / "setup.py").exists():
         try:
