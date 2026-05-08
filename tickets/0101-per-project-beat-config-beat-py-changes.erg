@@ -1,0 +1,67 @@
+%erg v1
+Title: Per-project beat config — beat.py changes (ProjectConfig + interval skip)
+Created: 2026-05-08
+Author: MinhHaDuong
+
+--- log ---
+2026-05-08T20:06Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Split from ticket 0069 (Phase 1). This ticket covers only `beat.py` changes
+needed for per-project config. The migration of existing config and creation
+of per-project `.claude/beat.json` files is ticket 0102 and must follow this one.
+
+## Actions
+
+1. Add optional budget and interval fields to `ProjectConfig` dataclass:
+
+```python
+@dataclass
+class ProjectConfig:
+    path: Path
+    budget_housekeeping: float = 0.40
+    budget_pick_ticket: float = 0.50
+    budget_raid: float = 10.00
+    interval_minutes: int = 0  # 0 = always run
+```
+
+2. In `load_projects()`, after building a `ProjectConfig` from `projects.json`,
+   check for `<project>/.claude/beat.json` and merge any fields present:
+
+```python
+beat_cfg = project_path / ".claude" / "beat.json"
+if beat_cfg.exists():
+    overrides = json.loads(beat_cfg.read_text())
+    for k, v in overrides.items():
+        if hasattr(config, k):
+            setattr(config, k, v)
+```
+
+3. In the main beat loop, before running housekeeping for a project, add an
+   interval skip check:
+
+```python
+if config.interval_minutes > 0:
+    last_run = _last_run_at(project)  # reads beat-log.jsonl
+    if last_run and (datetime.now(UTC) - last_run).total_seconds() < config.interval_minutes * 60:
+        log(f"interval-skip: {project.name} (next run in ...)")
+        continue
+```
+
+## Test
+
+- `BEAT_DRY_RUN=1 python3 beat.py` shows correct per-project budgets when a
+  `.claude/beat.json` is present.
+- With `interval_minutes: 30`, a project with a recent `beat-log.jsonl` entry
+  is skipped; one with an old or absent entry runs.
+- `projects.json` with no per-project fields still loads with defaults.
+
+## Exit criteria
+
+- `ProjectConfig` has `interval_minutes` and all four budget fields.
+- `load_projects()` overlays `.claude/beat.json` when present.
+- Interval skip logic in main loop; logged when triggered.
+- All existing beat tests pass.
+- Blocked-by: none (0102 depends on this, not the reverse).

@@ -1,0 +1,52 @@
+%erg v1
+Title: Move cooldown-recent-pick guard from SKILL.md prose to beat.py
+Created: 2026-05-08
+Author: MinhHaDuong
+
+--- log ---
+2026-05-08T20:06Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Split from ticket 0051 (Layer 0). The cooldown-recent-pick guard — "skip a
+ticket picked within the last 8 h" — currently lives as prose in
+`skills/pick-ticket/SKILL.md` (step 2). It is not tested and can drift.
+Moving it to `beat.py` makes it mechanical, testable, and removes one
+responsibility from the LLM skill.
+
+## Actions
+
+1. Add to `beat.py`:
+
+```python
+def _ticket_recently_picked(ticket_path: Path, within_hours: int = 8) -> bool:
+    cutoff = datetime.now(UTC) - timedelta(hours=within_hours)
+    for line in ticket_path.read_text().splitlines():
+        if "sweep-pick: selected" in line or "sweep-pick: picked" in line:
+            try:
+                ts = datetime.fromisoformat(line.split()[0].rstrip("Z")).replace(tzinfo=UTC)
+                if ts > cutoff:
+                    return True
+            except ValueError:
+                pass
+    return False
+```
+
+2. Call it in `_orchestrate()` (or wherever pick-ticket is invoked) before
+   launching the skill. If True, log `cooldown-recent-pick: <id>` and record
+   `outcome=idle`.
+
+3. Add to `test_beat.py`:
+   - Guard fires when a `sweep-pick: picked` line is within 8 h.
+   - Guard clears after 8 h.
+   - Malformed log line is ignored (no ValueError propagation).
+
+4. Remove the prose cooldown rule from `skills/pick-ticket/SKILL.md` step 2.
+
+## Exit criteria
+
+- `_ticket_recently_picked()` exists in `beat.py` with the above signature.
+- `test_beat.py` covers the three cases above; all pass.
+- The prose cooldown rule is gone from `skills/pick-ticket/SKILL.md`.
+- No existing beat test broken.

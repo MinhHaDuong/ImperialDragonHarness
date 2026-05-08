@@ -10,6 +10,7 @@ Author: claude
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:aff71a026b83 expires:2026-04-30T09:18Z
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:3cb6ec4ca46b expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
+2026-05-08T20:07Z split Layer 0 into ticket 0100 (cooldown guard to Python); 0051 retains Layer 1 (fallback rotation) and Layer 2 (pre-flight skip)
 --- body ---
 ## Context
 

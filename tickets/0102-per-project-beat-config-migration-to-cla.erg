@@ -1,0 +1,55 @@
+%erg v1
+Title: Per-project beat config — migration to .claude/beat.json
+Created: 2026-05-08
+Author: MinhHaDuong
+
+--- log ---
+2026-05-08T20:06Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Split from ticket 0069 (Phase 2). Depends on ticket 0101 (beat.py changes)
+being merged first. This ticket migrates existing project config and sets up
+per-project `.claude/beat.json` files.
+
+## Blocked-by
+
+0101
+
+## Actions
+
+1. Create `~/.claude/.claude/beat.json` with current IDH budget values:
+
+```json
+{
+  "budget_housekeeping": 0.40,
+  "budget_pick_ticket": 0.50,
+  "budget_raid": 10.00,
+  "interval_minutes": 60
+}
+```
+
+2. For each other active project in `scripts/projects.json`, create a
+   `.claude/beat.json` with its current budget overrides (read from
+   `projects.json` before stripping them).
+
+3. Strip budget override fields from `scripts/projects.json`, leaving only
+   `path` keys:
+
+```json
+[
+  { "path": "~/aedist-technical-report" },
+  { "path": "~/.claude" }
+]
+```
+
+4. Run `BEAT_DRY_RUN=1 python3 beat.py` and confirm budgets load correctly
+   from the new per-project files.
+
+## Exit criteria
+
+- `projects.json` contains only `path` keys (no budget fields).
+- Each active project has `.claude/beat.json` with its budget/interval config.
+- `BEAT_DRY_RUN=1 python3 beat.py` shows the same effective budgets as before.
+- All existing beat tests pass.
