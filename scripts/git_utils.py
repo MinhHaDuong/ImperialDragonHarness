@@ -6,7 +6,7 @@ from pathlib import Path
 
 def _default_branch(project: Path) -> str:
     """Return the remote default branch name, falling back to 'main'."""
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
         capture_output=True,
         text=True,
