@@ -56,11 +56,11 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
    ```
    Fix any errors before committing.
 
-5. Check blocker references (requires ticket 0035):
+5. Run corpus check to catch dangling refs:
    ```bash
-   $ERG verify-blockers tickets/ 2>/dev/null && echo OK || echo "WARNING: dangling Blocked-by refs — fix before committing"
+   $ERG check tickets/
    ```
-   Skip gracefully if the command does not exist yet.
+   Fix any errors before committing.
 
 6. Commit the ticket file.
 
