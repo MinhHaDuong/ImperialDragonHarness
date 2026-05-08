@@ -7,7 +7,7 @@
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`.
 - **Worktree isolation is automatic** — the SessionStart hook enforces it. All worktrees are throwaway; branches hold durable state. Skills must not manually delete worktrees created via `Agent(isolation:"worktree")` — use `git worktree prune` after branch deletion, never `rm -rf`.
 - **Squash merges break ancestry checks.** `git merge-base --is-ancestor` returns false after squash merge. To verify a branch landed, check for the PR number in `git log origin/main` instead.
-- **Create a merge request** for each ticket to review changes before merging.
+- **Create a merge request** for each ticket to review changes before merging. Include a `**Ticket:** tickets/NNNN-...` line in the PR body so `erg-pr-merge` can auto-close the ticket on merge.
 - **Delete branches after merge.** All repos use `deleteBranchOnMerge: true` on GitHub, so the remote branch disappears automatically when a PR merges. Clean up stale local branches with:
   ```bash
   git fetch --prune
