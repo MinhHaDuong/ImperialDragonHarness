@@ -8,16 +8,13 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from git_utils import _default_branch
+
 THRESHOLD_HOURS = 12.0
 
 
 def run(args, cwd):
     return subprocess.run(args, capture_output=True, text=True, check=False, cwd=cwd)
-
-
-def _default_branch(project):
-    r = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], project)
-    return r.stdout.strip().removeprefix("origin/") if r.returncode == 0 else "main"
 
 
 def git_state(project):

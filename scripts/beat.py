@@ -24,6 +24,8 @@ from datetime import UTC, datetime, timedelta
 from io import TextIOBase
 from pathlib import Path
 
+from git_utils import _default_branch
+
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 HARNESS_DIR = Path.home() / ".claude"
@@ -571,22 +573,6 @@ def run_skill(
 
 
 # ── Origin sync ───────────────────────────────────────────────────────────────
-
-
-def _default_branch(project: Path) -> str:
-    """Return the remote default branch name, falling back to 'main'."""
-    result = subprocess.run(  # noqa: S603
-        ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=project,
-    )
-    return (
-        result.stdout.strip().removeprefix("origin/")
-        if result.returncode == 0
-        else "main"
-    )
 
 
 def _sync_origin_main(project: Path) -> None:
