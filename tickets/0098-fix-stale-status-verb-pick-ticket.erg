@@ -1,0 +1,36 @@
+%erg v1
+Title: Fix stale status-verb examples in pick-ticket SKILL.md
+Created: 2026-05-08
+Author: claude
+
+--- log ---
+2026-05-08T00:00Z claude created
+
+--- body ---
+## Context
+
+`skills/pick-ticket/SKILL.md` lines 60 and 82 reference a stale
+`status closed — already-done` log verb pattern:
+
+    Line 60: `status closed — already-done` log line in the ticket
+    Line 82: `{ts} claude status closed — already-done` in one step.
+
+The `status` verb was removed from the %erg v1 spec. The correct
+verb emitted by `erg close` is `closed —` (see real ticket example:
+`2026-05-08T15:38Z MinhHaDuong closed — completed — ...`).
+
+This is the same anti-pattern fixed in ticket 0096 (AGENTS.md),
+found during the celebrate sweep after merging PRs 112/113.
+
+## Actions
+
+In `skills/pick-ticket/SKILL.md`:
+1. Line 60: replace `` `status closed — already-done` log line ``
+   with `` `closed — already-done` log line ``
+2. Line 82: replace `` `{ts} claude status closed — already-done` ``
+   with `` `{ts} claude closed — already-done` ``
+
+## Exit criteria
+
+- `skills/pick-ticket/SKILL.md` contains no `status closed` phrase
+- `erg check tickets/` passes
