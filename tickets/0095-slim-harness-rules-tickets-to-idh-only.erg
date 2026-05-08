@@ -1,0 +1,13 @@
+%erg v1
+Title: Slim harness-rules/tickets.md to IDH-only content, delegate format to tickets/AGENTS.md
+Created: 2026-05-08
+Author: claude
+Closed: completed — harness-rules/tickets.md slimmed to IDH-only content
+
+--- log ---
+2026-05-08T00:00Z claude created
+2026-05-08T15:42Z MinhHaDuong closed — completed — harness-rules/tickets.md slimmed to IDH-only content
+--- body ---
+The slimming work is done in this PR. `skills/harness-rules/tickets.md` previously
+duplicated log-format and verb content from `tickets/AGENTS.md`, causing verb drift.
+Removed duplicate sections and added a pointer to the canonical source.

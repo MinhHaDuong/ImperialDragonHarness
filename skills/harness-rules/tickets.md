@@ -2,7 +2,7 @@
 paths:
   - "tickets/"
   - "tickets/spec-erg-v1.md"
-last-reviewed: 2026-04-23
+last-reviewed: 2026-05-08
 ---
 
 # Ticket log conventions — %erg v1
@@ -10,24 +10,9 @@ last-reviewed: 2026-04-23
 Tickets live in `tickets/` as `.erg` files. The log section is append-only.
 Validate with `tickets/erg check tickets/`.
 
-## Log line format
+Format and base verbs: see `tickets/AGENTS.md`.
 
-```
-{YYYY-MM-DDThh:mmZ} {actor} {verb} [{detail}]
-```
-
-Actor is typically `claude` or `haduong`. Detail is free text after the verb.
-
-## Verbs (closed set)
-
-| Verb | Usage |
-|------|-------|
-| `created` | Ticket was created |
-| `status {new-status}` | Status changed; detail gives reason |
-| `note {text}` | Free-form annotation; anything goes |
-| `bump {category} — {detail}` | Agent paused waiting for a signal (see categories below) |
-
-## Bump categories (closed set)
+## Bump categories
 
 | Category | Meaning |
 |----------|---------|
