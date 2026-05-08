@@ -1,0 +1,46 @@
+%erg v1
+Title: Add CI grep guard against legacy status verb in skill log examples
+Created: 2026-05-08
+Author: claude
+
+--- log ---
+2026-05-08T16:15Z claude created
+
+--- body ---
+## Context
+
+The `status` verb was removed from %erg v1, but it keeps reappearing in
+skill log examples (found in AGENTS.md, pick-ticket SKILL.md during the
+2026-05-08 alignment raid). The class shape: any skill file containing a
+log-line example can drift to use the old verb.
+
+Individual fixes (0096, 0098) are not enough — without a standing gate, the
+pattern will reappear in unrelated PRs. A CI grep catches it at the class level.
+
+## Actions
+
+In `scripts/skill-lint.sh` (or equivalent CI lint script), add a check:
+
+```bash
+# No legacy status verb in skill log examples
+if grep -r '\bstatus open\b\|\bstatus closed\b\|\bstatus doing\b\|\bstatus pending\b' skills/; then
+  echo "ERROR: legacy 'status <state>' verb found in skills/ — use 'note' or 'closed'" >&2
+  exit 1
+fi
+```
+
+Tune the pattern after reading the actual log-example contexts to avoid
+false positives (e.g., `git status`, `http status`).
+
+## Test
+
+```bash
+bash scripts/skill-lint.sh   # should pass on clean tree
+# introduce a status verb in a skill and re-run — should fail
+```
+
+## Exit criteria
+
+- `make check` or equivalent CI step runs the guard.
+- The guard fails on a file containing `status closed` in a log example.
+- The guard passes on the current clean tree.
