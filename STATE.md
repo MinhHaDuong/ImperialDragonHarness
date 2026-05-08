@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-06T14:30Z
+Last updated: 2026-05-08T22:30Z
 
 ## North star
 
@@ -14,7 +14,7 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires every 30 min 22:00–06:00 weeknights, every 30 min all day weekends (17 runs/night). `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage. Beat prints one-line run summary to stdout (project, ticket, outcome, duration).
 
-**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — all projects at $0.40/$0.50. 2 targets in `scripts/projects.json`: `aedist-technical-report`, `~/.claude`. Ticket 0069 open to move config into per-project `.claude/beat.json`.
+**Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — all projects at $0.40/$0.50. 2 targets in `scripts/projects.json`: `aedist-technical-report`, `~/.claude`. Tickets 0101/0102 track the migration to per-project `.claude/beat.json`.
 
 **Idle skip**: housekeeping skipped when repo has no commits since last run (ticket 0036 closed).
 
@@ -46,20 +46,34 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 - 0057 — route .erg mutations through erg binary (blocked: needs git-erg/0039 `erg log` + git-erg/0040 `erg new`)
 - 0061 — sequence parallel agents to stay under budget (corpus discovery fanout crash)
 - 0062 — run nightbeat from a VM (uptime + bypass Gallica 403 blocks)
-- 0063 — enforce erg source read-only in IDH; edits go to git-erg
 - 0064 — audit bash/permission denial patterns across last 3 nights
 - 0065 — /nightbeat-risk-review skill (interactive log triage before next night)
 - 0067 — rename celebrate→roar and end-session→lair (blocked by 0068)
 - 0068 — two-word canonical names + IDH aliases for all skills
-- 0069 — per-project beat config (.claude/beat.json) with interval_minutes
 - 0070 — /dream skill — autonomous nightly memory consolidation
 - 0084 — cheap-worker delegation (blocked: needs WORKER_API_KEY + openai library)
-- 0087 — project-state.py: wrap make runner in try/except FileNotFoundError
-- 0089 — rebuild erg binary — enforce no-Status header per ticket-new skill
-- 0090 — deduplicate _default_branch helper between beat.py and project-state.py
+- 0098 — fix stale status-verb examples in pick-ticket SKILL.md
+- 0099 — add CI grep guard against legacy status verb in skill log examples
+- 0100 — move cooldown-recent-pick guard from SKILL.md to beat.py
+- 0101 — per-project beat config — beat.py changes (ProjectConfig + interval skip)
+- 0102 — per-project beat config — migration to .claude/beat.json
 - 0054 — [discussion] restore Five-Claws phase announcement at session start
 - 0055 — [discussion] milestone/epic layer above tickets
 - 0056 — [discussion] mid-session pause/resume checkpoints
+
+## Incident — 2026-05-08 night
+
+**Nightbeat timer stopped.** Two consecutive housekeeping budget failures (chemin-de-voix T200625Z $0.44, IDH T210747Z $0.42). Root cause: `erg check` reported 10 closed tickets not in `tickets/closed/` — housekeeping agent spent entire $0.40 budget investigating without completing.
+
+Additionally, the IDH housekeeping branch (`claude/housekeeping-20260508T210424Z-2579`) incorrectly **deleted** tickets 0100, 0101, 0102 and removed `Closed:` from 0069. That branch was **not merged** (beat recorded "fail") — main branch was unaffected.
+
+**Recovery completed by nightbeat monitor (this session):**
+- Moved the 10 misplaced closed tickets to `tickets/closed/` on main directly (clean `git mv`, not cherry-pick from bad branch)
+- Verified `erg check` now clean (98 tickets, 0 warnings)
+- STATE.md updated to reflect closed 0063, 0069, 0087, 0089, 0090 + added new open 0098–0102
+- Timer left stopped — restart manually once you confirm you're happy with state
+
+**To restart**: `systemctl --user start claude-nightbeat.timer`
 
 ## Blockers
 
