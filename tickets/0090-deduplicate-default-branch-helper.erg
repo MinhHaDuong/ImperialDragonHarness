@@ -2,10 +2,12 @@
 Title: Deduplicate _default_branch helper between beat.py and project-state.py
 Created: 2026-05-05
 Author: claude-agent
+Closed: done
 
 --- log ---
 2026-05-05T18:30Z claude-agent created
 
+2026-05-08T00:20Z MinhHaDuong closed — done
 --- body ---
 ## Context
 
