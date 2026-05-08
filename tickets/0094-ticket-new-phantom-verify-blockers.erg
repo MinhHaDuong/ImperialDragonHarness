@@ -1,0 +1,25 @@
+%erg v1
+Title: Replace phantom erg verify-blockers with erg check in ticket-new skill
+Created: 2026-05-08
+Author: agent
+Closed: completed — phantom command replaced with erg check
+
+--- log ---
+2026-05-08T00:00Z agent created
+
+2026-05-08T15:38Z MinhHaDuong closed — completed — phantom command replaced with erg check
+--- body ---
+## Context
+skills/ticket-new/SKILL.md step 5 calls `erg verify-blockers` which does not exist
+in the binary. The surrounding `2>/dev/null` suppression made this silently dead code.
+The corpus-level check command is `erg check [DIR]`.
+
+## Actions
+1. Replace step 5 in skills/ticket-new/SKILL.md with `erg check tickets/`
+2. Remove the "Skip gracefully if the command does not exist yet" note
+
+## Test
+Read back SKILL.md step 5 and confirm it references `erg check` not `erg verify-blockers`.
+
+## Exit criteria
+SKILL.md step 5 calls `$ERG check tickets/` and the error-suppression note is gone.
