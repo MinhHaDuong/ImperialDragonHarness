@@ -1,0 +1,33 @@
+%erg v1
+Title: Fix stale legacy status verb in AGENTS.md example log
+Created: 2026-05-08
+Author: claude-agent
+Closed: completed — example updated to use note verb
+
+--- log ---
+2026-05-08T00:00Z claude-agent created
+
+2026-05-08T15:37Z MinhHaDuong closed — completed — example updated to use note verb
+--- body ---
+## Context
+
+The example ticket log in `tickets/AGENTS.md` uses the legacy `status open`
+verb on the log line:
+
+    2026-05-04T14:22Z bob status open Was blocked, 0007 now merged
+
+The `status` verb predates the removal of the `Status:` header from the
+%erg v1 spec. The correct verb for an informational annotation is `note`.
+This stale example propagates the legacy pattern into new agents reading
+the file.
+
+## Actions
+
+Replace the `status open` log line with a `note` verb line:
+
+    2026-05-04T14:22Z bob note blocker 0007 merged — unblocked
+
+## Exit criteria
+
+- `tickets/AGENTS.md` example log uses `note` verb, not `status`
+- `erg check tickets/` passes
