@@ -5,6 +5,8 @@ Author: claude
 
 --- log ---
 2026-04-30T07:30Z claude created
+2026-05-08T04:08Z claude reimagined — Go source already deleted (PR #107); orphan binary re-appeared in 10160b31; scope narrowed to cleanup + guard
+2026-05-08T04:08Z claude started
 
 --- body ---
 ## Context

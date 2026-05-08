@@ -60,6 +60,34 @@ jobs:
           fi
           echo "OK: escape hatch suppressed leak"
 
+  erg-source-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject any files under tickets/tools/go/
+        run: |
+          set -euo pipefail
+          if find tickets/tools/go -type f 2>/dev/null | grep -q .; then
+            echo "FAIL: erg source is read-only in IDH — commit changes to git-erg project instead"
+            find tickets/tools/go -type f
+            exit 1
+          fi
+          echo "OK: no files under tickets/tools/go/"
+      - name: Self-test — guard must catch a deliberate violation
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/tickets/tools/go"
+          echo violation > "$tmp/tickets/tools/go/main.go"
+          pushd "$tmp" >/dev/null
+          if find tickets/tools/go -type f 2>/dev/null | grep -q .; then
+            echo "OK: deliberate violation caught"
+          else
+            echo "FAIL: guard did not catch violation"
+            exit 1
+          fi
+          popd >/dev/null
+
   pipefail-guard:
     runs-on: ubuntu-latest
     steps:
