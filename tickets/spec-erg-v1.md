@@ -261,7 +261,7 @@ the history of why it was blocked is not lost.
 
 ## Archiving
 
-Move a closed ticket to `tickets/archive/` (or any subdirectory of
+Move a closed ticket to `tickets/closed/` (or any subdirectory of
 `tickets/`) once no open ticket references it. `erg validate [dir]`
 recurses into subdirectories and validates every `.erg` file it finds.
 Archived tickets remain inside validation scope when validating the
