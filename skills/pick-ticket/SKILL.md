@@ -57,7 +57,7 @@ Select one ticket for the current sweep run.
    - `git log --since=<last-pick-ts> -- <relevant-files>` returns matches
      (recent commits touched files the ticket talks about). Use the
      timestamp of the most recent `sweep-pick:` log line or
-     `status closed — already-done` log line in the ticket as
+     `closed — already-done` log line in the ticket as
      `<last-pick-ts>`; if none, default to 7 days ago.
 
    Skip the check on cache-hit tickets with no recent relevant commits —
@@ -79,7 +79,7 @@ Select one ticket for the current sweep run.
 
    1. Call `/ticket-close <id> already-done` — `erg close` writes the
       `Status: closed` header change and appends the audit log line
-      `{ts} claude status closed — already-done` in one step.
+      `{ts} claude closed — already-done` in one step.
    2. Output `CLOSED: <id>` and stop processing this candidate (do not
       rank it). beat.py will loop back and pick again.
 
