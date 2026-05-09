@@ -23,7 +23,7 @@ One mechanically generated section (replaced each session from `git log` + `git-
 |---------|---------|-----------|
 | `## Status` | Ticket summary counts + last 3–5 commits | Machine |
 
-**Replace policy — no append.** Each session rewrites `## Status` in full from current git state. All `##` sections after `## Status` are preserved verbatim — the script only replaces the Status body, not what follows. The hand-edited sections are touched only when the author explicitly updates them.
+**Replace policy — no append.** Each session rewrites `## Status` in full from current git state and bumps `Last updated:` in the preamble. All `##` sections after `## Status` are preserved verbatim. The other hand-edited sections are touched only when the author explicitly updates them.
 
 **Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`.
 

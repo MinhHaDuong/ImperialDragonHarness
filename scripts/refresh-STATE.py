@@ -25,7 +25,6 @@ STATE_FILE = REPO_ROOT / "STATE.md"
 TICKETS_DIR = REPO_ROOT / "tickets"
 ERG_BIN = TICKETS_DIR / "erg"
 STATUS_HEADING = "## Status"
-MAX_STATUS_LINES = 20
 
 
 def run(cmd):
@@ -39,7 +38,14 @@ def get_commits(n=5):
 
 
 def get_tickets():
-    return json.loads(run([str(ERG_BIN), "ready", str(TICKETS_DIR), "--json"]))
+    if not ERG_BIN.exists():
+        print(f"ERROR: erg binary not found at {ERG_BIN}", file=sys.stderr)
+        sys.exit(1)
+    try:
+        return json.loads(run([str(ERG_BIN), "ready", str(TICKETS_DIR), "--json"]))
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: erg ready failed: {e.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
 
 
 def format_status(tickets, commits):
@@ -87,6 +93,10 @@ def refresh_last_updated(preamble, date_str):
     pat = re.compile(r"^Last updated:.*$", re.MULTILINE)
     if pat.search(preamble):
         return pat.sub(f"Last updated: {date_str}", preamble)
+    print(
+        "WARNING: 'Last updated:' line not found in STATE.md preamble — add it manually.",
+        file=sys.stderr,
+    )
     return preamble
 
 
@@ -109,10 +119,6 @@ def main():
     commits = get_commits()
     tickets = get_tickets()
     status_lines = format_status(tickets, commits)
-
-    if len(status_lines) > MAX_STATUS_LINES:
-        status_lines = status_lines[:MAX_STATUS_LINES]
-        status_lines.append(f"<!-- truncated to {MAX_STATUS_LINES} lines -->")
 
     new_text = (
         preamble.rstrip()
