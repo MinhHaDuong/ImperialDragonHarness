@@ -2,11 +2,13 @@
 Title: Nightbeat supervisor — autonomous post-beat merge + failure recovery agent
 Created: 2026-05-09
 Author: claude
+Closed: done
 
 --- log ---
 2026-05-09T00:00Z claude created
 2026-05-09T00:00Z claude note body rewritten to reflect final design decisions
 
+2026-05-09T16:30Z MinhHaDuong closed — done
 --- body ---
 ## Context
 
