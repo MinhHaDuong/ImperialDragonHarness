@@ -106,7 +106,7 @@ def _find_log_file(proj_name: str, failure_ts: str) -> str | None:
     best: Path | None = None
     for c in candidates:
         # Filename starts with YYYYMMDDTHHMMSSz e.g. 20260503T120323Z
-        stem = c.stem[:16]  # 20260503T120323
+        stem = c.stem[:15]  # 20260503T120323
         try:
             file_dt = datetime.strptime(stem, "%Y%m%dT%H%M%S").replace(
                 tzinfo=timezone.utc
