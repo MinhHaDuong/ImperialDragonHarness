@@ -1,0 +1,132 @@
+%erg v1
+Title: Nightbeat supervisor — autonomous post-beat merge + failure recovery agent
+Created: 2026-05-09
+Author: claude
+
+--- log ---
+2026-05-09T00:00Z claude created
+
+--- body ---
+## Context
+
+After each nightbeat run, two things can happen that currently require human
+morning review:
+
+1. **A raid succeeds and creates a PR.** The PR sits unmerged until the human
+   runs /nightbeat-report, reviews it, and manually triggers /merge. On
+   nights with 9 runs, a branch can wait 8 hours.
+
+2. **A housekeeping or raid fails.** The timer may stop (2026-05-08 incident)
+   or the same failure recurs all night, burning budget on something broken.
+   Root cause is not investigated until morning.
+
+The supervisor fills this gap: a continuously-running autonomous agent that
+watches beat-outcomes.jsonl, merges approved PRs, diagnoses failures, and
+applies bounded auto-repairs — all before the next beat fires.
+
+## Design decisions
+
+**Invocation**: separate systemd timer (`claude-nightbeat-supervisor.timer`),
+not a post-raid phase in beat.py. The supervisor must outlive the thing it
+supervises: if the main timer stops (as on 2026-05-08), a post-raid hook also
+stops. A separate timer can detect the outage and restart the main timer.
+
+**Watermark**: `~/.claude/logs/nightbeat-supervisor-watermark.json` — records
+the last beat-outcomes.jsonl timestamp the supervisor processed. Prevents
+re-merging or re-diagnosing on restart. Written atomically at the end of each
+supervisor run.
+
+**Repair authority** — two tiers:
+- *Auto-apply* (no ticket needed): add permission allowlist entries, raise
+  budget by ≤2x, move misplaced `tickets/*.erg` to `tickets/closed/`, restart
+  the main timer after a confirmed outage.
+- *Ticket-only* (never auto-edit): skill SKILL.md bodies, beat.py logic,
+  schema changes, anything requiring human judgment.
+
+**Destructive-diff brake**: before merging any PR, the supervisor checks the
+diff for deletions of `tickets/*.erg` files that are not simultaneously moved
+to `tickets/closed/`. Any such deletion → HOLD (do not merge, create a repair
+note). This catches the exact 2026-05-08 housekeeping branch incident.
+
+**Repair-while-running guard**: before touching beat.py, settings.json, or
+any skill file, the supervisor must stop the main timer
+(`systemctl --user stop claude-nightbeat.timer`), apply the fix, and restart
+it. Any failure in the apply step leaves the timer stopped and creates a
+diagnostic ticket.
+
+**Escalation**: call the `advisor` tool when:
+- The same failure type recurs ≥ 3 consecutive runs without a successful repair.
+- The root cause of a failure is ambiguous after reading the log.
+- A proposed repair is at the boundary of or outside auto-apply authority.
+
+**Model**: `claude-opus-4-7` with `effort: max`. The systemd ExecStart passes
+`--model claude-opus-4-7` explicitly (beat.py's run_skill() defaults to sonnet
+and must not be used to call the supervisor).
+
+## Relevant files
+
+- `~/.claude/logs/beat-outcomes.jsonl` — source of truth for beat outcomes
+- `~/.claude/logs/nightbeat/*.log` — per-run raw logs for diagnosis
+- `~/.claude/logs/nightbeat-supervisor-watermark.json` — new (idempotency)
+- `~/.claude/scripts/beat.py` — main timer controller; supervisor may restart it
+- `~/.claude/scripts/projects.json` — project list (for PR lookups)
+- `~/.claude/settings.json` — permission allowlist (auto-repair target)
+- `~/.claude/skills/nightbeat-supervisor/SKILL.md` — new skill persona
+- `~/.claude/scripts/nightbeat-supervisor-survey.py` — new helper (non-LLM
+  watermark reader + outcome classifier)
+- `/etc/systemd/user/claude-nightbeat-supervisor.{service,timer}` — new units
+
+## Actions
+
+1. **Write `skills/nightbeat-supervisor/SKILL.md`** — the full agent persona
+   (phases: watermark load → survey → merge loop → failure triage →
+   auto-repair → escalate → watermark update). Frontmatter:
+   `model: claude-opus-4-7`, `effort: max`.
+
+2. **Write `scripts/nightbeat-supervisor-survey.py`** — pure Python, stdlib
+   only:
+   - Reads `beat-outcomes.jsonl` from `--since <iso-ts>` (watermark).
+   - Classifies entries into: `prs_to_merge`, `failures`, `idle`.
+   - For each `raid outcome=success`, queries `gh pr list` (via subprocess)
+     to find the open PR for that project/ticket.
+   - Emits a JSON summary to stdout consumed by the skill.
+
+3. **Write systemd units** — `claude-nightbeat-supervisor.service` (one-shot,
+   `ExecStart=claude --model claude-opus-4-7 -p "/nightbeat-supervisor" ...`)
+   and `claude-nightbeat-supervisor.timer` (fires every 15 min during the
+   nightbeat window, plus on-boot).
+
+4. **Beat-outcomes watermark**: test that a duplicate supervisor run
+   (re-processing the same window) is a no-op (no double-merges, no
+   duplicate tickets).
+
+5. **Integration test**: simulate a budget-failure outcome entry in a test
+   beat-outcomes file → verify the supervisor creates a repair ticket (does
+   NOT attempt auto-repair on budget failures beyond budget-raise authority).
+
+## Test
+
+```bash
+# Red: survey script exists and classifies correctly
+python3 ~/.claude/scripts/nightbeat-supervisor-survey.py \
+  --outcomes-file tests/fixtures/beat-outcomes-sample.jsonl \
+  --since 2026-05-01T00:00:00Z | python3 -m json.tool
+# Should print {"prs_to_merge": [...], "failures": [...], "idle": [...]}
+# without error. Before implementation this file doesn't exist.
+```
+
+## Exit criteria
+
+- `scripts/nightbeat-supervisor-survey.py --help` exits 0.
+- Running the supervisor on an empty window (since=now) is a no-op and
+  updates the watermark.
+- A raid `outcome=success` with a matching open PR triggers verify-gate +
+  merge within one supervisor cycle.
+- A housekeeping `outcome=fail` triggers log-read + root-cause note
+  appended to the ticket (or a new ticket created) within one cycle.
+- The destructive-diff brake prevents merging the 2026-05-08-style
+  housekeeping branch (test with a synthetic PR diff).
+- Two consecutive supervisor failures on the same failure type escalate to
+  advisor output visible in the supervisor log.
+- Timer restart after repair is confirmed by `systemctl --user status
+  claude-nightbeat.timer` showing `active (waiting)`.
