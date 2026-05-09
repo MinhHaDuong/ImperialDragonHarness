@@ -2,7 +2,7 @@
 name: nightbeat-supervisor
 description: Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck.
 user-invocable: true
-argument-hint: "[--dry-run]"
+argument-hint: "[--since ISO-TS]"
 ---
 
 # Nightbeat Supervisor
@@ -16,20 +16,29 @@ beat.py) and acts on every unprocessed outcome:
 
 **Persona constraints** (non-negotiable, never override):
 - Never merge without an explicit `verdict: APPROVED` from `/verify-gate`.
-- Never edit a skill's SKILL.md autonomously.
-- Never touch `beat.py` logic (beyond config constants) without stopping the
-  main timer first and restarting it after.
+- Auto-edit only: `settings.json` permissions block, per-project `ProjectConfig`
+  literals in `beat.py`. Everything else opens a ticket and stops.
+- Never touch `beat.py` without stopping the main timer first and restarting
+  it after.
 - Never force-push.
 - If the same failure type recurs ≥ 3 consecutive runs: escalate (Phase 6),
   stop acting autonomously on that failure type.
 
 ---
 
-## Phase 1 — Watermark load
+## Phase 1 — Lock + watermark load
+
+Acquire an exclusive lock before any reads or writes:
+
+```bash
+exec 9>"${HOME}/.claude/logs/.supervisor.lock"
+flock -n 9 || { echo "supervisor: already running, exiting"; exit 0; }
+```
 
 Read `~/.claude/logs/nightbeat-supervisor-watermark.json`. Extract `since`
 (ISO-8601 timestamp). If the file does not exist, default `since` to 24 hours
-ago.
+ago. If `$ARGUMENTS` contains `--since <ts>`, use that value instead (allows
+manual backfill).
 
 ```bash
 python3 ~/.claude/scripts/nightbeat-supervisor-survey.py \
@@ -60,9 +69,9 @@ The script exits 0 if the diff is clean, 1 if it contains a ticket deletion
 without a corresponding move to `tickets/closed/`. It prints a one-line
 reason to stdout.
 
-If exit code is 1:
-- Do NOT call verify-gate or merge.
-- Create a note in the supervisor log: `HOLD PR#<n>: <reason>`.
+If exit code is non-zero (1 = ticket deletion detected, 2 = fetch failed):
+- Do NOT call verify-gate or merge regardless of reason.
+- Create a note in the supervisor log: `HOLD PR#<n>: <reason from script stdout>`.
 - Add it to the failures list for diagnosis in Phase 4.
 
 Continue to next PR.
@@ -143,19 +152,25 @@ Edit the file directly. Commit: `chore: supervisor auto-allow <command>`.
 
 ### 5b. Budget exhaustion
 
-Find the project's `ProjectConfig` in `beat.py`. If the observed cost is
-≤2× the current budget constant, raise the budget by 20% (round to 2 dp).
+Locate the project's per-project `ProjectConfig` entry in `beat.py`
+(search for `ProjectConfig(path=Path.home() / "<project-name>"`). Do not
+touch module-level constants (`BUDGET_HOUSEKEEPING`, `BUDGET_RAID`, etc.) —
+those affect every project.
 
-**Gate**: budget raise is at most 2× the original constant. If the current
-budget is already at or above 2× original, do not auto-raise. Create a
-ticket instead.
+If no per-project `ProjectConfig` exists for the failing project: create one
+that copies the current global defaults, then raise only the relevant field
+(e.g., `budget_housekeeping=0.90`). Do not auto-raise otherwise.
+
+**Gate**: raise is at most 2× the module-level constant for that field. If
+the per-project value is already at or above 2× the module-level constant,
+do not auto-raise. Create a ticket instead.
 
 Before editing `beat.py`:
 ```bash
 systemctl --user stop claude-nightbeat.timer
 ```
 
-Edit the constant. Commit: `chore: supervisor raises budget for <project>`.
+Edit the `ProjectConfig` field only. Commit: `chore: supervisor raises budget for <project>`.
 
 After commit:
 ```bash
@@ -212,7 +227,7 @@ Log: `supervisor: restarted nightbeat timer after crash recovery`.
 
 ---
 
-## Phase 6 — Escalate (Opus 4.7 max thinking)
+## Phase 6 — Escalate
 
 Call this phase when:
 - `verdict: ESCALATE` from verify-gate.
@@ -225,10 +240,12 @@ Collect:
 2. Recent beat-outcomes entries for the project (last 7 days).
 3. Any related open tickets.
 
-Escalation uses a sub-agent on the stronger model. If the `advisor` tool is
-available in this session, call it first — it forwards the full transcript.
-Otherwise (e.g., running under `claude -p --permission-mode bypassPermissions`
-where the advisor tool may not be loaded), spawn a sub-agent explicitly:
+**If the `advisor` tool is available** (interactive session): call it. It
+forwards the full conversation transcript and uses a stronger reviewer with
+extended thinking — the strongest escalation path.
+
+**If `advisor` is not available** (typical for `claude -p bypassPermissions`
+launched from the systemd unit): spawn a sub-agent on Opus:
 
 ```
 Agent(
@@ -238,11 +255,13 @@ Agent(
 )
 ```
 
-Apply the recommendation if it falls within auto-apply authority (Phase 5).
-Otherwise: create a ticket that captures the diagnosis and recommended action
-for human review.
+Note: the Agent tool does not expose an `effort` field — this gives Opus 4.7
+but without max-thinking mode. It is a degraded but useful fallback.
 
-Log: `supervisor: escalated <project>/<phase> failure — verdict: <one-line summary>`.
+Apply the recommendation if it falls within auto-apply authority (Phase 5).
+Otherwise: create a ticket capturing the diagnosis and recommended action.
+
+Log: `supervisor: escalated <project>/<phase> failure — advisor=<yes|sub-agent> verdict: <one-line summary>`.
 
 ---
 

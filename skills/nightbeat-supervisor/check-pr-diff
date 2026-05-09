@@ -10,10 +10,10 @@ PR_NUMBER=${1:?usage: check-pr-diff PR_NUMBER REPO}
 REPO=${2:?usage: check-pr-diff PR_NUMBER REPO}
 
 # <!-- harness-extension-point -->
-diff=$(gh pr diff "$PR_NUMBER" --repo "$REPO" 2>/dev/null) || {
-  echo "check-pr-diff: could not fetch diff for PR#${PR_NUMBER}"
-  exit 0  # soft fail — don't block on network error
-}
+if ! diff=$(gh pr diff "$PR_NUMBER" --repo "$REPO" 2>&1); then
+  echo "check-pr-diff: could not fetch diff for PR#${PR_NUMBER}: ${diff}"
+  exit 2  # unknown — SKILL.md Phase 2 treats any non-zero as HOLD
+fi
 
 # Find lines deleting ticket files: ^-  tickets/NNNN-slug.erg (not in closed/)
 deleted=$(echo "$diff" | grep -E '^-[^-].*tickets/[0-9]+-[^/]+\.erg' | grep -v 'tickets/closed/' || true)
