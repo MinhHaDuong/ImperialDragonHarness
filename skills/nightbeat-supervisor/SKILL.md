@@ -7,14 +7,11 @@ argument-hint: "[--since ISO-TS]"
 
 # Nightbeat Supervisor
 
-Watch `~/.claude/logs/beat-outcomes.jsonl` for unprocessed entries and close
-the loop: merge PRs that are ready, diagnose failures, repair within authority,
-escalate when stuck.
+Survey beat outcomes each cycle and close the loop: merge ready PRs, chase
+failures to their root cause, repair within authority, escalate when stuck.
 
-**Non-negotiables**: never merge without `verdict: APPROVED`; auto-edit only
-`settings.json` permissions block and per-project `ProjectConfig` literals —
-everything else opens a ticket; stop the main timer before touching `beat.py`,
-restart after.
+**Non-negotiables**: never merge without `verdict: APPROVED`; stop the main
+timer before editing `beat.py`, restart after; never edit skill SKILL.md files.
 
 ## 1. Survey
 
@@ -22,54 +19,58 @@ restart after.
 python3 ~/.claude/scripts/nightbeat-supervisor-survey.py [--since ISO-TS]
 ```
 
-Reads both `~/.claude/logs/beat-outcomes.jsonl` (phase-level signals) and
-each project's `beat-log.jsonl` (beat-level signals). Outputs
-`{prs_to_merge, failures}`. If both are empty, update the watermark and stop.
+If `--since` is absent from `$ARGUMENTS`, the script reads the watermark from
+`~/.claude/logs/nightbeat-supervisor-watermark.json` (defaults to 24h ago if
+the file is missing). Reads both `~/.claude/logs/beat-outcomes.jsonl` and each
+project's `beat-log.jsonl`. Outputs `{prs_to_merge, failures, watermark_ts}`.
+If both lists are empty, write `watermark_ts` and stop.
 
 ## 2. Merge ready PRs
 
-For each entry in `prs_to_merge`:
+For each entry in `prs_to_merge` (which includes `pr_number` and `github_repo`
+derived by the survey script from the project's git remote):
 
-1. Check the diff: `bash ~/.claude/skills/nightbeat-supervisor/check-pr-diff <pr> <repo>` — any non-zero exit is a HOLD; log the reason, skip to failures.
-2. `/verify-gate <pr>` — APPROVED → `/merge <pr>`. REROLL → note on the linked ticket. ESCALATE → go to step 4.
+1. `bash ~/.claude/skills/nightbeat-supervisor/check-pr-diff <pr_number> <github_repo>` — non-zero exit is a HOLD; add to failures with the script's reason.
+2. `/verify-gate <pr_number>` — APPROVED → `/merge <pr_number>`. REROLL → append the failing criteria as a note on the linked ticket (create the ticket if none is referenced in the PR body) and move on. ESCALATE → go to step 4.
 
-## 3. Triage failures
+## 3. Diagnose and repair
 
-For each failure, read the log and ask **why** until you reach an actionable
-root cause. Do not stop at the signal — `error_max_budget_usd` is not a root
-cause, it is a symptom. Keep asking:
+For each failure, read the nightbeat log and ask **why** until you reach an
+actionable root cause:
 
 > Why did it fail? → Why did that happen? → Why was that condition present?
 
-Stop when you reach something the harness can change. Then either repair
-within authority or open a ticket naming the root cause, not the symptom.
+When you reach a root cause, repair if within authority:
 
-**Repair authority** (auto-apply without a ticket):
-- Root cause is a missing permission → add to `settings.json` allowlist.
-- Root cause is a scope that fit under a larger budget → raise the per-project
-  `ProjectConfig` field by 20%, capped at 2× the module-level constant; never
-  touch the module-level constant; stop the timer first, restart after.
-- Root cause is a ticket too large to finish in one beat → read the body; if
-  it has obvious split lines (independent deliverables, self-contained
-  sections), split into one ticket per independent unit of work and close the
-  parent; otherwise add a sweep-skip and open a repair ticket.
-- Root cause is a dead timer → restart it.
+- **Missing permission** → add to `settings.json` allowlist.
+- **Budget too small for the actual scope of work** → raise the per-project
+  `ProjectConfig` field in `beat.py` by 20%, capped at 2× the module-level
+  constant; never touch the module-level constant.
+- **Ticket too large to finish in one beat** → split into one ticket per
+  independent unit of work; convert the parent to an umbrella by adding
+  `Blocks: <id>...` and leaving it open (it may be blocking other tickets).
+- **Dead timer** → restart it.
 
-**Everything else**: open a ticket stating the root cause chain. Do not
+If the why-chain bottoms out without reaching anything repairable: escalate
+(step 4).
+
+**Anything else**: open a ticket stating the root cause chain; do not
 auto-repair.
 
 ## 4. Escalate
 
-When: ESCALATE verdict, unknown failure category, or the same failure type
-recurring ≥ 3 consecutive runs for a project.
+Triggers: ESCALATE from verify-gate, why-chain without a repairable finding,
+or the same root cause recurring ≥ 3 consecutive runs for a project.
 
-Call `advisor` if available. Otherwise: `Agent(model="opus")` with the log
+Call `advisor` if available. Otherwise `Agent(model="opus")` with the log
 context (no extended thinking in Agent mode — honest degradation). Create a
-ticket with the verdict if the fix is outside auto-apply authority.
+ticket with the verdict if the fix is outside authority.
 
 ## 5. Done
 
-Update the watermark. End with:
+Write `watermark_ts` from the survey output to
+`~/.claude/logs/nightbeat-supervisor-watermark.json`. End with:
+
 ```
 supervisor: <ts> — merged: N, repaired: N, tickets: N, escalated: N
 ```
