@@ -40,9 +40,10 @@ def _github_repo(project_path: Path) -> str | None:
     )
     if r.returncode != 0:
         return None
-    url = r.stdout.strip().rstrip(".git")
+    url = r.stdout.strip().removesuffix(".git")
     if "github.com" in url:
-        return url.split("github.com/", 1)[-1].split(":", 1)[-1]
+        # handles both https://github.com/org/repo and git@github.com:org/repo
+        return url.split("github.com/", 1)[-1].split("github.com:", 1)[-1]
     return None
 
 
@@ -91,12 +92,68 @@ def _watermark(projects: list[dict]) -> datetime:
     )
 
 
-def _find_log_file(proj_name: str, ts_str: str) -> str | None:
+def _find_log_file(proj_name: str, failure_ts: str) -> str | None:
+    """Return log file whose name-timestamp is closest to and <= failure_ts."""
     log_dir = HARNESS_DIR / "logs" / "nightbeat"
     if not log_dir.exists():
         return None
     candidates = sorted(log_dir.glob(f"*{proj_name}*"))
-    return str(candidates[-1]) if candidates else None
+    if not candidates:
+        return None
+    failure_dt = _parse_ts(failure_ts)
+    if failure_dt is None:
+        return str(candidates[-1])
+    best: Path | None = None
+    for c in candidates:
+        # Filename starts with YYYYMMDDTHHMMSSz e.g. 20260503T120323Z
+        stem = c.stem[:16]  # 20260503T120323
+        try:
+            file_dt = datetime.strptime(stem, "%Y%m%dT%H%M%S").replace(
+                tzinfo=timezone.utc
+            )
+        except ValueError:
+            continue
+        if file_dt <= failure_dt:
+            best = c
+    return str(best) if best else str(candidates[0])
+
+
+def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict | None:
+    """Find an open PR for ticket_id via branch naming convention t{id}-*."""
+    r = subprocess.run(
+        ["git", "ls-remote", "--heads", "origin", f"t{ticket_id}-*"],
+        capture_output=True,
+        text=True,
+        cwd=project_path,
+    )
+    branches = [
+        line.split("\t", 1)[1].removeprefix("refs/heads/")
+        for line in r.stdout.strip().splitlines()
+        if "\t" in line
+    ]
+    for branch in branches:
+        pr_r = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--repo",
+                github_repo,
+                "--head",
+                branch,
+                "--state",
+                "open",
+                "--json",
+                "number,headRefName",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if pr_r.returncode == 0:
+            prs = json.loads(pr_r.stdout or "[]")
+            if prs:
+                return {"pr_number": prs[0]["number"], "branch": prs[0]["headRefName"]}
+    return None
 
 
 def main() -> None:
@@ -125,12 +182,13 @@ def main() -> None:
     )
     outcomes = _read_jsonl(outcomes_path, since=since)
 
-    # Index raid successes by project for quick lookup
-    raid_successes: set[str] = {
-        e["project"]
-        for e in outcomes
-        if e.get("phase") == "raid" and e.get("outcome") == "success"
-    }
+    # Raid successes: {project -> [ticket_id, ...]}
+    raid_success_tickets: dict[str, list[str]] = {}
+    for e in outcomes:
+        if e.get("phase") == "raid" and e.get("outcome") == "success":
+            tid = e.get("ticket_id")
+            if tid:
+                raid_success_tickets.setdefault(e["project"], []).append(tid)
 
     prs_to_merge: list[dict] = []
     failures: list[dict] = []
@@ -139,25 +197,30 @@ def main() -> None:
     for proj in projects:
         proj_path: Path = proj["path"]
         proj_name = proj_path.name
+        github_repo = _github_repo(proj_path)
 
-        # PRs to merge: most recent beat-log entry with a PR field
-        beat_log = _read_jsonl(proj_path / "beat-log.jsonl", since=since)
-        for entry in reversed(beat_log):
-            pr = entry.get("PR")
-            if pr and entry.get("outcome") in ("done", "success"):
+        # PRs to merge: find open PRs for each ticket that had a raid/success
+        seen_tickets: set[str] = set()
+        for ticket_id in raid_success_tickets.get(proj_name, []):
+            if ticket_id in seen_tickets:
+                continue
+            seen_tickets.add(ticket_id)
+            if github_repo is None:
+                continue
+            pr_info = _find_open_pr(proj_path, ticket_id, github_repo)
+            if pr_info:
                 prs_to_merge.append(
                     {
                         "project": proj_name,
                         "project_path": str(proj_path),
-                        "github_repo": _github_repo(proj_path),
-                        "ticket_id": entry.get("ticket_id"),
-                        "pr_number": pr,
-                        "branch": entry.get("branch"),
+                        "github_repo": github_repo,
+                        "ticket_id": ticket_id,
+                        "pr_number": pr_info["pr_number"],
+                        "branch": pr_info["branch"],
                     }
                 )
-            break  # only inspect most recent beat-log entry
 
-        # Failures: from beat-outcomes for this project
+        # Failures: phases with bad outcomes
         for e in outcomes:
             if e.get("project") != proj_name:
                 continue
@@ -181,21 +244,12 @@ def main() -> None:
         if context:
             journal_context[proj_name] = context
 
-    # Deduplicate prs_to_merge by pr_number
-    seen: set = set()
-    unique_prs = []
-    for p in prs_to_merge:
-        key = (p["project"], p["pr_number"])
-        if key not in seen:
-            seen.add(key)
-            unique_prs.append(p)
-
     print(
         json.dumps(
             {
                 "since": since.isoformat(),
                 "watermark_ts": since.isoformat(),
-                "prs_to_merge": unique_prs,
+                "prs_to_merge": prs_to_merge,
                 "failures": failures,
                 "journal_context": journal_context,
             },
