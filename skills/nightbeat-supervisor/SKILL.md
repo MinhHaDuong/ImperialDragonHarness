@@ -34,15 +34,22 @@ For each entry in `prs_to_merge`:
 
 ## 3. Triage failures
 
-Read the nightbeat log for each failure. Classify and repair:
+Read the nightbeat log for each failure. In practice, `error_max_budget_usd`
+is the only failure type observed across 60 runs (7/7 failures). Triage
+accordingly:
 
-| Category | Auto-repair |
-|---|---|
-| `permission_denial` | Add the denied command to `settings.json` allowlist |
-| `budget_exhaustion` | Raise per-project `ProjectConfig` field by 20%, capped at 2× the module-level constant; never edit the module-level constant |
-| `misplaced_tickets` | `git mv` closed tickets to `tickets/closed/` |
-| `crash` | Restart the main timer if stopped |
-| Anything else | Open a ticket with the log excerpt; stop |
+**`error_max_budget_usd`** (all observed failures): read the last 50 lines of
+the log to identify what consumed the budget — common sub-causes are `erg
+check` surprises, STATE.md scope creep, and stale worktree cleanup. Raise the
+per-project `ProjectConfig` field in `beat.py` by 20%, capped at 2× the
+module-level constant; never touch the module-level constant. Stop the main
+timer before editing, restart after.
+
+**`permission_denials` non-empty** (not yet observed, tracked in outcomes
+JSONL): add the denied command to `settings.json` allowlist.
+
+**Anything else**: open a ticket with the log excerpt and the result record's
+`subtype` and `stop_reason`; do not auto-repair.
 
 ## 4. Escalate
 
