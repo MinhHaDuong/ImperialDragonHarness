@@ -60,6 +60,43 @@ jobs:
           fi
           echo "OK: escape hatch suppressed leak"
 
+  status-verb-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No legacy status verb in skill log examples
+        run: bash scripts/check-status-verb.sh
+      - name: Self-test — guard must catch a deliberate violation
+        run: |
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/skills/fake"
+          echo '2026-05-01T10:00Z claude status closed — done' > "$tmp/skills/fake/SKILL.md"
+          if bash scripts/check-status-verb.sh "$tmp/skills"; then
+            echo "FAIL: guard did not catch the deliberate violation"
+            exit 1
+          fi
+          echo "OK: deliberate violation caught"
+      - name: Self-test — guard must pass on clean file
+        run: |
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/skills/fake"
+          echo '2026-05-01T10:00Z claude closed — done' > "$tmp/skills/fake/SKILL.md"
+          if ! bash scripts/check-status-verb.sh "$tmp/skills"; then
+            echo "FAIL: guard reported false positive on clean file"
+            exit 1
+          fi
+          echo "OK: guard passes clean file"
+      - name: Self-test — guard must not false-positive on substring match
+        run: |
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/skills/fake"
+          echo 'check status openings for this quarter' > "$tmp/skills/fake/SKILL.md"
+          if ! bash scripts/check-status-verb.sh "$tmp/skills"; then
+            echo "FAIL: guard false-positived on substring 'status openings'"
+            exit 1
+          fi
+          echo "OK: guard ignores substring matches"
+
   pipefail-guard:
     runs-on: ubuntu-latest
     steps:
