@@ -106,7 +106,9 @@ class ProjectConfig:
     path: Path
     budget_housekeeping: float = BUDGET_HOUSEKEEPING
     budget_pick_ticket: float = BUDGET_PICK_TICKET
+    budget_raid: float = BUDGET_RAID
     pick_ticket_model: str = MODEL_HAIKU  # model used when repo has no recent commits
+    interval_minutes: int = 0  # 0 = always run
 
 
 _BUILTIN_PROJECTS: list[ProjectConfig] = [
@@ -129,7 +131,30 @@ _BUILTIN_PROJECTS: list[ProjectConfig] = [
     ),
 ]
 
-_PROJ_KEYS = {"budget_housekeeping", "budget_pick_ticket", "pick_ticket_model"}
+_PROJ_KEYS = {
+    "budget_housekeeping",
+    "budget_pick_ticket",
+    "budget_raid",
+    "pick_ticket_model",
+    "interval_minutes",
+}
+
+
+def _apply_beat_json_overlay(config: ProjectConfig) -> None:
+    """Merge fields from <project>/.claude/beat.json into config, if present."""
+    beat_cfg = config.path / ".claude" / "beat.json"
+    if not beat_cfg.exists():
+        return
+    try:
+        overrides = json.loads(beat_cfg.read_text())
+        for k, v in overrides.items():
+            if k in _PROJ_KEYS:
+                setattr(config, k, v)
+    except Exception as exc:  # noqa: BLE001
+        print(
+            f"[beat] error loading {beat_cfg}: {exc}, ignoring overlay",
+            file=sys.stderr,
+        )
 
 
 def load_projects(config_path: Path) -> list[ProjectConfig]:
@@ -141,7 +166,7 @@ def load_projects(config_path: Path) -> list[ProjectConfig]:
         return list(_BUILTIN_PROJECTS)
     try:
         entries = json.loads(config_path.read_text())
-        return [
+        configs = [
             ProjectConfig(
                 path=Path(e["path"]).expanduser(),
                 **{k: e[k] for k in _PROJ_KEYS if k in e},
@@ -154,6 +179,9 @@ def load_projects(config_path: Path) -> list[ProjectConfig]:
             file=sys.stderr,
         )
         return list(_BUILTIN_PROJECTS)
+    for cfg in configs:
+        _apply_beat_json_overlay(cfg)
+    return configs
 
 
 PROJECTS: list[ProjectConfig] = load_projects(PROJECTS_CONFIG)
@@ -940,7 +968,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     _log(f"=== raid: running ticket {ticket_id} {_now_iso()} ===")
     oc_rc, oc_res = run_skill(
         f"/raid {ticket_id}\n\nRunning on: {hostname}",
-        budget=BUDGET_RAID,
+        budget=project.budget_raid,
         timeout_s=RAID_TIMEOUT_S,
         cwd=path,
         project_scoped=True,
@@ -1018,6 +1046,31 @@ def main() -> None:
     if not (path / ".git").is_dir():
         _log(f"ERROR: {path} is not a git repository. Aborting.")
         sys.exit(1)
+
+    # Interval skip: project can declare a minimum interval between beats.
+    if project.interval_minutes > 0:
+        last = read_last_beat_record(path)
+        if last and last.get("last_run_at"):
+            try:
+                last_epoch = datetime.fromisoformat(
+                    last["last_run_at"].replace("Z", "+00:00")
+                ).timestamp()
+                elapsed_s = time.time() - last_epoch
+                if elapsed_s < project.interval_minutes * 60:
+                    remaining = int(project.interval_minutes * 60 - elapsed_s)
+                    _log(
+                        f"=== interval-skip: {path.name} (next run in {remaining}s) ==="
+                    )
+                    _record_phase_outcome(
+                        path,
+                        "interval",
+                        "skip",
+                        detail=f"interval={project.interval_minutes}m, remaining={remaining}s",
+                    )
+                    lock_fh.close()
+                    sys.exit(0)
+            except (ValueError, TypeError):
+                pass
 
     (path / ".claude" / "sweep-state").mkdir(parents=True, exist_ok=True)
 
