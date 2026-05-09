@@ -78,7 +78,7 @@ Select one ticket for the current sweep run.
    pass:
 
    1. Call `/ticket-close <id> already-done` — `erg close` writes the
-      `Status: closed` header change and appends the audit log line
+      `Closed:` header and appends the audit log line
       `{ts} claude closed — already-done` in one step.
    2. Output `CLOSED: <id>` and stop processing this candidate (do not
       rank it). beat.py will loop back and pick again.
