@@ -2,11 +2,13 @@
 Title: Add CI grep guard against legacy status verb in skill log examples
 Created: 2026-05-08
 Author: claude
+Closed: done
 
 --- log ---
 2026-05-08T16:15Z claude created
 2026-05-09T17:00Z claude note raid-0099: scripts/check-status-verb.sh + CI job; scans skills/ + tickets/AGENTS.md
 
+2026-05-09T17:18Z MinhHaDuong closed — done
 --- body ---
 ## Context
 
