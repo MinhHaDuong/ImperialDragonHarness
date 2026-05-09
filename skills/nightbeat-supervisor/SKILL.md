@@ -16,12 +16,12 @@ timer before editing `beat.py`, restart after; never edit skill SKILL.md files.
 ## 1. Survey
 
 ```bash
-python3 ~/.claude/scripts/nightbeat-supervisor-survey.py [--since ISO-TS]
+python3 $HARNESS_DIR/scripts/nightbeat-supervisor-survey.py [--since ISO-TS]
 ```
 
 If `--since` is absent from `$ARGUMENTS`, the script reads the watermark from
-`~/.claude/logs/nightbeat-supervisor-watermark.json` (defaults to 24h ago if
-the file is missing). Reads both `~/.claude/logs/beat-outcomes.jsonl` and each
+`$HARNESS_DIR/logs/nightbeat-supervisor-watermark.json` (defaults to 24h ago if
+the file is missing). Reads both `$HARNESS_DIR/logs/beat-outcomes.jsonl` and each
 project's `beat-log.jsonl`. Outputs `{prs_to_merge, failures, watermark_ts}`.
 If both lists are empty, write `watermark_ts` and stop.
 
@@ -30,7 +30,7 @@ If both lists are empty, write `watermark_ts` and stop.
 For each entry in `prs_to_merge` (which includes `pr_number` and `github_repo`
 derived by the survey script from the project's git remote):
 
-1. `bash ~/.claude/skills/nightbeat-supervisor/check-pr-diff <pr_number> <github_repo>` — non-zero exit is a HOLD; add to failures with the script's reason.
+1. `bash $HARNESS_DIR/skills/nightbeat-supervisor/check-pr-diff <pr_number> <github_repo>` — non-zero exit is a HOLD; add to failures with the script's reason.
 2. `/verify-gate <pr_number>` — APPROVED → `/merge <pr_number>`. REROLL → append the failing criteria as a note on the linked ticket (create the ticket if none is referenced in the PR body) and move on. ESCALATE → go to step 4.
 
 ## 3. Diagnose and repair
@@ -68,8 +68,10 @@ ticket with the verdict if the fix is outside authority.
 
 ## 5. Done
 
-Write `watermark_ts` from the survey output to
-`~/.claude/logs/nightbeat-supervisor-watermark.json`. End with:
+Append one journal entry per action taken this cycle to
+`<project>/nightbeat-supervisor-journal.jsonl`. If no actions were taken,
+append a single `action=idle` entry — this serves as the watermark so the
+next cycle knows where to resume. End with:
 
 ```
 supervisor: <ts> — merged: N, repaired: N, tickets: N, escalated: N
