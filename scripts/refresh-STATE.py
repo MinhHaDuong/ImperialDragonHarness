@@ -49,16 +49,10 @@ def format_status(tickets, commits):
 
     lines = [STATUS_HEADING, f"<!-- generated {now} -->", ""]
 
-    if ready:
-        lines.append(f"**Ready ({len(ready)}):**")
-        for t in ready:
-            lines.append(f"  `{t['id']}` {t['title']}")
-
-    if blocked:
-        lines.append(f"**Blocked ({len(blocked)}):**")
-        for t in blocked:
-            deps = " ".join(f"→{b['id']}" for b in t["blocked_by"])
-            lines.append(f"  `{t['id']}` {t['title']} ({deps})")
+    # Summary counts only — full list via: erg ready tickets/
+    if ready or blocked:
+        summary = f"**Tickets:** {len(ready)} ready · {len(blocked)} blocked — `erg ready tickets/` for full list"
+        lines.append(summary)
 
     if commits:
         lines.append("**Recent commits:**")
@@ -69,11 +63,24 @@ def format_status(tickets, commits):
 
 
 def split_at_status(text):
-    """Return (preamble, discarded) split at the first ## Status heading."""
+    """Return (preamble, tail) split at the first ## Status heading.
+
+    tail includes everything from the Status heading onward so callers can
+    inspect sections that follow (Blockers, Next actions, Incident, etc.).
+    preamble is everything strictly before the Status heading.
+    """
     idx = text.find(f"\n{STATUS_HEADING}")
     if idx == -1:
-        return text.rstrip(), None
+        return text.rstrip(), ""
     return text[:idx], text[idx + 1 :]
+
+
+def _next_section_idx(text, start):
+    """Return index of the next ## heading after start, or len(text) if none."""
+    m = re.search(r"^## ", text[start:], re.MULTILINE)
+    if m:
+        return start + m.start()
+    return len(text)
 
 
 def refresh_last_updated(preamble, date_str):
@@ -89,9 +96,14 @@ def main():
         sys.exit(1)
 
     text = STATE_FILE.read_text()
-    preamble, _ = split_at_status(text)
+    preamble, tail = split_at_status(text)
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # tail starts with "## Status\n..."; find where Status body ends
+    # (i.e. where the next ## heading begins) so we can preserve everything after it.
+    status_end = _next_section_idx(tail, len(STATUS_HEADING) + 1)
+    tail_after_status = tail[status_end:]  # sections after ## Status (may be empty)
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     preamble = refresh_last_updated(preamble, today)
 
     commits = get_commits()
@@ -102,7 +114,12 @@ def main():
         status_lines = status_lines[:MAX_STATUS_LINES]
         status_lines.append(f"<!-- truncated to {MAX_STATUS_LINES} lines -->")
 
-    new_text = preamble.rstrip() + "\n\n" + "\n".join(status_lines) + "\n"
+    new_text = (
+        preamble.rstrip()
+        + "\n\n"
+        + "\n".join(status_lines)
+        + ("\n\n" + tail_after_status.lstrip() if tail_after_status.strip() else "\n")
+    )
     STATE_FILE.write_text(new_text)
 
     total = len(new_text.splitlines())

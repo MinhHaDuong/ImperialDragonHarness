@@ -10,42 +10,35 @@ Single orientation file, loaded at session start via hook. Hard cap: **40 lines 
 
 ## Structure
 
-Two hand-edited sections (short, stable, owned by the author):
+Hand-edited sections (stable, owned by the author):
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
 | `## North star` | One paragraph — the core argument, rarely changes | Author |
-| `## Milestones` | Current + next milestone, `- [ ]` checkboxes, 5–8 lines max | Author |
+| Any additional `##` sections | Milestones, blockers, incidents, next actions, backlog — author adds as needed | Author |
 
 One mechanically generated section (replaced each session from `git log` + `git-erg`):
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
-| `## Status` | Open tickets (git-erg), last 3–5 commits (git log --oneline), current blockers | Machine |
+| `## Status` | Ticket summary counts + last 3–5 commits | Machine |
 
-**Replace policy — no append.** Each session rewrites `## Status` in full from current git state. The hand-edited sections are touched only when the author explicitly updates them. No "Completed" or "Backlog" sections — git has the history, tickets have the backlog.
+**Replace policy — no append.** Each session rewrites `## Status` in full from current git state. All `##` sections after `## Status` are preserved verbatim — the script only replaces the Status body, not what follows. The hand-edited sections are touched only when the author explicitly updates them.
 
-**Line budget:** `## North star` ≤ 5 lines · `## Milestones` ≤ 10 lines · `## Status` ≤ 20 lines · header/whitespace ≤ 5 lines.
+**Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`.
 
-## Template
+## Minimal template
 
 ```markdown
-Last updated: YYYY-MM-DD
+Last updated: YYYY-MM-DDTHH:MMZ
 
 ## North star
 [One paragraph. Why this project exists, what success looks like. Author-maintained.]
 
-## Milestones
-### Current: [name]
-- [ ] item
-- [x] done item
-
-### Next: [name]
-- [ ] item
-
 ## Status
-<!-- generated: git log --oneline -5 + git-erg open -->
-**Open tickets:** 0NN title · 0NN title · …
-**Recent commits:** sha msg · sha msg · …
-**Blockers:** ticket or "None"
+<!-- generated YYYY-MM-DDTHH:MMZ -->
+**Tickets:** N ready · N blocked — `erg ready tickets/` for full list
+**Recent commits:**
+  sha msg
+  sha msg
 ```
