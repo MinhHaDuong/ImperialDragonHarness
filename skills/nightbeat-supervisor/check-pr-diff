@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# check-pr-diff — exit 0 if PR diff is clean, 1 if it deletes ticket files
+#                 without moving them to tickets/closed/.
+# Usage: check-pr-diff <pr_number> <repo>
+# Called by nightbeat-supervisor Phase 2 to guard against 2026-05-08-style
+# housekeeping branches that deleted ticket files from main.
+set -euo pipefail
+
+PR_NUMBER=${1:?usage: check-pr-diff PR_NUMBER REPO}
+REPO=${2:?usage: check-pr-diff PR_NUMBER REPO}
+
+# <!-- harness-extension-point -->
+if ! diff=$(gh pr diff "$PR_NUMBER" --repo "$REPO" 2>&1); then
+  echo "check-pr-diff: could not fetch diff for PR#${PR_NUMBER}: ${diff}"
+  exit 2  # unknown — SKILL.md Phase 2 treats any non-zero as HOLD
+fi
+
+# Find lines deleting ticket files: ^-  tickets/NNNN-slug.erg (not in closed/)
+deleted=$(echo "$diff" | grep -E '^-[^-].*tickets/[0-9]+-[^/]+\.erg' | grep -v 'tickets/closed/' || true)
+[ -z "$deleted" ] && exit 0
+
+# For each deleted path, check whether the same PR also adds it under tickets/closed/
+fail=0
+while IFS= read -r line; do
+  path=$(echo "$line" | grep -oE 'tickets/[0-9]+-[^/ ]+\.erg' | head -1)
+  filename=$(basename "$path")
+  if ! echo "$diff" | grep -qE "^\+[^+].*tickets/closed/${filename}"; then
+    echo "HOLD: PR#${PR_NUMBER} deletes ${path} without closing it"
+    fail=1
+  fi
+done <<< "$deleted"
+
+exit $fail

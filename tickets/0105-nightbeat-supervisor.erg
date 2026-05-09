@@ -1,0 +1,155 @@
+%erg v1
+Title: Nightbeat supervisor — autonomous post-beat merge + failure recovery agent
+Created: 2026-05-09
+Author: claude
+
+--- log ---
+2026-05-09T00:00Z claude created
+2026-05-09T00:00Z claude note body rewritten to reflect final design decisions
+
+--- body ---
+## Context
+
+After each nightbeat run, two things can happen that currently require human
+morning review:
+
+1. **A raid succeeds and creates a PR.** The PR sits unmerged until the human
+   runs /nightbeat-report, reviews it, and manually triggers /merge. On nights
+   with 9 runs, a branch can wait 8 hours.
+
+2. **A housekeeping or raid fails.** The timer may stop (2026-05-08 incident)
+   or the same failure recurs all night. Root cause is not investigated until
+   morning.
+
+The supervisor fills this gap: a skill invoked on its own 15-min timer that
+surveys beat outcomes, merges ready PRs, and chases failures to their root
+cause — all before the next beat fires.
+
+## Design decisions
+
+**Invocation**: separate systemd timer firing `claude -p "/nightbeat-supervisor"` every
+15 minutes. Not a post-raid phase in beat.py: the supervisor must outlive the
+thing it supervises (if the main timer stops, a post-raid hook also stops).
+
+**Session model**: stateless per cycle — fresh Claude session each invocation.
+Between-cycle memory lives in a per-project journal file, not in the agent
+context. Rationale: crash-safe, cost-bounded, context stays fresh. Judgment
+continuity comes from the survey script reading recent journal entries and
+including them in its output.
+
+**Journal**: `<project>/nightbeat-supervisor-journal.jsonl` — one record per
+supervisor action, appended by the skill after each cycle. Lives alongside
+`beat-log.jsonl` in the project root. Not under `$HARNESS_DIR` — IDH is
+agent-agnostic and runtime state belongs with the project it describes.
+Schema: `{ts, project, action, root_cause, ticket_id, pr_number, detail}`.
+Actions: `merge`, `budget_raise`, `allowlist_add`, `timer_restart`, `split`,
+`sweep_skip`, `ticket_created`, `escalate`.
+
+**Watermark**: derived from the journal's last entry `ts` for that project.
+No separate watermark file.
+
+**Failure triage**: toyota-why — ask "why" until reaching an actionable root
+cause, not a symptom-to-action lookup table. Empirical baseline from 200+ beat-log
+entries across 6 projects: aborted-no-diag (22), error_max_budget_usd (7),
+stale-in-progress (8), repeated-ticket (1 ticket × 3 runs), pre-ticket-fail (5).
+These inform priors, not rules.
+
+**Repair authority** (auto-apply without a ticket):
+- Missing permission → add to `settings.json` allowlist.
+- Budget too small for actual scope → raise per-project `ProjectConfig` field
+  in `beat.py` by 20%, capped at 2× the module-level constant; never edit
+  the module-level constant; stop timer first, restart after.
+- Ticket too large to finish in one beat → split into one ticket per
+  independent unit of work; convert parent to umbrella with `Blocks:` entries,
+  leave it open (may be blocking other tickets).
+- Dead timer → restart it.
+
+Everything else: open a ticket naming the root cause chain; do not auto-repair.
+
+**Destructive-diff brake**: before merging any PR, `check-pr-diff` exits
+non-zero if the diff deletes `tickets/*.erg` without a corresponding move to
+`tickets/closed/`. Any non-zero exit → HOLD. This catches the 2026-05-08
+incident pattern.
+
+**Escalation**: when the why-chain bottoms out without a repairable finding,
+or the same root cause recurs ≥ 3 consecutive runs. Use `advisor` tool if
+available; otherwise `Agent(model="opus")` — no extended thinking in Agent
+mode, honest degradation. Write verdict to journal.
+
+**Model**: Sonnet (supervisor loop); Opus 4.7 only for escalation.
+
+**Paths**: all `$HARNESS_DIR` references in skill and scripts, never
+`~/.claude`. Systemd units in `~/.config/systemd/user/`.
+
+## Relevant files
+
+- `$HARNESS_DIR/skills/nightbeat-supervisor/SKILL.md` — skill persona (done)
+- `$HARNESS_DIR/skills/nightbeat-supervisor/check-pr-diff` — diff brake (done)
+- `$HARNESS_DIR/scripts/nightbeat-supervisor-survey.py` — survey helper (todo)
+- `$HARNESS_DIR/logs/beat-outcomes.jsonl` — phase-level signals (existing)
+- `$HARNESS_DIR/logs/nightbeat/*.log` — per-run raw logs (existing)
+- `<project>/beat-log.jsonl` — beat-level signals (existing, per-project)
+- `<project>/nightbeat-supervisor-journal.jsonl` — supervisor journal (new, per-project)
+- `~/.config/systemd/user/claude-nightbeat-supervisor.{service,timer}` — new units
+- `$HARNESS_DIR/scripts/nightbeat-report.py` — extend to render journal (todo)
+
+## Actions
+
+Already done:
+- [x] `skills/nightbeat-supervisor/SKILL.md`
+- [x] `skills/nightbeat-supervisor/check-pr-diff`
+
+Remaining:
+
+1. **`scripts/nightbeat-supervisor-survey.py`** — pure Python, stdlib only.
+   Reads `$HARNESS_DIR/logs/beat-outcomes.jsonl` and each project's
+   `beat-log.jsonl` (paths from `scripts/projects.json`). Derives
+   `github_repo` from each project's git remote (`git remote get-url origin`).
+   Reads the last 30 entries from each project's journal to build
+   `journal_context` (recent actions + root causes for pattern detection).
+   Derives `since` from journal's last entry ts (defaults to 24h ago if
+   journal absent). Accepts `--since ISO-TS` override from CLI.
+   Emits JSON: `{prs_to_merge, failures, watermark_ts, journal_context}`.
+   Each `prs_to_merge` entry: `{project, github_repo, ticket_id, pr_number, branch}`.
+   Each `failures` entry: `{project, ticket_id, phase, outcome, ts, log_file}`.
+
+2. **Systemd units** — `claude-nightbeat-supervisor.service` (one-shot,
+   `ExecStart=claude -p "/nightbeat-supervisor"`) and
+   `claude-nightbeat-supervisor.timer` (OnCalendar=`*:0/15` during nightbeat
+   window; also on-boot via `[Install] WantedBy=timers.target`). Install to
+   `~/.config/systemd/user/`.
+
+3. **Test fixture** `tests/fixtures/beat-outcomes-sample.jsonl` — one
+   `raid/success`, one `housekeeping/fail`, one `raid/budget` entry across
+   three different projects. Used by the survey script test.
+
+4. **Extend `scripts/nightbeat-report.py`** — add a section rendering the
+   supervisor journal: actions taken, root causes identified, escalations.
+   Integrates into the existing morning report.
+
+## Test
+
+```bash
+# Red: survey script exists and classifies correctly
+python3 "$HARNESS_DIR/scripts/nightbeat-supervisor-survey.py" \
+  --outcomes tests/fixtures/beat-outcomes-sample.jsonl \
+  --since 2026-05-01T00:00:00Z | python3 -m json.tool
+# Should print {prs_to_merge, failures, watermark_ts, journal_context}
+# Before implementation, this file does not exist.
+```
+
+## Exit criteria
+
+- Survey script: `--help` exits 0; classifies the test fixture correctly.
+- Empty window (since=now): supervisor runs, writes journal entry, emits
+  `merged: 0, repaired: 0, tickets: 0, escalated: 0`.
+- A `raid/success` with a matching open PR: verify-gate + merge within one cycle;
+  journal records `action=merge`.
+- A `housekeeping/fail`: why-chain reaches a root cause; journal records action
+  and root cause; timer restarted or repair ticket opened as appropriate.
+- Destructive-diff brake: `check-pr-diff` exits non-zero on a synthetic diff
+  that deletes a ticket file; supervisor records HOLD and does not call
+  verify-gate.
+- Same root cause ≥ 3 consecutive runs (verifiable from journal): supervisor
+  escalates rather than re-attempting auto-repair.
+- No `~/.claude` hardcoded in skill, survey script, or systemd units.
