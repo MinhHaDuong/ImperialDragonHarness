@@ -51,8 +51,8 @@ within authority or open a ticket naming the root cause, not the symptom.
   touch the module-level constant; stop the timer first, restart after.
 - Root cause is a ticket too large to finish in one beat → read the body; if
   it has obvious split lines (independent deliverables, self-contained
-  sections), split into two child tickets and close the parent; otherwise
-  add a sweep-skip and open a repair ticket.
+  sections), split into one ticket per independent unit of work and close the
+  parent; otherwise add a sweep-skip and open a repair ticket.
 - Root cause is a dead timer → restart it.
 
 **Everything else**: open a ticket stating the root cause chain. Do not
