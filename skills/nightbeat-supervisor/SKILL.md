@@ -35,41 +35,28 @@ For each entry in `prs_to_merge`:
 
 ## 3. Triage failures
 
-Failure types ordered by observed frequency across all projects and 200+
-beat-log entries. Read the nightbeat log for each failure, classify, and act:
+For each failure, read the log and ask **why** until you reach an actionable
+root cause. Do not stop at the signal — `error_max_budget_usd` is not a root
+cause, it is a symptom. Keep asking:
 
-**`aborted` with no diagnostics** (most common — 22 observed, usually a
-timer-stop cascade): check whether the main timer is still active. If stopped,
-restart it. If already running, this is noise from a mid-run kill; no action.
+> Why did it fail? → Why did that happen? → Why was that condition present?
 
-**`error_max_budget_usd`** (7 observed, always during housekeeping or raid):
-read the last 50 lines of the log to identify the sub-cause — observed
-triggers are `erg check` surprises, STATE.md scope creep, and stale worktree
-cleanup. Raise the per-project `ProjectConfig` field in `beat.py` by 20%,
-capped at 2× the module-level constant; never edit the module-level constant.
-Stop the main timer before editing, restart after.
+Stop when you reach something the harness can change. Then either repair
+within authority or open a ticket naming the root cause, not the symptom.
 
-**`aborted` with stale-in-progress diagnostics** (8 observed — SIGKILL
-recovery): self-resolving; beat.py handles this on the next run. Log it, no
-action unless it recurs more than twice in the same window.
+**Repair authority** (auto-apply without a ticket):
+- Root cause is a missing permission → add to `settings.json` allowlist.
+- Root cause is a scope that fit under a larger budget → raise the per-project
+  `ProjectConfig` field by 20%, capped at 2× the module-level constant; never
+  touch the module-level constant; stop the timer first, restart after.
+- Root cause is a ticket too large to finish in one beat → read the body; if
+  it has obvious split lines (independent deliverables, self-contained
+  sections), split into two child tickets and close the parent; otherwise
+  add a sweep-skip and open a repair ticket.
+- Root cause is a dead timer → restart it.
 
-**Same ticket failing repeatedly** (observed: chemin-de-voix ticket 0021,
-3× in a row): read the ticket body before acting. If it has obvious split
-lines — multiple independent deliverables, `##` sections that are each
-self-contained, or an Actions list spanning unrelated files — split it into
-two child tickets, close the parent with a log entry `closed: split → <id-a>
-<id-b>`, and commit. Otherwise add a sweep-skip (`erg note sweep-skip:
-scope-too-large`) and open a repair ticket naming the blocking issue.
-
-**`failed` with no ticket_id** (5 observed — housekeeping or pick-ticket died
-before a ticket was selected): read the log to identify which phase failed.
-Treat as `error_max_budget_usd` if the phase signal is budget; otherwise open
-a ticket.
-
-**`permission_denials` non-empty** (not yet observed, tracked in outcomes
-JSONL): add the denied command to `settings.json` allowlist.
-
-**Anything else**: open a ticket with the log excerpt; do not auto-repair.
+**Everything else**: open a ticket stating the root cause chain. Do not
+auto-repair.
 
 ## 4. Escalate
 
