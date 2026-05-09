@@ -12,7 +12,7 @@ Level 4 (Hooks) + raid + `/verify` loop + git-erg tickets + bibliography pipelin
 
 **Forge-agnostic**: leak-guard enforces no `gh`/`github.com` in skills.
 
-**Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires every 30 min 22:00–06:00 weeknights, every 30 min all day weekends (17 runs/night). `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage. Beat prints one-line run summary to stdout (project, ticket, outcome, duration).
+**Nightbeat** (`claude-nightbeat.timer`) live on padme. Fires hourly 22:00–06:00 weeknights (9 runs/night), hourly all day weekends (24 runs/day). `beat.py` controls flow in Python — no LLM orchestrator. Per-project lock allows concurrent beats. `project_scoped=True` prevents cross-project ticket leakage. Beat prints one-line run summary to stdout (project, ticket, outcome, duration).
 
 **Per-project budgets**: `ProjectConfig` dataclass in `beat.py` — all projects at $0.40/$0.50. 2 targets in `scripts/projects.json`: `aedist-technical-report`, `~/.claude`. Tickets 0101/0102 track the migration to per-project `.claude/beat.json`.
 
