@@ -85,11 +85,18 @@ and must not be used to call the supervisor).
 
 2. **Write `scripts/nightbeat-supervisor-survey.py`** — pure Python, stdlib
    only:
-   - Reads `beat-outcomes.jsonl` from `--since <iso-ts>` (watermark).
+   - Reads `~/.claude/logs/beat-outcomes.jsonl` (phase-level signals) from
+     `--since <iso-ts>` (watermark).
+   - Also reads each project's `beat-log.jsonl` (beat-level signals) for
+     `aborted`/`failed` outcomes and repeated-ticket patterns.
    - Classifies entries into: `prs_to_merge`, `failures`, `idle`.
    - For each `raid outcome=success`, queries `gh pr list` (via subprocess)
      to find the open PR for that project/ticket.
    - Emits a JSON summary to stdout consumed by the skill.
+   - Failure classification order matches observed frequency (empirically
+     derived from 200+ beat-log entries across 6 projects on padme):
+     aborted-no-diag (22) > budget-exhaustion (7) > stale-in-progress (8) >
+     repeated-ticket (1 ticket × 3 runs) > pre-ticket-fail (5).
 
 3. **Write `skills/nightbeat-supervisor/check-pr-diff`** — bash script that
    fetches a PR diff (forge CLI call, isolated from SKILL.md to satisfy
