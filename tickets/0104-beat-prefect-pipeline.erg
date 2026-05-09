@@ -1,0 +1,78 @@
+%erg v1
+Title: Replace beat.py pipeline orchestration with Prefect 3.x
+Created: 2026-05-09
+Author: claude
+
+--- log ---
+2026-05-09T08:35Z claude created
+
+--- body ---
+## Context
+
+beat.py reimplements timeout management, retry logic, structured logging, and
+pipeline state in ~1091 lines of custom Python. Prefect 3.x (local/serve
+mode) covers all of these natively via `@flow` / `@task` decorators, with
+built-in crash recovery, per-task retries, timeout enforcement, and a
+browsable run history — without requiring any cloud infrastructure.
+
+The target architecture keeps systemd as the outer trigger (fires
+`python beat.py` on the existing timer schedule) but replaces beat.py's
+hand-rolled state machine with a Prefect flow:
+
+```
+housekeeping → pick-ticket → raid
+```
+
+Per-project config, `fcntl` locking, budget accounting, and the erg ticket
+system remain unchanged. The JSONL outcomes log is replaced by Prefect's
+SQLite-backed run history (queryable via `prefect` CLI).
+
+Depends on: ticket 0103 (asyncio subprocess refactor) should land first so
+the subprocess layer is clean before adding Prefect on top.
+
+## Actions
+
+1. Add `prefect>=3.0` to a `requirements.txt` (or `pyproject.toml`) in
+   `~/.claude/scripts/`.
+2. Prototype a minimal flow in `scripts/beat_flow.py`:
+   - `@task(timeout_seconds=..., retries=1)` for each phase
+     (housekeeping, pick_ticket, raid).
+   - `@flow(name="nightbeat", log_prints=True)` wrapping the pipeline.
+   - Keep `fcntl` lock acquisition outside the flow (before `flow.run()`).
+3. Verify `prefect server start --background` is not required for
+   `flow.run()` / `flow.serve()` (local ephemeral mode).
+4. Wire `beat.py` entry point to call `nightbeat_flow(project=...)` instead
+   of the current hand-rolled pipeline.
+5. Confirm `prefect runs ls` (or equivalent) shows completed runs with
+   per-task durations.
+6. Remove the custom JSONL logging for pipeline phases once Prefect run
+   history covers the same information. Keep `beat-outcomes.jsonl` only if
+   it carries data Prefect does not (e.g., budget spend per run).
+7. Update `beat-settings.json` if any fields become redundant.
+8. Run a full nightbeat cycle end-to-end and confirm outcomes are visible
+   in Prefect run history.
+
+## Test
+
+```bash
+# Red: beat_flow.py exists and imports cleanly
+python3 -c "from beat_flow import nightbeat_flow"
+# Should succeed. Before implementation this import fails.
+```
+
+```python
+# First Prefect test: flow runs without crashing on a dry-run project
+BEAT_DRY_RUN=1 python3 scripts/beat_flow.py
+```
+
+## Exit criteria
+
+- `pip install prefect` (or equivalent) is the only new dependency.
+- `python3 scripts/beat.py` still works as the systemd entry point (no
+  timer unit changes required).
+- The housekeeping → pick-ticket → raid pipeline is expressed as Prefect
+  tasks; custom timeout/retry code in beat.py is deleted.
+- `prefect runs ls` shows a completed nightbeat run with per-task status.
+- One live nightbeat cycle on each configured project completes without
+  regression.
+- beat.py line count drops by at least 40% from baseline (1091 lines).
