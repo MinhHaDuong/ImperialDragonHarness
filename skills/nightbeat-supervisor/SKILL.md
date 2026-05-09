@@ -54,8 +54,12 @@ recovery): self-resolving; beat.py handles this on the next run. Log it, no
 action unless it recurs more than twice in the same window.
 
 **Same ticket failing repeatedly** (observed: chemin-de-voix ticket 0021,
-3× in a row): the ticket is likely underspecified or blocked. Add a sweep-skip
-via `erg note sweep-skip: <reason>` and open a repair ticket.
+3× in a row): read the ticket body before acting. If it has obvious split
+lines — multiple independent deliverables, `##` sections that are each
+self-contained, or an Actions list spanning unrelated files — split it into
+two child tickets, close the parent with a log entry `closed: split → <id-a>
+<id-b>`, and commit. Otherwise add a sweep-skip (`erg note sweep-skip:
+scope-too-large`) and open a repair ticket naming the blocking issue.
 
 **`failed` with no ticket_id** (5 observed — housekeeping or pick-ticket died
 before a ticket was selected): read the log to identify which phase failed.
