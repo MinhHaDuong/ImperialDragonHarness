@@ -10,11 +10,11 @@ else
     TARGETS=("$@")
 fi
 
-PATTERN='status open\|status closed\|status doing\|status pending'
+PATTERN='\bstatus open\b\|\bstatus closed\b\|\bstatus doing\b\|\bstatus pending\b'
 
 fail=0
 for target in "${TARGETS[@]}"; do
-    [ -e "$target" ] || continue
+    [ -e "$target" ] || { echo "WARN: $target not found" >&2; continue; }
     while IFS= read -r match; do
         [ -z "$match" ] && continue
         echo "FAIL [legacy status verb]: $match"

@@ -86,6 +86,16 @@ jobs:
             exit 1
           fi
           echo "OK: guard passes clean file"
+      - name: Self-test — guard must not false-positive on substring match
+        run: |
+          tmp=$(mktemp -d)
+          mkdir -p "$tmp/skills/fake"
+          echo 'check status openings for this quarter' > "$tmp/skills/fake/SKILL.md"
+          if ! bash scripts/check-status-verb.sh "$tmp/skills"; then
+            echo "FAIL: guard false-positived on substring 'status openings'"
+            exit 1
+          fi
+          echo "OK: guard ignores substring matches"
 
   pipefail-guard:
     runs-on: ubuntu-latest
