@@ -26,7 +26,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 8. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
 9. **Refresh STATE.md** on a throwaway branch:
    a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
-   b. Rewrite STATE: current stats, blockers, next actions, milestones. No changelog.
+   b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
    c. Prune: delete items checked off before this session.
    d. Commit, merge to main via fast-forward, delete branch.
 10. **Memory sweep** — follow `/memory` skill (includes staleness check + rule cross-reference).

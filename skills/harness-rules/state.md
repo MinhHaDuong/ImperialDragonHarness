@@ -1,22 +1,44 @@
 ---
 paths:
   - "STATE.md"
-last-reviewed: 2026-04-04
+last-reviewed: 2026-05-09
 ---
 
 # STATE.md
 
-Single orientation file, loaded at session start via hook. Keep it short and current (~40 lines max) — history lives in `git log`.
+Single orientation file, loaded at session start via hook. Hard cap: **40 lines total**. History lives in `git log`.
 
-| Section | Content |
-|---------|---------|
-| `Last updated:` | Date |
-| `## Status` | One-liner summary |
-| `## Blockers` | Current blockers or "None" |
-| `## Next actions` | 5–10 items, most urgent first |
-| `## North star` | One paragraph — the core argument |
-| `## Current milestone` | What we're working toward, with `- [ ]` checkboxes |
-| `## Next milestone` | What comes after |
-| `## Backlog` | Parked ideas, no checkboxes |
+## Structure
 
-**Pruning:** each update *replaces* sections, not appends. Completed items are deleted after one session. No "Completed" section — git has the history.
+Hand-edited sections (stable, owned by the author):
+
+| Section | Content | Who edits |
+|---------|---------|-----------|
+| `## North star` | One paragraph — the core argument, rarely changes | Author |
+| Any additional `##` sections | Milestones, blockers, incidents, next actions, backlog — author adds as needed | Author |
+
+One mechanically generated section (replaced each session from `git log` + `git-erg`):
+
+| Section | Content | Who edits |
+|---------|---------|-----------|
+| `## Status` | Ticket summary counts + last 3–5 commits | Machine |
+
+**Replace policy — no append.** Each session rewrites `## Status` in full from current git state and bumps `Last updated:` in the preamble. All `##` sections after `## Status` are preserved verbatim. The other hand-edited sections are touched only when the author explicitly updates them.
+
+**Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`.
+
+## Minimal template
+
+```markdown
+Last updated: YYYY-MM-DDTHH:MMZ
+
+## North star
+[One paragraph. Why this project exists, what success looks like. Author-maintained.]
+
+## Status
+<!-- generated YYYY-MM-DDTHH:MMZ -->
+**Tickets:** N ready · N blocked — `erg ready tickets/` for full list
+**Recent commits:**
+  sha msg
+  sha msg
+```
