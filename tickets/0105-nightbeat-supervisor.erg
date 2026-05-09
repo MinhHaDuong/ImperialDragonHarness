@@ -91,18 +91,33 @@ and must not be used to call the supervisor).
      to find the open PR for that project/ticket.
    - Emits a JSON summary to stdout consumed by the skill.
 
-3. **Write systemd units** — `claude-nightbeat-supervisor.service` (one-shot,
-   `ExecStart=claude --model claude-opus-4-7 -p "/nightbeat-supervisor" ...`)
-   and `claude-nightbeat-supervisor.timer` (fires every 15 min during the
-   nightbeat window, plus on-boot).
+3. **Write `skills/nightbeat-supervisor/check-pr-diff`** — bash script that
+   fetches a PR diff (forge CLI call, isolated from SKILL.md to satisfy
+   leak-guard) and exits 1 if any `tickets/*.erg` file is deleted without a
+   corresponding move to `tickets/closed/`.
 
-4. **Beat-outcomes watermark**: test that a duplicate supervisor run
+4. **Write systemd units** — `claude-nightbeat-supervisor.service` (one-shot,
+   `ExecStart=claude -p "/nightbeat-supervisor" ...`, no explicit `--model`
+   flag so frontmatter governs) and `claude-nightbeat-supervisor.timer`
+   (fires every 15 min during the nightbeat window, plus on-boot).
+
+5. **Create test fixture** `tests/fixtures/beat-outcomes-sample.jsonl` —
+   a representative sample with one `raid/success`, one `housekeeping/fail`,
+   and one `raid/budget` entry, each with a different project. Used by the
+   survey script test in the Test block below.
+
+6. **Beat-outcomes watermark**: test that a duplicate supervisor run
    (re-processing the same window) is a no-op (no double-merges, no
    duplicate tickets).
 
-5. **Integration test**: simulate a budget-failure outcome entry in a test
+7. **Integration test**: simulate a budget-failure outcome entry in a test
    beat-outcomes file → verify the supervisor creates a repair ticket (does
    NOT attempt auto-repair on budget failures beyond budget-raise authority).
+
+**Dependency note**: ticket 0104 (Prefect pipeline refactor) will replace
+`beat-outcomes.jsonl` with Prefect run history. If 0104 lands first, update
+this ticket: the survey script must read from Prefect's SQLite store, and the
+watermark contract (`--since`) must be preserved.
 
 ## Test
 

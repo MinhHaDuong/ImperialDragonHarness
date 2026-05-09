@@ -1,16 +1,14 @@
 ---
 name: nightbeat-supervisor
 description: Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck.
-model: claude-opus-4-7
-effort: max
 user-invocable: true
 argument-hint: "[--dry-run]"
 ---
 
 # Nightbeat Supervisor
 
-Autonomous night watchman. Runs after each beat cycle (or on its own
-15-minute timer) and acts on every unprocessed outcome:
+Autonomous night watchman. Runs on its own 15-min timer (separate from
+beat.py) and acts on every unprocessed outcome:
 
 - **Happy path**: raid succeeded → PR open → verify-gate → merge.
 - **Failure path**: housekeeping/raid failed → diagnose → auto-repair or
@@ -22,7 +20,7 @@ Autonomous night watchman. Runs after each beat cycle (or on its own
 - Never touch `beat.py` logic (beyond config constants) without stopping the
   main timer first and restarting it after.
 - Never force-push.
-- If the same failure type recurs ≥ 3 consecutive runs: escalate to advisor,
+- If the same failure type recurs ≥ 3 consecutive runs: escalate (Phase 6),
   stop acting autonomously on that failure type.
 
 ---
@@ -51,21 +49,20 @@ and stop. Log one line: `supervisor: no pending actions since <since>`.
 
 ## Phase 2 — Destructive-diff check (for each PR)
 
-For each entry in `prs_to_merge`, before calling verify-gate:
+For each entry in `prs_to_merge`, before calling verify-gate, run the diff
+check script:
 
 ```bash
-# leak-guard escape: forge CLI intentional
-gh pr diff <pr_number> --repo <repo> 2>/dev/null
+bash ~/.claude/skills/nightbeat-supervisor/check-pr-diff "$PR_NUMBER" "$REPO"
 ```
 
-Scan the diff for lines matching `^-` (deletions) that contain
-`tickets/[0-9]+-[^/]+\.erg` and do **not** have a corresponding `^+` line
-moving the same path to `tickets/closed/`.
+The script exits 0 if the diff is clean, 1 if it contains a ticket deletion
+without a corresponding move to `tickets/closed/`. It prints a one-line
+reason to stdout.
 
-If any such deletion is found:
+If exit code is 1:
 - Do NOT call verify-gate or merge.
-- Append a comment to the PR explaining the hold.
-- Create a note in the supervisor log: `HOLD PR#<n>: deletes ticket file without closing`.
+- Create a note in the supervisor log: `HOLD PR#<n>: <reason>`.
 - Add it to the failures list for diagnosis in Phase 4.
 
 Continue to next PR.
@@ -87,8 +84,8 @@ Wait for verdict. Parse the last structured output block:
 - `verdict: REROLL` → do not merge. Log the failing criteria. If a ticket
   exists for this PR's work, append a `note` to it with the REROLL reason.
   If no ticket exists, create one.
-- `verdict: ESCALATE` → do not merge. Escalate to advisor (Phase 6) with the
-  full verify-gate output as context.
+- `verdict: ESCALATE` → do not merge. Escalate (Phase 6) with the full
+  verify-gate output as context.
 
 ### 3b. Merge
 
@@ -139,7 +136,6 @@ Find the denied command in the log. Add it to the `allow` list in
 allowlist structure.
 
 ```bash
-# Example: check current structure first
 python3 -c "import json,sys; d=json.load(open('${HOME}/.claude/settings.json')); print(json.dumps(d.get('permissions',{}), indent=2))"
 ```
 
@@ -216,7 +212,7 @@ Log: `supervisor: restarted nightbeat timer after crash recovery`.
 
 ---
 
-## Phase 6 — Escalate to advisor
+## Phase 6 — Escalate (Opus 4.7 max thinking)
 
 Call this phase when:
 - `verdict: ESCALATE` from verify-gate.
@@ -229,13 +225,24 @@ Collect:
 2. Recent beat-outcomes entries for the project (last 7 days).
 3. Any related open tickets.
 
-Call the `advisor` tool with this context to get a second opinion.
+Escalation uses a sub-agent on the stronger model. If the `advisor` tool is
+available in this session, call it first — it forwards the full transcript.
+Otherwise (e.g., running under `claude -p --permission-mode bypassPermissions`
+where the advisor tool may not be loaded), spawn a sub-agent explicitly:
 
-Apply the advisor's recommendation if it falls within auto-apply authority.
-Otherwise: create a ticket that captures the advisor's diagnosis and
-recommended action for human review.
+```
+Agent(
+  subagent_type="general-purpose",
+  model="opus",
+  prompt="<assembled context above>"
+)
+```
 
-Log: `supervisor: escalated <project>/<phase> failure — advisor verdict: <summary>`.
+Apply the recommendation if it falls within auto-apply authority (Phase 5).
+Otherwise: create a ticket that captures the diagnosis and recommended action
+for human review.
+
+Log: `supervisor: escalated <project>/<phase> failure — verdict: <one-line summary>`.
 
 ---
 
