@@ -1493,3 +1493,236 @@ class TestWeeklyPermissionsPrune:
 
         monkeypatch.setattr(beat, "PERMISSIONS_PRUNE_DAY_OF_WEEK", "monday")
         assert beat._is_prune_day() is False
+
+
+# ── Per-project beat config (ticket 0101) ────────────────────────────────────
+
+
+class TestProjectConfigFields:
+    def test_budget_raid_default(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"))
+        assert cfg.budget_raid == beat.BUDGET_RAID
+
+    def test_interval_minutes_default(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"))
+        assert cfg.interval_minutes == 0
+
+    def test_custom_budget_raid(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), budget_raid=8.00)
+        assert cfg.budget_raid == 8.00
+
+    def test_custom_interval(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), interval_minutes=30)
+        assert cfg.interval_minutes == 30
+
+
+class TestApplyBeatJsonOverlay:
+    def test_overlay_merges_known_keys(self, tmp_path):
+        (tmp_path / ".claude").mkdir()
+        (tmp_path / ".claude" / "beat.json").write_text(
+            json.dumps({"budget_raid": 8.00, "interval_minutes": 30})
+        )
+        cfg = beat.ProjectConfig(path=tmp_path)
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.budget_raid == 8.00
+        assert cfg.interval_minutes == 30
+
+    def test_overlay_ignores_unknown_keys(self, tmp_path):
+        (tmp_path / ".claude").mkdir()
+        (tmp_path / ".claude" / "beat.json").write_text(
+            json.dumps({"path": "/evil", "nonexistent_key": True})
+        )
+        cfg = beat.ProjectConfig(path=tmp_path)
+        original_path = cfg.path
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.path == original_path
+
+    def test_overlay_absent_is_noop(self, tmp_path):
+        cfg = beat.ProjectConfig(path=tmp_path)
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.budget_raid == beat.BUDGET_RAID
+
+    def test_overlay_malformed_json_warns(self, tmp_path, capsys):
+        (tmp_path / ".claude").mkdir()
+        (tmp_path / ".claude" / "beat.json").write_text("not json{")
+        cfg = beat.ProjectConfig(path=tmp_path, budget_raid=3.00)
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.budget_raid == 3.00
+        assert "error" in capsys.readouterr().err.lower()
+
+
+class TestLoadProjectsOverlay:
+    def test_overlay_applied_during_load(self, tmp_path):
+        proj_dir = tmp_path / "myproject"
+        proj_dir.mkdir()
+        (proj_dir / ".claude").mkdir()
+        (proj_dir / ".claude" / "beat.json").write_text(
+            json.dumps({"interval_minutes": 45, "budget_raid": 7.50})
+        )
+        cfg_file = tmp_path / "projects.json"
+        cfg_file.write_text(json.dumps([{"path": str(proj_dir)}]))
+        projects = beat.load_projects(cfg_file)
+        assert len(projects) == 1
+        assert projects[0].interval_minutes == 45
+        assert projects[0].budget_raid == 7.50
+
+    def test_projects_json_budget_raid(self, tmp_path):
+        cfg = tmp_path / "projects.json"
+        cfg.write_text(json.dumps([{"path": "~/x", "budget_raid": 12.00}]))
+        projects = beat.load_projects(cfg)
+        assert projects[0].budget_raid == 12.00
+
+    def test_projects_json_interval_minutes(self, tmp_path):
+        cfg = tmp_path / "projects.json"
+        cfg.write_text(json.dumps([{"path": "~/x", "interval_minutes": 60}]))
+        projects = beat.load_projects(cfg)
+        assert projects[0].interval_minutes == 60
+
+
+class TestRaidBudgetPassthrough:
+    """budget_raid flows from ProjectConfig to the raid skill invocation."""
+
+    def setup_method(self):
+        beat.DRY_RUN = False
+
+    def test_raid_uses_project_budget(self, tmp_project):
+        recorded: list[dict] = []
+
+        def fake_run_skill(
+            skill,
+            *,
+            budget,
+            timeout_s,
+            cwd,
+            project_scoped=False,
+            model=beat.MODEL_SONNET,
+        ):
+            recorded.append({"skill": skill, "budget": budget})
+            if "pick-ticket" in skill:
+                return (0, beat._SkillResult(result_text="PICK: 0001"))
+            return (0, beat._SkillResult())
+
+        with (
+            patch("beat.housekeeping_needed", return_value=False),
+            patch("beat._repo_active", return_value=False),
+            patch("beat._sync_origin_main"),
+            patch("beat._default_branch", return_value="main"),
+            patch(
+                "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+            ),
+            patch("beat.run_skill", side_effect=fake_run_skill),
+        ):
+            beat._raid(beat.ProjectConfig(path=tmp_project, budget_raid=8.50))
+
+        raid_call = next(
+            r for r in recorded if "raid" in r["skill"] and "pick" not in r["skill"]
+        )
+        assert raid_call["budget"] == 8.50
+
+
+class TestIntervalSkip:
+    """interval_minutes causes main() to exit early when last run is too recent."""
+
+    def test_skips_when_interval_not_elapsed(self, tmp_project, tmp_path):
+        recent_ts = beat._now_iso()
+        beat_log = tmp_project / "beat-log.jsonl"
+        beat_log.write_text(
+            json.dumps({"outcome": "done", "last_run_at": recent_ts}) + "\n"
+        )
+
+        log_lines: list[str] = []
+        with (
+            patch("beat.signal.signal"),
+            patch("beat._setup_env"),
+            patch.object(beat, "LOGDIR", tmp_path / "logs"),
+            patch(
+                "beat._pick_project",
+                return_value=(
+                    0,
+                    beat.ProjectConfig(path=tmp_project, interval_minutes=30),
+                ),
+            ),
+            patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch("beat.fcntl.flock"),
+            patch("beat._log", side_effect=log_lines.append),
+            patch("beat.read_last_beat_record") as mock_read,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            mock_read.return_value = {
+                "outcome": "done",
+                "last_run_at": recent_ts,
+            }
+            beat.main()
+
+        assert exc_info.value.code == 0
+        assert any("interval-skip" in l for l in log_lines)
+
+    def test_runs_when_interval_elapsed(self, tmp_project, tmp_path):
+        old_ts = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        beat_log = tmp_project / "beat-log.jsonl"
+        beat_log.write_text(
+            json.dumps({"outcome": "done", "last_run_at": old_ts}) + "\n"
+        )
+
+        with (
+            patch("beat.signal.signal"),
+            patch("beat._setup_env"),
+            patch.object(beat, "LOGDIR", tmp_path / "logs"),
+            patch(
+                "beat._pick_project",
+                return_value=(
+                    0,
+                    beat.ProjectConfig(path=tmp_project, interval_minutes=30),
+                ),
+            ),
+            patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch("beat.fcntl.flock"),
+            patch("beat._raid", return_value=("idle", None)) as mock_raid,
+            patch("beat.finalize_beat_log"),
+            patch("beat._cleanup_stale_in_progress"),
+            patch(
+                "beat.read_last_beat_record",
+                return_value={
+                    "outcome": "done",
+                    "last_run_at": old_ts,
+                },
+            ),
+            patch("beat.append_beat_log"),
+        ):
+            beat.main()
+
+        mock_raid.assert_called_once()
+
+    def test_no_skip_when_interval_zero(self, tmp_project, tmp_path):
+        recent_ts = beat._now_iso()
+
+        with (
+            patch("beat.signal.signal"),
+            patch("beat._setup_env"),
+            patch.object(beat, "LOGDIR", tmp_path / "logs"),
+            patch(
+                "beat._pick_project",
+                return_value=(
+                    0,
+                    beat.ProjectConfig(path=tmp_project, interval_minutes=0),
+                ),
+            ),
+            patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch("beat.fcntl.flock"),
+            patch("beat._raid", return_value=("idle", None)) as mock_raid,
+            patch("beat.finalize_beat_log"),
+            patch("beat._cleanup_stale_in_progress"),
+            patch(
+                "beat.read_last_beat_record",
+                return_value={
+                    "outcome": "done",
+                    "last_run_at": recent_ts,
+                },
+            ),
+            patch("beat.append_beat_log"),
+        ):
+            beat.main()
+
+        mock_raid.assert_called_once()
