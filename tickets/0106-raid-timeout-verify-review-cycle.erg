@@ -1,0 +1,54 @@
+%erg v1
+Title: fix: raid timeout during verify+review cycle (30-min window too tight)
+Created: 2026-05-09
+Author: claude
+
+--- log ---
+2026-05-09T16:00Z claude created — opened by nightbeat-supervisor; root cause from chemin-de-voix raid on 0071 (2026-05-09T10:33Z)
+
+--- body ---
+## Root cause chain
+
+- Raid on `chemin-de-voix` ticket 0071 timed out at 2026-05-09T10:33:22Z
+  (`outcome=aborted` in beat-outcomes.jsonl)
+- Why? → `verify-adherence` + `review` + `review-pr` skills were running
+  when `RAID_TIMEOUT_S` (30 min) elapsed
+- Why? → Implementation took ~19 min, leaving ~11 min for verify/review;
+  multi-agent review subagents need 10–15 min to complete
+- Why? → `RAID_TIMEOUT_S = 30 * 60` is a module-level constant that cannot
+  be tuned per-project; no per-project `raid_timeout_s` field in `ProjectConfig`
+
+Note: PR #31 was ultimately merged (likely by user or a later beat cycle),
+so ticket 0071 is complete. The raid timeout is a systemic infrastructure risk.
+
+## Impact
+
+When a ticket takes >18–20 min to implement, verify+review cannot complete
+within the 30-min raid window. The raid aborts with `outcome=timeout`; the
+PR may be left open without a verify-gate verdict, requiring manual or
+next-beat cleanup.
+
+## Options considered
+
+1. **Add `budget_raid_timeout_s` to `ProjectConfig`** — lets per-project
+   tuning without touching the module-level constant. Supervisor can raise
+   by 20% per the repair rule.
+2. **Increase `RAID_TIMEOUT_S` globally** — blunt; affects all projects;
+   forbidden by supervisor rules (module-level constant).
+3. **Split verify from the raid loop** — run verify in a follow-up beat
+   cycle; raid records `outcome=awaiting-verify`. More complex state machine.
+
+## Actions
+
+1. Add `raid_timeout_s: int = RAID_TIMEOUT_S` field to `ProjectConfig`
+2. Pass it as `timeout_s=project.raid_timeout_s` to the raid runner
+3. Expose it in `projects.json` schema (optional int field)
+4. Supervisor repair rule: raise per-project `raid_timeout_s` by 20%
+   when `outcome=timeout` root cause is verify/review slowness
+
+## Exit criteria
+
+- `ProjectConfig` has a `raid_timeout_s` field defaulting to `RAID_TIMEOUT_S`
+- `beat.py` raid runner uses `project.raid_timeout_s` instead of module constant
+- `projects.json` documents the field in a comment or README snippet
+- Nightbeat-supervisor skill spec updated to mention the new repair rule
