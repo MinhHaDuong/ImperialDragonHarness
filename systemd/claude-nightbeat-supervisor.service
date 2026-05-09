@@ -1,0 +1,16 @@
+[Unit]
+Description=Claude nightbeat supervisor — merge PRs + diagnose failures
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=HARNESS_DIR=%h/.claude
+ExecStart=%h/.local/bin/claude --dangerously-skip-permissions -p "/nightbeat-supervisor"
+WorkingDirectory=%h/.claude
+StandardOutput=journal+console
+StandardError=journal+console
+# Supervisor cycle budget: 8 min normal, 2 min grace for Opus escalation
+TimeoutStartSec=600
+Nice=10
+IOSchedulingClass=idle

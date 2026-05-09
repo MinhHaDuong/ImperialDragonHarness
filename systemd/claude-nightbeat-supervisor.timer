@@ -1,0 +1,16 @@
+[Unit]
+Description=Nightbeat supervisor — every 15 min during nightbeat window
+
+[Timer]
+# Weeknights: 22:00–06:59 every 15 min (matches nightbeat window)
+OnCalendar=Mon..Fri *-*-* 22,23,0,1,2,3,4,5,6:0,15,30,45:00
+# Weekends: all day every 15 min
+OnCalendar=Sat,Sun *-*-* *:0,15,30,45:00
+# Fire once on boot if a scheduled run was missed while machine was off
+Persistent=true
+# Spread within 30 s to avoid exact collision with beat (which starts at :00)
+RandomizedDelaySec=30
+Unit=claude-nightbeat-supervisor.service
+
+[Install]
+WantedBy=timers.target

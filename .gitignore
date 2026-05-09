@@ -29,6 +29,8 @@ tickets/tools/go/*.test
 !settings.template.json
 !tests/
 !tests/**
+!systemd/
+!systemd/**
 
 # Python build artefacts inside whitelisted dirs
 **/__pycache__/

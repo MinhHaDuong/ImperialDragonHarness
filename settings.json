@@ -7,6 +7,13 @@
     "allow": [
       "EnterWorktree",
       "ExitWorktree",
+      "Bash(python3 *nightbeat-supervisor-survey.py*)",
+      "Bash(bash *check-pr-diff *)",
+      "Bash(systemctl --user start claude-nightbeat*)",
+      "Bash(systemctl --user stop claude-nightbeat*)",
+      "Bash(systemctl --user restart claude-nightbeat*)",
+      "Edit(/.claude/settings.json)",
+      "Edit(**/beat.py)",
       "Bash(git fetch *)",
       "Bash(git rebase *)",
       "Bash(git checkout *)",
