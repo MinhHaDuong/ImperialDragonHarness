@@ -1,0 +1,58 @@
+%erg v1
+Title: Refactor beat.py subprocess management to asyncio
+Created: 2026-05-09
+Author: claude
+
+--- log ---
+2026-05-09T08:30Z claude created
+
+--- body ---
+## Context
+
+beat.py uses threads (`threading.Thread`) to manage subprocess timeouts and
+concurrent I/O for the housekeeping → pick-ticket → raid pipeline. This adds
+locking complexity and makes control flow hard to follow. `asyncio` +
+`asyncio.create_subprocess_exec` is the idiomatic Python approach for
+non-blocking subprocess management with timeouts and cancellation — no new
+dependencies required.
+
+The refactor targets the subprocess orchestration layer only; it does not
+change invocation semantics, skill payloads, project config, locking
+(`fcntl`), budget accounting, or JSONL logging.
+
+## Actions
+
+1. Audit all `threading.Thread` and `subprocess.Popen` usages in
+   `scripts/beat.py` and map each to an `asyncio` equivalent.
+2. Replace `run_skill()` (currently spawns a thread to enforce timeout via
+   `proc.kill()`) with an `async def run_skill()` using
+   `asyncio.create_subprocess_exec` + `asyncio.wait_for`.
+3. Replace the signal-handler `_on_sigterm` thread interaction with
+   `loop.add_signal_handler` + task cancellation.
+4. Convert the top-level `main()` to `asyncio.run(main())`.
+5. Verify `fcntl` lock acquisition still happens before the event loop starts
+   (lock is synchronous; keep it that way).
+6. Run `BEAT_DRY_RUN=1 python3 scripts/beat.py` and confirm the intended
+   sequence prints correctly.
+7. Run a live beat cycle on one project and confirm outcomes log is written.
+
+## Test
+
+```bash
+BEAT_DRY_RUN=1 python3 ~/.claude/scripts/beat.py
+```
+Should print the intended housekeeping → pick-ticket → raid sequence without
+error. No `threading` import should remain after the refactor.
+
+```bash
+grep -n "threading" ~/.claude/scripts/beat.py
+```
+Should return empty.
+
+## Exit criteria
+
+- `grep threading scripts/beat.py` returns nothing.
+- `BEAT_DRY_RUN=1 python3 scripts/beat.py` completes cleanly.
+- One live nightbeat cycle completes and writes a valid record to
+  `logs/beat-outcomes.jsonl`.
+- No new Python dependencies added (`requirements.txt` unchanged or absent).
