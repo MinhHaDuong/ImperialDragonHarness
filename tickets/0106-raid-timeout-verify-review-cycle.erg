@@ -4,6 +4,7 @@ Created: 2026-05-09
 Author: claude
 
 --- log ---
+2026-05-10T12:00Z claude note — implementing: raid_timeout_s field in ProjectConfig, wired to raid call site, supervisor repair rule added, discriminating test written
 2026-05-09T16:00Z claude created — opened by nightbeat-supervisor; root cause from chemin-de-voix raid on 0071 (2026-05-09T10:33Z)
 
 --- body ---

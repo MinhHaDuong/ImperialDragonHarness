@@ -47,6 +47,11 @@ When you reach a root cause, repair if within authority:
 - **Budget too small for the actual scope of work** → raise the per-project
   `ProjectConfig` field in `beat.py` by 20%, capped at 2× the module-level
   constant; never touch the module-level constant.
+- **Raid timeout during verify/review** (`outcome=timeout` AND why-chain
+  shows verify/review slowness, not implementation slowness) → raise
+  `raid_timeout_s` in the per-project config by 20%, capped at
+  2× `RAID_TIMEOUT_S` (3600 s). Implementation slowness is a "ticket too
+  large" signal — do not raise the timeout for that.
 - **Ticket too large to finish in one beat** → split into one ticket per
   independent unit of work; convert the parent to an umbrella by adding
   `Blocks: <id>...` and leaving it open (it may be blocking other tickets).

@@ -101,7 +101,14 @@ class _SkillResult:
 
 @dataclass
 class ProjectConfig:
-    """Per-project beat settings; budget fields default to the global constants."""
+    """Per-project beat settings; budget fields default to the global constants.
+
+    Fields (all optional except path):
+        budget_housekeeping, budget_pick_ticket, budget_raid — USD caps.
+        pick_ticket_model — model used when repo has no recent commits.
+        interval_minutes — minimum minutes between beats (0 = always run).
+        raid_timeout_s — seconds before the raid subprocess is killed.
+    """
 
     path: Path
     budget_housekeeping: float = BUDGET_HOUSEKEEPING
@@ -109,6 +116,7 @@ class ProjectConfig:
     budget_raid: float = BUDGET_RAID
     pick_ticket_model: str = MODEL_HAIKU  # model used when repo has no recent commits
     interval_minutes: int = 0  # 0 = always run
+    raid_timeout_s: int = RAID_TIMEOUT_S
 
 
 _BUILTIN_PROJECTS: list[ProjectConfig] = [
@@ -137,6 +145,7 @@ _PROJ_KEYS = {
     "budget_raid",
     "pick_ticket_model",
     "interval_minutes",
+    "raid_timeout_s",
 }
 
 
@@ -969,7 +978,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     oc_rc, oc_res = run_skill(
         f"/raid {ticket_id}\n\nRunning on: {hostname}",
         budget=project.budget_raid,
-        timeout_s=RAID_TIMEOUT_S,
+        timeout_s=project.raid_timeout_s,
         cwd=path,
         project_scoped=True,
     )
