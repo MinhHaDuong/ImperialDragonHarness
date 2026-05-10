@@ -111,6 +111,7 @@ class ProjectConfig:
         pick_ticket_model — model used when repo has no recent commits.
         interval_minutes — minimum minutes between beats (0 = always run).
         raid_timeout_s — seconds before the raid subprocess is killed.
+        max_turns_pick_ticket — max agent turns for pick-ticket (default 30).
     """
 
     path: Path
