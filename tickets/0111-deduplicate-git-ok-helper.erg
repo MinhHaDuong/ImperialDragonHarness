@@ -1,0 +1,60 @@
+%erg v1
+Title: Deduplicate _git_ok() helper across test classes
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T13:40Z claude created
+
+--- body ---
+## Context
+
+PR #130 (ticket 0109) added a `_git_ok()` instance method to three test
+classes independently — `TestRaid`, `TestRaidClosedLoop`, and
+`TestPickTicketModelSelection` — all with identical bodies:
+
+```python
+def _git_ok(self):
+    return patch(
+        "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+    )
+```
+
+Additionally, several other tests inline the same patch directly inside
+`with` blocks rather than using a helper at all. This makes future changes
+to the git mock (e.g. adding `returncode` fields or switching to a
+side_effect) require edits in many places.
+
+Discovered during post-merge review of PR #130.
+
+## Actions
+
+1. Replace all three `_git_ok()` instance methods with a single module-level
+   fixture in `tests/test_beat.py`:
+   ```python
+   @pytest.fixture()
+   def git_ok():
+       with patch(
+           "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+       ):
+           yield
+   ```
+2. Update every test that called `self._git_ok()` or inlined the same
+   `patch("beat._git", return_value=MagicMock(...))` pattern to accept
+   `git_ok` as a fixture parameter instead.
+3. Leave tests that use `_git_runner(commit_count=N)` unchanged — those
+   need the richer side_effect and are already DRY via the shared helper.
+
+## Test
+
+```bash
+python3 -m pytest tests/test_beat.py -q --tb=no
+# Must still show 0 failures after the refactor.
+```
+
+## Exit criteria
+
+- No more than one definition of the `returncode=0, stdout="", stderr=""`
+  git mock in `tests/test_beat.py`.
+- `python3 -m pytest tests/test_beat.py -q` exits 0.
+- No test logic changes — assertions and patch targets identical to before.

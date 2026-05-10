@@ -1,0 +1,69 @@
+%erg v1
+Title: Fix false-positive _raid tests that pass via early git abort
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T13:40Z claude created
+
+--- body ---
+## Context
+
+Several tests in `tests/test_beat.py` pass for the wrong reason: `_raid()`
+aborts at the `_git("checkout", branch)` step (because `tmp_project` has
+only a fake `.git` directory), and their assertions happen to match the
+early-abort return value `("aborted", None)` or an empty call list.
+
+PR #130 (ticket 0109) deliberately preserved these to avoid breaking them
+while fixing the 33 genuine failures. They should be corrected in a
+follow-up so the test suite reflects actual behaviour.
+
+Known false positives as of PR #130:
+
+1. `TestRaid::test_pick_ticket_timeout` — asserts `outcome == "aborted"`,
+   satisfied by git abort rather than the TIMEOUT_EXIT_CODE path.
+
+2. `TestRaid::test_housekeeping_skipped_when_recent` — asserts
+   `not any("housekeeping" in calls)`, trivially true because `run_skill`
+   is never reached.
+
+3. `TestHousekeepingPhase::test_raid_aborts_on_ci_failed` — asserts
+   `outcome == "aborted"`, satisfied by git abort rather than the
+   `_housekeeping_phase` returning "ci-failed".
+
+4. `TestHousekeepingPhase::test_raid_aborts_on_housekeeping_timeout` —
+   same as above with "timeout".
+
+5. `TestRaidDoneButOpenWarning::test_no_warning_when_ticket_closed` —
+   asserts no warning logged; true because raid never completes. See also
+   ticket 0110 (the `is_closed` check itself is wrong).
+
+## Actions
+
+For each false positive:
+1. Add `patch("beat._git", return_value=MagicMock(returncode=0, ...))` so
+   `_raid()` proceeds past the checkout gate.
+2. Ensure `run_skill` mocks return `(rc, beat._SkillResult(...))` so the
+   code path reaches the logic under test.
+3. Confirm the assertion still holds for the right reason.
+
+Note: tests 3 and 4 (`test_raid_aborts_on_ci_failed`,
+`test_raid_aborts_on_housekeeping_timeout`) already patch
+`_housekeeping_phase` directly, so only the git patch is missing.
+
+Test 5 depends on ticket 0110 being fixed first (the `is_closed` logic
+must be correct before the "no warning" assertion can be meaningful).
+
+## Test
+
+```bash
+python3 -m pytest tests/test_beat.py -q --tb=no
+# Must show 0 failures throughout.
+```
+
+## Exit criteria
+
+- All five listed tests exercise the intended code path, not the early
+  git-abort short-circuit.
+- `python3 -m pytest tests/test_beat.py -q` exits 0.
+- No test assertions weakened or removed.
