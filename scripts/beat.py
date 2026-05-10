@@ -50,6 +50,9 @@ RAID_TIMEOUT_S: int = 30 * 60
 # Max consecutive CLOSED:<id> repicks per beat before aborting to idle.
 # Tier 2 of ticket 0049: bound prevents flaky exit-criteria from looping forever.
 MAX_CLOSED_REPICKS: int = 3
+MAX_TURNS_HOUSEKEEPING: int = 40
+MAX_TURNS_PICK_TICKET: int = 30
+MAX_TURNS_RAID: int = 80
 CRASH_RECOVERY_WINDOW_S: int = 55 * 60
 LOG_RETAIN_COUNT: int = 60
 TIMEOUT_EXIT_CODE: int = 124  # matches bash `timeout` convention
@@ -497,6 +500,7 @@ def _claude_argv(
     *,
     project_scoped: bool = False,
     model: str = MODEL_SONNET,
+    max_turns: int | None = None,
 ) -> list[str]:
     argv = [
         "claude",
@@ -514,6 +518,8 @@ def _claude_argv(
         "--settings",
         str(HARNESS_DIR / "scripts" / "beat-settings.json"),
     ]
+    if max_turns is not None:
+        argv += ["--max-turns", str(max_turns)]
     if not project_scoped:
         # Harness context for skills that need workflow awareness (housekeeping).
         # Omitted for pick-ticket / raid to prevent cross-project ticket leakage.
@@ -530,6 +536,7 @@ def run_skill(
     cwd: Path,
     project_scoped: bool = False,
     model: str = MODEL_SONNET,
+    max_turns: int | None = None,
 ) -> tuple[int, _SkillResult]:
     """Invoke a Claude skill; return (exit_code, _SkillResult).
 
@@ -537,7 +544,9 @@ def run_skill(
     Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
     project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
     """
-    argv = _claude_argv(skill, budget, project_scoped=project_scoped, model=model)
+    argv = _claude_argv(
+        skill, budget, project_scoped=project_scoped, model=model, max_turns=max_turns
+    )
 
     if DRY_RUN:
         _log(f"[dry-run] {' '.join(argv)}")
@@ -759,11 +768,12 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     _log(f"=== housekeeping: running on {branch} {_now_iso()} ===")
     os.environ["BEAT_HOUSEKEEPING_BRANCH"] = branch
     try:
-        hk_rc, _ = run_skill(
+        hk_rc, hk_res = run_skill(
             "/housekeeping",
             budget=project.budget_housekeeping,
             timeout_s=HOUSEKEEPING_TIMEOUT_S,
             cwd=path,
+            max_turns=MAX_TURNS_HOUSEKEEPING,
         )
     finally:
         os.environ.pop("BEAT_HOUSEKEEPING_BRANCH", None)
@@ -771,6 +781,10 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     if hk_rc == TIMEOUT_EXIT_CODE:
         _log(f"=== housekeeping: timeout — {branch} left in place {_now_iso()} ===")
         return "timeout"
+    if hk_res.subtype == "error_max_turns":
+        _log(
+            f"=== housekeeping: max-turns ({MAX_TURNS_HOUSEKEEPING}) reached — context cap hit {_now_iso()} ==="
+        )
     if hk_rc != 0:
         _log(f"=== housekeeping: rc={hk_rc} on {branch} {_now_iso()} ===")
         return "failed"
@@ -922,11 +936,16 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
             cwd=path,
             project_scoped=True,
             model=pick_model,
+            max_turns=MAX_TURNS_PICK_TICKET,
         )
 
         if pt_rc == TIMEOUT_EXIT_CODE:
             _record_phase_outcome(path, "pick_ticket", "timeout", skill_result=pt_res)
             return "aborted", None
+        if pt_res.subtype == "error_max_turns":
+            _log(
+                f"=== pick-ticket: max-turns ({MAX_TURNS_PICK_TICKET}) reached — context cap hit {_now_iso()} ==="
+            )
         if pt_rc != 0:
             _record_phase_outcome(path, "pick_ticket", "fail", skill_result=pt_res)
             return "failed", None
@@ -978,19 +997,21 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     oc_rc, oc_res = run_skill(
         f"/raid {ticket_id}\n\nRunning on: {hostname}",
         budget=project.budget_raid,
-<<<<<<< HEAD
         timeout_s=project.raid_timeout_s,
-=======
-        timeout_s=RAID_TIMEOUT_S,
->>>>>>> 2656963 (ticket(0106): broaden docs criterion to accept ProjectConfig docstring)
         cwd=path,
         project_scoped=True,
+        max_turns=MAX_TURNS_RAID,
     )
 
     if oc_rc == TIMEOUT_EXIT_CODE:
         outcome = "aborted"
         _record_phase_outcome(
             path, "raid", "timeout", ticket_id=ticket_id, skill_result=oc_res
+        )
+    elif oc_res.subtype == "error_max_turns":
+        outcome = "failed"
+        _record_phase_outcome(
+            path, "raid", "max_turns", ticket_id=ticket_id, skill_result=oc_res
         )
     elif oc_res.subtype == "error_max_budget_usd":
         outcome = "failed"

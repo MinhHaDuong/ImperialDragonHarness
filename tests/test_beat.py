@@ -428,6 +428,7 @@ class TestRaid:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             for key, val in responses.items():
                 if key in skill:
@@ -856,6 +857,7 @@ class TestProjectScopedIsolation:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
             return (0, "IDLE: empty")
@@ -880,6 +882,7 @@ class TestProjectScopedIsolation:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
             if "pick-ticket" in skill:
@@ -906,6 +909,7 @@ class TestProjectScopedIsolation:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
             return (0, "IDLE: empty")
@@ -1083,6 +1087,7 @@ class TestPickTicketModelSelection:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             recorded.append({"skill": skill, "model": model})
             return (0, "IDLE: empty")
@@ -1269,6 +1274,7 @@ class TestRaidDoneButOpenWarning:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             if "pick-ticket" in skill:
                 return (0, "PICK: 0001")
@@ -1298,6 +1304,7 @@ class TestRaidDoneButOpenWarning:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             if "pick-ticket" in skill:
                 return (0, "PICK: 0002")
@@ -1324,6 +1331,7 @@ class TestRaidDoneButOpenWarning:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             if "pick-ticket" in skill:
                 return (0, "PICK: 9999")
@@ -1622,6 +1630,7 @@ class TestRaidBudgetPassthrough:
             cwd,
             project_scoped=False,
             model=beat.MODEL_SONNET,
+            max_turns=None,
         ):
             recorded.append({"skill": skill, "budget": budget})
             if "pick-ticket" in skill:
