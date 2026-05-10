@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-10T10:02Z
+Last updated: 2026-05-11T00:00Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-10T10:02Z -->
+<!-- generated 2026-05-11T00:00Z -->
 
-**Tickets:** 18 ready · 5 blocked — `erg ready tickets/` for full list
+**Tickets:** 26 ready · 2 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  31afc7b ticket(0047): close — merged PR #128
-  f3f669d ticket(0108): close — merged PR #127
-  dc0f9eb feat(0047): add --max-turns caps to beat.py skill invocations (Phase 1) (#128)
-  057e296 feat(0108): add SUPERVISOR ACTIONS section to nightbeat-report (#127)
-  943711b repair: raise chemin-de-voix budget_housekeeping 0.58→0.70 (error_max_budget_usd x2)
+  chore: archive closed tickets 0047, 0064, 0100, 0101, 0108, 0109, 0110
+  chore: archive closed tickets 0098, 0099, 0111, 0112
+  ticket(0115): per-project max_turns_pick_ticket — supervisor root-cause
+  feat(0113): beat denial catalog May 7-10 + ticket 0114 (locked worktrees) (#129)
+  feat(0102): migrate beat budgets from projects.json to per-project .claude/beat.json (#125)
 
 ## Blockers
 
