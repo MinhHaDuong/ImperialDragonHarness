@@ -1,0 +1,54 @@
+%erg v1
+Title: Add supervisor journal section to nightbeat-report output
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T09:00Z claude created
+
+--- body ---
+## Context
+
+`nightbeat-report.py --full` has no supervisor section. The morning reviewer
+must manually read the supervisor journal, and there are two journal files with
+ambiguous authority:
+
+- `~/.claude/nightbeat-supervisor-journal.jsonl` — written by the supervisor
+  skill (project-root path per `proj["path"] / "nightbeat-supervisor-journal.jsonl"`
+  in survey script); contains actual repairs, merges, tickets.
+- `~/.claude/logs/nightbeat-supervisor-journal.jsonl` — written by some runs
+  (origin unclear); contains only idle entries for the same overnight window.
+
+During the 2026-05-10 morning review, the reviewer read the `logs/` file and
+reported the supervisor as idle when it had in fact merged 2 PRs, raised 4
+budgets, and escalated one decision. The correct file is the project-root one.
+
+## Actions
+
+1. Add a `SUPERVISOR ACTIONS` section to `nightbeat-report.py` that reads
+   `~/.claude/nightbeat-supervisor-journal.jsonl` (the project-root journal)
+   and prints all non-idle entries from the reporting window (same `--hours`
+   window used for beat runs).
+2. Investigate how `~/.claude/logs/nightbeat-supervisor-journal.jsonl` is
+   created; delete it or redirect writes to the canonical path so there is
+   only one file.
+3. Update the nightbeat-report SKILL.md step that covers supervisor review to
+   reference the canonical path explicitly, or remove the step if the new
+   script section makes it redundant.
+
+## Test
+
+```
+python3 ~/.claude/scripts/nightbeat-report.py --full | grep -A5 "SUPERVISOR"
+```
+Must print at least the merged/repaired entries from the last 24h when the
+supervisor was active; must not be empty when the journal has non-idle entries.
+
+## Exit criteria
+
+- `nightbeat-report.py --full` output includes a `SUPERVISOR ACTIONS` section
+  listing all non-idle supervisor journal entries from the reporting window.
+- Only one `nightbeat-supervisor-journal.jsonl` exists under `~/.claude/`
+  (excluding worktrees).
+- The morning report for a night with supervisor activity correctly shows that
+  activity without manual file inspection.
