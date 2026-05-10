@@ -1,0 +1,40 @@
+%erg v1
+Title: add per-project max_turns_pick_ticket to ProjectConfig (analogous to raid_timeout_s)
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T21:05Z claude created — nightbeat-supervisor root-cause chain: chemin-de-voix pick_ticket outcome=fail at 19:05Z due to max-turns (30) reached during exit-criteria check for ticket 0071. No per-project knob exists; module-level constant is off-limits. Fix: add configurable field.
+
+--- body ---
+## Root cause chain
+
+1. chemin-de-voix pick_ticket outcome=fail 2026-05-10T19:05Z, cost=$0.21
+2. Log: `pick-ticket: max-turns (30) reached — context cap hit`
+3. Exit-criteria check for ticket 0071 (step 4) consumed all 30 allowed turns running erg, reading beat-skip, reading ticket body, and running shell checks for file presence
+4. `MAX_TURNS_PICK_TICKET = 30` is a module-level constant; per-project `max_turns_pick_ticket` does not exist in `ProjectConfig` or `_PROJ_KEYS`
+5. Supervisor authority: no per-project knob → ticket required
+
+## Context
+
+`beat.py` already supports per-project `raid_timeout_s` (analogous cap for the raid phase).
+The same pattern applies to pick-ticket: some repos with many tickets or complex exit
+criteria need more turns. The module-level constant (`MAX_TURNS_PICK_TICKET = 30`) serves
+as the floor/default.
+
+The immediate trigger (ticket 0071) was closed at 2026-05-10T19:30Z; next pick-ticket run
+will not hit the same issue. But the structural gap remains.
+
+## Goal
+
+Add `max_turns_pick_ticket: int` to `ProjectConfig`, defaulting to `MAX_TURNS_PICK_TICKET`.
+Add `"max_turns_pick_ticket"` to `_PROJ_KEYS` so it's readable from `beat.json` overlays.
+Wire it into the `_run_skill()` call at line ~1019 of `beat.py`.
+
+## Exit criteria
+
+- `ProjectConfig` has a `max_turns_pick_ticket: int = MAX_TURNS_PICK_TICKET` field
+- `"max_turns_pick_ticket"` is in `_PROJ_KEYS`
+- The per-project value is passed as `max_turns=` at line ~1019
+- `tests/test_beat.py` covers: default value, JSON overlay round-trip
+- `scripts/beat.py` tests pass (`make test` or `uv run pytest tests/test_beat.py`)
