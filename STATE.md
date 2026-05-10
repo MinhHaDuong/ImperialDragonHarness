@@ -9,7 +9,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 ## Status
 <!-- generated 2026-05-10T10:02Z -->
 
-**Tickets:** 19 ready · 5 blocked — `erg ready tickets/` for full list
+**Tickets:** 18 ready · 5 blocked — `erg ready tickets/` for full list
 **Recent commits:**
   31afc7b ticket(0047): close — merged PR #128
   f3f669d ticket(0108): close — merged PR #127
