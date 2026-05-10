@@ -467,7 +467,7 @@ class TestRaid:
         assert outcome == "done"
         assert ticket == "0023"
 
-    def test_pick_ticket_timeout(self, tmp_project):
+    def test_pick_ticket_timeout(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
             self._patch_run_skill({"pick-ticket": (beat.TIMEOUT_EXIT_CODE, "")}),
@@ -557,12 +557,12 @@ class TestRaid:
 
         assert any("housekeeping" in c for c in calls)
 
-    def test_housekeeping_skipped_when_recent(self, tmp_project):
+    def test_housekeeping_skipped_when_recent(self, tmp_project, git_ok):
         calls = []
 
         def fake_run_skill(skill, **kwargs):
             calls.append(skill)
-            return (0, "IDLE: empty")
+            return (0, beat._SkillResult(result_text="IDLE: empty"))
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
@@ -793,13 +793,13 @@ class TestHousekeepingPhase:
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
         assert outcome == "timeout"
 
-    def test_raid_aborts_on_ci_failed(self, tmp_project):
-        with patch("beat._housekeeping_phase", return_value="ci-failed"):
+    def test_raid_aborts_on_ci_failed(self, tmp_project, git_ok):
+        with patch("beat._housekeeping_phase", return_value="failed"):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "aborted"
         assert ticket is None
 
-    def test_raid_aborts_on_housekeeping_timeout(self, tmp_project):
+    def test_raid_aborts_on_housekeeping_timeout(self, tmp_project, git_ok):
         with patch("beat._housekeeping_phase", return_value="timeout"):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "aborted"
@@ -1290,7 +1290,7 @@ class TestRaidDoneButOpenWarning:
             "warning" in l and "0001" in l and "not closed" in l for l in log_lines
         )
 
-    def test_no_warning_when_ticket_closed(self, tmp_project):
+    def test_no_warning_when_ticket_closed(self, tmp_project, git_ok):
         self._make_ticket(tmp_project, "0002", "closed")
         log_lines: list[str] = []
 
@@ -1311,10 +1311,6 @@ class TestRaidDoneButOpenWarning:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):

@@ -2,10 +2,12 @@
 Title: Fix is_closed check to match erg v1 ticket format
 Created: 2026-05-10
 Author: claude
+Closed: merged PR #131
 
 --- log ---
 2026-05-10T13:35Z claude created
 
+2026-05-10T11:49Z MinhHaDuong closed — merged PR #131
 --- body ---
 ## Context
 
