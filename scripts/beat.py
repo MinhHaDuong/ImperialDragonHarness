@@ -978,7 +978,11 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     oc_rc, oc_res = run_skill(
         f"/raid {ticket_id}\n\nRunning on: {hostname}",
         budget=project.budget_raid,
+<<<<<<< HEAD
         timeout_s=project.raid_timeout_s,
+=======
+        timeout_s=RAID_TIMEOUT_S,
+>>>>>>> 2656963 (ticket(0106): broaden docs criterion to accept ProjectConfig docstring)
         cwd=path,
         project_scoped=True,
     )
