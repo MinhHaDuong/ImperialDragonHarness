@@ -1,0 +1,24 @@
+%erg v1
+Title: fix: raise BUDGET_HOUSEKEEPING in beat.py — chronic budget exhaustion
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T07:00Z claude created — 4 hk failures overnight at $0.40–$0.44 vs $0.25 ceiling (runs 1, 2, 4, 14 in nightbeat report)
+
+--- body ---
+## Context
+Housekeeping consistently costs $0.40–$0.44 per run but the budget cap is $0.25.
+This causes rc=1 on roughly half of all housekeeping runs, meaning no pick_ticket
+or raid phase is attempted after those failures. Pattern observed across multiple
+nights; it is structural, not a fluke.
+
+## Action
+In `beat.py`, locate the `BUDGET_HOUSEKEEPING` constant (or equivalent kwarg
+passed to the housekeeping subprocess) and raise it to at least `0.50`.
+Confirm the variable name by grepping: `grep -n "BUDGET_HOUSEKEEPING\|budget.*hk\|hk.*budget" beat.py`
+
+## Exit criteria
+- `BUDGET_HOUSEKEEPING` (or equivalent) set to ≥ 0.50 in beat.py
+- No `hk:rc=1; error_max_budget_usd` entries in the next nightbeat window
+- `make check` / CI green
