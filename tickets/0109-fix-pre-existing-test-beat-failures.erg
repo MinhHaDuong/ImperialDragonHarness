@@ -2,10 +2,12 @@
 Title: Fix 33 pre-existing test_beat.py failures hidden by SyntaxError
 Created: 2026-05-10
 Author: claude
+Closed: merged PR #130
 
 --- log ---
 2026-05-10T10:15Z claude created
 
+2026-05-10T11:20Z MinhHaDuong closed — merged PR #130
 --- body ---
 ## Context
 
