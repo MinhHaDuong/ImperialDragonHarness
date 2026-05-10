@@ -306,14 +306,14 @@ class TestRunSkillDryRun:
             "/pick-ticket", budget=0.20, timeout_s=60, cwd=tmp_project
         )
         assert rc == 0
-        assert "PICK: 9999" in result
+        assert "PICK: 9999" in result.result_text
 
     def test_other_skill_returns_ok(self, tmp_project):
         rc, result = beat.run_skill(
             "/housekeeping", budget=0.10, timeout_s=60, cwd=tmp_project
         )
         assert rc == 0
-        assert "dry-run" in result
+        assert "dry-run" in result.result_text
 
     def test_raid_returns_ok(self, tmp_project):
         rc, result = beat.run_skill(
@@ -352,7 +352,7 @@ class TestRunSkillSubprocess:
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
         assert rc == 0
-        assert "PICK: 0007" in result
+        assert "PICK: 0007" in result.result_text
 
     def test_ignores_non_result_lines(self, tmp_project):
         lines = [
@@ -364,7 +364,7 @@ class TestRunSkillSubprocess:
             _, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
-        assert result == "PICK: 0042"
+        assert result.result_text == "PICK: 0042"
 
     def test_timeout_returns_124(self, tmp_project):
         proc = MagicMock()
@@ -381,7 +381,7 @@ class TestRunSkillSubprocess:
                 "/pick-ticket", budget=0.20, timeout_s=1, cwd=tmp_project
             )
         assert rc == beat.TIMEOUT_EXIT_CODE
-        assert result == ""
+        assert result.result_text == ""
 
     def test_nonzero_exit_propagated(self, tmp_project):
         proc = self._make_popen([], returncode=1)
@@ -407,7 +407,7 @@ class TestRunSkillSubprocess:
             _, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
-        assert result == "IDLE: ok"
+        assert result.result_text == "IDLE: ok"
 
 
 # ── _raid ───────────────────────────────────────────────────────────────
@@ -418,7 +418,7 @@ class TestRaid:
         beat.DRY_RUN = False
 
     def _patch_run_skill(self, responses: dict):
-        """responses: {skill_substr: (rc, result)}"""
+        """responses: {skill_substr: (rc, result_text)}"""
 
         def fake_run_skill(
             skill,
@@ -430,16 +430,22 @@ class TestRaid:
             model=beat.MODEL_SONNET,
             max_turns=None,
         ):
-            for key, val in responses.items():
+            for key, (rc, text) in responses.items():
                 if key in skill:
-                    return val
-            return (0, "")
+                    return (rc, beat._SkillResult(result_text=text))
+            return (0, beat._SkillResult())
 
         return patch("beat.run_skill", side_effect=fake_run_skill)
+
+    def _git_ok(self):
+        return patch(
+            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+        )
 
     def test_idle_path(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             self._patch_run_skill({"pick-ticket": (0, "IDLE: empty queue")}),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -449,6 +455,7 @@ class TestRaid:
     def test_pick_and_done_path(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0023"),
@@ -472,6 +479,7 @@ class TestRaid:
     def test_pick_ticket_nonzero_exit(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             self._patch_run_skill({"pick-ticket": (1, "")}),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -481,6 +489,7 @@ class TestRaid:
     def test_raid_timeout(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
@@ -495,6 +504,7 @@ class TestRaid:
     def test_raid_nonzero_exit(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
@@ -538,8 +548,8 @@ class TestRaid:
         def fake_run_skill(skill, **kwargs):
             calls.append(skill)
             if "pick-ticket" in skill:
-                return (0, "IDLE: empty")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="IDLE: empty"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=True),
@@ -578,13 +588,18 @@ class TestRaidClosedLoop:
     def setup_method(self):
         beat.DRY_RUN = False
 
+    def _git_ok(self):
+        return patch(
+            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+        )
+
     def test_closed_then_pick_loops_back(self, tmp_project):
         """First pick-ticket call returns CLOSED; second returns PICK.
         _raid must call pick-ticket twice, then proceed to raid."""
         pick_results = iter(
             [
-                (0, "CLOSED: 0049"),
-                (0, "PICK: 0050"),
+                (0, beat._SkillResult(result_text="CLOSED: 0049")),
+                (0, beat._SkillResult(result_text="PICK: 0050")),
             ]
         )
         calls: list[str] = []
@@ -594,11 +609,12 @@ class TestRaidClosedLoop:
             if "pick-ticket" in skill:
                 return next(pick_results)
             if "raid" in skill:
-                return (0, "")
-            return (0, "")
+                return (0, beat._SkillResult())
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -618,11 +634,12 @@ class TestRaidClosedLoop:
         def fake_run_skill(skill, **kwargs):
             calls.append(skill)
             if "pick-ticket" in skill:
-                return (0, "CLOSED: 0049")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="CLOSED: 0049"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -639,8 +656,8 @@ class TestRaidClosedLoop:
         """CLOSED on first call, IDLE on second → idle (no raid)."""
         pick_results = iter(
             [
-                (0, "CLOSED: 0049"),
-                (0, "IDLE: nothing left"),
+                (0, beat._SkillResult(result_text="CLOSED: 0049")),
+                (0, beat._SkillResult(result_text="IDLE: nothing left")),
             ]
         )
         calls: list[str] = []
@@ -649,10 +666,11 @@ class TestRaidClosedLoop:
             calls.append(skill)
             if "pick-ticket" in skill:
                 return next(pick_results)
-            return (0, "")
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -700,7 +718,7 @@ class TestHousekeepingPhase:
         with (
             patch("beat.housekeeping_needed", return_value=True),
             patch("beat._git", side_effect=_git_runner(commit_count=0)) as mock_git,
-            patch("beat.run_skill", return_value=(0, "")),
+            patch("beat.run_skill", return_value=(0, beat._SkillResult())),
         ):
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
         assert outcome == "no-changes"
@@ -717,7 +735,7 @@ class TestHousekeepingPhase:
         with (
             patch("beat.housekeeping_needed", return_value=True),
             patch("beat._git", side_effect=_git_runner(commit_count=2)) as mock_git,
-            patch("beat.run_skill", return_value=(0, "")),
+            patch("beat.run_skill", return_value=(0, beat._SkillResult())),
         ):
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
         assert outcome == "deferred"
@@ -726,74 +744,56 @@ class TestHousekeepingPhase:
         calls = [call.args for call in mock_git.call_args_list]
         assert ("checkout", "main") in [c[:2] for c in calls]
 
-    def test_merged_when_pr_opt_in_and_ci_green(self, tmp_project, monkeypatch):
-        monkeypatch.setenv("BEAT_HOUSEKEEPING_PR", "1")
-        gh_calls: list[list[str]] = []
-
-        def fake_subprocess_run(argv, **kwargs):
-            if argv and argv[0] == "gh":
-                gh_calls.append(argv)
-                return MagicMock(returncode=0, stdout='[{"bucket":"pass"}]', stderr="")
-            return MagicMock(returncode=0, stdout="", stderr="")
-
+    def test_failed_when_skill_exits_nonzero(self, tmp_project):
         with (
             patch("beat.housekeeping_needed", return_value=True),
-            patch("beat._git", side_effect=_git_runner(commit_count=2)),
-            patch("beat.run_skill", return_value=(0, "")),
-            patch("beat._gh_available", return_value=True),
-            patch("beat.subprocess.run", side_effect=fake_subprocess_run),
+            patch("beat._git", side_effect=_git_runner(commit_count=0)),
+            patch("beat.run_skill", return_value=(1, beat._SkillResult())),
         ):
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
-        assert outcome == "merged"
-        assert any("create" in c for c in gh_calls)
-        assert any("merge" in c for c in gh_calls)
+        assert outcome == "failed"
 
-    def test_ci_failed_blocks_merge(self, tmp_project, monkeypatch):
-        monkeypatch.setenv("BEAT_HOUSEKEEPING_PR", "1")
-
-        def fake_subprocess_run(argv, **kwargs):
-            if argv and argv[:3] == ["gh", "pr", "checks"]:
-                return MagicMock(
-                    returncode=0,
-                    stdout='[{"name":"validate","bucket":"fail"}]',
-                    stderr="",
-                )
-            if argv and argv[:3] == ["gh", "pr", "create"]:
+    def test_failed_when_rev_parse_empty(self, tmp_project):
+        def git_no_base(*args, cwd):
+            sub = args[0] if args else ""
+            if sub == "rev-parse":
                 return MagicMock(returncode=0, stdout="", stderr="")
             return MagicMock(returncode=0, stdout="", stderr="")
 
         with (
             patch("beat.housekeeping_needed", return_value=True),
-            patch("beat._git", side_effect=_git_runner(commit_count=1)),
-            patch("beat.run_skill", return_value=(0, "")),
-            patch("beat._gh_available", return_value=True),
-            patch("beat.subprocess.run", side_effect=fake_subprocess_run),
+            patch("beat._git", side_effect=git_no_base),
         ):
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
-        assert outcome == "ci-failed"
+        assert outcome == "failed"
 
-    def test_wait_for_pr_checks_tolerates_transient_failures(self, tmp_path):
-        # First two calls fail (returncode=1), third returns a green check.
-        responses = [
-            MagicMock(returncode=1, stdout="", stderr="rate limited"),
-            MagicMock(returncode=1, stdout="", stderr="network blip"),
-            MagicMock(returncode=0, stdout='[{"bucket":"pass"}]', stderr=""),
-        ]
-        with (
-            patch("beat.subprocess.run", side_effect=responses),
-            patch("beat.time.sleep"),  # don't actually sleep in the test
-        ):
-            result = beat._wait_for_pr_checks("claude/housekeeping-x", cwd=tmp_path)
-        assert result is True
+    def test_failed_when_branch_checkout_fails(self, tmp_project):
+        def git_branch_fails(*args, cwd):
+            sub = args[0] if args else ""
+            if sub == "rev-parse":
+                return MagicMock(returncode=0, stdout="basesha\n", stderr="")
+            if sub == "checkout":
+                return MagicMock(returncode=1, stdout="", stderr="branch error")
+            return MagicMock(returncode=0, stdout="", stderr="")
 
-    def test_wait_for_pr_checks_gives_up_after_too_many_failures(self, tmp_path):
-        always_fail = MagicMock(returncode=1, stdout="", stderr="auth error")
         with (
-            patch("beat.subprocess.run", return_value=always_fail),
-            patch("beat.time.sleep"),
+            patch("beat.housekeeping_needed", return_value=True),
+            patch("beat._git", side_effect=git_branch_fails),
         ):
-            result = beat._wait_for_pr_checks("claude/housekeeping-x", cwd=tmp_path)
-        assert result is False
+            outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
+        assert outcome == "failed"
+
+    def test_deferred_leaves_branch_intact(self, tmp_project):
+        with (
+            patch("beat.housekeeping_needed", return_value=True),
+            patch("beat._git", side_effect=_git_runner(commit_count=2)) as mock_git,
+            patch("beat.run_skill", return_value=(0, beat._SkillResult())),
+        ):
+            outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
+        assert outcome == "deferred"
+        calls = [call.args for call in mock_git.call_args_list]
+        delete_calls = [c for c in calls if c[:2] == ("branch", "-D")]
+        assert len(delete_calls) == 0
 
     def test_skill_timeout_returns_timeout(self, tmp_project):
         with (
@@ -819,7 +819,14 @@ class TestHousekeepingPhase:
     def test_raid_continues_on_deferred(self, tmp_project):
         with (
             patch("beat._housekeeping_phase", return_value="deferred"),
-            patch("beat.run_skill", return_value=(0, "IDLE: empty")),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
+            patch(
+                "beat.run_skill",
+                return_value=(0, beat._SkillResult(result_text="IDLE: empty")),
+            ),
         ):
             outcome, _ = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "idle"  # not "aborted"
@@ -860,10 +867,14 @@ class TestProjectScopedIsolation:
             max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
-            return (0, "IDLE: empty")
+            return (0, beat._SkillResult(result_text="IDLE: empty"))
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -886,11 +897,15 @@ class TestProjectScopedIsolation:
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
             if "pick-ticket" in skill:
-                return (0, "PICK: 0001")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="PICK: 0001"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -912,7 +927,7 @@ class TestProjectScopedIsolation:
             max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
-            return (0, "IDLE: empty")
+            return (0, beat._SkillResult(result_text="IDLE: empty"))
 
         with (
             patch("beat.housekeeping_needed", return_value=True),
@@ -1026,8 +1041,15 @@ class TestSpinDown:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
+            patch(
                 "beat.run_skill",
-                side_effect=lambda s, **kw: (0, "IDLE: empty" if "pick" in s else ""),
+                side_effect=lambda s, **kw: (
+                    0,
+                    beat._SkillResult(result_text="IDLE: empty" if "pick" in s else ""),
+                ),
             ),
         ):
             beat._state.project = tmp_project
@@ -1090,15 +1112,21 @@ class TestPickTicketModelSelection:
             max_turns=None,
         ):
             recorded.append({"skill": skill, "model": model})
-            return (0, "IDLE: empty")
+            return (0, beat._SkillResult(result_text="IDLE: empty"))
 
         return recorded, fake_run_skill
+
+    def _git_ok(self):
+        return patch(
+            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
+        )
 
     def test_uses_haiku_when_idle(self, tmp_project):
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -1110,6 +1138,7 @@ class TestPickTicketModelSelection:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=True),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -1122,6 +1151,7 @@ class TestPickTicketModelSelection:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(
@@ -1136,6 +1166,7 @@ class TestPickTicketModelSelection:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=True),
+            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(
@@ -1277,12 +1308,16 @@ class TestRaidDoneButOpenWarning:
             max_turns=None,
         ):
             if "pick-ticket" in skill:
-                return (0, "PICK: 0001")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="PICK: 0001"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
@@ -1400,12 +1435,16 @@ class TestRaidCooldownRecentPick:
 
         def fake_run_skill(skill, **kwargs):
             calls.append(skill)
-            return (0, "")
+            return (0, beat._SkillResult())
 
         log_lines: list[str] = []
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
@@ -1433,12 +1472,16 @@ class TestRaidCooldownRecentPick:
         def fake_run_skill(skill, **kwargs):
             calls.append(skill)
             if "pick-ticket" in skill:
-                return (0, "IDLE: empty queue")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="IDLE: empty queue"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, _ = beat._raid(beat.ProjectConfig(path=tmp_project))
