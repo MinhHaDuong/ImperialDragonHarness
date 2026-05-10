@@ -1547,6 +1547,14 @@ class TestProjectConfigFields:
         cfg = beat.ProjectConfig(path=Path("/tmp/p"), interval_minutes=30)
         assert cfg.interval_minutes == 30
 
+    def test_max_turns_pick_ticket_default(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"))
+        assert cfg.max_turns_pick_ticket == beat.MAX_TURNS_PICK_TICKET
+
+    def test_custom_max_turns_pick_ticket(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_pick_ticket=50)
+        assert cfg.max_turns_pick_ticket == 50
+
 
 class TestApplyBeatJsonOverlay:
     def test_overlay_merges_known_keys(self, tmp_path):
@@ -1610,6 +1618,23 @@ class TestLoadProjectsOverlay:
         projects = beat.load_projects(cfg)
         assert projects[0].interval_minutes == 60
 
+    def test_projects_json_max_turns_pick_ticket(self, tmp_path):
+        cfg = tmp_path / "projects.json"
+        cfg.write_text(json.dumps([{"path": "~/x", "max_turns_pick_ticket": 50}]))
+        projects = beat.load_projects(cfg)
+        assert projects[0].max_turns_pick_ticket == 50
+
+    def test_beat_json_overlay_max_turns_pick_ticket(self, tmp_path):
+        proj_dir = tmp_path / "myproject"
+        proj_dir.mkdir()
+        (proj_dir / ".claude").mkdir()
+        (proj_dir / ".claude" / "beat.json").write_text(
+            json.dumps({"max_turns_pick_ticket": 45})
+        )
+        cfg = beat.ProjectConfig(path=proj_dir)
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.max_turns_pick_ticket == 45
+
 
 class TestRaidBudgetPassthrough:
     """budget_raid flows from ProjectConfig to the raid skill invocation."""
@@ -1648,6 +1673,43 @@ class TestRaidBudgetPassthrough:
             r for r in recorded if "raid" in r["skill"] and "pick" not in r["skill"]
         )
         assert raid_call["budget"] == 8.50
+
+
+class TestPickTicketMaxTurnsPassthrough:
+    """max_turns_pick_ticket flows from ProjectConfig to the pick-ticket invocation."""
+
+    def setup_method(self):
+        beat.DRY_RUN = False
+
+    def test_pick_ticket_uses_project_max_turns(self, tmp_project, git_ok):
+        recorded: list[dict] = []
+
+        def fake_run_skill(
+            skill,
+            *,
+            budget,
+            timeout_s,
+            cwd,
+            project_scoped=False,
+            model=beat.MODEL_SONNET,
+            max_turns=None,
+        ):
+            recorded.append({"skill": skill, "max_turns": max_turns})
+            if "pick-ticket" in skill:
+                return (0, beat._SkillResult(result_text="IDLE: empty"))
+            return (0, beat._SkillResult())
+
+        with (
+            patch("beat.housekeeping_needed", return_value=False),
+            patch("beat._repo_active", return_value=False),
+            patch("beat._sync_origin_main"),
+            patch("beat._default_branch", return_value="main"),
+            patch("beat.run_skill", side_effect=fake_run_skill),
+        ):
+            beat._raid(beat.ProjectConfig(path=tmp_project, max_turns_pick_ticket=50))
+
+        pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
+        assert pick_call["max_turns"] == 50
 
 
 class TestIntervalSkip:

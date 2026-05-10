@@ -111,6 +111,7 @@ class ProjectConfig:
         pick_ticket_model — model used when repo has no recent commits.
         interval_minutes — minimum minutes between beats (0 = always run).
         raid_timeout_s — seconds before the raid subprocess is killed.
+        max_turns_pick_ticket — max agent turns for pick-ticket (default 30).
     """
 
     path: Path
@@ -120,6 +121,7 @@ class ProjectConfig:
     pick_ticket_model: str = MODEL_HAIKU  # model used when repo has no recent commits
     interval_minutes: int = 0  # 0 = always run
     raid_timeout_s: int = RAID_TIMEOUT_S
+    max_turns_pick_ticket: int = MAX_TURNS_PICK_TICKET
 
 
 _BUILTIN_PROJECTS: list[ProjectConfig] = [
@@ -149,6 +151,7 @@ _PROJ_KEYS = {
     "pick_ticket_model",
     "interval_minutes",
     "raid_timeout_s",
+    "max_turns_pick_ticket",
 }
 
 
@@ -953,7 +956,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
             cwd=path,
             project_scoped=True,
             model=pick_model,
-            max_turns=MAX_TURNS_PICK_TICKET,
+            max_turns=project.max_turns_pick_ticket,
         )
 
         if pt_rc == TIMEOUT_EXIT_CODE:
@@ -961,7 +964,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
             return "aborted", None
         if pt_res.subtype == "error_max_turns":
             _log(
-                f"=== pick-ticket: max-turns ({MAX_TURNS_PICK_TICKET}) reached — context cap hit {_now_iso()} ==="
+                f"=== pick-ticket: max-turns ({project.max_turns_pick_ticket}) reached — context cap hit {_now_iso()} ==="
             )
         if pt_rc != 0:
             _record_phase_outcome(path, "pick_ticket", "fail", skill_result=pt_res)
