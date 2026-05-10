@@ -2,10 +2,12 @@
 Title: Add supervisor journal section to nightbeat-report output
 Created: 2026-05-10
 Author: claude
+Closed: merged PR #127 — SUPERVISOR ACTIONS section added to nightbeat-report.py; spurious logs/ journal deleted
 
 --- log ---
 2026-05-10T09:00Z claude created
 
+2026-05-10T07:27Z MinhHaDuong closed — merged PR #127 — SUPERVISOR ACTIONS section added to nightbeat-report.py; spurious logs/ journal deleted
 --- body ---
 ## Context
 
