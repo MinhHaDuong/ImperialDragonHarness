@@ -505,6 +505,32 @@ class TestRaid:
         assert outcome == "failed"
         assert ticket == "0005"
 
+    def test_raid_uses_per_project_timeout(self, tmp_project):
+        captured = {}
+
+        def spy_run_skill(skill, **kwargs):
+            if "raid" in skill and "pick" not in skill:
+                captured.update(kwargs)
+            if "pick-ticket" in skill:
+                return (0, beat._SkillResult(result_text="PICK: 0042"))
+            return (0, beat._SkillResult())
+
+        custom_timeout = 2700
+        config = beat.ProjectConfig(path=tmp_project, raid_timeout_s=custom_timeout)
+        with (
+            patch("beat.housekeeping_needed", return_value=False),
+            patch("beat._repo_active", return_value=False),
+            patch("beat._sync_origin_main"),
+            patch("beat._default_branch", return_value="main"),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
+            patch("beat.run_skill", side_effect=spy_run_skill),
+        ):
+            beat._raid(config)
+        assert captured["timeout_s"] == custom_timeout
+
     def test_housekeeping_runs_when_needed(self, tmp_project):
         calls = []
 
