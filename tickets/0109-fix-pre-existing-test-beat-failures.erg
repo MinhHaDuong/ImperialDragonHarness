@@ -1,0 +1,66 @@
+%erg v1
+Title: Fix 33 pre-existing test_beat.py failures hidden by SyntaxError
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T10:15Z claude created
+
+--- body ---
+## Context
+
+33 tests in `tests/test_beat.py` were failing before this ticket was filed.
+They were masked by a SyntaxError in `scripts/beat.py` (unresolved conflict
+markers committed in `a39359f`) that prevented `import beat` from succeeding,
+causing all 110 tests to fail with a collection error rather than individual
+test failures. PR #128 (ticket 0047) fixed the conflict markers, exposing the
+pre-existing failures.
+
+Two distinct root causes:
+
+**Root cause 1 — `run_skill` return-type mismatch (7 tests)**
+`TestRunSkillDryRun` and `TestRunSkillSubprocess` check `"PICK: 9999" in result`
+where `result` is the second element of `run_skill()`'s return tuple. Since
+`run_skill` now returns `tuple[int, _SkillResult]`, `result` is a `_SkillResult`
+object; the `in` operator raises `TypeError`. Fix: change assertions to check
+`result.result_text`.
+
+Affected: `TestRunSkillDryRun` (2), `TestRunSkillSubprocess` (4-5).
+
+**Root cause 2 — `_raid()` calls real git in fake-repo tmp_project (26 tests)**
+`_raid()` calls `_sync_origin_main(path)` and `_git("checkout", default_branch,
+cwd=path)` before any mocked code runs. The `tmp_project` fixture creates only
+a `.git` *directory* (not a real git repo), so these git calls fail and `_raid`
+returns `("aborted", None)` before reaching the logic under test.
+
+Affected: `TestRaid`, `TestRaidClosedLoop`, `TestHousekeepingPhase`,
+`TestProjectScopedIsolation`, `TestSpinDown`, `TestPickTicketModelSelection`,
+`TestRaidDoneButOpenWarning`, `TestRaidCooldownRecentPick`.
+
+Fix: add `patch("beat._sync_origin_main")` and patch `_git` to return a
+successful checkout result in tests that exercise `_raid`. Alternatively,
+extract a `_pick_and_raid()` helper that starts after the git setup so tests
+can call it directly.
+
+## Actions
+
+1. Fix root cause 1: update `TestRunSkillDryRun` and `TestRunSkillSubprocess`
+   assertions to use `result.result_text` instead of `result`.
+2. Fix root cause 2: add `patch("beat._sync_origin_main")` and a `_git` mock
+   returning `rc=0` for `checkout` in all `_raid`-exercising tests. The
+   `tmp_project` fixture should handle this so each test class doesn't repeat
+   the patches.
+3. Confirm `python3 -m pytest tests/test_beat.py -q` shows 0 failures.
+
+## Test
+
+```bash
+python3 -m pytest tests/test_beat.py -q --tb=no 2>&1 | tail -3
+# Expected: N passed (0 failed)
+```
+
+## Exit criteria
+
+- `python3 -m pytest tests/test_beat.py -q` exits 0 (all tests pass).
+- No test is deleted or skipped — all 33 failures are fixed, not suppressed.
+- CI passes on the PR branch.
