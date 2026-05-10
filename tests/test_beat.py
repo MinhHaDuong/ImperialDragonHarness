@@ -43,6 +43,13 @@ def beat_log(tmp_project):
     return tmp_project / "beat-log.jsonl"
 
 
+@pytest.fixture()
+def git_ok():
+    """Patch beat._git to succeed (returncode=0) for tests that call _raid()."""
+    with patch("beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")):
+        yield
+
+
 # ── parse_pick ─────────────────────────────────────────────────────────────────
 
 
@@ -437,25 +444,18 @@ class TestRaid:
 
         return patch("beat.run_skill", side_effect=fake_run_skill)
 
-    def _git_ok(self):
-        return patch(
-            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
-        )
-
-    def test_idle_path(self, tmp_project):
+    def test_idle_path(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             self._patch_run_skill({"pick-ticket": (0, "IDLE: empty queue")}),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "idle"
         assert ticket is None
 
-    def test_pick_and_done_path(self, tmp_project):
+    def test_pick_and_done_path(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0023"),
@@ -476,20 +476,18 @@ class TestRaid:
         assert outcome == "aborted"
         assert ticket is None
 
-    def test_pick_ticket_nonzero_exit(self, tmp_project):
+    def test_pick_ticket_nonzero_exit(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             self._patch_run_skill({"pick-ticket": (1, "")}),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
         assert outcome == "failed"
         assert ticket is None
 
-    def test_raid_timeout(self, tmp_project):
+    def test_raid_timeout(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
@@ -501,10 +499,9 @@ class TestRaid:
         assert outcome == "aborted"
         assert ticket == "0005"
 
-    def test_raid_nonzero_exit(self, tmp_project):
+    def test_raid_nonzero_exit(self, tmp_project, git_ok):
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             self._patch_run_skill(
                 {
                     "pick-ticket": (0, "PICK: 0005"),
@@ -588,12 +585,7 @@ class TestRaidClosedLoop:
     def setup_method(self):
         beat.DRY_RUN = False
 
-    def _git_ok(self):
-        return patch(
-            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
-        )
-
-    def test_closed_then_pick_loops_back(self, tmp_project):
+    def test_closed_then_pick_loops_back(self, tmp_project, git_ok):
         """First pick-ticket call returns CLOSED; second returns PICK.
         _raid must call pick-ticket twice, then proceed to raid."""
         pick_results = iter(
@@ -614,7 +606,6 @@ class TestRaidClosedLoop:
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -624,7 +615,7 @@ class TestRaidClosedLoop:
         assert outcome == "done"
         assert ticket == "0050"
 
-    def test_consecutive_closed_aborts_to_idle(self, tmp_project):
+    def test_consecutive_closed_aborts_to_idle(self, tmp_project, git_ok):
         """Three consecutive CLOSED picks → idle (loop guard).
 
         Bound: max 3 consecutive CLOSED before aborting. Prevents flaky
@@ -639,7 +630,6 @@ class TestRaidClosedLoop:
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -652,7 +642,7 @@ class TestRaidClosedLoop:
         assert outcome == "idle"
         assert ticket is None
 
-    def test_closed_then_idle_returns_idle(self, tmp_project):
+    def test_closed_then_idle_returns_idle(self, tmp_project, git_ok):
         """CLOSED on first call, IDLE on second → idle (no raid)."""
         pick_results = iter(
             [
@@ -670,7 +660,6 @@ class TestRaidClosedLoop:
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -816,13 +805,9 @@ class TestHousekeepingPhase:
         assert outcome == "aborted"
         assert ticket is None
 
-    def test_raid_continues_on_deferred(self, tmp_project):
+    def test_raid_continues_on_deferred(self, tmp_project, git_ok):
         with (
             patch("beat._housekeeping_phase", return_value="deferred"),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch(
                 "beat.run_skill",
                 return_value=(0, beat._SkillResult(result_text="IDLE: empty")),
@@ -853,7 +838,7 @@ class TestProjectScopedIsolation:
         add_dirs = [argv[i + 1] for i, a in enumerate(argv) if a == "--add-dir"]
         assert "." in add_dirs
 
-    def test_raid_passes_project_scoped_to_pick_ticket(self, tmp_project):
+    def test_raid_passes_project_scoped_to_pick_ticket(self, tmp_project, git_ok):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -871,10 +856,6 @@ class TestProjectScopedIsolation:
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -882,7 +863,7 @@ class TestProjectScopedIsolation:
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["project_scoped"] is True
 
-    def test_raid_passes_project_scoped_to_raid(self, tmp_project):
+    def test_raid_passes_project_scoped_to_raid(self, tmp_project, git_ok):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -902,10 +883,6 @@ class TestProjectScopedIsolation:
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -1036,14 +1013,10 @@ class TestCrashRecovery:
 
 
 class TestSpinDown:
-    def test_finalize_always_called_on_normal_exit(self, tmp_project, beat_log):
+    def test_finalize_always_called_on_normal_exit(self, tmp_project, beat_log, git_ok):
         beat_log.write_text(json.dumps({"outcome": "in_progress"}) + "\n")
         with (
             patch("beat.housekeeping_needed", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch(
                 "beat.run_skill",
                 side_effect=lambda s, **kw: (
@@ -1116,42 +1089,34 @@ class TestPickTicketModelSelection:
 
         return recorded, fake_run_skill
 
-    def _git_ok(self):
-        return patch(
-            "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
-        )
-
-    def test_uses_haiku_when_idle(self, tmp_project):
+    def test_uses_haiku_when_idle(self, tmp_project, git_ok):
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == beat.MODEL_HAIKU
 
-    def test_uses_sonnet_when_active(self, tmp_project):
+    def test_uses_sonnet_when_active(self, tmp_project, git_ok):
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=True),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == beat.MODEL_SONNET
 
-    def test_project_override_respected_when_idle(self, tmp_project):
+    def test_project_override_respected_when_idle(self, tmp_project, git_ok):
         custom_model = "claude-opus-4-7"
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(
@@ -1160,13 +1125,12 @@ class TestPickTicketModelSelection:
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == custom_model
 
-    def test_project_override_ignored_when_active(self, tmp_project):
+    def test_project_override_ignored_when_active(self, tmp_project, git_ok):
         """When repo is active, Sonnet is always used regardless of pick_ticket_model."""
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=True),
-            self._git_ok(),
             patch("beat.run_skill", side_effect=fake),
         ):
             beat._raid(
@@ -1293,7 +1257,7 @@ class TestRaidDoneButOpenWarning:
             f"\n--- log ---\n\n--- body ---\n"
         )
 
-    def test_warns_when_ticket_not_closed(self, tmp_project):
+    def test_warns_when_ticket_not_closed(self, tmp_project, git_ok):
         self._make_ticket(tmp_project, "0001", "open")
         log_lines: list[str] = []
 
@@ -1314,10 +1278,6 @@ class TestRaidDoneButOpenWarning:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
@@ -1423,7 +1383,7 @@ class TestRaidCooldownRecentPick:
     def setup_method(self):
         beat.DRY_RUN = False
 
-    def test_skips_pick_ticket_when_recent_pick_exists(self, tmp_project):
+    def test_skips_pick_ticket_when_recent_pick_exists(self, tmp_project, git_ok):
         (tmp_project / "tickets").mkdir(exist_ok=True)
         now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
         (tmp_project / "tickets" / "0042-recent.erg").write_text(
@@ -1441,10 +1401,6 @@ class TestRaidCooldownRecentPick:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
@@ -1457,7 +1413,7 @@ class TestRaidCooldownRecentPick:
         )
         assert any("cooldown-recent-pick" in l for l in log_lines)
 
-    def test_proceeds_when_no_recent_pick(self, tmp_project):
+    def test_proceeds_when_no_recent_pick(self, tmp_project, git_ok):
         (tmp_project / "tickets").mkdir(exist_ok=True)
         old = (datetime.now(timezone.utc) - timedelta(hours=9)).strftime(
             "%Y-%m-%dT%H:%MZ"
@@ -1478,10 +1434,6 @@ class TestRaidCooldownRecentPick:
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
-            patch(
-                "beat._git",
-                return_value=MagicMock(returncode=0, stdout="", stderr=""),
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             outcome, _ = beat._raid(beat.ProjectConfig(path=tmp_project))
@@ -1662,7 +1614,7 @@ class TestRaidBudgetPassthrough:
     def setup_method(self):
         beat.DRY_RUN = False
 
-    def test_raid_uses_project_budget(self, tmp_project):
+    def test_raid_uses_project_budget(self, tmp_project, git_ok):
         recorded: list[dict] = []
 
         def fake_run_skill(
@@ -1685,9 +1637,6 @@ class TestRaidBudgetPassthrough:
             patch("beat._repo_active", return_value=False),
             patch("beat._sync_origin_main"),
             patch("beat._default_branch", return_value="main"),
-            patch(
-                "beat._git", return_value=MagicMock(returncode=0, stdout="", stderr="")
-            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project, budget_raid=8.50))
