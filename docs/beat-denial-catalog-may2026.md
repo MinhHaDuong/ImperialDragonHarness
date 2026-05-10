@@ -8,7 +8,9 @@ No `permission_denials` JSON field was populated in any log for this window —
 the structured field exists but is sparsely populated. All findings were extracted
 from `is_error: true` tool results, non-zero exit codes, harness-guard blocks,
 and `error_max_budget_usd` result subtypes. Pure errors (file-not-found, test
-failures, erg format validation) are excluded.
+failures, erg format validation) are excluded. The Run column shows session start
+time (minute resolution); two rows sharing a timestamp are distinct events within
+the same session.
 
 ## Denial Catalog
 
@@ -19,7 +21,7 @@ failures, erg format validation) are excluded.
 | 20260510T010423Z | IDH/.claude | Bash | `guard-destructive-bash.sh` blocked `git checkout -- . && git clean -fd` — correct guard behavior | D (Bash blocked by hook) | Design intent |
 | 20260507T230223Z | chemin-de-voix | Bash | `git worktree remove` failed: orphaned locked worktree from prior killed session | D (git lock) | **UNCOVERED** |
 | 20260508T030423Z | chemin-de-voix | Bash (find) | rtk proxy rejected `find … -not -path` (compound predicate policy) | D (rtk proxy policy) | Design intent |
-| 20260508T040123Z | IDH/.claude | Bash (gh pr edit) | GitHub API exit 1: `Projects (classic) is being deprecated` deprecation error | B (GitHub API) | Not auth failure — see note |
+| 20260508T040123Z | IDH/.claude | Bash (gh pr edit) | GitHub API exit 1: `Projects (classic) is being deprecated` deprecation error | E (gh-cli deprecation) | Not a harness issue |
 | 20260510T070140Z | chemin-de-voix | AskUserQuestion | Blocked 3× in bypass-permissions mode — autonomous raid agent asked user for design decision | E (interactive tool in autonomous mode) | Design intent |
 | 20260508T200223Z | chemin-de-voix | (session) | `error_max_budget_usd` — hit $0.44 cap mid-session | E (budget cap) | 0061 |
 | 20260508T210423Z | IDH/.claude | (session) | `error_max_budget_usd` — hit $0.42 cap after 22 turns | E (budget cap) | 0061 |
@@ -34,9 +36,7 @@ binary. Agent recovered on next attempt. No new ticket needed; 0052 remains open
 
 ### B — GitHub API auth failure
 
-No authentication failures this window. The `gh pr edit` exit-1 was a deprecation
-warning about Projects Classic, not an auth error. The subsequent retry succeeded.
-No ticket needed.
+No hits this window.
 
 ### C — WebFetch geo/IP block (covered by 0062)
 
@@ -59,6 +59,9 @@ Three distinct sub-patterns:
 
 ### E — Other
 
+- **gh-cli deprecation warning**: `gh pr edit` exited 1 with "Projects (classic) is
+  being deprecated". Not an auth failure; subsequent retry succeeded. No ticket.
+
 - **AskUserQuestion in bypass mode**: Autonomous raid agents must not use interactive
   tools. Three denied calls in one session (chemin-de-voix, ticket 0070). Design
   intent — agents should be prompted to avoid interactive tools. No ticket.
@@ -66,26 +69,25 @@ Three distinct sub-patterns:
 - **Budget caps (3 hits)**: Sessions hit per-session cap ($0.40–$0.44). Ticket 0061
   addresses sequencing to stay under budget. No new ticket.
 
-- **git push non-fast-forward**: Remote was ahead; push rejected. Normal git behavior,
-  not a harness issue. No ticket.
+The following events were observed in logs but excluded from the catalog per
+methodology (not harness denials):
 
+- **git push non-fast-forward**: Remote was ahead; push rejected. Normal git behavior.
 - **Missing rules files**: chemin-de-voix lacked `.claude/rules/workflow.md` and
-  `.claude/rules/git.md`. Setup gap, not a denial. No ticket.
-
+  `.claude/rules/git.md`. Setup gap, not a denial.
 - **Write without prior read**: Harness guard refused Write without prior Read.
-  Working as designed. No ticket.
+  Working as designed.
 
 ## Ticket Coverage Summary
 
 | Category | Hits | Covered by | Gap |
 |----------|------|------------|-----|
 | A — .erg Edit denied | 1 | 0052 | None |
-| B — GitHub auth | 0 | — | None |
 | C — WebFetch geo-block | 1 | 0062 | None |
 | D — Bash: locked worktrees | 1 | **0110 (new)** | Was uncovered |
 | D — Bash: hooks/guards | 2 | Design intent | None |
+| E — gh-cli deprecation | 1 | N/A | None |
 | E — Budget caps | 3 | 0061 | None |
 | E — AskUserQuestion | 1 | Design intent | None |
-| E — Other | 3 | N/A | None |
 
 All denial categories now have a ticket or documented rationale. Zero "unknown" rows.
