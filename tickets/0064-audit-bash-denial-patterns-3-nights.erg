@@ -2,11 +2,11 @@
 Title: Systematic audit of beat permission-denial patterns across last 3 nights
 Created: 2026-04-30
 Author: claude
-Closed: stale — April 28-30 logs not archived; superseded by 0109
+Closed: stale — April 28-30 logs not archived; superseded by 0113
 
 --- log ---
 2026-04-30T07:30Z claude created
-2026-05-10T11:00Z claude closed — source logs (2026-04-28..30) were never persisted on padme; earliest available logs are 2026-05-07. Fresh ticket 0109 covers the same audit against available data.
+2026-05-10T11:00Z claude closed — source logs (2026-04-28..30) were never persisted on padme; earliest available logs are 2026-05-07. Fresh ticket 0113 covers the same audit against available data.
 
 --- body ---
 ## Context
