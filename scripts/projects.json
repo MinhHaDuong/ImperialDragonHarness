@@ -1,4 +1,4 @@
 [
-  { "path": "~/chemin-de-voix",               "budget_housekeeping": 0.58, "budget_pick_ticket": 0.50 },
+  { "path": "~/chemin-de-voix",               "budget_housekeeping": 0.70, "budget_pick_ticket": 0.50 },
   { "path": "~/.claude",                      "budget_housekeeping": 0.48, "budget_pick_ticket": 0.50, "budget_raid": 7.20 }
 ]
