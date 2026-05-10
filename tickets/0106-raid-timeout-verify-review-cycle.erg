@@ -7,6 +7,7 @@ Author: claude
 2026-05-09T16:00Z claude created — opened by nightbeat-supervisor; root cause from chemin-de-voix raid on 0071 (2026-05-09T10:33Z)
 2026-05-10T12:00Z claude bump verify-reroll — round 1: projects.json does not document raid_timeout_s field (exit criterion #3 unmet)
 2026-05-10T00:00Z claude bump verify-reroll — round 1: budget_raid not wired in ProjectConfig/_PROJ_KEYS/_raid(); PR 124 is a no-op against its stated intent
+2026-05-10T13:00Z claude bump verify-escalate — round 2: round 1 verdict was factually wrong (budget_raid already wired in main via PR #122/commit 328ca4d); PR 124 does not implement raid_timeout_s (ticket 0106's actual subject); human decision required on PR body framing
 
 --- body ---
 ## Root cause chain
