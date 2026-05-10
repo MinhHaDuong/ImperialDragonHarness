@@ -2,10 +2,12 @@
 Title: add per-project max_turns_pick_ticket to ProjectConfig (analogous to raid_timeout_s)
 Created: 2026-05-10
 Author: claude
+Closed: done
 
 --- log ---
 2026-05-10T21:05Z claude created — nightbeat-supervisor root-cause chain: chemin-de-voix pick_ticket outcome=fail at 19:05Z due to max-turns (30) reached during exit-criteria check for ticket 0071. No per-project knob exists; module-level constant is off-limits. Fix: add configurable field.
 
+2026-05-10T23:32Z MinhHaDuong closed — done
 --- body ---
 ## Root cause chain
 
