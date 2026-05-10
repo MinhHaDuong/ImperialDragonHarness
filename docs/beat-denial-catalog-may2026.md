@@ -55,9 +55,8 @@ Three distinct sub-patterns:
    rejects compound predicates). Agent recovered with Grep/Glob tools. No ticket.
 
 3. **Orphaned locked worktrees** — killed beat agents leave git-locked worktrees;
-   subsequent runs fail `git worktree remove`. Recurring: run `20260507T230223Z`
-   shows `agent-a0142f6c` locked at `chemin-de-voix` from a prior killed session.
-   **No existing ticket — new ticket created: 0114.**
+   subsequent runs fail `git worktree remove`. Requires manual intervention to
+   clear. **No existing ticket — new ticket created: 0114.**
 
 ### E — AskUserQuestion in autonomous mode
 
