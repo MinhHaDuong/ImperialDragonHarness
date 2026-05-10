@@ -800,6 +800,23 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     return "deferred"
 
 
+def _ticket_log_has_closed(ticket_path: Path) -> bool:
+    """Return True if the ticket's log section contains a 'closed' verb entry."""
+    in_log = False
+    for ln in ticket_path.read_text().splitlines():
+        if ln.strip() == "--- log ---":
+            in_log = True
+            continue
+        if ln.startswith("---"):
+            in_log = False
+            continue
+        if in_log:
+            parts = ln.split()
+            if len(parts) >= 3 and parts[2] == "closed":
+                return True
+    return False
+
+
 def _ticket_recently_picked(ticket_path: Path, within_hours: int = 8) -> bool:
     """True if a sweep-pick log line in this ticket is within cutoff.
 
@@ -1032,14 +1049,11 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
         )
         # Warn if raid exited cleanly but left the ticket open (double-pick risk).
         ticket_files = list(path.glob(f"tickets/{ticket_id}-*.erg"))
-        if ticket_files:
-            header_lines = ticket_files[0].read_text().splitlines()[:10]
-            is_closed = any(ln.startswith("Closed:") for ln in header_lines)
-            if not is_closed:
-                _log(
-                    f"=== warning: raid done but ticket {ticket_id}"
-                    f" not closed — double-pick risk ==="
-                )
+        if ticket_files and not _ticket_log_has_closed(ticket_files[0]):
+            _log(
+                f"=== warning: raid done but ticket {ticket_id}"
+                f" not closed — double-pick risk ==="
+            )
 
     _log(f"=== raid: outcome={outcome} {_now_iso()} ===")
     return outcome, ticket_id

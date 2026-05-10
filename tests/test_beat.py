@@ -1288,9 +1288,12 @@ class TestRaidDoneButOpenWarning:
 
     def _make_ticket(self, tmp_project, ticket_id: str, status: str) -> None:
         (tmp_project / "tickets").mkdir(exist_ok=True)
+        log = "2026-01-01T00:00Z claude created\n"
+        if status == "closed":
+            log += "2026-01-02T00:00Z claude closed\n"
         (tmp_project / f"tickets/{ticket_id}-test-ticket.erg").write_text(
-            f"%erg v1\nTitle: test\nStatus: {status}\nCreated: 2026-01-01\nAuthor: claude\n"
-            f"\n--- log ---\n\n--- body ---\n"
+            f"%erg v1\nTitle: test\nCreated: 2026-01-01\nAuthor: claude\n"
+            f"\n--- log ---\n{log}\n--- body ---\n"
         )
 
     def test_warns_when_ticket_not_closed(self, tmp_project):
@@ -1342,12 +1345,16 @@ class TestRaidDoneButOpenWarning:
             max_turns=None,
         ):
             if "pick-ticket" in skill:
-                return (0, "PICK: 0002")
-            return (0, "")
+                return (0, beat._SkillResult(result_text="PICK: 0002"))
+            return (0, beat._SkillResult())
 
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch("beat._repo_active", return_value=False),
+            patch(
+                "beat._git",
+                return_value=MagicMock(returncode=0, stdout="", stderr=""),
+            ),
             patch("beat.run_skill", side_effect=fake_run_skill),
             patch("beat._log", side_effect=log_lines.append),
         ):
