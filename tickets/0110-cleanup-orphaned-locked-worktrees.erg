@@ -1,0 +1,41 @@
+%erg v1
+Title: Clean up orphaned git-locked worktrees before each beat run
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T11:30Z claude created — identified in 0109 denial catalog (Run 20260507T230223Z)
+
+--- body ---
+## Context
+
+Killed beat agents leave git-locked worktrees in `.claude/worktrees/`. Subsequent
+beat runs fail when housekeeping tries `git worktree remove` on these locked trees:
+
+  fatal: impossible de supprimer un arbre de travail verrouillé
+
+The agent recovered (via `git worktree unlock` + `git worktree remove --force`) but
+this causes unnecessary noise and recovery steps. Seen in Run 20260507T230223Z for
+`agent-a0142f6c972c40a8b` in chemin-de-voix.
+
+## Actions
+
+1. Identify where beat.py starts its run (housekeeping phase entry point).
+2. Before the housekeeping phase, scan `git worktree list` for worktrees whose
+   `HEAD` lock file exists but no live PID matches (i.e., orphaned).
+3. For each orphaned locked worktree: `git worktree unlock <path>` then
+   `git worktree remove --force <path>`.
+4. Log each removal to beat-outcomes.jsonl as `phase: cleanup, outcome: removed-orphan`.
+
+## Test
+
+After a simulated killed-agent worktree (create a worktree, add a lock file
+with a dead PID), running `make check` or the beat housekeeping phase should
+automatically remove it without agent intervention.
+
+## Exit criteria
+
+- Beat housekeeping no longer produces `fatal: impossible de supprimer un arbre
+  de travail verrouillé` errors.
+- Orphaned worktrees are auto-cleaned at beat start rather than requiring manual
+  recovery.
