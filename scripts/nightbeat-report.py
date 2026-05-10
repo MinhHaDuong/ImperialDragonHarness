@@ -22,6 +22,9 @@ LOGDIR = HARNESS_DIR / "logs" / "nightbeat"
 PERMISSION_DIFFS_DIR = HARNESS_DIR / "telemetry" / "permission-diffs"
 PROJECTS_CONFIG = HARNESS_DIR / "scripts" / "projects.json"
 OUTCOMES_LOG = HARNESS_DIR / "logs" / "beat-outcomes.jsonl"
+# Canonical supervisor journal: written by nightbeat-supervisor skill to the
+# .claude project root (proj["path"] / "nightbeat-supervisor-journal.jsonl").
+SUPERVISOR_JOURNAL = HARNESS_DIR / "nightbeat-supervisor-journal.jsonl"
 
 
 def _load_rotation_projects() -> list[Path]:
@@ -305,6 +308,35 @@ def _unreviewed_permission_diffs(since: datetime) -> list[tuple[Path, int]]:
     return out
 
 
+# ── Supervisor journal ────────────────────────────────────────────────────────
+
+
+def _supervisor_actions(since: datetime) -> list[dict]:
+    """Return non-idle supervisor journal entries from the reporting window."""
+    if not SUPERVISOR_JOURNAL.exists():
+        return []
+    out: list[dict] = []
+    for raw in SUPERVISOR_JOURNAL.read_text().splitlines():
+        if not raw.strip():
+            continue
+        try:
+            entry = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if entry.get("action") == "idle":
+            continue
+        ts_str = entry.get("ts", "")
+        if ts_str:
+            try:
+                ts_dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                if ts_dt < since:
+                    continue
+            except ValueError:
+                pass
+        out.append(entry)
+    return out
+
+
 # ── 7-day phase outcomes ───────────────────────────────────────────────────────
 
 
@@ -573,6 +605,28 @@ def main() -> None:
                 if ln not in seen_d:
                     print(ln)
                     seen_d.add(ln)
+
+    # ── Supervisor actions ──────────────────────────────────────────────────────
+    sv_actions = _supervisor_actions(since)
+    print(f"\n{'═' * 72}")
+    print("SUPERVISOR ACTIONS")
+    print(f"{'═' * 72}")
+    if sv_actions:
+        for entry in sv_actions:
+            ts = (entry.get("ts") or "")[:16].replace("T", " ")
+            action = entry.get("action", "?")
+            proj = entry.get("project", "")
+            detail = (
+                entry.get("repair")
+                or entry.get("note")
+                or entry.get("finding")
+                or entry.get("ticket")
+                or ""
+            )
+            proj_s = f" [{proj}]" if proj else ""
+            print(f"  {ts}{proj_s}  {action}: {detail}")
+    else:
+        print("  (none — supervisor was idle all night)")
 
     print()
 
