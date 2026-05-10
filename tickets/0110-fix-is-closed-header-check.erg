@@ -1,0 +1,64 @@
+%erg v1
+Title: Fix is_closed check to match erg v1 ticket format
+Created: 2026-05-10
+Author: claude
+
+--- log ---
+2026-05-10T13:35Z claude created
+
+--- body ---
+## Context
+
+In `scripts/beat.py`, `_raid()` checks whether a ticket was closed after
+raid completes, to warn about double-pick risk:
+
+```python
+is_closed = any(ln.startswith("Closed:") for ln in header_lines)
+```
+
+The erg v1 format has no `Closed:` header field. Tickets are closed by
+adding a `closed` log entry (e.g. `2026-05-10T12:00Z claude closed`),
+not by a header line. This check never matches, so the "raid done but
+ticket not closed" warning fires for every ticket regardless of actual
+status, and `test_no_warning_when_ticket_closed` passes for the wrong
+reason (the test relies on `_raid` aborting before reaching this code).
+
+Discovered during post-merge review of PR #130 (ticket 0109).
+
+## Actions
+
+1. Replace the `is_closed` header check with a log-section scan:
+   read the `--- log ---` section of the ticket file and look for a line
+   whose third token is `closed` (per erg v1 spec).
+2. Update `test_no_warning_when_ticket_closed` to add git patches so
+   `_raid` actually reaches the warning check, and verify the warning is
+   suppressed for a ticket with a `closed` log entry.
+3. Verify `test_warns_when_ticket_not_closed` still passes (it should —
+   the open ticket has no `closed` log entry).
+
+## Test
+
+```python
+# Red: currently passes for wrong reason (git abort, not correct logic)
+def test_no_warning_when_ticket_closed(self, tmp_project):
+    self._make_ticket(tmp_project, "0002", "closed")  # needs closed log entry
+    ...
+    with (
+        patch("beat.housekeeping_needed", return_value=False),
+        patch("beat._repo_active", return_value=False),
+        patch("beat._git", return_value=MagicMock(returncode=0, ...)),
+        patch("beat.run_skill", side_effect=fake_run_skill),
+        patch("beat._log", side_effect=log_lines.append),
+    ):
+        beat._raid(beat.ProjectConfig(path=tmp_project))
+    assert not any("warning" in l and "not closed" in l for l in log_lines)
+```
+
+## Exit criteria
+
+- `_raid()` does not log a "not closed" warning when the ticket's log
+  section contains a `closed` entry.
+- `_raid()` does log the warning when the ticket has no `closed` log entry.
+- `test_no_warning_when_ticket_closed` passes with git patches applied
+  (i.e. exercises the real code path, not the early-abort false positive).
+- `python3 -m pytest tests/test_beat.py -q` exits 0.
