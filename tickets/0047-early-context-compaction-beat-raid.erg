@@ -2,6 +2,7 @@
 Title: Auto early context compaction in beat and raid based on context signals
 Created: 2026-04-29
 Author: claude
+Closed: merged PR #128 — --max-turns caps added to beat.py; conflict markers fixed; 79 tests pass
 
 --- log ---
 2026-04-29T08:00Z claude created
@@ -9,6 +10,7 @@ Author: claude
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:567998f68005 expires:2026-04-30T09:18Z
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:296a99bcaf67 expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
+2026-05-10T07:40Z MinhHaDuong closed — merged PR #128 — --max-turns caps added to beat.py; conflict markers fixed; 79 tests pass
 --- body ---
 ## Context
 
