@@ -1,22 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-09T16:45Z
+Last updated: 2026-05-10T10:02Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
+<!-- generated 2026-05-10T10:02Z -->
 
-**Tickets:** 29 open — `erg ready tickets/` for full list
+**Tickets:** 19 ready · 5 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  4d78892 ticket(0105): close — done
-  550897f fix(0105): survey script — journal watermark + gh pr list PR discovery (#120)
-  878c17d fix(beat): housekeeping budget +20% + ticket 0106 for raid timeout (#119)
-  c1b482c feat(0105): supervisor systemd units + survey script + permissions (#118)
-  d216953 feat: nightbeat supervisor skill (ticket 0105) (#116)
-
-**Nightbeat supervisor** (`claude-nightbeat-supervisor.timer`) live on padme. Fires every 15 min during nightbeat window. Survey script uses journal watermark + forge API for PR discovery. Housekeeping budget raised to $0.48 for both projects.
+  31afc7b ticket(0047): close — merged PR #128
+  f3f669d ticket(0108): close — merged PR #127
+  dc0f9eb feat(0047): add --max-turns caps to beat.py skill invocations (Phase 1) (#128)
+  057e296 feat(0108): add SUPERVISOR ACTIONS section to nightbeat-report (#127)
+  943711b repair: raise chemin-de-voix budget_housekeeping 0.58→0.70 (error_max_budget_usd x2)
 
 ## Blockers
 
