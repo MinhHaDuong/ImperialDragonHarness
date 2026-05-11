@@ -1,0 +1,55 @@
+%erg v1
+Title: skill-doctor: budget-raise convergence guard — escalate after 3 consecutive raises
+Created: 2026-05-11
+Author: claude
+
+--- log ---
+2026-05-11T16:00Z claude created — skill-doctor survey: freq=9, sev=medium, score=18
+2026-05-11T16:52Z claude note — reverted erroneous auto-close (PR #139 opens this ticket, does not implement it)
+--- body ---
+## Context
+
+The nightbeat-supervisor raises per-project budgets by 20% on each
+`error_max_budget_usd` failure, but the 20% rule is reactive and slow to
+converge when scope grows faster than increments can track. Evidence from the
+last 30 days:
+
+- chemin-de-voix `budget_housekeeping`: 0.48 → 0.58 → 0.70 → 0.84 → 0.90 → 1.08
+  across 6 supervisor cycles (7 repair commits, some duplicated across branches)
+- `.claude` `budget_raid`: 5.00 → 6.00 → 7.20, committed twice
+- Ticket 0116's watermark bug amplified this — same failure re-detected 4 times
+
+The supervisor never stops raising because no convergence check exists.
+
+## Actions
+
+1. In `skills/nightbeat-supervisor/SKILL.md`, add a convergence guard to
+   step 3 (Diagnose and repair):
+
+   > Before raising a budget, count how many `action=repair` journal entries
+   > exist for the same project+phase in the last 7 days. If ≥ 3: do not
+   > raise. Instead, open a ticket: "budget not converging for {project}
+   > {phase} — {N} raises in 7 days, current={current}, started={first}."
+
+2. Add a warning threshold: if the proposed raise would exceed 1.5× the
+   module-level constant, log a warning and include it in the ticket.
+
+3. Update the survey script's budget clusterer to track per-project+phase
+   counts for more precise scoring.
+
+## Test
+
+```bash
+# Simulate: add 3 budget_raise journal entries for the same project+phase
+# within 7 days, then run a supervisor cycle with a new budget failure.
+# Expected: supervisor opens a ticket instead of raising.
+python3 scripts/skill-doctor-survey.py --days 7
+# Should show budget-cap-repeated-raises with freq >= 3
+```
+
+## Exit criteria
+
+- Supervisor SKILL.md contains the convergence guard (3 raises / 7 days).
+- A supervisor cycle with 3+ prior raises for the same project+phase opens
+  a ticket instead of raising the budget.
+- The 1.5× warning threshold is documented in the SKILL.md.
