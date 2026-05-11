@@ -845,6 +845,44 @@ def _ticket_recently_picked(ticket_path: Path, within_hours: int = 8) -> bool:
     return False
 
 
+def _pick_needed(project: Path, last_beat_at: datetime | None) -> bool:
+    """False when nothing has changed since the last pick run.
+
+    Implements Layer 2 of ticket 0051: skip the Claude pick-ticket invocation
+    entirely when the repo has no new commits and no ticket files have changed.
+    Saves tokens on idle projects that beat frequently.
+
+    Returns True (pick needed) when:
+    - last_beat_at is None (no prior beat recorded)
+    - The repo has at least one commit since last_beat_at
+    - Any file under tickets/ changed in git history since last_beat_at
+    """
+    if last_beat_at is None:
+        return True
+    if not _repo_frozen_since(project, last_beat_at):
+        # Repo has commits since last beat → something may have changed.
+        return True
+    # Check whether any ticket file was modified since last beat.
+    result = subprocess.run(  # noqa: S603
+        [
+            "git",
+            "-C",
+            str(project),
+            "log",
+            f"--since={last_beat_at.isoformat()}",
+            "--name-only",
+            "--pretty=format:",
+            "--",
+            "tickets/",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    changed = [ln for ln in result.stdout.splitlines() if ln.strip()]
+    return bool(changed)
+
+
 # ── Weekly /fewer-permission-prompts (ticket 0043) ────────────────────────────
 
 
@@ -931,6 +969,31 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
         _log("=== pick-ticket: skipped (cooldown-recent-pick) ===")
         _record_phase_outcome(
             path, "pick_ticket", "skip", detail="cooldown-recent-pick"
+        )
+        return "idle", None
+
+    # Layer 2 pre-flight skip (ticket 0051): if nothing has changed in the repo
+    # or ticket files since the last beat, skip the Claude pick-ticket invocation
+    # and return idle directly — saves tokens on dormant projects.
+    _last_record = read_last_beat_record(path)
+    _last_beat_at: datetime | None = None
+    if _last_record and _last_record.get("last_run_at"):
+        try:
+            _last_beat_at = datetime.fromisoformat(
+                _last_record["last_run_at"].replace("Z", "+00:00")
+            )
+        except (ValueError, TypeError):
+            pass
+    if not _pick_needed(path, _last_beat_at):
+        _log(
+            f"=== pick-ticket: skipped (nothing changed since"
+            f" {_last_beat_at.isoformat() if _last_beat_at else 'unknown'}) ==="
+        )
+        _record_phase_outcome(
+            path,
+            "pick_ticket",
+            "skip",
+            detail=f"nothing-changed-since-{_last_beat_at.isoformat() if _last_beat_at else 'unknown'}",
         )
         return "idle", None
 
@@ -1162,6 +1225,46 @@ def main() -> None:
     ticket_id: str | None = None
     try:
         outcome, ticket_id = _raid(project)
+
+        # Layer 1 — Fallback rotation (ticket 0051): if the primary project is
+        # idle, try other projects in the rotation before giving up the timeslot.
+        # Bound at len(PROJECTS) - 1 to prevent infinite loops. Each fallback
+        # acquires its own lock non-blocking; already-running projects are skipped.
+        if outcome == "idle" and not os.environ.get("BEAT_PROJECT"):
+            _log("=== fallback: primary idle, trying other projects ===")
+            fallback_tried = 0
+            for fallback_cfg in PROJECTS:
+                if fallback_cfg.path == path:
+                    continue
+                if fallback_tried >= len(PROJECTS) - 1:
+                    break
+                fb_lock_fh = _lockfile(fallback_cfg.path).open("w")
+                try:
+                    fcntl.flock(fb_lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    _log(f"=== fallback: {fallback_cfg.path.name} locked, skipping ===")
+                    fb_lock_fh.close()
+                    fallback_tried += 1
+                    continue
+                try:
+                    _log(
+                        f"=== fallback: trying {fallback_cfg.path.name} {_now_iso()} ==="
+                    )
+                    fallback_tried += 1
+                    fb_outcome, fb_ticket = _raid(fallback_cfg)
+                    _log(
+                        f"=== fallback: {fallback_cfg.path.name}"
+                        f" outcome={fb_outcome} ==="
+                    )
+                    if fb_outcome != "idle":
+                        outcome = fb_outcome
+                        ticket_id = fb_ticket
+                        break
+                finally:
+                    fcntl.flock(fb_lock_fh, fcntl.LOCK_UN)
+                    fb_lock_fh.close()
+            else:
+                _log("=== fallback: all projects idle or locked ===")
     except KeyboardInterrupt:
         outcome = "aborted"
 

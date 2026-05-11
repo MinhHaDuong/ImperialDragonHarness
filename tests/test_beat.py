@@ -1,5 +1,6 @@
 """Tests for scripts/beat.py — happy and adverse paths."""
 
+import contextlib
 import json
 import subprocess
 import sys
@@ -1757,6 +1758,7 @@ class TestIntervalSkip:
         beat_log.write_text(
             json.dumps({"outcome": "done", "last_run_at": old_ts}) + "\n"
         )
+        primary_cfg = beat.ProjectConfig(path=tmp_project, interval_minutes=30)
 
         with (
             patch("beat.signal.signal"),
@@ -1764,12 +1766,12 @@ class TestIntervalSkip:
             patch.object(beat, "LOGDIR", tmp_path / "logs"),
             patch(
                 "beat._pick_project",
-                return_value=(
-                    0,
-                    beat.ProjectConfig(path=tmp_project, interval_minutes=30),
-                ),
+                return_value=(0, primary_cfg),
             ),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch.object(
+                beat, "PROJECTS", [primary_cfg]
+            ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
             patch("beat.finalize_beat_log"),
@@ -1789,6 +1791,7 @@ class TestIntervalSkip:
 
     def test_no_skip_when_interval_zero(self, tmp_project, tmp_path):
         recent_ts = beat._now_iso()
+        primary_cfg = beat.ProjectConfig(path=tmp_project, interval_minutes=0)
 
         with (
             patch("beat.signal.signal"),
@@ -1796,12 +1799,12 @@ class TestIntervalSkip:
             patch.object(beat, "LOGDIR", tmp_path / "logs"),
             patch(
                 "beat._pick_project",
-                return_value=(
-                    0,
-                    beat.ProjectConfig(path=tmp_project, interval_minutes=0),
-                ),
+                return_value=(0, primary_cfg),
             ),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch.object(
+                beat, "PROJECTS", [primary_cfg]
+            ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
             patch("beat.finalize_beat_log"),
@@ -1818,3 +1821,221 @@ class TestIntervalSkip:
             beat.main()
 
         mock_raid.assert_called_once()
+
+
+# ── Layer 2: _pick_needed (ticket 0051) ───────────────────────────────────────
+
+
+class TestPickNeeded:
+    """Unit tests for _pick_needed() — Layer 2 pre-flight skip."""
+
+    def test_returns_true_when_no_prior_beat(self, tmp_project):
+        """No prior beat record → always run pick-ticket."""
+        assert beat._pick_needed(tmp_project, None) is True
+
+    def test_returns_true_when_repo_has_commits(self, tmp_project):
+        """New commits since last beat → pick needed."""
+        last_beat = datetime.now(timezone.utc) - timedelta(hours=1)
+        with patch("beat._repo_frozen_since", return_value=False):
+            assert beat._pick_needed(tmp_project, last_beat) is True
+
+    def test_returns_false_when_frozen_no_ticket_changes(self, tmp_project):
+        """No commits, no ticket changes → skip pick-ticket."""
+        last_beat = datetime.now(timezone.utc) - timedelta(hours=1)
+        with (
+            patch("beat._repo_frozen_since", return_value=True),
+            patch("beat.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+            assert beat._pick_needed(tmp_project, last_beat) is False
+
+    def test_returns_true_when_ticket_changed(self, tmp_project):
+        """Repo frozen but a ticket file changed → pick needed."""
+        last_beat = datetime.now(timezone.utc) - timedelta(hours=1)
+        with (
+            patch("beat._repo_frozen_since", return_value=True),
+            patch("beat.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout="tickets/0042-foo.erg\n",
+                stderr="",
+            )
+            assert beat._pick_needed(tmp_project, last_beat) is True
+
+
+# ── Layer 1: fallback rotation (ticket 0051) ──────────────────────────────────
+
+
+class TestFallbackRotation:
+    """Layer 1: when primary project is idle, beat tries other projects."""
+
+    def setup_method(self):
+        beat.DRY_RUN = False
+
+    def _make_main_patches(self, tmp_project, tmp_path, primary_cfg, projects, raid_fn):
+        """Return context managers for a main() call with fallback rotation."""
+        return [
+            patch("beat.signal.signal"),
+            patch("beat._setup_env"),
+            patch.object(beat, "LOGDIR", tmp_path / "logs"),
+            patch("beat._pick_project", return_value=(0, primary_cfg)),
+            patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch.object(beat, "PROJECTS", projects),
+            patch("beat.fcntl.flock"),
+            patch("beat._raid", side_effect=raid_fn),
+            patch("beat.finalize_beat_log"),
+            patch("beat._cleanup_stale_in_progress"),
+            patch("beat.read_last_beat_record", return_value=None),
+            patch("beat.append_beat_log"),
+        ]
+
+    def test_fallback_attempted_when_primary_idle(self, tmp_project, tmp_path):
+        """When primary returns idle, the fallback project is tried."""
+        fallback_path = tmp_path / "fallback"
+        fallback_path.mkdir()
+        (fallback_path / ".git").mkdir()
+
+        primary_cfg = beat.ProjectConfig(path=tmp_project)
+        fallback_cfg = beat.ProjectConfig(path=fallback_path)
+
+        raid_calls = []
+
+        def raid_fn(cfg):
+            raid_calls.append(cfg.path)
+            if cfg.path == tmp_project:
+                return ("idle", None)
+            return ("done", "0042")
+
+        with contextlib.ExitStack() as stack:
+            for cm in self._make_main_patches(
+                tmp_project,
+                tmp_path,
+                primary_cfg,
+                [primary_cfg, fallback_cfg],
+                raid_fn,
+            ):
+                stack.enter_context(cm)
+            beat.main()
+
+        assert tmp_project in raid_calls
+        assert fallback_path in raid_calls
+
+    def test_no_fallback_when_primary_not_idle(self, tmp_project, tmp_path):
+        """When primary returns done, no fallback is attempted."""
+        fallback_path = tmp_path / "fallback"
+        fallback_path.mkdir()
+        (fallback_path / ".git").mkdir()
+
+        primary_cfg = beat.ProjectConfig(path=tmp_project)
+        fallback_cfg = beat.ProjectConfig(path=fallback_path)
+
+        raid_calls = []
+
+        def raid_fn(cfg):
+            raid_calls.append(cfg.path)
+            return ("done", "0042")
+
+        with contextlib.ExitStack() as stack:
+            for cm in self._make_main_patches(
+                tmp_project,
+                tmp_path,
+                primary_cfg,
+                [primary_cfg, fallback_cfg],
+                raid_fn,
+            ):
+                stack.enter_context(cm)
+            beat.main()
+
+        assert raid_calls == [tmp_project]
+
+    def test_no_infinite_loop_all_idle(self, tmp_project, tmp_path):
+        """When all projects return idle, fallback terminates cleanly."""
+        p2 = tmp_path / "p2"
+        p2.mkdir()
+        (p2 / ".git").mkdir()
+        p3 = tmp_path / "p3"
+        p3.mkdir()
+        (p3 / ".git").mkdir()
+
+        primary_cfg = beat.ProjectConfig(path=tmp_project)
+        cfg2 = beat.ProjectConfig(path=p2)
+        cfg3 = beat.ProjectConfig(path=p3)
+
+        raid_calls = []
+
+        def raid_fn(cfg):
+            raid_calls.append(cfg.path)
+            return ("idle", None)
+
+        log_lines: list[str] = []
+
+        with contextlib.ExitStack() as stack:
+            for cm in self._make_main_patches(
+                tmp_project,
+                tmp_path,
+                primary_cfg,
+                [primary_cfg, cfg2, cfg3],
+                raid_fn,
+            ):
+                stack.enter_context(cm)
+            stack.enter_context(patch("beat._log", side_effect=log_lines.append))
+            beat.main()
+
+        # Must not loop infinitely; each project tried at most once.
+        assert len(raid_calls) <= len([primary_cfg, cfg2, cfg3])
+
+    def test_no_fallback_with_single_project(self, tmp_project, tmp_path):
+        """Single-project rotation: idle primary yields idle outcome, no loop."""
+        primary_cfg = beat.ProjectConfig(path=tmp_project)
+
+        raid_calls = []
+
+        def raid_fn(cfg):
+            raid_calls.append(cfg.path)
+            return ("idle", None)
+
+        with contextlib.ExitStack() as stack:
+            for cm in self._make_main_patches(
+                tmp_project,
+                tmp_path,
+                primary_cfg,
+                [primary_cfg],
+                raid_fn,
+            ):
+                stack.enter_context(cm)
+            beat.main()
+
+        assert raid_calls == [tmp_project]
+
+    def test_beat_project_env_disables_fallback(
+        self, tmp_project, tmp_path, monkeypatch
+    ):
+        """BEAT_PROJECT override disables fallback rotation."""
+        fallback_path = tmp_path / "fallback"
+        fallback_path.mkdir()
+        (fallback_path / ".git").mkdir()
+
+        monkeypatch.setenv("BEAT_PROJECT", str(tmp_project))
+
+        primary_cfg = beat.ProjectConfig(path=tmp_project)
+        fallback_cfg = beat.ProjectConfig(path=fallback_path)
+
+        raid_calls = []
+
+        def raid_fn(cfg):
+            raid_calls.append(cfg.path)
+            return ("idle", None)
+
+        with contextlib.ExitStack() as stack:
+            for cm in self._make_main_patches(
+                tmp_project,
+                tmp_path,
+                primary_cfg,
+                [primary_cfg, fallback_cfg],
+                raid_fn,
+            ):
+                stack.enter_context(cm)
+            beat.main()
+
+        assert raid_calls == [tmp_project]
