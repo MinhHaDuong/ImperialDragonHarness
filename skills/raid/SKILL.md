@@ -114,6 +114,7 @@ individual `/verify` verdicts.
 
 Check each merge request for scope creep — did Execute exceed the Plan?
 
+<!-- harness-extension-point -->
 **Inspect the branch, not a range.** Use two-dot `git log origin/main..origin/<branch> --stat` (or the equivalent `gh pr diff <N>`). Never use three-dot `origin/main...origin/<branch>` — that's the symmetric difference, so commits another session pushes to main while the raid runs will appear in the output and get falsely flagged as on-PR scope creep.
 
 **Token economy rule**: Any time a ticket must be created in any phase, invoke

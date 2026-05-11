@@ -6,6 +6,7 @@ Author: claude-opus-4-6
 --- log ---
 2026-05-11T20:40Z claude-opus-4-6 created
 
+2026-05-11T21:07Z claude note fix: add harness-extension-point comment on line preceding gh pr diff reference in SKILL.md
 --- body ---
 ## Context
 
