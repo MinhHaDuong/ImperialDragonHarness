@@ -20,7 +20,7 @@ python3 $HARNESS_DIR/scripts/nightbeat-supervisor-survey.py [--since ISO-TS]
 ```
 
 If `--since` is absent from `$ARGUMENTS`, the script derives the watermark from
-the latest `ts` in each project's `nightbeat-supervisor-journal.jsonl` (defaults
+the latest `ts` in `$HARNESS_DIR/nightbeat-supervisor-journal.jsonl` (defaults
 to 24h ago if no journal exists). Reads `$HARNESS_DIR/logs/beat-outcomes.jsonl`
 and finds open PRs for raid-success tickets via remote branch lookup and forge API.
 Outputs `{prs_to_merge, failures, watermark_ts, journal_context}`.
@@ -75,7 +75,7 @@ ticket with the verdict if the fix is outside authority.
 ## 5. Done
 
 Append one journal entry per action taken this cycle to
-`<project>/nightbeat-supervisor-journal.jsonl`. If no actions were taken,
+`$HARNESS_DIR/nightbeat-supervisor-journal.jsonl`. If no actions were taken,
 append a single `action=idle` entry — this serves as the watermark so the
 next cycle knows where to resume. End with:
 

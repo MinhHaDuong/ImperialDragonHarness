@@ -1,0 +1,51 @@
+%erg v1
+Title: Fix dual-journal path mismatch in nightbeat-supervisor
+Created: 2026-05-11
+Author: claude
+
+--- log ---
+2026-05-11T04:10Z claude created
+2026-05-11T05:00Z claude note — root cause confirmed: SKILL.md used ambiguous `<project>/nightbeat-supervisor-journal.jsonl`; agent interpreted as logs/ on some cycles. No code hardcodes the wrong path. Fix: make path explicit as `$HARNESS_DIR/nightbeat-supervisor-journal.jsonl` at both SKILL.md sites. Add migration script for lost entries and docstring clarifications.
+
+--- body ---
+## Context
+
+Two `nightbeat-supervisor-journal.jsonl` files exist:
+- `~/.claude/nightbeat-supervisor-journal.jsonl` (root) — read by the survey script
+- `~/.claude/logs/nightbeat-supervisor-journal.jsonl` (logs) — written by some supervisor cycles
+
+The survey's `_watermark()` reads `proj["path"] / "nightbeat-supervisor-journal.jsonl"`,
+which for the `.claude` project resolves to the root file. But supervisor cycles (at least
+those run between 01:15Z–01:49Z on 2026-05-11) wrote their journal entries to the logs
+file. The watermark therefore never advanced past the last root-file entry (01:00:57Z),
+causing the same chemin-de-voix housekeeping failure to be re-detected and the budget
+raised repeatedly: $0.70 → $0.84 → $0.90 → $1.08 across four cycles.
+
+Root cause discovered while processing chemin-de-voix housekeeping fail at 01:07:10Z
+(error_max_budget_usd, cost=$0.706). Budget in beat.json is already at $1.08 and
+subsequent beat succeeded — no additional repair needed.
+
+## Actions
+
+1. Decide canonical path: `~/.claude/nightbeat-supervisor-journal.jsonl` (matches
+   survey expectation) or `~/.claude/logs/nightbeat-supervisor-journal.jsonl` (matches
+   logging convention). Recommendation: root file, since that's what the survey reads.
+
+2. Migrate existing entries from the logs journal to the root journal (dedup by ts+action).
+
+3. Remove (or make a symlink of) the logs journal so both paths resolve to the same file,
+   OR update the supervisor skill to always write to the root file.
+
+4. Update the survey script comment / docstring to name the canonical path explicitly.
+
+## Test
+
+After fix: run `python3 scripts/nightbeat-supervisor-survey.py` and verify that
+`watermark_ts` equals the latest entry across BOTH current files (currently 01:49:50Z).
+
+## Exit criteria
+
+- Single canonical journal path used by both the supervisor skill and the survey script.
+- Running the survey after a repair cycle produces a watermark that reflects the repair,
+  so the next cycle does not re-detect the same failure.
+- Existing entries from the logs journal are preserved (not lost).
