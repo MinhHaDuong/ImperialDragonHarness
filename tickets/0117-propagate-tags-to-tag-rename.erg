@@ -2,6 +2,7 @@
 Title: Propagate Tags: → Tag: rename to IDH skill scripts and harness
 Created: 2026-05-11
 Author: claude-sonnet-4-6
+Closed: done — erg binary updated, Tags:→Tag: migrated in 0118, no remaining references
 
 --- log ---
 2026-05-11T00:00Z claude-sonnet-4-6 created
@@ -10,6 +11,8 @@ Author: claude-sonnet-4-6
 
 2026-05-11T00:00Z MinhHaDuong audit — `grep -rn 'Tags:' ~/.claude/skills/ ~/.claude/scripts/` returns 0 hits; only one IDH ticket fixture (0118) uses `Tags: needs-human`. Migration deferred until user-local erg binary is updated (currently revision 310acbb, predates 0106).
 
+2026-05-11T20:14Z claude note — erg binary updated (1f68c4a→178ca95); Tags:→Tag: migrated in 0118; grep confirms 0 remaining Tags: refs; erg check PASS; pytest 145 passed
+2026-05-11T20:14Z MinhHaDuong closed — done — erg binary updated, Tags:→Tag: migrated in 0118, no remaining references
 --- body ---
 ## Context
 git-erg ticket 0106 renames the `Tags:` header to `Tag:` (singular) to match
