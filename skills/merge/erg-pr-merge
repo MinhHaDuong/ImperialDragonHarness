@@ -64,7 +64,7 @@ fi
 # ── Step 1: find ticket ID ────────────────────────────────────────────────────
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
-TITLE=$(gh pr view "$PR" --json title --jq '.title')
+TITLE=$(gh pr view "$PR" --json title --jq '.title') # harness-extension-point
 
 # Accept: **Ticket:** tickets/NNNN, **Ticket**: tickets/NNNN, Ticket: tickets/NNNN
 TICKET_ID=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | head -1 || true)
