@@ -2,12 +2,14 @@
 Title: Audit beat permission-denial patterns in recent nightbeat logs (May 7-10)
 Created: 2026-05-10
 Author: claude
+Closed: autoclosed — PR #136
 
 --- log ---
 2026-05-10T11:00Z claude created
 2026-05-10T11:30Z claude note — audit complete: 10 denial events across May 7-10, all categorized. New ticket 0114 created for orphaned locked worktrees. Catalog at docs/beat-denial-catalog-may2026.md.
 2026-05-10T13:00Z claude bump verify-reroll — round 1: verifiable minors 4/5/6 unresolved (log count, recurring citation, AskUserQuestion split)
 
+2026-05-11T22:38Z MinhHaDuong closed — autoclosed — PR #136
 --- body ---
 ## Context
 
