@@ -1,0 +1,61 @@
+%erg v1
+Title: Housekeeping should delete stale branches for closed tickets
+Created: 2026-05-11
+Author: MinhHaDuong
+
+--- log ---
+2026-05-11T21:30Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Healthcheck check 4 (Branch hygiene) flags local branches whose ticket is
+closed as "cleanup candidates." But housekeeping never acts on this — no
+fix-now item deletes stale branches. The result: branches accumulate and
+`erg ready` misreports tickets as claimed because it uses branch-name
+substring matching.
+
+Observed tonight in chemin-de-voix: 4 tickets (0013, 0015, 0070, 0079)
+showed as claimed despite stale claims, because empty branches existed.
+6 more branches for closed tickets (0119–0122) and orphaned worktree
+branches also lingered.
+
+## Design
+
+Add branch cleanup to the housekeeping fix-now pipeline. Two cases:
+
+1. **Closed-ticket branches** — branch name contains a 4-digit ticket ID,
+   that ticket has a `Closed:` header or lives under `closed/`, and the
+   branch has no unmerged commits (all commits reachable from default
+   branch, possibly via squash-merge). Delete with `git branch -d` or
+   `git branch -D` after verifying commits are landed.
+
+2. **Empty orphan branches** — branches with 0 commits beyond the default
+   branch, no associated worktree, and no open PR. Delete with
+   `git branch -d`.
+
+Worktree-locked branches (`+` prefix in `git branch`) must have their
+worktree removed first (`git worktree remove`). Only remove worktrees
+with no uncommitted changes; skip dirty ones and flag them as warn.
+
+Healthcheck already collects `branches.details` with `commits_beyond_default`
+and worktree association. The probe data is sufficient — no new git commands
+needed.
+
+## Actions
+
+1. In healthcheck SKILL.md check 4, classify deletable branches as fix-now
+   (not just "cleanup candidates").
+2. In housekeeping step 3, add branch deletion: remove orphaned worktrees
+   first, then delete branches. Log each deletion.
+3. Guard: never delete a branch that has an open PR (`gh pr list --head`).
+
+## Exit criteria
+
+1. Housekeeping deletes local branches for closed tickets when commits are
+   already on the default branch.
+2. Housekeeping removes orphaned worktrees (clean only) before deleting
+   their branches.
+3. Branches with open PRs or dirty worktrees are skipped with a warning.
+4. chemin-de-voix `erg ready` no longer shows false claimed tickets after
+   a housekeeping run.
