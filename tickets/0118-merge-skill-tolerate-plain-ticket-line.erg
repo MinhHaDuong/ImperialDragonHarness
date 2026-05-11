@@ -1,0 +1,37 @@
+%erg v1
+Title: merge skill: tolerate plain "Ticket:" in PR body (or fail loud)
+Created: 2026-05-11
+Author: claude
+Tags: needs-human
+
+--- log ---
+2026-05-11T11:40Z claude created — observed during chemin-de-voix PR #45 (ticket 0089) merge: skill silently skipped close
+2026-05-11T11:50Z claude note relocated from chemin-de-voix/tickets/0090 (harness-scoped, not project-scoped)
+2026-05-11T14:05Z claude note third instance: chemin-de-voix PR #46 (ticket 0119) merge skipped close — and the failure mode is broader than originally scoped. PR #46 body had NO `Ticket:` line at all (plain or bold); only the title `feat(0119): ...` referenced the ticket. The skill happily merged. Strengthens case for option (B) fail-loud: a missing reference is the same risk whether the markdown asterisks are wrong or the line is missing entirely. Option (A) alone would not have caught this case.
+
+--- body ---
+## Context
+
+`~/.claude/skills/merge/erg-pr-merge` greps PR body for the literal `**Ticket:**` (bold markdown) to find the ticket file to close. If the PR body uses plain `Ticket:` instead, the script prints `Note: no **Ticket:** line in PR body — skipping close` and exits successfully — the PR merges, but the ticket file is left without a `Closed:` header, requiring a manual cleanup commit.
+
+This happened on chemin-de-voix PR #45 / ticket 0089 (2026-05-11). Memory captured at `~/.claude/projects/-home-haduong-chemin-de-voix/memory/feedback_merge_skill_bold_ticket.md`.
+
+## Actions
+
+Either:
+- (A) Loosen the grep in `~/.claude/skills/merge/erg-pr-merge` to accept both `Ticket:` and `**Ticket:**` at line start. **Also** parse `feat(NNNN): ...` / `ticket(NNNN): ...` patterns from the PR title as a fallback, since PR #46 showed the reference can live in the title alone.
+- (B) Make the script *fail* (non-zero exit, no merge) when no ticket line is recognised, so the operator can't accidentally merge without closing.
+
+(A) is more forgiving; (B) is safer. Three observed instances in 24 hours (PRs #45, #46, plus the failure that motivated this ticket) suggests the convention is not enforced consistently — argues for (B) fail-loud unless the title-fallback in (A) is implemented too.
+
+## Test
+
+After fix, open a test PR with `Ticket: tickets/NNNN-foo.erg` (plain, no asterisks), then run `~/.claude/skills/merge/erg-pr-merge <PR>`:
+- For option (A): the ticket should auto-close.
+- For option (B): the script should exit non-zero before merging.
+
+## Exit criteria
+
+- [ ] Decision recorded on whether the skill should accept plain `Ticket:` or fail-loud when missing.
+- [ ] `erg-pr-merge` updated and tested against a real PR.
+- [ ] Memory `feedback_merge_skill_bold_ticket.md` updated or removed once the fragility is gone.
