@@ -123,6 +123,44 @@ def _find_log_file(proj_name: str, failure_ts: str) -> str | None:
     return str(best) if best else str(candidates[0])
 
 
+def _list_open_prs(project_path: Path, github_repo: str) -> list[dict]:
+    """List all open PRs whose branch references a 4-digit ticket ID."""
+    import re
+
+    r = subprocess.run(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--repo",
+            github_repo,
+            "--state",
+            "open",
+            "--json",
+            "number,headRefName",
+            "--limit",
+            "50",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        return []
+    prs = json.loads(r.stdout or "[]")
+    results = []
+    for pr in prs:
+        m = re.search(r"(\d{4})", pr["headRefName"])
+        if m:
+            results.append(
+                {
+                    "ticket_id": m.group(1),
+                    "pr_number": pr["number"],
+                    "branch": pr["headRefName"],
+                }
+            )
+    return results
+
+
 def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict | None:
     """Find an open PR for ticket_id via branch naming convention t{id}-*."""
     r = subprocess.run(
@@ -204,16 +242,14 @@ def main() -> None:
         proj_name = proj_path.name
         github_repo = _github_repo(proj_path)
 
-        # PRs to merge: find open PRs for each ticket that had a raid/success
-        seen_tickets: set[str] = set()
+        # PRs to merge: find open PRs for tickets with raid/success outcomes
+        seen_prs: set[int] = set()
         for ticket_id in raid_success_tickets.get(proj_name, []):
-            if ticket_id in seen_tickets:
-                continue
-            seen_tickets.add(ticket_id)
             if github_repo is None:
                 continue
             pr_info = _find_open_pr(proj_path, ticket_id, github_repo)
-            if pr_info:
+            if pr_info and pr_info["pr_number"] not in seen_prs:
+                seen_prs.add(pr_info["pr_number"])
                 prs_to_merge.append(
                     {
                         "project": proj_name,
@@ -222,6 +258,21 @@ def main() -> None:
                         "ticket_id": ticket_id,
                         "pr_number": pr_info["pr_number"],
                         "branch": pr_info["branch"],
+                    }
+                )
+
+        # Also discover open PRs not originating from beat raids
+        if github_repo is not None:
+            for pr_entry in _list_open_prs(proj_path, github_repo):
+                if pr_entry["pr_number"] in seen_prs:
+                    continue
+                seen_prs.add(pr_entry["pr_number"])
+                prs_to_merge.append(
+                    {
+                        "project": proj_name,
+                        "project_path": str(proj_path),
+                        "github_repo": github_repo,
+                        **pr_entry,
                     }
                 )
 
