@@ -1,0 +1,37 @@
+%erg v1
+Title: Fix leak-guard violation on main — skills/raid/SKILL.md:117
+Created: 2026-05-11
+Author: claude-opus-4-6
+
+--- log ---
+2026-05-11T20:40Z claude-opus-4-6 created
+
+--- body ---
+## Context
+
+Commit c4064de on main introduced a `gh pr diff` reference in
+`skills/raid/SKILL.md:117` without a `<!-- harness-extension-point -->`
+escape hatch. The leak-guard CI check greps the full tree (not just the
+diff), so this blocks ALL PRs from passing CI.
+
+Discovered while attempting to merge PR #141 (ticket 0117).
+
+## Actions
+
+1. Add `<!-- harness-extension-point -->` on the line preceding the `gh`
+   reference in `skills/raid/SKILL.md`, OR reword to remove the `gh`
+   reference entirely.
+2. Push fix to main and verify leak-guard CI passes.
+
+## Test
+
+```bash
+bash scripts/check-project-leak.sh skills
+# Expected: exit 0 (no leaks)
+```
+
+## Exit criteria
+
+- leak-guard CI passes on main.
+- No `\bgh ` matches in `skills/` without escape hatch.
+- PR #141 (ticket 0117) unblocked.
