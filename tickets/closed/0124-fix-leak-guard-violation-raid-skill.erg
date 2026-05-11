@@ -2,11 +2,13 @@
 Title: Fix leak-guard violation on main — skills/raid/SKILL.md:117
 Created: 2026-05-11
 Author: claude-opus-4-6
+Closed: completed in PR #143
 
 --- log ---
 2026-05-11T20:40Z claude-opus-4-6 created
 
 2026-05-11T21:07Z claude note fix: add harness-extension-point comment on line preceding gh pr diff reference in SKILL.md
+2026-05-11T21:22Z MinhHaDuong closed — completed in PR #143
 --- body ---
 ## Context
 
