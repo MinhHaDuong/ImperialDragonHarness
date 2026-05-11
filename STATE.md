@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-11T00:00Z
+Last updated: 2026-05-11T21:13Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-11T00:00Z -->
+<!-- generated 2026-05-11T21:13Z -->
 
-**Tickets:** 26 ready · 2 blocked — `erg ready tickets/` for full list
+**Tickets:** 24 ready · 7 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  chore: archive closed tickets 0047, 0064, 0100, 0101, 0108, 0109, 0110
-  chore: archive closed tickets 0098, 0099, 0111, 0112
-  ticket(0115): per-project max_turns_pick_ticket — supervisor root-cause
-  feat(0113): beat denial catalog May 7-10 + ticket 0114 (locked worktrees) (#129)
-  feat(0102): migrate beat budgets from projects.json to per-project .claude/beat.json (#125)
+  9501354 ticket(0125): open — housekeeping should delete stale branches for closed tickets
+  9d90dcd chore: update erg binary to b6168d1, unblock 0044, migrate Tags:→Tag:, archive 0115
+  9784205 chore: close 0102 + 0106 (PRs merged), archive both
+  95b12e9 chore: add git-erg to beat rotation
+  521bc45 ticket(0124): open — fix leak-guard violation on main (skills/raid/SKILL.md)
 
 ## Blockers
 
@@ -24,8 +24,10 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
+- **Review & merge open PRs**: #142 (0051 fallback rotation), #141 (0117 Tag rename), #136 (0113 denial catalog), #143 (0124 leak-guard)
+- **0125**: housekeeping should delete stale branches for closed tickets
+- **git-erg/0130**: erg tag/untag CLI — prerequisite for replacing branch-as-claim
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
-- **git-erg/0008**: rewrite branch-as-claim check in `erg ready`
 
 ## Backlog
 
