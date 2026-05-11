@@ -1,6 +1,6 @@
 ---
 name: end-session
-description: End-of-day session wrap-up. Pushes branches, runs tests, refreshes STATE, offers autonomous session.
+description: End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session.
 disable-model-invocation: false
 user-invocable: true
 ---
@@ -11,22 +11,23 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 ## Steps
 
-0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/celebrate-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/celebrate-last-sha)..HEAD --oneline` is empty, skip steps 1 and 10 (nothing new since last celebrate).
+0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/celebrate-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/celebrate-last-sha)..HEAD --oneline` is empty, skip steps 1–2 and 11 (nothing new since last celebrate).
 
-1. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
-2. **Log session metrics** — run `~/.claude/skills/end-session/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
-3. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
-4. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
-5. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
-6. **Exit worktree** — if in a worktree, call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
-7. **Hygiene sweep**:
+1. **Housekeeping** — run `/housekeeping` (git sync, healthcheck, eager fix-now repairs, ticket creation).
+2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
+3. **Log session metrics** — run `~/.claude/skills/end-session/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
+4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
+5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
+6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
+7. **Exit worktree** — if in a worktree, call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
+8. **Hygiene sweep**:
    - `git worktree list` → remove any stale worktrees (`git worktree prune`)
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
-8. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
-9. **Refresh STATE.md** on a throwaway branch:
-   a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
-   b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
-   c. Prune: delete items checked off before this session.
-   d. Commit, merge to main via fast-forward, delete branch.
-10. **Memory sweep** — follow `/memory` skill (includes staleness check + rule cross-reference).
+9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
+10. **Refresh STATE.md** on a throwaway branch:
+    a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
+    b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
+    c. Prune: delete items checked off before this session.
+    d. Commit, merge to main via fast-forward, delete branch.
+11. **Memory sweep** — follow `/memory` skill (includes staleness check + rule cross-reference).
