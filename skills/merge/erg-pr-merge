@@ -8,7 +8,7 @@
 #
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
-#   1. Find ticket ID from "**Ticket:** tickets/NNNN-..." line in PR body
+#   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
 #   3. Squash-merge + delete remote branch via GitHub API (no local git ops)
 #   4. If not in worktree: git checkout base && git pull --rebase
@@ -64,7 +64,19 @@ fi
 # ── Step 1: find ticket ID ────────────────────────────────────────────────────
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
-TICKET_ID=$(echo "$BODY" | grep -oP '(?<=\*\*Ticket:\*\* )tickets/\K\d+' | head -1 || true)
+TITLE=$(gh pr view "$PR" --json title --jq '.title')
+
+# Accept: **Ticket:** tickets/NNNN, **Ticket**: tickets/NNNN, Ticket: tickets/NNNN
+TICKET_ID=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | head -1 || true)
+
+# Fallback: parse feat(NNNN) or ticket(NNNN) from PR title
+if [[ -z "$TICKET_ID" ]]; then
+    TICKET_ID=$(echo "$TITLE" | grep -oP '(?:feat|fix|ticket|chore)\(\K\d+' | head -1 || true)
+fi
+
+if [[ -z "$TICKET_ID" ]] && [[ -d tickets ]]; then
+    die "no ticket reference found in PR body or title — add 'Ticket: tickets/NNNN-...' to the PR body"
+fi
 
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────
 
@@ -80,8 +92,6 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
     git push origin HEAD
 elif [[ -n "$TICKET_ID" ]]; then
     echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
-else
-    echo "Note: no **Ticket:** line in PR body — skipping close"
 fi
 
 # ── Step 3: squash-merge via GitHub API (works in worktrees and on VMs) ──────
