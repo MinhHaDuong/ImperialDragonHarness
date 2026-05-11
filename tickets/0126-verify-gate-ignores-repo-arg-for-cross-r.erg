@@ -1,0 +1,37 @@
+%erg v1
+Title: verify-gate ignores --repo arg for cross-repo PRs
+Created: 2026-05-12
+Author: MinhHaDuong
+
+--- log ---
+2026-05-11T23:37Z MinhHaDuong created
+
+--- body ---
+## Problem
+
+When the nightbeat supervisor runs `/verify-gate 133 MinhHaDuong/git-erg`
+from a harness repo worktree, the skill resolves `gh pr view 133` against
+the current repo's origin (ImperialDragonHarness) instead of the specified
+repo (git-erg). This returned APPROVED for an already-merged harness PR
+instead of the target git-erg PR.
+
+Every cross-repo PR the survey discovers will hit this wall until fixed.
+
+## Root cause
+
+The verify-gate skill (and likely the merge skill) invokes `gh pr view`
+without `--repo <owner/repo>`, so the GitHub CLI defaults to the current
+working directory's git remote.
+
+## Plan
+
+1. Audit the verify-gate SKILL.md and any helper scripts for `gh pr` or
+   `gh api` calls that lack `--repo`.
+2. Thread the repo argument through all GitHub CLI calls.
+3. Add a test case: verify-gate from a different repo's worktree against
+   a cross-repo PR number.
+
+## Exit criteria
+
+- `gh pr view` calls in verify-gate use `--repo` when a repo arg is provided.
+- Supervisor can verify-gate a git-erg PR from a harness worktree.
