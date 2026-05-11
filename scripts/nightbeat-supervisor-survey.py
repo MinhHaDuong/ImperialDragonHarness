@@ -77,7 +77,12 @@ def _read_jsonl(path: Path, since: datetime | None = None) -> list[dict]:
 
 
 def _watermark(projects: list[dict]) -> datetime:
-    """Latest journal entry ts across all projects; defaults to 24h ago."""
+    """Latest journal entry ts across all projects; defaults to 24h ago.
+
+    Canonical journal path: <proj["path"]>/nightbeat-supervisor-journal.jsonl.
+    For the harness project this resolves to $HARNESS_DIR/nightbeat-supervisor-journal.jsonl.
+    The nightbeat-supervisor skill writes ALL entries there (not to logs/ subdirs).
+    """
     latest: datetime | None = None
     for proj in projects:
         journal = proj["path"] / "nightbeat-supervisor-journal.jsonl"

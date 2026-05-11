@@ -22,8 +22,8 @@ LOGDIR = HARNESS_DIR / "logs" / "nightbeat"
 PERMISSION_DIFFS_DIR = HARNESS_DIR / "telemetry" / "permission-diffs"
 PROJECTS_CONFIG = HARNESS_DIR / "scripts" / "projects.json"
 OUTCOMES_LOG = HARNESS_DIR / "logs" / "beat-outcomes.jsonl"
-# Canonical supervisor journal: written by nightbeat-supervisor skill to the
-# .claude project root (proj["path"] / "nightbeat-supervisor-journal.jsonl").
+# Canonical supervisor journal: $HARNESS_DIR/nightbeat-supervisor-journal.jsonl.
+# The nightbeat-supervisor skill writes ALL entries here (never to logs/ subdirs).
 SUPERVISOR_JOURNAL = HARNESS_DIR / "nightbeat-supervisor-journal.jsonl"
 
 
