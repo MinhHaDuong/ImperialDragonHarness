@@ -1,0 +1,56 @@
+%erg v1
+Title: skill-doctor: journal path startup assertion — prevent re-detection loops
+Created: 2026-05-11
+Author: claude
+
+--- log ---
+2026-05-11T16:00Z claude created — skill-doctor survey: freq=3, sev=high, score=9
+
+--- body ---
+## Context
+
+Ticket 0116 fixed the root cause: the supervisor SKILL.md used an ambiguous
+journal path that some cycles resolved to `logs/` instead of the project root.
+But no guard prevents the same class of bug from recurring — if a future skill
+edit reintroduces the ambiguity, the re-detection loop restarts silently.
+
+Evidence: 3 journal entries documenting re-detection, 4 unnecessary budget
+raises ($0.70 → $1.08) for the same chemin-de-voix housekeeping failure.
+
+## Actions
+
+1. In `scripts/nightbeat-supervisor-survey.py`, add a startup assertion
+   after loading projects:
+
+   ```python
+   for proj in projects:
+       canonical = proj["path"] / "nightbeat-supervisor-journal.jsonl"
+       alt = proj["path"] / "logs" / "nightbeat-supervisor-journal.jsonl"
+       if alt.exists() and canonical.exists() and not alt.is_symlink():
+           sys.exit(f"ERROR: dual journal for {proj['path'].name}: "
+                    f"both {canonical} and {alt} exist independently. "
+                    f"Merge entries and remove or symlink the non-canonical file.")
+   ```
+
+2. Add the same check to the supervisor SKILL.md step 1 (Survey):
+
+   > Before running the survey, verify no dual-journal state exists.
+   > If both `<project>/nightbeat-supervisor-journal.jsonl` and
+   > `<project>/logs/nightbeat-supervisor-journal.jsonl` exist as
+   > independent files, stop and open a ticket.
+
+## Test
+
+```bash
+# Create a dual-journal scenario:
+touch /tmp/test-journal-canonical.jsonl
+touch /tmp/test-journal-alt.jsonl
+# Mock the survey to check both paths exist → expected: non-zero exit
+```
+
+## Exit criteria
+
+- Survey script exits non-zero if both canonical and non-canonical journal
+  files exist independently (not symlinked).
+- Error message names both paths and the project.
+- Supervisor SKILL.md documents the pre-flight check.

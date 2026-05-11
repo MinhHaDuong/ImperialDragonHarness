@@ -1,0 +1,55 @@
+%erg v1
+Title: skill-doctor: auto-close umbrella tickets when all children are closed
+Created: 2026-05-11
+Author: claude
+
+--- log ---
+2026-05-11T16:00Z claude created — skill-doctor survey: freq=2, sev=medium, score=4
+
+--- body ---
+## Context
+
+Umbrella tickets (those with `Blocks:` entries) remain open after all their
+children complete. pick-ticket treats them as valid candidates and wastes turns
+assessing them — chemin-de-voix 0071 stayed open after 0080+0081 completed,
+consuming all 30 max-turns during the exit-criteria check. The supervisor
+had to close it manually across 2 cycles.
+
+Ticket 0061 was also closed as meta (split into 0115/0116/0117) — same pattern
+of an umbrella needing manual intervention.
+
+## Actions
+
+1. In `skills/pick-ticket/SKILL.md` step 3 (Assess remaining candidates),
+   add an umbrella check before the scope/risk assessment:
+
+   > **Umbrella check**: if the ticket body contains `Blocks:` entries,
+   > extract the referenced ticket IDs. For each, check whether
+   > `tickets/closed/<id>-*.erg` exists (or `erg status <id>` reports closed).
+   > If ALL referenced tickets are closed, auto-close the umbrella via
+   > `/ticket-close <id> already-done` and output `CLOSED: <id>`.
+   > Skip scope assessment for this ticket.
+
+2. This is a grep-able check — no LLM judgment required:
+
+   ```bash
+   # Extract Blocks: IDs from ticket body
+   grep -oP 'Blocks:\s*\K[\d,\s]+' tickets/NNNN-*.erg | tr ',' '\n'
+   # For each ID, check if closed
+   test -n "$(ls tickets/closed/${ID}-*.erg 2>/dev/null)"
+   ```
+
+## Test
+
+```bash
+# Create an umbrella ticket with Blocks: 0001, 0002
+# Ensure both 0001 and 0002 exist in tickets/closed/
+# Run pick-ticket
+# Expected: CLOSED: <umbrella-id>
+```
+
+## Exit criteria
+
+- pick-ticket auto-closes umbrella tickets whose Blocks: targets are all closed.
+- The auto-close outputs `CLOSED: <id>` (not `PICK:`) so beat.py loops.
+- No more max-turns exhaustion on completed umbrella tickets.

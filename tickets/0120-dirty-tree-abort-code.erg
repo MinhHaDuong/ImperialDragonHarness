@@ -1,0 +1,59 @@
+%erg v1
+Title: skill-doctor: dirty tree blocks beat checkout — abort with structured error
+Created: 2026-05-11
+Author: claude
+
+--- log ---
+2026-05-11T16:00Z claude created — skill-doctor survey: freq=12, sev=medium, score=24
+
+--- body ---
+## Context
+
+12+ beat cycles aborted with "cannot checkout main/master" because a previous
+session left uncommitted changes. Dirty files included STATE.md, scripts/beat.py,
+scripts/nightbeat-supervisor-survey.py, and chemin-de-voix ticket files.
+
+`beat.py`'s `_sync_origin_main()` calls `git checkout <default_branch>` without
+checking working tree state first. When dirty, git prints a French error message
+and exits non-zero. Beat logs this as a generic `beat aborted` but the supervisor
+has no structured signal to act on — it just sees the abort in the next log scan.
+
+Pattern: interactive session or previous beat leaves uncommitted changes →
+next hourly beat can't sync → repeats every hour until human intervenes.
+
+## Actions
+
+1. In `_sync_origin_main()` in `scripts/beat.py`, before the checkout:
+
+   ```python
+   r = _git("status", "--porcelain", cwd=path)
+   if r.stdout.strip():
+       dirty = r.stdout.strip().splitlines()[:5]
+       _log(f"aborted-dirty-tree: {len(dirty)} dirty files: {dirty}")
+       return "aborted-dirty-tree"
+   ```
+
+2. Add `"aborted-dirty-tree"` as a recognized outcome in `beat-outcomes.jsonl`
+   so the supervisor can match on it.
+
+3. In the supervisor SKILL.md step 3, add a repair rule:
+
+   > **Dirty working tree** → commit or stash the changes if they are
+   > machine-local state (beat.json, STATE.md regen); otherwise open a
+   > ticket naming the dirty files.
+
+## Test
+
+```bash
+# In a project repo, create an uncommitted file, then run beat:
+echo "dirty" > /tmp/test-dirty && cp /tmp/test-dirty STATE.md
+python3 scripts/beat.py --dry-run
+# Expected: log line contains "aborted-dirty-tree"
+```
+
+## Exit criteria
+
+- `_sync_origin_main()` checks `git status --porcelain` before checkout.
+- A dirty working tree produces `outcome=aborted-dirty-tree` in beat outcomes.
+- The supervisor SKILL.md documents the dirty-tree repair rule.
+- No more generic `beat aborted: cannot checkout` lines in nightbeat logs.
