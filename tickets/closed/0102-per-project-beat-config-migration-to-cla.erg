@@ -2,11 +2,13 @@
 Title: Per-project beat config — migration to .claude/beat.json
 Created: 2026-05-08
 Author: MinhHaDuong
+Closed: done — PR #125 merged
 
 --- log ---
 2026-05-08T20:06Z MinhHaDuong created
 2026-05-10T01:15Z claude note raid-0102: migrating config. beat.json files use current effective values (0.48/0.50 for harness, 0.58/0.50 for chemin-de-voix) per exit criterion, not ticket Action 1 stale literals (0.40, raid=10, interval=60)
 
+2026-05-11T20:50Z MinhHaDuong closed — done — PR #125 merged
 --- body ---
 ## Context
 
