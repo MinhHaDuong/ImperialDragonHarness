@@ -1,0 +1,38 @@
+%erg v1
+Title: Add tests for skill-doctor-survey.py
+Created: 2026-05-11
+Author: MinhHaDuong
+
+--- log ---
+2026-05-11T20:29Z MinhHaDuong created
+
+--- body ---
+## Context
+
+`scripts/skill-doctor-survey.py` has 7 clusterers and ~400 lines but no
+test coverage. The survey was validated manually against live data, but
+regressions (e.g., the hardcoded frequency floor in `_cluster_ticket_line_format`
+that was caught during review) would go undetected.
+
+## Actions
+
+1. Add `tests/test_skill_doctor_survey.py` with unit tests for:
+   - `_cluster_budget_raises`: deduplication of git commits by message
+   - `_cluster_dirty_tree`: pattern matching on French/English error messages
+   - `_cluster_watermark_redetection`: keyword matching in journal entries
+   - `_cluster_umbrella_not_closed`: journal + log line merging
+   - `_cluster_ticket_line_format`: real frequency (no hardcoded floor)
+   - `_cluster_max_turns`: journal + log merging
+   - `_cluster_crash_recovery`: threshold filtering
+   - `_resolve_harness_dir`: worktree path resolution
+
+2. Test edge cases:
+   - Empty inputs (no journal, no logs, no commits)
+   - Below-threshold frequencies (should return None)
+   - `--min-frequency` filtering
+
+## Exit criteria
+
+- `pytest tests/test_skill_doctor_survey.py` passes
+- Each clusterer has at least one positive and one below-threshold test
+- `_resolve_harness_dir` tested with mocked `.git` file
