@@ -2,11 +2,13 @@
 Title: Fix dual-journal path mismatch in nightbeat-supervisor
 Created: 2026-05-11
 Author: claude
+Closed: PR #138 squash-merged (9750ce89); fix consolidated journal path to HARNESS_DIR/nightbeat-supervisor-journal.jsonl in SKILL.md, added migration script
 
 --- log ---
 2026-05-11T04:10Z claude created
 2026-05-11T05:00Z claude note — root cause confirmed: SKILL.md used ambiguous `<project>/nightbeat-supervisor-journal.jsonl`; agent interpreted as logs/ on some cycles. No code hardcodes the wrong path. Fix: make path explicit as `$HARNESS_DIR/nightbeat-supervisor-journal.jsonl` at both SKILL.md sites. Add migration script for lost entries and docstring clarifications.
 
+2026-05-11T03:33Z MinhHaDuong closed — PR #138 squash-merged (9750ce89); fix consolidated journal path to HARNESS_DIR/nightbeat-supervisor-journal.jsonl in SKILL.md, added migration script
 --- body ---
 ## Context
 

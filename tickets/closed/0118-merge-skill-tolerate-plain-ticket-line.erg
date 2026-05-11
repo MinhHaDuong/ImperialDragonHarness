@@ -3,12 +3,14 @@ Title: merge skill: tolerate plain "Ticket:" in PR body (or fail loud)
 Created: 2026-05-11
 Author: claude
 Tags: needs-human
+Closed: done — PR #140 merged
 
 --- log ---
 2026-05-11T11:40Z claude created — observed during chemin-de-voix PR #45 (ticket 0089) merge: skill silently skipped close
 2026-05-11T11:50Z claude note relocated from chemin-de-voix/tickets/0090 (harness-scoped, not project-scoped)
 2026-05-11T14:05Z claude note third instance: chemin-de-voix PR #46 (ticket 0119) merge skipped close — and the failure mode is broader than originally scoped. PR #46 body had NO `Ticket:` line at all (plain or bold); only the title `feat(0119): ...` referenced the ticket. The skill happily merged. Strengthens case for option (B) fail-loud: a missing reference is the same risk whether the markdown asterisks are wrong or the line is missing entirely. Option (A) alone would not have caught this case.
 
+2026-05-11T20:07Z MinhHaDuong closed — done — PR #140 merged
 --- body ---
 ## Context
 

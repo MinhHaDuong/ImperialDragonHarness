@@ -1,0 +1,34 @@
+%erg v1
+Title: Propagate Tags: → Tag: rename to IDH skill scripts and harness
+Created: 2026-05-11
+Author: claude-sonnet-4-6
+
+--- log ---
+2026-05-11T00:00Z claude-sonnet-4-6 created
+
+2026-05-11T00:00Z MinhHaDuong unblocked — git-erg PR #122 (ticket 0106) landed; `Tag:` rename is live
+
+2026-05-11T00:00Z MinhHaDuong audit — `grep -rn 'Tags:' ~/.claude/skills/ ~/.claude/scripts/` returns 0 hits; only one IDH ticket fixture (0118) uses `Tags: needs-human`. Migration deferred until user-local erg binary is updated (currently revision 310acbb, predates 0106).
+
+--- body ---
+## Context
+git-erg ticket 0106 renames the `Tags:` header to `Tag:` (singular) to match
+the repeatable-header convention (`Blocked-by:` not `Blocked-bys:`). Once that
+lands, any IDH skill or script that reads or writes `.erg` files by grepping
+for `^Tags:` will silently break.
+
+## Actions
+1. Update user-local `erg` binary (`erg update` or rebuild from source).
+2. Migrate `~/.claude/tickets/0118-merge-skill-tolerate-plain-ticket-line.erg`:
+   change `Tags: needs-human` → `Tag: needs-human` (only IDH ticket using
+   the old syntax; confirmed by audit 2026-05-11).
+3. Skills/scripts: no work needed (audit returned 0 hits).
+4. Re-run `erg validate` on IDH tickets to confirm.
+
+## Was blocked by
+git-erg ticket 0106 (PR #122) — landed 2026-05-11. Now unblocked.
+
+## Exit criteria
+- No `^Tags:` references remain in IDH skills or scripts.
+- IDH tickets use `Tag:` if any had `Tags:`.
+- Harness tests pass.
