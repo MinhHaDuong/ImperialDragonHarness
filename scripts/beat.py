@@ -769,6 +769,17 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
         return "failed"
 
     _log(f"=== housekeeping: running on {branch} {_now_iso()} ===")
+    git_script = path / "scripts" / "housekeeping-git.sh"
+    if git_script.exists():
+        git_rc = subprocess.run(  # noqa: S603
+            [str(git_script)],
+            cwd=path,
+            check=False,
+        ).returncode
+        if git_rc == 0:
+            _log(f"=== housekeeping-git: done {_now_iso()} ===")
+        else:
+            _log(f"=== housekeeping-git: rc={git_rc} {_now_iso()} ===")
     os.environ["BEAT_HOUSEKEEPING_BRANCH"] = branch
     try:
         hk_rc, hk_res = run_skill(

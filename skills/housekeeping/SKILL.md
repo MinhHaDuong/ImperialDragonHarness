@@ -11,21 +11,9 @@ Run full repo housekeeping and act on every finding.
 
 ## Steps
 
-1. **Git sync.** `git fetch --all --prune --quiet` then `git gc --auto`. Log if working tree is dirty (do not abort).
-
-1a. **Beat-skip sweep.** If `.git/beat-skip.json` exists, remove entries where
-    `until` is present and `until < now`. Rewrite the file in place. This
-    prevents the skip list from accumulating expired entries across beats.
-
-1b. **DAG coherence check.** Run `erg check` if available (command tracked in
-    git-erg/0038) to surface duplicate IDs, dangling Blocked-by refs, and
-    folder-closure issues. Degrade gracefully if the command is not yet
-    installed:
-    ```bash
-    ERG=${ERG:-tickets/erg}
-    $ERG check tickets/ 2>/dev/null || true
-    ```
-    Emit any output as housekeeping warnings; do not abort on non-zero exit.
+1. **Git phase.**
+   - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(scripts/housekeeping-git.sh)` from the project root.
+   - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
 
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
