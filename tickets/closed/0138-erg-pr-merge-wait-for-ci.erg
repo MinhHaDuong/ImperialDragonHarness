@@ -2,10 +2,12 @@
 Title: erg-pr-merge: wait for CI before calling merge API
 Created: 2026-05-12
 Author: claude
+Closed: autoclosed — PR #157
 
 --- log ---
 2026-05-12T20:00Z claude created — perch follow-up after raid 120/129/133
 
+2026-05-12T21:07Z MinhHaDuong closed — autoclosed — PR #157
 --- body ---
 ## Context
 
