@@ -529,7 +529,7 @@ def main() -> None:
                             print(f"    {c}")
                     else:
                         print(f"  {'─' * 40}")
-                        print("  Git: branch exists but no commits ahead of main")
+                        print("  Git: branch exists but no new commits vs default")
                 else:
                     print(f"  {'─' * 40}")
                     print("  Git: branch not found (merged or deleted)")
