@@ -1,0 +1,46 @@
+%erg v1
+Title: Add subprocess timeouts to survey scripts and extract shared utils
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T08:00Z claude created
+
+--- body ---
+## Context
+
+Three related issues in harness survey scripts:
+
+1. **No subprocess timeouts.** nightbeat-supervisor-survey.py has 4 subprocess.run
+   calls (git remote, gh pr list, git ls-remote, gh pr list) with no timeout
+   parameter. A hung gh call blocks the supervisor indefinitely. beat.py itself
+   has careful timeout handling — the survey scripts don't.
+
+2. **Duplicated utilities.** `_parse_ts` and `_read_jsonl` are copy-pasted
+   identically between nightbeat-supervisor-survey.py and skill-doctor-survey.py.
+
+3. **Redundant API calls in supervisor survey.** The survey does per-ticket
+   `git ls-remote` + `gh pr list --head` (2 calls per success ticket), then
+   calls `_list_open_prs` which fetches ALL open PRs in one shot. The per-ticket
+   path is now redundant — filter the all-PRs result instead.
+
+## Actions
+
+1. Add `timeout=30` to all subprocess.run calls in both survey scripts.
+2. Extract `_parse_ts` and `_read_jsonl` into `scripts/harness_utils.py`.
+3. Remove `_find_open_pr` from supervisor survey; filter `_list_open_prs`
+   results for raid-success tickets instead.
+4. Update imports in both survey scripts.
+
+## Test
+
+- `python3 -c "from scripts.harness_utils import parse_ts, read_jsonl"` works.
+- `timeout 5 python3 scripts/nightbeat-supervisor-survey.py` completes.
+- Existing test_nightbeat_supervisor_survey.py passes.
+
+## Exit criteria
+
+1. All subprocess.run calls have timeout parameter.
+2. No duplicated utility functions across survey scripts.
+3. Supervisor survey makes at most 1 gh-pr-list call per project (not per ticket).
+4. All existing tests pass.

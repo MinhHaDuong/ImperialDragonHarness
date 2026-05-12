@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Detect consumer-project assumptions leaking into harness skills and tickets.
-# Usage: check-project-leak.sh [dir ...]   (default: skills tickets)
+# Detect consumer-project assumptions in harness skills and tickets.
+# Usage: check-agnostic.sh [dir ...]   (default: skills tickets)
 # Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line.
 set -euo pipefail
 
@@ -45,7 +45,7 @@ check_pattern() {
         if echo "$line $prev" | grep -q 'harness-extension-point'; then
             continue
         fi
-        echo "LEAK [$pattern]: $file:$lineno: $line"
+        echo "VIOLATION [$pattern]: $file:$lineno: $line"
         fail=1
     done < <(grep -rn "$pattern" "$dir" 2>/dev/null || true)
 }

@@ -1,0 +1,40 @@
+%erg v1
+Title: Remove restated verify pipeline from raid Phase 6
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T08:00Z claude created
+
+--- body ---
+## Context
+
+Raid SKILL.md Phase 6 (lines 87-111) restates the 6-step verify pipeline that
+verify/SKILL.md already defines. This 25-line copy rots when verify evolves and
+costs ~500 tokens per raid invocation for information the agent gets again when
+it invokes `/verify`.
+
+The verify chain totals 844 lines across 4 skills (verify 219, verify-adherence
+216, verify-gate 232, raid Phase 6 copy 25). Removing the copy from raid reduces
+the loaded prompt for every raid by ~3%.
+
+Caveat: the "redundant" text may be load-bearing for raid agents that need to
+understand the verify flow before invoking it. Test by running a raid with the
+simplified Phase 6 and checking that verify is still invoked correctly.
+
+## Actions
+
+1. Replace raid Phase 6 lines 91-98 with a one-liner: `invoke /verify <pr-number>`.
+2. Keep the mood line, per-wave integration review, and the "never merges" invariant.
+3. Run a test raid on a small ticket to confirm verify still fires correctly.
+
+## Test
+
+- Raid Phase 6 is under 15 lines (down from 25).
+- `/verify` still runs all 6 sub-phases when invoked from a raid.
+
+## Exit criteria
+
+1. Raid SKILL.md Phase 6 delegates to `/verify` without restating its internals.
+2. Per-wave integration review section preserved.
+3. A test raid completes Phase 6 successfully.
