@@ -1,5 +1,5 @@
 %erg v1
-Title: Split housekeeping into git-cleanup phase and ticket-scan phase
+Title: Offload housekeeping git phase to a shell script
 Created: 2026-04-27
 Author: claude
 
@@ -12,33 +12,43 @@ Author: claude
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:8895985d7704 expires:2026-04-30T09:18Z
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:fd5819165802 expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
+2026-05-12T13:28Z rescoped: offload git steps to shell script; drop two-skill split approach
 --- body ---
 ## Problem
 
-Housekeeping does two expensive things in one session:
-1. Git hygiene: stale branches, worktrees, STATE.md, commit
-2. Ticket scan: sweep-skip expiry, pick-assessments
-
-Combining them in a single long session (30–41 turns, $0.50+) means a budget
-overflow in phase 2 undoes partially-committed phase 1 work visually (hk:rc=1 even
-if the git cleanup was committed).
+Housekeeping steps 1/1a/1b (git fetch, gc, beat-skip expiry sweep, erg check) are
+fully deterministic but currently run as LLM prose instructions, spending tokens
+on work that needs no model judgment. A budget overflow in the ticket-scan phase
+(steps 2–6) also taints the git phase's outcome code even when git work committed
+cleanly.
 
 ## Solution
 
-Run housekeeping in two sequential sub-calls from beat.py:
-1. `run_skill("/housekeeping-git", budget=0.35)` — git only, always runs
-2. `run_skill("/housekeeping-tickets", budget=0.40)` — ticket scan, runs only if
-   there are tickets to re-assess
+Extract steps 1, 1a, 1b from `skills/housekeeping/SKILL.md` into
+`scripts/housekeeping-git.sh`. Beat.py calls the script as a plain subprocess
+(zero token cost) before invoking the skill. The skill's step 1 becomes a single
+`Bash(scripts/housekeeping-git.sh)` call for interactive use — no algorithm in
+LLM prose.
 
-Each can succeed independently. Beat.py marks hk:done if phase 1 succeeds, even
-if phase 2 is skipped or fails.
+## Actions
 
-## Acceptance criteria
+1. Write `scripts/housekeeping-git.sh`:
+   - `git fetch --all --prune --quiet && git gc --auto`
+   - Beat-skip expiry sweep: remove entries from `.git/beat-skip.json` where
+     `until < now` (Python one-liner or jq acceptable)
+   - `${ERG:-tickets/erg} check tickets/ 2>/dev/null || true`
+   - Exit 0 always (degrade gracefully)
 
-- Git cleanup always completes within $0.35 budget
-- Ticket scan is optional and skippable
-- beat.py distinguishes hk-git:done from hk-tickets:done in the log
+2. Update `skills/housekeeping/SKILL.md`: replace steps 1/1a/1b prose with
+   `Bash(scripts/housekeeping-git.sh)`.
 
-## Notes
+3. Update `beat.py` `_housekeeping_phase()`: call the script as a subprocess
+   before `run_skill("/housekeeping", ...)`. Log `hk-git:done` or `hk-git:rc=N`
+   independently.
 
-Requires new skill files and beat.py changes. Larger effort than 0031/0032.
+## Exit criteria
+
+- `scripts/housekeeping-git.sh` exists, is executable, and passes `bash -n`
+- `skills/housekeeping/SKILL.md` steps 1/1a/1b replaced by single Bash call
+- `beat.py` logs `hk-git:done` separately from the skill outcome
+- `make check` passes
