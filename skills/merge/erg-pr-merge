@@ -7,7 +7,7 @@
 # GitHub-only: requires the GitHub CLI authenticated to the repo's GitHub remote.
 #
 # For cross-repo merges, the caller must cd into the target project and
-# `gh pr checkout <pr>` before invoking this script. See raid Phase 7
+# checkout the PR branch before invoking this script. See raid Phase 7
 # and nightbeat-supervisor Phase 2 for the caller contracts.
 #
 # Happy path:
