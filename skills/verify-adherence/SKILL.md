@@ -2,7 +2,6 @@
 name: verify-adherence
 description: Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time.
 disable-model-invocation: false
-model: haiku
 user-invocable: true
 argument-hint: <branch>
 context: fork
