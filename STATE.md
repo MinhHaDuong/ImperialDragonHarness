@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-12T14:30Z
+Last updated: 2026-05-12T14:47Z
 
 ## North star
 
