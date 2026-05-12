@@ -14,7 +14,8 @@
 #   0. Verify: on PR head branch, CI green, no conflicts
 #   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
-#   3. Squash-merge + delete remote branch via GitHub API (no local git ops)
+#   2a. Wait for CI to pass on ticket-close commit (timeout 600s)
+#   3. Squash-merge + delete remote branch via gh pr merge --squash --delete-branch
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -94,6 +95,9 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
         git commit -m "ticket(${TICKET_ID}): close and archive — PR #${PR}"
     fi
     git push origin HEAD
+    echo "Waiting for CI after ticket-close commit..."
+    timeout 600 gh pr checks "$PR" --watch --fail-fast \
+        || die "CI failed after ticket-close commit — aborting merge"
 elif [[ -n "$TICKET_ID" ]]; then
     echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
 fi
@@ -101,12 +105,7 @@ fi
 # ── Step 3: squash-merge via GitHub API (works in worktrees and on VMs) ──────
 
 echo "Merging PR #${PR}..."
-REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner') # harness-extension-point
-gh api "repos/${REPO}/pulls/${PR}/merge" -X PUT -f merge_method=squash # harness-extension-point
-# harness-extension-point: GitHub API branch delete
-gh api "repos/${REPO}/git/refs/heads/${PR_BRANCH}" -X DELETE 2>/dev/null \
-    && echo "Deleted remote branch ${PR_BRANCH}" \
-    || echo "Note: remote branch ${PR_BRANCH} already gone"
+gh pr merge "$PR" --squash --delete-branch # harness-extension-point
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
 
