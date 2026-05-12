@@ -12,11 +12,13 @@ Usage:
 import argparse
 import json
 import re
-import subprocess  # noqa: E402 — used in _resolve_branch/_git_log_oneline
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from git_utils import _default_branch
 
 HARNESS_DIR = Path.home() / ".claude"
 LOGDIR = HARNESS_DIR / "logs" / "nightbeat"
@@ -66,15 +68,24 @@ def _resolve_branch(project: Path, ticket_id: str) -> str | None:
 
 
 def _git_log_oneline(project: Path, branch: str, max_commits: int = 5) -> list[str]:
-    """Return oneline commit subjects for branch vs origin/main."""
+    """Return oneline commit subjects for branch vs the project's default branch."""
+    default = _default_branch(project)
     try:
         out = subprocess.run(
-            ["git", "-C", str(project), "log", "--oneline", f"origin/main..{branch}"],
+            [
+                "git",
+                "-C",
+                str(project),
+                "log",
+                "--oneline",
+                f"-{max_commits}",
+                f"origin/{default}..{branch}",
+            ],
             capture_output=True,
             text=True,
             timeout=5,
         )
-        return out.stdout.splitlines()[:max_commits]
+        return out.stdout.splitlines()
     except (subprocess.TimeoutExpired, OSError):
         return []
 
