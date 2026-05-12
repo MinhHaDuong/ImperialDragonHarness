@@ -12,10 +12,13 @@ Usage:
 import argparse
 import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from git_utils import _default_branch
 
 HARNESS_DIR = Path.home() / ".claude"
 LOGDIR = HARNESS_DIR / "logs" / "nightbeat"
@@ -35,6 +38,55 @@ def _load_rotation_projects() -> list[Path]:
         entries = json.loads(PROJECTS_CONFIG.read_text())
         return [Path(e["path"]).expanduser() for e in entries]
     except Exception:
+        return []
+
+
+def _resolve_branch(project: Path, ticket_id: str) -> str | None:
+    """Find remote branch matching t{ticket_id}-* for a project."""
+    try:
+        out = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project),
+                "branch",
+                "-r",
+                "--list",
+                f"origin/t{ticket_id}-*",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in out.stdout.splitlines():
+            branch = line.strip()
+            if branch:
+                return branch
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+    return None
+
+
+def _git_log_oneline(project: Path, branch: str, max_commits: int = 5) -> list[str]:
+    """Return oneline commit subjects for branch vs the project's default branch."""
+    default = _default_branch(project)
+    try:
+        out = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project),
+                "log",
+                "--oneline",
+                f"-{max_commits}",
+                f"origin/{default}..{branch}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return out.stdout.splitlines()
+    except (subprocess.TimeoutExpired, OSError):
         return []
 
 
@@ -465,6 +517,22 @@ def main() -> None:
                 )
             for ln in text.splitlines():
                 print(f"  {ln}")
+
+            if run.project and run.ticket_id:
+                branch = _resolve_branch(run.project, run.ticket_id)
+                if branch:
+                    commits = _git_log_oneline(run.project, branch)
+                    if commits:
+                        print(f"  {'─' * 40}")
+                        print("  Git (ground truth):")
+                        for c in commits:
+                            print(f"    {c}")
+                    else:
+                        print(f"  {'─' * 40}")
+                        print("  Git: branch exists but no new commits vs default")
+                else:
+                    print(f"  {'─' * 40}")
+                    print("  Git: branch not found (merged or deleted)")
 
     # ── Issues ──────────────────────────────────────────────────────────────────
     issues: list[str] = []

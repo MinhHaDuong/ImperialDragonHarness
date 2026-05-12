@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 spec = importlib.util.spec_from_file_location(
     "nightbeat_report", SCRIPTS / "nightbeat-report.py"
 )
