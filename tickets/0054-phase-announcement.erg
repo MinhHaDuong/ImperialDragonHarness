@@ -2,11 +2,13 @@
 Title: Restore Five-Claws phase announcement at session start
 Created: 2026-04-29
 Author: claude
+Closed: Restored Phase column and post-EnterWorktree announcement in workflow.md — option A (automatic at session start).
 
 --- log ---
 2026-04-29T00:00Z claude created
 
 2026-05-02T20:05Z haduong note migration: status pending→open; beat-skip needs-human added
+2026-05-12T13:07Z Minh Ha-Duong closed — Restored Phase column and post-EnterWorktree announcement in workflow.md — option A (automatic at session start).
 --- body ---
 ## Context
 

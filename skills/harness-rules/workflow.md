@@ -1,21 +1,23 @@
-<!-- last-reviewed: 2026-05-02 -->
+<!-- last-reviewed: 2026-05-12 -->
 # Session Start
 
 At the beginning of every conversation:
 
 > Setup (env, worktree isolation) is delivered by the SessionStart hook. The hook instructs the model to call `EnterWorktree` before doing anything else.
 
-## 1. Worktree naming
+## 1. Worktree naming and phase announcement
 
 The hook handles worktree entry automatically. When naming the worktree (if prompted), use:
 
-| Context | Worktree name |
-|---------|---------------|
-| Fresh conversation, no ticket | `explore-{topic}` |
-| Ticket reference but no branch | `t{N}` |
-| `/start-ticket N` | `t{N}` |
-| Active feature branch + open MR | `t{N}` |
-| MR review | `review-{N}` |
+| Context | Worktree name | Phase |
+|---------|---------------|-------|
+| Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
+| Ticket reference but no branch | `t{N}` | `[→ Plan]` |
+| `/start-ticket N` | `t{N}` | `[→ Execute]` |
+| Active feature branch + open MR | `t{N}` | `[→ Execute]` |
+| MR review | `review-{N}` | `[→ Verify]` |
+
+After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
 
 After entering the worktree, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
 
