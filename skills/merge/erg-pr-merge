@@ -15,7 +15,7 @@
 #   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
 #   2a. Wait for CI to pass on ticket-close commit (timeout 600s)
-#   3. Squash-merge + delete remote branch via gh pr merge --squash --delete-branch
+#   3. Squash-merge + delete remote branch (forge CLI — harness-extension-point)
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -95,7 +95,7 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
         git commit -m "ticket(${TICKET_ID}): close and archive — PR #${PR}"
     fi
     git push origin HEAD
-    echo "Waiting for CI after ticket-close commit..."
+    echo "Waiting for CI after ticket-close commit..." # harness-extension-point
     timeout 600 gh pr checks "$PR" --watch --fail-fast \
         || die "CI failed after ticket-close commit — aborting merge"
 elif [[ -n "$TICKET_ID" ]]; then
