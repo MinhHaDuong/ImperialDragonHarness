@@ -64,7 +64,6 @@ format literals.
 | `Author` | yes | no | line | Agent or human identifier (non-empty) |
 | `Closed` | no | no | line | Closure reason (PR ref, supersession note, etc.); non-empty |
 | `Blocked-by` | no | yes | ref | Local `NNNN`, path-ref `module/NNNN`, or forge ref `host/owner/repo#N` (see grammar) |
-| `Blocks` | no | yes | ref | Inverse of `Blocked-by`: parent/umbrella ticket lists child IDs it blocks; used by pick-ticket to auto-close when all children are closed |
 | `Tag` | no | yes | enum | Configurable via `.ergrc [tags]`; defaults: `needs-human`, `deferred` |
 
 **All header values are line-strings — single line, no embedded newlines.**
@@ -123,10 +122,6 @@ default. One `Blocked-by:` line per dependency; remove the line once the depende
 
 **Resolution and cycle detection** for path-refs are deferred to a follow-up implementation ticket.
 Tools that cannot resolve a path-ref treat it as blocking (same behaviour as offline forge refs).
-
-**`Blocks:` references** use the same ref grammar as `Blocked-by:`. The auto-close logic in
-`pick-ticket` resolves local refs only (`[0-9]{4}`); path-refs and forge-refs in `Blocks:` lines
-are ignored by the auto-close check (treated as unresolvable — the umbrella stays open).
 
 There is no pending or doing header. If two agents need to avoid stepping on each other, they should
 coordinate via out-of-band signals — typically a git branch whose name contains the ticket ID.
