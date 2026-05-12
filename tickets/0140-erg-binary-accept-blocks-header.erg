@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Update erg binary to accept Blocks: as a valid v1 header
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T20:49Z claude created — unblocks PR #159 umbrella auto-close feature
+
+--- body ---
+## Context
+
+`tickets/spec-erg-v1.md` (updated in PR #159) defines `Blocks:` as a valid v1
+header (repeatable, type `ref`, inverse of `Blocked-by:`). However, the `erg`
+binary at `tickets/erg` hardcodes its accepted header set and currently rejects
+`Blocks:` with "unknown header 'Blocks' (not in v1 closed set)".
+
+This means any ticket file using `Blocks:` to mark children will fail the
+`validate-tickets` CI job before the pick-ticket umbrella-close logic can run.
+The feature added in PR #159 is doc-complete but non-functional until this fix.
+
+## Actions
+
+1. Update the `erg` binary source (git-erg repo) to add `Blocks:` to the
+   accepted v1 header set: repeatable, type `ref`, same grammar as `Blocked-by:`.
+2. Rebuild and recommit `tickets/erg` in the harness repo.
+3. Verify `erg validate` accepts a ticket file with `Blocks: 0042`.
+
+## Exit criteria
+
+- [ ] `tickets/erg validate` accepts a ticket file with `Blocks: 0042` (exit 0).
+- [ ] `validate-tickets` CI job passes on a branch with a `Blocks:`-bearing ticket.
+- [ ] `make check` (or equivalent) passes.
