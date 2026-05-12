@@ -1,0 +1,37 @@
+%erg v1
+Title: Merge new-ticket and ticket-new into a single skill
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T08:00Z claude created
+
+--- body ---
+## Context
+
+Two skills create tickets: `new-ticket` (50 lines) and `ticket-new` (67 lines).
+Both do the same job — normalize input to %erg v1 and write a ticket file — but
+their templates have drifted: ticket-new adds a `Status:` warning and a format-spec
+pointer that new-ticket lacks. When one is updated the other is forgotten.
+
+The raid SKILL.md token-economy rule (line 119) mandates `/ticket-new`. Skills and
+agents that predate that rule still reference `/new-ticket`. The dual existence
+creates confusion for both humans and model-invoked calls.
+
+## Actions
+
+1. Decide which name to keep (ticket-new is the canonical one per raid rules).
+2. Merge any unique guidance from new-ticket into ticket-new.
+3. Delete the redundant skill directory.
+4. Grep all skills for references to the deleted name and update them.
+
+## Test
+
+- `ls skills/ticket-new/SKILL.md` exists, `ls skills/new-ticket/` does not.
+- `grep -r 'new-ticket' skills/` returns no hits (except this ticket if still open).
+
+## Exit criteria
+
+1. Single ticket-creation skill remains.
+2. All cross-references updated.
+3. CI green.
