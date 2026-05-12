@@ -78,7 +78,6 @@
       "/tmp"
     ]
   },
-  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
