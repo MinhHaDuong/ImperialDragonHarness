@@ -11,11 +11,11 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 **Tickets:** `erg ready tickets/` for full list
 **Recent commits:**
+  88fb9bd chore: update erg binary to fb1aab2 — fix AGENTS.md template (status verb + Tags→Tag)
+  ab78bf4 chore: drop merged PRs from next actions, promote git-erg rebuild
   494a1af feat: offload housekeeping git phase to shell script (#34) (#149)
   bd4b9f6 chore: archive closed tickets, migrate Tags→Tag
   b74677e feat: route all .erg mutations through erg binary (#57)
-  0b4ba6a feat: restore Five-Claws phase announcement at session start (#54)
-  8a94013 ticket: close 0052 — erg edit permissions stable for 13+ days
 
 ## Blockers
 
@@ -23,7 +23,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **git-erg**: rebuild binary after AGENTS.md template hotfix (`make build` on git-erg, then `erg update` in all projects)
+- **erg update in consumer projects**: IDH binary rebuilt (fb1aab2) — propagate to chemin-de-voix and any other projects (`erg update` in each)
 - **0125**: housekeeping should delete stale branches for closed tickets
 - **git-erg/0130**: erg tag/untag CLI — prerequisite for replacing branch-as-claim
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
