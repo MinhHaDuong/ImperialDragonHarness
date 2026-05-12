@@ -2,11 +2,13 @@
 Title: skill-doctor: auto-close umbrella tickets when all children are closed
 Created: 2026-05-11
 Author: claude
+Closed: autoclosed — PR #159
 
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=2, sev=medium, score=4
 2026-05-12T21:00Z claude note — reimagine: Blocks: header not in spec-erg-v1.md; add it as prerequisite in same PR. Anchor grep to ^Blocks: to avoid prose false positives.
 
+2026-05-12T21:10Z MinhHaDuong closed — autoclosed — PR #159
 --- body ---
 ## Context
 
