@@ -78,7 +78,7 @@
       "/tmp"
     ]
   },
-  "model": "claude-opus-4-6",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
