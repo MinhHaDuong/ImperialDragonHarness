@@ -39,16 +39,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check for consumer-project assumptions in skills and tickets
         run: bash scripts/check-agnostic.sh
-      - name: Self-test — script must catch a deliberate leak
+      - name: Self-test — script must catch a deliberate violation
         run: |
           tmp=$(mktemp -d)
           mkdir -p "$tmp/skills"
           echo '/home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
           if bash scripts/check-agnostic.sh "$tmp/skills"; then
-            echo "FAIL: agnostic-guard did not catch the deliberate leak"
+            echo "FAIL: agnostic-guard did not catch the deliberate violation"
             exit 1
           fi
-          echo "OK: deliberate leak caught"
+          echo "OK: deliberate violation caught"
       - name: Self-test — escape hatch must suppress a leak
         run: |
           tmp=$(mktemp -d)
