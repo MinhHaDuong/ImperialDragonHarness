@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=12, sev=medium, score=24
 2026-05-12T00:00Z claude note imagine: fix belongs in _raid() line 957, not _sync_origin_main(); beat-outcomes.jsonl already exists via _record_phase_outcome()
+2026-05-12T00:00Z claude note implemented: dirty-tree guard in _raid() + supervisor repair rule
 
 --- body ---
 ## Context

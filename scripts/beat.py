@@ -954,6 +954,15 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     # Ensure working tree is on main before any read or write.
     # Fails fast with a clear message if the tree is dirty.
     default_branch = _default_branch(path)
+
+    status = _git("status", "--porcelain", cwd=path)
+    if status.stdout.strip():
+        dirty_files = status.stdout.strip().splitlines()[:5]
+        detail = f"{len(dirty_files)} file(s): {', '.join(dirty_files[:3])}"
+        _log(f"=== beat aborted: dirty working tree: {detail} ===")
+        _record_phase_outcome(path, "raid", "aborted-dirty-tree", detail=detail)
+        return "aborted-dirty-tree", None
+
     r = _git("checkout", default_branch, cwd=path)
     if r.returncode != 0:
         detail = (r.stderr or r.stdout or "").strip().replace("\n", " | ")

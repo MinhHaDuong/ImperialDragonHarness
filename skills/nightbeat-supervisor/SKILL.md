@@ -63,6 +63,10 @@ When you reach a root cause, repair if within authority:
   independent unit of work; convert the parent to an umbrella by adding
   `Blocks: <id>...` and leaving it open (it may be blocking other tickets).
 - **Dead timer** → restart it.
+- **Dirty working tree** (`outcome=aborted-dirty-tree`) → if the dirty files
+  are machine-local state (beat-outcomes.jsonl, STATE.md, build artifacts),
+  commit or stash them; otherwise open a ticket naming the dirty files and
+  their likely source.
 
 If the why-chain bottoms out without reaching anything repairable: escalate
 (step 4).
