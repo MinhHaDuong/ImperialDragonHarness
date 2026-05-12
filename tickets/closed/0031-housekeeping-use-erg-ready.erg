@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Replace grep-based ticket scanning with erg ready --json in housekeeping and pick-ticket
 Created: 2026-04-27
 Author: claude

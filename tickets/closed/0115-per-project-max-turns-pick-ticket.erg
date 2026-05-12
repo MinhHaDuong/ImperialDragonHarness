@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: add per-project max_turns_pick_ticket to ProjectConfig (analogous to raid_timeout_s)
 Created: 2026-05-10
 Author: claude

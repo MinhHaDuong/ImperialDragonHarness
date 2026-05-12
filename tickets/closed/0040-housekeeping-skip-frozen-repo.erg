@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Skip housekeeping when repo is frozen (no commits, no ticket changes)
 Created: 2026-04-27
 Author: claude

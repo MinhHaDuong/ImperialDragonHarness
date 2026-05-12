@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Deduplicate _default_branch helper between beat.py and project-state.py
 Created: 2026-05-05
 Author: claude-agent

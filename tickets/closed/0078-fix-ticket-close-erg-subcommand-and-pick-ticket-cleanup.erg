@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Fix /ticket-close — add erg close subcommand and clean up pick-ticket
 Created: 2026-05-03
 Author: claude

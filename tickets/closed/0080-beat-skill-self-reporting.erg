@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Move beat run-summary into beat.py — eliminate JSONL parsing from skill
 Created: 2026-05-03
 Author: claude

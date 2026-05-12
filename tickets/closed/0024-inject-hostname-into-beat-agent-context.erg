@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Inject hostname into beat agent context so pick-ticket knows where it runs
 Created: 2026-04-25
 Author: claude

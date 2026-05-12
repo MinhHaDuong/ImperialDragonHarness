@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: verify-gate ignores --repo arg for cross-repo PRs
 Created: 2026-05-12
 Author: MinhHaDuong

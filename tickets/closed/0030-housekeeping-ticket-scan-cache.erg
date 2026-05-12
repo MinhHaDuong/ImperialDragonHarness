@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Cache ticket scan in housekeeping to avoid re-reading unchanged files
 Created: 2026-04-27
 Author: claude

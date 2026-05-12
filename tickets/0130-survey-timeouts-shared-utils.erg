@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Add subprocess timeouts to survey scripts and extract shared utils
 Created: 2026-05-12
 Author: claude

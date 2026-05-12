@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Offload housekeeping git phase to a shell script
 Created: 2026-04-27
 Author: claude

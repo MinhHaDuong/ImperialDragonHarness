@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Make pick-ticket incremental by caching per-ticket assessments in ticket logs
 Created: 2026-04-26
 Author: claude

@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: merge skill: tolerate plain "Ticket:" in PR body (or fail loud)
 Created: 2026-05-11
 Author: claude

@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Decouple verify-adherence ratchet from Python/pytest
 Created: 2026-04-24
 Author: claude

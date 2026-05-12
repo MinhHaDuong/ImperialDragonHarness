@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Deduplicate _git_ok() helper across test classes
 Created: 2026-05-10
 Author: claude

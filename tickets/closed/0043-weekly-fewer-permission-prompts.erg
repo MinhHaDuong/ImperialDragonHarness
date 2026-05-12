@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Run /fewer-permission-prompts weekly via systemd timer
 Created: 2026-04-28
 Author: claude

@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: ticket-close should accept an optional reason argument
 Created: 2026-05-03
 Author: claude

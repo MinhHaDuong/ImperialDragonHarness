@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: erg sweep-skip corrupts ticket bodies via slice aliasing
 Created: 2026-04-29
 Author: claude

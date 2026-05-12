@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Replace beat.py pipeline orchestration with Prefect 3.x
 Created: 2026-05-09
 Author: claude

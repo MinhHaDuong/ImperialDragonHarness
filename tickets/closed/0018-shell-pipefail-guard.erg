@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Add set -euo pipefail to all hook scripts
 Created: 2026-04-23
 Author: claude

@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: Redesign ticket state model: formal machine, coherence rules, and enforced invariants
 Created: 2026-04-30
 Author: claude

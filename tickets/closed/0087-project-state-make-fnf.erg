@@ -1,4 +1,4 @@
-%erg v1
+%erg 0.1
 Title: project-state.py: wrap make runner in try/except FileNotFoundError
 Created: 2026-05-05
 Author: claude
