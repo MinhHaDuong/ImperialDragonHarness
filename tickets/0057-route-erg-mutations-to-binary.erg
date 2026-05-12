@@ -2,10 +2,12 @@
 Title: Route .erg ticket mutations through erg binary instead of direct file edits
 Created: 2026-04-29
 Author: claude
+Closed: verify-gate uses erg log; Edit/Write .erg allows removed from beat-settings.json
 
 --- log ---
 2026-04-29T14:00Z claude created
 
+2026-05-12T13:09Z Minh Ha-Duong closed — verify-gate uses erg log; Edit/Write .erg allows removed from beat-settings.json
 --- body ---
 ## Context
 

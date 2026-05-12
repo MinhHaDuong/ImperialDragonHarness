@@ -154,8 +154,7 @@ second_round_needed:
   APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
-**On REROLL**: append to the ticket file at `~/.claude/tickets/{ticket-id}-*.erg`:
-`{ISO8601} claude bump verify-reroll — round {n}: {top unresolved criterion}`
+**On REROLL**: run `${ERG:-erg} log <ticket-id> "bump verify-reroll — round {n}: {top unresolved criterion}"`
 
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
 
