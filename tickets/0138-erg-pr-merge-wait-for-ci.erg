@@ -1,0 +1,49 @@
+%erg 0.1
+Title: erg-pr-merge: wait for CI before calling merge API
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T20:00Z claude created — perch follow-up after raid 120/129/133
+
+--- body ---
+## Context
+
+`erg-pr-merge` closes the ticket, pushes a ticket-close commit to the branch,
+then immediately calls `gh pr merge`. The push triggers a new CI run, making the
+PR temporarily UNSTABLE. GitHub's merge API returns HTTP 405 ("not mergeable")
+while checks are pending, so every `/merge` invocation fails on the first try.
+
+Workaround: after the 405, wait for CI (`until gh pr checks <N> | grep -qv pending`)
+then call `gh pr merge --squash` directly. This added manual steps to every merge
+in the raid.
+
+## Relevant files
+- `~/.claude/skills/merge/erg-pr-merge` — the shell script
+
+## Actions
+
+1. After pushing the ticket-close commit, add a CI poll loop before the merge call:
+   ```bash
+   echo "Waiting for CI..."
+   until gh pr checks "$PR" 2>/dev/null | grep -qv 'pending'; do sleep 5; done
+   ```
+2. Check that all checks passed (not just finished):
+   ```bash
+   if gh pr checks "$PR" 2>/dev/null | grep -q 'FAIL'; then
+     echo "erg-pr-merge: CI failed after ticket-close commit — merge aborted"
+     exit 1
+   fi
+   ```
+3. Then proceed with the existing merge call.
+
+## Test
+
+Run `/merge` on a PR where the ticket-close commit triggers CI; confirm the script
+waits and merges without requiring manual intervention.
+
+## Exit criteria
+
+- `erg-pr-merge` polls CI after pushing the ticket-close commit.
+- Script exits non-zero if CI fails; proceeds to merge if CI passes.
+- No more manual `gh pr merge` fallback needed after 405.
