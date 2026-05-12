@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Guard git checkout in housekeeping post-cleanup path (beat.py line 807)
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T20:00Z claude created — celebrate sweep after 0120 fix; same class as 0120
+
+--- body ---
+## Context
+
+Ticket 0120 added a dirty-tree guard before the `git checkout` in `_raid()` (line 966).
+A sweep of beat.py found a second unguarded checkout at line 807, in the post-housekeeping
+cleanup path. If housekeeping leaves uncommitted files (e.g. a failed partial commit),
+this checkout silently fails and the function returns an incorrect outcome.
+
+The pattern: `_git("checkout", default_branch, cwd=path)` without a prior
+`git status --porcelain` check.
+
+## Relevant files
+- `scripts/beat.py` line 807 — checkout in post-housekeeping cleanup
+- `scripts/beat.py` lines 954-964 — the guarded checkout added by 0120 (reference impl)
+
+## Actions
+
+1. In `beat.py` around line 807, add the same `git status --porcelain` pre-check
+   that was added in the 0120 fix (lines 958-964):
+   ```python
+   status = _git("status", "--porcelain", cwd=path)
+   if status.stdout.strip():
+       dirty_files = status.stdout.strip().splitlines()[:5]
+       detail = f"{len(dirty_files)} file(s): {', '.join(dirty_files[:3])}"
+       _log(f"=== housekeeping: aborted-dirty-tree: {detail} ===")
+       _record_phase_outcome(path, "housekeeping", "aborted-dirty-tree", detail=detail)
+       return "aborted-dirty-tree"
+   ```
+2. Add `"aborted-dirty-tree"` check to the housekeeping outcome handling in the
+   supervisor survey if not already covered (check `nightbeat-supervisor-survey.py`
+   — `FAILURE_OUTCOMES` was updated by 0120 so this may already be handled).
+
+## Test
+
+Add to `tests/test_beat.py` a test in the housekeeping path that patches `_git` to
+return non-empty stdout for `status --porcelain` and asserts the function returns
+`"aborted-dirty-tree"` without attempting the checkout.
+
+## Exit criteria
+
+- `beat.py` line 807 has a `git status --porcelain` pre-check before the checkout.
+- Dirty working tree in housekeeping returns `"aborted-dirty-tree"`.
+- Test covers the new guard.
+- `python -m pytest tests/test_beat.py` passes.
