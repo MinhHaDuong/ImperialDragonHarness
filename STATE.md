@@ -31,9 +31,3 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - Streamline settings.json hook configuration
 - Enable branch protection requiring `validate-tickets` on main
 - Merge REALF guidelines and business rules
-
-## Backlog
-
-- Streamline settings.json hook configuration
-- Enable branch protection requiring `validate-tickets` on main
-- Merge REALF guidelines and business rules
