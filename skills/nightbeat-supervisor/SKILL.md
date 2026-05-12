@@ -60,8 +60,10 @@ When you reach a root cause, repair if within authority:
   2× `RAID_TIMEOUT_S` (3600 s). Implementation slowness is a "ticket too
   large" signal — do not raise the timeout for that.
 - **Ticket too large to finish in one beat** → split into one ticket per
-  independent unit of work; convert the parent to an umbrella by adding
-  `Blocks: <id>...` and leaving it open (it may be blocking other tickets).
+  independent unit of work; leave the parent open as an umbrella. Each child
+  ticket must carry `Blocked-by: <umbrella-id>` so pick-ticket can auto-close
+  the umbrella when all children are done (it uses inverse lookup, not a
+  `Blocks:` header — that header is not valid in %erg v1).
 - **Dead timer** → restart it.
 - **Dirty working tree** (`outcome=aborted-dirty-tree`) → if the dirty files
   are machine-local state (beat-outcomes.jsonl, STATE.md, build artifacts),

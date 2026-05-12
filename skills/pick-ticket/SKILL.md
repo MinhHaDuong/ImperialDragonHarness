@@ -31,14 +31,19 @@ Select one ticket for the current sweep run.
 3. **Assess remaining candidates.** For each remaining ticket:
 
    **Umbrella check**: Before assessing scope, check if this ticket is
-   referenced as a blocker by other tickets. Run:
+   referenced as a blocker by other tickets. Extract the ticket ID from the
+   filename (e.g., `TICKET_ID=0042` from `0042-some-slug.erg`), then run:
    ```bash
-   grep -rl "Blocked-by:.*${TICKET_ID}" tickets/
+   grep -rl "^Blocked-by:.*\b${TICKET_ID}\b" tickets/
    ```
-   to find tickets that list this one as a blocker. If any results are found
-   AND all matching tickets exist in `tickets/closed/`, auto-close this ticket
-   via `/ticket-close <id> already-done` and output `CLOSED: <id>`. Skip scope
+   to find tickets that list this one as a blocker. For each matching file,
+   check whether the ticket is closed using `$ERG status <id>`. If any results
+   are found AND all matching tickets are closed, auto-close this ticket via
+   `/ticket-close <id> already-done` and output `CLOSED: <id>`. Skip scope
    assessment for this ticket.
+
+   Convention: when splitting a ticket into children, each child ticket must
+   carry `Blocked-by: <umbrella-id>` so this inverse lookup can find them.
 
    Read the ticket body and assess scope and risk:
    - **Scope:** estimated time and files touched (e.g. `30m/3f`)
