@@ -1290,7 +1290,7 @@ class TestPickTicketModelSelection:
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == beat.MODEL_HAIKU
 
-    def test_uses_sonnet_when_active(self, tmp_project, git_ok):
+    def test_uses_haiku_when_active(self, tmp_project, git_ok):
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
@@ -1299,7 +1299,7 @@ class TestPickTicketModelSelection:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
-        assert pick_call["model"] == beat.MODEL_SONNET
+        assert pick_call["model"] == beat.MODEL_HAIKU
 
     def test_project_override_respected_when_idle(self, tmp_project, git_ok):
         custom_model = "claude-opus-4-7"
@@ -1315,8 +1315,8 @@ class TestPickTicketModelSelection:
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
         assert pick_call["model"] == custom_model
 
-    def test_project_override_ignored_when_active(self, tmp_project, git_ok):
-        """When repo is active, Sonnet is always used regardless of pick_ticket_model."""
+    def test_project_override_respected_when_active(self, tmp_project, git_ok):
+        """pick_ticket_model is always respected, regardless of repo activity."""
         recorded, fake = self._make_recorder()
         with (
             patch("beat.housekeeping_needed", return_value=False),
@@ -1329,7 +1329,7 @@ class TestPickTicketModelSelection:
                 )
             )
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
-        assert pick_call["model"] == beat.MODEL_SONNET
+        assert pick_call["model"] == "claude-opus-4-7"
 
 
 # ── _repo_frozen_since / housekeeping frozen skip (ticket 0040) ────────────────
