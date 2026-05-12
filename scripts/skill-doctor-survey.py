@@ -84,6 +84,7 @@ def _git_log_grep(pattern: str, since: datetime) -> list[str]:
         capture_output=True,
         text=True,
         cwd=HARNESS_DIR,
+        timeout=60,
     )
     return r.stdout.strip().splitlines() if r.returncode == 0 else []
 

@@ -37,6 +37,7 @@ def _github_repo(project_path: Path) -> str | None:
         capture_output=True,
         text=True,
         cwd=project_path,
+        timeout=60,
     )
     if r.returncode != 0:
         return None
@@ -143,6 +144,7 @@ def _list_open_prs(project_path: Path, github_repo: str) -> list[dict]:
         ],
         capture_output=True,
         text=True,
+        timeout=60,
     )
     if r.returncode != 0:
         return []
@@ -171,6 +173,7 @@ def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict 
         capture_output=True,
         text=True,
         cwd=project_path,
+        timeout=60,
     )
     branches = [
         line.split("\t", 1)[1].removeprefix("refs/heads/")
@@ -194,6 +197,7 @@ def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict 
             ],
             capture_output=True,
             text=True,
+            timeout=60,
         )
         if pr_r.returncode == 0:
             prs = json.loads(pr_r.stdout or "[]")
