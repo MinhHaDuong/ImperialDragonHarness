@@ -2,11 +2,13 @@
 Title: Merge new-ticket and ticket-new into a single skill
 Created: 2026-05-12
 Author: claude
+Closed: autoclosed — PR #156
 
 --- log ---
 2026-05-12T08:00Z claude created
 2026-05-12T00:00Z claude note implemented: merged new-ticket content into ticket-new, deleted new-ticket dir
 
+2026-05-12T20:17Z MinhHaDuong closed — autoclosed — PR #156
 --- body ---
 ## Context
 
