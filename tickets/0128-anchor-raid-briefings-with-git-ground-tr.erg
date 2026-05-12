@@ -1,0 +1,46 @@
+%erg v1
+Title: Anchor raid briefings with git ground truth in nightbeat report
+Created: 2026-05-12
+Author: MinhHaDuong
+
+--- log ---
+2026-05-12T05:30Z MinhHaDuong created
+
+--- body ---
+## Problem
+
+nightbeat-report.py displays raid briefings verbatim from the agent's
+`result_text`. These briefings can misrepresent the actual fix — t0124
+said "added harness-extension-point annotation" but the commit removed
+the gh reference instead. No ground truth is shown alongside the briefing.
+
+## Root cause
+
+The report has `project` (repo path) and `ticket_id` but never queries
+git. Line 460 of nightbeat-report.py prints result_text as-is.
+
+## Plan
+
+In the RAID RESULTS section of nightbeat-report.py (~line 460), after
+printing the briefing text, resolve the actual branch and append a
+"Git (ground truth)" block:
+
+1. From `run.project` and `run.ticket_id`, find branches matching
+   `t{ticket_id}-*` via `git -C <project> branch -r --list 'origin/t{id}-*'`
+2. If a branch is found, run `git -C <project> log --oneline origin/main..origin/<branch>`
+   (capped at 5 commits)
+3. Print the result indented under a `Git` separator, below the
+   briefing text
+4. If no branch is found (already merged/deleted), print a note
+
+This is ~20 lines in nightbeat-report.py. No changes to beat.py or raid
+SKILL.md.
+
+## Exit criteria
+
+- `nightbeat-report.py --full` shows actual commit subjects alongside
+  each raid briefing that has a resolvable branch
+- When the branch is gone (merged+deleted), a note says so rather than
+  silently omitting
+- No new dependencies; git is already available in the nightbeat
+  environment

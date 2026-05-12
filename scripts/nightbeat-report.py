@@ -12,6 +12,7 @@ Usage:
 import argparse
 import json
 import re
+import subprocess  # noqa: E402 — used in _resolve_branch/_git_log_oneline
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -35,6 +36,46 @@ def _load_rotation_projects() -> list[Path]:
         entries = json.loads(PROJECTS_CONFIG.read_text())
         return [Path(e["path"]).expanduser() for e in entries]
     except Exception:
+        return []
+
+
+def _resolve_branch(project: Path, ticket_id: str) -> str | None:
+    """Find remote branch matching t{ticket_id}-* for a project."""
+    try:
+        out = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project),
+                "branch",
+                "-r",
+                "--list",
+                f"origin/t{ticket_id}-*",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in out.stdout.splitlines():
+            branch = line.strip()
+            if branch:
+                return branch
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+    return None
+
+
+def _git_log_oneline(project: Path, branch: str, max_commits: int = 5) -> list[str]:
+    """Return oneline commit subjects for branch vs origin/main."""
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(project), "log", "--oneline", f"origin/main..{branch}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return out.stdout.splitlines()[:max_commits]
+    except (subprocess.TimeoutExpired, OSError):
         return []
 
 
@@ -465,6 +506,22 @@ def main() -> None:
                 )
             for ln in text.splitlines():
                 print(f"  {ln}")
+
+            if run.project and run.ticket_id:
+                branch = _resolve_branch(run.project, run.ticket_id)
+                if branch:
+                    commits = _git_log_oneline(run.project, branch)
+                    if commits:
+                        print(f"  {'─' * 40}")
+                        print("  Git (ground truth):")
+                        for c in commits:
+                            print(f"    {c}")
+                    else:
+                        print(f"  {'─' * 40}")
+                        print("  Git: branch exists but no commits ahead of main")
+                else:
+                    print(f"  {'─' * 40}")
+                    print("  Git: branch not found (merged or deleted)")
 
     # ── Issues ──────────────────────────────────────────────────────────────────
     issues: list[str] = []
