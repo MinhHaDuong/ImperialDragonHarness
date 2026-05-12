@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Review and close abandoned branch fix/double-pick-and-projects-config
+Created: 2026-05-12
+Author: Claude
+
+--- log ---
+2026-05-12T14:45Z Claude created
+
+--- body ---
+## Context
+
+Branch `fix/double-pick-and-projects-config` has 6 commits beyond main with
+no open PR. Healthcheck flagged it as a cleanup candidate. Most changes appear
+already incorporated on main (e.g. `git gc --auto` is in housekeeping-git.sh,
+Haiku idle fix matches closed ticket 0038). But this needs human verification
+before deletion.
+
+Commits on branch not on main:
+- ba55411 fix(housekeeping): add git gc --auto to git sync step
+- a0acfff test(beat): clarify safety-floor mock intent with explicit side_effect
+- c8f3ca5 docs(0040): note why tickets/ condition is subsumed by commits check
+- 8ea3002 fix(beat): Haiku for idle pick-ticket, skip frozen housekeeping
+- 275e0ee ticket: 0048 audit ticket slug status markers
+- 3468caf housekeeping: doc sync, 2 new tickets, branch cleanup
+
+## Actions
+
+1. `git diff main..fix/double-pick-and-projects-config` — scan for anything not yet on main
+2. If all changes are covered: `git branch -d fix/double-pick-and-projects-config`
+3. If novel changes remain: open a PR
+
+## Exit criteria
+- [ ] Branch is either deleted (all changes confirmed covered) or has an open PR
+- [ ] `git branch` no longer lists `fix/double-pick-and-projects-config`
