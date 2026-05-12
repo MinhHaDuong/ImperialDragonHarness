@@ -24,6 +24,23 @@ Run full repo housekeeping and act on every finding.
 3. **Fix `fix-now` items.** Apply every `fix-now` item inline. If any fixes were
    applied, commit once: `chore: housekeeping fixes (sweep)`.
 
+   **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
+   to delete a branch, apply these guards before acting. Skip (log a warning) if any
+   guard trips:
+   - **Merge guard**: re-run the squash-merge probe from healthcheck check 4 and confirm
+     it exits 0. If the ticket ID does NOT appear in main's commit log since the branch
+     diverged, the branch is not yet merged — skip deletion.
+     ```bash
+     merge_base=$(git merge-base main <branch>)
+     ticket_id=$(echo <branch> | grep -oP 't\K\d+')
+     git log $merge_base..main --format="%s" | grep -qP "(feat|fix|chore|ticket)\($ticket_id\)"
+     ```
+   - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
+     worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
+     If the worktree is clean, remove it first with `git worktree remove <path>`.
+   - **Safe delete**: use `git branch -d <branch>` (not `-D`) — this fails safely if
+     the branch has unmerged commits, providing a final safety net.
+
 4. **Ticket `open-ticket` items.** For each `open-ticket` finding:
    - Search open ticket slugs and titles for key terms from the finding.
    - If no existing ticket covers it, create one with /ticket-new using a

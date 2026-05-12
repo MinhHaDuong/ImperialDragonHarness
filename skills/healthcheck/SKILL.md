@@ -27,7 +27,16 @@ Parse the JSON output. Use its fields to populate checks 1–9 below without re-
 1. **Recent activity** — from `git.recent_commits`. List count and key themes.
 2. **Open PRs** — from `prs.open` / `prs.items`. Skip if `prs.error`.
 3. **Origin sync** — from `git.ahead` / `git.behind`. Skip if no remote.
-4. **Branch hygiene** — from `branches.local` / `branches.remote` / `branches.details`. Flag branches with `commits_beyond_default > 0`. For branches whose name contains a 4-digit ticket ID, check if the ticket file has a `Closed:` line; flag those as cleanup candidates.
+4. **Branch hygiene** — from `branches.local` / `branches.remote` / `branches.details`. For each local branch:
+   - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
+   - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the squash-merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
+     ```bash
+     merge_base=$(git merge-base main <branch>)
+     ticket_id=$(echo <branch> | grep -oP 't\K\d+')
+     git log $merge_base..main --format="%s" | grep -qP "(feat|fix|chore|ticket)\($ticket_id\)"
+     ```
+     If the grep exits 0, the branch was squash-merged into main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, squash-merged into main)`.
+   - **Closed-ticket branches** where the squash-merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).
 5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running.
 6. **Working tree** — from `git.clean` / `git.dirty_files`. List uncommitted files if dirty.
 7. **Tests green** — from `tests.status` / `tests.detail`. Skip if `tests.runner == "none"`.
