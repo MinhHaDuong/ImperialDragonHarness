@@ -1,0 +1,46 @@
+%erg v1
+Title: Review token economy across raid cycle skills
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T10:00Z claude created
+
+--- body ---
+## Context
+
+The raid pipeline chains 8+ skills (start-ticket, verify-adherence, review,
+review-pr, simplify, verify-gate, merge, celebrate) plus the raid orchestrator
+itself. Each skill loads its full SKILL.md into context, and several repeat
+preambles, verdict shapes, or anti-pattern tables that the caller already
+injected. The cumulative token spend across a multi-ticket raid is high —
+especially on REROLL cycles where verify runs twice.
+
+## Actions
+
+1. Measure baseline: instrument a dry-run raid to log token counts per skill
+   invocation. Identify the top 3 token-heavy skills.
+2. Audit each skill's SKILL.md for repeated content — shared definitions
+   (minor tag table, verdict shape, anti-pattern lists) that appear in
+   multiple skills. Factor into a shared reference if net savings > 20%.
+3. Check whether context is cleared between raid phases. Identify phases
+   where stale context from prior phases persists without being used.
+4. Review verbose output shapes (verify-gate YAML, review-pr comment
+   templates) — can they be compacted without losing information for the
+   next consumer in the chain?
+5. Check the raid SKILL.md itself (190 lines) — can phase descriptions be
+   tightened without losing precision?
+6. Propose concrete changes with estimated token savings per raid run.
+
+## Test
+
+Run `wc -c` on all skill files in the raid pipeline before and after changes.
+Total character count should decrease by at least 15% without losing any
+decision-relevant information (verify by re-running /verify on an existing PR
+and comparing verdict quality).
+
+## Exit criteria
+
+- Token audit report with per-skill measurements
+- At least one concrete compaction applied and verified
+- No regression in verify-gate verdict quality on a test PR
