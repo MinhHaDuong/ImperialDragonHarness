@@ -149,13 +149,16 @@ def _list_open_prs(project_path: Path, github_repo: str) -> list[dict]:
     prs = json.loads(r.stdout or "[]")
     results = []
     for pr in prs:
-        m = re.search(r"(\d{4})", pr["headRefName"])
+        branch = pr["headRefName"]
+        if re.match(r"^open-\d{4}", branch):
+            continue
+        m = re.search(r"(\d{4})", branch)
         if m:
             results.append(
                 {
                     "ticket_id": m.group(1),
                     "pr_number": pr["number"],
-                    "branch": pr["headRefName"],
+                    "branch": branch,
                 }
             )
     return results
