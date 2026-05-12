@@ -1,0 +1,97 @@
+%erg v1
+Title: Deps management script for IDH (rtk + erg)
+Created: 2026-05-12
+Author: minh
+
+--- log ---
+2026-05-12T13:34Z minh created
+
+--- body ---
+## Context
+
+The IDH README documents how to install the harness itself but says nothing about its two external dependencies, `rtk` (Rust Token Killer) and `erg` (git-erg). Both are required at runtime:
+
+- `rtk` is wired into `settings.json` as the Bash PreToolUse hook (`rtk hook claude`) — every Bash call goes through it. Silent breakage bricks the harness.
+- `erg` is the ticket manipulation binary. A bootstrap copy is committed at `tickets/erg` (Linux x86-64), but per-project install is preferred.
+
+`rtk` upstream is `github.com/rtk-ai/rtk` (NOT on crates.io — the name `rtk` there is Rust Type Kit, the collision RTK.md warns about). Install path: `cargo install --git https://github.com/rtk-ai/rtk --locked`.
+
+`erg` upstream is `github.com/MinhHaDuong/git-erg`, installed per-project per its README.
+
+The daily systemd timer pulls the harness repo only. Dep updates must stay deliberate: a silent daily rebuild of `rtk` would be slow, miss the prompt cache, and propagate upstream breakage to every Bash call before the user wakes up.
+
+`healthcheck` is project-scoped — it lives in the project where it runs and checks project state. Conflated here because the harness IS the current project, but elsewhere (e.g. chemin-de-voix) it is not. Drift detection therefore belongs in a harness-scoped surface. `smoke` already plays that role: "agent environment smoke test — reports runtime identity, auth method, harness context."
+
+**Scope note:** This script is rtk-management with erg-awareness, not erg parity. erg installation is per-project (per its README) and intentionally out of scope here. For erg the script delegates to erg's own tooling — `erg version` already reports path, revision, build date, and flags stale copies; `erg update` already does in-place binary refresh. `idh-deps.sh` exposes these but does not duplicate them. Reviewers should not expect symmetric handling of the two deps.
+
+## Relevant files
+
+- `scripts/idh-deps.sh` — new script to create
+- `skills/smoke/SKILL.md` — call `idh-deps.sh status` and include drift report
+- `README.md` — add "Dependencies" sub-section under "Installation" pointing to the script
+- `settings.json` — context only: contains the `rtk hook claude` Bash hook that depends on rtk being installed
+- `RTK.md` — context only: documents rtk usage and warns about the Rust Type Kit name collision
+- `tickets/AGENTS.md` — context only: documents erg fallback at `tickets/erg`
+
+## Actions
+
+1. Create `scripts/idh-deps.sh` with sub-commands `install`, `update`, `remove`, `status`, plus `-h`/`--help`. Script must be `set -euo pipefail`, idempotent, exit non-zero on failure.
+2. **Preflight** (runs before any sub-command except `--help`): check `cargo` and `git` are on PATH. If absent, print actionable message ("install rust via https://rustup.rs") and exit 3.
+3. **`--help` / `-h`**: print a 5-7 line usage block — one line per sub-command, plus exit-code legend. Same output on bad sub-command (with exit 2).
+4. `install`: announce intent in one line ("ensuring rtk is installed..."). If `command -v rtk` succeeds, no-op with a one-line confirmation. Else run `cargo install --git https://github.com/rtk-ai/rtk --locked`. For erg, print per-project pointer (git-erg README) — script does not install erg globally.
+5. `update`: announce intent in one line ("rebuilding rtk from upstream HEAD — may take several minutes"). Then run `cargo install --git https://github.com/rtk-ai/rtk --locked --force`. For erg, print the per-project recipe: `erg update` if a project erg is reachable (it fetches and replaces the binary from origin), else point to git-erg README.
+6. `remove`: announce intent in one line ("uninstalling rtk from ~/.cargo/bin..."). Run `cargo uninstall rtk`. For erg, print pointer for per-project removal.
+7. `status` (budget: ≤ 10 lines total; structure fixed across runs):
+   - **rtk**: one line — `rtk: <version> <commit-sha7> (OK | DRIFT: local=<sha7> upstream=<sha7> | drift: unknown)`. Version comes from `rtk --version`; commit from `cargo install --list` or `~/.cargo/.crates2.json`; upstream from `git ls-remote https://github.com/rtk-ai/rtk HEAD` with 3s timeout, fallback `drift: unknown`.
+   - **erg**: invoke `erg version` (prefer `./tickets/erg`, else `erg` on PATH). Its output is already a compact block with path, revision, build date, and stale-copy flags. If neither is reachable, print one line pointing to `github.com/MinhHaDuong/git-erg` plus `erg update` hint.
+8. **Exit codes**: 0 = OK / action succeeded; 1 = drift detected or rtk missing on `status`; 2 = usage error (bad sub-command, bad flag); 3 = preflight failed (cargo or git missing). Document in `--help`.
+9. Update `skills/smoke` to invoke `scripts/idh-deps.sh status` and include its output in the smoke report. Network is best-effort — smoke must remain fast (no hang on offline machines).
+10. Update `README.md`: add "Dependencies" sub-section under "Installation" with one paragraph each for rtk and erg, pointing to the script (`scripts/idh-deps.sh install|update|status`). No command duplication.
+11. Do NOT modify the daily systemd timer.
+12. Do NOT modify the `healthcheck` skill.
+
+## Manual verification
+
+(No automated test harness — this is a 4-subcommand bash wrapper around `cargo` and `git ls-remote`. Verify by running the script and checking observable side-effects.)
+
+On a machine where rtk is already installed, run `bash scripts/idh-deps.sh status` and expect:
+
+- Exit 0
+- A line matching `^rtk: <semver> .*(OK|DRIFT: local=[0-9a-f]+ upstream=[0-9a-f]+|drift: unknown)` where `<semver>` is the version printed by `rtk --version`
+- A line reporting erg state (bootstrap binary path and/or PATH presence)
+
+Then run `idh-deps.sh install` and `idh-deps.sh status` again to confirm idempotence (no errors, status parseable).
+
+## Verification
+
+- [ ] `scripts/idh-deps.sh --help` and `-h`: print usage block including exit-code legend, exit 0
+- [ ] `scripts/idh-deps.sh foo`: exit 2, prints same usage block
+- [ ] `PATH=/usr/bin scripts/idh-deps.sh install` (cargo absent): exit 3, message points to rustup
+- [ ] `scripts/idh-deps.sh install` on a machine with rtk absent: prints intent line, installs rtk, exits 0, `which rtk` returns `~/.cargo/bin/rtk`
+- [ ] `scripts/idh-deps.sh install` re-run: exits 0 without error (idempotent, prints "already installed" line)
+- [ ] `scripts/idh-deps.sh update`: prints intent line (warning about compile time), forces reinstall, exits 0
+- [ ] `scripts/idh-deps.sh status`: ≤ 10 lines total; one rtk line matching the documented format; erg block from `erg version`; exit 0 when OK, 1 when DRIFT or rtk missing
+- [ ] `scripts/idh-deps.sh remove`: prints intent line, removes rtk, exits 0; rerun warns rtk absent but does not error-exit
+- [ ] `/smoke` output contains the dep-status block
+- [ ] `README.md` "Dependencies" sub-section exists, points to script, contains no install commands inline
+
+## Invariants
+
+- `settings.json` Bash hook `rtk hook claude` continues to fire and succeed after install/update
+- `healthcheck` skill output unchanged
+- Daily systemd timer file unchanged
+- No new auto-update mechanism added — dep updates remain manual
+- `tickets/AGENTS.md` and `RTK.md` unchanged (script references them, does not duplicate their content)
+
+## Exit criteria
+
+- [ ] `scripts/idh-deps.sh` exists with sub-commands: install, update, remove, status
+- [ ] install/update handle rtk via `cargo install --git ... --locked` (--force on update); erg gets a per-project pointer message
+- [ ] remove runs `cargo uninstall rtk`; erg removal documented
+- [ ] status reports installed rtk version + drift vs upstream HEAD, plus erg presence
+- [ ] Script is idempotent and exits non-zero on failure
+- [ ] `skills/smoke` calls `idh-deps.sh status` and surfaces drift in its output
+- [ ] README "Installation" gains a "Dependencies" sub-section pointing to the script
+- [ ] Daily systemd timer NOT modified
+- [ ] `healthcheck` skill NOT modified
+- [ ] Manual smoke run on this machine shows current rtk version (whatever `rtk --version` reports) and either `OK` or a valid `DRIFT:` / `drift: unknown` line
