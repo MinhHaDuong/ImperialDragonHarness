@@ -97,17 +97,7 @@ Wait for wave to complete.
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** invoke `/verify <pr-number>` on each merge request. The skill runs:
-
-1. `/verify-adherence` — mechanical-first rule check (tests + grep ratchet before LLM).
-2. `/review` (built-in) — standard review.
-3. `/review-pr` or `/review-pr-prose` — file-type heuristic.
-4. `/simplify` — reuse/quality/efficiency, applies fixes.
-5. `/verify-gate` — anti-rubber-stamp merge gate: APPROVED / REROLL / ESCALATE.
-6. On REROLL (round 1 only), `/verify` spawns a fix agent and re-gates; round 2 escalates.
-
-`/verify` never merges. Merges happen in Phase 7 after verify-gate clears
-(including its scope-containment check).
+**Per-ticket:** invoke `/verify <pr-number>` on each merge request.
 
 **Per-wave:** after all per-ticket `/verify` runs complete, launch one integration-review
 subagent (read-only) to check:
