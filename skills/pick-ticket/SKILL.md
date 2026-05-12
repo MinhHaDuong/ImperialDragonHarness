@@ -28,8 +28,22 @@ Select one ticket for the current sweep run.
    Log each excluded id and reason to beat output. Do not read ticket bodies
    for excluded tickets.
 
-3. **Assess remaining candidates.** For each remaining ticket, read its body
-   and assess scope and risk:
+3. **Assess remaining candidates.** For each remaining ticket:
+
+   **Umbrella check**: Before assessing scope, grep the ticket file header for
+   `^Blocks:` (anchored to line start). If found, extract the space/comma-separated
+   ticket IDs. For each ID, check whether `tickets/closed/<NNNN>-*.erg` exists.
+   If ALL referenced tickets are closed, run `/ticket-close <id> already-done`
+   and output `CLOSED: <id>`. Skip scope assessment for this ticket.
+
+   Shell reference:
+   ```bash
+   grep -oP '^Blocks:\s*\K[\d,\s]+' ticket.erg | tr ',' '\n' | tr -d ' '
+   # Close check:
+   ls tickets/closed/${ID}-*.erg 2>/dev/null
+   ```
+
+   Read the ticket body and assess scope and risk:
    - **Scope:** estimated time and files touched (e.g. `30m/3f`)
    - **Risk:** `low`, `medium`, or `high` — prefer tickets that touch few
      files, change docs/config/tests rather than core logic, are easily

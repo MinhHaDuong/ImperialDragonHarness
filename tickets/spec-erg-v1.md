@@ -64,6 +64,7 @@ format literals.
 | `Author` | yes | no | line | Agent or human identifier (non-empty) |
 | `Closed` | no | no | line | Closure reason (PR ref, supersession note, etc.); non-empty |
 | `Blocked-by` | no | yes | ref | Local `NNNN`, path-ref `module/NNNN`, or forge ref `host/owner/repo#N` (see grammar) |
+| `Blocks` | no | yes | ref | Inverse of `Blocked-by`: parent/umbrella ticket lists child IDs it blocks; used by pick-ticket to auto-close when all children are closed |
 | `Tag` | no | yes | enum | Configurable via `.ergrc [tags]`; defaults: `needs-human`, `deferred` |
 
 **All header values are line-strings — single line, no embedded newlines.**
