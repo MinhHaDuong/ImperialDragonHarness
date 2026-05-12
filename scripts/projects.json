@@ -1,5 +1,4 @@
 [
   { "path": "~/chemin-de-voix" },
-  { "path": "~/.claude" },
-  { "path": "~/git-erg" }
+  { "path": "~/.claude" }
 ]
