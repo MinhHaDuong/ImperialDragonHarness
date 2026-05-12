@@ -31,14 +31,16 @@ Select one ticket for the current sweep run.
 3. **Assess remaining candidates.** For each remaining ticket:
 
    **Umbrella check**: Before assessing scope, grep the ticket file header for
-   `^Blocks:` (anchored to line start). If found, extract the space/comma-separated
-   ticket IDs. For each ID, check whether `tickets/closed/<NNNN>-*.erg` exists.
+   `^Blocks:` (anchored to line start). If found, extract the referenced ticket
+   IDs (one per `Blocks:` line — the header is repeatable). For each ID, check
+   whether `tickets/closed/<NNNN>-*.erg` exists.
    If ALL referenced tickets are closed, run `/ticket-close <id> already-done`
    and output `CLOSED: <id>`. Skip scope assessment for this ticket.
 
    Shell reference:
    ```bash
-   grep -oP '^Blocks:\s*\K[\d,\s]+' ticket.erg | tr ',' '\n' | tr -d ' '
+   # Each Blocks: line yields one ID (repeatable header — one ref per line):
+   grep -oP '^Blocks:\s*\K\S+' ticket.erg
    # Close check:
    ls tickets/closed/${ID}-*.erg 2>/dev/null
    ```

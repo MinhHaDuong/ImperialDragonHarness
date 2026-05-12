@@ -83,7 +83,7 @@ content belongs in the body section.
 Required headers (`Title`, `Created`, `Author`) must have a non-empty
 value; an empty value is a validation error.
 
-No other headers are valid in v1. No `X-` extensions.
+No headers outside this table are valid in v1. No `X-` extensions.
 
 `Tag:` is repeatable; each occurrence adds one tag value. The validator enforces the closed value set per occurrence; see the validate rules.
 
