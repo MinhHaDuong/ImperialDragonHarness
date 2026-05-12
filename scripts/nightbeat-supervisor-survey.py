@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HARNESS_DIR = Path(__file__).parent.parent
-FAILURE_OUTCOMES = {"fail", "budget", "timeout"}
+FAILURE_OUTCOMES = {"fail", "budget", "timeout", "aborted-dirty-tree"}
 
 
 def _expand(p: str) -> Path:
