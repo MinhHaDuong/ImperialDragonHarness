@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Add per-project max_turns_housekeeping override (chemin-de-voix hit cap)
+Created: 2026-05-12
+Author: nightbeat-supervisor
+
+--- log ---
+2026-05-12T20:30Z nightbeat-supervisor created
+
+--- body ---
+## Context
+
+Housekeeping in `chemin-de-voix` failed at 2026-05-12T20:10:23Z with
+`error_max_turns` after 41 turns (cap 40). Beat outcome:
+`fail/failed`, cost $0.897 (within the per-project `budget_housekeeping`
+of $1.08 raised on 2026-05-11).
+
+Why → the agent legitimately had a lot to clean up:
+- 3 stale agent worktrees (`agent-a322aaf…`, `agent-a94bda…`,
+  `agent-a97182ed…`)
+- 5 stale branches (raid-close-tickets, raid-housekeeping,
+  update-state, t0123-fix-extraction-failures, t0124-pdf-handler)
+- `.claude/scheduled_tasks.lock` not gitignored
+- Stale housekeeping branch `claude/housekeeping-20260512T040653Z-ea02`
+
+The agent did most of the cleanup (removed worktrees and branches,
+gitignored the lock file, created ticket 0126 in chemin-de-voix), but
+ran out of turns while finalising STATE.md and the gitignore commit.
+
+## Why this is recurring
+
+chemin-de-voix housekeeping has failed 5 times since 2026-05-08
+(2026-05-08T20:06Z, 2026-05-10T00:07Z, 2026-05-10T03:08Z,
+2026-05-11T01:07Z, 2026-05-12T20:10Z). The 2026-05-11 fail was
+`error_max_budget_usd` and was repaired by raising `budget_housekeeping`
+to $1.08 in `~/.claude/beat.json`. With budget no longer binding,
+max_turns is now the binding constraint.
+
+`scripts/beat.py` exposes `max_turns_pick_ticket` per-project on
+`ProjectConfig` but uses the module-level `MAX_TURNS_HOUSEKEEPING = 40`
+unconditionally at the housekeeping call site (beat.py:790). Supervisor
+authority says "raise the per-project ProjectConfig field by 20%, capped
+at 2× module-level". There is no per-project field for housekeeping —
+adding one is outside auto-repair authority.
+
+## Exit criteria
+
+- [ ] Add `max_turns_housekeeping: int = MAX_TURNS_HOUSEKEEPING` to
+      `ProjectConfig` in `scripts/beat.py`.
+- [ ] Wire it through to the housekeeping `_run_skill` call site
+      (beat.py:790) alongside the existing `max_turns_pick_ticket`
+      pattern.
+- [ ] Add `"max_turns_housekeeping"` to the per-project allowlist
+      (around `scripts/beat.py:154`).
+- [ ] Set `max_turns_housekeeping: 48` for `chemin-de-voix` (40 × 1.2)
+      in `scripts/beat-settings.json`.
+- [ ] Once merged, supervisor can apply the standard 20% bump rule when
+      housekeeping hits max_turns repeatedly on any project.
+
+## Notes for implementer
+
+- Module-level `MAX_TURNS_HOUSEKEEPING` must not change.
+- Cap the per-project value at `2 * MAX_TURNS_HOUSEKEEPING = 80` per the
+  supervisor authority rule.
+- Re-check chemin-de-voix repo state before bumping — if the same
+  worktree/branch sludge re-accumulates, the upstream fix is whatever
+  raid/sweep is leaving cruft behind, not a higher housekeeping cap.
