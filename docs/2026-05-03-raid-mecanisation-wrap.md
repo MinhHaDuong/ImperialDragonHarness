@@ -69,7 +69,7 @@ Post-raid (each PR independent against main):
 - #90 adds 11 pytest tests (4 beat + 4 helper + 3 nightbeat-report)
 
 If all five land cleanly: ~30 net new tests. No CI guard regressions
-reported by any agent (`leak-guard`, `pipefail-guard`, `skill-lint`,
+reported by any agent (`agnostic-guard`, `pipefail-guard`, `skill-lint`,
 `erg validate` all green per-worktree).
 
 ## Artifacts

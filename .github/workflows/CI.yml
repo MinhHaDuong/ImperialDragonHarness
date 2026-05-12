@@ -33,19 +33,19 @@ jobs:
           done
           exit $fail
 
-  leak-guard:
+  agnostic-guard:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Check for consumer-project assumptions in skills and tickets
-        run: bash scripts/check-project-leak.sh
+        run: bash scripts/check-agnostic.sh
       - name: Self-test — script must catch a deliberate leak
         run: |
           tmp=$(mktemp -d)
           mkdir -p "$tmp/skills"
           echo '/home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
-          if bash scripts/check-project-leak.sh "$tmp/skills"; then
-            echo "FAIL: leak-guard did not catch the deliberate leak"
+          if bash scripts/check-agnostic.sh "$tmp/skills"; then
+            echo "FAIL: agnostic-guard did not catch the deliberate leak"
             exit 1
           fi
           echo "OK: deliberate leak caught"
@@ -54,7 +54,7 @@ jobs:
           tmp=$(mktemp -d)
           mkdir -p "$tmp/skills"
           echo '<!-- harness-extension-point --> /home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
-          if ! bash scripts/check-project-leak.sh "$tmp/skills"; then
+          if ! bash scripts/check-agnostic.sh "$tmp/skills"; then
             echo "FAIL: escape hatch did not suppress the leak"
             exit 1
           fi
