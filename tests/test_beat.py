@@ -671,6 +671,37 @@ class TestRaidClosedLoop:
         assert ticket is None
 
 
+# ── _raid dirty-tree guard (ticket 0120) ──────────────────────────────────────
+
+
+class TestRaidDirtyTree:
+    """Ticket 0120: _raid returns ("aborted-dirty-tree", None) when the
+    working tree has uncommitted changes, and never proceeds to checkout."""
+
+    def test_dirty_tree_aborts_before_checkout(self, tmp_project):
+        checkout_called = []
+
+        def fake_git(*args, cwd):
+            sub = args[0] if args else ""
+            if sub == "status":
+                return MagicMock(returncode=0, stdout="M scripts/beat.py\n", stderr="")
+            if sub == "checkout":
+                checkout_called.append(args)
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        with (
+            patch("beat._sync_origin_main"),
+            patch("beat._default_branch", return_value="main"),
+            patch("beat._git", side_effect=fake_git),
+            patch("beat._record_phase_outcome"),
+        ):
+            outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
+
+        assert outcome == "aborted-dirty-tree"
+        assert ticket is None
+        assert checkout_called == [], "checkout must not be called on a dirty tree"
+
+
 # ── housekeeping phase: dedicated branch + PR flow (ticket 0072) ──────────────
 
 
