@@ -2,10 +2,12 @@
 Title: Update erg binary to accept Blocks: as a valid v1 header
 Created: 2026-05-12
 Author: claude
+Closed: moot — Blocks: header removed from spec, no binary update needed
 
 --- log ---
 2026-05-12T20:49Z claude created — unblocks PR #159 umbrella auto-close feature
 
+2026-05-12T22:00Z MinhHaDuong closed — moot — Blocks: header removed from spec, no binary update needed
 --- body ---
 ## Context
 
