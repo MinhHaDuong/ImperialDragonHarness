@@ -12,4 +12,10 @@ Run:
 ~/.claude/skills/merge/erg-pr-merge $ARGUMENTS
 ```
 
+**Cross-repo prerequisite**: the caller must ensure cwd is the target
+project and the PR branch is checked out before invoking `/merge`. For
+cross-repo flows, this means `cd <project-path> && git fetch origin &&
+gh pr checkout <pr-number>` before the call. The script itself is
+cwd-based — it never takes a repo or path argument.
+
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.

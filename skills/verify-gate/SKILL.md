@@ -47,6 +47,12 @@ Either:
 Both paths produce the same verdict shape. Round is always derived from PR comment
 history (see "Standalone invocation"), never passed by the caller.
 
+**Cross-repo prerequisite**: the caller must ensure cwd is the target project
+before invoking `/verify-gate`. The gate uses `gh` and `git` commands that resolve
+against cwd — running from a different repo's worktree will produce wrong results.
+For cross-repo flows, the caller does `cd <project-path> && git fetch origin`
+before invoking the gate.
+
 ## Evidence discovery
 
 For each ticket exit criterion, the gate searches:

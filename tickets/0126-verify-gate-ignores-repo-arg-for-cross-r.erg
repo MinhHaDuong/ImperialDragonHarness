@@ -6,6 +6,7 @@ Author: MinhHaDuong
 --- log ---
 2026-05-11T23:37Z MinhHaDuong created
 2026-05-12T06:00Z MinhHaDuong note audit complete — scope wider than original ticket
+2026-05-12T09:00Z MinhHaDuong note design decision: cwd contract (forge-neutral) — caller cd's into target project before verify-gate/merge
 
 --- body ---
 ## Problem
@@ -32,26 +33,45 @@ Three layers are missing `--repo`:
 The survey (`nightbeat-supervisor-survey.py:135`) and `check-pr-diff`
 already use `--repo` correctly — the gap is downstream.
 
+## Design decision
+
+**Contract**: cwd-based. The caller (supervisor, raid) ensures cwd is the
+target project and the PR branch is checked out before invoking
+`/verify-gate` and `/merge`. No forge slug or project-path argument on
+skills or scripts.
+
+**Why cwd instead of project-path arg**: verify-gate runs `git log`,
+erg-pr-merge runs `git branch --show-current`, `git add tickets/`,
+`git push` — all cwd-dependent. Patching just the `gh` calls with
+`--repo` leaves dozens of `git` operations pointing at the wrong repo.
+The only clean fix is cwd.
+
+**Why forge-neutral**: the supervisor passes `project_path` (filesystem
+path) to `cd`, not a GitHub slug. The GitHub slug only appears in
+`check-pr-diff` and `gh pr checkout --repo`, behind
+`# harness-extension-point` lines.
+
+**Consistency with raid**: raid Phase 7 already does `gh pr checkout`
+before `/merge`. The supervisor now mirrors this pattern.
+
 ## Plan
 
 ### Layer 1: erg-pr-merge (shell script)
-- Accept optional `$GH_REPO` env var or positional arg for repo
-- Pass `--repo "$GH_REPO"` to `gh pr view` at lines 30, 36, 67
-- Fallback: if unset, derive from `git remote get-url origin` (current behavior)
+- No argument changes — script stays cwd-based
+- Update header comment to document the cross-repo caller contract
 
-### Layer 2: verify-gate SKILL.md
-- Add instruction: "When a repo argument is provided, pass `--repo <repo>`
-  to all `gh pr` and `gh api` calls"
-- Same for verify/SKILL.md and raid/SKILL.md line 142 (`/merge` invocation)
+### Layer 2: SKILL.md instructions
+- verify-gate, verify, merge: add cross-repo prerequisite note
+  (caller ensures cwd is target project)
+- raid: no change (already does `gh pr checkout` before `/merge`)
 
 ### Layer 3: Supervisor
-- nightbeat-supervisor SKILL.md line 35: pass repo when invoking
-  `/verify-gate` and `/merge`
-- Set `GH_REPO` env var before calling erg-pr-merge
+- Phase 2: add `cd <project_path> && git fetch && gh pr checkout`
+  before `/verify-gate` and `/merge`
 
 ## Exit criteria
 
-- `gh pr view` calls in erg-pr-merge use `--repo` when `GH_REPO` is set
-- verify-gate SKILL.md instructs agents to use `--repo` for cross-repo PRs
-- Supervisor passes repo context through the full verify-gate → merge chain
+- Supervisor SKILL.md instructs agents to cd + checkout before verify-gate/merge
+- verify-gate, verify, merge SKILL.md document the cwd prerequisite
+- erg-pr-merge header documents the cross-repo caller contract
 - Manual test: verify-gate a git-erg PR from a harness worktree succeeds
