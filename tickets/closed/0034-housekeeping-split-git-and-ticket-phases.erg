@@ -2,6 +2,7 @@
 Title: Offload housekeeping git phase to a shell script
 Created: 2026-04-27
 Author: claude
+Closed: autoclosed — PR #149
 
 --- log ---
 2026-04-27T00:00Z claude created
@@ -13,6 +14,7 @@ Author: claude
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:fd5819165802 expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
 2026-05-12T13:28Z rescoped: offload git steps to shell script; drop two-skill split approach
+2026-05-12T13:56Z Minh Ha-Duong closed — autoclosed — PR #149
 --- body ---
 ## Problem
 
