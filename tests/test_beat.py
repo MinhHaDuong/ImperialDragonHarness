@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import os
 import subprocess
 import sys
 import textwrap
@@ -983,6 +984,163 @@ class TestPerProjectLock:
         ):
             beat.main()
         assert exc_info.value.code == 0
+
+
+# ── orphaned locked worktree cleanup ──────────────────────────────────────────
+
+
+class TestCleanupLockedWorktrees:
+    """Tests for _cleanup_locked_worktrees — orphan detection and removal."""
+
+    def _make_locked_worktree(self, git_dir: Path, name: str, pid: int) -> Path:
+        """Create a fake worktree admin dir with a lock file and gitdir pointer."""
+        admin = git_dir / "worktrees" / name
+        admin.mkdir(parents=True)
+        (admin / "locked").write_text(f"claude agent {name} (pid {pid})\n")
+        # gitdir points to <worktree_checkout>/.git
+        fake_checkout = git_dir.parent / ".claude" / "worktrees" / name
+        fake_checkout.mkdir(parents=True, exist_ok=True)
+        (admin / "gitdir").write_text(str(fake_checkout / ".git") + "\n")
+        return fake_checkout
+
+    def test_removes_worktree_with_dead_pid(self, tmp_path):
+        """Orphaned locked worktree (dead PID) is unlocked and removed."""
+        project = tmp_path / "repo"
+        project.mkdir()
+        git_dir = project / ".git"
+        git_dir.mkdir()
+
+        dead_pid = 999999  # almost certainly not alive
+        worktree_path = self._make_locked_worktree(git_dir, "agent-deadbeef", dead_pid)
+
+        run_calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            run_calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with (
+            patch("beat.subprocess.run", side_effect=fake_run),
+            patch("beat.os.kill", side_effect=ProcessLookupError),
+        ):
+            beat._cleanup_locked_worktrees(project)
+
+        assert any("worktree" in " ".join(c) and "unlock" in c for c in run_calls), (
+            f"Expected a 'git worktree unlock' call; got: {run_calls}"
+        )
+        assert any("worktree" in " ".join(c) and "remove" in c for c in run_calls), (
+            f"Expected a 'git worktree remove' call; got: {run_calls}"
+        )
+
+    def test_skips_worktree_with_live_pid(self, tmp_path):
+        """Locked worktree whose PID is alive must not be removed."""
+        project = tmp_path / "repo"
+        project.mkdir()
+        git_dir = project / ".git"
+        git_dir.mkdir()
+
+        live_pid = os.getpid()  # our own PID — definitely alive
+        self._make_locked_worktree(git_dir, "agent-liveone", live_pid)
+
+        run_calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            run_calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with patch("beat.subprocess.run", side_effect=fake_run):
+            beat._cleanup_locked_worktrees(project)
+
+        assert run_calls == [], (
+            f"Should not have called subprocess.run; got: {run_calls}"
+        )
+
+    def test_skips_non_harness_name(self, tmp_path):
+        """Worktree names not matching harness patterns are left alone."""
+        project = tmp_path / "repo"
+        project.mkdir()
+        git_dir = project / ".git"
+        git_dir.mkdir()
+
+        self._make_locked_worktree(git_dir, "custom-worktree", 999999)
+
+        run_calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            run_calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with (
+            patch("beat.subprocess.run", side_effect=fake_run),
+            patch("beat.os.kill", side_effect=ProcessLookupError),
+        ):
+            beat._cleanup_locked_worktrees(project)
+
+        assert run_calls == [], (
+            f"Non-harness worktree should be skipped; got: {run_calls}"
+        )
+
+    def test_skips_lock_file_without_pid(self, tmp_path):
+        """Lock file with unknown format (no PID) is skipped safely."""
+        project = tmp_path / "repo"
+        project.mkdir()
+        git_dir = project / ".git"
+        git_dir.mkdir()
+
+        admin = git_dir / "worktrees" / "agent-nopid"
+        admin.mkdir(parents=True)
+        (admin / "locked").write_text("some other format\n")
+        fake_checkout = tmp_path / "worktrees" / "agent-nopid"
+        fake_checkout.mkdir(parents=True)
+        (admin / "gitdir").write_text(str(fake_checkout / ".git") + "\n")
+
+        run_calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            run_calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with (
+            patch("beat.subprocess.run", side_effect=fake_run),
+            patch("beat.os.kill", side_effect=ProcessLookupError),
+        ):
+            beat._cleanup_locked_worktrees(project)
+
+        assert run_calls == [], (
+            f"Unknown lock format should be skipped; got: {run_calls}"
+        )
+
+    def test_noop_when_no_git_dir(self, tmp_path):
+        """Function returns silently when project has no .git directory."""
+        project = tmp_path / "notgit"
+        project.mkdir()
+        # Should not raise
+        beat._cleanup_locked_worktrees(project)
+
+    def test_skips_permission_error_pid(self, tmp_path):
+        """PermissionError from os.kill means PID is alive — worktree kept."""
+        project = tmp_path / "repo"
+        project.mkdir()
+        git_dir = project / ".git"
+        git_dir.mkdir()
+
+        self._make_locked_worktree(git_dir, "agent-foreign", 12345)
+
+        run_calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            run_calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with (
+            patch("beat.subprocess.run", side_effect=fake_run),
+            patch("beat.os.kill", side_effect=PermissionError),
+        ):
+            beat._cleanup_locked_worktrees(project)
+
+        assert run_calls == [], (
+            f"PermissionError PID should be treated as alive; got: {run_calls}"
+        )
 
 
 # ── crash recovery ─────────────────────────────────────────────────────────────

@@ -2,11 +2,13 @@
 Title: Clean up orphaned git-locked worktrees before each beat run
 Created: 2026-05-10
 Author: claude
+Closed: autoclosed — PR #163
 
 --- log ---
 2026-05-10T11:30Z claude created — identified in 0109 denial catalog (Run 20260507T230223Z)
 2026-05-12T21:00Z claude note — reimagine: check .git/worktrees/*/locked marker (not HEAD.lock). Scope cleanup to harness-pattern names (agent-*, explore-*, t[0-9]*, review-*). Insert after _cleanup_stale_in_progress at beat.py:1213.
 
+2026-05-12T21:27Z MinhHaDuong closed — autoclosed — PR #163
 --- body ---
 ## Context
 

@@ -267,6 +267,86 @@ def _cleanup_stale_in_progress(project: Path) -> None:
         _log(f"=== startup: cleaned stale in_progress records in {project.name} ===")
 
 
+# Harness worktree name patterns created by EnterWorktree
+_HARNESS_WORKTREE_RE = re.compile(r"^(agent-|explore-|t\d|review-)")
+
+
+def _cleanup_locked_worktrees(project: Path) -> None:
+    """Unlock and remove git-locked worktrees whose agent PID is no longer alive.
+
+    EnterWorktree writes a lock file at .git/worktrees/<name>/locked with content
+    like "claude agent <name> (pid NNNN)". When an agent is killed the lock is never
+    removed. This function scans all locked worktrees belonging to this project,
+    checks PID liveness, and removes orphans so housekeeping does not fail with
+    "fatal: impossible de supprimer un arbre de travail verrouillé".
+    """
+    git_dir = project / ".git"
+    if not git_dir.is_dir():
+        return
+    worktrees_admin = git_dir / "worktrees"
+    if not worktrees_admin.is_dir():
+        return
+
+    for admin_dir in sorted(worktrees_admin.iterdir()):
+        if not admin_dir.is_dir():
+            continue
+        name = admin_dir.name
+        if not _HARNESS_WORKTREE_RE.match(name):
+            continue
+
+        lock_file = admin_dir / "locked"
+        if not lock_file.exists():
+            continue
+
+        # Extract PID from lock content, e.g. "claude agent <name> (pid 1234)"
+        content = lock_file.read_text().strip()
+        pid_match = re.search(r"\(pid (\d+)\)", content)
+        if not pid_match:
+            # Unknown format — skip to avoid accidentally removing a live worktree
+            _log(
+                f"=== startup: skipping locked worktree {name}: unknown lock format ==="
+            )
+            continue
+
+        pid = int(pid_match.group(1))
+        try:
+            os.kill(pid, 0)
+            alive = True
+        except ProcessLookupError:
+            alive = False
+        except PermissionError:
+            alive = True  # process exists but owned by another user
+
+        if alive:
+            continue
+
+        # Resolve the worktree checkout path from .git/worktrees/<name>/gitdir
+        gitdir_file = admin_dir / "gitdir"
+        if not gitdir_file.exists():
+            continue
+        # gitdir contains "<worktree_path>/.git", so parent is the checkout dir
+        worktree_path = Path(gitdir_file.read_text().strip()).parent
+
+        _log(
+            f"=== startup: removing orphaned locked worktree {name} (dead pid {pid}) ==="
+        )
+        try:
+            subprocess.run(  # noqa: S603
+                ["git", "worktree", "unlock", str(worktree_path)],
+                cwd=project,
+                capture_output=True,
+                check=False,
+            )
+            subprocess.run(  # noqa: S603
+                ["git", "worktree", "remove", "--force", str(worktree_path)],
+                cwd=project,
+                capture_output=True,
+                check=False,
+            )
+        except OSError as exc:
+            _log(f"=== startup: failed to remove worktree {name}: {exc} ===")
+
+
 def append_beat_log(project: Path, record: dict) -> None:
     """Append one compact-JSON record; no-op in dry-run mode."""
     if DRY_RUN:
@@ -1211,6 +1291,9 @@ def main() -> None:
     # Layer-1 cleanup: rewrite buried stale in_progress records that crash
     # recovery missed (it only checks the most-recent record within 55 min).
     _cleanup_stale_in_progress(path)
+
+    # Layer-2 cleanup: remove orphaned git-locked worktrees left by killed agents.
+    _cleanup_locked_worktrees(path)
 
     # Crash / SIGKILL recovery
     last = read_last_beat_record(path)
