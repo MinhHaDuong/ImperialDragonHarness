@@ -9,6 +9,18 @@ Append the following to `.git/hooks/pre-commit` (create the file and
 `chmod +x` it if it does not exist):
 
 ```sh
+# Reject tickets/erg commit on non-main branches
+# CI rebuilds the binary after merge; feature PRs must not include it.
+if git diff --cached --name-only | grep -q '^tickets/erg$'; then
+    branch=$(git branch --show-current)
+    if [ "$branch" != "main" ]; then
+        echo "pre-commit: do not commit tickets/erg in feature branches." >&2
+        echo " CI rebuilds the binary after merge. Use 'make build' and test" >&2
+        echo " with build/erg. To override: git commit --no-verify" >&2
+        exit 1
+    fi
+fi
+
 # Validate .erg files (if any are staged)
 erg_files=$(git diff --cached --name-only | grep '\.erg$' || true)
 if [ -n "$erg_files" ]; then
