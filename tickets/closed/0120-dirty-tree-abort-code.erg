@@ -2,6 +2,7 @@
 Title: skill-doctor: dirty tree blocks beat checkout — abort with structured error
 Created: 2026-05-11
 Author: claude
+Closed: autoclosed — PR #154
 
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=12, sev=medium, score=24
@@ -9,6 +10,7 @@ Author: claude
 2026-05-12T00:00Z claude note implemented: dirty-tree guard in _raid() + supervisor repair rule
 
 2026-05-12T20:00Z note verify-gate round=2 APPROVED — all exit criteria addressed, round-1 blockers resolved in commit 5eb432c
+2026-05-12T20:06Z MinhHaDuong closed — autoclosed — PR #154
 --- body ---
 ## Context
 
