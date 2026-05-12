@@ -1,6 +1,6 @@
 ---
 name: raid
-description: Run an Imperial Dragon raid across multiple tickets. Picks targets, manages waves, enforces isolation. Always autonomous — never merges.
+description: Run an Imperial Dragon raid across multiple tickets. Picks targets, manages waves, enforces isolation. Merges APPROVED PRs after verify-gate clears.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
@@ -12,8 +12,7 @@ effort: max
 
 A raid does not redefine skills. It calls `/start-ticket`,
 `/review-pr`, `/celebrate`, etc. Its job is sequencing, wave management,
-and enforcing invariants. It never merges — all work lands as merge requests
-for the author to review.
+and enforcing invariants.
 
 ## Balance rule
 
@@ -52,6 +51,16 @@ For each ticket, launch an agent (background, no isolation needed — read-only)
   Annotate any hits with the proposed fix.
 
 Wait for all. Commit reimagined tickets. Report scorecard.
+
+**Drift guard**: For each reimagined ticket, compare against the original:
+- Exit criteria dropped or reworded to change intent → ESCALATE.
+- New exit criteria added that weren't implied by the original → ESCALATE.
+- Scope narrowed to a strict subset of the original → allowed (simplification).
+- Implementation approach changed but exit criteria preserved → allowed (that's the point).
+
+Reimagination refines *how* to deliver, not *what* to deliver. Any ticket that
+fails the drift guard is pulled from the raid and left for human review with
+a comment explaining what the Imagine agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 
@@ -97,8 +106,8 @@ Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence 
 5. `/verify-gate` — anti-rubber-stamp merge gate: APPROVED / REROLL / ESCALATE.
 6. On REROLL (round 1 only), `/verify` spawns a fix agent and re-gates; round 2 escalates.
 
-`/verify` never merges. The raid does not either — merges are always the
-author's call (interactive) or the `/celebrate` flow's call (autonomous).
+`/verify` never merges. Merges happen in Phase 7 after verify-gate clears
+(including its scope-containment check).
 
 **Per-wave:** after all per-ticket `/verify` runs complete, launch one integration-review
 subagent (read-only) to check:
@@ -110,28 +119,37 @@ subagent (read-only) to check:
 Wave-level findings go to the human as a wave-summary comment; they do not block
 individual `/verify` verdicts.
 
-## Phase 7: Scope audit
-
-Check each merge request for scope creep — did Execute exceed the Plan?
-
-**Inspect the branch, not a range.** Use two-dot `git log origin/main..origin/<branch> --stat`. Never use three-dot `origin/main...origin/<branch>` — that's the symmetric difference, so commits another session pushes to main while the raid runs will appear in the output and get falsely flagged as on-PR scope creep.
+## Phase 7: Merge (sequential per-wave)
 
 **Token economy rule**: Any time a ticket must be created in any phase, invoke
 `/ticket-new` — never write the file directly or compute the next ID manually.
 `/ticket-new` calls `erg next-id` and `erg validate <file>` (file arg, not
 directory), keeping mechanical work inside the tool where it belongs.
 
-For each out-of-scope finding, choose one outcome:
+For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
+- `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
+- `scope_overflow` in the verdict is empty or all entries have suggested disposition
+  TICKETED (caller creates tickets via `/ticket-new` and adds `Scope overflow:
+  tickets/NNNN` to the PR body before merging).
 
-- **CLEAN** — no scope creep found; continue.
-- **TICKETED** — create a new ticket via `/ticket-new` for the out-of-scope work.
-  Leave commits in the PR. Add a line to the PR body: `Scope overflow: #NNNN`.
-  Do not rewrite git history.
-- **ESCALATE** — scope creep is present but cannot be cleanly ticketed (ambiguous
-  ownership, no clear ticket boundary, or you are uncertain). Stop. Leave a
-  comment on the merge request explaining what was found. Human decides.
+Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
+the PR — it stays open for human review.
 
-**Never** rebase or amend commits to excise scope creep.
+For each eligible PR, sequentially within the wave:
+1. `git fetch origin` to pick up any prior merges.
+2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch.
+3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
+4. Run `/merge <pr-number>`. This atomically closes the ticket and squash-merges via GitHub API.
+5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
+
+After all waves: `git checkout main && git pull --rebase origin main`, then
+`make check`. New failures → revert last merge + ticket.
+
+## Phase 8: Celebrate (per-merged-PR)
+
+After all merges, from the updated main branch, run `/celebrate` for each
+successfully merged PR. The celebrate pre-check (`git merge-base --is-ancestor
+HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)
 
@@ -150,8 +168,7 @@ Autonomous mode: ralph loop to next wave.
     grep -h ' bump ' tickets/*.erg | awk '{print $4}' | sort | uniq -c | sort -rn
     ```
     Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
-2a. Interactive mode: All work pushed, merge requests open.
-2b. Autonomous mode: All merge requests merged, main green.
+2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
 3. Write briefing (session log + merge request list + test delta).
 4. Do NOT run `/end-session`.
 

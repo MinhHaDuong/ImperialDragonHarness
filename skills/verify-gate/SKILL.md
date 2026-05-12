@@ -67,6 +67,21 @@ For each review comment, the gate searches:
 
 A comment is UNRESOLVED if none of the above applies.
 
+## Scope containment
+
+After verifying exit criteria (completeness), the gate checks containment:
+does the diff include work not attributable to any exit criterion?
+
+Inspect the branch with `git log origin/main..origin/<branch> --stat` (two-dot,
+never three-dot — three-dot is symmetric difference and catches unrelated commits
+pushed to main during the raid). For each changed file, trace it to an exit
+criterion or a necessary dependency (e.g., a test file for a new function).
+
+The gate reports findings in the `scope_overflow` section of the verdict. It does
+not create tickets or edit the PR body — the caller handles disposition.
+
+Never rebase or amend commits to excise scope creep.
+
 ## Verdict shape
 
 ```yaml
@@ -104,6 +119,11 @@ unresolved_adherence_violations:
     line: <n>
     severity: blocking | nit
 
+scope_overflow:
+  - file: <path>
+    reason: "<why this change is not traceable to any exit criterion>"
+    suggested_disposition: TICKETED | ESCALATE
+
 rationale: |
   <one paragraph: what is the strongest remaining reviewer attack on this PR?
    if APPROVED, state why the evidence holds up to adversarial reading.>
@@ -129,6 +149,9 @@ second_round_needed:
 - Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
+- Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
+- `scope_overflow` entries with all suggested dispositions TICKETED → does not block
+  APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
 **On REROLL**: append to the ticket file at `~/.claude/tickets/{ticket-id}-*.erg`:
@@ -169,7 +192,7 @@ blocker or a `verifiable:` minor) or files it as `consider:`.
 | "Simplify ran, no findings" | Simplify finds nits, not ticket completion; orthogonal |
 | "Reviewer concern filed as follow-up" with no ticket ID | Unverifiable; ticket must exist |
 | "Addressed in PR body" without commit | PR body is narrative; need the actual change |
-| "Edge case out of scope" without Scope audit confirmation | The Scope phase is Phase 7; gate cannot waive unilaterally |
+| "Edge case out of scope" without scope evidence | Gate must trace each changed file to an exit criterion; untraced files go in `scope_overflow` |
 | "X might break" / "could cause Y" as a minor | Ambiguous hypothesis with no reproducible evidence. |
 
 ## Standalone invocation
@@ -202,6 +225,7 @@ by invocation mode:
    Review comments: <n_unresolved> unresolved
    Simplify: <n_unresolved> must-fix not applied
    Adherence: <n_blocking> blocking violations
+   Scope overflow: <n_files> files (<n_ticketed> ticketed, <n_escalate> escalate)
 
    Minors:
    - verifiable: <count> (<n_unresolved> unresolved, blocker-adjacent)
@@ -229,4 +253,4 @@ by invocation mode:
 
 - **Merging.** The gate never merges.
 - **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them.
-- **Scope audit.** That's Phase 7 of the raid, handled separately.
+- **Acting on scope overflow.** The gate detects and reports; the caller tickets and annotates.
