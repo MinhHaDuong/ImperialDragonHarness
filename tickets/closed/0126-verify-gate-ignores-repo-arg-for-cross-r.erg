@@ -2,12 +2,14 @@
 Title: verify-gate ignores --repo arg for cross-repo PRs
 Created: 2026-05-12
 Author: MinhHaDuong
+Closed: autoclosed — PR #152
 
 --- log ---
 2026-05-11T23:37Z MinhHaDuong created
 2026-05-12T06:00Z MinhHaDuong note audit complete — scope wider than original ticket
 2026-05-12T09:00Z MinhHaDuong note design decision: cwd contract (forge-neutral) — caller cd's into target project before verify-gate/merge
 
+2026-05-12T18:42Z MinhHaDuong closed — autoclosed — PR #152
 --- body ---
 ## Problem
 
