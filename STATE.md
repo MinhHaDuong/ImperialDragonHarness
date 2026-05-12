@@ -23,9 +23,8 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **Review & merge open PRs**: #142 (0051 fallback rotation), #141 (0117 Tag rename), #136 (0113 denial catalog), #143 (0124 agnostic-guard)
+- **git-erg**: rebuild binary after AGENTS.md template hotfix (`make build` on git-erg, then `erg update` in all projects)
 - **0125**: housekeeping should delete stale branches for closed tickets
-- **git-erg**: rebuild binary after AGENTS.md template hotfix (`make build` + `erg update` in all projects)
 - **git-erg/0130**: erg tag/untag CLI — prerequisite for replacing branch-as-claim
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
