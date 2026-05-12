@@ -16,7 +16,7 @@ Blocked-by: 0007
 
 --- log ---
 2026-05-04T09:00Z alice created
-2026-05-04T14:22Z bob status open Was blocked, 0007 now merged
+2026-05-04T14:22Z bob note blocker 0007 merged â€” unblocked
 
 --- body ---
 ## Context
@@ -25,7 +25,7 @@ We need exponential backoff with jitter, capped at 3 retries.
 
 ## Exit criteria
 - [ ] `client.Fetch()` retries up to 3 times on 5xx
-- [ ] Backoff is 1s, 2s, 4s + random jitter âi 500ms
+- [ ] Backoff is 1s, 2s, 4s + random jitter ï¿½i 500ms
 - [ ] Unit test covers retry exhaustion path
 - [ ] `make check` passes
 ```
