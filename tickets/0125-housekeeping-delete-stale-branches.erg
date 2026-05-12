@@ -5,6 +5,7 @@ Author: MinhHaDuong
 
 --- log ---
 2026-05-11T21:30Z MinhHaDuong created
+2026-05-12T21:00Z claude note — reimagine: case 2 (empty orphan branches) deferred as stretch goal. Core fix: reclassify closed-ticket branches with 0 commits_beyond_default from cleanup-candidate to fix-now in healthcheck SKILL.md. Use git branch -d (not -D) — fails safely on unmerged. Open-PR guard via gh pr list --head.
 
 --- body ---
 ## Context
