@@ -95,14 +95,15 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
         git commit -m "ticket(${TICKET_ID}): close and archive — PR #${PR}"
     fi
     git push origin HEAD
-    echo "Waiting for CI after ticket-close commit..." # harness-extension-point
+    echo "Waiting for CI after ticket-close commit..."
+    # harness-extension-point
     timeout 600 gh pr checks "$PR" --watch --fail-fast \
-        || die "CI failed after ticket-close commit — aborting merge"
+        || die "CI did not pass within 600s (failed or timed out) — aborting merge"
 elif [[ -n "$TICKET_ID" ]]; then
     echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
 fi
 
-# ── Step 3: squash-merge via GitHub API (works in worktrees and on VMs) ──────
+# ── Step 3: squash-merge via forge CLI (works in worktrees and on VMs) ───────
 
 echo "Merging PR #${PR}..."
 gh pr merge "$PR" --squash --delete-branch # harness-extension-point
