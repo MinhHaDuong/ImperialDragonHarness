@@ -7,6 +7,7 @@ Author: claude
 2026-05-12T08:00Z claude created
 2026-05-12T21:00Z claude note — reimagine: scope to timeouts only. Shared utils YAGNI (_read_jsonl diverges between scripts). _find_open_pr removal is separate. 5 subprocess.run calls total (4 in supervisor-survey, 1 in skill-doctor-survey). Use timeout=60 (gh can be slow).
 
+2026-05-12T20:47Z bump verify-reroll — round 1: exit criteria #2 (no duplicated utils) and #3 (at-most-1 gh-pr-list) listed in ticket body but not addressed or removed
 --- body ---
 ## Context
 
@@ -41,7 +42,9 @@ Three related issues in harness survey scripts:
 
 ## Exit criteria
 
-1. All subprocess.run calls have timeout parameter.
-2. No duplicated utility functions across survey scripts.
-3. Supervisor survey makes at most 1 gh-pr-list call per project (not per ticket).
+1. All subprocess.run calls have timeout parameter and handle subprocess.TimeoutExpired.
 4. All existing tests pass.
+
+Criteria 2 (shared utils extraction) and 3 (redundant gh-pr-list calls) deferred —
+_read_jsonl diverges between scripts (YAGNI); _find_open_pr removal is a separate concern.
+Open follow-up tickets if needed.
