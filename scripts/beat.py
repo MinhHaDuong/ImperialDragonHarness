@@ -1106,7 +1106,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     # at MAX_CLOSED_REPICKS to prevent flaky exit-criteria from looping
     # forever (abort to idle so the next beat can try again).
     hostname = socket.gethostname()
-    pick_model = MODEL_SONNET if _repo_active(path) else project.pick_ticket_model
+    pick_model = project.pick_ticket_model
     closed_attempts = 0
     ticket_id = None
     pt_res = _SkillResult()

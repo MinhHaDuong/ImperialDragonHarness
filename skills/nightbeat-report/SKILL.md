@@ -1,6 +1,7 @@
 ---
 name: nightbeat-report
 description: Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities.
+model: haiku
 user-invocable: true
 argument-hint: "[--hours N]"
 ---
