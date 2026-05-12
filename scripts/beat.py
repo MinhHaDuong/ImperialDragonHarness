@@ -109,7 +109,7 @@ class ProjectConfig:
 
     Fields (all optional except path):
         budget_housekeeping, budget_pick_ticket, budget_raid — USD caps.
-        pick_ticket_model — model used when repo has no recent commits.
+        pick_ticket_model — model tier for pick-ticket (always used, active or idle).
         interval_minutes — minimum minutes between beats (0 = always run).
         raid_timeout_s — seconds before the raid subprocess is killed.
         max_turns_pick_ticket — max agent turns for pick-ticket (default 30).
@@ -119,7 +119,7 @@ class ProjectConfig:
     budget_housekeeping: float = BUDGET_HOUSEKEEPING
     budget_pick_ticket: float = BUDGET_PICK_TICKET
     budget_raid: float = BUDGET_RAID
-    pick_ticket_model: str = MODEL_FAST  # model used when repo has no recent commits
+    pick_ticket_model: str = MODEL_FAST
     interval_minutes: int = 0  # 0 = always run
     raid_timeout_s: int = RAID_TIMEOUT_S
     max_turns_pick_ticket: int = MAX_TURNS_PICK_TICKET
