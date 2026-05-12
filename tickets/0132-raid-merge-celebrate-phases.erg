@@ -1,0 +1,48 @@
+%erg v1
+Title: Add merge and celebrate phases to raid, fold scope audit into verify-gate
+Created: 2026-05-12
+Author: claude
+
+--- log ---
+2026-05-12T10:15Z claude created
+
+--- body ---
+## Context
+
+Raid sequenced work through verify-gate but never merged — PRs were left for
+human review or nightbeat-supervisor. With growing trust in the pipeline,
+raid should close the loop: verify-gate APPROVED → merge → celebrate.
+
+Scope audit (old Phase 7) duplicated work that verify-gate could do natively
+as a scope-containment check on the diff. Folding it in simplifies the
+pipeline and keeps the per-ticket lifecycle self-contained.
+
+## Actions
+
+1. verify-gate: add scope-containment section — detect overflow, report in
+   `scope_overflow` verdict field with `suggested_disposition` (TICKETED or
+   ESCALATE). Gate stays a pure detector (context: fork).
+2. verify-gate: add `scope_overflow` to verdict shape and decision rules.
+3. raid: remove Phase 7 (scope audit) — now handled by verify-gate.
+4. raid: add Phase 7 (Merge) — sequential per-wave, `gh pr checkout` before
+   each `/merge`, handle scope_overflow ticketing before merge.
+5. raid: add Phase 8 (Celebrate) — from updated main after all merges.
+6. raid: add drift guard after Phase 2 (Imagine) — exit criteria changes
+   ESCALATE, implementation approach changes allowed.
+7. raid: remove interactive/autonomous mode split in wrap-up.
+
+## Test
+
+Diff review: verify that verify-gate verdict shape includes `scope_overflow`,
+decision rules handle TICKETED vs ESCALATE, raid Phase 7 merge flow checks
+out PR branch before `/merge`, and drift guard criteria are precise.
+
+## Exit criteria
+
+- verify-gate has scope-containment section with `scope_overflow` in verdict shape
+- verify-gate decision rules: all TICKETED does not block APPROVED, any ESCALATE → ESCALATE
+- raid Phase 7 merges sequentially per-wave with `gh pr checkout` before `/merge`
+- raid Phase 8 runs `/celebrate` from updated main
+- drift guard after Imagine: dropped/reworded exit criteria → ESCALATE
+- No stale "Phase 7 = scope audit" references remain
+- All `gh` calls annotated with harness-extension-point comment
