@@ -331,15 +331,17 @@ def _cleanup_locked_worktrees(project: Path) -> None:
             f"=== startup: removing orphaned locked worktree {name} (dead pid {pid}) ==="
         )
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 ["git", "worktree", "unlock", str(worktree_path)],
                 cwd=project,
                 capture_output=True,
+                check=False,
             )
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 ["git", "worktree", "remove", "--force", str(worktree_path)],
                 cwd=project,
                 capture_output=True,
+                check=False,
             )
         except OSError as exc:
             _log(f"=== startup: failed to remove worktree {name}: {exc} ===")
