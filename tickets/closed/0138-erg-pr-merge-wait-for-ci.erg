@@ -6,6 +6,7 @@ Closed: autoclosed — PR #157
 
 --- log ---
 2026-05-12T20:00Z claude created — perch follow-up after raid 120/129/133
+2026-05-12T21:00Z claude note — reimagine: use `gh pr checks --watch --fail-fast` (built-in, handles edge cases) instead of grep loop. Replace raw `gh api` merge call with `gh pr merge --squash --delete-branch`. Wrap with timeout 600 to prevent infinite hang.
 
 2026-05-12T21:07Z MinhHaDuong closed — autoclosed — PR #157
 --- body ---

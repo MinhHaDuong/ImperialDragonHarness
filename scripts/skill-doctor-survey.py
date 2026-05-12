@@ -72,19 +72,23 @@ def _read_jsonl(path: Path, since: datetime | None = None) -> list[dict]:
 
 
 def _git_log_grep(pattern: str, since: datetime) -> list[str]:
-    r = subprocess.run(
-        [
-            "git",
-            "log",
-            "--all",
-            "--oneline",
-            f"--since={since.isoformat()}",
-            f"--grep={pattern}",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=HARNESS_DIR,
-    )
+    try:
+        r = subprocess.run(
+            [
+                "git",
+                "log",
+                "--all",
+                "--oneline",
+                f"--since={since.isoformat()}",
+                f"--grep={pattern}",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=HARNESS_DIR,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return []
     return r.stdout.strip().splitlines() if r.returncode == 0 else []
 
 
