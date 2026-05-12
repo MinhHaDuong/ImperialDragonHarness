@@ -23,10 +23,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **erg update in consumer projects**: IDH binary rebuilt (fb1aab2) — propagate to chemin-de-voix and any other projects (`erg update` in each)
 - **0125**: housekeeping should delete stale branches for closed tickets
-- **git-erg/0130**: erg tag/untag CLI — prerequisite for replacing branch-as-claim
-- **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
 ## Backlog
 
