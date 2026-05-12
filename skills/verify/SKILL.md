@@ -41,6 +41,7 @@ Merge is always the human's or the raid's call.
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
+- Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). A PR is **small** if `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
 
 ### 2–4. Read-only review fan-out (parallel)
@@ -52,13 +53,15 @@ Launch in a single message, as background agents:
   pre-PR gate, see PR #40), skip this invocation — the adherence check
   already ran clean before the PR was opened.
 - `/review` (built-in) — standard review.
-- `/review-pr` or `/review-pr-prose` — file-type heuristic: if any `*.qmd` changed → prose; else code.
+- `/review-pr` or `/review-pr-prose` — **size-gate**: skip if the PR is small (as computed in phase 1); log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the setup summary. Otherwise: file-type heuristic: if any `*.qmd` changed → prose; else code.
 
-Wait for all three to complete. Collect their outputs.
+Wait for all agents to complete. Collect their outputs.
+
+**Early-exit check**: if `/verify-adherence` returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees a REROLL; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
 ### 5. Simplify (sequential)
 
-After 2–4 land their comments, run `/simplify <pr-number>`. This phase may commit fixes
+After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
@@ -102,7 +105,7 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 ## Circuit breakers
 
 - Setup step cannot find ticket file → ESCALATE.
-- Any of phases 2–5 errors or times out → ESCALATE (do not silently skip).
+- Any of phases 2–5 errors or times out → ESCALATE (do not silently skip). Exception: phase 5 (simplify) intentionally skipped when adherence is blocking — this is not an error.
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with phase 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
@@ -196,8 +199,8 @@ final report is the signal.
 
 round: <n>
 adherence: PASS|FAIL — <n_blocking> blocking
-review-pr: <n_comments_posted>
-simplify: <n_fixes_applied>
+review-pr: <n_comments_posted> | skipped (size-gate) | skipped (adherence blocking)
+simplify: <n_fixes_applied> | skipped (adherence blocking)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
 ## /verify-gate verdict
