@@ -436,7 +436,7 @@ class TestRaid:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             for key, (rc, text) in responses.items():
@@ -881,7 +881,7 @@ class TestProjectScopedIsolation:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
@@ -906,7 +906,7 @@ class TestProjectScopedIsolation:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
@@ -933,7 +933,7 @@ class TestProjectScopedIsolation:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "project_scoped": project_scoped})
@@ -1271,7 +1271,7 @@ class TestPickTicketModelSelection:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "model": model})
@@ -1288,7 +1288,7 @@ class TestPickTicketModelSelection:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
-        assert pick_call["model"] == beat.MODEL_HAIKU
+        assert pick_call["model"] == beat.MODEL_FAST
 
     def test_uses_haiku_when_active(self, tmp_project, git_ok):
         recorded, fake = self._make_recorder()
@@ -1299,7 +1299,7 @@ class TestPickTicketModelSelection:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
         pick_call = next(r for r in recorded if "pick-ticket" in r["skill"])
-        assert pick_call["model"] == beat.MODEL_HAIKU
+        assert pick_call["model"] == beat.MODEL_FAST
 
     def test_project_override_respected_when_idle(self, tmp_project, git_ok):
         custom_model = "claude-opus-4-7"
@@ -1461,7 +1461,7 @@ class TestRaidDoneButOpenWarning:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             if "pick-ticket" in skill:
@@ -1491,7 +1491,7 @@ class TestRaidDoneButOpenWarning:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             if "pick-ticket" in skill:
@@ -1518,7 +1518,7 @@ class TestRaidDoneButOpenWarning:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             if "pick-ticket" in skill:
@@ -1842,7 +1842,7 @@ class TestRaidBudgetPassthrough:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "budget": budget})
@@ -1881,7 +1881,7 @@ class TestPickTicketMaxTurnsPassthrough:
             timeout_s,
             cwd,
             project_scoped=False,
-            model=beat.MODEL_SONNET,
+            model=beat.MODEL_WORKHORSE,
             max_turns=None,
         ):
             recorded.append({"skill": skill, "max_turns": max_turns})

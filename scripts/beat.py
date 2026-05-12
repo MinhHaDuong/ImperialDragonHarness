@@ -61,8 +61,9 @@ BUDGET_HOUSEKEEPING: float = 0.75
 BUDGET_PICK_TICKET: float = 0.75
 BUDGET_RAID: float = 5.00
 
-MODEL_SONNET: str = "sonnet"
-MODEL_HAIKU: str = "claude-haiku-4-5-20251001"
+MODEL_FAST: str = "claude-haiku-4-5-20251001"
+MODEL_WORKHORSE: str = "sonnet"
+MODEL_STRONG: str = "opus"
 
 PROJECTS_CONFIG: Path = HARNESS_DIR / "scripts" / "projects.json"
 OUTCOMES_LOG: Path = HARNESS_DIR / "logs" / "beat-outcomes.jsonl"
@@ -118,7 +119,7 @@ class ProjectConfig:
     budget_housekeeping: float = BUDGET_HOUSEKEEPING
     budget_pick_ticket: float = BUDGET_PICK_TICKET
     budget_raid: float = BUDGET_RAID
-    pick_ticket_model: str = MODEL_HAIKU  # model used when repo has no recent commits
+    pick_ticket_model: str = MODEL_FAST  # model used when repo has no recent commits
     interval_minutes: int = 0  # 0 = always run
     raid_timeout_s: int = RAID_TIMEOUT_S
     max_turns_pick_ticket: int = MAX_TURNS_PICK_TICKET
@@ -582,7 +583,7 @@ def _claude_argv(
     budget: float,
     *,
     project_scoped: bool = False,
-    model: str = MODEL_SONNET,
+    model: str = MODEL_WORKHORSE,
     max_turns: int | None = None,
 ) -> list[str]:
     argv = [
@@ -618,7 +619,7 @@ def run_skill(
     timeout_s: int,
     cwd: Path,
     project_scoped: bool = False,
-    model: str = MODEL_SONNET,
+    model: str = MODEL_WORKHORSE,
     max_turns: int | None = None,
 ) -> tuple[int, _SkillResult]:
     """Invoke a Claude skill; return (exit_code, _SkillResult).
