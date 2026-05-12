@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Add timeout= to subprocess.run in git_utils, project-state, refresh-STATE
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T00:00Z claude created — celebrate sweep after raid 122/114/125/130/138
+
+--- body ---
+## Context
+
+Ticket 0130 added `timeout=60` to the survey scripts. A celebrate sweep found 4
+remaining subprocess.run calls in 3 scripts that still lack a timeout parameter:
+
+- `scripts/git_utils.py:9`
+- `scripts/project-state.py:17`
+- `scripts/refresh-STATE.py:15` and `:31`
+
+These are called by housekeeping and healthcheck probes. A hung `git` or system
+call in any of these blocks the supervisor silently.
+
+## Actions
+
+1. Add `timeout=30` to each of the 4 subprocess.run calls (git commands are
+   local, 30s is generous).
+2. Add `except subprocess.TimeoutExpired` handling at each call site — log the
+   timeout and return a safe empty result.
+
+## Test
+
+```python
+# Patch subprocess.run to raise TimeoutExpired; assert function returns
+# gracefully (no exception propagated, returns empty/default value).
+```
+
+## Exit criteria
+
+- `python3 -c "import ast, sys; ..."` AST check (same as 0130 celebrate sweep)
+  returns no hits for scripts/git_utils.py, scripts/project-state.py,
+  scripts/refresh-STATE.py.
+- All existing tests pass.
