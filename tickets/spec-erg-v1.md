@@ -124,6 +124,10 @@ default. One `Blocked-by:` line per dependency; remove the line once the depende
 **Resolution and cycle detection** for path-refs are deferred to a follow-up implementation ticket.
 Tools that cannot resolve a path-ref treat it as blocking (same behaviour as offline forge refs).
 
+**`Blocks:` references** use the same ref grammar as `Blocked-by:`. The auto-close logic in
+`pick-ticket` resolves local refs only (`[0-9]{4}`); path-refs and forge-refs in `Blocks:` lines
+are ignored by the auto-close check (treated as unresolvable — the umbrella stays open).
+
 There is no pending or doing header. If two agents need to avoid stepping on each other, they should
 coordinate via out-of-band signals — typically a git branch whose name contains the ticket ID.
 
