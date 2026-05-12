@@ -2,10 +2,12 @@
 Title: remove git-erg from nightbeat targets
 Created: 2026-05-12
 Author: MinhHaDuong
+Closed: merged PR #151
 
 --- log ---
 2026-05-12T14:48Z MinhHaDuong created
 
+2026-05-12T15:02Z MinhHaDuong closed — merged PR #151
 --- body ---
 No open tickets in git-erg repo — remove it from `scripts/projects.json` to avoid wasting beat budget.
 
