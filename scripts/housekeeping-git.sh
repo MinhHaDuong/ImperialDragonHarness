@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Run from project root. Handles git sync, beat-skip expiry, and erg DAG check.
-set -uo pipefail
+set -euo pipefail
 
-git fetch --all --prune --quiet
-git gc --auto
+git fetch --all --prune --quiet || true
+git gc --auto || true
 
 SKIP_FILE=".git/beat-skip.json"
 if [[ -f "$SKIP_FILE" ]]; then
