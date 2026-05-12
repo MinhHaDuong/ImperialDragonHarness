@@ -5,6 +5,7 @@ Author: MinhHaDuong
 
 --- log ---
 2026-05-11T23:37Z MinhHaDuong created
+2026-05-12T06:00Z MinhHaDuong note audit complete — scope wider than original ticket
 
 --- body ---
 ## Problem
@@ -19,19 +20,38 @@ Every cross-repo PR the survey discovers will hit this wall until fixed.
 
 ## Root cause
 
-The verify-gate skill (and likely the merge skill) invokes `gh pr view`
-without `--repo <owner/repo>`, so the GitHub CLI defaults to the current
-working directory's git remote.
+Three layers are missing `--repo`:
+
+1. **erg-pr-merge script** (`skills/merge/erg-pr-merge`) — 3 `gh pr view`
+   calls at lines 30, 36, 67 lack `--repo`. These are the hardest failures.
+2. **verify-gate SKILL.md** — prose instructions tell the agent to run
+   `gh pr view` but don't mention `--repo`. The agent inherits cwd context.
+3. **Supervisor wiring** — supervisor knows `github_repo` from the survey
+   but doesn't pass it when invoking `/verify-gate` or `/merge`.
+
+The survey (`nightbeat-supervisor-survey.py:135`) and `check-pr-diff`
+already use `--repo` correctly — the gap is downstream.
 
 ## Plan
 
-1. Audit the verify-gate SKILL.md and any helper scripts for `gh pr` or
-   `gh api` calls that lack `--repo`.
-2. Thread the repo argument through all GitHub CLI calls.
-3. Add a test case: verify-gate from a different repo's worktree against
-   a cross-repo PR number.
+### Layer 1: erg-pr-merge (shell script)
+- Accept optional `$GH_REPO` env var or positional arg for repo
+- Pass `--repo "$GH_REPO"` to `gh pr view` at lines 30, 36, 67
+- Fallback: if unset, derive from `git remote get-url origin` (current behavior)
+
+### Layer 2: verify-gate SKILL.md
+- Add instruction: "When a repo argument is provided, pass `--repo <repo>`
+  to all `gh pr` and `gh api` calls"
+- Same for verify/SKILL.md and raid/SKILL.md line 142 (`/merge` invocation)
+
+### Layer 3: Supervisor
+- nightbeat-supervisor SKILL.md line 35: pass repo when invoking
+  `/verify-gate` and `/merge`
+- Set `GH_REPO` env var before calling erg-pr-merge
 
 ## Exit criteria
 
-- `gh pr view` calls in verify-gate use `--repo` when a repo arg is provided.
-- Supervisor can verify-gate a git-erg PR from a harness worktree.
+- `gh pr view` calls in erg-pr-merge use `--repo` when `GH_REPO` is set
+- verify-gate SKILL.md instructs agents to use `--repo` for cross-repo PRs
+- Supervisor passes repo context through the full verify-gate → merge chain
+- Manual test: verify-gate a git-erg PR from a harness worktree succeeds
