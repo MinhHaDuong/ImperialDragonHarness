@@ -55,10 +55,10 @@ jobs:
           mkdir -p "$tmp/skills"
           echo '<!-- harness-extension-point --> /home/someuser/projects/SomeProject' > "$tmp/skills/SKILL.md"
           if ! bash scripts/check-agnostic.sh "$tmp/skills"; then
-            echo "FAIL: escape hatch did not suppress the leak"
+            echo "FAIL: escape hatch did not suppress the violation"
             exit 1
           fi
-          echo "OK: escape hatch suppressed leak"
+          echo "OK: escape hatch suppressed violation"
 
   status-verb-guard:
     runs-on: ubuntu-latest
