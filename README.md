@@ -38,10 +38,9 @@ ImperialDragonHarness/
 │   ├── review-pr-prose/    # Peer review panel for prose
 │   ├── celebrate/          # Post-task wrap-up
 │   ├── end-session/        # Day wrap-up + STATE.md refresh
-│   ├── new-ticket/         # Create git-erg ticket with TDD spec
 │   ├── start-ticket/       # Begin work on a ticket (TDD red step)
 │   ├── ticket-close/       # Close a ticket
-│   ├── ticket-new/         # Low-level: create a raw .erg file
+│   ├── ticket-new/         # Create a local %erg v1 file for agent coordination
 │   ├── ticket-ready/       # List unblocked tickets
 │   ├── healthcheck/        # Git hygiene + doc freshness check
 │   ├── memory/             # Persistent memory management
