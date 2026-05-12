@@ -32,13 +32,16 @@ def _load_projects() -> list[dict]:
 
 
 def _github_repo(project_path: Path) -> str | None:
-    r = subprocess.run(
-        ["git", "remote", "get-url", "origin"],
-        capture_output=True,
-        text=True,
-        cwd=project_path,
-        timeout=60,
-    )
+    try:
+        r = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            cwd=project_path,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return None
     if r.returncode != 0:
         return None
     url = r.stdout.strip().removesuffix(".git")
@@ -128,24 +131,27 @@ def _list_open_prs(project_path: Path, github_repo: str) -> list[dict]:
     """List all open PRs whose branch references a 4-digit ticket ID."""
     import re
 
-    r = subprocess.run(
-        [
-            "gh",
-            "pr",
-            "list",
-            "--repo",
-            github_repo,
-            "--state",
-            "open",
-            "--json",
-            "number,headRefName",
-            "--limit",
-            "50",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    try:
+        r = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--repo",
+                github_repo,
+                "--state",
+                "open",
+                "--json",
+                "number,headRefName",
+                "--limit",
+                "50",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return []
     if r.returncode != 0:
         return []
     prs = json.loads(r.stdout or "[]")
@@ -168,37 +174,43 @@ def _list_open_prs(project_path: Path, github_repo: str) -> list[dict]:
 
 def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict | None:
     """Find an open PR for ticket_id via branch naming convention t{id}-*."""
-    r = subprocess.run(
-        ["git", "ls-remote", "--heads", "origin", f"t{ticket_id}-*"],
-        capture_output=True,
-        text=True,
-        cwd=project_path,
-        timeout=60,
-    )
+    try:
+        r = subprocess.run(
+            ["git", "ls-remote", "--heads", "origin", f"t{ticket_id}-*"],
+            capture_output=True,
+            text=True,
+            cwd=project_path,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return None
     branches = [
         line.split("\t", 1)[1].removeprefix("refs/heads/")
         for line in r.stdout.strip().splitlines()
         if "\t" in line
     ]
     for branch in branches:
-        pr_r = subprocess.run(
-            [
-                "gh",
-                "pr",
-                "list",
-                "--repo",
-                github_repo,
-                "--head",
-                branch,
-                "--state",
-                "open",
-                "--json",
-                "number,headRefName",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+        try:
+            pr_r = subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "list",
+                    "--repo",
+                    github_repo,
+                    "--head",
+                    branch,
+                    "--state",
+                    "open",
+                    "--json",
+                    "number,headRefName",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired:
+            continue
         if pr_r.returncode == 0:
             prs = json.loads(pr_r.stdout or "[]")
             if prs:
