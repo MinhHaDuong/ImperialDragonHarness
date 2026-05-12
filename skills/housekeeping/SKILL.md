@@ -27,8 +27,14 @@ Run full repo housekeeping and act on every finding.
    **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
    to delete a branch, apply these guards before acting. Skip (log a warning) if any
    guard trips:
-   - **Open PR guard**: `gh pr list --head <branch> --json number | jq 'length > 0'` —
-     skip if `true` (branch has an open PR).
+   - **Merge guard**: re-run the squash-merge probe from healthcheck check 4 and confirm
+     it exits 0. If the ticket ID does NOT appear in main's commit log since the branch
+     diverged, the branch is not yet merged — skip deletion.
+     ```bash
+     merge_base=$(git merge-base main <branch>)
+     ticket_id=$(echo <branch> | grep -oP 't\K\d+')
+     git log $merge_base..main --format="%s" | grep -qP "(feat|fix|chore|ticket)\($ticket_id\)"
+     ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
      If the worktree is clean, remove it first with `git worktree remove <path>`.
