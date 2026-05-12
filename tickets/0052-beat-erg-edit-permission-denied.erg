@@ -2,11 +2,13 @@
 Title: Fix night-sweep permission denials on .erg ticket edits
 Created: 2026-04-29
 Author: claude
+Closed: Fix applied 2026-04-29; no permission denials in 13+ days of beats — stable.
 
 --- log ---
 2026-04-29T09:30Z claude created
 
 2026-04-29T09:18Z claude note sweep-assess: not-picked hash:0f1f9c454cfc scope:add explicit allows to beat-settings.json risk:low
+2026-05-12T13:06Z Minh Ha-Duong closed — Fix applied 2026-04-29; no permission denials in 13+ days of beats — stable.
 --- body ---
 ## Context
 
