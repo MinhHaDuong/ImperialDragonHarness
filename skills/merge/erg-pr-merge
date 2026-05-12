@@ -6,6 +6,10 @@
 # Must be run from the PR's head branch. Works in git worktrees and on VMs.
 # GitHub-only: requires the GitHub CLI authenticated to the repo's GitHub remote.
 #
+# For cross-repo merges, the caller must cd into the target project and
+# checkout the PR branch before invoking this script. See raid Phase 7
+# and nightbeat-supervisor Phase 2 for the caller contracts.
+#
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
 #   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)

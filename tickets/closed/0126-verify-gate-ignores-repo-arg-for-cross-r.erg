@@ -1,0 +1,79 @@
+%erg 0.1
+Title: verify-gate ignores --repo arg for cross-repo PRs
+Created: 2026-05-12
+Author: MinhHaDuong
+Closed: autoclosed — PR #152
+
+--- log ---
+2026-05-11T23:37Z MinhHaDuong created
+2026-05-12T06:00Z MinhHaDuong note audit complete — scope wider than original ticket
+2026-05-12T09:00Z MinhHaDuong note design decision: cwd contract (forge-neutral) — caller cd's into target project before verify-gate/merge
+
+2026-05-12T18:42Z MinhHaDuong closed — autoclosed — PR #152
+--- body ---
+## Problem
+
+When the nightbeat supervisor runs `/verify-gate 133 MinhHaDuong/git-erg`
+from a harness repo worktree, the skill resolves `gh pr view 133` against
+the current repo's origin (ImperialDragonHarness) instead of the specified
+repo (git-erg). This returned APPROVED for an already-merged harness PR
+instead of the target git-erg PR.
+
+Every cross-repo PR the survey discovers will hit this wall until fixed.
+
+## Root cause
+
+Three layers are missing `--repo`:
+
+1. **erg-pr-merge script** (`skills/merge/erg-pr-merge`) — 3 `gh pr view`
+   calls at lines 30, 36, 67 lack `--repo`. These are the hardest failures.
+2. **verify-gate SKILL.md** — prose instructions tell the agent to run
+   `gh pr view` but don't mention `--repo`. The agent inherits cwd context.
+3. **Supervisor wiring** — supervisor knows `github_repo` from the survey
+   but doesn't pass it when invoking `/verify-gate` or `/merge`.
+
+The survey (`nightbeat-supervisor-survey.py:135`) and `check-pr-diff`
+already use `--repo` correctly — the gap is downstream.
+
+## Design decision
+
+**Contract**: cwd-based. The caller (supervisor, raid) ensures cwd is the
+target project and the PR branch is checked out before invoking
+`/verify-gate` and `/merge`. No forge slug or project-path argument on
+skills or scripts.
+
+**Why cwd instead of project-path arg**: verify-gate runs `git log`,
+erg-pr-merge runs `git branch --show-current`, `git add tickets/`,
+`git push` — all cwd-dependent. Patching just the `gh` calls with
+`--repo` leaves dozens of `git` operations pointing at the wrong repo.
+The only clean fix is cwd.
+
+**Why forge-neutral**: the supervisor passes `project_path` (filesystem
+path) to `cd`, not a GitHub slug. The GitHub slug only appears in
+`check-pr-diff` and `gh pr checkout --repo`, behind
+`# harness-extension-point` lines.
+
+**Consistency with raid**: raid Phase 7 already does `gh pr checkout`
+before `/merge`. The supervisor now mirrors this pattern.
+
+## Plan
+
+### Layer 1: erg-pr-merge (shell script)
+- No argument changes — script stays cwd-based
+- Update header comment to document the cross-repo caller contract
+
+### Layer 2: SKILL.md instructions
+- verify-gate, verify, merge: add cross-repo prerequisite note
+  (caller ensures cwd is target project)
+- raid: no change (already does `gh pr checkout` before `/merge`)
+
+### Layer 3: Supervisor
+- Phase 2: add `cd <project_path> && git fetch && gh pr checkout`
+  before `/verify-gate` and `/merge`
+
+## Exit criteria
+
+- Supervisor SKILL.md instructs agents to cd + checkout before verify-gate/merge
+- verify-gate, verify, merge SKILL.md document the cwd prerequisite
+- erg-pr-merge header documents the cross-repo caller contract
+- Manual test: verify-gate a git-erg PR from a harness worktree succeeds

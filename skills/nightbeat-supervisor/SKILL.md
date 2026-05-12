@@ -28,11 +28,18 @@ If both lists are empty, write a journal `action=idle` entry and stop.
 
 ## 2. Merge ready PRs
 
-For each entry in `prs_to_merge` (which includes `pr_number` and `github_repo`
-derived by the survey script from the project's git remote):
+For each entry in `prs_to_merge` (which includes `pr_number`, `github_repo`,
+and `project_path` derived by the survey script from the project's git remote):
 
 1. `bash $HARNESS_DIR/skills/nightbeat-supervisor/check-pr-diff <pr_number> <github_repo>` — non-zero exit is a HOLD; add to failures with the script's reason.
-2. `/verify-gate <pr_number>` — APPROVED → `/merge <pr_number>`. REROLL → append the failing criteria as a note on the linked ticket (create the ticket if none is referenced in the PR body) and move on. ESCALATE → go to step 4.
+2. Switch to the target project and check out the PR branch:
+   ```bash
+   cd <project_path>
+   git fetch origin
+   gh pr checkout <pr_number> --repo <github_repo>   # harness-extension-point
+   ```
+   Then: `/verify-gate <pr_number>` — APPROVED → `/merge <pr_number>`. REROLL → append the failing criteria as a note on the linked ticket (create the ticket if none is referenced in the PR body) and move on. ESCALATE → go to step 4.
+   After verify-gate and merge complete, `cd $HARNESS_DIR` to return to the harness directory for the next PR.
 
 ## 3. Diagnose and repair
 
