@@ -65,3 +65,41 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 6. Commit the ticket file.
 
 Format spec: `tickets/spec-erg-v1.md` (or global rule `tickets.md`).
+
+## Required sections for handoff documents
+
+When creating a ticket as a handoff document, ensure it includes these sections
+so a new agent has complete context:
+
+```markdown
+## Context
+What problem or need this addresses. Why now.
+
+## Relevant files
+- `path/to/file.py` — role in this task
+
+## Actions
+1. Concrete step
+2. Concrete step
+
+## Test
+- What test to write first (red step of TDD)
+
+## Verification
+- [ ] How to confirm each action worked
+
+## Invariants
+- What must not break (tests, build, existing behavior)
+
+## Exit criteria
+- Definition of done — when is this ticket complete?
+```
+
+## Tracking ticket convention
+
+When investigation spawns sub-tickets:
+
+1. Original ticket becomes the **tracking ticket** — leave it open.
+2. Create each sub-ticket referencing the tracker.
+3. Edit tracking ticket to list each child.
+4. Tracking ticket closes only after integration review (see `/celebrate` step 7).
