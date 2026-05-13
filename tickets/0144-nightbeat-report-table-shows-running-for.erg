@@ -1,0 +1,70 @@
+%erg 0.1
+Title: nightbeat-report: table shows 'running' for completed-idle beats
+Created: 2026-05-13
+Author: MinhHaDuong
+
+--- log ---
+2026-05-13T06:22Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Five beat runs appear as "running" in the nightbeat-report table but are correctly
+recorded as "idle" in the phase-outcomes summary (beat-outcomes.jsonl). The two
+data sources disagree because the log parser (`nightbeat-report.py`) fails to
+recognise the run-end markers for idle beats.
+
+## Root cause
+
+`nightbeat-report.py:93` defines:
+```python
+_MARKER = re.compile(r"^=== (.+?) (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) ===$")
+```
+
+This regex requires a timestamp. Two marker types in `beat.py` lack timestamps and
+therefore pass through the parser unmatched:
+
+| beat.py line | marker text | missing |
+|---|---|---|
+| 899 | `=== housekeeping: no commits, deleting branch ===` | timestamp |
+| 1179 | `=== pick-ticket: idle — {last_result_line} ===` | timestamp |
+| 1160 | `=== pick-ticket: idle — N consecutive CLOSED ... ===` | timestamp |
+
+### Consequence
+
+For an idle beat (housekeeping runs, finds no commits, pick-ticket returns IDLE):
+
+1. `=== housekeeping: running on <branch> <timestamp> ===` → matched → `hk_status = "running"`
+2. `=== housekeeping: no commits, deleting branch ===` → **not matched** → `hk_status` stays `"running"`
+3. `=== pick-ticket: running model=... <timestamp> ===` → matched → section = "pick"
+4. `=== pick-ticket: idle — ... ===` → **not matched** → `pick_status` stays `""`
+5. `=== beat done elapsed=Ns <timestamp> ===` → matched
+
+`_outcome()` (line 290) falls through to `hk_status or "?"` → returns `"running"`.
+
+## Fix options
+
+**Option A — fix the emitter (beat.py):** add `{_now_iso()}` before `===` on the
+three marker lines (899, 1160, 1179). Consistent with every other terminal marker.
+Fixes future runs; old log files remain broken.
+
+**Option B — fix the parser (nightbeat-report.py):** add a fallback regex for
+markers without timestamps, tried after `_MARKER` fails:
+```python
+_MARKER_NO_TS = re.compile(r"^=== (.+?) ===$")
+```
+Then update `_handle_marker` for `housekeeping: no commits` → `hk_status = "no-changes"`.
+`pick-ticket: idle` is already handled via `"idle" in status`.
+
+**Option C — both:** preferred. Fix beat.py so new logs are clean; add the fallback
+regex so the parser degrades gracefully on old logs.
+
+## Exit criteria
+
+- [ ] Five historically-idle runs no longer appear as "running" in the table
+      (test against existing log files in LOGDIR)
+- [ ] `_outcome()` returns `"idle"` for runs where pick-ticket emitted an idle marker
+- [ ] `_outcome()` returns `"no-changes"` (or similar non-"running") for runs where
+      housekeeping found no commits
+- [ ] Table and phase-outcomes summary agree on idle count
+- [ ] `make check` passes
