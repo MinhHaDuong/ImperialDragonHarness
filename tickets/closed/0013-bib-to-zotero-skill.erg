@@ -2,6 +2,7 @@
 Title: Build skill — bib-to-zotero (push refs.bib entries to Zotero via API)
 Created: 2026-04-17
 Author: user
+Closed: out of scope for harness — bibliography/Zotero workflow belongs in the research project repo, not IDH
 
 --- log ---
 2026-04-17T15:30Z claude created from review session discussion
@@ -13,6 +14,7 @@ Author: user
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:5e3f6732fbef expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
 2026-05-11T20:50Z unclaimed — stale claim, no branch activity
+2026-05-13T08:58Z MinhHaDuong closed — out of scope for harness — bibliography/Zotero workflow belongs in the research project repo, not IDH
 --- body ---
 ## Context
 
