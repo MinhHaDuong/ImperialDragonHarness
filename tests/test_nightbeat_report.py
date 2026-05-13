@@ -115,3 +115,30 @@ def test_no_timestamp_less_log_markers():
         if re.search(r"=== .+ ===", line) and "_now_iso" not in line
     ]
     assert bad == [], "Timestamp-less _log markers:\n" + "\n".join(bad)
+
+
+# ── No-timestamp marker parsing (ticket 0146) ─────────────────────────────────
+
+
+def test_hk_status_no_changes(tmp_path):
+    """parse_log sets hk_status='no-changes' for a no-timestamp no-commits marker."""
+    body = (
+        "=== beat start 2026-01-01T00:00:00Z ===\n"
+        "=== housekeeping: running on claude/hk-abc 2026-01-01T00:00:01Z ===\n"
+        "=== housekeeping: no commits ===\n"
+        "=== beat done elapsed=5s 2026-01-01T00:00:06Z ===\n"
+    )
+    run = nbr.parse_log(_write_log(tmp_path, body))
+    assert run.hk_status == "no-changes"
+
+
+def test_hk_status_deferred(tmp_path):
+    """parse_log sets hk_status='deferred' for a no-timestamp deferred marker."""
+    body = (
+        "=== beat start 2026-01-01T00:00:00Z ===\n"
+        "=== housekeeping: running on claude/hk-abc 2026-01-01T00:00:01Z ===\n"
+        "=== housekeeping: deferred — 3 commit(s) on claude/hk-abc ready for review ===\n"
+        "=== beat done elapsed=5s 2026-01-01T00:00:06Z ===\n"
+    )
+    run = nbr.parse_log(_write_log(tmp_path, body))
+    assert run.hk_status == "deferred"
