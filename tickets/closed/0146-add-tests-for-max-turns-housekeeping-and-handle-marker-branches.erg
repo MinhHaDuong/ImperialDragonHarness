@@ -2,11 +2,13 @@
 Title: add tests for max_turns_housekeeping and new _handle_marker branches
 Created: 2026-05-13
 Author: MinhHaDuong
+Closed: autoclosed — PR #171
 
 --- log ---
 2026-05-13T08:30Z MinhHaDuong created
 2026-05-13T00:00Z claude executed
 
+2026-05-13T08:42Z MinhHaDuong closed — autoclosed — PR #171
 --- body ---
 ## Context
 
