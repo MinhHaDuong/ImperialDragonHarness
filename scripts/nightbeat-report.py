@@ -91,6 +91,7 @@ def _git_log_oneline(project: Path, branch: str, max_commits: int = 5) -> list[s
 
 
 _MARKER = re.compile(r"^=== (.+?) (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) ===$")
+_MARKER_NO_TS = re.compile(r"^=== (.+?) ===$")
 _RUN_RE = re.compile(r"^Run \d+\s+\S+\s+project slot \d+: (.+)$")
 _LOCK_RE = re.compile(r"beat already running for (\S+), skipping")
 
@@ -178,8 +179,8 @@ def parse_log(path: Path) -> BeatRun:
             run.project = Path(m.group(1).strip())
             continue
 
-        # Marker lines
-        m = _MARKER.search(line)
+        # Marker lines (timestamped preferred; fall back to timestamp-less)
+        m = _MARKER.search(line) or _MARKER_NO_TS.search(line)
         if m:
             label = m.group(1)
             _handle_marker(label, line, run, section_ref := [section])
@@ -223,6 +224,12 @@ def _handle_marker(label: str, line: str, run: BeatRun, section_ref: list) -> No
             section_ref[0] = None
         elif status == "done" or status.startswith("done "):
             run.hk_status = "done"
+            section_ref[0] = None
+        elif status.startswith("no commits"):
+            run.hk_status = "no-changes"
+            section_ref[0] = None
+        elif status.startswith("deferred"):
+            run.hk_status = "deferred"
             section_ref[0] = None
         else:
             run.hk_status = status.split()[0]  # e.g. "rc=1"
