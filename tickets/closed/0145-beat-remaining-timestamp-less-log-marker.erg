@@ -2,13 +2,12 @@
 Title: beat: remaining timestamp-less _log markers produce ugly hk_status
 Created: 2026-05-13
 Author: MinhHaDuong
-Closed: autoclosed — PR #170
+Closed: exit criteria met: all === markers stamped, explicit hk_status branches added, ratchet test in test_nightbeat_report.py (PRs #170 #171)
 
 --- log ---
 2026-05-13T06:29Z MinhHaDuong created
-2026-05-13T08:00Z claude executed
 
-2026-05-13T08:39Z MinhHaDuong closed — autoclosed — PR #170
+2026-05-13T08:56Z MinhHaDuong closed — exit criteria met: all === markers stamped, explicit hk_status branches added, ratchet test in test_nightbeat_report.py (PRs #170 #171)
 --- body ---
 ## Context
 

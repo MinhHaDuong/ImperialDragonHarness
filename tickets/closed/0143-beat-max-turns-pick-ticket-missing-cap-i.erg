@@ -2,13 +2,12 @@
 Title: beat: max_turns_pick_ticket missing cap in __post_init__
 Created: 2026-05-13
 Author: MinhHaDuong
-Closed: autoclosed — PR #169
+Closed: exit criteria met: max_turns_pick_ticket capped in __post_init__, docstring updated, make check passes (PR #169)
 
 --- log ---
 2026-05-13T06:18Z MinhHaDuong created
-2026-05-13T07:15Z claude executed
 
-2026-05-13T08:38Z MinhHaDuong closed — autoclosed — PR #169
+2026-05-13T08:56Z MinhHaDuong closed — exit criteria met: max_turns_pick_ticket capped in __post_init__, docstring updated, make check passes (PR #169)
 --- body ---
 ## Context
 
