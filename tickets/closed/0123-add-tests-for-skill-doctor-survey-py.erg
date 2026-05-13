@@ -2,11 +2,13 @@
 Title: Add tests for skill-doctor-survey.py
 Created: 2026-05-11
 Author: MinhHaDuong
+Closed: autoclosed — PR #174
 
 --- log ---
 2026-05-11T20:29Z MinhHaDuong created
 2026-05-13T11:15Z claude note 44 tests written for all 7 clusterers and _resolve_harness_dir; PR #174 opened
 
+2026-05-13T09:35Z MinhHaDuong closed — autoclosed — PR #174
 --- body ---
 ## Context
 
