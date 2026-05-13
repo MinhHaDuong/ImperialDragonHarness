@@ -10,6 +10,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 <!-- generated 2026-05-13T10:07Z -->
 
 **Tickets:** 14 open · 14 ready — `erg ready tickets/` for full list
+**Morning review:** `/nightbeat-report` (narrative) · `/nightbeat-risk-review` (interactive triage before next run)
 **Recent commits:**
   120b67f docs(verify): isolate verify/verify-gate agents in temp worktree (#176)
   70780ee docs(nightbeat-supervisor): budget-raise convergence guard (#178)
