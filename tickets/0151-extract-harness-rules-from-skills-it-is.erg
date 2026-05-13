@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Extract harness-rules from skills/ — it is documentation, not a skill
+Created: 2026-05-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-05-13T14:14Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`skills/harness-rules/` has no `SKILL.md`. It's a rule-pack
+(`README.md`, `workflow.md`, `git.md`, `state.md`, `coding-python.md`)
+auto-injected by the session-start hook. It appears in the
+user-facing skill list only because of its directory location.
+
+Surfaced as cleanup finding 1.a in the 2026-05-13 annotation on
+ticket 0068. Splitting out so 0068 can stay focused on naming;
+this is structural.
+
+## Actions
+
+1. Pick a destination — candidates: `rules/`, `docs/rules/`,
+   `skills/_rules/` (leading-underscore convention to mark
+   non-skill). Prefer `rules/` for short paths and clear semantics.
+2. `git mv skills/harness-rules/* rules/` (or chosen path).
+3. Update the session-start injection hook (likely a script under
+   `scripts/` or a `settings.json` startup hook entry) to read from
+   the new path.
+4. Update `skills/verify-adherence/SKILL.md` — it references this
+   rule-pack as "the single source of truth" on rule applicability.
+5. Update any cross-refs in other skill files (`skills/end-session/`
+   references `state.md`; ticket-flow skills reference the
+   `tickets/AGENTS.md` pointer).
+6. Update README.md.
+7. Update the `agnostic-guard` CI grep paths if it scans
+   `skills/harness-rules/`.
+
+## Exit criteria
+
+- [ ] `skills/harness-rules/` does not exist.
+- [ ] New rules directory is auto-injected on session start.
+- [ ] No skill listing shows `harness-rules` as an invocable skill.
+- [ ] All cross-refs updated.
+- [ ] `make check` (or equivalent CI) passes.
