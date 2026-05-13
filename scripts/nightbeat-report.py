@@ -232,6 +232,12 @@ def _handle_marker(
         elif status.startswith("deferred"):
             run.hk_status = "deferred"
             section_ref[0] = None
+        elif "cannot resolve" in status:
+            run.hk_status = "no-branch"
+            section_ref[0] = None
+        elif "failed to create" in status:
+            run.hk_status = "failed"
+            section_ref[0] = None
         else:
             run.hk_status = status.split()[0]  # e.g. "rc=1"
             section_ref[0] = None

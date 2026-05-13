@@ -102,3 +102,16 @@ def test_unreviewed_permission_diffs_no_dir(tmp_path, monkeypatch):
 
     monkeypatch.setattr(nbr, "PERMISSION_DIFFS_DIR", tmp_path / "missing")
     assert nbr._unreviewed_permission_diffs(datetime.now(timezone.utc)) == []
+
+
+def test_no_timestamp_less_log_markers():
+    """Ratchet: every === ... === marker in beat.py must include _now_iso()."""
+    import re
+
+    source = (Path(__file__).parent.parent / "scripts" / "beat.py").read_text()
+    bad = [
+        line.strip()
+        for line in source.splitlines()
+        if re.search(r"=== .+ ===", line) and "_now_iso" not in line
+    ]
+    assert bad == [], "Timestamp-less _log markers:\n" + "\n".join(bad)
