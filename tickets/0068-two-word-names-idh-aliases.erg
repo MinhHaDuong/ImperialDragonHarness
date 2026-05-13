@@ -10,6 +10,7 @@ Tag: deferred
 
 2026-05-12T13:11Z needs-human: naming table stale (new skills since 2026-04-30) + alias mechanism unresolved; awaiting design sign-off
 2026-05-13T09:02Z MinhHaDuong tag deferred
+2026-05-13T16:00Z MinhHaDuong annotated — skillset cleanup, verb-object schema attempt, v2 mapping table (v1 above superseded)
 --- body ---
 ## Context
 
@@ -35,7 +36,7 @@ compatibility is a hard constraint — muscle memory and docs are not invalidate
   (`pick-ticket`, `end-session`, `verify-gate`, etc.) stay as the canonical.
   Existing single-word names become aliases of the new two-word canonical.
 
-## Proposed mapping (draft — aliases subject to revision)
+## Proposed mapping (draft v1 — SUPERSEDED, see "v2 mapping" below)
 
 | Current name | Canonical (two-word) | Alias |
 |---|---|---|
@@ -105,3 +106,202 @@ Alias choices are provisional and should be reviewed before implementation.
 - Both names invoke the skill identically.
 - No existing invocation is broken.
 - Ticket 0067 closed as subset.
+
+## Annotation 2026-05-13 — cleanup, schema, v2 table
+
+Annotation, not implementation. Decisions marked **[CONFIRM?]** need
+author sign-off before any code lands. No code touched.
+
+### 1. Skillset cleanup — findings (out-of-scope for this ticket, file separately)
+
+a. **`harness-rules` is not a skill.** It has no `SKILL.md`; it's an
+   auto-injected rule-pack (README + four scoped `.md` files) loaded
+   by the session-start hook. It appears in the skill list only by
+   accident of living under `skills/`. Move to `rules/` or
+   `docs/rules/` and update the injection hook. **Open separate
+   ticket** (touches the session-start hook and `verify-adherence`,
+   which cross-refs this index).
+
+b. **`nightbeat-risk-review` is scope-narrow.** Today it pre-flights
+   one nightbeat run on one repo by scanning the prior journal for
+   risky-ticket signals. What we actually want is **multi-repo
+   readiness and configuration review**: across every consumer
+   project — git hygiene, ticket flow health, `CLAUDE.md` /
+   `.claude/settings.json` drift, skill-version drift if any,
+   pre-flight before scheduling a nightbeat. This is a *rescope*,
+   not a rename. **Open separate ticket** to replace
+   `nightbeat-risk-review` with `check-readiness` (proposed name);
+   the current narrow function survives as one mode.
+
+c. **`memory` vs `dream`** are distinct, not redundant.
+   `memory` is the **antechamber** — synchronous, user-initiated:
+   "save this" / "sweep stale". `dream` (ticket 0070, deferred) is
+   the **back-of-house** — autonomous, cron-fired, LLM-driven
+   classification (ADD/UPDATE/DELETE/NOOP) against neighbours.
+   Both keep their identity in v2. No merge.
+
+d. **`healthcheck` vs `housekeeping`** overlap on subject (repo) but
+   not on responsibility. `healthcheck` reports; `housekeeping`
+   eagerly repairs fix-now items. Keep both, **disambiguate by verb
+   in v2** (`check-repo` vs `repair-repo` — see v2 table).
+
+e. **`smoke` and `healthcheck` do not overlap.** `smoke` is an
+   *agent-environment* self-test (model, auth, paths); `healthcheck`
+   is a *repo* audit. Different subjects; keep both.
+
+### 2. Gap candidates from SOTA harness work (one-liners → future tickets)
+
+Each is a candidate, not a commitment. No new tickets created here.
+
+- **Cost / token budget skill** — no current way to query session
+  spend or enforce per-skill budgets. (Earlier in this session the
+  user asked why `/simplify` cost so much; the answer wasn't
+  introspectable from inside the harness.)
+- **Skill linter** — `skill-doctor` surveys *failures*; nothing
+  audits skill-file structure (frontmatter completeness, broken
+  cross-refs between skills, dead helper-script references,
+  argument-hint vs actual CLI). Could be a CI check or a new
+  `/lint-skills`.
+- **Multi-repo readiness** — the rescoped `check-readiness` above;
+  see 1.b.
+- **New-project scaffolder** — built-in `/init` writes a `CLAUDE.md`
+  but doesn't lay down IDH scaffolding (`tickets/`, `STATE.md`,
+  `.claude/settings.json`, `.ergrc`, `erg` binary). Could be
+  `/init-project` extending built-in `/init`.
+- **Skill discovery / catalog** — non-interactive sessions can't see
+  `slashCommands` list; even interactive users can't see
+  descriptions side-by-side. Could be `/show-skills` or generated
+  from frontmatter into a markdown index.
+- **Session resume** — `start-ticket` resumes ticket work, but
+  there's no "pick up where /end-session left off across the project
+  fleet". `/resume-session` reads STATE.md and re-anchors.
+- **Forge portability** — `merge`, `review-pr`, and parts of
+  `nightbeat-supervisor` shell out to `gh` (GitHub-only). The
+  agnostic-guard CI already grep-bans `gh` in `skills/` with
+  `harness-extension-point` escapes — but no shim layer exists.
+- **Evergreen documentation system** (raised by author in this
+  annotation thread): the README is a snapshot, not a manual.
+  Candidates: auto-generated `SKILLS.md` from each `SKILL.md`
+  frontmatter, an architecture page regenerated from ticket
+  history, a `/show-docs <topic>` skill that exposes the rule-pack
+  + skill catalog + lifecycle docs as a queryable corpus. Most
+  ambitious version: docs *are* the source of truth, skills derive
+  from them. Out of scope for 0068; deserves its own design ticket.
+- **Crash recovery** — partly handled by ticket flow, but no
+  single-command "what was I doing? show me uncommitted work across
+  worktrees".
+- **Observability beyond nightbeat-report** — nothing for
+  same-day / live runs; `/perch` is the closest.
+
+### 3. Schema decisions (choice points to settle)
+
+#### 3.1 Verb-object vs noun-prefix family clusters **[CONFIRM?]**
+
+The user's wording was "coherent verb-object schema". Strict reading:
+verb first, every skill. Honest reality after enumeration: ~5 skills
+resist verb-object because the IDH concept itself is the name
+(`beat`, `raid`, `dream`, `perch`, `smoke`). Three pragmatic options:
+
+| Option | Rule | Tradeoff |
+|---|---|---|
+| **A — Strict verb-object** | Every canonical is `verb-noun` | `night-beat`, `do-raid`, `do-smoke`, `mid-session`, `consolidate-memory` — fights the IDH register; loses tab-completion family clusters (`ticket-<TAB>` no longer expands) |
+| **B — Verb-object + ritual exception** *(recommended)* | Default verb-object; ritual concepts (beat, raid, dream) keep their noun name as the canonical | Pragmatic; explicit rule covers the awkward 5; tab-completion families preserved via aliases or namespacing |
+| **C — Family-cluster noun-first** | Use `noun-verb` for any skill that shares a noun with siblings (`ticket-{new,close,pick,start}`, `verify-{pr,gate,adherence}`); verb-noun for singletons | Maximizes tab-completion; mixed grammar within the schema |
+
+**Recommendation: B.** Verb-object as the default rule, with an
+explicit "ritual concept" exception listing the 5–6 nouns that
+themselves *are* the skill. Codify the exception list rather than
+case-by-case judgement.
+
+#### 3.2 User-facing vs plumbing classification **[CONFIRM?]**
+
+Per author's new rule: "only user-facing commands need the alias".
+Classification of the 29 current skills below in v2 table.
+Disagreements with my classification welcome — when I couldn't
+classify cleanly, I flag the skill in section 1 as mis-scoped.
+
+#### 3.3 Aliases for already-two-word skills **[CONFIRM?]**
+
+The v1 table left "—" for `bib-merge`, `related-work-note`,
+`ticket-new`, `ticket-close`, `review-pr`, etc. — already two-word,
+no alias. Question: do *daily-use* already-two-word skills also get
+a dragon alias? My read: yes for daily-use (`ticket-close`,
+`ticket-new`, `start-ticket`), no for occasional (`bib-merge`,
+`related-work-note`, `review-pr-prose`). v2 reflects this.
+
+#### 3.4 Alias mechanism — still unresolved
+
+The v1 ticket flagged this and it remains the gating implementation
+question. Three candidates worth investigating in priority order:
+
+1. **Symlinks in `skills/`** (`skills/roar → skills/celebrate`).
+   Cheapest; depends on whether Claude Code's skill scanner follows
+   symlinks. **Untested — quick experiment would settle it.**
+2. **Frontmatter `aliases:` field** in `SKILL.md`. Requires harness
+   support; not currently honored by Claude Code.
+3. **Stub `SKILL.md` that delegates** (`skills/roar/SKILL.md`
+   reads "invoke /celebrate"). Works today but bloats the skill
+   list and breaks `disable-model-invocation` separability.
+
+Option 1 is the obvious experiment to run before any rename PR
+lands.
+
+### 4. v2 mapping table — supersedes v1
+
+Schema applied: option B (verb-object default + ritual exception).
+Aliases granted only to user-facing skills; daily-use already-
+two-word skills also get an alias. **[CONFIRM?]** on each row.
+
+| Current | Proposed canonical | Cat | User-facing? | Dragon alias |
+|---|---|---|---|---|
+| `beat` | `beat` ✓ (ritual) | autonomy | yes | — (name *is* the verb) |
+| `bib-merge` | `bib-merge` ✓ | research | yes (occasional) | — |
+| `celebrate` | `mark-done` | lifecycle | yes (daily) | `roar` |
+| `end-session` | `end-session` ✓ | lifecycle | yes (daily) | `lair` |
+| `harness-rules` | *(not a skill — move out)* | — | — | — |
+| `healthcheck` | `check-repo` | repo | yes | `pulse` |
+| `housekeeping` | `repair-repo` | repo | yes | `groom` |
+| `memory` | `save-memory` | memory | yes | `cache` |
+| `merge` | `merge-pr` | pr | yes (daily) | `seal` |
+| `nightbeat-report` | `report-beat` | autonomy | yes (daily) | `dawn` |
+| `nightbeat-risk-review` | *(rescope — see 1.b)* | autonomy | — | — |
+| `nightbeat-supervisor` | `supervise-beat` | autonomy | no (cron) | — |
+| `perch` | `perch` ✓ (ritual) | lifecycle | yes | — |
+| `pick-ticket` | `pick-ticket` ✓ | ticket | no (called by beat/raid) | — |
+| `raid` | `raid` ✓ (ritual) | autonomy | yes | — |
+| `related-work-note` | `write-rwnote` | research | yes (occasional) | — |
+| `related-work-note-validate` | `check-rwnote` | research | yes (occasional) | — |
+| `review-pr` | `review-pr` ✓ | pr | yes | `gaze` |
+| `review-pr-prose` | `review-prose` | research | yes (occasional) | — |
+| `skill-doctor` | `audit-skills` | meta | yes (weekly) | — |
+| `smoke` | `smoke` ✓ (ritual) | diagnostics | yes | — |
+| `start-ticket` | `start-ticket` ✓ | ticket | yes (daily) | `prowl` |
+| `ticket-close` | `close-ticket` | ticket | yes (daily) | `stash` |
+| `ticket-new` | `new-ticket` | ticket | yes (daily) | `forge` |
+| `verify` | `verify-pr` | pr | yes (daily) | `ward` |
+| `verify-adherence` | `verify-adherence` ✓ | pr | no (called by verify) | — |
+| `verify-gate` | `verify-gate` ✓ | pr | no (called by verify) | — |
+| `zotero-import` | `import-zotero` | research | yes (occasional) | — |
+| *(future — 0070)* `dream` | `dream` (ritual) | memory | autonomous + manual | `dream` |
+
+`Cat` column legend: lifecycle, autonomy, repo, pr, ticket, memory,
+research, meta, diagnostics. Useful when generating future
+`/show-skills` catalogs (gap 2).
+
+### 5. Open questions for the author
+
+1. Approve schema option **B** (verb-object + ritual exception)?
+   Or prefer **A** (strict) / **C** (family-cluster)?
+2. Are the four canonical renames `mark-done`, `check-repo`,
+   `repair-repo`, `merge-pr` acceptable? Some are ugly
+   (`audit-skills`, `import-zotero` — alternatives welcome).
+3. Confirm "ritual" exception list: `beat`, `raid`, `perch`,
+   `smoke`, `dream`. Add `roar` / `lair` to ritual list as aliases-
+   only (not canonicals)?
+4. Dragon aliases — `roar`, `lair`, `pulse`, `groom`, `cache`,
+   `seal`, `dawn`, `gaze`, `prowl`, `stash`, `forge`, `ward` — too
+   many? Reduce to the 5–6 most-fluent daily commands?
+5. File the three separate tickets now (harness-rules move,
+   check-readiness rescope, evergreen docs design) or batch later?
+6. Run the symlink experiment (3.4 option 1) before any of this
+   lands?
