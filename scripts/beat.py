@@ -112,6 +112,7 @@ class ProjectConfig:
         interval_minutes — minimum minutes between beats (0 = always run).
         raid_timeout_s — seconds before the raid subprocess is killed.
         max_turns_pick_ticket — max agent turns for pick-ticket (default 30).
+        max_turns_housekeeping — max agent turns for housekeeping (default 40, cap 80).
     """
 
     path: Path
@@ -122,6 +123,12 @@ class ProjectConfig:
     interval_minutes: int = 0  # 0 = always run
     raid_timeout_s: int = RAID_TIMEOUT_S
     max_turns_pick_ticket: int = MAX_TURNS_PICK_TICKET
+    max_turns_housekeeping: int = MAX_TURNS_HOUSEKEEPING
+
+    def __post_init__(self) -> None:
+        cap = 2 * MAX_TURNS_HOUSEKEEPING
+        if self.max_turns_housekeeping > cap:
+            self.max_turns_housekeeping = cap
 
 
 _BUILTIN_PROJECTS: list[ProjectConfig] = [
@@ -152,6 +159,7 @@ _PROJ_KEYS = {
     "interval_minutes",
     "raid_timeout_s",
     "max_turns_pick_ticket",
+    "max_turns_housekeeping",
 }
 
 
@@ -867,7 +875,7 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
             budget=project.budget_housekeeping,
             timeout_s=HOUSEKEEPING_TIMEOUT_S,
             cwd=path,
-            max_turns=MAX_TURNS_HOUSEKEEPING,
+            max_turns=project.max_turns_housekeeping,
         )
     finally:
         os.environ.pop("BEAT_HOUSEKEEPING_BRANCH", None)
@@ -877,7 +885,7 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
         return "timeout"
     if hk_res.subtype == "error_max_turns":
         _log(
-            f"=== housekeeping: max-turns ({MAX_TURNS_HOUSEKEEPING}) reached — context cap hit {_now_iso()} ==="
+            f"=== housekeeping: max-turns ({project.max_turns_housekeeping}) reached — context cap hit {_now_iso()} ==="
         )
     if hk_rc != 0:
         _log(f"=== housekeeping: rc={hk_rc} on {branch} {_now_iso()} ===")
