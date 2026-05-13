@@ -1,0 +1,42 @@
+%erg 0.1
+Title: beat: remaining timestamp-less _log markers produce ugly hk_status
+Created: 2026-05-13
+Author: MinhHaDuong
+
+--- log ---
+2026-05-13T06:29Z MinhHaDuong created
+
+--- body ---
+## Context
+
+PR #167 (ticket 0144) fixed the five idle-beat markers that lacked timestamps. The
+`_MARKER_NO_TS` fallback added to `nightbeat-report.py` now catches all remaining
+timestamp-less markers, so none silently disappear anymore. However, several error
+markers still lack timestamps and fall into the `else` branch in `_handle_marker`,
+producing short ugly status strings via `status.split()[0]`:
+
+| beat.py line | marker | resulting hk_status |
+|---|---|---|
+| 850 | `housekeeping: cannot resolve origin/{branch}` | `"cannot"` |
+| 858 | `housekeeping: failed to create {branch}: {detail}` | `"failed"` |
+| 1054 | `housekeeping: dirty working tree: {detail}` | `"dirty"` |
+| 1061 | `housekeeping: cannot checkout {default_branch}: {detail}` | `"cannot"` |
+
+Informational multi-project markers with no handler (silently ignored, OK):
+lines 277, 357, 761, 786, 1349, 1360, 1382.
+
+## Fix
+
+Add `{_now_iso()}` to every `_log("=== ... ===")` call in `beat.py` that currently
+lacks it. Optionally add explicit `_handle_marker` branches for the four error cases
+to produce cleaner status strings (`"no-branch"`, `"failed"`, `"dirty"`, `"no-checkout"`).
+
+A standing ratchet test that greps `_log.*===` lines for absence of `_now_iso` would
+prevent future drift.
+
+## Exit criteria
+
+- [ ] No `_log("=== ...` call in `beat.py` emits a marker without `{_now_iso()}`
+- [ ] `nightbeat-report.py` handles `cannot resolve`, `failed to create`, `dirty working tree`, `cannot checkout` explicitly
+- [ ] CI ratchet (grep or test) guards against future timestamp-less markers
+- [ ] `python3 -m py_compile scripts/beat.py scripts/nightbeat-report.py` passes
