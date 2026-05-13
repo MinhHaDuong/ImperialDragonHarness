@@ -17,11 +17,11 @@ The caller cwd was correctly inside IDH. Phase 1 of `/verify` succeeded
 (it identified PR 180, CI status, ticket path — all IDH-scoped).
 
 Phase 2 launched the `verify-adherence` sub-agent via the Skill tool.
-The sub-agent's cwd resolved into
-`/home/haduong/CNRS/projets/actifs/chemin-de-voix/.claude/worktrees/import-archiveccs-zotero/`
-— a completely unrelated project. It then reviewed branch
-`worktree-import-archiveccs-zotero` and emitted a PASS verdict that
-had no bearing on PR 180.
+The sub-agent's cwd resolved into one of the session's `additional
+working directories` — a completely unrelated consumer-project
+worktree (`~/CNRS/.../<project>/.claude/worktrees/<branch>/`). It
+then reviewed that wrong branch and emitted a PASS verdict that had
+no bearing on PR 180.
 
 `/verify`'s circuit-breaker caught the mismatch and ESCALATED rather
 than rubber-stamping. The PR was merged after manual review +
@@ -30,9 +30,8 @@ session that lists project dirs as additional cwds.
 
 ## Hypothesis
 
-The session was started with `additionalWorkingDirectories` including
-`/home/haduong/CNRS/projets/actifs/chemin-de-voix` and
-`/home/haduong/data/projets/chemin-de-voix/corpus`. The Skill tool
+The session was started with `additionalWorkingDirectories`
+including two consumer-project paths outside IDH. The Skill tool
 sub-agent appears to pick the first writable Additional working
 directory as its cwd instead of inheriting the parent agent's cwd.
 
