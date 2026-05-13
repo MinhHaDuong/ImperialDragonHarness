@@ -24,8 +24,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 ## Next actions
 
 - **audit-rename-agnostic-guard**: 6-commit branch needs PR + verify before merge
-- **0129**: deduplicate verify chain in raid (stale worktree `agent-ad6d9f2a48e8386cc` has partial work + merge conflict — needs human review before cleanup)
-- **squash-merge probe false negatives**: probe pattern `\(NNNN\)` misses commits scoped as `(beat)`, `(skill-doctor)` etc. — 7 closed-ticket branches stuck; ticket needed
+- **0149**: fix squash-merge probe false negatives (pattern misses conventional scopes like `(beat)`, `(skill-doctor)`)
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
 ## Backlog
