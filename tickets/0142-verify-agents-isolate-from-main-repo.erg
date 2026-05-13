@@ -1,0 +1,58 @@
+%erg 0.1
+Title: Verify agents must not use the main repo as their workspace
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T00:10Z claude created — celebrate sweep after raid 122/114/125/130/138
+
+--- body ---
+## Context
+
+During raids, verify agents (`/verify`, `/verify-gate`) run `gh pr checkout <N>`
+which switches **the main repo's** working directory to the PR branch. They make
+fixes, push, then the main repo is left on the PR branch with staged/unstaged
+noise. The orchestrator must then manually discard rogue changes and restore
+`main` before proceeding.
+
+Observed in this raid: beat.py MODEL_SONNET change, settings.json, healthcheck
+SKILL.md, nightbeat-report SKILL.md, verify SKILL.md — all left as unstaged
+changes in the main repo by verify agents that ran there.
+
+The existing prompt mitigation ("task is complete after emitting the verdict")
+does not prevent the checkout side-effect.
+
+## Actions
+
+1. In `/tmp` (or `.claude/worktrees/`), verify agents should always work in an
+   isolated worktree or tmpdir — not the main repo checkout.
+
+2. Option A — shallow clone: `gh pr checkout <N> --force` inside a temp directory
+   created with `mktemp -d`. Tear down on exit. No impact on main repo.
+
+3. Option B — worktree: Create `git worktree add /tmp/review-<N> <PR-branch>`,
+   run verify there, `git worktree remove /tmp/review-<N>` on exit. Already done
+   by the verify skill for review sub-agents (see `/tmp/review-158` pattern in
+   `git worktree list`). Extend to the top-level skill invocation.
+
+4. Update `skills/verify/SKILL.md` and `skills/verify-gate/SKILL.md` to document
+   the isolation requirement and include the worktree setup/teardown step.
+
+5. Add a pre-flight check: if `git branch --show-current` in the invocation
+   directory is not `main`, warn and abort rather than switching branches.
+
+## Relevant files
+
+- `skills/verify/SKILL.md`
+- `skills/verify-gate/SKILL.md`
+
+## Test
+
+After a `/verify` run on any PR, `git status` in the main repo returns clean
+and `git branch --show-current` returns `main`.
+
+## Exit criteria
+
+- Running `/verify <N>` does not switch or dirty the main repo working directory.
+- All fix commits land on the PR branch, not on main.
+- Existing verify behaviour (adherence check, simplify, gate verdict) unchanged.
