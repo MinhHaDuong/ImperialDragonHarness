@@ -277,7 +277,9 @@ def _cleanup_stale_in_progress(project: Path) -> None:
         new_lines.append(line)
     if changed:
         path.write_text("\n".join(new_lines) + "\n")
-        _log(f"=== startup: cleaned stale in_progress records in {project.name} ===")
+        _log(
+            f"=== startup: cleaned stale in_progress records in {project.name} {_now_iso()} ==="
+        )
 
 
 # Harness worktree name patterns created by EnterWorktree
@@ -317,7 +319,7 @@ def _cleanup_locked_worktrees(project: Path) -> None:
         if not pid_match:
             # Unknown format — skip to avoid accidentally removing a live worktree
             _log(
-                f"=== startup: skipping locked worktree {name}: unknown lock format ==="
+                f"=== startup: skipping locked worktree {name}: unknown lock format {_now_iso()} ==="
             )
             continue
 
@@ -341,7 +343,7 @@ def _cleanup_locked_worktrees(project: Path) -> None:
         worktree_path = Path(gitdir_file.read_text().strip()).parent
 
         _log(
-            f"=== startup: removing orphaned locked worktree {name} (dead pid {pid}) ==="
+            f"=== startup: removing orphaned locked worktree {name} (dead pid {pid}) {_now_iso()} ==="
         )
         try:
             subprocess.run(  # noqa: S603
@@ -357,7 +359,9 @@ def _cleanup_locked_worktrees(project: Path) -> None:
                 check=False,
             )
         except OSError as exc:
-            _log(f"=== startup: failed to remove worktree {name}: {exc} ===")
+            _log(
+                f"=== startup: failed to remove worktree {name}: {exc} {_now_iso()} ==="
+            )
 
 
 def append_beat_log(project: Path, record: dict) -> None:
@@ -761,7 +765,7 @@ def _sync_origin_main(project: Path) -> None:
         )
         summary = (merge.stdout.strip().splitlines() or ["already up to date"])[0]
         if merge.returncode == 0:
-            _log(f"=== sync: {default_branch}: {summary} ===")
+            _log(f"=== sync: {default_branch}: {summary} {_now_iso()} ===")
         else:
             _log(
                 f"=== sync: ff-merge skipped — "
@@ -778,7 +782,7 @@ def _sync_origin_main(project: Path) -> None:
         )
         if update.returncode == 0:
             _log(
-                f"=== sync: {default_branch} updated from origin (HEAD on {branch}) ==="
+                f"=== sync: {default_branch} updated from origin (HEAD on {branch}) {_now_iso()} ==="
             )
         else:
             _log(
@@ -786,7 +790,7 @@ def _sync_origin_main(project: Path) -> None:
                 f"{(update.stderr.strip().splitlines() or ['non-fast-forward'])[-1][:80]} ==="
             )
     else:
-        _log("=== sync: skipped — detached HEAD ===")
+        _log(f"=== sync: skipped — detached HEAD {_now_iso()} ===")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -850,7 +854,9 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     default_branch = _default_branch(path)
     base = _git("rev-parse", f"origin/{default_branch}", cwd=path).stdout.strip()
     if not base:
-        _log(f"=== housekeeping: cannot resolve origin/{default_branch} ===")
+        _log(
+            f"=== housekeeping: cannot resolve origin/{default_branch} {_now_iso()} ==="
+        )
         return "failed"
 
     nonce = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + secrets.token_hex(2)
@@ -858,7 +864,7 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     r = _git("checkout", "-B", branch, base, cwd=path)
     if r.returncode != 0:
         detail = (r.stderr or r.stdout or "").strip().replace("\n", " | ")
-        _log(f"=== housekeeping: failed to create {branch}: {detail} ===")
+        _log(f"=== housekeeping: failed to create {branch}: {detail} {_now_iso()} ===")
         return "failed"
 
     _log(f"=== housekeeping: running on {branch} {_now_iso()} ===")
@@ -1054,14 +1060,16 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     if status.stdout.strip():
         dirty_files = status.stdout.strip().splitlines()[:5]
         detail = f"{len(dirty_files)} file(s): {', '.join(dirty_files[:3])}"
-        _log(f"=== beat aborted: dirty working tree: {detail} ===")
+        _log(f"=== beat aborted: dirty working tree: {detail} {_now_iso()} ===")
         _record_phase_outcome(path, "raid", "aborted-dirty-tree", detail=detail)
         return "aborted-dirty-tree", None
 
     r = _git("checkout", default_branch, cwd=path)
     if r.returncode != 0:
         detail = (r.stderr or r.stdout or "").strip().replace("\n", " | ")
-        _log(f"=== beat aborted: cannot checkout {default_branch}: {detail} ===")
+        _log(
+            f"=== beat aborted: cannot checkout {default_branch}: {detail} {_now_iso()} ==="
+        )
         return "aborted", None
 
     # Housekeeping (conditional). Aborts beat on failure/timeout so
@@ -1081,7 +1089,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     # raid hasn't had a chance to close it yet, and re-picking risks a
     # double-raid.
     if any(_ticket_recently_picked(t) for t in path.glob("tickets/*.erg")):
-        _log("=== pick-ticket: skipped (cooldown-recent-pick) ===")
+        _log(f"=== pick-ticket: skipped (cooldown-recent-pick) {_now_iso()} ===")
         _record_phase_outcome(
             path, "pick_ticket", "skip", detail="cooldown-recent-pick"
         )
@@ -1288,7 +1296,7 @@ def main() -> None:
                 if elapsed_s < project.interval_minutes * 60:
                     remaining = int(project.interval_minutes * 60 - elapsed_s)
                     _log(
-                        f"=== interval-skip: {path.name} (next run in {remaining}s) ==="
+                        f"=== interval-skip: {path.name} (next run in {remaining}s) {_now_iso()} ==="
                     )
                     _record_phase_outcome(
                         path,
@@ -1349,7 +1357,7 @@ def main() -> None:
         # Bound at len(PROJECTS) - 1 to prevent infinite loops. Each fallback
         # acquires its own lock non-blocking; already-running projects are skipped.
         if outcome == "idle" and not os.environ.get("BEAT_PROJECT"):
-            _log("=== fallback: primary idle, trying other projects ===")
+            _log(f"=== fallback: primary idle, trying other projects {_now_iso()} ===")
             fallback_tried = 0
             for fallback_cfg in PROJECTS:
                 if fallback_cfg.path == path:
@@ -1360,7 +1368,9 @@ def main() -> None:
                 try:
                     fcntl.flock(fb_lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except BlockingIOError:
-                    _log(f"=== fallback: {fallback_cfg.path.name} locked, skipping ===")
+                    _log(
+                        f"=== fallback: {fallback_cfg.path.name} locked, skipping {_now_iso()} ==="
+                    )
                     fb_lock_fh.close()
                     fallback_tried += 1
                     continue
@@ -1382,7 +1392,7 @@ def main() -> None:
                     fcntl.flock(fb_lock_fh, fcntl.LOCK_UN)
                     fb_lock_fh.close()
             else:
-                _log("=== fallback: all projects idle or locked ===")
+                _log(f"=== fallback: all projects idle or locked {_now_iso()} ===")
     except KeyboardInterrupt:
         outcome = "aborted"
 
