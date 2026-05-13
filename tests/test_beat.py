@@ -850,12 +850,20 @@ class TestHousekeepingPhase:
             patch("beat.housekeeping_needed", return_value=True),
             patch("beat._git", side_effect=git_dirty_after_skill),
             patch("beat.run_skill", return_value=(0, beat._SkillResult())),
+            patch("beat._record_phase_outcome") as mock_record,
         ):
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
 
         assert outcome == "aborted-dirty-tree"
         # The post-skill checkout must NOT have been reached
         assert checkout_calls == [], f"unexpected checkout calls: {checkout_calls}"
+        # _record_phase_outcome must be called with the housekeeping phase and aborted-dirty-tree
+        mock_record.assert_called_once_with(
+            tmp_project,
+            "housekeeping",
+            "aborted-dirty-tree",
+            detail="1 file(s): M dirty_file.py",
+        )
 
     def test_raid_aborts_on_ci_failed(self, tmp_project, git_ok):
         with patch("beat._housekeeping_phase", return_value="failed"):
