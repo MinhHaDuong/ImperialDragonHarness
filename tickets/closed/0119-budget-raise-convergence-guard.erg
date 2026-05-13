@@ -2,10 +2,13 @@
 Title: skill-doctor: budget-raise convergence guard — escalate after 3 consecutive raises
 Created: 2026-05-11
 Author: claude
+Closed: autoclosed — PR #178
 
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=9, sev=medium, score=18
 2026-05-11T16:52Z claude note — reverted erroneous auto-close (PR #139 opens this ticket, does not implement it)
+2026-05-13T00:00Z claude note — implemented convergence guard in SKILL.md; PR #178 opened; 216 tests pass
+2026-05-13T09:53Z MinhHaDuong closed — autoclosed — PR #178
 --- body ---
 ## Context
 

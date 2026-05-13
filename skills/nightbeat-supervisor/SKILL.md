@@ -56,9 +56,19 @@ actionable root cause:
 When you reach a root cause, repair if within authority:
 
 - **Missing permission** → add to `settings.json` allowlist.
-- **Budget too small for the actual scope of work** → raise the per-project
-  `ProjectConfig` field in `beat.py` by 20%, capped at 2× the module-level
-  constant; never touch the module-level constant.
+- **Budget too small for the actual scope of work** → before raising, apply
+  the convergence guard:
+  1. Count `action=repair` journal entries for the same project+phase in the
+     last 7 days. If ≥ 3: **do not raise**. Instead, open a ticket:
+     "budget not converging for {project} {phase} — {N} raises in 7 days,
+     current={current}, started={first}."
+  2. If the proposed raise would exceed 1.5× the module-level constant for
+     that phase, log a warning and include it in the ticket body (note: the
+     hard ceiling remains 2× the module-level constant — the 1.5× threshold
+     is a warning only, not a new cap).
+  If neither guard triggers: raise the per-project `ProjectConfig` field in
+  `beat.py` by 20%, capped at 2× the module-level constant; never touch the
+  module-level constant.
 - **Raid timeout during verify/review** (`outcome=timeout` AND why-chain
   shows verify/review slowness, not implementation slowness) → raise
   `raid_timeout_s` in the per-project config by 20%, capped at
