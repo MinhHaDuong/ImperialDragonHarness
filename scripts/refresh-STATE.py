@@ -12,9 +12,19 @@ from pathlib import Path
 
 
 def _repo_root() -> Path:
-    r = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True
-    )
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        print(
+            "WARNING: git rev-parse timed out, falling back to script parent",
+            file=sys.stderr,
+        )
+        return Path(__file__).parent.parent
     if r.returncode == 0:
         return Path(r.stdout.strip())
     return Path(__file__).parent.parent  # fallback: script is in scripts/ of project
@@ -28,9 +38,13 @@ STATUS_HEADING = "## Status"
 
 
 def run(cmd):
-    return subprocess.run(
-        cmd, capture_output=True, text=True, check=True, cwd=REPO_ROOT
-    ).stdout.strip()
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, check=True, cwd=REPO_ROOT, timeout=30
+        ).stdout.strip()
+    except subprocess.TimeoutExpired:
+        print(f"WARNING: command timed out: {cmd}", file=sys.stderr)
+        sys.exit(1)
 
 
 def get_commits(n=5):
