@@ -1,0 +1,84 @@
+%erg 0.1
+Title: Design evergreen documentation system for the harness
+Created: 2026-05-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-05-13T14:14Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+The harness has README.md, STATE.md, scattered `docs/*.md` raid
+notes, per-skill `SKILL.md` frontmatter, the `harness-rules/` pack,
+and ticket bodies — but no single authoritative manual, and no
+mechanism keeping any of it in sync as skills evolve.
+
+Symptoms:
+- Onboarding agents (and humans) can't quickly answer "what does
+  this harness do? What skills exist? How do I run a typical day?"
+  without grepping the repo.
+- Mid-session, agents can't query "remind me what `/perch`
+  actually does" without reading the file.
+- New skills don't auto-appear anywhere users discover them
+  (slash-command picker is interactive-only).
+- Ticket 0068's v2 mapping table will be stale within weeks of any
+  new skill landing.
+
+Raised by the author during the 2026-05-13 annotation on 0068:
+"we need an evergreen documentation system for the harness — the
+README can only go so far."
+
+## Design space — candidates to explore
+
+This ticket is a design-stub, not an implementation plan. Each
+candidate is worth a paragraph of research before any code:
+
+a. **Auto-generated `SKILLS.md` catalog** — one file regenerated
+   from every `SKILL.md` frontmatter (name, description, args,
+   user-invocable). Cheap; stale-by-construction unless tied to a
+   pre-commit or CI hook.
+
+b. **`/show-docs <topic>` skill** — queryable corpus: skill
+   catalog + rule-pack + lifecycle docs surfaced via a single
+   command. Fits the agent-introspection use case.
+
+c. **`/show-skill <name>` skill** — focused variant: print one
+   skill's description, args, and source for in-session reference
+   without leaving the chat. Probably trivial to ship as a starter.
+
+d. **Architecture page regenerated from ticket history** — the
+   "why" of the harness lives in closed tickets. Could generate a
+   curated digest weekly via `skill-doctor` style sweep.
+
+e. **Docs as source of truth, skills derived** — the most
+   ambitious: SKILL.md frontmatter + rule-pack + ticket
+   conventions all derive from a single `docs/` source. Inverts
+   the current dependency. Probably overkill for a personal-fleet
+   harness.
+
+f. **Embedded query interface** — index everything (skills,
+   rules, tickets, STATE) into a small SQLite or grep-cache;
+   expose via `/query`. Crosses into RAG territory.
+
+## Actions (design phase only — no implementation in this ticket)
+
+1. Survey what's out there. Anthropic's own Claude Code docs,
+   public harnesses (Aider's structure, Cursor's rules, OpenDevin's
+   manifest format, any agent-OS literature from 2026).
+2. Decide the *primary use case*: agent introspection
+   mid-session? Human onboarding? Both? The answer shapes the
+   format.
+3. Pick the lightest candidate that solves the primary use case.
+   Candidate (c) `/show-skill` alone might be 80% of the value.
+4. Open one or more implementation tickets with concrete scope.
+5. Close this ticket with the design decision as the closing log
+   entry.
+
+## Exit criteria
+
+- [ ] A design note names the chosen approach and rejected
+      alternatives (in this ticket's body, or a separate
+      `docs/0153-doc-system-design.md`).
+- [ ] At least one implementation ticket filed.
+- [ ] Author signs off on the design.

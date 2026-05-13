@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Rescope nightbeat-risk-review into check-readiness — multi-repo pre-flight
+Created: 2026-05-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-05-13T14:14Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`nightbeat-risk-review` today pre-flights one autonomous nightbeat
+on one repo by scanning the prior journal for risky-ticket signals
+(parallel-fanout cost, repeated picks, permission denials). Narrow
+scope, narrow value: only useful before scheduling `nightbeat-supervisor`.
+
+What we actually want is a **multi-repo readiness and configuration
+review**: a pre-flight that runs across every consumer project the
+harness manages and surfaces:
+
+- Per-repo git hygiene (uncommitted, drift from origin, stale
+  branches, dirty worktrees)
+- Ticket flow health (open count, stale-claim count, unclaimed
+  ready, blocked-by chains)
+- CLAUDE.md presence and freshness
+- `.claude/settings.json` drift across projects (skill aliases,
+  permission allowlists, hooks)
+- Skill-version drift if multiple project copies of skills exist
+  (current state: skills are global in `~/.claude/`, so not yet
+  applicable — but the audit anticipates per-project skill libs)
+- The current `nightbeat-risk-review` content, as one mode
+  (`--mode=nightbeat-history`) of the larger skill
+
+Surfaced as cleanup finding 1.b in the 2026-05-13 annotation on
+ticket 0068.
+
+## Actions
+
+1. Decide canonical name. Annotation proposed `check-readiness`;
+   alternatives: `audit-fleet`, `pre-flight`, `survey-repos`. The
+   annotation's recommended schema (option B from 0068) prefers
+   verb-object, so `check-readiness` fits.
+2. Rename `skills/nightbeat-risk-review/` → `skills/check-readiness/`.
+   Update SKILL.md frontmatter and self-references.
+3. Generalize the survey logic: today it shells `nightbeat-report.py`
+   for one repo. Iterate over `~/.claude/projects/*/` (or wherever
+   the project root list lives) and aggregate.
+4. Add the new modes:
+   - default (full sweep across all projects)
+   - `--mode=nightbeat-history` (preserves today's behaviour as a
+     legacy sub-mode, until 0068 closes and aliases land)
+   - `--project <name>` (scope to one project)
+5. Update STATE.md "Morning review" if it references the old name.
+6. Coordinate with 0068 — this rescope changes one row of the v2
+   mapping table.
+
+## Exit criteria
+
+- [ ] `skills/check-readiness/SKILL.md` exists and covers
+      multi-project pre-flight.
+- [ ] Today's nightbeat-risk-review behaviour available as a
+      sub-mode.
+- [ ] At least one cross-project signal surfaced that the old
+      skill couldn't (e.g. settings.json drift).
+- [ ] `skills/nightbeat-risk-review/` removed or redirects to the
+      new skill (depends on 0068's alias mechanism).
