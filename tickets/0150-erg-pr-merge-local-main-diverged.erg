@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Fix erg-pr-merge when local main is ahead of origin/main
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T14:10Z claude created
+
+--- body ---
+## Context
+
+`erg-pr-merge` fails at the final squash-merge step when local `main`
+has unpushed commits (diverged from `origin/main`). The script tries to
+fast-forward local main after squash-merging, hits a rebase conflict,
+and exits non-zero — leaving a half-applied rebase that must be aborted
+manually.
+
+Observed in raid session 2026-05-13: PRs #183 and #186 both hit this.
+Workaround: `git rebase --abort` + manual `gh api .../merge` call.
+
+The root cause: the script assumes local main is either behind or at
+parity with origin/main. When a housekeeping session runs and leaves
+commits on local main (state machine tick), this assumption breaks.
+
+## Actions
+
+1. In `skills/merge/erg-pr-merge`, locate the post-merge `git pull`
+   or fast-forward step that updates local main.
+2. Replace with a safe variant: if local main diverges, skip the local
+   fast-forward (log a warning) and do NOT rebase. The squash-merge
+   on GitHub succeeded; local state is the caller's problem.
+3. Alternatively, do the squash-merge via `gh api` directly (matching
+   what we already do as the workaround) and skip the local git step
+   entirely — the local branch is a worktree throwaway anyway.
+
+## Test
+
+Set up a local main with 1 unpushed commit, then run `erg-pr-merge` on
+a PR. Verify: PR is squash-merged on GitHub, script exits 0, no rebase
+is left in progress.
+
+## Exit criteria
+
+- [ ] `erg-pr-merge` exits 0 when local main is ahead of origin/main
+- [ ] No `git rebase --abort` manual step required
+- [ ] PR is squash-merged on GitHub and ticket is closed

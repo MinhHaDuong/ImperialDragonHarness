@@ -114,7 +114,19 @@ if in_worktree; then
     echo "In git worktree — skipping checkout of ${BASE_BRANCH}; exit the worktree when done."
 else
     git checkout "$BASE_BRANCH"
-    git pull --rebase origin "$BASE_BRANCH"
+    # Safe fast-forward: skip when local branch has unpushed commits
+    # (e.g., housekeeping ticks) to avoid rebase conflicts on the
+    # already-squash-merged PR.  The GitHub merge succeeded; local
+    # state is the caller's responsibility.
+    LOCAL=$(git rev-parse HEAD)
+    git fetch origin "$BASE_BRANCH"
+    REMOTE=$(git rev-parse "origin/$BASE_BRANCH")
+    if git merge-base --is-ancestor "$LOCAL" "$REMOTE"; then
+        # Local is behind or at parity — safe to fast-forward
+        git merge --ff-only "origin/$BASE_BRANCH"
+    else
+        echo "erg-pr-merge: warning: local ${BASE_BRANCH} has unpushed commits — skipping pull to avoid rebase conflict"
+    fi
 fi
 
 echo "Done."
