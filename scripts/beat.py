@@ -111,7 +111,7 @@ class ProjectConfig:
         pick_ticket_model — model used when repo has no recent commits.
         interval_minutes — minimum minutes between beats (0 = always run).
         raid_timeout_s — seconds before the raid subprocess is killed.
-        max_turns_pick_ticket — max agent turns for pick-ticket (default 30).
+        max_turns_pick_ticket — max agent turns for pick-ticket (default 30, cap 60).
         max_turns_housekeeping — max agent turns for housekeeping (default 40, cap 80).
     """
 
@@ -129,6 +129,9 @@ class ProjectConfig:
         cap = 2 * MAX_TURNS_HOUSEKEEPING
         if self.max_turns_housekeeping > cap:
             self.max_turns_housekeeping = cap
+        cap = 2 * MAX_TURNS_PICK_TICKET
+        if self.max_turns_pick_ticket > cap:
+            self.max_turns_pick_ticket = cap
 
 
 _BUILTIN_PROJECTS: list[ProjectConfig] = [
