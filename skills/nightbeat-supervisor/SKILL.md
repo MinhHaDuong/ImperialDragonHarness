@@ -15,6 +15,11 @@ timer before editing `beat.py`, restart after; never edit skill SKILL.md files.
 
 ## 1. Survey
 
+Pre-flight: verify no dual-journal state exists (`canonical` vs `logs/` path). If both
+`<project>/nightbeat-supervisor-journal.jsonl` and `<project>/logs/nightbeat-supervisor-journal.jsonl`
+exist as independent files (not a symlink), stop and open a ticket before proceeding.
+The survey script enforces this automatically and exits non-zero if the condition is detected.
+
 ```bash
 python3 $HARNESS_DIR/scripts/nightbeat-supervisor-survey.py [--since ISO-TS]
 ```

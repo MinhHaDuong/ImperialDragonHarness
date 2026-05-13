@@ -2,10 +2,13 @@
 Title: skill-doctor: journal path startup assertion — prevent re-detection loops
 Created: 2026-05-11
 Author: claude
+Closed: autoclosed — PR #179
 
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=3, sev=high, score=9
+2026-05-13T09:20Z claude note PR #179 opened — dual-journal assertion added to survey script; also resolved existing dual-journal state in harness (merged 34 alt entries into canonical, symlinked alt path)
 
+2026-05-13T09:38Z MinhHaDuong closed — autoclosed — PR #179
 --- body ---
 ## Context
 
