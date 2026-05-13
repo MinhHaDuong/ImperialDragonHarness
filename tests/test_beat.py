@@ -1757,6 +1757,10 @@ class TestProjectConfigFields:
         cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_housekeeping=9999)
         assert cfg.max_turns_housekeeping == 2 * beat.MAX_TURNS_HOUSEKEEPING
 
+    def test_max_turns_pick_ticket_cap(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_pick_ticket=9999)
+        assert cfg.max_turns_pick_ticket == 2 * beat.MAX_TURNS_PICK_TICKET
+
 
 class TestApplyBeatJsonOverlay:
     def test_overlay_merges_known_keys(self, tmp_path):
