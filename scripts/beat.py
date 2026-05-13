@@ -8,7 +8,6 @@ Environment:
   BEAT_DRY_RUN=1   Print intended sequence without invoking Claude.
 """
 
-import asyncio
 import fcntl
 import json
 import os
@@ -82,7 +81,7 @@ DRY_RUN: bool = os.environ.get("BEAT_DRY_RUN") == "1"
 class _State:
     beat_start: float = 0.0
     project: Path | None = None
-    current_proc: asyncio.subprocess.Process | None = field(default=None, repr=False)
+    current_proc: subprocess.Popen | None = field(default=None, repr=False)
     log_fh: TextIOBase | None = field(default=None, repr=False)
     final_written: bool = False
 
@@ -467,11 +466,15 @@ def _record_phase_outcome(
 # ── Signal handling ────────────────────────────────────────────────────────────
 
 
-def _on_sigterm() -> None:
+def _on_sigterm(_signum: int, _frame: object) -> None:
     elapsed = int(time.monotonic() - _state.beat_start)
     proc = _state.current_proc
-    if proc is not None and proc.returncode is None:
-        proc.kill()
+    if proc is not None and proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
     if _state.project is not None:
         finalize_beat_log(
             _state.project,
@@ -625,7 +628,7 @@ def _claude_argv(
     return argv
 
 
-async def run_skill(
+def run_skill(
     skill: str,
     *,
     budget: float,
@@ -637,7 +640,8 @@ async def run_skill(
 ) -> tuple[int, _SkillResult]:
     """Invoke a Claude skill; return (exit_code, _SkillResult).
 
-    Streams stdout line-by-line for live logging via asyncio.
+    Streams stdout line-by-line for live logging.  Uses subprocess.Popen
+    with communicate() for timeout enforcement (no threads).
     Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
     project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
     """
@@ -652,10 +656,12 @@ async def run_skill(
         return 0, _SkillResult(result_text="(dry-run ok)")
 
     env = {**os.environ, "CLAUDE_NIGHT_SWEEP": "1"}
-    proc = await asyncio.create_subprocess_exec(
-        *argv,
-        stdout=asyncio.subprocess.PIPE,
+    proc = subprocess.Popen(  # noqa: S603
+        argv,
+        stdout=subprocess.PIPE,
         stderr=None,  # inherit → systemd journal
+        text=True,
+        bufsize=1,
         cwd=cwd,
         env=env,
     )
@@ -663,27 +669,23 @@ async def run_skill(
 
     stdout_lines: list[str] = []
 
-    async def _read_stdout() -> None:
-        assert proc.stdout is not None
-        async for raw in proc.stdout:
-            line = raw.decode().rstrip("\n")
-            _log(line)
-            stdout_lines.append(line)
-
     timed_out = False
     try:
-        await asyncio.wait_for(
-            asyncio.gather(_read_stdout(), proc.wait()),
-            timeout=timeout_s,
-        )
-    except asyncio.TimeoutError:
+        # Read stdout line-by-line then wait, enforcing a single timeout
+        # over the whole operation via communicate().
+        raw_out, _ = proc.communicate(timeout=timeout_s)
+        for raw in raw_out.splitlines():
+            line = raw.rstrip("\n")
+            _log(line)
+            stdout_lines.append(line)
+    except subprocess.TimeoutExpired:
         timed_out = True
         proc.terminate()
         try:
-            await asyncio.wait_for(proc.wait(), timeout=5)
-        except asyncio.TimeoutError:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
             proc.kill()
-            await proc.wait()
+            proc.wait()
 
     _state.current_proc = None
 
@@ -708,7 +710,7 @@ async def run_skill(
         except json.JSONDecodeError:
             pass
 
-    return proc.returncode or 0, skill_result
+    return proc.returncode, skill_result
 
 
 # ── Origin sync ───────────────────────────────────────────────────────────────
@@ -829,7 +831,7 @@ def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     )
 
 
-async def _housekeeping_phase(project: ProjectConfig) -> str:
+def _housekeeping_phase(project: ProjectConfig) -> str:
     """Run housekeeping on a dedicated branch cut from origin/main.
 
     Returns one of:
@@ -875,7 +877,7 @@ async def _housekeeping_phase(project: ProjectConfig) -> str:
             _log(f"=== housekeeping-git: rc={git_rc} {_now_iso()} ===")
     os.environ["BEAT_HOUSEKEEPING_BRANCH"] = branch
     try:
-        hk_rc, hk_res = await run_skill(
+        hk_rc, hk_res = run_skill(
             "/housekeeping",
             budget=project.budget_housekeeping,
             timeout_s=HOUSEKEEPING_TIMEOUT_S,
@@ -1046,7 +1048,7 @@ def _prune_permissions(project: Path) -> None:
         _log(f"=== permissions-prune: failed silently: {exc} {_now_iso()} ===")
 
 
-async def _raid(project: ProjectConfig) -> tuple[str, str | None]:
+def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     """Run the pick→raid sequence; return (outcome, ticket_id)."""
     ticket_id: str | None = None
     path = project.path
@@ -1077,7 +1079,7 @@ async def _raid(project: ProjectConfig) -> tuple[str, str | None]:
 
     # Housekeeping (conditional). Aborts beat on failure/timeout so
     # pick-ticket → raid never runs against a known-bad main.
-    hk_outcome = await _housekeeping_phase(project)
+    hk_outcome = _housekeeping_phase(project)
     _record_phase_outcome(
         path,
         "housekeeping",
@@ -1138,7 +1140,7 @@ async def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     pt_res = _SkillResult()
     while closed_attempts < MAX_CLOSED_REPICKS:
         _log(f"=== pick-ticket: running model={pick_model} {_now_iso()} ===")
-        pt_rc, pt_res = await run_skill(
+        pt_rc, pt_res = run_skill(
             f"/pick-ticket\n\nRunning on: {hostname}",
             budget=project.budget_pick_ticket,
             timeout_s=PICK_TICKET_TIMEOUT_S,
@@ -1203,7 +1205,7 @@ async def _raid(project: ProjectConfig) -> tuple[str, str | None]:
 
     # Raid
     _log(f"=== raid: running ticket {ticket_id} {_now_iso()} ===")
-    oc_rc, oc_res = await run_skill(
+    oc_rc, oc_res = run_skill(
         f"/raid {ticket_id}\n\nRunning on: {hostname}",
         budget=project.budget_raid,
         timeout_s=project.raid_timeout_s,
@@ -1251,10 +1253,9 @@ async def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     return outcome, ticket_id
 
 
-async def main() -> None:
+def main() -> None:
     _state.beat_start = time.monotonic()
-    loop = asyncio.get_running_loop()
-    loop.add_signal_handler(signal.SIGTERM, _on_sigterm)
+    signal.signal(signal.SIGTERM, _on_sigterm)
     _setup_env()
 
     # Per-run logfile (opened before lock so startup messages are captured)
@@ -1354,7 +1355,7 @@ async def main() -> None:
     outcome = "idle"
     ticket_id: str | None = None
     try:
-        outcome, ticket_id = await _raid(project)
+        outcome, ticket_id = _raid(project)
 
         # Layer 1 — Fallback rotation (ticket 0051): if the primary project is
         # idle, try other projects in the rotation before giving up the timeslot.
@@ -1383,7 +1384,7 @@ async def main() -> None:
                         f"=== fallback: trying {fallback_cfg.path.name} {_now_iso()} ==="
                     )
                     fallback_tried += 1
-                    fb_outcome, fb_ticket = await _raid(fallback_cfg)
+                    fb_outcome, fb_ticket = _raid(fallback_cfg)
                     _log(
                         f"=== fallback: {fallback_cfg.path.name}"
                         f" outcome={fb_outcome} ==="
@@ -1427,4 +1428,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
