@@ -3,12 +3,14 @@ Title: Discuss milestone/epic layer above tickets
 Created: 2026-04-29
 Author: claude
 Tag: deferred
+Closed: use tags to mark epics or stories
 
 --- log ---
 2026-04-29T00:00Z claude created
 
 2026-05-02T20:05Z haduong note migration: status pending→open; beat-skip needs-human added
 2026-05-13T09:02Z MinhHaDuong tag deferred
+2026-05-13T12:42Z MinhHaDuong closed — use tags to mark epics or stories
 --- body ---
 ## Context
 

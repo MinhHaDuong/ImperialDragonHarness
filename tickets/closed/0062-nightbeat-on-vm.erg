@@ -1,0 +1,94 @@
+%erg 0.1
+Title: Isolate raid agents in Firecracker microVMs on padme
+Created: 2026-04-30
+Author: claude
+Closed: deferred — threat model does not justify implementation cost until IDH agents run against secret-bearing projects
+
+--- log ---
+2026-04-30T07:30Z claude created
+2026-04-30T09:00Z claude note — evidence lifecycle: on a VM, worktrees created via Agent(isolation:"worktree") are ephemeral; they vanish at session end. The only persistent evidence after a beat is what was pushed (branch commits, PR body, ticket log lines). This sharpens the requirement that raid agents push their branch before session end. The raid skill was updated today (worktrees/nightbeat-report branch) to remove the erroneous "Clean up worktrees" step — worktree lifecycle is harness-managed, not raid-managed. On VM this is even more load-bearing: there is no local disk to fall back on.
+
+2026-05-13T12:46Z MinhHaDuong note VM means local VM on padme for strong isolation, not a cloud VM — uptime and IP-block rationale no longer apply; reframe ticket around isolation benefit
+2026-05-13T13:02Z claude rewrote body: reframed from cloud-VM uptime to Firecracker microVM isolation on padme; KVM confirmed available
+2026-05-13T13:04Z MinhHaDuong closed — deferred — threat model does not justify implementation cost until IDH agents run against secret-bearing projects
+--- body ---
+## Context
+
+IDH raid agents run as subprocesses on the host filesystem. A rogue or
+confused agent can dirty the main repo, contaminate branches, spiral into
+unscoped work, or leak host secrets — all documented incidents in the
+harness feedback memory.
+
+Current mitigations are prompt-level (instructions to agents) and
+post-hoc (git status checks, discard rogue changes). These work but are
+fragile: a sufficiently confused agent ignores instructions.
+
+Firecracker microVMs provide hardware-enforced isolation: each agent gets
+its own kernel, tmpfs scratch, and constrained network. The repo is
+bind-mounted read-only; only git pushes produce durable state. padme has
+KVM (`/dev/kvm` confirmed, AMD SVM). Firecracker cold-starts in 125–150ms
+— negligible relative to raid agent runtime.
+
+The isolation is agent-agnostic: any CLI (Claude Code, Gemini CLI, future
+agents) runs unchanged inside the VM.
+
+## Motivation (documented incidents)
+
+- Verify agents checkout PR branches in main repo, leaving staged noise
+- Parallel execute agents contaminate shared branches
+- Verify agents spiral into unscoped harness work after completing verdict
+
+## Design
+
+Each raid agent invocation goes through `scripts/agent-sandbox`:
+```
+agent-sandbox <agent-cli> [args...]
+```
+Internally:
+1. Firecracker spawns a minimal VM (kernel + rootfs with agent CLI installed)
+2. Repo bind-mounted read-only at /repo
+3. Writable tmpfs at /workspace (agent's worktree)
+4. Outbound network allowed (API calls); inbound blocked via tap interface
+5. VM exits when agent process exits — tmpfs evaporates, no trace
+
+## Threat model
+
+| Threat | Current mitigation | With Firecracker | Priority |
+|--------|--------------------|-----------------|----------|
+| Agent dirties main repo (checked-out files, staged changes) | Post-hoc `git checkout -- .` | Impossible — repo is read-only bind-mount | Medium — annoying, not destructive |
+| Agent contaminates shared branch (pushes to wrong branch) | Verify PR file list before merge | Unchanged — git push still works from VM | Low — gate catches this |
+| Agent spirals into unscoped work (loops, spawns sub-agents) | Circuit breakers (timeout kill) | Contained to VM; host process tree unaffected | Low — circuit breakers sufficient |
+| Agent reads host secrets (API keys, SSH keys, env vars) | None — agent inherits host env | VM gets only explicitly injected env vars | **High** — real risk as projects grow |
+| Agent exfiltrates data via network | None | Unchanged — outbound allowed for API | Low — agent already has API access |
+| Agent corrupts git history (force-push, rebase main) | Branch protection, verify gate | Unchanged — git remote enforces protection | Low — GitHub enforces this |
+| Kernel CVE lets agent escape VM | N/A | Still possible but requires hypervisor exploit | Very low — acceptable residual risk |
+
+**Trigger condition for implementation:** when IDH agents run against projects
+containing secrets (SSH keys, API tokens, private research data) that are not
+already scoped to the agent's task. Current IDH workload (harness
+self-improvement on public repos) does not meet this bar.
+
+## Actions
+
+1. Install Firecracker binary on padme (`scripts/install-firecracker.sh`)
+2. Build minimal rootfs image: Debian slim + git + Claude Code CLI + erg binary
+3. Write `scripts/agent-sandbox` wrapper (agent-agnostic: takes any CLI)
+4. Test: run one raid agent through agent-sandbox, confirm it pushes a branch
+5. Wire into beat.py / raid skill: replace direct agent invocation with agent-sandbox
+6. Document in STATE.md and CLAUDE.md
+
+## Test
+
+```bash
+scripts/agent-sandbox claude --version   # Confirm CLI runs in VM
+scripts/agent-sandbox claude -p "echo hi"  # Confirm API reachable from VM
+# Then: run a real raid ticket through the sandbox and confirm branch is pushed
+```
+
+## Exit criteria
+
+- [ ] `scripts/agent-sandbox` wraps any CLI invocation in a Firecracker VM
+- [ ] Repo visible read-only inside VM; tmpfs scratch for writes
+- [ ] One raid agent successfully pushes a branch from inside the VM
+- [ ] VM leaves no filesystem trace after exit
+- [ ] beat.py / raid skill uses agent-sandbox for all agent invocations
