@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -230,6 +231,16 @@ def main() -> None:
     args = parser.parse_args()
 
     projects = _load_projects()
+
+    for proj in projects:
+        canonical = proj["path"] / "nightbeat-supervisor-journal.jsonl"
+        alt = proj["path"] / "logs" / "nightbeat-supervisor-journal.jsonl"
+        if alt.exists() and canonical.exists() and not alt.is_symlink():
+            sys.exit(
+                f"ERROR: dual journal for {proj['path'].name}: "
+                f"both {canonical} and {alt} exist independently. "
+                f"Merge entries and remove or symlink the non-canonical file."
+            )
 
     since: datetime = (
         _parse_ts(args.since) or _watermark(projects)
