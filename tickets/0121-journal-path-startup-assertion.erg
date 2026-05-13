@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-05-11T16:00Z claude created — skill-doctor survey: freq=3, sev=high, score=9
+2026-05-13T09:20Z claude note PR #179 opened — dual-journal assertion added to survey script; also resolved existing dual-journal state in harness (merged 34 alt entries into canonical, symlinked alt path)
 
 --- body ---
 ## Context
