@@ -101,48 +101,34 @@ verdict: APPROVED | REROLL | ESCALATE
 round: 1 | 2
 pr: <pr-number>
 ticket: <ticket-id>
-
 per_exit_criterion:
-  - criterion: "<verbatim text from ticket>"
+  - criterion: "<verbatim>"
     status: ADDRESSED | MISSING
-    evidence: "<commit SHA + file:line | test_id | PR body statement>"
-
+    evidence: "<commit SHA + file:line | test_id>"
 unresolved_review_comments:
-  - comment_ref: <url or id>
+  - comment_ref: <url|id>
     author: <login>
     tag: verifiable | consider | nofollow | untagged
-    thread_excerpt: "<short>"
     why_unresolved: "<reason>"
-
 malformed_minors:
-  - comment_ref: <url or id>
-    author: <login>
+  - comment_ref: <url|id>
     excerpt: "<hedged phrasing>"
-    fix: "retag as verifiable: with assertion, or as consider:"
-
 unresolved_simplify_findings:
   - finding: "<verbatim>"
     severity: must-fix | nice-to-have
-    status: NOT_APPLIED | APPLIED_PARTIAL | WAIVED_WITHOUT_RATIONALE
-
+    status: NOT_APPLIED | WAIVED_WITHOUT_RATIONALE
 unresolved_adherence_violations:
   - rule_ref: "<.claude/rules/foo.md#bar>"
     file: <path>
-    line: <n>
     severity: blocking | nit
-
 scope_overflow:
   - file: <path>
-    reason: "<why this change is not traceable to any exit criterion>"
+    reason: "<not traceable to exit criterion>"
     suggested_disposition: TICKETED | ESCALATE
-
 rationale: |
-  <one paragraph: what is the strongest remaining reviewer attack on this PR?
-   if APPROVED, state why the evidence holds up to adversarial reading.>
-
-second_round_needed:
-  # populated only if verdict == REROLL
-  - <each item from the unresolved lists, prioritised>
+  <strongest remaining reviewer attack; if APPROVED, why evidence holds>
+second_round_needed:   # only if REROLL
+  - <prioritised items from unresolved lists>
 ```
 
 ## Decision rules
@@ -172,107 +158,41 @@ If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third rou
 
 ## Minor tag handling
 
-Incoming `/review-pr` and `/review-pr-prose` comments at the minor/suggestion tier are
-expected to be prefixed `verifiable:`, `consider:`, or `nofollow:`. The tag set is
-defined in `/review-pr` and `/review-pr-prose`. Keep all three in sync.
+Tag definitions live in `/review-pr` (canonical source). Gate treatment:
 
-| Tag | Gate treatment |
-|---|---|
-| `verifiable:` | Blocker-adjacent. Must be ADDRESSED (commit closes the assertion, or a follow-up ticket is opened with rationale). Unresolved → REROLL. |
-| `consider:` | Informational. Surfaced in the verdict comment under a `consider:` section. Never bounces. |
-| `nofollow:` | Muted. Not surfaced, not counted. |
+- `verifiable:` → blocker-adjacent. Unresolved → REROLL.
+- `consider:` → informational, surfaced but never bounces.
+- `nofollow:` → muted, not surfaced.
 
-Untagged or ambiguously-phrased minors ("might break", "could regress", "may confuse
-readers" without a line pointer) are a process failure, not a finding. The gate:
-
-1. Lists them under `malformed_minors` in the verdict bundle.
-2. Does not let them bounce the PR on their own.
-3. Flags the review author for retag — either promote to `verifiable:` with a failing
-   test, or downgrade to `consider:`.
-4. On round 2, any untagged minor still present → ESCALATE. Ignoring retag requests is not free.
-
-The gate itself also refuses to author hedged language in its own rationale. If the
-gate wants to raise a concern, it either attaches a reproducible check (making it a
-blocker or a `verifiable:` minor) or files it as `consider:`.
-
-## Anti-patterns the gate refuses to indulge
-
-| Pattern | Why it fails |
-|---------|--------------|
-| "Test suite passes" as sole evidence | No link from test to criterion; tests could pre-exist |
-| "Simplify ran, no findings" | Simplify finds nits, not ticket completion; orthogonal |
-| "Reviewer concern filed as follow-up" with no ticket ID | Unverifiable; ticket must exist |
-| "Addressed in PR body" without commit | PR body is narrative; need the actual change |
-| "Edge case out of scope" without scope evidence | Gate must trace each changed file to an exit criterion; untraced files go in `scope_overflow` |
-| "X might break" / "could cause Y" as a minor | Ambiguous hypothesis with no reproducible evidence. |
+Untagged minors go in `malformed_minors`; they do not bounce on their own.
+On round 2 any untagged minor still present → ESCALATE.
+The gate never authors hedged language — use `verifiable:` or `consider:`.
 
 ## Standalone invocation
 
-`/verify-gate <pr-number>` can be called without `/verify` having run first. In that mode
-the gate uses only existing PR state (comments, commits, reviews) — no phase 2–5 outputs.
-This is useful for sanity-checking a PR the human is considering, or for re-running the
-gate after manual fixes.
+Callable without `/verify`. Uses existing PR state only (no phase 2-5 outputs).
+Isolation setup is identical to `/verify` phase 1 (create worktree, remove on exit).
 
-Always invoke `/verify-gate` standalone from within a conversation worktree, never
-from the main repo root.
+**Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`;
+current round = count + 1.
 
-**Isolation setup (standalone only):**
-
-```bash
-# Step 1 — Resolve PR number to branch name (forge-specific step)
-PR_BRANCH=<resolved-branch-name>
-
-# Step 2 — Fetch and create an isolated worktree
-git fetch origin "$PR_BRANCH"
-git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
-# Run all gate checks inside /tmp/review-<pr-number>.
-```
-
-Remove it on exit (regardless of verdict):
-
-```bash
-git worktree remove /tmp/review-<pr-number> --force
-```
-
-**Round derivation:** count existing PR comments matching `/verify-gate round=N verdict=V`.
-The current round is `prior_verdict_count + 1`. The budget is then enforced differently
-by invocation mode:
-
-- **Called from `/verify`** (structured bundle input): if derived round > 2, immediately
-  ESCALATE — do not run the full gate. The pipeline is exhausted.
-- **Standalone** (PR number only): if derived round > 2, warn ("round budget exceeded —
-  N prior rounds detected") and proceed, but label the verdict `standalone-override`.
-  A standalone-override verdict does not count as a pipeline round and cannot unblock
-  a `/verify` sequence that already ESCALATED. It is for human re-inspection only.
+- From `/verify`: round > 2 → immediate ESCALATE.
+- Standalone: round > 2 → warn and proceed as `standalone-override` (does not
+  unblock an ESCALATED `/verify` sequence).
 
 ## Output destinations
 
-1. Structured verdict returned to the caller (for `/verify` consumption).
-2. A PR comment posted with a human-readable summary of the verdict. Template:
+1. Structured verdict returned to caller (for `/verify` consumption).
+2. PR comment posted with human-readable summary:
 
    ```
    /verify-gate round=<n> verdict=<V>
-
-   Exit criteria: <n_addressed>/<n_total> addressed
-   Review comments: <n_unresolved> unresolved
-   Simplify: <n_unresolved> must-fix not applied
-   Adherence: <n_blocking> blocking violations
-   Scope overflow: <n_files> files (<n_ticketed> ticketed, <n_escalate> escalate)
-
-   Minors:
-   - verifiable: <count> (<n_unresolved> unresolved, blocker-adjacent)
-   - consider:   <count> (informational, does not bounce)
-   - nofollow:   <count> (muted)
-   - malformed:  <count> (retag required)
-
-   Top reasons (if not APPROVED):
-   - <ranked list>
-
+   Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
+   Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
+   Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
+   Top reasons (if not APPROVED): <ranked list>
    Rationale: <paragraph>
    ```
-
-   The three prefixes (`verifiable:`, `consider:`, `nofollow:`) appear verbatim in the
-   posted comment so authors can see which class each minor falls into.
 
 ## Circuit breakers
 
