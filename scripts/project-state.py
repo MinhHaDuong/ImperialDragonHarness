@@ -14,7 +14,17 @@ THRESHOLD_HOURS = 12.0
 
 
 def run(args, cwd):
-    return subprocess.run(args, capture_output=True, text=True, check=False, cwd=cwd)
+    try:
+        return subprocess.run(
+            args, capture_output=True, text=True, check=False, cwd=cwd, timeout=30
+        )
+    except subprocess.TimeoutExpired:
+        import sys
+
+        print(f"WARNING: subprocess timed out: {args}", file=sys.stderr)
+        return subprocess.CompletedProcess(
+            args=args, returncode=1, stdout="", stderr="timeout"
+        )
 
 
 def git_state(project):
