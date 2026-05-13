@@ -34,21 +34,19 @@ Merge is always the human's or the raid's call.
 
 ### 1. Setup
 
-**Pre-flight isolation check (runs in the caller's cwd, before any checkout):**
+Always invoke `/verify` from within a conversation worktree, never from the main repo
+root. The worktree is the isolation boundary; no main-repo checkout is ever needed.
+
+**Isolation setup:**
 
 ```bash
-current_branch=$(git branch --show-current)
-if [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
-  echo "/verify: aborting — invocation directory is on branch '$current_branch', not main." >&2
-  exit 1
-fi
-```
+# Step 1 — Resolve PR number to branch name (forge-specific step;
+#           on GitHub: gh pr view <pr-number> --json headRefName -q .headRefName)
+PR_BRANCH=<resolved-branch-name>
 
-If the check passes, create an isolated worktree for all subsequent work:
-
-```bash
-PR_BRANCH=$(gh pr view <pr-number> --json headRefName -q .headRefName)
-git worktree add /tmp/review-<pr-number> "$PR_BRANCH"
+# Step 2 — Fetch and create an isolated worktree
+git fetch origin "$PR_BRANCH"
+git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
 # All phases 1–6 and the fix agent run inside /tmp/review-<pr-number>.
 # The main repo is never switched, never dirtied.
 ```

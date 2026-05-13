@@ -55,11 +55,9 @@ before invoking the gate.
 
 **Isolation**:
 - When called from `/verify` (bundle mode), cwd is already the isolated worktree
-  that `/verify` created in phase 1. No additional checkout is needed; the
-  pre-flight check below is skipped because `/verify` already ran it.
-- When invoked **standalone**, the gate must not perform a bare `gh pr checkout`
-  in the caller's repo. See "Standalone invocation" for the required worktree
-  setup.
+  that `/verify` created in phase 1. No additional setup is needed.
+- When invoked **standalone**, the gate must create its own isolated worktree
+  before reading PR state. See "Standalone invocation" for the setup.
 
 ## Evidence discovery
 
@@ -215,22 +213,19 @@ the gate uses only existing PR state (comments, commits, reviews) — no phase 2
 This is useful for sanity-checking a PR the human is considering, or for re-running the
 gate after manual fixes.
 
-**Pre-flight isolation check (standalone only):**
+Always invoke `/verify-gate` standalone from within a conversation worktree, never
+from the main repo root.
+
+**Isolation setup (standalone only):**
 
 ```bash
-current_branch=$(git branch --show-current)
-if [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
-  echo "/verify-gate: aborting — invocation directory is on branch '$current_branch', not main." >&2
-  exit 1
-fi
-```
+# Step 1 — Resolve PR number to branch name (forge-specific step;
+#           on GitHub: gh pr view <pr-number> --json headRefName -q .headRefName)
+PR_BRANCH=<resolved-branch-name>
 
-**Worktree setup (standalone only):** do not run `gh pr checkout` in the caller's
-repo. Instead, create an isolated worktree:
-
-```bash
-PR_BRANCH=$(gh pr view <pr-number> --json headRefName -q .headRefName)
-git worktree add /tmp/review-<pr-number> "$PR_BRANCH"
+# Step 2 — Fetch and create an isolated worktree
+git fetch origin "$PR_BRANCH"
+git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
 # Run all gate checks inside /tmp/review-<pr-number>.
 ```
 
