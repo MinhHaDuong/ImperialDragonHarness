@@ -34,8 +34,33 @@ Merge is always the human's or the raid's call.
 
 ### 1. Setup
 
-- Check out the merge-request branch into an isolated worktree. Abort if not mergeable
-  or if there are open merge conflicts.
+**Pre-flight isolation check (runs in the caller's cwd, before any checkout):**
+
+```bash
+current_branch=$(git branch --show-current)
+if [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
+  echo "/verify: aborting — invocation directory is on branch '$current_branch', not main." >&2
+  exit 1
+fi
+```
+
+If the check passes, create an isolated worktree for all subsequent work:
+
+```bash
+PR_BRANCH=$(gh pr view <pr-number> --json headRefName -q .headRefName)
+git worktree add /tmp/review-<pr-number> "$PR_BRANCH"
+# All phases 1–6 and the fix agent run inside /tmp/review-<pr-number>.
+# The main repo is never switched, never dirtied.
+```
+
+On any exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker abort),
+remove the worktree:
+
+```bash
+git worktree remove /tmp/review-<pr-number> --force
+```
+
+- Abort if not mergeable or if there are open merge conflicts.
 - Collect:
   - The ticket file referenced in the PR title or body (`tickets/*.erg`).
   - PR body, full diff, all existing review comments, all inline comments, all commit
@@ -110,6 +135,10 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 - Gate disagrees with phase 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
 - Telemetry thresholds (see `## Telemetry`).
+
+On **every** circuit-breaker exit (not only ESCALATE): run
+`git worktree remove /tmp/review-<pr-number> --force` before returning so the
+main repo is never left in a partial state.
 
 ## Telemetry
 

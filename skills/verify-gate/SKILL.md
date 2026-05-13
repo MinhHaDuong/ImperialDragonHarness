@@ -53,6 +53,14 @@ against cwd — running from a different repo's worktree will produce wrong resu
 For cross-repo flows, the caller does `cd <project-path> && git fetch origin`
 before invoking the gate.
 
+**Isolation**:
+- When called from `/verify` (bundle mode), cwd is already the isolated worktree
+  that `/verify` created in phase 1. No additional checkout is needed; the
+  pre-flight check below is skipped because `/verify` already ran it.
+- When invoked **standalone**, the gate must not perform a bare `gh pr checkout`
+  in the caller's repo. See "Standalone invocation" for the required worktree
+  setup.
+
 ## Evidence discovery
 
 For each ticket exit criterion, the gate searches:
@@ -206,6 +214,31 @@ blocker or a `verifiable:` minor) or files it as `consider:`.
 the gate uses only existing PR state (comments, commits, reviews) — no phase 2–5 outputs.
 This is useful for sanity-checking a PR the human is considering, or for re-running the
 gate after manual fixes.
+
+**Pre-flight isolation check (standalone only):**
+
+```bash
+current_branch=$(git branch --show-current)
+if [ "$current_branch" != "main" ] && [ "$current_branch" != "master" ]; then
+  echo "/verify-gate: aborting — invocation directory is on branch '$current_branch', not main." >&2
+  exit 1
+fi
+```
+
+**Worktree setup (standalone only):** do not run `gh pr checkout` in the caller's
+repo. Instead, create an isolated worktree:
+
+```bash
+PR_BRANCH=$(gh pr view <pr-number> --json headRefName -q .headRefName)
+git worktree add /tmp/review-<pr-number> "$PR_BRANCH"
+# Run all gate checks inside /tmp/review-<pr-number>.
+```
+
+Remove it on exit (regardless of verdict):
+
+```bash
+git worktree remove /tmp/review-<pr-number> --force
+```
 
 **Round derivation:** count existing PR comments matching `/verify-gate round=N verdict=V`.
 The current round is `prior_verdict_count + 1`. The budget is then enforced differently
