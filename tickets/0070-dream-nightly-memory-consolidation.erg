@@ -9,6 +9,7 @@ Tag: deferred
 
 2026-05-11T20:50Z unclaimed — stale claim, no branch activity
 2026-05-13T09:02Z MinhHaDuong tag deferred
+2026-05-13T14:32Z claude note research complete — see docs/dream-research.md; mem0 v2.0 production-ready, Anthropic dreaming released May 2026 validates concept, TiMem adds temporal-hierarchical SOTA, importance-weighted triggers validated by SCM; recommend v1 with mem0 classifier + Park reflection + time-based trigger, reserve importance-sum and TiMem for v2.
 --- body ---
 ## Context
 
@@ -127,10 +128,26 @@ Assert: older entry classified `DELETE`; newer survives; proposed
 - Naming: `/dream` matches Imperial Dragon voice (dragons in their lair,
   dreaming over the hoard). Bikeshed welcome but not load-bearing.
 
-## References (initial survey, 2026-04-30 — re-validate per Action 1)
+## References (initial survey 2026-04-30; second-round validation 2026-05-13)
 
-- Letta sleep-time agents — https://docs.letta.com/guides/agents/architectures/sleeptime
-- mem0 paper (ADD/UPDATE/DELETE/NOOP) — https://arxiv.org/abs/2504.19413
-- Generative Agents reflection (Park 2023) — https://ar5iv.labs.arxiv.org/html/2304.03442
-- A-MEM (Zettelkasten link updates) — https://arxiv.org/abs/2502.12110
-- Zep / Graphiti bi-temporal — https://arxiv.org/abs/2501.13956
+### Core patterns — validated, production-ready
+
+- **mem0 paper (ADD/UPDATE/DELETE/NOOP)** — https://arxiv.org/abs/2504.19413 (April 2025). Four-operation classifier confirmed in v2.0.2 (May 2026) with no breaking schema changes. Production-ready.
+- **Generative Agents reflection (Park 2023)** — https://ar5iv.labs.arxiv.org/html/2304.03442. VALID baseline for flat reflection; superseded for long-horizon by TiMem (see below).
+- **Zep / Graphiti bi-temporal invalidation** — https://arxiv.org/abs/2501.13956 (January 2025). VALID; non-destructive memory mutation pattern. Git audit log provides free bi-temporal recovery for v1.
+- **A-MEM (Zettelkasten link updates)** — https://arxiv.org/abs/2502.12110 (February 2025, NeurIPS 2025). VALID; confirms link-graph updates during consolidation are best-practice. Reserve for v2.
+- **Letta sleep-time agents** — https://docs.letta.com/guides/agents/architectures/sleeptime (April 2025). UPDATED: May 2026 roadmap signals shift from server-side to client-side subagent consolidation. v1 design should be local-first (already true per Action 7).
+- **Importance-sum trigger (Park)** — VALID as v2 option; validated by SCM (arXiv:2604.20943, April 2026) as scalable trigger alternative. Keep time-based for v1 (simpler).
+
+### New findings — changes since 2026-04-30
+
+- **Anthropic "Dreaming" (May 6, 2026)** — https://letsdatascience.com/blog/anthropic-dreaming-claude-managed-agents-self-improving-may-6. Reference implementation released in research preview for Managed Agents. ~6x Harvey completion rate lift. Snapshot-before-mutation pattern confirmed.
+- **TiMem (January 2026)** — https://arxiv.org/abs/2601.02845. Temporal-hierarchical consolidation (five-level tree) achieves SOTA (75.30% accuracy, 52% memory reduction). Recommended for v2 if project tracks multi-session horizons.
+- **Claude API Memory Tool (May 2026)** — https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool. Native primitives now public. CRUD operations (view/create/str_replace/insert/delete/rename) on `/memories` directory. Study example implementations for security patterns.
+- **Cognee Memify (2026)** — https://docs.cognee.ai/core-concepts/main-operations/memify. Two-stage pipeline (extract + enrich) for knowledge graph consolidation. Mental model transfers to `/dream` architecture.
+- **ICLR 2026 MemAgents Workshop** — https://openreview.net/forum?id=U51WxL382H. Signals ecosystem standardization on consolidation as first-class infrastructure. Watch for post-May-13 papers.
+- **SCM: Sleep-Consolidated Memory (April 2026)** — https://arxiv.org/html/2604.20943. Validates importance-weighted thresholding for memory retention. Foundation for v2 importance-sum trigger.
+
+### Research note
+
+Full reconciliation with current state-of-the-art published at `/home/haduong/.claude/docs/dream-research.md` (2026-05-13). V1 design: mem0 classifier + Park reflection + time-based trigger. V2 extensions: importance-weighted trigger, TiMem hierarchy, link updates.

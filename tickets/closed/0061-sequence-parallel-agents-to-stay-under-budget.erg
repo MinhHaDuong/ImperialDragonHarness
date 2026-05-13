@@ -2,10 +2,12 @@
 Title: Sequence parallel agents rather than fan out when ticket risks budget ceiling
 Created: 2026-04-30
 Author: claude
+Closed: won't do
 
 --- log ---
 2026-04-30T07:30Z claude created
 
+2026-05-13T12:40Z MinhHaDuong closed — won't do
 --- body ---
 ## Context
 

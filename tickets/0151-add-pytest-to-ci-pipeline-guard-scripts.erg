@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Add pytest to CI pipeline — guard scripts only, test suite not exercised
+Created: 2026-05-13
+Author: MinhHaDuong
+
+--- log ---
+2026-05-13T15:12Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Surfaced during raid 2026-05-13 (PR #189). The CI pipeline runs only guard
+scripts (validate-tickets, skill-lint, agnostic-guard, status-verb-guard,
+pipefail-guard). `pytest tests/` is not invoked. PR #189 passed CI green
+while the actual test suite (217 tests) was only confirmed locally.
+
+This means a PR can break the test suite and merge undetected if the author
+forgets to run pytest manually.
+
+## Actions
+
+1. Locate the CI config (`.github/workflows/` or equivalent).
+2. Add a `pytest tests/` step after the existing guard steps.
+3. Ensure the step fails the pipeline on any test failure.
+4. Confirm on a test PR that a deliberate test failure blocks merge.
+
+## Exit criteria
+
+- [ ] `pytest tests/` runs in CI on every PR
+- [ ] A failing test blocks merge (CI check goes red)
+- [ ] All 217 existing tests pass in CI
