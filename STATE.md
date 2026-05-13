@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-13T05:48Z
+Last updated: 2026-05-13T10:00Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-13T05:48Z -->
+<!-- generated 2026-05-13T10:00Z -->
 
-**Tickets:** 20 ready · 4 blocked — `erg ready tickets/` for full list
+**Tickets:** 14 open · 14 ready — `erg ready tickets/` for full list
 **Recent commits:**
-  4872f22 chore: housekeeping timestamp 2026-05-13T05:48Z
-  e2127ee chore: ticket 0142 — verify agents must not use main repo as workspace
-  cb43849 chore: ticket 0141 — subprocess timeout gaps in git_utils/project-state/refresh-STATE
-  98917ce ticket(0140): close — moot, Blocks: header removed from spec
-  cb589b2 feat(0125): housekeeping deletes stale branches for closed tickets (#162)
+  120b67f docs(verify): isolate verify/verify-gate agents in temp worktree (#176)
+  70780ee docs(nightbeat-supervisor): budget-raise convergence guard (#178)
+  650f3dc fix(nightbeat-supervisor): dual-journal startup assertion (#179)
+  521bfd6 fix(scripts): add timeout=30 to subprocess.run (#173)
+  953c2e1 fix(beat): guard git checkout in housekeeping post-cleanup path (#175)
 
 ## Blockers
 
@@ -23,9 +23,9 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **0142**: verify agents must not use main repo as workspace (rogue checkout problem)
-- **0141**: subprocess timeout gaps in git_utils, project-state, refresh-STATE
 - **audit-rename-agnostic-guard**: 6-commit branch needs PR + verify before merge
+- **0129**: deduplicate verify chain in raid (stale worktree `agent-ad6d9f2a48e8386cc` has partial work + merge conflict — needs human review before cleanup)
+- **squash-merge probe false negatives**: probe pattern `\(NNNN\)` misses commits scoped as `(beat)`, `(skill-doctor)` etc. — 7 closed-ticket branches stuck; ticket needed
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
 ## Backlog

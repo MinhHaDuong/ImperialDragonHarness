@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Fix squash-merge probe to match conventional commit scopes
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T10:00Z claude created
+
+--- body ---
+## Context
+The squash-merge probe in healthcheck and housekeeping uses the pattern
+`(feat|fix|chore|ticket)\($ticket_id\)` to detect whether a branch was
+squash-merged into main. This expects commit subjects like `fix(0123): ...`
+but actual commits use conventional scopes like `fix(beat):`, `test(skill-doctor):`,
+etc. with the PR number as `(#174)` at the end.
+
+Result: probe always returns false-negatives for real squash-merges, causing
+7+ closed-ticket branches to accumulate indefinitely and blocking automated cleanup.
+
+Discovered during healthcheck: tickets 0119, 0121, 0123, 0137, 0145, 0148 all
+confirmed merged via PRs #174–179 but probe fails for all of them.
+
+## Relevant files
+- `skills/healthcheck/SKILL.md` — defines the probe pattern (check 4)
+- `skills/housekeeping/SKILL.md` — reuses same probe pattern for branch deletion
+- `scripts/project-state.py` — may also reference merge detection logic
+
+## Actions
+1. Decide on the correct detection strategy — options:
+   a. Match PR number: `git log ... | grep -qE "\(#[0-9]+\)"` combined with cross-referencing the ticket's `Closed:` line for the PR number
+   b. Match ticket ID anywhere in subject/body: `git log ... --format="%s %b" | grep -qE "(0123|t0123|#0123)"`
+   c. Use `git cherry` or tree-diff to detect whether branch commits are reachable from main
+2. Update `skills/healthcheck/SKILL.md` probe snippet
+3. Update `skills/housekeeping/SKILL.md` probe snippet
+4. Add a regression note in both skill files citing this ticket
+
+## Test
+Run the probe against `t0123-test-skill-doctor-survey` (confirmed merged via
+PR #174) — it must exit 0 after the fix.
+
+## Exit criteria
+- [ ] Probe correctly identifies all 7 accumulated closed-ticket branches as squash-merged
+- [ ] `make check` (or skill validate) passes
+- [ ] Zero false-negatives on a branch confirmed merged by its ticket's `Closed:` line
