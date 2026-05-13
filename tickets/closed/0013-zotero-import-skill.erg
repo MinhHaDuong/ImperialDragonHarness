@@ -2,6 +2,7 @@
 Title: Build skill — zotero-import (push PDFs to Zotero via RIS export)
 Created: 2026-04-17
 Author: user
+Closed: autoclosed — PR #180
 
 --- log ---
 2026-04-17T15:30Z claude created from review session discussion
@@ -15,6 +16,7 @@ Author: user
 2026-05-11T20:50Z unclaimed — stale claim, no branch activity
 2026-05-13T08:58Z MinhHaDuong closed — out of scope for harness — bibliography/Zotero workflow belongs in the research project repo, not IDH
 2026-05-13T13:30Z MinhHaDuong reopened — scope shifted from bib→Zotero (Web API / Pyzotero) to PDF→Zotero (RIS export + xdg-open); shipped as PR #180
+2026-05-13T11:24Z Minh Ha-Duong closed — autoclosed — PR #180
 --- body ---
 ## Context
 
