@@ -3,7 +3,7 @@ name: zotero-import
 description: Import one or more PDFs into Zotero. Extracts metadata from the document, resolves identifiers online when available, checks for duplicates in the local Zotero library, writes a combined RIS file, and hands it to xdg-open so the user's environment decides what to do with it.
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <pdf>... [--zotero-db PATH] [--no-attach] [--ris-out PATH]
+argument-hint: <pdf>...
 ---
 
 # Zotero import

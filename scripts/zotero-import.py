@@ -1,21 +1,5 @@
 #!/usr/bin/env python3
-"""Helper for the zotero-import skill.
-
-Three subcommands:
-
-  probe   — extract pdfinfo + first-pages text + a *naïve* Zotero
-            duplicate hit list (matched against the pdfinfo Title,
-            which is often a LaTeX template artefact). One JSON
-            array on stdout per call.
-
-  match   — refined Zotero lookup given an agent-extracted title /
-            year / DOI. Call this after reading first-pages text.
-
-  write   — emit a single combined RIS file from a JSON entry array.
-            The agent fills in title/authors/year/translation after probing.
-
-The script never opens Zotero itself; xdg-open is left to the caller.
-"""
+"""Helper for the zotero-import skill. Subcommands: probe, match, write."""
 from __future__ import annotations
 
 import argparse
@@ -25,13 +9,19 @@ import re
 import sqlite3
 import subprocess
 import sys
+import configparser
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
 
-DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
+DOI_BARE_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
+# Anchor on doi.org/ or "DOI:" / "doi " preamble. Lets us prefer the document's
+# own DOI over the first cited DOI in the body text.
+DOI_ANCHORED_RE = re.compile(
+    r"(?:doi\.org/|doi[:\s]+)(10\.\d{4,9}/[-._;()/:A-Z0-9]+)",
+    re.IGNORECASE,
+)
 YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
-# ISBN-10 or ISBN-13, with optional hyphens/spaces between groups.
 ISBN_RE = re.compile(
     r"\bISBN(?:[- ]?1[03])?[: ]*((?:97[89][- ]?)?(?:[0-9][- ]?){9}[0-9Xx])\b",
     re.IGNORECASE,
@@ -39,8 +29,11 @@ ISBN_RE = re.compile(
 HDL_RE = re.compile(r"\bhdl\.handle\.net/[^\s)\]]+", re.IGNORECASE)
 ARXIV_RE = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5})(v\d+)?\b", re.IGNORECASE)
 FIRST_PAGES = 2
-LAST_PAGES = 2  # back-matter scan (colophon, ISBN page)
+LAST_PAGES = 2
 TEXT_TRUNCATE = 4000
+# How far into page 1 to keep scanning for a bare DOI when no anchored DOI is
+# found — limits the false-positive risk of picking up a cited DOI from the body.
+DOI_BARE_WINDOW = 800
 
 
 def run(cmd: list[str], **kw: Any) -> subprocess.CompletedProcess[str]:
@@ -59,36 +52,36 @@ def pdfinfo(path: Path) -> dict[str, str]:
     return out
 
 
-def pdftotext_first(path: Path, pages: int = FIRST_PAGES) -> str:
-    p = run(["pdftotext", "-f", "1", "-l", str(pages), "-layout", str(path), "-"])
+def pdftotext_range(path: Path, first: int, last: int) -> str:
+    if last < first:
+        return ""
+    p = run(["pdftotext", "-f", str(first), "-l", str(last), "-layout",
+             str(path), "-"])
     if p.returncode != 0:
         return ""
     return p.stdout[:TEXT_TRUNCATE]
 
 
-def pdftotext_last(path: Path, total: int, pages: int = LAST_PAGES) -> str:
-    if total <= FIRST_PAGES:
-        return ""  # already covered by first-page scan
-    start = max(total - pages + 1, FIRST_PAGES + 1)
-    p = run(["pdftotext", "-f", str(start), "-l", str(total), "-layout", str(path), "-"])
-    if p.returncode != 0:
-        return ""
-    return p.stdout[:TEXT_TRUNCATE]
+def find_doi(front_text: str, back_text: str, subject: str) -> str | None:
+    for blob in (front_text, back_text, subject):
+        if m := DOI_ANCHORED_RE.search(blob):
+            return m.group(1).rstrip(".,;)»")
+    if m := DOI_BARE_RE.search(front_text[:DOI_BARE_WINDOW]):
+        return m.group(0).rstrip(".,;)»")
+    return None
 
 
-def find_identifier(text: str) -> dict[str, str | None]:
-    """Surface every identifier we can spot — agent picks the strongest one."""
+def find_identifier(front_text: str, back_text: str, subject: str
+                    ) -> dict[str, str | None]:
     out: dict[str, str | None] = {"doi": None, "isbn": None, "handle": None,
                                   "arxiv": None}
-    if m := DOI_RE.search(text):
-        out["doi"] = m.group(0).rstrip(".,;)»")
-    if m := ISBN_RE.search(text):
-        # Strip separators inside the ISBN.
-        raw = re.sub(r"[- ]", "", m.group(1))
-        out["isbn"] = raw
-    if m := HDL_RE.search(text):
+    out["doi"] = find_doi(front_text, back_text, subject)
+    combined = front_text + "\n" + back_text + "\n" + subject
+    if m := ISBN_RE.search(combined):
+        out["isbn"] = re.sub(r"[- ]", "", m.group(1))
+    if m := HDL_RE.search(combined):
         out["handle"] = "https://" + m.group(0)
-    if m := ARXIV_RE.search(text):
+    if m := ARXIV_RE.search(combined):
         out["arxiv"] = m.group(1)
     return out
 
@@ -103,12 +96,15 @@ def find_zotero_db() -> Path | None:
         Path.home() / "data" / "Zotero" / "zotero.sqlite",
         Path.home() / "Documents" / "Zotero" / "zotero.sqlite",
     ]
-    # Inspect Firefox-style profiles.ini for explicit dataDir override.
+    # Firefox-style profiles.ini may override dataDir.
     profiles_ini = Path.home() / ".zotero" / "zotero" / "profiles.ini"
     if profiles_ini.exists():
         try:
             cp = ConfigParser()
             cp.read(profiles_ini)
+        except (OSError, configparser.Error):
+            cp = None
+        if cp is not None:
             for section in cp.sections():
                 pth = cp.get(section, "Path", fallback=None)
                 if not pth:
@@ -123,8 +119,6 @@ def find_zotero_db() -> Path | None:
                     )
                     if m:
                         candidates.append(Path(m.group(1)) / "zotero.sqlite")
-        except Exception:
-            pass
     for c in candidates:
         if c.exists():
             return c
@@ -132,7 +126,7 @@ def find_zotero_db() -> Path | None:
 
 
 def zotero_open(db_path: Path) -> sqlite3.Connection:
-    # Open immutable to bypass WAL locks while Zotero is running.
+    # immutable=1 bypasses WAL locks while Zotero is running.
     uri = f"file:{db_path}?immutable=1"
     return sqlite3.connect(uri, uri=True)
 
@@ -146,25 +140,53 @@ def zotero_matches(
     pdf_path: Path,
 ) -> list[dict[str, Any]]:
     cur = conn.cursor()
-    # Load all live items with title/doi/date in one pass.
-    rows = cur.execute(
+    if doi:
+        rows = cur.execute(
+            """
+            SELECT i.itemID,
+                   MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
+                   MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
+                   MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
+            FROM items i
+            JOIN itemData d ON d.itemID = i.itemID
+            JOIN fields f   ON f.fieldID = d.fieldID
+            JOIN itemDataValues v ON v.valueID = d.valueID
+            WHERE i.itemID NOT IN (SELECT itemID FROM deletedItems)
+              AND i.itemID IN (
+                  SELECT d2.itemID FROM itemData d2
+                  JOIN fields f2 ON f2.fieldID = d2.fieldID
+                  JOIN itemDataValues v2 ON v2.valueID = d2.valueID
+                  WHERE f2.fieldName='DOI' AND LOWER(v2.value)=LOWER(?)
+              )
+            GROUP BY i.itemID
+            """,
+            (doi,),
+        ).fetchall()
+    else:
+        sql = """
+            SELECT i.itemID,
+                   MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
+                   MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
+                   MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
+            FROM items i
+            JOIN itemData d ON d.itemID = i.itemID
+            JOIN fields f   ON f.fieldID = d.fieldID
+            JOIN itemDataValues v ON v.valueID = d.valueID
+            LEFT JOIN itemAttachments a ON a.itemID = i.itemID AND a.parentItemID IS NOT NULL
+            WHERE i.itemID NOT IN (SELECT itemID FROM deletedItems)
+              AND a.itemID IS NULL
         """
-        SELECT i.itemID,
-               MAX(CASE WHEN f.fieldName='title' THEN v.value END)  AS title,
-               MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)    AS doi,
-               MAX(CASE WHEN f.fieldName='date' THEN v.value END)   AS date
-        FROM items i
-        JOIN itemData d ON d.itemID = i.itemID
-        JOIN fields f   ON f.fieldID = d.fieldID
-        JOIN itemDataValues v ON v.valueID = d.valueID
-        WHERE i.itemID NOT IN (SELECT itemID FROM deletedItems)
-          AND i.itemID NOT IN (SELECT itemID FROM itemAttachments WHERE parentItemID IS NOT NULL)
-        GROUP BY i.itemID
-        """
-    ).fetchall()
+        params: list[Any] = []
+        if year:
+            sql += " AND i.itemID IN (SELECT d3.itemID FROM itemData d3 " \
+                   "JOIN fields f3 ON f3.fieldID=d3.fieldID " \
+                   "JOIN itemDataValues v3 ON v3.valueID=d3.valueID " \
+                   "WHERE f3.fieldName='date' AND v3.value LIKE ?)"
+            params.append(f"%{year}%")
+        sql += " GROUP BY i.itemID"
+        rows = cur.execute(sql, params).fetchall()
 
     def tok(s: str) -> set[str]:
-        # Drop punctuation/quotes/curly chars and tiny stopwords before tokenizing.
         cleaned = re.sub(r"[^\w\s]", " ", s.lower(), flags=re.UNICODE)
         return {w for w in cleaned.split() if len(w) > 2}
 
@@ -221,11 +243,14 @@ def probe_one(pdf: Path, conn: sqlite3.Connection | None) -> dict[str, Any]:
         page_count = int(info.get("Pages", "0"))
     except ValueError:
         page_count = 0
-    text_front = pdftotext_first(pdf)
-    text_back = pdftotext_last(pdf, page_count) if page_count else ""
-    ids = find_identifier(text_front + "\n" + text_back + "\n"
-                          + (info.get("Subject") or ""))
-    # pdfinfo Title is often a LaTeX template artefact — surface it but don't trust it.
+    text_front = pdftotext_range(pdf, 1, FIRST_PAGES)
+    text_back = ""
+    if page_count > FIRST_PAGES:
+        text_back = pdftotext_range(
+            pdf, max(page_count - LAST_PAGES + 1, FIRST_PAGES + 1), page_count,
+        )
+    ids = find_identifier(text_front, text_back, info.get("Subject") or "")
+    # pdfinfo Title is often a LaTeX template artefact; agent re-extracts from text.
     pdfinfo_title = info.get("Title") or None
     year = None
     if "CreationDate" in info:
@@ -250,7 +275,7 @@ def probe_one(pdf: Path, conn: sqlite3.Connection | None) -> dict[str, Any]:
             conn, doi=ids["doi"], title=pdfinfo_title, year=year, pdf_path=pdf,
         )
     else:
-        out["zotero_matches"] = None  # null = lookup skipped (no DB found)
+        out["zotero_matches"] = None
     return out
 
 
@@ -261,13 +286,13 @@ RIS_VALID_TYPES = {
     "JOUR", "BOOK", "CHAP", "CONF", "CPAPER", "THES", "RPRT", "GEN",
     "GOVDOC", "NEWS", "MGZN", "MANSCPT", "PAT", "STAND", "UNPB", "WEB",
 }
+MONOGRAPH_TYPES = {"BOOK", "THES", "RPRT", "CHAP", "MANSCPT", "STAND", "PAT"}
 
 
 def author_to_ris(a: str) -> str:
     a = a.strip()
     if "," in a:
         return a
-    # "First Middle Last" → "Last, First Middle"
     parts = a.split()
     if len(parts) >= 2:
         return f"{parts[-1]}, {' '.join(parts[:-1])}"
@@ -282,7 +307,6 @@ def entry_to_ris(e: dict[str, Any]) -> str:
     if t := e.get("title"):
         lines.append(f"TI  - {t}")
     if st := e.get("shortTitle"):
-        # ST → Zotero "Short Title" (a.k.a. abbreviated title).
         lines.append(f"ST  - {st}")
     for a in e.get("authors") or []:
         lines.append(f"AU  - {author_to_ris(a)}")
@@ -306,10 +330,9 @@ def entry_to_ris(e: dict[str, Any]) -> str:
             lines.append(f"SP  - {sp.strip()}")
         if ep:
             lines.append(f"EP  - {ep.strip()}")
-    # Total page count of the PDF — Zotero's "Number of Pages" maps from RIS SP
-    # for monograph-like types only; for everything else we surface it as a tag.
+    # Zotero's "Number of Pages" only maps from RIS SP on monograph types.
     if (n := e.get("numPages")) and not e.get("pages"):
-        if ty in {"BOOK", "THES", "RPRT", "CHAP", "MANSCPT", "STAND", "PAT"}:
+        if ty in MONOGRAPH_TYPES:
             lines.append(f"SP  - {n}")
         else:
             lines.append(f"KW  - pages:{n}")
@@ -318,12 +341,8 @@ def entry_to_ris(e: dict[str, Any]) -> str:
     if lang := e.get("language"):
         lines.append(f"LA  - {lang}")
     if ab := e.get("abstract"):
-        # Collapse newlines to keep RIS one-field-per-line.
         lines.append("AB  - " + " ".join(ab.split()))
     if e.get("attach_pdf") and (p := e.get("pdf")):
-        # L1 — Zotero respects file:// for attachment import. If the user's
-        # Zotero is set to "Store Copy of Files" it copies into storage,
-        # otherwise it links.
         lines.append(f"L1  - file://{Path(p).resolve()}")
     lines.append("ER  - ")
     return "\n".join(lines) + "\n"
@@ -331,13 +350,15 @@ def entry_to_ris(e: dict[str, Any]) -> str:
 
 # --- CLI -------------------------------------------------------------------
 
+def resolve_db_path(override: str | None) -> Path | None:
+    if override:
+        p = Path(override)
+        return p if p.exists() else None
+    return find_zotero_db()
+
+
 def cmd_probe(args: argparse.Namespace) -> int:
-    db_path: Path | None
-    if args.zotero_db:
-        p = Path(args.zotero_db)
-        db_path = p if p.exists() else None
-    else:
-        db_path = find_zotero_db()
+    db_path = resolve_db_path(args.zotero_db)
     conn = zotero_open(db_path) if db_path else None
     out: list[dict[str, Any]] = []
     for pdf_arg in args.pdf:
@@ -360,12 +381,7 @@ def cmd_probe(args: argparse.Namespace) -> int:
 
 
 def cmd_match(args: argparse.Namespace) -> int:
-    db_path: Path | None
-    if args.zotero_db:
-        p = Path(args.zotero_db)
-        db_path = p if p.exists() else None
-    else:
-        db_path = find_zotero_db()
+    db_path = resolve_db_path(args.zotero_db)
     if db_path is None:
         json.dump({"zotero_db": None, "matches": []}, sys.stdout)
         sys.stdout.write("\n")
