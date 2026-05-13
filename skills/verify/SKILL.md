@@ -34,8 +34,30 @@ Merge is always the human's or the raid's call.
 
 ### 1. Setup
 
-- Check out the merge-request branch into an isolated worktree. Abort if not mergeable
-  or if there are open merge conflicts.
+Always invoke `/verify` from within a conversation worktree, never from the main repo
+root. The worktree is the isolation boundary; no main-repo checkout is ever needed.
+
+**Isolation setup:**
+
+```bash
+# Step 1 — Resolve PR number to branch name (forge-specific step)
+PR_BRANCH=<resolved-branch-name>
+
+# Step 2 — Fetch and create an isolated worktree
+git fetch origin "$PR_BRANCH"
+git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
+# All phases 1–6 and the fix agent run inside /tmp/review-<pr-number>.
+# The main repo is never switched, never dirtied.
+```
+
+On any exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker abort),
+remove the worktree:
+
+```bash
+git worktree remove /tmp/review-<pr-number> --force
+```
+
+- Abort if not mergeable or if there are open merge conflicts.
 - Collect:
   - The ticket file referenced in the PR title or body (`tickets/*.erg`).
   - PR body, full diff, all existing review comments, all inline comments, all commit
@@ -110,6 +132,10 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 - Gate disagrees with phase 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
 - Telemetry thresholds (see `## Telemetry`).
+
+On **every** circuit-breaker exit (not only ESCALATE): run
+`git worktree remove /tmp/review-<pr-number> --force` before returning so the
+main repo is never left in a partial state.
 
 ## Telemetry
 

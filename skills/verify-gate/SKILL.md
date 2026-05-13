@@ -53,6 +53,12 @@ against cwd — running from a different repo's worktree will produce wrong resu
 For cross-repo flows, the caller does `cd <project-path> && git fetch origin`
 before invoking the gate.
 
+**Isolation**:
+- When called from `/verify` (bundle mode), cwd is already the isolated worktree
+  that `/verify` created in phase 1. No additional setup is needed.
+- When invoked **standalone**, the gate must create its own isolated worktree
+  before reading PR state. See "Standalone invocation" for the setup.
+
 ## Evidence discovery
 
 For each ticket exit criterion, the gate searches:
@@ -206,6 +212,27 @@ blocker or a `verifiable:` minor) or files it as `consider:`.
 the gate uses only existing PR state (comments, commits, reviews) — no phase 2–5 outputs.
 This is useful for sanity-checking a PR the human is considering, or for re-running the
 gate after manual fixes.
+
+Always invoke `/verify-gate` standalone from within a conversation worktree, never
+from the main repo root.
+
+**Isolation setup (standalone only):**
+
+```bash
+# Step 1 — Resolve PR number to branch name (forge-specific step)
+PR_BRANCH=<resolved-branch-name>
+
+# Step 2 — Fetch and create an isolated worktree
+git fetch origin "$PR_BRANCH"
+git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
+# Run all gate checks inside /tmp/review-<pr-number>.
+```
+
+Remove it on exit (regardless of verdict):
+
+```bash
+git worktree remove /tmp/review-<pr-number> --force
+```
 
 **Round derivation:** count existing PR comments matching `/verify-gate round=N verdict=V`.
 The current round is `prior_verdict_count + 1`. The budget is then enforced differently
