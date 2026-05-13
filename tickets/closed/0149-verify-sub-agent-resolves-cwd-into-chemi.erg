@@ -1,0 +1,75 @@
+%erg 0.1
+Title: verify sub-agent resolves cwd into chemin-de-voix instead of caller's IDH worktree
+Created: 2026-05-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #185
+
+--- log ---
+2026-05-13T11:42Z Minh Ha-Duong created
+
+2026-05-13T11:45Z Minh Ha-Duong closed — autoclosed — PR #185
+--- body ---
+## Context
+
+Reproduced on 2026-05-13 while running `/verify 180` from an IDH worktree
+at `~/.claude/.claude/worktrees/sync-check` (branch
+`feat/zotero-import-skill`, remote `MinhHaDuong/ImperialDragonHarness`).
+
+The caller cwd was correctly inside IDH. Phase 1 of `/verify` succeeded
+(it identified PR 180, CI status, ticket path — all IDH-scoped).
+
+Phase 2 launched the `verify-adherence` sub-agent via the Skill tool.
+The sub-agent's cwd resolved into one of the session's `additional
+working directories` — a completely unrelated consumer-project
+worktree (`~/CNRS/.../<project>/.claude/worktrees/<branch>/`). It
+then reviewed that wrong branch and emitted a PASS verdict that had
+no bearing on PR 180.
+
+`/verify`'s circuit-breaker caught the mismatch and ESCALATED rather
+than rubber-stamping. The PR was merged after manual review +
+`/simplify`, but the verify path is currently unusable from any IDH
+session that lists project dirs as additional cwds.
+
+## Hypothesis
+
+The session was started with `additionalWorkingDirectories`
+including two consumer-project paths outside IDH. The Skill tool
+sub-agent appears to pick the first writable Additional working
+directory as its cwd instead of inheriting the parent agent's cwd.
+
+The `verify` SKILL.md has a "Cross-repo prerequisite" note acknowledging
+the risk surface, but the actual sub-agent invocation does not pin cwd
+explicitly — it relies on inheritance that doesn't hold.
+
+## Reproduction
+
+1. Start a Claude Code session from an IDH worktree.
+2. Ensure session has at least one non-IDH writable additional cwd
+   (e.g. a research project with its own `.claude/worktrees/...`).
+3. Run `/verify <PR#>` on any IDH PR.
+4. Observe the verify-adherence sub-agent reviewing the wrong project.
+
+## Actions
+
+1. Locate the Skill-tool sub-agent invocation in `skills/verify/SKILL.md`
+   (or its helper scripts) — specifically the phase-2 verify-adherence
+   launch.
+2. Pin cwd explicitly on the sub-agent call (pass an absolute path or
+   set the working directory in the sub-agent prompt), don't rely on
+   inheritance.
+3. Add a startup assertion to the verify-adherence sub-agent: first
+   action is `pwd && git rev-parse --show-toplevel` and the output must
+   match the IDH repo root the parent passed in. If it doesn't, fail
+   loud, not silent.
+4. Mirror the fix in `verify-gate` and any other sibling sub-agent
+   launches that have the same shape.
+
+## Exit criteria
+
+- [ ] `/verify <PR#>` completes phases 2-6 (or escalates legitimately)
+      from an IDH worktree when at least one non-IDH writable
+      additional cwd is configured.
+- [ ] Startup assertion in verify-adherence (and siblings) refuses to
+      proceed on cwd mismatch.
+- [ ] Regression test added — or at minimum, a documented manual
+      repro recipe in the ticket close-out note.
