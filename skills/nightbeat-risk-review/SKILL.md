@@ -11,6 +11,12 @@ Run this skill before starting a new nightbeat window to flag and de-risk struct
 
 ## Steps
 
+0. **Resolve the `erg` binary.**
+
+   ```bash
+   ERG=$(command -v erg 2>/dev/null || echo "tickets/erg")
+   ```
+
 1. **Collect the raw report.**
 
    Run:
@@ -22,7 +28,8 @@ Run this skill before starting a new nightbeat window to flag and de-risk struct
 
 2. **Extract risk signals.**
 
-   For each run in the report, extract the picked ticket ID (look for `PICK: NNNN` in the result text).
+   For each run in the report, read the ticket ID from the **Ticket** column of the run table
+   (the four-digit number shown for runs where a ticket was picked; rows showing `—` had no pick).
    Flag a ticket if **any** of:
    - `total_cost_usd > 2.0` — parallel fanout risk
    - `stop_reason` is `None` or absent — budget kill or crash
@@ -47,13 +54,14 @@ Run this skill before starting a new nightbeat window to flag and de-risk struct
 
    a. **sweep-skip** — tag the ticket deferred:
       ```bash
-      erg tag NNNN deferred tickets/
-      erg log NNNN "claude note sweep-skip: scope-too-large, deferred after risk review" tickets/
+      $ERG tag NNNN deferred tickets/
+      $ERG log NNNN "claude note sweep-skip: <signal>, deferred after risk review" tickets/
       ```
+      Replace `<signal>` with the actual risk signal (e.g. `cost>$2`, `budget-kill`, `repeated-pick`, `access-denied`, `expensive-fast`).
 
    b. **note** — append an explanation without tagging:
       ```bash
-      erg log NNNN "claude note <reason>" tickets/
+      $ERG log NNNN "claude note <reason>" tickets/
       ```
 
    c. **open sub-ticket** — split into a smaller ticket: invoke `/ticket-new` to create the sub-ticket with a focused scope.
