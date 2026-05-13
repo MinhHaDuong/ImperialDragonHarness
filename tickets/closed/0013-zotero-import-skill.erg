@@ -1,0 +1,79 @@
+%erg 0.1
+Title: Build skill — zotero-import (push PDFs to Zotero via RIS export)
+Created: 2026-04-17
+Author: user
+Closed: autoclosed — PR #180
+
+--- log ---
+2026-04-17T15:30Z claude created from review session discussion
+
+2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:5337b9e78984 expires:2026-04-28T14:32Z
+2026-04-28T21:03Z claude note sweep-skip: scope-too-large hash:4680d9afb7d9 expires:2026-04-29T21:03Z
+2026-04-29T02:05Z claude note sweep-skip: scope-too-large hash:eb7beb6f93fa expires:2026-04-30T02:05Z
+2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:f6250604695b expires:2026-04-30T09:18Z
+2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:5e3f6732fbef expires:2026-04-30T09:21Z
+2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
+2026-05-11T20:50Z unclaimed — stale claim, no branch activity
+2026-05-13T08:58Z MinhHaDuong closed — out of scope for harness — bibliography/Zotero workflow belongs in the research project repo, not IDH
+2026-05-13T13:30Z MinhHaDuong reopened — scope shifted from bib→Zotero (Web API / Pyzotero) to PDF→Zotero (RIS export + xdg-open); shipped as PR #180
+2026-05-13T11:24Z Minh Ha-Duong closed — autoclosed — PR #180
+--- body ---
+## Context
+
+Original goal: automate the last step of the bibliography pipeline
+(related-work-note → bib-merge → local refs.bib → Zotero), which was
+manual (File → Import).
+
+Closed on 2026-05-13 as "out of scope for IDH" because the originally-
+specified mechanism (Zotero Web API via Pyzotero, with PAT-based auth)
+belongs in a research-project repo, not the harness.
+
+Reopened on 2026-05-13 because a leaner approach turns out to be
+in-scope for IDH: rather than calling the Zotero Web API, the skill
+prepares a RIS file from one or more source documents and hands it to
+`xdg-open`. The user's MIME associations decide whether it lands in
+Zotero or a text editor — both are acceptable. No PAT, no Web API
+dependency, no plugin install, no library-ID config. Skill is generic
+and reusable across projects.
+
+## Implementation (PR #180)
+
+Skill `zotero-import` at `skills/zotero-import/SKILL.md`, backed by
+`scripts/zotero-import.py` with three subcommands:
+
+- `probe <pdf>...` — extract pdfinfo + first/last-page text + DOI /
+  ISBN / handle / arXiv identifiers + naïve Zotero duplicate hits
+  against the local SQLite (read-only, `?immutable=1`).
+- `match` — refined Zotero lookup using the agent-extracted title.
+- `write --out <ris> --entries-json <json>` — emit a combined RIS
+  with TI in original language, ST for English short title, type-
+  aware page-count handling, and `L1 file://` attachment.
+
+The SKILL.md drives the judgement work: title extraction, online
+identifier resolution (CrossRef / OpenLibrary / arXiv), web search
+fallback, duplicate adjudication, English short-title generation.
+
+## Exit criteria
+
+- [x] `skills/zotero-import/SKILL.md` committed, invocable via Skill tool.
+- [x] Dedupe against existing Zotero library by DOI or fuzzy title;
+      surface attachment-basename matches with high confidence.
+- [x] PDF attachment works (via RIS `L1 file://`; Zotero's *Linked
+      Attachments* preference decides copy vs link).
+- [x] No hardcoded secrets (no auth needed — Web API path not used).
+- [x] End-to-end tested on six Vietnam Technology Catalogue 2026
+      drafts (~/Technology Catalogues 2026 for public hearing/).
+
+## Out of scope (deferred)
+
+- Zotero Web API path (Pyzotero, PAT, `create_items()`). Original
+  ticket scope; no longer planned. Use Zotero's own UI if API-level
+  control is needed.
+- Bib → Zotero import. Different input shape; bib-merge already covers
+  the local-staging side, and Zotero's File → Import handles .bib
+  natively.
+- Zotero RDF output (`dc:relation` for Related items, `z:Collection`).
+  Investigated 2026-05-13; rejected: `xdg-open` on Linux routes
+  `application/rdf+xml` to the browser, not Zotero, which breaks the
+  skill's "let the environment decide" contract. Conditions for
+  revisiting documented in PR #180 discussion.
