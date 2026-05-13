@@ -2,11 +2,13 @@
 Title: Add timeout= to subprocess.run in git_utils, project-state, refresh-STATE
 Created: 2026-05-13
 Author: claude
+Closed: autoclosed — PR #173
 
 --- log ---
 2026-05-13T00:00Z claude created — celebrate sweep after raid 122/114/125/130/138
 2026-05-13T00:00Z claude note PR #173 opened — timeout=30 + TimeoutExpired handling added to all 4 call sites; 171 tests pass
 
+2026-05-13T09:36Z MinhHaDuong closed — autoclosed — PR #173
 --- body ---
 ## Context
 
