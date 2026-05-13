@@ -1,0 +1,33 @@
+%erg 0.1
+Title: add test_max_turns_pick_ticket_cap to test_beat.py
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T08:30Z claude created
+
+--- body ---
+## Context
+PR #169 (ticket 0143) added a `__post_init__` cap for `max_turns_pick_ticket`
+at `2 × MAX_TURNS_PICK_TICKET = 60`. No test was added in that PR, and ticket
+0146 covered only `max_turns_housekeeping`. A regression in the cap logic would
+go undetected. Identified during verify of PR #169.
+
+Scope overflow from PR #169.
+
+## Actions
+1. In `tests/test_beat.py`, in `TestProjectConfigFields`, add:
+   ```python
+   def test_max_turns_pick_ticket_cap(self):
+       cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_pick_ticket=9999)
+       assert cfg.max_turns_pick_ticket == 2 * beat.MAX_TURNS_PICK_TICKET
+   ```
+2. Run `python3 -m pytest tests/test_beat.py -x -q` to confirm it passes.
+
+## Test
+Write the test first — it should pass immediately since the cap already exists.
+A failing test here would indicate the cap logic regressed.
+
+## Exit criteria
+- [ ] `test_max_turns_pick_ticket_cap` exists in `TestProjectConfigFields`
+- [ ] `python3 -m pytest tests/test_beat.py -x -q` passes
