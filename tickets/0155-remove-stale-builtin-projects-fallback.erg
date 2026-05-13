@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Remove stale _BUILTIN_PROJECTS fallback from beat.py
+Created: 2026-05-13
+Author: claude
+
+--- log ---
+2026-05-13T20:40Z claude created
+
+--- body ---
+## Context
+
+`beat.py` (line 136) still contains a hardcoded `_BUILTIN_PROJECTS` list with
+five projects: aedist-technical-report, cadens, Climate_finance, fuzzy-corpus,
+and .claude. This predates ticket 0046, which introduced `projects.json` as the
+authoritative source.
+
+`projects.json` now lists only `.claude`. The builtin list is stale: if
+`projects.json` goes missing or becomes malformed, beat silently falls back to
+raiding paths that likely don't exist or aren't intended targets (lines 192–208).
+
+The comment in `load_projects()` ("fall back to built-in defaults on any error")
+treats a missing config as a recoverable condition. It is not: a missing config
+is a misconfiguration that should surface immediately, not be masked.
+
+## Actions
+
+1. In `scripts/beat.py`, make `projects.json` required:
+   - If `PROJECTS_CONFIG` does not exist: log an error and `sys.exit(1)`.
+   - If JSON is malformed: log the parse error and `sys.exit(1)`.
+2. Remove `_BUILTIN_PROJECTS` list and the `_apply_beat_json_overlay` fallback
+   paths that reference it (lines ~136–211).
+3. Update `load_projects()` to reflect the new fail-fast contract.
+4. Update `tests/test_beat.py`: remove tests that cover the builtin-fallback
+   path; add a test that exit(1) is raised when `projects.json` is absent.
+
+## Exit criteria
+
+- [ ] `_BUILTIN_PROJECTS` no longer exists in `beat.py`
+- [ ] beat exits non-zero with a clear error when `projects.json` is missing
+- [ ] beat exits non-zero with a clear error when `projects.json` is malformed
+- [ ] `make check` passes
