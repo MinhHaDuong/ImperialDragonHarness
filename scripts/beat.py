@@ -896,11 +896,13 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     n = _git("rev-list", "--count", f"{base}..HEAD", cwd=path).stdout.strip() or "0"
     _git("checkout", default_branch, cwd=path)
     if int(n) == 0:
-        _log("=== housekeeping: no commits, deleting branch ===")
+        _log(f"=== housekeeping: no commits, deleting branch {_now_iso()} ===")
         _git("branch", "-D", branch, cwd=path)
         return "no-changes"
 
-    _log(f"=== housekeeping: deferred — {n} commit(s) on {branch} ready for review ===")
+    _log(
+        f"=== housekeeping: deferred — {n} commit(s) on {branch} ready for review {_now_iso()} ==="
+    )
     return "deferred"
 
 
@@ -1158,7 +1160,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
         # raids a ticket that may be already done.
         _log(
             f"=== pick-ticket: idle — {MAX_CLOSED_REPICKS} consecutive CLOSED"
-            " picks; aborting beat to avoid loop ==="
+            f" picks; aborting beat to avoid loop {_now_iso()} ==="
         )
         _record_phase_outcome(
             path,
@@ -1176,7 +1178,7 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
             else ""
         )
         _log(
-            f"=== pick-ticket: idle — {last_result_line or 'IDLE: no eligible tickets'} ==="
+            f"=== pick-ticket: idle — {last_result_line or 'IDLE: no eligible tickets'} {_now_iso()} ==="
         )
         _record_phase_outcome(
             path, "pick_ticket", "idle", detail=last_result_line, skill_result=pt_res
