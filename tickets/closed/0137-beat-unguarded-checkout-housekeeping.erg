@@ -2,10 +2,14 @@
 Title: Guard git checkout in housekeeping post-cleanup path (beat.py line 807)
 Created: 2026-05-12
 Author: claude
+Closed: autoclosed — PR #175
 
 --- log ---
 2026-05-12T20:00Z claude created — celebrate sweep after 0120 fix; same class as 0120
+2026-05-13T00:00Z claude note PR #172 opened — guard added at line 909, _HK_OUTCOME_MAP updated, test added, 153 tests pass
+2026-05-13T00:01Z claude note PR #172 closed (branch contamination); PR #175 opened from clean t0137v3 branch, 152 tests pass
 
+2026-05-13T09:36Z MinhHaDuong closed — autoclosed — PR #175
 --- body ---
 ## Context
 
