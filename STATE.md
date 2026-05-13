@@ -10,6 +10,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 <!-- generated 2026-05-13T05:48Z -->
 
 **Tickets:** 20 ready · 4 blocked — `erg ready tickets/` for full list
+**Morning review:** `/nightbeat-report` (narrative) · `/nightbeat-risk-review` (interactive triage before next run)
 **Recent commits:**
   4872f22 chore: housekeeping timestamp 2026-05-13T05:48Z
   e2127ee chore: ticket 0142 — verify agents must not use main repo as workspace
