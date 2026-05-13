@@ -1745,6 +1745,18 @@ class TestProjectConfigFields:
         cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_pick_ticket=50)
         assert cfg.max_turns_pick_ticket == 50
 
+    def test_max_turns_housekeeping_default(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"))
+        assert cfg.max_turns_housekeeping == beat.MAX_TURNS_HOUSEKEEPING
+
+    def test_max_turns_housekeeping_custom(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_housekeeping=10)
+        assert cfg.max_turns_housekeeping == 10
+
+    def test_max_turns_housekeeping_cap(self):
+        cfg = beat.ProjectConfig(path=Path("/tmp/p"), max_turns_housekeeping=9999)
+        assert cfg.max_turns_housekeeping == 2 * beat.MAX_TURNS_HOUSEKEEPING
+
 
 class TestApplyBeatJsonOverlay:
     def test_overlay_merges_known_keys(self, tmp_path):
@@ -1824,6 +1836,17 @@ class TestLoadProjectsOverlay:
         cfg = beat.ProjectConfig(path=proj_dir)
         beat._apply_beat_json_overlay(cfg)
         assert cfg.max_turns_pick_ticket == 45
+
+    def test_beat_json_overlay_max_turns_housekeeping(self, tmp_path):
+        proj_dir = tmp_path / "myproject"
+        proj_dir.mkdir()
+        (proj_dir / ".claude").mkdir()
+        (proj_dir / ".claude" / "beat.json").write_text(
+            json.dumps({"max_turns_housekeeping": 55})
+        )
+        cfg = beat.ProjectConfig(path=proj_dir)
+        beat._apply_beat_json_overlay(cfg)
+        assert cfg.max_turns_housekeeping == 55
 
 
 class TestRaidBudgetPassthrough:
