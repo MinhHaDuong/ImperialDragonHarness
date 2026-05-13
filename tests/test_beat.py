@@ -826,6 +826,37 @@ class TestHousekeepingPhase:
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
         assert outcome == "timeout"
 
+    def test_aborted_dirty_tree_when_post_skill_tree_dirty(self, tmp_project):
+        """Ticket 0137: dirty tree after skill run aborts checkout, returns
+        'aborted-dirty-tree' and never calls git checkout."""
+
+        checkout_calls = []
+
+        def git_dirty_after_skill(*args, cwd):
+            sub = args[0] if args else ""
+            if sub == "rev-parse":
+                return MagicMock(returncode=0, stdout="basesha\n", stderr="")
+            if sub == "checkout" and args[1:2] != ("-B",):
+                # Record unguarded checkout attempts (should not happen)
+                checkout_calls.append(args)
+                return MagicMock(returncode=0, stdout="", stderr="")
+            if sub == "rev-list":
+                return MagicMock(returncode=0, stdout="2\n", stderr="")
+            if sub == "status":
+                return MagicMock(returncode=0, stdout=" M dirty_file.py\n", stderr="")
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        with (
+            patch("beat.housekeeping_needed", return_value=True),
+            patch("beat._git", side_effect=git_dirty_after_skill),
+            patch("beat.run_skill", return_value=(0, beat._SkillResult())),
+        ):
+            outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
+
+        assert outcome == "aborted-dirty-tree"
+        # The post-skill checkout must NOT have been reached
+        assert checkout_calls == [], f"unexpected checkout calls: {checkout_calls}"
+
     def test_raid_aborts_on_ci_failed(self, tmp_project, git_ok):
         with patch("beat._housekeeping_phase", return_value="failed"):
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))

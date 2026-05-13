@@ -429,6 +429,7 @@ _HK_OUTCOME_MAP: dict[str, str] = {
     "deferred": "success",
     "timeout": "timeout",
     "failed": "fail",
+    "aborted-dirty-tree": "fail",
 }
 
 
@@ -840,11 +841,12 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     """Run housekeeping on a dedicated branch cut from origin/main.
 
     Returns one of:
-      "skipped"    — housekeeping_needed was False
-      "no-changes" — skill ran clean, produced no commits
-      "deferred"   — commits on branch, left for human review
-      "timeout"    — skill timed out
-      "failed"     — git or skill error
+      "skipped"            — housekeeping_needed was False
+      "no-changes"         — skill ran clean, produced no commits
+      "deferred"           — commits on branch, left for human review
+      "timeout"            — skill timed out
+      "failed"             — git or skill error
+      "aborted-dirty-tree" — working tree dirty after skill run; checkout skipped
     """
     path = project.path
     if not housekeeping_needed(path):
@@ -903,6 +905,14 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
         return "failed"
 
     n = _git("rev-list", "--count", f"{base}..HEAD", cwd=path).stdout.strip() or "0"
+
+    status = _git("status", "--porcelain", cwd=path)
+    if status.stdout.strip():
+        dirty_files = status.stdout.strip().splitlines()
+        detail = f"{len(dirty_files)} file(s): {', '.join(f.strip() for f in dirty_files[:3])}"
+        _log(f"=== housekeeping: aborted-dirty-tree: {detail} {_now_iso()} ===")
+        return "aborted-dirty-tree"
+
     _git("checkout", default_branch, cwd=path)
     if int(n) == 0:
         _log(f"=== housekeeping: no commits, deleting branch {_now_iso()} ===")
