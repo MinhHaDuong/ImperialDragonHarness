@@ -1,13 +1,13 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-13T10:00Z
+Last updated: 2026-05-13T10:07Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-13T10:00Z -->
+<!-- generated 2026-05-13T10:07Z -->
 
 **Tickets:** 14 open · 14 ready — `erg ready tickets/` for full list
 **Recent commits:**
