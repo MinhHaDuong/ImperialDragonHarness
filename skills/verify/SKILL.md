@@ -40,8 +40,7 @@ root. The worktree is the isolation boundary; no main-repo checkout is ever need
 **Isolation setup:**
 
 ```bash
-# Step 1 — Resolve PR number to branch name (forge-specific step;
-#           on GitHub: gh pr view <pr-number> --json headRefName -q .headRefName)
+# Step 1 — Resolve PR number to branch name (forge-specific step)
 PR_BRANCH=<resolved-branch-name>
 
 # Step 2 — Fetch and create an isolated worktree
