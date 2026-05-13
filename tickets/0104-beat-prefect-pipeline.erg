@@ -2,13 +2,13 @@
 Title: Replace beat.py pipeline orchestration with Prefect 3.x
 Created: 2026-05-09
 Author: claude
-Blocked-by: 0103
 Tag: deferred
 
 --- log ---
 2026-05-09T08:35Z claude created
 
 2026-05-13T09:02Z MinhHaDuong tag deferred
+2026-05-13T13:24Z MinhHaDuong note blocker 0103 closed — Blocked-by removed.
 --- body ---
 ## Context
 
