@@ -1,0 +1,31 @@
+%erg 0.1
+Title: beat: max_turns_pick_ticket missing cap in __post_init__
+Created: 2026-05-13
+Author: MinhHaDuong
+
+--- log ---
+2026-05-13T06:18Z MinhHaDuong created
+
+--- body ---
+## Context
+
+PR #166 added `max_turns_housekeeping` to `ProjectConfig` with a cap in `__post_init__`
+(capped at `2 × MAX_TURNS_HOUSEKEEPING = 80`). The analogous field `max_turns_pick_ticket`
+was added earlier but has no corresponding cap — a beat.json overlay can set it arbitrarily
+high without enforcement.
+
+`scripts/beat.py` line 128–131:
+```python
+def __post_init__(self) -> None:
+    cap = 2 * MAX_TURNS_HOUSEKEEPING
+    if self.max_turns_housekeeping > cap:
+        self.max_turns_housekeeping = cap
+```
+
+`max_turns_pick_ticket` (default 30) is not capped.
+
+## Exit criteria
+
+- [ ] `__post_init__` also caps `max_turns_pick_ticket` at `2 × MAX_TURNS_PICK_TICKET = 60`
+- [ ] Docstring updated to mention the cap for both fields
+- [ ] `make check` passes
