@@ -21,6 +21,22 @@ Run full repo housekeeping and act on every finding.
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
    are the contract interface consumed by steps 3–5 below.
 
+2.5. **Audit open-ticket exit criteria.** For each open ticket, apply the
+   same lightweight grep-able checks used by /pick-ticket step 4. Only
+   check exit criteria that reduce to one of three crisp shapes:
+
+   1. **String absence**: `! grep -qF "<literal>" <file>`
+   2. **File absence**: `test ! -f <path>`
+   3. **Symbol presence**: `grep -qE '^(def|class|func) <name>' <file>`
+
+   If *all* of a ticket's exit criteria reduce to these shapes AND all
+   pass: call `/ticket-close <id> already-done`. Log each closure as a
+   fix-now action and include it in the step 3 commit. If *any* criterion
+   is vague or cannot be reduced to these shapes → leave the ticket open.
+
+   Process all open tickets unconditionally (not just candidates).
+   Batch-closing is allowed here: close every qualifying ticket in one pass.
+
 3. **Fix `fix-now` items.** Apply every `fix-now` item inline. If any fixes were
    applied, commit once: `chore: housekeeping fixes (sweep)`.
 
