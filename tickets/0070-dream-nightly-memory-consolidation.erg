@@ -150,4 +150,4 @@ Assert: older entry classified `DELETE`; newer survives; proposed
 
 ### Research note
 
-Full reconciliation with current state-of-the-art published at `/home/haduong/.claude/docs/dream-research.md` (2026-05-13). V1 design: mem0 classifier + Park reflection + time-based trigger. V2 extensions: importance-weighted trigger, TiMem hierarchy, link updates.
+Full reconciliation with current state-of-the-art published at `docs/dream-research.md` (2026-05-13). V1 design: mem0 classifier + Park reflection + time-based trigger. V2 extensions: importance-weighted trigger, TiMem hierarchy, link updates.
