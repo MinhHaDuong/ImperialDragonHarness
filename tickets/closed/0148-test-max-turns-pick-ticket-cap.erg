@@ -2,11 +2,13 @@
 Title: add test_max_turns_pick_ticket_cap to test_beat.py
 Created: 2026-05-13
 Author: claude
+Closed: autoclosed — PR #177
 
 --- log ---
 2026-05-13T08:30Z claude created
 2026-05-13T10:15Z claude executed — PR reopened after contamination fix
 
+2026-05-13T09:34Z MinhHaDuong closed — autoclosed — PR #177
 --- body ---
 ## Context
 PR #169 (ticket 0143) added a `__post_init__` cap for `max_turns_pick_ticket`
