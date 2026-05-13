@@ -173,6 +173,8 @@ def _apply_beat_json_overlay(config: ProjectConfig) -> None:
         for k, v in overrides.items():
             if k in _PROJ_KEYS:
                 setattr(config, k, v)
+        # __post_init__ doesn't re-run after setattr; re-apply caps manually.
+        config.__post_init__()
     except Exception as exc:  # noqa: BLE001
         print(
             f"[beat] error loading {beat_cfg}: {exc}, ignoring overlay",
