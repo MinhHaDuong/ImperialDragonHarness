@@ -17,7 +17,6 @@ import signal
 import socket
 import subprocess
 import sys
-import threading
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -641,7 +640,8 @@ def run_skill(
 ) -> tuple[int, _SkillResult]:
     """Invoke a Claude skill; return (exit_code, _SkillResult).
 
-    Streams stdout line-by-line for live logging.
+    Streams stdout line-by-line for live logging.  Uses subprocess.Popen
+    with communicate() for timeout enforcement (no threads).
     Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
     project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
     """
@@ -669,20 +669,15 @@ def run_skill(
 
     stdout_lines: list[str] = []
 
-    def _reader() -> None:
-        if proc.stdout is None:
-            return
-        for raw in proc.stdout:
+    timed_out = False
+    try:
+        # Read stdout line-by-line then wait, enforcing a single timeout
+        # over the whole operation via communicate().
+        raw_out, _ = proc.communicate(timeout=timeout_s)
+        for raw in raw_out.splitlines():
             line = raw.rstrip("\n")
             _log(line)
             stdout_lines.append(line)
-
-    reader = threading.Thread(target=_reader, daemon=True)
-    reader.start()
-
-    timed_out = False
-    try:
-        proc.wait(timeout=timeout_s)
     except subprocess.TimeoutExpired:
         timed_out = True
         proc.terminate()
@@ -692,7 +687,6 @@ def run_skill(
             proc.kill()
             proc.wait()
 
-    reader.join(timeout=10)
     _state.current_proc = None
 
     if timed_out:

@@ -339,13 +339,11 @@ class TestRunSkillSubprocess:
         beat.DRY_RUN = False
 
     def _make_popen(self, stdout_lines: list[str], returncode: int = 0):
-        """Return a Popen mock that streams stdout_lines then exits."""
-        import io
-
+        """Return a Popen mock whose communicate() returns stdout_lines."""
         proc = MagicMock()
-        proc.stdout = io.StringIO("\n".join(stdout_lines) + "\n")
         proc.returncode = returncode
         proc.poll.return_value = returncode
+        proc.communicate.return_value = ("\n".join(stdout_lines) + "\n", "")
 
         def fake_wait(timeout=None):
             proc.returncode = returncode
@@ -377,13 +375,10 @@ class TestRunSkillSubprocess:
 
     def test_timeout_returns_124(self, tmp_project):
         proc = MagicMock()
-        proc.stdout = MagicMock()
-        proc.stdout.__iter__ = lambda s: iter([])
-        # First wait() raises TimeoutExpired; second (after terminate) succeeds.
-        proc.wait.side_effect = [
-            subprocess.TimeoutExpired(cmd="claude", timeout=1),
-            None,
-        ]
+        # communicate() raises TimeoutExpired; terminate + wait(5) succeeds.
+        proc.communicate.side_effect = subprocess.TimeoutExpired(
+            cmd="claude", timeout=1
+        )
         proc.returncode = -15
         with patch("beat.subprocess.Popen", return_value=proc):
             rc, result = beat.run_skill(
