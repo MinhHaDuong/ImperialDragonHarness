@@ -90,8 +90,7 @@ def _git_log_oneline(project: Path, branch: str, max_commits: int = 5) -> list[s
         return []
 
 
-_MARKER = re.compile(r"^=== (.+?) (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) ===$")
-_MARKER_NO_TS = re.compile(r"^=== (.+?) ===$")
+_MARKER = re.compile(r"^=== (.+?)(?:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)? ===$")
 _RUN_RE = re.compile(r"^Run \d+\s+\S+\s+project slot \d+: (.+)$")
 _LOCK_RE = re.compile(r"beat already running for (\S+), skipping")
 
@@ -179,8 +178,8 @@ def parse_log(path: Path) -> BeatRun:
             run.project = Path(m.group(1).strip())
             continue
 
-        # Marker lines (timestamped preferred; fall back to timestamp-less)
-        m = _MARKER.search(line) or _MARKER_NO_TS.search(line)
+        # Marker lines — timestamp is optional (old logs pre-PR #167 lacked it)
+        m = _MARKER.search(line)
         if m:
             label = m.group(1)
             _handle_marker(label, line, run, section_ref := [section])
@@ -206,7 +205,9 @@ def parse_log(path: Path) -> BeatRun:
     return run
 
 
-def _handle_marker(label: str, line: str, run: BeatRun, section_ref: list) -> None:
+def _handle_marker(
+    label: str, line: str, run: BeatRun, section_ref: list[str | None]
+) -> None:
     """Mutate run and section_ref[0] in-place based on a === ... === marker."""
     if "beat start" in label:
         pass

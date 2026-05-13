@@ -1,0 +1,34 @@
+%erg 0.1
+Title: add tests for max_turns_housekeeping and new _handle_marker branches
+Created: 2026-05-13
+Author: MinhHaDuong
+
+--- log ---
+2026-05-13T08:30Z MinhHaDuong created
+
+--- body ---
+## Context
+
+PR #166 added `max_turns_housekeeping` to `ProjectConfig` in `beat.py`.
+PR #167 added `_MARKER_NO_TS` fallback and new `no commits` / `deferred`
+branches to `_handle_marker` in `nightbeat-report.py`.
+
+Neither change has test coverage:
+- `test_beat.py` tests `max_turns_pick_ticket` (6 tests at lines 1742–1826+)
+  but has zero tests for the analogous `max_turns_housekeeping` field.
+- `test_nightbeat_report.py` has no cases for timestamp-less marker lines,
+  or for `hk_status` values `"no-changes"` and `"deferred"`.
+
+Identified during 2026-05-13 integration review (post-PR #166/#167).
+
+## Exit criteria
+
+- [ ] `test_beat.py`: test `max_turns_housekeeping` default, custom value,
+      and `__post_init__` cap (mirrors the 3 analogous `max_turns_pick_ticket` tests)
+- [ ] `test_beat.py`: test that `max_turns_housekeeping` is accepted in `beat.json`
+      overlay and propagated to the housekeeping invocation
+- [ ] `test_nightbeat_report.py`: test that `parse_log` sets `hk_status = "no-changes"`
+      for a log with `=== housekeeping: no commits ===` (no timestamp)
+- [ ] `test_nightbeat_report.py`: test that `parse_log` sets `hk_status = "deferred"`
+      for a log with `=== housekeeping: deferred — N commit(s)... ===` (no timestamp)
+- [ ] `python3 -m pytest tests/test_beat.py tests/test_nightbeat_report.py` passes

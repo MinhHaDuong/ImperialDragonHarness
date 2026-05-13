@@ -1,0 +1,35 @@
+%erg 0.1
+Title: simplify nightbeat-report marker regex and fix agnostic guard in SKILL.md
+Created: 2026-05-13
+Author: MinhHaDuong
+Closed: autoclosed — PR #168
+
+--- log ---
+2026-05-13T09:30Z MinhHaDuong created
+2026-05-13T09:30Z MinhHaDuong closed PR #168 merged
+
+2026-05-13T07:24Z MinhHaDuong closed — autoclosed — PR #168
+--- body ---
+## Context
+
+Integration review of PRs merged 2026-05-13 (PRs #166/#167).
+
+Two improvements identified:
+
+1. `nightbeat-report.py` had two compiled regexes (`_MARKER` + `_MARKER_NO_TS`)
+   that could be unified into one with an optional timestamp group. Reduces code
+   and makes the optional-timestamp intent explicit.
+
+2. `skills/nightbeat-report/SKILL.md:76` contained a literal `gh pr view` command
+   in the Supervisor HOLDs guidance. This violated the agnostic-guard CI check
+   (skills must not assume GitHub as the VCS provider). Replaced with a
+   provider-neutral instruction.
+
+## Exit criteria
+
+- [x] `_MARKER` and `_MARKER_NO_TS` unified into one regex with optional TS group
+- [x] `_handle_marker` type annotation tightened to `list[str | None]`
+- [x] `SKILL.md` Supervisor HOLDs guidance is VCS-provider-agnostic
+- [x] `check-agnostic.sh skills/nightbeat-report/` passes
+- [x] 164 tests green, ruff clean
+- [x] PR #168 merged

@@ -73,7 +73,7 @@ If a project shows `idle` for every run in the window, its ticket backlog is emp
 If a run spent > $3 on a ticket that is still not closed: flag the ticket for human review — it may be stuck in a loop or working on something underspecified.
 
 **Supervisor HOLDs**
-For each `action=hold` entry in the SUPERVISOR ACTIONS section, check the PR's current state before surfacing it: `gh pr view <pr_number> --repo <github_repo> --json state`. If state is `MERGED` or `CLOSED`, the hold resolved naturally — skip it entirely; it is not a harness issue.
+For each `action=hold` entry in the SUPERVISOR ACTIONS section, check whether the PR is already merged or closed via your VCS provider before surfacing it. If it is, the hold resolved naturally — skip it entirely; it is not a harness issue.
 
 Format this section as a bulleted list. If no patterns are found, say so explicitly — "No harness friction detected."
 
