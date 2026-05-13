@@ -2,10 +2,13 @@
 Title: Change nightbeat-supervisor timer to hourly at H+30
 Created: 2026-05-13
 Author: claude
+Closed: autoclosed — PR #193
 
 --- log ---
 2026-05-13T20:40Z claude created
+2026-05-13T20:46Z claude note updated timer: every-15-min → hourly at :30
 
+2026-05-13T20:52Z MinhHaDuong closed — autoclosed — PR #193
 --- body ---
 ## Context
 
