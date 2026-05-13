@@ -23,7 +23,6 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **audit-rename-agnostic-guard**: 6-commit branch needs PR + verify before merge
 - **0149**: fix squash-merge probe false negatives (pattern misses conventional scopes like `(beat)`, `(skill-doctor)`)
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
