@@ -2,10 +2,12 @@
 Title: Fix erg-pr-merge when local main is ahead of origin/main
 Created: 2026-05-13
 Author: claude
+Closed: autoclosed — PR #187
 
 --- log ---
 2026-05-13T14:10Z claude created
 
+2026-05-13T13:22Z MinhHaDuong closed — autoclosed — PR #187
 --- body ---
 ## Context
 
