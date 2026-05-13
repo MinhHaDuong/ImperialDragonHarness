@@ -2,11 +2,13 @@
 Title: Verify agents must not use the main repo as their workspace
 Created: 2026-05-13
 Author: claude
+Closed: autoclosed — PR #176
 
 --- log ---
 2026-05-13T00:10Z claude created — celebrate sweep after raid 122/114/125/130/138
 2026-05-13T00:00Z claude note PR #176 opened — docs(verify): isolate verify/verify-gate agents in temp worktree
 
+2026-05-13T09:56Z MinhHaDuong closed — autoclosed — PR #176
 --- body ---
 ## Context
 
