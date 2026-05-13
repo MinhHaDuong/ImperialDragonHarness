@@ -33,7 +33,7 @@ Parse the JSON output. Use its fields to populate checks 1–9 below without re-
      ```bash
      merge_base=$(git merge-base main <branch>)
      pr_num=$(grep -oP '^Closed:.*#\K[0-9]+' tickets/closed/$(ls tickets/closed/ | grep -P "^$(echo <branch> | grep -oP 't\K\d+')-" | head -1) 2>/dev/null | head -1 || true)
-     [ -n "$pr_num" ] && git log $merge_base..main --format="%s" | grep -qE "\(#${pr_num}\)"
+     [ -n "$pr_num" ] && git log $merge_base..main --format="%s%n%b" | grep -qE "\(#${pr_num}\)"
      ```
      If the probe exits 0, the branch was squash-merged into main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, squash-merged into main)`.
    - **Closed-ticket branches** where the squash-merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).

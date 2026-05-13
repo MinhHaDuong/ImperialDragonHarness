@@ -33,7 +33,7 @@ Run full repo housekeeping and act on every finding.
      ```bash
      merge_base=$(git merge-base main <branch>)
      pr_num=$(grep -oP '^Closed:.*#\K[0-9]+' tickets/closed/$(ls tickets/closed/ | grep -P "^$(echo <branch> | grep -oP 't\K\d+')-" | head -1) 2>/dev/null | head -1 || true)
-     [ -n "$pr_num" ] && git log $merge_base..main --format="%s" | grep -qE "\(#${pr_num}\)"
+     [ -n "$pr_num" ] && git log $merge_base..main --format="%s%n%b" | grep -qE "\(#${pr_num}\)"
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
