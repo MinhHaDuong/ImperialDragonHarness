@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Auto-generate skills catalog in README.md from SKILL.md frontmatter
+Created: 2026-05-14
+Author: MinhHaDuong
+
+--- log ---
+2026-05-14T15:06Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Surfaced from 0153 design exploration (raid 2026-05-14). The 0153 exploration
+concluded:
+- Agent introspection mid-session is already solved by Claude Code's platform
+  (system-reminder injects every skill's name+description on every turn)
+- The actual gap is human-facing: README.md hand-lists 22 of 27 skills and
+  is already drifting
+
+Recommended approach: auto-generated skills catalog in README.md.
+
+Rejected alternatives:
+- /show-docs and /show-skill — redundant with platform-provided system-reminder
+- Architecture page from ticket history — orthogonal to staleness
+- Docs-as-source-of-truth — overkill for 27-skill personal harness
+- Embedded query/RAG — over-engineering; `grep -r` suffices
+
+## Actions
+
+1. Add Makefile target `make skills-catalog`:
+   - Read `description:` from frontmatter of every `skills/*/SKILL.md`
+   - Regenerate the skills section in README.md between sentinel comments
+     (e.g. `<!-- skills:begin -->` ... `<!-- skills:end -->`)
+   - Sort alphabetically; group user-invocable separately from internal helpers
+2. Add CI check that fails if `make skills-catalog` produces a diff
+   (drift detection — catches forgotten regeneration before merge)
+3. Run once locally to populate README.md sentinel block
+4. Document in CLAUDE.md / contributing notes: regenerate after adding/renaming/
+   removing a skill
+
+## Notes
+
+- Authoring detail: SKILL.md frontmatter sometimes has multi-line descriptions
+  (e.g., schedule, claude-api). Use a YAML parser, not regex.
+- Some entries (init, review, security-review) are built-in Claude Code skills,
+  not present as SKILL.md — handle missing files gracefully
+
+## Exit criteria
+
+- [ ] `make skills-catalog` regenerates README.md skills section
+- [ ] CI check fails if README.md is out of sync with skill frontmatter
+- [ ] README.md updated to current state of skills/

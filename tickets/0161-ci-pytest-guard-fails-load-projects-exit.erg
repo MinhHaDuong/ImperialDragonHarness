@@ -1,0 +1,35 @@
+%erg 0.1
+Title: CI pytest-guard fails — load_projects exits 1 in CI environment
+Created: 2026-05-14
+Author: MinhHaDuong
+
+--- log ---
+2026-05-14T15:06Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Surfaced during /verify of PR #200 (ticket 0158). The pytest-guard CI job
+added in PR #194 (ticket 0154) is failing on main since PR #197 (ticket 0155)
+removed the _BUILTIN_PROJECTS fallback.
+
+Symptom: pytest-guard CI run 25851149946 fails because beat.py's
+load_projects() does `sys.exit(1)` at module import when projects.json
+is not found at the expected path. In CI, the path resolution differs
+from local — the file exists at `scripts/projects.json` but the CI
+working directory and HARNESS_DIR resolution may point elsewhere.
+
+## Investigation needed
+
+- Reproduce locally with `HARNESS_DIR=/tmp/empty pytest tests/`
+- Check how CI sets HARNESS_DIR (env var? cwd?)
+- Determine whether the fix is:
+  a. Make load_projects() lazy (don't call at import time, only when needed)
+  b. Set BEAT_PROJECTS_CONFIG env var in CI
+  c. Add a tmp_path projects.json fixture for tests that trigger import
+
+## Exit criteria
+
+- [ ] pytest-guard CI job green on main
+- [ ] All 223 tests pass in CI (currently pass locally)
+- [ ] Root cause documented in commit message
