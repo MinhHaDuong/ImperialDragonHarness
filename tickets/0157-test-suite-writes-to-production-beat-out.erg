@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Test suite writes to production beat-outcomes.jsonl — isolate log path
+Created: 2026-05-14
+Author: claude
+
+--- log ---
+2026-05-14T07:10Z claude created
+
+--- body ---
+## Context
+
+`OUTCOMES_LOG` in `beat.py` is hardcoded to
+`~/.claude/logs/beat-outcomes.jsonl`. The test suite runs beat.py against
+fake project paths (names like `test_pick_ticket_uses_project_0`,
+`test_closed_then_idle_returns_0`, etc.) and writes their phase-outcome
+records directly into this production log.
+
+After 7 days, beat-outcomes.jsonl contains 100–200 entries per test project
+(30+ fake projects), dwarfing the real entries and skewing every analysis
+that reads the file (nightbeat-report, nightbeat-supervisor-survey,
+permission-prune telemetry).
+
+The root cause: `_record_phase_outcome` uses the module-level `OUTCOMES_LOG`
+constant, which resolves at import time to the real path. Tests that call
+`beat.main()` or its sub-functions inherit this path with no way to override it.
+
+## Actions
+
+1. In `beat.py`, make `OUTCOMES_LOG` overridable via environment variable:
+   ```python
+   OUTCOMES_LOG: Path = Path(
+       os.environ.get("BEAT_OUTCOMES_LOG") or
+       str(HARNESS_DIR / "logs" / "beat-outcomes.jsonl")
+   )
+   ```
+2. In `tests/test_beat.py`, set `BEAT_OUTCOMES_LOG` to a `tmp_path`-scoped
+   file in every test fixture that invokes beat code:
+   ```python
+   @pytest.fixture(autouse=True)
+   def isolate_outcomes_log(tmp_path, monkeypatch):
+       monkeypatch.setenv("BEAT_OUTCOMES_LOG", str(tmp_path / "outcomes.jsonl"))
+   ```
+3. Apply the same isolation to `LOGDIR` / `COUNTER_FILE` if tests write there.
+4. Optionally: backfill by pruning `test_*` entries from the production log
+   (one-off script — not required for exit criteria).
+
+## Exit criteria
+
+- [ ] `BEAT_OUTCOMES_LOG` env var overrides the log path in beat.py
+- [ ] All test fixtures that invoke beat functions use a tmp_path-isolated log
+- [ ] Running `pytest tests/` does not append any new `test_*` entries to
+      `~/.claude/logs/beat-outcomes.jsonl`
+- [ ] `make check` passes
