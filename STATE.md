@@ -32,8 +32,6 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **0151**: extract harness rules into machine-readable format
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - **0070**: /dream skill — research gate cleared (docs/dream-research.md); ready to implement
-- **0142**: verify agents must not use main repo as workspace
-- **0141**: subprocess timeout gaps in git_utils, project-state, refresh-STATE
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
 
 ## Backlog
