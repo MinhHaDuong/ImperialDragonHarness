@@ -22,14 +22,14 @@ Every task passes through five phases:
 
 ```
 ImperialDragonHarness/
+├── rules/                  # Rule index (README.md) injected at SessionStart; bodies read on demand
+│   ├── README.md           # One-screen index: filename, scope, summary
+│   ├── workflow.md         # Session start, escalation, worktree
+│   ├── git.md              # Branch, commit, PR discipline
+│   ├── coding-python.md    # Python style, testing, Make (load when Python project)
+│   ├── state.md            # STATE.md format spec
+│   └── tickets.md          # Ticket log verbs including bump categories
 ├── skills/                 # Slash commands — 25 total: /beat, /celebrate, /verify, /raid, /perch, etc.
-│   ├── harness-rules/      # Rule index (README.md) injected at SessionStart; bodies read on demand
-│   │   ├── README.md           # One-screen index: filename, scope, summary
-│   │   ├── workflow.md         # Session start, escalation, worktree
-│   │   ├── git.md              # Branch, commit, PR discipline
-│   │   ├── coding-python.md    # Python style, testing, Make (load when Python project)
-│   │   ├── state.md            # STATE.md format spec
-│   │   └── tickets.md          # Ticket log verbs including bump categories
 │   ├── raid/               # Autonomous batch across multiple tickets
 │   ├── verify/             # Full PR verification loop (adherence + review + gate)
 │   ├── verify-adherence/   # Mechanical rule check on branch diff
