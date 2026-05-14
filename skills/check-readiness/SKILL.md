@@ -154,8 +154,8 @@ compatibility until ticket 0068 (alias system) is closed.
 Identical to **default mode**, but iterate over only the named project.
 The project name is the base name from `~/.claude/projects/<name>`.
 
-Example: `check-readiness --project Climate-finance` runs the full audit on
-`/home/haduong/Climate-finance/` only.
+Example: `check-readiness --project my-project` runs the full audit on
+that project only (resolves to `<path>` from `projects.json` entry).
 
 ---
 
