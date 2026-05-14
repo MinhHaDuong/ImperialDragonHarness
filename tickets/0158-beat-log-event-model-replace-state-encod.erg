@@ -1,0 +1,145 @@
+%erg 0.1
+Title: beat-log: replace state encoding with event encoding
+Created: 2026-05-14
+Author: claude
+
+--- log ---
+2026-05-14T07:15Z claude created
+
+--- body ---
+## Context
+
+`beat-log.jsonl` encodes beat lifecycle as **state**: an `in_progress`
+record is written at spin-in and replaced/removed at spin-down by
+`finalize_beat_log`. This causes the Layer 2 pre-flight skip to always
+fire: `_raid` calls `read_last_beat_record` after `in_progress` is
+written, reads `last_run_at = NOW`, and finds no commits since NOW.
+
+Root cause: state goes stale by design. "in_progress" is a claim about
+the present that becomes false when the beat ends or crashes. The file
+must be mutated to stay truthful.
+
+The correct primitive is an **event**: "this beat started at T" is
+permanently true, regardless of what happens next. "this beat ended at
+T with outcome X" is also permanently true. A crash means no `end` event
+follows the `start` event — the reader discovers this without the writer
+ever needing to patch old records.
+
+### Current format
+
+```jsonl
+{"outcome":"in_progress","last_run_at":"T_start"}   ← mutable (overwritten)
+{"outcome":"idle","last_run_at":"T_end",...}         ← replaces in_progress
+```
+
+### Target format
+
+```jsonl
+{"type":"start","ts":"T_start"}
+{"type":"end","ts":"T_end","outcome":"idle","ticket_id":null,"duration_s":N}
+```
+
+All existing records without a `type` field are treated as `end` events
+by the reader (`outcome: "in_progress"` → legacy start, all others →
+legacy end). No migration script needed.
+
+## Actions
+
+### 1. New writer API
+
+Replace `append_beat_log` + `finalize_beat_log` with two functions:
+
+```python
+def write_beat_start(project: Path) -> None:
+    """Append a start event. Idempotent — never mutates existing records."""
+    _append(project, {"type": "start", "ts": _now_iso()})
+
+def write_beat_end(project: Path, outcome: str, **fields) -> None:
+    """Append an end event. Never scans or rewrites anything."""
+    _append(project, {"type": "end", "ts": _now_iso(), "outcome": outcome, **fields})
+```
+
+`_append` is the current compact-JSON append, extracted.
+
+### 2. New reader API
+
+Replace `read_last_beat_record` with two focused readers:
+
+```python
+def last_completed_beat(project: Path) -> dict | None:
+    """Return the most recent end-event record, or None."""
+    for line in _reversed_lines(project):
+        r = _parse_json(line)
+        if r and (r.get("type") == "end" or
+                  (r.get("type") is None and r.get("outcome") != "in_progress")):
+            return r
+    return None
+
+def last_beat_crashed(project: Path, window_s: int = CRASH_RECOVERY_WINDOW_S) -> bool:
+    """True if the most recent start event has no following end event within window."""
+    for line in _reversed_lines(project):
+        r = _parse_json(line)
+        if not r:
+            continue
+        if r.get("type") == "end" or (r.get("type") is None and
+                                       r.get("outcome") != "in_progress"):
+            return False  # found completed beat before any orphaned start
+        if r.get("type") == "start" or r.get("outcome") == "in_progress":
+            age = time.time() - _parse_epoch(r.get("ts") or r.get("last_run_at"))
+            return age < window_s
+    return False
+```
+
+### 3. Remove mutation functions
+
+Delete `finalize_beat_log` and `_cleanup_stale_in_progress`. Replace all
+call sites:
+
+| Old | New |
+|-----|-----|
+| `append_beat_log(path, {"outcome": "in_progress", ...})` | `write_beat_start(path)` |
+| `finalize_beat_log(path, {...})` | `write_beat_end(path, outcome=..., ...)` |
+| `_cleanup_stale_in_progress(path)` | removed — `last_beat_crashed` makes it unnecessary |
+
+### 4. Fix Layer 2 (`_pick_needed`)
+
+In `_raid`, replace:
+```python
+_last_record = read_last_beat_record(path)
+_last_beat_at = parse(_last_record["last_run_at"]) if _last_record else None
+```
+with:
+```python
+_last_beat = last_completed_beat(path)
+_last_beat_at = parse(_last_beat.get("ts") or _last_beat.get("last_run_at")) if _last_beat else None
+```
+
+`last_completed_beat` returns the previous beat's `end` event — not the
+current beat's `start` — so `_pick_needed` compares against the correct
+watermark.
+
+### 5. Fix crash recovery in `main()`
+
+Replace the `last.get("outcome") == "in_progress"` check with
+`last_beat_crashed(path)`. Remove the call to `_cleanup_stale_in_progress`.
+
+### 6. Update `nightbeat-report.py` and tests
+
+`nightbeat-report.py` reads `beat-log.jsonl` to build the run table.
+Update its parser to handle both old and new record shapes.
+
+Update `tests/test_beat.py`: replace fixtures that write `in_progress`
+records with `start` events; assert that `end` events appear (not that
+records were replaced).
+
+## Exit criteria
+
+- [ ] `beat-log.jsonl` never contains `outcome: "in_progress"` for new records
+- [ ] `finalize_beat_log` deleted from beat.py
+- [ ] `_cleanup_stale_in_progress` deleted from beat.py
+- [ ] Layer 2 skip uses `last_completed_beat`, not `read_last_beat_record`
+- [ ] `_pick_needed` receives the previous beat's end timestamp, not NOW
+- [ ] Crash recovery works: a beat that starts but never ends is detected
+      correctly on the next beat without rewriting any log entries
+- [ ] Old-format records (no `type` field) are read correctly by all new readers
+- [ ] `make check` passes
