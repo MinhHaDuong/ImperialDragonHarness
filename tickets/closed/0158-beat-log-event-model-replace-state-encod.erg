@@ -2,11 +2,13 @@
 Title: beat-log: replace state encoding with event encoding
 Created: 2026-05-14
 Author: claude
+Closed: Merged PR #200 — event-model core; asyncio split to 0160
 
 --- log ---
 2026-05-14T07:15Z claude created
 
 2026-05-14T14:57Z claude note implementing sections 1-5 and 7; section 6 asyncio split to followup
+2026-05-14T15:05Z MinhHaDuong closed — Merged PR #200 — event-model core; asyncio split to 0160
 --- body ---
 ## Context
 
