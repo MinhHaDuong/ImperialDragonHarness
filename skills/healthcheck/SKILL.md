@@ -26,7 +26,11 @@ Parse the JSON output. Use its fields to populate checks 1–9 below without re-
 
 1. **Recent activity** — from `git.recent_commits`. List count and key themes.
 2. **Open PRs** — from `prs.open` / `prs.items`. Skip if `prs.error`.
-3. **Origin sync** — from `git.ahead` / `git.behind`. Skip if no remote.
+3. **Origin sync** — from `git.ahead` / `git.behind`. Skip if no remote. Also explicitly check local `main` vs `origin/main`:
+   ```bash
+   git rev-list --left-right --count main...origin/main
+   ```
+   Flag `warn` if local main is behind origin/main (needs pull) or ahead (unpushed commits on main).
 4. **Branch hygiene** — from `branches.local` / `branches.remote` / `branches.details`. For each local branch:
    - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
    - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the squash-merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
