@@ -29,30 +29,7 @@ ImperialDragonHarness/
 │   ├── coding-python.md    # Python style, testing, Make (load when Python project)
 │   ├── state.md            # STATE.md format spec
 │   └── tickets.md          # Ticket log verbs including bump categories
-├── skills/                 # Slash commands — 25 total: /beat, /celebrate, /verify, /raid, /perch, etc.
-│   ├── raid/               # Autonomous batch across multiple tickets
-│   ├── verify/             # Full PR verification loop (adherence + review + gate)
-│   ├── verify-adherence/   # Mechanical rule check on branch diff
-│   ├── verify-gate/        # Anti-rubber-stamp merge gate
-│   ├── review-pr/          # Multi-agent code review
-│   ├── review-pr-prose/    # Peer review panel for prose
-│   ├── celebrate/          # Post-task wrap-up
-│   ├── end-session/        # Day wrap-up + STATE.md refresh
-│   ├── start-ticket/       # Begin work on a ticket (TDD red step)
-│   ├── ticket-close/       # Close a ticket
-│   ├── ticket-new/         # Create a local %erg v1 file for agent coordination
-│   ├── ticket-ready/       # List unblocked tickets
-│   ├── healthcheck/        # Git hygiene + doc freshness check
-│   ├── memory/             # Persistent memory management
-│   ├── bib-merge/          # Merge approved bib entries into refs.bib
-│   ├── related-work-note/  # Due-diligence note for a cited paragraph
-│   ├── related-work-note-validate/ # Re-resolve all DOIs/URLs in a note
-│   ├── beat/               # Trigger one beat cycle (housekeeping → pick-ticket → work)
-│   ├── housekeeping/       # Repo hygiene: git sync, healthcheck, stale-branch cleanup
-│   ├── nightbeat-report/   # Morning review of autonomous nightbeat runs
-│   ├── pick-ticket/        # Pick lowest-risk ready ticket for autonomous sweep
-│   ├── perch/              # Mid-chat orientation
-│   └── smoke/              # Agent environment smoke test
+├── skills/                 # Slash commands — auto-generated catalog below
 ├── scripts/                # Hook implementations + shell init
 │   ├── shell-init.sh           # Source from ~/.bashrc — claude wrapper
 │   ├── on-start.sh             # Session start: env loading, worktree gate
@@ -60,7 +37,8 @@ ImperialDragonHarness/
 │   ├── guard-commit-on-main.sh
 │   ├── block-pr-merge-in-worktree.sh
 │   ├── lint-on-edit.sh
-│   └── warn-stale-rules.sh
+│   ├── warn-stale-rules.sh
+│   └── gen-skills-catalog.sh   # Generate skills catalog from SKILL.md frontmatter
 ├── commands/               # Guidance documents
 │   └── choose-journal.md
 ├── bin/                    # Utilities (added to PATH)
@@ -91,6 +69,42 @@ ImperialDragonHarness/
    This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
 
 Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automatically via `settings.json`.
+
+## Skills Catalog
+
+<!-- skills:begin -->
+
+| Command | Description |
+|---------|-------------|
+| `/beat` | Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid). |
+| `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
+| `/celebrate` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
+| `/check-readiness` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
+| `/end-session` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
+| `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
+| `/housekeeping` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
+| `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
+| `/merge` | Atomically close the linked ticket and squash-merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
+| `/nightbeat-report` | Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities. |
+| `/nightbeat-supervisor` | Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck. |
+| `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
+| `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous sweep run. Returns PICK:<id>, CLOSED:<id>, or IDLE. |
+| `/raid` | Run an Imperial Dragon raid across multiple tickets. Picks targets, manages waves, enforces isolation. Merges APPROVED PRs after verify-gate clears. |
+| `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
+| `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
+| `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
+| `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
+| `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
+| `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
+| `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
+| `/ticket-close` | Close a local ticket. |
+| `/ticket-new` | Create a local %erg 0.1 file for agent coordination. |
+| `/verify` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
+| `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |
+| `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Never merges. |
+| `/zotero-import` | Import one or more PDFs into Zotero. Extracts metadata from the document, resolves identifiers online when available, checks for duplicates in the local Zotero library, writes a combined RIS file, and hands it to xdg-open so the user's environment decides what to do with it. |
+
+<!-- skills:end -->
 
 ## Ticket management
 
