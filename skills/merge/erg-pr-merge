@@ -94,11 +94,19 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
     if ! git diff --cached --quiet; then
         git commit -m "ticket(${TICKET_ID}): close and archive — PR #${PR}"
     fi
-    git push origin HEAD
-    echo "Waiting for CI after ticket-close commit..."
-    # harness-extension-point
-    timeout 600 gh pr checks "$PR" --watch --fail-fast \
-        || die "CI did not pass within 600s (failed or timed out) — aborting merge"
+
+    # Check if this is an erg-only branch (no changes outside tickets/)
+    DIFF_SIZE=$(git diff origin/main...HEAD -- . ':(exclude)tickets/' | wc -c)
+
+    if [[ "$DIFF_SIZE" -eq 0 ]]; then
+        echo "Erg-only branch detected — skipping CI wait (no code changes)"
+    else
+        git push origin HEAD
+        echo "Waiting for CI after ticket-close commit..."
+        # harness-extension-point
+        timeout 600 gh pr checks "$PR" --watch --fail-fast \
+            || die "CI did not pass within 600s (failed or timed out) — aborting merge"
+    fi
 elif [[ -n "$TICKET_ID" ]]; then
     echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
 fi
