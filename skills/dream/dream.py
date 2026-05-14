@@ -189,7 +189,7 @@ def consolidate_project(client, project_dir, model, dry_run=False):
         logger.info(f"  No memory files found in {project_dir.name}; skipping.")
         return 0, 0, []
 
-    filenames = [filename for _, _, filename in index_entries]
+    filenames = [filename for filename, _, _ in index_entries]
 
     # Read all memory files
     memory_files = read_memory_files(project_dir, filenames)
@@ -264,7 +264,9 @@ def commit_consolidation(project_name, n_before, n_after):
     message = f"dream: consolidate {project_name} memory ({n_before}→{n_after})"
 
     try:
-        subprocess.run(["git", "add", "-A"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "add", str(MEMORY_BASE)], check=True, capture_output=True
+        )
         subprocess.run(
             ["git", "commit", "-m", message], check=True, capture_output=True
         )

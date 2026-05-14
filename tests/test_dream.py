@@ -5,10 +5,13 @@ Test fixture: contradicting feedback entries (vim vs emacs).
 Validates classifier correctly identifies DELETE for older, conflicting entries.
 """
 
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+DREAM_PY = Path(__file__).parent.parent / "skills" / "dream" / "dream.py"
 
 
 @pytest.fixture
@@ -69,6 +72,7 @@ Reasoning: Project needs elisp integration; emacs is more practical here.
         yield project_dir
 
 
+@pytest.mark.slow
 def test_dream_dry_run_contradicting_entries(fixture_project_memory):
     """
     Test /dream --dry-run on contradicting feedback entries.
@@ -76,6 +80,9 @@ def test_dream_dry_run_contradicting_entries(fixture_project_memory):
     Expected: older entry (vim) classified DELETE, newer (emacs) survives,
     MEMORY.md updated, no files written.
     """
+    pytest.importorskip("anthropic")
+    sys.path.insert(0, str(DREAM_PY.parent))
+
     # Save initial state
     old_entry_path = fixture_project_memory / "memory" / "feedback_editor_vim.md"
     new_entry_path = fixture_project_memory / "memory" / "feedback_editor_emacs.md"
@@ -85,13 +92,9 @@ def test_dream_dry_run_contradicting_entries(fixture_project_memory):
     new_content = new_entry_path.read_text()
     index_content = index_path.read_text()
 
-    # Run /dream --dry-run with the fixture project
-    # Note: We run this as a subprocess to test the full skill flow
-    # In a real environment, this would call the /dream skill directly
-    # For now, we'll test the Python logic directly
+    from anthropic import Anthropic
 
     from dream import consolidate_project
-    from anthropic import Anthropic
 
     client = Anthropic()
 
@@ -104,7 +107,6 @@ def test_dream_dry_run_contradicting_entries(fixture_project_memory):
     decisions_dict = {fn: (dec, reason) for fn, dec, reason in decisions}
 
     # The older vim entry should be marked DELETE or NOOP
-    # (depending on classifier; we expect DELETE due to contradiction)
     vim_decision = decisions_dict.get("feedback_editor_vim.md", ("NOOP", ""))[0]
     assert vim_decision in ("DELETE", "NOOP"), (
         f"vim entry: expected DELETE/NOOP, got {vim_decision}"
@@ -126,27 +128,20 @@ def test_dream_dry_run_contradicting_entries(fixture_project_memory):
     assert index_path.read_text() == index_content, "MEMORY.md was modified in dry-run"
 
     # Verify consolidation happened (n_before and n_after should differ if entries were pruned)
-    # In this case, we expect at least 1 entry to survive (the newer one)
     assert n_after >= 1, f"Expected at least 1 survivor, got {n_after}"
 
 
 def test_dream_preserves_contradictions():
     """
-    Test that /dream preserves contradictions that reveal evolution.
-
-    Contradictions are important — they show how preferences changed over time.
-    Only DELETE if the entry is truly obsolete (not just superseded).
+    Verify classify_memory_file prompt instructs the LLM to preserve evolutionary contradictions.
     """
-    # This is a design test: verify that the LLM prompt instructs preservation
-    # of evolution markers (e.g., "vim" → "emacs" decision sequence).
-
-    # The prompt in classify_memory_file should say:
-    # "IMPORTANT: Preserve contradictions that reveal evolution"
-
-    from dream import classify_memory_file
-
-    # Pseudo-test: verify the function exists and accepts the right signature
-    assert callable(classify_memory_file), "/dream classifier should be callable"
+    source = DREAM_PY.read_text()
+    assert "classify_memory_file" in source, (
+        "classifier function must exist in dream.py"
+    )
+    assert "Preserve contradictions" in source, (
+        "classifier prompt must instruct LLM to preserve contradictions that reveal evolution"
+    )
 
 
 if __name__ == "__main__":
