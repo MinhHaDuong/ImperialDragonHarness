@@ -133,26 +133,6 @@ class ProjectConfig:
             self.max_turns_pick_ticket = cap
 
 
-_BUILTIN_PROJECTS: list[ProjectConfig] = [
-    ProjectConfig(
-        path=Path.home() / "aedist-technical-report",
-        budget_housekeeping=0.40,
-        budget_pick_ticket=0.50,
-    ),
-    ProjectConfig(
-        path=Path.home() / "cadens",
-        budget_housekeeping=0.40,
-        budget_pick_ticket=0.50,
-    ),
-    ProjectConfig(path=Path.home() / "Climate_finance"),
-    ProjectConfig(path=Path.home() / "fuzzy-corpus"),
-    ProjectConfig(
-        path=HARNESS_DIR,
-        budget_housekeeping=0.40,
-        budget_pick_ticket=0.50,
-    ),
-]
-
 _PROJ_KEYS = {
     "budget_housekeeping",
     "budget_pick_ticket",
@@ -185,12 +165,13 @@ def _apply_beat_json_overlay(config: ProjectConfig) -> None:
 
 
 def load_projects(config_path: Path) -> list[ProjectConfig]:
-    """Load project list from JSON; fall back to built-in defaults on any error."""
+    """Load project list from JSON; exit(1) if missing or malformed."""
     if not config_path.exists():
         print(
-            f"[beat] {config_path} not found, using built-in defaults", file=sys.stderr
+            f"[beat] {config_path} not found — beat requires valid projects.json",
+            file=sys.stderr,
         )
-        return list(_BUILTIN_PROJECTS)
+        sys.exit(1)
     try:
         entries = json.loads(config_path.read_text())
         configs = [
@@ -202,10 +183,10 @@ def load_projects(config_path: Path) -> list[ProjectConfig]:
         ]
     except Exception as exc:  # noqa: BLE001
         print(
-            f"[beat] error loading {config_path}: {exc}, using built-in defaults",
+            f"[beat] error loading {config_path}: {exc}",
             file=sys.stderr,
         )
-        return list(_BUILTIN_PROJECTS)
+        sys.exit(1)
     for cfg in configs:
         _apply_beat_json_overlay(cfg)
     return configs
