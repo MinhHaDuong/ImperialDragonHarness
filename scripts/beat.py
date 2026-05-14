@@ -200,7 +200,15 @@ def load_projects(config_path: Path) -> list[ProjectConfig]:
     return configs
 
 
-PROJECTS: list[ProjectConfig] = load_projects(PROJECTS_CONFIG)
+_PROJECTS_CACHE: list[ProjectConfig] | None = None
+
+
+def _get_projects() -> list[ProjectConfig]:
+    """Lazy-load projects from PROJECTS_CONFIG; cache result for reuse."""
+    global _PROJECTS_CACHE  # noqa: PLW0603
+    if _PROJECTS_CACHE is None:
+        _PROJECTS_CACHE = load_projects(PROJECTS_CONFIG)
+    return _PROJECTS_CACHE
 
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -820,14 +828,15 @@ def _pick_project() -> tuple[int, ProjectConfig]:
     count = int(COUNTER_FILE.read_text().strip()) if COUNTER_FILE.exists() else 0
     COUNTER_FILE.write_text(str(count + 1))
     override = os.environ.get("BEAT_PROJECT")
+    projects = _get_projects()
     if override:
         override_path = Path(override).resolve()
-        for cfg in PROJECTS:
+        for cfg in projects:
             if cfg.path == override_path:
                 return count, cfg
         return count, ProjectConfig(path=override_path)
-    idx = count % len(PROJECTS)
-    return count, PROJECTS[idx]
+    idx = count % len(projects)
+    return count, projects[idx]
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
@@ -1288,7 +1297,8 @@ def main() -> None:
         sys.exit(0)
 
     _log(f"=== beat start {_now_iso()} ===")
-    _log(f"Run {count}  →  project slot {count % len(PROJECTS)}: {path}")
+    projects = _get_projects()
+    _log(f"Run {count}  →  project slot {count % len(projects)}: {path}")
 
     if not (path / ".git").is_dir():
         _log(f"ERROR: {path} is not a git repository. Aborting.")
@@ -1351,10 +1361,11 @@ def main() -> None:
         if outcome == "idle" and not os.environ.get("BEAT_PROJECT"):
             _log(f"=== fallback: primary idle, trying other projects {_now_iso()} ===")
             fallback_tried = 0
-            for fallback_cfg in PROJECTS:
+            projects = _get_projects()
+            for fallback_cfg in projects:
                 if fallback_cfg.path == path:
                     continue
-                if fallback_tried >= len(PROJECTS) - 1:
+                if fallback_tried >= len(projects) - 1:
                     break
                 fb_lock_fh = _lockfile(fallback_cfg.path).open("w")
                 try:
