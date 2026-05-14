@@ -120,7 +120,7 @@ grep -r "ruff" tests/ --include="*.py" -l
 If no match: emit one `untested_rules` entry:
 
 ```yaml
-rule: harness-rules/coding-python.md#testing
+rule: rules/coding-python.md#testing
 suggested_test: |
   @pytest.mark.adherence
   def test_ruff():
