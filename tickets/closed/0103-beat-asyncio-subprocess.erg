@@ -10,6 +10,7 @@ Closed: autoclosed — PR #189
 
 2026-05-13T09:02Z MinhHaDuong tag deferred
 2026-05-13T13:24Z MinhHaDuong closed — autoclosed — PR #189
+2026-05-14T07:30Z claude note PR #189 removed threading but shipped Popen.communicate() instead of asyncio. Exit criterion ("grep threading = empty") was satisfied but asyncio was never implemented. Real-time stdout streaming was silently lost — Popen.communicate() buffers all output until subprocess exits. Asyncio scope folded into ticket 0158 (event model refactor), which touches run_skill anyway.
 --- body ---
 ## Context
 

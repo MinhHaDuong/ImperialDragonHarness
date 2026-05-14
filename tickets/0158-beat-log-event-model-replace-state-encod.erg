@@ -123,7 +123,42 @@ watermark.
 Replace the `last.get("outcome") == "in_progress"` check with
 `last_beat_crashed(path)`. Remove the call to `_cleanup_stale_in_progress`.
 
-### 6. Update `nightbeat-report.py` and tests
+### 6. Restore asyncio streaming in `run_skill`
+
+PR #189 (ticket 0103) removed `threading.Thread` but replaced it with
+`Popen.communicate()`, which buffers all subprocess output until exit.
+Real-time stdout streaming was silently lost.
+
+Replace `run_skill` with an async implementation:
+
+```python
+async def run_skill(...) -> tuple[int, _SkillResult]:
+    proc = await asyncio.create_subprocess_exec(
+        *argv, stdout=asyncio.subprocess.PIPE, stderr=None, cwd=cwd, env=env
+    )
+    stdout_lines: list[str] = []
+    async def _read():
+        async for raw in proc.stdout:
+            line = raw.decode().rstrip("\n")
+            _log(line)
+            stdout_lines.append(line)
+    try:
+        await asyncio.wait_for(
+            asyncio.gather(_read(), proc.wait()), timeout=timeout_s
+        )
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        return TIMEOUT_EXIT_CODE, _SkillResult()
+    ...
+```
+
+`fcntl` lock acquisition stays synchronous in `main()` before
+`asyncio.run()`. `_on_sigterm` becomes `loop.add_signal_handler`.
+Convert `main()`, `_raid()`, `_housekeeping_phase()` to `async def`.
+Entry point: `asyncio.run(main())`.
+
+### 7. Update `nightbeat-report.py` and tests
 
 `nightbeat-report.py` reads `beat-log.jsonl` to build the run table.
 Update its parser to handle both old and new record shapes.
@@ -142,4 +177,7 @@ records were replaced).
 - [ ] Crash recovery works: a beat that starts but never ends is detected
       correctly on the next beat without rewriting any log entries
 - [ ] Old-format records (no `type` field) are read correctly by all new readers
+- [ ] `run_skill` uses `asyncio.create_subprocess_exec` — stdout streamed line-by-line during execution, not buffered until exit
+- [ ] `grep threading scripts/beat.py` returns nothing (already true; must stay true)
+- [ ] `grep asyncio scripts/beat.py` returns results
 - [ ] `make check` passes
