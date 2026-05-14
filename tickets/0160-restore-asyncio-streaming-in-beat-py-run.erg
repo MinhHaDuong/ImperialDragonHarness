@@ -1,0 +1,61 @@
+%erg 0.1
+Title: restore asyncio streaming in beat.py run_skill
+Created: 2026-05-14
+Author: MinhHaDuong
+
+--- log ---
+2026-05-14T14:58Z MinhHaDuong created
+2026-05-14T15:00Z claude note split from 0158 section 6; PR #200 left run_skill synchronous
+
+--- body ---
+## Context
+
+PR #189 (ticket 0103) removed `threading.Thread` from `run_skill` but
+replaced it with `Popen.communicate()`, which buffers all subprocess
+output until exit. Real-time stdout streaming was silently lost — beat
+log output appears in a single burst at the end of each skill run.
+
+This was originally part of ticket 0158 (section 6) but was split out so
+that the beat-log event-model fix (sections 1-5, 7) could land first as
+a focused PR (#200).
+
+## Actions
+
+Replace `run_skill` with an async implementation:
+
+```python
+async def run_skill(...) -> tuple[int, _SkillResult]:
+    proc = await asyncio.create_subprocess_exec(
+        *argv, stdout=asyncio.subprocess.PIPE, stderr=None, cwd=cwd, env=env
+    )
+    stdout_lines: list[str] = []
+    async def _read():
+        async for raw in proc.stdout:
+            line = raw.decode().rstrip("\n")
+            _log(line)
+            stdout_lines.append(line)
+    try:
+        await asyncio.wait_for(
+            asyncio.gather(_read(), proc.wait()), timeout=timeout_s
+        )
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        return TIMEOUT_EXIT_CODE, _SkillResult()
+    ...
+```
+
+- `fcntl` lock acquisition stays synchronous in `main()` before
+  `asyncio.run()`.
+- `_on_sigterm` becomes `loop.add_signal_handler`.
+- Convert `main()`, `_raid()`, `_housekeeping_phase()` to `async def`.
+- Entry point: `asyncio.run(main())`.
+
+## Exit criteria
+
+- [ ] `run_skill` uses `asyncio.create_subprocess_exec` — stdout streamed
+      line-by-line during execution, not buffered until exit
+- [ ] `grep threading scripts/beat.py` returns nothing (already true; must stay true)
+- [ ] `grep asyncio scripts/beat.py` returns results
+- [ ] Tests still pass — including timeout, dry-run, and signal-handling paths
+- [ ] `make check` (or equivalent) passes

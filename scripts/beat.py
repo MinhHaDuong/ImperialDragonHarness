@@ -229,47 +229,6 @@ def _beat_log_path(project: Path) -> Path:
     return project / "beat-log.jsonl"
 
 
-def _cleanup_stale_in_progress(project: Path) -> None:
-    """Rewrite any in_progress record older than CRASH_RECOVERY_WINDOW_S to aborted.
-
-    Crash recovery only catches the most-recent record; this catches orphans
-    buried under subsequent done/failed records when the 55-min window elapsed
-    before the project was next visited.
-    """
-    path = _beat_log_path(project)
-    if not path.exists():
-        return
-    cutoff = time.time() - CRASH_RECOVERY_WINDOW_S
-    lines = path.read_text().splitlines()
-    changed = False
-    new_lines: list[str] = []
-    for line in lines:
-        if line.strip():
-            try:
-                rec = json.loads(line)
-                if rec.get("outcome") == "in_progress":
-                    epoch = datetime.fromisoformat(
-                        rec.get("last_run_at", "1970-01-01T00:00:00Z").replace(
-                            "Z", "+00:00"
-                        )
-                    ).timestamp()
-                    if epoch < cutoff:
-                        rec["outcome"] = "aborted"
-                        rec["diagnostics"] = (
-                            "stale in_progress — cleaned on next beat start"
-                        )
-                        line = json.dumps(rec, separators=(",", ":"))
-                        changed = True
-            except (json.JSONDecodeError, ValueError, TypeError):
-                pass
-        new_lines.append(line)
-    if changed:
-        path.write_text("\n".join(new_lines) + "\n")
-        _log(
-            f"=== startup: cleaned stale in_progress records in {project.name} {_now_iso()} ==="
-        )
-
-
 # Harness worktree name patterns created by EnterWorktree
 _HARNESS_WORKTREE_RE = re.compile(r"^(agent-|explore-|t\d|review-)")
 
@@ -352,7 +311,7 @@ def _cleanup_locked_worktrees(project: Path) -> None:
             )
 
 
-def append_beat_log(project: Path, record: dict) -> None:
+def _append(project: Path, record: dict) -> None:
     """Append one compact-JSON record; no-op in dry-run mode."""
     if DRY_RUN:
         return
@@ -361,51 +320,112 @@ def append_beat_log(project: Path, record: dict) -> None:
         fh.write(json.dumps(record, separators=(",", ":")) + "\n")
 
 
-def finalize_beat_log(project: Path, record: dict) -> None:
-    """Write terminal spin-down record, replacing any trailing in_progress.
+def _reversed_lines(project: Path):
+    """Yield non-empty lines from beat-log.jsonl in reverse order."""
+    path = _beat_log_path(project)
+    if not path.exists() or path.stat().st_size == 0:
+        return
+    for line in reversed(path.read_text().splitlines()):
+        if line.strip():
+            yield line
+
+
+def _parse_epoch(ts_str: str | None) -> float:
+    """Parse an ISO-8601 timestamp string (with optional Z suffix) to epoch seconds."""
+    if not ts_str:
+        return 0.0
+    try:
+        return datetime.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def write_beat_start(project: Path) -> None:
+    """Append a start event. Idempotent — never mutates existing records."""
+    _append(project, {"type": "start", "ts": _now_iso()})
+
+
+def write_beat_end(project: Path, outcome: str, **fields) -> None:
+    """Append an end event. Never scans or rewrites anything.
 
     Idempotent via _state.final_written; no-op in dry-run mode.
     """
     if _state.final_written or DRY_RUN:
         return
+    record = {"type": "end", "ts": _now_iso(), "outcome": outcome, **fields}
+    _append(project, record)
     _state.final_written = True
 
-    path = _beat_log_path(project)
-    if not path.exists():
-        append_beat_log(project, record)
-        return
 
-    lines = path.read_text().splitlines()
-    while lines:
+def _is_end_record(rec: dict) -> bool:
+    """Identify an end-event record across new and legacy formats.
+
+    New format: type == "end".
+    Legacy format: no `type` key, an `outcome` key is present, and outcome
+    is not "in_progress". The `outcome` key check is required to reject
+    pretty-printed `}` lines that parse to {} but lack any beat semantics.
+    """
+    if rec.get("type") == "end":
+        return True
+    if (
+        rec.get("type") is None
+        and "outcome" in rec
+        and rec.get("outcome") != "in_progress"
+    ):
+        return True
+    return False
+
+
+def _is_start_record(rec: dict) -> bool:
+    """Identify a start-event record across new and legacy formats."""
+    if rec.get("type") == "start":
+        return True
+    if rec.get("type") is None and rec.get("outcome") == "in_progress":
+        return True
+    return False
+
+
+def last_completed_beat(project: Path) -> dict | None:
+    """Return the most recent end-event record, or None.
+
+    Handles both new (`type:"end"`) and legacy records (no `type`, with
+    `outcome` key not equal to `in_progress`). Start events and stray
+    `}` lines from pretty-printed JSON are skipped.
+    """
+    for line in _reversed_lines(project):
         try:
-            if json.loads(lines[-1]).get("outcome") == "in_progress":
-                lines.pop()
-                continue
-        except (json.JSONDecodeError, AttributeError):
-            pass
-        break
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        if _is_end_record(rec):
+            return rec
+    return None
 
-    lines.append(json.dumps(record, separators=(",", ":")))
-    path.write_text("\n".join(lines) + "\n")
 
+def last_beat_crashed(project: Path, window_s: int = CRASH_RECOVERY_WINDOW_S) -> bool:
+    """True if the most recent start event has no following end event within window.
 
-def read_last_beat_record(project: Path) -> dict | None:
-    """Return the last record in beat-log.jsonl, handling pretty-printed JSON."""
-    path = _beat_log_path(project)
-    if not path.exists() or path.stat().st_size == 0:
-        return None
-    result = subprocess.run(  # noqa: S603
-        ["jq", "-s", "last"],
-        input=path.read_text(),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    try:
-        obj = json.loads(result.stdout)
-        return obj if isinstance(obj, dict) else None
-    except json.JSONDecodeError:
-        return None
+    Reverse-scans the log. If we see a completed-beat (end event) before any
+    orphaned start, the previous beat finished cleanly. If we see a start
+    event first, check its age: if within the crash-recovery window it counts
+    as a crash; otherwise it's old enough to ignore.
+    """
+    for line in _reversed_lines(project):
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        if _is_end_record(rec):
+            return False
+        if _is_start_record(rec):
+            ts_str = rec.get("ts") or rec.get("last_run_at")
+            age = time.time() - _parse_epoch(ts_str)
+            return age < window_s
+    return False
 
 
 # ── Phase outcome log ─────────────────────────────────────────────────────────
@@ -466,17 +486,12 @@ def _on_sigterm(_signum: int, _frame: object) -> None:
         except subprocess.TimeoutExpired:
             proc.kill()
     if _state.project is not None:
-        finalize_beat_log(
+        write_beat_end(
             _state.project,
-            {
-                "last_run_at": _now_iso(),
-                "ticket_id": None,
-                "branch": None,
-                "PR": None,
-                "outcome": "aborted",
-                "diagnostics": "systemd SIGTERM — beat exceeded time budget",
-                "duration_s": elapsed,
-            },
+            "aborted",
+            ticket_id=None,
+            diagnostics="systemd SIGTERM — beat exceeded time budget",
+            duration_s=elapsed,
         )
     _log(f"=== beat SIGTERM elapsed={elapsed}s {_now_iso()} ===")
     sys.exit(143)
@@ -1093,15 +1108,15 @@ def _raid(project: ProjectConfig) -> tuple[str, str | None]:
     # Layer 2 pre-flight skip (ticket 0051): if nothing has changed in the repo
     # or ticket files since the last beat, skip the Claude pick-ticket invocation
     # and return idle directly — saves tokens on dormant projects.
-    _last_record = read_last_beat_record(path)
+    _last_record = last_completed_beat(path)
     _last_beat_at: datetime | None = None
-    if _last_record and _last_record.get("last_run_at"):
-        try:
-            _last_beat_at = datetime.fromisoformat(
-                _last_record["last_run_at"].replace("Z", "+00:00")
-            )
-        except (ValueError, TypeError):
-            pass
+    if _last_record:
+        _last_ts = _last_record.get("ts") or _last_record.get("last_run_at")
+        if _last_ts:
+            try:
+                _last_beat_at = datetime.fromisoformat(_last_ts.replace("Z", "+00:00"))
+            except (ValueError, TypeError):
+                pass
     if not _pick_needed(path, _last_beat_at):
         _log(
             f"=== pick-ticket: skipped (nothing changed since"
@@ -1281,65 +1296,47 @@ def main() -> None:
 
     # Interval skip: project can declare a minimum interval between beats.
     if project.interval_minutes > 0:
-        last = read_last_beat_record(path)
-        if last and last.get("last_run_at"):
+        last = last_completed_beat(path)
+        if last:
+            last_ts = last.get("ts") or last.get("last_run_at")
             try:
-                last_epoch = datetime.fromisoformat(
-                    last["last_run_at"].replace("Z", "+00:00")
-                ).timestamp()
-                elapsed_s = time.time() - last_epoch
-                if elapsed_s < project.interval_minutes * 60:
-                    remaining = int(project.interval_minutes * 60 - elapsed_s)
-                    _log(
-                        f"=== interval-skip: {path.name} (next run in {remaining}s) {_now_iso()} ==="
-                    )
-                    _record_phase_outcome(
-                        path,
-                        "interval",
-                        "skip",
-                        detail=f"interval={project.interval_minutes}m, remaining={remaining}s",
-                    )
-                    lock_fh.close()
-                    sys.exit(0)
+                last_epoch = _parse_epoch(last_ts)
+                if last_epoch > 0:
+                    elapsed_s = time.time() - last_epoch
+                    if elapsed_s < project.interval_minutes * 60:
+                        remaining = int(project.interval_minutes * 60 - elapsed_s)
+                        _log(
+                            f"=== interval-skip: {path.name} (next run in {remaining}s) {_now_iso()} ==="
+                        )
+                        _record_phase_outcome(
+                            path,
+                            "interval",
+                            "skip",
+                            detail=f"interval={project.interval_minutes}m, remaining={remaining}s",
+                        )
+                        lock_fh.close()
+                        sys.exit(0)
             except (ValueError, TypeError):
                 pass
 
     (path / ".claude" / "sweep-state").mkdir(parents=True, exist_ok=True)
 
-    # Layer-1 cleanup: rewrite buried stale in_progress records that crash
-    # recovery missed (it only checks the most-recent record within 55 min).
-    _cleanup_stale_in_progress(path)
-
-    # Layer-2 cleanup: remove orphaned git-locked worktrees left by killed agents.
+    # Cleanup: remove orphaned git-locked worktrees left by killed agents.
     _cleanup_locked_worktrees(path)
 
-    # Crash / SIGKILL recovery
-    last = read_last_beat_record(path)
-    if last and last.get("outcome") == "in_progress":
-        try:
-            last_at = last.get("last_run_at", "1970-01-01T00:00:00Z")
-            last_epoch = datetime.fromisoformat(
-                last_at.replace("Z", "+00:00")
-            ).timestamp()
-            if (time.time() - last_epoch) < CRASH_RECOVERY_WINDOW_S:
-                append_beat_log(
-                    path,
-                    {
-                        "last_run_at": _now_iso(),
-                        "ticket_id": None,
-                        "branch": None,
-                        "PR": None,
-                        "outcome": "aborted",
-                        "diagnostics": "crash/SIGKILL recovery — previous run never completed spin-down",
-                    },
-                )
-                _log(f"=== beat aborted: crash recovery {_now_iso()} ===")
-                sys.exit(0)
-        except (ValueError, TypeError):
-            pass
+    # Crash / SIGKILL recovery: detect a start event with no following end event.
+    if last_beat_crashed(path):
+        write_beat_end(
+            path,
+            "aborted",
+            ticket_id=None,
+            diagnostics="crash/SIGKILL recovery — previous run never completed spin-down",
+        )
+        _log(f"=== beat aborted: crash recovery {_now_iso()} ===")
+        sys.exit(0)
 
     # Spin-in
-    append_beat_log(path, {"outcome": "in_progress", "last_run_at": _now_iso()})
+    write_beat_start(path)
 
     # Orchestration
     outcome = "idle"
@@ -1393,16 +1390,11 @@ def main() -> None:
 
     # Spin-down
     elapsed = int(time.monotonic() - _state.beat_start)
-    finalize_beat_log(
+    write_beat_end(
         path,
-        {
-            "last_run_at": _now_iso(),
-            "ticket_id": ticket_id,
-            "branch": None,
-            "PR": None,
-            "outcome": outcome,
-            "duration_s": elapsed,
-        },
+        outcome,
+        ticket_id=ticket_id,
+        duration_s=elapsed,
     )
 
     ticket_label = ticket_id if ticket_id else "—"

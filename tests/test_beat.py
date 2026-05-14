@@ -5,7 +5,6 @@ import json
 import os
 import subprocess
 import sys
-import textwrap
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -189,124 +188,175 @@ class TestHousekeepingNeeded:
             assert beat.housekeeping_needed(tmp_project) is False
 
 
-# ── append_beat_log ────────────────────────────────────────────────────────────
+# ── write_beat_start ───────────────────────────────────────────────────────────
 
 
-class TestAppendBeatLog:
-    def test_appends_record(self, tmp_project, beat_log):
-        beat.append_beat_log(
-            tmp_project, {"outcome": "in_progress", "last_run_at": "t"}
-        )
+class TestWriteBeatStart:
+    def test_appends_start_event(self, tmp_project, beat_log):
+        beat.write_beat_start(tmp_project)
         records = [json.loads(line) for line in beat_log.read_text().splitlines()]
-        assert records == [{"outcome": "in_progress", "last_run_at": "t"}]
+        assert len(records) == 1
+        assert records[0]["type"] == "start"
+        assert "ts" in records[0]
 
-    def test_appends_multiple_records(self, tmp_project, beat_log):
-        beat.append_beat_log(tmp_project, {"outcome": "in_progress"})
-        beat.append_beat_log(tmp_project, {"outcome": "done"})
-        outcomes = [
-            json.loads(line)["outcome"] for line in beat_log.read_text().splitlines()
-        ]
-        assert outcomes == ["in_progress", "done"]
+    def test_multiple_starts_are_appended(self, tmp_project, beat_log):
+        beat.write_beat_start(tmp_project)
+        beat.write_beat_start(tmp_project)
+        records = [json.loads(line) for line in beat_log.read_text().splitlines()]
+        assert len(records) == 2
+        assert all(r["type"] == "start" for r in records)
 
     def test_dry_run_is_noop(self, tmp_project, beat_log):
         beat.DRY_RUN = True
-        beat.append_beat_log(tmp_project, {"outcome": "done"})
+        beat.write_beat_start(tmp_project)
         assert not beat_log.exists()
 
 
-# ── finalize_beat_log ──────────────────────────────────────────────────────────
+# ── write_beat_end ─────────────────────────────────────────────────────────────
 
 
-class TestFinalizeBeatLog:
-    def test_replaces_trailing_in_progress(self, tmp_project, beat_log):
+class TestWriteBeatEnd:
+    def test_appends_end_event(self, tmp_project, beat_log):
+        beat.write_beat_end(tmp_project, "idle", ticket_id=None, duration_s=12)
+        records = [json.loads(line) for line in beat_log.read_text().splitlines()]
+        assert len(records) == 1
+        assert records[0]["type"] == "end"
+        assert records[0]["outcome"] == "idle"
+        assert records[0]["ticket_id"] is None
+        assert records[0]["duration_s"] == 12
+        assert "ts" in records[0]
+
+    def test_append_only_does_not_mutate_prior_records(self, tmp_project, beat_log):
+        # Prior start event must remain in place — event log is append-only.
         beat_log.write_text(
-            json.dumps({"outcome": "in_progress", "last_run_at": "t"}) + "\n"
+            json.dumps({"type": "start", "ts": "2026-01-01T00:00:00Z"}) + "\n"
         )
-        beat.finalize_beat_log(tmp_project, {"outcome": "done", "ticket_id": "0001"})
-        lines = beat_log.read_text().splitlines()
-        assert len(lines) == 1
-        assert json.loads(lines[0])["outcome"] == "done"
-
-    def test_keeps_prior_records(self, tmp_project, beat_log):
-        beat_log.write_text(
-            json.dumps({"outcome": "done", "ticket_id": "0001"})
-            + "\n"
-            + json.dumps({"outcome": "in_progress"})
-            + "\n"
-        )
-        beat.finalize_beat_log(tmp_project, {"outcome": "idle"})
-        lines = [json.loads(line) for line in beat_log.read_text().splitlines()]
-        assert len(lines) == 2
-        assert lines[0]["outcome"] == "done"
-        assert lines[1]["outcome"] == "idle"
-
-    def test_creates_file_if_missing(self, tmp_project, beat_log):
-        beat.finalize_beat_log(tmp_project, {"outcome": "idle"})
-        # append_beat_log is called internally; dry-run=False so it writes
-        assert beat_log.exists()
+        beat.write_beat_end(tmp_project, "done", ticket_id="0042")
+        records = [json.loads(line) for line in beat_log.read_text().splitlines()]
+        assert len(records) == 2
+        assert records[0]["type"] == "start"
+        assert records[1]["type"] == "end"
+        assert records[1]["outcome"] == "done"
 
     def test_idempotent_second_call_ignored(self, tmp_project, beat_log):
-        beat_log.write_text(json.dumps({"outcome": "in_progress"}) + "\n")
-        beat.finalize_beat_log(tmp_project, {"outcome": "done"})
-        beat.finalize_beat_log(tmp_project, {"outcome": "failed"})  # should be ignored
-        lines = beat_log.read_text().splitlines()
-        assert json.loads(lines[-1])["outcome"] == "done"
-
-    def test_handles_pretty_printed_in_progress(self, tmp_project, beat_log):
-        # Legacy records may be multi-line JSON; finalize_beat_log works on
-        # compact lines it wrote itself — pretty-printed records are left as-is.
-        pretty = textwrap.dedent("""\
-            {
-              "outcome": "done",
-              "ticket_id": "0001"
-            }
-        """)
-        # The last line of a pretty record is '}', which json.loads succeeds on
-        # but .get("outcome") returns None → loop breaks → final record appended.
-        beat_log.write_text(pretty)
-        beat.finalize_beat_log(tmp_project, {"outcome": "idle"})
-        last_line = beat_log.read_text().splitlines()[-1]
-        assert json.loads(last_line)["outcome"] == "idle"
+        beat.write_beat_end(tmp_project, "done")
+        beat.write_beat_end(tmp_project, "failed")  # should be ignored
+        records = [json.loads(line) for line in beat_log.read_text().splitlines()]
+        assert len(records) == 1
+        assert records[0]["outcome"] == "done"
 
     def test_dry_run_is_noop(self, tmp_project, beat_log):
         beat.DRY_RUN = True
-        beat_log.write_text(json.dumps({"outcome": "in_progress"}) + "\n")
-        beat.finalize_beat_log(tmp_project, {"outcome": "done"})
-        assert json.loads(beat_log.read_text().strip())["outcome"] == "in_progress"
+        beat.write_beat_end(tmp_project, "done")
+        assert not beat_log.exists()
 
 
-# ── read_last_beat_record ──────────────────────────────────────────────────────
+# ── last_completed_beat ────────────────────────────────────────────────────────
 
 
-class TestReadLastBeatRecord:
-    def test_returns_last_compact_record(self, tmp_project, beat_log):
+class TestLastCompletedBeat:
+    def test_returns_last_end_event(self, tmp_project, beat_log):
         beat_log.write_text(
-            json.dumps({"outcome": "done"})
+            json.dumps({"type": "end", "ts": "2026-01-01T00:00:00Z", "outcome": "done"})
             + "\n"
-            + json.dumps({"outcome": "idle"})
+            + json.dumps(
+                {"type": "end", "ts": "2026-01-02T00:00:00Z", "outcome": "idle"}
+            )
             + "\n"
         )
-        result = beat.read_last_beat_record(tmp_project)
+        result = beat.last_completed_beat(tmp_project)
         assert result is not None
         assert result["outcome"] == "idle"
 
     def test_returns_none_for_missing_file(self, tmp_project):
-        result = beat.read_last_beat_record(tmp_project)
-        assert result is None
+        assert beat.last_completed_beat(tmp_project) is None
 
     def test_returns_none_for_empty_file(self, tmp_project, beat_log):
         beat_log.write_text("")
-        result = beat.read_last_beat_record(tmp_project)
-        assert result is None
+        assert beat.last_completed_beat(tmp_project) is None
 
-    def test_handles_pretty_printed_json(self, tmp_project, beat_log):
-        pretty = (
-            '{"outcome": "in_progress",\n  "last_run_at": "2026-01-01T00:00:00Z"\n}\n'
+    def test_skips_start_events(self, tmp_project, beat_log):
+        """Regression: Layer 2 was reading the current beat's start event,
+        causing _pick_needed to compare against NOW and always skip."""
+        beat_log.write_text(
+            '{"outcome":"idle","last_run_at":"2026-01-01T00:00:00Z"}\n'
+            '{"type":"start","ts":"2026-01-02T00:00:00Z"}\n'
         )
-        beat_log.write_text(pretty)
-        result = beat.read_last_beat_record(tmp_project)
+        result = beat.last_completed_beat(tmp_project)
         assert result is not None
-        assert result["outcome"] == "in_progress"
+        assert result["outcome"] == "idle"  # must not return the start event
+
+    def test_legacy_records_without_type_count_as_end(self, tmp_project, beat_log):
+        # Legacy spin-down records have no `type` field and outcome != in_progress.
+        beat_log.write_text(
+            json.dumps({"outcome": "done", "last_run_at": "2026-01-01T00:00:00Z"})
+            + "\n"
+        )
+        result = beat.last_completed_beat(tmp_project)
+        assert result is not None
+        assert result["outcome"] == "done"
+
+    def test_legacy_in_progress_is_skipped(self, tmp_project, beat_log):
+        # Legacy in_progress records are start events, not completed beats.
+        beat_log.write_text(
+            json.dumps({"outcome": "done", "last_run_at": "2026-01-01T00:00:00Z"})
+            + "\n"
+            + json.dumps(
+                {"outcome": "in_progress", "last_run_at": "2026-01-02T00:00:00Z"}
+            )
+            + "\n"
+        )
+        result = beat.last_completed_beat(tmp_project)
+        assert result is not None
+        assert result["outcome"] == "done"
+
+    def test_rejects_pretty_printed_closing_brace(self, tmp_project, beat_log):
+        # `}` lines parse to {} — must not be returned as a completed beat.
+        beat_log.write_text(
+            json.dumps({"type": "end", "ts": "2026-01-01T00:00:00Z", "outcome": "done"})
+            + "\n"
+            + "}\n"
+        )
+        result = beat.last_completed_beat(tmp_project)
+        assert result is not None
+        assert result["outcome"] == "done"
+
+
+# ── last_beat_crashed ──────────────────────────────────────────────────────────
+
+
+class TestLastBeatCrashed:
+    def test_false_when_no_log(self, tmp_project):
+        assert beat.last_beat_crashed(tmp_project) is False
+
+    def test_false_when_last_event_is_end(self, tmp_project, beat_log):
+        beat_log.write_text(
+            json.dumps({"type": "start", "ts": "2026-01-01T00:00:00Z"})
+            + "\n"
+            + json.dumps(
+                {"type": "end", "ts": "2026-01-01T00:01:00Z", "outcome": "done"}
+            )
+            + "\n"
+        )
+        assert beat.last_beat_crashed(tmp_project) is False
+
+    def test_true_when_recent_orphaned_start(self, tmp_project, beat_log):
+        recent_ts = beat._now_iso()
+        beat_log.write_text(json.dumps({"type": "start", "ts": recent_ts}) + "\n")
+        assert beat.last_beat_crashed(tmp_project) is True
+
+    def test_false_when_orphaned_start_outside_window(self, tmp_project, beat_log):
+        # Start event older than CRASH_RECOVERY_WINDOW_S is too stale to recover.
+        old_ts = "2020-01-01T00:00:00Z"
+        beat_log.write_text(json.dumps({"type": "start", "ts": old_ts}) + "\n")
+        assert beat.last_beat_crashed(tmp_project) is False
+
+    def test_legacy_in_progress_counts_as_start(self, tmp_project, beat_log):
+        recent_ts = beat._now_iso()
+        beat_log.write_text(
+            json.dumps({"outcome": "in_progress", "last_run_at": recent_ts}) + "\n"
+        )
+        assert beat.last_beat_crashed(tmp_project) is True
 
 
 # ── run_skill (dry-run mode) ───────────────────────────────────────────────────
@@ -1187,64 +1237,46 @@ class TestCleanupLockedWorktrees:
 
 
 class TestCrashRecovery:
-    def test_recent_in_progress_triggers_aborted(self, tmp_project, beat_log):
-        from datetime import datetime
+    def test_recent_orphan_triggers_aborted(self, tmp_project, beat_log):
+        """An orphaned start event within window triggers write_beat_end(aborted)."""
+        recent_ts = beat._now_iso()
+        beat_log.write_text(json.dumps({"type": "start", "ts": recent_ts}) + "\n")
 
-        recent_ts = "2026-04-25T15:00:00Z"
+        with patch("beat.write_beat_end") as mock_write_end:
+            if beat.last_beat_crashed(tmp_project):
+                beat.write_beat_end(
+                    tmp_project,
+                    "aborted",
+                    ticket_id=None,
+                    diagnostics="crash/SIGKILL recovery — previous run never completed spin-down",
+                )
+
+        mock_write_end.assert_called_once()
+        args, kwargs = mock_write_end.call_args
+        assert args[1] == "aborted"
+        assert "crash" in kwargs["diagnostics"]
+
+    def test_old_orphan_does_not_trigger_recovery(self, tmp_project, beat_log):
+        """An orphaned start event outside window is too stale to recover."""
+        old_ts = "2020-01-01T00:00:00Z"
+        beat_log.write_text(json.dumps({"type": "start", "ts": old_ts}) + "\n")
+        assert beat.last_beat_crashed(tmp_project) is False
+
+    def test_legacy_in_progress_record_triggers_recovery(self, tmp_project, beat_log):
+        """Legacy in_progress records (no `type` field) still trigger recovery."""
+        recent_ts = beat._now_iso()
         beat_log.write_text(
             json.dumps({"outcome": "in_progress", "last_run_at": recent_ts}) + "\n"
         )
-        recent_epoch = datetime.fromisoformat(
-            recent_ts.replace("Z", "+00:00")
-        ).timestamp()
-
-        with (
-            patch("beat.read_last_beat_record") as mock_last,
-            patch("beat.append_beat_log") as mock_append,
-            patch("beat.time.time", return_value=recent_epoch + 60),  # 1 min later
-        ):
-            mock_last.return_value = {
-                "outcome": "in_progress",
-                "last_run_at": recent_ts,
-            }
-            last = mock_last(tmp_project)
-            if last and last.get("outcome") == "in_progress":
-                last_at = last.get("last_run_at", "1970-01-01T00:00:00Z")
-                last_ep = datetime.fromisoformat(
-                    last_at.replace("Z", "+00:00")
-                ).timestamp()
-                if (recent_epoch + 60 - last_ep) < beat.CRASH_RECOVERY_WINDOW_S:
-                    mock_append(
-                        tmp_project,
-                        {
-                            "outcome": "aborted",
-                            "diagnostics": "crash/SIGKILL recovery — previous run never completed spin-down",
-                        },
-                    )
-
-        mock_append.assert_called_once()
-        call_record = mock_append.call_args[0][1]
-        assert call_record["outcome"] == "aborted"
-        assert "crash" in call_record["diagnostics"]
-
-    def test_old_in_progress_does_not_trigger_recovery(self, tmp_project):
-        from datetime import datetime
-
-        old_ts = "2026-04-25T00:00:00Z"
-        old_epoch = datetime.fromisoformat(old_ts.replace("Z", "+00:00")).timestamp()
-        now = old_epoch + 15 * 3600  # 15 hours after spin-in
-
-        last_epoch = datetime.fromisoformat(old_ts.replace("Z", "+00:00")).timestamp()
-        elapsed = now - last_epoch
-        assert elapsed >= beat.CRASH_RECOVERY_WINDOW_S
+        assert beat.last_beat_crashed(tmp_project) is True
 
 
 # ── spin-down completeness ─────────────────────────────────────────────────────
 
 
 class TestSpinDown:
-    def test_finalize_always_called_on_normal_exit(self, tmp_project, beat_log, git_ok):
-        beat_log.write_text(json.dumps({"outcome": "in_progress"}) + "\n")
+    def test_write_beat_end_called_on_normal_exit(self, tmp_project, beat_log, git_ok):
+        beat_log.write_text(json.dumps({"type": "start", "ts": "t"}) + "\n")
         with (
             patch("beat.housekeeping_needed", return_value=False),
             patch(
@@ -1259,17 +1291,16 @@ class TestSpinDown:
             beat._state.final_written = False
             beat.DRY_RUN = False
             outcome, ticket = beat._raid(beat.ProjectConfig(path=tmp_project))
-            beat.finalize_beat_log(
+            beat.write_beat_end(
                 tmp_project,
-                {
-                    "last_run_at": "t",
-                    "ticket_id": ticket,
-                    "outcome": outcome,
-                    "duration_s": 0,
-                },
+                outcome,
+                ticket_id=ticket,
+                duration_s=0,
             )
         last_line = beat_log.read_text().splitlines()[-1]
-        assert json.loads(last_line)["outcome"] == "idle"
+        last_rec = json.loads(last_line)
+        assert last_rec["type"] == "end"
+        assert last_rec["outcome"] == "idle"
 
 
 # ── _repo_active (ticket 0038) ─────────────────────────────────────────────────
@@ -1989,12 +2020,14 @@ class TestIntervalSkip:
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
             patch("beat.fcntl.flock"),
             patch("beat._log", side_effect=log_lines.append),
-            patch("beat.read_last_beat_record") as mock_read,
+            patch("beat.last_completed_beat") as mock_read,
+            patch("beat.last_beat_crashed", return_value=False),
             pytest.raises(SystemExit) as exc_info,
         ):
             mock_read.return_value = {
+                "type": "end",
                 "outcome": "done",
-                "last_run_at": recent_ts,
+                "ts": recent_ts,
             }
             beat.main()
 
@@ -2025,16 +2058,17 @@ class TestIntervalSkip:
             ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
-            patch("beat.finalize_beat_log"),
-            patch("beat._cleanup_stale_in_progress"),
+            patch("beat.write_beat_end"),
+            patch("beat.write_beat_start"),
+            patch("beat.last_beat_crashed", return_value=False),
             patch(
-                "beat.read_last_beat_record",
+                "beat.last_completed_beat",
                 return_value={
+                    "type": "end",
                     "outcome": "done",
-                    "last_run_at": old_ts,
+                    "ts": old_ts,
                 },
             ),
-            patch("beat.append_beat_log"),
         ):
             beat.main()
 
@@ -2058,16 +2092,17 @@ class TestIntervalSkip:
             ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
-            patch("beat.finalize_beat_log"),
-            patch("beat._cleanup_stale_in_progress"),
+            patch("beat.write_beat_end"),
+            patch("beat.write_beat_start"),
+            patch("beat.last_beat_crashed", return_value=False),
             patch(
-                "beat.read_last_beat_record",
+                "beat.last_completed_beat",
                 return_value={
+                    "type": "end",
                     "outcome": "done",
-                    "last_run_at": recent_ts,
+                    "ts": recent_ts,
                 },
             ),
-            patch("beat.append_beat_log"),
         ):
             beat.main()
 
@@ -2135,10 +2170,10 @@ class TestFallbackRotation:
             patch.object(beat, "PROJECTS", projects),
             patch("beat.fcntl.flock"),
             patch("beat._raid", side_effect=raid_fn),
-            patch("beat.finalize_beat_log"),
-            patch("beat._cleanup_stale_in_progress"),
-            patch("beat.read_last_beat_record", return_value=None),
-            patch("beat.append_beat_log"),
+            patch("beat.write_beat_end"),
+            patch("beat.write_beat_start"),
+            patch("beat.last_completed_beat", return_value=None),
+            patch("beat.last_beat_crashed", return_value=False),
         ]
 
     def test_fallback_attempted_when_primary_idle(self, tmp_project, tmp_path):
