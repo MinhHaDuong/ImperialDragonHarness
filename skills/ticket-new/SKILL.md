@@ -1,7 +1,7 @@
 ---
 name: ticket-new
-description: Create a local %erg v1 file for agent coordination.
-# Model-invocable: parses free-form input (title, sentence, JSON blob, paste) into %erg v1.
+description: Create a local %erg 0.1 file for agent coordination.
+# Model-invocable: parses free-form input (title, sentence, JSON blob, paste) into %erg 0.1.
 # Side effects are file-only — no branch, no PR — so autonomous capture is safe.
 # Contrast start-ticket (disable-model-invocation: true), which creates worktree + branch + PR.
 disable-model-invocation: false
@@ -12,7 +12,7 @@ argument-hint: [title]
 # Create local ticket
 
 **Input:** anything — a title, a sentence, a JSON blob from `gh`, a paste
-from a conversation. Extract the intent and normalize to `%erg v1`.
+from a conversation. Extract the intent and normalize to `%erg 0.1`.
 
 ## Steps
 
@@ -27,7 +27,7 @@ from a conversation. Extract the intent and normalize to `%erg v1`.
 
 3. Create `tickets/{ID}-{slug}.erg` with this exact structure:
    ```
-   %erg v1
+   %erg 0.1
    Title: {imperative title}
    Created: {YYYY-MM-DD}
    Author: {agent or user}
