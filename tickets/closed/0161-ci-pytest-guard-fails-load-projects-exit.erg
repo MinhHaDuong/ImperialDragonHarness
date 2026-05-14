@@ -2,10 +2,12 @@
 Title: CI pytest-guard fails — load_projects exits 1 in CI environment
 Created: 2026-05-14
 Author: MinhHaDuong
+Closed: Merged PR #203
 
 --- log ---
 2026-05-14T15:06Z MinhHaDuong created
 
+2026-05-14T16:07Z MinhHaDuong closed — Merged PR #203
 --- body ---
 ## Context
 

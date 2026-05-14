@@ -2,11 +2,13 @@
 Title: restore asyncio streaming in beat.py run_skill
 Created: 2026-05-14
 Author: MinhHaDuong
+Closed: Merged PR #204
 
 --- log ---
 2026-05-14T14:58Z MinhHaDuong created
 2026-05-14T15:00Z claude note split from 0158 section 6; PR #200 left run_skill synchronous
 
+2026-05-14T16:07Z MinhHaDuong closed — Merged PR #204
 --- body ---
 ## Context
 

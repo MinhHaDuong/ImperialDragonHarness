@@ -2,10 +2,12 @@
 Title: Auto-generate skills catalog in README.md from SKILL.md frontmatter
 Created: 2026-05-14
 Author: MinhHaDuong
+Closed: Merged PR #201
 
 --- log ---
 2026-05-14T15:06Z MinhHaDuong created
 
+2026-05-14T16:07Z MinhHaDuong closed — Merged PR #201
 --- body ---
 ## Context
 
