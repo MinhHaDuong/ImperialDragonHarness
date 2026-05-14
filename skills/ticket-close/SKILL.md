@@ -8,6 +8,14 @@ argument-hint: <ticket-id> [reason]
 
 # Close ticket $ARGUMENTS
 
-1. Parse `$ARGUMENTS`: first word is `<id>`, rest is `<reason>` (default: `done`).
-2. Run: `${ERG:-erg} close <id> <reason>`
-3. Commit: `git add tickets/ && git commit -m "ticket(<id>): close — <reason>"`
+Run:
+```bash
+~/.claude/skills/ticket-close/ticket-close-impl $ARGUMENTS
+```
+
+**Behavior**:
+- Closes the ticket and commits the change
+- Detects if the branch contains only erg file changes
+- For erg-only branches: attempts fast-forward push to origin/main (bypasses PR)
+- For non-erg branches or if push fails: returns non-zero (caller should create PR)
+- If script exits 0, ticket is already merged; if non-zero, PR path should be used
