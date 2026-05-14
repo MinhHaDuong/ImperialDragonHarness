@@ -78,6 +78,7 @@
       "/tmp"
     ]
   },
+  "model": "haiku",
   "hooks": {
     "SessionStart": [
       {
