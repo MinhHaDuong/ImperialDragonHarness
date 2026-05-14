@@ -37,7 +37,11 @@ Parse the JSON output. Use its fields to populate checks 1–9 below without re-
      ```
      If the probe exits 0, the branch was squash-merged into main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, squash-merged into main)`.
    - **Closed-ticket branches** where the squash-merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).
-5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running.
+5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running. For each worktree, also run:
+   ```bash
+   git log <worktree-head>..<main-head> --oneline | wc -l
+   ```
+   If the count is > 0, flag as `warn`: "worktree `<name>` is N commits behind main — filesystem state (tickets/, docs/) may be stale relative to main".
 6. **Working tree** — from `git.clean` / `git.dirty_files`. List uncommitted files if dirty.
 7. **Tests green** — from `tests.status` / `tests.detail`. Skip if `tests.runner == "none"`.
 8. **Housekeeping** — from `housekeeping.state` / `housekeeping.age_hours` / `housekeeping.branch`. Report `ok` if `state == "clean"` (age ≤ 12 h), `warn` if `state == "needed"` (overdue) or `state == "tidying"` (a `claude/housekeeping-*` branch is in flight). Skip if probe missing.
