@@ -14,7 +14,7 @@ import os
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Get home directory
 HOME = Path.home()
