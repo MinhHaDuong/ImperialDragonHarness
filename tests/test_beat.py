@@ -2101,7 +2101,7 @@ class TestIntervalSkip:
             ),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
             patch.object(
-                beat, "PROJECTS", [primary_cfg]
+                beat, "_PROJECTS_CACHE", [primary_cfg]
             ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
@@ -2135,7 +2135,7 @@ class TestIntervalSkip:
             ),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
             patch.object(
-                beat, "PROJECTS", [primary_cfg]
+                beat, "_PROJECTS_CACHE", [primary_cfg]
             ),  # single project — no fallback
             patch("beat.fcntl.flock"),
             patch("beat._raid", return_value=("idle", None)) as mock_raid,
@@ -2214,7 +2214,7 @@ class TestFallbackRotation:
             patch.object(beat, "LOGDIR", tmp_path / "logs"),
             patch("beat._pick_project", return_value=(0, primary_cfg)),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
-            patch.object(beat, "PROJECTS", projects),
+            patch.object(beat, "_PROJECTS_CACHE", projects),
             patch("beat.fcntl.flock"),
             patch("beat._raid", side_effect=raid_fn),
             patch("beat.write_beat_end"),

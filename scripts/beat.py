@@ -90,7 +90,9 @@ DRY_RUN: bool = os.environ.get("BEAT_DRY_RUN") == "1"
 class _State:
     beat_start: float = 0.0
     project: Path | None = None
-    current_proc: subprocess.Popen | asyncio.subprocess.Process | None = field(default=None, repr=False)
+    current_proc: subprocess.Popen | asyncio.subprocess.Process | None = field(
+        default=None, repr=False
+    )
     log_fh: TextIOBase | None = field(default=None, repr=False)
     final_written: bool = False
 
@@ -201,7 +203,19 @@ def load_projects(config_path: Path) -> list[ProjectConfig]:
     return configs
 
 
-PROJECTS: list[ProjectConfig] = load_projects(PROJECTS_CONFIG)
+_PROJECTS_CACHE: list[ProjectConfig] | None = None
+
+
+def _get_projects() -> list[ProjectConfig]:
+    """Lazy-load projects list on first access, caching the result.
+
+    This defers sys.exit(1) from import time to runtime, allowing pytest-guard
+    to import the module without triggering exit on missing projects.json.
+    """
+    global _PROJECTS_CACHE
+    if _PROJECTS_CACHE is None:
+        _PROJECTS_CACHE = load_projects(PROJECTS_CONFIG)
+    return _PROJECTS_CACHE
 
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -639,7 +653,6 @@ def _claude_argv(
     return argv
 
 
-
 async def _run_skill_async(
     skill: str,
     *,
@@ -713,6 +726,7 @@ async def _run_skill_async(
 
     returncode = proc.returncode if proc.returncode is not None else 0
     return returncode, skill_result
+
 
 def run_skill(
     skill: str,
@@ -846,11 +860,11 @@ def _pick_project() -> tuple[int, ProjectConfig]:
     override = os.environ.get("BEAT_PROJECT")
     if override:
         override_path = Path(override).resolve()
-        for cfg in PROJECTS:
+        for cfg in _get_projects():
             if cfg.path == override_path:
                 return count, cfg
         return count, ProjectConfig(path=override_path)
-    projects = PROJECTS
+    projects = _get_projects()
     idx = count % len(projects)
     return count, projects[idx]
 
@@ -1313,7 +1327,7 @@ def main() -> None:
         sys.exit(0)
 
     _log(f"=== beat start {_now_iso()} ===")
-    _log(f"Run {count}  →  project slot {count % len(PROJECTS)}: {path}")
+    _log(f"Run {count}  →  project slot {count % len(_get_projects())}: {path}")
 
     if not (path / ".git").is_dir():
         _log(f"ERROR: {path} is not a git repository. Aborting.")
@@ -1376,7 +1390,7 @@ def main() -> None:
         if outcome == "idle" and not os.environ.get("BEAT_PROJECT"):
             _log(f"=== fallback: primary idle, trying other projects {_now_iso()} ===")
             fallback_tried = 0
-            projects = PROJECTS
+            projects = _get_projects()
             for fallback_cfg in projects:
                 if fallback_cfg.path == path:
                     continue
