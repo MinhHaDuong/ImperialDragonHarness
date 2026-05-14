@@ -10,7 +10,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 <!-- generated 2026-05-14T07:45Z -->
 
 **Tickets:** 8 ready · 12 open — `erg ready tickets/` for full list
-**Morning review:** `/nightbeat-report` (narrative) · `/nightbeat-risk-review` (interactive triage before next run)
+**Morning review:** `/nightbeat-report` (narrative) · `/check-readiness --mode=nightbeat-history` (interactive triage before next run) or `/check-readiness` (full multi-project audit)
 **Recent commits:**
   f58a7dc chore(tickets): fold asyncio into 0158; annotate closed 0103
   c1920fd ticket(0158): beat-log event model — replace state encoding with events
