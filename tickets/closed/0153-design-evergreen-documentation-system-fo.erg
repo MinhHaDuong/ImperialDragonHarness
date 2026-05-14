@@ -2,11 +2,13 @@
 Title: Design evergreen documentation system for the harness
 Created: 2026-05-13
 Author: Minh Ha-Duong
+Closed: Design complete, spawned 0162 (merged PR #201), author sign-off obtained
 
 --- log ---
 2026-05-13T14:14Z Minh Ha-Duong created
 2026-05-13T20:45Z claude note confirmed eligible for autonomous raid — design phase, author sign-off still required
 
+2026-05-14T16:36Z MinhHaDuong closed — Design complete, spawned 0162 (merged PR #201), author sign-off obtained
 --- body ---
 ## Context
 
