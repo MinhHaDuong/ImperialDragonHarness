@@ -74,7 +74,7 @@ def run_in_repo(repo_path: Path, cmd: str) -> Tuple[int, str, str]:
         return 1, "", str(e)
 
 
-def check_git_hygiene(repo_path: Path) -> Dict[str, any]:
+def check_git_hygiene(repo_path: Path) -> Dict[str, Any]:
     """Check git hygiene: uncommitted, drift, stale branches."""
     status = {
         "uncommitted": False,
@@ -125,7 +125,7 @@ def check_git_hygiene(repo_path: Path) -> Dict[str, any]:
     return status
 
 
-def check_ticket_health(repo_path: Path, erg: str) -> Dict[str, any]:
+def check_ticket_health(repo_path: Path, erg: str) -> Dict[str, Any]:
     """Check ticket flow health."""
     status = {
         "open_count": 0,
@@ -160,7 +160,7 @@ def check_ticket_health(repo_path: Path, erg: str) -> Dict[str, any]:
     return status
 
 
-def check_config_health(repo_path: Path) -> Dict[str, any]:
+def check_config_health(repo_path: Path) -> Dict[str, Any]:
     """Check CLAUDE.md and settings.json health."""
     status = {
         "has_claude_md": False,
@@ -193,7 +193,7 @@ def check_config_health(repo_path: Path) -> Dict[str, any]:
     return status
 
 
-def audit_project(project_path: Path, erg: str) -> Dict[str, any]:
+def audit_project(project_path: Path, erg: str) -> Dict[str, Any]:
     """Audit a single project for readiness."""
     project_name = project_path.name
 
@@ -236,7 +236,7 @@ def render_status_indicator(
     return " ".join(indicators) if indicators else "✓ clean"
 
 
-def print_audit_table(audits: List[Dict[str, any]]) -> None:
+def print_audit_table(audits: List[Dict[str, Any]]) -> None:
     """Print audit results in table format."""
     print()
     print("Project Status Summary")
