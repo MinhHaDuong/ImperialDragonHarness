@@ -1447,23 +1447,18 @@ class TestLoadProjects:
         projects = beat.load_projects(cfg)
         assert projects[0].pick_ticket_model == "claude-opus-4-7"
 
-    def test_falls_back_when_missing(self, tmp_path, capsys):
-        projects = beat.load_projects(tmp_path / "nonexistent.json")
-        assert projects == beat._BUILTIN_PROJECTS
+    def test_exits_on_missing_config(self, tmp_path, capsys):
+        with pytest.raises(SystemExit) as exc_info:
+            beat.load_projects(tmp_path / "nonexistent.json")
+        assert exc_info.value.code == 1
         assert "not found" in capsys.readouterr().err
 
-    def test_falls_back_on_bad_json(self, tmp_path, capsys):
+    def test_exits_on_malformed_json(self, tmp_path, capsys):
         bad = tmp_path / "projects.json"
         bad.write_text("not { valid json")
-        projects = beat.load_projects(bad)
-        assert projects == beat._BUILTIN_PROJECTS
-        assert "error" in capsys.readouterr().err.lower()
-
-    def test_falls_back_on_missing_path_key(self, tmp_path, capsys):
-        cfg = tmp_path / "projects.json"
-        cfg.write_text(json.dumps([{"budget_housekeeping": 0.4}]))
-        projects = beat.load_projects(cfg)
-        assert projects == beat._BUILTIN_PROJECTS
+        with pytest.raises(SystemExit) as exc_info:
+            beat.load_projects(bad)
+        assert exc_info.value.code == 1
         assert "error" in capsys.readouterr().err.lower()
 
 
