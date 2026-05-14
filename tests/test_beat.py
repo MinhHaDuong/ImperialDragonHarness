@@ -1,5 +1,6 @@
 """Tests for scripts/beat.py — happy and adverse paths."""
 
+import asyncio
 import contextlib
 import json
 import os
@@ -8,7 +9,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -390,27 +391,51 @@ class TestRunSkillDryRun:
 # ── run_skill (subprocess mode) ────────────────────────────────────────────────
 
 
+class AsyncIterMock:
+    """Mock async iterator for asyncio.subprocess stdout."""
+
+    def __init__(self, lines: list[str]):
+        self.lines = [
+            line.encode() + b"\n" if not line.endswith("\n") else line.encode()
+            for line in lines
+        ]
+        self.index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.index >= len(self.lines):
+            raise StopAsyncIteration
+        line = self.lines[self.index]
+        self.index += 1
+        return line
+
+
 class TestRunSkillSubprocess:
     def setup_method(self):
         beat.DRY_RUN = False
 
-    def _make_popen(self, stdout_lines: list[str], returncode: int = 0):
-        """Return a Popen mock whose communicate() returns stdout_lines."""
-        proc = MagicMock()
+    def _make_async_proc(self, stdout_lines: list[str], returncode: int = 0):
+        """Return an asyncio.subprocess.Process mock."""
+        proc = AsyncMock()
         proc.returncode = returncode
-        proc.poll.return_value = returncode
-        proc.communicate.return_value = ("\n".join(stdout_lines) + "\n", "")
+        proc.stdout = AsyncIterMock(stdout_lines)
 
-        def fake_wait(timeout=None):
-            proc.returncode = returncode
+        async def fake_wait():
+            return returncode
 
-        proc.wait.side_effect = fake_wait
+        proc.wait = fake_wait
         return proc
 
     def test_extracts_result_text(self, tmp_project):
         payload = json.dumps({"type": "result", "result": "PICK: 0007"})
-        proc = self._make_popen([payload])
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc([payload])
+        with patch(
+            "beat.asyncio.create_subprocess_exec",
+            new_callable=AsyncMock,
+            return_value=proc,
+        ):
             rc, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
@@ -422,21 +447,32 @@ class TestRunSkillSubprocess:
             json.dumps({"type": "assistant", "content": "thinking..."}),
             json.dumps({"type": "result", "result": "PICK: 0042"}),
         ]
-        proc = self._make_popen(lines)
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc(lines)
+        with patch(
+            "beat.asyncio.create_subprocess_exec",
+            new_callable=AsyncMock,
+            return_value=proc,
+        ):
             _, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
         assert result.result_text == "PICK: 0042"
 
     def test_timeout_returns_124(self, tmp_project):
-        proc = MagicMock()
-        # communicate() raises TimeoutExpired; terminate + wait(5) succeeds.
-        proc.communicate.side_effect = subprocess.TimeoutExpired(
-            cmd="claude", timeout=1
-        )
-        proc.returncode = -15
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc([])
+
+        async def mock_wait_for(*args, **kwargs):
+            # Simulate timeout during the gather() call
+            raise asyncio.TimeoutError()
+
+        with (
+            patch(
+                "beat.asyncio.create_subprocess_exec",
+                new_callable=AsyncMock,
+                return_value=proc,
+            ),
+            patch("beat.asyncio.wait_for", side_effect=mock_wait_for),
+        ):
             rc, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=1, cwd=tmp_project
             )
@@ -444,16 +480,24 @@ class TestRunSkillSubprocess:
         assert result.result_text == ""
 
     def test_nonzero_exit_propagated(self, tmp_project):
-        proc = self._make_popen([], returncode=1)
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc([], returncode=1)
+        with patch(
+            "beat.asyncio.create_subprocess_exec",
+            new_callable=AsyncMock,
+            return_value=proc,
+        ):
             rc, _ = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
         assert rc == 1
 
     def test_clears_current_proc_after_run(self, tmp_project):
-        proc = self._make_popen([])
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc([])
+        with patch(
+            "beat.asyncio.create_subprocess_exec",
+            new_callable=AsyncMock,
+            return_value=proc,
+        ):
             beat.run_skill("/housekeeping", budget=0.10, timeout_s=30, cwd=tmp_project)
         assert beat._state.current_proc is None
 
@@ -462,8 +506,12 @@ class TestRunSkillSubprocess:
             "not json at all",
             json.dumps({"type": "result", "result": "IDLE: ok"}),
         ]
-        proc = self._make_popen(lines)
-        with patch("beat.subprocess.Popen", return_value=proc):
+        proc = self._make_async_proc(lines)
+        with patch(
+            "beat.asyncio.create_subprocess_exec",
+            new_callable=AsyncMock,
+            return_value=proc,
+        ):
             _, result = beat.run_skill(
                 "/pick-ticket", budget=0.20, timeout_s=30, cwd=tmp_project
             )
