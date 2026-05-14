@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Skip PR loop for erg-only branches
+Created: 2026-05-14
+Author: MinhHaDuong
+
+--- log ---
+2026-05-14T09:30Z MinhHaDuong created
+
+--- body ---
+## Context
+When a branch contains only `.erg` file changes (ticket creates, closes, log
+entries), the full PR + CI-wait loop is pure overhead — there is no code risk
+and no review value. A fast-forward push directly to main is the right move.
+
+## Actions
+1. In `ticket-close` skill: after staging the closed ticket move, check whether
+   the branch diff (vs main) touches any file outside `tickets/`. If not, push
+   directly to `origin/main` via `git push origin HEAD:main` instead of opening
+   a PR.
+2. In `erg-pr-merge` (if it exists as a separate skill/script): skip the CI wait
+   when `git diff origin/main...HEAD -- . ':(exclude)tickets/' | wc -c` is 0.
+3. Add a safety guard: if the direct push fails (e.g. non-fast-forward), fall
+   back to the normal PR path.
+
+## Test
+Create a branch with only a `.erg` file change. Run `ticket-close`. Verify no
+PR is created and the commit lands on main directly.
+
+## Exit criteria
+- [ ] `ticket-close` detects erg-only branches and pushes directly to main
+- [ ] Non-erg changes still go through the normal PR path
+- [ ] Fast-forward failure falls back to PR path without error
+- [ ] `make check` (or equivalent) passes
