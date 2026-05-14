@@ -64,7 +64,15 @@ MODEL_SONNET: str = "sonnet"
 MODEL_HAIKU: str = "claude-haiku-4-5-20251001"
 
 PROJECTS_CONFIG: Path = HARNESS_DIR / "scripts" / "projects.json"
-OUTCOMES_LOG: Path = HARNESS_DIR / "logs" / "beat-outcomes.jsonl"
+
+
+def _get_outcomes_log() -> Path:
+    """Return the outcomes log path, respecting BEAT_OUTCOMES_LOG env override."""
+    return Path(
+        os.environ.get("BEAT_OUTCOMES_LOG")
+        or str(HARNESS_DIR / "logs" / "beat-outcomes.jsonl")
+    )
+
 
 # Weekly /fewer-permission-prompts cadence. Folded into nightbeat instead of
 # a dedicated systemd timer (ticket 0043). Lowercase weekday name; matched
@@ -439,8 +447,9 @@ def _record_phase_outcome(
             rec["cost_usd"] = round(skill_result.cost_usd, 4)
         if skill_result.permission_denials:
             rec["denied"] = skill_result.permission_denials
-    OUTCOMES_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with OUTCOMES_LOG.open("a") as fh:
+    outcomes_log = _get_outcomes_log()
+    outcomes_log.parent.mkdir(parents=True, exist_ok=True)
+    with outcomes_log.open("a") as fh:
         fh.write(json.dumps(rec, separators=(",", ":")) + "\n")
 
 

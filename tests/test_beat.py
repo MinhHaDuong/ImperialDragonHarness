@@ -33,6 +33,12 @@ def reset_state():
     beat.DRY_RUN = original_dry_run
 
 
+@pytest.fixture(autouse=True)
+def isolate_outcomes_log(tmp_path, monkeypatch):
+    """Isolate beat-outcomes.jsonl to tmp_path for all tests."""
+    monkeypatch.setenv("BEAT_OUTCOMES_LOG", str(tmp_path / "outcomes.jsonl"))
+
+
 @pytest.fixture()
 def tmp_project(tmp_path):
     """Minimal git-like project directory with beat-log.jsonl."""
