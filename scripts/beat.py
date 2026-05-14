@@ -8,6 +8,7 @@ Environment:
   BEAT_DRY_RUN=1   Print intended sequence without invoking Claude.
 """
 
+import asyncio
 import fcntl
 import json
 import os
@@ -89,7 +90,9 @@ DRY_RUN: bool = os.environ.get("BEAT_DRY_RUN") == "1"
 class _State:
     beat_start: float = 0.0
     project: Path | None = None
-    current_proc: subprocess.Popen | None = field(default=None, repr=False)
+    current_proc: subprocess.Popen | asyncio.subprocess.Process | None = field(
+        default=None, repr=False
+    )
     log_fh: TextIOBase | None = field(default=None, repr=False)
     final_written: bool = False
 
@@ -479,12 +482,17 @@ def _record_phase_outcome(
 def _on_sigterm(_signum: int, _frame: object) -> None:
     elapsed = int(time.monotonic() - _state.beat_start)
     proc = _state.current_proc
-    if proc is not None and proc.poll() is None:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
+    if proc is not None:
+        if isinstance(proc, subprocess.Popen):
+            if proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+        elif isinstance(proc, asyncio.subprocess.Process):
+            # Asyncio process — cannot terminate synchronously in signal handler
+            pass
     if _state.project is not None:
         write_beat_end(
             _state.project,
@@ -633,7 +641,7 @@ def _claude_argv(
     return argv
 
 
-def run_skill(
+async def _run_skill_async(
     skill: str,
     *,
     budget: float,
@@ -643,13 +651,7 @@ def run_skill(
     model: str = MODEL_SONNET,
     max_turns: int | None = None,
 ) -> tuple[int, _SkillResult]:
-    """Invoke a Claude skill; return (exit_code, _SkillResult).
-
-    Streams stdout line-by-line for live logging.  Uses subprocess.Popen
-    with communicate() for timeout enforcement (no threads).
-    Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
-    project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
-    """
+    """Async impl using asyncio.create_subprocess_exec for real-time streaming."""
     argv = _claude_argv(
         skill, budget, project_scoped=project_scoped, model=model, max_turns=max_turns
     )
@@ -661,12 +663,10 @@ def run_skill(
         return 0, _SkillResult(result_text="(dry-run ok)")
 
     env = {**os.environ, "CLAUDE_NIGHT_SWEEP": "1"}
-    proc = subprocess.Popen(  # noqa: S603
-        argv,
-        stdout=subprocess.PIPE,
-        stderr=None,  # inherit → systemd journal
-        text=True,
-        bufsize=1,
+    proc = await asyncio.create_subprocess_exec(
+        *argv,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=None,
         cwd=cwd,
         env=env,
     )
@@ -674,28 +674,25 @@ def run_skill(
 
     stdout_lines: list[str] = []
 
-    timed_out = False
-    try:
-        # Read stdout line-by-line then wait, enforcing a single timeout
-        # over the whole operation via communicate().
-        raw_out, _ = proc.communicate(timeout=timeout_s)
-        for raw in raw_out.splitlines():
-            line = raw.rstrip("\n")
+    async def _read_stdout() -> None:
+        """Read and log stdout in real-time."""
+        assert proc.stdout is not None
+        async for raw in proc.stdout:
+            line = raw.decode().rstrip("\n")
             _log(line)
             stdout_lines.append(line)
-    except subprocess.TimeoutExpired:
-        timed_out = True
-        proc.terminate()
-        try:
-            proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
+
+    try:
+        await asyncio.wait_for(
+            asyncio.gather(_read_stdout(), proc.wait()), timeout=timeout_s
+        )
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        _state.current_proc = None
+        return TIMEOUT_EXIT_CODE, _SkillResult()
 
     _state.current_proc = None
-
-    if timed_out:
-        return TIMEOUT_EXIT_CODE, _SkillResult()
 
     skill_result = _SkillResult()
     for line in stdout_lines:
@@ -715,7 +712,36 @@ def run_skill(
         except json.JSONDecodeError:
             pass
 
-    return proc.returncode, skill_result
+    returncode = proc.returncode if proc.returncode is not None else 0
+    return returncode, skill_result
+
+
+def run_skill(
+    skill: str,
+    *,
+    budget: float,
+    timeout_s: int,
+    cwd: Path,
+    project_scoped: bool = False,
+    model: str = MODEL_SONNET,
+    max_turns: int | None = None,
+) -> tuple[int, _SkillResult]:
+    """Real-time streaming prevents buffering delays.
+
+    Returns exit_code=TIMEOUT_EXIT_CODE on timeout.
+    project_scoped=True omits --add-dir harness to prevent cross-project ticket leakage.
+    """
+    return asyncio.run(
+        _run_skill_async(
+            skill,
+            budget=budget,
+            timeout_s=timeout_s,
+            cwd=cwd,
+            project_scoped=project_scoped,
+            model=model,
+            max_turns=max_turns,
+        )
+    )
 
 
 # ── Origin sync ───────────────────────────────────────────────────────────────
