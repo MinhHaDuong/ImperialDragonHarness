@@ -341,10 +341,14 @@ def _beat_log_night_summary(proj: Path, since: datetime) -> dict:
             rec = json.loads(raw)
         except json.JSONDecodeError:
             continue
+        # Skip start events (event-model): they have type:"start" but no outcome.
+        if rec.get("type") == "start":
+            continue
         last = rec
-        if rec.get("last_run_at", "") >= since_str:
+        ts = rec.get("ts") or rec.get("last_run_at", "")
+        if ts >= since_str:
             outcome = rec.get("outcome", "?")
-            if outcome != "in_progress":  # orphans cleaned by beat.py; skip noise
+            if outcome != "in_progress":  # legacy orphans; skip noise
                 counts[outcome] = counts.get(outcome, 0) + 1
     return {"counts": counts, "last": last}
 
@@ -628,7 +632,9 @@ def main() -> None:
                 parts_p.append(f"{outcome}:{counts[outcome]}")
         last_ticket = last.get("ticket_id") or "—"
         last_outcome = last.get("outcome", "?")
-        last_at = (last.get("last_run_at") or "")[:16].replace("T", " ")
+        last_at = (last.get("ts") or last.get("last_run_at") or "")[:16].replace(
+            "T", " "
+        )
         counts_str = "  ".join(parts_p) if parts_p else "no runs"
         print(
             f"  {proj_path.name:<30}  {counts_str:<28}  last: {last_ticket} ({last_outcome}) @ {last_at}"
