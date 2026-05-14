@@ -1,32 +1,37 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-13T19:35Z
+Last updated: 2026-05-14T07:45Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-13T19:35Z -->
+<!-- generated 2026-05-14T07:45Z -->
 
-**Tickets:** 2 ready · 8 blocked — `erg ready tickets/` for full list
+**Tickets:** 8 ready · 12 open — `erg ready tickets/` for full list
 **Morning review:** `/nightbeat-report` (narrative) · `/nightbeat-risk-review` (interactive triage before next run)
 **Recent commits:**
-  f034ae8 ticket(0103): close and archive — PR #189
-  078f748 refactor(beat): replace threading with asyncio for subprocess management (#0103) (#189)
-  a994e2c ticket(0131): close and archive — PR #188
-  2d5b722 refactor(skills): compact verify-gate and verify skill files (#0131) (#188)
-  b6bb88a ticket(0150): close and archive — PR #187
+  f58a7dc chore(tickets): fold asyncio into 0158; annotate closed 0103
+  c1920fd ticket(0158): beat-log event model — replace state encoding with events
+  1abd848 ticket(0157): test suite writes to production beat-outcomes.jsonl
+  b6831a3 fix(nightbeat): supervisor timer hourly at H+30 (#193)
+  2fc8c65 fix(tickets): sanitize hardcoded home path in 0070 — agnostic-guard violation
 
 ## Blockers
 
 - **0084**: needs WORKER_API_KEY secret + openai library on host
+- **Layer 2 skip**: `_pick_needed` in `_raid` uses current beat's `in_progress` timestamp as watermark — always finds no commits since NOW → skips pick-ticket every run. Root cause in `read_last_beat_record` call placement. Fix: ticket 0158.
 
 ## Next actions
 
+- **0158**: beat-log event model (fixes Layer 2 skip + asyncio streaming) — highest priority
+- **0157**: test suite pollutes production beat-outcomes.jsonl — isolate log path
+- **0155**: remove stale `_BUILTIN_PROJECTS` fallback in beat.py
+- **0154**: add pytest to CI pipeline
+- **0151**: extract harness rules into machine-readable format
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - **0070**: /dream skill — research gate cleared (docs/dream-research.md); ready to implement
-- **0154**: add pytest to CI pipeline (surfaced in raid PR #189)
 - **0142**: verify agents must not use main repo as workspace
 - **0141**: subprocess timeout gaps in git_utils, project-state, refresh-STATE
 - **doudou setup**: add source line to `~/.bashrc`, install nightbeat systemd units, copy erg binary to all projects
