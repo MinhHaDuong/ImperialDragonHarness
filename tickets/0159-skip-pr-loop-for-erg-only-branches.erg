@@ -2,10 +2,12 @@
 Title: Skip PR loop for erg-only branches
 Created: 2026-05-14
 Author: MinhHaDuong
+Closed: Merged PR #195
 
 --- log ---
 2026-05-14T09:30Z MinhHaDuong created
 
+2026-05-14T08:07Z MinhHaDuong closed — Merged PR #195
 --- body ---
 ## Context
 When a branch contains only `.erg` file changes (ticket creates, closes, log

@@ -2,10 +2,12 @@
 Title: Remove stale _BUILTIN_PROJECTS fallback from beat.py
 Created: 2026-05-13
 Author: claude
+Closed: Merged PR #197
 
 --- log ---
 2026-05-13T20:40Z claude created
 
+2026-05-14T08:07Z MinhHaDuong closed — Merged PR #197
 --- body ---
 ## Context
 
