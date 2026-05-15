@@ -22,8 +22,8 @@ global would bloat the harness tier and degrade every session.
 
 ## Research foundation required
 
-Before implementation, a second-round research note (`docs/dream-v2-research.md`)
-must address the following:
+Before implementation, extend `docs/dream-research.md` with a new
+section "Memory hierarchy and promotion" that addresses the following:
 
 **1. Spacing and frequency effects (cognitive science)**
 The spacing effect (Ebbinghaus 1885, confirmed by Cepeda et al. 2006
@@ -108,8 +108,8 @@ No agent tier, no provider tier. Those are subsets of harness.
 
 ## Exit criteria
 
-- [ ] Research note at `docs/dream-v2-research.md` covers all five
-      research questions above with citations.
+- [ ] `docs/dream-research.md` extended with "Memory hierarchy and
+      promotion" section covering all five research questions with citations.
 - [ ] `~/.claude/memory/` tier exists; SessionStart hook injects it.
 - [ ] `/dream <project>` records provenance in `.provenance.json`.
 - [ ] Promotion pass runs after consolidation; candidates evaluated
