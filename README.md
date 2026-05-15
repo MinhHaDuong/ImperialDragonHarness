@@ -80,7 +80,7 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/celebrate` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
 | `/check-readiness` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
-| `/dream` | Autonomous nightly memory consolidation across all projects. |
+| `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
