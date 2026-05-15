@@ -226,6 +226,8 @@ def test_state(project):
         content = makefile.read_text(errors="replace")
         if "check-fast" in content:
             target = "check-fast"
+        elif "check:" in content:
+            target = "check"
         elif "test" in content:
             target = "test"
         else:
