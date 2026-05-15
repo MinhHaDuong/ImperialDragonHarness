@@ -925,23 +925,63 @@ class TestHousekeepingPhase:
             outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
         assert outcome == "timeout"
 
-    def test_aborted_dirty_tree_when_post_skill_tree_dirty(self, tmp_project):
+    def test_aborted_dirty_tree_pre_flight(self, tmp_project):
+        """Pre-flight dirty check: if tree is dirty before skill runs,
+        return 'aborted-dirty-tree' immediately without invoking the skill."""
+
+        checkout_calls = []
+
+        def git_dirty_pre_flight(*args, cwd):
+            sub = args[0] if args else ""
+            if sub == "checkout" and args[1:2] != ("-B",):
+                checkout_calls.append(args)
+                return MagicMock(returncode=0, stdout="", stderr="")
+            if sub == "status":
+                return MagicMock(returncode=0, stdout=" M dirty_file.py\n", stderr="")
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        with (
+            patch("beat.housekeeping_needed", return_value=True),
+            patch("beat._git", side_effect=git_dirty_pre_flight),
+            patch("beat.run_skill", return_value=(0, beat._SkillResult())) as mock_run,
+            patch("beat._record_phase_outcome") as mock_record,
+        ):
+            outcome = beat._housekeeping_phase(beat.ProjectConfig(path=tmp_project))
+
+        assert outcome == "aborted-dirty-tree"
+        # Skill must NOT have been invoked
+        mock_run.assert_not_called()
+        # No checkout attempts
+        assert checkout_calls == [], f"unexpected checkout calls: {checkout_calls}"
+        mock_record.assert_called_once_with(
+            tmp_project,
+            "housekeeping",
+            "aborted-dirty-tree",
+            detail="pre-flight: 1 file(s): M dirty_file.py",
+        )
+
+    def test_aborted_dirty_tree_post_skill(self, tmp_project):
         """Ticket 0137: dirty tree after skill run aborts checkout, returns
         'aborted-dirty-tree' and never calls git checkout."""
 
         checkout_calls = []
+        status_call_count = 0
 
         def git_dirty_after_skill(*args, cwd):
+            nonlocal status_call_count
             sub = args[0] if args else ""
             if sub == "rev-parse":
                 return MagicMock(returncode=0, stdout="basesha\n", stderr="")
             if sub == "checkout" and args[1:2] != ("-B",):
-                # Record unguarded checkout attempts (should not happen)
                 checkout_calls.append(args)
                 return MagicMock(returncode=0, stdout="", stderr="")
             if sub == "rev-list":
                 return MagicMock(returncode=0, stdout="2\n", stderr="")
             if sub == "status":
+                status_call_count += 1
+                # First call: pre-flight — clean; second call: post-skill — dirty
+                if status_call_count == 1:
+                    return MagicMock(returncode=0, stdout="", stderr="")
                 return MagicMock(returncode=0, stdout=" M dirty_file.py\n", stderr="")
             return MagicMock(returncode=0, stdout="", stderr="")
 
@@ -956,12 +996,11 @@ class TestHousekeepingPhase:
         assert outcome == "aborted-dirty-tree"
         # The post-skill checkout must NOT have been reached
         assert checkout_calls == [], f"unexpected checkout calls: {checkout_calls}"
-        # _record_phase_outcome must be called with the housekeeping phase and aborted-dirty-tree
         mock_record.assert_called_once_with(
             tmp_project,
             "housekeeping",
             "aborted-dirty-tree",
-            detail="pre-flight: 1 file(s): M dirty_file.py",
+            detail="1 file(s): M dirty_file.py",
         )
 
     def test_raid_aborts_on_ci_failed(self, tmp_project, git_ok):
