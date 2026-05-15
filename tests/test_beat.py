@@ -2092,19 +2092,15 @@ class TestIntervalSkip:
             json.dumps({"outcome": "done", "last_run_at": recent_ts}) + "\n"
         )
 
+        primary_cfg = beat.ProjectConfig(path=tmp_project, interval_minutes=30)
         log_lines: list[str] = []
         with (
             patch("beat.signal.signal"),
             patch("beat._setup_env"),
             patch.object(beat, "LOGDIR", tmp_path / "logs"),
-            patch(
-                "beat._pick_project",
-                return_value=(
-                    0,
-                    beat.ProjectConfig(path=tmp_project, interval_minutes=30),
-                ),
-            ),
+            patch("beat._pick_project", return_value=(0, primary_cfg)),
             patch.object(beat, "_LOCK_DIR", tmp_path / "locks"),
+            patch.object(beat, "_PROJECTS_CACHE", [primary_cfg]),
             patch("beat.fcntl.flock"),
             patch("beat._log", side_effect=log_lines.append),
             patch("beat.last_completed_beat") as mock_read,
