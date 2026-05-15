@@ -880,7 +880,7 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
       "deferred"           — commits on branch, left for human review
       "timeout"            — skill timed out
       "failed"             — git or skill error
-      "aborted-dirty-tree" — working tree dirty after skill run; checkout skipped
+      "aborted-dirty-tree" — working tree dirty (pre-flight or post-skill); checkout skipped
     """
     path = project.path
     if not housekeeping_needed(path):
@@ -889,8 +889,8 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
 
     status = _git("status", "--porcelain", cwd=path)
     if status.stdout.strip():
-        dirty_files = status.stdout.strip().splitlines()[:5]
-        detail = f"{len(dirty_files)} file(s): {', '.join(dirty_files[:3])}"
+        dirty_lines = status.stdout.strip().splitlines()
+        detail = f"{len(dirty_lines)} file(s): {', '.join(dirty_lines[:3])}"
         _log(
             f"=== housekeeping: skipped-dirty-tree (pre-flight): {detail} {_now_iso()} ==="
         )
