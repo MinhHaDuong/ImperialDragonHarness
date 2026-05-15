@@ -2,10 +2,12 @@
 Title: Fix nightbeat supervisor to commit its own writes before exiting
 Created: 2026-05-15
 Author: claude
+Closed: autoclosed — PR #208
 
 --- log ---
 2026-05-15T07:30Z claude created
 
+2026-05-15T09:04Z MinhHaDuong closed — autoclosed — PR #208
 --- body ---
 ## Context
 
