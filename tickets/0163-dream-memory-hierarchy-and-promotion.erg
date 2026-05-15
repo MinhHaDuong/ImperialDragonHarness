@@ -1,0 +1,120 @@
+%erg 0.1
+Title: Dream v2 — memory hierarchy and earned promotion to harness level
+Created: 2026-05-15
+Author: claude
+
+--- log ---
+2026-05-15T09:00Z claude created
+
+--- body ---
+## Context
+
+The v1 `/dream` skill (ticket 0070) consolidates memory within a single
+project. This ticket designs and implements the generalization: a
+harness-level memory tier, and a principled mechanism for project-level
+memories to earn promotion into it.
+
+The promotion criterion must be grounded in learning science. The naive
+heuristic ("no project-specific nouns") is necessary but not sufficient.
+Memories must demonstrate cross-context relevance AND material cost to
+earn harness status. Decorating every general-sounding preference as
+global would bloat the harness tier and degrade every session.
+
+## Research foundation required
+
+Before implementation, a second-round research note (`docs/dream-v2-research.md`)
+must address the following:
+
+**1. Spacing and frequency effects (cognitive science)**
+The spacing effect (Ebbinghaus 1885, confirmed by Cepeda et al. 2006
+meta-analysis) shows that memories retrieved across distributed contexts
+are retained longer and generalise more reliably than those rehearsed in
+one context. Applied to agent memory: a lesson that surfaces independently
+in N≥2 unrelated projects is structurally analogous to spaced retrieval —
+it has demonstrated transfer. What threshold N is defensible?
+
+**2. Transfer-appropriate processing (Morris et al. 1977)**
+Encoding specificity: memories are best retrieved in contexts similar to
+where they were encoded. A lesson encoded only in a corpus-linguistics
+context may not transfer to a code project even if its surface form looks
+general. The research note must propose a test for genuine context-
+independence vs. surface-level generality.
+
+**3. Cost-weighted salience**
+Not all transferable lessons deserve equal harness weight. The promotion
+signal should be:
+
+  promotion_score = frequency_across_contexts × per_session_cost
+
+where cost is one of:
+- **Token cost**: if the lesson is large or must be re-derived each
+  session without the memory, it costs tokens every time it is missed.
+- **Security/correctness cost**: if missing the lesson causes agent
+  errors (wrong tool use, credential exposure, unsafe git ops), the
+  cost is qualitative but high.
+
+Low-frequency or low-cost generalities stay at project level and age out
+naturally. Only high-(frequency × cost) items earn harness promotion.
+
+**4. The forgetting curve at harness level**
+Harness memories must also decay. Without decay, harness grows unbounded
+and injection cost rises per session. The research note must propose a
+staleness model: time-based TTL, access-frequency weighting (ART theory,
+Anderson 1983), or recency-weighted importance (similar to SCM 2604.20943).
+
+**5. Existing multi-tier agent memory systems**
+Survey whether TiMem (2601.02845), A-MEM (2502.12110), or Graphiti
+(2501.13956) define an explicit "global" vs "local" memory tier and what
+their promotion criteria are. Anthropic's dreaming architecture (May 2026)
+should also be checked for any published tier model.
+
+## Architecture (to be validated by research note)
+
+**Proposed tiers:**
+
+| Tier | Path | Scope | Injected when |
+|------|------|-------|---------------|
+| Harness | `~/.claude/memory/` | All sessions | Always, via SessionStart hook |
+| Project | `~/.claude/projects/<mangled>/memory/` | One project | When CWD matches |
+
+No agent tier, no provider tier. Those are subsets of harness.
+
+**Proposed promotion gate (three conditions, all required):**
+
+1. **Frequency**: memory surfaces as relevant (LLM-classified NOOP/UPDATE,
+   not project-specific) in ≥2 distinct project consolidations.
+2. **Cost**: missing the memory has token cost (>500 tokens to re-derive)
+   OR correctness/security cost (LLM-assessed).
+3. **Context-independence**: the lesson contains no project-specific
+   entities (file paths, repo names, person names, domain vocabulary)
+   after stripping — or a context-independent reformulation can be
+   produced without loss of meaning.
+
+**Promotion mechanism:**
+- `/dream` records each entry's project-of-origin in a sidecar file
+  (`~/.claude/memory/.provenance.json`).
+- After N appearances across distinct projects, the entry becomes a
+  promotion candidate.
+- A promotion pass (separate from consolidation) evaluates cost and
+  context-independence.
+- Approved promotions are written to `~/.claude/memory/` and the
+  project-level entry gets a tombstone pointing to the harness entry.
+
+**Harness decay:**
+- Each harness entry carries a `last_confirmed:` date (updated when a
+  project consolidation finds the entry still relevant).
+- Entries not confirmed in 90 days are demoted back to the originating
+  project or deleted.
+
+## Exit criteria
+
+- [ ] Research note at `docs/dream-v2-research.md` covers all five
+      research questions above with citations.
+- [ ] `~/.claude/memory/` tier exists; SessionStart hook injects it.
+- [ ] `/dream <project>` records provenance in `.provenance.json`.
+- [ ] Promotion pass runs after consolidation; candidates evaluated
+      against all three gates (frequency, cost, context-independence).
+- [ ] Harness decay: entries older than 90 days without confirmation
+      are flagged for review.
+- [ ] `make check` passes; existing 0070 tests unaffected.
+- [ ] Dry-run mode shows promotion candidates without writing.
