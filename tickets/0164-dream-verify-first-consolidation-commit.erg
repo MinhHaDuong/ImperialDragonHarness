@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Verify dream skill fires — first consolidation commit within one week of merge
+Created: 2026-05-15
+Author: claude
+
+--- log ---
+2026-05-15T10:15Z claude created — watch-ticket for 0070 exit criterion 6
+
+--- body ---
+## Context
+
+Ticket 0070 exit criterion 6: "At least one `dream: consolidate ...` commit
+appears in IDH history within one week of merge (proves the timer fires)."
+
+This is a post-merge obligation — it cannot be pre-verified. This ticket
+tracks it.
+
+## Exit criteria
+
+- [ ] `git log --grep='^dream: consolidate' --oneline` shows at least one
+      commit dated within 7 days of PR #205 merge date.
+- [ ] Commit format: `dream: consolidate <project> memory (<n>→<m>)`.
