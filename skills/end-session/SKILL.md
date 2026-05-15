@@ -30,4 +30,4 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
     c. Prune: delete items checked off before this session.
     d. Commit, merge to main via fast-forward, delete branch.
-11. **Memory sweep** — follow `/memory` skill (includes staleness check + rule cross-reference).
+11. **Memory consolidation** — run `/dream <project>` where `<project>` is the current project directory name. This delegates to the autonomous consolidation skill (includes staleness check, dedup, and Park reflection).

@@ -27,6 +27,19 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Consider: refactor nightbeat risk-review to use check-readiness skill (0152)
 
+## Morning review
+
+Nightly consolidation runs via `/dream` (scheduled at 2 AM UTC via `/schedule 0 2 * * * /dream`).
+Consolidation deduplicates memory across all projects using mem0 classifier + Park reflection.
+
+To inspect consolidation results:
+```
+git log --grep='^dream:' --oneline
+```
+
+Each consolidation commit shows entry counts before/after (format: `dream: consolidate <project> memory (<n>→<m>)`).
+Memory files that are marked DELETE receive a tombstone comment; git history provides recovery.
+
 ## Backlog
 
 - Streamline settings.json hook configuration
