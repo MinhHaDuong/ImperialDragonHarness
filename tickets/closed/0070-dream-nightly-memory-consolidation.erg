@@ -3,6 +3,7 @@ Title: Add /dream skill — autonomous nightly memory consolidation
 Created: 2026-04-30
 Author: claude
 Tag: deferred
+Closed: autoclosed — PR #207
 
 --- log ---
 2026-04-30T13:30Z claude created
@@ -10,6 +11,7 @@ Tag: deferred
 2026-05-11T20:50Z unclaimed — stale claim, no branch activity
 2026-05-13T09:02Z MinhHaDuong tag deferred
 2026-05-13T14:32Z claude note research complete — see docs/dream-research.md; mem0 v2.0 production-ready, Anthropic dreaming released May 2026 validates concept, TiMem adds temporal-hierarchical SOTA, importance-weighted triggers validated by SCM; recommend v1 with mem0 classifier + Park reflection + time-based trigger, reserve importance-sum and TiMem for v2.
+2026-05-15T08:23Z MinhHaDuong closed — autoclosed — PR #207
 --- body ---
 ## Context
 

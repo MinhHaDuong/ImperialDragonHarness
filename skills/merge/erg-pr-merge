@@ -96,7 +96,7 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
     fi
 
     # Check if this is an erg-only branch (no changes outside tickets/)
-    DIFF_SIZE=$(git diff origin/main...HEAD -- . ':(exclude)tickets/' | wc -c)
+    DIFF_SIZE=$(git diff origin/${BASE_BRANCH}...HEAD -- . ':(exclude)tickets/' | wc -c)
 
     if [[ "$DIFF_SIZE" -eq 0 ]]; then
         echo "Erg-only branch detected — skipping CI wait (no code changes)"
