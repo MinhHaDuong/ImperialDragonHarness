@@ -78,7 +78,7 @@
       "/tmp"
     ]
   },
-  "model": "haiku",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {

@@ -37,8 +37,13 @@ Run full repo housekeeping and act on every finding.
    Process all open tickets unconditionally (not just candidates).
    Batch-closing is allowed here: close every qualifying ticket in one pass.
 
-3. **Fix `fix-now` items.** Apply every `fix-now` item inline. If any fixes were
-   applied, commit once: `chore: housekeeping fixes (sweep)`.
+3. **Fix `fix-now` items.** Apply every `fix-now` item inline. Before committing,
+   run `git status --porcelain` and stage any pre-existing modifications to tracked
+   files (`git add -u`) — this absorbs uncommitted supervisor writes (ticket log
+   entries, settings.json model switches) left over from a prior session. Commit
+   once: `chore: housekeeping fixes (sweep)`. If there are no fix-now items but
+   there are pre-existing tracked-file modifications, still commit them with that
+   message so the working tree is clean for the next beat cycle.
 
    **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
    to delete a branch, apply these guards before acting. Skip (log a warning) if any
