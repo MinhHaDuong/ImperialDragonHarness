@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Autonomous nightly memory consolidation across all projects.
+Autonomous nightly memory consolidation for a single project.
 
 Uses mem0 classifier (ADD/UPDATE/DELETE/NOOP) + Park reflection + bi-temporal invalidation.
 Patterns validated as production-ready as of 2026-05-13.
@@ -22,7 +22,6 @@ from anthropic import Anthropic
 MEMORY_BASE = Path.home() / ".claude" / "projects"
 IDH_BASE = Path.home() / ".claude"
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-DEFAULT_CRON = "0 2 * * *"  # 2 AM UTC nightly
 
 # Setup logging
 logging.basicConfig(
@@ -31,13 +30,6 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
-
-
-def get_memory_dirs():
-    """Enumerate all project memory directories."""
-    if not MEMORY_BASE.exists():
-        return []
-    return [d for d in MEMORY_BASE.iterdir() if d.is_dir() and (d / "memory").is_dir()]
 
 
 def read_memory_index(project_dir):
@@ -292,9 +284,7 @@ def main():
     )
     parser.add_argument(
         "project",
-        nargs="?",
-        default=None,
-        help="Project name (default: consolidate all projects)",
+        help="Project name to consolidate (directory name under ~/.claude/projects/)",
     )
     parser.add_argument(
         "--dry-run", action="store_true", help="Propose edits without writing."
@@ -316,36 +306,21 @@ def main():
     # Initialize Anthropic client
     client = Anthropic()
 
-    # Determine projects to consolidate
-    if args.project:
-        project_dirs = [MEMORY_BASE / args.project]
-        if not project_dirs[0].exists():
-            logger.error(f"Project {args.project} not found at {project_dirs[0]}")
-            sys.exit(1)
-    else:
-        project_dirs = get_memory_dirs()
-
-    if not project_dirs:
-        logger.info("No projects found; exiting.")
-        return
+    project_dir = MEMORY_BASE / args.project
+    if not project_dir.exists():
+        logger.error(f"Project {args.project} not found at {project_dir}")
+        sys.exit(1)
 
     logger.info(f"Starting consolidation ({'dry-run' if args.dry_run else 'live'})...")
 
-    # Consolidate each project
-    total_before = 0
-    total_after = 0
-    for project_dir in project_dirs:
-        n_before, n_after, decisions = consolidate_project(
-            client, project_dir, args.model, dry_run=args.dry_run
-        )
-        total_before += n_before
-        total_after += n_after
+    n_before, n_after, _ = consolidate_project(
+        client, project_dir, args.model, dry_run=args.dry_run
+    )
 
-        # Commit if not dry-run
-        if not args.dry_run and n_before > 0:
-            commit_consolidation(project_dir.name, n_before, n_after)
+    if not args.dry_run and n_before > 0:
+        commit_consolidation(project_dir.name, n_before, n_after)
 
-    logger.info(f"Consolidation complete. {total_before}→{total_after} entries.")
+    logger.info(f"Consolidation complete. {n_before}→{n_after} entries.")
 
 
 if __name__ == "__main__":

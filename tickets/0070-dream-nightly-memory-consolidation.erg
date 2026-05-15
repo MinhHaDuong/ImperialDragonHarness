@@ -112,11 +112,11 @@ Assert: older entry classified `DELETE`; newer survives; proposed
 
 - Second-round research note committed at `docs/dream-research.md`,
   reconciling the initial survey with current state of the art.
-- `~/.claude/skills/dream/SKILL.md` exists, user-invocable, runs with no
-  args.
+- `~/.claude/skills/dream/SKILL.md` exists, user-invocable, requires a
+  project argument.
 - `/end-session` step 10 delegates to `/dream <project>`.
-- `/schedule` recipe documented in SKILL.md (sample cron line, opt-in).
-- Dry-run on the AEDIST project memory dir produces a sensible diff
+- `/schedule` recipe documented in SKILL.md (one entry per project).
+- Dry-run on any real project memory dir produces a sensible diff
   (manual review by the author before merge).
 - At least one `dream: consolidate ...` commit appears in IDH history
   within one week of merge (proves the timer fires).

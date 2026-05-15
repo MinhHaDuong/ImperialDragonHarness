@@ -7,12 +7,12 @@ user-invocable: true
 
 # Dream — autonomous nightly memory consolidation
 
-Consolidates and deduplicates memory across all projects (`~/.claude/projects/*/memory/`). Runs nightly as a scheduled agent or manually on demand.
+Consolidates and deduplicates memory for one project (`~/.claude/projects/<project>/memory/`). Runs nightly as a scheduled agent or manually on demand. Schedule one entry per project.
 
 ## When to run
 
 - **Scheduled**: nightly (default `0 2 * * *`, 2 AM UTC). Configure via `/schedule 0 2 * * * /dream`.
-- **Manual**: user invokes `/dream` after work sessions (especially when memory churn is high) or `/dream <project>` to consolidate a single project.
+- **Manual**: user invokes `/dream <project>` after work sessions (especially when memory churn is high).
 
 ## Design (research validated 2026-05-13)
 
@@ -41,15 +41,14 @@ All patterns are production-ready as of 2026-05-13 (see `docs/dream-research.md`
 
 - `--dry-run`: Propose edits, print diffs, exit without writing.
 - `--rollback <commit-hash>`: Revert last consolidation commit.
-- `--project <name>`: Consolidate single project (default: all projects).
 - `--model <model-id>`: Override default model (default: haiku-4-5-20251001). Use for testing or cost control.
 
 ## Schedule recipe
 
-Add to `/schedule` (or cron):
+Add one entry per project to `/schedule` (or cron):
 
 ```
-0 2 * * * /dream
+0 2 * * * /dream -home-haduong--claude
 ```
 
 Runs nightly at 2 AM UTC. To inspect consolidation results:
