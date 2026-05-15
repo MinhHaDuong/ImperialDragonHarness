@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Fix erg-pr-merge hard-coded origin/main to use dynamic base branch
+Created: 2026-05-15
+Author: claude
+Closed: fix applied directly — one-token substitution, no ambiguity
+
+--- log ---
+2026-05-15T10:00Z claude created
+
+2026-05-15T08:07Z MinhHaDuong closed — fix applied directly — one-token substitution, no ambiguity
+--- body ---
+## Context
+Line 99 of skills/merge/erg-pr-merge hard-codes `origin/main`:
+
+    DIFF_SIZE=$(git diff origin/main...HEAD -- . ':(exclude)tickets/' | wc -c)
+
+This detects whether the branch has code changes beyond ticket files — used to
+decide if a CI wait is needed after the ticket-close commit. On repos that use
+`master` (e.g. chemin-de-voix/Tracing-Kieu), `origin/main` does not exist and
+the diff returns non-zero exit, causing the script to abort after ticket
+close/archive but before the squash merge.
+
+`$BASE_BRANCH` is already computed from the PR JSON at line 43 —
+the fix is a one-token substitution.
+
+Observed: PR #85 on Tracing-Kieu — ticket closed and archived, then
+`fatal: bad revision 'origin/main...HEAD'` killed the script before merge.
+
+## Relevant files
+- `~/.claude/skills/merge/erg-pr-merge` — line 99
+
+## Actions
+1. Replace `origin/main` with `origin/$BASE_BRANCH` on line 99
+2. Verify with a test repo that uses `master` as default branch
+
+## Exit criteria
+- [ ] Line 99 uses `origin/$BASE_BRANCH` instead of `origin/main`
+- [ ] Script completes successfully on a master-based repo
