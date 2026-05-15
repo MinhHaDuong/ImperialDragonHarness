@@ -23,7 +23,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **0070**: /dream skill — PR #205 in review (REROLL addressed, awaiting re-verify + merge)
+- **Exercise /dream**: run `/dream -home-haduong--claude` to validate the skill on real memory data
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Consider: refactor nightbeat risk-review to use check-readiness skill (0152)
 
