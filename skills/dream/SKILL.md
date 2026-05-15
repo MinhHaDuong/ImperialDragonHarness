@@ -1,66 +1,123 @@
 ---
 name: dream
-description: Autonomous nightly memory consolidation across all projects.
-disable-model-invocation: false
+description: Autonomous nightly memory consolidation for one project.
 user-invocable: true
 ---
 
-# Dream — autonomous nightly memory consolidation
+# Dream — memory consolidation
 
-Consolidates and deduplicates memory for one project (`~/.claude/projects/<project>/memory/`). Runs nightly as a scheduled agent or manually on demand. Schedule one entry per project.
+Consolidates and deduplicates memory for one project using mem0 classifier + Park reflection. Claude does all reasoning inline; scripts handle only file I/O and git.
 
-## When to run
+## Invocation
 
-- **Scheduled**: nightly (default `0 2 * * *`, 2 AM UTC). Configure via `/schedule 0 2 * * * /dream`.
-- **Manual**: user invokes `/dream <project>` after work sessions (especially when memory churn is high).
+```
+/dream <project> [--dry-run]
+/dream <project> --rollback <commit-hash>
+```
 
-## Design (research validated 2026-05-13)
+`<project>` is the directory name under `~/.claude/projects/` (e.g. `-home-haduong--claude`).
 
-Uses three techniques from published literature:
+## Steps
 
-1. **mem0 classifier (ADD/UPDATE/DELETE/NOOP)**: For each memory entry, retrieve semantic neighbors and prompt LLM to classify. Prevents silent dedup drift.
-2. **Park 2023 reflection**: After dedup, extract N=5 high-level insights from survivors and regenerate `MEMORY.md` index.
-3. **Bi-temporal invalidation**: Never delete files; apply edits in place. Git audit log provides recovery.
+### Rollback mode
 
-All patterns are production-ready as of 2026-05-13 (see `docs/dream-research.md` for full reconciliation with current state-of-art).
+If `--rollback <hash>` is present, run:
+```
+python3 ~/.claude/skills/dream/commit.py rollback <hash>
+```
+Then stop.
 
-## Procedure
+### Consolidation
 
-1. **Dry-run check** — if `--dry-run` flag, propose edits and exit without writing.
-2. **Per-project iteration**:
-   a. Read `MEMORY.md` index + all `.md` memory files.
-   b. For each entry: retrieve top-5 neighbors by keyword-overlap (Counter frequency heuristic; v2 will use vector embeddings).
-   c. Prompt LLM: given candidate X and neighbors, decide ADD (new) / UPDATE (augment) / DELETE (contradicts) / NOOP (present).
-   d. Apply edits in place (tombstone comments for deleted entries; never `rm`).
-   e. Extract N=5 insights via reflection prompt.
-   f. Regenerate `MEMORY.md` from insights + survivors (keep index < 200 lines).
-   g. Commit with message: `dream: consolidate <project> memory (<n>→<m>)`.
-3. **Post-consolidation**: git operations confined to IDH; no writes to project repos.
+**1. Read the memory index.**
 
-## Flags
+```bash
+python3 ~/.claude/skills/dream/read-index.py <project>
+```
 
-- `--dry-run`: Propose edits, print diffs, exit without writing.
-- `--rollback <commit-hash>`: Revert last consolidation commit.
-- `--model <model-id>`: Override default model (default: haiku-4-5-20251001). Use for testing or cost control.
+Output is JSON: `{project, memory_dir, entries[]}` where each entry has `filename`, `title`, `desc`, `content`, `path`.
+
+If `entries` is empty, log "No memory entries found" and stop.
+
+**2. Classify each entry.**
+
+For each entry, read its `content` and the content of semantically related entries (look for keyword overlap in titles and descriptions). Then decide:
+
+- **NOOP** — already accurate and not redundant with another entry.
+- **ADD** — genuinely new information with no semantic equivalent (rare; most entries were already classified when written).
+- **UPDATE** — should be merged into or superseded by another entry.
+- **DELETE** — contradicted by a more recent entry, or fully stale.
+
+Rules:
+- Preserve entries that document evolution ("use vim" → "use emacs"): keep both unless one is explicitly obsolete.
+- Only DELETE if the entry is genuinely misleading or already captured elsewhere.
+- Log each decision with one line of reasoning.
+
+**3. Reflect on survivors.**
+
+From entries classified NOOP, ADD, or UPDATE: extract 5 high-level insights that capture patterns, recurring themes, or important lessons. Each insight: 1–2 sentences. These go into the regenerated index as context above the entry list.
+
+**4. Report.**
+
+Print a summary table:
+- Each filename → decision + one-line reason
+- The 5 extracted insights
+- Counts: N entries before → M after
+
+If `--dry-run`: **stop here. Do not write anything.**
+
+**5. Apply deletions.**
+
+For each DELETE entry, overwrite its file with a tombstone:
+```
+# DELETED <ISO timestamp>: <title>
+# Reason: <one-line reason>
+# Original content preserved in git history.
+```
+
+Use the Edit or Write tool. Never use `rm`.
+
+**6. Rewrite MEMORY.md.**
+
+Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
+
+```markdown
+## Key insights
+
+- <insight 1>
+- <insight 2>
+...
+
+## Entries
+
+- [<title>](<filename>) — <desc>
+...
+```
+
+Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
+
+**7. Commit.**
+
+```bash
+python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
+```
 
 ## Schedule recipe
 
-Add one entry per project to `/schedule` (or cron):
+One entry per project:
 
 ```
-0 2 * * * /dream -home-haduong--claude
+0 2 * * * /dream <project>
 ```
 
-Runs nightly at 2 AM UTC. To inspect consolidation results:
-
+To inspect consolidation history:
+```bash
+git log --grep='^dream: consolidate' --oneline
 ```
-git log --grep='^dream:' --oneline
-```
 
-## v2 roadmap (post-MVP, Q3+ 2026)
+## v2 roadmap
 
-- Importance-weighted trigger (SCM pattern, April 2026)
-- Temporal-hierarchical reflection (TiMem, January 2026) if projects track session boundaries
-- Zettelkasten link updates (A-MEM, February 2025) after UPDATE/DELETE passes
-- Explicit `t_valid`/`t_invalid` metadata in memory entries (complement git audit log)
-- Consolidation benchmarking (LoCoMo / LongMemEval-S metrics)
+- Harness-level memory tier + earned promotion (ticket 0163)
+- Importance-weighted trigger (SCM pattern)
+- Temporal-hierarchical reflection (TiMem) for multi-session horizons
+- Link updates after UPDATE/DELETE passes (A-MEM)

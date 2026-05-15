@@ -1,148 +1,89 @@
 """
-TDD tests for /dream skill.
-
-Test fixture: contradicting feedback entries (vim vs emacs).
-Validates classifier correctly identifies DELETE for older, conflicting entries.
+Tests for /dream skill helper scripts.
+Scripts are pure I/O — no LLM calls, no Anthropic dependency.
 """
 
+import json
+import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
 
-DREAM_PY = Path(__file__).parent.parent / "skills" / "dream" / "dream.py"
+DREAM_DIR = Path(__file__).parent.parent / "skills" / "dream"
+READ_INDEX = DREAM_DIR / "read-index.py"
+COMMIT_PY = DREAM_DIR / "commit.py"
 
 
 @pytest.fixture
-def fixture_project_memory():
-    """Create a temporary project memory directory with contradicting entries."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        project_dir = Path(tmpdir) / "test-project"
-        memory_dir = project_dir / "memory"
-        memory_dir.mkdir(parents=True)
+def fixture_memory_dir(tmp_path):
+    projects_dir = tmp_path / ".claude" / "projects" / "test-project" / "memory"
+    projects_dir.mkdir(parents=True)
 
-        # Create old feedback entry: "use vim"
-        old_entry = memory_dir / "feedback_editor_vim.md"
-        old_entry.write_text(
-            """---
-name: feedback_editor_vim
-description: Editor preference established via user feedback
-metadata:
-  type: feedback
----
-
-Editor Preference — Vim
-
-The user prefers vim for editor work. This was established in 2026-04-15 during a coding session.
-Reasoning: vim keybindings align with user's muscle memory from prior experience.
-"""
-        )
-
-        # Create new feedback entry: "use emacs" (contradicts vim)
-        new_entry = memory_dir / "feedback_editor_emacs.md"
-        new_entry.write_text(
-            """---
-name: feedback_editor_emacs
-description: Updated editor preference
-metadata:
-  type: feedback
----
-
-Editor Preference — Emacs
-
-Updated 2026-05-10: User switched to emacs for the newer project. Wants to use emacs-based
-tools for this codebase specifically. This supersedes the prior vim preference.
-Reasoning: Project needs elisp integration; emacs is more practical here.
-"""
-        )
-
-        # Create MEMORY.md index
-        index = memory_dir / "MEMORY.md"
-        index.write_text(
-            """# Memory index
-
-## Entries
-
-- [feedback_editor_vim](feedback_editor_vim.md) — Editor preference: vim
-- [feedback_editor_emacs](feedback_editor_emacs.md) — Updated editor preference: emacs
-"""
-        )
-
-        yield project_dir
-
-
-@pytest.mark.slow
-def test_dream_dry_run_contradicting_entries(fixture_project_memory):
-    """
-    Test /dream --dry-run on contradicting feedback entries.
-
-    Expected: older entry (vim) classified DELETE, newer (emacs) survives,
-    MEMORY.md updated, no files written.
-    """
-    pytest.importorskip("anthropic")
-    sys.path.insert(0, str(DREAM_PY.parent))
-
-    # Save initial state
-    old_entry_path = fixture_project_memory / "memory" / "feedback_editor_vim.md"
-    new_entry_path = fixture_project_memory / "memory" / "feedback_editor_emacs.md"
-    index_path = fixture_project_memory / "memory" / "MEMORY.md"
-
-    old_content = old_entry_path.read_text()
-    new_content = new_entry_path.read_text()
-    index_content = index_path.read_text()
-
-    from anthropic import Anthropic
-
-    from dream import consolidate_project
-
-    client = Anthropic()
-
-    # Run consolidation in dry-run mode
-    n_before, n_after, decisions = consolidate_project(
-        client, fixture_project_memory, "claude-haiku-4-5-20251001", dry_run=True
+    (projects_dir / "feedback_vim.md").write_text(
+        "---\nname: feedback_vim\ndescription: vim preference\nmetadata:\n  type: feedback\n---\nUser prefers vim.\n"
     )
-
-    # Verify decisions
-    decisions_dict = {fn: (dec, reason) for fn, dec, reason in decisions}
-
-    # The older vim entry should be marked DELETE or NOOP
-    vim_decision = decisions_dict.get("feedback_editor_vim.md", ("NOOP", ""))[0]
-    assert vim_decision in ("DELETE", "NOOP"), (
-        f"vim entry: expected DELETE/NOOP, got {vim_decision}"
+    (projects_dir / "feedback_emacs.md").write_text(
+        "---\nname: feedback_emacs\ndescription: emacs preference\nmetadata:\n  type: feedback\n---\nUser switched to emacs.\n"
     )
-
-    # The newer emacs entry should be ADD or NOOP (present)
-    emacs_decision = decisions_dict.get("feedback_editor_emacs.md", ("NOOP", ""))[0]
-    assert emacs_decision in ("ADD", "UPDATE", "NOOP"), (
-        f"emacs entry: expected ADD/UPDATE/NOOP, got {emacs_decision}"
+    (projects_dir / "MEMORY.md").write_text(
+        "## Entries\n\n"
+        "- [feedback_vim](feedback_vim.md) — Editor preference: vim\n"
+        "- [feedback_emacs](feedback_emacs.md) — Editor preference: emacs\n"
     )
-
-    # Verify files were NOT modified (dry-run)
-    assert old_entry_path.read_text() == old_content, (
-        "vim entry was modified in dry-run"
-    )
-    assert new_entry_path.read_text() == new_content, (
-        "emacs entry was modified in dry-run"
-    )
-    assert index_path.read_text() == index_content, "MEMORY.md was modified in dry-run"
-
-    # Verify consolidation happened (n_before and n_after should differ if entries were pruned)
-    assert n_after >= 1, f"Expected at least 1 survivor, got {n_after}"
+    return tmp_path
 
 
-def test_dream_preserves_contradictions():
-    """
-    Verify classify_memory_file prompt instructs the LLM to preserve evolutionary contradictions.
-    """
-    source = DREAM_PY.read_text()
-    assert "classify_memory_file" in source, (
-        "classifier function must exist in dream.py"
-    )
-    assert "Preserve contradictions" in source, (
-        "classifier prompt must instruct LLM to preserve contradictions that reveal evolution"
+def _run(script, *args, home):
+    return subprocess.run(
+        [sys.executable, str(script), *args],
+        capture_output=True,
+        text=True,
+        env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
     )
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+def test_read_index_returns_entries(fixture_memory_dir):
+    result = _run(READ_INDEX, "test-project", home=fixture_memory_dir)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["project"] == "test-project"
+    assert len(data["entries"]) == 2
+    filenames = {e["filename"] for e in data["entries"]}
+    assert filenames == {"feedback_vim.md", "feedback_emacs.md"}
+    for entry in data["entries"]:
+        assert entry["content"]
+
+
+def test_read_index_missing_project(tmp_path):
+    result = _run(READ_INDEX, "nonexistent", home=tmp_path)
+    assert result.returncode == 1
+    data = json.loads(result.stdout)
+    assert "error" in data
+
+
+def test_read_index_empty_index(tmp_path):
+    mem = tmp_path / ".claude" / "projects" / "empty" / "memory"
+    mem.mkdir(parents=True)
+    (mem / "MEMORY.md").write_text("# Memory index\n\n## Key insights\n\n")
+
+    result = _run(READ_INDEX, "empty", home=tmp_path)
+    assert result.returncode == 0
+    data = json.loads(result.stdout)
+    assert data["entries"] == []
+
+
+def test_skill_md_instructs_preserve_evolution():
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "evolution" in content.lower() or "preserve" in content.lower()
+
+
+def test_commit_py_has_rollback_subcommand():
+    assert "rollback" in COMMIT_PY.read_text()
+
+
+def test_no_anthropic_import_in_scripts():
+    for script in [READ_INDEX, COMMIT_PY]:
+        source = script.read_text()
+        assert "import anthropic" not in source, f"{script.name} imports anthropic"
+        assert "from anthropic" not in source, f"{script.name} imports anthropic"
