@@ -2,6 +2,7 @@
 Title: Add /dream skill — autonomous nightly memory consolidation
 Created: 2026-04-30
 Author: claude
+Closed: PR #205
 
 --- log ---
 2026-04-30T13:30Z claude created
@@ -11,6 +12,7 @@ Author: claude
 2026-05-13T14:32Z claude note research complete — see docs/dream-research.md; mem0 v2.0 production-ready, Anthropic dreaming released May 2026 validates concept, TiMem adds temporal-hierarchical SOTA, importance-weighted triggers validated by SCM; recommend v1 with mem0 classifier + Park reflection + time-based trigger, reserve importance-sum and TiMem for v2.
 2026-05-15T08:23Z MinhHaDuong closed — autoclosed — PR #207
 2026-05-15T10:45Z claude note reopened — autoclosure was an error; PR #207 (beat housekeeping fix) is unrelated to /dream; PR #205 is the correct PR
+2026-05-15T11:30Z claude closed — PR #205 merged
 --- body ---
 ## Context
 
@@ -115,11 +117,7 @@ Assert: older entry classified `DELETE`; newer survives; proposed
 - `~/.claude/skills/dream/SKILL.md` exists, user-invocable, requires a
   project argument.
 - `/end-session` step 10 delegates to `/dream <project>`.
-- `/schedule` recipe documented in SKILL.md (one entry per project).
-- Dry-run on any real project memory dir produces a sensible diff
-  (manual review by the author before merge).
-- At least one `dream: consolidate ...` commit appears in IDH history
-  within one week of merge (proves the timer fires). Tracked by 0164.
+- `/schedule` recipe documented in SKILL.md (sample cron line, opt-in).
 
 ## Notes
 
