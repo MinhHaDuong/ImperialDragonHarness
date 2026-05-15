@@ -131,7 +131,7 @@ cd $HARNESS_DIR
 dirty=$(git status --porcelain)
 if [ -n "$dirty" ]; then
   echo "WARNING: supervisor leaving dirty tree: $dirty"
-  git add -A && git commit -m 'chore(supervisor): commit residual tracked writes'
+  git add -u && git commit -m 'chore(supervisor): commit residual tracked writes'
 fi
 ```
 This is a safety net — every write should already be committed by the steps
