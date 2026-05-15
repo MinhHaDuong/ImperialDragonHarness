@@ -12,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -78,9 +79,6 @@ def extract_keywords(text, max_terms=20):
     # Filter short words and common terms
     stop_words = {"the", "a", "an", "and", "or", "is", "in", "of", "to", "for", "on"}
     keywords = [w for w in words if len(w) > 2 and w not in stop_words]
-    # Return most frequent (simple heuristic for importance)
-    from collections import Counter
-
     freq = Counter(keywords)
     return [word for word, _ in freq.most_common(max_terms)]
 

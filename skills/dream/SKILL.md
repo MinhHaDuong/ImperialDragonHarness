@@ -28,14 +28,13 @@ All patterns are production-ready as of 2026-05-13 (see `docs/dream-research.md`
 
 1. **Dry-run check** — if `--dry-run` flag, propose edits and exit without writing.
 2. **Per-project iteration**:
-   a. Skip if no `mtime` change since last consolidation marker.
-   b. Read `MEMORY.md` index + all `.md` memory files.
-   c. For each entry: retrieve top-10 semantic neighbors (vector embedding similarity).
-   d. Prompt LLM: given candidate X and neighbors, decide ADD (new) / UPDATE (augment) / DELETE (contradicts) / NOOP (present).
-   e. Apply edits in place (use Edit tool; never `rm`). Optional tombstone comments for deleted entries.
-   f. Extract N=5 insights via reflection prompt.
-   g. Regenerate `MEMORY.md` from insights + survivors (keep index < 200 lines).
-   h. Commit with message: `dream: consolidate <project> memory (<n>→<m>)`.
+   a. Read `MEMORY.md` index + all `.md` memory files.
+   b. For each entry: retrieve top-5 neighbors by keyword-overlap (Counter frequency heuristic; v2 will use vector embeddings).
+   c. Prompt LLM: given candidate X and neighbors, decide ADD (new) / UPDATE (augment) / DELETE (contradicts) / NOOP (present).
+   d. Apply edits in place (tombstone comments for deleted entries; never `rm`).
+   e. Extract N=5 insights via reflection prompt.
+   f. Regenerate `MEMORY.md` from insights + survivors (keep index < 200 lines).
+   g. Commit with message: `dream: consolidate <project> memory (<n>→<m>)`.
 3. **Post-consolidation**: git operations confined to IDH; no writes to project repos.
 
 ## Flags
