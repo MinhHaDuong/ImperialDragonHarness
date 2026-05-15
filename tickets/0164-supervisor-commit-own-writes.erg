@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Fix nightbeat supervisor to commit its own writes before exiting
+Created: 2026-05-15
+Author: claude
+
+--- log ---
+2026-05-15T07:30Z claude created
+
+--- body ---
+## Context
+
+The nightbeat supervisor writes to tracked files (ticket log entries,
+`settings.json` model switches) but exits without committing them. The main
+repo is left dirty, and the next beat cycle's pre-flight dirty-tree check
+(added in PR #207) skips housekeeping until a human session cleans up.
+
+Observed overnight 2026-05-14→15: 4 consecutive beat runs aborted because
+the supervisor appended a log line to `tickets/0070` and changed
+`settings.json` from `haiku` to `sonnet` without committing either.
+
+The supervisor already commits some state (e.g. orphaned supervisor notes
+in `nightbeat-supervisor` skill). The gap is that inline writes during a
+cycle — ticket log entries added via `erg-pr-merge` side-effects, model
+switches done via settings.json edit — are not followed by a commit.
+
+## Actions
+
+1. Audit `skills/nightbeat-supervisor/SKILL.md` for every place the
+   supervisor writes to tracked files: ticket log entries, `settings.json`
+   model changes, STATE.md updates.
+2. After each such write, add: `git add <file> && git commit -m "chore(supervisor): <description>"`.
+3. Verify the supervisor cycle exits with a clean working tree by adding a
+   final `git status --porcelain` check that logs a warning if dirty.
+
+## Test
+
+Run a simulated supervisor cycle that appends a log entry to a ticket and
+changes `settings.json`. Assert `git status --porcelain` is empty after the
+cycle completes.
+
+## Exit criteria
+
+- [ ] `skills/nightbeat-supervisor/SKILL.md` includes a commit step after
+  every tracked-file write.
+- [ ] A final `git status --porcelain` guard logs a warning if anything is
+  left dirty at cycle end.
+- [ ] `make check` passes.
+- [ ] One full overnight beat run with no `aborted-dirty-tree` outcomes
+  attributable to supervisor writes (verified in next morning's
+  nightbeat-report).
