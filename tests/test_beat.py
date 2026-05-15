@@ -961,7 +961,7 @@ class TestHousekeepingPhase:
             tmp_project,
             "housekeeping",
             "aborted-dirty-tree",
-            detail="1 file(s): M dirty_file.py",
+            detail="pre-flight: 1 file(s): M dirty_file.py",
         )
 
     def test_raid_aborts_on_ci_failed(self, tmp_project, git_ok):

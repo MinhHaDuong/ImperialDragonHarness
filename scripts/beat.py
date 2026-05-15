@@ -887,6 +887,18 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
         _log(f"=== housekeeping: skipped {_now_iso()} ===")
         return "skipped"
 
+    status = _git("status", "--porcelain", cwd=path)
+    if status.stdout.strip():
+        dirty_files = status.stdout.strip().splitlines()[:5]
+        detail = f"{len(dirty_files)} file(s): {', '.join(dirty_files[:3])}"
+        _log(
+            f"=== housekeeping: skipped-dirty-tree (pre-flight): {detail} {_now_iso()} ==="
+        )
+        _record_phase_outcome(
+            path, "housekeeping", "aborted-dirty-tree", detail=f"pre-flight: {detail}"
+        )
+        return "aborted-dirty-tree"
+
     default_branch = _default_branch(path)
     base = _git("rev-parse", f"origin/{default_branch}", cwd=path).stdout.strip()
     if not base:
