@@ -1,0 +1,75 @@
+%erg 0.1
+Title: Clarify worktree-paths rule — main-branch exception for housekeeping
+Created: 2026-05-20
+Author: claude
+
+--- log ---
+2026-05-20T22:30Z claude created
+
+--- body ---
+## Context
+
+The `rules/workflow.md` "Worktree paths" section currently says:
+
+> In an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolute
+> path. Edits at `/home/haduong/<repo>/<file>` go to the **main repo**, not the
+> worktree. Always use worktree-rooted paths. Confirm with `pwd` and
+> `git branch --show-current` before committing — if branch is `main`, stop.
+
+The strict "if branch is main, stop" advice collides with `rules/git.md` which
+explicitly allows main commits for housekeeping:
+
+> Always work on a branch. Main is read-only except for STATE housekeeping.
+
+In practice, ticket lifecycle commits (close ticket, open ticket, batch close
+several) routinely land directly on main with a `tickets: ...` prefix — and
+this is the documented project norm in at least one project (AEDIST), with a
+long commit history of precedent (a81a452, 85a0e6c, 61b00d2, 8619f94).
+
+An agent following workflow.md literally stops at a legitimate housekeeping
+commit. An agent ignoring workflow.md drifts toward making real code changes
+on main. Both fail modes are real.
+
+## Actions
+
+1. Update `rules/workflow.md` "Worktree paths" section to enumerate the
+   accepted main-commit categories instead of a blanket "stop":
+   - STATE.md updates (already covered by git.md)
+   - Ticket lifecycle: closing finished tickets (adding `Closed:` header +
+     log entry), opening new tickets (creating `.erg` files), batch ticket
+     housekeeping
+   - Memory / configuration files outside the worktree's purview
+   For everything else (code, manuscript prose, data files), the "stop"
+   guidance still applies.
+
+2. Cross-reference: link this clarification to `git.md`'s main-readonly rule
+   so the two rules read as one coherent policy rather than two
+   contradictory ones.
+
+3. Consider: should there be a positive list of `tickets:` and `STATE:`
+   commit message prefixes that the verify-adherence skill recognizes as
+   sanctioned main commits? Out of scope for this ticket but worth a
+   follow-up.
+
+## Test
+
+There is no automated test for prose rules. Validation is by reading:
+- The updated section in `rules/workflow.md` enumerates the categories
+- A reader who picks up only `workflow.md` does not get a rule that
+  contradicts `git.md`
+
+## Exit criteria
+
+- [ ] `rules/workflow.md` "Worktree paths" updated with the enumerated
+      exception list
+- [ ] Cross-reference to `git.md` "Main is read-only except for STATE
+      housekeeping" added
+- [ ] No remaining `if branch is main, stop` unconditional in workflow.md
+
+## Notes
+
+- This is rules-only, no code touched.
+- Triggered by AEDIST session 2026-05-20: agent wrote ticket files to
+  `/home/haduong/<repo>/tickets/...` from within a worktree, committed them
+  on main, and pushed without incident — which workflow.md's literal reading
+  would have prevented but git.md's reading explicitly allows.
