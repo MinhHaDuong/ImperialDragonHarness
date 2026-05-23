@@ -78,3 +78,8 @@ Recommendation: **A** with env-var abstraction so any option works.
 ## Effort
 
 Medium — ~2 hours. Two short Python scripts + CLAUDE.md edit + env var setup.
+
+Additional consideration:
+Try using Aider for verification tasks.
+
+
