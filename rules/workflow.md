@@ -21,6 +21,17 @@ After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→
 
 After entering the worktree, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
 
+# Worktree paths
+
+During an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolute path. An edit at `/home/haduong/<repo>/<file>` lands in the **main repo**, not the worktree. Use worktree-rooted paths for code, prose, and data.
+
+Exception — the following may land directly on main without a branch:
+- `STATE.md` updates (always main — see `git.md` "Main is read-only except for STATE housekeeping")
+- Ticket lifecycle: closing finished tickets (`erg close`), opening new `.erg` files, batch ticket housekeeping
+- Harness memory and config files (`memory/*.md`, `settings.json`, `MEMORY.md`)
+
+For everything else (source code, manuscript prose, data files): if `git branch --show-current` is `main`, stop and switch to a branch first.
+
 # Escalation Protocol
 
 When stuck, escalate progressively:
