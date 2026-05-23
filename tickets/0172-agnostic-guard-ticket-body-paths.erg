@@ -1,0 +1,36 @@
+%erg 0.1
+Title: agnostic-guard: catch /home/[a-z] paths in ticket bodies before push
+Created: 2026-05-23
+Author: claude
+
+--- log ---
+2026-05-23T00:00Z claude created — pattern found during quickfixes session celebrate sweep
+
+--- body ---
+## Context
+
+The `scripts/check-agnostic.sh` check runs on `tickets/` as well as `skills/`.
+During the quickfixes session (2026-05-23), tickets 0166 and 0171 were committed
+to main with `/home/haduong/<repo>/<file>` examples in their bodies — authored
+by the HDMX-coding-agent with actual session paths. The agnostic-guard caught it
+only at CI time on the first PR (t170), requiring a fixup commit before merge.
+
+The root cause is agents writing ticket bodies with real paths from their session
+context instead of `~/<repo>/<file>` or `$HOME/<repo>/<file>`.
+
+## Exit criteria
+
+- [ ] A pre-commit hook or `make check` target runs `check-agnostic.sh tickets/`
+      and fails if any open ticket body contains a `/home/[a-z]` pattern.
+- [ ] The check runs on `tickets/` only (closed tickets in `tickets/closed/`
+      are already frozen — no need to amend them).
+- [ ] At least one adherence test in `tests/` exercises the check against a
+      synthetic ticket body containing a hardcoded home path and asserts failure.
+- [ ] `make check` passes after the change.
+
+## Notes
+
+- This is a class-shape regression guard: the same anti-pattern can recur any
+  time an agent creates a ticket from within a session with real paths.
+- Keep the fix minimal: the check already exists; this is just about running it
+  automatically on commit or in the test suite, not rewriting the check.
