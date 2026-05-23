@@ -114,7 +114,13 @@ fi
 # ── Step 3: squash-merge via forge CLI (works in worktrees and on VMs) ───────
 
 echo "Merging PR #${PR}..."
-gh pr merge "$PR" --squash --delete-branch # harness-extension-point
+if in_worktree; then
+    # deleteBranchOnMerge cleans the remote; the local flag would fail
+    # on the primary worktree's main-lock (see ticket 0170).
+    gh pr merge "$PR" --squash # harness-extension-point
+else
+    gh pr merge "$PR" --squash --delete-branch # harness-extension-point
+fi
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
 
