@@ -2,10 +2,12 @@
 Title: erg-pr-merge — drop --delete-branch when run inside a git worktree
 Created: 2026-05-23
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #211
 
 --- log ---
 2026-05-23T14:25Z HDMX-coding-agent created — recurring main-lock error during a merge-heavy session in aedist-technical-report
 
+2026-05-23T14:55Z MinhHaDuong closed — autoclosed — PR #211
 --- body ---
 ## Context
 
