@@ -1,0 +1,54 @@
+%erg 0.1
+Title: PreToolUse hook — warn when Write/Edit targets the main repo path during a worktree session
+Created: 2026-05-23
+Author: HDMX-coding-agent
+
+--- log ---
+2026-05-23T14:25Z HDMX-coding-agent created — wasted edit + main-repo revert during worktree session in aedist-technical-report
+
+--- body ---
+## Context
+
+During an `EnterWorktree` session, `Write`/`Edit`/`Read` accept any absolute path.
+An edit to `/home/haduong/<repo>/<file>` lands in the **main repo**, not the
+worktree — the project rule `.claude/rules/workflow.md` ("Worktree paths") warns
+about exactly this, but nothing enforces it.
+
+On 2026-05-23 a `Write` to `<repo>/.github/workflows/CI.yml` (instead of the
+worktree-rooted path) silently edited the main repo's working tree. It was caught
+only because a later `uv` parse read the *worktree* copy and mismatched. Cost: one
+wasted edit, plus a `git restore` to clean the stray modification off main.
+
+This is a class of error (any agent, any session), high-frequency in worktree-heavy
+workflows, and the failure is silent — the write succeeds, just in the wrong tree.
+
+## Exit criteria
+
+- [ ] A `PreToolUse` hook (matcher: `Write|Edit|NotebookEdit`) fires when a worktree
+      session is active AND the tool's `file_path` resolves under the primary repo
+      root rather than the active worktree root.
+- [ ] On match it WARNS (declarative, non-blocking by default) with the corrected
+      worktree-rooted path, e.g. "path resolves to main repo; did you mean
+      <worktree>/<relpath>?". Per workflow.md, hook output must be declarative, not
+      an imperative "INSTRUCTION:" (the model classifies imperative hook text as
+      prompt injection and ignores it).
+- [ ] No false positive when the path is already inside the active worktree, or when
+      no worktree session is active (hook is a silent no-op).
+- [ ] First test: feed the hook a synthetic PreToolUse payload (main-repo path while
+      a worktree is active) on stdin and assert the warning is emitted; feed a
+      worktree-rooted path and assert silence. Pure stdin/stdout, no real git state.
+
+## Guidance
+
+- Detect "worktree session active" the same way `erg-pr-merge:in_worktree()` does:
+  `git rev-parse --git-common-dir` != `git rev-parse --git-dir`. The active worktree
+  root is `git rev-parse --show-toplevel` from the session cwd; the primary repo root
+  is the parent of `--git-common-dir`.
+- Decision to make during Plan: warn-only vs. block (`exit 2`). Lean warn-only first —
+  blocking risks false positives on legit cross-repo edits (the env has additional
+  working dirs). Revisit if warnings prove insufficient.
+- Scope the matcher to write tools only; never gate `Read` (read-from-main is
+  sometimes intentional).
+- Wire via `settings.json` hooks, not a skill (this is automatic behaviour).
+
+Sibling from same session: [[0170]] (erg-pr-merge --delete-branch). No dependency.

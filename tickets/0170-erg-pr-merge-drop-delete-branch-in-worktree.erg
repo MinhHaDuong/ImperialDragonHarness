@@ -1,0 +1,75 @@
+%erg 0.1
+Title: erg-pr-merge — drop --delete-branch when run inside a git worktree
+Created: 2026-05-23
+Author: HDMX-coding-agent
+
+--- log ---
+2026-05-23T14:25Z HDMX-coding-agent created — recurring main-lock error during a merge-heavy session in aedist-technical-report
+
+--- body ---
+## Context
+
+`skills/merge/erg-pr-merge` line 117 runs unconditionally:
+
+```bash
+gh pr merge "$PR" --squash --delete-branch # harness-extension-point
+```
+
+When invoked from inside a git worktree, the **server-side squash succeeds**, but
+`gh`'s local `--delete-branch` cleanup then fails:
+
+```
+failed to run git: fatal: 'main' is already used by worktree at <primary-repo>
+```
+
+`gh pr merge --delete-branch` tries to switch the local checkout off the merged
+branch; it can't, because `main` is held by the primary worktree. The command
+exits non-zero, so callers (and the `/merge` skill) treat a successful merge as a
+failure and start retrying. In a session on 2026-05-23 this bit three consecutive
+PRs (#452/#457/#458 in aedist-technical-report) before the operator dropped the flag.
+
+The flag is redundant in every repo that sets `deleteBranchOnMerge: true` (all of
+them, per git.md) — GitHub deletes the remote branch on merge regardless.
+
+The script **already** detects worktrees: `in_worktree()` at line ~25, used at
+step 4 (line ~121) to skip the base-branch checkout. The merge call simply doesn't
+consult it.
+
+## Exit criteria
+
+- [ ] Line 117 no longer passes `--delete-branch` when `in_worktree` returns true.
+      Outside a worktree, behaviour is unchanged (`--delete-branch` still passed).
+- [ ] After the change, a worktree merge prints the merge confirmation and exits 0;
+      the remote branch is gone (verify `git ls-remote --heads origin <branch>` empty).
+- [ ] First test (source-inspection, no network): assert the merge invocation is
+      guarded by `in_worktree`. e.g. a shell/bats check that
+      `grep -A2 'gh pr merge' erg-pr-merge` shows the `--delete-branch` variant only
+      in the non-worktree branch:
+
+      ```bash
+      run grep -c -- '--delete-branch' skills/merge/erg-pr-merge
+      [ "$output" -eq 1 ]            # exactly one, in the else/non-worktree path
+      run bash -c 'sed -n "/in_worktree;/,/fi/p" skills/merge/erg-pr-merge | grep -c -- "--delete-branch"'
+      [ "$output" -eq 0 ]           # never in the worktree path
+      ```
+- [ ] Comment on line 117 updated to explain the worktree carve-out.
+
+## Guidance
+
+Minimal shape:
+
+```bash
+echo "Merging PR #${PR}..."
+if in_worktree; then
+    # deleteBranchOnMerge cleans the remote; local --delete-branch would fail
+    # on the primary worktree's main-lock. See ticket 0170.
+    gh pr merge "$PR" --squash # harness-extension-point
+else
+    gh pr merge "$PR" --squash --delete-branch # harness-extension-point
+fi
+```
+
+Keep the `# harness-extension-point` marker on whichever line(s) downstream tooling
+greps for. Don't refactor the surrounding step-3/step-4 structure.
+
+Sibling from same session: [[0171]] (worktree-path write guard). No dependency.
