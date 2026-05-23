@@ -44,6 +44,14 @@ Save a feedback memory at each escalation (what failed, why). Stop if repeating 
 - **Max 4 concurrent agents.** Beyond that, coordination overhead exceeds the gains.
 - **One well-prompted agent first.** Only add agents when a single agent clearly can't handle the task.
 
+# Ticket discipline for multi-PR work
+
+**One PR closes exactly one ticket.** `erg-pr-merge` closes whatever ticket appears in the PR body's `**Ticket:**` line — unconditionally, regardless of whether all exit-criteria checkboxes are ticked.
+
+When a ticket has multiple sub-tasks that will land in separate PRs: split into child tickets (one per PR) before work starts. Each child PR closes its own child ticket. The parent ticket stays open until all children are merged.
+
+Do NOT put the same `**Ticket:**` line in multiple PRs unless the intent is to close it on the first merge.
+
 # Compaction
 
 When compacting, preserve the list of modified files, test commands, and current implementation plan.
