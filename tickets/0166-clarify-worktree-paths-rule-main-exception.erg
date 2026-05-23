@@ -12,7 +12,7 @@ Author: claude
 The `rules/workflow.md` "Worktree paths" section currently says:
 
 > In an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolute
-> path. Edits at `/home/haduong/<repo>/<file>` go to the **main repo**, not the
+> path. Edits at `~/<repo>/<file>` go to the **main repo**, not the
 > worktree. Always use worktree-rooted paths. Confirm with `pwd` and
 > `git branch --show-current` before committing — if branch is `main`, stop.
 
@@ -70,6 +70,6 @@ There is no automated test for prose rules. Validation is by reading:
 
 - This is rules-only, no code touched.
 - Triggered by AEDIST session 2026-05-20: agent wrote ticket files to
-  `/home/haduong/<repo>/tickets/...` from within a worktree, committed them
+  `~/<repo>/tickets/...` from within a worktree, committed them
   on main, and pushed without incident — which workflow.md's literal reading
   would have prevented but git.md's reading explicitly allows.
