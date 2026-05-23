@@ -11,6 +11,30 @@ Run full repo housekeeping and act on every finding.
 
 ## Steps
 
+0. **Active-session guard.** Before doing anything else, check for other live Claude sessions on this repo:
+
+   ```bash
+   git worktree list --porcelain | grep -E '^(worktree|locked|reason)' 
+   ```
+
+   For each worktree entry that has a `locked` line, extract the PID from the reason (format: `claude agent <name> (pid <N>)`):
+
+   ```bash
+   ps -p <N> -o pid= 2>/dev/null
+   ```
+
+   If **any** locked worktree has a live PID, **stop immediately** — print:
+
+   ```
+   ⚠ Housekeeping aborted: another Claude session is active (pid <N>, branch <branch>).
+   Locked worktrees: <list>
+   Re-run housekeeping after that session exits.
+   ```
+
+   Do not proceed past step 0. The fix-now deletions and STATE timestamp commit would race with the other session's uncommitted work.
+
+   Exception: `BEAT_HOUSEKEEPING_BRANCH` is set — beat.py manages concurrency itself; skip this guard.
+
 1. **Git phase.**
    - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(scripts/housekeeping-git.sh)` from the project root.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.

@@ -17,4 +17,7 @@ cjk = len(re.findall(r'[一-鿿㐀-䶿]', text))
 lat = len(re.findall(r'[a-zA-ZÀ-öø-ÿ]+', text))
 tokens = cjk + int(lat * 1.3)
 ```
+
+`select_dataset.py:count_content_words()` fixed PR #100. `extract.py` (4 guards) and `harvest_corpus.py:count_words()` fixed PR #103 (ticket 0217). Remaining instances: `extract_mistral_ocr.py:136` (ticket 0219), `fetch_from_inventory.py:467,553,770` (ticket 0220). Standing regression test planned in ticket 0221.
+
 Linked: [[per-backend-queue-scheduler]] — same class of silent numeric failure.
