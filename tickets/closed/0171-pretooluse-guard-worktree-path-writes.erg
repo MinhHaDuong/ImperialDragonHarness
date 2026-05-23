@@ -2,10 +2,12 @@
 Title: PreToolUse hook — warn when Write/Edit targets the main repo path during a worktree session
 Created: 2026-05-23
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #212
 
 --- log ---
 2026-05-23T14:25Z HDMX-coding-agent created — wasted edit + main-repo revert during worktree session in aedist-technical-report
 
+2026-05-23T14:58Z MinhHaDuong closed — autoclosed — PR #212
 --- body ---
 ## Context
 
