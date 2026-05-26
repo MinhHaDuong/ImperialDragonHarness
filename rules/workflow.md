@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-05-12 -->
+<!-- last-reviewed: 2026-05-26 -->
 # Session Start
 
 At the beginning of every conversation:
@@ -20,6 +20,18 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
 
 After entering the worktree, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
+
+## 2. Sync before starting work
+
+Before substantial work — **not just before branching** — fetch and scan for parallel or already-merged work:
+
+```bash
+git fetch origin
+git log --oneline HEAD..origin/main         # what landed upstream since your base
+git diff --name-only origin/main...HEAD      # files you'd touch that upstream also changed
+```
+
+If `origin/main` is ahead and overlaps your area, reconcile first (rebase onto it, or cut a fresh branch from `origin/main`) **before writing code**. Skipping this risks reinventing work that parallel raid/nightbeat agents already merged — it bit once (2026-05-26): an entire ticket's fixes were duplicated, less completely, from a base ~15 commits stale, caught only at PR time. The fetch is cheap; the rework is not. (To test whether a path exists at a ref, use `git cat-file -e <ref>:<path>` — `git ls-tree <ref> <path> && …` exits 0 even when the path is absent.)
 
 # Worktree paths
 
