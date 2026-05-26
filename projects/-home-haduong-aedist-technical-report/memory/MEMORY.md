@@ -1,0 +1,102 @@
+## Key insights
+
+- FP labeling: say "non-reconnus/unrecognized" not "hallucinés/hallucinated" for LP-irreconcilable assets — some are LP name-variant failures, not model errors. See [[feedback-fp-unrecognized-not-hallucinated]].
+- Ruff post-edit hook strips imports between Edits — always add import + first usage in one Edit block; same trap hits DictWriter fieldnames and `--model-set` dispatch paths.
+- Git state surgery starts with diagnosis: `git log HEAD origin/main` + worktree list before acting; DU flood from interrupted checkout clears with `git reset --mixed HEAD`; `git fetch origin` after every API merge — local ref is stale until then.
+- Experiment data integrity is explicit discipline: archive outputs are integrity signals (never chmod), smoke `--promote-as-production` saves correct filenames, `make rebuild-measurements` destroys all records, verify prose claims against raw data not summaries.
+- Ticket/PR precision prevents silent work loss: erg-pr-merge closes **Ticket:** unconditionally — split multi-PR work into child tickets; detect partial success (ticket closed, merge failed) and skip to `gh api merge`; fetch origin/main before picking ticket IDs.
+- Provider quirks accumulate silently: `reasoning_effort="minimal"` turns thinking ON; Qwen `*:free` rate-limits in seconds; MoE needs `repeat=3`; local routing is `llama_server` (Ollama deprecated); Padme is serial-only for Ollama.
+- Stale pre-fix PDFs: after patching a plot script, always rebuild before committing — PDFs in working tree may predate the fix; size should grow when adding content, shrink signals regression.
+- Conference delivered 2026-05-27 (Econom'IA 2026 at Thema/Cergy) — paper writing phase now open; H1-H4 and OSF preregistration relevant again for journal submission.
+
+## Entries
+
+- [Parallel push during investigation](feedback_parallel_push_during_investigation.md) — always branch from `origin/main` after fetch, not local HEAD; user may push directly while agent investigates
+
+- [Argparse defaults drift](feedback_argparse_defaults_drift.md) — when Makefile output paths change, update argparse defaults + docstrings in generating scripts too; grep src/ before declaring done
+- [Chore branch + data commits](feedback_rebase_chore_data_branch.md) — don't mix data commits (CSV scoring, figure rebuilds) onto chore/ base branches; causes dense rebase conflicts at merge
+- [Frozen results chmod](feedback_frozen_results_chmod.md) — read-only perms on experiment outputs are integrity signals; never chmod without explicit confirmation
+- [xargs env var syntax](feedback_xargs_env_var.md) — xargs can't interpret VAR=value; use `env VAR=value cmd` prefix
+- [uv run --project cwd and $(CURDIR)](feedback_uv_run_project_cwd.md) — use $(CURDIR) for job dir paths in Makefiles; relative paths safe but fragile
+- [Exp1 batch2 canonical dataset](project_exp1_batch2.md) — 14 models × 5 reps, exp1_batch2/, manager+worker pipeline, qwen3.6-27b dropped
+- [erg premature autoclosure](feedback_erg_premature_autoclosure.md) — erg-pr-merge closes ticket unconditionally; split multi-PR tickets into children or delay **Ticket:** line
+- [Ticket line in PR](feedback_ticket_line_in_pr.md) — only put **Ticket:** in PR body when that ticket will actually be closed; admin PRs omit it
+- [Permutation test power](feedback_permutation_test_power.md) — min attainable p = 1/2^n; with n=4 subjects p<0.05 is unreachable; check before writing threshold
+- [Compute before figure](feedback_compute_before_figure.md) — run throwaway data script first; catches prose claim errors and N-count surprises before writing plot code
+- [Zotero API access](reference_zotero.md) — user ID 95318, API key for downloading PDFs from haduong's library
+- [API keys location](reference_api_keys_location.md) — project `.env` has OPENROUTER_API_KEY; use `UV_ENV_FILE=.env` for experiment scripts, not `~/.claude/.env`
+- [Econom'IA 2026 venue](reference_econom_ia_2026.md) — conference URL and abstract location
+- [Padme local AI infra](project_padme_local_infra.md) — GROBID, Ollama, GPUs; user prefers local-first pipelines
+- [Local routing → llama_server](project_local_routing_llama_server.md) — Ollama deprecated; llama_server uses OpenAI-compatible API and inherits the OpenRouter dispatch path
+- [Harness architecture: git-erg vs IDH](project_harness_architecture.md) — git-erg travels with repo (project-level); IDH is user-level, never vendor into projects
+- [Econom'IA 2026 deadline](project_econom_ia_2026.md) — talk 2026-05-27 at Thema/Cergy, slides (FR) required, "Beyond RAG" thesis
+- [Paper sequencing](project_paper_sequencing.md) — report stays exploratory; slides first (deadline 2026-05-27), paper writing opens after slides locked
+- [Padme Ollama serial](feedback_padme_ollama_serial.md) — workstation is Padme; only ONE Ollama job at a time; never parallelize Ollama-bound work
+- [Imagine mode = design dialogue](feedback_imagine_mode.md) — "braindump" / "imagine mode" = reflect and sharpen, don't commit to docs until ratified
+- [ESCALATE = think harder, not stop](feedback_escalate_means_think_harder.md) — verify-gate ESCALATE means use advisor/ultrathink and fix autonomously; only surface to human if fix requires information they alone have
+- [Ticket log entry placement](feedback_ticket_log_placement.md) — log entries go before --- body ---, never append at EOF (lands in body section)
+- [DictWriter fieldnames must match rows](feedback_csv_writer_fieldnames.md) — update fieldnames + test assertion when adding keys to row dicts
+- [--model-set dispatch path not tested](feedback_model_set_dispatch_test_gap.md) — imports in if args.model_set: branches get ruff-stripped silently; ticket 0162 tracks the fix
+- [seed silent-drop bug](project_seed_silentdrop_bug.md) — seed=42 in 57 sweeps was silently dropped; pre-0139 MoE runs uncontrolled for seed/provider routing
+- [Raid budget recovery](feedback_raid_budget_recovery.md) — on budget exhaustion, inspect locked worktree first; uncommitted work may be salvageable
+- [F1=None means non-attempt, not zero](project_f1_none_semantics.md) — f1=None = refusal/format error; exclude from means, report n_valid/n_total
+- [erg auto-archives to tickets/closed/](project_erg_closed_dir.md) — erg close triggers batch archival; expect git status "D" flood; Blocked-by refs to closed/ break validation
+- [H1–H4 deprioritised for conference push](project_h1_h4_hypotheses.md) — conference (2026-05-27) is slides/manuscript/main.md driven; H1–H4 and OSF off the critical path
+- [H3 empirical, not impossibility](feedback_h3_empirical_not_impossibility.md) — use "does not" not "cannot"; H3 is SOTA observation, not impossibility claim
+- [Phase B-0 N=1 gate](project_phase_b0_n1_gate.md) — SOTA 4-agent experiment runs N=1 smoke first, gating N=3 on review
+- [Exp 1 design: thinking allowed, no web](project_exp1_design_thinking_allowed.md) — parametric ceiling = best F1 from memory; constraint is no-web (via system_instruction), thinking-on is fine
+- [Test one before blasting at experiment level](feedback_test_one_before_blasting_experiment_level.md) — the project rule applies to experiment design too, not only per-call
+- [Killed agent salvage](feedback_killed_agent_salvage.md) — TaskStop on raid subagent leaves locked worktree + claimed branch + uncommitted WIP; commit WIP before remove
+- [Rebase-drop cascade](feedback_rebase_drop_cascade.md) — sequential merges of wave PRs touching same registry set drop the PR's addition during rebase; resurrection pattern documented
+- [git pull on diverged main creates merge commit](feedback_git_pull_creates_merge_commit.md) — check left-right divergence before pulling; if local main is ahead, branch off instead
+- [/merge main-lock wrinkle](feedback_merge_skill_main_lock.md) — /merge exits non-zero on local cleanup when main is held elsewhere; GitHub-side merge already succeeded, verify via gh pr view
+- [Exp 1 done](project_exp1_done.md) — 16 models × 5 reps = 80 rows / 77 ok / 3 declined / $2.85; cost summary via `make exp1-cost-summary`; 0178 manuscript update is next
+- [Refusal is data](feedback_refusal_is_data.md) — when a model declines on principled grounds (GPT-5.5, qwen3-max-thinking), classifier returns "refusal" and manuscript reports as "declined"
+- [Namespace migration trap](feedback_namespace_migration_trap.md) — in-place jsonl migrations leave source .record.json stale; every rebuild silently reverts unless sources also migrated; see scripts/migrate_record_json.py pattern
+- [smoke --promote-as-production](feedback_smoke_promote_production.md) — flag (PR #363) saves smoke calls as `{slug}-run{N}.json` without smoke marker; avoids manual rename + JSON-edit dance for production reps
+- [arms_runs CSV has no n_matched](feedback_arms_runs_csv_no_nmatched.md) — use tab_exp2_arms_runs_view.csv for coverage scores; base CSV is cost/timing only
+- [Verify prose claims against raw data](feedback_verify_prose_claims.md) — manuscript numbers must be queried, not reconstructed from summaries; PR #371 had 2 factual errors caught by /verify
+- [LP matcher cost function](project_lp_matcher_cost.md) — name similarity + capacity only; province/fuel deliberately excluded (ADR-3); default similarity_threshold=90, capacity_weight=0.001
+- [Semantic-completeness test for resolvers](feedback_semantic_completeness_resolvers.md) — hand-crafted unit tests miss live-data gaps; parametric iteration over measurements.jsonl catches "I forgot about model X" (cogito/granite caught by /verify PR #380)
+- [gh pr edit blocked here](feedback_gh_pr_edit_blocked.md) — title/body edits fail with classic-projects GraphQL error; use `gh pr comment` instead, don't retry
+- [Audit before extra='forbid'](feedback_pydantic_forbid_extras_audit.md) — flipping extra='forbid' on a config-loading Pydantic model needs a key-by-key audit first; converts medium risk to small change
+- [/verify routes to healthcheck on 2nd call](feedback_verify_re_invocation_routes_healthcheck.md) — after REROLL push, second /verify <pr> may return healthcheck; fall back to /verify-gate <pr>
+- [Supervised runs need no standing guards](feedback_supervised_runs_no_standing_guards.md) — don't propose AST/adherence tests for user-driven callsites; worker-pipeline guards yes, smoke/CLI guards no (0195 wontfix)
+- [OpenRouter reasoning_effort semantics](project_openrouter_reasoning_effort.md) — "minimal" turns reasoning ON; absence turns it OFF; the comment in models.yaml claiming otherwise is empirically backwards
+- [Check origin/main for ticket ID before picking](feedback_ticket_id_collision_check.md) — fetch+ls-tree origin/main before Writing new tickets/NNNN-*.erg; local listing misses in-flight commits
+- [Exp 3 reconstruction sweep](project_exp3_reconstruction_sweep.md) — 5 strategies × 5 models × 3 reps, HITL 3-tier verification, mistral-embed ranker; full spec in 0202
+- [Source classification scheme](project_source_classification_scheme.md) — Tier 1/2/3 by epistemic role; four-oracle Tier-2 (pipeline.ods, rag_corpus, Zotero, allowlist); Tier-3 default-exclude; canonical in verification_methods.tex §verif-filter
+- [Talk narrative: three experiments + case study](project_talk_narrative_three_plus_case_study.md) — Exp 1/2/3 + 0200 case study (time permitting); locked 2026-05-21, 0200 retitled from "Exp 3"
+- [Design debate, not ouioui](feedback_design_debate_not_ouioui.md) — challenge slide/document structure proposals with 3-agent debate before committing; don't default to agreement on design questions
+- [Beamer plain frame sizing](feedback_beamer_plain_frame_sizing.md) — [plain] full-page figure frames need width=\paperwidth AND height=\paperheight with keepaspectratio
+- [size_class per-record split](feedback_size_class_per_record_split.md) — model attrs in measurements.jsonl can vary across reps; resolve once per model before sorting, not per record
+- [/merge leaves worktree on main](feedback_merge_leaves_worktree_on_main.md) — after merge, worktree's HEAD is on local main; branch BEFORE the next Edit or stray commits land on main
+- [Main repo on foreign branch](feedback_main_repo_on_foreign_branch.md) — during a raid the main checkout may be on another session's feature branch; ticket-closure/STATE commits meant for main land wrong — switch a worktree to main instead
+- [pathlib with_suffix on dotted stems](feedback_pathlib_with_suffix_dotted_stems.md) — `Path("foo.bar-baz").with_suffix(".x")` returns `foo.x`; use string slicing when input stem may contain dots
+- [make rebuild-measurements destroys records](feedback_make_rebuild_measurements_destroys_records.md) — deletes ALL .record.json before regenerating; if downstream fails you lose cohort records, restore from git
+- [gpt-oss-* lives in gpt family](project_gpt_oss_family.md) — open-weight but architecturally GPT; family-based panel labels must not say "closed-source" or "open-weight" unless explicitly filtered
+- [Qwen free-tier rate limit](feedback_qwen_free_tier_rate_limit.md) — `*:free` qwen/deepseek models on OpenRouter rate-limit within seconds; serialise with 180s+ pauses, never include in parallel-worker drains
+- [claude-code-cli route](reference_claude_cli_route.md) — ticket 0160 / PR #395; runs Claude via user's CC session, no ANTHROPIC_API_KEY; suggest for capability checks (NOT controlled sweeps — no T=0/seed/max_tokens)
+- [Run adherence tests locally before push](feedback_run_adherence_locally_before_push.md) — `pytest -m adherence` catches plot-color/import violations in 30s; saves a CI round-trip
+- [erg-pr-merge partial success](feedback_erg_pr_merge_partial_success.md) — if ticket-close push succeeded but merge failed, ticket already closed; skip to `gh api .../merge` directly
+- [CI chore-bypass via workflow path-filter](project_ci_chore_bypass_workflow.md) — DONE (#458): CI.yml skips lint/tests on ticket/STATE-only diffs (dorny/paths-filter, predicate-quantifier every, fail-safe)
+- [gh pr merge --delete-branch in worktree](feedback_gh_pr_merge_delete_branch_worktree.md) — drop `--delete-branch` from a worktree (main-lock error); merge succeeds server-side; auto-merge now enabled repo-wide
+- [Agent identity separation](project_agent_identity_separation.md) — post-conference: give Copilot/HDMX-coding-agent a non-admin GitHub identity so `enforce_admins: true` actually protects against agent red-merges
+- [git cherry misleads on squash merge](feedback_git_cherry_misleads_on_squash_merge.md) — historical: old PRs were squash-merged; `git cherry +` misleads on those; use `gh pr view` probe. Squash disabled 2026-05-25.
+- [Exp 2 Phase B done](project_exp2_phase_b_done.md) — Exp 2 = TWO arms (naive comparator vs optimized), 4 agents × 5 reps each; optimized Phase B done (0242); Phase C cross-eval scores BOTH arms (40 outputs), tracked in 0171
+- [README: no autoscript](feedback_readme_no_autoscript.md) — write output folder READMEs by hand; user rejected Python script approach explicitly
+- [Anthropic adapter filename](project_anthropic_adapter_name.md) — `query_anthropic.py` not `adapter_anthropic.py`; retry target is `dispatch()` ~line 385
+- [Branch from stale local main](feedback_branch_from_stale_local_main.md) — fetch+scan origin/main before *starting* work, not just branching; reinvented already-merged 0346 work from a stale base (2026-05-26)
+- [git existence check](feedback_git_existence_check.md) — `git ls-tree ref path && echo` false-positives; use `git cat-file -e ref:path` to test a path exists at a ref
+- [Squash merge disabled](project_squash_merge_disabled.md) — disabled 2026-05-25; use `--merge` / `merge_method=merge` everywhere; git merge-base works correctly for new PRs
+- [Use auto-merge when CI blocks](feedback_use_auto_merge.md) — erg-pr-merge fails on pending CI? → `gh pr merge N --merge --auto`; don't poll, move on
+- [PR without Ticket line](feedback_pr_no_ticket_line.md) — follow-on PRs with no **Ticket:** line: skip erg-pr-merge, go straight to `gh api .../merge`; rebase if `strict: true` branch protection
+- [Plot axis: ask count vs ratio](feedback_plot_axis_ask_count_vs_ratio.md) — before implementing a derived Y-axis metric, ask if user wants absolute count or ratio; ratios have denominator edge cases
+- [exp2_interactive_smoke PYTHONPATH](feedback_exp2_interactive_smoke_pythonpath.md) — requires `PYTHONPATH=.` prefix; `experiments/` is not an installed package
+- [Unit suffix stripping design](feedback_unit_suffix_stripping_design.md) — strip from fixed reference set, not dynamic DataFrame; see [[project-lp-mismatched-fix]]
+- [LP Mismatched fix](project_lp_mismatched_fix.md) — Mismatched mis-routed to EXACT_CAPACITY_DIFF pre-2026-05-25; PR #547 corrected; pre-fix metrics inflated
+- [Experiment costs](project_experiment_costs.md) — Exp1 $2.85 / Exp3 arm1 $12.97 / Exp3 arm2 $14.48 / Exp3 total $27.44 / grand total $30.29 (as of 2026-05-25)
+- [Modify/delete rebase](feedback_modify_delete_rebase.md) — when parallel commit deletes a file the branch modifies, accept deletion then manually migrate new content to surviving location; check for build refactor commits before starting Makefile work
+- [Presence metrics saturate in Exp 1](feedback_presence_metrics_saturate.md) — source_presence/field_completeness trivially 1.0 in parametric condition; use diversity/spread/validity metrics instead
+- [API merge fetch after](feedback_api_merge_fetch_after.md) — after gh api .../merge, run git fetch origin before reading git log origin/main; local ref is stale until fetch
+- [Verify artifacts after Python fix](feedback_verify_artifacts_after_fix.md) — always rebuild PDFs after patching a plot script; stale pre-fix PDFs in working tree look modified but are wrong; size shrink signals regression
