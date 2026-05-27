@@ -7,6 +7,7 @@ Author: HDMX-coding-agent
 2026-05-21T00:16Z HDMX-coding-agent created
 2026-05-21T07:32Z claude note re-filed from aedist-technical-report/tickets/0189 — this is user-level skill work, not project work; ref to former 0188 updated to 0167
 
+2026-05-27T20:53Z claude note salvage script + PreToolUse remove-WIP guard + raid circuit-breaker prose added; pending merge + next-raid observation
 --- body ---
 ## Context
 
