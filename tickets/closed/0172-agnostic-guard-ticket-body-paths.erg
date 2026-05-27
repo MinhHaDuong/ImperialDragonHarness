@@ -2,16 +2,19 @@
 Title: agnostic-guard: catch /home/[a-z] paths in ticket bodies before push
 Created: 2026-05-23
 Author: claude
+Closed: make check now runs agnostic guard on open ticket bodies; adherence test added; make check + 237 tests green
 
 --- log ---
 2026-05-23T00:00Z claude created — pattern found during quickfixes session celebrate sweep
 
+2026-05-27T19:56Z claude note wired check-agnostic.sh tickets into make check; closed/ subdir exempted; added tests/test_check_agnostic.py
+2026-05-27T19:56Z Claude closed — make check now runs agnostic guard on open ticket bodies; adherence test added; make check + 237 tests green
 --- body ---
 ## Context
 
 The `scripts/check-agnostic.sh` check runs on `tickets/` as well as `skills/`.
 During the quickfixes session (2026-05-23), tickets 0166 and 0171 were committed
-to main with `/home/haduong/<repo>/<file>` examples in their bodies — authored
+to main with `/home/<user>/<repo>/<file>` examples in their bodies — authored
 by the HDMX-coding-agent with actual session paths. The agnostic-guard caught it
 only at CI time on the first PR (t170), requiring a fixup commit before merge.
 

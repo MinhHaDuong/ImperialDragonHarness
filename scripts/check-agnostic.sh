@@ -2,6 +2,7 @@
 # Detect consumer-project assumptions in harness skills and tickets.
 # Usage: check-agnostic.sh [dir ...]   (default: skills tickets)
 # Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line.
+# `closed/` subdirs are skipped — closed tickets are frozen archives, not amended.
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
@@ -47,7 +48,7 @@ check_pattern() {
         fi
         echo "VIOLATION [$pattern]: $file:$lineno: $line"
         fail=1
-    done < <(grep -rn "$pattern" "$dir" 2>/dev/null || true)
+    done < <(grep -rn --exclude-dir=closed "$pattern" "$dir" 2>/dev/null || true)
 }
 
 for dir in "${DIRS[@]}"; do
