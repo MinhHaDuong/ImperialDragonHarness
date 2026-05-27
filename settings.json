@@ -124,6 +124,16 @@
         ]
       },
       {
+        "matcher": "Bash(git worktree remove*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-worktree-remove-wip.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

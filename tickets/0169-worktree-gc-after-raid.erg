@@ -7,6 +7,7 @@ Author: HDMX-coding-agent
 2026-05-21T00:17Z HDMX-coding-agent created
 2026-05-21T07:32Z claude note re-filed from aedist-technical-report/tickets/0190 — this is user-level skill work, not project work
 
+2026-05-27T20:53Z claude note worktree-gc.sh + celebrate/housekeeping GC steps + pytest coverage added; pending merge + next-raid observation
 --- body ---
 ## Context
 

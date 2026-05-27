@@ -79,8 +79,29 @@ Launch agents by cluster to cross-check plans:
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts
+- Cross-cutting registries: a file holding a shared hash-set / dict / dispatch
+  table (test allowlist, dispatch keys, config conventions) that 3+ PRs will
+  edit. Flag any you find — they trigger the Phase 5.0 coordination PR.
 
 Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
+
+## Phase 5.0: Land coordination PR (cross-cutting registries)
+
+**When**: 3+ PRs in a wave will edit the same file holding a shared
+hash-set / dict / dispatch registry (test allowlists like `VALID_ROUTES`,
+dispatch keys, config-file conventions). If ≤2 PRs touch it, skip — a manual
+rebase is cheaper than the coordination overhead.
+
+**Why**: when N parallel PRs each append to the same cross-cutting set, the
+rebase onto sibling-merged main silently drops each PR's own addition. Wave 2
+(SOTA-adapter raid, 2026-05-20) needed a resurrection agent for 3 of 4 merges
+because of this. (memory: feedback_rebase_drop_cascade)
+
+**How**: before opening any Wave-N PR, open one tiny PR that adds ALL of the
+wave's entries to the shared registries at once, and merge it first. Each
+Wave-N PR then makes a purely additive change (new file, new entry referencing
+a pre-registered key) without mutating the shared set. The coordination PR
+itself follows the normal verify/merge gates.
 
 ## Phase 5: Execute (waves, worktree-isolated)
 
@@ -168,9 +189,25 @@ All three triggers below require a bump log line written to the **main-repo**
 `tickets/` directory (not the killed agent's worktree copy), committed before
 relaunching: `{ISO8601} claude bump circuit-breaker — {reason}`.
 
-**Agent timeout**: If an agent has not pushed within 10 minutes,
-kill it. Split the ticket or relaunch with narrower scope.
-Bump reason: `agent timeout`.
+**Killing a mid-execution agent — salvage WIP first.** Before any
+`git worktree remove` on a killed agent's worktree, salvage its work so it
+survives the deletion:
+
+```bash
+~/.claude/scripts/worktree-salvage.sh <worktree-path>
+```
+
+This commits everything on the agent's branch and pushes it. A PreToolUse guard
+enforces the order: `git worktree remove` is blocked while the worktree has
+uncommitted changes. Relaunch the finisher on the **existing** branch with
+`git switch <branch>` (NOT `-c`); it inspects the salvaged WIP via
+`git show --stat HEAD` before continuing rather than starting from scratch.
+Salvage is the FIRST step of any restart, not an afterthought.
+(memory: feedback_killed_agent_salvage)
+
+**Agent timeout**: If an agent has not pushed within 10 minutes, salvage its
+worktree (above), then kill it. Split the ticket or relaunch with narrower
+scope. Bump reason: `agent timeout`.
 
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
