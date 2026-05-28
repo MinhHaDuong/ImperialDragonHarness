@@ -30,7 +30,7 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
    ```bash
    git rev-parse HEAD > "$(git rev-parse --git-common-dir)/celebrate-last-sha"
    ```
-3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found.
+3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found via `/ticket-new` (which commits at its step 6 — don't skip it; an uncommitted draft is destroyed by step 9's worktree exit, see ticket 0174).
 4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /verify is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/end-session`.
@@ -41,7 +41,14 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
     - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria.
     - Any open → do nothing, tracker stays open.
-9. **Exit worktree** (if in one): call `ExitWorktree` with action `remove`. Skip if not in a worktree.
+9. **Exit worktree** (if in one):
+    a. Preflight from inside the worktree:
+       ```bash
+       scripts/worktree-exit-preflight.sh
+       ```
+       Refuses (exit 1) when there are uncommitted/untracked files — including a fresh ticket draft `/ticket-new` wrote but never committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT fire on `ExitWorktree`, so this is the only gate. If it blocks, commit (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See ticket 0174.
+    b. Call `ExitWorktree` with action `remove`.
+    Skip if not in a worktree.
 9.5. **GC stale agent worktrees** (from the main repo): prune leftover `agent-*` worktrees whose branch is merged-and-gone — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
     git fetch --prune origin
