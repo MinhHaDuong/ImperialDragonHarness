@@ -169,6 +169,7 @@ def test_guard_handles_malformed_json():
         input="not json{", capture_output=True, text=True,
     )
     assert res.returncode == 0
+    assert res.stderr == ""
 
 
 # --------------------------------------------------------------------------- #
