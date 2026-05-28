@@ -111,8 +111,11 @@ def test_salvage_missing_arg_errors(origin):
 # guard-worktree-remove-wip.sh
 # --------------------------------------------------------------------------- #
 
-def _guard(cmd):
-    payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}})
+def _guard(cmd, cwd=None):
+    body = {"tool_name": "Bash", "tool_input": {"command": cmd}}
+    if cwd is not None:
+        body["cwd"] = str(cwd)
+    payload = json.dumps(body)
     return subprocess.run(
         ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
         input=payload, capture_output=True, text=True,
@@ -145,6 +148,26 @@ def test_guard_ignores_unrelated_command(origin):
 
 def test_guard_allows_nonexistent_path():
     res = _guard("git worktree remove /no/such/worktree/path")
+    assert res.returncode == 0
+
+
+def test_guard_resolves_relative_path_against_json_cwd(origin):
+    """A relative path should resolve against the PreToolUse JSON .cwd, not
+    the hook's own cwd. Otherwise dirty removes via relative paths slip past."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-rel", dirty=True)
+    # Command uses a relative path; cwd is primary's parent (the tmp dir).
+    res = _guard(f"git worktree remove --force {wt.name}", cwd=wt.parent)
+    assert res.returncode == 2
+    assert "uncommitted WIP" in res.stderr
+
+
+def test_guard_handles_malformed_json():
+    """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
+    res = subprocess.run(
+        ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
+        input="not json{", capture_output=True, text=True,
+    )
     assert res.returncode == 0
 
 
@@ -207,3 +230,17 @@ def test_gc_silent_when_nothing_to_do(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert res.stdout.strip() == ""
+
+
+def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
+    """A locked but unlockable agent-* worktree on a gone branch should be
+    unlocked and removed — exercises the locked-branch code path."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-locked", dirty=False)
+    git(primary, "worktree", "lock", str(wt))
+    make_branch_gone(remote, primary, "agent-locked")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-locked" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)

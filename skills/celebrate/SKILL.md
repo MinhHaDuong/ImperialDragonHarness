@@ -42,8 +42,9 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
     - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria.
     - Any open → do nothing, tracker stays open.
 9. **Exit worktree** (if in one): call `ExitWorktree` with action `remove`. Skip if not in a worktree.
-9.5. **GC stale agent worktrees** (from the main repo): prune leftover `agent-*` worktrees whose branch is merged-and-gone — intact dirs that `git worktree prune` misses:
+9.5. **GC stale agent worktrees** (from the main repo): prune leftover `agent-*` worktrees whose branch is merged-and-gone — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
+    git fetch --prune origin
     ~/.claude/scripts/worktree-gc.sh
     ```
     Removes only worktrees with no uncommitted changes; never `rm -rf`s, silent when there is nothing to clean. See ticket 0169.
