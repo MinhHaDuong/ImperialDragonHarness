@@ -2,10 +2,12 @@
 Title: pretooluse-worktree-path-guard.sh resolves relative paths against hook cwd instead of PreToolUse .cwd
 Created: 2026-05-28
 Author: claude
+Closed: fix landed in PR #216 (commit a5954c2)
 
 --- log ---
 2026-05-28T08:45Z claude created — class-bug follow-up from celebrate sweep after PR #215
 
+2026-05-28T07:02Z Claude closed — fix landed in PR #216 (commit a5954c2)
 --- body ---
 ## Context
 
