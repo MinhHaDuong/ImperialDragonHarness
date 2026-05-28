@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-15T20:05Z
+Last updated: 2026-05-28T11:51Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-15T20:05Z -->
+<!-- generated 2026-05-28T11:51Z -->
 
-**Tickets:** 0 ready · 5 deferred/blocked — `erg ready tickets/` for full list
+**Tickets:** 3 ready · 5 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  9e2d136 chore(nightbeat): remove IDH from beat roll
-  984303b chore: tag 0165 deferred, wire make check target
-  f94978c fix(probe): filter erg ready --json by ready:true field
-  c6cb68f dream: consolidate chemin-de-voix memory (26→26 entries)
-  dc46bcb chore(state): refresh 2026-05-15 end-of-session — dream merged, 233 tests
+  01720db tickets: close 0173 — fix landed in #216 (#217)
+  a5954c2 fix(0173): pretooluse-worktree-path-guard resolves cwd from PreToolUse JSON (#216)
+  0ef401a Merge pull request #215 from MinhHaDuong/claude/erg-ready-presentation-BJhbR
+  85d41f8 test(0168): assert malformed-JSON guard stays silent on stderr
+  25f8152 fix(0168-0169): harden worktree tooling from opus-panel findings
 
 ## Blockers
 
