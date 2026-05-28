@@ -1,9 +1,13 @@
-"""Tests for the worktree tooling scripts (tickets 0168, 0169).
+"""Tests for the worktree tooling scripts (tickets 0168, 0169, 0174).
 
 Exercises:
-  - scripts/worktree-salvage.sh        — commit + push WIP before removal
+  - scripts/worktree-salvage.sh         — commit + push WIP before removal
   - scripts/guard-worktree-remove-wip.sh — PreToolUse guard blocking removal on WIP
-  - scripts/worktree-gc.sh             — GC stale agent-* worktrees
+  - scripts/worktree-gc.sh              — GC stale agent-* worktrees
+  - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
+                                          uncommitted files (incl. untracked).
+                                          Closes the ExitWorktree gap that lost
+                                          the 0173 draft (ticket 0174).
 """
 
 import json
@@ -231,6 +235,93 @@ def test_gc_silent_when_nothing_to_do(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert res.stdout.strip() == ""
+
+
+# --------------------------------------------------------------------------- #
+# worktree-exit-preflight.sh — ticket 0174
+# --------------------------------------------------------------------------- #
+#
+# The PreToolUse Bash(git worktree remove*) matcher does not fire on the
+# ExitWorktree harness tool, so a /celebrate sweep that Write's a ticket draft
+# and then calls ExitWorktree silently drops the draft. The preflight script
+# is the skill-level gate that closes that window: invoked by the celebrate
+# and end-session skills before they call ExitWorktree, it refuses when the
+# worktree has any uncommitted state (tracked or untracked).
+
+def _preflight(path):
+    return subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), str(path)],
+        capture_output=True, text=True,
+    )
+
+
+def test_preflight_blocks_on_untracked_ticket_draft(origin):
+    """The exact failure mode that lost the 0173 draft: a /celebrate sweep
+    Write's a new ticket file (untracked, never `git add`'d) and step 9 then
+    calls ExitWorktree. The preflight must refuse before ExitWorktree runs."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-sweep", dirty=False)
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0999-swept-class-bug.erg").write_text("%erg 0.1\n")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "0999-swept-class-bug.erg" in res.stderr
+    assert "ExitWorktree" in res.stderr  # message names the gate it's guarding
+
+
+def test_preflight_blocks_on_tracked_modification(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-mod", dirty=True)  # tracked-modified
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "work.txt" in res.stderr
+
+
+def test_preflight_blocks_on_staged_uncommitted(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-staged", dirty=False)
+    (wt / "new.txt").write_text("staged\n")
+    git(wt, "add", "new.txt")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "new.txt" in res.stderr
+
+
+def test_preflight_passes_on_clean_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-clean-exit", dirty=False)
+
+    res = _preflight(wt)
+    assert res.returncode == 0
+    assert res.stdout == ""
+    assert res.stderr == ""
+
+
+def test_preflight_defaults_to_cwd(origin):
+    """No arg → check the current directory. Mirrors how skill prose invokes
+    it from inside the worktree it is about to exit."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-cwd", dirty=False)
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0998-draft.erg").write_text("%erg 0.1\n")
+
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh")],
+        cwd=str(wt), capture_output=True, text=True,
+    )
+    assert res.returncode != 0
+    assert "0998-draft.erg" in res.stderr
+
+
+def test_preflight_errors_on_missing_path():
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
+        capture_output=True, text=True,
+    )
+    assert res.returncode != 0
 
 
 def test_gc_unlocks_and_removes_locked_gone_worktree(origin):

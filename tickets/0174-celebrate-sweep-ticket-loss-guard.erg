@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-05-28T09:30Z claude created — surfaced when raid 713 recovered the lost 0173 ticket
 
+2026-05-28T17:17Z audit: ExitWorktree is a harness tool, not Bash; Bash(git worktree remove*) matcher does not fire on it, so neither guard-worktree-remove-wip.sh nor worktree-gc.sh covered the loss path (gc runs after the exit in celebrate step 9.5). Fix: scripts/worktree-exit-preflight.sh + celebrate/end-session prose; preflight refuses on tracked-mod/staged/untracked (uses --untracked-files=all so individual draft files surface in the message). Regression suite: 6 cases in tests/test_worktree_tools.py. Awaiting observation cycle.
 --- body ---
 ## Context
 
