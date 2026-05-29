@@ -72,13 +72,13 @@
       "Bash(pkill -f \"dd if=/dev/urandom bs=1M count=500\")",
       "Bash(ssh padme ' *)"
     ],
+    "defaultMode": "auto",
     "additionalDirectories": [
       "/home/haduong/CNRS/projets/actifs/chemin-de-voix",
       "/home/haduong/data/projets/chemin-de-voix/corpus",
       "/tmp"
     ]
   },
-  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -167,11 +167,11 @@
     ],
     "Stop": []
   },
-  "effortLevel": "xhigh",
   "advisorModel": "opus",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true
 }
