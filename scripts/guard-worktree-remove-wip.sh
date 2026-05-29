@@ -14,7 +14,7 @@ cmd=$(echo "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)
 hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 
 # Only act on git worktree remove (also catches it inside a compound command).
-echo "$cmd" | grep -qE '\bgit[[:space:]]+worktree[[:space:]]+remove\b' || exit 0
+echo "$cmd" | grep -qP '\bgit\s+worktree\s+remove\b' || exit 0
 
 # Extract the worktree path: first non-flag token after "remove".
 after=${cmd#*worktree*remove}
