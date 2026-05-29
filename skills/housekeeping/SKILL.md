@@ -71,6 +71,7 @@ Run full repo housekeeping and act on every finding.
 
    ```bash
    tickets/erg archive tickets/
+   git add tickets/closed/
    ```
 
    This moves any ticket with a non-empty `Closed:` header from `tickets/`
@@ -83,7 +84,7 @@ Run full repo housekeeping and act on every finding.
    for f in tickets/*.erg; do
      base=$(basename "$f")
      if [ -f "tickets/closed/$base" ]; then
-       git rm -f "$f"
+       git rm "$f"
      fi
    done
    shopt -u nullglob
