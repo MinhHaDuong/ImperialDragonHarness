@@ -1,0 +1,41 @@
+%erg 0.1
+Title: housekeeping: detect and fix ticket corpus errors + archive closed tickets
+Created: 2026-05-24
+Author: haduong
+
+--- log ---
+2026-05-24T08:35Z haduong created
+
+--- body ---
+## Context
+
+The /housekeeping skill runs healthcheck, applies fix-now items, and opens tickets for
+open-ticket items. But it does not inspect the ticket corpus itself for two classes of
+error that require silent, low-risk remediation:
+
+1. **Un-archived closed tickets** — tickets with a `Closed:` header still sitting in
+   `tickets/` (not yet moved to `tickets/closed/`). These clutter the ready/open lists
+   and confuse `erg` counts.
+
+2. **Duplicate live tickets** — a ticket that exists in both `tickets/` and
+   `tickets/closed/`. The live copy is stale and should be removed.
+
+Both were found manually during a housekeeping run on 2026-05-24 (0263, 0265 un-archived;
+0264 duplicated). The skill should catch and fix these automatically.
+
+## Exit criteria
+
+- [ ] `/housekeeping` step 2.5 (or a new step 2.6) scans `tickets/*.erg` for:
+  - Files with a `^Closed:` line → `git mv` to `tickets/closed/`
+  - Files whose basename also exists in `tickets/closed/` → `git rm` the live copy
+- [ ] Both classes of fix are committed as part of the existing `chore: housekeeping fixes (sweep)` commit (or a companion commit in the same session).
+- [ ] The fix is guarded: skip if `tickets/` or `tickets/closed/` directories are absent (graceful degrade for projects without erg tickets).
+- [ ] Updated skill spec tested against a repo with at least one un-archived closed ticket.
+
+## Guidance
+
+The check is purely mechanical (grep + file existence). No LLM judgment needed.
+Add it to step 2.5 in `~/.claude/skills/housekeeping/SKILL.md` alongside the existing
+exit-criteria audit, or as a new step 2.6 immediately before step 3 (fix-now).
+
+For `git mv` / `git rm`, prefer operating from the project root so paths are repo-relative.
