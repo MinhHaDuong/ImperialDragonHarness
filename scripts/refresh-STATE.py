@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Replace the ## Status section of STATE.md with fresh git + erg output."""
 
-from __future__ import annotations
-
+import argparse
 import json
 import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+STATUS_HEADING = "## Status"
 
 
 def _repo_root() -> Path:
@@ -30,40 +31,39 @@ def _repo_root() -> Path:
     return Path(__file__).parent.parent  # fallback: script is in scripts/ of project
 
 
-REPO_ROOT = _repo_root()
-STATE_FILE = REPO_ROOT / "STATE.md"
-TICKETS_DIR = REPO_ROOT / "tickets"
-ERG_BIN = TICKETS_DIR / "erg"
-STATUS_HEADING = "## Status"
-
-
-def run(cmd):
+def run(cmd, repo_root: Path):
     try:
         return subprocess.run(
-            cmd, capture_output=True, text=True, check=True, cwd=REPO_ROOT, timeout=30
+            cmd, capture_output=True, text=True, check=True, cwd=repo_root, timeout=30
         ).stdout.strip()
     except subprocess.TimeoutExpired:
         print(f"WARNING: command timed out: {cmd}", file=sys.stderr)
         sys.exit(1)
 
 
-def get_commits(n=5):
-    return run(["git", "log", "--oneline", f"-{n}"]).splitlines()
+def get_commits(repo_root: Path, n=5):
+    return run(["git", "log", "--oneline", f"-{n}"], repo_root).splitlines()
 
 
-def get_tickets():
+def get_tickets(repo_root: Path):
     """Return (ready_count, blocked_count) from erg.
 
     `erg ready` lists only ready (unblocked, open) tickets; `erg list` lists
     all open tickets. Neither item carries a `ready` flag, so blocked is
     derived as open minus ready.
     """
-    if not ERG_BIN.exists():
-        print(f"ERROR: erg binary not found at {ERG_BIN}", file=sys.stderr)
+    tickets_dir = repo_root / "tickets"
+    erg_bin = tickets_dir / "erg"
+    if not erg_bin.exists():
+        print(f"ERROR: erg binary not found at {erg_bin}", file=sys.stderr)
         sys.exit(1)
     try:
-        ready = json.loads(run([str(ERG_BIN), "ready", str(TICKETS_DIR), "--json"]))
-        open_tickets = json.loads(run([str(ERG_BIN), "list", str(TICKETS_DIR), "--json"]))
+        ready = json.loads(
+            run([str(erg_bin), "ready", str(tickets_dir), "--json"], repo_root)
+        )
+        open_tickets = json.loads(
+            run([str(erg_bin), "list", str(tickets_dir), "--json"], repo_root)
+        )
     except subprocess.CalledProcessError as e:
         print(f"ERROR: erg query failed: {e.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
@@ -125,12 +125,28 @@ def refresh_last_updated(preamble, date_str):
     return preamble
 
 
-def main():
-    if not STATE_FILE.exists():
-        print(f"ERROR: {STATE_FILE} not found", file=sys.stderr)
+def main(repo_root: Path | None = None):
+    parser = argparse.ArgumentParser(
+        description="Replace the ## Status section of STATE.md with fresh git + erg output."
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        type=Path,
+        default=None,
+        help="Path to the repository root (default: auto-detect via git rev-parse)",
+    )
+    args = parser.parse_args()
+
+    if repo_root is None:
+        repo_root = args.path if args.path is not None else _repo_root()
+
+    state_file = repo_root / "STATE.md"
+    if not state_file.exists():
+        print(f"ERROR: {state_file} not found", file=sys.stderr)
         sys.exit(1)
 
-    text = STATE_FILE.read_text()
+    text = state_file.read_text()
     preamble, tail = split_at_status(text)
 
     # tail starts with "## Status\n..."; find where Status body ends
@@ -141,8 +157,8 @@ def main():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     preamble = refresh_last_updated(preamble, today)
 
-    commits = get_commits()
-    ready_count, blocked_count = get_tickets()
+    commits = get_commits(repo_root)
+    ready_count, blocked_count = get_tickets(repo_root)
     status_lines = format_status(ready_count, blocked_count, commits)
 
     new_text = (
@@ -151,7 +167,7 @@ def main():
         + "\n".join(status_lines)
         + ("\n\n" + tail_after_status.lstrip() if tail_after_status.strip() else "\n")
     )
-    STATE_FILE.write_text(new_text)
+    state_file.write_text(new_text)
 
     total = len(new_text.splitlines())
     print(f"STATE.md refreshed — {len(status_lines)} status lines, {total} total.")
