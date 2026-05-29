@@ -11,7 +11,9 @@ import sys
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
-spec = importlib.util.spec_from_file_location("refresh_state", SCRIPTS / "refresh-STATE.py")
+spec = importlib.util.spec_from_file_location(
+    "refresh_state", SCRIPTS / "refresh-STATE.py"
+)
 rs = importlib.util.module_from_spec(spec)
 sys.modules["refresh_state"] = rs
 spec.loader.exec_module(rs)
@@ -79,32 +81,74 @@ def test_format_status_omits_commits_when_none():
 
 
 def _erg_item(tid: str) -> dict:
-    return {"id": tid, "title": f"t{tid}", "file": f"{tid}.erg",
-            "closed": False, "refs": [], "tags": [], "blocked_by": []}
+    return {
+        "id": tid,
+        "title": f"t{tid}",
+        "file": f"{tid}.erg",
+        "closed": False,
+        "refs": [],
+        "tags": [],
+        "blocked_by": [],
+    }
 
 
-def test_get_tickets_derives_blocked_from_open_minus_ready(monkeypatch):
+def test_get_tickets_derives_blocked_from_open_minus_ready(tmp_path, monkeypatch):
     import json as _json
+
+    (tmp_path / "tickets").mkdir()
+    (tmp_path / "tickets" / "erg").touch()
 
     ready = [_erg_item("0001"), _erg_item("0002"), _erg_item("0003")]
     open_all = [_erg_item(f"00{i:02d}") for i in range(1, 9)]  # 8 open
 
-    def fake_run(cmd):
-        # cmd is the list passed to subprocess; pick which query by subcommand
+    def fake_run(cmd, repo_root):
         return _json.dumps(ready if "ready" in cmd else open_all)
 
     monkeypatch.setattr(rs, "run", fake_run)
-    ready_count, blocked_count = rs.get_tickets()
+    ready_count, blocked_count = rs.get_tickets(tmp_path)
     assert (ready_count, blocked_count) == (3, 5)
 
 
-def test_get_tickets_never_returns_negative_blocked(monkeypatch):
+def test_get_tickets_never_returns_negative_blocked(tmp_path, monkeypatch):
     import json as _json
 
+    (tmp_path / "tickets").mkdir()
+    (tmp_path / "tickets" / "erg").touch()
+
     # Defensive: if ready somehow exceeds open, blocked floors at 0, not negative.
-    def fake_run(cmd):
-        return _json.dumps([_erg_item("0001"), _erg_item("0002")]) if "ready" in cmd \
+    def fake_run(cmd, repo_root):
+        return (
+            _json.dumps([_erg_item("0001"), _erg_item("0002")])
+            if "ready" in cmd
             else _json.dumps([_erg_item("0001")])
+        )
 
     monkeypatch.setattr(rs, "run", fake_run)
-    assert rs.get_tickets() == (2, 0)
+    assert rs.get_tickets(tmp_path) == (2, 0)
+
+
+def test_main_uses_path_argument(tmp_path, monkeypatch):
+    """main() must use the supplied path argument, not git rev-parse."""
+    state = tmp_path / "STATE.md"
+    state.write_text(
+        "# Project\n\nLast updated: 2020-01-01T00:00Z\n\n## Status\nold\n\n## Blockers\nnone\n"
+    )
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    (tickets / "erg").touch()  # satisfy erg_bin.exists() guard
+
+    def fake_run(cmd, repo_root):
+        assert repo_root == tmp_path, (
+            f"run() called with repo_root={repo_root!r}, expected {tmp_path!r}"
+        )
+        if "log" in cmd:
+            return "abc1234 test commit"
+        return "[]"
+
+    monkeypatch.setattr(rs, "run", fake_run)
+    monkeypatch.setattr(sys, "argv", ["refresh-STATE.py", str(tmp_path)])
+    rs.main()
+
+    refreshed = state.read_text()
+    assert "old" not in refreshed
+    assert "Last updated:" in refreshed
