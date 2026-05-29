@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-28T11:51Z
+Last updated: 2026-05-29T13:25Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-28T11:51Z -->
+<!-- generated 2026-05-29T13:25Z -->
 
-**Tickets:** 3 ready · 5 blocked — `erg ready tickets/` for full list
+**Tickets:** 6 ready · 6 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  01720db tickets: close 0173 — fix landed in #216 (#217)
-  a5954c2 fix(0173): pretooluse-worktree-path-guard resolves cwd from PreToolUse JSON (#216)
-  0ef401a Merge pull request #215 from MinhHaDuong/claude/erg-ready-presentation-BJhbR
-  85d41f8 test(0168): assert malformed-JSON guard stays silent on stderr
-  25f8152 fix(0168-0169): harden worktree tooling from opus-panel findings
+  0a40ddf docs: regenerate skills catalog after squash-merge rename
+  baf2914 tickets: file 0178 — housekeeping detect and fix ticket corpus errors
+  0460305 config: auto mode, drop explicit model/effortLevel, skipAutoPermissionPrompt
+  081cce4 chore: squash-merge is disabled — purge stale wording across harness
+  7fecc71 Merge remote-tracking branch 'origin/main'
 
 ## Blockers
 
