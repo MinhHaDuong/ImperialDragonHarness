@@ -73,7 +73,7 @@ Run full repo housekeeping and act on every finding.
    **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
    to delete a branch, apply these guards before acting. Skip (log a warning) if any
    guard trips:
-   - **Merge guard**: re-run the squash-merge probe from healthcheck check 4 and confirm
+   - **Merge guard**: re-run the merge probe from healthcheck check 4 and confirm
      it exits 0. If the ticket ID does NOT appear in main's commit log since the branch
      diverged, the branch is not yet merged — skip deletion.
      ```bash

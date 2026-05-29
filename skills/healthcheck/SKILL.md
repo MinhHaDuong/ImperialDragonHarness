@@ -33,14 +33,15 @@ Parse the JSON output. Use its fields to populate checks 1–9 below without re-
    Flag `warn` if local main is behind origin/main (needs pull) or ahead (unpushed commits on main).
 4. **Branch hygiene** — from `branches.local` / `branches.remote` / `branches.details`. For each local branch:
    - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
-   - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the squash-merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
+   - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
      ```bash
      merge_base=$(git merge-base main <branch>)
      pr_num=$(grep -oP '^Closed:.*#\K[0-9]+' tickets/closed/$(ls tickets/closed/ | grep -P "^$(echo <branch> | grep -oP 't\K\d+')-" | head -1) 2>/dev/null | head -1 || true)
      [ -n "$pr_num" ] && git log $merge_base..main --format="%s%n%b" | grep -qE "\(#${pr_num}\)"
      ```
-     If the probe exits 0, the branch was squash-merged into main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, squash-merged into main)`.
-   - **Closed-ticket branches** where the squash-merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).
+     If the probe exits 0, the branch landed on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
+     Note: for branches merged before 2026-05-25, the repo used squash-merge — `git merge-base --is-ancestor` is unreliable for those; the PR-number grep above handles both merge strategies.
+   - **Closed-ticket branches** where the merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).
 5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running. For each worktree, also run:
    ```bash
    git log <worktree-head>..<main-head> --oneline | wc -l

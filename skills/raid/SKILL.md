@@ -150,7 +150,7 @@ For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
 2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `/merge <pr-number>`. This atomically closes the ticket and squash-merges via GitHub API.
+4. Run `/merge <pr-number>`. This atomically closes the ticket and merges via GitHub API.
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
 
 After all waves: `git checkout main && git pull --rebase origin main`, then

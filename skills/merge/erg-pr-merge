@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# erg-pr-merge — close ticket and squash-merge a PR atomically
+# erg-pr-merge — close ticket and merge a PR atomically
 #
 # Usage: erg-pr-merge [PR_NUMBER]
 #
@@ -15,7 +15,7 @@
 #   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
 #   2a. Wait for CI to pass on ticket-close commit (timeout 600s)
-#   3. Squash-merge + delete remote branch (forge CLI — harness-extension-point)
+#   3. Merge + delete remote branch (forge CLI — harness-extension-point)
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -111,15 +111,15 @@ elif [[ -n "$TICKET_ID" ]]; then
     echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
 fi
 
-# ── Step 3: squash-merge via forge CLI (works in worktrees and on VMs) ───────
+# ── Step 3: merge via forge CLI (works in worktrees and on VMs) ──────────────
 
 echo "Merging PR #${PR}..."
 if in_worktree; then
     # deleteBranchOnMerge cleans the remote; the local flag would fail
     # on the primary worktree's main-lock (see ticket 0170).
-    gh pr merge "$PR" --squash # harness-extension-point
+    gh pr merge "$PR" --merge # harness-extension-point
 else
-    gh pr merge "$PR" --squash --delete-branch # harness-extension-point
+    gh pr merge "$PR" --merge --delete-branch # harness-extension-point
 fi
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
@@ -130,7 +130,7 @@ else
     git checkout "$BASE_BRANCH"
     # Safe fast-forward: skip when local branch has unpushed commits
     # (e.g., housekeeping ticks) to avoid rebase conflicts on the
-    # already-squash-merged PR.  The GitHub merge succeeded; local
+    # already-merged PR.  The GitHub merge succeeded; local
     # state is the caller's responsibility.
     LOCAL=$(git rev-parse HEAD)
     git fetch origin "$BASE_BRANCH"
