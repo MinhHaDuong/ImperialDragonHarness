@@ -1,0 +1,93 @@
+%erg 0.1
+Title: /celebrate sweep can claim to file follow-up tickets without committing them
+Created: 2026-05-28
+Author: claude
+
+--- log ---
+2026-05-28T09:30Z claude created — surfaced when raid 713 recovered the lost 0173 ticket
+
+2026-05-28T17:17Z audit: ExitWorktree is a harness tool, not Bash; Bash(git worktree remove*) matcher does not fire on it, so neither guard-worktree-remove-wip.sh nor worktree-gc.sh covered the loss path (gc runs after the exit in celebrate step 9.5). Fix: scripts/worktree-exit-preflight.sh + celebrate/end-session prose; preflight refuses on tracked-mod/staged/untracked (uses --untracked-files=all so individual draft files surface in the message). Regression suite: 6 cases in tests/test_worktree_tools.py. Awaiting observation cycle.
+--- body ---
+## Context
+
+`skills/celebrate/SKILL.md` step 3 ("Sweep for similar patterns") instructs the
+agent to "File tickets for all instances found" and step 4 escalates to a class
+test when the sweep is juicy. Both steps depend on the agent actually writing,
+validating, committing, and pushing the new ticket file before the worktree is
+removed in step 9.
+
+In the celebrate run after PR #215 the sweep correctly identified a class bug
+(`scripts/pretooluse-worktree-path-guard.sh` using `$(pwd)` instead of the
+PreToolUse JSON `.cwd`, mirroring the bug `25f8152` had just fixed in
+`guard-worktree-remove-wip.sh`). The session reported "filed a ticket" — but
+nothing ever made it to a commit, so when the worktree was removed in step 9
+the ticket draft went with it. Only a user-side memory of "celebrate said it
+filed a ticket" surfaced the loss; without that, the class bug would have
+shipped silently to the next raid.
+
+Raid 713 recovered the lost ticket as 0173 and shipped the fix (#216), but the
+underlying skill failure mode remains: there is no mechanical gate that
+prevents step 9 (Exit worktree) from running while step 3 has uncommitted
+files in the worktree.
+
+## Relevant files
+
+- `skills/celebrate/SKILL.md` — steps 3, 4, 9 are the relevant slice
+- `scripts/guard-worktree-remove-wip.sh` — already blocks `git worktree remove`
+  when the target has uncommitted files; the same guard would catch this case
+  if the agent reached step 9 with the new ticket still uncommitted
+- `skills/ticket-new/SKILL.md` — step 6 says "Commit the ticket file" but is
+  silent on push
+
+## Actions
+
+1. Audit whether the existing `guard-worktree-remove-wip.sh` already covers
+   step 9 of `/celebrate`. If yes, the loss must have come from a different
+   exit path (worktree-gc pruning a "clean" worktree that had ticket files
+   never `git add`'d). Document the actual failure mode before designing
+   the fix.
+2. In `skills/celebrate/SKILL.md` step 3, make the commit gate explicit:
+   each filed ticket must be `git add`'d, committed, and pushed in the same
+   step that created it. Reference `/ticket-new` (which already requires
+   commit at step 6) rather than describing the mechanics inline.
+3. Consider a step 3.5 / wrap-up assertion: before step 9 (Exit worktree),
+   run `git status --porcelain tickets/` in the worktree and refuse to
+   proceed if there are unstaged or uncommitted ticket files. Cheaper than
+   a hook; lives in the skill prose where the failure happened.
+4. If the failure mode is gc-pruning untracked ticket drafts: confirm
+   `worktree-gc.sh` skips worktrees with any untracked files, not just
+   tracked modifications. Currently it uses `git status --porcelain`, which
+   does include untracked files by default — so a freshly-`Write`'n ticket
+   would block GC. Verify in a test.
+
+## Test
+
+Add a `tests/test_celebrate_ticket_loss_regression.sh` (or extend
+`test_worktree_tools.py`) that simulates the failure path: create a worktree,
+write a ticket file inside it without staging, then attempt the celebrate
+step-9 sequence (`worktree remove` followed by `worktree-gc`). Assert that
+the ticket file is preserved or its loss is reported, not silently dropped.
+
+## Verification
+
+- [ ] Failure mode reproduced and documented (which exit path lost the ticket)
+- [ ] Celebrate skill prose makes the commit-before-exit gate explicit
+- [ ] Regression test asserts the gate fires
+- [ ] `make check` passes
+
+## Invariants
+
+- Existing celebrate flow unchanged for runs whose sweep finds nothing
+- Existing worktree-gc and remove guards stay advisory / blocking exactly as
+  they are today — no behavior change for unrelated cases
+- No new dependency added to `/celebrate` (any check must use tools already
+  available in the skill's environment)
+
+## Exit criteria
+
+- The failure mode that lost the 0173 draft is identified in the ticket log
+- Celebrate skill or supporting guard prevents a sweep-filed ticket from
+  being lost across worktree exit
+- Regression test in place
+- One observation cycle: next celebrate that files a sweep ticket lands it
+  on `main` rather than losing it

@@ -139,6 +139,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install pytest
-        run: pip install pytest
-      - name: Run test suite
-        run: python3 -m pytest tests/ -v
+        run: pip install pytest pytest-cov
+      # The shell-based regression suites in tests/*.sh are run under pytest via
+      # tests/test_bash_suites.py; jq is needed by the guard-destructive suite.
+      - name: Ensure jq is available
+        run: jq --version
+      - name: Run test suite with coverage
+        # Coverage is reported (term-missing) but not yet gated. Add
+        # --cov-fail-under=<N> here to ratchet once the baseline is raised.
+        run: |
+          python3 -m pytest tests/ -v \
+            --cov=scripts --cov-report=term-missing

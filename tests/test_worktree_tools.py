@@ -1,0 +1,338 @@
+"""Tests for the worktree tooling scripts (tickets 0168, 0169, 0174).
+
+Exercises:
+  - scripts/worktree-salvage.sh         — commit + push WIP before removal
+  - scripts/guard-worktree-remove-wip.sh — PreToolUse guard blocking removal on WIP
+  - scripts/worktree-gc.sh              — GC stale agent-* worktrees
+  - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
+                                          uncommitted files (incl. untracked).
+                                          Closes the ExitWorktree gap that lost
+                                          the 0173 draft (ticket 0174).
+"""
+
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS = REPO_ROOT / "scripts"
+
+pytestmark = pytest.mark.skipif(
+    shutil.which("git") is None or shutil.which("jq") is None,
+    reason="git and jq required",
+)
+
+
+def run(args, cwd=None, check=True):
+    return subprocess.run(
+        args, cwd=cwd, check=check, capture_output=True, text=True
+    )
+
+
+def git(repo, *args, check=True):
+    return run(["git", "-C", str(repo), *args], check=check)
+
+
+@pytest.fixture
+def origin(tmp_path):
+    """A bare remote plus a primary clone with an initial commit on main."""
+    remote = tmp_path / "remote.git"
+    run(["git", "init", "--bare", "-b", "main", str(remote)])
+
+    primary = tmp_path / "primary"
+    run(["git", "init", "-b", "main", str(primary)])
+    git(primary, "config", "user.email", "test@example.com")
+    git(primary, "config", "user.name", "Test")
+    git(primary, "config", "commit.gpgsign", "false")
+    (primary / "README").write_text("hi\n")
+    git(primary, "add", "-A")
+    git(primary, "commit", "-m", "init")
+    git(primary, "remote", "add", "origin", str(remote))
+    git(primary, "push", "-u", "origin", "main")
+    return remote, primary
+
+
+def make_agent_worktree(primary, name, *, dirty=False, push=True):
+    """Create an agent-* worktree on its own branch; optionally push + leave WIP."""
+    wt = primary.parent / name
+    git(primary, "worktree", "add", "-b", name, str(wt))
+    (wt / "work.txt").write_text("first\n")
+    git(wt, "add", "-A")
+    git(wt, "commit", "-m", "work")
+    if push:
+        git(wt, "push", "-u", "origin", name)
+    if dirty:
+        (wt / "work.txt").write_text("uncommitted change\n")
+    return wt
+
+
+def make_branch_gone(remote, primary, name):
+    """Delete the branch on the remote and prune so the local branch reads [gone]."""
+    git(remote, "update-ref", "-d", f"refs/heads/{name}")
+    git(primary, "fetch", "--prune", "origin")
+
+
+# --------------------------------------------------------------------------- #
+# worktree-salvage.sh
+# --------------------------------------------------------------------------- #
+
+def test_salvage_commits_and_pushes_wip(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-salv", dirty=True)
+
+    res = run([str(SCRIPTS / "worktree-salvage.sh"), str(wt)])
+    assert res.returncode == 0
+
+    head_msg = git(wt, "log", "-1", "--format=%s").stdout.strip()
+    assert head_msg == "WIP: salvaged from interrupted raid"
+    assert git(wt, "status", "--porcelain").stdout.strip() == ""
+    # Pushed: remote tip matches local HEAD.
+    local = git(wt, "rev-parse", "HEAD").stdout.strip()
+    remote_tip = git(remote, "rev-parse", "refs/heads/agent-salv").stdout.strip()
+    assert local == remote_tip
+
+
+def test_salvage_clean_tree_is_noop(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-clean", dirty=False)
+    before = git(wt, "rev-parse", "HEAD").stdout.strip()
+
+    res = run([str(SCRIPTS / "worktree-salvage.sh"), str(wt)])
+    assert res.returncode == 0
+    assert "nothing to salvage" in res.stdout
+    assert git(wt, "rev-parse", "HEAD").stdout.strip() == before
+
+
+def test_salvage_missing_arg_errors(origin):
+    res = run([str(SCRIPTS / "worktree-salvage.sh")], check=False)
+    assert res.returncode == 2
+
+
+# --------------------------------------------------------------------------- #
+# guard-worktree-remove-wip.sh
+# --------------------------------------------------------------------------- #
+
+def _guard(cmd, cwd=None):
+    body = {"tool_name": "Bash", "tool_input": {"command": cmd}}
+    if cwd is not None:
+        body["cwd"] = str(cwd)
+    payload = json.dumps(body)
+    return subprocess.run(
+        ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
+        input=payload, capture_output=True, text=True,
+    )
+
+
+def test_guard_blocks_remove_with_wip(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-dirty", dirty=True)
+    res = _guard(f"git worktree remove --force {wt}")
+    assert res.returncode == 2
+    assert "uncommitted WIP" in res.stderr
+
+
+def test_guard_allows_remove_when_clean(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ok", dirty=False)
+    res = _guard(f"git worktree remove {wt}")
+    assert res.returncode == 0
+    assert res.stderr == ""
+
+
+def test_guard_ignores_unrelated_command(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-x", dirty=True)
+    # Not a worktree-remove command — must not block even with a dirty path.
+    res = _guard(f"git worktree list {wt}")
+    assert res.returncode == 0
+
+
+def test_guard_allows_nonexistent_path():
+    res = _guard("git worktree remove /no/such/worktree/path")
+    assert res.returncode == 0
+
+
+def test_guard_resolves_relative_path_against_json_cwd(origin):
+    """A relative path should resolve against the PreToolUse JSON .cwd, not
+    the hook's own cwd. Otherwise dirty removes via relative paths slip past."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-rel", dirty=True)
+    # Command uses a relative path; cwd is primary's parent (the tmp dir).
+    res = _guard(f"git worktree remove --force {wt.name}", cwd=wt.parent)
+    assert res.returncode == 2
+    assert "uncommitted WIP" in res.stderr
+
+
+def test_guard_handles_malformed_json():
+    """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
+    res = subprocess.run(
+        ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
+        input="not json{", capture_output=True, text=True,
+    )
+    assert res.returncode == 0
+    assert res.stderr == ""
+
+
+# --------------------------------------------------------------------------- #
+# worktree-gc.sh
+# --------------------------------------------------------------------------- #
+
+def _gc(primary):
+    return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)])
+
+
+def _worktree_paths(primary):
+    out = git(primary, "worktree", "list", "--porcelain").stdout
+    return [l[len("worktree "):] for l in out.splitlines() if l.startswith("worktree ")]
+
+
+def test_gc_removes_gone_clean_agent_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-gone", dirty=False)
+    make_branch_gone(remote, primary, "agent-gone")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-gone" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_keeps_dirty_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-wip", dirty=True)
+    make_branch_gone(remote, primary, "agent-wip")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-wip (uncommitted WIP)" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_live_branch_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-live", dirty=False)  # branch still on origin
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_ignores_non_agent_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "feature-x", dirty=False)
+    make_branch_gone(remote, primary, "feature-x")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_silent_when_nothing_to_do(origin):
+    _, primary = origin
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert res.stdout.strip() == ""
+
+
+# --------------------------------------------------------------------------- #
+# worktree-exit-preflight.sh — ticket 0174
+# --------------------------------------------------------------------------- #
+#
+# The PreToolUse Bash(git worktree remove*) matcher does not fire on the
+# ExitWorktree harness tool, so a /celebrate sweep that Write's a ticket draft
+# and then calls ExitWorktree silently drops the draft. The preflight script
+# is the skill-level gate that closes that window: invoked by the celebrate
+# and end-session skills before they call ExitWorktree, it refuses when the
+# worktree has any uncommitted state (tracked or untracked).
+
+def _preflight(path):
+    return subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), str(path)],
+        capture_output=True, text=True,
+    )
+
+
+def test_preflight_blocks_on_untracked_ticket_draft(origin):
+    """The exact failure mode that lost the 0173 draft: a /celebrate sweep
+    Write's a new ticket file (untracked, never `git add`'d) and step 9 then
+    calls ExitWorktree. The preflight must refuse before ExitWorktree runs."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-sweep", dirty=False)
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0999-swept-class-bug.erg").write_text("%erg 0.1\n")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "0999-swept-class-bug.erg" in res.stderr
+    assert "ExitWorktree" in res.stderr  # message names the gate it's guarding
+
+
+def test_preflight_blocks_on_tracked_modification(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-mod", dirty=True)  # tracked-modified
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "work.txt" in res.stderr
+
+
+def test_preflight_blocks_on_staged_uncommitted(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-staged", dirty=False)
+    (wt / "new.txt").write_text("staged\n")
+    git(wt, "add", "new.txt")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "new.txt" in res.stderr
+
+
+def test_preflight_passes_on_clean_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-clean-exit", dirty=False)
+
+    res = _preflight(wt)
+    assert res.returncode == 0
+    assert res.stdout == ""
+    assert res.stderr == ""
+
+
+def test_preflight_defaults_to_cwd(origin):
+    """No arg → check the current directory. Mirrors how skill prose invokes
+    it from inside the worktree it is about to exit."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-cwd", dirty=False)
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0998-draft.erg").write_text("%erg 0.1\n")
+
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh")],
+        cwd=str(wt), capture_output=True, text=True,
+    )
+    assert res.returncode != 0
+    assert "0998-draft.erg" in res.stderr
+
+
+def test_preflight_errors_on_missing_path():
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
+        capture_output=True, text=True,
+    )
+    assert res.returncode != 0
+
+
+def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
+    """A locked but unlockable agent-* worktree on a gone branch should be
+    unlocked and removed — exercises the locked-branch code path."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-locked", dirty=False)
+    git(primary, "worktree", "lock", str(wt))
+    make_branch_gone(remote, primary, "agent-locked")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-locked" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)

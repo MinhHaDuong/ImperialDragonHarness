@@ -8,8 +8,9 @@ input=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
 [ -z "$file_path" ] && exit 0
+hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 
 _in_worktree() {
     [ -f .git ] && grep -q "gitdir:" .git 2>/dev/null
@@ -29,9 +30,15 @@ fi
 
 [ "$worktree_root" = "$primary_root" ] && exit 0
 
-# Normalize to absolute path
+# Resolve relative file_path against the PreToolUse JSON's .cwd (the cwd the
+# tool will run from), not the hook's own cwd. Fall back to $(pwd) when .cwd
+# is absent so older runners and tests that don't supply it still work.
 if [ "${file_path#/}" = "$file_path" ]; then
-    file_path="$(pwd)/$file_path"
+    if [ -n "$hook_cwd" ]; then
+        file_path="$hook_cwd/$file_path"
+    else
+        file_path="$(pwd)/$file_path"
+    fi
 fi
 
 case "$file_path" in

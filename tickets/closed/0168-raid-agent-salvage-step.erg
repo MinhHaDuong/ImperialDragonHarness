@@ -2,11 +2,14 @@
 Title: Add killed-agent salvage step to raid skill — commit WIP before worktree remove
 Created: 2026-05-21
 Author: HDMX-coding-agent
+Closed: skill update merged in fc51c4c; feedback_killed_agent_salvage referenced from raid skill prose at line 206
 
 --- log ---
 2026-05-21T00:16Z HDMX-coding-agent created
 2026-05-21T07:32Z claude note re-filed from aedist-technical-report/tickets/0189 — this is user-level skill work, not project work; ref to former 0188 updated to 0167
 
+2026-05-27T20:53Z claude note salvage script + PreToolUse remove-WIP guard + raid circuit-breaker prose added; pending merge + next-raid observation
+2026-05-28T11:51Z Claude closed — skill update merged in fc51c4c; feedback_killed_agent_salvage referenced from raid skill prose at line 206
 --- body ---
 ## Context
 

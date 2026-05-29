@@ -1,0 +1,92 @@
+%erg 0.1
+Title: pretooluse-worktree-path-guard.sh resolves relative paths against hook cwd instead of PreToolUse .cwd
+Created: 2026-05-28
+Author: claude
+Closed: fix landed in PR #216 (commit a5954c2)
+
+--- log ---
+2026-05-28T08:45Z claude created — class-bug follow-up from celebrate sweep after PR #215
+
+2026-05-28T07:02Z Claude closed — fix landed in PR #216 (commit a5954c2)
+--- body ---
+## Context
+
+PR #215 (commit 25f8152, ticket 0168-0169) fixed
+`scripts/guard-worktree-remove-wip.sh` to resolve relative paths against the
+PreToolUse JSON's `.cwd` field instead of the hook's own `$(pwd)`. That fix
+closed a false-negative where `git worktree remove ../wt-dirty` slipped past
+the WIP check because the hook resolved `../wt-dirty` from wherever the hook
+itself was invoked, not from where the tool would run.
+
+The celebrate sweep after that merge found the same class bug in
+`scripts/pretooluse-worktree-path-guard.sh:33-34`:
+
+```
+if [ "${file_path#/}" = "$file_path" ]; then
+    file_path="$(pwd)/$file_path"
+fi
+```
+
+This guard receives `file_path` from `tool_input.file_path` (Write / Edit /
+NotebookEdit). When the tool runs from a different cwd than the hook (which is
+the common case during a worktree session, since hooks fire from the harness
+working directory, not from where Bash will `cd`), a relative `file_path`
+resolves to the wrong directory and the main-repo-write warning is suppressed
+incorrectly.
+
+The previous celebrate session said it filed a ticket for this, but it was
+never committed — recreating here so the work survives.
+
+## Relevant files
+
+- `scripts/pretooluse-worktree-path-guard.sh` — the hook with the bug
+- `tests/test_pretooluse_worktree_path_guard.sh` — payloads currently omit
+  `.cwd`; add a case that sets it
+- `scripts/guard-worktree-remove-wip.sh` — reference implementation of the
+  fix pattern (read `.cwd` from JSON, fall back gracefully)
+
+## Actions
+
+1. In `pretooluse-worktree-path-guard.sh`, read the PreToolUse JSON's `.cwd`
+   field once near the top (alongside the `file_path` read), with the same
+   `2>/dev/null || true` defensive parse used in `guard-worktree-remove-wip.sh`.
+2. Replace `file_path="$(pwd)/$file_path"` with a resolution against the
+   hook-supplied `.cwd` when present, falling back to `$(pwd)` only if `.cwd`
+   is empty (preserves behavior when invoked by tests or older runners).
+3. Add a regression test in `tests/test_pretooluse_worktree_path_guard.sh`
+   that sends `tool_input.file_path` = a relative path plus `.cwd` = a path
+   inside the primary repo (but outside the worktree), asserting the warning
+   fires. Add a second case where `.cwd` is omitted to confirm the fallback
+   keeps current behavior.
+
+## Test
+
+Red step: extend `tests/test_pretooluse_worktree_path_guard.sh` with a case
+that submits `{"tool_input":{"file_path":"foo.md"},"cwd":"<primary_root>"}`
+under a fake worktree session (`_GUARD_WORKTREE_ROOT` / `_GUARD_PRIMARY_ROOT`
+env-var overrides already exist) and expects the "resolves to the main repo"
+warning on stderr. With current code the test fails because `$(pwd)` from the
+test harness doesn't resolve into `$primary_root`.
+
+## Verification
+
+- [ ] New test fails on current `pretooluse-worktree-path-guard.sh`
+- [ ] New test passes after the `.cwd` resolution change
+- [ ] Existing 5 cases in `test_pretooluse_worktree_path_guard.sh` still pass
+- [ ] `make check` passes
+
+## Invariants
+
+- Guard stays advisory (exit 0 on all paths)
+- Absolute `file_path` continues to bypass the resolution branch unchanged
+- Empty / missing `.cwd` falls back to `$(pwd)` so existing test payloads keep
+  working without modification
+
+## Exit criteria
+
+- `pretooluse-worktree-path-guard.sh` resolves relative `file_path` against
+  the PreToolUse JSON `.cwd` field, matching the pattern in
+  `guard-worktree-remove-wip.sh`
+- Regression test in `tests/test_pretooluse_worktree_path_guard.sh` asserts
+  the cwd-resolution behavior
+- `make check` passes

@@ -2,9 +2,12 @@
 # Regression test for ticket 0042 — harness-rules index-based lazy load.
 #
 # Asserts that scripts/on-start.sh emits the harness-rules index
-# (skills/harness-rules/README.md) before its stdout cutoff, but does
-# NOT emit the bodies of individual rule files. Agents read those on
-# demand via the index pointers.
+# (rules/README.md) before its stdout cutoff, but does NOT emit the
+# bodies of individual rule files. Agents read those on demand via the
+# index pointers.
+#
+# NOTE: ticket 0151 extracted the rules out of skills/harness-rules/ into
+# the repo-root rules/ directory; the assertions below track that layout.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -43,15 +46,16 @@ if ! grep -F 'cat' scripts/on-start.sh | grep -qF 'README.md'; then
   fail=1
 fi
 
-# 4. SKILL.md must be gone (the persuasion-phrase wrapper is replaced).
+# 4. The old skills/harness-rules wrapper must be gone — rules now live
+#    at the repo root (ticket 0151), injected as a plain index, not a skill.
 if [[ -e skills/harness-rules/SKILL.md ]]; then
-  echo "FAIL: skills/harness-rules/SKILL.md still exists"
+  echo "FAIL: skills/harness-rules/SKILL.md still exists (rules moved to rules/)"
   fail=1
 fi
 
-# 5. README.md index must exist.
-if [[ ! -f skills/harness-rules/README.md ]]; then
-  echo "FAIL: skills/harness-rules/README.md missing"
+# 5. README.md index must exist at the repo-root rules/ directory.
+if [[ ! -f rules/README.md ]]; then
+  echo "FAIL: rules/README.md missing"
   fail=1
 fi
 

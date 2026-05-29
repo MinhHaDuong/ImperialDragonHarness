@@ -52,26 +52,37 @@ def get_commits(n=5):
 
 
 def get_tickets():
+    """Return (ready_count, blocked_count) from erg.
+
+    `erg ready` lists only ready (unblocked, open) tickets; `erg list` lists
+    all open tickets. Neither item carries a `ready` flag, so blocked is
+    derived as open minus ready.
+    """
     if not ERG_BIN.exists():
         print(f"ERROR: erg binary not found at {ERG_BIN}", file=sys.stderr)
         sys.exit(1)
     try:
-        return json.loads(run([str(ERG_BIN), "ready", str(TICKETS_DIR), "--json"]))
+        ready = json.loads(run([str(ERG_BIN), "ready", str(TICKETS_DIR), "--json"]))
+        open_tickets = json.loads(run([str(ERG_BIN), "list", str(TICKETS_DIR), "--json"]))
     except subprocess.CalledProcessError as e:
-        print(f"ERROR: erg ready failed: {e.stderr.strip()}", file=sys.stderr)
+        print(f"ERROR: erg query failed: {e.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
+    ready_count = len(ready)
+    blocked_count = max(len(open_tickets) - ready_count, 0)
+    return ready_count, blocked_count
 
 
-def format_status(tickets, commits):
+def format_status(ready_count, blocked_count, commits):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
-    ready = [t for t in tickets if t["ready"]]
-    blocked = [t for t in tickets if not t["ready"]]
 
     lines = [STATUS_HEADING, f"<!-- generated {now} -->", ""]
 
     # Summary counts only — full list via: erg ready tickets/
-    if ready or blocked:
-        summary = f"**Tickets:** {len(ready)} ready · {len(blocked)} blocked — `erg ready tickets/` for full list"
+    if ready_count or blocked_count:
+        summary = (
+            f"**Tickets:** {ready_count} ready · {blocked_count} blocked"
+            " — `erg ready tickets/` for full list"
+        )
         lines.append(summary)
 
     if commits:
@@ -131,8 +142,8 @@ def main():
     preamble = refresh_last_updated(preamble, today)
 
     commits = get_commits()
-    tickets = get_tickets()
-    status_lines = format_status(tickets, commits)
+    ready_count, blocked_count = get_tickets()
+    status_lines = format_status(ready_count, blocked_count, commits)
 
     new_text = (
         preamble.rstrip()

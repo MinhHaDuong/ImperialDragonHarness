@@ -15,36 +15,40 @@ fi
 cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
 [ -z "$cmd" ] && exit 0
 
-# Patterns that are destructive and hard to reverse
+# Patterns that are destructive and hard to reverse.
+# grep -P (PCRE): \s and \b are spec-defined in PCRE, unlike POSIX ERE where
+# they are GNU-only extensions that degrade to literals on other grep builds.
 
 # rm -rf / rm -fr / rm --force (any combination)
-if echo "$cmd" | grep -qE '\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|.*--force)\b'; then
+if echo "$cmd" | grep -qP '\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|.*--force)\b'; then
     echo "BLOCKED: rm -rf/--force detected. Use targeted rm or move to trash instead." >&2
     exit 2
 fi
 
-if echo "$cmd" | grep -qE '\bgit\s+reset\s+--hard\b'; then
+if echo "$cmd" | grep -qP '\bgit\s+reset\s+--hard\b'; then
     echo "BLOCKED: git reset --hard destroys uncommitted work. Use git stash or git checkout <file> instead." >&2
     exit 2
 fi
 
 # git push --force / -f (but NOT --force-with-lease)
-if echo "$cmd" | grep -qE '\bgit\s+push\s+.*--force($|\s)|\bgit\s+push\s+.*\s-f($|\s)'; then
+# Use \bgit\s+push\b (not \s+) so a -f flag directly after "push" still matches —
+# the trailing-space form let `git push -f origin main` slip through.
+if echo "$cmd" | grep -qP '\bgit\s+push\b.*--force($|\s)|\bgit\s+push\b.*(\s|^)-f($|\s)'; then
     echo "BLOCKED: force push can destroy remote history. Use --force-with-lease if needed." >&2
     exit 2
 fi
 
-if echo "$cmd" | grep -qE '\bgit\s+clean\s+-[a-zA-Z]*f'; then
+if echo "$cmd" | grep -qP '\bgit\s+clean\s+-[a-zA-Z]*f'; then
     echo "BLOCKED: git clean -f permanently deletes untracked files. Use git clean -n to preview first." >&2
     exit 2
 fi
 
-if echo "$cmd" | grep -qE '\bsudo\s+rm\b'; then
+if echo "$cmd" | grep -qP '\bsudo\s+rm\b'; then
     echo "BLOCKED: sudo rm is too dangerous for automated execution. Run manually if needed." >&2
     exit 2
 fi
 
-if echo "$cmd" | grep -qEi '\bdrop\s+(table|database)\b'; then
+if echo "$cmd" | grep -qPi '\bdrop\s+(table|database)\b'; then
     echo "BLOCKED: DROP TABLE/DATABASE detected. Run manually if intended." >&2
     exit 2
 fi
