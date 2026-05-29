@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Fix beat-skip.json schema mismatch in housekeeping-git.sh
+Created: 2026-05-29
+Author: MinhHaDuong
+
+--- log ---
+2026-05-29T13:37Z MinhHaDuong created
+
+--- body ---
+## Context
+
+`scripts/housekeeping-git.sh` prints a jq error on every run when a
+`.git/beat-skip.json` file exists:
+
+```
+jq: error (at .git/beat-skip.json:5): Cannot index array with string "entries"
+```
+
+The failure is graceful (the `else rm -f "$TMP"` branch leaves the file
+unchanged), so the **beat-skip expiry logic is silently a no-op** — expired
+skip entries are never pruned.
+
+Two-sided schema mismatch:
+
+1. **Script bug.** The expiry filter targets `.entries`:
+   `jq '.entries |= [.[] | select(.until == null or .until > $now)]'`.
+   But the canonical schema, per `skills/pick-ticket/SKILL.md` (the
+   reader/writer of this file), is a **top-level array of objects**:
+   `[{ "id": "...", "until": "...", "reason": "..." }, ...]`.
+   `.entries` on a top-level array errors **regardless of content** — so
+   this is a script fix, not a data-cleanup. (Cleaning a consumer repo's
+   local file does NOT silence the error.)
+
+2. **Legacy data format.** Observed in the wild (git-erg's
+   `.git/beat-skip.json`): a plain **string array** `["0001","0012",...]`,
+   predating the object schema. Even with the filter fixed to operate on a
+   top-level array, `.until` on a string element would error. The fix must
+   tolerate or migrate legacy string entries.
+
+Discovered during a `/housekeeping` run on git-erg (2026-05-29).
+
+## Exit criteria
+
+- [ ] `housekeeping-git.sh` expiry filter operates on the top-level array
+      (`map(select(.until == null or .until > $now))`), matching
+      `pick-ticket/SKILL.md`'s schema — no `.entries` indexing.
+- [ ] Legacy string-array entries are tolerated (skipped or migrated to
+      `{id}` objects) without erroring.
+- [ ] Running the script against both schemas (object array, legacy string
+      array, empty `[]`) produces no jq error on stderr.
+- [ ] Expired entries (`until` < now) are actually pruned; indefinite
+      entries (`until` absent) are preserved.
