@@ -2,11 +2,13 @@
 Title: Add CI guard: no grep -E with \s/\b/\w in hook scripts
 Created: 2026-05-29
 Author: claude
+Closed: autoclosed — PR #228
 
 --- log ---
 2026-05-29T06:35Z claude created
 
 2026-05-29T14:14Z MinhHaDuong note blocker 0175 closed — Blocked-by removed.
+2026-05-29T14:25Z MinhHaDuong closed — autoclosed — PR #228
 --- body ---
 ## Context
 The `grep -E` + `\s`/`\b`/`\w` portability bug (see 0175) has a class shape:
