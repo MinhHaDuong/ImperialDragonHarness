@@ -67,6 +67,33 @@ Run full repo housekeeping and act on every finding.
    Process all open tickets unconditionally (not just candidates).
    Batch-closing is allowed here: close every qualifying ticket in one pass.
 
+2.6. **Archive closed tickets.** Skip if `tickets/` is absent.
+
+   ```bash
+   tickets/erg archive tickets/
+   git add tickets/closed/
+   ```
+
+   This moves any ticket with a non-empty `Closed:` header from `tickets/`
+   into `tickets/closed/`. After archiving, remove any file from `tickets/`
+   that already exists in `tickets/closed/` (duplicate committed under both
+   paths):
+
+   ```bash
+   shopt -s nullglob
+   for f in tickets/*.erg; do
+     base=$(basename "$f")
+     if [ -f "tickets/closed/$base" ]; then
+       git rm "$f"
+     fi
+   done
+   shopt -u nullglob
+   ```
+
+   If any files were moved or removed, stage and include them in the step 3
+   commit (`chore: housekeeping fixes (sweep)`). Do not create a separate
+   commit for this step.
+
 3. **Fix `fix-now` items.** Apply every `fix-now` item inline. If any fixes were
    applied, commit once: `chore: housekeeping fixes (sweep)`.
 

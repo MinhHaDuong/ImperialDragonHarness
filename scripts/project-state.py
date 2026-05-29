@@ -144,7 +144,7 @@ def ticket_state(project):
             "error": "erg not found",
         }
 
-    ready_ids = [t["id"] for t in ready_list if t.get("ready", False)]
+    ready_ids = [t["id"] for t in ready_list]
 
     erg_files = list(tickets_dir.glob("*.erg"))
     open_count = 0

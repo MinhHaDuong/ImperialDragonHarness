@@ -2,10 +2,12 @@
 Title: Fix project-state.py ready_ids always empty (erg has no ready key)
 Created: 2026-05-29
 Author: claude
+Closed: autoclosed — PR #224
 
 --- log ---
 2026-05-29T06:35Z claude created
 
+2026-05-29T14:13Z MinhHaDuong closed — autoclosed — PR #224
 --- body ---
 ## Context
 Same erg-JSON-schema misunderstanding that PR #221 fixed in `refresh-STATE.py`.
