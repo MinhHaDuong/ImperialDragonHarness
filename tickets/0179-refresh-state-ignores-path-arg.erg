@@ -15,7 +15,7 @@ resolves to the worktree root when called from a worktree session. This causes
 STATE.md to be written in the worktree instead of the main repo — silently,
 with no error.
 
-Discovered 2026-05-29 during healthcheck: `refresh-STATE.py /home/haduong/.claude`
+Discovered 2026-05-29 during healthcheck: `refresh-STATE.py ~/.claude`
 appeared to succeed but left the main repo's STATE.md unchanged.
 
 ## Exit criteria
@@ -24,6 +24,6 @@ appeared to succeed but left the main repo's STATE.md unchanged.
   instead of calling `git rev-parse --show-toplevel`.
 - [ ] `REPO_ROOT` is set from `sys.argv[1]` when present, falling back to the
   current `_repo_root()` logic when no argument is given.
-- [ ] Running `cd /some/worktree && python3 ~/.claude/scripts/refresh-STATE.py /home/haduong/.claude`
-  updates `/home/haduong/.claude/STATE.md`, not the worktree's copy.
+- [ ] Running `cd /some/worktree && python3 ~/.claude/scripts/refresh-STATE.py ~/.claude`
+  updates `~/.claude/STATE.md`, not the worktree's copy.
 - [ ] `make check` passes.
