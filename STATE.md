@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-29T13:25Z
+Last updated: 2026-05-29T15:20Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-29T13:25Z -->
+<!-- generated 2026-05-29T15:20Z -->
 
-**Tickets:** 6 ready · 6 blocked — `erg ready tickets/` for full list
+**Tickets:** 5 ready · 5 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  0a40ddf docs: regenerate skills catalog after squash-merge rename
-  baf2914 tickets: file 0178 — housekeeping detect and fix ticket corpus errors
-  0460305 config: auto mode, drop explicit model/effortLevel, skipAutoPermissionPrompt
-  081cce4 chore: squash-merge is disabled — purge stale wording across harness
-  7fecc71 Merge remote-tracking branch 'origin/main'
+  c121599 Merge pull request #228 from MinhHaDuong/t176-grep-e-guard
+  0ccc4eb ticket(0176): close and archive — PR #228
+  c67d99c feat(0176): add grep-e-guard CI job — no grep -E/-G with PCRE escapes
+  2289e7a Merge pull request #227 from MinhHaDuong/t179-refresh-state-path-arg-v2
+  4c3e311 Merge origin/main into t179 to resolve post-close-commit conflicts
 
 ## Blockers
 
