@@ -29,7 +29,9 @@ if echo "$cmd" | grep -qE '\bgit\s+reset\s+--hard\b'; then
 fi
 
 # git push --force / -f (but NOT --force-with-lease)
-if echo "$cmd" | grep -qE '\bgit\s+push\s+.*--force($|\s)|\bgit\s+push\s+.*\s-f($|\s)'; then
+# Use \bgit\s+push\b (not \s+) so a -f flag directly after "push" still matches —
+# the trailing-space form let `git push -f origin main` slip through.
+if echo "$cmd" | grep -qE '\bgit\s+push\b.*--force($|\s)|\bgit\s+push\b.*(\s|^)-f($|\s)'; then
     echo "BLOCKED: force push can destroy remote history. Use --force-with-lease if needed." >&2
     exit 2
 fi
