@@ -11,8 +11,6 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
-
 # --- stub `requests` so the module imports without the real dependency -------
 _fake_requests = types.ModuleType("requests")
 _fake_exceptions = types.ModuleType("requests.exceptions")
