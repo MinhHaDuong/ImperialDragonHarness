@@ -14,7 +14,7 @@ cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
 [ -z "$cmd" ] && exit 0
 
 # Only check git commit commands
-echo "$cmd" | grep -qE '\bgit\s+commit\b' || exit 0
+echo "$cmd" | grep -qP '\bgit\s+commit\b' || exit 0
 
 # Get current branch
 branch=$(git branch --show-current 2>/dev/null || true)
