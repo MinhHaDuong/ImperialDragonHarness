@@ -165,6 +165,13 @@ def _build_zotero_db() -> sqlite3.Connection:
         INSERT INTO items VALUES (11);
         INSERT INTO itemDataValues VALUES (4,'Shallow Trees for Weather'),(5,'2019');
         INSERT INTO itemData VALUES (11,1,4),(11,3,5);
+
+        -- item 30: is ITSELF a child attachment (parentItemID set) with a title
+        -- identical to item 10's. The no-DOI branch must exclude it via the
+        -- `a.itemID IS NULL` filter even though its title would otherwise match.
+        INSERT INTO items VALUES (30);
+        INSERT INTO itemData VALUES (30,1,1);  -- reuse 'Deep Learning for Climate'
+        INSERT INTO itemAttachments VALUES (30, 11, 'storage:child.pdf', 'application/pdf');
         """
     )
     conn.commit()
@@ -185,14 +192,31 @@ def test_zotero_matches_doi_exact_match():
     assert m["attachments"][0]["path"] == "storage:paper.pdf"
 
 
-def test_zotero_matches_title_fuzzy_on_unattached_item():
+def test_zotero_matches_title_fuzzy_match():
     conn = _build_zotero_db()
     matches = zi.zotero_matches(
         conn, doi=None, title="Shallow Trees for Weather", year=None, pdf_path=Path("x.pdf")
     )
     ids = [m["itemID"] for m in matches]
-    assert 11 in ids  # title overlap >= 0.6
-    assert 10 not in ids  # item 10 has an attachment → excluded from no-doi branch
+    assert 11 in ids  # exact title → Jaccard 1.0 >= 0.6
+    # item 10 ("Deep Learning for Climate") shares only "for" with the query →
+    # Jaccard well below 0.6 → not matched. (It is NOT excluded for having an
+    # attachment; parents with attachments stay eligible in the no-DOI branch.)
+    assert 10 not in ids
+
+
+def test_zotero_matches_excludes_items_that_are_themselves_attachments():
+    """The no-DOI branch's `a.itemID IS NULL` filter drops child-attachment items."""
+    conn = _build_zotero_db()
+    # Query item 10's exact title. Item 10 (a top-level work) matches; item 30
+    # has the identical title but IS a child attachment, so it must be excluded
+    # — proving the filter, since title alone would otherwise score it as a hit.
+    matches = zi.zotero_matches(
+        conn, doi=None, title="Deep Learning for Climate", year=None, pdf_path=Path("x.pdf")
+    )
+    ids = [m["itemID"] for m in matches]
+    assert 10 in ids
+    assert 30 not in ids
 
 
 def test_zotero_matches_no_hit_returns_empty():
