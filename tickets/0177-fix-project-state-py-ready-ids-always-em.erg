@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Fix project-state.py ready_ids always empty (erg has no ready key)
+Created: 2026-05-29
+Author: claude
+
+--- log ---
+2026-05-29T06:35Z claude created
+
+--- body ---
+## Context
+Same erg-JSON-schema misunderstanding that PR #221 fixed in `refresh-STATE.py`.
+`erg ready --json` items carry keys [id, title, file, closed, refs, tags,
+blocked_by] — there is NO `ready` field. `scripts/project-state.py:147`:
+
+    ready_ids = [t["id"] for t in ready_list if t.get("ready", False)]
+
+The `.get(..., False)` default means this never raises (unlike refresh-STATE,
+which crashed) — but it silently always evaluates to False, so `ready_ids` is
+ALWAYS `[]` and the reported "ready" count is permanently 0. Confirmed live:
+no item in `erg ready --json` has a `ready` key.
+
+## Exit criteria
+- [ ] `ready_ids` reflects the actual ready tickets — `erg ready` already
+      returns only ready ones, so `ready_ids = [t["id"] for t in ready_list]`
+- [ ] Test pins the real erg schema (no `ready` key) so the regression can't
+      silently return
+- [ ] `make check` / pytest pass
+
+## Notes
+Related class to 0175/0176 only loosely (schema assumption, not grep). The
+refresh-STATE fix (PR #221) is the sibling instance; consider whether a shared
+erg-result helper is worth extracting.
+
