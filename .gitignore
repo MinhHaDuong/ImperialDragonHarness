@@ -26,6 +26,10 @@ tickets/tools/go/*.test
 # Makefile for harness targets (skills catalog, checks, etc.)
 !Makefile
 
+# Git hooks — tracked so all machines pick them up via on-start.sh
+!hooks/
+!hooks/**
+
 # settings.json: universal config (hooks, effortLevel, universal permissions) — tracked
 # settings.local.json: machine-specific permissions — gitignored
 !settings.json

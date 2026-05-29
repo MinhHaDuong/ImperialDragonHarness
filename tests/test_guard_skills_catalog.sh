@@ -33,16 +33,7 @@ skills-catalog:
 MK
 
 mkdir -p "$TMPDIR/.git/hooks"
-cat > "$TMPDIR/.git/hooks/pre-commit" <<'HOOK'
-skills_changed=$(git diff --cached --name-only | grep '^skills/.*/SKILL\.md$' || true)
-if [ -n "$skills_changed" ]; then
-    if ! make skills-catalog; then
-        echo "ERROR: make skills-catalog failed — commit aborted" >&2
-        exit 1
-    fi
-    git add README.md
-fi
-HOOK
+cp "$(git rev-parse --show-toplevel)/hooks/pre-commit" "$TMPDIR/.git/hooks/pre-commit"
 chmod +x "$TMPDIR/.git/hooks/pre-commit"
 
 git -C "$TMPDIR" add .

@@ -1,0 +1,46 @@
+#!/bin/sh
+# --- erg-source-guard ---
+# Reject any staged changes under tickets/tools/go/ — erg source is read-only
+# in IDH. All edits must go to the git-erg project.
+erg_source=$(git diff --cached --diff-filter=d --name-only | grep '^tickets/tools/go/' || true)
+if [ -n "$erg_source" ]; then
+    echo "ERROR: erg source is read-only in IDH — commit changes to git-erg project instead" >&2
+    echo "Rejected files:" >&2
+    echo "$erg_source" >&2
+    exit 1
+fi
+# --- erg-source-guard ---
+
+# --- skills-catalog-guard ---
+# When any skills/*/SKILL.md is staged, regenerate README.md skills catalog.
+skills_changed=$(git diff --cached --name-only | grep '^skills/.*/SKILL\.md$' || true)
+if [ -n "$skills_changed" ]; then
+    if ! make skills-catalog; then
+        echo "ERROR: make skills-catalog failed — commit aborted" >&2
+        exit 1
+    fi
+    git add README.md
+fi
+# --- skills-catalog-guard ---
+
+# --- git-erg: begin managed block ---
+# Pre-commit hook fragment for git-erg ticket validation.
+# The install script appends this between "# --- git-erg ---" markers,
+# composing safely with any existing pre-commit hook.
+# To install manually, append everything below the shebang to your hook.
+
+# Validate .erg files (if any are staged)
+erg_files=$(git diff --cached --name-only | grep '\.erg$' || true)
+if [ -n "$erg_files" ]; then
+    erg_bin="${ERG:-tickets/erg}"
+    if [ -x "$erg_bin" ]; then
+        if ! "$erg_bin" check tickets/; then
+            echo "ERROR: Ticket validation failed. Fix errors above." >&2
+            exit 1
+        fi
+    else
+        echo "ERROR: erg binary not found. Run 'make build' first." >&2
+        exit 1
+    fi
+fi
+# --- git-erg: end managed block ---
