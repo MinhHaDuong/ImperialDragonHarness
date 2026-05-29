@@ -13,14 +13,18 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))  # project-state imports git_utils
-spec = importlib.util.spec_from_file_location("project_state", SCRIPTS / "project-state.py")
+spec = importlib.util.spec_from_file_location(
+    "project_state", SCRIPTS / "project-state.py"
+)
 ps = importlib.util.module_from_spec(spec)
 sys.modules["project_state"] = ps
 spec.loader.exec_module(ps)
 
 
 def _cp(stdout="", returncode=0, stderr=""):
-    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
+    return subprocess.CompletedProcess(
+        args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    )
 
 
 def _patch_run(monkeypatch, responder):
@@ -132,7 +136,9 @@ def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch
     tickets = tmp_path / "tickets"
     tickets.mkdir()
     (tickets / "0001-open.erg").write_text("%erg 0.1\nTitle: open one\n")
-    (tickets / "0002-closed.erg").write_text("%erg 0.1\nClosed: 2026-01-01\nTitle: done\n")
+    (tickets / "0002-closed.erg").write_text(
+        "%erg 0.1\nClosed: 2026-01-01\nTitle: done\n"
+    )
     # Make the erg lookup raise FileNotFoundError to exercise the fallback path.
     monkeypatch.setattr(ps.shutil, "which", lambda _x: None)
 
@@ -143,3 +149,19 @@ def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch
     out = ps.ticket_state(tmp_path)
     assert out["error"] == "erg not found"
     assert out["open"] == 1  # only the non-Closed ticket counted
+
+
+def test_ticket_state_ready_ids_populated(tmp_path, monkeypatch):
+    """erg ready --json returns no 'ready' key; ready_ids must NOT filter on it."""
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    erg_output = '[{"id": "0042", "title": "Do thing", "file": "0042-do-thing.erg", "closed": null, "refs": [], "tags": [], "blocked_by": []}, {"id": "0043", "title": "Other thing", "file": "0043-other-thing.erg", "closed": null, "refs": [], "tags": [], "blocked_by": []}]'
+    monkeypatch.setattr(ps.shutil, "which", lambda _x: "/usr/bin/erg")
+    monkeypatch.setattr(ps, "run", lambda args, cwd: _cp(erg_output))
+
+    (tickets / "0042-do-thing.erg").write_text("%erg 0.1\nTitle: Do thing\n")
+    (tickets / "0043-other-thing.erg").write_text("%erg 0.1\nTitle: Other thing\n")
+
+    out = ps.ticket_state(tmp_path)
+    assert out["ready"] == 2, "ready_ids should include all erg-ready tickets"
+    assert out["ready_ids"] == ["0042", "0043"]
