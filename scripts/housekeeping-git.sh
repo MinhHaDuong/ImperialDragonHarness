@@ -9,7 +9,7 @@ SKIP_FILE=".git/beat-skip.json"
 if [[ -f "$SKIP_FILE" ]]; then
     NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     TMP=$(mktemp)
-    if jq --arg now "$NOW" '.entries |= [.[] | select(.until == null or .until > $now)]' "$SKIP_FILE" > "$TMP"; then
+    if jq --arg now "$NOW" 'map(select(type == "object" and (.until == null or .until > $now)))' "$SKIP_FILE" > "$TMP"; then
         mv "$TMP" "$SKIP_FILE"
     else
         rm -f "$TMP"
