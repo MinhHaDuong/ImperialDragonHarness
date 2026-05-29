@@ -1,0 +1,29 @@
+%erg 0.1
+Title: fix refresh-STATE.py to use its path argument instead of git rev-parse
+Created: 2026-05-29
+Author: haduong
+
+--- log ---
+2026-05-29T13:30Z haduong created
+
+--- body ---
+## Context
+
+`scripts/refresh-STATE.py` accepts a positional path argument but ignores it.
+It always derives the repo root via `git rev-parse --show-toplevel`, which
+resolves to the worktree root when called from a worktree session. This causes
+STATE.md to be written in the worktree instead of the main repo — silently,
+with no error.
+
+Discovered 2026-05-29 during healthcheck: `refresh-STATE.py /home/haduong/.claude`
+appeared to succeed but left the main repo's STATE.md unchanged.
+
+## Exit criteria
+
+- [ ] When a path argument is provided, the script uses it as the repo root
+  instead of calling `git rev-parse --show-toplevel`.
+- [ ] `REPO_ROOT` is set from `sys.argv[1]` when present, falling back to the
+  current `_repo_root()` logic when no argument is given.
+- [ ] Running `cd /some/worktree && python3 ~/.claude/scripts/refresh-STATE.py /home/haduong/.claude`
+  updates `/home/haduong/.claude/STATE.md`, not the worktree's copy.
+- [ ] `make check` passes.

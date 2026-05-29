@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-04-29 -->
+<!-- last-reviewed: 2026-05-29 -->
 # Git Discipline
 
 - **Always work on a branch.** Main is read-only except for STATE housekeeping. For the full exception list (tickets, memory, config), see `rules/workflow.md` § Worktree paths.

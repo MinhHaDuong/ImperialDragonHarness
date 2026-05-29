@@ -1,0 +1,33 @@
+%erg 0.1
+Title: ensure skills-catalog is regenerated when any SKILL.md changes
+Created: 2026-05-29
+Author: haduong
+
+--- log ---
+2026-05-29T13:30Z haduong created
+
+--- body ---
+## Context
+
+The squash-merge sweep (2026-05-29) updated `skills/merge/SKILL.md` but did not
+regenerate the skills catalog, leaving README.md stale. The `make check-skills-drift`
+CI check caught it, but not until healthcheck — no local signal fired at commit time.
+
+The gap: there is no pre-commit hook or checklist entry that runs `make skills-catalog`
+when a `skills/*/SKILL.md` file is staged.
+
+## Exit criteria
+
+- [ ] A pre-commit hook (or equivalent) detects when any `skills/*/SKILL.md` is staged
+  and either auto-runs `make skills-catalog` or emits a warning that causes the commit
+  to pause for confirmation.
+- [ ] Alternatively: add a note to `rules/git.md` or the commit checklist that
+  `make skills-catalog` must be run when SKILL.md files change.
+- [ ] The fix is tested: stage a SKILL.md change without regenerating; the hook fires.
+- [ ] `make check` passes.
+
+## Guidance
+
+A pre-commit hook that auto-runs and stages the regenerated README.md is the
+lowest-friction solution. A warn-only hook is acceptable if auto-staging feels
+too magical.
