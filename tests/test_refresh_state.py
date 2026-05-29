@@ -59,12 +59,7 @@ def test_refresh_last_updated_warns_when_absent(capsys):
 
 
 def test_format_status_summarizes_ready_and_blocked():
-    tickets = [
-        {"id": "0001", "ready": True},
-        {"id": "0002", "ready": True},
-        {"id": "0003", "ready": False},
-    ]
-    lines = rs.format_status(tickets, ["abc123 commit one"])
+    lines = rs.format_status(2, 1, ["abc123 commit one"])
     joined = "\n".join(lines)
     assert lines[0] == rs.STATUS_HEADING
     assert "2 ready · 1 blocked" in joined
@@ -73,5 +68,43 @@ def test_format_status_summarizes_ready_and_blocked():
 
 
 def test_format_status_omits_commits_when_none():
-    lines = rs.format_status([{"id": "0001", "ready": True}], [])
+    lines = rs.format_status(1, 0, [])
     assert "**Recent commits:**" not in "\n".join(lines)
+
+
+# The erg JSON schema is the contract that previously bit us: `erg ready` /
+# `erg list` items carry NO `ready` flag, so get_tickets must derive the split
+# from list-vs-ready counts. These fixtures mirror the real schema exactly
+# (keys: id, title, file, closed, refs, tags, blocked_by).
+
+
+def _erg_item(tid: str) -> dict:
+    return {"id": tid, "title": f"t{tid}", "file": f"{tid}.erg",
+            "closed": False, "refs": [], "tags": [], "blocked_by": []}
+
+
+def test_get_tickets_derives_blocked_from_open_minus_ready(monkeypatch):
+    import json as _json
+
+    ready = [_erg_item("0001"), _erg_item("0002"), _erg_item("0003")]
+    open_all = [_erg_item(f"00{i:02d}") for i in range(1, 9)]  # 8 open
+
+    def fake_run(cmd):
+        # cmd is the list passed to subprocess; pick which query by subcommand
+        return _json.dumps(ready if "ready" in cmd else open_all)
+
+    monkeypatch.setattr(rs, "run", fake_run)
+    ready_count, blocked_count = rs.get_tickets()
+    assert (ready_count, blocked_count) == (3, 5)
+
+
+def test_get_tickets_never_returns_negative_blocked(monkeypatch):
+    import json as _json
+
+    # Defensive: if ready somehow exceeds open, blocked floors at 0, not negative.
+    def fake_run(cmd):
+        return _json.dumps([_erg_item("0001"), _erg_item("0002")]) if "ready" in cmd \
+            else _json.dumps([_erg_item("0001")])
+
+    monkeypatch.setattr(rs, "run", fake_run)
+    assert rs.get_tickets() == (2, 0)
