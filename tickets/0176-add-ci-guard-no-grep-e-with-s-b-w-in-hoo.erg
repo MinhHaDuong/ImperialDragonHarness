@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Add CI guard: no grep -E with \s/\b/\w in hook scripts
+Created: 2026-05-29
+Author: claude
+Blocked-by: 0175
+
+--- log ---
+2026-05-29T06:35Z claude created
+
+--- body ---
+## Context
+The `grep -E` + `\s`/`\b`/`\w` portability bug (see 0175) has a class shape:
+it recurred across multiple hook guards because nothing flags it. PCRE escapes
+in an ERE pattern fail silently on non-GNU grep — exactly the kind of latent
+gap a standing guard should catch, analogous to the existing `pipefail-guard`
+in `.github/workflows/CI.yml`.
+
+## Exit criteria
+- [ ] CI job (or extension of an existing guard job) fails when a `scripts/*.sh`
+      hook uses `grep -E`/`-G` with `\s`, `\b`, or `\w`
+- [ ] Self-tests in the CI job: catches a deliberate violation AND passes a
+      clean script (mirror the pipefail-guard / status-verb-guard pattern)
+- [ ] Existing scripts pass once 0175 lands (sequence 0175 before enabling)
+
+## Notes
+Standing regression test for the class — not a per-PR fix. Keep separate from
+0175 so the guard can be enabled after the existing offenders are converted.
+

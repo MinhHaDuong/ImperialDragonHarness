@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Convert remaining hook guards from grep -E with \s to grep -P
+Created: 2026-05-29
+Author: claude
+
+--- log ---
+2026-05-29T06:35Z claude created
+
+--- body ---
+## Context
+PR #221 fixed `guard-destructive-bash.sh` to use `grep -P` after a Copilot
+review noted that `\s` and `\b` are GNU-only extensions in POSIX ERE (`grep -E`)
+— on a non-GNU grep they degrade to the literal `s` / word-boundary-less match,
+silently defeating the guard.
+
+A celebrate-sweep found the same anti-pattern in two more PreToolUse guards:
+- `scripts/guard-no-push.sh:12`   `grep -qE '\bgit\s+push\b'`
+- `scripts/guard-no-push.sh:16`   `grep -qE "\b${BEAT_HOUSEKEEPING_BRANCH}\b"`
+- `scripts/guard-commit-on-main.sh:17`  `grep -qE '\bgit\s+commit\b'`
+
+(`guard-worktree-remove-wip.sh` already uses the correct `[[:space:]]` form.)
+
+## Exit criteria
+- [ ] `guard-no-push.sh` and `guard-commit-on-main.sh` no longer rely on
+      `\s`/`\b` under `grep -E` (switch to `grep -P`, matching guard-destructive-bash.sh)
+- [ ] A test exercises each guard's block/allow behaviour (extend the
+      `tests/*.sh` suites picked up by `tests/test_bash_suites.py`)
+- [ ] `make check` and the pytest suite pass
+
+## Notes
+Do not bundle with 0176 (the standing CI guard for the class).
+
