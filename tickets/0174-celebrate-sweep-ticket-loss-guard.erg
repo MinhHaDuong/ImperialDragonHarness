@@ -2,11 +2,13 @@
 Title: /celebrate sweep can claim to file follow-up tickets without committing them
 Created: 2026-05-28
 Author: claude
+Closed: all exit criteria met — preflight script deployed, celebrate prose updated, regression tests in place, observation cycle confirmed by commit 3efdc7a (celebrate filed 0175-0177 from PR #221)
 
 --- log ---
 2026-05-28T09:30Z claude created — surfaced when raid 713 recovered the lost 0173 ticket
 
 2026-05-28T17:17Z audit: ExitWorktree is a harness tool, not Bash; Bash(git worktree remove*) matcher does not fire on it, so neither guard-worktree-remove-wip.sh nor worktree-gc.sh covered the loss path (gc runs after the exit in celebrate step 9.5). Fix: scripts/worktree-exit-preflight.sh + celebrate/end-session prose; preflight refuses on tracked-mod/staged/untracked (uses --untracked-files=all so individual draft files surface in the message). Regression suite: 6 cases in tests/test_worktree_tools.py. Awaiting observation cycle.
+2026-05-29T15:26Z MinhHaDuong closed — all exit criteria met — preflight script deployed, celebrate prose updated, regression tests in place, observation cycle confirmed by commit 3efdc7a (celebrate filed 0175-0177 from PR #221)
 --- body ---
 ## Context
 
