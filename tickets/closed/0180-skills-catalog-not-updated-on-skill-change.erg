@@ -2,10 +2,12 @@
 Title: ensure skills-catalog is regenerated when any SKILL.md changes
 Created: 2026-05-29
 Author: haduong
+Closed: autoclosed — PR #229
 
 --- log ---
 2026-05-29T13:30Z haduong created
 
+2026-05-29T15:57Z MinhHaDuong closed — autoclosed — PR #229
 --- body ---
 ## Context
 
