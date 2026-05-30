@@ -8,6 +8,7 @@
 - **Worktree isolation is automatic** — the SessionStart hook enforces it. All worktrees are throwaway; branches hold durable state. Skills must not manually delete worktrees created via `Agent(isolation:"worktree")` — use `git worktree prune` after branch deletion, never `rm -rf`.
 - **Squash merge is disabled.** This repo uses regular merge commits only (`--merge`). `git merge-base --is-ancestor` works correctly. For branches that may have been squash-merged historically (before 2026-05-25), verify via `gh pr view --json headRefName,mergeCommit` instead of `git cherry`.
 - **Create a merge request** for each ticket to review changes before merging. Include a `**Ticket:** tickets/NNNN-...` line in the PR body so `erg-pr-merge` can auto-close the ticket on merge.
+- **Rebase before merge.** Before merging any PR, rebase onto current `origin/main`, push `--force-with-lease`, and wait for CI to pass. This prevents "Base branch was modified" failures mid-merge and keeps history linear.
 - **Delete branches after merge.** All repos use `deleteBranchOnMerge: true` on GitHub, so the remote branch disappears automatically when a PR merges. Clean up stale local branches with:
   ```bash
   git fetch --prune
