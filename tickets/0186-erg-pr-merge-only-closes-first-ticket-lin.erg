@@ -1,0 +1,45 @@
+%erg 0.1
+Title: erg-pr-merge: only closes first **Ticket:** line — loop over all
+Created: 2026-05-30
+Author: Claude
+
+--- log ---
+2026-05-30T19:45Z Claude created — surfaced in raid 0181-0184 (PR #207 had four tickets; only 0181 auto-closed)
+
+--- body ---
+## Context
+
+`skills/merge/erg-pr-merge` extracts the ticket ID from the PR body with:
+
+```bash
+TICKET_ID=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | head -1 || true)
+```
+
+The `head -1` means only the first `**Ticket:**` line is processed. PRs
+that bundle multiple tickets (a common pattern in raid waves) leave all
+but the first ticket open, requiring manual `erg close` + `erg archive`
+after merge. This happened in PR #207 (tickets 0181–0184): only 0181
+was auto-closed; 0182, 0183, 0184 required manual cleanup.
+
+## Actions
+
+1. In `skills/merge/erg-pr-merge`, replace the single-ticket extraction
+   with a loop over all matching lines:
+   ```bash
+   TICKET_IDS=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' || true)
+   ```
+2. In Step 2, iterate over `$TICKET_IDS` (newline-separated) and call
+   `erg close` + `erg archive` for each ID, accumulating the commit
+   message to cover all closed tickets in one commit.
+3. Update the die message to reflect that multiple tickets are accepted.
+4. Update the title-fallback extraction similarly if it also uses `head -1`.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — line ~75 (`head -1`) and Step 2 loop
+
+## Exit criteria
+
+- [ ] A PR body with three `**Ticket:**` lines closes and archives all three on merge
+- [ ] A PR body with one `**Ticket:**` line still works as before (no regression)
+- [ ] The commit message names all closed ticket IDs
