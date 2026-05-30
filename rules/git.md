@@ -1,7 +1,7 @@
 <!-- last-reviewed: 2026-05-29 -->
 # Git Discipline
 
-- **Always work on a branch.** Main is read-only except for STATE housekeeping. For the full exception list (tickets, memory, config), see `rules/workflow.md` § Worktree paths.
+- **Always work on a branch.** Main is read-only — no exceptions. Everything (code, docs, tickets, STATE, memory, config) lands via branch + PR. See `rules/workflow.md` § Worktree paths.
 - **One change per commit.** Message explains *why this change and not another*: alternatives considered, local design choices made.
 - **Merge commits**: strategic-level detail — architecture decisions, cross-file impacts, residual debt. Feature merges go through merge requests; chores merge locally via short-lived branch + fast-forward.
 - **Git is the project's long-term memory.** Top-level files reflect *now* — history lives in `git log`.

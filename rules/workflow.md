@@ -37,10 +37,7 @@ If `origin/main` is ahead and overlaps your area, reconcile first (rebase onto i
 
 During an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolute path. An edit at `/home/haduong/<repo>/<file>` lands in the **main repo**, not the worktree. Use worktree-rooted paths for code, prose, and data.
 
-Exception — the following may land directly on main without a branch:
-- `STATE.md` updates (always main — see `git.md` "Main is read-only except for STATE housekeeping")
-- Ticket lifecycle: closing finished tickets (`erg close`), opening new `.erg` files, batch ticket housekeeping
-- Harness memory and config files (`memory/*.md`, `settings.json`, `MEMORY.md`)
+**No exceptions. Everything goes through a PR.** `STATE.md`, ticket lifecycle, memory files, config — all changes land via branch + PR. The GitHub gate is closed; there is no direct-push-to-main path.
 
 For everything else (source code, manuscript prose, data files): if `git branch --show-current` is `main`, stop and switch to a branch first.
 
