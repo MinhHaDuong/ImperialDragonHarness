@@ -12,7 +12,7 @@
 #
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
-#   1. Find ticket ID from "Ticket: tickets/NNNN-..." in PR body (or title fallback)
+#   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
 #   2a. Wait for CI to pass on ticket-close commit (timeout 600s)
 #   3. Merge + delete remote branch (forge CLI — harness-extension-point)
@@ -72,27 +72,35 @@ BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 TITLE=$(gh pr view "$PR" --json title --jq '.title') # harness-extension-point
 
 # Accept: **Ticket:** tickets/NNNN, **Ticket**: tickets/NNNN, Ticket: tickets/NNNN
-TICKET_ID=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | head -1 || true)
+# A PR may bundle several tickets — collect ALL matching lines. `sort -u` is
+# load-bearing: a duplicated ID would re-close an already-archived ticket in
+# the loop below and abort under `set -e`.
+TICKET_IDS=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u || true)
 
 # Fallback: parse feat(NNNN) or ticket(NNNN) from PR title
-if [[ -z "$TICKET_ID" ]]; then
-    TICKET_ID=$(echo "$TITLE" | grep -oP '(?:feat|fix|ticket|chore)\(\K\d+' | head -1 || true)
+if [[ -z "$TICKET_IDS" ]]; then
+    TICKET_IDS=$(echo "$TITLE" | grep -oP '(?:feat|fix|ticket|chore)\(\K\d+' | sort -u || true)
 fi
 
-if [[ -z "$TICKET_ID" ]] && [[ -d tickets ]]; then
-    die "no ticket reference found in PR body or title — add 'Ticket: tickets/NNNN-...' to the PR body"
+if [[ -z "$TICKET_IDS" ]] && [[ -d tickets ]]; then
+    die "no ticket reference found in PR body or title — add one or more 'Ticket: tickets/NNNN-...' lines to the PR body"
 fi
 
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────
 
 ERG=${ERG:-erg}
-if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; then
-    echo "Closing ticket ${TICKET_ID}..."
-    "$ERG" close "$TICKET_ID" "autoclosed — PR #${PR}"
-    "$ERG" archive "$TICKET_ID" 2>/dev/null || true
+if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; then
+    CLOSED_LIST=""
+    while IFS= read -r tid; do
+        [[ -z "$tid" ]] && continue
+        echo "Closing ticket ${tid}..."
+        "$ERG" close "$tid" "autoclosed — PR #${PR}"
+        "$ERG" archive "$tid" 2>/dev/null || true
+        CLOSED_LIST="${CLOSED_LIST:+${CLOSED_LIST}, }${tid}"
+    done <<< "$TICKET_IDS"
     git add tickets/ 2>/dev/null || true
     if ! git diff --cached --quiet; then
-        git commit -m "ticket(${TICKET_ID}): close and archive — PR #${PR}"
+        git commit -m "ticket(${CLOSED_LIST}): close and archive — PR #${PR}"
     fi
 
     # Check if this is an erg-only branch (no changes outside tickets/)
@@ -107,8 +115,8 @@ if [[ -n "$TICKET_ID" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; t
         timeout 600 gh pr checks "$PR" --watch --fail-fast \
             || die "CI did not pass within 600s (failed or timed out) — aborting merge"
     fi
-elif [[ -n "$TICKET_ID" ]]; then
-    echo "Note: ticket ${TICKET_ID} found but no erg available — skipping close"
+elif [[ -n "$TICKET_IDS" ]]; then
+    echo "Note: ticket(s) ${TICKET_IDS//$'\n'/, } found but no erg available — skipping close"
 fi
 
 # ── Step 3: merge via forge CLI (works in worktrees and on VMs) ──────────────
