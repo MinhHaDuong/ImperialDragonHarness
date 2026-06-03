@@ -137,6 +137,15 @@ individual `/verify` verdicts.
 `/ticket-new` calls `erg next-id` and `erg validate <file>` (file arg, not
 directory), keeping mechanical work inside the tool where it belongs.
 
+**Bundle follow-up tickets into the spawning PR.** When a raid or review
+surfaces a follow-up, open it via `/ticket-new` and commit the `.erg` onto the
+current PR branch — the ticket only, never the fix. Reference it from the PR
+body (`Related follow-up: tickets/NNNN`, or `Scope overflow: tickets/NNNN` when
+it comes from a verify-gate verdict). The PR's `**Ticket:**` line still closes
+only its own ticket on merge; the bundled follow-up stays open. Never file the
+follow-up on a main checkout — main is read-only and may be dirty with parallel
+work.
+
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 - `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
 - `scope_overflow` in the verdict is empty or all entries have suggested disposition
