@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-05-26 -->
+<!-- last-reviewed: 2026-06-03 -->
 # Session Start
 
 At the beginning of every conversation:
@@ -51,6 +51,20 @@ When stuck, escalate progressively:
 5. Stop — ask the author.
 
 Save a feedback memory at each escalation (what failed, why). Stop if repeating yourself.
+
+# Diagnosis discipline
+
+Report the **observation**; hold the **cause** until you have isolated it. Don't
+reach for loaded causal labels — *corrupt*, *broken*, *tampered*, *hacked*,
+*hazard* — before evidence rules the cause in: they misdirect the fix (reinstall
+vs reword) and manufacture false alarm. Before blaming a tool, check the cheap
+discriminators: is it intact (package-verify / hash)? deterministic? does an
+independent code path reproduce it? does upstream document the behaviour? Any
+"yes" points away from corruption toward *intended behaviour*. State "X emits Y
+for input Z; cause not yet established," not a verdict dressed as a finding.
+(Cost of skipping this, 2026-06-03: a stock gofmt doc-comment smart-quote
+feature — intact binary, deterministic, reproduced by the stdlib — was
+misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.)
 
 # When to Ask the Author
 
