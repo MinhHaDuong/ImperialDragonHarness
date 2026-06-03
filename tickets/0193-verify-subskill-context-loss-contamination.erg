@@ -6,6 +6,8 @@ Author: claude
 --- log ---
 2026-06-03T21:18Z claude created — four incidents in five /verify runs during raid 0185-0189
 
+2026-06-03T21:21Z claude note fifth incident: a verify sub-agent pushed the orchestrator's local branch t0189-followup and opened duplicate PR #243 (20:50Z); closed as rogue, content already merged via #241
+
 --- body ---
 ## Context
 
