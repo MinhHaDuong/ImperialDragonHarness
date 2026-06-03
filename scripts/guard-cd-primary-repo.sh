@@ -58,9 +58,12 @@ target="${target//\$HOME/$HOME}"
 # worktree path, which lives under primary_root) are fine.
 [ "$target" = "$primary_root" ] || exit 0
 
-# Mutating git verbs or erg verbs after the cd → block.
-if echo "$cmd" | grep -qP '\bgit\s+(commit|add|switch|checkout|reset|merge|rebase|push|mv|rm|stash)\b' \
-   || echo "$cmd" | grep -qP '\berg\s+(close|archive)\b'; then
+# Mutating git verbs or erg verbs *after* the cd → block. Scan $rest (the text
+# following the first `cd`), not $cmd: a mutation *before* the cd ran in the
+# worktree and is safe (e.g. `git add . && cd <primary>`), so scanning the whole
+# command would false-block it — contra the ticket's fail-safe invariant.
+if echo "$rest" | grep -qP '\bgit\s+(commit|add|switch|checkout|reset|merge|rebase|push|mv|rm|stash)\b' \
+   || echo "$rest" | grep -qP '\berg\s+(close|archive)\b'; then
     echo "BLOCKED: 'cd $target && ...' targets the PRIMARY repo (on main), but this is a worktree session (cwd=$cwd)." >&2
     echo "The mutation would land on the wrong tree. Either:" >&2
     echo "  - drop the 'cd' — plain git/erg already operate on the worktree branch, or" >&2

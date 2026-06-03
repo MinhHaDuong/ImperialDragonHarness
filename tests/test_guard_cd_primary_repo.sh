@@ -92,6 +92,12 @@ _assert_allowed "cd into worktree subtree && git commit" \
 _assert_allowed "cd /tmp && git commit" "cd /tmp && git commit -m x" "$WORKTREE"
 # Empty command.
 _assert_allowed "empty command" "" "$WORKTREE"
+# Mutating verb BEFORE the cd (operates on the worktree); nothing mutating after
+# the cd-to-PRIMARY. Must NOT false-block — the offence is mutation *under* the cd.
+_assert_allowed "git add . && cd PRIMARY (mutate before cd)" \
+                "git add . && cd $PRIMARY && echo done" "$WORKTREE"
+_assert_allowed "git commit && cd PRIMARY (mutate before cd)" \
+                "git commit -m x && cd $PRIMARY" "$WORKTREE"
 
 # Read-only cd into PRIMARY must be allowed AND silent (no stderr noise).
 _assert_allowed_silent "cd PRIMARY && git status" "cd $PRIMARY && git status" "$WORKTREE"
