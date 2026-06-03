@@ -71,7 +71,10 @@ For each reimagined ticket, launch an agent (background):
   wrong implementation, or only a different one? Annotate any hits
   with the proposed fix.
 
-Wait for all. Commit planned tickets. Report scorecard.
+Wait for all. Commit planned tickets. Report scorecard. Ticket files go on a
+branch — stage and commit the `.erg` file immediately after writing it; if
+staging fails (gitignore or wrong cwd), embed the ticket content directly in
+the execute agent prompt and the agent creates the file as its first step.
 
 ## Phase 4: Verify feasibility
 
