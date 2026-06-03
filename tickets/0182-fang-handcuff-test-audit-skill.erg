@@ -1,0 +1,137 @@
+%erg 0.1
+Title: Extract test-quality audit workflow (fang/handcuff/scope) into a skill
+Created: 2026-05-30
+Author: claude
+Tag: deferred
+
+--- log ---
+2026-05-30T10:00Z claude created — after the fang-audit fan-out run on git-erg validated the design
+
+--- body ---
+## Context
+
+A fan-out mutation-testing workflow ("fang audit") was prototyped and run end-to-end
+on the `git-erg` Go test harness (19 test files, 31 agents, ~29 min, 1.3M tokens).
+It works: 90 confirmed fangs, 8 toothless tests surfaced, both guard canaries caught.
+Durable artifacts from the validating run (copied OUT of the ephemeral session dir):
+- Reviewed+verified plan: `~/.claude/plans/quizzical-booping-puffin.md` (the M1–M4 fixes,
+  pairing table, verdict rules, lens design — survived two local review passes).
+- Proven workflow script: `~/.claude/plans/fang-audit-erg-prototype.js` (the exact script
+  that produced the 19-file run; start the extraction from this, do not rewrite from memory).
+- Sample output: `git-erg/FANG-AUDIT.md` (90 caught / 8 toothless / 4 equivalent, canary PASS).
+
+Per the approved plan's follow-up, the pattern generalizes to any repo with a runnable
+test suite and should become a reusable harness skill — but only now that the concrete
+run has shaken out the design. This ticket extracts it AND adds the complementary
+"handcuff audit" (the other half of test scoping).
+
+Two axes of test scoping, both mechanically checkable by mutation:
+- **Fang (sensitivity):** behavior-CHANGING mutation → the test must go RED. A test
+  that stays green is toothless. (This is what the prototype already does.)
+- **Handcuff (robustness):** behavior-PRESERVING refactor (rename locals, reorder
+  independent statements, swap an equivalent construct, change an unexported
+  representation) → the test must stay GREEN. A test that goes red is over-scoped and
+  blocks legitimate evolution.
+- **Scope / altitude (class coverage):** for each behavior-changing mutation that IS
+  caught, apply the SAME mutation operator at every structurally-similar sibling site.
+  If only the site with a regression test goes red and the siblings survive, the test is
+  pinned to one INSTANCE when the defect is a CLASS — it guards the past, not the future.
+  Flag for promotion to a class/invariant guard (the project already does this for ASCII,
+  scaling, resource-hygiene). Oracle: sibling-survives = under-scoped contract.
+Right-scoped on all three = bites the defect, tolerates refactors, AND guards the whole
+class. The prototype only measures the first axis (fang).
+
+## Design rationale — the lens taxonomy
+
+A test is a CLASSIFIER over code-versions: it partitions every possible version into
+accept (green) / reject (red). A perfect test draws that boundary exactly along the
+contract. Every quality lens is a way the boundary is wrong, untrustworthy, or too
+costly to consult. Three families:
+
+1. Is the boundary in the RIGHT PLACE? (mutation-mechanizable — this skill)
+   - fang: rejects bad versions (recall). Toothless = too loose.
+   - handcuff: accepts good versions (precision; tolerates refactors). Brittle = too tight.
+   - altitude/scope: boundary resolution vs the defect-CLASS edge (instance vs class).
+   - oracle-strength: the continuous form of fang — a weak assertion (!= nil) kills few
+     mutants, a strong one (== expected) kills many. Free from the same mutation data.
+
+2. Can you BELIEVE the verdict? (empirically-mechanizable — re-run/shuffle/time, no LLM)
+   - determinism: same code -> same verdict. Flaky tests have NEGATIVE value (they train
+     the team to ignore red, disarming the whole suite).
+   - independence: verdict invariant under reorder/parallel/isolation.
+   - faithfulness: exercises prod-like code paths, not a mocked fiction (LLM-auditable).
+
+3. Can you AFFORD and ACT on the verdict?
+   - speed: a correct test nobody runs has ~zero realized value (the `scaling` build tag
+     exists for exactly this — quarantine the slow guard).
+   - diagnosticity: on red, does it bisect to the cause? Mutation-derivable: how FEW /
+     how targeted are the tests that fire per killed mutant. Free from v1's data.
+   - maintainability: a legitimate contract change touches one test, not fifty.
+
+META-LENS: test quality is NOT intrinsic — it is relative to RISK x CHURN. Spend test
+budget where blast-radius x change-frequency is highest. (The audit's scariest finding
+was identity_test's sanitize = a SECURITY invariant, header injection — weight it above
+cosmetic checks regardless of verdict count.) And: most toothlessness is a NEGATIVE-SPACE
+failure — the test never constructs the adversarial input where the defect lives; mutation
+testing finds these precisely because the mutation manufactures that input.
+
+## Lens roadmap (avoid cramming everything into one skill)
+
+- v1 (THIS skill): the three boundary lenses + oracle-strength + diagnosticity. The last
+  two are FREE RIDERS — derivable from the mutation data v1 already collects, no extra runs.
+- v1 PRECHECK (gate): a quick determinism check (re-run unchanged suite N times) BEFORE
+  trusting any mutation verdict — you cannot mutation-test a flaky suite. This is a
+  dependency, not a nice-to-have. Independence (shuffle/parallel) optional in the precheck.
+- DEFERRED, separate tickets (different MECHANISM — do not bloat this skill):
+  * empirical trio as a lightweight CI-side utility: flakiness / independence / speed
+    (a small test-runner wrapper, NOT an expensive fan-out).
+  * LLM-audit pass: faithfulness, readability/intent, negative-space coverage,
+    change-detector smell (read-and-judge, no execution) — a sibling skill.
+  * risk x churn = a PRESENTATION/prioritization layer over findings (pull churn from
+    git log, sort by blast-radius x change-frequency). Keep the human in the loop; do NOT
+    automate the risk judgment.
+
+## Design note — one workflow, two passes (recommended)
+
+Run both in the SAME workflow, NOT two disconnected runs:
+- They share ~80% of scaffolding: the explicit test↔source pairing table, worktree
+  setup, baseline-green check, untracked-input copy, per-file fan-out, the canary gate.
+- Keep the two ORACLES in separate agent roles — do not make one agent juggle
+  red=good and red=bad; that invites misclassification.
+- Pipeline them: fang pass first, then a handcuff pass (can prioritise tests that
+  showed fangs / are non-trivial). Emit ONE unified per-test report: `has-fang? |
+  is-handcuff?` on both axes — far more actionable than two separate tables.
+- The handcuff pass needs its OWN skeptic, symmetric to the equivalent-mutant skeptic:
+  when a test goes red on a supposed refactor, verify the refactor was TRULY
+  behavior-preserving. If it secretly changed behavior, the red is a legitimate catch,
+  NOT a handcuff — withdraw the accusation. (Mirror image of the false-accusation guard.)
+
+## Known defect to fix during extraction
+
+The prototype's canary validity-gate trusted an `isCanary` flag from ALL agents;
+behavioral audit agents mis-set it on their own findings and produced a false "FAIL".
+Scope the canary gate strictly to the designated guard files. (Fixed ad hoc in the
+prototype via `f.isCanary && /scaling_test|resource_test/.test(file)` — bake the
+principle into the skill: canary designation is a workflow input, not an agent claim.)
+
+## Exit criteria
+- [ ] `skills/fang-audit/SKILL.md` + workflow script committed; registered via
+      `make skills-catalog`; `make check-skills-drift` passes in CI.
+- [ ] Repo-specific knobs are explicit inputs (NOT name heuristics): `TEST_GLOB`,
+      `RUN_TEST` (+ tag variants), the test↔source pairing table, designated canary
+      files, language-specific mutation heuristics.
+- [ ] Fang mode reproduces the git-erg result (toothless list + canary PASS).
+- [ ] Handcuff mode implemented: behavior-preserving mutation operators + inverted
+      oracle (red = over-scoped) + behavior-preservation skeptic.
+- [ ] Scope/altitude mode implemented: replay each caught mutation's operator across
+      structurally-similar sibling sites; flag instance-pinned contracts (sibling
+      survives) for promotion to a class guard.
+- [ ] Oracle-strength + diagnosticity reported as free riders from the existing mutation
+      data (mutants-killed-per-assertion; tests-fired-per-killed-mutant) — no extra runs.
+- [ ] Determinism precheck gates the run: re-run the unchanged suite N times; abort with a
+      clear "suite is flaky, verdicts untrustworthy" message if verdicts vary.
+- [ ] Unified per-test report covers all three axes (fang? / handcuff? / right-scope?)
+      and is sortable by a risk x churn weighting (churn from git log).
+- [ ] Canary gate scoped to designated guard files only (isCanary-pollution bug gone).
+- [ ] Forge-agnostic, language-pluggable (validated on at least one non-Go repo or a
+      documented plug-in path).

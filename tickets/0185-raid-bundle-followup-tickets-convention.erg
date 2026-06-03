@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Document "bundle follow-up tickets into the spawning PR" raid convention
+Created: 2026-05-30
+Author: claude
+
+--- log ---
+2026-05-30T11:00Z claude created
+
+--- body ---
+## Context
+
+During raid 0175 (git-erg Tag→Label rename), a review surfaced a pre-existing,
+out-of-scope finding. Filing the follow-up ticket "cleanly on main" stalled —
+main was checked out and dirty in the main repo (parallel work), so it could not
+be committed there from the worktree.
+
+The author confirmed the resolution and wants it documented as a standing
+convention: **bundle the follow-up ticket file onto the spawning PR's branch**
+(the ticket only, never the fix), and reference it from the PR body/comment. The
+parent PR's `**Ticket:**` line still closes only its own ticket on merge; the
+bundled follow-up stays open.
+
+## Actions
+1. Decide the canonical home for the convention. Candidates:
+   - `skills/raid/SKILL.md` — Phase 6/7 (already covers /ticket-new + scope
+     overflow during a raid); most thematically coherent.
+   - `rules/workflow.md` — "Ticket discipline for multi-PR work" section.
+2. Add a concise note: when a raid/review surfaces a follow-up, open it via
+   `/ticket-new` and commit the `.erg` onto the current PR branch; reference it
+   in the PR (e.g. "Related follow-up:" / "Scope overflow: tickets/NNNN").
+   Commit the ticket only, not the implementation.
+3. Cross-check against the existing Phase 7 scope-overflow / "Scope overflow:
+   tickets/NNNN" wording so the two are consistent, not contradictory.
+
+## Exit criteria
+- [ ] The bundle-follow-ups convention is documented in one canonical place
+- [ ] No contradiction with the existing Phase 7 scope-overflow guidance
+
+## Notes
+Memory captured this session: feedback_bundle_followup_tickets (git-erg project
+memory). Author asked for an IDH ticket rather than an in-session edit.

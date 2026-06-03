@@ -1,0 +1,36 @@
+%erg 0.1
+Title: raid phase 3 commit ticket file onto branch before execute
+Created: 2026-05-30
+Author: MinhHaDuong
+
+--- log ---
+2026-05-30T21:00Z MinhHaDuong created
+
+--- body ---
+## Context
+
+During the 0200 raid, the ticket file was written to the main repo's
+working tree as an untracked file. When the branch switched it stranded,
+and the gitignore for .claude/worktrees blocked staging it from the
+hook-reset cwd. The ticket had to be embedded in the execute agent
+prompt as a fallback.
+
+## Problem
+
+The raid skill's Phase 2/3 checkpoint says "commit planned tickets"
+but does not specify WHERE or HOW. A ticket created with Write to the
+main repo's working tree will strand on the next branch switch.
+
+## Fix
+
+Add one sentence to the raid skill's Phase 3 checkpoint:
+
+  "Ticket files go on a branch — stage and commit the .erg file
+  immediately after writing it. If staging fails (gitignore or
+  wrong cwd), embed the ticket content directly in the execute
+  agent prompt; the agent creates the file as its first step."
+
+## Exit criteria
+
+- [ ] SKILL.md Phase 3 checkpoint includes the commit-or-embed note
+- [ ] The note is one sentence, not a procedure
