@@ -41,6 +41,8 @@ During an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolu
 
 For everything else (source code, manuscript prose, data files): if `git branch --show-current` is `main`, stop and switch to a branch first.
 
+The same trap exists on the Bash surface: prefixing a command with `cd <primary-repo-root> &&` silently lands `git`/`erg` mutations on the primary checkout (on main) instead of the worktree branch. A PreToolUse guard blocks `cd <primary-repo-root> && <mutating git/erg>` during worktree sessions; read-only inspection (`git status`, `git log`) is not penalised, and an intentional primary-repo mutation should use `git -C <path>` rather than a `cd`.
+
 # Escalation Protocol
 
 When stuck, escalate progressively:
