@@ -2,11 +2,13 @@
 Title: PreToolUse guard against cd-to-primary-repo in worktree sessions
 Created: 2026-06-03
 Author: claude
+Closed: autoclosed — PR #241
 
 --- log ---
 2026-06-03T13:00Z claude created
 2026-06-03T20:08Z claude note implemented guard + tests + registration per plan
 
+2026-06-03T21:13Z MinhHaDuong closed — autoclosed — PR #241
 --- body ---
 ## Context
 
