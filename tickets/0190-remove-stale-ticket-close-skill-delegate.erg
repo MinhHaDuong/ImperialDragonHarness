@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Remove stale ticket-close skill, delegate ticket-new mechanics to erg new
+Created: 2026-06-03
+Author: claude
+
+--- log ---
+2026-06-03T18:53Z claude created
+
+--- body ---
+## Source
+Skill audit during the 0216 dogfood migration (git-erg), 2026-06-03.
+Author observation: "ticket skills are stale, we use erg verbs now."
+
+## Context
+Audit of the four ticket-lifecycle skills against the current erg verb
+surface (new, close, log, label, archive, rm, ready, next-id):
+
+- skills/ticket-close: thin wrapper over `erg close` + commit. Its
+  ticket-close-impl also attempts a FAST-FORWARD PUSH DIRECTLY TO
+  origin/main for erg-only branches, which violates the no-direct-push-
+  to-main policy (everything lands via PR). Stale and policy-violating.
+- skills/ticket-new: parses free-form input into a ticket (real value)
+  but hand-writes the .erg file; it uses `erg next-id` yet not `erg new`,
+  which is atomic and race-safe under concurrent agents.
+- skills/start-ticket: KEEP (worktree/branch/test-first/verify-gate
+  orchestration, not replaceable by erg verbs). Step 2 calls
+  /ticket-close -- needs updating.
+- skills/pick-ticket: KEEP (risk-ranked sweep picker over
+  `erg ready --json`). Line ~96 calls /ticket-close -- needs updating.
+
+## Fix
+1. Delete skills/ticket-close/ (SKILL.md + ticket-close-impl). Callers
+   use `erg close ID REASON` + commit + normal PR flow instead.
+2. Rewrite skills/ticket-new to delegate file creation to `erg new TITLE`
+   then edit the body in place; keep the free-form-input normalization
+   guidance. (Alternative: remove it too and fold the guidance into
+   tickets/AGENTS.md -- decide at execution.)
+3. Update cross-references: start-ticket step 2 and pick-ticket line ~96
+   replace `/ticket-close <id> already-done` with the erg close + commit
+   sequence.
+4. Regenerate the skills catalog: `make skills-catalog` (README.md is
+   generated; CI runs check-skills-drift).
+
+## Exit criteria
+- [ ] skills/ticket-close/ no longer exists
+- [ ] No skill or rule references /ticket-close (grep -r ticket-close)
+- [ ] ticket-new creates files via `erg new` (atomic), not hand-written
+- [ ] start-ticket and pick-ticket close tickets via `erg close` + PR flow
+- [ ] make skills-catalog run; check-skills-drift passes
