@@ -73,8 +73,10 @@ explicit human go-ahead.
   ```
 
   The helper rewrites the tag-like segment inside raw-download / release URLs
-  to the new tag and prints a replacement count; it exits non-zero if no such
-  URL is found, so a missing or already-current URL surfaces immediately.
+  to the new tag and prints a match count; it exits non-zero (with a
+  diagnostic) if **no** such URL is found, so a missing URL surfaces
+  immediately. An already-current URL is a normal match: the helper prints its
+  count and exits 0 (idempotent no-op).
 - Commit the change: `release(<tag>): update download URL to <tag>`.
 
 ## 5. GPG signing pause (human-only)

@@ -32,7 +32,10 @@ fi
 # Tag-bearing download-URL path segment: /raw/<tag>/ or /download/<tag>/
 pattern='/(raw|download)/([0-9]{4}-[0-9]{2}-[0-9]{2}|v?[0-9]+\.[0-9]+\.[0-9]+)/'
 
-count=$(grep -oE "$pattern" "$file" | wc -l)
+# `|| true`: a no-match makes grep exit 1, which (with set -e + pipefail)
+# would abort the script here and skip the diagnostic below. Swallow it so
+# the explicit zero-count branch runs and prints the message.
+count=$(grep -oE "$pattern" "$file" | wc -l || true)
 
 if [[ "$count" -eq 0 ]]; then
     echo "rewrite-download-url: no tag-bearing download URL found in $file" >&2

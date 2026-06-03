@@ -50,17 +50,23 @@ else
     echo "FAIL: (b) helper exited non-zero with two matching URLs"; fail=1
 fi
 
-# (c) no matching download URL → exit non-zero.
+# (c) no matching download URL → exit non-zero AND print a diagnostic.
+# The diagnostic assertion guards against an errexit-on-grep regression where
+# the script aborts before the explicit zero-count branch, silently dropping
+# the "no tag-bearing download URL found" message.
 f_c="$TMPDIR/nomatch.md"
 cat > "$f_c" <<'MD'
 # README
 
 No download URL here, just prose and a plain link https://example.com/repo.
 MD
-if bash "$HELPER" "$f_c" 2026-06-03 >/dev/null 2>&1; then
+c_err="$TMPDIR/nomatch.err"
+if bash "$HELPER" "$f_c" 2026-06-03 >/dev/null 2>"$c_err"; then
     echo "FAIL: (c) helper exited zero on a file with no matching URL"; fail=1
+elif grep -qi 'no tag-bearing download URL' "$c_err"; then
+    echo "PASS: (c) helper exits non-zero and prints a diagnostic when no URL matches"
 else
-    echo "PASS: (c) helper exits non-zero when no URL matches"
+    echo "FAIL: (c) helper exited non-zero but printed no diagnostic"; cat "$c_err"; fail=1
 fi
 
 # (d) idempotence — second run with the same tag exits 0, file unchanged.
