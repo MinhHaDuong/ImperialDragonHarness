@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# rewrite-download-url <file> <new-tag>
+#
+# Rewrites the tag-like segment inside raw-download / release URLs to a new
+# release tag, in place. Forge-generic: matches on path shape, not host.
+# Recognised positions:
+#   .../raw/<tag>/...        (raw file at a ref)
+#   .../download/<tag>/...   (release asset at a ref)
+# Recognised tag shapes:
+#   YYYY-MM-DD date tags, or v?MAJOR.MINOR.PATCH semver.
+#
+# Prints the number of matching URL segments. Exits non-zero if zero match.
+#
+# Exit code keys off "a tag-bearing download URL was FOUND", not "the file
+# changed" — so re-running with the same tag is a content no-op that still
+# exits 0 (idempotent), while a file with no such URL exits non-zero.
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+    echo "usage: rewrite-download-url <file> <new-tag>" >&2
+    exit 2
+fi
+
+file="$1"
+new_tag="$2"
+
+if [[ ! -f "$file" ]]; then
+    echo "rewrite-download-url: not a file: $file" >&2
+    exit 2
+fi
+
+# Tag-bearing download-URL path segment: /raw/<tag>/ or /download/<tag>/
+pattern='/(raw|download)/([0-9]{4}-[0-9]{2}-[0-9]{2}|v?[0-9]+\.[0-9]+\.[0-9]+)/'
+
+count=$(grep -oE "$pattern" "$file" | wc -l)
+
+if [[ "$count" -eq 0 ]]; then
+    echo "rewrite-download-url: no tag-bearing download URL found in $file" >&2
+    exit 1
+fi
+
+# `#` delimiter — URLs contain `/`. Replace only the <tag> capture group,
+# keeping the /raw/ or /download/ verb and the trailing path intact.
+sed -E -i "s#/(raw|download)/([0-9]{4}-[0-9]{2}-[0-9]{2}|v?[0-9]+\.[0-9]+\.[0-9]+)/#/\1/${new_tag}/#g" "$file"
+
+echo "$count"
