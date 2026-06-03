@@ -11,7 +11,7 @@ Author: claude
 
 In an EnterWorktree session the Bash shell already sits in the worktree
 (`.claude/worktrees/<name>`) and resets there after every command. Prefixing
-a Bash command with `cd /home/haduong/<repo> &&` silently cd's into the
+a Bash command with `cd ~/<repo> &&` silently cd's into the
 PRIMARY repo (checked out on `main`), so any `git` / `erg close` / `git commit`
 in that command mutates the primary checkout on main instead of the worktree
 branch.
@@ -57,9 +57,9 @@ avoidable) and fail-safe (never block when detection is ambiguous).
 
 A unit test for the guard predicate (shell or python, matching the repo's
 existing hook tests): given (cwd-is-worktree, command-string) pairs, assert the
-predicate fires on `cd /home/haduong/<repo> && git commit ...` and does NOT
+predicate fires on `cd ~/<repo> && git commit ...` and does NOT
 fire on (a) the same command outside a worktree session, (b) a bare
-`git commit` in the worktree, (c) `cd /home/haduong/<repo>/.claude/worktrees/x`
+`git commit` in the worktree, (c) `cd ~/<repo>/.claude/worktrees/x`
 (staying within the worktree tree), (d) a read-only `cd <repo> && git status`
 if the policy is warn-only for reads.
 
