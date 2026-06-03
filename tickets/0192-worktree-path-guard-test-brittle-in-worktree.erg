@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Make test_pretooluse_worktree_path_guard.sh hermetic when run from a linked worktree
+Created: 2026-06-03
+Author: claude
+
+--- log ---
+2026-06-03T20:21Z claude created — surfaced independently by both 0187 and 0189 raid execute agents
+
+--- body ---
+## Context
+
+`tests/test_pretooluse_worktree_path_guard.sh` (case 4) fails when the
+suite is invoked from inside a linked git worktree, where `.git` is a
+*file* (`gitdir:` pointer) rather than a directory — this trips the
+test's worktree detection heuristic. In CI's fresh checkout `.git` is a
+directory and the suite is green, so the red only appears for agents
+and humans running `pytest tests/test_bash_suites.py` from a worktree
+session — which is the harness's default working mode.
+
+Confirmed pre-existing on `origin/main` (2026-06-03, raid 0186/0187/0189):
+both execute agents hit it independently; neither PR's diff touches the
+failing suite.
+
+## Relevant files
+
+- `tests/test_pretooluse_worktree_path_guard.sh` — case 4 and its
+  worktree-detection helper
+- `tests/test_bash_suites.py` — pytest wrapper that surfaces the red
+- `scripts/pretooluse-worktree-path-guard.sh` — guard under test (only
+  touch if the brittleness is in its own detection)
+
+## Actions
+
+1. Reproduce: run the suite once from a linked worktree (red, case 4)
+   and once from a fresh checkout (green).
+2. Make the test hermetic: derive the fixture's worktree-ness from the
+   fixture paths the test constructs (or pin fixture HOME/cwd), instead
+   of inheriting the invoking checkout's `.git` shape.
+3. If the brittleness turns out to live in the guard script's own
+   detection, fix it there and add a test case covering both `.git`
+   shapes.
+
+## Test
+
+The red step already exists: `bash tests/test_pretooluse_worktree_path_guard.sh`
+from inside any `.claude/worktrees/*` checkout fails case 4 today.
+
+## Verification
+
+- [ ] Suite green when invoked from a linked worktree
+- [ ] Suite green from a fresh checkout (CI environment)
+
+## Invariants
+
+- No behaviour change to `scripts/pretooluse-worktree-path-guard.sh`
+  unless step 3 applies (then a test proves both environments).
+- All other suites in `tests/test_bash_suites.py` stay green.
+
+## Exit criteria
+
+- [ ] `pytest tests/test_bash_suites.py` passes from a linked worktree
+      and from a fresh checkout
