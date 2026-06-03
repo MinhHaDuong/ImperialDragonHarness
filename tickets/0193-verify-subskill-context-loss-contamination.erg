@@ -1,0 +1,80 @@
+%erg 0.1
+Title: Thread PR context through verify sub-skills and stop worktree contamination
+Created: 2026-06-03
+Author: claude
+
+--- log ---
+2026-06-03T21:18Z claude created — four incidents in five /verify runs during raid 0185-0189
+
+2026-06-03T21:21Z claude note fifth incident: a verify sub-agent pushed the orchestrator's local branch t0189-followup and opened duplicate PR #243 (20:50Z); closed as rogue, content already merged via #241
+
+--- body ---
+## Context
+
+During the 2026-06-03 raid (merge requests #238–#242), the /verify
+pipeline produced correct final verdicts but its sub-skills misbehaved
+four times in five runs:
+
+1. `verify-gate` returned an unrelated tickets-backlog survey instead
+   of gating #241 — the running verifier rendered the gate verdict
+   itself from collected evidence (authorized fallback, but the gate
+   did the wrong job silently).
+2. `verify-adherence` spiraled into ticket-landscape orientation
+   instead of checking #238's diff.
+3. `verify-adherence` reviewed the wrong branch (t0189) during #240's
+   run.
+4. A verify sub-agent resurrected the historical duplicate-ID file
+   `0149-squash-merge-probe-false-negatives.erg` into the raid
+   orchestrator's worktree; `erg-pr-merge`'s `git add tickets/` swept
+   it into the index and bounced #242's merge on corpus validation.
+
+Common shape: sub-skill invocations lose their inputs (PR number,
+branch, unresolved-findings list) when forked, and sub-agents inherit
+the orchestrator's cwd instead of the review worktree. Memory
+`feedback_verify_agents_dirty_main_repo` documents the main-repo
+variant of (4); this raid shows it generalizes to orchestrator
+worktrees.
+
+## Relevant files
+
+- `skills/verify/SKILL.md` — orchestration; where sub-skill inputs are
+  (not) threaded
+- `skills/verify-adherence/SKILL.md` — drifted twice
+- `skills/verify-gate/SKILL.md` — lost PR context once
+- `skills/merge/erg-pr-merge` — `git add tickets/` sweeps stray files;
+  consider `git add` of only the closed ticket paths
+
+## Actions
+
+1. Thread PR number, branch, and unresolved-findings explicitly through
+   verify → verify-adherence → verify-gate as skill arguments, not
+   conversational context.
+2. Pin verify sub-agent cwd to the review worktree (never the calling
+   session's cwd).
+3. Add a post-verify orchestrator-side `git status --porcelain` check;
+   discard foreign files before any merge step.
+4. Consider narrowing `erg-pr-merge`'s `git add tickets/` to the files
+   `erg close`/`erg archive` actually touched.
+
+## Test
+
+Red step: a fixture run of /verify with a deliberately empty
+conversational context must still receive the PR number via args — a
+grep-able assertion that verify-gate's invocation line carries the PR
+number and unresolved-findings input.
+
+## Verification
+
+- [ ] verify-gate invocation receives PR number + unresolved lists as args
+- [ ] sub-agent cwd pinned to review worktree
+- [ ] post-verify status check present in skills/verify/SKILL.md
+
+## Invariants
+
+- /verify still never merges; verdict semantics unchanged.
+- Existing guard and bash-suite tests stay green.
+
+## Exit criteria
+
+- [ ] One full raid cycle with zero off-task sub-skill runs and zero
+      foreign files in the orchestrator worktree after verify
