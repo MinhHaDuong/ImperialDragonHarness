@@ -110,10 +110,6 @@ closed_has() {  # $1 ticket-number -> 0 if archived under tickets/closed/
     git -C "$REPO" ls-tree -r --name-only "$BRANCH" -- tickets/closed/ \
         | grep -q "${1}-"
 }
-open_has() {    # $1 ticket-number -> 0 if still a top-level open ticket
-    git -C "$REPO" ls-tree -r --name-only "$BRANCH" -- tickets/ \
-        | grep -v 'tickets/closed/' | grep -q "tickets/${1}-"
-}
 commit_subject() { git -C "$REPO" log -1 --format=%s "$BRANCH"; }
 
 # ════════════════════════════════════════════════════════════════════════════
