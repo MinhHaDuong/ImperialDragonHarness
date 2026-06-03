@@ -1,0 +1,46 @@
+%erg 0.1
+Title: LLM read-and-judge test-audit (faithfulness, intent, negative-space, change-detector)
+Created: 2026-05-30
+Author: claude
+Tag: deferred
+
+--- log ---
+2026-05-30T10:30Z claude created — sibling to 0182; different mechanism (judge, no execution)
+
+--- body ---
+## Context
+
+Sibling to [[0182]] (the mutation-oracle test-quality audit: fang / handcuff / scope).
+Those three lenses are MUTATION-mechanizable — mutate, run, read the oracle. A second
+family of test-quality lenses cannot be measured that way; they require READING the test
+and judging intent, with no execution. Different mechanism => separate skill, so neither
+bloats the other. Build AFTER 0182 v1 proves the harness shape.
+
+## Lenses in scope (read-and-judge, no test runs)
+- **Faithfulness / test-reality gap:** does the test exercise prod-like paths, or a mocked
+  fiction that can stay green while production breaks? Flag heavy mocking that stubs the
+  very thing under test.
+- **Readability / intent legibility:** can a reader tell WHICH contract is asserted and WHY,
+  without running it? Flag tests whose name lies about what they check, or that pass for the
+  wrong reason.
+- **Negative-space coverage:** does it test error paths, boundaries, malformed/empty/huge
+  inputs — or only the happy path? (The 0182 run showed most toothlessness is a
+  negative-space failure; this lens finds it statically, before mutation confirms it.)
+- **Change-detector smell:** does it assert HOW the code works (call sequences, mock
+  interaction order) instead of WHAT it produces? The structural cause of handcuffs.
+
+## Design notes
+- Pure LLM fan-out (one judge per test file); NO worktrees, NO go test — cheap relative to
+  0182 (no compile/run loop), but still token-heavy. Use a cheaper model for the bulk pass;
+  reserve a stronger model for flagged/ambiguous cases.
+- Output joins 0182's per-test report so a test gets ONE row across all lenses, or a
+  standalone report keyed on the same test-file identity.
+- These verdicts are SOFT (judgment, not a passing/failing oracle) — present as advisory
+  findings with rationale, never as a hard gate.
+
+## Exit criteria
+- [ ] `skills/test-audit-llm/` (or a mode of the 0182 skill) with the four lenses above.
+- [ ] One judge agent per test file; structured findings with rationale + severity.
+- [ ] Cheap-model bulk pass + stronger-model escalation for flagged cases.
+- [ ] Report composes with 0182 output (shared test-file keys) OR a clean standalone report.
+- [ ] Explicitly advisory: no CI hard-gate; findings feed ticket creation, not PR blocks.

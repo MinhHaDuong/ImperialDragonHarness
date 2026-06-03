@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Empirical test-quality CI utility (flakiness / independence / speed)
+Created: 2026-05-30
+Author: claude
+Tag: deferred
+
+--- log ---
+2026-05-30T10:45Z claude created — cheap-tier sibling to 0182/0183; the per-PR-gateable lenses
+
+--- body ---
+## Context
+
+Third in the test-quality tooling family ([[0182]] mutation oracles, [[0183]] LLM judge).
+This one carves out the lenses that are CHEAP and DETERMINISTIC — measurable by re-running
+the existing suite, no mutation, no LLM, no tokens. Because they cost seconds not dollars,
+these are the ONLY test-quality checks suitable as a per-PR CI gate (0182/0183 are
+scheduled/on-demand only — a full mutation run was ~1.3M tokens / ~29 min for 19 files).
+
+Reusable harness utility (hence IDH store); per-repo CI wiring is a thin adapter each repo
+adds (erg's wiring would be a small erg-project task, NOT this ticket).
+
+## Lenses in scope (re-run / shuffle / time — no LLM)
+- **Flakiness / determinism:** run the unchanged suite N times; flag any test whose verdict
+  varies. NEGATIVE-value tests — they train teams to ignore red. Also a hard PRECONDITION
+  for 0182: you cannot mutation-test a flaky suite (0182 imports this as its precheck gate).
+- **Independence / isolation:** run shuffled and in parallel; flag tests whose verdict
+  depends on order or shared state.
+- **Speed:** time each test; flag the slow tail and suggest tagging (cf. erg's `scaling`
+  build tag) so the fast feedback loop stays fast.
+
+## Design notes
+- Language-pluggable runner adapter (Go: `go test -count=N -shuffle=on -json`; others: their
+  equivalents). Parse machine-readable test output; pure data, no agents.
+- Output: per-test {stable?, order-independent?, duration}. Composes with 0182/0183 reports
+  via shared test identity, or stands alone.
+- CADENCE: this is the per-PR tier. Fast enough to gate. Pair with a ratchet so it blocks
+  only on NEW flakiness/slowness introduced by the diff, not pre-existing debt.
+
+## Exit criteria
+- [ ] Utility runs the three checks from a single entry point; machine-readable output.
+- [ ] Flakiness check is exposed as a reusable gate that 0182 calls as its precheck.
+- [ ] Go adapter implemented; the runner interface is documented for other languages.
+- [ ] Ratchet mode: fail only on diff-introduced regressions, baseline the rest.
+- [ ] Cost note honored: zero LLM tokens; runtime bounded for per-PR use.
