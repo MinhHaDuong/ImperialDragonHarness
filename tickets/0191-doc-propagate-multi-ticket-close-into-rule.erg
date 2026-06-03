@@ -1,0 +1,64 @@
+%erg 0.1
+Title: Propagate multi-ticket close into single-ticket rule prose
+Created: 2026-06-03
+Author: claude
+
+--- log ---
+2026-06-03T20:11Z claude created — follow-up to 0186 multi-ticket close
+
+--- body ---
+## Context
+
+Ticket 0186 changed `skills/merge/erg-pr-merge` to close ALL `**Ticket:**`
+lines in a PR body, not just the first. Two rule files still assert the old
+single-ticket invariant and will read as stale once that change lands:
+
+- `rules/workflow.md` § Ticket discipline: "One PR closes exactly one ticket"
+  and "erg-pr-merge closes whatever ticket appears in the PR body's
+  `**Ticket:**` line — unconditionally". The mechanism described is now plural.
+- `rules/git.md` bullet: "Include a `**Ticket:** tickets/NNNN-...` line in the
+  PR body so erg-pr-merge can auto-close the ticket on merge." Singular line;
+  multiple are now supported.
+
+This is a documentation-only propagation pass. The behavioral change and its
+test already landed under 0186; this ticket only reconciles the prose so the
+rules describe what the script actually does.
+
+## Relevant files
+
+- `rules/workflow.md` — § Ticket discipline for multi-PR work
+- `rules/git.md` — the "Create a merge request" bullet
+
+## Actions
+
+1. In `rules/workflow.md`, reconcile the "one PR closes exactly one ticket"
+   guidance with the new plural behavior. The child-ticket-per-PR convention
+   (split into child tickets before work starts) is still the recommended
+   workflow for review hygiene — keep that intent, but stop asserting that the
+   script can only close one. Note that listing multiple `**Ticket:**` lines
+   now closes all of them on merge.
+2. In `rules/git.md`, update the singular "a `**Ticket:** tickets/NNNN-...`
+   line" wording to allow one or more lines.
+3. Keep wording forge-agnostic (no hardcoded `gh`/GitHub references).
+
+## Test
+
+- `bash scripts/check-agnostic.sh` passes (no forge-specific terms introduced).
+- A grep for "closes exactly one ticket" / "the ticket appears in the PR body's"
+  no longer contradicts the multi-close mechanism.
+
+## Verification
+
+- [ ] `rules/workflow.md` no longer asserts a one-ticket-per-merge mechanism.
+- [ ] `rules/git.md` allows one or more `**Ticket:**` lines.
+- [ ] `bash scripts/check-agnostic.sh` passes.
+
+## Invariants
+
+- Child-ticket-per-PR remains the recommended review-hygiene workflow.
+- No behavioral code change — docs only.
+
+## Exit criteria
+
+- Both rule files describe the actual multi-ticket-close behavior; agnostic
+  guard passes.
