@@ -1,0 +1,82 @@
+%erg 0.1
+Title: PreToolUse guard against cd-to-primary-repo in worktree sessions
+Created: 2026-06-03
+Author: claude
+
+--- log ---
+2026-06-03T13:00Z claude created
+
+--- body ---
+## Context
+
+In an EnterWorktree session the Bash shell already sits in the worktree
+(`.claude/worktrees/<name>`) and resets there after every command. Prefixing
+a Bash command with `cd /home/haduong/<repo> &&` silently cd's into the
+PRIMARY repo (checked out on `main`), so any `git` / `erg close` / `git commit`
+in that command mutates the primary checkout on main instead of the worktree
+branch.
+
+This bit a single autonomous session (2026-06-03, aedist-technical-report)
+**three times**:
+- `erg close` + a stray `git add -A` landed a 493-file commit on primary `main`
+  (recovered via `git reset --mixed HEAD~1`).
+- `git switch -c t0357` created the branch in the PRIMARY repo while the
+  worktree stayed on a stale branch; edits made via the worktree path were
+  stranded on the wrong branch (recovered via stash + re-branch).
+- `uv run pytest` ran against the primary repo's stale files, masking RED tests.
+
+A same-session memory (`feedback_bash_cd_primary_repo_trap`) did NOT prevent
+recurrence — the failure is a reflex (prefix `cd <repo> &&` for "safety"), so a
+note is too weak. A mechanical guard is the right altitude. This is the
+Bash-surface sibling of the existing `git worktree remove` PreToolUse guard and
+the worktree-path Edit/Write rule.
+
+## Relevant files
+
+- `~/.claude/settings.json` (or project `.claude/settings.json`) — PreToolUse
+  hook registration for the `Bash` matcher
+- wherever existing PreToolUse Bash guards live (e.g.
+  `~/.claude/scripts/guard-destructive-bash.sh`) — mirror its shape
+- `~/.claude/rules/workflow.md` — the "Worktree paths" rule the guard enforces
+
+## Approach (sketch — refine at plan time)
+
+A PreToolUse hook on `Bash` that fires only when a worktree session is active
+(detectable via `CLAUDE_WORKTREE`/cwd under `.claude/worktrees/`, or
+`git rev-parse --show-toplevel` containing `/.claude/worktrees/`) AND the
+command contains a `cd` into the primary repo root (the toplevel's
+non-worktree parent). On match: WARN with the reason and the correct
+alternative ("you are already in the worktree — run git bare"), and prefer to
+BLOCK for mutating commands (`git commit|add|switch|reset|merge`, `erg close`)
+while allowing read-only ones, OR warn-only with an opt-out — decide at plan.
+
+Keep it cheap (pure string/path inspection, no git calls in the hot path if
+avoidable) and fail-safe (never block when detection is ambiguous).
+
+## First test
+
+A unit test for the guard predicate (shell or python, matching the repo's
+existing hook tests): given (cwd-is-worktree, command-string) pairs, assert the
+predicate fires on `cd /home/haduong/<repo> && git commit ...` and does NOT
+fire on (a) the same command outside a worktree session, (b) a bare
+`git commit` in the worktree, (c) `cd /home/haduong/<repo>/.claude/worktrees/x`
+(staying within the worktree tree), (d) a read-only `cd <repo> && git status`
+if the policy is warn-only for reads.
+
+## Exit criteria
+
+- [ ] PreToolUse Bash hook detects cd-to-primary-repo during a worktree session
+- [ ] Mutating git/erg commands under that cd are blocked (or warned per the
+      plan decision), read-only inspection is not penalised
+- [ ] Predicate has a unit test covering the fire / no-fire cases above
+- [ ] Guard documented next to the "Worktree paths" rule in workflow.md
+- [ ] `make check` (or IDH's equivalent) green
+
+## Notes
+
+- Detection of "the primary repo root" from inside a worktree:
+  `git rev-parse --git-common-dir` resolves to the primary `.git`; its parent is
+  the primary worktree root. A `cd` whose target equals that root (and is not
+  under `.claude/worktrees/`) is the offence.
+- Fail-safe over fail-closed: a false block is more annoying than a missed
+  warning. Warn-only is an acceptable v1 if blocking proves brittle.
