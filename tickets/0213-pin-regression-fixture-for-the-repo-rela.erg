@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Pin regression fixture for the repo-relative scripts pattern in check-agnostic
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T11:01Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Ticket 0204 (PR #277) added a SKILL_PATTERNS entry to
+scripts/check-agnostic.sh catching repo-relative `scripts/<name>.(sh|py)`
+references, wired into `make check` via the check-agnostic-skills target.
+The /verify gate flagged (non-blocking): the pattern is live-enforced but
+has no committed regression-pin fixture — tests/test_check_agnostic.py
+and the CI self-test only exercise the older home-path pattern.
+If the new pattern regresses (BRE typo, refactor), nothing fails.
+
+review-pr also noted the pattern stem `[a-z-]` misses uppercase / digit /
+underscore script names — broaden while pinning.
+
+## Relevant files
+
+- `scripts/check-agnostic.sh` — the new SKILL_PATTERNS entry
+- `tests/test_check_agnostic.py` — where the fixture-based pin belongs
+
+## Actions
+
+1. Add a fixture test: a temp markdown file with a bare `scripts/foo.sh`
+   reference must make check-agnostic.sh exit 1; `~/.claude/scripts/foo.sh`,
+   `$HARNESS_DIR/scripts/foo.py`, and `./scripts/foo.sh` forms must pass.
+2. Broaden the stem to cover uppercase/digit/underscore script names;
+   pin that too.
+
+## Test
+
+The fixture test above — red first against a deliberately broken pattern.
+
+## Exit criteria
+
+- [ ] Regression-pin fixture for the repo-relative pattern in tests/
+- [ ] Stem covers [A-Za-z0-9_-] script names
+- [ ] make check green

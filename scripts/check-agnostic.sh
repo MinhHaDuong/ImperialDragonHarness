@@ -26,6 +26,7 @@ SKILL_PATTERNS=(
     'uv run pytest'   # stack-specific; skills must be stack-agnostic
     '\bgh '           # GitHub CLI; skills must be forge-agnostic
     'github\.com'     # GitHub URL; skills must be forge-agnostic
+    '\(^\|[^.~/]\)scripts/[a-z-]\+\.\(sh\|py\)'  # repo-relative script path; use ~/.claude/scripts/ or $HARNESS_DIR
 )
 
 fail=0

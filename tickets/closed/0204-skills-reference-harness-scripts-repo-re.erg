@@ -2,10 +2,12 @@
 Title: Skills reference harness scripts repo-relatively; breaks cross-project runs
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: autoclosed — PR #277
 
 --- log ---
 2026-06-04T08:12Z MinhHaDuong created
 
+2026-06-04T20:11Z MinhHaDuong closed — autoclosed — PR #277
 --- body ---
 ## Source
 Two live failures within one hour on 2026-06-04, both running IDH skills
