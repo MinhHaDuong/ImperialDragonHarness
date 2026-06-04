@@ -1,0 +1,54 @@
+%erg 0.1
+Title: erg-pr-merge auto-merge hits check-registration race — tolerate 'no checks reported' briefly
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T08:50Z claude created
+
+--- body ---
+## Context
+
+The 0198 auto-merge rewrite of `skills/merge/erg-pr-merge` hit the same
+bounce chain on 4 of 4 merges on 2026-06-04 (PRs #254, #255, #256 in the
+0190-0196 raid; #262 in the 0193 session):
+
+1. The close commit is pushed; GitHub starts recomputing mergeability
+   and re-registering checks.
+2. `gh pr merge --auto` fails immediately with the GraphQL error
+   "Pull Request is not mergeable (mergePullRequest)" because the PR is
+   transiently `BLOCKED`/`UNKNOWN` — the script reads this as
+   "auto-merge unavailable" and takes the legacy fallback.
+3. The fallback's `gh pr checks --watch` then reports "no checks
+   reported on the '<branch>' branch" (checks for the new head are not
+   registered yet) and the run dies with "CI did not pass within 600s".
+
+Every occurrence resolved itself ~30-60s later: re-checking showed
+checks green and a plain `gh pr merge --merge` completed. The failure
+is purely a race between the close-commit push and GitHub's check
+registration; the script's two probes both fire inside the window.
+
+First observed and diagnosed by the 0190-0196 raid session (PR #262
+coordination comment, 08:12Z); reproduced independently on #262's own
+merge at 08:46Z.
+
+## Actions
+
+1. After the close-commit push, poll mergeability until it leaves
+   `UNKNOWN` (bounded, ~60s) before attempting `gh pr merge --auto`.
+2. Distinguish the transient GraphQL "not mergeable" error from a real
+   auto-merge-disabled response; only the latter should take the
+   legacy watch-then-merge fallback.
+3. In the fallback, tolerate "no checks reported" for a bounded window
+   (~60s) before declaring failure, instead of dying on first read.
+4. Extend `tests/test_erg_pr_merge.sh` with a stub that fails the
+   first `pr merge --auto` with the GraphQL race error and reports
+   "no checks" once, then succeeds — asserting the script rides out
+   the window.
+
+## Exit criteria
+
+- [ ] A merge run started inside the registration window completes
+      without manual re-invocation
+- [ ] Test case covers the transient-race stub path
+- [ ] Real auto-merge-disabled repos still reach the legacy fallback
