@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Strip black-formatter churn from test_worktree_tools.py or adopt it repo-wide
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T07:53Z MinhHaDuong created
+
+--- body ---
+## Context
+
+PR #258 (ticket 0195) carried black-style formatter churn in
+`tests/test_worktree_tools.py` on functions unrelated to the GC change
+(`_guard`, `_preflight`, ...). The verify-gate assigned it TICKETED
+scope-overflow disposition: harmless but it pollutes blame and makes
+review diffs noisier than their semantic content.
+
+## Actions
+
+1. Decide: either revert the incidental reformatting in
+   `tests/test_worktree_tools.py` to pre-#258 style, or adopt the
+   formatter repo-wide (add it to lint tooling + one bulk-format commit)
+   so per-PR churn can never recur.
+2. Apply the chosen option.
+
+## Test
+
+`git log -p --follow tests/test_worktree_tools.py` — the next functional
+PR touching the file shows no formatting-only hunks.
+
+## Exit criteria
+- [ ] Formatting of tests/ is deliberate (either reverted or adopted repo-wide), not per-PR drift
