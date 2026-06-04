@@ -57,9 +57,15 @@ else
     fail=1
 fi
 
-# 4. No worktree active (no env overrides, run from primary repo root where .git is a dir) → silent
-out=$(echo '{"tool_name":"Write","tool_input":{"file_path":"/home/haduong/.claude/src/main.py","content":"x"}}' \
+# 4. No worktree active → silent. Hermetic fixture: a temp dir whose cwd has
+# .git as a real DIRECTORY (not a gitdir: pointer file), so the guard's
+# _in_worktree() returns false regardless of where the suite itself runs from
+# (a linked worktree's .git is a file, which would otherwise trip detection).
+_case4_dir=$(mktemp -d)
+mkdir "$_case4_dir/.git"
+out=$( cd "$_case4_dir" && echo '{"tool_name":"Write","tool_input":{"file_path":"/tmp/unrelated/file.py","content":"x"}}' \
       | bash "$HOOK" 2>&1 || true)
+rm -rf "$_case4_dir"
 if [ -z "$out" ]; then
     echo "PASS: silent when not in a worktree"
 else

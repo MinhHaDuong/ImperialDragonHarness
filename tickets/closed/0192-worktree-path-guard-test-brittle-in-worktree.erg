@@ -2,10 +2,13 @@
 Title: Make test_pretooluse_worktree_path_guard.sh hermetic when run from a linked worktree
 Created: 2026-06-03
 Author: claude
+Closed: autoclosed — PR #255
 
 --- log ---
 2026-06-03T20:21Z claude created — surfaced independently by both 0187 and 0189 raid execute agents
+2026-06-04T06:49Z claude note made case 4 hermetic via mktemp fixture with .git directory
 
+2026-06-04T07:56Z MinhHaDuong closed — autoclosed — PR #255
 --- body ---
 ## Context
 
