@@ -2,10 +2,13 @@
 Title: Stale-branch cleanup snippet in rules/git.md silently no-ops under rtk
 Created: 2026-06-04
 Author: claude
+Closed: autoclosed — PR #256
 
 --- log ---
 2026-06-04T06:10Z claude created — failed twice during raid 0185-0189 cleanup
+2026-06-04T06:49Z claude note replaced snippet with exit-code merge-probe loop; manual +/- cases verified
 
+2026-06-04T07:57Z MinhHaDuong closed — autoclosed — PR #256
 --- body ---
 ## Context
 
