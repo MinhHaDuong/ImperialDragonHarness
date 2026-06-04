@@ -14,7 +14,7 @@
 #   0. Verify: on PR head branch, CI green, no conflicts
 #   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body (or title fallback)
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
-#   3. Queue auto-merge (gh pr merge --merge --auto); falls back to watch-then-merge if auto-merge disabled
+#   3. Queue auto-merge via the forge CLI; falls back to watch-then-merge if auto-merge disabled
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -131,7 +131,7 @@ if gh pr merge "$PR" "${MERGE_FLAGS[@]}"; then  # harness-extension-point
 else
     # Fallback: repo has auto-merge disabled. Legacy watch-then-merge path
     # so the script stays usable without allow_auto_merge. (ticket 0198)
-    echo "Auto-merge unavailable — falling back to watch-then-merge..."
+    echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
     timeout 600 gh pr checks "$PR" --watch --fail-fast \
         || die "CI did not pass within 600s (failed or timed out) — aborting merge"  # harness-extension-point
     if in_worktree; then
