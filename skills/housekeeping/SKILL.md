@@ -36,7 +36,7 @@ Run full repo housekeeping and act on every finding.
    Exception: `BEAT_HOUSEKEEPING_BRANCH` is set — beat.py manages concurrency itself; skip this guard.
 
 1. **Git phase.**
-   - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(scripts/housekeeping-git.sh)` from the project root.
+   - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
 
 1.5. **GC stale agent worktrees.** Remove leftover `agent-*` worktrees whose branch is merged-and-gone (intact dirs that `git worktree prune` misses):
@@ -125,6 +125,8 @@ Run full repo housekeeping and act on every finding.
 
 6. **Timestamp.** Update STATE.md to note the housekeeping run UTC date and time, commit it.
 
+6.5. **Open merge request (interactive run only).** If `BEAT_HOUSEKEEPING_BRANCH` is unset and any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+
 7. **Report.** Summarize what you did.
 
 ## Beat mode
@@ -137,5 +139,7 @@ items and the timestamp as usual. Do NOT push or open a PR yourself.
 the branch; if there are commits it leaves the branch locally as a
 "deferred" candidate for human review.
 
-If `BEAT_HOUSEKEEPING_BRANCH` is unset (interactive `/housekeeping`), commit
-in place as before — no PR detour for hand-typed runs.
+If `BEAT_HOUSEKEEPING_BRANCH` is unset (interactive `/housekeeping`), step 1
+cuts a `housekeeping-<date>` branch from origin/main before any commits, and
+step 6.5 pushes it and opens a merge request. All fixes — including the STATE
+timestamp — land via that merge, never directly on main.
