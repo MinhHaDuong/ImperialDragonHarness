@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-05-29T15:20Z
+Last updated: 2026-06-04T05:49Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-05-29T15:20Z -->
+<!-- generated 2026-06-04T05:49Z -->
 
-**Tickets:** 5 ready · 5 blocked — `erg ready tickets/` for full list
+**Tickets:** 4 ready · 8 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  c121599 Merge pull request #228 from MinhHaDuong/t176-grep-e-guard
-  0ccc4eb ticket(0176): close and archive — PR #228
-  c67d99c feat(0176): add grep-e-guard CI job — no grep -E/-G with PCRE escapes
-  2289e7a Merge pull request #227 from MinhHaDuong/t179-refresh-state-path-arg-v2
-  4c3e311 Merge origin/main into t179 to resolve post-close-commit conflicts
+  512b3f1 Merge pull request #244 from MinhHaDuong/raid-wrapup-20260603
+  db338a4 ticket(0193): log fifth incident — rogue duplicate PR #243 from orchestrator branch
+  7702193 raid(0185-0189) wrap-up: file 0193 verify-reliability, log 0167 skip-path observation
+  66189e6 Merge pull request #239 from MinhHaDuong/t0188-commit-or-embed
+  f7e6039 ticket(0188): close and archive — PR #239
 
 ## Blockers
 
