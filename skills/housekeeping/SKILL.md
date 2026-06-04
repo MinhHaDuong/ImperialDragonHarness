@@ -39,11 +39,11 @@ Run full repo housekeeping and act on every finding.
    - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
 
-1.5. **GC stale agent worktrees.** Remove leftover `agent-*` worktrees whose branch is merged-and-gone (intact dirs that `git worktree prune` misses):
+1.5. **GC stale worktrees.** Remove any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` (intact dirs that `git worktree prune` misses):
    ```bash
    ~/.claude/scripts/worktree-gc.sh
    ```
-   Skips any worktree with uncommitted changes, never `rm -rf`s, silent when there is nothing to clean. Safe here because step 0 already confirmed no other live session, and the git phase above ran `git fetch --prune` so gone branches are detectable. See ticket 0169.
+   Skips any worktree with uncommitted changes (and the one it runs from), never `rm -rf`s, silent when there is nothing to clean. Safe here because step 0 already confirmed no other live session, and the git phase above ran `git fetch --prune` so gone branches are detectable. See tickets 0169, 0195.
 
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
