@@ -6,6 +6,8 @@ Author: claude
 --- log ---
 2026-06-04T07:36Z claude created
 
+2026-06-04T08:54Z claude note absorbed duplicate 0209: adds 5 more occurrences (PRs #254/#255/#256/#263/#262, 2026-06-04) — all self-resolved in ~30-60s, confirming the bounded-poll window calibration; test-stub framing already covered by exit criteria here
+
 --- body ---
 ## Source
 First production run of the 0198 rewrite (aedist PR #689, 2026-06-04),
