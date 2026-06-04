@@ -1,0 +1,49 @@
+%erg 0.1
+Title: worktree-gc: enumerate via git worktree list, not the .claude/worktrees directory
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T06:10Z claude created — /tmp worktree with stranded ticket 0190 survived GC for hours
+
+--- body ---
+## Context
+
+`scripts/worktree-gc.sh` discovers candidates by scanning the
+`.claude/worktrees/` directory. A worktree created elsewhere — e.g.
+`/tmp/erg-migrate-216/claude-harness` from the 2026-06-03 erg-migrate
+session — is invisible to GC and lingers after its session dies. Cost
+realized on 2026-06-04: that worktree held the only copy of ticket 0190
+(stranded, unmerged commit) and was found by accident during a
+healthcheck, not by GC.
+
+## Relevant files
+
+- `scripts/worktree-gc.sh` — candidate enumeration
+- `tickets/closed/0169-worktree-gc-after-raid.erg` — original GC design
+- `skills/celebrate/SKILL.md` step 9.5, `skills/housekeeping/SKILL.md`
+  step 1.5 — callers
+
+## Actions
+
+1. Enumerate candidates from `git worktree list --porcelain` (every
+   registered worktree except the primary and the invoking one),
+   instead of globbing `.claude/worktrees/`.
+2. Keep existing safety rails: skip dirty worktrees, skip worktrees on
+   branches with unmerged commits (git cherry vs origin default),
+   never rm -rf.
+3. Keep the agent-* fast path if useful, but the registry walk is the
+   source of truth.
+
+## Test
+
+Red step: create a throwaway worktree under /tmp on a merged branch,
+run worktree-gc.sh, assert it is NOT removed today (bug), then assert
+it IS removed after the fix. Shell test mirroring tests/test_*.sh
+conventions, hermetic in a fixture repo.
+
+## Exit criteria
+
+- [ ] GC removes clean, merged worktrees regardless of their path
+- [ ] Dirty or unmerged worktrees still skipped (test covers both)
+- [ ] Callers (celebrate 9.5, housekeeping 1.5) need no wording change
