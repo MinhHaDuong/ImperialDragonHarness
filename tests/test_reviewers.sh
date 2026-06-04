@@ -3,8 +3,8 @@
 # Verifies stub behaviour with an empty panel roster.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REVIEWERS="${SCRIPT_DIR}/reviewers.sh"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REVIEWERS="${REPO_ROOT}/skills/reviewers/reviewers.sh"
 PASS=0
 FAIL=0
 

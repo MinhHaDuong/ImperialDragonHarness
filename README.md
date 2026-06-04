@@ -96,7 +96,7 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
-| `/reviewers` | "Reviewer-management helper skill — request, harvest, normalize, scorecard" |
+| `/reviewers` | "Reviewer-management helper skill — list, request, harvest, scorecard" |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |

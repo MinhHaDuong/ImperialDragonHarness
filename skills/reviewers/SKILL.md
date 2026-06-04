@@ -1,6 +1,6 @@
 ---
 name: reviewers
-description: "Reviewer-management helper skill — request, harvest, normalize, scorecard"
+description: "Reviewer-management helper skill — list, request, harvest, scorecard"
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
