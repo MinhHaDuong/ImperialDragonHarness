@@ -8,6 +8,7 @@ Author: claude
 
 2026-06-04T06:33Z claude note edge from 0216 runs: the erg-only fast path (DIFF_SIZE=0, skips CI wait, plain gh pr merge) is also broken by the main-required-checks ruleset -- ticket-only PRs now bounce at merge until checks pass; apply --auto there too, not only in the CI-wait block
 2026-06-04T06:47Z claude note live failure PR git-erg#256: the erg-only fast path committed the ticket-close locally and never pushed it before gh pr merge -- the close commit was stranded and the remote branch auto-deleted; the rewrite must push before --auto. Past close commits survived only because non-erg-only PRs hit the push branch.
+2026-06-04T07:11Z claude note implemented: unconditional push + --auto queue + exit-code fallback + Step-4 gate; tests 6 pass
 --- body ---
 ## Context
 

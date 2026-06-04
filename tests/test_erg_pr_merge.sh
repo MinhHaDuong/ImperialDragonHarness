@@ -45,8 +45,14 @@ case "$1 $2" in
       '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body}'
     exit 0 ;;
   "pr merge")
+    echo "$*" >> "${STUB_MERGE_LOG:-/dev/null}"
+    if [[ "$*" == *"--auto"* && "${STUB_AUTO_FAILS:-0}" == "1" ]]; then
+      echo "stub: auto-merge not allowed for this repository" >&2
+      exit 1
+    fi
     echo "stub: merged $3"; exit 0 ;;
   "pr checks")
+    echo "$*" >> "${STUB_CHECKS_LOG:-/dev/null}"
     echo "stub: checks ok"; exit 0 ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
@@ -91,6 +97,10 @@ ERG
     git -C "$REPO" commit -q -m "init: open tickets"
     # self as origin so origin/<base> resolves (script line ~99)
     git -C "$REPO" remote add origin "$REPO"
+    # The script now pushes the close commit unconditionally (ticket 0198).
+    # origin is the repo itself with $BRANCH checked out, so allow pushing to
+    # the current branch of this non-bare self-origin (deviation: fixture-only).
+    git -C "$REPO" config receive.denyCurrentBranch ignore
     git -C "$REPO" fetch -q origin
     BASE=$(git -C "$REPO" branch --show-current)
     BRANCH="pr-$name"
@@ -103,6 +113,9 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       ERG="$ERG_LOCAL" \
       STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
       STUB_BODY="$1" STUB_TITLE="$2" \
+      STUB_AUTO_FAILS="${STUB_AUTO_FAILS:-0}" \
+      STUB_MERGE_LOG="${STUB_MERGE_LOG:-/dev/null}" \
+      STUB_CHECKS_LOG="${STUB_CHECKS_LOG:-/dev/null}" \
       bash "$SCRIPT" 42 )
 }
 
@@ -156,6 +169,62 @@ if run_merge "$BODY3" "ticket(0195): dup" >/dev/null 2>&1; then
     fi
 else
     echo "FAIL: erg-pr-merge crashed on duplicated Ticket line"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 4: auto-merge happy path — queues --auto, no CI-watch poll (ticket 0198)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo automerge 0196
+MLOG="$WORK/merge4.log"; CLOG="$WORK/checks4.log"
+: > "$MLOG"; : > "$CLOG"
+BODY4=$'Summary.\n\n**Ticket:** tickets/0196-fixture.erg\n'
+if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   run_merge "$BODY4" "ticket(0196): auto" >/dev/null 2>&1; then
+    auto_miss=0
+    grep -q -- '--auto' "$MLOG" || { echo "  merge log has no --auto"; auto_miss=1; }
+    grep -q -- '--watch' "$CLOG" && { echo "  checks log unexpectedly watched"; auto_miss=1; }
+    if (( auto_miss )); then echo "FAIL: auto-merge happy path did not queue --auto / watched CI"; fail=1
+    else echo "PASS: auto-merge queued (--auto), no CI-watch poll"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on auto-merge happy path"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 5: fallback — auto-merge disabled -> watch-then-merge (ticket 0198)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo fallback 0197
+MLOG="$WORK/merge5.log"; CLOG="$WORK/checks5.log"
+: > "$MLOG"; : > "$CLOG"
+BODY5=$'Summary.\n\n**Ticket:** tickets/0197-fixture.erg\n'
+if STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   run_merge "$BODY5" "ticket(0197): fallback" >/dev/null 2>&1; then
+    fb_miss=0
+    grep -q -- '--auto' "$MLOG" || { echo "  no --auto attempt logged"; fb_miss=1; }
+    grep -q -- '--watch' "$CLOG" || { echo "  fallback did not watch checks"; fb_miss=1; }
+    # A bare --merge (no --auto) must have been issued after the watch.
+    grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' \
+        || { echo "  no plain --merge after fallback"; fb_miss=1; }
+    if (( fb_miss )); then echo "FAIL: fallback path incomplete"; fail=1
+    else echo "PASS: fallback to watch-then-merge when auto-merge disabled"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on fallback path"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 6: close commit pushed before merge — erg-only branch (git-erg#256)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo strand 0199
+MLOG="$WORK/merge6.log"; CLOG="$WORK/checks6.log"
+: > "$MLOG"; : > "$CLOG"
+BODY6=$'Summary.\n\n**Ticket:** tickets/0199-fixture.erg\n'
+if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   run_merge "$BODY6" "ticket(0199): strand" >/dev/null 2>&1; then
+    git -C "$REPO" rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1 \
+      && git -C "$REPO" merge-base --is-ancestor "$(git -C "$REPO" rev-parse "$BRANCH")" "$(git -C "$REPO" rev-parse "origin/$BRANCH")" \
+      && echo "PASS: close commit pushed before merge (no strand)" \
+      || { echo "FAIL: close commit not pushed before merge"; fail=1; }
+else
+    echo "FAIL: erg-pr-merge exited non-zero on erg-only strand case"; fail=1
 fi
 
 if (( fail )); then exit 1; fi

@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-06-03 -->
+<!-- last-reviewed: 2026-06-04 -->
 # Git Discipline
 
 - **Always work on a branch.** Main is read-only — no exceptions. Everything (code, docs, tickets, STATE, memory, config) lands via branch + PR. See `rules/workflow.md` § Worktree paths.
@@ -11,8 +11,6 @@
 - **Rebase before merge.** Before merging any PR, rebase onto current `origin/main`, push `--force-with-lease`, and wait for CI to pass. This prevents "Base branch was modified" failures mid-merge and keeps history linear.
 - **After an APPROVED `/verify`, sync before merging.** `/verify` may commit and push fixes from its own review worktree, leaving your local branch behind `origin`. Run `git fetch origin && git merge --ff-only origin/<branch>` before you rebase/merge — otherwise a rebase + `--force-with-lease` silently drops the verify fix.
 - **Merge-bounce recovery.** `erg-pr-merge` legitimately bounces in sequence; each bounce has a specific retry — do not blanket-fall back to `gh pr merge`:
-  - *Mergeability `UNKNOWN` / "not mergeable" right after a `--force-with-lease` push or the ticket-close commit* — GitHub is recomputing mergeability/checks. Wait for the live check (`gh run watch <run-id>`), then re-invoke `erg-pr-merge`.
-  - *"CI has N check(s) still running"* — `gh run watch` the pending run to completion, then re-invoke.
   - *"close: no ticket found" on a retry* — the FIRST run already `erg close`d + archived + pushed the close commit (the script is **not** idempotent past that step). Do NOT re-run it and do NOT hand-close the ticket; the close commit is already on the branch, so finish with `gh pr merge <N> --merge` directly once CI is green.
   - *"must run from PR branch" after a fast-forward* — HEAD detached after `merge --ff-only`; `git checkout <branch>`, then retry.
 - **Delete branches after merge.** All repos use `deleteBranchOnMerge: true` on GitHub, so the remote branch disappears automatically when a PR merges. Clean up stale local branches with:

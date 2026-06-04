@@ -19,3 +19,5 @@ and checking out the PR branch before the call. The script itself is
 cwd-based — it never takes a repo or path argument.
 
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
+
+Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled).
