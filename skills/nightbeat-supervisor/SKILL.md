@@ -14,7 +14,7 @@ failures to their root cause, repair within authority, escalate when stuck.
 timer before editing `beat.py`, restart after; never edit skill SKILL.md files.
 
 **Commit tracked writes immediately.** Every write to a tracked file in
-`$HARNESS_DIR` (`settings.json`, `scripts/beat.py`, `tickets/*.erg`) must be
+`$HARNESS_DIR` (`settings.json`, `scripts/beat.py`, `tickets/*.erg`) must be <!-- harness-extension-point -->
 followed by `git add <file> && git commit -m 'chore(supervisor): <description>'`
 before proceeding to the next action. Uncommitted tracked files cause the next
 beat cycle's dirty-tree pre-flight to abort.
@@ -82,12 +82,12 @@ When you reach a root cause, repair if within authority:
   If neither guard triggers: raise the per-project `ProjectConfig` field in
   `beat.py` by 20%, capped at 2× the module-level constant; never touch the
   module-level constant. Then
-  `git add scripts/beat.py && git commit -m 'chore(supervisor): raise <field> budget for <project>'`.
+  `git add scripts/beat.py && git commit -m 'chore(supervisor): raise <field> budget for <project>'`. <!-- harness-extension-point -->
 - **Raid timeout during verify/review** (`outcome=timeout` AND why-chain
   shows verify/review slowness, not implementation slowness) → raise
   `raid_timeout_s` in the per-project config by 20%, capped at
   2× `RAID_TIMEOUT_S` (3600 s). Then
-  `git add scripts/beat.py && git commit -m 'chore(supervisor): raise raid_timeout_s for <project>'`.
+  `git add scripts/beat.py && git commit -m 'chore(supervisor): raise raid_timeout_s for <project>'`. <!-- harness-extension-point -->
   Implementation slowness is a "ticket too
   large" signal — do not raise the timeout for that.
 - **Ticket too large to finish in one beat** → split into one ticket per

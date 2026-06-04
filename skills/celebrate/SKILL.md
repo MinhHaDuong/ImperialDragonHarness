@@ -44,20 +44,24 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
 9. **Exit worktree** (if in one):
     a. Preflight from inside the worktree:
        ```bash
-       scripts/worktree-exit-preflight.sh
+       ~/.claude/scripts/worktree-exit-preflight.sh
        ```
        Refuses (exit 1) when there are uncommitted/untracked files — including a fresh ticket draft `/ticket-new` wrote but never committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT fire on `ExitWorktree`, so this is the only gate. If it blocks, commit (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See ticket 0174.
-    b. Call `ExitWorktree` with action `remove`.
+    b. Call `ExitWorktree` with action `remove`. When the pre-check
+       (`git merge-base --is-ancestor HEAD origin/main`) has already
+       passed, the worktree branch is fully merged — ExitWorktree's
+       "N commits would be discarded" warning is a false alarm from a
+       stale local main. Authorize `discard_changes` in that case.
     Skip if not in a worktree.
-9.5. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
+10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
     git fetch --prune origin
     ~/.claude/scripts/worktree-gc.sh
     ```
     Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to clean. See tickets 0169, 0195.
-10. **Verify hygiene**:
+11. **Verify hygiene**:
     - `git branch -a` → no stale remote branches
     - Check for stale merge requests
-11. **Offer** to improve workflow rules if lessons were learned.
+12. **Offer** to improve workflow rules if lessons were learned.
 
 Note: STATE.md is updated on main during `/end-session`, not here.
