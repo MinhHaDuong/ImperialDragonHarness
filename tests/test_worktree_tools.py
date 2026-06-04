@@ -30,7 +30,9 @@ pytestmark = pytest.mark.skipif(
 
 
 def run(args, cwd=None, check=True):
-    return subprocess.run(args, cwd=cwd, check=check, capture_output=True, text=True)
+    return subprocess.run(
+        args, cwd=cwd, check=check, capture_output=True, text=True
+    )
 
 
 def git(repo, *args, check=True):
@@ -80,7 +82,6 @@ def make_branch_gone(remote, primary, name):
 # worktree-salvage.sh
 # --------------------------------------------------------------------------- #
 
-
 def test_salvage_commits_and_pushes_wip(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-salv", dirty=True)
@@ -117,7 +118,6 @@ def test_salvage_missing_arg_errors(origin):
 # guard-worktree-remove-wip.sh
 # --------------------------------------------------------------------------- #
 
-
 def _guard(cmd, cwd=None):
     body = {"tool_name": "Bash", "tool_input": {"command": cmd}}
     if cwd is not None:
@@ -125,9 +125,7 @@ def _guard(cmd, cwd=None):
     payload = json.dumps(body)
     return subprocess.run(
         ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input=payload,
-        capture_output=True,
-        text=True,
+        input=payload, capture_output=True, text=True,
     )
 
 
@@ -175,9 +173,7 @@ def test_guard_handles_malformed_json():
     """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
     res = subprocess.run(
         ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input="not json{",
-        capture_output=True,
-        text=True,
+        input="not json{", capture_output=True, text=True,
     )
     assert res.returncode == 0
     assert res.stderr == ""
@@ -187,16 +183,13 @@ def test_guard_handles_malformed_json():
 # worktree-gc.sh
 # --------------------------------------------------------------------------- #
 
-
 def _gc(primary):
     return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)])
 
 
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
-    return [
-        l[len("worktree ") :] for l in out.splitlines() if l.startswith("worktree ")
-    ]
+    return [l[len("worktree "):] for l in out.splitlines() if l.startswith("worktree ")]
 
 
 def test_gc_removes_gone_clean_agent_worktree(origin):
@@ -223,9 +216,7 @@ def test_gc_keeps_dirty_worktree(origin):
 
 def test_gc_keeps_live_branch_worktree(origin):
     _, primary = origin
-    wt = make_agent_worktree(
-        primary, "agent-live", dirty=False
-    )  # branch still on origin
+    wt = make_agent_worktree(primary, "agent-live", dirty=False)  # branch still on origin
 
     res = _gc(primary)
     assert res.returncode == 0
@@ -302,12 +293,10 @@ def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
 # and end-session skills before they call ExitWorktree, it refuses when the
 # worktree has any uncommitted state (tracked or untracked).
 
-
 def _preflight(path):
     return subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), str(path)],
-        capture_output=True,
-        text=True,
+        capture_output=True, text=True,
     )
 
 
@@ -366,9 +355,7 @@ def test_preflight_defaults_to_cwd(origin):
 
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh")],
-        cwd=str(wt),
-        capture_output=True,
-        text=True,
+        cwd=str(wt), capture_output=True, text=True,
     )
     assert res.returncode != 0
     assert "0998-draft.erg" in res.stderr
@@ -377,8 +364,7 @@ def test_preflight_defaults_to_cwd(origin):
 def test_preflight_errors_on_missing_path():
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
-        capture_output=True,
-        text=True,
+        capture_output=True, text=True,
     )
     assert res.returncode != 0
 
