@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Upstream git-erg: ID allocation races across parallel checkouts
+Created: 2026-06-04
+Author: Minh Ha-Duong
+
+--- log ---
+2026-06-04T16:24Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Observed collision (AEDIST, 2026-06-04): `erg new` allocated **0421** twice —
+once on a feature branch (skill update-publist ticket), once on main in a
+parallel session (render-rules ticket, landed via aedist PR #713). No corpus
+breakage only because the branch copy had been deleted before merge.
+
+Mechanism: `erg new` allocates "the next free ID" by scanning the *local
+checkout*. Two checkouts (or one checkout + one worktree branch) that have
+not seen each other's tickets hand out the same ID. The duplicate guard
+(`erg check` in CI) only fires once both files reach the same tree — at
+merge time, after the work is done and cross-referenced.
+
+## Actions
+
+1. File the upstream request on the git-erg repo (GitHub issue — cross-repo
+   coordination), summarizing the incident and proposing options:
+   - scan `origin/main` (fetched) in addition to the working tree when
+     allocating, and warn when the checkout is behind;
+   - optional remote ID reservation (push a refs/erg-ids/NNNN marker, atomic
+     by ref-update semantics);
+   - or document a convention: allocate on main + land ticket files
+     immediately (quickpr), never on long-lived branches.
+2. Track the upstream answer here; adopt whatever lands in the next binary
+   refresh of the traveling `tickets/erg`.
+
+## Test
+
+Reproduce the race: two clones, `erg new` in each without fetching; assert
+the chosen mitigation either prevents the duplicate or detects it at
+allocation time (not merge time).
+
+## Exit criteria
+
+- [ ] Upstream issue filed and linked here
+- [ ] Decision recorded (fix adopted, or convention documented in
+      tickets/AGENTS.md template)
+
+## Related
+
+- AEDIST 0412 journal (incident record), aedist PR #713 (the other 0421)
