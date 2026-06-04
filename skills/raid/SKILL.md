@@ -121,7 +121,11 @@ Wait for wave to complete.
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** invoke `/verify <pr-number>` on each merge request.
+**Per-ticket:** launch per-ticket `/verify` runs in parallel (background agents,
+one per merge request) when the PR branches touch disjoint files. Verify
+file-sharing PRs sequentially to avoid concurrent-fix collisions. Respect the
+max-concurrent-agents cap (see Subagents in rules/workflow.md). Phase 7 merges
+stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/verify` runs complete, launch one integration-review
 subagent (read-only) to check:

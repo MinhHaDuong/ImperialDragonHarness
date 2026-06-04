@@ -5,6 +5,7 @@ Author: MinhHaDuong
 
 --- log ---
 2026-06-04T08:07Z MinhHaDuong created
+2026-06-04T12:30Z claude note sweep: healthcheck — checks 1-9 are inline sequential bash, no agent fan-out, no annotation needed; review-pr — already declares "parallel" fan-out (lines 21, 28), compliant; dream — steps 1-7 sequential single-agent inline, no fan-out, no annotation needed
 
 --- body ---
 ## Context
@@ -52,6 +53,6 @@ Grep-able: `grep -n "parallel" skills/raid/SKILL.md` includes Phase 6;
 
 ## Exit criteria
 
-- [ ] Writing-Skills principle present in rules/workflow.md
-- [ ] Raid Phase 6 declares parallel fan-out + sequential-merge contract
-- [ ] One sweep pass over existing skills' multi-item steps documented in this ticket's log
+- [x] Writing-Skills principle present in rules/workflow.md
+- [x] Raid Phase 6 declares parallel fan-out + sequential-merge contract
+- [x] One sweep pass over existing skills' multi-item steps documented in this ticket's log
