@@ -210,6 +210,14 @@ Explicit human override. Usage: `/verify <pr-number> --force-approve <reason>`.
   `/verify-wave` (not yet drafted) for post-merge integration testing of a batch.
 - **Merging.** Ever. That is the caller's job.
 
+## Panel extension
+
+When external reviewers are configured (`/reviewers list` shows non-empty
+panel), the setup phase calls `/reviewers request <pr>` to fire all panel
+members. After phases 2–4 complete, `/reviewers harvest <pr>` collects and
+normalizes external findings into the gate's comment shape. Findings are
+dispositioned identically to built-in reviewer output.
+
 ## Output shape
 
 Post a single top-level PR comment at end of skill. Two sections,

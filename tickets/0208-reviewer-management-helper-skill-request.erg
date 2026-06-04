@@ -2,10 +2,12 @@
 Title: Reviewer-management helper skill — request, harvest, normalize, scorecard
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: Implemented: /reviewers skill with list/request/harvest/scorecard stubs, panel.yml roster, verify panel-extension section
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
 
+2026-06-04T09:13Z MinhHaDuong closed — Implemented: /reviewers skill with list/request/harvest/scorecard stubs, panel.yml roster, verify panel-extension section
 --- body ---
 ## Context
 

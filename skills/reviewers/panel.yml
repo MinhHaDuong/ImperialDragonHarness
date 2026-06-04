@@ -1,0 +1,3 @@
+# Reviewer panel roster — managed by /reviewers skill
+# Each entry: name, kind (forge-bot|cli-agent|local-model), disposition (advisory|required), trial ticket
+reviewers: []
