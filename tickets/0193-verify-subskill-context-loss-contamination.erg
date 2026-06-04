@@ -10,7 +10,9 @@ Author: claude
 
 2026-06-04T07:05Z claude note transcript investigation of session 5a6bf32d complete — root cause is fork task-framing loss + shared cwd/branch/stash state, NOT lost args; body rewritten with diagnosis and re-ranked actions
 
-2026-06-04T07:31Z stash landmine defused: stash@{1} (2026-05-13) confirmed as the 0149 culprit — pop-on-conflict retains the entry, so it stayed armed; stash@{0} (raid evening 22:58) held the only copy of two aedist MEMORY.md index lines, salvaged via PR #261; stash@{2} was a dead settings experiment; all three dropped, stack now empty, patches backed up in /tmp
+2026-06-04T07:31Z claude note stash landmine defused: stash@{1} (2026-05-13) confirmed as the 0149 culprit — pop-on-conflict retains the entry, so it stayed armed; stash@{0} (raid evening 22:58) held the only copy of two aedist MEMORY.md index lines, salvaged via PR #261; stash@{2} was a dead settings experiment; all three dropped, stack now empty, patches backed up in /tmp
+
+2026-06-04T07:56Z claude note exit criteria rewritten to the shipped contracts; empirical raid-cycle criterion split to child 0202 (review: a shipping PR cannot prove an empirical criterion; only the erg-pr-merge narrowing is mechanical)
 --- body ---
 ## Context
 
@@ -79,8 +81,9 @@ pin the mechanism. Three findings correct the original hypothesis:
    worktrees), surfacing the historical `0149-*.erg` as a DU conflict.
    The fork `git rm --cached`-ed it, leaving it untracked on disk
    ("harmless", it said); `erg-pr-merge`'s `git add tickets/` then
-   swept it into #242's merge. The primary repo still holds 3 stale
-   stashes as of 2026-06-04 — the hazard is live.
+   swept it into #242's merge. The primary repo still held 3 stale
+   stashes on the morning of 2026-06-04 — drained the same day (log
+   07:31Z).
 
 ## Relevant files
 
@@ -93,31 +96,40 @@ pin the mechanism. Three findings correct the original hypothesis:
 
 ## Actions
 
-Ranked by determinism — the containment fixes fire whether or not a
-fork drifts; the prompt fix only lowers drift frequency.
+Honesty ranking (corrected in review): only (3) is mechanical —
+enforced by code regardless of model behaviour. (2) is reliable when
+the orchestrator completes, and catches working-tree residue but NOT
+a rogue push/PR (the #243 mode). (1) and (5) both live inside the
+drift-prone fork — a fork that ignores the directive ignores the cd
+too — so they reduce drift frequency without bounding damage. The
+deterministic kill for the #243 mode (Agent-spawned sub-skills with
+pinned cwd, or a push/PR guard) is carried by child ticket 0202.
 
 1. **Pin sub-skill cwd via explicit path argument.** `context: fork`
    does not inherit the orchestrator's cwd, so verify/SKILL.md must
    pass the `/tmp/review-<pr>` worktree path as part of each
    sub-skill's args, and each sub-skill's SKILL.md must `cd` into the
-   path it receives as its first act. (Deterministic.)
+   path it receives as its first act. Note: `/simplify` is a built-in
+   skill — it receives the `worktree=` hint in its args but carries no
+   directive contract; residual risk named in 0202.
 2. **Post-verify containment check.** Orchestrator-side `git status
    --porcelain` in both the session worktree and the primary repo
    after every /verify; discard foreign files and abort merge on
-   unexpected branch switches. (Deterministic.)
+   unexpected branch switches.
 3. **Narrow `erg-pr-merge`'s `git add tickets/`** to the exact paths
    `erg close`/`erg archive` touched, so stray files can never be
-   swept into a merge. (Deterministic.)
+   swept into a merge. (Mechanical.)
 4. **Ban bare `git stash`/`stash pop` in shared worktrees.** The stash
    stack is repo-global. Skills must not round-trip through it with
-   output suppressed; use `git stash push` + pop-by-name, or
-   `git worktree add` a throwaway instead. Also: drain the 3 stale
-   stashes currently parked in the primary repo. (Deterministic.)
+   output suppressed; use a throwaway `git worktree add` or a WIP
+   commit instead. Also: drain the 3 stale stashes currently parked
+   in the primary repo. (Done 2026-06-04, see log.)
 5. **Imperative task framing in fork-context sub-skills.** Open
-   verify-adherence/verify-gate/review-pr SKILL.md with "Your task NOW:
-   <verb> $ARGUMENTS" before the reference prose, so a bare fork cannot
-   misread the body as loaded documentation. (Probabilistic — reduces
-   drift frequency only; never rely on it for safety.)
+   verify/verify-adherence/verify-gate/review-pr/review-pr-prose
+   SKILL.md with a TASK DIRECTIVE block before the reference prose,
+   so a bare fork cannot misread the body as loaded documentation,
+   and forbid inferring a task from ambient cues. (Probabilistic —
+   reduces drift frequency only; never rely on it for safety.)
 
 ## Test
 
@@ -143,5 +155,12 @@ it).
 
 ## Exit criteria
 
-- [ ] One full raid cycle with zero off-task sub-skill runs and zero
-      foreign files in the orchestrator worktree after verify
+- [ ] All five Actions shipped: worktree= threading + sub-skill cd
+      contract, post-verify containment postcondition, narrowed
+      erg-pr-merge staging, stash discipline (rule + drained stack +
+      guard message), TASK DIRECTIVE openers in all five fork skills
+- [ ] Source-inspection ratchet tests pin every contract
+      (tests/test_verify_fork_contracts.py) and a behavioural fixture
+      proves the staging narrowing (test_erg_pr_merge.sh case 7)
+- [ ] Empirical raid-cycle validation split to child ticket 0202
+      (this criterion was empirical and unprovable by the shipping PR)
