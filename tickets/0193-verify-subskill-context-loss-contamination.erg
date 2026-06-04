@@ -161,6 +161,6 @@ it).
       guard message), TASK DIRECTIVE openers in all five fork skills
 - [ ] Source-inspection ratchet tests pin every contract
       (tests/test_verify_fork_contracts.py) and a behavioural fixture
-      proves the staging narrowing (test_erg_pr_merge.sh case 7)
+      proves the staging narrowing (test_erg_pr_merge.sh cases 11-12)
 - [ ] Empirical raid-cycle validation split to child ticket 0202
       (this criterion was empirical and unprovable by the shipping PR)

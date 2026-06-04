@@ -318,5 +318,46 @@ else
     echo "FAIL: erg-pr-merge exited non-zero with a stray file present"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 12: closing a ticket that a sibling open ticket is Blocked-by -> the
+# sibling edit `erg close` makes (strips the `Blocked-by:` line, appends a log)
+# MUST be staged and committed. Path-scoping the staging to the closed ticket's
+# own paths would silently drop the sibling edit when the review worktree is
+# discarded — the same dirty-tree class ticket 0193 set out to fix.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo dependent 0220
+cat > "$REPO/tickets/0221-dependent.erg" <<'ERG'
+%erg 0.1
+Title: Dependent ticket blocked by the one being closed
+Created: 2026-06-03
+Author: test
+Blocked-by: 0220
+
+--- log ---
+2026-06-03T00:00Z test created
+
+--- body ---
+## Context
+Open sibling whose Blocked-by must be rewritten and committed on close.
+ERG
+git -C "$REPO" add tickets/0221-dependent.erg
+git -C "$REPO" commit -q -m "add dependent ticket"
+git -C "$REPO" switch -q "$BRANCH"
+git -C "$REPO" merge -q "$BASE"
+BODY12=$'Summary.\n\n**Ticket:** tickets/0220-fixture.erg\n'
+if run_merge "$BODY12" "ticket(0220): dependent" >/dev/null 2>&1; then
+    miss=0
+    closed_has 0220 || { echo "  not closed: 0220"; miss=1; }
+    # The sibling's committed content on the branch must no longer carry the
+    # Blocked-by line — proving the edit was staged, not silently dropped.
+    if git -C "$REPO" show "$BRANCH:tickets/0221-dependent.erg" | grep -q 'Blocked-by: 0220'; then
+        echo "  sibling Blocked-by edit was NOT committed (lost on worktree discard)"; miss=1
+    fi
+    if (( miss )); then echo "FAIL: sibling Blocked-by edit not staged on close"; fail=1
+    else echo "PASS: sibling Blocked-by edit staged and committed alongside the close"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero with a dependent ticket present"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged"

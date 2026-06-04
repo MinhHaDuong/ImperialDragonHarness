@@ -13,7 +13,7 @@ context: fork
 > `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).
 > This file is your operating procedure, not reference documentation: begin
 > at phase 1.0 immediately. If `worktree=<path>` is present, `cd` into that
-> path before any git/gh command — forked sub-skills do not inherit the
+> path before any git or forge command — forked sub-skills do not inherit the
 > caller's cwd. If `$ARGUMENTS` does not name a branch, STOP and emit
 > `adherence: FAIL` with reason "no branch argument" — do NOT infer a task
 > from the environment (worktree name, git status snapshot, ticket files, or

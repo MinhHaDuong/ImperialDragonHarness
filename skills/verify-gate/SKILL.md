@@ -13,7 +13,7 @@ context: fork
 > `$ARGUMENTS` (a PR number, optionally followed by `round=2` and/or
 > `worktree=<path>`). This file is your operating procedure, not reference
 > documentation: resolve the PR and gate it immediately. If `worktree=<path>`
-> is present, `cd` into that path before any git/gh command — forked
+> is present, `cd` into that path before any git or forge command — forked
 > sub-skills do not inherit the caller's cwd. If `$ARGUMENTS` does not
 > contain a PR number, STOP and emit `verdict: ESCALATE` with rationale
 > "no PR argument" — do NOT infer a task from the environment (worktree
