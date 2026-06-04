@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Align lint-on-edit ruff format hook with the repo formatting policy
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T11:01Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Ticket 0201 (PR #275) reverted black-style formatting churn from
+tests/test_worktree_tools.py; the decision was: no formatter adopted
+repo-wide. The execute agent then discovered that the `lint-on-edit.sh`
+PostToolUse hook runs `ruff format` on every Python file after every
+Edit/Write — so the next agent touching that file via Edit/Write
+reinstates the exact churn just reverted (the 0201 agent had to bypass
+the hook with `cp`). The repo has a de-facto formatter through the hook
+while claiming not to have one; PR #275's revert is fragile until the
+contradiction is resolved.
+
+## Relevant files
+
+- `~/.claude/scripts/lint-on-edit.sh` (or wherever the PostToolUse hook lives) — the `ruff format` call
+- `tests/test_worktree_tools.py` — the file whose formatting the hook silently rewrites
+- tickets/0201 — the revert this ticket protects
+
+## Actions
+
+1. Decide: (a) remove/exclude `ruff format` from lint-on-edit.sh (keep
+   lint, drop format) to match the no-formatter decision, or (b) adopt
+   ruff format repo-wide (one bulk-format commit + CI check) and close
+   the formatting question the other way.
+2. Apply the chosen option; document the decision in this ticket's log.
+
+## Test
+
+Edit tests/test_worktree_tools.py via the Edit tool (touch one semantic
+line); `git diff` shows no formatting-only hunks afterwards.
+
+## Exit criteria
+
+- [ ] Hook behavior and repo formatting policy agree
+- [ ] Editing tests/test_worktree_tools.py via Edit produces no formatting-only diff hunks
+- [ ] Decision documented in this ticket's log
