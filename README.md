@@ -99,7 +99,6 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
-| `/ticket-close` | Close a local ticket. |
 | `/ticket-new` | Create a local %erg 0.1 file for agent coordination. |
 | `/verify` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |

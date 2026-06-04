@@ -60,9 +60,10 @@ Run full repo housekeeping and act on every finding.
    3. **Symbol presence**: `grep -qE '^(def|class|func) <name>' <file>`
 
    If *all* of a ticket's exit criteria reduce to these shapes AND all
-   pass: call `/ticket-close <id> already-done`. Log each closure as a
-   fix-now action and include it in the step 3 commit. If *any* criterion
-   is vague or cannot be reduced to these shapes → leave the ticket open.
+   pass: run `erg close <id> already-done` (the close lands in the
+   housekeeping branch's sweep commit). Log each closure as a fix-now
+   action and include it in the step 3 commit. If *any* criterion is vague
+   or cannot be reduced to these shapes → leave the ticket open.
 
    Process all open tickets unconditionally (not just candidates).
    Batch-closing is allowed here: close every qualifying ticket in one pass.
