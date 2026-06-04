@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Skills declare concurrency explicitly — parallel verify fan-out in raid Phase 6
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T08:07Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Model behaviour diverges where skill text leaves execution shape
+unspecified. Controlled observation, raid of 2026-06-04: raid Phases
+2/3 say "launch an agent (background)" — the orchestrator (Opus 4.8)
+fanned out planners and executes without prompting; Phase 6 says only
+"invoke /verify <pr> on each merge request" — the same orchestrator
+serialized four verifies. An earlier model (4.7) parallelized the same
+phase by disposition. IDH is model-agnostic: the skill text, not the
+model's temperament, must be the contract.
+
+Author directive (2026-06-04): adjust skill language to encourage the
+intended parallelism for every model.
+
+## Relevant files
+
+- `rules/workflow.md` § Writing Skills and Hooks — new general principle
+- `skills/raid/SKILL.md` Phase 6 — the concrete underdetermined step
+- tickets/0193 — sub-agent cwd pinning; gates the default flip
+
+## Actions
+
+1. rules/workflow.md, § Writing Skills: add the principle — "State
+   concurrency explicitly. Every multi-item skill step declares whether
+   items run parallel-background or sequential-blocking, and why. Model
+   defaults differ across versions; the skill text is the contract."
+   (Lands independently, immediately.)
+2. skills/raid/SKILL.md Phase 6: "Launch per-ticket /verify runs in
+   parallel (background agents, one per merge request) when the PR
+   branches touch disjoint files; verify file-sharing PRs sequentially.
+   Respect the max-concurrent-agents cap. Phase 7 merges stay strictly
+   sequential." Include, until 0193 lands, the caveat that each parallel
+   verify runner is instructed not to repair foreign branch state it
+   encounters.
+3. Sweep other multi-item skill steps (healthcheck sweeps, review-pr
+   fan-out, dream) for the same underdetermination; annotate each with
+   its intended mode.
+
+## Test
+
+Grep-able: `grep -n "parallel" skills/raid/SKILL.md` includes Phase 6;
+`grep -n "concurrency" rules/workflow.md` hits the new principle.
+
+## Exit criteria
+
+- [ ] Writing-Skills principle present in rules/workflow.md
+- [ ] Raid Phase 6 declares parallel fan-out + sequential-merge contract
+- [ ] One sweep pass over existing skills' multi-item steps documented in this ticket's log
