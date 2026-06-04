@@ -1,0 +1,44 @@
+%erg 0.1
+Title: erg-pr-merge: title fallback closes tickets the PR did not claim
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T06:47Z MinhHaDuong created
+
+--- body ---
+## Source
+Live failure, git-erg PR #256 (2026-06-04). The PR body deliberately
+carried no `**Ticket:**` line ("0216 stays open until the last two
+stores are done") -- yet erg-pr-merge closed and archived 0216 anyway.
+
+## Context
+Step 1 of skills/merge/erg-pr-merge falls back, when the body has no
+Ticket line, to parsing the PR TITLE: `(?:feat|fix|ticket|chore)\(\K\d+`.
+A conventional title prefix like `chore(0216): log dogfood run` is a
+*subject* reference, not a close claim, but the fallback cannot tell
+the difference. The body's explicit close intent (or its absence) is
+silently overridden.
+
+The rule in workflow.md is the opposite: erg-pr-merge closes whatever
+the `**Ticket:**` line names -- the line IS the claim. A fallback that
+manufactures a claim from the title breaks "one PR closes exactly one
+ticket" in both directions (closes unclaimed tickets; encourages
+omitting the explicit line).
+
+(The companion failure on the same run -- close commit never pushed on
+the erg-only path -- is logged on 0198, whose rewrite owns that block.)
+
+## Fix
+Remove the title fallback. If the body has no `**Ticket:**` line:
+- tickets/ exists: keep the current die() asking for an explicit line,
+  and extend the message: PRs that intentionally close nothing may say
+  `Ticket: none`, which skips Step 2 instead of dying.
+- Update SKILL.md and the workflow.md merge prose accordingly.
+
+## Exit criteria
+- [ ] Title prefixes (feat/fix/ticket/chore(NNNN)) never trigger a close
+- [ ] `Ticket: none` in the body skips the close step without dying
+- [ ] tests/test_erg_pr_merge.sh covers: title-only PR dies with the
+      explicit-line message; `Ticket: none` merges without closing
+- [ ] SKILL.md + rules prose updated
