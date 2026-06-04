@@ -1,0 +1,64 @@
+%erg 0.1
+Title: Narrow blanket git add in skill prose — check-readiness, pick-ticket, housekeeping, nightbeat-supervisor + ratchet test
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T09:05Z claude created — 0193 post-merge celebrate sweep
+
+--- body ---
+## Context
+
+The 0193 post-merge celebrate sweep found the anti-pattern that bit
+PR #242 (a stray file swept into a close commit by blanket staging)
+alive in skill prose that agents execute in shared checkouts.
+`erg-pr-merge` itself was narrowed by PR #262 (cases 11-12 in
+`tests/test_erg_pr_merge.sh`), but four skills still instruct the
+blanket form. Any stray file in `tickets/` — stash residue, a
+crashed agent's draft, a cross-branch leftover — gets silently
+committed by the next skill run that follows these lines.
+
+## Relevant files
+
+- `skills/check-readiness/SKILL.md:74` — `git add -A && git commit`
+  (sweeps everything, the broadest instance)
+- `skills/check-readiness/SKILL.md:145` — `git add tickets/`
+- `skills/pick-ticket/SKILL.md:43` — `git add tickets/` on the
+  already-done-close path: the same class as the #242 sweep
+- `skills/housekeeping/SKILL.md:75` — `git add tickets/closed/`
+- `skills/nightbeat-supervisor/SKILL.md:98` — `git add tickets/*.erg`
+  glob, sweeps any stray `.erg`
+
+## Actions
+
+1. Narrow each instruction to the exact paths the step touches: a
+   named ticket file where the step knows it, or `git add -u` where
+   only tracked-file edits are intended.
+2. Add a standing adherence ratchet test (alongside
+   `tests/test_verify_fork_contracts.py`) banning command-position
+   `git add -A`, `git add .`, and unglobbed `git add tickets/` in
+   `skills/*/SKILL.md` prose. Provide an explicit allowlist mechanism
+   (e.g. a `# blanket-add-ok: <reason>` adjacent comment) should a
+   legitimate blanket add ever be needed.
+
+## Test
+
+Red step: the new ratchet test must FAIL against the current prose
+(five hits across four files) and PASS after the narrowing.
+
+## Verification
+
+- [ ] All five instances narrowed or justified via the allowlist
+- [ ] Ratchet test red pre-fix, green post-fix
+- [ ] Full bash + pytest suites green
+
+## Invariants
+
+- The skills' staging steps still commit what they intend to commit
+  (close commits, supervisor notes, ticket files); only the blast
+  radius shrinks.
+
+## Exit criteria
+
+- [ ] Zero unjustified blanket adds in skills/*/SKILL.md, enforced by
+      a standing test
