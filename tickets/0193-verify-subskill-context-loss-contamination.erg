@@ -10,6 +10,7 @@ Author: claude
 
 2026-06-04T07:05Z claude note transcript investigation of session 5a6bf32d complete — root cause is fork task-framing loss + shared cwd/branch/stash state, NOT lost args; body rewritten with diagnosis and re-ranked actions
 
+2026-06-04T07:31Z stash landmine defused: stash@{1} (2026-05-13) confirmed as the 0149 culprit — pop-on-conflict retains the entry, so it stayed armed; stash@{0} (raid evening 22:58) held the only copy of two aedist MEMORY.md index lines, salvaged via PR #261; stash@{2} was a dead settings experiment; all three dropped, stack now empty, patches backed up in /tmp
 --- body ---
 ## Context
 
