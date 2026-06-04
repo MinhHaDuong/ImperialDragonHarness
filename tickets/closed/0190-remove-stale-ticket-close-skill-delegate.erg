@@ -2,11 +2,13 @@
 Title: Remove stale ticket-close skill, delegate ticket-new mechanics to erg new
 Created: 2026-06-03
 Author: claude
+Closed: autoclosed — PR #264
 
 --- log ---
 2026-06-03T18:53Z claude created
 2026-06-04T08:04Z claude note retired ticket-close, delegated ticket-new creation to erg new
 
+2026-06-04T08:35Z MinhHaDuong closed — autoclosed — PR #264
 --- body ---
 ## Source
 Skill audit during the 0216 dogfood migration (git-erg), 2026-06-03.
