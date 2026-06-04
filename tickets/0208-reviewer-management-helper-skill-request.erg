@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Reviewer-management helper skill — request, harvest, normalize, scorecard
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/0205. With three reviewer kinds (forge bot, aider
+endpoints, sibling Claude tier), panel membership and trial bookkeeping
+need a management surface so verify stays thin. Author directive
+(2026-06-04): "add helper skills for reviewers management". Helpers are
+tool-named where they wrap one tool (0205 naming exception); the
+umbrella skill itself is generic.
+
+## Relevant files
+
+- new: skills/reviewers/SKILL.md (+ pure-I/O helpers per reviewer kind)
+- skills/verify/SKILL.md — calls into this instead of inlining mechanics
+- tickets/0206, tickets/0207 — the reviewers being managed
+
+## Actions
+
+1. `/reviewers list` — panel members, their kind, advisory/required
+   status, trial progress (MRs observed / projects covered).
+2. `/reviewers request <pr>` — fire all configured external reviewers
+   for a merge request (forge-bot request, aider adapter invocations).
+3. `/reviewers harvest <pr>` — collect all external findings, normalize
+   to the 0205 contract shape, emit one findings file for the gate.
+4. `/reviewers scorecard <pr> <verdict-summary>` — append the per-MR
+   trial line to the owning ticket's log (the 0206/0207 observation
+   bookkeeping, mechanized).
+5. Config lives in one place (panel roster + endpoints); no secrets in
+   config — credentials via BASH_ENV path (see 0207).
+
+## Test
+
+Shell test with stubbed forge CLI + stubbed adapters: `request` invokes
+each configured reviewer once; `harvest` merges two stub finding files
+into one normalized output; `scorecard` appends a valid erg log line
+(verbs: created/note/closed only) that `erg validate` accepts.
+
+## Exit criteria
+
+- [ ] /reviewers skill with list/request/harvest/scorecard, catalog-registered
+- [ ] verify's panel-extension section delegates mechanics to it
+- [ ] Stubbed shell test green; make check green

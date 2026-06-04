@@ -1,0 +1,63 @@
+%erg 0.1
+Title: External-reviewer panel for verify — contract, decorrelation rule, trial tracker
+Created: 2026-06-04
+Author: MinhHaDuong
+Blocked-by: 0206
+Blocked-by: 0207
+Blocked-by: 0208
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+--- body ---
+## Context
+
+The verify panel is single-vendor: every member (adherence, review-pr,
+simplify, gate) is a Claude model orchestrating itself, and the 0193
+incident catalog (9 incidents, 2026-06-03/04) shows they share failure
+modes. Author directive (2026-06-04, imagine-copilot session): add
+externally-decorrelated reviewers behind one contract. TRACKING TICKET —
+stays open until children merge + integration review (celebrate step 7).
+
+## Children
+
+- tickets/0206 — Copilot review (forge bot; subscription confirmed)
+- tickets/0207 — aider adapter (OpenRouter + llama-server configs)
+- tickets/0208 — reviewer-management helper skill
+
+## Design rules (bind the children)
+
+1. **Contract**: every external reviewer yields findings in the gate's
+   comment shape (`verifiable:` / `consider:` + file:line + rationale).
+   The gate dispositions all reviewers identically.
+2. **Advisory → required**: each new reviewer runs advisory (logged,
+   only verifiable-class findings may bounce) for an observation period
+   of **at least 5 merge requests spanning at least 3 projects** before
+   promotion to required disposition in the gate.
+3. **Decorrelation rule rewording** (this ticket's own change), replacing
+   the "Sonnet reviews Opus" instance in rules/workflow.md § Subagents:
+   "Reviewer decorrelation. The verify panel never shares the coding
+   agent's model. Minimum: the sibling tier of the same family.
+   Stronger: a different vendor or harness entirely (forge review bot,
+   independent CLI agent, local model). Prefer the most-decorrelated
+   reviewer available for the change's risk level."
+4. **Helper naming exception** (author, 2026-06-04): helper skills and
+   scripts that wrap a concrete tool are NAMED for that tool (copilot,
+   aider, llama-server) — the forge/stack-agnostic language rule applies
+   to generic skill prose, not to tool-specific helpers. Mechanical
+   agnostic-guard patterns still require `<!-- harness-extension-point -->`
+   escape hatches where literals appear under skills/.
+
+## Actions
+
+1. Land the decorrelation rewording in rules/workflow.md.
+2. Record the contract (finding shape, advisory protocol, observation
+   period) in skills/verify/SKILL.md as the panel-extension section.
+3. After children merge: integration review across ≥5 trial MRs / ≥3
+   projects; promote or drop each reviewer; close this tracker.
+
+## Exit criteria
+
+- [ ] Decorrelation rule reworded (agnostic, gradient stated)
+- [ ] Panel-extension contract documented in skills/verify/SKILL.md
+- [ ] All children merged; trial scorecards reviewed; promote/drop decided
