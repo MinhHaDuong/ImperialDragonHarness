@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Copilot review in the verify panel — auto-request, gate harvest, advisory trial
+Created: 2026-06-04
+Author: MinhHaDuong
+Blocked-by: 0193
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/0205 (external-reviewer panel). GitHub Copilot code
+review = cross-vendor reviewer at zero token cost, server-side, async.
+Subscription confirmed (author, 2026-06-04). Copilot comments but never
+approves, so "required" is enforced as a verify-gate disposition
+precondition, never a forge approval rule.
+
+## Relevant files
+
+- skills/verify/SKILL.md — setup phase + gate-inputs clause
+- Forge settings — auto-request lever (repo setting or ruleset
+  parameter; identify exact mechanism at implementation)
+- tickets/0205 — contract + observation-period definition
+
+## Actions
+
+1. Enable auto-request of Copilot review on every merge request
+   (forge-side config; document the exact lever in this ticket's log).
+2. skills/verify/SKILL.md: (a) setup notes the forge-review status;
+   (b) gate's comment-validation step includes "the forge's automated
+   reviewer, when present" — findings dispositioned like any panel
+   comment; correctness-class only may bounce, style is noted-not-blocking.
+   If the review is pending when all else is ready: bounded wait
+   (few minutes), then proceed with a logged WARN — fail-open.
+   GitHub-specific mechanics carry <!-- harness-extension-point -->.
+3. Advisory trial per 0205: at least 5 merge requests across at least
+   3 projects; log a one-line scorecard per MR (findings, true/false
+   positives) in this ticket.
+
+## Test
+
+First MR of the trial shows a harvested Copilot comment dispositioned
+in the gate verdict's evidence table.
+
+## Exit criteria
+
+- [ ] Auto-request live; lever documented
+- [ ] Gate clause merged (advisory disposition, fail-open pending-wait)
+- [ ] Trial scorecard: ≥5 MRs, ≥3 projects, logged here
+- [ ] Promote/drop recommendation recorded for 0205's integration review

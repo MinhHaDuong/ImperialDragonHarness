@@ -1,0 +1,58 @@
+%erg 0.1
+Title: aider as external verifier — one adapter, OpenRouter and llama-server configs
+Created: 2026-06-04
+Author: MinhHaDuong
+Blocked-by: 0193
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/0205. aider driven as a read-only reviewer gives
+vendor+harness decorrelation; pointing the same adapter at llama-server
+adds a fully local, free, private reviewer. Both speak OpenAI-compatible
+endpoints, so the experiment matrix is configuration, not code:
+{adapter: aider} x {endpoint: OpenRouter-hosted model, local llama-server}.
+Helper is tool-NAMED per the 0205 naming exception.
+
+## Credential path (decided before implementation, per standing rule)
+
+OPENROUTER_API_KEY loads via the BASH_ENV -> bash-env.sh pattern — never
+argv, never CLAUDE_ENV_FILE (argv leaks to ps -ef). llama-server endpoint
+is plain config (host:port), no secret.
+
+## Relevant files
+
+- skills/verify/SKILL.md — panel-extension section (from 0205)
+- new helper: skills/verify/external-review-aider (tool-named; pure I/O:
+  PR ref in, findings file out; no model API calls hand-rolled — aider is
+  the engine)
+- ~/.claude/scripts/bash-env.sh — credential loading reference
+
+## Actions
+
+1. Helper `external-review-aider <pr-number> --endpoint <url> --model <id>`:
+   temp read-only checkout of the MR branch, drive aider with a review
+   prompt over the diff, normalize output to the 0205 contract shape
+   (verifiable:/consider: + file:line), write findings file, exit.
+2. Smoke both configs manually on one merged PR (no gate wiring yet):
+   record model used, latency, finding quality in this ticket's log.
+3. Wire as advisory panel member per 0205's contract (gate dispositions
+   findings; only verifiable-class may bounce).
+4. Advisory trial: at least 5 merge requests across at least 3 projects
+   PER CONFIG (OpenRouter, llama-server) — scorecard lines in this log.
+
+## Test
+
+Helper unit test (tests/test_external_review_aider.sh): stub aider on
+PATH emitting canned review text; assert normalized findings file shape
+and non-zero exit when the endpoint is unreachable (fail-loud).
+
+## Exit criteria
+
+- [ ] Helper exists, tool-named, credentials via BASH_ENV path only
+- [ ] Both endpoint configs smoke-tested and logged
+- [ ] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
+- [ ] Promote/drop recommendation recorded for 0205's integration review
