@@ -8,7 +8,11 @@ Closed: autoclosed — PR #258 (manual completion: close step bounced on branch 
 2026-06-04T06:10Z claude created — /tmp worktree with stranded ticket 0190 survived GC for hours
 2026-06-04T06:52Z claude note real bug was agent-* basename filter, not enumeration; removed filter + added self-skip rail
 
+2026-06-04T07:41Z claude note bump verify-reroll — round 1: exit criterion 3 MISSING — celebrate 9.5 + housekeeping 1.5 still say 'agent-*' worktrees, contradicting the any-path scope this PR introduces
+
 2026-06-04T08:36Z MinhHaDuong closed — autoclosed — PR #258 (manual completion: close step bounced on branch race)
+
+2026-06-04T09:15Z claude note REROLL log line above salvaged: verify-gate's erg log step ran against the primary checkout on main (not the review worktree), leaving this entry stranded uncommitted there for 90 minutes — incident #9 for ticket 0202's baseline; author token added per spec during salvage
 --- body ---
 ## Context
 
