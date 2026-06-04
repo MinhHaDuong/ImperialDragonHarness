@@ -2,10 +2,13 @@
 Title: Align housekeeping skill with no-direct-push rule — fixes land via branch + PR
 Created: 2026-06-04
 Author: claude
+Closed: autoclosed — PR #254
 
 --- log ---
 2026-06-04T06:10Z claude created — surfaced by interactive /housekeeping after raid 0185-0189
+2026-06-04T06:49Z claude note implemented branch+MR flow per plan
 
+2026-06-04T07:53Z MinhHaDuong closed — autoclosed — PR #254
 --- body ---
 ## Context
 
