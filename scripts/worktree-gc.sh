@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# GC stale agent worktrees: remove worktrees named agent-* whose branch is
-# gone from origin (squash-merged + remote-deleted) AND have no uncommitted
-# changes. Never touches dirty worktrees, never uses rm -rf, idempotent.
-# Relies on the caller having run `git fetch --prune` first (housekeeping /
-# celebrate do). Optional arg: repo dir (default: current dir). See ticket 0169.
+# GC stale worktrees: remove any registered worktree (regardless of path or
+# name — including ones outside .claude/worktrees/, e.g. a stranded /tmp
+# worktree) when ALL safety rails pass: the tree is clean (no uncommitted
+# changes), its branch is upstream-gone (merged + remote-deleted), and it is
+# not the worktree this script is invoked from. `git worktree remove` only
+# detaches the worktree — branches and commits survive — and we never rm -rf,
+# so a mistaken removal loses no history. Idempotent. Relies on the caller
+# having run `git fetch --prune` first (housekeeping / celebrate do).
+# Optional arg: repo dir (default: current dir). See tickets 0169, 0195.
 
 repo="${1:-.}"
 removed=0
@@ -21,10 +25,10 @@ flush() {
     [ -z "$path" ] && return
     local base
     base=$(basename "$path")
-    case "$base" in
-        agent-*) ;;
-        *) reset; return ;;
-    esac
+    # Never remove the worktree we are running from (covers the race where a
+    # live session sits on a just-merged, now-gone branch). git worktree list
+    # reports absolute paths; $PWD is absolute, so this compares cleanly.
+    if [ "$path" = "$PWD" ]; then reset; return; fi
     # Never touch a worktree with uncommitted changes (could be user WIP).
     if [ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ]; then
         echo "worktree-gc: skip $base (uncommitted WIP)"

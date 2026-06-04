@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-06-04T06:10Z claude created — /tmp worktree with stranded ticket 0190 survived GC for hours
+2026-06-04T06:52Z claude note real bug was agent-* basename filter, not enumeration; removed filter + added self-skip rail
 
 --- body ---
 ## Context
