@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-04T08:40Z claude created — enabled by allow_auto_merge + main-required-checks ruleset (both 2026-06-04)
 
+2026-06-04T06:33Z claude note edge from 0216 runs: the erg-only fast path (DIFF_SIZE=0, skips CI wait, plain gh pr merge) is also broken by the main-required-checks ruleset -- ticket-only PRs now bounce at merge until checks pass; apply --auto there too, not only in the CI-wait block
 --- body ---
 ## Context
 
