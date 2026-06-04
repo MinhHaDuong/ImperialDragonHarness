@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Migrate harness ticket store to current erg (0216 dogfood)
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T06:17Z MinhHaDuong created
+
+2026-06-04T06:18Z claude note migrate refreshed .ergrc+AGENTS.md (not init-preserved); diff inspected: pure template upgrades (mojibake fix, Tag->Label, artifacts-by-path rule, erg-github note), zero authored content lost
+--- body ---
+## Context
+Seventh of eight stores in the git-erg 0216 dogfood migration (the most
+sensitive one: the harness itself, author watching; aedist remains).
+Premigration check 2026-06-04:
+clean main, 14 violations all of one class (legacy Tag: -> Label:),
+zero warnings, binary b484505 (2026-05-29) behind pinned 9c23c37,
+no provenance manifest yet. The validate-only pre-commit hook does not
+hardcode main, so the branch commit needs no override.
+
+## Exit criteria
+- [x] tickets/erg refreshed to rev 9c23c37 (role: traveling)
+- [x] erg migrate applied: 14 Tag: -> Label: rewrites, zero remaining
+      violations on FULL validate (complete list, not truncated output)
+- [x] tickets/.erg-assets provenance manifest committed (binary is
+      tracked, not gitignored)
+- [x] .ergrc and AGENTS.md local edits preserved by init (migrate refreshed them; diff verified: pure template upgrades, no authored content)
+- [x] erg check tickets: PASS, 0 warnings
