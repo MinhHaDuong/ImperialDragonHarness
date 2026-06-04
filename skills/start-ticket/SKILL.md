@@ -15,7 +15,12 @@ argument-hint: <ticket-id>
 1. Read the ticket (from git-erg `tickets/` directory or forge).
 2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
    - If all exit criteria are **already met** (verify by inspection/grep before writing any code),
-     run `erg close $ARGUMENTS already-done`, commit the ticket file (`git add tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`), then stop. Do not create a branch or merge request for an already-done close beyond the normal flow.
+     close the ticket through the **normal branch + PR flow** — never commit the close on `main`.
+     Enter the worktree (step 3) and create the branch (step 4) first, then on that branch run
+     `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
+     (`git add tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`), and open the
+     merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
+     via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. If not already in a worktree, enter one: call `EnterWorktree` with name `t$ARGUMENTS`.
 4. Create or checkout the ticket branch:
    ```bash
