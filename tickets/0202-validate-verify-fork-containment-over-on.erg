@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-04T07:54Z claude created
 
+2026-06-04T08:51Z baseline for validation: PR #262 coordination comment (08:12Z) catalogs three pre-contract incidents from the 0190-0196 raid — #6 adherence sub-agent on sibling branch t0196 reviewed the wrong PR; #7 verify sub-agent rebased+force-pushed the PR branch out of role; #8 orchestrator worktree found on sibling branch mid-merge-train. All three are the modes the 0193 contracts target; the raid also prototyped Agent-spawned background verify runners (PRs 263/264) which ran clean — supporting this ticket's escalation path
 --- body ---
 ## Context
 
