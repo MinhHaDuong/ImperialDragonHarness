@@ -286,5 +286,37 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on bare-claim PR"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 11: stray untracked ticket file in tickets/ -> NOT swept into the close
+# commit (ticket 0193: a stash-resurrected 0149 file was swept by the blanket
+# `git add tickets/` and bounced PR #242 on corpus validation)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo stray 0200
+cat > "$REPO/tickets/0149-stray-resurrected.erg" <<'ERG'
+%erg 0.1
+Title: Stray file a rogue stash pop left behind
+Created: 2026-05-13
+Author: test
+
+--- log ---
+2026-05-13T00:00Z test created
+
+--- body ---
+## Context
+Must never be staged by erg-pr-merge.
+ERG
+BODY11=$'Summary.\n\n**Ticket:** tickets/0200-fixture.erg\n'
+if run_merge "$BODY11" "ticket(0200): stray" >/dev/null 2>&1; then
+    miss=0
+    closed_has 0200 || { echo "  not closed: 0200"; miss=1; }
+    if git -C "$REPO" ls-tree -r --name-only "$BRANCH" | grep -q "0149-stray"; then
+        echo "  stray 0149 file was swept into the close commit"; miss=1
+    fi
+    if (( miss )); then echo "FAIL: stray-file containment broken"; fail=1
+    else echo "PASS: stray untracked ticket file left alone; close commit stages only erg-touched paths"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero with a stray file present"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept"

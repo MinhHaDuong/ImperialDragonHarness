@@ -26,7 +26,7 @@ if echo "$cmd" | grep -qP '\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|.
 fi
 
 if echo "$cmd" | grep -qP '\bgit\s+reset\s+--hard\b'; then
-    echo "BLOCKED: git reset --hard destroys uncommitted work. Use git stash or git checkout <file> instead." >&2
+    echo "BLOCKED: git reset --hard destroys uncommitted work. Use git checkout <file> or a WIP commit instead (never a stash round-trip: the stash stack is repo-global)." >&2
     exit 2
 fi
 

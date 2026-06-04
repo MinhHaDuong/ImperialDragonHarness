@@ -9,6 +9,15 @@ context: fork
 
 # Review PR $ARGUMENTS — multi-perspective agent review
 
+> **TASK DIRECTIVE — execute now.** You are running `/review-pr` on PR
+> `$ARGUMENTS` (a PR number, optionally followed by `worktree=<path>`). This
+> file is your operating procedure, not reference documentation: start the
+> setup immediately. If `worktree=<path>` is present, `cd` into that path
+> before any git/gh command — forked sub-skills do not inherit the caller's
+> cwd. If `$ARGUMENTS` does not contain a PR number, STOP and report the
+> missing argument — do NOT infer a task from the environment (worktree
+> name, git status snapshot, ticket files, or the shared task list).
+
 Spin multiple agents in parallel, each with a distinct perspective. Run all agents in fresh contexts.
 
 ## Setup

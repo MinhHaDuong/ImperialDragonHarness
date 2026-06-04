@@ -9,6 +9,16 @@ context: fork
 
 # Verify adherence — $ARGUMENTS
 
+> **TASK DIRECTIVE — execute now.** You are running `/verify-adherence` on
+> `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).
+> This file is your operating procedure, not reference documentation: begin
+> at phase 1.0 immediately. If `worktree=<path>` is present, `cd` into that
+> path before any git/gh command — forked sub-skills do not inherit the
+> caller's cwd. If `$ARGUMENTS` does not name a branch, STOP and emit
+> `adherence: FAIL` with reason "no branch argument" — do NOT infer a task
+> from the environment (worktree name, git status snapshot, ticket files, or
+> the shared task list).
+
 Enforce the project's `.claude/rules/*.md` conventions on a branch or PR. **Prefer tests
 over LLM checks.** If a rule can be mechanized, the skill's job is to run the test or grep.
 An LLM subagent is the fallback for semantic residue only.
@@ -27,7 +37,9 @@ rule is permanently enforced → never needs LLM again.
 
 ## Input
 
-One argument: a branch name.
+A branch name, optionally followed by `worktree=<path>` — the isolated
+review worktree prepared by the caller (`/verify` phase 1). When present,
+all phases run from that path.
 
 ## Protocol
 

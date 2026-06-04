@@ -9,6 +9,13 @@ context: fork
 
 # Verify PR $ARGUMENTS — six-phase loop with anti-rubber-stamp gate
 
+> **TASK DIRECTIVE — execute now.** You are running `/verify` on PR `$ARGUMENTS`.
+> This file is your operating procedure, not reference documentation: begin at
+> phase 1 immediately. If `$ARGUMENTS` does not contain a PR number, STOP and
+> return ESCALATE with reason "no PR argument" — do NOT infer a task from the
+> environment (worktree name, git status snapshot, ticket files, or the shared
+> task list).
+
 One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Never merges.**
 Merge is always the human's or the raid's call.
 
@@ -68,14 +75,21 @@ git worktree remove /tmp/review-<pr-number> --force
 
 ### 2–4. Read-only review fan-out (parallel)
 
+Sub-skills are `context: fork` — **they do not inherit this skill's cwd or
+conversation**. Every invocation must carry the review-worktree path as an
+explicit `worktree=` argument; a fork launched without it lands in the
+session worktree on whatever branch happens to be checked out there
+(ticket 0193: that is how a drifted fork pushed a stray branch and opened
+rogue PR #243).
+
 Launch in a single message, as background agents:
 
-- `/verify-adherence <branch>` — mechanical-first rule check. If the PR
+- `/verify-adherence <branch> worktree=/tmp/review-<pr-number>` — mechanical-first rule check. If the PR
   carries the `verify:adherence-passed` label (set by `/start-ticket`'s
   pre-PR gate, see PR #40), skip this invocation — the adherence check
   already ran clean before the PR was opened.
 - `/review` (built-in) — standard review.
-- `/review-pr` or `/review-pr-prose` — **size-gate**: skip if the PR is small (as computed in phase 1); log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the setup summary. Otherwise: file-type heuristic: if any `*.qmd` changed → prose; else code.
+- `/review-pr <pr-number> worktree=/tmp/review-<pr-number>` or `/review-pr-prose <pr-number> worktree=/tmp/review-<pr-number>` — **size-gate**: skip if the PR is small (as computed in phase 1); log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the setup summary. Otherwise: file-type heuristic: if any `*.qmd` changed → prose; else code.
 
 Wait for all agents to complete. Collect their outputs.
 
@@ -83,12 +97,12 @@ Wait for all agents to complete. Collect their outputs.
 
 ### 5. Simplify (sequential)
 
-After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number>`. This phase may commit fixes
+After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=/tmp/review-<pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
 
-Invoke `/verify-gate <pr-number>`. It returns a structured verdict:
+Invoke `/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`. It returns a structured verdict:
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE
@@ -111,6 +125,28 @@ round: 1 | 2
   still-unresolved items and the gate's rationale. End the skill.
 - **ESCALATE** → post a PR comment tagged `/verify stopped:` listing what needs human
   judgment. End the skill.
+
+## Containment postcondition
+
+On **every** exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
+abort), after removing the review worktree and before returning control to
+the caller — the caller must see this report before any merge step:
+
+```bash
+git status --porcelain                      # invoking session worktree
+git branch --show-current                   # must equal the branch on entry
+git -C <primary-repo-root> status --porcelain
+```
+
+- **Foreign files** (anything this run did not deliberately create —
+  especially stray `tickets/*.erg`) → remove or restore them, and flag the
+  contamination in the verdict comment. Do not leave them for a later
+  `git add` to sweep.
+- **Unexpected branch** → switch back to the entry branch and flag it. Never
+  end the skill with the session worktree on a different branch than it was
+  on at phase 1.
+- Anything that cannot be restored cleanly → downgrade the verdict to
+  ESCALATE; a contaminated workspace must not feed a merge.
 
 ## Fix-agent contract
 

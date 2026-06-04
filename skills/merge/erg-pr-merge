@@ -95,11 +95,21 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
     while IFS= read -r tid; do
         [[ -z "$tid" ]] && continue
         echo "Closing ticket ${tid}..."
+        # Record the open file BEFORE close/archive so we can stage exactly
+        # the paths erg touches. A blanket `git add tickets/` once swept a
+        # stray stash-resurrected file into the close commit and bounced the
+        # merge on corpus validation (ticket 0193).
+        TICKET_FILE=$(ls tickets/"${tid}"-*.erg 2>/dev/null | head -1 || true)
         "$ERG" close "$tid" "autoclosed — PR #${PR}"
         "$ERG" archive "$tid" 2>/dev/null || true
+        if [[ -n "$TICKET_FILE" ]]; then
+            # --all stages the deletion of the (archived-away) open path;
+            # separate adds so a failed archive cannot void the close staging.
+            git add --all -- "$TICKET_FILE" 2>/dev/null || true
+            git add --all -- "tickets/closed/$(basename "$TICKET_FILE")" 2>/dev/null || true
+        fi
         CLOSED_LIST="${CLOSED_LIST:+${CLOSED_LIST}, }${tid}"
     done <<< "$TICKET_IDS"
-    git add tickets/ 2>/dev/null || true
     if ! git diff --cached --quiet; then
         git commit -m "ticket(${CLOSED_LIST}): close and archive — PR #${PR}"
     fi
