@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-06-03 -->
+<!-- last-reviewed: 2026-06-04 -->
 # Session Start
 
 At the beginning of every conversation:
@@ -82,11 +82,11 @@ misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.
 
 # Ticket discipline for multi-PR work
 
-**One PR closes exactly one ticket.** `erg-pr-merge` closes whatever ticket appears in the PR body's `**Ticket:**` line — unconditionally, regardless of whether all exit-criteria checkboxes are ticked.
+**One PR closes exactly one ticket.** `erg-pr-merge` closes whatever ticket appears in the PR body's `**Ticket:**` line — unconditionally, regardless of whether all exit-criteria checkboxes are ticked. The `**Ticket:**` (or bare `Ticket:`) line is the close claim. To cite a ticket without closing it, use `Ticket-ref: tickets/NNNN-...`; for a PR that closes nothing, `Ticket: none`. Title prefixes like `chore(0216):` are subject references, never close claims.
 
 When a ticket has multiple sub-tasks that will land in separate PRs: split into child tickets (one per PR) before work starts. Each child PR closes its own child ticket. The parent ticket stays open until all children are merged.
 
-Do NOT put the same `**Ticket:**` line in multiple PRs unless the intent is to close it on the first merge.
+Do NOT put the same `**Ticket:**` line in multiple PRs unless the intent is to close it on the first merge. Use `Ticket-ref:` for the non-closing PRs.
 
 # Compaction
 

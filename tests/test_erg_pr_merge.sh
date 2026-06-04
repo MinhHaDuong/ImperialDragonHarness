@@ -227,5 +227,64 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on erg-only strand case"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 7: title-only PR — a chore(NNNN) title prefix is a SUBJECT reference,
+# not a close claim. The PR must die (no close-claim in body), the seeded
+# ticket must SURVIVE, and the message must name both the `none` and
+# `Ticket-ref` escape hatches (ties the test to the new die message). (0199)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo titleonly 0216
+BODY7=$'Summary only — 0216 stays open until the last two stores are done.\n'
+if out=$(run_merge "$BODY7" "chore(0216): log dogfood run" 2>&1); then
+    echo "FAIL: title-only PR should have died (title prefix is not a close claim)"; fail=1
+else
+    msg_ok=1
+    echo "$out" | grep -q 'none'       || { echo "  die msg lacks 'none'";       msg_ok=0; }
+    echo "$out" | grep -q 'Ticket-ref' || { echo "  die msg lacks 'Ticket-ref'"; msg_ok=0; }
+    if closed_has 0216; then echo "  0216 wrongly closed by title fallback"; msg_ok=0; fi
+    if (( msg_ok )); then echo "PASS: title prefix never closes; die names none/Ticket-ref; 0216 survives"
+    else echo "FAIL: title-only PR did not behave per new contract"; fail=1; fi
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 8: `Ticket: none` — PR that closes nothing. Reaches the merge path
+# (exit zero), closes no ticket. (0199)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo nonecase 0210
+BODY8=$'Summary.\n\nTicket: none\n'
+if run_merge "$BODY8" "chore: housekeeping" >/dev/null 2>&1; then
+    if closed_has 0210; then echo "FAIL: Ticket: none closed 0210"; fail=1
+    else echo "PASS: Ticket: none merges without closing any ticket"; fi
+else
+    echo "FAIL: Ticket: none should reach merge path, exited non-zero"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 9: `Ticket-ref:` — references a ticket without closing it (precedent
+# PR #190 annotation idiom). Merge path reached; the referenced 0068 stays
+# open. (0199)
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo refcase 0068
+BODY9=$'Summary.\n\nTicket-ref: tickets/0068-fixture.erg\n'
+if run_merge "$BODY9" "chore: annotate 0068" >/dev/null 2>&1; then
+    if closed_has 0068; then echo "FAIL: Ticket-ref: closed 0068"; fail=1
+    else echo "PASS: Ticket-ref: references without closing; 0068 stays open"; fi
+else
+    echo "FAIL: Ticket-ref: should reach merge path, exited non-zero"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 10: bare `Ticket:` claim (no bold) still closes — the claim regex is
+# unchanged. Anti-regression guard for the regex left intact by 0199.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo bareclaim 0211
+BODY10=$'Summary.\n\nTicket: tickets/0211-fixture.erg\n'
+if run_merge "$BODY10" "chore: bare claim" >/dev/null 2>&1; then
+    if closed_has 0211; then echo "PASS: bare Ticket: claim still closes 0211 (regex unchanged)"
+    else echo "FAIL: bare Ticket: claim did not close 0211"; fail=1; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on bare-claim PR"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe"
