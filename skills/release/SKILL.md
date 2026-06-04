@@ -32,8 +32,8 @@ skill **never signs** a tag — that is the human's sole responsibility.
 
 ## 2. Parallel audits
 
-Launch **two background agents in parallel** (single message, both as
-background agents). Wait for both to return, then consolidate.
+Launch **three background agents in parallel** (single message, all as
+background agents). Wait for all to return, then consolidate.
 
 **Agent A — security audit.** Review the release surface for:
 - supply chain (dependencies, pinned versions, fetched scripts),
@@ -46,11 +46,19 @@ audience definitions and install paths, and walk each one. If `0152` is
 absent, degrade to generic heuristics: a clean install from scratch, plus a
 first-use walkthrough of the primary command.
 
+**Agent C — foundations coherence.** Follow the target repo's
+`FOUNDATIONS-PROCESS.md` if present (sweep stated contracts across
+constitution/rationale/spec/process docs; verify the disjoint union against
+guard tests — stated-without-guard needs a test, guarded-without-statement
+needs a sentence; flag inter-doc tensions). If absent, degrade to a light
+pass: do the stated-vs-guarded comparison on whatever convention docs and
+test suites the repo has.
+
 Each agent files **one ticket per finding** via `/ticket-new`, with a severity
 of HIGH / MEDIUM / LOW in the title or body. If there is no `tickets/`
 directory, the agent prints its findings to output instead of filing.
 
-After both return, print a **consolidated summary**: count of findings by
+After all three return, print a **consolidated summary**: count of findings by
 severity, grouped by agent.
 
 ## 3. Resolve HIGH findings
