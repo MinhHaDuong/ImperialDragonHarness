@@ -10,6 +10,8 @@ Author: HDMX-coding-agent
 2026-05-27T20:53Z claude note Phase 5.0 coordination-PR step + Phase 4 cross-cutting-registry detection added to raid skill; pending merge + next-raid observation
 2026-06-03T21:19Z claude note observation: raid 0185-0189 (5 PRs) exercised the SKIP path — Phase 4 registry scan found no 3+-PR shared registry (README catalog had only 2 writers), coordination PR correctly omitted, sequential rebases clean. Heuristic negative case validated; fire-path observation still pending.
 
+2026-06-04T08:36Z claude note observation 2: raid 0190-0196 (6 PRs, 2 waves) — skip path again; max 2 writers per file (rules/git.md, README catalog), sequential rebases clean
+
 --- body ---
 ## Context
 

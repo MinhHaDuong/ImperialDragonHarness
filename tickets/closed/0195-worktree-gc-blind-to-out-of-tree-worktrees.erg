@@ -2,11 +2,13 @@
 Title: worktree-gc: enumerate via git worktree list, not the .claude/worktrees directory
 Created: 2026-06-04
 Author: claude
+Closed: autoclosed — PR #258 (manual completion: close step bounced on branch race)
 
 --- log ---
 2026-06-04T06:10Z claude created — /tmp worktree with stranded ticket 0190 survived GC for hours
 2026-06-04T06:52Z claude note real bug was agent-* basename filter, not enumeration; removed filter + added self-skip rail
 
+2026-06-04T08:36Z MinhHaDuong closed — autoclosed — PR #258 (manual completion: close step bounced on branch race)
 --- body ---
 ## Context
 
