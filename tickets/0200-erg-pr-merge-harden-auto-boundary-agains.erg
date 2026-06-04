@@ -8,6 +8,7 @@ Author: claude
 
 2026-06-04T08:54Z claude note absorbed duplicate 0209: adds 5 more occurrences (PRs #254/#255/#256/#263/#262, 2026-06-04) — all self-resolved in ~30-60s, confirming the bounded-poll window calibration; test-stub framing already covered by exit criteria here
 
+2026-06-04T20:19Z claude note three more occurrences (raid merges, PRs #274/#275/#277, 2026-06-04T20:0xZ): every erg-pr-merge run hit both boundaries — gh pr merge --auto failed on post-close-push mergeability recompute ('not mergeable' 2x, 'base branch was modified' 1x), then the checks-watch fallback died instantly on 'no checks reported'. All three self-resolved in ~90s; recovered manually with gh pr merge --merge per the documented bounce recovery. The bounded-poll fix sketch stands; 8 occurrences total now
 --- body ---
 ## Source
 First production run of the 0198 rewrite (aedist PR #689, 2026-06-04),

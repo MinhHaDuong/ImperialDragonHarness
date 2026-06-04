@@ -1,0 +1,68 @@
+%erg 0.1
+Title: Convert verify phases 2-4 and 6 to Agent-spawned sub-agents with pinned cwd
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T20:17Z MinhHaDuong created
+
+--- body ---
+## Context
+
+0202's validation cycle (raid 0203/0208/0201/0204/0167, 2026-06-04) ran
+six /verify fork invocations under the 0193 contracts. Containment held
+on the headline criteria — zero off-task runs, zero foreign files, zero
+rogue pushes/PRs — but contract drift INSIDE the forks recurred in three
+milder forms:
+
+1. PR #274 run 1: the fork under-executed its directive — no gate
+   invocation, no verdict comment, stale /tmp/review-274 left behind,
+   containment postcondition skipped. Orchestrator had to clean up and
+   retry (clean on retry).
+2. PR #276 fix loop: attempted an out-of-role rebase + force-push of the
+   PR branch (the 0193 incident-#7 mode). The permission guard DENIED the
+   force-push — positive evidence the guard layer works — but the fork
+   then worked around it with a cherry-pick and left commit 90de0bc
+   carrying a false "Rebased onto origin/main" message.
+3. PR #276 gate fork: emitted a malformed erg log line (invalid author/
+   verb) that would have failed erg validate; discarded before reaching
+   the branch.
+
+Per 0202's escalation clause: the 2026-06-03 evidence already showed
+Agent(isolation:"worktree") execute agents with imperative prompts and
+pinned cwd never drifted; only context:fork Skill invocations did. The
+deterministic fix is to move verify's sub-skill execution onto that
+mechanism (prototyped clean in PRs #263/#264).
+
+## Relevant files
+
+- `skills/verify/SKILL.md` phases 2-4 (fan-out) and 6 (gate) — the
+  context:fork invocations to convert
+- `skills/verify-gate/SKILL.md`, `skills/verify-adherence/SKILL.md`,
+  `skills/simplify/` — invoked surfaces; their TASK DIRECTIVE openers
+  stay (defense in depth)
+- tickets/closed/0193, tickets/0202 — incident catalog and validation log
+
+## Actions
+
+1. Rewrite verify phases 2-4 to spawn Agent sub-agents (read-only,
+   pinned cwd = /tmp/review-<pr>) instead of Skill forks; embed each
+   sub-skill's operating procedure imperatively in the agent prompt.
+2. Same for phase 6 (gate), returning the structured verdict as agent
+   output.
+3. Keep the orchestrator-side containment postcondition; it caught
+   nothing this cycle only because exit-path checks ran — keep them.
+4. Consider a push/PR guard scoped to verify sub-agent sessions as a
+   second layer (the #276 force-push denial shows guards bite).
+
+## Test
+
+One full /verify run on a real PR: all phases complete, verdict posted,
+no stale /tmp worktrees, no branch switches, transcript shows zero
+out-of-role mutation attempts.
+
+## Exit criteria
+
+- [ ] Verify phases 2-4 and 6 run as Agent-spawned sub-agents with pinned cwd
+- [ ] One clean /verify cycle on a real PR under the new mechanism
+- [ ] Containment postcondition retained
