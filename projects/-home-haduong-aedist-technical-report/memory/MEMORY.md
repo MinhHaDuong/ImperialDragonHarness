@@ -100,3 +100,5 @@
 - [Presence metrics saturate in Exp 1](feedback_presence_metrics_saturate.md) — source_presence/field_completeness trivially 1.0 in parametric condition; use diversity/spread/validity metrics instead
 - [API merge fetch after](feedback_api_merge_fetch_after.md) — after gh api .../merge, run git fetch origin before reading git log origin/main; local ref is stale until fetch
 - [Verify artifacts after Python fix](feedback_verify_artifacts_after_fix.md) — always rebuild PDFs after patching a plot script; stale pre-fix PDFs in working tree look modified but are wrong; size shrink signals regression
+- [Bash cd-to-primary-repo trap](feedback_bash_cd_primary_repo_trap.md) — in a worktree session, prefixing Bash with `cd /home/haduong/<repo>` routes git/erg/commit to the PRIMARY repo on main; run git bare, never `git add -A` with untracked data present
+- [Figure verify: worst-case panel](feedback_figure_verify_worst_case_panel.md) — when checking a multi-panel figure for title/label overlap, render+inspect the longest/two-line-title panel, not an easy representative; structural tests give no visual signal
