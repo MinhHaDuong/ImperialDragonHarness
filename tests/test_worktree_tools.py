@@ -3,7 +3,10 @@
 Exercises:
   - scripts/worktree-salvage.sh         — commit + push WIP before removal
   - scripts/guard-worktree-remove-wip.sh — PreToolUse guard blocking removal on WIP
-  - scripts/worktree-gc.sh              — GC stale agent-* worktrees
+  - scripts/worktree-gc.sh              — GC stale worktrees (any path/name)
+                                          on upstream-gone branches; rails:
+                                          clean tree, gone branch, not the
+                                          invoking worktree
   - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
                                           uncommitted files (incl. untracked).
                                           Closes the ExitWorktree gap that lost
@@ -27,9 +30,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def run(args, cwd=None, check=True):
-    return subprocess.run(
-        args, cwd=cwd, check=check, capture_output=True, text=True
-    )
+    return subprocess.run(args, cwd=cwd, check=check, capture_output=True, text=True)
 
 
 def git(repo, *args, check=True):
@@ -79,6 +80,7 @@ def make_branch_gone(remote, primary, name):
 # worktree-salvage.sh
 # --------------------------------------------------------------------------- #
 
+
 def test_salvage_commits_and_pushes_wip(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-salv", dirty=True)
@@ -115,6 +117,7 @@ def test_salvage_missing_arg_errors(origin):
 # guard-worktree-remove-wip.sh
 # --------------------------------------------------------------------------- #
 
+
 def _guard(cmd, cwd=None):
     body = {"tool_name": "Bash", "tool_input": {"command": cmd}}
     if cwd is not None:
@@ -122,7 +125,9 @@ def _guard(cmd, cwd=None):
     payload = json.dumps(body)
     return subprocess.run(
         ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input=payload, capture_output=True, text=True,
+        input=payload,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -170,7 +175,9 @@ def test_guard_handles_malformed_json():
     """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
     res = subprocess.run(
         ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input="not json{", capture_output=True, text=True,
+        input="not json{",
+        capture_output=True,
+        text=True,
     )
     assert res.returncode == 0
     assert res.stderr == ""
@@ -180,13 +187,16 @@ def test_guard_handles_malformed_json():
 # worktree-gc.sh
 # --------------------------------------------------------------------------- #
 
+
 def _gc(primary):
     return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)])
 
 
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
-    return [l[len("worktree "):] for l in out.splitlines() if l.startswith("worktree ")]
+    return [
+        l[len("worktree ") :] for l in out.splitlines() if l.startswith("worktree ")
+    ]
 
 
 def test_gc_removes_gone_clean_agent_worktree(origin):
@@ -213,21 +223,24 @@ def test_gc_keeps_dirty_worktree(origin):
 
 def test_gc_keeps_live_branch_worktree(origin):
     _, primary = origin
-    wt = make_agent_worktree(primary, "agent-live", dirty=False)  # branch still on origin
+    wt = make_agent_worktree(
+        primary, "agent-live", dirty=False
+    )  # branch still on origin
 
     res = _gc(primary)
     assert res.returncode == 0
     assert str(wt) in _worktree_paths(primary)
 
 
-def test_gc_ignores_non_agent_worktree(origin):
+def test_gc_removes_non_agent_named_worktree_on_gone_branch(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "feature-x", dirty=False)
     make_branch_gone(remote, primary, "feature-x")
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert str(wt) in _worktree_paths(primary)
+    assert "removed feature-x" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
 
 
 def test_gc_silent_when_nothing_to_do(origin):
@@ -235,6 +248,47 @@ def test_gc_silent_when_nothing_to_do(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert res.stdout.strip() == ""
+
+
+def _out_of_tree_worktree(remote, primary, tmp_path, *, dirty=False):
+    """Register a worktree on branch raid-session-01 at an arbitrary path
+    OUTSIDE .claude/worktrees/ (mirrors /tmp/erg-migrate-216/claude-harness),
+    committed + pushed. Returns its path."""
+    wt = tmp_path / "erg-migrate-test" / "claude-harness"
+    wt.parent.mkdir(parents=True, exist_ok=True)
+    git(primary, "worktree", "add", "-b", "raid-session-01", str(wt))
+    (wt / "work.txt").write_text("first\n")
+    git(wt, "add", "-A")
+    git(wt, "commit", "-m", "work")
+    git(wt, "push", "-u", "origin", "raid-session-01")
+    if dirty:
+        (wt / "work.txt").write_text("uncommitted change\n")
+    return wt
+
+
+def test_gc_removes_out_of_tree_worktree(origin, tmp_path):
+    """The real 0195 bug: a clean, gone-branch worktree at an arbitrary path
+    (not named agent-*, not under .claude/worktrees/) must be removed."""
+    remote, primary = origin
+    wt = _out_of_tree_worktree(remote, primary, tmp_path)
+    make_branch_gone(remote, primary, "raid-session-01")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed claude-harness" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
+    """The dirty rail must still protect an out-of-tree worktree with WIP."""
+    remote, primary = origin
+    wt = _out_of_tree_worktree(remote, primary, tmp_path, dirty=True)
+    make_branch_gone(remote, primary, "raid-session-01")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip claude-harness (uncommitted WIP)" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
 
 
 # --------------------------------------------------------------------------- #
@@ -248,10 +302,12 @@ def test_gc_silent_when_nothing_to_do(origin):
 # and end-session skills before they call ExitWorktree, it refuses when the
 # worktree has any uncommitted state (tracked or untracked).
 
+
 def _preflight(path):
     return subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), str(path)],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -310,7 +366,9 @@ def test_preflight_defaults_to_cwd(origin):
 
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh")],
-        cwd=str(wt), capture_output=True, text=True,
+        cwd=str(wt),
+        capture_output=True,
+        text=True,
     )
     assert res.returncode != 0
     assert "0998-draft.erg" in res.stderr
@@ -319,7 +377,8 @@ def test_preflight_defaults_to_cwd(origin):
 def test_preflight_errors_on_missing_path():
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     assert res.returncode != 0
 
