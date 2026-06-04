@@ -13,9 +13,8 @@
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
 #   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body (or title fallback)
-#   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
-#   2a. Wait for CI to pass on ticket-close commit (timeout 600s)
-#   3. Merge + delete remote branch (forge CLI — harness-extension-point)
+#   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
+#   3. Queue auto-merge via the forge CLI; falls back to watch-then-merge if auto-merge disabled
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -103,37 +102,52 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
         git commit -m "ticket(${CLOSED_LIST}): close and archive — PR #${PR}"
     fi
 
-    # Check if this is an erg-only branch (no changes outside tickets/)
-    DIFF_SIZE=$(git diff origin/${BASE_BRANCH}...HEAD -- . ':(exclude)tickets/' | wc -c)
-
-    if [[ "$DIFF_SIZE" -eq 0 ]]; then
-        echo "Erg-only branch detected — skipping CI wait (no code changes)"
-    else
-        git push origin HEAD
-        echo "Waiting for CI after ticket-close commit..."
-        # harness-extension-point
-        timeout 600 gh pr checks "$PR" --watch --fail-fast \
-            || die "CI did not pass within 600s (failed or timed out) — aborting merge"
-    fi
+    # Push the close commit unconditionally. The erg-only fast path used to
+    # skip this push, stranding the close commit locally — it was lost when
+    # the remote branch auto-deleted on merge (git-erg#256, ticket 0198).
+    git push origin HEAD
 elif [[ -n "$TICKET_IDS" ]]; then
     echo "Note: ticket(s) ${TICKET_IDS//$'\n'/, } found but no erg available — skipping close"
 fi
 
-# ── Step 3: merge via forge CLI (works in worktrees and on VMs) ──────────────
-
-echo "Merging PR #${PR}..."
+# ── Step 3: queue auto-merge via forge CLI (works in worktrees and on VMs) ────
+#
+# --auto lets GitHub gate on required checks itself: the PR lands when checks
+# go green (or immediately if none are required). No more CI babysitting.
+# (ticket 0198)
+#
+# in_worktree: deleteBranchOnMerge cleans the remote; the local --delete-branch
+# flag would fail on the primary worktree's main-lock (ticket 0170).
+echo "Queueing merge for PR #${PR}..."
 if in_worktree; then
-    # deleteBranchOnMerge cleans the remote; the local flag would fail
-    # on the primary worktree's main-lock (see ticket 0170).
-    gh pr merge "$PR" --merge # harness-extension-point
+    MERGE_FLAGS=(--merge --auto)
 else
-    gh pr merge "$PR" --merge --delete-branch # harness-extension-point
+    MERGE_FLAGS=(--merge --auto --delete-branch)
+fi
+
+if gh pr merge "$PR" "${MERGE_FLAGS[@]}"; then  # harness-extension-point
+    echo "Merge queued; lands when required checks pass."
+    AUTO_QUEUED=1
+else
+    # Fallback: repo has auto-merge disabled. Legacy watch-then-merge path
+    # so the script stays usable without allow_auto_merge. (ticket 0198)
+    echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
+    timeout 600 gh pr checks "$PR" --watch --fail-fast \
+        || die "CI did not pass within 600s (failed or timed out) — aborting merge"  # harness-extension-point
+    if in_worktree; then
+        gh pr merge "$PR" --merge          # harness-extension-point
+    else
+        gh pr merge "$PR" --merge --delete-branch  # harness-extension-point
+    fi
+    AUTO_QUEUED=0
 fi
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
 
 if in_worktree; then
-    echo "In git worktree — skipping checkout of ${BASE_BRANCH}; exit the worktree when done."
+    echo "In git worktree — exit the worktree when done."
+elif [[ "${AUTO_QUEUED:-0}" -eq 1 ]]; then
+    echo "Auto-merge queued — leaving local ${BASE_BRANCH} untouched; sync after the PR lands."
 else
     git checkout "$BASE_BRANCH"
     # Safe fast-forward: skip when local branch has unpushed commits
