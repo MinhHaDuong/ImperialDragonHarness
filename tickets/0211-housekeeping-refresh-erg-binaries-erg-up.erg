@@ -1,0 +1,45 @@
+%erg 0.1
+Title: housekeeping: refresh erg binaries (erg update) as a sweep step
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T09:03Z MinhHaDuong created
+
+--- body ---
+## Source
+2026-06-04 git-erg queue preflight: ~/.local/bin/erg had gone stale in
+five days (built 05-30 vs committed 06-03) and produced six FALSE
+`erg check` violations on closed tickets carrying the newer Label:
+header. Caught interactively; an autonomous sweep would have acted on
+the false failures.
+
+## Decision: harness-side cadence, no magic in erg
+Auto-update inside erg was considered and rejected -- it breaks the
+tool's offline/no-surprise-network contract ("update never mutates
+anything implicitly; migration is a separate, reviewable step").
+Checking `erg version` against git HEAD was also rejected: the git-erg
+repo is not supposed to be installed on consumer machines, and
+reaching origin requires network -- exactly what erg refuses to do
+implicitly. The harness is the layer that legitimately opts into the
+network on a schedule; erg stays silent.
+
+## Fix
+Add an `erg update` step to the housekeeping skill sweep (or
+healthcheck, whichever owns environment freshness):
+- Refresh the INSTALLED binary: `erg update` (safe offline: fetch
+  errors exit 0 by design, so the sweep never fails on an isolated
+  machine).
+- Per visited repo with a tickets/ store, surface (not auto-fix) a
+  committed tickets/erg that lags the remote -- the committed binary
+  travels via PR, not via direct mutation.
+- After a refresh, re-run `erg check` so stale-binary false violations
+  are distinguished from real ones before any ticket is filed on them.
+
+## Exit criteria
+- [ ] housekeeping (or healthcheck) skill doc includes the erg update
+      step with the offline-safe rationale
+- [ ] Step is ordered BEFORE any erg check whose findings can spawn
+      tickets
+- [ ] Stale committed tickets/erg is reported as a finding, never
+      auto-committed
