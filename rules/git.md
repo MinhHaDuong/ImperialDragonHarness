@@ -16,7 +16,9 @@
 - **Delete branches after merge.** All repos use `deleteBranchOnMerge: true` on GitHub, so the remote branch disappears automatically when a PR merges. Clean up stale local branches with:
   ```bash
   git fetch --prune
-  git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D
+  for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
+    git merge-base --is-ancestor "$b" origin/main && git branch -d "$b"
+  done
   ```
-  The healthcheck's branch hygiene check flags stale locals; this is how to resolve them. Do not use `git branch -D` on a branch whose PR you have not verified is merged.
+  The old `git branch -vv | awk '/: gone]/'` pipeline silently no-ops under rtk output rewriting; the merge-probe loop keys on exit code, not parsed stdout, so it stays robust under any hook. The healthcheck's branch hygiene check flags stale locals; this is how to resolve them. Do not use `git branch -D` on a branch whose PR you have not verified is merged.
 - **Don't gitignore handoff artifacts.** Generated files that a downstream workpackage consumes (figures, tables, macros `\input`ed by the manuscript) are durable state — commit them. Caches, LaTeX aux files, and the final rendered PDF are regenerable — gitignore.
