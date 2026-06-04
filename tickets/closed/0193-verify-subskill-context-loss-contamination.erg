@@ -1,0 +1,168 @@
+%erg 0.1
+Title: Thread PR context through verify sub-skills and stop worktree contamination
+Created: 2026-06-03
+Author: claude
+Closed: autoclosed — PR #262
+
+--- log ---
+2026-06-03T21:18Z claude created — four incidents in five /verify runs during raid 0185-0189
+
+2026-06-03T21:21Z claude note fifth incident: a verify sub-agent pushed the orchestrator's local branch t0189-followup and opened duplicate PR #243 (20:50Z); closed as rogue, content already merged via #241
+
+2026-06-04T07:05Z claude note transcript investigation of session 5a6bf32d complete — root cause is fork task-framing loss + shared cwd/branch/stash state, NOT lost args; body rewritten with diagnosis and re-ranked actions
+
+2026-06-04T07:31Z claude note stash landmine defused: stash@{1} (2026-05-13) confirmed as the 0149 culprit — pop-on-conflict retains the entry, so it stayed armed; stash@{0} (raid evening 22:58) held the only copy of two aedist MEMORY.md index lines, salvaged via PR #261; stash@{2} was a dead settings experiment; all three dropped, stack now empty, patches backed up in /tmp
+
+2026-06-04T07:56Z claude note exit criteria rewritten to the shipped contracts; empirical raid-cycle criterion split to child 0202 (review: a shipping PR cannot prove an empirical criterion; only the erg-pr-merge narrowing is mechanical)
+2026-06-04T08:43Z MinhHaDuong closed — autoclosed — PR #262
+--- body ---
+## Context
+
+During the 2026-06-03 raid (merge requests #238–#242), the /verify
+pipeline produced correct final verdicts but its sub-skills misbehaved
+four times in five runs:
+
+1. `verify-gate` returned an unrelated tickets-backlog survey instead
+   of gating #241 — the running verifier rendered the gate verdict
+   itself from collected evidence (authorized fallback, but the gate
+   did the wrong job silently).
+2. `verify-adherence` spiraled into ticket-landscape orientation
+   instead of checking #238's diff.
+3. `verify-adherence` reviewed the wrong branch (t0189) during #240's
+   run.
+4. A verify sub-agent resurrected the historical duplicate-ID file
+   `0149-squash-merge-probe-false-negatives.erg` into the raid
+   orchestrator's worktree; `erg-pr-merge`'s `git add tickets/` swept
+   it into the index and bounced #242's merge on corpus validation.
+
+Common shape: sub-skill invocations lose their inputs (PR number,
+branch, unresolved-findings list) when forked, and sub-agents inherit
+the orchestrator's cwd instead of the review worktree. Memory
+`feedback_verify_agents_dirty_main_repo` documents the main-repo
+variant of (4); this raid shows it generalizes to orchestrator
+worktrees.
+
+## Diagnosis (2026-06-04, transcripts of session 5a6bf32d)
+
+Subagent transcripts under
+`~/.claude/projects/-home-haduong--claude--claude-worktrees-explore-tickets/5a6bf32d-*/subagents/`
+pin the mechanism. Three findings correct the original hypothesis:
+
+1. **Args are NOT lost.** Every fork received its argument correctly
+   interpolated into the SKILL.md heading (`# Verify adherence —
+   t0186-multi-ticket-close`, `# Verify gate — PR 241`). The verify
+   orchestrator passed `{"skill": "verify-adherence", "args":
+   "t0187-release-skill"}` etc. every time. What the fork loses is the
+   *directive framing*: a `context: fork` sub-skill starts with a bare
+   context — no parent conversation — whose only user message is the
+   doc-style SKILL.md body. 4 of ~14 forks classified it as "skill
+   documentation loaded, no explicit task" (verbatim in
+   `agent-a789cbc448`, the rogue gate-241) and fell back to ambient
+   cues. Drift is stochastic: the well-behaved gate-238 fork
+   (`agent-a17d062f`) received byte-identical context shape. So a more
+   imperative prompt lowers frequency but cannot be the safety
+   mechanism.
+2. **The ambient cues all point at the same wrong task.** Forks
+   inherit (a) the session worktree's name `explore-tickets`, (b) the
+   parent session-start gitStatus snapshot (stale branch
+   `idh-0187-release-skill`), (c) the shared task list. All four
+   drifted forks converged on the same hallucinated task: survey the
+   tickets backlog. The PR-#243 incident is the worst case: the fork's
+   cwd was the *session* worktree — not the orchestrator's
+   `/tmp/review-<pr>` worktree, which a forked sub-skill does not
+   inherit — and the raid session had left that worktree sitting on
+   local branch `t0189-followup` (created 20:46Z to file ticket 0192).
+   The drifted fork (`agent-a5156594`, 20:50Z) found committed work
+   with no PR, inferred "open a PR" as its mission, consulted the
+   advisor (which endorsed it), pushed the branch, and opened #243.
+3. **The 0149 resurrection is a shared-stash hazard, not file
+   creation.** The same rogue fork ran `git stash -u >/dev/null; …;
+   git stash pop >/dev/null 2>&1 || true` on a clean tree: the stash
+   saved nothing, so the pop silently popped a PRE-EXISTING stash from
+   the repo-global stash stack (stashes are shared across all
+   worktrees), surfacing the historical `0149-*.erg` as a DU conflict.
+   The fork `git rm --cached`-ed it, leaving it untracked on disk
+   ("harmless", it said); `erg-pr-merge`'s `git add tickets/` then
+   swept it into #242's merge. The primary repo still held 3 stale
+   stashes on the morning of 2026-06-04 — drained the same day (log
+   07:31Z).
+
+## Relevant files
+
+- `skills/verify/SKILL.md` — orchestration; where sub-skill inputs are
+  (not) threaded
+- `skills/verify-adherence/SKILL.md` — drifted twice
+- `skills/verify-gate/SKILL.md` — lost PR context once
+- `skills/merge/erg-pr-merge` — `git add tickets/` sweeps stray files;
+  consider `git add` of only the closed ticket paths
+
+## Actions
+
+Honesty ranking (corrected in review): only (3) is mechanical —
+enforced by code regardless of model behaviour. (2) is reliable when
+the orchestrator completes, and catches working-tree residue but NOT
+a rogue push/PR (the #243 mode). (1) and (5) both live inside the
+drift-prone fork — a fork that ignores the directive ignores the cd
+too — so they reduce drift frequency without bounding damage. The
+deterministic kill for the #243 mode (Agent-spawned sub-skills with
+pinned cwd, or a push/PR guard) is carried by child ticket 0202.
+
+1. **Pin sub-skill cwd via explicit path argument.** `context: fork`
+   does not inherit the orchestrator's cwd, so verify/SKILL.md must
+   pass the `/tmp/review-<pr>` worktree path as part of each
+   sub-skill's args, and each sub-skill's SKILL.md must `cd` into the
+   path it receives as its first act. Note: `/simplify` is a built-in
+   skill — it receives the `worktree=` hint in its args but carries no
+   directive contract; residual risk named in 0202.
+2. **Post-verify containment check.** Orchestrator-side `git status
+   --porcelain` in both the session worktree and the primary repo
+   after every /verify; discard foreign files and abort merge on
+   unexpected branch switches.
+3. **Narrow `erg-pr-merge`'s `git add tickets/`** to the exact paths
+   `erg close`/`erg archive` touched, so stray files can never be
+   swept into a merge. (Mechanical.)
+4. **Ban bare `git stash`/`stash pop` in shared worktrees.** The stash
+   stack is repo-global. Skills must not round-trip through it with
+   output suppressed; use a throwaway `git worktree add` or a WIP
+   commit instead. Also: drain the 3 stale stashes currently parked
+   in the primary repo. (Done 2026-06-04, see log.)
+5. **Imperative task framing in fork-context sub-skills.** Open
+   verify/verify-adherence/verify-gate/review-pr/review-pr-prose
+   SKILL.md with a TASK DIRECTIVE block before the reference prose,
+   so a bare fork cannot misread the body as loaded documentation,
+   and forbid inferring a task from ambient cues. (Probabilistic —
+   reduces drift frequency only; never rely on it for safety.)
+
+## Test
+
+Red step: grep-able assertions that (a) verify/SKILL.md threads the
+review-worktree path into each sub-skill invocation line, (b) each
+fork-context sub-skill SKILL.md opens with an imperative task line
+referencing $ARGUMENTS, (c) erg-pr-merge stages only erg-touched
+paths (fixture: stray tickets/NNNN file present, merge must not sweep
+it).
+
+## Verification
+
+- [ ] sub-skill invocations carry the review-worktree path as an arg
+- [ ] sub-skills cd into the received path before any git command
+- [ ] post-verify status check present in skills/verify/SKILL.md
+- [ ] erg-pr-merge stages only the closed-ticket paths
+- [ ] no bare stash round-trip remains in skills/scripts
+
+## Invariants
+
+- /verify still never merges; verdict semantics unchanged.
+- Existing guard and bash-suite tests stay green.
+
+## Exit criteria
+
+- [ ] All five Actions shipped: worktree= threading + sub-skill cd
+      contract, post-verify containment postcondition, narrowed
+      erg-pr-merge staging, stash discipline (rule + drained stack +
+      guard message), TASK DIRECTIVE openers in all five fork skills
+- [ ] Source-inspection ratchet tests pin every contract
+      (tests/test_verify_fork_contracts.py) and a behavioural fixture
+      proves the staging narrowing (test_erg_pr_merge.sh cases 11-12)
+- [ ] Empirical raid-cycle validation split to child ticket 0202
+      (this criterion was empirical and unprovable by the shipping PR)

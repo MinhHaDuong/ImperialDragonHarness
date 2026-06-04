@@ -1,0 +1,48 @@
+%erg 0.1
+Title: Validate verify fork containment over one raid cycle; escalate to Agent-spawned sub-skills if drift recurs
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T07:54Z claude created
+
+--- body ---
+## Context
+
+Child of 0193. That ticket's fix (PR pending) hardens the /verify
+pipeline against fork drift: TASK DIRECTIVE openers, worktree= cwd
+threading, an orchestrator-side containment postcondition, narrowed
+erg-pr-merge staging, and a stash-discipline rule. The headline exit
+criterion — one full raid cycle with zero off-task sub-skill runs and
+zero foreign files — is empirical and cannot be proven by the PR that
+ships the contracts. This ticket carries it.
+
+Honesty note from the 0193 review: of the shipped fixes, only the
+erg-pr-merge narrowing is mechanical. The TASK DIRECTIVE and the
+worktree= cd both live *inside* the drift-prone fork — a fork that
+ignores the directive ignores the cd too — and the postcondition
+check is orchestrator-run, catching working-tree residue but not a
+rogue push/PR (the #243 mode). `/simplify` is a built-in skill that
+receives the worktree= hint in its args but carries no directive
+contract. The 2026-06-03 evidence points at the deterministic
+alternative: raid execute agents — `Agent(isolation:"worktree")`
+with imperative prompts and pinned cwd — never drifted; only
+`context: fork` Skill invocations did.
+
+## Actions
+
+1. Observe the next full raid cycle (or run one) with the 0193
+   contracts in place. Audit every verify sub-skill transcript for
+   off-task runs, foreign files, branch switches, rogue pushes/PRs.
+2. If any drift recurs: convert /verify phases 2–4 and 6 from
+   `context: fork` Skill invocations to `Agent`-spawned sub-agents
+   with pinned cwd (the mechanism raid execute agents already use),
+   or add a push/PR guard scoped to verify sub-skill sessions —
+   whichever deterministically kills the #243 mode.
+
+## Exit criteria
+
+- [ ] One full raid cycle with zero off-task sub-skill runs and zero
+      foreign files in the orchestrator worktree after verify
+- [ ] If drift recurred: the deterministic spawn fix (or guard) is
+      ticketed or shipped

@@ -95,11 +95,29 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
     while IFS= read -r tid; do
         [[ -z "$tid" ]] && continue
         echo "Closing ticket ${tid}..."
+        # Record the open file BEFORE close/archive so we can stage exactly
+        # the paths erg touches. A blanket `git add tickets/` once swept a
+        # stray stash-resurrected file into the close commit and bounced the
+        # merge on corpus validation (ticket 0193).
+        TICKET_FILE=$(ls tickets/"${tid}"-*.erg 2>/dev/null | head -1 || true)
         "$ERG" close "$tid" "autoclosed — PR #${PR}"
         "$ERG" archive "$tid" 2>/dev/null || true
+        # Stage tracked modifications and deletions across tickets/: this
+        # covers the closed ticket's own path AND the sibling open tickets
+        # that `erg close` step 3 rewrites (it strips `Blocked-by: <id>` and
+        # appends a log line to every dependent). Path-scoping to the closed
+        # ticket alone would silently drop those sibling edits when the review
+        # worktree is discarded — the same dirty-tree class ticket 0193 fixes.
+        # `-u` stages tracked files only, so a stray *untracked* file (the 0149
+        # stash-resurrection mode) is still never swept (test_erg_pr_merge.sh
+        # case 11). The new closed/<id>.erg path is untracked, so add it
+        # explicitly after the archive.
+        git add -u tickets/ 2>/dev/null || true
+        if [[ -n "$TICKET_FILE" ]]; then
+            git add -- "tickets/closed/$(basename "$TICKET_FILE")" 2>/dev/null || true
+        fi
         CLOSED_LIST="${CLOSED_LIST:+${CLOSED_LIST}, }${tid}"
     done <<< "$TICKET_IDS"
-    git add tickets/ 2>/dev/null || true
     if ! git diff --cached --quiet; then
         git commit -m "ticket(${CLOSED_LIST}): close and archive — PR #${PR}"
     fi

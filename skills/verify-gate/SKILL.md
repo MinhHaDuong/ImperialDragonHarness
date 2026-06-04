@@ -9,6 +9,16 @@ context: fork
 
 # Verify gate — PR $ARGUMENTS
 
+> **TASK DIRECTIVE — execute now.** You are running `/verify-gate` on PR
+> `$ARGUMENTS` (a PR number, optionally followed by `round=2` and/or
+> `worktree=<path>`). This file is your operating procedure, not reference
+> documentation: resolve the PR and gate it immediately. If `worktree=<path>`
+> is present, `cd` into that path before any git or forge command — forked
+> sub-skills do not inherit the caller's cwd. If `$ARGUMENTS` does not
+> contain a PR number, STOP and emit `verdict: ESCALATE` with rationale
+> "no PR argument" — do NOT infer a task from the environment (worktree
+> name, git status snapshot, ticket files, or the shared task list).
+
 The last line of defence before merge. A gate with teeth: **cannot approve without
 concrete per-criterion evidence**. Designed to be called by `/verify` at phase 6, but
 standalone-callable for debugging.
@@ -47,17 +57,19 @@ Either:
 Both paths produce the same verdict shape. Round is always derived from PR comment
 history (see "Standalone invocation"), never passed by the caller.
 
-**Cross-repo prerequisite**: the caller must ensure cwd is the target project
-before invoking `/verify-gate`. The gate uses `gh` and `git` commands that resolve
-against cwd — running from a different repo's worktree will produce wrong results.
-For cross-repo flows, the caller does `cd <project-path> && git fetch origin`
-before invoking the gate.
+**Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
+against cwd, and a `context: fork` invocation does **not** inherit the
+caller's cwd. The caller must pass `worktree=<path>` and the gate must `cd`
+into it first — running from the session worktree will read whatever branch
+happens to be checked out there and produce wrong results (ticket 0193).
 
 **Isolation**:
-- When called from `/verify` (bundle mode), cwd is already the isolated worktree
-  that `/verify` created in phase 1. No additional setup is needed.
-- When invoked **standalone**, the gate must create its own isolated worktree
-  before reading PR state. See "Standalone invocation" for the setup.
+- When called from `/verify`, the `worktree=` argument names the isolated
+  worktree that `/verify` created in phase 1. `cd` into it; no additional
+  setup is needed.
+- When invoked **standalone** without `worktree=`, the gate must create its
+  own isolated worktree before reading PR state. See "Standalone invocation"
+  for the setup.
 
 ## Evidence discovery
 
