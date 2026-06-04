@@ -2,7 +2,7 @@
 Title: Refactor beat.py subprocess management to asyncio
 Created: 2026-05-09
 Author: claude
-Tag: deferred
+Label: deferred
 Closed: autoclosed — PR #189
 
 --- log ---

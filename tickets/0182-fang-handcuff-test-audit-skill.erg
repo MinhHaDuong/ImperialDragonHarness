@@ -2,7 +2,7 @@
 Title: Extract test-quality audit workflow (fang/handcuff/scope) into a skill
 Created: 2026-05-30
 Author: claude
-Tag: deferred
+Label: deferred
 
 --- log ---
 2026-05-30T10:00Z claude created — after the fang-audit fan-out run on git-erg validated the design
