@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Skills reference harness scripts repo-relatively; breaks cross-project runs
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T08:12Z MinhHaDuong created
+
+--- body ---
+## Source
+Two live failures within one hour on 2026-06-04, both running IDH skills
+against git-erg: /celebrate step 9a could not find
+`scripts/worktree-exit-preflight.sh` (manual `git status --porcelain`
+fallback improvised), and /housekeeping step 1 could not find
+`scripts/housekeeping-git.sh` (script is at ~/.claude/scripts/). Both
+scripts exist in the harness repo, so the bug is invisible when the
+project under maintenance IS the harness.
+
+## Context
+Sweep of skills/*/SKILL.md for repo-relative `scripts/<name>.(sh|py)`
+references that actually live in ~/.claude/scripts/:
+
+- skills/celebrate/SKILL.md:47   `scripts/worktree-exit-preflight.sh`
+- skills/end-session/SKILL.md:23 `scripts/worktree-exit-preflight.sh`
+- skills/housekeeping/SKILL.md:39 `scripts/housekeeping-git.sh`
+
+(nightbeat-supervisor's `scripts/beat.py` refs are $HARNESS_DIR-scoped
+and correct.)
+
+Two adjacent fixes belong in the same pass, both from the same session:
+
+1. celebrate step 9b: when the pre-check (`git merge-base --is-ancestor
+   HEAD origin/main`) has already passed, ExitWorktree's "N commits
+   would be discarded" refusal is a false alarm from a stale LOCAL
+   main -- add one sentence authorizing discard_changes in that case so
+   future sessions need not re-derive the safety argument.
+2. celebrate step numbering: 9.5 (GC stale agent worktrees, added with
+   ticket 0169) is a lazy insert -- a standalone action, not a
+   subdivision. Renumber 9.5 -> 10, 10 -> 11, 11 -> 12. Keep 9a/9b
+   (genuine subdivisions of one exit action). Check end-session for the
+   same pattern while in there.
+
+## Fix
+- Replace the three repo-relative references with `~/.claude/scripts/...`
+  absolute paths.
+- Apply fixes 1 and 2 above to celebrate (and end-session if affected).
+- Standing guard: extend the skill-lint CI check to reject repo-relative
+  `scripts/` references in SKILL.md files (the class came back twice in
+  one day; a per-PR eyeball will not hold).
+
+## Exit criteria
+- [ ] No SKILL.md references a harness script repo-relatively
+      (`grep -rn --include=SKILL.md -E '(^|[^.~/])scripts/[a-z-]+\.(sh|py)'`
+      returns only $HARNESS_DIR-scoped or commit-message lines)
+- [ ] celebrate 9b documents the is-ancestor discard-safety rule
+- [ ] celebrate steps renumbered 1-12, no fractional steps; 9a/9b kept
+- [ ] skill-lint rejects the repo-relative pattern (test with a fixture)
