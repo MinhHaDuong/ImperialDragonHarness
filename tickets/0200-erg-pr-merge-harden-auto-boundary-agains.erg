@@ -1,0 +1,50 @@
+%erg 0.1
+Title: erg-pr-merge: harden --auto boundary against post-push recompute races
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T07:36Z claude created
+
+--- body ---
+## Source
+First production run of the 0198 rewrite (aedist PR #689, 2026-06-04),
+observed live. The core fixes held: close commit pushed unconditionally
+(no strand), close durable. But the merge step failed through BOTH
+boundaries and needed manual recovery.
+
+## Context
+Two distinct races share the --auto failure path:
+
+1. `gh pr merge --auto` was called immediately after the close-commit
+   push, while GitHub recomputed mergeability -> "Pull Request is not
+   mergeable (mergePullRequest)". This is transient, but the exit-code
+   fallback cannot distinguish it from "auto-merge not allowed", so the
+   script wrongly concluded auto-merge was unavailable.
+2. The fallback's `gh pr checks --watch` then hit the check-registration
+   race ("no checks reported on the branch") and exited non-zero
+   instantly -- die()'d with a misleading "did not pass within 600s"
+   message (it failed in ~1s).
+
+Manual recovery was trivial (watch the re-registered run, plain merge),
+which is exactly what the script should do itself.
+
+## Fix sketch
+- Before (or on failure of) the --auto call: poll `gh pr view --json
+  mergeable` until it leaves UNKNOWN (bounded, e.g. 5 x 10s). Retry
+  --auto once after the recompute settles; only a second failure means
+  auto-merge is genuinely unavailable.
+- In the fallback: treat "no checks reported" as registration-race --
+  bounded retry of the watch (e.g. 3 x 10s) before dying; fix the die
+  message to reflect the actual failure (registration vs timeout vs red).
+- Consider whether the pre-close PENDING gate (Step 0) should also queue
+  via --auto instead of bouncing -- it fired on PR #689's fresh push and
+  cost one manual round-trip too.
+
+## Exit criteria
+- [ ] --auto retried after mergeability recompute settles; fallback only
+      on genuine auto-merge-unavailable
+- [ ] Fallback watch survives the no-checks-reported registration race
+- [ ] die() messages name the actual failure cause
+- [ ] tests cover both races (stub: first --auto fails "not mergeable",
+      second succeeds; checks watch fails once with no-checks then passes)

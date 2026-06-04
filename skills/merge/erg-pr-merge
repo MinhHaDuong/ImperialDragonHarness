@@ -12,7 +12,8 @@
 #
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
-#   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body (or title fallback)
+#   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body only;
+#      title prefixes (chore(NNNN)) are subject references, not close claims
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
 #   3. Queue auto-merge via the forge CLI; falls back to watch-then-merge if auto-merge disabled
 #   4. If not in worktree: git checkout base && git pull --rebase
@@ -68,7 +69,6 @@ fi
 # ── Step 1: find ticket ID ────────────────────────────────────────────────────
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
-TITLE=$(gh pr view "$PR" --json title --jq '.title') # harness-extension-point
 
 # Accept: **Ticket:** tickets/NNNN, **Ticket**: tickets/NNNN, Ticket: tickets/NNNN
 # A PR may bundle several tickets — collect ALL matching lines. `sort -u` is
@@ -76,13 +76,15 @@ TITLE=$(gh pr view "$PR" --json title --jq '.title') # harness-extension-point
 # the loop below and abort under `set -e`.
 TICKET_IDS=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u || true)
 
-# Fallback: parse feat(NNNN) or ticket(NNNN) from PR title
-if [[ -z "$TICKET_IDS" ]]; then
-    TICKET_IDS=$(echo "$TITLE" | grep -oP '(?:feat|fix|ticket|chore)\(\K\d+' | sort -u || true)
-fi
+# No-close markers: a PR may reference a ticket without closing it
+# (Ticket-ref:, precedent IDH PR #190 on deferred 0068), or declare it
+# closes nothing (Ticket: none). Either suppresses the die() below.
+NOCLOSE=""
+if echo "$BODY" | grep -qiP '^\*{0,2}ticket-ref:?\*{0,2}:?\s*tickets/\d+'; then NOCLOSE=1; fi
+if echo "$BODY" | grep -qiP '^\*{0,2}ticket:?\*{0,2}:?\s*none\b'; then NOCLOSE=1; fi
 
-if [[ -z "$TICKET_IDS" ]] && [[ -d tickets ]]; then
-    die "no ticket reference found in PR body or title — add one or more 'Ticket: tickets/NNNN-...' lines to the PR body"
+if [[ -z "$TICKET_IDS" ]] && [[ -z "$NOCLOSE" ]] && [[ -d tickets ]]; then
+    die "no close-claim in PR body — add a 'Ticket: tickets/NNNN-...' line to close a ticket, 'Ticket-ref: tickets/NNNN-...' to reference one without closing, or 'Ticket: none' if this PR closes nothing. (Title prefixes like chore(NNNN) are NOT close claims.)"
 fi
 
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────

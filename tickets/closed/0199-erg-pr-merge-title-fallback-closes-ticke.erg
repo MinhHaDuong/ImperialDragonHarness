@@ -2,11 +2,14 @@
 Title: erg-pr-merge: title fallback closes tickets the PR did not claim
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: autoclosed — PR #260
 
 --- log ---
 2026-06-04T06:47Z MinhHaDuong created
 
 2026-06-04T06:52Z claude note audit precedent PR #190 (2026-05-13): annotation-only PRs use a Ticket: line as a REFERENCE on a deferred ticket that must stay open -- the fix must distinguish close-claim from reference (e.g. keep **Ticket:** as the claim, add Ticket-ref: or Ticket: none for non-closing references), not merely allow none
+2026-06-04T07:25Z claude note implemented: title fallback removed, Ticket: none + Ticket-ref: added, die message extended; tests 10 pass (6 prior + 4 new)
+2026-06-04T07:49Z MinhHaDuong closed — autoclosed — PR #260
 --- body ---
 ## Source
 Live failure, git-erg PR #256 (2026-06-04). The PR body deliberately
