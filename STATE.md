@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-04T05:49Z
+Last updated: 2026-06-04T05:54Z
 
 ## North star
 
@@ -25,7 +25,6 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 - **Exercise /dream**: run `/dream -home-haduong--claude` to validate the skill on real memory data
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
-- Consider: refactor nightbeat risk-review to use check-readiness skill (0152)
 - Nightbeat suspended (no projects in roll); re-enable when new project added
 
 ## Backlog
