@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Stale-branch cleanup snippet in rules/git.md silently no-ops under rtk
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T06:10Z claude created — failed twice during raid 0185-0189 cleanup
+
+--- body ---
+## Context
+
+`rules/git.md` documents stale-local-branch cleanup as:
+
+    git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D
+
+Under the rtk hook, `git branch -vv` output is rewritten/summarised, so
+the `: gone]` pattern never matches and the pipeline silently deletes
+nothing. It failed twice on 2026-06-03 (post-#236 cleanup and Phase 7
+cleanup); the working fallback both times was a per-branch probe:
+
+    git merge-base --is-ancestor <branch> origin/main && git branch -d <branch>
+
+(or the PR-number grep probe from healthcheck check 4 for cherry-picked
+content). Silent no-op is the worst failure mode for a documented
+hygiene command — the operator believes cleanup happened.
+
+## Relevant files
+
+- `rules/git.md` — "Delete branches after merge" bullet
+- `skills/healthcheck/SKILL.md` check 4 — already documents the robust probe
+- rtk configuration (out-of-repo) — alternative fix surface
+
+## Actions
+
+1. Decide the fix surface: (a) replace the snippet in rules/git.md with
+   the merge-probe loop (robust under any output rewriting), or (b) add
+   an rtk passthrough for `git branch -vv` so the documented snippet
+   works as written. Prefer (a): rules should not depend on rtk config.
+2. Apply, keeping the "do not -D unverified branches" caveat.
+
+## Test
+
+Not CI-testable (rtk is host config). Verification: run the documented
+snippet on a repo with a known gone-upstream branch under rtk and
+confirm it deletes the branch.
+
+## Exit criteria
+
+- [ ] The documented cleanup command works under rtk (verified manually)
+- [ ] Caveat about unverified -D preserved

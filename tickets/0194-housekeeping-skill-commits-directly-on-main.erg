@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Align housekeeping skill with no-direct-push rule — fixes land via branch + PR
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T06:10Z claude created — surfaced by interactive /housekeeping after raid 0185-0189
+
+--- body ---
+## Context
+
+`skills/housekeeping/SKILL.md` steps 3 and 6 say to commit fix-now items
+and the STATE timestamp directly, and the interactive-mode note says
+"commit in place as before — no PR detour for hand-typed runs". That
+predates the no-direct-push-to-main policy (PR #231): main is read-only,
+everything lands via branch + PR. Same anti-pattern class as ticket
+0190's finding in skills/ticket-close (which goes further and
+fast-forward-pushes to origin/main).
+
+The 2026-06-04 interactive run already worked around it: fixes rode a
+`housekeeping-YYYYMMDD` branch and merged as PR #246. The skill prose
+should codify that flow so the next agent doesn't direct-commit.
+
+## Relevant files
+
+- `skills/housekeeping/SKILL.md` — steps 3, 6, and the "Beat mode" /
+  interactive-mode notes
+- `rules/workflow.md` § Worktree paths — the policy being violated
+- `tickets/closed/...` 0190 sibling finding for ticket-close
+
+## Actions
+
+1. Rewrite step 3 and step 6: interactive runs cut a
+   `housekeeping-<date>` branch from origin/main, commit fixes +
+   timestamp there, open a merge request, merge after CI.
+2. Keep beat mode unchanged (beat.py already supplies a dedicated
+   branch via BEAT_HOUSEKEEPING_BRANCH).
+3. Cross-check step 2.6 (archive) and 2.5 (auto-close) wording for the
+   same direct-commit assumption.
+
+## Test
+
+Grep-able red step: `grep -n "commit in place" skills/housekeeping/SKILL.md`
+returns a hit today; after the fix it returns none and the prose
+mentions opening a merge request for interactive runs.
+
+## Exit criteria
+
+- [ ] Interactive flow in SKILL.md routes fixes through branch + merge request
+- [ ] Beat mode behaviour unchanged
+- [ ] No "commit in place" wording remains
