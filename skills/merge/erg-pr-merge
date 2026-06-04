@@ -138,6 +138,72 @@ fi
 #
 # in_worktree: deleteBranchOnMerge cleans the remote; the local --delete-branch
 # flag would fail on the primary worktree's main-lock (ticket 0170).
+
+# Bounded retry tuning for the two post-push races below. Overridable so the
+# test suite drives them without sleeping (ticket 0200).
+POLL_INTERVAL="${ERG_PR_MERGE_POLL_INTERVAL:-10}"   # seconds between polls
+MERGE_POLL_TRIES="${ERG_PR_MERGE_POLL_TRIES:-5}"    # mergeability settle polls
+WATCH_RACE_TRIES="${ERG_PR_MERGE_WATCH_TRIES:-3}"   # checks-watch race retries
+
+# Poll until GitHub finishes recomputing mergeability. The Step-2 close-commit
+# push flips `mergeable` to UNKNOWN transiently; bounded so a genuinely-stuck
+# UNKNOWN still returns. Emits the last observed state. (ticket 0200)
+settle_mergeable() {
+    local state i
+    state=UNKNOWN
+    for (( i=0; i<MERGE_POLL_TRIES; i++ )); do
+        state=$(gh pr view "$PR" --json mergeable --jq '.mergeable' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+        [[ "$state" != "UNKNOWN" ]] && { echo "$state"; return 0; }
+        sleep "$POLL_INTERVAL"
+    done
+    echo "$state"
+}
+
+# Queue --auto, retrying once after the post-push mergeability recompute
+# settles. The close-commit push leaves the forge's --auto merge failing with
+# "Pull Request is not mergeable" transiently; the exit code alone cannot tell
+# that race apart from "auto-merge not allowed", so inspect the error text.
+# Only a non-mergeability failure, or a second failure after the recompute
+# settles, means auto-merge is genuinely unavailable. (ticket 0200)
+try_auto_merge() {
+    local err state
+    err=$(gh pr merge "$PR" "${MERGE_FLAGS[@]}" 2>&1) && { echo "$err"; return 0; }  # harness-extension-point
+    echo "$err" >&2
+    if echo "$err" | grep -qiE 'not mergeable|base branch was modified'; then
+        echo "Post-push mergeability recompute in flight — waiting for it to settle..."
+        state=$(settle_mergeable)
+        echo "Mergeability settled (${state}); retrying auto-merge once..."
+        err=$(gh pr merge "$PR" "${MERGE_FLAGS[@]}" 2>&1) && { echo "$err"; return 0; }  # harness-extension-point
+        echo "$err" >&2
+    fi
+    return 1
+}
+
+# Watch CI, tolerating the post-push check-registration race. A fresh push
+# leaves a brief window where the checks-watch reports "no checks reported on
+# the <branch> branch" and exits non-zero in ~1s — that is neither a red check
+# nor a timeout, so retry it a bounded number of times. On a real failure or a
+# watch timeout, die() with a message naming the actual cause rather than the
+# misleading "did not pass within 600s". (ticket 0200)
+watch_checks_or_die() {
+    local out rc i
+    for (( i=1; i<=WATCH_RACE_TRIES; i++ )); do
+        out=$(timeout 600 gh pr checks "$PR" --watch --fail-fast 2>&1) && { echo "$out"; return 0; }  # harness-extension-point
+        rc=$?
+        echo "$out" >&2
+        if echo "$out" | grep -qi 'no checks reported'; then
+            echo "No checks registered yet (attempt ${i}/${WATCH_RACE_TRIES}) — waiting for CI to register..."
+            sleep "$POLL_INTERVAL"
+            continue
+        fi
+        if [[ "$rc" -eq 124 ]]; then
+            die "CI watch timed out after 600s — aborting merge"
+        fi
+        die "CI checks failed (checks-watch exited ${rc}) — fix red checks before merging"
+    done
+    die "CI checks never registered after ${WATCH_RACE_TRIES} attempts (no checks reported) — aborting merge"
+}
+
 echo "Queueing merge for PR #${PR}..."
 if in_worktree; then
     MERGE_FLAGS=(--merge --auto)
@@ -145,15 +211,15 @@ else
     MERGE_FLAGS=(--merge --auto --delete-branch)
 fi
 
-if gh pr merge "$PR" "${MERGE_FLAGS[@]}"; then  # harness-extension-point
+if try_auto_merge; then
     echo "Merge queued; lands when required checks pass."
     AUTO_QUEUED=1
 else
-    # Fallback: repo has auto-merge disabled. Legacy watch-then-merge path
-    # so the script stays usable without allow_auto_merge. (ticket 0198)
+    # Genuine auto-merge-unavailable: repo has auto-merge disabled. Legacy
+    # watch-then-merge path so the script stays usable without
+    # allow_auto_merge. (ticket 0198)
     echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
-    timeout 600 gh pr checks "$PR" --watch --fail-fast \
-        || die "CI did not pass within 600s (failed or timed out) — aborting merge"  # harness-extension-point
+    watch_checks_or_die
     if in_worktree; then
         gh pr merge "$PR" --merge          # harness-extension-point
     else

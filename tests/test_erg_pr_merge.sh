@@ -6,6 +6,10 @@
 # carrying multiple `**Ticket:**` lines closes and archives ALL of them in one
 # close commit, that a single-ticket PR still works, and that a duplicated
 # Ticket line does not crash (exercises the load-bearing `sort -u` dedup).
+# Cases 13-14 (ticket 0200) cover the two post-push --auto/--watch races: the
+# mergeability recompute race (first --auto fails "not mergeable", retried once
+# after settle) and the check-registration race ("no checks reported" watch is
+# retried before merging).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -34,6 +38,17 @@ case "$1 $2" in
       # number-only or title-only single-field --jq queries
       if [[ "$args" == *"number"* ]]; then echo "$STUB_PR"; exit 0; fi
       if [[ "$args" == *"title"*  ]]; then echo "$STUB_TITLE"; exit 0; fi
+      # mergeability poll (settle_mergeable): simulate the post-push recompute
+      # race — first poll reports UNKNOWN, then settles to MERGEABLE.
+      if [[ "$args" == *"mergeable"* ]]; then
+        if [[ -n "${STUB_MERGEABLE_UNKNOWN_ONCE:-}" ]]; then
+          n=$(cat "$STUB_MERGEABLE_UNKNOWN_ONCE" 2>/dev/null || echo 0)
+          if [[ "$n" -eq 0 ]]; then
+            echo 1 > "$STUB_MERGEABLE_UNKNOWN_ONCE"; echo "UNKNOWN"; exit 0
+          fi
+        fi
+        echo "MERGEABLE"; exit 0
+      fi
     fi
     if [[ "$args" == *"title"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
@@ -46,13 +61,36 @@ case "$1 $2" in
     exit 0 ;;
   "pr merge")
     echo "$*" >> "${STUB_MERGE_LOG:-/dev/null}"
-    if [[ "$*" == *"--auto"* && "${STUB_AUTO_FAILS:-0}" == "1" ]]; then
-      echo "stub: auto-merge not allowed for this repository" >&2
-      exit 1
+    if [[ "$*" == *"--auto"* ]]; then
+      # Post-push recompute race: first --auto fails "not mergeable", a later
+      # call (after settle_mergeable) succeeds. Distinct from STUB_AUTO_FAILS,
+      # which models genuine auto-merge-unavailable on every call.
+      if [[ -n "${STUB_AUTO_NOTMERGEABLE_ONCE:-}" ]]; then
+        n=$(cat "$STUB_AUTO_NOTMERGEABLE_ONCE" 2>/dev/null || echo 0)
+        if [[ "$n" -eq 0 ]]; then
+          echo 1 > "$STUB_AUTO_NOTMERGEABLE_ONCE"
+          echo "stub: Pull Request is not mergeable (mergePullRequest)" >&2
+          exit 1
+        fi
+      fi
+      if [[ "${STUB_AUTO_FAILS:-0}" == "1" ]]; then
+        echo "stub: auto-merge not allowed for this repository" >&2
+        exit 1
+      fi
     fi
     echo "stub: merged $3"; exit 0 ;;
   "pr checks")
     echo "$*" >> "${STUB_CHECKS_LOG:-/dev/null}"
+    # Check-registration race: first watch reports "no checks reported" and
+    # exits non-zero instantly; a later watch passes.
+    if [[ -n "${STUB_CHECKS_NOCHECKS_ONCE:-}" ]]; then
+      n=$(cat "$STUB_CHECKS_NOCHECKS_ONCE" 2>/dev/null || echo 0)
+      if [[ "$n" -eq 0 ]]; then
+        echo 1 > "$STUB_CHECKS_NOCHECKS_ONCE"
+        echo "no checks reported on the $STUB_BRANCH branch" >&2
+        exit 1
+      fi
+    fi
     echo "stub: checks ok"; exit 0 ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
@@ -74,6 +112,10 @@ seed_repo() {
     git init -q "$REPO"
     git -C "$REPO" config user.email "test@example.com"
     git -C "$REPO" config user.name  "Test"
+    # Hermetic fixtures: never inherit a host's commit-signing config (a signed
+    # environment otherwise fails every fixture commit with a signing error).
+    git -C "$REPO" config commit.gpgsign false
+    git -C "$REPO" config tag.gpgsign false
     mkdir -p "$REPO/tickets"
     cp "$ERG_BIN" "$REPO/tickets/erg"
     ERG_LOCAL="$REPO/tickets/erg"
@@ -116,6 +158,10 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_AUTO_FAILS="${STUB_AUTO_FAILS:-0}" \
       STUB_MERGE_LOG="${STUB_MERGE_LOG:-/dev/null}" \
       STUB_CHECKS_LOG="${STUB_CHECKS_LOG:-/dev/null}" \
+      STUB_AUTO_NOTMERGEABLE_ONCE="${STUB_AUTO_NOTMERGEABLE_ONCE:-}" \
+      STUB_MERGEABLE_UNKNOWN_ONCE="${STUB_MERGEABLE_UNKNOWN_ONCE:-}" \
+      STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
+      ERG_PR_MERGE_POLL_INTERVAL=0 \
       bash "$SCRIPT" 42 )
 }
 
@@ -359,5 +405,63 @@ else
     echo "FAIL: erg-pr-merge exited non-zero with a dependent ticket present"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 13: post-push mergeability recompute race (ticket 0200). The close-commit
+# push flips mergeable to UNKNOWN; the first `gh pr merge --auto` fails "not
+# mergeable". The script must poll mergeability until it settles, retry --auto
+# once (which now succeeds), and NOT fall back to watch-then-merge.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo recompute 0230
+MLOG="$WORK/merge13.log"; CLOG="$WORK/checks13.log"
+: > "$MLOG"; : > "$CLOG"
+NOTMERGE_FLAG="$WORK/notmerge13"; : > "$NOTMERGE_FLAG"; echo 0 > "$NOTMERGE_FLAG"
+UNKNOWN_FLAG="$WORK/unknown13"; echo 0 > "$UNKNOWN_FLAG"
+BODY13=$'Summary.\n\n**Ticket:** tickets/0230-fixture.erg\n'
+if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   STUB_AUTO_NOTMERGEABLE_ONCE="$NOTMERGE_FLAG" \
+   STUB_MERGEABLE_UNKNOWN_ONCE="$UNKNOWN_FLAG" \
+   run_merge "$BODY13" "ticket(0230): recompute" >/dev/null 2>&1; then
+    rc_miss=0
+    closed_has 0230 || { echo "  not closed: 0230"; rc_miss=1; }
+    # --auto must have been attempted twice (initial fail + retry after settle).
+    autos=$(grep -c -- '--auto' "$MLOG" || true)
+    [[ "$autos" -ge 2 ]] || { echo "  expected >=2 --auto attempts, got $autos"; rc_miss=1; }
+    # Must NOT have fallen back to watch-then-merge.
+    grep -q -- '--watch' "$CLOG" && { echo "  fell back to watch on a transient race"; rc_miss=1; }
+    if (( rc_miss )); then echo "FAIL: post-push recompute race not handled"; fail=1
+    else echo "PASS: --auto retried after mergeability settles; no spurious fallback"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on post-push recompute race"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 14: fallback watch survives the no-checks-reported registration race
+# (ticket 0200). Auto-merge is genuinely unavailable, so the script falls back
+# to watch-then-merge. The first `gh pr checks --watch` exits non-zero with
+# "no checks reported" (fresh-push registration race); the script must retry
+# the watch, succeed on the second, then issue a plain --merge.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo registration 0231
+MLOG="$WORK/merge14.log"; CLOG="$WORK/checks14.log"
+: > "$MLOG"; : > "$CLOG"
+NOCHECKS_FLAG="$WORK/nochecks14"; echo 0 > "$NOCHECKS_FLAG"
+BODY14=$'Summary.\n\n**Ticket:** tickets/0231-fixture.erg\n'
+if STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   STUB_CHECKS_NOCHECKS_ONCE="$NOCHECKS_FLAG" \
+   run_merge "$BODY14" "ticket(0231): registration" >/dev/null 2>&1; then
+    reg_miss=0
+    closed_has 0231 || { echo "  not closed: 0231"; reg_miss=1; }
+    # Watch must have been retried (no-checks once, then success): >=2 watches.
+    watches=$(grep -c -- '--watch' "$CLOG" || true)
+    [[ "$watches" -ge 2 ]] || { echo "  expected >=2 --watch attempts, got $watches"; reg_miss=1; }
+    # A plain --merge (no --auto) must follow the successful watch.
+    grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' \
+        || { echo "  no plain --merge after fallback watch"; reg_miss=1; }
+    if (( reg_miss )); then echo "FAIL: no-checks registration race not survived"; fail=1
+    else echo "PASS: fallback watch retries past no-checks race, then merges"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on no-checks registration race"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled"

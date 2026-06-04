@@ -2,6 +2,7 @@
 Title: erg-pr-merge: harden --auto boundary against post-push recompute races
 Created: 2026-06-04
 Author: claude
+Closed: autoclosed — PR #283
 
 --- log ---
 2026-06-04T07:36Z claude created
@@ -9,6 +10,8 @@ Author: claude
 2026-06-04T08:54Z claude note absorbed duplicate 0209: adds 5 more occurrences (PRs #254/#255/#256/#263/#262, 2026-06-04) — all self-resolved in ~30-60s, confirming the bounded-poll window calibration; test-stub framing already covered by exit criteria here
 
 2026-06-04T20:19Z claude note three more occurrences (raid merges, PRs #274/#275/#277, 2026-06-04T20:0xZ): every erg-pr-merge run hit both boundaries — gh pr merge --auto failed on post-close-push mergeability recompute ('not mergeable' 2x, 'base branch was modified' 1x), then the checks-watch fallback died instantly on 'no checks reported'. All three self-resolved in ~90s; recovered manually with gh pr merge --merge per the documented bounce recovery. The bounded-poll fix sketch stands; 8 occurrences total now
+2026-06-04T22:15Z claude note implemented: --auto retried once after settle_mergeable poll, error-text discriminates transient recompute from genuine unavailable; fallback watch bounded-retries the no-checks registration race; die() messages name registration/timeout/red. Tests cases 13-14 added, all 14 pass
+2026-06-04T22:18Z Claude closed — autoclosed — PR #283
 --- body ---
 ## Source
 First production run of the 0198 rewrite (aedist PR #689, 2026-06-04),
@@ -45,9 +48,9 @@ which is exactly what the script should do itself.
   cost one manual round-trip too.
 
 ## Exit criteria
-- [ ] --auto retried after mergeability recompute settles; fallback only
+- [x] --auto retried after mergeability recompute settles; fallback only
       on genuine auto-merge-unavailable
-- [ ] Fallback watch survives the no-checks-reported registration race
-- [ ] die() messages name the actual failure cause
-- [ ] tests cover both races (stub: first --auto fails "not mergeable",
+- [x] Fallback watch survives the no-checks-reported registration race
+- [x] die() messages name the actual failure cause
+- [x] tests cover both races (stub: first --auto fails "not mergeable",
       second succeeds; checks watch fails once with no-checks then passes)
