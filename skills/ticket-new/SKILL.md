@@ -11,31 +11,30 @@ argument-hint: [title]
 
 # Create local ticket
 
-**Input:** anything — a title, a sentence, a JSON blob from `gh`, a paste
-from a conversation. Extract the intent and normalize to `%erg 0.1`.
+**Input:** anything — a title, a sentence, a JSON blob from the forge CLI, a
+paste from a conversation. Extract the intent and normalize to a single
+imperative title.
 
 ## Steps
 
-1. Determine the next ID:
+1. **Normalize the title.** Distill the free-form input into one imperative
+   title (e.g. "Add retry logic for failed API requests"). Drop noise; keep
+   the intent. This is the only piece you craft by hand.
+
+2. **Create the file atomically:**
    ```bash
    ERG=${ERG:-tickets/erg}
-   $ERG next-id tickets/
+   $ERG new "<normalized title>"
    ```
-   Always use `erg next-id` — never compute or guess the ID manually.
+   `erg new` allocates the next free ID, kebab-cases the title into a slug,
+   and writes a valid `%erg 0.1` file (preamble headers + a `created` log
+   line + an empty body) in one race-safe step. It prints
+   `CREATED NNNN-slug.erg` — note that filename for the next step. Never
+   compute the ID or slug yourself.
 
-2. Choose a slug: lowercase kebab-case, ASCII only (`[a-z0-9-]`), derived from the title.
-
-3. Create `tickets/{ID}-{slug}.erg` with this exact structure:
-   ```
-   %erg 0.1
-   Title: {imperative title}
-   Created: {YYYY-MM-DD}
-   Author: {agent or user}
-
-   --- log ---
-   {YYYY-MM-DD}T{HH:MM}Z {author} created
-
-   --- body ---
+3. **Edit the body in place.** Open the file `erg new` just printed and fill
+   in the body section with these sections:
+   ```markdown
    ## Context
    {why this work exists}
 
@@ -48,21 +47,21 @@ from a conversation. Extract the intent and normalize to `%erg 0.1`.
    ## Exit criteria
    {definition of done}
    ```
-   Note: no `Status:` header — `erg validate` rejects it.
+   Leave the preamble headers and log section as `erg new` wrote them.
 
-4. Validate the new ticket (pass the specific file, not the directory):
+4. **Validate the file** (pass the specific file, not the directory):
    ```bash
    $ERG validate tickets/<new-file>.erg
    ```
    Fix any errors before committing.
 
-5. Run corpus check to catch dangling refs:
+5. **Run corpus check** to catch dangling refs:
    ```bash
    $ERG check tickets/
    ```
    Fix any errors before committing.
 
-6. Commit the ticket file.
+6. **Commit the ticket file.**
 
 Format spec: `tickets/spec-erg-v1.md` (or global rule `tickets.md`).
 
