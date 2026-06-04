@@ -44,7 +44,7 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
 9. **Exit worktree** (if in one):
     a. Preflight from inside the worktree:
        ```bash
-       scripts/worktree-exit-preflight.sh
+       ~/.claude/scripts/worktree-exit-preflight.sh
        ```
        Refuses (exit 1) when there are uncommitted/untracked files — including a fresh ticket draft `/ticket-new` wrote but never committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT fire on `ExitWorktree`, so this is the only gate. If it blocks, commit (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See ticket 0174.
     b. Call `ExitWorktree` with action `remove`.

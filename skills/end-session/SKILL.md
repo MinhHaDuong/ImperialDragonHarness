@@ -20,7 +20,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
 6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
 7. **Exit worktree** — if in a worktree:
-    a. Preflight from inside the worktree: `scripts/worktree-exit-preflight.sh` (refuses on any uncommitted/untracked state; closes the ExitWorktree gap, ticket 0174). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
+    a. Preflight from inside the worktree: `~/.claude/scripts/worktree-exit-preflight.sh` (refuses on any uncommitted/untracked state; closes the ExitWorktree gap, ticket 0174). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
     b. Call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
 8. **Hygiene sweep**:
    - `git worktree list` → remove any stale worktrees (`git worktree prune`)
