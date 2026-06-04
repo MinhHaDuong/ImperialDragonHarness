@@ -1,0 +1,64 @@
+%erg 0.1
+Title: erg-pr-merge: queue auto-merge after the close commit, drop the CI-watch loop
+Created: 2026-06-04
+Author: claude
+
+--- log ---
+2026-06-04T08:40Z claude created — enabled by allow_auto_merge + main-required-checks ruleset (both 2026-06-04)
+
+--- body ---
+## Context
+
+`skills/merge/erg-pr-merge` pushes the ticket-close commit, then polls
+CI itself ("Waiting for CI after ticket-close commit...") before calling
+the merge. That watch loop is the script's most fragile section: it
+raced GitHub's check registration on PR #239 ("no checks reported" →
+600 s timeout → bounce), and the whole "Merge-bounce recovery" section
+in rules/git.md exists largely to recover from it.
+
+Since 2026-06-04 the repo has (a) the `main-required-checks` ruleset —
+GitHub itself refuses to merge until all 7 checks are green — and (b)
+`allow_auto_merge: true`. The script no longer needs to babysit CI:
+queue the merge and exit.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — the CI-wait block after the close-commit
+  push, and the final merge call
+- `skills/merge/SKILL.md` — prose describing the wait, if any
+- `rules/git.md` "Merge-bounce recovery" — prune the bounce cases this
+  removes (keep "close: no ticket found" retry guidance; it is about
+  idempotency, not CI)
+- `tests/test_erg_pr_merge.sh` — gh stub gains the auto-merge call shape
+
+## Actions
+
+1. After pushing the close commit, replace the poll loop with
+   `gh pr merge "$PR" --merge --auto` and exit 0, reporting "merge
+   queued; lands when checks pass". <!-- harness-extension-point -->
+2. Keep a fallback: if the repo has auto-merge disabled (gh error),
+   fall back to the existing watch-then-merge path so the script stays
+   usable on repos without the setting.
+3. Update tests: stub `gh pr merge ... --auto` success; one case for the
+   fallback path.
+4. Prune rules/git.md merge-bounce bullets that describe CI-wait races;
+   keep the not-idempotent-past-close guidance.
+
+## Test
+
+Red step: extend tests/test_erg_pr_merge.sh with a stubbed gh whose
+`pr merge --auto` records its invocation; assert the script calls it
+and does NOT invoke the checks-polling path when auto-merge succeeds.
+
+## Invariants
+
+- One close commit per run, naming all closed tickets (0186 behaviour).
+- Raid waves keep sequential explicit merges — this changes the
+  single-PR flow only; the raid skill's Phase 7 is unaffected.
+
+## Exit criteria
+
+- [ ] erg-pr-merge exits immediately after queueing auto-merge (happy path)
+- [ ] Fallback to watch-then-merge when auto-merge is unavailable
+- [ ] tests/test_erg_pr_merge.sh covers both paths
+- [ ] rules/git.md merge-bounce section pruned accordingly
