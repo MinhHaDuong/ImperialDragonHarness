@@ -2,10 +2,12 @@
 Title: Strip black-formatter churn from test_worktree_tools.py or adopt it repo-wide
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: autoclosed — PR #275
 
 --- log ---
 2026-06-04T07:53Z MinhHaDuong created
 
+2026-06-04T20:07Z MinhHaDuong closed — autoclosed — PR #275
 --- body ---
 ## Context
 
