@@ -32,9 +32,10 @@ const DEFAULTS = {
 
   // Where the workflow writes the final report. Throwaway worktrees die with
   // the run, so this MUST be an absolute path in the MAIN repo (untracked is
-  // fine). NO hardcoded /home — use an absolute path you control, e.g.
-  // `${process.env.HOME}/your-repo/FANG-AUDIT.md`.
-  OUTPUT: `${process.env.HOME}/YOUR-REPO/FANG-AUDIT.md`,
+  // fine). NO hardcoded /home — use `~/your-repo/FANG-AUDIT.md`; the engine
+  // expands a leading `~/` via the args.HOME knob (the workflow sandbox has
+  // no Node `process` global, so HOME cannot come from the environment).
+  OUTPUT: '~/YOUR-REPO/FANG-AUDIT.md',
 
   // <TAGS> = build-tag flags for the DEFAULT suite (usually empty string).
   DEFAULT_TAGS: '',
@@ -60,12 +61,12 @@ const DEFAULTS = {
   // so a fresh worktree (which only has the committed tree) lacks them. The
   // guard agent copies each from `from` into `dest` if missing, BEFORE the
   // baseline check. Empty list = no seeding (fully generic). Keep `from` paths
-  // out of the /home/[a-z] form — use ${process.env.HOME}.
+  // out of the /home/[a-z] form — use a leading `~/` (expanded via args.HOME).
   // (The git-erg guard build references an untracked resource_test.go that
   // shares the //go:build scaling compile unit with scaling_test.go; without
   // it the scaling build fails to compile and the canary falsely FAILs.)
   UNTRACKED_SEED: [
-    { dest: 'src/go/resource_test.go', from: `${process.env.HOME}/git-erg/src/go/resource_test.go` },
+    { dest: 'src/go/resource_test.go', from: '~/git-erg/src/go/resource_test.go' },
   ],
 
   // Mutation heuristics — language-specific examples of a MINIMAL, COMPILING,
@@ -131,9 +132,12 @@ const DEFAULTS = {
 
 // Δ9: per-repo config arrives via the Workflow `args` input (read from the
 // target repo's `.fang-audit.json` by the SKILL.md invocation) and overrides
-// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side —
-// JSON cannot carry `${process.env.HOME}`.
-const expand = p => typeof p === 'string' ? p.replace(/^~(?=\/)/, process.env.HOME) : p
+// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side.
+// The workflow sandbox has NO Node `process` global, so HOME must be supplied
+// by the invoker as args.HOME; without it, `~/` paths pass through unchanged
+// (the invoker should then pre-expand them in the config it passes).
+const HOME = (args && typeof args === 'object' && typeof args.HOME === 'string') ? args.HOME : ''
+const expand = p => (typeof p === 'string' && HOME) ? p.replace(/^~(?=\/)/, HOME) : p
 const CONFIG = Object.assign({}, DEFAULTS, (args && typeof args === 'object') ? args : {})
 CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
 CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))

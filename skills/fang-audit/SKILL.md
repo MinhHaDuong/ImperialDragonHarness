@@ -66,7 +66,10 @@ read that file and pass its parsed content as the Workflow `args` input —
 the script merges it over the built-in DEFAULTS (the validated git-erg
 reference values, kept in `fang-audit.js` as living documentation of every
 knob). Path values (`OUTPUT`, `UNTRACKED_SEED[].from`) may use a leading
-`~/`; the script expands it.
+`~/`; the script expands it **only if you also pass `HOME` in `args`** (set
+it to the user's home directory). The Workflow sandbox has no Node `process`
+global, so the script cannot read `$HOME` itself — when in doubt, pre-expand
+all paths to absolute form in the `args` you pass.
 
 If `.fang-audit.json` is missing, STOP and hand the user a template built
 from the DEFAULTS block — do not edit `fang-audit.js`, do not guess a

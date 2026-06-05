@@ -1,0 +1,36 @@
+%erg 0.1
+Title: fang-audit workflow crashes: sandbox has no process global
+Created: 2026-06-05
+Author: MinhHaDuong
+
+--- log ---
+2026-06-05T15:13Z MinhHaDuong created
+
+--- body ---
+## Context
+Launching the fang-audit Workflow on 2026-06-05 failed instantly (7 ms, 0 agents):
+
+    Error: process is not defined
+        at <anonymous> (workflow.js:19:21)
+
+`fang-audit.js` used `process.env.HOME` in its DEFAULTS block (OUTPUT,
+UNTRACKED_SEED) and in the `expand` tilde-expander. The Workflow sandbox
+exposes no Node `process` global (consistent with its documented "no
+filesystem or Node.js API access" contract), so the script dies at parse-time
+before the precheck phase. The validating 1.3M-token run predates this; the
+runtime contract has since tightened.
+
+## Fix
+- DEFAULTS path knobs become plain `~/` strings (no template interpolation).
+- `expand` reads HOME from a new `args.HOME` knob supplied by the invoker;
+  without it, `~/` paths pass through unchanged.
+- SKILL.md invocation contract updated: pass `HOME` in `args`, or pre-expand
+  all paths to absolute form.
+
+Verified empirically: the relaunch with `args.HOME` + pre-expanded paths got
+past parse and into the Precheck phase (run wf_356ca0b7-db6).
+
+## Exit criteria
+- [ ] `grep -c 'process\.' skills/fang-audit/fang-audit.js` returns 0 (comments may mention the word, code may not)
+- [ ] SKILL.md documents the `HOME` args knob
+- [ ] A fang-audit Workflow launch reaches the Precheck phase instead of dying at parse
