@@ -1,0 +1,76 @@
+%erg 0.1
+Title: Handcuff and scope-altitude mutation modes for the fang-audit skill
+Created: 2026-06-05
+Author: MinhHaDuong
+Blocked-by: 0182
+Label: deferred
+
+--- log ---
+2026-06-05T11:56Z MinhHaDuong created
+
+2026-06-05T11:56Z MinhHaDuong label deferred
+--- body ---
+## Context
+
+Split from [[0182]] (author directive, 2026-06-05): the fang-audit
+extraction raids in two integer-numbered tickets instead of one
+monolith. 0182 keeps the feasible v1 — extract the PROVEN fang
+(sensitivity) mode from the git-erg prototype, with the determinism
+precheck, canary-gate fix, and free-rider metrics. THIS ticket carries
+the two additional mutation modes that have no validating run yet, plus
+the multi-language generalization.
+
+All design rationale (lens taxonomy, one-workflow-two-passes, the
+behavior-preservation skeptic) lives in 0182's body — read it first.
+
+## Relevant files
+
+- skills/fang-audit/ — the 0182 deliverable this extends
+- ~/.claude/plans/quizzical-booping-puffin.md — reviewed plan (M1-M4
+  fixes, pairing table, verdict rules, lens design)
+- ~/.claude/plans/fang-audit-erg-prototype.js — the proven workflow
+  script 0182 extracts from
+
+## Actions
+
+1. Handcuff mode: behavior-PRESERVING mutation operators (rename locals,
+   reorder independent statements, equivalent-construct swap, unexported
+   representation change) + inverted oracle (red = over-scoped) + its
+   own behavior-preservation skeptic (a red on a secretly
+   behavior-changing "refactor" is a legitimate catch — withdraw the
+   accusation; mirror of the equivalent-mutant skeptic).
+2. Scope/altitude mode: replay each caught mutation's operator across
+   structurally-similar sibling sites; sibling-survives = instance-pinned
+   contract; flag for promotion to a class/invariant guard.
+3. Pipeline both after the fang pass in the SAME workflow (shared
+   pairing table, worktree setup, baseline-green, canary gate); separate
+   agent roles for the two oracles (never one agent juggling red=good
+   and red=bad).
+4. Unified per-test report: has-fang? | is-handcuff? | right-scope? —
+   one row per test, sortable by risk x churn (churn from git log).
+5. Language-pluggable: validate on at least one non-Go repo or document
+   the plug-in path.
+
+## Test
+
+A fixture test file with a known over-scoped assertion (asserts mock
+call order): handcuff mode flags it; the same fixture refactored
+behavior-preservingly stays green elsewhere. A known instance-pinned
+regression test: scope mode flags the surviving sibling site.
+
+## Exit criteria
+
+- [ ] Handcuff mode implemented: behavior-preserving operators + inverted
+      oracle + behavior-preservation skeptic
+- [ ] Scope/altitude mode implemented: sibling-site replay, instance-pinned
+      contracts flagged for class-guard promotion
+- [ ] Unified per-test report covers all three axes (fang? / handcuff? /
+      right-scope?) sortable by risk x churn weighting
+- [ ] Language-pluggable: validated on at least one non-Go repo or a
+      documented plug-in path
+- [ ] make check passes
+
+## Related
+
+- Parent: [[0182]] (fang v1 — must merge first)
+- Siblings: [[0183]] (LLM judge), [[0184]] (empirical CI utility)

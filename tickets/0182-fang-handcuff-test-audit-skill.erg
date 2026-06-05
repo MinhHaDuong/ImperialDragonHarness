@@ -2,11 +2,12 @@
 Title: Extract test-quality audit workflow (fang/handcuff/scope) into a skill
 Created: 2026-05-30
 Author: claude
-Label: deferred
 
 --- log ---
 2026-05-30T10:00Z claude created — after the fang-audit fan-out run on git-erg validated the design
 
+2026-06-05T11:57Z MinhHaDuong unlabel deferred
+2026-06-05T11:57Z Minh Ha-Duong note re-scoped (author directive): split — this ticket keeps the feasible fang-only v1 extraction from the proven prototype; handcuff + scope/altitude + three-axis report + multi-language move to 0219 (blocked on this). Un-deferred for raid alongside 0184
 --- body ---
 ## Context
 
@@ -115,23 +116,23 @@ prototype via `f.isCanary && /scaling_test|resource_test/.test(file)` — bake t
 principle into the skill: canary designation is a workflow input, not an agent claim.)
 
 ## Exit criteria
+
+(Re-scoped 2026-06-05, author directive: fang-only v1 — the feasible
+extraction from the proven prototype. Handcuff, scope/altitude, the
+three-axis report, and multi-language validation moved to
+tickets/0219, which is blocked on this ticket.)
+
 - [ ] `skills/fang-audit/SKILL.md` + workflow script committed; registered via
       `make skills-catalog`; `make check-skills-drift` passes in CI.
 - [ ] Repo-specific knobs are explicit inputs (NOT name heuristics): `TEST_GLOB`,
       `RUN_TEST` (+ tag variants), the test↔source pairing table, designated canary
       files, language-specific mutation heuristics.
 - [ ] Fang mode reproduces the git-erg result (toothless list + canary PASS).
-- [ ] Handcuff mode implemented: behavior-preserving mutation operators + inverted
-      oracle (red = over-scoped) + behavior-preservation skeptic.
-- [ ] Scope/altitude mode implemented: replay each caught mutation's operator across
-      structurally-similar sibling sites; flag instance-pinned contracts (sibling
-      survives) for promotion to a class guard.
 - [ ] Oracle-strength + diagnosticity reported as free riders from the existing mutation
       data (mutants-killed-per-assertion; tests-fired-per-killed-mutant) — no extra runs.
 - [ ] Determinism precheck gates the run: re-run the unchanged suite N times; abort with a
-      clear "suite is flaky, verdicts untrustworthy" message if verdicts vary.
-- [ ] Unified per-test report covers all three axes (fang? / handcuff? / right-scope?)
-      and is sortable by a risk x churn weighting (churn from git log).
+      clear "suite is flaky, verdicts untrustworthy" message if verdicts vary. Use the
+      0184 utility's reusable gate (merges first in this raid).
+- [ ] Per-test fang report (toothless? + free-rider metrics) sortable by a risk x churn
+      weighting (churn from git log).
 - [ ] Canary gate scoped to designated guard files only (isCanary-pollution bug gone).
-- [ ] Forge-agnostic, language-pluggable (validated on at least one non-Go repo or a
-      documented plug-in path).
