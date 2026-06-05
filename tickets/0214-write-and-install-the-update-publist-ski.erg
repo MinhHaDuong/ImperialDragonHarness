@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-06-04T15:43Z Minh Ha-Duong created
 
+2026-06-05T11:05Z Minh Ha-Duong note amendment: drop the X-test:1 dry-run requirement — gate the HAL deposit on user review of the assembled payload (meta.xml TEI + zip manifest) plus explicit confirmation before any API call
 --- body ---
 ## Context
 
@@ -47,8 +48,9 @@ moderation queue by HAL's ack email.
      the public search API before choosing
    - zip `meta.xml` + PDF; POST to `https://api.archives-ouvertes.fr/sword/hal/`
      with `Packaging: http://purl.org/net/sword-types/AOfr`
-   - **dry-run first with header `X-test: 1`**, then real deposit only after
-     user confirmation (outward, irreversible once moderated)
+   - **show the assembled payload (full `meta.xml` TEI + zip manifest) to
+     the user for review**, then deposit only after explicit user
+     confirmation (outward, irreversible once moderated); no dry-run step
    - pass credentials via a chmod-600 temp curl config (`-K`), never on the
      command line; mask `<hal:password>` in any displayed response; the
      SWORD ack means "stored in workspace" — moderation status is confirmed
@@ -63,15 +65,16 @@ moderation queue by HAL's ack email.
 
 ## Test
 
-Dry-run invocation on a fictitious publication: the skill must stop at the
-`X-test: 1` dry-run and ask for confirmation before any real deposit, and
-must refuse to display credential values.
+Invocation on a fictitious publication: the skill must display the
+assembled payload (meta.xml + zip manifest) and stop for explicit user
+confirmation before any HAL API call, and must refuse to display
+credential values.
 
 ## Exit criteria
 
 - [ ] SKILL.md written here and catalog regenerated
 - [ ] Skill present in `~/.claude/skills/update-publist/`
-- [ ] HAL step gated by dry-run + explicit confirmation before real deposit
+- [ ] HAL step gated by user review of the assembled payload + explicit confirmation before any API call
 - [ ] No credential value can reach chat output or git history
 
 ## Related

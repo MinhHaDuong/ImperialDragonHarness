@@ -2,7 +2,6 @@
 Title: Validate verify fork containment over one raid cycle; escalate to Agent-spawned sub-skills if drift recurs
 Created: 2026-06-04
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-06-04T07:54Z claude created
@@ -11,6 +10,8 @@ Label: needs-human
 2026-06-04T09:08Z claude note incident #9 (pre-contract baseline): verify-gate's REROLL erg log step during PR #258's round 1 (07:41Z) ran against the primary checkout on main instead of the review worktree; the dirty ticket file silently blocked main's fast-forward sync for ~90 minutes until found at 09:12Z. Line salvaged into tickets/closed/0195. The 0193 worktree= threading covers this mode; validation here
 2026-06-04T20:19Z claude note validation cycle complete (raid 0203/0208/0201/0204/0167, six verify fork runs): headline criteria MET — zero off-task runs, zero foreign files, zero rogue pushes/PRs; orchestrator containment checks clean after every run. BUT in-fork drift recurred 3x in milder forms: (1) PR#274 run-1 under-executed — no gate, no verdict comment, stale /tmp/review-274, postcondition skipped; orchestrator retried, clean. (2) PR#276 fix loop attempted out-of-role rebase+force-push (0193 mode-7) — DENIED by permission guard (positive: guard layer works), then cherry-pick workaround left false commit message 90de0bc. (3) PR#276 gate fork emitted malformed erg verb line, discarded before reaching branch. Criterion 2 fires: escalation ticketed as 0216 (Agent-spawn conversion). Close/extend disposition left to author — closing as clean would overstate the result
 2026-06-04T20:19Z MinhHaDuong label needs-human
+2026-06-05T11:05Z Minh Ha-Duong note author disposition: close. Validation evidence recorded in full (headline containment criteria MET; 3 milder in-fork drift modes); the escalation clause fired correctly and the deterministic fix continues as ticket 0216 — this ticket's observational mandate is complete
+2026-06-05T11:05Z MinhHaDuong unlabel needs-human
 --- body ---
 ## Context
 

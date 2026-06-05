@@ -2,12 +2,13 @@
 Title: Dream v2 — memory hierarchy and earned promotion to harness level
 Created: 2026-05-15
 Author: claude
-Label: deferred
 
 --- log ---
 2026-05-15T09:00Z claude created
 2026-05-15T19:55Z claude note Tagged deferred — parked until dream v1 sees more exercise
 
+2026-06-05T11:07Z MinhHaDuong unlabel deferred
+2026-06-05T11:07Z Minh Ha-Duong note un-deferred: parking condition met — dream v1 has run nightly for ~3 weeks (latest: PR #295, 2026-06-05); enough exercise to design the hierarchy and promotion path
 --- body ---
 ## Context
 

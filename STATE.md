@@ -19,12 +19,11 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Blockers
 
-- **0084**: needs WORKER_API_KEY secret + openai library on host
+(none)
 
 ## Next actions
 
-- **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207/0208
-- **0218**: drop template-echo + dedupe in the /reviewers harvest normalizer
+- **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
 - **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native)
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
