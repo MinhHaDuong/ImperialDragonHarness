@@ -2,10 +2,13 @@
 Title: Align lint-on-edit ruff format hook with the repo formatting policy
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: Hook aligned with no-formatter policy; ratchet test added — PR pending
 
 --- log ---
 2026-06-04T11:01Z MinhHaDuong created
 
+2026-06-05T04:05Z claude decided option (a): drop 'ruff format' from scripts/lint-on-edit.sh, keep 'ruff check --fix'. Aligns with 0201/PR #275 (no repo-wide formatter). Added tests/test_lint_on_edit.sh ratchet (static: no 'ruff format'; behavioral: hook leaves a format-only deviation byte-identical).
+2026-06-05T04:05Z Claude closed — Hook aligned with no-formatter policy; ratchet test added — PR pending
 --- body ---
 ## Context
 
