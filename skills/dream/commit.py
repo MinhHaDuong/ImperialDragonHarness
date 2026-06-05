@@ -38,14 +38,14 @@ def main():
         try:
             # Stage project-level memory changes
             subprocess.run(
-                ["git", "-C", str(IDH_BASE), "add", str(memory_dir)],
+                ["git", "-C", str(IDH_BASE), "add", "-f", str(memory_dir)],
                 check=True,
                 capture_output=True,
             )
             # Stage harness-level memory changes (provenance + promotions)
             if harness_memory_dir.exists():
                 subprocess.run(
-                    ["git", "-C", str(IDH_BASE), "add", str(harness_memory_dir)],
+                    ["git", "-C", str(IDH_BASE), "add", "-f", str(harness_memory_dir)],
                     check=True,
                     capture_output=True,
                 )
