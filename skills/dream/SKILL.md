@@ -64,7 +64,7 @@ Print a summary table:
 - The 5 extracted insights
 - Counts: N entries before → M after
 
-If `--dry-run`: **stop here. Do not write anything.**
+If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
 
 **5. Apply deletions.**
 
@@ -105,6 +105,8 @@ python3 ~/.claude/skills/dream/provenance.py record <entry_slug> <project>
 ```
 
 `<entry_slug>` is the entry's filename without extension (e.g. `feedback_vim`). This tracks which projects have seen each entry, enabling the promotion pass.
+
+**Slug identity (v2 simplification)**: entries are keyed by filename. If the same lesson appears under different filenames in different projects, Claude should assign the same slug during consolidation to enable cross-project frequency counting. A semantic slug-matching system is deferred to v3.
 
 **8. Commit.**
 

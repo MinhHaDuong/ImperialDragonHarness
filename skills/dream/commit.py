@@ -31,15 +31,24 @@ def main():
 
     if args.cmd == "commit":
         memory_dir = MEMORY_BASE / args.project / "memory"
+        harness_memory_dir = IDH_BASE / "memory"
         message = (
             f"dream: consolidate {args.project} memory ({args.n_before}→{args.n_after})"
         )
         try:
+            # Stage project-level memory changes
             subprocess.run(
                 ["git", "-C", str(IDH_BASE), "add", str(memory_dir)],
                 check=True,
                 capture_output=True,
             )
+            # Stage harness-level memory changes (provenance + promotions)
+            if harness_memory_dir.exists():
+                subprocess.run(
+                    ["git", "-C", str(IDH_BASE), "add", str(harness_memory_dir)],
+                    check=True,
+                    capture_output=True,
+                )
             subprocess.run(
                 ["git", "-C", str(IDH_BASE), "commit", "-m", message],
                 check=True,
