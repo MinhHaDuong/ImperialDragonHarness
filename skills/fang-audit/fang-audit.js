@@ -323,9 +323,15 @@ log(`precheck PASS — suite stable (exit ${precheck.exitCode}, gate=${precheck.
 
 // ---- Phase 1+2: behavioral audit -> skeptic (pipeline, no barrier) ----
 phase('Audit')
+// Δ8: isolation:'worktree' — Workflow agents run in the SESSION checkout by
+// default (probe-verified 2026-06-05, ticket 0221); without per-agent
+// worktrees the concurrent mutate→test→revert loops corrupt each other.
+// This also binds the run to the session's repo: invoke from a session
+// rooted in the TARGET repo (see SKILL.md). Skeptics stay non-isolated —
+// read-and-judge, no execution.
 const behavioral = await pipeline(
   BEHAVIORAL,
-  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', schema: AUDIT_SCHEMA })
+  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', schema: AUDIT_SCHEMA, isolation: 'worktree' })
             .then(a => { if (a) a.testFile = a.testFile || file.test; return a }),
   (audit, file) => skepticize(audit, file),
 )
@@ -334,7 +340,7 @@ const behavioral = await pipeline(
 phase('Guards')
 const guards = []
 for (const file of GUARDS) {
-  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', schema: AUDIT_SCHEMA })
+  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
   // agent it dispatched), NEVER from a read-back of the agent's isCanary flag.
