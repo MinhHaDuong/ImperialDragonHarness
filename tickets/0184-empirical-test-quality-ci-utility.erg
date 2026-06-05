@@ -2,11 +2,12 @@
 Title: Empirical test-quality CI utility (flakiness / independence / speed)
 Created: 2026-05-30
 Author: claude
-Label: deferred
 
 --- log ---
 2026-05-30T10:45Z claude created — cheap-tier sibling to 0182/0183; the per-PR-gateable lenses
 
+2026-06-05T11:57Z MinhHaDuong unlabel deferred
+2026-06-05T11:57Z Minh Ha-Duong note un-deferred for raid (author directive): the trio splits — 0184 raids now (it provides the flakiness gate 0182 imports as precheck), 0182 raids fang-only, 0219 carries the rest, 0183 stays deferred
 --- body ---
 ## Context
 
