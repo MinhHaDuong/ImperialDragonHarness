@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Dream v2 debt: decay-confirmation loop and provenance write race
+Created: 2026-06-05
+Author: MinhHaDuong
+
+--- log ---
+2026-06-05T19:13Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Two non-blocking residuals from the Dream v2 verify gate (PR #302,
+ticket 0165, 2026-06-05), recorded on the PR but until now unticketed:
+
+1. **Decay-confirmation loop is half-wired.** Promotion tombstones the
+   project-level entry whose `record()` call would have refreshed the
+   harness entry's `last_confirmed` — so every PROMOTED harness entry
+   decay-flags at 90 days regardless of continued relevance. The 0165
+   exit criterion ("entries >90d unconfirmed are flagged") is met
+   literally; the refresh path for promoted entries is the gap.
+2. **Lost-update race on `.provenance.json`.** `record()` is an
+   unlocked read-modify-write and the cron recipe fires all projects
+   at 02:00 — concurrent consolidations can clobber provenance and
+   suppress a legitimate promotion.
+
+## Relevant files
+
+- skills/dream/provenance.py — record()/decay() (both defects live here)
+- skills/dream/SKILL.md — promotion pass + decay step wiring
+- tests/test_dream.py — provenance tests to extend
+
+## Actions
+
+1. Confirmation path for promoted entries: a project consolidation that
+   finds a harness entry still relevant refreshes its `last_confirmed`
+   (e.g. via the existing NOOP/UPDATE classification), instead of only
+   the tombstoned project entry.
+2. Serialize provenance writes: O_EXCL lockfile or per-project staggered
+   cron — pick the cheapest mechanism that closes the 02:00 collision.
+3. Tests: a promoted entry confirmed by a later consolidation does NOT
+   decay-flag; two interleaved record() calls lose neither write.
+
+## Test
+
+Unit: simulate promote → later consolidation touches the same lesson →
+decay() must not flag it. Race: two record() round-trips with
+interleaved reads preserve both entries.
+
+## Exit criteria
+
+- [ ] Promoted harness entries get `last_confirmed` refreshed by later
+      relevant consolidations
+- [ ] Concurrent record() calls cannot lose writes
+- [ ] Tests cover both paths; make check passes
