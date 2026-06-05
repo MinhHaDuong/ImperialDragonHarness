@@ -3,12 +3,14 @@ Title: Replace beat.py pipeline orchestration with Prefect 3.x
 Created: 2026-05-09
 Author: claude
 Label: deferred
+Closed: rejected (author, 2026-06-05): pipeline loops are now commodity in agent harnesses — the systemd-triggered beat loop works and Claude Code itself provides loop/routine primitives; adopting a workflow engine solves a non-problem and contradicts the review-is-CI lean-on-existing-primitives principle. The real unsolved problem is agent-agnosticism, tracked in 0217 (seat-runner)
 
 --- log ---
 2026-05-09T08:35Z claude created
 
 2026-05-13T09:02Z MinhHaDuong tag deferred
 2026-05-13T13:24Z MinhHaDuong note blocker 0103 closed — Blocked-by removed.
+2026-06-05T08:18Z MinhHaDuong closed — rejected (author, 2026-06-05): pipeline loops are now commodity in agent harnesses — the systemd-triggered beat loop works and Claude Code itself provides loop/routine primitives; adopting a workflow engine solves a non-problem and contradicts the review-is-CI lean-on-existing-primitives principle. The real unsolved problem is agent-agnosticism, tracked in 0217 (seat-runner)
 --- body ---
 ## Context
 
