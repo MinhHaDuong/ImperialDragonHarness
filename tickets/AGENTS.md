@@ -35,6 +35,7 @@ Rules agents must know:
 - Closed/not-closed is inferred from path conventions or a non-empty `Closed:` header
 - `Label:` is optional and repeatable; accepted values are defined in `tickets/.ergrc` (defaults: `needs-human`, `deferred`)
 - Log entries are append-only: `YYYY-MM-DDTHH:MMZ author verb detail`
+- ID allocation is optimistic (git-erg#282, wontfix): `erg new` scans only the local checkout, so parallel sessions on different branches/checkouts can hand out the same ID. Fetch before allocating, run `erg check` after every fetch in ticket-heavy sessions, and on collision simply renumber to the next free ID (`git mv` + fix cross-references). No reservation machinery exists or is planned — seat taken, move to the next one.
 - Artifacts a ticket consumes or produces (reports, data, generated files, scripts) live in their natural location in the project tree and are referenced from the body by path, not embedded wholesale, and not kept as a filename-twinned `0002-slug.md` sidecar the tooling cannot track.
 
 On GitHub, `tickets/erg-github` (a separate committed helper, not an `erg` subcommand) adds a `verify` check that fails a PR referencing a still-open ticket -- so close the ticket in the same PR (`erg close`).

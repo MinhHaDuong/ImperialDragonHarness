@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-06-04T16:24Z Minh Ha-Duong created
 
+2026-06-05T10:28Z claude note Upstream verdict in: git-erg#282 closed wontfix — author retained optimistic concurrency (collisions are cheap: renumber to next free ID; erg check in CI detects). No reservation machinery in binary or skill. Both ticket actions resolved: issue was filed 2026-06-04 from an AEDIST session; answer adopted as-is, nothing to pull into the traveling binary.
 --- body ---
 ## Context
 
@@ -41,9 +42,11 @@ allocation time (not merge time).
 
 ## Exit criteria
 
-- [ ] Upstream issue filed and linked here
-- [ ] Decision recorded (fix adopted, or convention documented in
-      tickets/AGENTS.md template)
+- [x] Upstream issue filed and linked here — git-erg#282 (closed wontfix:
+      optimistic concurrency retained, renumber on collision, CI detects)
+- [x] Decision recorded (fix adopted, or convention documented in
+      tickets/AGENTS.md template) — convention added to tickets/AGENTS.md
+      "Rules agents must know"
 
 ## Related
 
