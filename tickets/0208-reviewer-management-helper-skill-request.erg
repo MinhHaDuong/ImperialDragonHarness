@@ -12,6 +12,7 @@ Blocked-by: 0217
 2026-06-05T06:55Z claude note panel review (PR #289): reworded exit-criterion #3 to a delegation stub (the full panel-extension section is 0205's deliverable, which lands AFTER this child, so the original criterion was unverifiable at close). Open panel blockers held for author: ACP fs/read must be path-allowlisted (red-team), per-seat fail-open vs the verify circuit breaker (operational), scorecard schema (operational)
 
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): no ACP client harness — this is the management surface over the 0217 sandbox-runner. Blocked-by 0217 added (the runner is the seat execution mechanism). Seats are invoked by running the 0217 runner per roster entry; containment is the runner's OS sandbox, not protocol grants. The red-team's path-allowlist + per-seat fail-open blockers move to 0217 (where the sandbox lives); the scorecard-schema blocker stays here
+2026-06-05T09:25Z claude note /reviewers skill scaffold landed (PR supersedes #276): list/request/harvest/scorecard wired to the 0217 seat-runner — request runs the runner per roster seat with per-seat fail-open, harvest normalizes FINDING| output to the contract shape (unparseable→WARN), scorecard writes a fixed-schema erg line; empty-roster-safe; tests/test_reviewers.sh 13/13. NOT closing: blocked-by 0217 and the advisory trial (>=5 MRs) is pending
 --- body ---
 ## Context
 
