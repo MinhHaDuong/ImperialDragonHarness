@@ -17,3 +17,5 @@ Before creating a new ticket file, `git fetch origin --quiet && git ls-tree -r -
 - If a collision is discovered post-PR, file the rename + comment trail on the PR (branch name and title may stay; the file path and PR body's `**Ticket:**` line are what matter for auto-close).
 
 Related: [[feedback-gh-pr-edit-blocked]] documents the gh api workaround used in recovery.
+
+**Second incident (2026-06-04):** ID 0412 allocated twice — a raid bundled its ticket on a PR branch (#698) while a parallel session committed 0412 directly to main. Even the fetch+check discipline cannot fully prevent this (the window is between check and merge); a duplicate then sat ON MAIN with `erg check` failing and zero CI signal, because lint runs only the log-placement validator and the chore-bypass path filter skips lint on tickets-only diffs. Mechanical gate ticketed: 0418 (erg check in CI). Recovery cost stayed low (one git mv + chore PR #701) because the collision was caught the same day — check `erg check tickets/` after every fetch when working ticket-heavy sessions.
