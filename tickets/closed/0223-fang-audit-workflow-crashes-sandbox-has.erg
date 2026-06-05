@@ -2,10 +2,12 @@
 Title: fang-audit workflow crashes: sandbox has no process global
 Created: 2026-06-05
 Author: MinhHaDuong
+Closed: autoclosed — PR #309
 
 --- log ---
 2026-06-05T15:13Z MinhHaDuong created
 
+2026-06-05T18:13Z MinhHaDuong closed — autoclosed — PR #309
 --- body ---
 ## Context
 Launching the fang-audit Workflow on 2026-06-05 failed instantly (7 ms, 0 agents):
