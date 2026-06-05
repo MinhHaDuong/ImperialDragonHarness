@@ -2,10 +2,12 @@
 Title: Fang-audit runtime: per-agent worktree isolation and target-repo session binding
 Created: 2026-06-05
 Author: MinhHaDuong
+Closed: autoclosed — PR #307
 
 --- log ---
 2026-06-05T14:10Z MinhHaDuong created
 
+2026-06-05T14:31Z MinhHaDuong closed — autoclosed — PR #307
 --- body ---
 ## Context
 
