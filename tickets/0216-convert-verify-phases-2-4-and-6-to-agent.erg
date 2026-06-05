@@ -6,6 +6,9 @@ Author: MinhHaDuong
 --- log ---
 2026-06-04T20:17Z MinhHaDuong created
 
+2026-06-05T06:41Z claude note sequencing note (0205 architecture decision): proceed as designed — the Agent() conversion fixes live fork drift now; it later converges into the ACP client architecture on 0205 (all reviewers behind capability grants), so do not read the two as contradictory
+
+2026-06-05T06:56Z claude note panel review (PR #289): this ticket, 0206, and 0208 all edit skills/verify/SKILL.md. Land THIS first (it rewrites phases 2-4/6 wholesale) so 0206's gate clause and 0208's delegation stub stack onto the new structure — avoids a three-way parallel-raid conflict on verify/SKILL.md
 --- body ---
 ## Context
 

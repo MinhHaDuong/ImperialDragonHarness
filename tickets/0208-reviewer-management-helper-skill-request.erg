@@ -2,49 +2,77 @@
 Title: Reviewer-management helper skill — request, harvest, normalize, scorecard
 Created: 2026-06-04
 Author: MinhHaDuong
+Blocked-by: 0217
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
 
+2026-06-05T06:41Z claude note re-scoped: per-tool adapters replaced by ONE ACP client harness — seats are interchangeable ACP agents (Gemini CLI and Copilot CLI speak it natively; 0207's thin model agent; claude-code-acp as the Sonnet seat); containment enforced by capability grants (fs/read only), see 0205 architecture decision
+
+2026-06-05T06:55Z claude note panel review (PR #289): reworded exit-criterion #3 to a delegation stub (the full panel-extension section is 0205's deliverable, which lands AFTER this child, so the original criterion was unverifiable at close). Open panel blockers held for author: ACP fs/read must be path-allowlisted (red-team), per-seat fail-open vs the verify circuit breaker (operational), scorecard schema (operational)
+
+2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): no ACP client harness — this is the management surface over the 0217 sandbox-runner. Blocked-by 0217 added (the runner is the seat execution mechanism). Seats are invoked by running the 0217 runner per roster entry; containment is the runner's OS sandbox, not protocol grants. The red-team's path-allowlist + per-seat fail-open blockers move to 0217 (where the sandbox lives); the scorecard-schema blocker stays here
 --- body ---
 ## Context
 
-Child of tickets/0205. With three reviewer kinds (forge bot, aider
-endpoints, sibling Claude tier), panel membership and trial bookkeeping
-need a management surface so verify stays thin. Author directive
-(2026-06-04): "add helper skills for reviewers management". Helpers are
-tool-named where they wrap one tool (0205 naming exception); the
-umbrella skill itself is generic.
+Child of tickets/0205. Re-scoped 2026-06-05 to the review-is-CI model:
+the management surface invokes the 0217 sandbox-runner once per roster
+entry — it does NOT implement a protocol client. Containment is the
+runner's OS sandbox (read-only mount, secrets denyRead, minimal env),
+not capability grants. Adding a reviewer = adding a roster stanza
+(another agnostic CLI + endpoint), not writing an adapter. Seats:
+0207's CLI seat over {OpenRouter, llama-server}, plus the 0206 Copilot
+forge bot (the one server-side, non-container member). The seats never
+run tests; the orchestrator runs them and feeds results into each
+seat's prompt context. Helpers are tool-named where they wrap one tool
+(0205 naming exception); the umbrella skill itself is generic.
 
 ## Relevant files
 
-- new: skills/reviewers/SKILL.md (+ pure-I/O helpers per reviewer kind)
+- new: skills/reviewers/SKILL.md (umbrella; generic)
+- scripts/seat-runner-prototype.sh (0217) — the contained runner this
+  skill invokes per seat
+- new: reviewer roster config (one place: seat = {agent_cmd, endpoint,
+  model, kind, status advisory|required}; no secrets — credentials via
+  BASH_ENV path, see 0207)
 - skills/verify/SKILL.md — calls into this instead of inlining mechanics
-- tickets/0206, tickets/0207 — the reviewers being managed
+- tickets/0206, tickets/0207, tickets/0217 — the reviewers and the runner
 
 ## Actions
 
-1. `/reviewers list` — panel members, their kind, advisory/required
+1. `/reviewers list` — panel roster, each seat's kind, advisory/required
    status, trial progress (MRs observed / projects covered).
-2. `/reviewers request <pr>` — fire all configured external reviewers
-   for a merge request (forge-bot request, aider adapter invocations).
-3. `/reviewers harvest <pr>` — collect all external findings, normalize
-   to the 0205 contract shape, emit one findings file for the gate.
+2. `/reviewers request <pr>` — for each roster seat, run the 0217
+   seat-runner over the PR diff (container per seat); plus the 0206
+   forge-bot request (the one non-container member).
+3. `/reviewers harvest <pr>` — collect all seats' findings, normalize to
+   the 0205 contract shape, emit one findings file for the gate.
+   Unparseable findings are surfaced as WARN, never silently dropped
+   (the prototype's normalizer leaks template-echo/dupes — tighten here).
 4. `/reviewers scorecard <pr> <verdict-summary>` — append the per-MR
-   trial line to the owning ticket's log (the 0206/0207 observation
-   bookkeeping, mechanized).
-5. Config lives in one place (panel roster + endpoints); no secrets in
-   config — credentials via BASH_ENV path (see 0207).
+   trial line to the owning ticket's log, in a fixed schema (seat,
+   finding-id, file:line, class TP|FP|FN, latency) so 0205's integration
+   review is evidence-based, not vibes (operational-panel blocker).
+5. Per-seat fail-open: one seat hanging/erroring WARNs and the gate
+   proceeds on the rest — never ESCALATEs the whole verify run.
+6. Config lives in one place (the roster); no secrets in config —
+   credentials via BASH_ENV path (see 0207).
 
 ## Test
 
-Shell test with stubbed forge CLI + stubbed adapters: `request` invokes
-each configured reviewer once; `harvest` merges two stub finding files
-into one normalized output; `scorecard` appends a valid erg log line
-(verbs: created/note/closed only) that `erg validate` accepts.
+Shell test with a stub agnostic CLI on PATH + stubbed forge CLI:
+`request` runs the 0217 runner once per configured seat; a seat that
+attempts a repo write is blocked by the SANDBOX (0217 self-test);
+`harvest` merges two stub finding files into one normalized output and
+surfaces an unparseable finding as WARN; `scorecard` appends a valid
+erg log line (verbs: created/note/closed only) that `erg validate`
+accepts; one stubbed seat hang proves fail-open (gate proceeds).
 
 ## Exit criteria
 
 - [ ] /reviewers skill with list/request/harvest/scorecard, catalog-registered
-- [ ] verify's panel-extension section delegates mechanics to it
+- [ ] request invokes the 0217 sandbox-runner per roster seat; per-seat fail-open proven
+- [ ] harvest normalizes to the contract shape; unparseable → WARN, never dropped
+- [ ] scorecard writes a fixed-schema trial line (evidence, not vibes)
+- [ ] verify/SKILL.md carries a delegation stub pointing to /reviewers (the full panel-extension contract is 0205's deliverable, lands after this)
 - [ ] Stubbed shell test green; make check green
