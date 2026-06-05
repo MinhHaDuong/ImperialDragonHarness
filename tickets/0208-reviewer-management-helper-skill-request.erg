@@ -7,6 +7,8 @@ Author: MinhHaDuong
 2026-06-04T08:41Z MinhHaDuong created
 
 2026-06-05T06:41Z claude note re-scoped: per-tool adapters replaced by ONE ACP client harness — seats are interchangeable ACP agents (Gemini CLI and Copilot CLI speak it natively; 0207's thin model agent; claude-code-acp as the Sonnet seat); containment enforced by capability grants (fs/read only), see 0205 architecture decision
+
+2026-06-05T06:55Z claude note panel review (PR #289): reworded exit-criterion #3 to a delegation stub (the full panel-extension section is 0205's deliverable, which lands AFTER this child, so the original criterion was unverifiable at close). Open panel blockers held for author: ACP fs/read must be path-allowlisted (red-team), per-seat fail-open vs the verify circuit breaker (operational), scorecard schema (operational)
 --- body ---
 ## Context
 
@@ -70,5 +72,5 @@ validate` accepts.
 
 - [ ] ACP client harness: one client, N seats, fs/read-only grants, mutation permission requests denied
 - [ ] /reviewers skill with list/request/harvest/scorecard, catalog-registered
-- [ ] verify's panel-extension section delegates mechanics to it
+- [ ] verify/SKILL.md carries a delegation stub pointing to /reviewers (the full panel-extension contract is 0205's deliverable, lands after this)
 - [ ] Stubbed shell test green; make check green

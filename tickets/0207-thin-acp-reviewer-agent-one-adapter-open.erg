@@ -2,6 +2,7 @@
 Title: Thin ACP reviewer agent — one adapter, OpenRouter and llama-server configs
 Created: 2026-06-04
 Author: MinhHaDuong
+Blocked-by: 0208
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
@@ -9,6 +10,10 @@ Author: MinhHaDuong
 2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
 
 2026-06-05T06:41Z claude note re-scoped: aider dropped in favor of a thin first-party reviewer agent speaking the Agent Client Protocol — its edit-and-commit loop is exactly what a read-only seat must forbid, while its endpoint connectivity is a trivial OpenAI-compatible call; decision from the ACP/A2A dig with the author (file renamed from 0207-aider-as-external-verifier-one-adapter-o.erg)
+
+2026-06-05T06:55Z claude note panel review (PR #289): added Blocked-by 0208 — action 3 wires this seat into 0208's ACP client harness, so the harness must land first. Three further panel blockers (overstated containment claim, ACP cost/value, trial-stat insufficiency) deferred to author direction on the architecture rewrite
+
+2026-06-05T06:56Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
 --- body ---
 ## Context
 
