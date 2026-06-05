@@ -2,12 +2,14 @@
 Title: Write and install the /update-publist skill (in the catalog, absent from the harness)
 Created: 2026-06-04
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #300
 
 --- log ---
 2026-06-04T15:43Z Minh Ha-Duong created
 
 2026-06-05T11:05Z Minh Ha-Duong note amendment: drop the X-test:1 dry-run requirement — gate the HAL deposit on user review of the assembled payload (meta.xml TEI + zip manifest) plus explicit confirmation before any API call
 2026-06-05T11:13Z claude note raid execute: writing SKILL.md from the amended reference procedure
+2026-06-05T11:28Z MinhHaDuong closed — autoclosed — PR #300
 --- body ---
 ## Context
 
