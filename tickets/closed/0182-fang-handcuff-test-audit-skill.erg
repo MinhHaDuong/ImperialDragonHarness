@@ -2,12 +2,15 @@
 Title: Extract test-quality audit workflow (fang/handcuff/scope) into a skill
 Created: 2026-05-30
 Author: claude
+Closed: autoclosed — PR #305
 
 --- log ---
 2026-05-30T10:00Z claude created — after the fang-audit fan-out run on git-erg validated the design
 
 2026-06-05T11:57Z MinhHaDuong unlabel deferred
 2026-06-05T11:57Z Minh Ha-Duong note re-scoped (author directive): split — this ticket keeps the feasible fang-only v1 extraction from the proven prototype; handcuff + scope/altitude + three-axis report + multi-language move to 0219 (blocked on this). Un-deferred for raid alongside 0184
+2026-06-05T13:01Z claude note raid execute: fang-only v1 extraction from the proven prototype
+2026-06-05T13:32Z MinhHaDuong closed — autoclosed — PR #305
 --- body ---
 ## Context
 
@@ -122,17 +125,53 @@ extraction from the proven prototype. Handcuff, scope/altitude, the
 three-axis report, and multi-language validation moved to
 tickets/0219, which is blocked on this ticket.)
 
-- [ ] `skills/fang-audit/SKILL.md` + workflow script committed; registered via
+- [x] `skills/fang-audit/SKILL.md` + workflow script committed; registered via
       `make skills-catalog`; `make check-skills-drift` passes in CI.
-- [ ] Repo-specific knobs are explicit inputs (NOT name heuristics): `TEST_GLOB`,
+      Evidence: skills/fang-audit/{SKILL.md,fang-audit.js}; README.md catalog row added;
+      `make check-skills-drift` → "OK: Skills catalog is in sync"; `make check` exit 0.
+- [x] Repo-specific knobs are explicit inputs (NOT name heuristics): `TEST_GLOB`,
       `RUN_TEST` (+ tag variants), the test↔source pairing table, designated canary
       files, language-specific mutation heuristics.
-- [ ] Fang mode reproduces the git-erg result (toothless list + canary PASS).
-- [ ] Oracle-strength + diagnosticity reported as free riders from the existing mutation
+      Evidence: fang-audit.js CONFIG block — RUN_TEST + DEFAULT_TAGS/GUARD_TAGS,
+      BEHAVIORAL (explicit test↔source map incl. the non-1:1 refs_git→refs.go pair the
+      old X_test→X.go heuristic broke), GUARDS (designated canaries), MUTATION_HEURISTICS,
+      PRECHECK_CMD, RISK. (No glob is used — the explicit pairing table supersedes
+      TEST_GLOB, which the plan named only as the heuristic-era knob.) Guarded by
+      tests/test_fang_audit_skill.py::test_config_block_declares_explicit_knobs and
+      ::test_pairing_table_is_explicit_map_not_heuristic.
+- [x] Fang mode reproduces the git-erg result (toothless list + canary PASS).
+      Satisfied by faithful extraction (cannot re-run the 1.3M-token audit): the prompts
+      (auditPrompt/guardPrompt/skepticPrompt), AUDIT/SKEPTIC schemas, RULES, verdict
+      classification, skepticize, the pipeline+serialized-guards shape, the guard
+      untracked-input seeding (UNTRACKED_SEED, the resource_test.go copy the canary build
+      needs), and the toothless/canary report sections are structurally preserved and
+      parameterized (text interpolates CONFIG knobs; logic unchanged). The prototype→skill
+      correspondence is documented in the PR body. The 19-file git-erg config (pairing
+      table + canaries + seed) ships as the default CONFIG so re-running it reproduces the run.
+- [x] Oracle-strength + diagnosticity reported as free riders from the existing mutation
       data (mutants-killed-per-assertion; tests-fired-per-killed-mutant) — no extra runs.
-- [ ] Determinism precheck gates the run: re-run the unchanged suite N times; abort with a
+      Evidence: fang-audit.js — oracleStrength (mutants killed per testFunc) and
+      diagnosticity (failingTests.length per caught mutant), both computed from the
+      already-collected `caught` findings; report has "Oracle strength" + "Diagnosticity"
+      sections. Guarded by ::test_free_rider_metrics_present.
+- [x] Determinism precheck gates the run: re-run the unchanged suite N times; abort with a
       clear "suite is flaky, verdicts untrustworthy" message if verdicts vary. Use the
       0184 utility's reusable gate (merges first in this raid).
-- [ ] Per-test fang report (toothless? + free-rider metrics) sortable by a risk x churn
+      Evidence: Phase 'Precheck' precedes 'Audit'; the precheck agent runs
+      `~/.claude/scripts/test-quality.py flakiness` (exit-code contract 0/2) and the
+      workflow `return { aborted: true }` with "suite is flaky, verdicts untrustworthy" on
+      exit 2 + gate=fail (a mis-invocation that also exits 2 is distinguished). Guarded by
+      ::test_precheck_calls_0184_flakiness_gate and ::test_precheck_aborts_and_blocks_fanout.
+- [x] Per-test fang report (toothless? + free-rider metrics) sortable by a risk x churn
       weighting (churn from git log).
-- [ ] Canary gate scoped to designated guard files only (isCanary-pollution bug gone).
+      Evidence: toothless table is `survivedRanked` sorted by risk×churn DESC; churn =
+      `git log --follow` commit count per file (churn agent); risk = human-supplied
+      CONFIG.RISK (default 1, never inferred — per ticket). Guarded by
+      ::test_risk_churn_sort_present_and_risk_is_input.
+- [x] Canary gate scoped to designated guard files only (isCanary-pollution bug gone).
+      Evidence: guard-agent findings are tagged structurally with `_isGuardFile` from the
+      CONFIG.GUARDS dispatch; canaryFindings filters on `f._isGuardFile && f.isCanary`, so
+      a behavioral agent's self-set isCanary can never pollute the gate. The prototype's
+      ad-hoc `/scaling_test|resource_test/` filename regex is gone. Guarded by
+      ::test_canary_gate_uses_structural_guard_tag_not_agent_claim and
+      ::test_canary_gate_does_not_trust_filename_regex_or_bare_iscanary.
