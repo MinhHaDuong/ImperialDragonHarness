@@ -31,14 +31,14 @@ rule is permanently enforced → never needs LLM again.
 
 ## When to use
 
-- Called by `/verify` as part of phase 2.
+- Called by `/gaze` as part of phase 2.
 - Called standalone by an author who wants to pre-check their own branch before opening a PR.
 - Called by the raid in an Imagine phase to audit a prototype.
 
 ## Input
 
 A branch name, optionally followed by `worktree=<path>` — the isolated
-review worktree prepared by the caller (`/verify` phase 1). When present,
+review worktree prepared by the caller (`/gaze` phase 1). When present,
 all phases run from that path.
 
 ## Protocol
@@ -49,8 +49,8 @@ Python projects fulfill the protocol via `@pytest.mark.adherence` tests invoked 
 
 ## Phases
 
-**Label skip.** When called from `/verify`, if the PR carries the
-`verify:adherence-passed` label (set by `/start-ticket`'s pre-PR
+**Label skip.** When called from `/gaze`, if the PR carries the
+`verify:adherence-passed` label (set by `/hunt`'s pre-PR
 gate), the caller skips this entire skill — the adherence check
 already ran clean before the PR was opened.
 
@@ -141,7 +141,7 @@ suggested_test: |
 ```
 
 This is non-blocking — it does not set `adherence: FAIL`. It triggers the ratchet
-so the next `/verify` cycle opens a follow-up ticket.
+so the next `/gaze` cycle opens a follow-up ticket.
 
 ### 2. Grep rules live as adherence tests (no central bank)
 
@@ -156,7 +156,7 @@ assertion message, and evolve without changing a harness interface. A
 central YAML/grep bank would force a framework for one beneficiary until
 a second project arrives wanting the same mechanism.
 
-When `/verify` or a review surfaces a rule worth mechanizing, write a
+When `/gaze` or a review surfaces a rule worth mechanizing, write a
 `@pytest.mark.adherence` test in the target repo. That is the ratchet
 in practice.
 
@@ -203,7 +203,7 @@ untested_rules:
 
 After each run, if `semantic_findings` is non-empty:
 
-1. The caller (`/verify` or author) opens a small follow-up ticket in the target repo:
+1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo:
    "Mechanize adherence rule X per suggested_test."
 2. That ticket adds a `@pytest.mark.adherence` test (in any existing test file, or a
    new one) that asserts the rule mechanically.

@@ -9,7 +9,7 @@ user-invocable: true
 
 This skill was renamed in ticket 0067. This stub exists for muscle memory only.
 
-1. Tell the user, verbatim: **"Skill celebrate renamed roar. Roaring."**
-2. Invoke the `roar` skill via the Skill tool, passing along any arguments.
+1. FIRST, before any tool call, write this line as plain visible response text (it is the point of this stub — do not skip it): **"Skill celebrate renamed roar. Roaring."**
+2. Only after that line is emitted, invoke the `roar` skill via the Skill tool, passing along any arguments.
 
 Do not perform any wrap-up steps here — `/roar` owns the procedure.

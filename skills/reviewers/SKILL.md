@@ -1,12 +1,12 @@
 ---
 name: reviewers
-description: "Reviewer-panel management for /verify — list, request, harvest, scorecard (review-is-CI seats)"
+description: "Reviewer-panel management for /gaze — list, request, harvest, scorecard (review-is-CI seats)"
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
 ---
 
-Manage the external reviewer panel for `/verify`. Each seat is a sandboxed
+Manage the external reviewer panel for `/gaze`. Each seat is a sandboxed
 CI-style reviewer job (ticket 0205, "review is CI"): `request` runs the
 0217 seat-runner once per roster seat — one OS-sandboxed container per
 seat — and `harvest` normalizes every seat's findings to the gate's

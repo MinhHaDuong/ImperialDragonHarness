@@ -22,7 +22,7 @@ precondition, never a forge approval rule.
 
 ## Relevant files
 
-- skills/verify/SKILL.md — setup phase + gate-inputs clause
+- skills/gaze/SKILL.md — setup phase + gate-inputs clause
 - Forge settings — auto-request lever (repo setting or ruleset
   parameter; identify exact mechanism at implementation)
 - tickets/0205 — contract + observation-period definition
@@ -31,7 +31,7 @@ precondition, never a forge approval rule.
 
 1. Enable auto-request of Copilot review on every merge request
    (forge-side config; document the exact lever in this ticket's log).
-2. skills/verify/SKILL.md: (a) setup notes the forge-review status;
+2. skills/gaze/SKILL.md: (a) setup notes the forge-review status;
    (b) gate's comment-validation step includes "the forge's automated
    reviewer, when present" — findings dispositioned like any panel
    comment; correctness-class only may bounce, style is noted-not-blocking.

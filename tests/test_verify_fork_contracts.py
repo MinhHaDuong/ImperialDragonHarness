@@ -1,4 +1,4 @@
-"""Fork-contract ratchet for the /verify pipeline (ticket 0193).
+"""Fork-contract ratchet for the /gaze pipeline (ticket 0193).
 
 The 2026-06-03 raid showed that `context: fork` sub-skills start from a bare
 context: args arrive interpolated into the SKILL.md heading, but the body
@@ -15,7 +15,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 
-VERIFY = (SKILLS / "verify" / "SKILL.md").read_text()
+VERIFY = (SKILLS / "gaze" / "SKILL.md").read_text()
 ERG_PR_MERGE = (SKILLS / "merge" / "erg-pr-merge").read_text()
 
 
@@ -45,7 +45,7 @@ def test_fork_skills_forbid_task_inference():
 
 
 def test_verify_threads_worktree_path_to_subskills():
-    """verify/SKILL.md must pass the review-worktree path to every sub-skill.
+    """gaze/SKILL.md must pass the review-worktree path to every sub-skill.
 
     `context: fork` does not inherit the orchestrator's cwd: during the raid
     the adherence/gate forks landed in the *session* worktree (on whatever
@@ -57,12 +57,12 @@ def test_verify_threads_worktree_path_to_subskills():
             line for line in VERIFY.splitlines() if name in line and "worktree=" in line
         ]
         assert invocation_lines, (
-            f"verify/SKILL.md: no invocation of {name} carries worktree=<path>"
+            f"gaze/SKILL.md: no invocation of {name} carries worktree=<path>"
         )
 
 
 def test_subskills_document_worktree_argument():
-    """Each verify sub-skill must cd into the worktree path it receives."""
+    """Each gaze sub-skill must cd into the worktree path it receives."""
     for skill in ("verify-adherence", "verify-gate", "review-pr", "review-pr-prose"):
         text = (SKILLS / skill / "SKILL.md").read_text()
         assert "worktree=" in text, (
@@ -71,7 +71,7 @@ def test_subskills_document_worktree_argument():
 
 
 def test_verify_has_containment_postcondition():
-    """Post-verify git-status check guards against foreign files and rogue
+    """Post-gaze git-status check guards against foreign files and rogue
     branch switches before any merge step (ticket 0193 action 2)."""
     assert "## Containment postcondition" in VERIFY
     assert "git status --porcelain" in VERIFY

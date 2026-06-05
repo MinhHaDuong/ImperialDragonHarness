@@ -930,7 +930,7 @@ def _housekeeping_phase(project: ProjectConfig) -> str:
     os.environ["BEAT_HOUSEKEEPING_BRANCH"] = branch
     try:
         hk_rc, hk_res = run_skill(
-            "/housekeeping",
+            "/molt",
             budget=project.budget_housekeeping,
             timeout_s=HOUSEKEEPING_TIMEOUT_S,
             cwd=path,

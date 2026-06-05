@@ -13,7 +13,7 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 |---------|---------------|-------|
 | Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
 | Ticket reference but no branch | `t{N}` | `[→ Plan]` |
-| `/start-ticket N` | `t{N}` | `[→ Execute]` |
+| `/hunt N` | `t{N}` | `[→ Execute]` |
 | Active feature branch + open MR | `t{N}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 

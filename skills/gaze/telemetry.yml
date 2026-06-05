@@ -1,4 +1,4 @@
-#  /verify telemetry thresholds
+#  /gaze telemetry thresholds
 #
 # Keep these as knobs, not code. Operators can widen/narrow without
 # touching SKILL.md. Overridable per-invocation via env vars listed
