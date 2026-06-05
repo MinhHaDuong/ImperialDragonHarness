@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-05T09:58Z claude created
 
+2026-06-05T10:38Z claude note raid execute: template-echo guard + per-seat dedup in harvest; single normalization point; tests
 --- body ---
 ## Context
 
@@ -49,7 +50,7 @@ as real input — exactly the alert-fatigue/noise the decorrelation research
 
 ## Exit criteria
 
-- [ ] Template-placeholder lines never reach the gate findings file
-- [ ] Duplicate findings collapsed to one (per seat) by (severity, file:line, rationale)
-- [ ] Single documented normalization point (harvest)
-- [ ] tests/test_reviewers.sh covers template-echo and duplicate-emission
+- [x] Template-placeholder lines never reach the gate findings file
+- [x] Duplicate findings collapsed to one (per seat) by (severity, file:line, rationale)
+- [x] Single documented normalization point (harvest)
+- [x] tests/test_reviewers.sh covers template-echo and duplicate-emission

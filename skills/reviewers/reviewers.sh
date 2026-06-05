@@ -115,24 +115,33 @@ case "$subcmd" in
         shopt -s nullglob
         for f in "$dest"/*.findings; do
             seat="$(basename "$f" .findings)"
+            declare -A _seen=()
             while IFS= read -r line; do
                 case "$line" in
                     FINDING\|*)
-                        # FINDING|severity=X|file=P:L|rationale=R → contract shape.
                         sev=$(sed -n 's/.*severity=\([^|]*\).*/\1/p' <<<"$line")
                         loc=$(sed -n 's/.*file=\([^|]*\).*/\1/p' <<<"$line")
                         rat=$(sed -n 's/.*rationale=\(.*\)$/\1/p' <<<"$line")
                         if [ -n "$sev" ] && [ -n "$loc" ]; then
+                            if [ "$sev" = "verifiable-or-consider" ] || [ "$loc" = "PATH:LINE" ] || [ "$rat" = "ONE SENTENCE" ]; then
+                                echo "harvest: DROP template-echo from '${seat}': ${line}" >&2; continue
+                            fi
+                            key="${sev}|${loc}|${rat}"
+                            if [ -n "${_seen[$key]:-}" ]; then
+                                echo "harvest: DROP duplicate from '${seat}': ${line}" >&2; continue
+                            fi
+                            _seen[$key]=1
                             echo "${sev}: ${loc} — ${rat}  [${seat}]"
                         else
                             echo "harvest: WARN unparseable finding from '${seat}': ${line}" >&2
                         fi
                         ;;
-                    SUMMARY\|*) : ;;  # per-seat summary line, not a finding
+                    SUMMARY\|*) : ;;
                     "") : ;;
                     *) echo "harvest: WARN non-contract line from '${seat}': ${line}" >&2 ;;
                 esac
             done < "$f"
+            unset _seen
         done
         ;;
 

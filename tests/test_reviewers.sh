@@ -86,6 +86,32 @@ mkdir -p "$FDIR/99"; printf 'garbage line not a finding\n' > "$FDIR/99/x.finding
 harv_warn=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 99 2>&1 >/dev/null)
 assert_contains "harvest: WARN on non-contract line" "WARN non-contract line" "$harv_warn"
 
+# ── template-echo detection ─────────────────────────────────────────────────
+mkdir -p "$FDIR/200"
+cat > "$FDIR/200/noisy-seat.findings" <<'NOISY'
+FINDING|severity=verifiable-or-consider|file=PATH:LINE|rationale=ONE SENTENCE
+FINDING|severity=verifiable|file=foo.sh:10|rationale=off-by-one
+FINDING|severity=verifiable|file=foo.sh:10|rationale=off-by-one
+FINDING|severity=consider|file=bar.py:5|rationale=unused import
+SUMMARY|findings=1|verdict=approve-or-revise
+NOISY
+harv_out=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>/dev/null)
+harv_err=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>&1 >/dev/null)
+# Template-echo line must be dropped, not emitted as a finding.
+if printf '%s' "$harv_out" | grep -qF 'verifiable-or-consider'; then
+    echo "FAIL: harvest: template-echo leaked through"; FAIL=$((FAIL+1))
+else
+    echo "PASS: harvest: template-echo dropped"; PASS=$((PASS+1))
+fi
+assert_contains "harvest: template-echo logged as DROP" "DROP template-echo" "$harv_err"
+# Duplicate collapsed: only one copy of off-by-one.
+count=$(printf '%s\n' "$harv_out" | grep -c 'off-by-one' || true)
+assert_eq "harvest: duplicate collapsed to one" "1" "$count"
+assert_contains "harvest: duplicate logged as DROP" "DROP duplicate" "$harv_err"
+# Both real unique findings survive.
+assert_contains "harvest: real finding 1 survives" "verifiable: foo.sh:10 — off-by-one" "$harv_out"
+assert_contains "harvest: real finding 2 survives" "consider: bar.py:5 — unused import" "$harv_out"
+
 # ── scorecard appends a valid erg log line ───────────────────────────────────
 # Build a throwaway erg ticket store so the real erg accepts the note.
 ERG_BIN="${REPO_ROOT}/tickets/erg"

@@ -131,7 +131,7 @@ run_seat "$HOMEDIR/.local/bin/aider" \
     > "$WORK/raw.out" 2> "$WORK/raw.err" \
     || { echo "seat-runner: reviewer exited non-zero; stderr follows" >&2; tail -20 "$WORK/raw.err" >&2; exit 1; }
 
-# ── 6. Normalize: keep only contract-shaped lines; surface the rest as WARN ─
+# ── 6. Pre-filter: structural contract lines only (harvest is the normalizer) ─
 grep -E '^(FINDING|SUMMARY)\|' "$WORK/raw.out" > "$OUT" || {
     echo "seat-runner: WARN no contract-shaped lines in reviewer output; raw output follows" >&2
     cat "$WORK/raw.out" >&2
