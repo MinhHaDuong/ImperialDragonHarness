@@ -2,11 +2,13 @@
 Title: Upstream git-erg: ID allocation races across parallel checkouts
 Created: 2026-06-04
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #297
 
 --- log ---
 2026-06-04T16:24Z Minh Ha-Duong created
 
 2026-06-05T10:28Z claude note Upstream verdict in: git-erg#282 closed wontfix — author retained optimistic concurrency (collisions are cheap: renumber to next free ID; erg check in CI detects). No reservation machinery in binary or skill. Both ticket actions resolved: issue was filed 2026-06-04 from an AEDIST session; answer adopted as-is, nothing to pull into the traveling binary.
+2026-06-05T10:31Z MinhHaDuong closed — autoclosed — PR #297
 --- body ---
 ## Context
 
