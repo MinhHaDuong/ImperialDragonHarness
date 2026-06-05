@@ -147,6 +147,25 @@ def test_independence_lens_ignores_intrinsically_flaky_test():
     assert out["order_dependent"] == []
 
 
+def test_independence_lens_flags_stable_ordered_unstable_shuffled():
+    # The canonical isolation bug: deterministic under fixed order, verdict
+    # varies under shuffle (depends which neighbours ran first). Reproduces
+    # the PR #303 round-1 reviewer finding: neither lens flagged this.
+    ordered = [
+        tq.RunResult(tq.GoAdapter.parse(_raw(("TestA", "pass")))) for _ in range(3)
+    ]
+    shuffled = [
+        tq.RunResult(tq.GoAdapter.parse(_raw(("TestA", v))), shuffle=True)
+        for v in ("pass", "fail", "pass")
+    ]
+    out = tq.independence_lens(ordered, shuffled)
+    (dep,) = out["order_dependent"]
+    assert dep["identity"] == "pkg::TestA"
+    assert dep["ordered"] == "pass"
+    assert dep["shuffled"] == "unstable"
+    assert dep["shuffled_verdicts"] == ["pass", "fail", "pass"]
+
+
 # ── speed lens ───────────────────────────────────────────────────────────────
 
 

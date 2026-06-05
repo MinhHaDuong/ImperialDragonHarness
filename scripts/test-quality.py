@@ -252,8 +252,18 @@ def flakiness_lens(runs: list[RunResult]) -> dict:
 def independence_lens(
     ordered: list[RunResult], shuffled: list[RunResult]
 ) -> dict:
-    """A test is order-dependent if its verdict differs between the ordered and
-    shuffled runs (controlling for tests already flaky under fixed order)."""
+    """A test is order-dependent when shuffling changes its behaviour.
+
+    Two signatures, both flagged:
+    - stable in BOTH directions but the verdicts disagree (deterministic
+      order dependence);
+    - stable under fixed order but UNSTABLE under shuffle (the canonical
+      isolation bug: the verdict depends on which neighbours ran first).
+      Reported with shuffled="unstable" plus the observed verdicts.
+
+    A test already unstable under fixed order is flakiness, not order
+    dependence — the flakiness lens (which sees the ordered runs) owns it.
+    """
     ordered_v = _verdicts_by_identity(ordered)
     shuffled_v = _verdicts_by_identity(shuffled)
 
@@ -264,12 +274,22 @@ def independence_lens(
     dependent: list[dict] = []
     for identity in sorted(set(ordered_v) | set(shuffled_v)):
         o = stable_verdict(ordered_v.get(identity, []))
-        s = stable_verdict(shuffled_v.get(identity, []))
-        # Only call it order-dependent when BOTH directions are internally
-        # stable but disagree — otherwise it's flakiness, not order-dependence.
-        if o is not None and s is not None and o != s:
+        shuffled_verdicts = shuffled_v.get(identity, [])
+        s = stable_verdict(shuffled_verdicts)
+        if o is None:
+            continue  # unstable under fixed order = flaky, owned by flakiness_lens
+        if s is not None and o != s:
             dependent.append(
                 {"identity": identity, "ordered": o, "shuffled": s}
+            )
+        elif s is None and shuffled_verdicts:
+            dependent.append(
+                {
+                    "identity": identity,
+                    "ordered": o,
+                    "shuffled": "unstable",
+                    "shuffled_verdicts": shuffled_verdicts,
+                }
             )
     return {
         "lens": "independence",
