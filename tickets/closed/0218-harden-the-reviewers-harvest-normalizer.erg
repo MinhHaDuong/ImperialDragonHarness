@@ -2,11 +2,13 @@
 Title: Harden the /reviewers harvest normalizer — drop template-echo and dedupe seat findings
 Created: 2026-06-05
 Author: claude
+Closed: autoclosed — PR #298
 
 --- log ---
 2026-06-05T09:58Z claude created
 
 2026-06-05T10:38Z claude note raid execute: template-echo guard + per-seat dedup in harvest; single normalization point; tests
+2026-06-05T10:49Z MinhHaDuong closed — autoclosed — PR #298
 --- body ---
 ## Context
 
