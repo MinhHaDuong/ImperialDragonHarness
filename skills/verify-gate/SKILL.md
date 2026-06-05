@@ -20,7 +20,7 @@ context: fork
 > name, git status snapshot, ticket files, or the shared task list).
 
 The last line of defence before merge. A gate with teeth: **cannot approve without
-concrete per-criterion evidence**. Designed to be called by `/verify` at phase 6, but
+concrete per-criterion evidence**. Designed to be called by `/gaze` at phase 6, but
 standalone-callable for debugging.
 
 ## Non-negotiables
@@ -52,7 +52,7 @@ standalone-callable for debugging.
 
 Either:
 - `<pr-number>` (standalone mode): the gate resolves ticket, diff, comments itself.
-- A structured bundle from `/verify` (preferred): `{pr, ticket, diff, phase_outputs}`.
+- A structured bundle from `/gaze` (preferred): `{pr, ticket, diff, phase_outputs}`.
 
 Both paths produce the same verdict shape. Round is always derived from PR comment
 history (see "Standalone invocation"), never passed by the caller.
@@ -64,8 +64,8 @@ into it first — running from the session worktree will read whatever branch
 happens to be checked out there and produce wrong results (ticket 0193).
 
 **Isolation**:
-- When called from `/verify`, the `worktree=` argument names the isolated
-  worktree that `/verify` created in phase 1. `cd` into it; no additional
+- When called from `/gaze`, the `worktree=` argument names the isolated
+  worktree that `/gaze` created in phase 1. `cd` into it; no additional
   setup is needed.
 - When invoked **standalone** without `worktree=`, the gate must create its
   own isolated worktree before reading PR state. See "Standalone invocation"
@@ -182,19 +182,19 @@ The gate never authors hedged language — use `verifiable:` or `consider:`.
 
 ## Standalone invocation
 
-Callable without `/verify`. Uses existing PR state only (no phase 2-5 outputs).
-Isolation setup is identical to `/verify` phase 1 (create worktree, remove on exit).
+Callable without `/gaze`. Uses existing PR state only (no phase 2-5 outputs).
+Isolation setup is identical to `/gaze` phase 1 (create worktree, remove on exit).
 
 **Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`;
 current round = count + 1.
 
-- From `/verify`: round > 2 → immediate ESCALATE.
+- From `/gaze`: round > 2 → immediate ESCALATE.
 - Standalone: round > 2 → warn and proceed as `standalone-override` (does not
-  unblock an ESCALATED `/verify` sequence).
+  unblock an ESCALATED `/gaze` sequence).
 
 ## Output destinations
 
-1. Structured verdict returned to caller (for `/verify` consumption).
+1. Structured verdict returned to caller (for `/gaze` consumption).
 2. PR comment posted with human-readable summary:
 
    ```

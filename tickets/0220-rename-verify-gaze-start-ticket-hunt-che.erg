@@ -6,6 +6,7 @@ Author: MinhHaDuong
 --- log ---
 2026-06-05T13:01Z MinhHaDuong created
 
+2026-06-05T13:12Z note implemented on t0220 (stacked on t0067); beat.py invokes /molt directly to avoid stub hop under budget; domain vocabulary (claude/housekeeping-* branches, housekeeping-git.sh, healthcheck probe keys) intentionally unchanged
 --- body ---
 ## Context
 
@@ -51,7 +52,7 @@ mechanism — command name = directory name). Two framings:
 
 ## Exit criteria
 
-- [ ] `skills/gaze/`, `skills/hunt/`, `skills/scry/`, `skills/molt/` exist with full content
-- [ ] Old names resolve via stubs: verify/start-ticket warn-and-delegate; check-readiness/housekeeping silently alias
-- [ ] No un-swept old-name references in skills/, rules/, scripts/, tests/ (excluding the stubs themselves and closed tickets)
-- [ ] `make check` + pytest pass; catalog in sync
+- [x] `skills/gaze/`, `skills/hunt/`, `skills/scry/`, `skills/molt/` exist with full content
+- [x] Old names resolve via stubs: verify/start-ticket warn-and-delegate; check-readiness/housekeeping silently alias
+- [x] No un-swept old-name references in skills/, rules/, scripts/, tests/ (excluding the stubs themselves and closed tickets)
+- [x] `make check` + pytest pass; catalog in sync

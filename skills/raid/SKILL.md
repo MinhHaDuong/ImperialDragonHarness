@@ -10,7 +10,7 @@ effort: max
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
-A raid does not redefine skills. It calls `/start-ticket`,
+A raid does not redefine skills. It calls `/hunt`,
 `/review-pr`, `/roar`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
 
@@ -113,21 +113,21 @@ Group tickets into waves:
 - Wave N+1: depends on Wave N results
 
 For each wave, launch agents with `isolation: "worktree"`.
-Each agent follows `/start-ticket` workflow. Push branch when done, create merge request.
+Each agent follows `/hunt` workflow. Push branch when done, create merge request.
 
 Wait for wave to complete.
 
-## Phase 6: Verify (per-ticket `/verify`)
+## Phase 6: Verify (per-ticket `/gaze`)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** launch per-ticket `/verify` runs in parallel (background agents,
+**Per-ticket:** launch per-ticket `/gaze` runs in parallel (background agents,
 one per merge request) when the PR branches touch disjoint files. Verify
 file-sharing PRs sequentially to avoid concurrent-fix collisions. Respect the
 max-concurrent-agents cap (see Subagents in rules/workflow.md). Phase 7 merges
 stay strictly sequential.
 
-**Per-wave:** after all per-ticket `/verify` runs complete, launch one integration-review
+**Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
 subagent (read-only) to check:
 - Do the merged/merge-pending PRs compose without contradiction?
 - Does `make check` still pass if we imagine them all merged?
@@ -135,7 +135,7 @@ subagent (read-only) to check:
   same test file in incompatible ways)?
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
-individual `/verify` verdicts.
+individual `/gaze` verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 

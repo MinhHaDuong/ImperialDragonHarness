@@ -41,7 +41,7 @@ the deep-research found is the ONLY real kind (ACP/A2A capability grants
 and aider's --ask are cooperative-only; a misbehaving seat bypasses
 them).
 
-    /verify gate
+    /gaze gate
     +-- seat-runner (0217): rootless container, repo read-only, secrets
     |   denyRead, network deny-by-default → ANY agnostic CLI as a seat
     +-- seats (0207): aider --ask / thin caller over an OpenAI-compatible
@@ -106,12 +106,12 @@ locally and mirror into forge CI — no forge round-trip required.
 
 1. Land the decorrelation rewording in rules/workflow.md.
 2. Record the contract (finding shape, advisory protocol, observation
-   period) in skills/verify/SKILL.md as the panel-extension section.
+   period) in skills/gaze/SKILL.md as the panel-extension section.
 3. After children merge: integration review across ≥5 trial MRs / ≥3
    projects; promote or drop each reviewer; close this tracker.
 
 ## Exit criteria
 
 - [ ] Decorrelation rule reworded (agnostic, gradient stated)
-- [ ] Panel-extension contract documented in skills/verify/SKILL.md
+- [ ] Panel-extension contract documented in skills/gaze/SKILL.md
 - [ ] All children merged; trial scorecards reviewed; promote/drop decided

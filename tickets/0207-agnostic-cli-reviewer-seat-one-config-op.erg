@@ -47,7 +47,7 @@ the child). llama-server endpoint is plain config (host:port), no secret.
 - scripts/seat-runner-prototype.sh (0217) — the contained runner this
   seat plugs into; v1 already drives aider --ask over llama-server
 - reviewer roster config (0208) — seat = {agent_cmd, endpoint, model}
-- skills/verify/SKILL.md — panel-extension section (from 0205)
+- skills/gaze/SKILL.md — panel-extension section (from 0205)
 - ~/.claude/scripts/bash-env.sh — credential loading reference
 
 ## Actions

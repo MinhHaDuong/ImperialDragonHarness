@@ -22,7 +22,7 @@
       "Bash(git push *)",
       "Bash(gh repo *)",
       "Bash(gh api *)",
-      "Edit(/.claude/skills/start-ticket/**)",
+      "Edit(/.claude/skills/hunt/**)",
       "Edit(/.claude/tickets/*.erg)",
       "Write(/.claude/tickets/*.erg)",
       "Bash(uv sync *)",

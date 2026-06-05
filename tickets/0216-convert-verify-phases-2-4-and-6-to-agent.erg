@@ -8,12 +8,12 @@ Author: MinhHaDuong
 
 2026-06-05T06:41Z claude note sequencing note (0205 architecture decision): proceed as designed — the Agent() conversion fixes live fork drift now; it later converges into the ACP client architecture on 0205 (all reviewers behind capability grants), so do not read the two as contradictory
 
-2026-06-05T06:56Z claude note panel review (PR #289): this ticket, 0206, and 0208 all edit skills/verify/SKILL.md. Land THIS first (it rewrites phases 2-4/6 wholesale) so 0206's gate clause and 0208's delegation stub stack onto the new structure — avoids a three-way parallel-raid conflict on verify/SKILL.md
+2026-06-05T06:56Z claude note panel review (PR #289): this ticket, 0206, and 0208 all edit skills/gaze/SKILL.md. Land THIS first (it rewrites phases 2-4/6 wholesale) so 0206's gate clause and 0208's delegation stub stack onto the new structure — avoids a three-way parallel-raid conflict on verify/SKILL.md
 --- body ---
 ## Context
 
 0202's validation cycle (raid 0203/0208/0201/0204/0167, 2026-06-04) ran
-six /verify fork invocations under the 0193 contracts. Containment held
+six /gaze fork invocations under the 0193 contracts. Containment held
 on the headline criteria — zero off-task runs, zero foreign files, zero
 rogue pushes/PRs — but contract drift INSIDE the forks recurred in three
 milder forms:
@@ -39,7 +39,7 @@ mechanism (prototyped clean in PRs #263/#264).
 
 ## Relevant files
 
-- `skills/verify/SKILL.md` phases 2-4 (fan-out) and 6 (gate) — the
+- `skills/gaze/SKILL.md` phases 2-4 (fan-out) and 6 (gate) — the
   context:fork invocations to convert
 - `skills/verify-gate/SKILL.md`, `skills/verify-adherence/SKILL.md`,
   `skills/simplify/` — invoked surfaces; their TASK DIRECTIVE openers
@@ -60,12 +60,12 @@ mechanism (prototyped clean in PRs #263/#264).
 
 ## Test
 
-One full /verify run on a real PR: all phases complete, verdict posted,
+One full /gaze run on a real PR: all phases complete, verdict posted,
 no stale /tmp worktrees, no branch switches, transcript shows zero
 out-of-role mutation attempts.
 
 ## Exit criteria
 
 - [ ] Verify phases 2-4 and 6 run as Agent-spawned sub-agents with pinned cwd
-- [ ] One clean /verify cycle on a real PR under the new mechanism
+- [ ] One clean /gaze cycle on a real PR under the new mechanism
 - [ ] Containment postcondition retained

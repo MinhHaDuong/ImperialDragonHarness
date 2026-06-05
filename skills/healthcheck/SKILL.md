@@ -112,6 +112,6 @@ Format:
 
 Omit a heading if it has no entries. If all checks are `ok`, omit the Action plan entirely.
 
-> **Contract** — `/housekeeping` parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
+> **Contract** — `/molt` parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
 
 Once the Action plan is fully effected, propose: "Surface remaining nits?"

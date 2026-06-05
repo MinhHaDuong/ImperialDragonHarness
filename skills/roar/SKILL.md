@@ -31,7 +31,7 @@ If the current branch is not merged into origin/main, stop and tell the user. Do
    git rev-parse HEAD > "$(git rev-parse --git-common-dir)/roar-last-sha"
    ```
 3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found via `/ticket-new` (which commits at its step 6 — don't skip it; an uncommitted draft is destroyed by step 9's worktree exit, see ticket 0174).
-4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /verify is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
+4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
 

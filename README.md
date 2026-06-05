@@ -68,7 +68,7 @@ ImperialDragonHarness/
    ```
    This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
 
-Skills are available as `/roar`, `/review-pr`, etc. Hooks fire automatically via `settings.json`.
+Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 
 ## Skills Catalog
 
@@ -79,15 +79,18 @@ Skills are available as `/roar`, `/review-pr`, etc. Hooks fire automatically via
 | `/beat` | Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/celebrate` | Deprecated — renamed to /roar. Warns, then delegates to the new name. |
-| `/check-readiness` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
+| `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
 | `/fang-audit` | "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch? Surfaces toothless tests. EXPENSIVE on-demand (the validating run was ~1.3M tokens / ~29 min); never invoke casually." |
+| `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
-| `/housekeeping` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
+| `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
+| `/hunt` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
+| `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
 | `/nightbeat-report` | Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities. |
 | `/nightbeat-supervisor` | Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
@@ -98,14 +101,15 @@ Skills are available as `/roar`, `/review-pr`, etc. Hooks fire automatically via
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
-| `/reviewers` | "Reviewer-panel management for /verify — list, request, harvest, scorecard (review-is-CI seats)" |
+| `/reviewers` | "Reviewer-panel management for /gaze — list, request, harvest, scorecard (review-is-CI seats)" |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
+| `/scry` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
-| `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
+| `/start-ticket` | Deprecated — renamed to /hunt. Warns, then delegates to the new name. |
 | `/ticket-new` | Create a local %erg 0.1 file for agent coordination. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
-| `/verify` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
+| `/verify` | Deprecated — renamed to /gaze. Warns, then delegates to the new name. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |
 | `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Never merges. |
 | `/zotero-import` | Import one or more PDFs into Zotero. Extracts metadata from the document, resolves identifiers online when available, checks for duplicates in the local Zotero library, writes a combined RIS file, and hands it to xdg-open so the user's environment decides what to do with it. |

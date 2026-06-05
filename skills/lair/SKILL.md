@@ -13,7 +13,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/roar-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/roar-last-sha)..HEAD --oneline` is empty, skip steps 1–2 and 11 (nothing new since last roar).
 
-1. **Housekeeping** — run `/housekeeping` (git sync, healthcheck, eager fix-now repairs, ticket creation).
+1. **Housekeeping** — run `/molt` (git sync, healthcheck, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
 3. **Log session metrics** — run `~/.claude/skills/lair/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
 4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.

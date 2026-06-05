@@ -656,7 +656,7 @@ class TestRaid:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        assert any("housekeeping" in c for c in calls)
+        assert any("/molt" in c for c in calls)
 
     def test_housekeeping_skipped_when_recent(self, tmp_project, git_ok):
         calls = []
@@ -671,7 +671,7 @@ class TestRaid:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        assert not any("housekeeping" in c for c in calls)
+        assert not any("/molt" in c for c in calls)
 
 
 # ── _raid CLOSED-loop (ticket 0049 Tier 2) ────────────────────────────────────
@@ -1123,7 +1123,7 @@ class TestProjectScopedIsolation:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        hk_call = next(r for r in recorded if "housekeeping" in r["skill"])
+        hk_call = next(r for r in recorded if "/molt" in r["skill"])
         assert hk_call["project_scoped"] is False
 
 
