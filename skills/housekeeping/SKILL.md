@@ -71,8 +71,9 @@ Run full repo housekeeping and act on every finding.
 2.6. **Archive closed tickets.** Skip if `tickets/` is absent.
 
    ```bash
-   tickets/erg archive tickets/
-   git add tickets/closed/
+   # Stage exactly the files this archive moved (it prints `ARCHIVED <basename>`),
+   # never the whole closed/ dir — a stray file there must not ride along.
+   tickets/erg archive tickets/ | sed -n 's#^ARCHIVED #tickets/closed/#p' | xargs -r git add --
    ```
 
    This moves any ticket with a non-empty `Closed:` header from `tickets/`

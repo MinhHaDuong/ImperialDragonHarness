@@ -18,7 +18,9 @@ argument-hint: <ticket-id>
      close the ticket through the **normal branch + PR flow** — never commit the close on `main`.
      Enter the worktree (step 3) and create the branch (step 4) first, then on that branch run
      `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
-     (`git add tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`), and open the
+     (`git add -u tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`
+     — `-u` stages the close edit and any dependent Blocked-by removals, never a
+     stray file in the shared `tickets/`), and open the
      merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. If not already in a worktree, enter one: call `EnterWorktree` with name `t$ARGUMENTS`.
