@@ -11,6 +11,13 @@
 
 ## Entries
 
+- [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
+- [Archive move: outputs/ is record-only](project_archive_move_record_only_outputs.md) — raw replies in archive/outputs/ since edda724b; rules/scripts reading raw data must point at archive; tab_decomposition_fix FROZEN (0424)
+- [Concurrent author-session raids](feedback_concurrent_author_session_raids.md) — re-verify ticket open/closed on origin/main before every execute launch; never touch sibling-session worktrees; don't bundle whole tickets/ snapshots into content PRs
+- [Pre-commit hook commit ordering](feedback_precommit_hook_commit_ordering.md) — adherence hook runs working-tree tests against the index; order multi-commit series green, slice with `git commit -- <paths>`
+- [Optimistic concurrency for ticket IDs](feedback_optimistic_concurrency_ticket_ids.md) — no reservation machinery (wontfix 0427, git-erg#282); collision = renumber; CI detects (0418)
+- [erg close bookkeeping conflict](feedback_erg_close_bookkeeping_conflict.md) — parallel closes of sibling blockers conflict in the THIRD ticket's Blocked-by lines; keep both notes, drop both headers
+- [quickpr limitations](feedback_quickpr_limitations.md) — no renames/deletions; restoring the starting branch reverts working-tree edits
 - [Parallel push during investigation](feedback_parallel_push_during_investigation.md) — always branch from `origin/main` after fetch, not local HEAD; user may push directly while agent investigates
 
 - [Argparse defaults drift](feedback_argparse_defaults_drift.md) — when Makefile output paths change, update argparse defaults + docstrings in generating scripts too; grep src/ before declaring done
