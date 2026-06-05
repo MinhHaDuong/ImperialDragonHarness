@@ -7,6 +7,8 @@ Author: MinhHaDuong
 2026-06-04T08:41Z MinhHaDuong created
 
 2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
+
+2026-06-05T06:41Z claude note alternative path recorded: Copilot CLI speaks ACP natively (Jan 2026) and could join as an 0208 seat instead of the forge bot; this ticket's forge-bot approach stands (zero token cost, server-side) — re-evaluate at 0205's integration review
 --- body ---
 ## Context
 

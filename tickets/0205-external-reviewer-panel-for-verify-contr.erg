@@ -9,6 +9,7 @@ Blocked-by: 0208
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
 
+2026-06-05T06:41Z claude note architecture decision (ACP/A2A dig with author): panel seats connect via the Agent Client Protocol — one client harness (0208), thin model agent replaces aider (0207 re-scoped + renamed), claude-code-acp joins as the sibling-tier Claude seat; A2A noted as the future seam for remote/hosted reviewers; 0216 proceeds as designed and converges into this
 --- body ---
 ## Context
 
@@ -22,8 +23,30 @@ stays open until children merge + integration review (celebrate step 7).
 ## Children
 
 - tickets/0206 — Copilot review (forge bot; subscription confirmed)
-- tickets/0207 — aider adapter (OpenRouter + llama-server configs)
-- tickets/0208 — reviewer-management helper skill
+- tickets/0207 — thin ACP reviewer agent (OpenRouter + llama-server configs)
+- tickets/0208 — reviewer-management helper skill (ACP client harness)
+
+## Architecture (decided 2026-06-05)
+
+Seats connect via the Agent Client Protocol (ACP): the client mediates
+all filesystem and terminal access, so the 0208 harness grants each
+seat fs/read only — containment by capability omission, a structural
+upgrade over prompt-level discipline for every seat at once.
+
+    verify orchestrator = ACP client  (fs/read yes, fs/write no, terminal no)
+    +-- claude-code-acp   (sibling-tier Claude seat; subscription auth)
+    +-- Gemini CLI        (native ACP)
+    +-- Copilot CLI       (native ACP; alternative to 0206's forge bot)
+    +-- model-reviewer    (0207 thin agent -> OpenRouter / llama-server)
+
+Seats never run tests; the orchestrator runs them and feeds results
+into each seat's context. A direct-API Claude seat would need a funded
+key — rejected; claude-code-acp keeps subscription auth. A2A (Linux
+Foundation, v1.0) is the noted future seam for remote/hosted reviewers;
+premature for local CLI seats. tickets/0216 (Agent() conversion of
+verify's internal phases) proceeds as designed — it fixes live drift
+now and converges into this architecture later (one containment regime
+for all reviewers).
 
 ## Design rules (bind the children)
 

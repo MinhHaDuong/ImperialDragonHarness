@@ -6,45 +6,69 @@ Author: MinhHaDuong
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
 
+2026-06-05T06:41Z claude note re-scoped: per-tool adapters replaced by ONE ACP client harness — seats are interchangeable ACP agents (Gemini CLI and Copilot CLI speak it natively; 0207's thin model agent; claude-code-acp as the Sonnet seat); containment enforced by capability grants (fs/read only), see 0205 architecture decision
 --- body ---
 ## Context
 
-Child of tickets/0205. With three reviewer kinds (forge bot, aider
-endpoints, sibling Claude tier), panel membership and trial bookkeeping
-need a management surface so verify stays thin. Author directive
-(2026-06-04): "add helper skills for reviewers management". Helpers are
-tool-named where they wrap one tool (0205 naming exception); the
-umbrella skill itself is generic.
+Child of tickets/0205. Re-scoped 2026-06-05 (ACP/A2A dig): instead of
+one bespoke adapter per reviewer kind, the management surface is ONE
+Agent Client Protocol (ACP) client harness driving N interchangeable
+seats. The client mediates all filesystem and terminal access in ACP,
+so the harness grants each seat fs/read only — no fs/write, no
+terminal — and the 0193/0202 drift catalog becomes structurally
+impossible for every seat, not prompt-discouraged. Adding a reviewer =
+adding a roster stanza, not writing an adapter. Seats available day
+one: Gemini CLI and Copilot CLI (native ACP), 0207's thin model agent
+(OpenRouter / llama-server), and claude-code-acp as the sibling-tier
+Claude seat (keeps subscription auth — no funded API key). The seats
+never run tests; the orchestrator runs them and feeds results into
+each seat's prompt context. Helpers are tool-named where they wrap one
+tool (0205 naming exception); the umbrella skill itself is generic.
 
 ## Relevant files
 
-- new: skills/reviewers/SKILL.md (+ pure-I/O helpers per reviewer kind)
+- new: skills/reviewers/SKILL.md + the ACP client harness helper
+  (pure I/O; spawns a seat sub-process, speaks JSON-RPC over stdio)
+- new: reviewer roster config (one place: seat = {agent_cmd, model,
+  kind, status advisory|required}; no secrets — credentials via
+  BASH_ENV path, see 0207)
 - skills/verify/SKILL.md — calls into this instead of inlining mechanics
 - tickets/0206, tickets/0207 — the reviewers being managed
 
 ## Actions
 
-1. `/reviewers list` — panel members, their kind, advisory/required
+1. ACP client harness: spawn the seat's agent_cmd, initialize with
+   capabilities {fs/read: yes, fs/write: NO, terminal: NO}, session/new,
+   session/prompt with the review directive (diff, ticket, test results,
+   0205 contract shape), stream session/update into a findings file,
+   deny any session/request_permission for mutation. One harness, every
+   seat.
+2. `/reviewers list` — panel roster, each seat's kind, advisory/required
    status, trial progress (MRs observed / projects covered).
-2. `/reviewers request <pr>` — fire all configured external reviewers
-   for a merge request (forge-bot request, aider adapter invocations).
-3. `/reviewers harvest <pr>` — collect all external findings, normalize
-   to the 0205 contract shape, emit one findings file for the gate.
-4. `/reviewers scorecard <pr> <verdict-summary>` — append the per-MR
+3. `/reviewers request <pr>` — fire all configured seats for a merge
+   request (ACP sessions; plus the 0206 forge-bot request, the one
+   non-ACP member while it lasts).
+4. `/reviewers harvest <pr>` — collect all findings, normalize to the
+   0205 contract shape, emit one findings file for the gate.
+5. `/reviewers scorecard <pr> <verdict-summary>` — append the per-MR
    trial line to the owning ticket's log (the 0206/0207 observation
    bookkeeping, mechanized).
-5. Config lives in one place (panel roster + endpoints); no secrets in
-   config — credentials via BASH_ENV path (see 0207).
+6. Config lives in one place (the roster); no secrets in config —
+   credentials via BASH_ENV path (see 0207).
 
 ## Test
 
-Shell test with stubbed forge CLI + stubbed adapters: `request` invokes
-each configured reviewer once; `harvest` merges two stub finding files
-into one normalized output; `scorecard` appends a valid erg log line
-(verbs: created/note/closed only) that `erg validate` accepts.
+Shell test with a stub ACP agent on PATH (canned JSON-RPC responses) +
+stubbed forge CLI: harness grants exclude fs/write and terminal;
+`request` opens one session per configured seat; a stub
+session/request_permission for a write is DENIED; `harvest` merges two
+stub finding files into one normalized output; `scorecard` appends a
+valid erg log line (verbs: created/note/closed only) that `erg
+validate` accepts.
 
 ## Exit criteria
 
+- [ ] ACP client harness: one client, N seats, fs/read-only grants, mutation permission requests denied
 - [ ] /reviewers skill with list/request/harvest/scorecard, catalog-registered
 - [ ] verify's panel-extension section delegates mechanics to it
 - [ ] Stubbed shell test green; make check green

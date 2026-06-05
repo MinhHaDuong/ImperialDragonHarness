@@ -6,6 +6,7 @@ Author: MinhHaDuong
 --- log ---
 2026-06-04T20:17Z MinhHaDuong created
 
+2026-06-05T06:41Z claude note sequencing note (0205 architecture decision): proceed as designed — the Agent() conversion fixes live fork drift now; it later converges into the ACP client architecture on 0205 (all reviewers behind capability grants), so do not read the two as contradictory
 --- body ---
 ## Context
 
