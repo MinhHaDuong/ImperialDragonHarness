@@ -1,10 +1,10 @@
 ## Key insights
 
-- Agent scope drift is the dominant failure mode: verify agents spiral, parallel agents contaminate branches, verify agents dirty the main repo. Defense: explicit "task complete after verdict" in prompts, worktree isolation, post-agent git status checks.
+- Agent scope drift is the dominant failure mode: verify agents spiral, parallel agents contaminate branches, verify agents dirty the main repo, forks start bare and under-execute. Defense: explicit "task complete after verdict" in prompts, worktree isolation, imperative TASK DIRECTIVE openers, post-agent git status checks.
 - Write-commit atomicity is a hard constraint imposed by beat's dirty-tree gate. Any skill writing tracked files without an immediate commit blocks the next beat cycle — treat it as a non-negotiable postcondition.
 - Spec drift recurs because implementers copy peers, not the spec. erg verbs, headers, and skill architecture anti-patterns all trace to this. Adherence tests that grep the canonical spec are the ratchet.
-- Credential architecture is a first-class design decision. BASH_ENV→bash-env.sh vs argv-leak, subscription auth vs funded direct-API key — both discovered through production failures. Every new secret-bearing feature needs an explicit credential path before implementation.
-- This memory is the harness's operational runbook: invisible invariants and failure modes discovered at cost, not what the code does (that's git). Value compounds across sessions.
+- Security architecture is first-class and needs an explicit path BEFORE implementation, on two axes: the credential path (BASH_ENV→bash-env.sh vs argv-leak; subscription auth vs funded direct-API key) and containment (real isolation is OS-level — seccomp / bubblewrap / rootless podman — never a cooperative protocol grant or an agent "mode", which a misbehaving or injected process bypasses).
+- This memory is the harness's operational runbook: invisible invariants and failure modes discovered at cost, not what the code does (that's git) nor architecture decisions (those live in tickets and docs/). Value compounds across sessions.
 
 ## Entries
 
