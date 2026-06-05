@@ -4,12 +4,14 @@ Created: 2026-04-30
 Author: claude
 Blocked-by: 0068
 Label: deferred
+Closed: autoclosed — PR #304
 
 --- log ---
 2026-04-30T08:30Z claude created
 
 2026-05-13T09:02Z MinhHaDuong tag deferred
 2026-06-05T12:49Z note user amended exit criteria: keep warning stubs at old names (announce rename, delegate to new name)
+2026-06-05T13:58Z MinhHaDuong closed — autoclosed — PR #304
 --- body ---
 ## Context
 
