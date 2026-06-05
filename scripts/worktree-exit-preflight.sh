@@ -8,7 +8,7 @@ set -euo pipefail
 # ExitWorktree will silently destroy the draft — the failure mode that lost
 # the 0173 ticket. See ticket 0174.
 #
-# This is a skill-level gate, called from /celebrate step 9 and /end-session
+# This is a skill-level gate, called from /roar step 9 and /lair
 # step 7 before invoking ExitWorktree. Checks tracked-modified, staged, AND
 # untracked entries — `git status --porcelain` covers all three by default.
 #
@@ -29,7 +29,7 @@ Blocked: worktree '$path' has uncommitted state — ExitWorktree would destroy i
 $status
 
 Commit (and push) anything you mean to keep before calling ExitWorktree. For
-ticket drafts filed during /celebrate sweeps, finish the /ticket-new commit
+ticket drafts filed during /roar sweeps, finish the /ticket-new commit
 step. For genuine WIP, salvage:
 
   ~/.claude/scripts/worktree-salvage.sh "$path"

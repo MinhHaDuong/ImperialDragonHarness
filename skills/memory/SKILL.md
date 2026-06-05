@@ -11,8 +11,8 @@ Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
 
 ## When to run
 
-- During `/celebrate` (save only, no sweep)
-- During `/end-session` (full sweep: stale check + rule cross-reference)
+- During `/roar` (save only, no sweep)
+- During `/lair` (full sweep: stale check + rule cross-reference)
 - After a user correction (save feedback immediately)
 - After discovering a project quirk
 

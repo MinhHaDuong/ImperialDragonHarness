@@ -42,7 +42,7 @@ IDH covers three of the five categories already, two implicitly:
 | Pattern | IDH surface | Status |
 |---------|-------------|--------|
 | **A** Auto-tuner | None — `settings.local.json` is curated by hand. The 2026-04-04 synthesis flagged this as finding C3 (140 lines of accumulated one-off permissions). | **Gap** |
-| **B** Observer | Three partial surfaces: `nightbeat-report` Step 4 (autonomous-channel only, post-hoc, structured), `celebrate` Step 11 ("Offer to improve workflow rules if lessons were learned" — per-task, suggestion), `memory` sweep (TTL-managed, semantic). No surface logs interactive-session friction structurally. | **Partial** |
+| **B** Observer | Three partial surfaces: `nightbeat-report` Step 4 (autonomous-channel only, post-hoc, structured), `roar` Step 11 ("Offer to improve workflow rules if lessons were learned" — per-task, suggestion), `memory` sweep (TTL-managed, semantic). No surface logs interactive-session friction structurally. | **Partial** |
 | **C** Generator | `new-ticket` generates ticket scaffolds. No skill creates other skills. | **Out of scope** |
 | **D** Teacher | `harness-rules` (companion `.md`s) auto-loads at session start. Functional, but inverts the progressive-disclosure pattern Anthropic recommends — it teaches by being always-loaded, not by being discoverable on demand. | **Architecturally different** |
 | **E** Orchestrator | `/orchestrator` (171 lines) runs the Five Claws across N tickets autonomously. `/beat` is its single-cycle wrapper. `/verify` runs a sub-orchestration of adherence + review + gate. | **Strong — defining feature of IDH** |
@@ -57,7 +57,7 @@ The strongest IDH-specific observation: **`/orchestrator` is a lifecycle metaski
 
 `nightbeat-report` covers the autonomous channel comprehensively — six categories of friction patterns (permission denials, budget exhaustion, recurring tickets, ambiguous orchestrator outputs, idle projects, expensive stuck tickets), with concrete fix proposals per pattern. It is a strong example of pattern (B), but it only fires after `claude-nightbeat.timer` runs.
 
-Interactive sessions — the bulk of IDH usage — produce no equivalent structured log. `celebrate` Step 11 is a one-line nudge ("Offer to improve workflow rules if lessons were learned"). It depends on the model deciding to surface lessons; it does not append to a durable log; it does not trigger a periodic aggregate review. `task-observer`'s key contribution over IDH's existing surface is the **silent-log-plus-weekly-review** pattern: every session adds observations to a JSONL, and once a week (or after N entries) an aggregate sweep proposes harness changes.
+Interactive sessions — the bulk of IDH usage — produce no equivalent structured log. `roar` Step 11 is a one-line nudge ("Offer to improve workflow rules if lessons were learned"). It depends on the model deciding to surface lessons; it does not append to a durable log; it does not trigger a periodic aggregate review. `task-observer`'s key contribution over IDH's existing surface is the **silent-log-plus-weekly-review** pattern: every session adds observations to a JSONL, and once a week (or after N entries) an aggregate sweep proposes harness changes.
 
 This is a closable gap. IDH already has the JSONL convention (`celebrations.jsonl`, 46 entries, ~25 days of data). Adding `observations.jsonl` and a weekly aggregator skill costs a few hundred lines and reuses the existing telemetry-directory pattern.
 
@@ -148,7 +148,7 @@ Three concrete actions, ranked by leverage. None duplicate the 2026-04-04 action
 These don't fit into actions but are worth a future doc:
 
 - **Is `harness-rules`' always-loaded design paying for itself?** §F4 frames this. An A/B over a week of session telemetry (rules loaded vs. rules behind progressive disclosure) would settle it. Current evidence is suggestive but not conclusive.
-- **Should `/celebrate` Step 11 be replaced by R2 (the observer log)?** They overlap. Either Step 11 stays as the synchronous "do you want to update rules?" prompt and the observer captures the silent residue, or Step 11 is dropped in favor of the observer's aggregate review. Probably the former, but worth deciding.
+- **Should `/roar` Step 11 be replaced by R2 (the observer log)?** They overlap. Either Step 11 stays as the synchronous "do you want to update rules?" prompt and the observer captures the silent residue, or Step 11 is dropped in favor of the observer's aggregate review. Probably the former, but worth deciding.
 - **Should the harness publish a skills-search tool?** `obra/superpowers` ships `skills-search` as the discovery surface for its 20+ skills. IDH has 26 skills and a flat `/<skill-name>` namespace; a search tool would matter once the count exceeds ~40. Not now.
 
 ---

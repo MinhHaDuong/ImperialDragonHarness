@@ -11,6 +11,7 @@ Label: deferred
 2026-05-12T13:11Z needs-human: naming table stale (new skills since 2026-04-30) + alias mechanism unresolved; awaiting design sign-off
 2026-05-13T09:02Z MinhHaDuong tag deferred
 2026-05-13T16:00Z MinhHaDuong annotated — skillset cleanup, verb-object schema attempt, v2 mapping table (v1 above superseded)
+2026-06-05T12:49Z note design resolved: simple dragon rename chosen over two-name system; Claude Code has no alias mechanism (no aliases: frontmatter, command = directory name, no settings alias map) — superseded by 0067 implementation
 --- body ---
 ## Context
 

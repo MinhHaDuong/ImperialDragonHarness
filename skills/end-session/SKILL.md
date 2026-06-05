@@ -1,35 +1,15 @@
 ---
 name: end-session
-description: End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session.
-disable-model-invocation: false
+description: Deprecated — renamed to /lair. Warns, then delegates to the new name.
+disable-model-invocation: true
 user-invocable: true
 ---
 
-# End session — day wrap-up
+# end-session → lair (renamed)
 
-Run when the user ends a work session ("done for today", "let's stop", "wrap up").
+This skill was renamed in ticket 0067. This stub exists for muscle memory only.
 
-## Steps
+1. Tell the user, verbatim: **"Skill end-session renamed lair. Retreating to the lair."**
+2. Invoke the `lair` skill via the Skill tool, passing along any arguments.
 
-0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/celebrate-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/celebrate-last-sha)..HEAD --oneline` is empty, skip steps 1–2 and 11 (nothing new since last celebrate).
-
-1. **Housekeeping** — run `/housekeeping` (git sync, healthcheck, eager fix-now repairs, ticket creation).
-2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
-3. **Log session metrics** — run `~/.claude/skills/end-session/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
-4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
-5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
-6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
-7. **Exit worktree** — if in a worktree:
-    a. Preflight from inside the worktree: `~/.claude/scripts/worktree-exit-preflight.sh` (refuses on any uncommitted/untracked state; closes the ExitWorktree gap, ticket 0174). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
-    b. Call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
-8. **Hygiene sweep**:
-   - `git worktree list` → remove any stale worktrees (`git worktree prune`)
-   - `git branch -a` → delete stale remote branches
-   - Check for orphan tickets and stale merge requests
-9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
-10. **Refresh STATE.md** on a throwaway branch:
-    a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
-    b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
-    c. Prune: delete items checked off before this session.
-    d. Commit, merge to main via fast-forward, delete branch.
-11. **Memory consolidation** — run `/dream <project>` where `<project>` is the current project directory name. This delegates to the autonomous consolidation skill (includes staleness check, dedup, and Park reflection).
+Do not perform any wrap-up steps here — `/lair` owns the procedure.

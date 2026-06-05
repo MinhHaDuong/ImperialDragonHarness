@@ -102,7 +102,7 @@ When compacting, preserve the list of modified files, test commands, and current
 
 # Autonomous Action Rules
 
-**Sweep results are decisions.** When a skill sweep (celebrate step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty.
+**Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty.
 
 **Loophole found → offer to plug it.** When a gap or loophole is identified (audit, review, user-reported check), don't just report it — immediately offer a concrete fix. Propose either implementing it now or opening a ticket. Reporting without offering leaves the user to ask the obvious follow-up.
 

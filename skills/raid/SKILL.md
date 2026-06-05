@@ -11,7 +11,7 @@ effort: max
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
 A raid does not redefine skills. It calls `/start-ticket`,
-`/review-pr`, `/celebrate`, etc. Its job is sequencing, wave management,
+`/review-pr`, `/roar`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
 
 ## Balance rule
@@ -174,8 +174,8 @@ After all waves: `git checkout main && git pull --rebase origin main`, then
 
 ## Phase 8: Celebrate (per-merged-PR)
 
-After all merges, from the updated main branch, run `/celebrate` for each
-successfully merged PR. The celebrate pre-check (`git merge-base --is-ancestor
+After all merges, from the updated main branch, run `/roar` for each
+successfully merged PR. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)
@@ -197,7 +197,7 @@ Autonomous mode: ralph loop to next wave.
     Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
 3. Write briefing (session log + merge request list + test delta).
-4. Do NOT run `/end-session`.
+4. Do NOT run `/lair`.
 
 ## Circuit breakers
 
