@@ -58,12 +58,24 @@ You configure it, then run it with the Workflow tool. Phases:
 Then the engine assembles a deterministic report (no LLM formatting) and returns
 it; write it to `CONFIG.OUTPUT`.
 
-## Configuration — the only part you edit per repo
+## Configuration — `.fang-audit.json` in the target repo, never this skill
 
-Open `skills/fang-audit/fang-audit.js` and fill the `CONFIG` block. **These are
-explicit inputs, NOT name heuristics** — the `X_test.go → X.go` heuristic
-returned a *nonexistent* file for 5 of 19 git-erg tests, including both canaries,
-silently breaking the validity gate. Always supply the table.
+**You never edit any skill file to run an audit.** The target repo owns its
+configuration in a committed `.fang-audit.json` at its root. At invocation,
+read that file and pass its parsed content as the Workflow `args` input —
+the script merges it over the built-in DEFAULTS (the validated git-erg
+reference values, kept in `fang-audit.js` as living documentation of every
+knob). Path values (`OUTPUT`, `UNTRACKED_SEED[].from`) may use a leading
+`~/`; the script expands it.
+
+If `.fang-audit.json` is missing, STOP and hand the user a template built
+from the DEFAULTS block — do not edit `fang-audit.js`, do not guess a
+pairing table.
+
+**The knobs are explicit inputs, NOT name heuristics** — the
+`X_test.go → X.go` heuristic returned a *nonexistent* file for 5 of 19
+git-erg tests, including both canaries, silently breaking the validity gate.
+Always supply the table.
 
 | Knob | What it is |
 |---|---|
@@ -119,9 +131,10 @@ from `git log --follow`; risk = the human-supplied `CONFIG.RISK` weight, default
 
 0. **Open the session in the target repo** (see the hard requirement above).
 1. Confirm the suite is worth a 1.3M-token audit and is reasonably stable.
-2. Edit the `CONFIG` block in `skills/fang-audit/fang-audit.js` for the target
-   repo (pairing table, run command, guards/canaries, precheck command).
-3. Run `skills/fang-audit/fang-audit.js` with the Workflow tool.
+2. Read `.fang-audit.json` at the target repo root. Missing → STOP and give
+   the user a template (from the DEFAULTS block); never edit skill files.
+3. Run `skills/fang-audit/fang-audit.js` with the Workflow tool, passing the
+   parsed config as `args`.
 4. If it aborts at the precheck, stabilize the flaky tests first — the verdicts
    are untrustworthy on a flaky suite, by design.
 5. Write the returned `report` to `CONFIG.OUTPUT`. **Spot-check 2–3 toothless

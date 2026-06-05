@@ -194,3 +194,38 @@ def test_mutating_agents_are_worktree_isolated():
 def test_skill_md_states_target_repo_requirement():
     text = MD.read_text()
     assert "TARGET repo" in text, "SKILL.md missing the target-repo session requirement"
+
+
+# ── 0222: per-repo config via args — zero skill-file editing ─────────────────
+
+
+def test_config_is_defaults_merged_with_args():
+    """Per-repo config arrives as the Workflow args input (read from the
+    target repo's .fang-audit.json); the engine consumes only the merged
+    CONFIG. Editing this file per repo is the defect 0222 removes."""
+    src = js()
+    assert "const DEFAULTS = {" in src, "DEFAULTS block missing"
+    assert re.search(r"const CONFIG = Object\.assign\(\{\}, DEFAULTS,.*args", src), (
+        "CONFIG must merge args over DEFAULTS"
+    )
+
+
+def test_path_knobs_are_tilde_expanded():
+    src = js()
+    assert "CONFIG.OUTPUT = expand(CONFIG.OUTPUT)" in src
+    assert "UNTRACKED_SEED" in src and "from: expand(s.from)" in src
+
+
+def test_meta_precedes_defaults():
+    """Workflow scripts must begin with export const meta (after comments)."""
+    src = js()
+    assert src.index("export const meta") < src.index("const DEFAULTS"), (
+        "meta block must precede DEFAULTS"
+    )
+
+
+def test_skill_md_forbids_editing_skill_files():
+    text = MD.read_text()
+    assert ".fang-audit.json" in text, "config-file flow not documented"
+    assert "never edit" in text.lower() or "never edit any skill file" in text.lower()
+    assert "Edit the `CONFIG` block" not in text, "stale edit-the-skill instruction remains"

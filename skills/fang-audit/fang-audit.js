@@ -5,15 +5,28 @@
 // See skills/fang-audit/SKILL.md for the prototype→skill correspondence and
 // the EXPENSIVE-RUN warning. This is fang-only v1 (ticket 0182); handcuff,
 // scope/altitude, and the three-axis report live in ticket 0219.
-//
+
+export const meta = {
+  name: 'fang-audit',
+  description: 'Mutation-test the configured test harness: does each test FAIL on the defect it claims to catch? Reports toothless tests. No source/test changes persist. EXPENSIVE on-demand audit (the validating run was ~1.3M tokens / ~29 min).',
+  phases: [
+    { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
+    { title: 'Audit', detail: 'behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
+    { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
+    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive)' },
+  ],
+}
+
 // ============================================================================
-// CONFIG — the ONLY part you edit per repo. Everything below CONFIG is the
-// repo-agnostic engine (verbatim from the prototype except the four marked
-// deltas: parameterized knobs, config-scoped canary gate, determinism
-// precheck, and the free-rider / risk×churn report additions).
+// DEFAULTS — the validated git-erg reference configuration, kept as living
+// documentation of every knob. Δ9: NEVER edit this file per repo — the target
+// repo owns its config in `.fang-audit.json` at its root, which the SKILL.md
+// invocation reads and passes as the Workflow `args` input; args override
+// these defaults key-by-key. Everything below the merge is the repo-agnostic
+// engine (verbatim from the prototype except the marked deltas).
 // ============================================================================
 
-const CONFIG = {
+const DEFAULTS = {
   // Human-readable name of the project under audit (report title only).
   PROJECT: 'YOUR-PROJECT',
 
@@ -116,16 +129,14 @@ const CONFIG = {
 // where marked Δ.
 // ============================================================================
 
-export const meta = {
-  name: 'fang-audit',
-  description: 'Mutation-test the configured test harness: does each test FAIL on the defect it claims to catch? Reports toothless tests. No source/test changes persist. EXPENSIVE on-demand audit (the validating run was ~1.3M tokens / ~29 min).',
-  phases: [
-    { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
-    { title: 'Audit', detail: 'behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
-    { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
-    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive)' },
-  ],
-}
+// Δ9: per-repo config arrives via the Workflow `args` input (read from the
+// target repo's `.fang-audit.json` by the SKILL.md invocation) and overrides
+// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side —
+// JSON cannot carry `${process.env.HOME}`.
+const expand = p => typeof p === 'string' ? p.replace(/^~(?=\/)/, process.env.HOME) : p
+const CONFIG = Object.assign({}, DEFAULTS, (args && typeof args === 'object') ? args : {})
+CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
+CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))
 
 const { BEHAVIORAL, GUARDS } = CONFIG
 

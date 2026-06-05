@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Fang-audit: per-repo config file, zero skill-file editing at invocation
+Created: 2026-06-05
+Author: MinhHaDuong
+
+--- log ---
+2026-06-05T14:42Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Author UX verdict on the first post-merge invocation attempt
+(2026-06-05): "a skill that needs two lines of dark magic before
+invocation" — the as-shipped flow required editing the committed
+fang-audit.js CONFIG block per target repo. That (a) dirties the
+harness repo on every run, arming beat's dirty-tree gate, and
+(b) puts per-repo data in a harness-global file, against the 0184
+doctrine (per-repo wiring is a thin adapter the repo owns).
+
+## Design
+
+- fang-audit.js: the CONFIG literal becomes DEFAULTS (the validated
+  git-erg values, kept as living documentation); the engine consumes
+  `CONFIG = {...DEFAULTS, ...args}` — the Workflow tool's args input
+  is the per-repo override channel. Tilde-expand OUTPUT and
+  UNTRACKED_SEED[].from script-side (JSON cannot carry
+  ${process.env.HOME}).
+- SKILL.md: invocation = open a session in the target repo, run
+  /fang-audit; the skill reads `.fang-audit.json` at the repo root
+  and passes it as args. Missing file → stop with a template, never
+  edit skill files.
+- The target repo owns its config: `.fang-audit.json` is committed
+  THERE (git-erg gets the reference one).
+
+## Actions
+
+1. fang-audit.js: DEFAULTS + args merge (Δ9), tilde expansion.
+2. SKILL.md: rewrite Configuration + Steps for the config-file flow.
+3. tests: pin the args merge and the no-edit invocation doc.
+4. git-erg: commit the validated `.fang-audit.json` (cross-repo PR).
+
+## Test
+
+Source-inspection: CONFIG is derived from DEFAULTS and args; SKILL.md
+documents `.fang-audit.json`; no instruction to edit the .js remains.
+
+## Exit criteria
+
+- [x] args override DEFAULTS; engine reads only the merged CONFIG — fang-audit.js Δ9 (Object.assign over DEFAULTS); meta moved first per Workflow spec
+- [x] OUTPUT and UNTRACKED_SEED paths tilde-expanded script-side — expand() on both knobs
+- [x] SKILL.md: config-file invocation, no skill-file editing step — Configuration section rewritten, Steps 2-3
+- [x] Regression tests updated/added; make check passes — 4 new tests, 19/19
+- [x] git-erg carries .fang-audit.json (reference config) — git-erg PR #292 (17 pairs + 2 guards, machine-extracted from DEFAULTS)
