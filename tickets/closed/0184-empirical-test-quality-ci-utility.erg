@@ -1,0 +1,75 @@
+%erg 0.1
+Title: Empirical test-quality CI utility (flakiness / independence / speed)
+Created: 2026-05-30
+Author: claude
+Closed: autoclosed — PR #303
+
+--- log ---
+2026-05-30T10:45Z claude created — cheap-tier sibling to 0182/0183; the per-PR-gateable lenses
+
+2026-06-05T11:57Z MinhHaDuong unlabel deferred
+2026-06-05T11:57Z Minh Ha-Duong note un-deferred for raid (author directive): the trio splits — 0184 raids now (it provides the flakiness gate 0182 imports as precheck), 0182 raids fang-only, 0219 carries the rest, 0183 stays deferred
+2026-06-05T12:03Z claude note raid execute: building scripts/test-quality.py — pure-Python utility (runner/adapter/lenses/ratchet layers), Go go-test-json adapter, flakiness gate subcommand w/ exit-code contract for 0182, ratchet baseline mode; tests via importlib + recorded go-json fixture
+2026-06-05T12:09Z claude note raid execute complete: scripts/test-quality.py + tests (24 pass, full suite 395 pass, make check pass, ruff clean); PR #303 opened; all 5 exit criteria ticked w/ evidence
+2026-06-05T12:55Z MinhHaDuong closed — autoclosed — PR #303
+--- body ---
+## Context
+
+Third in the test-quality tooling family ([[0182]] mutation oracles, [[0183]] LLM judge).
+This one carves out the lenses that are CHEAP and DETERMINISTIC — measurable by re-running
+the existing suite, no mutation, no LLM, no tokens. Because they cost seconds not dollars,
+these are the ONLY test-quality checks suitable as a per-PR CI gate (0182/0183 are
+scheduled/on-demand only — a full mutation run was ~1.3M tokens / ~29 min for 19 files).
+
+Reusable harness utility (hence IDH store); per-repo CI wiring is a thin adapter each repo
+adds (erg's wiring would be a small erg-project task, NOT this ticket).
+
+## Lenses in scope (re-run / shuffle / time — no LLM)
+- **Flakiness / determinism:** run the unchanged suite N times; flag any test whose verdict
+  varies. NEGATIVE-value tests — they train teams to ignore red. Also a hard PRECONDITION
+  for 0182: you cannot mutation-test a flaky suite (0182 imports this as its precheck gate).
+- **Independence / isolation:** run shuffled and in parallel; flag tests whose verdict
+  depends on order or shared state.
+- **Speed:** time each test; flag the slow tail and suggest tagging (cf. erg's `scaling`
+  build tag) so the fast feedback loop stays fast.
+
+## Design notes
+- Language-pluggable runner adapter (Go: `go test -count=N -shuffle=on -json`; others: their
+  equivalents). Parse machine-readable test output; pure data, no agents.
+- Output: per-test {stable?, order-independent?, duration}. Composes with 0182/0183 reports
+  via shared test identity, or stands alone.
+- CADENCE: this is the per-PR tier. Fast enough to gate. Pair with a ratchet so it blocks
+  only on NEW flakiness/slowness introduced by the diff, not pre-existing debt.
+
+## Exit criteria
+- [x] Utility runs the three checks from a single entry point; machine-readable output.
+      `scripts/test-quality.py run` builds flakiness + independence + speed lenses from one
+      set of suite invocations (`build_report`) and prints JSON on stdout. Verified by
+      `tests/test_test_quality.py::test_build_report_runs_all_three_lenses` and
+      `::test_run_subcommand_emits_report_and_exits_zero`, plus a live run against a real Go
+      package (slow_tail correctly flags the sleeping test).
+- [x] Flakiness check is exposed as a reusable gate that 0182 calls as its precheck.
+      `flakiness` subcommand: exit 0 = stable, exit `EXIT_REGRESSION` (2) = new flakiness,
+      JSON either way. 0182 shells out and keys on the exit code (contract documented in the
+      module docstring "Exit-code contract"; language-agnostic, robust to the hyphenated,
+      non-importable filename). Tests: `::test_flakiness_subcommand_exit_zero_when_stable`,
+      `::test_flakiness_subcommand_exit_nonzero_when_flaky`,
+      `::test_flakiness_subcommand_baseline_suppresses_known_flake`.
+- [x] Go adapter implemented; the runner interface is documented for other languages.
+      `GoAdapter.parse` consumes the `go test -json` event stream (keys Action/Test/Package/
+      Elapsed); `GoTestRunner` is the only subprocess layer (`go test -count=1 -json`,
+      `-shuffle` for independence). The pluggable runner+adapter interface (callable
+      `runner(*, shuffle, seed) -> str` + `adapter.parse(raw) -> list[TestRecord]`) is
+      documented in the module docstring. Adapter tested against a recorded fixture
+      (`tests/fixtures/go_test_mixed.json`), never invoking go:
+      `::test_go_adapter_parses_recorded_fixture`, `::test_go_adapter_ignores_package_events_and_build_noise`.
+- [x] Ratchet mode: fail only on diff-introduced regressions, baseline the rest.
+      `Baseline` = known-bad identities per lens; `ratchet()` fails only on bad identities
+      NOT in the baseline; `--update-baseline` re-baselines (never gates). Test identity =
+      `<package>::<TestName>` (the shared join key for 0182/0183 composition). Tests:
+      `::test_ratchet_passes_when_all_bad_is_baselined`, `::test_ratchet_fails_on_new_regression`,
+      `::test_run_subcommand_gates_on_ratchet_regression`, `::test_run_subcommand_update_baseline_never_gates`.
+- [x] Cost note honored: zero LLM tokens; runtime bounded for per-PR use.
+      Pure stdlib re-run/parse — no `anthropic`, no network, no agents (grep-clean).
+      `--runs` (default 3) and `--timeout` (default 600s) bound runtime; `--runs` is the
+      knob CI tunes per repo. Tested end-to-end via stub runner + a real Go package.

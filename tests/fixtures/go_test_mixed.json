@@ -1,0 +1,23 @@
+{"Time":"2026-06-05T14:04:34.7207673+02:00","Action":"start","Package":"gqdemo"}
+{"Time":"2026-06-05T14:04:34.722370587+02:00","Action":"run","Package":"gqdemo","Test":"TestAlpha"}
+{"Time":"2026-06-05T14:04:34.722420221+02:00","Action":"output","Package":"gqdemo","Test":"TestAlpha","Output":"=== RUN   TestAlpha\n"}
+{"Time":"2026-06-05T14:04:34.722447993+02:00","Action":"output","Package":"gqdemo","Test":"TestAlpha","Output":"--- PASS: TestAlpha (0.00s)\n"}
+{"Time":"2026-06-05T14:04:34.722454035+02:00","Action":"pass","Package":"gqdemo","Test":"TestAlpha","Elapsed":0}
+{"Time":"2026-06-05T14:04:34.722463472+02:00","Action":"run","Package":"gqdemo","Test":"TestBeta"}
+{"Time":"2026-06-05T14:04:34.722468923+02:00","Action":"output","Package":"gqdemo","Test":"TestBeta","Output":"=== RUN   TestBeta\n"}
+{"Time":"2026-06-05T14:04:34.722474283+02:00","Action":"output","Package":"gqdemo","Test":"TestBeta","Output":"    demo_test.go:6: hello\n"}
+{"Time":"2026-06-05T14:04:34.722480044+02:00","Action":"output","Package":"gqdemo","Test":"TestBeta","Output":"--- PASS: TestBeta (0.00s)\n"}
+{"Time":"2026-06-05T14:04:34.722485384+02:00","Action":"pass","Package":"gqdemo","Test":"TestBeta","Elapsed":0}
+{"Time":"2026-06-05T14:04:34.722490734+02:00","Action":"run","Package":"gqdemo","Test":"TestGammaFails"}
+{"Time":"2026-06-05T14:04:34.722495753+02:00","Action":"output","Package":"gqdemo","Test":"TestGammaFails","Output":"=== RUN   TestGammaFails\n"}
+{"Time":"2026-06-05T14:04:34.722501073+02:00","Action":"output","Package":"gqdemo","Test":"TestGammaFails","Output":"    demo_test.go:7: boom\n"}
+{"Time":"2026-06-05T14:04:34.722506814+02:00","Action":"output","Package":"gqdemo","Test":"TestGammaFails","Output":"--- FAIL: TestGammaFails (0.00s)\n"}
+{"Time":"2026-06-05T14:04:34.722512134+02:00","Action":"fail","Package":"gqdemo","Test":"TestGammaFails","Elapsed":0}
+{"Time":"2026-06-05T14:04:34.722517785+02:00","Action":"run","Package":"gqdemo","Test":"TestSkipped"}
+{"Time":"2026-06-05T14:04:34.722522724+02:00","Action":"output","Package":"gqdemo","Test":"TestSkipped","Output":"=== RUN   TestSkipped\n"}
+{"Time":"2026-06-05T14:04:34.722527814+02:00","Action":"output","Package":"gqdemo","Test":"TestSkipped","Output":"    demo_test.go:8: nope\n"}
+{"Time":"2026-06-05T14:04:34.722533344+02:00","Action":"output","Package":"gqdemo","Test":"TestSkipped","Output":"--- SKIP: TestSkipped (0.00s)\n"}
+{"Time":"2026-06-05T14:04:34.722538624+02:00","Action":"skip","Package":"gqdemo","Test":"TestSkipped","Elapsed":0}
+{"Time":"2026-06-05T14:04:34.722546078+02:00","Action":"output","Package":"gqdemo","Output":"FAIL\n"}
+{"Time":"2026-06-05T14:04:34.722780411+02:00","Action":"output","Package":"gqdemo","Output":"FAIL\tgqdemo\t0.002s\n"}
+{"Time":"2026-06-05T14:04:34.72280094+02:00","Action":"fail","Package":"gqdemo","Elapsed":0.002}
