@@ -32,6 +32,10 @@ fi
 # individual rule files on demand; verify-adherence checks ex post.
 cat "$_script_dir/../rules/README.md" 2>/dev/null || true
 
+# Inject harness-level memory (cross-project lessons promoted by /dream).
+# Kept tight — decay pass removes stale entries so injection cost stays bounded.
+cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
+
 # --- Nothing below this line may produce stdout (hook output = conversation context) ---
 exec >/dev/null 2>&1
 
