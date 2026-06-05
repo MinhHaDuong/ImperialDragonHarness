@@ -1,0 +1,79 @@
+%erg 0.1
+Title: Write and install the /update-publist skill (in the catalog, absent from the harness)
+Created: 2026-06-04
+Author: Minh Ha-Duong
+
+--- log ---
+2026-06-04T15:43Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+The AEDIST project's AGENTS.md skills catalog lists `/update-publist`
+("Adding/updating a publication | Edit Ha-Duong.bib, deposit on HAL via
+SWORD") as an IDH skill, but it exists nowhere: not in `skills/` here, not
+installed in `~/.claude/skills/`. Catalog/harness drift, discovered during
+AEDIST ticket 0412 (archiving the Econom'IA talk): the procedure had to be
+executed by hand.
+
+That session (2026-06-04) is the reference spec — manual procedure validated
+end to end, deposit hal-05644906 accepted on first try, confirmed in the
+moderation queue by HAL's ack email.
+
+## Reference procedure (skill spec)
+
+1. **Personal page** (`~/CNRS/html/`, not a git repo, deployed over FTP):
+   - copy the PDF into `files/` (naming `HaDuong-YYYY-Topic.pdf`; `-EN`
+     suffix for translations)
+   - add the entry to `src/Ha-Duong.bib`; section on the page is driven by
+     the BibTeX type (`inproceedings` → Scientific communications,
+     `unpublished` → Teaching and conferences, see TYPE_HEADINGS in
+     `src/bib2htm.py`); `file = {…}`, then `eprint = {https://hal.science/hal-XXXXXXXvN}`
+     once deposited
+   - translation pairs: `:EN` key suffix, `related`/`relatedtype =
+     {translationof}` on the translation, `{translatedin}` on the original;
+     the renderer merges them into one item (translation shown first,
+     original bracketed — disambiguate identical titles with a marker like
+     "(En français)")
+   - `make index.html && make files/Ha-Duong.bib`; verify by grep;
+     `make sync` (FTP, creds in `~/.netrc`) is the publish step — user
+     confirmation required
+2. **HAL via SWORD** (credential names: `HAL_ID`/`HAL_PASSWORD` in the
+   project `.env` — never echo values, never commit them):
+   - AOfr TEI (template: https://api.archives-ouvertes.fr/documents/all.xml);
+     typology COMM for a conference talk; valid CIRED structure =
+     `#struct-1380080`; idhal `minh-ha-duong`
+   - check the author's previous deposits for doctype/domain conventions via
+     the public search API before choosing
+   - zip `meta.xml` + PDF; POST to `https://api.archives-ouvertes.fr/sword/hal/`
+     with `Packaging: http://purl.org/net/sword-types/AOfr`
+   - **dry-run first with header `X-test: 1`**, then real deposit only after
+     user confirmation (outward, irreversible once moderated)
+   - pass credentials via a chmod-600 temp curl config (`-K`), never on the
+     command line; mask `<hal:password>` in any displayed response; the
+     SWORD ack means "stored in workspace" — moderation status is confirmed
+     by HAL's ack email, not the API response
+
+## Actions
+
+1. Write `skills/update-publist/SKILL.md` from the spec above.
+2. `make skills-catalog` to regenerate the README catalog.
+3. Install into `~/.claude/skills/update-publist/`.
+4. Check the AEDIST AGENTS.md catalog line matches the real skill.
+
+## Test
+
+Dry-run invocation on a fictitious publication: the skill must stop at the
+`X-test: 1` dry-run and ask for confirmation before any real deposit, and
+must refuse to display credential values.
+
+## Exit criteria
+
+- [ ] SKILL.md written here and catalog regenerated
+- [ ] Skill present in `~/.claude/skills/update-publist/`
+- [ ] HAL step gated by dry-run + explicit confirmation before real deposit
+- [ ] No credential value can reach chat output or git history
+
+## Related
+
+- AEDIST ticket 0412 (reference session) and PR MinhHaDuong/aedist-technical-report#710
