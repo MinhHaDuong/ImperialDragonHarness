@@ -2,6 +2,7 @@
 Title: Validate verify fork containment over one raid cycle; escalate to Agent-spawned sub-skills if drift recurs
 Created: 2026-06-04
 Author: claude
+Closed: autoclosed — PR #299
 
 --- log ---
 2026-06-04T07:54Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-06-04T20:19Z MinhHaDuong label needs-human
 2026-06-05T11:05Z Minh Ha-Duong note author disposition: close. Validation evidence recorded in full (headline containment criteria MET; 3 milder in-fork drift modes); the escalation clause fired correctly and the deterministic fix continues as ticket 0216 — this ticket's observational mandate is complete
 2026-06-05T11:05Z MinhHaDuong unlabel needs-human
+2026-06-05T11:08Z MinhHaDuong closed — autoclosed — PR #299
 --- body ---
 ## Context
 
