@@ -101,6 +101,7 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
 | `/ticket-new` | Create a local %erg 0.1 file for agent coordination. |
+| `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
 | `/verify` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |
 | `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Never merges. |
