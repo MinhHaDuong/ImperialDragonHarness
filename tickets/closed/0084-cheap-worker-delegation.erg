@@ -2,12 +2,15 @@
 Title: Add cheap-worker delegation for I/O-heavy tasks (bulk reads, boilerplate)
 Created: 2026-05-03
 Author: haduong
-Label: deferred
+Closed: autoclosed — PR #299
 
 --- log ---
 2026-05-03T15:00Z haduong created
 
 2026-05-13T09:02Z MinhHaDuong tag deferred
+2026-06-05T11:05Z Minh Ha-Duong note author disposition: close wontfix — superseded by platform evolution. The Agent tool now supports model overrides (haiku) and Explore agents natively, covering the I/O-delegation use case with zero custom scripts, zero new credentials. The WORKER_API_KEY approach also conflicts with the skill-architecture rule (helper scripts never call model APIs directly; subscription auth). No artifacts to remove (scripts/ask-worker, write-worker never written)
+2026-06-05T11:05Z MinhHaDuong unlabel deferred
+2026-06-05T11:08Z MinhHaDuong closed — autoclosed — PR #299
 --- body ---
 ## Context
 

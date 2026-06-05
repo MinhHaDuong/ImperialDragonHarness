@@ -2,7 +2,7 @@
 Title: Reviewer-management helper skill — request, harvest, normalize, scorecard
 Created: 2026-06-04
 Author: MinhHaDuong
-Blocked-by: 0217
+Closed: autoclosed — PR #299
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
@@ -13,6 +13,8 @@ Blocked-by: 0217
 
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): no ACP client harness — this is the management surface over the 0217 sandbox-runner. Blocked-by 0217 added (the runner is the seat execution mechanism). Seats are invoked by running the 0217 runner per roster entry; containment is the runner's OS sandbox, not protocol grants. The red-team's path-allowlist + per-seat fail-open blockers move to 0217 (where the sandbox lives); the scorecard-schema blocker stays here
 2026-06-05T09:25Z claude note /reviewers skill scaffold landed (PR supersedes #276): list/request/harvest/scorecard wired to the 0217 seat-runner — request runs the runner per roster seat with per-seat fail-open, harvest normalizes FINDING| output to the contract shape (unparseable→WARN), scorecard writes a fixed-schema erg line; empty-roster-safe; tests/test_reviewers.sh 13/13. NOT closing: blocked-by 0217 and the advisory trial (>=5 MRs) is pending
+2026-06-05T11:06Z Minh Ha-Duong note author disposition: close. All six exit criteria verified met (skill landed via PR #292 with Ticket-ref, harvest hardened by 0218/PR #298, delegation stub at verify/SKILL.md:216). Stale Blocked-by:0217 dropped — the remaining containment hardening (network isolation, path allowlist) is 0217's own scope, not this skill's
+2026-06-05T11:08Z MinhHaDuong closed — autoclosed — PR #299
 --- body ---
 ## Context
 
@@ -71,9 +73,9 @@ accepts; one stubbed seat hang proves fail-open (gate proceeds).
 
 ## Exit criteria
 
-- [ ] /reviewers skill with list/request/harvest/scorecard, catalog-registered
-- [ ] request invokes the 0217 sandbox-runner per roster seat; per-seat fail-open proven
-- [ ] harvest normalizes to the contract shape; unparseable → WARN, never dropped
-- [ ] scorecard writes a fixed-schema trial line (evidence, not vibes)
-- [ ] verify/SKILL.md carries a delegation stub pointing to /reviewers (the full panel-extension contract is 0205's deliverable, lands after this)
-- [ ] Stubbed shell test green; make check green
+- [x] /reviewers skill with list/request/harvest/scorecard, catalog-registered — PR #292; README.md catalog line present
+- [x] request invokes the 0217 sandbox-runner per roster seat; per-seat fail-open proven — tests/test_reviewers.sh "bad seat fail-open WARN"
+- [x] harvest normalizes to the contract shape; unparseable → WARN, never dropped — tested; hardened further by 0218/PR #298 (template-echo drop + dedup)
+- [x] scorecard writes a fixed-schema trial line (evidence, not vibes) — erg-validated in tests
+- [x] verify/SKILL.md carries a delegation stub pointing to /reviewers (the full panel-extension contract is 0205's deliverable, lands after this) — skills/verify/SKILL.md:216-220
+- [x] Stubbed shell test green; make check green — 19/19 assertions, make check passes
