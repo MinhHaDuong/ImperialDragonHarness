@@ -32,9 +32,10 @@ const DEFAULTS = {
 
   // Where the workflow writes the final report. Throwaway worktrees die with
   // the run, so this MUST be an absolute path in the MAIN repo (untracked is
-  // fine). NO hardcoded /home — use an absolute path you control, e.g.
-  // `${process.env.HOME}/your-repo/FANG-AUDIT.md`.
-  OUTPUT: `${process.env.HOME}/YOUR-REPO/FANG-AUDIT.md`,
+  // fine). NO hardcoded /home — use `~/your-repo/FANG-AUDIT.md`; the engine
+  // expands a leading `~/` via the args.HOME knob (the workflow sandbox has
+  // no Node `process` global, so HOME cannot come from the environment).
+  OUTPUT: '~/YOUR-REPO/FANG-AUDIT.md',
 
   // <TAGS> = build-tag flags for the DEFAULT suite (usually empty string).
   DEFAULT_TAGS: '',
@@ -60,12 +61,12 @@ const DEFAULTS = {
   // so a fresh worktree (which only has the committed tree) lacks them. The
   // guard agent copies each from `from` into `dest` if missing, BEFORE the
   // baseline check. Empty list = no seeding (fully generic). Keep `from` paths
-  // out of the /home/[a-z] form — use ${process.env.HOME}.
+  // out of the /home/[a-z] form — use a leading `~/` (expanded via args.HOME).
   // (The git-erg guard build references an untracked resource_test.go that
   // shares the //go:build scaling compile unit with scaling_test.go; without
   // it the scaling build fails to compile and the canary falsely FAILs.)
   UNTRACKED_SEED: [
-    { dest: 'src/go/resource_test.go', from: `${process.env.HOME}/git-erg/src/go/resource_test.go` },
+    { dest: 'src/go/resource_test.go', from: '~/git-erg/src/go/resource_test.go' },
   ],
 
   // Mutation heuristics — language-specific examples of a MINIMAL, COMPILING,
@@ -131,10 +132,20 @@ const DEFAULTS = {
 
 // Δ9: per-repo config arrives via the Workflow `args` input (read from the
 // target repo's `.fang-audit.json` by the SKILL.md invocation) and overrides
-// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side —
-// JSON cannot carry `${process.env.HOME}`.
-const expand = p => typeof p === 'string' ? p.replace(/^~(?=\/)/, process.env.HOME) : p
-const CONFIG = Object.assign({}, DEFAULTS, (args && typeof args === 'object') ? args : {})
+// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side.
+// The workflow sandbox has NO Node `process` global, so HOME must be supplied
+// by the invoker as args.HOME; without it, `~/` paths pass through unchanged
+// (the invoker should then pre-expand them in the config it passes).
+// Δ10: tolerate args delivered as a JSON-encoded STRING — observed 2026-06-05:
+// the harness handed the object through as a string, the old typeof check
+// silently dropped it, and the whole run fell back to DEFAULTS (harmless only
+// because the git-erg config IS the DEFAULTS reference; fatal for any other repo).
+let _cfg = args
+if (typeof _cfg === 'string') { try { _cfg = JSON.parse(_cfg) } catch { _cfg = null } }
+if (!(_cfg && typeof _cfg === 'object')) _cfg = {}
+const HOME = typeof _cfg.HOME === 'string' ? _cfg.HOME : ''
+const expand = p => (typeof p === 'string' && HOME) ? p.replace(/^~(?=\/)/, HOME) : p
+const CONFIG = Object.assign({}, DEFAULTS, _cfg)
 CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
 CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))
 
@@ -315,7 +326,7 @@ This is the 0184 test-quality utility's flakiness gate. Exit-code contract:
   - exit 2 = NEW flakiness found -> gate "fail"
 The JSON report on stdout carries a "gate" field ("pass"/"fail"); read it to confirm. Report exitCode, gate, any flaky test identities, and a short evidence excerpt. Do NOT mutate anything.`,
   { label: 'precheck:flakiness', phase: 'Precheck', schema: PRECHECK_SCHEMA }
-)
+).catch(() => null)  // Δ10: a precheck agent error falls into the abort path below, not an opaque crash
 
 if (!precheck || precheck.exitCode !== 0 || precheck.gate === 'fail') {
   const detail = precheck
@@ -351,7 +362,11 @@ const behavioral = await pipeline(
 phase('Guards')
 const guards = []
 for (const file of GUARDS) {
+  // Δ10: a single guard-agent failure must not discard the behavioral results
+  // already collected — degrade to null (the canary gate then reports SUSPECT,
+  // which is the honest verdict when a guard agent dies).
   let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8
+    .catch(e => { log(`guard ${file.test} agent error: ${e}`); return null })
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
   // agent it dispatched), NEVER from a read-back of the agent's isCanary flag.
@@ -410,14 +425,25 @@ const oracleStrength = Object.entries(oracleByFunc)
 // inferred — per the ticket, the human owns that judgment.
 // `churnByFile` is populated by the churn agent below; default 0 keeps the
 // sort total even if churn is unavailable.
+// Δ10: churn is DECORATION (a sort weight) — it must never kill the run. The
+// 2026-06-05 run died HERE at the finish line: the tool layer serialized the
+// agent's integer values as strings, the integer-typed schema rejected them,
+// and the uncaught throw discarded 1.36M tokens of completed audit work.
+// Tolerant schema (string|integer) + parseInt + try/catch => worst case is a
+// flat churn of 0 and a degraded sort, never a dead run.
 const churnByFile = await (async () => {
   const files = [...new Set(flat.map(f => f._file))]
-  const res = await agent(
-    `For ${CONFIG.PROJECT}, report the git churn (number of commits that touched the file) for each of these test files, using \`git log --follow --oneline -- <file> | wc -l\` from the repo root. Files: ${files.join(', ')}. Return a JSON object mapping each filename to its commit count.`,
-    { label: 'churn:git-log', phase: 'Guards',
-      schema: { type: 'object', additionalProperties: { type: 'integer' } } }
-  )
-  return res || {}
+  try {
+    const res = await agent(
+      `For ${CONFIG.PROJECT}, report the git churn (number of commits that touched the file) for each of these test files, using \`git log --follow --oneline -- <file> | wc -l\` from the repo root. Files: ${files.join(', ')}. Return a JSON object mapping each filename to its commit count (a plain number; a numeric string is also accepted).`,
+      { label: 'churn:git-log', phase: 'Guards',
+        schema: { type: 'object', additionalProperties: { type: ['integer', 'string'] } } }
+    )
+    return Object.fromEntries(Object.entries(res || {}).map(([k, v]) => [k, parseInt(v, 10) || 0]))
+  } catch (e) {
+    log(`churn agent failed (${e}); risk×churn sort degrades to churn=0 — report otherwise valid`)
+    return {}
+  }
 })()
 
 const riskWeight = f => (CONFIG.RISK[f._file] || 1.0)

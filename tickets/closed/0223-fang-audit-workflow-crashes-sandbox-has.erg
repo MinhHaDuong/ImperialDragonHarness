@@ -1,0 +1,63 @@
+%erg 0.1
+Title: fang-audit workflow crashes: sandbox has no process global
+Created: 2026-06-05
+Author: MinhHaDuong
+Closed: autoclosed — PR #309
+
+--- log ---
+2026-06-05T15:13Z MinhHaDuong created
+
+2026-06-05T18:13Z MinhHaDuong closed — autoclosed — PR #309
+--- body ---
+## Context
+Launching the fang-audit Workflow on 2026-06-05 failed instantly (7 ms, 0 agents):
+
+    Error: process is not defined
+        at <anonymous> (workflow.js:19:21)
+
+`fang-audit.js` used `process.env.HOME` in its DEFAULTS block (OUTPUT,
+UNTRACKED_SEED) and in the `expand` tilde-expander. The Workflow sandbox
+exposes no Node `process` global (consistent with its documented "no
+filesystem or Node.js API access" contract), so the script dies at parse-time
+before the precheck phase. The validating 1.3M-token run predates this; the
+runtime contract has since tightened.
+
+## Context (widened after the relaunch)
+The relaunch surfaced two more instances of the same failure class — the
+script trusting Workflow-runtime contracts that don't hold:
+
+2. **args delivered as a JSON-encoded string.** The harness handed the
+   `args` object through as a string; the old `typeof args === 'object'`
+   check silently dropped it and the entire run fell back to DEFAULTS.
+   Harmless here only because git-erg's `.fang-audit.json` IS the DEFAULTS
+   reference config — fatal misconfiguration for any other repo (evidence:
+   churn agent prompt read "For YOUR-PROJECT").
+3. **Schema-rejected integers killed a finished run.** The churn agent's
+   tool layer serialized integer values as strings; the
+   `additionalProperties: {type:'integer'}` schema rejected every attempt,
+   the engine threw after 2 nudges, and the uncaught throw discarded a
+   1.36M-token run at the finish line — with all 17 behavioral audits, all
+   skeptics, and both guard canaries already complete.
+
+## Fix
+- DEFAULTS path knobs become plain `~/` strings (no template interpolation).
+- `expand` reads HOME from a new `args.HOME` knob supplied by the invoker;
+  without it, `~/` paths pass through unchanged.
+- SKILL.md invocation contract updated: pass `HOME` in `args`, or pre-expand
+  all paths to absolute form.
+- args accepted as object OR JSON-encoded string (script-side JSON.parse).
+- Decorative/terminal agents can no longer kill the run (Δ10): churn gets a
+  tolerant string|integer schema + parseInt + try/catch (degrades to
+  churn=0); guard agents degrade to null (canary gate then reports SUSPECT,
+  the honest verdict); precheck errors fall into the existing abort path.
+
+Verified empirically: relaunch passed parse and ran the full audit
+(27 agents, 1.36M tokens); after the Δ10 fixes the resume from
+wf_356ca0b7-db6 replayed all cached agents and completed.
+
+## Exit criteria
+- [ ] `grep -cE '\bprocess\.' skills/fang-audit/fang-audit.js` returns 0 (comments may mention the word, code may not)
+- [ ] SKILL.md documents the `HOME` args knob
+- [ ] A fang-audit Workflow launch reaches the Precheck phase instead of dying at parse
+- [ ] args passed as a JSON-encoded string produces the same CONFIG as the object form
+- [ ] A churn/guard agent failure degrades the report instead of discarding the run

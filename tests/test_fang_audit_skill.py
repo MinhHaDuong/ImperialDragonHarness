@@ -202,11 +202,19 @@ def test_skill_md_states_target_repo_requirement():
 def test_config_is_defaults_merged_with_args():
     """Per-repo config arrives as the Workflow args input (read from the
     target repo's .fang-audit.json); the engine consumes only the merged
-    CONFIG. Editing this file per repo is the defect 0222 removes."""
+    CONFIG. Editing this file per repo is the defect 0222 removes. The
+    harness may deliver args as a JSON-encoded STRING (observed 2026-06-05,
+    ticket 0223), so the engine must normalize before the merge."""
     src = js()
     assert "const DEFAULTS = {" in src, "DEFAULTS block missing"
-    assert re.search(r"const CONFIG = Object\.assign\(\{\}, DEFAULTS,.*args", src), (
-        "CONFIG must merge args over DEFAULTS"
+    assert re.search(r"let _cfg = args", src), (
+        "config must derive from the Workflow args input"
+    )
+    assert re.search(r"JSON\.parse\(_cfg\)", src), (
+        "string-delivered args must be JSON.parse'd (0223)"
+    )
+    assert re.search(r"const CONFIG = Object\.assign\(\{\}, DEFAULTS, _cfg\)", src), (
+        "CONFIG must merge the normalized args over DEFAULTS"
     )
 
 
