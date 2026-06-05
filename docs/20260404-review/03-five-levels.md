@@ -47,7 +47,7 @@ The harness is well past raw prompting. Every file contains structured instructi
 | `review-pr` uses `context: fork` for parallel agents | Multi-perspective review |
 | `autonomous` manages parallel implementations | Up to 3 parallel, max 4 worktrees |
 
-**Notable skills:** `start-ticket` (TDD workflow), `review-pr` (5 perspectives), `end-session` (9-step wrap-up), `memory` (TTLs, staleness, caps).
+**Notable skills:** `start-ticket` (TDD workflow), `review-pr` (5 perspectives), `lair` (9-step wrap-up), `memory` (TTLs, staleness, caps).
 
 **Gaps:** No coding-pattern skills (e.g., "add module", "refactor"). Skills are workflow-oriented rather than coding-oriented.
 
@@ -84,7 +84,7 @@ The framework's key Level 4 criterion: *"you stop telling the agent to validate 
 | Worktree isolation | Complete — every conversation gets own worktree |
 | Parallel agents | Partial — `review-pr` and `autonomous` use them |
 | Cross-session state | Complete — STATE.md + MEMORY.md |
-| Session chaining | Partial — `end-session` → `autonomous` handoff |
+| Session chaining | Partial — `lair` → `autonomous` handoff |
 | Coordination layer (file conflicts) | **Missing** |
 | Fleet management (multi-session orchestrator) | **Missing** |
 | Merge conflict detection | **Missing** |
@@ -115,7 +115,7 @@ The framework's key Level 4 criterion: *"you stop telling the agent to validate 
 3. **Pre-PR conflict check** → verify branch merges cleanly with main
 
 ### Strengths
-- Session lifecycle fully automated (`on-start.sh` → skills → `end-session` → `autonomous`)
+- Session lifecycle fully automated (`on-start.sh` → skills → `lair` → `autonomous`)
 - Skill library exceptionally well-designed (proportional depth, multi-perspective, anti-patterns)
 - Memory management disciplined (TTLs, staleness, caps, cross-referencing)
 - Defensive hooks prevent known footguns

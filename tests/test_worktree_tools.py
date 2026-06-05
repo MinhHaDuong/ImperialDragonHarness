@@ -287,10 +287,10 @@ def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
 # --------------------------------------------------------------------------- #
 #
 # The PreToolUse Bash(git worktree remove*) matcher does not fire on the
-# ExitWorktree harness tool, so a /celebrate sweep that Write's a ticket draft
+# ExitWorktree harness tool, so a /roar sweep that Write's a ticket draft
 # and then calls ExitWorktree silently drops the draft. The preflight script
-# is the skill-level gate that closes that window: invoked by the celebrate
-# and end-session skills before they call ExitWorktree, it refuses when the
+# is the skill-level gate that closes that window: invoked by the roar
+# and lair skills before they call ExitWorktree, it refuses when the
 # worktree has any uncommitted state (tracked or untracked).
 
 def _preflight(path):
@@ -301,7 +301,7 @@ def _preflight(path):
 
 
 def test_preflight_blocks_on_untracked_ticket_draft(origin):
-    """The exact failure mode that lost the 0173 draft: a /celebrate sweep
+    """The exact failure mode that lost the 0173 draft: a /roar sweep
     Write's a new ticket file (untracked, never `git add`'d) and step 9 then
     calls ExitWorktree. The preflight must refuse before ExitWorktree runs."""
     _, primary = origin

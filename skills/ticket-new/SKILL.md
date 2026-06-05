@@ -101,4 +101,4 @@ When investigation spawns sub-tickets:
 1. Original ticket becomes the **tracking ticket** — leave it open.
 2. Create each sub-ticket referencing the tracker.
 3. Edit tracking ticket to list each child.
-4. Tracking ticket closes only after integration review (see `/celebrate` step 7).
+4. Tracking ticket closes only after integration review (see `/roar` step 7).

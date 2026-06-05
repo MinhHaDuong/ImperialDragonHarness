@@ -53,7 +53,7 @@ These issues surfaced across 3+ reviews — high confidence they matter:
 1. **Context discipline is outstanding** — 87 lines, no flattery, dense tabular formatting. Textbook Principle 2.
 2. **Worktree isolation model is architecturally sound** — prevents multi-session interference, enables attributable testing.
 3. **PR-merge block hook is exemplary hardening** — deterministic guard with diagnostic message and workaround.
-4. **Session lifecycle is fully automated** — `on-start.sh` → skills → `end-session` → `autonomous` chain.
+4. **Session lifecycle is fully automated** — `on-start.sh` → skills → `lair` → `autonomous` chain.
 5. **Memory management is disciplined** — TTLs, staleness criteria, list caps, cross-referencing.
 
 ---

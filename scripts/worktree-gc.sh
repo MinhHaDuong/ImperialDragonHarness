@@ -7,7 +7,7 @@ set -euo pipefail
 # not the worktree this script is invoked from. `git worktree remove` only
 # detaches the worktree — branches and commits survive — and we never rm -rf,
 # so a mistaken removal loses no history. Idempotent. Relies on the caller
-# having run `git fetch --prune` first (housekeeping / celebrate do).
+# having run `git fetch --prune` first (housekeeping / roar do).
 # Optional arg: repo dir (default: current dir). See tickets 0169, 0195.
 
 repo="${1:-.}"

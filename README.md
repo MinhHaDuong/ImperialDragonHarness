@@ -68,7 +68,7 @@ ImperialDragonHarness/
    ```
    This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
 
-Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automatically via `settings.json`.
+Skills are available as `/roar`, `/review-pr`, etc. Hooks fire automatically via `settings.json`.
 
 ## Skills Catalog
 
@@ -78,13 +78,14 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 |---------|-------------|
 | `/beat` | Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
-| `/celebrate` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
+| `/celebrate` | Deprecated — renamed to /roar. Warns, then delegates to the new name. |
 | `/check-readiness` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
-| `/end-session` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
+| `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
 | `/fang-audit` | "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch? Surfaces toothless tests. EXPENSIVE on-demand (the validating run was ~1.3M tokens / ~29 min); never invoke casually." |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
+| `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/nightbeat-report` | Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities. |
@@ -98,6 +99,7 @@ Skills are available as `/celebrate`, `/review-pr`, etc. Hooks fire automaticall
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
 | `/reviewers` | "Reviewer-panel management for /verify — list, request, harvest, scorecard (review-is-CI seats)" |
+| `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |

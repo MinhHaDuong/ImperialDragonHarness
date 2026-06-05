@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Rename verify→gaze, start-ticket→hunt, check-readiness→scry, housekeeping→molt
+Created: 2026-06-05
+Author: MinhHaDuong
+
+--- log ---
+2026-06-05T13:01Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Round 2 of the Imperial Dragon skill renames (0067/0068, PR #304).
+Author decisions, 2026-06-05:
+
+- `verify` → `gaze` (the dragon's gaze as the verification ward).
+  `review-pr` keeps its name — never invoked by hand, it is plumbing
+  called by `/verify`. Bonus: renaming IDH `verify` removes the name
+  collision with Claude Code's built-in `verify` skill.
+- `start-ticket` → `hunt` — pairs semantically with `raid`.
+- `check-readiness` → `scry`, `housekeeping` → `molt` — approved, but
+  discoverability and memorability will take a while: **aliases are
+  musts**. The descriptive names stay as permanent aliases, not
+  deprecation stubs.
+- `perch` stays (`coil` rejected).
+
+## Mechanism
+
+Same stub pattern as 0067: old-name `SKILL.md` delegates to the new
+canonical via the Skill tool (Claude Code has no native alias
+mechanism — command name = directory name). Two framings:
+
+- `verify`, `start-ticket`: deprecation stubs as in 0067 (warn line,
+  e.g. "Skill verify renamed gaze. Gazing.", then delegate).
+- `check-readiness`, `housekeeping`: permanent alias stubs — no
+  deprecated language; catalog description keeps the descriptive
+  text prefixed "Alias of /scry —" / "Alias of /molt —".
+
+## Actions
+
+1. `git mv` each skill dir to its dragon name; update frontmatter
+   `name:`, self-references, and helper-script paths.
+2. Write the four old-name stubs (framings above),
+   `disable-model-invocation: true`.
+3. Call-site sweep — `verify` especially is invoked from `raid`,
+   `beat`, `nightbeat-supervisor`, `reviewers`, rules, scripts and
+   tests. `verify-gate` and `verify-adherence` keep their names
+   (plumbing called by gaze). Stubs keep any missed call site
+   working, but sweep anyway.
+4. `make skills-catalog`; update README prose if needed.
+5. Run `make check`, pytest, `erg check`.
+
+## Exit criteria
+
+- [ ] `skills/gaze/`, `skills/hunt/`, `skills/scry/`, `skills/molt/` exist with full content
+- [ ] Old names resolve via stubs: verify/start-ticket warn-and-delegate; check-readiness/housekeeping silently alias
+- [ ] No un-swept old-name references in skills/, rules/, scripts/, tests/ (excluding the stubs themselves and closed tickets)
+- [ ] `make check` + pytest pass; catalog in sync
