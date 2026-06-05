@@ -210,6 +210,15 @@ Explicit human override. Usage: `/verify <pr-number> --force-approve <reason>`.
   `/verify-wave` (not yet drafted) for post-merge integration testing of a batch.
 - **Merging.** Ever. That is the caller's job.
 
+## External reviewer panel (delegation stub)
+
+The external, decorrelated reviewer panel — sandboxed CI-style seats over
+agnostic CLI reviewers — is managed by the `/reviewers` skill, not inlined
+here. Its findings are **advisory**: the gate dispositions them like any
+panel comment (only verifiable-class may bounce). The full panel-extension
+contract is ticket 0205's deliverable; seat execution is the 0217
+seat-runner. See `skills/reviewers/SKILL.md`.
+
 ## Output shape
 
 Post a single top-level PR comment at end of skill. Two sections,
