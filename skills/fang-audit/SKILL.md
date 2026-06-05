@@ -3,7 +3,7 @@ name: fang-audit
 description: "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch? Surfaces toothless tests. EXPENSIVE on-demand (the validating run was ~1.3M tokens / ~29 min); never invoke casually."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "[after editing the CONFIG block in fang-audit.js]"
+argument-hint: "[run in the target repo; reads its committed .fang-audit.json]"
 ---
 
 # Fang Audit — does each test have teeth?

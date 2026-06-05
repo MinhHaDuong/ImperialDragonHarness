@@ -229,3 +229,9 @@ def test_skill_md_forbids_editing_skill_files():
     assert ".fang-audit.json" in text, "config-file flow not documented"
     assert "never edit" in text.lower() or "never edit any skill file" in text.lower()
     assert "Edit the `CONFIG` block" not in text, "stale edit-the-skill instruction remains"
+    # The frontmatter argument-hint must not instruct editing the skill file
+    # either — it slipped through 0222's first pass because the body checks
+    # above match backticked phrasing only (review-pr finding, PR 308 round 1).
+    assert "editing the CONFIG block" not in text, (
+        "stale frontmatter argument-hint still instructs editing fang-audit.js"
+    )
