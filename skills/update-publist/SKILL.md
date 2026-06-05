@@ -1,14 +1,15 @@
 ---
 name: update-publist
 description: Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call.
-disable-model-invocation: false
+disable-model-invocation: true
 user-invocable: true
 argument-hint: <pdf-path> [--hal-only] [--page-only]
 ---
 
 # Update publication list
 
-Two independent steps, either runnable alone via flags. Both are
+Two independent steps, either runnable alone via flags (`--page-only`
+runs Step 1 only; `--hal-only` runs Step 2 only). Both are
 outward-facing and irreversible once completed — every mutation requires
 explicit user confirmation before execution.
 
@@ -98,11 +99,12 @@ curl -K "$TMPCONFIG" \
   --data-binary @deposit.zip
 ```
 
-Where `$TMPCONFIG` is a chmod-600 temp file containing:
+Where `$TMPCONFIG` is created with `mktemp` in `/tmp` (outside the
+repo tree), chmod-600'd, and cleaned up via `trap 'rm -f "$TMPCONFIG"' EXIT`
+so it is deleted even on error or interruption. Contents:
 ```
 user = "HAL_ID_VALUE:HAL_PASSWORD_VALUE"
 ```
-Delete the temp config immediately after the curl call.
 
 The SWORD acknowledgement means "stored in workspace" — moderation
 status is confirmed by HAL's email, not the API response.
