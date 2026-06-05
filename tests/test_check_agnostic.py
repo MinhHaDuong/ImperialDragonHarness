@@ -65,3 +65,61 @@ def test_escape_hatch_suppresses_violation(tmp_path):
     )
     result = _run(tmp_path)
     assert result.returncode == 0, result.stdout
+
+
+# --- Repo-relative script path pattern (ticket 0204, pinned by ticket 0213) ---
+#
+# The SKILL_PATTERNS entry catching repo-relative `scripts/<name>.(sh|py)`
+# references only runs against directories matching the skills case (`skills*`
+# or `*/skills*`), so these fixtures live under a `skills` subdir. Skills must
+# reference scripts via `~/.claude/scripts/` or `$HARNESS_DIR`, never as a bare
+# repo-relative `scripts/foo.sh` that assumes the harness IS the cwd.
+
+
+def _skill_dir(tmp_path):
+    """A directory whose name makes check-agnostic.sh apply SKILL_PATTERNS."""
+    d = tmp_path / "skills"
+    d.mkdir()
+    return d
+
+
+def _skill_doc(tmp_path, body):
+    d = _skill_dir(tmp_path)
+    (d / "SKILL.md").write_text(f"# Example skill\n\n{body}\n")
+    return d
+
+
+def test_fails_on_repo_relative_script_path(tmp_path):
+    """A bare `scripts/foo.sh` reference in a skill must fail the check."""
+    d = _skill_doc(tmp_path, "Run `scripts/foo.sh` to do the thing.")
+    result = _run(d)
+    assert result.returncode != 0, result.stdout
+    assert "VIOLATION" in result.stdout
+    assert "scripts/foo.sh" in result.stdout
+
+
+def test_passes_on_agnostic_script_path_forms(tmp_path):
+    """Home-anchored, HARNESS_DIR, and ./-prefixed forms are all agnostic."""
+    for body in (
+        "Run `~/.claude/scripts/foo.sh` to do the thing.",
+        "Run `$HARNESS_DIR/scripts/foo.py` to do the thing.",
+        "Run `./scripts/foo.sh` to do the thing.",
+    ):
+        sub = tmp_path / f"case_{abs(hash(body))}"
+        sub.mkdir()
+        d = _skill_doc(sub, body)
+        result = _run(d)
+        assert result.returncode == 0, f"{body!r} -> {result.stdout}"
+
+
+def test_catches_mixed_case_and_underscore_script_names(tmp_path):
+    """Stem must cover uppercase/digit/underscore names, not just [a-z-].
+
+    Red against the original `[a-z-]\\+` stem; green once broadened to
+    `[A-Za-z0-9_-]`. This is the deliberately-broken-pattern pin.
+    """
+    d = _skill_doc(tmp_path, "Run `scripts/Build_Step2.py` to do the thing.")
+    result = _run(d)
+    assert result.returncode != 0, result.stdout
+    assert "VIOLATION" in result.stdout
+    assert "scripts/Build_Step2.py" in result.stdout

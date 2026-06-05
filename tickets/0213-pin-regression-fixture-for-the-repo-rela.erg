@@ -2,10 +2,12 @@
 Title: Pin regression fixture for the repo-relative scripts pattern in check-agnostic
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: Pinned regression fixture for repo-relative scripts pattern; broadened stem to [A-Za-z0-9_-]
 
 --- log ---
 2026-06-04T11:01Z MinhHaDuong created
 
+2026-06-05T00:11Z Claude closed — Pinned regression fixture for repo-relative scripts pattern; broadened stem to [A-Za-z0-9_-]
 --- body ---
 ## Context
 
