@@ -8,6 +8,7 @@ Author: claude
 
 2026-06-05T08:34Z note prototype evidence (2026-06-05, padme): seat-runner v1 works end-to-end — podman rootless (bwrap blocked by apparmor_restrict_unprivileged_userns=1; podman ships an allowed profile), --read-only rootfs + ro mounts + tmpfs HOME + explicit env; containment self-test is alive-then-blocked (v1 bwrap self-test was fail-open: counted sandbox-failed-to-start as write-blocked). Devstral-Small-2-24B Q4_K_M via llama-server dual-GPU: 32s wall-clock on a ~600-line prose-heavy diff; normalization + fail-loud OK. Review quality: 13/13 findings FALSE POSITIVES (uniform hallucinated missing-trailing-newline, 0 such markers in the diff), summary count off by one — matches docs/research/ensemble-decorrelation-evidence.md prediction that a weak seat on a trivial/prose diff yields noise. Scorecard 1: seat=devstral-small-2-q4km TP=0 FP=13 latency=32s. Next: qwen3.6-27B head-to-head (already in /data/models/gguf/qwen), then a code-heavy diff
 2026-06-05T08:35Z claude note format correction: the 08:34Z line above lacks its author token (erg log takes the line verbatim; spec is {ts} {actor} {verb} {detail}) — author is claude. Appending per append-only rule
+2026-06-05T08:57Z claude note scorecard 2: seat=qwen3.6-35b-a3b (MoE, 3B active) via llama-server dual-GPU shard. SPEED: 80 tok/s generation (6.2x the dense qwen3.6-27b's 12.9 tok/s — confirms MoE active-param thesis; dense 27B took 4m36s and errored, MoE full review 2m23s). QUALITY: 3 findings, and one is a REAL cross-file consistency catch — flagged that THIS ticket's body said 'bubblewrap' while the prototype script uses podman (now fixed). That is exactly the cross-file finding class docs/research/ensemble-decorrelation-evidence.md predicted weak single-shot seats MISS — the MoE caught it. Other two: 1 reasonable-but-misread (aider provenance), 1 nitpick (clone flags). Verdict: USABLE local seat. Contrast scorecard 1 (devstral-small-2-q4km): 13/13 hallucinated false positives, unusable. Recommend qwen3.6-35b-a3b as the local open-weights seat. NORMALIZER GAP found: template-echo lines and duplicate emissions leak past the ^FINDING|/^SUMMARY| grep — tighten to drop literal-template and dedupe. Scorecard 2: seat=qwen3.6-35b-a3b TP=1 FP=2(1 nitpick,1 misread) latency=143s tok/s=80 verdict-quality=usable
 --- body ---
 ## Context
 
@@ -43,11 +44,13 @@ plumbing (0216 stays Claude-native) and is the natural spinoff.
 
 ## Actions (scoping — refine before execution)
 
-1. Seat-runner: launch a reviewer CLI inside an OS sandbox
-   (bubblewrap on Linux) with: read-only repo bind, scoped denyRead on
-   credential/secret paths (~/.ssh, ~/.aws, bash-env.sh, ~/.claude
-   memory), and network isolation (deny by default; allow only the one
-   model endpoint host the seat needs).
+1. Seat-runner: launch a reviewer CLI inside an OS sandbox (rootless
+   podman on this host — bwrap is blocked by
+   apparmor_restrict_unprivileged_userns=1 while podman/crun/runc ship
+   allowed AppArmor profiles; the prototype uses podman) with: read-only
+   repo bind, scoped denyRead on credential/secret paths (~/.ssh, ~/.aws,
+   bash-env.sh, ~/.claude memory), and network isolation (deny by
+   default; allow only the one model endpoint host the seat needs).
 2. Per-seat credential scoping: construct a MINIMAL child env (only the
    one API key that seat needs; strip BASH_ENV so the child does not
    re-source the full secret file). Addresses PR #289 red-team MAJOR.
