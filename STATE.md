@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-05T10:01Z
+Last updated: 2026-06-05T19:21Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-06-05T10:01Z -->
+<!-- generated 2026-06-05T19:21Z -->
 
-**Tickets:** 6 ready · 11 blocked — `erg ready tickets/` for full list
+**Tickets:** 5 ready · 3 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  14ab396 Merge pull request #293 from MinhHaDuong/t-normalizer-leak
-  2f23ba1 ticket(0218): harden /reviewers harvest normalizer — drop template-echo, dedupe
-  cf98c82 Merge pull request #292 from MinhHaDuong/t0208-reviewers-ci
-  e1f97ec skill(0208): /reviewers panel management wired to the 0217 seat-runner
-  d48d4f6 Merge pull request #273 from MinhHaDuong/chore-close-0167
+  7a7d544 Merge pull request #312 from MinhHaDuong/chore-memory-workflow
+  9aaebfd memory: Workflow agents are session-bound — isolation opt-in, repo binding structural
+  9c1db30 Merge pull request #311 from MinhHaDuong/t-dream-debt
+  a9b0597 ticket(0224): file Dream v2 debt — decay-confirmation loop + provenance race
+  7b2a95c Merge pull request #309 from MinhHaDuong/fang-audit-process-fix
 
 ## Blockers
 
@@ -23,8 +23,10 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
+- **Balance debt**: 2026-06-05 was all tooling — next raid must advance a deliverable (STATE milestone work or a project repo)
 - **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
-- **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native)
+- **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native); lands before 0206's verify/SKILL.md edits
+- **0219**: pick the second-language validation target (AEDIST Python suite is the candidate) before raiding
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
 
