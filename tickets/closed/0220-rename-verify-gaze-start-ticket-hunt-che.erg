@@ -2,11 +2,13 @@
 Title: Rename verify→gaze, start-ticket→hunt, check-readiness→scry, housekeeping→molt
 Created: 2026-06-05
 Author: MinhHaDuong
+Closed: autoclosed — PR #306
 
 --- log ---
 2026-06-05T13:01Z MinhHaDuong created
 
 2026-06-05T13:12Z note implemented on t0220 (stacked on t0067); beat.py invokes /molt directly to avoid stub hop under budget; domain vocabulary (claude/housekeeping-* branches, housekeeping-git.sh, healthcheck probe keys) intentionally unchanged
+2026-06-05T14:10Z MinhHaDuong closed — autoclosed — PR #306
 --- body ---
 ## Context
 
