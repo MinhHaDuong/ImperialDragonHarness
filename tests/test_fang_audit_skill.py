@@ -169,3 +169,28 @@ def test_no_hardcoded_home_paths():
         text = f.read_text()
         assert not re.search(r"/home/[a-z]", text), f"{f.name} has a /home path"
         assert "github.com" not in text, f"{f.name} references github.com"
+
+
+# ── 0221: per-agent worktree isolation on the mutating call sites ────────────
+
+
+def test_mutating_agents_are_worktree_isolated():
+    """Workflow agents share the session checkout by default (probe-verified,
+    ticket 0221); the mutate->test->revert loops MUST run in per-agent
+    worktrees or they corrupt each other. Skeptics are read-only and stay
+    non-isolated (worktrees are expensive)."""
+    lines = js().splitlines()
+    mutating = [ln for ln in lines
+                if "agent(auditPrompt(file)" in ln or "agent(guardPrompt(file)" in ln]
+    assert len(mutating) == 2, "expected exactly one audit + one guard agent call"
+    for ln in mutating:
+        assert "isolation: 'worktree'" in ln, f"mutating agent not isolated: {ln.strip()[:80]}"
+    # Skeptic stays non-isolated: read-and-judge, no execution.
+    (idx,) = [i for i, ln in enumerate(lines) if "agent(skepticPrompt" in ln]
+    skeptic_call = "\n".join(lines[idx:idx + 5])
+    assert "isolation" not in skeptic_call, "skeptic must stay non-isolated"
+
+
+def test_skill_md_states_target_repo_requirement():
+    text = MD.read_text()
+    assert "TARGET repo" in text, "SKILL.md missing the target-repo session requirement"

@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Fang-audit runtime: per-agent worktree isolation and target-repo session binding
+Created: 2026-06-05
+Author: MinhHaDuong
+
+--- log ---
+2026-06-05T14:10Z MinhHaDuong created
+
+--- body ---
+## Context
+
+First-contact findings from the authorized 0182 validating run
+(2026-06-05, pre-spend). A one-agent Workflow probe (~22k tokens)
+proved both empirically:
+
+1. **No per-agent isolation.** Workflow `agent()` calls run in the
+   SESSION checkout by default — `isolation: 'worktree'` is opt-in,
+   and neither the merged skill nor the May prototype passes it. As
+   shipped, the fan-out would run 16 concurrent mutate→test→revert
+   loops in one shared tree, corrupting each other's verdicts. The
+   prompt's "You are in an isolated throwaway git worktree" line is
+   false as shipped. (PR #305's verify checked extraction FIDELITY,
+   so it faithfully preserved the prototype's own omission.)
+2. **Target-repo session binding.** Workflow worktrees are cut from
+   the session's repo; an audit of git-erg cannot launch from an IDH
+   session — every agent would land in a tree with no src/go.
+
+## Actions
+
+1. fang-audit.js: add `isolation: 'worktree'` (marked Δ8) to the
+   behavioral-audit and guard `agent()` calls. Skeptics stay
+   non-isolated (read-and-judge, no execution — isolation is
+   expensive and useless there).
+2. SKILL.md: state the hard requirement — invoke from a session
+   rooted in the TARGET repo; the worktrees are cut from it.
+3. tests/test_fang_audit_skill.py: source-inspection test pinning
+   `isolation: 'worktree'` on both mutating agent() call sites.
+
+## Test
+
+Source-inspection: the audit and guard agent() calls carry
+isolation: 'worktree'; the skeptic call does not.
+
+## Exit criteria
+
+- [x] Audit + guard agents isolated (Δ8, both call sites) — fang-audit.js:334,343
+- [x] SKILL.md documents the target-repo session requirement — "HARD REQUIREMENT" block + step 0
+- [x] Regression test pins both call sites — test_mutating_agents_are_worktree_isolated, test_skill_md_states_target_repo_requirement
+- [x] make check passes — 15 skill tests, 422 full suite, drift + agnostic clean
+
+## Related
+
+- tickets/closed/0182 (the extraction), tickets/0219 (parking
+  condition NOT met by this — the validating run is still pending)

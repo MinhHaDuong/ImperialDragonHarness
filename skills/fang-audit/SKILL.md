@@ -29,6 +29,12 @@ blocked follow-up — do not expect them here.
 
 ## How it runs
 
+> **HARD REQUIREMENT: invoke from a session rooted in the TARGET repo.**
+> The Workflow tool cuts each agent's throwaway worktree from the *session's*
+> repository (probe-verified, ticket 0221). Launched from any other repo,
+> every agent lands in a tree without the configured sources and fails at
+> baseline. To audit `~/git-erg`, open the Claude session in `~/git-erg`.
+
 The workflow is a `Workflow`-tool script: `skills/fang-audit/fang-audit.js`.
 You configure it, then run it with the Workflow tool. Phases:
 
@@ -111,6 +117,7 @@ from `git log --follow`; risk = the human-supplied `CONFIG.RISK` weight, default
 
 ## Steps
 
+0. **Open the session in the target repo** (see the hard requirement above).
 1. Confirm the suite is worth a 1.3M-token audit and is reasonably stable.
 2. Edit the `CONFIG` block in `skills/fang-audit/fang-audit.js` for the target
    repo (pairing table, run command, guards/canaries, precheck command).

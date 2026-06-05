@@ -9,6 +9,7 @@ Label: deferred
 
 2026-06-05T11:56Z MinhHaDuong label deferred
 2026-06-05T13:32Z MinhHaDuong note blocker 0182 closed — Blocked-by removed.
+2026-06-05T14:12Z claude note parking condition NOT yet met: the authorized validating run hit a setup blocker pre-spend — Workflow agents proved non-isolated and session-repo-bound (probe, ticket 0221). Run again after 0221 merges, from a session rooted in the target repo
 --- body ---
 ## Context
 
