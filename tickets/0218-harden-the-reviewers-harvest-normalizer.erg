@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Harden the /reviewers harvest normalizer — drop template-echo and dedupe seat findings
+Created: 2026-06-05
+Author: claude
+
+--- log ---
+2026-06-05T09:58Z claude created
+
+--- body ---
+## Context
+
+Surfaced by the 0217 seat-runner prototype run (2026-06-05). A weak seat
+(and even a usable one — qwen3.6-35b-a3b) emits noise the normalizer lets
+through into the gate's findings:
+
+1. **Template echo** — the model repeats the literal prompt template
+   ("FINDING|severity=...|file=...|rationale=...", "SUMMARY|...|verdict=
+   approve-or-revise") before its real findings. These literal-placeholder
+   lines match `^FINDING|`/`^SUMMARY|` and pass straight through.
+2. **Duplicate emission** — the same finding block is emitted more than
+   once (observed: the MoE printed its 3 findings twice).
+
+Both leak past the harvest-side filter in skills/reviewers/reviewers.sh
+(`grep -E '^(FINDING|SUMMARY)\|'` / the case match) and the seat-runner's
+own grep. Result: the gate sees placeholder lines and duplicated findings
+as real input — exactly the alert-fatigue/noise the decorrelation research
+(docs/research/ensemble-decorrelation-evidence.md) warns degrades a panel.
+
+## Relevant files
+
+- skills/reviewers/reviewers.sh — the `harvest` normalizer (the canonical
+  fix site; one normalizer for all seats)
+- scripts/seat-runner-prototype.sh — its tail grep (0217); fix or defer to
+  the harvest normalizer so there is a single normalization point
+- tests/test_reviewers.sh — add cases for both noise modes
+
+## Actions
+
+1. Drop literal-template lines: reject a FINDING/SUMMARY line whose field
+   values are the placeholder tokens (file=..., severity=verifiable-or-
+   consider, verdict=approve-or-revise, rationale=ONE SENTENCE / ...).
+2. Dedupe findings by (severity, file:line, rationale) within a seat's
+   output before emitting; keep the first occurrence.
+3. Decide the single normalization point — prefer harvest (one place, all
+   seats) and make the seat-runner's grep a thin pre-filter only.
+4. Tests: a seat output containing the echoed template + a duplicated
+   finding yields exactly the unique real findings, with WARN-not-drop
+   preserved for genuinely unparseable lines.
+
+## Exit criteria
+
+- [ ] Template-placeholder lines never reach the gate findings file
+- [ ] Duplicate findings collapsed to one (per seat) by (severity, file:line, rationale)
+- [ ] Single documented normalization point (harvest)
+- [ ] tests/test_reviewers.sh covers template-echo and duplicate-emission
