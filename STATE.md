@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-04T05:54Z
+Last updated: 2026-06-05T10:01Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-06-04T05:49Z -->
+<!-- generated 2026-06-05T10:01Z -->
 
-**Tickets:** 4 ready · 8 blocked — `erg ready tickets/` for full list
+**Tickets:** 6 ready · 11 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  512b3f1 Merge pull request #244 from MinhHaDuong/raid-wrapup-20260603
-  db338a4 ticket(0193): log fifth incident — rogue duplicate PR #243 from orchestrator branch
-  7702193 raid(0185-0189) wrap-up: file 0193 verify-reliability, log 0167 skip-path observation
-  66189e6 Merge pull request #239 from MinhHaDuong/t0188-commit-or-embed
-  f7e6039 ticket(0188): close and archive — PR #239
+  14ab396 Merge pull request #293 from MinhHaDuong/t-normalizer-leak
+  2f23ba1 ticket(0218): harden /reviewers harvest normalizer — drop template-echo, dedupe
+  cf98c82 Merge pull request #292 from MinhHaDuong/t0208-reviewers-ci
+  e1f97ec skill(0208): /reviewers panel management wired to the 0217 seat-runner
+  d48d4f6 Merge pull request #273 from MinhHaDuong/chore-close-0167
 
 ## Blockers
 
@@ -23,9 +23,11 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **Exercise /dream**: run `/dream -home-haduong--claude` to validate the skill on real memory data
+- **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207/0208
+- **0218**: drop template-echo + dedupe in the /reviewers harvest normalizer
+- **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native)
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
-- Nightbeat suspended (no projects in roll); re-enable when new project added
+- Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
 
 ## Backlog
 
