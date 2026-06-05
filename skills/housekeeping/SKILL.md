@@ -35,6 +35,33 @@ Run full repo housekeeping and act on every finding.
 
    Exception: `BEAT_HOUSEKEEPING_BRANCH` is set — beat.py manages concurrency itself; skip this guard.
 
+0.7. **Freshen the erg binary (before any erg check).** Refresh the installed
+   `erg` *before* step 1's git phase, because both erg-driven surfaces a sweep
+   acts on run against whatever binary is on `PATH`: the corpus check
+   `erg check tickets/` inside `housekeeping-git.sh`, and `erg ready` inside the
+   step-2 healthcheck probe (`project-state.py` prefers `which erg`). A stale
+   installed binary produces *false* violations on tickets using format the old
+   binary predates — six bogus folder/header hits on closed tickets carrying the
+   newer `Label:` header, 2026-06-04 — and an autonomous sweep would file
+   tickets on them.
+
+   ```bash
+   erg update   # refresh the INSTALLED binary. Offline-safe by design: fetch
+                # errors (no remote, no network, not a git repo) exit 0, so the
+                # sweep never fails on an isolated machine.
+   ```
+
+   `erg update` only ever replaces the binary it runs as (the installed
+   `~/.local/bin/erg`), never the committed `tickets/erg`. If a visited repo's
+   committed `tickets/erg` lags its remote, **surface that as an `open-ticket`
+   finding (step 4) — do not run `tickets/erg update` and do not commit a
+   refreshed binary here.** The committed binary is durable state that travels
+   via a merge request, not via a sweep's direct mutation.
+
+   Ordering this before step 1 means every later erg-driven finding runs against
+   the fresh binary: a violation that survives the refresh is real and may be
+   ticketed; one that does not was a stale-binary artifact and is dropped.
+
 1. **Git phase.**
    - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
