@@ -10,6 +10,8 @@ Blocked-by: 0208
 2026-06-04T08:41Z MinhHaDuong created
 
 2026-06-05T06:41Z claude note architecture decision (ACP/A2A dig with author): panel seats connect via the Agent Client Protocol — one client harness (0208), thin model agent replaces aider (0207 re-scoped + renamed), claude-code-acp joins as the sibling-tier Claude seat; A2A noted as the future seam for remote/hosted reviewers; 0216 proceeds as designed and converges into this
+
+2026-06-05T07:30Z claude note SUPERSEDED by panel + research: the PR #289 panel (RETHINK x2) and deep-research (docs/research/agnostic-reviewer-landscape.md) both find the ACP-client framing wrong — containment is OS-level not protocol-level, and the reusable unit is a sandbox-runner (spinoff 0217), not an ACP client. Decorrelation premise unproven (deep-research wbclco9po pending). Author reframe 2026-06-05: "review is CI, treat it like CI" — architecture rewrite pending on that
 --- body ---
 ## Context
 
