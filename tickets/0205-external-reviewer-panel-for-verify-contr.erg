@@ -12,6 +12,8 @@ Blocked-by: 0208
 2026-06-05T06:41Z claude note architecture decision (ACP/A2A dig with author): panel seats connect via the Agent Client Protocol — one client harness (0208), thin model agent replaces aider (0207 re-scoped + renamed), claude-code-acp joins as the sibling-tier Claude seat; A2A noted as the future seam for remote/hosted reviewers; 0216 proceeds as designed and converges into this
 
 2026-06-05T07:30Z claude note SUPERSEDED by panel + research: the PR #289 panel (RETHINK x2) and deep-research (docs/research/agnostic-reviewer-landscape.md) both find the ACP-client framing wrong — containment is OS-level not protocol-level, and the reusable unit is a sandbox-runner (spinoff 0217), not an ACP client. Decorrelation premise unproven (deep-research wbclco9po pending). Author reframe 2026-06-05: "review is CI, treat it like CI" — architecture rewrite pending on that
+
+2026-06-05T09:10Z claude note rewritten around review-is-CI (author directive): ACP dropped as the substrate; a reviewer seat is a sandboxed CI-style job (0217 seat-runner), findings normalize to the contract shape, advisory→required is the optional→required-check toggle. Decorrelation evidence landed (docs/research/ensemble-decorrelation-evidence.md): cap N at 2-4, composition>count, the genuinely-different local open-weights seat buys the real independence (prototype: qwen3.6-35b-a3b usable, devstral hallucinated). 0207/0208 re-scoped off ACP; children now blocked-by 0217
 --- body ---
 ## Context
 
@@ -25,30 +27,51 @@ stays open until children merge + integration review (celebrate step 7).
 ## Children
 
 - tickets/0206 — Copilot review (forge bot; subscription confirmed)
-- tickets/0207 — thin ACP reviewer agent (OpenRouter + llama-server configs)
-- tickets/0208 — reviewer-management helper skill (ACP client harness)
+- tickets/0207 — agnostic CLI reviewer seat (OpenRouter + llama-server configs)
+- tickets/0208 — reviewer-management surface (roster, harvest, scorecard)
+- tickets/0217 — sandbox seat-runner (the seat execution mechanism; foundational)
 
-## Architecture (decided 2026-06-05)
+## Architecture: review is CI (decided 2026-06-05, supersedes the ACP draft)
 
-Seats connect via the Agent Client Protocol (ACP): the client mediates
-all filesystem and terminal access, so the 0208 harness grants each
-seat fs/read only — containment by capability omission, a structural
-upgrade over prompt-level discipline for every seat at once.
+A reviewer seat is a sandboxed CI-style job, not an orchestrated agent.
+This reuses solved CI primitives instead of building bespoke
+orchestration, and — critically — gets containment from the OS, which
+the deep-research found is the ONLY real kind (ACP/A2A capability grants
+and aider's --ask are cooperative-only; a misbehaving seat bypasses
+them).
 
-    verify orchestrator = ACP client  (fs/read yes, fs/write no, terminal no)
-    +-- claude-code-acp   (sibling-tier Claude seat; subscription auth)
-    +-- Gemini CLI        (native ACP)
-    +-- Copilot CLI       (native ACP; alternative to 0206's forge bot)
-    +-- model-reviewer    (0207 thin agent -> OpenRouter / llama-server)
+    /verify gate
+    +-- seat-runner (0217): rootless container, repo read-only, secrets
+    |   denyRead, network deny-by-default → ANY agnostic CLI as a seat
+    +-- seats (0207): aider --ask / thin caller over an OpenAI-compatible
+    |   endpoint — OpenRouter or local llama-server
+    +-- roster + harvest + scorecard (0208): invoke seats, normalize to
+    |   the contract shape, track the advisory trial
+    +-- Copilot forge bot (0206): server-side, the one non-container seat
+    +-- the gate dispositions all findings identically
 
-Seats never run tests; the orchestrator runs them and feeds results
-into each seat's context. A direct-API Claude seat would need a funded
-key — rejected; claude-code-acp keeps subscription auth. A2A (Linux
-Foundation, v1.0) is the noted future seam for remote/hosted reviewers;
-premature for local CLI seats. tickets/0216 (Agent() conversion of
-verify's internal phases) proceeds as designed — it fixes live drift
-now and converges into this architecture later (one containment regime
-for all reviewers).
+Mapping the panel onto CI primitives: containment = container sandbox;
+read-only = no write mount / no push token; secret scoping = minimal
+per-seat env (no BASH_ENV inheritance); normalized findings = the
+contract shape (SARIF-shaped); advisory→required = optional→required
+check; N seats = a job matrix; the gate = the merge gate / branch
+protection. Seats never run tests; the orchestrator runs them and feeds
+results into each seat's context.
+
+Decorrelation evidence (docs/research/ensemble-decorrelation-evidence.md)
+binds the design: cap N at 2-4 (more seats = more veto/noise, not more
+coverage); composition dominates count; a genuinely-different LOCAL
+open-weights seat buys more error-independence than a second frontier
+vendor (strong models correlate ~60% on errors). Prototype scorecards
+(0217): qwen3.6-35b-a3b MoE usable and fast; devstral-small-2 13/13
+hallucinations. Skip seats on trivial/prose diffs — ensemble value
+concentrates on complex multi-file CODE changes.
+
+tickets/0216 (Agent() conversion of verify's internal phases) stays
+Claude-native and orthogonal — it fixes internal fork drift; this panel
+is the EXTERNAL decorrelated layer. A local CI-equivalent executor
+(the 0217 seat-runner) lets the same seats run under beat/raid/nightbeat
+locally and mirror into forge CI — no forge round-trip required.
 
 ## Design rules (bind the children)
 
@@ -58,7 +81,12 @@ for all reviewers).
 2. **Advisory → required**: each new reviewer runs advisory (logged,
    only verifiable-class findings may bounce) for an observation period
    of **at least 5 merge requests spanning at least 3 projects** before
-   promotion to required disposition in the gate.
+   promotion to required disposition in the gate. (Promotion is literally
+   flipping the seat's CI check from optional to required. Caveat from
+   the decorrelation research: LLM review is non-deterministic, so a
+   "required" LLM seat is in tension with re-runnable required checks —
+   promote only seats whose verifiable-class findings prove stable across
+   re-runs; advisory is the safe default.)
 3. **Decorrelation rule rewording** (this ticket's own change), replacing
    the "Sonnet reviews Opus" instance in rules/workflow.md § Subagents:
    "Reviewer decorrelation. The verify panel never shares the coding

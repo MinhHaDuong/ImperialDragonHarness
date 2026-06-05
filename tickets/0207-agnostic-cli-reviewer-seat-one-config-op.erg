@@ -1,0 +1,80 @@
+%erg 0.1
+Title: Agnostic CLI reviewer seat — one config, OpenRouter and llama-server endpoints
+Created: 2026-06-04
+Author: MinhHaDuong
+Blocked-by: 0217
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
+
+2026-06-05T06:41Z claude note re-scoped: aider dropped in favor of a thin first-party reviewer agent speaking the Agent Client Protocol — its edit-and-commit loop is exactly what a read-only seat must forbid, while its endpoint connectivity is a trivial OpenAI-compatible call; decision from the ACP/A2A dig with the author (file renamed from 0207-aider-as-external-verifier-one-adapter-o.erg)
+
+2026-06-05T06:55Z claude note panel review (PR #289): added Blocked-by 0208 — action 3 wires this seat into 0208's ACP client harness, so the harness must land first. Three further panel blockers (overstated containment claim, ACP cost/value, trial-stat insufficiency) deferred to author direction on the architecture rewrite
+
+2026-06-05T06:56Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
+
+2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): the seat is just an agnostic CLI reviewer run by the 0217 sandbox-runner — no bespoke ACP agent. Blocked-by flipped 0208→0217 (the runner is the dependency, not a management surface). Prototype already done in 0217: aider --ask over llama-server, contained in rootless podman; scorecard 1 devstral-small-2 (13/13 hallucinations, unusable), scorecard 2 qwen3.6-35b-a3b (1 real cross-file catch, usable, 80 tok/s). This ticket now = generalize that to the {OpenRouter, llama-server} matrix + the advisory trial
+--- body ---
+## Context
+
+Child of tickets/0205. Re-scoped 2026-06-05 to the review-is-CI model:
+a reviewer seat is an off-the-shelf agnostic CLI reviewer (aider --ask,
+or a thin OpenAI-compatible caller) run inside the 0217 sandbox-runner —
+NOT a bespoke ACP agent. The aider→ACP detour is dropped: aider's
+edit-and-commit loop, the thing a read-only seat must forbid, is
+neutralized by --ask mode AND by the sandbox (read-only mount, no write
+path), so aider is usable directly. Containment comes from the OS
+sandbox (0217), not from a protocol's cooperative grants. Decorrelation
+lives in the MODEL, not the CLI: one runner, N models via {endpoint,
+model} config — OpenRouter-hosted frontier models, or a fully local,
+free, private llama-server. The decorrelation research
+(docs/research/ensemble-decorrelation-evidence.md) says the
+genuinely-different LOCAL open-weights seat is the real independence
+play, not a second frontier vendor. Helper is tool-NAMED per the 0205
+naming exception.
+
+## Credential path (unchanged, decided before implementation)
+
+OPENROUTER_API_KEY loads via the BASH_ENV -> bash-env.sh pattern — never
+argv, never CLAUDE_ENV_FILE (argv leaks to ps -ef). The 0217 runner
+gives each seat a MINIMAL env (only its own key; BASH_ENV stripped from
+the child). llama-server endpoint is plain config (host:port), no secret.
+
+## Relevant files
+
+- scripts/seat-runner-prototype.sh (0217) — the contained runner this
+  seat plugs into; v1 already drives aider --ask over llama-server
+- reviewer roster config (0208) — seat = {agent_cmd, endpoint, model}
+- skills/verify/SKILL.md — panel-extension section (from 0205)
+- ~/.claude/scripts/bash-env.sh — credential loading reference
+
+## Actions
+
+1. Generalize the 0217 prototype to a configurable seat: same runner,
+   the {endpoint, model} matrix — OpenRouter-hosted model AND local
+   llama-server. Findings normalize to the 0205 contract shape
+   (verifiable:/consider: + file:line + rationale).
+2. Smoke both endpoint configs on one merged PR (no gate wiring yet):
+   record model, latency, finding quality in this log. (llama-server
+   side partly done — see 0217 scorecards.)
+3. Wire as an advisory seat via the 0208 roster, per 0205's contract
+   (gate dispositions findings; only verifiable-class may bounce).
+4. Advisory trial: at least 5 merge requests across at least 3 projects
+   PER CONFIG (OpenRouter, llama-server) — scorecard lines in this log.
+
+## Test
+
+tests/test_reviewer_seat.sh: stub OpenAI-compatible endpoint emitting a
+canned completion; run the seat through the 0217 runner; assert the
+normalized findings shape, that a repo write is blocked by the SANDBOX
+(not the agent's mode), and non-zero exit when the endpoint is
+unreachable (fail-loud).
+
+## Exit criteria
+
+- [ ] Seat runs an agnostic CLI reviewer via the 0217 sandbox-runner, credentials via BASH_ENV minimal-env path
+- [ ] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged
+- [ ] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
+- [ ] Promote/drop recommendation recorded for 0205's integration review
