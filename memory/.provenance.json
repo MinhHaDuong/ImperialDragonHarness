@@ -183,6 +183,838 @@
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-06-05T19:24:54Z",
       "promoted": false
+    },
+    "feedback_api_merge_fetch_after": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_argparse_defaults_drift": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_arms_runs_csv_no_nmatched": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_async_agent_continuation": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_bash_cd_primary_repo_trap": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_beamer_plain_frame_sizing": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_branch_from_stale_local_main": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_compute_before_figure": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_concurrent_author_session_raids": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_csv_writer_fieldnames": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:06Z",
+      "last_confirmed": "2026-06-05T19:26:06Z",
+      "promoted": false
+    },
+    "feedback_design_debate_not_ouioui": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_dictated_constants_verify_disk": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_drain_stalled_green_prs": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_erg_close_bookkeeping_conflict": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_erg_premature_autoclosure": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_erg_pr_merge_partial_success": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_escalate_means_think_harder": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_exp2_interactive_smoke_pythonpath": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_figure_verify_worst_case_panel": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_fp_unrecognized_not_hallucinated": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_frozen_results_chmod": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_gh_pr_edit_blocked": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_gh_pr_merge_delete_branch_worktree": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_git_cherry_misleads_on_squash_merge": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_git_existence_check": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_git_pull_creates_merge_commit": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_h3_empirical_not_impossibility": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_imagine_mode": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_killed_agent_salvage": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_main_repo_on_foreign_branch": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_make_rebuild_measurements_destroys_records": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_merge_leaves_worktree_on_main": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_merge_skill_main_lock": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_model_set_dispatch_test_gap": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_modify_delete_rebase": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_namespace_migration_trap": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_optimistic_concurrency_ticket_ids": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_padme_ollama_serial": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_parallel_push_during_investigation": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:07Z",
+      "last_confirmed": "2026-06-05T19:26:07Z",
+      "promoted": false
+    },
+    "feedback_pathlib_with_suffix_dotted_stems": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_permutation_test_power": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_plot_axis_ask_count_vs_ratio": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_precommit_hook_commit_ordering": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_presence_metrics_saturate": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_pr_no_ticket_line": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_pydantic_forbid_extras_audit": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_quickpr_limitations": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_qwen_free_tier_rate_limit": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_raid_budget_recovery": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_readme_no_autoscript": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_rebase_chore_data_branch": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_rebase_drop_cascade": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_refusal_is_data": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_run_adherence_locally_before_push": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_semantic_completeness_resolvers": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_size_class_per_record_split": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_smoke_promote_production": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_supervised_runs_no_standing_guards": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_task_notification_exit_code": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_test_one_before_blasting_experiment_level": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_ticket_id_collision_check": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_ticket_line_in_pr": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_ticket_log_placement": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_unit_suffix_stripping_design": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_use_auto_merge": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_uv_run_project_cwd": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_verify_artifacts_after_fix": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_verify_prose_claims": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:08Z",
+      "last_confirmed": "2026-06-05T19:26:08Z",
+      "promoted": false
+    },
+    "feedback_verify_re_invocation_routes_healthcheck": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "feedback_xargs_env_var": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_agent_identity_separation": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_anthropic_adapter_name": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_archive_move_record_only_outputs": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_ci_chore_bypass_workflow": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_econom_ia_2026": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_erg_closed_dir": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_exp1_batch2": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_exp1_design_thinking_allowed": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_exp1_done": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_exp2_phase_b_done": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_exp3_reconstruction_sweep": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_experiment_costs": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_f1_none_semantics": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_gpt_oss_family": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_h1_h4_hypotheses": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_harness_architecture": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_local_routing_llama_server": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_lp_matcher_cost": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_lp_mismatched_fix": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_ods_xml_surgery_pattern": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_openrouter_reasoning_effort": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_padme_local_infra": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_phase_b0_n1_gate": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_phase_build_layout": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_preprint_target_main_md": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_reference_v2_adopted": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:09Z",
+      "last_confirmed": "2026-06-05T19:26:09Z",
+      "promoted": false
+    },
+    "project_seed_silentdrop_bug": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "project_source_classification_scheme": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "project_squash_merge_disabled": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "project_talk_narrative_three_plus_case_study": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "reference_api_keys_location": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "reference_claude_cli_route": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "reference_econom_ia_2026": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
+    },
+    "reference_zotero": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-05T19:26:10Z",
+      "last_confirmed": "2026-06-05T19:26:10Z",
+      "promoted": false
     }
   }
 }
