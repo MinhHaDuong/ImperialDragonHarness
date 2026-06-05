@@ -40,7 +40,9 @@ Select one ticket for the current sweep run.
    check whether the ticket is closed using `$ERG status <id>`. If any results
    are found AND all matching tickets are closed, auto-close this ticket by
    running `$ERG close <id> already-done`, then commit the ticket file
-   (`git add tickets/ && git commit -m "ticket(<id>): close — already-done"`),
+   (`git add -u tickets/ && git commit -m "ticket(<id>): close — already-done"`
+   — `-u` stages the close edit and any dependent Blocked-by removals without
+   sweeping a stray file in the shared `tickets/`),
    and output `CLOSED: <id>`. Skip scope assessment for this ticket.
 
    Convention: when splitting a ticket into children, each child ticket must
@@ -97,7 +99,8 @@ Select one ticket for the current sweep run.
    1. Run `$ERG close <id> already-done` — it writes the `Closed:` header
       and appends the audit log line `{ts} claude closed — already-done` in
       one step. Then commit the ticket file
-      (`git add tickets/ && git commit -m "ticket(<id>): close — already-done"`).
+      (`git add -u tickets/ && git commit -m "ticket(<id>): close — already-done"`
+      — `-u` stages tracked edits only, never a stray file in `tickets/`).
    2. Output `CLOSED: <id>` and stop processing this candidate (do not
       rank it). beat.py will loop back and pick again.
 

@@ -71,7 +71,7 @@ configuration health, project readiness, and surface risk signals from prior run
 4. **Interactive triage**
    For each project flagged with issues (≥ 1 ⚠ indicator):
    Present the findings and offer:
-   a. **commit**: Stage and commit any changes (git add -A && git commit)
+   a. **commit**: Stage and commit any changes (git add -u && git commit)
    b. **branch**: Create a new branch for the changes
    c. **note**: Record an explanation without committing
    d. **skip**: Leave unchanged, move to next
@@ -140,9 +140,10 @@ compatibility until ticket 0068 (alias system) is closed.
    Record every action taken.
 
 6. **Housekeeping commit**
-   After triage, commit all modified ticket files:
+   After triage, commit all modified ticket files (`-u` stages tracked
+   edits only — a stray `.erg` left in `tickets/` is never swept in):
    ```bash
-   git add tickets/
+   git add -u tickets/
    git commit -m "chore(tickets): nightbeat risk-review triage $(date +%Y-%m-%d)"
    ```
    If no files were changed (all `skip`), print "No changes to commit."

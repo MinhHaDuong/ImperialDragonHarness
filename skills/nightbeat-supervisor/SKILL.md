@@ -94,8 +94,11 @@ When you reach a root cause, repair if within authority:
   independent unit of work; leave the parent open as an umbrella. Each child
   ticket must carry `Blocked-by: <umbrella-id>` so pick-ticket can auto-close
   the umbrella when all children are done (it uses inverse lookup, not a
-  `Blocks:` header — that header is not valid in %erg v1). Commit all new/modified
-  ticket files: `git add tickets/*.erg && git commit -m 'chore(supervisor): split <ticket> into children'`.
+  `Blocks:` header — that header is not valid in %erg v1). Commit the new
+  ticket files by naming each child (`git add tickets/<child-id>-*.erg`, one per
+  child), then `git commit -m 'chore(supervisor): split <ticket> into children'`
+  — never `git add` over the whole `tickets/` glob, which also sweeps a stray
+  `.erg` left by another agent in the shared checkout.
 - **Dead timer** → restart it.
 - **Dirty working tree** (`outcome=aborted-dirty-tree`) → if the dirty files
   are machine-local state (beat-outcomes.jsonl, STATE.md, build artifacts),
