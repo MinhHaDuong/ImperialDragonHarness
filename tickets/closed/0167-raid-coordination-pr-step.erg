@@ -2,6 +2,7 @@
 Title: Add coordination-PR step to raid skill — pre-land test allowlists for the wave
 Created: 2026-05-21
 Author: HDMX-coding-agent
+Closed: skill update merged, two skip-path observations validate heuristic
 
 --- log ---
 2026-05-21T00:15Z HDMX-coding-agent created
@@ -11,7 +12,9 @@ Author: HDMX-coding-agent
 2026-06-03T21:19Z claude note observation: raid 0185-0189 (5 PRs) exercised the SKIP path — Phase 4 registry scan found no 3+-PR shared registry (README catalog had only 2 writers), coordination PR correctly omitted, sequential rebases clean. Heuristic negative case validated; fire-path observation still pending.
 
 2026-06-04T08:36Z claude note observation 2: raid 0190-0196 (6 PRs, 2 waves) — skip path again; max 2 writers per file (rules/git.md, README catalog), sequential rebases clean
+2026-06-04T14:00Z claude note closing: skill update merged (Phase 5.0 + Phase 4 registry scan); two observation cycles (2026-06-03 raid 0185-0189, 2026-06-04 raid 0190-0196) validated the skip-path heuristic — no 3+-PR shared registry detected, coordination PR correctly omitted, sequential rebases clean. Fire-path validation deferred to the next eligible raid with 3+ PRs touching the same registry.
 
+2026-06-04T09:08Z MinhHaDuong closed — skill update merged, two skip-path observations validate heuristic
 --- body ---
 ## Context
 
