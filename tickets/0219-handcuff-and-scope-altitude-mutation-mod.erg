@@ -2,13 +2,13 @@
 Title: Handcuff and scope-altitude mutation modes for the fang-audit skill
 Created: 2026-06-05
 Author: MinhHaDuong
-Blocked-by: 0182
 Label: deferred
 
 --- log ---
 2026-06-05T11:56Z MinhHaDuong created
 
 2026-06-05T11:56Z MinhHaDuong label deferred
+2026-06-05T13:32Z MinhHaDuong note blocker 0182 closed — Blocked-by removed.
 --- body ---
 ## Context
 

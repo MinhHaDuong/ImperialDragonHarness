@@ -2,6 +2,7 @@
 Title: Extract test-quality audit workflow (fang/handcuff/scope) into a skill
 Created: 2026-05-30
 Author: claude
+Closed: autoclosed — PR #305
 
 --- log ---
 2026-05-30T10:00Z claude created — after the fang-audit fan-out run on git-erg validated the design
@@ -9,6 +10,7 @@ Author: claude
 2026-06-05T11:57Z MinhHaDuong unlabel deferred
 2026-06-05T11:57Z Minh Ha-Duong note re-scoped (author directive): split — this ticket keeps the feasible fang-only v1 extraction from the proven prototype; handcuff + scope/altitude + three-axis report + multi-language move to 0219 (blocked on this). Un-deferred for raid alongside 0184
 2026-06-05T13:01Z claude note raid execute: fang-only v1 extraction from the proven prototype
+2026-06-05T13:32Z MinhHaDuong closed — autoclosed — PR #305
 --- body ---
 ## Context
 
