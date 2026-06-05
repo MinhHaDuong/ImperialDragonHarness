@@ -8,8 +8,13 @@
 - Provider quirks accumulate silently: `reasoning_effort="minimal"` turns thinking ON; Qwen `*:free` rate-limits in seconds; MoE needs `repeat=3`; local routing is `llama_server` (Ollama deprecated); Padme is serial-only for Ollama.
 - Stale pre-fix PDFs: after patching a plot script, always rebuild before committing — PDFs in working tree may predate the fix; size should grow when adding content, shrink signals regression.
 - Conference delivered 2026-05-27 (Econom'IA 2026 at Thema/Cergy) — paper writing phase now open; H1-H4 and OSF preregistration relevant again for journal submission.
+- The arXiv preprint = slides/manuscript/main.md; report.tex is internal ("no future"). See [[project-preprint-target-main-md]].
+- Reference v2 (170 plants) adopted 2026-06-05; never hardcode the reference size in render scripts — use reference_plant_count(). See [[project-reference-v2-adopted]].
 
 ## Entries
+- [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 probably moot; Annex E = recognition matrix
+- [Reference v2 adopted](project_reference_v2_adopted.md) — 170 plants PR #767; projection at load; snapshot = sole master copy; ratchet 0447
+- [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
 
 - [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
 - [Archive move: outputs/ is record-only](project_archive_move_record_only_outputs.md) — raw replies in archive/outputs/ since edda724b; rules/scripts reading raw data must point at archive; tab_decomposition_fix FROZEN (0424)
@@ -37,7 +42,6 @@
 - [Local routing → llama_server](project_local_routing_llama_server.md) — Ollama deprecated; llama_server uses OpenAI-compatible API and inherits the OpenRouter dispatch path
 - [Harness architecture: git-erg vs IDH](project_harness_architecture.md) — git-erg travels with repo (project-level); IDH is user-level, never vendor into projects
 - [Econom'IA 2026 deadline](project_econom_ia_2026.md) — talk 2026-05-27 at Thema/Cergy, slides (FR) required, "Beyond RAG" thesis
-- [Paper sequencing](project_paper_sequencing.md) — report stays exploratory; slides first (deadline 2026-05-27), paper writing opens after slides locked
 - [Padme Ollama serial](feedback_padme_ollama_serial.md) — workstation is Padme; only ONE Ollama job at a time; never parallelize Ollama-bound work
 - [Imagine mode = design dialogue](feedback_imagine_mode.md) — "braindump" / "imagine mode" = reflect and sharpen, don't commit to docs until ratified
 - [ESCALATE = think harder, not stop](feedback_escalate_means_think_harder.md) — verify-gate ESCALATE means use advisor/ultrathink and fix autonomously; only surface to human if fix requires information they alone have
@@ -63,6 +67,9 @@
 - [smoke --promote-as-production](feedback_smoke_promote_production.md) — flag (PR #363) saves smoke calls as `{slug}-run{N}.json` without smoke marker; avoids manual rename + JSON-edit dance for production reps
 - [arms_runs CSV has no n_matched](feedback_arms_runs_csv_no_nmatched.md) — use tab_exp2_arms_runs_view.csv for coverage scores; base CSV is cost/timing only
 - [Verify prose claims against raw data](feedback_verify_prose_claims.md) — manuscript numbers must be queried, not reconstructed from summaries; PR #371 had 2 factual errors caught by /verify
+- [Dictated constants: verify against disk](feedback_dictated_constants_verify_disk.md) — handoff-dictated mapping tables must be checked against consuming data/code (v1 CSV, STATUS_ORDER), not just self-consistent tests
+- [ODS XML surgery pattern](project_ods_xml_surgery_pattern.md) — odfpy mutation broken (cache asymmetry); use stdlib ET on content.xml + byte-identical rezip + full-grid pandas collateral diff; UI work (validity, cond. formatting) stays human
+- [Task-notification exit code](feedback_task_notification_exit_code.md) — "completed (exit code 0)" is the wrapper's exit; read the verdict from the output file / rtk tee log before reporting green
 - [LP matcher cost function](project_lp_matcher_cost.md) — name similarity + capacity only; province/fuel deliberately excluded (ADR-3); default similarity_threshold=90, capacity_weight=0.001
 - [Semantic-completeness test for resolvers](feedback_semantic_completeness_resolvers.md) — hand-crafted unit tests miss live-data gaps; parametric iteration over measurements.jsonl catches "I forgot about model X" (cogito/granite caught by /verify PR #380)
 - [gh pr edit blocked here](feedback_gh_pr_edit_blocked.md) — title/body edits fail with classic-projects GraphQL error; use `gh pr comment` instead, don't retry
