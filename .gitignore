@@ -19,6 +19,8 @@
 !commands/**
 !docs/
 !docs/**
+!memory/
+!memory/**
 !tickets/
 !tickets/**
 tickets/tools/go/*.test

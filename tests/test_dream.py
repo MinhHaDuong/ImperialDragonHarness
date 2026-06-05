@@ -13,6 +13,7 @@ import pytest
 DREAM_DIR = Path(__file__).parent.parent / "skills" / "dream"
 READ_INDEX = DREAM_DIR / "read-index.py"
 COMMIT_PY = DREAM_DIR / "commit.py"
+PROVENANCE_PY = DREAM_DIR / "provenance.py"
 
 
 @pytest.fixture
@@ -83,7 +84,133 @@ def test_commit_py_has_rollback_subcommand():
 
 
 def test_no_anthropic_import_in_scripts():
-    for script in [READ_INDEX, COMMIT_PY]:
+    for script in [READ_INDEX, COMMIT_PY, PROVENANCE_PY]:
         source = script.read_text()
         assert "import anthropic" not in source, f"{script.name} imports anthropic"
         assert "from anthropic" not in source, f"{script.name} imports anthropic"
+
+
+# --- Provenance tests (v2) ---
+
+
+@pytest.fixture
+def provenance_env(tmp_path):
+    """Set up a fake HOME with harness memory dir for provenance tests."""
+    memory_dir = tmp_path / ".claude" / "memory"
+    memory_dir.mkdir(parents=True)
+    return tmp_path
+
+
+def _run_provenance(*args, home):
+    return subprocess.run(
+        [sys.executable, str(PROVENANCE_PY), *args],
+        capture_output=True,
+        text=True,
+        env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
+    )
+
+
+def test_provenance_record_new_entry(provenance_env):
+    result = _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["projects"] == ["project-alpha"]
+    assert data["promoted"] is False
+
+
+def test_provenance_record_second_project(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert set(data["projects"]) == {"project-alpha", "project-beta"}
+
+
+def test_provenance_record_same_project_idempotent(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("show", home=provenance_env)
+    data = json.loads(result.stdout)
+    assert data["entries"]["feedback_vim"]["projects"] == ["project-alpha"]
+
+
+def test_provenance_candidates_empty_initially(provenance_env):
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == []
+
+
+def test_provenance_candidates_after_two_projects(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0
+    candidates = json.loads(result.stdout)
+    assert len(candidates) == 1
+    assert candidates[0]["slug"] == "feedback_vim"
+
+
+def test_provenance_candidates_excludes_promoted(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    _run_provenance("promote", "feedback_vim", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    candidates = json.loads(result.stdout)
+    assert len(candidates) == 0
+
+
+def test_provenance_promote(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("promote", "feedback_vim", home=provenance_env)
+    assert result.returncode == 0
+    assert "Promoted" in result.stdout
+    show = _run_provenance("show", home=provenance_env)
+    data = json.loads(show.stdout)
+    assert data["entries"]["feedback_vim"]["promoted"] is True
+    assert "promoted_at" in data["entries"]["feedback_vim"]
+
+
+def test_provenance_promote_unknown_slug(provenance_env):
+    result = _run_provenance("promote", "nonexistent", home=provenance_env)
+    assert result.returncode == 1
+
+
+def test_provenance_decay_empty(provenance_env):
+    result = _run_provenance("decay", home=provenance_env)
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == []
+
+
+def test_provenance_decay_flags_old_entries(provenance_env):
+    """Directly write provenance with an old last_confirmed date."""
+    prov_path = provenance_env / ".claude" / "memory" / ".provenance.json"
+    prov_path.write_text(json.dumps({
+        "entries": {
+            "old_entry": {
+                "projects": ["project-alpha", "project-beta"],
+                "first_seen": "2025-01-01T00:00:00Z",
+                "last_confirmed": "2025-01-01T00:00:00Z",
+                "promoted": True,
+            },
+            "fresh_entry": {
+                "projects": ["project-alpha"],
+                "first_seen": "2026-06-01T00:00:00Z",
+                "last_confirmed": "2026-06-01T00:00:00Z",
+                "promoted": True,
+            },
+        }
+    }))
+    result = _run_provenance("decay", home=provenance_env)
+    assert result.returncode == 0
+    flagged = json.loads(result.stdout)
+    slugs = [f["slug"] for f in flagged]
+    assert "old_entry" in slugs
+    assert "fresh_entry" not in slugs
+
+
+def test_provenance_show(provenance_env):
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("show", home=provenance_env)
+    assert result.returncode == 0
+    data = json.loads(result.stdout)
+    assert "feedback_vim" in data["entries"]

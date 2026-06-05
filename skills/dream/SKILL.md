@@ -64,7 +64,7 @@ Print a summary table:
 - The 5 extracted insights
 - Counts: N entries before → M after
 
-If `--dry-run`: **stop here. Do not write anything.**
+If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
 
 **5. Apply deletions.**
 
@@ -96,11 +96,92 @@ Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
 
 Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
 
-**7. Commit.**
+**7. Record provenance.**
+
+For each surviving entry (NOOP, ADD, UPDATE), record its presence in this project's consolidation:
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py record <entry_slug> <project>
+```
+
+`<entry_slug>` is the entry's filename without extension (e.g. `feedback_vim`). This tracks which projects have seen each entry, enabling the promotion pass.
+
+**Slug identity (v2 simplification)**: entries are keyed by filename. If the same lesson appears under different filenames in different projects, Claude should assign the same slug during consolidation to enable cross-project frequency counting. A semantic slug-matching system is deferred to v3.
+
+**8. Commit.**
 
 ```bash
 python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
 ```
+
+### Promotion pass
+
+Runs after consolidation. Evaluates whether any project-level entries have earned harness-level status.
+
+**9. List promotion candidates.**
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py candidates
+```
+
+Output is JSON: entries seen in >=2 distinct projects that are not yet promoted. If empty, skip to step 13.
+
+**10. Evaluate each candidate against three gates (all required).**
+
+For each candidate, Claude evaluates inline:
+
+- **Frequency gate** (mechanical, already passed): entry appears in >=2 distinct project consolidations.
+- **Cost gate** (Claude judgment): would missing this entry cost >500 tokens to re-derive per session, OR does missing it risk correctness/security failures? If neither, the entry fails.
+- **Context-independence gate** (Claude judgment): apply the three-part test from the research note:
+  1. Entity stripping: remove project-specific entities. Does the lesson retain meaning?
+  2. Reformulation: rewrite in domain-neutral terms. Is it still actionable?
+  3. Counterfactual transfer: would this have prevented a known failure in a different project?
+
+Log each gate evaluation with one line of reasoning per candidate.
+
+**11. Apply approved promotions.**
+
+For each candidate that passes all three gates:
+
+a. Write the context-independent reformulation to `~/.claude/memory/<slug>.md`.
+b. Mark promoted in provenance:
+```bash
+python3 ~/.claude/skills/dream/provenance.py promote <slug>
+```
+c. Overwrite the project-level entry with a tombstone:
+```
+# PROMOTED <ISO timestamp>: <title>
+# Now at: ~/.claude/memory/<slug>.md
+# Original content preserved in git history.
+```
+
+If `--dry-run`: print candidates, gate evaluations, and proposed promotions without writing anything.
+
+**12. Commit promotions.**
+
+```bash
+python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
+```
+
+### Decay pass
+
+Runs after the promotion pass. Flags stale harness-level entries for review.
+
+**13. Check for stale harness entries.**
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py decay
+```
+
+Output is JSON: promoted entries whose `last_confirmed` date is >90 days ago. For each flagged entry, print:
+
+- Entry slug and title
+- Last confirmed date and age in days
+- Originating projects
+
+These entries need human review: confirm (update `last_confirmed`), demote back to project level, or delete.
+
+If `--dry-run`: print the decay report without taking any action.
 
 ## Schedule recipe
 
@@ -115,9 +196,16 @@ To inspect consolidation history:
 git log --grep='^dream: consolidate' --oneline
 ```
 
-## v2 roadmap
+## v2 features (ticket 0165)
 
-- Harness-level memory tier + earned promotion (ticket 0163)
+- Harness-level memory tier (`~/.claude/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
+- Provenance tracking (`.provenance.json`) — cross-project entry history
+- Harness decay (90-day unconfirmed entries flagged for review)
+- Dry-run mode covers promotion candidates and decay flags
+
+## v3 roadmap
+
 - Importance-weighted trigger (SCM pattern)
 - Temporal-hierarchical reflection (TiMem) for multi-session horizons
 - Link updates after UPDATE/DELETE passes (A-MEM)
+- Bi-temporal metadata (Graphiti pattern) for richer decay

@@ -2,6 +2,7 @@
 Title: Dream v2 — memory hierarchy and earned promotion to harness level
 Created: 2026-05-15
 Author: claude
+Closed: autoclosed — PR #302
 
 --- log ---
 2026-05-15T09:00Z claude created
@@ -9,6 +10,8 @@ Author: claude
 
 2026-06-05T11:07Z MinhHaDuong unlabel deferred
 2026-06-05T11:07Z Minh Ha-Duong note un-deferred: parking condition met — dream v1 has run nightly for ~3 weeks (latest: PR #295, 2026-06-05); enough exercise to design the hierarchy and promotion path
+2026-06-05T12:02Z claude note raid execute: research section written, provenance.py helper created, SKILL.md extended with promotion/decay/provenance passes, harness memory tier created, SessionStart hook updated, tests added (17 pass)
+2026-06-05T12:42Z MinhHaDuong closed — autoclosed — PR #302
 --- body ---
 ## Context
 
@@ -111,13 +114,13 @@ No agent tier, no provider tier. Those are subsets of harness.
 
 ## Exit criteria
 
-- [ ] `docs/dream-research.md` extended with "Memory hierarchy and
+- [x] `docs/dream-research.md` extended with "Memory hierarchy and
       promotion" section covering all five research questions with citations.
-- [ ] `~/.claude/memory/` tier exists; SessionStart hook injects it.
-- [ ] `/dream <project>` records provenance in `.provenance.json`.
-- [ ] Promotion pass runs after consolidation; candidates evaluated
+- [x] `~/.claude/memory/` tier exists; SessionStart hook injects it.
+- [x] `/dream <project>` records provenance in `.provenance.json`.
+- [x] Promotion pass runs after consolidation; candidates evaluated
       against all three gates (frequency, cost, context-independence).
-- [ ] Harness decay: entries older than 90 days without confirmation
+- [x] Harness decay: entries older than 90 days without confirmation
       are flagged for review.
-- [ ] `make check` passes; existing 0070 tests unaffected.
-- [ ] Dry-run mode shows promotion candidates without writing.
+- [x] `make check` passes; existing 0070 tests unaffected.
+- [x] Dry-run mode shows promotion candidates without writing.
