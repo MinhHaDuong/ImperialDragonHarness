@@ -2,11 +2,12 @@
 Title: LLM read-and-judge test-audit (faithfulness, intent, negative-space, change-detector)
 Created: 2026-05-30
 Author: claude
-Label: deferred
 
 --- log ---
 2026-05-30T10:30Z claude created — sibling to 0182; different mechanism (judge, no execution)
 
+2026-06-06T12:09Z MinhHaDuong unlabel deferred
+2026-06-06T12:09Z MinhHaDuong unlabel deferred — parking condition met (0182 PR #305, 0219 PR #316, 0226 PR #319 all merged; harness shape proven thrice). Note: 0226 waived the pass-shape dedup (runPass/expandRules extraction) to this ticket — the next lens pays for the abstraction. Composition target renamed maw-audit (PR #323).
 --- body ---
 ## Context
 

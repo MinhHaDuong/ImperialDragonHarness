@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Static test-hygiene tier for the test-quality family: AST-enforced integration markers
+Created: 2026-06-06
+Author: MinhHaDuong
+
+--- log ---
+2026-06-06T12:10Z MinhHaDuong created
+
+--- body ---
+## Context
+
+During the 0224 raid, /gaze observed that the coding-python.md rule
+"tests using subprocess.run() or time.sleep() must be marked
+@pytest.mark.integration" is enforced by reviewer vigilance only — the
+raid under review had just hand-added such markers. The suggestion was a
+quick AST-based adherence test; author directive (2026-06-06): test-suite
+verification belongs to the maw-audit / test-quality FAMILY, not an
+ad-hoc one-off PR. This ticket places it there.
+
+The family, by mechanism:
+- maw-audit — mutation (expensive, on-demand): fang / handcuff / scope
+- [[0183]] — LLM read-and-judge (no execution): faithfulness, intent,
+  negative-space, change-detector
+- 0184 (closed) — empirical re-run: flakiness / independence / speed
+  (scripts/test-quality.py, the cheap per-PR tier)
+- THIS ticket — STATIC analysis (zero execution, zero tokens, ms-fast):
+  structural hygiene a parser can prove
+
+## Actions
+
+1. Add a `static` lens to scripts/test-quality.py (the cheap per-PR
+   tier is its natural home — same report identity `<package>::<Test>`,
+   same ratchet/baseline machinery), starting with one check:
+   marker hygiene — parse each test file with Python's `ast` module,
+   walk every test function's body for `subprocess.*` / `time.sleep`
+   calls (including aliased imports), and flag functions lacking the
+   `integration` marker (decorator or module-level pytestmark).
+   AST not grep: grep cannot tie a call site to its enclosing
+   function's decorator list (false positives on imports/comments,
+   false negatives on aliases).
+2. Language-pluggable like the existing lenses: the Python AST checker
+   is the first adapter; the lens interface must not assume Python.
+3. Wire into the harness's own suite as an adherence test (the IDH
+   repo dogfoods the check via make check-fast).
+4. Ratchet mode applies: fail only on NEW violations, baseline the rest.
+
+## Exit criteria
+
+- [ ] `test-quality.py static` (or equivalent lens) reports marker
+      violations with `<file>::<function>` identities; JSON output
+- [ ] AST-based: catches aliased `from subprocess import run as X`;
+      ignores subprocess mentions in comments/strings (teeth test
+      proves both, RED on a violating fixture)
+- [ ] Ratchet/baseline semantics consistent with the existing lenses
+- [ ] IDH repo runs it in make check-fast; suite currently clean
+- [ ] make check passes
+
+## Related
+
+- Family: maw-audit skill, [[0183]] (LLM judge), 0184 (empirical tier)
+- Origin: /gaze suggestion on PR #315 (ticket 0224)
