@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Upstream git-erg: fix hook-template error text 'Run make build first'
+Created: 2026-06-06
+Author: MinhHaDuong
+
+--- log ---
+2026-06-06T13:28Z MinhHaDuong created
+
+--- body ---
+## Context
+
+The git-erg pre-commit hook template emits, when the erg binary is missing:
+
+    ERROR: erg binary not found. Run 'make build' first.
+
+This is wrong for IDH and any project that vendors the binary at `tickets/erg`:
+there is no `make build` here — the binary is committed and refreshed via
+`git pull` (or rebuilt from the git-erg source project). 0230 hand-edited the
+local copy in `hooks/pre-commit` and `tickets/integration.md`, but the string
+also lives in the **vendored binary's template** (`strings tickets/erg` shows
+it). Any future `erg install --hooks` re-emits the managed block from that
+template and **clobbers the local hand-edit**, reintroducing the stale text.
+The durable fix therefore belongs upstream in git-erg, not in IDH.
+
+## Relevant files
+
+- git-erg source: the hook-template string `Run 'make build' first` (and the
+  twin "do not commit tickets/erg ... Use 'make build'" line if present).
+- IDH `hooks/pre-commit` and `tickets/integration.md` — already hand-edited by
+  0230; will be overwritten by `erg install --hooks` until upstream lands.
+
+## Actions
+
+1. In git-erg, locate the hook template string(s) referencing `make build`.
+2. Replace with project-agnostic wording, e.g. "erg binary not found. Refresh
+   the vendored binary (git pull if committed) or build from the git-erg
+   source project." Avoid assuming a `make build` target in the consuming repo.
+3. Rebuild the git-erg binary; re-vendor `tickets/erg` into IDH on a main-only
+   merge (CI rebuilds after merge — do not commit the binary on a feature PR).
+
+## Test
+
+- `strings <new erg binary> | grep "Run 'make build' first"` returns nothing.
+
+## Exit criteria
+
+- [ ] git-erg hook template no longer says "Run 'make build' first".
+- [ ] `erg install --hooks` in a vendored-binary project no longer reintroduces
+      the stale text.
+- [ ] IDH re-vendored binary carries the corrected template.

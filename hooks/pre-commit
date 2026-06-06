@@ -39,7 +39,7 @@ if [ -n "$erg_files" ]; then
             exit 1
         fi
     else
-        echo "ERROR: erg binary not found. Run 'make build' first." >&2
+        echo "ERROR: erg binary not found. Refresh the vendored binary: git pull (tickets/erg is committed), or build from git-erg source." >&2
         exit 1
     fi
 fi

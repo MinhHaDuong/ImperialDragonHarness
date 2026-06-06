@@ -61,5 +61,17 @@ else
     echo "PASS: README.md not staged for unrelated change"
 fi
 
+# Test 3: pre-commit hook must not carry the stale 'Run make build first' text.
+# IDH vendors the erg binary at tickets/erg — there is no `make build` target.
+# Guards against erg install --hooks reintroducing the upstream template string
+# (tracked upstream in ticket 0231). RED against the pre-0230 hook text.
+HOOK="$(git rev-parse --show-toplevel)/hooks/pre-commit"
+if grep -q "Run 'make build' first" "$HOOK"; then
+    echo "FAIL: hooks/pre-commit still says \"Run 'make build' first\" (no make build in IDH; see ticket 0231)"
+    fail=1
+else
+    echo "PASS: hooks/pre-commit free of stale 'make build' error text"
+fi
+
 if (( fail )); then exit 1; fi
 echo "PASS: skills-catalog-guard fires on SKILL.md changes and ignores others"

@@ -7,6 +7,7 @@ Author: claude
 2026-06-06T13:11Z claude created — child of 0227, split per multi-PR ticket discipline (harness-repo portion only; parent retains the multi-repo sweep)
 
 2026-06-06T13:11Z claude note filed as wave-1 raid target (slate: 0216, 0229, 0230 / wave 2: 0228, 0183)
+2026-06-06T13:29Z claude note action-4 contradiction: erg install --hooks would reintroduce the bad text (template is in the vendored binary, strings tickets/erg confirms); hand-edited hook + filed upstream follow-up 0231 instead
 --- body ---
 ## Context
 
