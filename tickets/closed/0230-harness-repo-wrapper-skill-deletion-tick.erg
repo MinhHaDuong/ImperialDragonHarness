@@ -2,12 +2,14 @@
 Title: Harness-repo wrapper-skill deletion: ticket-new removal, raid/roar reference fixes, catalog regen
 Created: 2026-06-06
 Author: claude
+Closed: autoclosed — PR #330
 
 --- log ---
 2026-06-06T13:11Z claude created — child of 0227, split per multi-PR ticket discipline (harness-repo portion only; parent retains the multi-repo sweep)
 
 2026-06-06T13:11Z claude note filed as wave-1 raid target (slate: 0216, 0229, 0230 / wave 2: 0228, 0183)
 2026-06-06T13:29Z claude note action-4 contradiction: erg install --hooks would reintroduce the bad text (template is in the vendored binary, strings tickets/erg confirms); hand-edited hook + filed upstream follow-up 0231 instead
+2026-06-06T14:17Z Integration Test closed — autoclosed — PR #330
 --- body ---
 ## Context
 
