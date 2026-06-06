@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Ratchet test: gaze reviewer agents must stay non-isolation (pinned-cwd read-only)
+Created: 2026-06-06
+Author: Integration Test
+
+--- log ---
+2026-06-06T14:58Z Integration Test created
+
+--- body ---
+## Context
+
+Wave-1 integration review of the 2026-06-06 raid (PR #329, ticket
+0216) flagged: the rewritten skills/gaze/SKILL.md states that phases
+2-4 reviewer agents and the phase-6 gate agent must be read-only with
+pinned cwd and must NOT receive isolation:"worktree" (which cuts a
+fresh tree from main and reproduces the wrong-branch drift 0216
+killed); only the REROLL fix agent gets isolation. This is a
+correctness constraint enforced by prose only — a future editorial
+pass could silently drop it. tests/test_verify_fork_contracts.py (the
+0193 ratchet) checks cwd threading and containment text but not this
+prohibition.
+
+## Actions
+
+1. Add an assertion to tests/test_verify_fork_contracts.py: the gaze
+   phases 2-4/6 sections must contain the isolation prohibition for
+   reviewer/gate agents, and the only isolation:"worktree" occurrence
+   in the file is the REROLL fix-agent block.
+2. Prove RED by deleting the prohibition sentence locally.
+
+## Test
+
+Ratchet test RED on a gaze text without the prohibition; GREEN on
+current main.
+
+## Exit criteria
+
+- [ ] Ratchet assertion in tests/test_verify_fork_contracts.py
+- [ ] RED proof recorded in the PR body
+- [ ] make check-fast passes

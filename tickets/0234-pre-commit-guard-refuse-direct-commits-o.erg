@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Pre-commit guard: refuse direct commits on main in the primary checkout
+Created: 2026-06-06
+Author: Integration Test
+
+--- log ---
+2026-06-06T14:58Z Integration Test created
+
+--- body ---
+## Context
+
+During the 2026-06-06 raid the primary checkout (~/.claude) was found
+DIVERGED: a dream session had committed e3dfb27 (memory consolidation)
+directly to local main without push or PR — violating the
+everything-via-PR rule and silently starving every skill resolution of
+13 upstream commits (merged gaze mechanism changes were inert until
+the orchestrator noticed and synced). Rescued via branch + PR #334.
+Failure family matches feedback_beat_checkout_model (skills operating
+on a main checkout). The session-level PreToolUse guard does not fire
+for sessions legitimately rooted in the primary repo.
+
+## Actions
+
+1. Extend hooks/pre-commit (repo-side, fires regardless of session
+   type): refuse a commit when HEAD is main in the PRIMARY checkout
+   (worktrees excluded — branch commits there are the normal flow;
+   also exclude rebase/merge-in-progress states and CI).
+   Override: ALLOW_MAIN_COMMIT=1 for deliberate cases.
+2. Audit skills that run on the primary checkout (dream, beat,
+   nightbeat) for commit steps lacking a branch guard; fix the texts.
+3. Prove RED: a test commit on main in a scratch clone is refused.
+
+## Test
+
+hooks/pre-commit refuses `git commit` on main in the primary checkout
+and allows the same commit on a branch; existing suites stay green.
+
+## Exit criteria
+
+- [ ] Pre-commit guard refuses direct main commits (override env var documented)
+- [ ] dream/beat/nightbeat texts audited; unguarded commit steps fixed
+- [ ] RED/GREEN proof in PR body
+- [ ] make check passes
