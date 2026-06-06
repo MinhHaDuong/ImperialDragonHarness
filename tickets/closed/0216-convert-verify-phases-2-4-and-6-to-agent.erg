@@ -2,6 +2,7 @@
 Title: Convert verify phases 2-4 and 6 to Agent-spawned sub-agents with pinned cwd
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: autoclosed — PR #329
 
 --- log ---
 2026-06-04T20:17Z MinhHaDuong created
@@ -12,6 +13,7 @@ Author: MinhHaDuong
 2026-06-05T13:17Z note 0220 renamed verify→gaze: the file the 06:56Z entry calls skills/verify/SKILL.md is now skills/gaze/SKILL.md; body refs updated, log left verbatim
 2026-06-06T13:27Z claude note plan: convert gaze phases 2-4 + 6 from context:fork to read-only Agents pinned to /tmp/review-<pr> (NOT isolation:worktree, which cuts a fresh tree on main); embed each sub-skill procedure imperatively, return structured block orchestrator parses; built-in /review Agent-WRAPped; only REROLL fix agent keeps isolation:worktree
 2026-06-06T13:27Z claude note exit criterion 2 is post-merge-empirical (skills resolve globally); evidence = first clean /gaze run after merge, expected on this raid's wave-2 PRs; evidence will be appended to this (closed) ticket
+2026-06-06T14:15Z Integration Test closed — autoclosed — PR #329
 --- body ---
 ## Context
 
