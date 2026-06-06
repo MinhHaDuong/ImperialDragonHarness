@@ -2,10 +2,12 @@
 Title: Dream v2: atomic provenance write to prevent torn reads under concurrency
 Created: 2026-06-06
 Author: MinhHaDuong
+Closed: fixed — atomic provenance write (temp + os.replace), torn-read test with teeth
 
 --- log ---
 2026-06-06T08:19Z MinhHaDuong created
 
+2026-06-06T09:34Z MinhHaDuong closed — fixed — atomic provenance write (temp + os.replace), torn-read test with teeth
 --- body ---
 ## Context
 
@@ -48,6 +50,18 @@ and PASS after the `os.replace` change.
 
 ## Exit criteria
 
-- [ ] Provenance writes are atomic (temp + `os.replace`)
-- [ ] A reader interleaved with a writer never observes a torn file
-- [ ] Test covers the path and fails against non-atomic write; `make check` passes
+- [x] Provenance writes are atomic (temp + `os.replace`)
+- [x] A reader interleaved with a writer never observes a torn file
+- [x] Test covers the path and fails against non-atomic write; `make check` passes
+
+## Implementation note
+
+The ticket suggested reusing `DREAM_PROVENANCE_TEST_DELAY` to land the read
+mid-write. That hook fires *between* `_load_provenance` and `_save_provenance`
+— i.e. before the write begins, when the on-disk file is still the intact old
+document — so it cannot create a torn-read window. The fix adds a sibling hook
+`DREAM_PROVENANCE_WRITE_DELAY` firing *inside* `_save_provenance` at the safe
+point (temp staged, live file intact, before `os.replace`). Same mechanism,
+correct call site; the two race tests keep independent windows. Teeth check
+verified by reverting `_save_provenance` to an instrumented non-atomic
+`open(...,"w")` form: the reader subprocess goes RED on `json.loads("")`.
