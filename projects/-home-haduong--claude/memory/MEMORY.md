@@ -31,3 +31,4 @@
 - [Module-level git paths break in worktrees](feedback_module_level_git_paths.md) — git rev-parse at import time resolves to worktree root; use argparse path arg with rev-parse as fallback
 - [Unpushed main contaminates parallel worktrees](feedback_unpushed_main_contaminates_worktrees.md) — Push local main before launching parallel execute agents; unpushed commits become the worktree base, causing cross-contamination
 - [Big artifacts go to /data/models](project_data_disk_model_store.md) — LLM weights/GGUFs never in homedir; /data/models/gguf/<family>/ is the writable store; LLAMA_CACHE=/data/models/cache is intended config — fix perms, don't redirect to homedir
+- [Primary-checkout staleness gates skills](feedback_primary_checkout_staleness_gates_skills.md) — Skills resolve from ~/.claude; merged skill changes are inert until that checkout pulls; check it for divergence (unpushed/uncommitted local-main work) before judging new-mechanism behavior
