@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Anchor cwd before branch-mutating git in skills (forked-skill cwd resets)
+Created: 2026-06-06
+Author: claude
+
+--- log ---
+2026-06-06T11:52Z claude created
+
+--- body ---
+## Context
+
+2026-06-06 padme session: twice after a forked-skill boundary (/gaze),
+the shell's working directory had been silently reset or left in a
+different worktree than the conversation assumed. A `git switch` +
+`merge --ff-only` compound ran against the wrong checkout; the output
+looked plausible and the mistake only surfaced when a follow-up Read
+showed pre-rewrite file content. `git worktree list` disambiguated.
+The harness emits "Shell cwd was reset to ..." notices, but a compound
+command issued in the same turn can still execute in the stale cwd.
+
+Failure shape: any skill step or ad-hoc command that mutates branch
+state (switch, merge, rebase, commit, push) while assuming the cwd
+carried over from a previous tool call.
+
+## Actions
+
+1. Add a rule line to rules/git.md (or workflow.md): branch-mutating
+   git commands must anchor their target explicitly — either
+   `cd <worktree-path> && ...` within the same compound command, or
+   `git -C <path>`; verify with `git rev-parse --show-toplevel` when
+   the prior context crossed a forked-skill boundary.
+2. Audit skill texts that issue branch-mutating git (gaze, merge, raid,
+   roar, molt) for unanchored steps; add the anchor idiom where absent.
+3. Judge whether a PreToolUse hook can cheaply flag a mutating git
+   command with no `cd`/`-C` anchor in the first turn after a fork
+   returns. If impractical, log the decision and rely on the rule.
+
+## Test
+
+Reproduce the shape: from a session worktree, simulate a cwd reset
+(run one Bash call that cds elsewhere), then verify the documented
+idiom (`git -C` / anchored compound) targets the intended worktree
+while the unanchored form would not.
+
+## Exit criteria
+
+- [ ] Rule line landed in rules/git.md or rules/workflow.md
+- [ ] gaze/merge/raid/roar/molt skill texts anchor branch-mutating git
+- [ ] Hook feasibility judged; decision logged in this ticket

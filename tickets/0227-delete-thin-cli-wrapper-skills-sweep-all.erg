@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-06T11:43Z claude created
 
+2026-06-06T11:52Z claude note ride-along: fix ~/.claude pre-commit hook error text 'Run make build first' — binary is vendored at tickets/erg, there is no make build; refresh via erg install --hooks
 --- body ---
 ## Context
 
