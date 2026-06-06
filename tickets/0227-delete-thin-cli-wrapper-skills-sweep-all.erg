@@ -7,6 +7,7 @@ Author: claude
 2026-06-06T11:43Z claude created
 
 2026-06-06T11:52Z claude note ride-along: fix ~/.claude pre-commit hook error text 'Run make build first' — binary is vendored at tickets/erg, there is no make build; refresh via erg install --hooks
+2026-06-06T13:11Z claude note split: harness-repo portion (actions 1-3, 5, hook ride-along) moved to child 0230 for the raid; this parent retains the multi-repo sweep (action 4), one PR per repo, stays open until all repos done
 --- body ---
 ## Context
 
@@ -24,38 +25,24 @@ delete. Skills are for multi-step orchestration only.
 
 ## Actions
 
-1. Audit every skill in ~/.claude/skills/ against the wrapper test.
-   Known candidate: ticket-new (thin `$ERG new` wrapper; the global
-   tickets/AGENTS.md already documents direct erg usage). Judge each of
-   the others on the same criterion — most (raid, gaze, roar...) are
-   genuine orchestration and stay.
-2. Delete the wrappers found. Where the deleted skill carried a unique
-   fact, move that line to the relevant AGENTS.md/CLAUDE.md/rules file.
-3. Update skills that *reference* deleted wrappers to direct CLI calls:
-   at minimum raid (Phase 7 "Token economy rule": invoke /ticket-new)
-   and roar (step 3: file tickets via /ticket-new). Their reason for
-   delegating — erg owns next-id/validate — is preserved by calling erg
-   directly.
-4. Sweep every repo on padme for project-level wrapper skills and
+(Harness-repo portion — skill audit, wrapper deletion, reference fixes,
+catalog regen, pre-commit hook ride-along — split to child [[0230]].)
+
+1. Sweep every repo on padme for project-level wrapper skills and
    v1-era ticket residue (`.claude/skills/ticket-*`, `%erg v1`,
    `Status:` mutation guidance, `tickets/tools/go`): padme (already
    clean, PRs #5–#7), chemin-de-voix, git-erg, aedist-technical-report
    (+ -docs, -experiments, -slides), Climate-finance,
    Oeconomia-Climate-finance, cadens, fuzzy-corpus, llm-benchmarks,
-   and the home-dir repo. One branch+PR per affected repo.
-5. After harness-repo deletions: `make skills-catalog` and verify
-   `make check-skills-drift` passes.
+   and the home-dir repo. One branch+PR per affected repo, run from a
+   session in that repo (agents are session-bound).
 
 ## Test
 
-For the harness repo: a sweep listing each skill with a one-line
-verdict (orchestration / wrapper-deleted), committed in the PR body or
-ticket log. For each swept project repo: grep transcript showing zero
-hits for the residue patterns.
+For each swept project repo: grep transcript showing zero hits for the
+residue patterns.
 
 ## Exit criteria
 
-- [ ] No skill in ~/.claude/skills/ fails the wrapper test
-- [ ] No skill text references a deleted wrapper (/ticket-new etc.)
+- [ ] Child [[0230]] (harness repo) closed
 - [ ] Every padme repo swept; residue removed or justified in ticket log
-- [ ] make check-skills-drift passes after catalog regeneration
