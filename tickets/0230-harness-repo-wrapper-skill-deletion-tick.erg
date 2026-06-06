@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Harness-repo wrapper-skill deletion: ticket-new removal, raid/roar reference fixes, catalog regen
+Created: 2026-06-06
+Author: claude
+
+--- log ---
+2026-06-06T13:11Z claude created — child of 0227, split per multi-PR ticket discipline (harness-repo portion only; parent retains the multi-repo sweep)
+
+2026-06-06T13:11Z claude note filed as wave-1 raid target (slate: 0216, 0229, 0230 / wave 2: 0228, 0183)
+--- body ---
+## Context
+
+Child of [[0227]] (delete thin CLI-wrapper skills). 0227's work lands as
+one PR per repo; per ticket discipline each PR closes its own child.
+This child covers ONLY the harness repo (~/.claude). The parent keeps
+the per-repo sweep of the other padme repos and stays open until all
+are done.
+
+Author's call (padme session 2026-06-06): skills that are thin
+delegations to a self-documenting CLI should not exist. The wrapper
+test: does the skill add logic beyond invoking one tool? If not,
+replace with an instruction line and delete. Rationale memorized:
+projects/-home-haduong-padme/memory/feedback_no_wrapper_skills.md
+
+## Actions
+
+1. Audit every skill in ~/.claude/skills/ against the wrapper test.
+   Known candidate: ticket-new (thin `$ERG new` wrapper; the global
+   tickets/AGENTS.md already documents direct erg usage). Most others
+   (raid, gaze, roar...) are genuine orchestration and stay.
+2. Delete the wrappers found. Where a deleted skill carried a unique
+   fact, move that line to the relevant AGENTS.md/CLAUDE.md/rules file.
+3. Update skills that *reference* deleted wrappers to direct CLI calls:
+   at minimum raid (Phase 7 "Token economy rule": invoke /ticket-new)
+   and roar (step 3: file tickets via /ticket-new). Their reason for
+   delegating — erg owns next-id/validate — is preserved by calling
+   erg directly.
+4. Ride-along from 0227's log: fix the ~/.claude pre-commit hook error
+   text 'Run make build first' — the binary is vendored at tickets/erg,
+   there is no make build; refresh via erg install --hooks.
+5. `make skills-catalog`; verify `make check-skills-drift` passes.
+
+## Test
+
+A sweep listing each skill with a one-line verdict (orchestration /
+wrapper-deleted), committed in the PR body or ticket log.
+
+## Exit criteria
+
+- [ ] No skill in ~/.claude/skills/ fails the wrapper test
+- [ ] No skill text references a deleted wrapper (/ticket-new etc.)
+- [ ] Pre-commit hook error text no longer says 'Run make build first'
+- [ ] make check-skills-drift passes after catalog regeneration
