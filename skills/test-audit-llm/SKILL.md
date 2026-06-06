@@ -111,7 +111,7 @@ The engine assembles a **deterministic** report (no LLM formatting):
 - a **markdown** report (`CONFIG.OUTPUT`, default `~/TEST-AUDIT-LLM.md`) — banner,
   per-lens summary, an all-findings table sorted by severity × risk × churn, and
   per-file summaries; and
-- a **JSON sidecar** (`OUTPUT` with a `.json` extension) — one object per finding
+- a **JSON sidecar** (`OUTPUT` with the extension replaced by `.json`) — one object per finding
   with the canonical `{ identity, lens, severity, rationale }` schema (plus
   `suggestion`, `confidence`, `escalated`), the machine-readable composition
   artifact.

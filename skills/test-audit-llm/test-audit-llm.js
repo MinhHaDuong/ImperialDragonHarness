@@ -66,7 +66,7 @@ export const meta = {
 // Optional override keys (all may be omitted):
 //   PROJECT, LANGUAGE, FRAMEWORK  — orientation labels / judge context.
 //   OUTPUT                        — report path (default below); JSON sidecar is
-//                                   OUTPUT with a .json extension.
+//                                   OUTPUT with the extension replaced by .json.
 //   TEST_FILES                    — explicit list of repo-relative test files to
 //                                   judge (skips/overrides discovery's list).
 //   ESCALATE_K                    — top-K files to escalate to the strong model
@@ -413,7 +413,7 @@ return {
   report,
   sidecar,
   output: CONFIG.OUTPUT,
-  sidecarOutput: CONFIG.OUTPUT.replace(/\.md$/, '') + '.json',
+  sidecarOutput: CONFIG.OUTPUT.replace(/\.[^./]*$/, '.json'),
   counts: {
     faithfulness: byLens('faithfulness').length,
     intent: byLens('intent').length,
