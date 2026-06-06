@@ -1,6 +1,6 @@
 ---
 name: beat
-description: Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid).
+description: Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). One beat is the heartbeat unit of the overnight autonomous pipeline (nightbeat).
 user-invocable: true
 argument-hint:
 ---

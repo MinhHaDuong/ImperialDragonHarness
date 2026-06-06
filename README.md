@@ -76,7 +76,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 
 | Command | Description |
 |---------|-------------|
-| `/beat` | Trigger one beat cycle on the current project (housekeeping → pick-ticket → raid). |
+| `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). One beat is the heartbeat unit of the overnight autonomous pipeline (nightbeat). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/celebrate` | Deprecated — renamed to /roar. Warns, then delegates to the new name. |
 | `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
@@ -87,15 +87,15 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
 | `/hunt` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
-| `/maw-audit` | "Full-jaw mutation-testing audit. The maw is the beast's devouring jaws — this inspects every tooth of the test suite at once, not just one fang: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Surfaces toothless, over-scoped, and instance-pinned tests. Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. Formerly fang-audit." |
+| `/maw-audit` | "Audit test-suite quality by mutation testing: verify that each test actually catches the defect it claims to catch, stays green under harmless refactors, and guards the whole defect class rather than one instance. The three lenses: fang (a behavior-changing mutation must turn the test RED — else toothless), handcuff (a behavior-preserving refactor must keep it GREEN — else over-scoped), scope (a caught mutation replayed at sibling sites — survivors mean instance-pinned). Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. The name: the maw is the beast's devouring jaws — the audit inspects every tooth, not just one fang. Formerly fang-audit." |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
-| `/nightbeat-report` | Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities. |
-| `/nightbeat-supervisor` | Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck. |
+| `/nightbeat-report` | Review what the overnight autonomous runs did, each morning: parse the logs, narrate the work done, and surface harness improvement opportunities. (Nightbeat is the overnight beat-cycle pipeline.) |
+| `/nightbeat-supervisor` | Supervise the overnight autonomous pipeline (nightbeat) continuously: watch each cycle outcome, merge ready PRs, diagnose and repair failures, escalate when stuck. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
 | `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous sweep run. Returns PICK:<id>, CLOSED:<id>, or IDLE. |
-| `/raid` | Run an Imperial Dragon raid across multiple tickets. Picks targets, manages waves, enforces isolation. Merges APPROVED PRs after verify-gate clears. |
+| `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. This is the Imperial Dragon raid — parallel agents under strict isolation discipline. |
 | `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |

@@ -1,6 +1,6 @@
 ---
 name: maw-audit
-description: "Full-jaw mutation-testing audit. The maw is the beast's devouring jaws — this inspects every tooth of the test suite at once, not just one fang: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Surfaces toothless, over-scoped, and instance-pinned tests. Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. Formerly fang-audit."
+description: "Audit test-suite quality by mutation testing: verify that each test actually catches the defect it claims to catch, stays green under harmless refactors, and guards the whole defect class rather than one instance. The three lenses: fang (a behavior-changing mutation must turn the test RED — else toothless), handcuff (a behavior-preserving refactor must keep it GREEN — else over-scoped), scope (a caught mutation replayed at sibling sites — survivors mean instance-pinned). Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. The name: the maw is the beast's devouring jaws — the audit inspects every tooth, not just one fang. Formerly fang-audit."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[run in the target repo; it discovers its own config — optional overrides via the Workflow args input]"
