@@ -1,12 +1,17 @@
 ---
-name: fang-audit
-description: "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Surfaces toothless, over-scoped, and instance-pinned tests. Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually."
+name: maw-audit
+description: "Full-jaw mutation-testing audit. The maw is the beast's devouring jaws — this inspects every tooth of the test suite at once, not just one fang: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Surfaces toothless, over-scoped, and instance-pinned tests. Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. Formerly fang-audit."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[run in the target repo; it discovers its own config — optional overrides via the Workflow args input]"
 ---
 
-# Fang Audit — does each test have teeth, and the right ones?
+# Maw Audit — does each test have teeth, and the right ones?
+
+*The **maw** is a predator's mouth, jaws, and gullet seen as the thing that
+devours — the whole bite, not one tooth. v1 of this skill audited single fangs
+(sensitivity only) and was named `fang-audit`; since the handcuff and scope
+passes landed it inspects the entire jaw, and the name grew with it.*
 
 A green test suite tells you nothing about whether a test would go **red** if the
 code it covers regressed — nor whether it goes red on a harmless refactor, nor
@@ -101,7 +106,7 @@ empty set.
 > agent lands in a tree without the configured sources and fails at baseline. To
 > audit `~/git-erg`, open the Claude session in `~/git-erg`.
 
-The workflow is a `Workflow`-tool script: `skills/fang-audit/fang-audit.js`.
+The workflow is a `Workflow`-tool script: `skills/maw-audit/maw-audit.js`.
 Phases:
 
 0. **Discovery** (read-only, non-isolated) — derives the config from the launch
@@ -183,7 +188,7 @@ blast-radius × change-frequency findings surface first.
 
 0. **Open the session in the target repo** (see the hard requirement above).
 1. Confirm the suite is worth a ≥1.3M-token audit and is reasonably stable.
-2. Run `skills/fang-audit/fang-audit.js` with the Workflow tool. Pass an `args`
+2. Run `skills/maw-audit/maw-audit.js` with the Workflow tool. Pass an `args`
    object only if you want to **override** a derived value or **opt in** to guard
    files; otherwise pass nothing — discovery derives the config.
 3. If it aborts at discovery (no pairing table) or the precheck (flaky suite),
@@ -197,14 +202,14 @@ blast-radius × change-frequency findings surface first.
 ## Language-pluggable — the documented zero-prep path (non-Go validation)
 
 Because discovery derives the config by reading the repo, a non-Go run is
-**zero-prep**: no `.fang-audit.json`, no pairing table to author. The validated
+**zero-prep**: no `.maw-audit.json`, no pairing table to author. The validated
 second-language target is **`~/aedist-technical-report`** (a `uv` Python project,
 30+ test files). The exact launch procedure:
 
 1. Open a Claude session **rooted in `~/aedist-technical-report`** (the
    hard requirement — Workflow agents cut their worktrees from the session repo;
    this run **cannot** be launched from a `~/.claude`-rooted session).
-2. Invoke `fang-audit` with **no args** (or pass `{ "RISK": {...} }` / a `GUARDS`
+2. Invoke `maw-audit` with **no args** (or pass `{ "RISK": {...} }` / a `GUARDS`
    opt-in only if desired). Discovery reads `pyproject.toml` / `pytest.ini` and
    the `tests/` tree, derives `pytest -p no:cacheprovider ...` (cache-buster
    included) and the test↔source pairing table from imports.

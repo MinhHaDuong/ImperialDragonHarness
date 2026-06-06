@@ -11,7 +11,7 @@ Three lenses, one entry point:
   * flakiness    run the unchanged suite N times; a test whose verdict varies
                  across runs is flaky. Flaky tests train teams to ignore red,
                  and you cannot mutation-test a flaky suite — so this lens is
-                 also the PRECONDITION gate that 0182's fang-audit calls before
+                 also the PRECONDITION gate that 0182's maw-audit (formerly fang-audit) calls before
                  it spends a token. Exposed as the `flakiness` subcommand with a
                  hard exit-code contract (see below).
   * independence run the suite shuffled; a test whose verdict depends on order
