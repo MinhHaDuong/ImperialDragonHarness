@@ -1,6 +1,6 @@
 ---
 name: nightbeat-supervisor
-description: Continuous autonomous supervisor for nightbeat. Watches beat outcomes, merges ready PRs, diagnoses and repairs failures, escalates when stuck.
+description: Supervise the overnight autonomous pipeline (nightbeat) continuously: watch each cycle outcome, merge ready PRs, diagnose and repair failures, escalate when stuck.
 user-invocable: true
 argument-hint: "[--since ISO-TS]"
 ---

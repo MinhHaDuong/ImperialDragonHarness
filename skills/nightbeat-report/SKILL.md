@@ -1,6 +1,6 @@
 ---
 name: nightbeat-report
-description: Morning review of autonomous nightbeat runs. Parses logs, narrates work done, and surfaces harness improvement opportunities.
+description: Review what the overnight autonomous runs did, each morning: parse the logs, narrate the work done, and surface harness improvement opportunities. (Nightbeat is the overnight beat-cycle pipeline.)
 user-invocable: true
 argument-hint: "[--hours N]"
 ---
