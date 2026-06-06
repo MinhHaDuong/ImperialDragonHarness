@@ -8,6 +8,7 @@ Author: claude
 
 2026-06-06T12:09Z MinhHaDuong unlabel deferred
 2026-06-06T12:09Z MinhHaDuong unlabel deferred — parking condition met (0182 PR #305, 0219 PR #316, 0226 PR #319 all merged; harness shape proven thrice). Note: 0226 waived the pass-shape dedup (runPass/expandRules extraction) to this ticket — the next lens pays for the abstraction. Composition target renamed maw-audit (PR #323).
+2026-06-06T14:32Z claude note 0226-waived dedup dispositioned: Workflow sandbox has no module imports — cross-skill extraction impossible; expandRules tokens are mutation-specific; the legitimate residue is a maw-audit-INTERNAL 3->1 *Rules collapse, filed as follow-up ticket 0232
 --- body ---
 ## Context
 

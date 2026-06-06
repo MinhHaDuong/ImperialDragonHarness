@@ -1,0 +1,46 @@
+%erg 0.1
+Title: maw-audit internal: collapse applyRules/handcuffRules/scopeRules into one expandRules
+Created: 2026-06-06
+Author: claude
+
+--- log ---
+2026-06-06T14:31Z claude created
+
+--- body ---
+## Context
+
+Filed from ticket 0183 (the read-and-judge test-audit-llm skill). Ticket 0226
+deferred a "pass-shape dedup (runPass/expandRules extraction)" to 0183, on the
+theory that the next test-quality lens would pay for a shared abstraction.
+
+While building 0183, that cross-skill extraction was determined **mechanically
+impossible**:
+- Workflow scripts run in a sandbox with **no module imports** (no `require`, no
+  `import`, no `process`); a `skills/_shared` does not and cannot exist.
+- maw-audit's `expandRules`-style token substitution (`<RUN_TEST>`,
+  `<MUTATION_HEURISTICS>`, `<TAGS>`, `<SRC_DIR>`) is **mutation-specific** —
+  test-audit-llm executes nothing, so it has no test command, no pairing table,
+  no mutation/handcuff heuristics to template, and a single fan-out (no
+  multi-pass `runPass` shape to share).
+
+So the cross-skill abstraction 0226 imagined has no surface. The **legitimate
+residue** is purely maw-audit-INTERNAL: three near-identical rule templaters —
+`applyRules` (fang), `handcuffRules`, `scopeRules` in
+`skills/maw-audit/maw-audit.js` — each doing the same `<TOKEN>`-replacement over
+a different RULES string. They can collapse into one `expandRules(rulesText,
+tags)` helper that substitutes the common tokens, with each pass passing its own
+RULES body + any pass-specific token.
+
+## Exit criteria
+- [ ] `applyRules` / `handcuffRules` / `scopeRules` collapsed into one
+      `expandRules(rulesText, tags)` in `skills/maw-audit/maw-audit.js`.
+- [ ] Behavior-preserving: the generated prompts are byte-identical to before
+      (the substitution set per pass is unchanged).
+- [ ] `tests/test_maw_audit_skill.py` still passes (the structural assertions on
+      each pass's prompt content are unaffected); fixtures still pass.
+- [ ] `make check` and `make check-fast` pass.
+
+## Notes
+This is a pure internal refactor of ONE skill — NOT the cross-skill extraction
+0226 hypothesised (that is impossible; see Context). Gated on the maw-audit
+fixtures and structural tests still passing.
