@@ -9,11 +9,11 @@
 - Stale pre-fix PDFs: after patching a plot script, always rebuild before committing — PDFs in working tree may predate the fix; size should grow when adding content, shrink signals regression.
 - Conference delivered 2026-05-27 (Econom'IA 2026 at Thema/Cergy) — paper writing phase now open; H1-H4 and OSF preregistration relevant again for journal submission.
 - The arXiv preprint = slides/manuscript/main.md; report.tex is internal ("no future"). See [[project-preprint-target-main-md]].
-- Reference v2 (170 plants) adopted 2026-06-05; never hardcode the reference size in render scripts — use reference_plant_count(). See [[project-reference-v2-adopted]].
+- Reference v2.1 (173 plants, extensions standalone) adopted 2026-06-06; master replay pending (0458); never hardcode the reference size — use reference_plant_count(). See [[project-reference-v2-adopted]].
 
 ## Entries
 - [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 deferred (pre-registered, never close-silently); H5 wiki count in Annex C (5/20 optimised violations); Annex E = recognition matrix
-- [Reference v2 adopted](project_reference_v2_adopted.md) — 170 plants PR #767; projection at load; snapshot = sole master copy; ratchet 0447
+- [Reference v2.1 adopted](project_reference_v2_adopted.md) — 173 plants PR #780 (extensions standalone); master replay pending (0458); ratchet 0447
 - [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
 
 - [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
