@@ -55,3 +55,5 @@
 - [ticket store map](reference_ticket_store_map.md) — padme host config → ~/padme/tickets; IDH harness → ~/.claude/tickets; erg tool → ~/git-erg; classify by what it fixes
 - [cross-session worktree hijack](feedback_cross_session_worktree_hijack.md) — assert `git branch --show-current` before mutating git in a finished agent worktree; another session may have re-pointed it
 - [meta-test: owner pays](feedback_meta_test_owner_pays.md) — coverage meta-tests fail on whichever PR is in flight when a parallel key lands; add the fixture in your PR, never an exemption
+- [Workflow sandbox contract](feedback_workflow_sandbox_contract.md) — no process global; args may arrive stringified; schemas must tolerate stringified ints; decorative agents degrade not die; resume needs byte-identical CONFIG
+- [red-control: no cooperating instrumentation](feedback_redcontrol_no_cooperating_instrumentation.md) — mutate the defect only, never the counter; a guard whose signal lives inside the mutable region can be orphaned by the defect it watches (0240/gaze r1)
