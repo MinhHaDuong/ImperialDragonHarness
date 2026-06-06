@@ -145,8 +145,8 @@ Run full repo housekeeping and act on every finding.
 
 4. **Ticket `open-ticket` items.** For each `open-ticket` finding:
    - Search open ticket slugs and titles for key terms from the finding.
-   - If no existing ticket covers it, create one with /ticket-new using a
-     specific title. For test failures, the slug must contain `fix-tests`
+   - If no existing ticket covers it, create one with `tickets/erg new "<title>"`
+     using a specific title. For test failures, the slug must contain `fix-tests`
      (e.g. `0042-fix-tests-module-not-found`).
    - If a ticket already exists, skip.
 

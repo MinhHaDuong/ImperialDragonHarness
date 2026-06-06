@@ -54,7 +54,7 @@ needs a sentence; flag inter-doc tensions). If absent, degrade to a light
 pass: do the stated-vs-guarded comparison on whatever convention docs and
 test suites the repo has.
 
-Each agent files **one ticket per finding** via `/ticket-new`, with a severity
+Each agent files **one ticket per finding** via `tickets/erg new`, with a severity
 of HIGH / MEDIUM / LOW in the title or body. If there is no `tickets/`
 directory, the agent prints its findings to output instead of filing.
 
@@ -111,7 +111,7 @@ not a release.
 
 ## 7. Blog post (stub)
 
-File a **deferred** ticket via `/ticket-new` titled
+File a **deferred** ticket via `tickets/erg new` titled
 `Write release blog post for <tag>`. This is a documented placeholder — there
 is no blog implementation until blog infrastructure exists.
 

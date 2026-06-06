@@ -107,7 +107,6 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Deprecated — renamed to /hunt. Warns, then delegates to the new name. |
-| `/ticket-new` | Create a local %erg 0.1 file for agent coordination. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
 | `/verify` | Deprecated — renamed to /gaze. Warns, then delegates to the new name. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |

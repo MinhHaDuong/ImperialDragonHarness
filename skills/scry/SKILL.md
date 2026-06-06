@@ -133,7 +133,7 @@ compatibility.
       $ERG log NNNN "claude note <reason>" tickets/
       ```
 
-   c. **open sub-ticket** — split into a smaller ticket: invoke `/ticket-new` to create the sub-ticket with a focused scope.
+   c. **open sub-ticket** — split into a smaller ticket: `tickets/erg new "<title>"` to create the sub-ticket with a focused scope.
 
    d. **skip** — leave unchanged, move to next.
 
