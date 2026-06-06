@@ -75,25 +75,87 @@ git worktree remove /tmp/review-<pr-number> --force
 
 ### 2–4. Read-only review fan-out (parallel)
 
-Sub-skills are `context: fork` — **they do not inherit this skill's cwd or
-conversation**. Every invocation must carry the review-worktree path as an
-explicit `worktree=` argument; a fork launched without it lands in the
-session worktree on whatever branch happens to be checked out there
-(ticket 0193: that is how a drifted fork pushed a stray branch and opened
-rogue PR #243).
+These phases run as **Agent-spawned sub-agents, not `context: fork`
+invocations** (ticket 0216). A fork does not inherit this skill's cwd or
+conversation, so it lands in the session worktree on whatever branch is
+checked out there — that is how a drifted fork pushed a stray branch and
+opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
+deterministically: each reviewer is a **read-only** background Agent whose
+cwd is **pinned to the existing review worktree** `/tmp/review-<pr-number>`
+(created in phase 1). Do **not** give these agents `isolation: "worktree"` —
+that cuts a *fresh* tree from the session repo on main/HEAD, which is exactly
+the wrong-branch failure this conversion eliminates; only the REROLL fix
+agent (a mutator) gets `isolation: "worktree"`.
 
-Launch in a single message, as background agents:
+Every reviewer agent's prompt:
+- opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
+  procedure it runs and the PR;
+- forbids `cd` out of the pinned cwd, and forbids commits, pushes, new
+  branches, new PRs, and any write to `tickets/*.erg` (read-only role);
+- imperatively embeds the sub-skill's operating procedure (the steps below
+  — not a `/skill` invocation), so the agent cannot misread the body as
+  documentation;
+- ends by **returning a single structured block as its final message**, which
+  the orchestrator parses to branch.
 
-- `/verify-adherence <branch> worktree=/tmp/review-<pr-number>` — mechanical-first rule check. If the PR
-  carries the `verify:adherence-passed` label (set by `/hunt`'s
-  pre-PR gate, see PR #40), skip this invocation — the adherence check
-  already ran clean before the PR was opened.
-- `/review` (built-in) — standard review.
-- `/review-pr <pr-number> worktree=/tmp/review-<pr-number>` or `/review-pr-prose <pr-number> worktree=/tmp/review-<pr-number>` — **size-gate**: skip if the PR is small (as computed in phase 1); log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the setup summary. Otherwise: file-type heuristic: if any `*.qmd` changed → prose; else code.
+Spawn the applicable agents **in a single message, as parallel background
+agents** (so the fan-out runs concurrently), then wait for all to return and
+collect their structured outputs.
 
-Wait for all agents to complete. Collect their outputs.
+**Agent A — adherence** (`/verify-adherence <branch> worktree=/tmp/review-<pr-number>`
+is the equivalent procedure). **Label-skip:** if the PR carries the
+`verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
+do **not** spawn this agent — the adherence check already ran clean before the
+PR was opened. Otherwise spawn a read-only Agent, cwd `/tmp/review-<pr-number>`,
+whose embedded procedure is: (1) cheap static checks — for each touched `.py`
+under `scripts/`, probe import resolution (`uv run python -c "import sys;
+sys.path.insert(0,'scripts'); import <m>; getattr(<m>,'<sym>')"`) and run each
+touched module's test file (`uv run python -m pytest <files> -q`); both
+blocking, <10 s budget, ESCALATE rather than trim. (2) Run the adherence suite
+`uv run python -m pytest -m adherence -q` (with the legacy `test_hygiene_*` /
+`test_discipline_*` / `test_schema_contracts` fallback for unmigrated repos);
+failures are blocking. (3) If `pyproject.toml` names ruff and no test calls
+ruff, emit one non-blocking `untested_rules` entry. (4) Only if a
+`.claude/rules/*.md` file changed, run one semantic check citing file:line +
+`suggested_test` per finding. Return the verdict block:
+`adherence: PASS|FAIL`, plus `mechanical_failures`, `semantic_findings`
+(each with `severity: blocking|nit`), and `untested_rules`. The orchestrator's
+early-exit reads `adherence` and the count of `blocking` findings.
 
-**Early-exit check**: if `/verify-adherence` returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees a REROLL; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
+**Agent B — built-in review** (`/review`). This is a built-in slash command
+whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
+embedded**: spawn a read-only Agent, cwd pinned to `/tmp/review-<pr-number>`,
+same containment rails, whose prompt simply invokes `/review` on the PR and
+returns the review summary. (Phase 5 `/simplify` is the other built-in slash
+command; it stays as a direct invocation for now — out of this ticket's scope —
+and would be Agent-WRAPped the same way when converted.)
+
+**Agent C — PR review** (`/review-pr <pr-number> worktree=/tmp/review-<pr-number>`
+or `/review-pr-prose <pr-number> worktree=/tmp/review-<pr-number>`).
+**Size-gate:** skip this agent if the PR is small (as computed in phase 1) and
+log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the
+setup summary. Otherwise pick by file type: if any `*.qmd` changed → prose
+panel; else code panel. Spawn a read-only Agent, cwd `/tmp/review-<pr-number>`,
+whose embedded procedure is: read the linked ticket's exit criteria and the
+diff, assess risk, and run the proportional perspective set in parallel —
+**code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
+correctness only; standard → +consistency; +scripts → +doc-propagation;
+substantial → all five); **prose:** discipline panel sized to the change,
+always including an adversarial referee and an AI-tells auditor that scans the
+full text against `config/ai-tells.yml`. Each perspective reports
+confidence and a verdict (approve / comment / request-changes for code; accept
+/ minor / major for prose). Synthesize: preserve dissent verbatim, dedupe, run
+`make check`. Every non-blocker (minor) finding **must** carry exactly one tag
+prefix — `verifiable:` (a reproducible failing assertion is attached),
+`consider:` (hypothesis, no enforcement), or `nofollow:` (noted, not pursued);
+hedged "might break X" phrasing is forbidden — produce the assertion or
+downgrade to `consider:`. Blockers (request-changes / major) are untagged.
+Post the single review on the PR and return the synthesized findings (blockers
++ tagged minors) as the structured block.
+
+Wait for all spawned agents to complete. Collect their structured outputs.
+
+**Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees a REROLL; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
 ### 5. Simplify (sequential)
 
@@ -102,7 +164,36 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 
 ### 6. Gate (the non-rubber-stamp step)
 
-Invoke `/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`. It returns a structured verdict:
+The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
+(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only** background
+Agent, cwd **pinned to** `/tmp/review-<pr-number>` (the equivalent fork call is
+`/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`); never
+`isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
+cwd, no commits/pushes/branches/PRs; the gate's **one** permitted write is the
+`${ERG:-erg} log <ticket-id> …` reroll-bump line (and its PR verdict comment) —
+it edits no other `tickets/*.erg`. The agent's prompt embeds the gate procedure
+imperatively and returns the YAML verdict block below as its **final message**;
+the orchestrator parses `verdict` to branch.
+
+Embedded gate procedure: for **every** ticket exit criterion, emit
+ADDRESSED/MISSING with concrete evidence — a commit SHA + file:line that
+touched the cited file, a matching test_id, or a posted rationale; "CI ran" /
+"tests pass" is **not** evidence. For **every** review comment (from the phase
+2–4 agents or a human), mark ADDRESSED (a post-comment commit changed the cited
+file, OR the comment is resolved, OR a follow-up ticket is referenced) or
+UNRESOLVED. Tagged minors are triaged by tag, not severity: `verifiable:`
+unresolved → blocker-adjacent (REROLL); `consider:` informational; `nofollow:`
+muted; untagged minors → `malformed_minors` (round 2 → ESCALATE). Every
+must-fix simplify finding is APPLIED (diff shows it) or has a validated
+rationale. Any `blocking` adherence violation → REROLL. Run `git log
+origin/main..origin/<branch> --stat` (two-dot) and report files not traceable
+to an exit criterion as `scope_overflow` (report only — never rebase/amend to
+excise). Decision: any MISSING criterion, any unresolved human comment, any
+unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
+or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
+(round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
+forbidden. On REROLL run `${ERG:-erg} log <ticket-id> "bump verify-reroll —
+round {n}: {top unresolved criterion}"` and post the PR verdict comment. Return:
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE
@@ -119,8 +210,9 @@ round: 1 | 2
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`, feeding it the
-  unresolved lists as input. Fix agent gets ≤10 min. On push, re-enter phase 6 with
-  `round=2`.
+  unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
+  re-spawning the read-only gate Agent** (pinned cwd `/tmp/review-<pr-number>`, as in
+  phase 6) with `round=2` — not a fork invocation.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
   still-unresolved items and the gate's rationale. End the skill.
 - **ESCALATE** → post a PR comment tagged `/gaze stopped:` listing what needs human

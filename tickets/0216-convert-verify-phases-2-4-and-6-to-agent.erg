@@ -10,6 +10,8 @@ Author: MinhHaDuong
 
 2026-06-05T06:56Z claude note panel review (PR #289): this ticket, 0206, and 0208 all edit skills/verify/SKILL.md. Land THIS first (it rewrites phases 2-4/6 wholesale) so 0206's gate clause and 0208's delegation stub stack onto the new structure — avoids a three-way parallel-raid conflict on verify/SKILL.md
 2026-06-05T13:17Z note 0220 renamed verify→gaze: the file the 06:56Z entry calls skills/verify/SKILL.md is now skills/gaze/SKILL.md; body refs updated, log left verbatim
+2026-06-06T13:27Z claude note plan: convert gaze phases 2-4 + 6 from context:fork to read-only Agents pinned to /tmp/review-<pr> (NOT isolation:worktree, which cuts a fresh tree on main); embed each sub-skill procedure imperatively, return structured block orchestrator parses; built-in /review Agent-WRAPped; only REROLL fix agent keeps isolation:worktree
+2026-06-06T13:27Z claude note exit criterion 2 is post-merge-empirical (skills resolve globally); evidence = first clean /gaze run after merge, expected on this raid's wave-2 PRs; evidence will be appended to this (closed) ticket
 --- body ---
 ## Context
 
