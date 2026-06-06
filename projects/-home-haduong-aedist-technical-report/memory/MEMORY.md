@@ -41,7 +41,6 @@
 - [Padme local AI infra](project_padme_local_infra.md) — GROBID, Ollama, GPUs; user prefers local-first pipelines
 - [Local routing → llama_server](project_local_routing_llama_server.md) — Ollama deprecated; llama_server uses OpenAI-compatible API and inherits the OpenRouter dispatch path
 - [Harness architecture: git-erg vs IDH](project_harness_architecture.md) — git-erg travels with repo (project-level); IDH is user-level, never vendor into projects
-- [Econom'IA 2026 deadline](project_econom_ia_2026.md) — talk 2026-05-27 at Thema/Cergy, slides (FR) required, "Beyond RAG" thesis
 - [Padme Ollama serial](feedback_padme_ollama_serial.md) — workstation is Padme; only ONE Ollama job at a time; never parallelize Ollama-bound work
 - [Imagine mode = design dialogue](feedback_imagine_mode.md) — "braindump" / "imagine mode" = reflect and sharpen, don't commit to docs until ratified
 - [ESCALATE = think harder, not stop](feedback_escalate_means_think_harder.md) — verify-gate ESCALATE means use advisor/ultrathink and fix autonomously; only surface to human if fix requires information they alone have
@@ -54,7 +53,6 @@
 - [erg auto-archives to tickets/closed/](project_erg_closed_dir.md) — erg close triggers batch archival; expect git status "D" flood; Blocked-by refs to closed/ break validation
 - [H1–H4 deprioritised for conference push](project_h1_h4_hypotheses.md) — conference (2026-05-27) is slides/manuscript/main.md driven; H1–H4 and OSF off the critical path
 - [H3 empirical, not impossibility](feedback_h3_empirical_not_impossibility.md) — use "does not" not "cannot"; H3 is SOTA observation, not impossibility claim
-- [Phase B-0 N=1 gate](project_phase_b0_n1_gate.md) — SOTA 4-agent experiment runs N=1 smoke first, gating N=3 on review
 - [Exp 1 design: thinking allowed, no web](project_exp1_design_thinking_allowed.md) — parametric ceiling = best F1 from memory; constraint is no-web (via system_instruction), thinking-on is fine
 - [Test one before blasting at experiment level](feedback_test_one_before_blasting_experiment_level.md) — the project rule applies to experiment design too, not only per-call
 - [Killed agent salvage](feedback_killed_agent_salvage.md) — TaskStop on raid subagent leaves locked worktree + claimed branch + uncommitted WIP; commit WIP before remove
@@ -116,3 +114,4 @@
 - [Verify artifacts after Python fix](feedback_verify_artifacts_after_fix.md) — always rebuild PDFs after patching a plot script; stale pre-fix PDFs in working tree look modified but are wrong; size shrink signals regression
 - [Bash cd-to-primary-repo trap](feedback_bash_cd_primary_repo_trap.md) — in a worktree session, prefixing Bash with `cd /home/haduong/<repo>` routes git/erg/commit to the PRIMARY repo on main; run git bare, never `git add -A` with untracked data present
 - [Figure verify: worst-case panel](feedback_figure_verify_worst_case_panel.md) — when checking a multi-panel figure for title/label overlap, render+inspect the longest/two-line-title panel, not an easy representative; structural tests give no visual signal
+- [Matplotlib annotation autoscale](feedback_matplotlib_annotation_autoscale.md) — ax.plot leader lines outside the data area silently expand axes limits, desyncing multi-panel rows; pin set_ylim after all artists; verify alignment by pixel-measuring separators
