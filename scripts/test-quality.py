@@ -54,9 +54,30 @@ The Runner interface for a new language is a callable:
 paired with an Adapter ``parse(raw: str) -> list[TestRecord]``. Implement those
 two and the lenses + ratchet work unchanged. See ``GoAdapter`` /
 ``GoTestRunner`` for the reference Go implementation.
+
+A fourth, STATIC lens (subcommand ``static``) lives alongside the three
+empirical lenses but does NOT re-run the suite — it parses test sources with
+the ``ast`` module and proves a structural property a parser can settle in
+milliseconds, zero tokens, zero execution. The first (and only) check is
+*marker hygiene*: a test function whose body resolves a call to a subprocess
+spawn (``subprocess.{run,Popen,call,check_call,check_output}``) or
+``time.sleep`` must carry the pytest ``integration`` marker (per
+``rules/coding-python.md``). Because it walks the AST rather than grepping, it
+ties each call site to its enclosing function's decorators, follows aliased
+imports (``from subprocess import run as r``), and is immune to the word
+"subprocess" appearing in a comment or string literal.
+
+The static lens has its own subcommand because its inputs (source files) and
+findings (``<file>::<function>`` identities) do not fit the
+``build_report``/RunResult pipeline. It reuses the ratchet idea with its own
+small baseline diff. It is language-pluggable in the minimal sense the rest of
+the file is: one named adapter function (``python_marker_violations``) with a
+documented contract (below). No registry, no ABC — adding a second language is
+adding a second function, by convention.
 """
 
 import argparse
+import ast
 import json
 import logging
 import random
@@ -382,6 +403,243 @@ def ratchet(report: dict, baseline: Baseline) -> dict:
     }
 
 
+# ── static lens: AST marker hygiene (zero execution) ─────────────────────────
+#
+# Adapter contract (mirror this to add another language):
+#
+#   def <lang>_marker_violations(source: str, identity_prefix: str) -> list[dict]
+#
+# Given a test file's source text and a prefix for the identity (the repo-
+# relative path), return one dict per OFFENDING test function:
+#
+#   {"identity": "<identity_prefix>::<function>", "calls": [<call-name>, ...]}
+#
+# where each <call-name> is the canonical dotted name of a spawn/sleep call the
+# function makes that obliges the `integration` marker. A function is an offender
+# iff it makes ≥1 such call AND does NOT carry the marker. Pure-static: no import
+# of the file, no execution. The Python adapter is `python_marker_violations`.
+
+# Calls that oblige the `integration` marker, by their canonical dotted name.
+_SPAWN_CALLS = frozenset(
+    {
+        "subprocess.run",
+        "subprocess.Popen",
+        "subprocess.call",
+        "subprocess.check_call",
+        "subprocess.check_output",
+        "time.sleep",
+    }
+)
+
+
+def _canonical_call_name(node: ast.Call, aliases: dict[str, str]) -> str | None:
+    """Resolve a call node to its canonical dotted name using the import map.
+
+    `aliases` maps the local binding seen in source to a canonical name:
+      * module aliases:  "sp" -> "subprocess"           (import subprocess as sp)
+      * from-imports:    "r"  -> "subprocess.run"        (from subprocess import run as r)
+
+    Returns e.g. "subprocess.run" / "time.sleep", or None if the call is not a
+    recognised spawn/sleep. Only the shapes we care about are resolved; anything
+    else returns None (the lens reports nothing for it).
+    """
+    func = node.func
+    # Attribute call: <value>.<attr>(...)  e.g. subprocess.run(...), sp.run(...)
+    if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+        module = aliases.get(func.value.id, func.value.id)
+        return f"{module}.{func.attr}"
+    # Bare-name call: <name>(...)  e.g. run(...) after `from subprocess import run`
+    if isinstance(func, ast.Name):
+        return aliases.get(func.id)
+    return None
+
+
+def _build_alias_map(tree: ast.AST) -> dict[str, str]:
+    """Map local bindings to canonical names from a module's import statements.
+
+    Handles ``import subprocess``/``import subprocess as sp`` (module aliases)
+    and ``from subprocess import run``/``from subprocess import run as r`` and
+    ``from time import sleep`` (from-import aliases). Only modules relevant to
+    the spawn/sleep checks (subprocess, time) are recorded; other imports are
+    ignored, keeping the map small.
+    """
+    relevant_modules = {"subprocess", "time"}
+    aliases: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in relevant_modules:
+                    aliases[alias.asname or alias.name] = alias.name
+        elif isinstance(node, ast.ImportFrom):
+            if node.module in relevant_modules:
+                for alias in node.names:
+                    bound = alias.asname or alias.name
+                    aliases[bound] = f"{node.module}.{alias.name}"
+    return aliases
+
+
+def _has_integration_marker(decorator_list: list, module_markers: list[str]) -> bool:
+    """True if this function carries the pytest `integration` marker.
+
+    Sources, any of which suffices:
+      * a decorator whose unparsed text contains the token `integration`
+        (``@pytest.mark.integration``);
+      * a module- or class-level ``pytestmark`` that contains `integration`
+        (passed in via `module_markers`, already unparsed).
+
+    Token-specific on purpose: ``@pytest.mark.skipif(...)`` and
+    ``pytestmark = pytest.mark.skipif(...)`` do NOT count.
+    """
+    for dec in decorator_list:
+        if "integration" in ast.unparse(dec):
+            return True
+    return any("integration" in m for m in module_markers)
+
+
+def _unparse_pytestmark(value: ast.AST) -> list[str]:
+    """Unparse a `pytestmark` assignment value into a list of marker strings.
+
+    `pytestmark` may be a single marker or a list/tuple of markers. Returns the
+    unparsed text of each element (so the caller can token-match `integration`).
+    """
+    if isinstance(value, (ast.List, ast.Tuple)):
+        return [ast.unparse(elt) for elt in value.elts]
+    return [ast.unparse(value)]
+
+
+def _collect_pytestmarks(body: list) -> list[str]:
+    """Find `pytestmark = ...` assignments directly in a body (module or class).
+
+    Returns the unparsed marker strings. Walks only direct statements, so a
+    class's pytestmark is read for that class, the module's for the module.
+    """
+    marks: list[str] = []
+    for stmt in body:
+        if isinstance(stmt, ast.Assign):
+            for target in stmt.targets:
+                if isinstance(target, ast.Name) and target.id == "pytestmark":
+                    marks.extend(_unparse_pytestmark(stmt.value))
+    return marks
+
+
+def _offending_calls(func: ast.FunctionDef, aliases: dict[str, str]) -> list[str]:
+    """Canonical spawn/sleep call names made anywhere in a function's body.
+
+    Uses ``ast.walk`` over the function body, so a call inside a closure defined
+    within the test still counts (documented limitation: a call made by a
+    *separate* module-level helper the test merely invokes is NOT traced — the
+    helper is a different function the walk never descends into)."""
+    found: list[str] = []
+    for node in ast.walk(func):
+        if isinstance(node, ast.Call):
+            name = _canonical_call_name(node, aliases)
+            if name in _SPAWN_CALLS:
+                found.append(name)
+    return sorted(set(found))
+
+
+def python_marker_violations(source: str, identity_prefix: str) -> list[dict]:
+    """Python adapter: flag test functions that spawn/sleep without `integration`.
+
+    A *test function* is a top-level or class-nested function whose name starts
+    with ``test``. For each, resolve its spawn/sleep calls against the file's
+    import alias map; if it makes ≥1 such call and lacks the `integration`
+    marker (own decorators, module pytestmark, or its enclosing class's
+    pytestmark), it is a violation.
+    """
+    tree = ast.parse(source)
+    aliases = _build_alias_map(tree)
+    module_marks = _collect_pytestmarks(tree.body)
+    violations: list[dict] = []
+
+    def inspect(func: ast.FunctionDef, extra_marks: list[str]) -> None:
+        if not func.name.startswith("test"):
+            return
+        calls = _offending_calls(func, aliases)
+        if not calls:
+            return
+        if _has_integration_marker(func.decorator_list, module_marks + extra_marks):
+            return
+        violations.append(
+            {"identity": f"{identity_prefix}::{func.name}", "calls": calls}
+        )
+
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            inspect(node, [])
+        elif isinstance(node, ast.ClassDef):
+            class_marks = _collect_pytestmarks(node.body)
+            for sub in node.body:
+                if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    inspect(sub, class_marks)
+
+    return sorted(violations, key=lambda v: v["identity"])
+
+
+def _repo_relative(path: Path, root: Path) -> str:
+    """Identity prefix: the path relative to `root` (so identities are stable
+    across checkouts / CI), POSIX-style. Falls back to the name if `path` is not
+    under `root`."""
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
+def static_lens(test_files: list[Path], root: Path) -> dict:
+    """Run the Python marker-hygiene adapter over every test file.
+
+    Identities are ``<repo-relative-path>::<function>``. Files that fail to parse
+    are reported under ``unparseable`` rather than crashing the lens.
+    """
+    violations: list[dict] = []
+    unparseable: list[str] = []
+    scanned = 0
+    for path in sorted(test_files):
+        rel = _repo_relative(path, root)
+        try:
+            source = path.read_text()
+            file_violations = python_marker_violations(source, rel)
+        except (SyntaxError, ValueError) as exc:
+            unparseable.append(rel)
+            log.warning("could not parse %s: %s", rel, exc)
+            continue
+        scanned += 1
+        violations.extend(file_violations)
+    return {
+        "lens": "static",
+        "scanned": scanned,
+        "violations": sorted(violations, key=lambda v: v["identity"]),
+        "clean": scanned - len({v["identity"] for v in violations}),
+        "unparseable": sorted(unparseable),
+    }
+
+
+def static_ratchet(report: dict, baseline_ids: set[str]) -> dict:
+    """Split static violations into NEW (gating) and baselined (known, ignored).
+
+    Mirrors the empirical ratchet: a violation whose identity is already in the
+    committed baseline does not gate; anything else is a regression.
+    """
+    current = {v["identity"] for v in report["violations"]}
+    new = sorted(current - baseline_ids)
+    return {
+        "regressed": bool(new),
+        "new": new,
+        "baselined": sorted(current & baseline_ids),
+    }
+
+
+def discover_test_files(root: Path) -> list[Path]:
+    """Every collectible ``test_*.py`` under ``<root>/tests`` (the dogfood scan).
+
+    Deliberately matches pytest's default collection glob so the lens sees the
+    same files the runner does — and so ``sample_*.py`` fixtures (which pytest's
+    ``norecursedirs``/non-``test_`` naming already excludes) are NOT pulled in.
+    """
+    return sorted((root / "tests").glob("test_*.py"))
+
+
 # ── top-level orchestration: the single entry point that runs all 3 lenses ───
 
 
@@ -464,6 +722,44 @@ def cmd_flakiness(args) -> int:
     return EXIT_REGRESSION if new_flaky else 0
 
 
+def cmd_static(args) -> int:
+    """STATIC GATE: AST marker-hygiene over test sources; no suite execution.
+
+    Exit 0 = clean (or every violation is baselined). Exit EXIT_REGRESSION = a
+    NEW marker violation. JSON report on stdout either way. With
+    --update-baseline, rewrite the baseline from current findings and never gate.
+    """
+    root = Path(args.root).expanduser().resolve()
+    if args.files:
+        test_files = [Path(f) for f in args.files]
+    else:
+        test_files = discover_test_files(root)
+    report = static_lens(test_files, root)
+
+    baseline_ids: set[str] = set()
+    if args.baseline:
+        bpath = Path(args.baseline)
+        if bpath.exists():
+            baseline_ids = set(json.loads(bpath.read_text()).get("static", []))
+    rr = static_ratchet(report, baseline_ids)
+    report["ratchet"] = rr
+
+    if args.update_baseline and args.baseline:
+        Path(args.baseline).write_text(
+            json.dumps(
+                {"static": sorted(v["identity"] for v in report["violations"])},
+                indent=2,
+            )
+            + "\n"
+        )
+        report["ratchet"]["baseline_updated"] = True
+        _emit(report)
+        return 0
+
+    _emit(report)
+    return EXIT_REGRESSION if rr["regressed"] else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
@@ -544,6 +840,37 @@ def build_parser() -> argparse.ArgumentParser:
         help="Baseline JSON; flakiness already listed does not gate",
     )
     fl_p.set_defaults(func=cmd_flakiness)
+
+    st_p = sub.add_parser(
+        "static",
+        help=(
+            "STATIC GATE: AST marker-hygiene over test sources; no suite run. "
+            "Flags subprocess/time.sleep calls in tests lacking the "
+            "`integration` marker."
+        ),
+    )
+    st_p.add_argument(
+        "--root",
+        default=".",
+        help="Repo root; test files are discovered under <root>/tests (default: .)",
+    )
+    st_p.add_argument(
+        "--files",
+        nargs="*",
+        default=None,
+        help="Explicit test files to scan (default: discover <root>/tests/test_*.py)",
+    )
+    st_p.add_argument(
+        "--baseline",
+        default=None,
+        help="Baseline JSON ({'static': [identities]}); listed violations don't gate",
+    )
+    st_p.add_argument(
+        "--update-baseline",
+        action="store_true",
+        help="Rewrite the baseline from current findings; never gates",
+    )
+    st_p.set_defaults(func=cmd_static)
 
     return p
 
