@@ -2,6 +2,7 @@
 Title: Handcuff and scope-altitude mutation modes for the fang-audit skill
 Created: 2026-06-05
 Author: MinhHaDuong
+Closed: autoclosed — PR #316
 
 --- log ---
 2026-06-05T11:56Z MinhHaDuong created
@@ -13,6 +14,7 @@ Author: MinhHaDuong
 2026-06-05T18:12Z Minh Ha-Duong note parking condition MET (2026-06-05): authorized fang-v1 validating run completed on git-erg — canary gate PASS (both guards caught their primary canaries), 86 caught / 3 toothless (all true coverage gaps) / 3 equivalent; report at ~/git-erg/FANG-AUDIT.md. Count drift vs the May prototype (90/8/4) explained by test improvements since and per-run mutation sampling; the methodology reproduced end-to-end (precheck gate, 17 isolated audits, skeptics, serialized guards). Remaining input before raid: pick the second-language validation target (AEDIST Python suite is the candidate)
 2026-06-05T18:12Z claude note run residue findings to absorb in this ticket's scaffolding work: (1) seeded guard worktrees skip auto-reclaim (untracked seed file makes them dirty); (2) audit agents hand-roll /tmp/fang-erg-* scratch worktrees on detached HEAD — add a post-run cleanup step to the skill when touching the workflow here
 2026-06-06T00:00Z MinhHaDuong note author directives 2026-06-06 (supersede conflicting 0182 exit-criteria text): (1) Just Work — replace the hardcoded CONFIG with a run-start DISCOVERY phase, overrides only optional; (2) deliberately REWRITE the 0182 adherence tests to guard the new discovery contract (do not bounce, do not delete silently); (3) validation run EXCLUDED — satisfy via documented zero-prep launch path for ~/aedist-technical-report; (4) absorb the two run-residue cleanups. Full text in body section "Author directives".
+2026-06-06T08:56Z MinhHaDuong closed — autoclosed — PR #316
 --- body ---
 ## Context
 
