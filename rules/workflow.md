@@ -93,7 +93,7 @@ original ticket becomes a **tracking ticket** — leave it open. Create each
 sub-ticket referencing the tracker, then edit the tracker to list every child.
 As with the planned multi-PR split above, the tracker stays open until every
 child is closed — and then closes only after the integration review at `/roar`
-step 7 (all children closed → re-read child diffs, run the full suite, verify
+step 8 (all children closed → re-read child diffs, run the full suite, verify
 exit criteria), not on the bare event of the last child merging.
 
 # Compaction
