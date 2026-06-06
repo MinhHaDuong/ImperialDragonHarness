@@ -54,8 +54,9 @@ file to run an audit.** At run start a **DISCOVERY** phase reads the LAUNCH repo
 - the **test↔source pairing table** (each test mapped to the source file(s) it
   actually exercises, with the import/call-site evidence recorded),
 - language-specific mutation + refactor heuristics,
-- the `test-quality.py` flakiness-gate invocation for the language (if an adapter
-  exists).
+- the `test-quality.py` flakiness-gate invocation **if** the language has an
+  adapter (`test-quality.py` ships a **Go adapter only** today — a Python/other
+  suite gets an empty `PRECHECK_CMD` and the determinism gate skips openly).
 
 This is **informed derivation by reading** — allowed. The **BANNED** thing is the
 blind filename-glob heuristic (`X_test → X.go`), which returned a *nonexistent*
@@ -82,6 +83,15 @@ cannot come from the environment — pre-expand to absolute form when in doubt).
 explicit human **opt-in** — never auto-discovered. With no guards designated the
 canary gate is **skipped openly** (the report says so); it is never faked on an
 empty set.
+
+> **Reproducing the git-erg reference run** (the one with a live canary gate)
+> therefore needs **two overrides discovery cannot derive**: `GUARDS` (the
+> designated canary file + its primary canary mutation — an opt-in, never
+> auto-discovered) and `UNTRACKED_SEED` (the uncommitted build inputs the guard
+> build needs, which a fresh worktree lacks — only the committed tree
+> propagates). A `GUARDS`-only reproduction whose guard test depends on an
+> untracked input will fail at the guard baseline; pair the two. Without
+> `GUARDS` the run still completes — the canary gate just skips openly.
 
 ## How it runs
 
@@ -164,6 +174,11 @@ sorted by **risk × churn** (churn = commit count per file from `git log --follo
 risk = the human-supplied `CONFIG.RISK` weight, default 1) so the highest
 blast-radius × change-frequency findings surface first.
 
+> **`RISK` override keys are the full repo-root-relative test path** (e.g.
+> `{"tests/test_foo.py": 2.0}`), matching the identity discovery returns — not a
+> bare basename. Test identity is one canonical path everywhere in the engine
+> (0226); a basename key silently weights nothing on a path-prefixed repo.
+
 ## Steps
 
 0. **Open the session in the target repo** (see the hard requirement above).
@@ -193,8 +208,13 @@ second-language target is **`~/aedist-technical-report`** (a `uv` Python project
    opt-in only if desired). Discovery reads `pyproject.toml` / `pytest.ini` and
    the `tests/` tree, derives `pytest -p no:cacheprovider ...` (cache-buster
    included) and the test↔source pairing table from imports.
-3. The precheck uses the Python adapter of `~/.claude/scripts/test-quality.py`
-   if one exists for the suite; otherwise it skips openly (warn-and-proceed).
+3. The precheck. `~/.claude/scripts/test-quality.py` ships a **Go adapter only**
+   (`--adapter` accepts `go`; there is no Python adapter today), so for a Python
+   suite discovery returns an empty `PRECHECK_CMD` and the determinism gate
+   **skips openly** (warn-and-proceed; the report carries a ⏭️ banner). Do NOT
+   hand-wire `PRECHECK_CMD` with `--adapter python` — argparse rejects it (exit
+   2) and the precheck aborts the run. Stabilize a Python suite manually (or add
+   a Python adapter to `test-quality.py`) before trusting the toothless rows.
 4. **Expected cost scale.** The git-erg reference run was ~1.3M tokens / ~29 min
    for 19 files, fang-only. AEDIST has ~30+ test files and the v2 workflow adds a
    handcuff pass and a scope pass, so budget on the order of **2–4×** the git-erg

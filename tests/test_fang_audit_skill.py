@@ -380,6 +380,100 @@ def test_skill_md_states_target_repo_requirement():
     )
 
 
+# ── 0226 defect 1: ONE canonical test-identity normalization ─────────────────
+
+
+def test_test_identity_keyed_consistently_no_per_site_basename():
+    """0226 defect 1 (the headline). The fang/handcuff/scope dicts were WRITTEN
+    with ``base(a.testFile)`` (basename) but READ with the raw
+    ``BEHAVIORAL[].test`` path. On a path-prefixed repo (Python ``tests/``
+    layout) discovery returns ``tests/test_foo.py`` while ``base()`` yields
+    ``test_foo.py`` — the join misses, so the scope pass never dispatches, the
+    handcuff priority sort is a no-op, and the three-axis table is all-n/a.
+
+    Root fix: identity is the full repo-root-relative path, established once at
+    the BEHAVIORAL mapping and bound through DISPATCH (``a.testFile =
+    file.test``), never a per-site basename. So:
+      * NO ``base(`` call survives — every former key site now holds the
+        canonical full path the read sites already use.
+      * Each MUTATING wrapper pins identity from the dispatched ``file.test``,
+        not the agent's self-reported ``a.testFile`` (the ``|| file.test``
+        fallback let the agent's claim win — same anti-pattern the canary gate
+        already bans, l.602-604).
+
+    This test FAILS on the pre-fix code (``base(a.testFile)`` present, wrappers
+    use ``a.testFile || file.test``) and passes once identity is canonical."""
+    src = js()
+    # No per-site basename normalization on a key/identity site survives.
+    assert "base(" not in src, (
+        "a per-site base()/basename on a test-identity key survives — the "
+        "write-key (basename) and read-key (full path) split that makes the "
+        "scope/handcuff/three-axis joins miss on path-prefixed repos (0226 d1)"
+    )
+    # Every mutating wrapper must pin identity from the DISPATCHED file, never
+    # the agent's self-reported testFile (no `|| file.test` fallback).
+    assert "a.testFile || file.test" not in src and "a.testFile||file.test" not in src, (
+        "a mutating wrapper still lets the agent's self-reported testFile win "
+        "over the dispatched file.test — identity must come from dispatch (0226 d1)"
+    )
+    assert src.count("a.testFile = file.test") >= 4, (
+        "expected all four mutating wrappers (audit/guard/handcuff/scope) to "
+        "pin a.testFile = file.test from dispatch (0226 d1)"
+    )
+
+
+def test_run_test_validated_non_empty_before_fanout():
+    """0226 defect 2. An empty RUN_TEST gives every audit agent a blank test
+    command, so every mutation trivially 'survives' → a false-accusation flood.
+    The discovery schema must require a non-empty RUN_TEST (minLength) so the
+    Workflow runtime rejects+retries a blank, AND the engine must abort if it is
+    still empty after merge."""
+    src = js()
+    # Schema enforces a non-empty RUN_TEST.
+    sch = src[src.index("DISCOVERY_SCHEMA"):src.index("phase('Discovery')")]
+    assert "minLength" in sch, (
+        "DISCOVERY_SCHEMA does not enforce a non-empty RUN_TEST (minLength) — "
+        "an empty test command passes every gate (0226 d2)"
+    )
+    # Engine aborts on an empty RUN_TEST before the fan-out.
+    assert re.search(r"!CONFIG\.RUN_TEST", src) or "RUN_TEST.trim()" in src, (
+        "engine does not abort on an empty RUN_TEST after merge (0226 d2)"
+    )
+
+
+def test_precheck_gate_enum_and_affirmative_pass():
+    """0226 defect 3. The precheck gate must be an ENUM ['pass','fail'] (the
+    Workflow runtime validates + retries on mismatch, so a real agent returning
+    'skipped'/'Pass'/'unknown' is rejected, not silently passed), and the
+    no-abort condition must require ``gate === 'pass'`` AFFIRMATIVELY — not
+    merely ``!== 'fail'``."""
+    src = js()
+    psch = src[src.index("PRECHECK_SCHEMA"):src.index("const RULES")]
+    assert re.search(r"gate:\s*\{[^}]*enum:\s*\[\s*'pass'\s*,\s*'fail'\s*\]", psch), (
+        "PRECHECK_SCHEMA.gate is not an enum ['pass','fail'] — a real agent "
+        "returning 'skipped'/'Pass' would pass the flakiness gate (0226 d3)"
+    )
+    # The abort must require an affirmative pass.
+    assert "gate !== 'pass'" in src or "gate === 'pass'" in src, (
+        "precheck abort does not require an affirmative gate === 'pass' (0226 d3)"
+    )
+
+
+def test_precheck_skip_banner_in_report():
+    """0226 advisory. The precheck open-skip was invisible in the Markdown
+    report (only log() + a return field); the canary open-skip has a ⏭️ banner.
+    The report must mirror that banner for a precheck skip."""
+    src = js()
+    # The L (report) assembly must reference precheckSkipped to emit a banner.
+    lasm = src[src.index("const L = []"):]
+    assert "precheckSkipped" in lasm, (
+        "precheck skip is not surfaced in the Markdown report (0226 advisory)"
+    )
+    assert lasm.count("⏭️") >= 2, (
+        "precheck skip banner does not mirror the canary ⏭️ banner (0226 advisory)"
+    )
+
+
 # ── 0223: args may arrive as a JSON-encoded string ───────────────────────────
 
 

@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-06T10:55Z claude created — post-merge /code-review of PR #316 (high effort, 7 finder angles, adversarial verify); 3 CONFIRMED correctness defects + verified advisories
 
+2026-06-06T10:01Z claude note RED→GREEN teeth evidence: pre-fix 4 new tests FAILED on unedited fang-audit.js (base( present, wrappers a.testFile||file.test, gate no enum, RUN_TEST no minLength, 1 banner); post-fix 37 passed. Defect-1 root fix: identity=full repo-root-relative path pinned via dispatch (a.testFile=file.test x4 wrappers), all base() removed (5 sites incl hcFlat/scFlat). Full suite 449 passed, make check clean.
 --- body ---
 ## Context
 

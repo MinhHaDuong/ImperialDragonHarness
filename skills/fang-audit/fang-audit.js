@@ -112,7 +112,7 @@ const DISCOVERY_SCHEMA = {
     LANGUAGE: { type: 'string' },
     PACKAGE_HINT: { type: 'string' },
     SRC_DIR: { type: 'string', description: 'directory the test command runs in, relative to repo root' },
-    RUN_TEST: { type: 'string', description: 'the cache-busting test command; <TAGS> placeholder for build-tag flags' },
+    RUN_TEST: { type: 'string', minLength: 1, description: 'the cache-busting test command; <TAGS> placeholder for build-tag flags' },  // 0226 d2: minLength so the Workflow runtime rejects+retries a blank command (an empty RUN_TEST gives every audit agent a no-op gate → every mutation trivially "survives")
     DEFAULT_TAGS: { type: 'string' },
     GUARD_TAGS: { type: 'string' },
     PRECHECK_CMD: { type: 'string', description: 'the 0184 test-quality.py flakiness gate invocation for this repo' },
@@ -123,9 +123,14 @@ const DISCOVERY_SCHEMA = {
       properties: {
         test: { type: 'string' },
         src: { type: 'array', items: { type: 'string' } },
-        rationale: { type: 'string', description: 'WHY this pairing — the import/call-site evidence, proving it is read-derived not glob-derived' },
+        rationale: { type: 'string', minLength: 1, description: 'WHY this pairing — the import/call-site evidence, proving it is read-derived not glob-derived' },
       },
-      required: ['test', 'src'],
+      // 0226 advisory: require `rationale`. Without it, a glob-derived pairing
+      // table (the BANNED X_test→X.go heuristic) passes the only machine gate —
+      // the import/call-site evidence is the sole structural proof the pairing
+      // was READ-derived, not name-derived. The runtime rejects+retries a
+      // pairing with a missing or empty rationale.
+      required: ['test', 'src', 'rationale'],
     } },
     evidence: { type: 'string', description: 'what files were read (Makefile/pyproject/go.mod/test tree) and how the command + pairings were derived' },
   },
@@ -175,6 +180,19 @@ CONFIG.RISK = CONFIG.RISK || {}
 CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
 CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))
 log(`discovery: ${CONFIG.BEHAVIORAL.length} test↔source pairings, RUN_TEST="${CONFIG.RUN_TEST}", ${CONFIG.GUARDS.length} designated guard(s).`)
+
+// 0226 d2: an empty RUN_TEST is the silent killer — every audit agent gets a
+// blank test command, so EVERY mutation trivially "survives" (a false-accusation
+// flood) and the canary never trips. The schema minLength makes the Workflow
+// runtime reject+retry a blank from discovery, but an explicit `RUN_TEST: ''`
+// override (or a degenerate discovery the runtime accepted) can still reach
+// here. FALLBACKS carries no RUN_TEST, so a missing value stays undefined.
+// Abort affirmatively on a missing-or-blank command rather than fan out a no-op.
+if (!CONFIG.RUN_TEST || !String(CONFIG.RUN_TEST).trim()) {
+  const msg = 'ABORT: RUN_TEST is empty — no test command to run. Every mutation would trivially "survive" a blank gate (a false-accusation flood). Discovery must derive a cache-busting test command, or pass a non-empty RUN_TEST override.'
+  log(msg)
+  return { aborted: true, reason: msg, discovered }
+}
 
 const { BEHAVIORAL, GUARDS } = CONFIG
 
@@ -226,7 +244,11 @@ const PRECHECK_SCHEMA = {
   additionalProperties: false,
   properties: {
     exitCode: { type: 'integer', description: 'exit code of the flakiness gate (0 = stable, 2 = new flakiness)' },
-    gate: { type: 'string', description: 'the "gate" field from the JSON report: "pass" or "fail"' },
+    // 0226 d3: enum, not a bare string. The Workflow runtime validates agent
+    // returns against this schema and retries on mismatch, so a real agent
+    // reporting 'skipped'/'Pass'/'unknown' is REJECTED rather than slipping
+    // through the flakiness gate masquerading as a pass.
+    gate: { type: 'string', enum: ['pass', 'fail'], description: 'the "gate" field from the JSON report: "pass" or "fail"' },
     flakyTests: { type: 'array', items: { type: 'string' }, description: 'identities flagged flaky, if any' },
     evidence: { type: 'string', description: 'the raw command + a short excerpt of its JSON stdout' },
   },
@@ -557,10 +579,16 @@ This is the 0184 test-quality utility's flakiness gate. Exit-code contract:
   - exit 0 = suite is stable (or all flakiness is baselined) -> gate "pass"
   - exit 2 = NEW flakiness found -> gate "fail"
 The JSON report on stdout carries a "gate" field ("pass"/"fail"); read it to confirm. Report exitCode, gate, any flaky test identities, and a short evidence excerpt. Do NOT mutate anything.`,
-  { label: 'precheck:flakiness', phase: 'Precheck', schema: PRECHECK_SCHEMA }
+  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin the cheap model (mirrors the skeptics), don't burn Opus
 ).catch(() => null)  // Δ10: a precheck agent error falls into the abort path below, not an opaque crash
 
-if (!precheck || precheck.exitCode !== 0 || precheck.gate === 'fail') {
+// 0226 d3: require an AFFIRMATIVE pass on the real-agent path — `gate === 'pass'`,
+// not merely `!== 'fail'`. With the PRECHECK_SCHEMA enum now constraining gate to
+// ['pass','fail'] the runtime already rejects+retries a stray 'skipped'/'Pass'/
+// 'unknown', but defence-in-depth: a value that is neither 'pass' nor 'fail' must
+// ABORT, never slip through. The OPEN skip (precheckSkipped, synthetic
+// gate:'skipped') is a deliberate warn-and-proceed and is exempt from the gate.
+if (!precheckSkipped && (!precheck || precheck.exitCode !== 0 || precheck.gate !== 'pass')) {
   const detail = precheck
     ? `exit ${precheck.exitCode}, gate=${precheck.gate}${precheck.flakyTests && precheck.flakyTests.length ? ', flaky: ' + precheck.flakyTests.join(', ') : ''}`
     : 'precheck agent returned nothing'
@@ -586,7 +614,7 @@ phase('Audit')
 const behavioral = await pipeline(
   BEHAVIORAL,
   file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', schema: AUDIT_SCHEMA, isolation: 'worktree' })
-            .then(a => { if (a) a.testFile = a.testFile || file.test; return a }),
+            .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH, not the agent's self-report (mirrors the canary-tag rule below — never read it back from the agent)
   (audit, file) => skepticize(audit, file),
 )
 
@@ -602,17 +630,26 @@ for (const file of GUARDS) {
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
   // agent it dispatched), NEVER from a read-back of the agent's isCanary flag.
-  if (a) { a.testFile = a.testFile || file.test; a._isGuardFile = true; a = await skepticize(a, file) }
+  if (a) { a.testFile = file.test; a._isGuardFile = true; a = await skepticize(a, file) }  // 0226 d1: identity from DISPATCH (see audit wrapper)
   guards.push(a)
   log(`guard ${file.test}: ${a ? (a.findings.filter(f => f.isCanary).map(f => f.result).join(',') || a.findings[0]?.result) : 'null'}`)
 }
 
 const all = [...behavioral, ...guards].filter(Boolean)
 
-// Report helpers — hoisted above the handcuff/scope phases (which key fang
-// counts and caught-operators by basename) so they are in scope there too.
+// Report helper — hoisted above the handcuff/scope phases so it is in scope
+// there too.
+//
+// 0226 d1: there is intentionally NO basename helper. Test identity is the full
+// repo-root-relative path discovery returns (e.g. `tests/test_foo.py` on a
+// Python layout), established ONCE at the BEHAVIORAL mapping and bound through
+// dispatch (`a.testFile = file.test` in every wrapper above). The former
+// basename-of-testFile keys split the WRITE side (basename) from the READ side
+// (`BEHAVIORAL[].test`, full path), so on a path-prefixed repo the scope /
+// handcuff / three-axis joins all missed — the AEDIST-blocking defect. Keying
+// on one canonical string everywhere is the fix; a per-site basename would just
+// reintroduce the split.
 const esc = s => String(s == null ? '' : s).replace(/\n+/g, ' ').replace(/\|/g, '\\|').trim()
-const base = p => String(p || '').split('/').pop()
 
 // ---- Phase 4: HANDCUFF pass (robustness — INVERTED oracle, own skeptic) ----
 // Pipelined AFTER the fang pass in the SAME workflow (shared discovery,
@@ -620,9 +657,15 @@ const base = p => String(p || '').split('/').pop()
 // are non-trivial — a file with no fang is unlikely to be over-scoped, and the
 // budget is better spent on the ones doing real assertion work.
 phase('Handcuff')
+// 0226 advisory: fangByFile feeds ONLY the BEHAVIORAL handcuff-priority sort, so
+// count fangs from behavioral findings only. Iterating `all` (behavioral +
+// guards) double-counts a file designated as BOTH a behavioral pairing and a
+// guard (same path in BEHAVIORAL and GUARDS): its guard-pass caught mutations
+// would inflate its behavioral fang count and distort the sort. Filter on the
+// structural _isGuardFile tag.
 const fangByFile = {}
-all.forEach(a => (a.findings || []).forEach(f => {
-  if (f.result === 'caught') fangByFile[base(a.testFile)] = (fangByFile[base(a.testFile)] || 0) + 1
+all.filter(a => !a._isGuardFile).forEach(a => (a.findings || []).forEach(f => {
+  if (f.result === 'caught') fangByFile[a.testFile] = (fangByFile[a.testFile] || 0) + 1
 }))
 const handcuffTargets = [...BEHAVIORAL].sort((x, y) => (fangByFile[x.test] || 0) < (fangByFile[y.test] || 0) ? 1 : -1)
 const handcuffs = await pipeline(
@@ -631,7 +674,7 @@ const handcuffs = await pipeline(
   // and runs the suite; concurrent loops on a shared checkout corrupt each
   // other, exactly as in the fang pass.
   file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })
-            .then(a => { if (a) a.testFile = a.testFile || file.test; return a }),
+            .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH (see audit wrapper)
   (audit, file) => handcuffSkepticize(audit, file),
 )
 
@@ -641,7 +684,7 @@ const handcuffs = await pipeline(
 phase('Scope')
 const caughtOpsByFile = {}
 behavioral.filter(Boolean).forEach(a => {
-  const fileName = base(a.testFile)
+  const fileName = a.testFile
   ;(a.findings || []).filter(f => f.result === 'caught').forEach(f => {
     (caughtOpsByFile[fileName] = caughtOpsByFile[fileName] || []).push({ testFunc: f.testFunc, mutation: f.mutation })
   })
@@ -651,7 +694,7 @@ const scopes = await parallel(scopeTargets.map(file => () =>
   // Δ8: isolation:'worktree' — the scope agent MUTATES (replays operators at
   // sibling sites) and runs the suite; must be isolated like fang/handcuff.
   agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', schema: SCOPE_SCHEMA, isolation: 'worktree' })
-    .then(a => { if (a) a.testFile = a.testFile || file.test; return a })
+    .then(a => { if (a) a.testFile = file.test; return a })  // 0226 d1: identity from DISPATCH (see audit wrapper)
     .catch(e => { log(`scope ${file.test} agent error: ${e}`); return null })
 ))
 
@@ -676,14 +719,14 @@ PROCEDURE (read-then-act, conservatively):
 4. Report which paths you removed (or "none found").
 
 If \`git worktree list\` shows no /tmp/fang- entries, do nothing and report "none found". Do NOT mutate source, do NOT remove anything outside the /tmp/fang- prefix.`,
-  { label: 'cleanup:scratch-worktrees', phase: 'Cleanup' }
+  { label: 'cleanup:scratch-worktrees', phase: 'Cleanup', model: 'sonnet' }  // 0226 advisory: mechanical list-then-prune — pin the cheap model
 ).catch(e => log(`cleanup agent error (non-fatal): ${e}`))
 
 // ---- Deterministic report assembly (no LLM formatting of N objects) ----
-// (esc/base hoisted above the handcuff/scope phases.)
+// (esc hoisted above the handcuff/scope phases.)
 // Δ7: carry _isGuardFile down onto each finding so canary scoping is by
 // CONFIG-dispatched role, not by a self-asserted flag.
-const flat = all.flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile), _isGuardFile: !!a._isGuardFile })))
+const flat = all.flatMap(a => (a.findings || []).map(f => ({ ...f, _file: a.testFile, _isGuardFile: !!a._isGuardFile })))
 const survived = flat.filter(f => f.result === 'survived')
 const equivalent = flat.filter(f => f.result === 'equivalent')
 const caught = flat.filter(f => f.result === 'caught')
@@ -705,11 +748,11 @@ const canarySkipped = GUARDS.length === 0
 const canaryOK = !canarySkipped && canaryFindings.length >= GUARDS.length && canaryFindings.every(f => f.result === 'caught')
 
 // ---- 0219: flatten the HANDCUFF (robustness) and SCOPE (altitude) passes ----
-const hcFlat = (handcuffs || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile) })))
+const hcFlat = (handcuffs || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: a.testFile })))
 const handcuffHits = hcFlat.filter(f => f.result === 'handcuff')        // over-scoped (red on a true refactor)
 const robust = hcFlat.filter(f => f.result === 'robust')
 const notPreserving = hcFlat.filter(f => f.result === 'not-preserving') // refactor secretly changed behavior — a fang, not a handcuff
-const scFlat = (scopes || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile) })))
+const scFlat = (scopes || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: a.testFile })))
 const instancePinned = scFlat.filter(f => f.result === 'instance-pinned') // under-scoped: guards one instance, not the class
 const classGuarded = scFlat.filter(f => f.result === 'class-guarded')
 
@@ -750,7 +793,7 @@ const churnByFile = await (async () => {
   try {
     const res = await agent(
       `For ${CONFIG.PROJECT}, report the git churn (number of commits that touched the file) for each of these test files, using \`git log --follow --oneline -- <file> | wc -l\` from the repo root. Files: ${files.join(', ')}. Return a JSON object mapping each filename to its commit count (a plain number; a numeric string is also accepted).`,
-      { label: 'churn:git-log', phase: 'Guards',
+      { label: 'churn:git-log', phase: 'Guards', model: 'sonnet',  // 0226 advisory: mechanical git-log-and-count — pin the cheap model
         schema: { type: 'object', additionalProperties: { type: ['integer', 'string'] } } }
     )
     return Object.fromEntries(Object.entries(res || {}).map(([k, v]) => [k, parseInt(v, 10) || 0]))
@@ -808,6 +851,18 @@ if (canarySkipped) {
   L.push('🛑 **FAIL / SUSPECT** — a guard canary did not classify as `caught`. The harness may be miswired (or the guard-tag / untracked-input setup failed). **Treat the toothless list with caution.** Canary results:')
   canaryFindings.forEach(f => L.push(`- \`${f._file}\` → **${f.result}** — ${esc(f.mutation)}`))
   if (canaryFindings.length < GUARDS.length) L.push(`- (only ${canaryFindings.length} canary finding(s) reported; expected ${GUARDS.length})`)
+}
+L.push('')
+// 0226 advisory: the precheck OPEN-skip was invisible in the report (only
+// log() + a return field), while the canary open-skip carries a ⏭️ banner.
+// Mirror it here so a reader of the Markdown sees the un-vetted-determinism
+// caveat without trawling the run log.
+L.push('## Determinism precheck')
+L.push('')
+if (precheckSkipped) {
+  L.push('⏭️ **SKIPPED (openly)** — discovery found no 0184 flakiness adapter for this language, so the suite was NOT determinism-vetted before the audit. A flaky test can masquerade as a toothless one (a mutation "survives" only because the suite is non-deterministic). **Stabilize the suite manually before trusting the toothless rows below.** To gate determinism, pass a `PRECHECK_CMD` override naming the flakiness command for this language.')
+} else {
+  L.push('✅ **PASS** — the suite ran deterministically across the flakiness gate\'s re-runs, so a "survived" verdict reflects a real coverage gap, not suite noise.')
 }
 L.push('')
 L.push('## Summary')
