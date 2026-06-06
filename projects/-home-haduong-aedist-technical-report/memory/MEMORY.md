@@ -12,7 +12,7 @@
 - Reference v2 (170 plants) adopted 2026-06-05; never hardcode the reference size in render scripts — use reference_plant_count(). See [[project-reference-v2-adopted]].
 
 ## Entries
-- [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 probably moot; Annex E = recognition matrix
+- [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 deferred (pre-registered, never close-silently); H5 wiki count in Annex C (5/20 optimised violations); Annex E = recognition matrix
 - [Reference v2 adopted](project_reference_v2_adopted.md) — 170 plants PR #767; projection at load; snapshot = sole master copy; ratchet 0447
 - [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
 

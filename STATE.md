@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-05T19:21Z
+Last updated: 2026-06-06T12:16Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
 
 ## Status
-<!-- generated 2026-06-05T19:21Z -->
+<!-- generated 2026-06-06T12:16Z -->
 
-**Tickets:** 5 ready · 3 blocked — `erg ready tickets/` for full list
+**Tickets:** 7 ready · 2 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  7a7d544 Merge pull request #312 from MinhHaDuong/chore-memory-workflow
-  9aaebfd memory: Workflow agents are session-bound — isolation opt-in, repo binding structural
-  9c1db30 Merge pull request #311 from MinhHaDuong/t-dream-debt
-  a9b0597 ticket(0224): file Dream v2 debt — decay-confirmation loop + provenance race
-  7b2a95c Merge pull request #309 from MinhHaDuong/fang-audit-process-fix
+  271d15f chore: housekeeping fixes (sweep)
+  6e93166 Merge pull request #325 from MinhHaDuong/ticket-triage-0183-0227
+  b70ee60 tickets: undefer 0183 (parking condition met), file 0229 static test-hygiene tier
+  be8ef03 Merge pull request #324 from MinhHaDuong/skill-descriptions-discoverability
+  1ec14c0 skills: descriptions lead with the plain function — theme after sentence one
 
 ## Blockers
 
@@ -23,10 +23,10 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **Balance debt**: 2026-06-05 was all tooling — next raid must advance a deliverable (STATE milestone work or a project repo)
+- **Balance debt**: 2026-06-05 AND 06-06 were all tooling — next raid must advance a deliverable (STATE milestone work or a project repo)
+- **AEDIST maw-audit run**: unblocked (0226), author-deferred 2026-06-06 — launch from a session rooted in `~/aedist-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
 - **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
 - **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native); lands before 0206's verify/SKILL.md edits
-- **0219**: pick the second-language validation target (AEDIST Python suite is the candidate) before raiding
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
 
