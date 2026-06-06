@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Dream v2: atomic provenance write to prevent torn reads under concurrency
+Created: 2026-06-06
+Author: MinhHaDuong
+
+--- log ---
+2026-06-06T08:19Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Surfaced by `/gaze` on PR #315 (ticket 0224). That PR closed the
+lost-**write** race on `~/.claude/memory/.provenance.json` by serializing
+the read-modify-write in `record`/`promote`/`confirm` under an `fcntl.flock`
+on a sidecar lock file. It deliberately did NOT lock the read paths.
+
+A different failure class remains: the read paths (`candidates`, `decay`,
+`show`, and `_load_provenance` itself) take no lock, and writes use
+`Path.write_text(...)` which is **not** atomic — it truncates then writes.
+A reader that loads mid-write can see a partial file and raise
+`json.JSONDecodeError`. Under the 02:00 cron fan-out this is a real (if
+narrow) window.
+
+## Relevant files
+
+- `skills/dream/provenance.py` — `_load_provenance` / `_save_provenance`,
+  read verbs (`candidates`, `decay`, `show`).
+- `tests/test_dream.py` — provenance tests; reuse the
+  `DREAM_PROVENANCE_TEST_DELAY` hook added in 0224.
+
+## Actions
+
+1. Make writes atomic: write to a temp file in the same directory, then
+   `os.replace()` onto `.provenance.json`. A reader then always sees a
+   complete old-or-new file — no lock needed on the read path, which keeps
+   readers fast and avoids extending the critical section.
+2. (Alternative, if atomic-write proves insufficient) take the shared flock
+   in `_load_provenance` for read paths too. Prefer atomic-write; it is
+   cheaper and does not serialize readers against writers.
+
+## Test
+
+Interleave a reader with a writer using the existing
+`DREAM_PROVENANCE_TEST_DELAY` hook so the read lands mid-write; assert the
+reader never raises `JSONDecodeError` and gets a valid (old or new) document.
+Teeth check: the test must FAIL against the current non-atomic `write_text`
+and PASS after the `os.replace` change.
+
+## Exit criteria
+
+- [ ] Provenance writes are atomic (temp + `os.replace`)
+- [ ] A reader interleaved with a writer never observes a torn file
+- [ ] Test covers the path and fails against non-atomic write; `make check` passes

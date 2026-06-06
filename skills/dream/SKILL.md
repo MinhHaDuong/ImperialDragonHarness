@@ -108,6 +108,23 @@ python3 ~/.claude/skills/dream/provenance.py record <entry_slug> <project>
 
 **Slug identity (v2 simplification)**: entries are keyed by filename. If the same lesson appears under different filenames in different projects, Claude should assign the same slug during consolidation to enable cross-project frequency counting. A semantic slug-matching system is deferred to v3.
 
+**7b. Confirm still-relevant promoted entries.**
+
+A promoted entry's project-level copy is a tombstone, so step 7's `record` never
+fires for it again and its `last_confirmed` would freeze — decay-flagging it at
+90 days no matter how relevant it remains (ticket 0224). For each harness-level
+entry (in `~/.claude/memory/`) that this project's surviving content still
+supports — i.e. the consolidation would have classified its lesson NOOP or
+UPDATE were it still project-local — refresh its confirmation:
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py confirm <slug>
+```
+
+This resets only the decay clock; it does not re-add the project to the entry's
+origin list. Skip entries the project's content no longer supports — letting
+those decay-flag is the intended signal for human review.
+
 **8. Commit.**
 
 ```bash

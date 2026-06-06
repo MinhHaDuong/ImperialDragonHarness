@@ -101,12 +101,15 @@ def provenance_env(tmp_path):
     return tmp_path
 
 
-def _run_provenance(*args, home):
+def _run_provenance(*args, home, extra_env=None):
+    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(
         [sys.executable, str(PROVENANCE_PY), *args],
         capture_output=True,
         text=True,
-        env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
+        env=env,
     )
 
 
@@ -214,3 +217,87 @@ def test_provenance_show(provenance_env):
     assert result.returncode == 0
     data = json.loads(result.stdout)
     assert "feedback_vim" in data["entries"]
+
+
+# --- Decay-confirmation path (ticket 0224, defect 1) ---
+
+
+def test_provenance_confirm_unknown_slug(provenance_env):
+    result = _run_provenance("confirm", "nonexistent", home=provenance_env)
+    assert result.returncode == 1
+
+
+def test_provenance_confirm_rejects_unpromoted(provenance_env):
+    """confirm targets promoted harness entries; a project-level entry is refused."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("confirm", "feedback_vim", home=provenance_env)
+    assert result.returncode == 1
+
+
+def test_provenance_confirm_refreshes_promoted_entry_so_decay_skips_it(provenance_env):
+    """A promoted entry confirmed by a later consolidation must NOT decay-flag.
+
+    Reproduces the ticket-0224 gap: promote freezes last_confirmed (the
+    tombstoned project entry no longer gets `record`ed), so without `confirm`
+    the entry decay-flags at 90 days regardless of relevance. After `confirm`,
+    decay must skip it.
+    """
+    prov_path = provenance_env / ".claude" / "memory" / ".provenance.json"
+    prov_path.write_text(json.dumps({
+        "entries": {
+            "old_promoted": {
+                "projects": ["project-alpha", "project-beta"],
+                "first_seen": "2025-01-01T00:00:00Z",
+                "last_confirmed": "2025-01-01T00:00:00Z",
+                "promoted": True,
+            },
+        }
+    }))
+    # Before confirm: decay flags it (stale by >90 days).
+    before = json.loads(_run_provenance("decay", home=provenance_env).stdout)
+    assert "old_promoted" in [f["slug"] for f in before]
+
+    # A later relevant consolidation confirms it.
+    result = _run_provenance("confirm", "old_promoted", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+
+    # After confirm: decay no longer flags it.
+    after = json.loads(_run_provenance("decay", home=provenance_env).stdout)
+    assert "old_promoted" not in [f["slug"] for f in after]
+
+
+# --- Provenance write-race (ticket 0224, defect 2) ---
+
+
+@pytest.mark.integration
+def test_provenance_concurrent_record_loses_neither_write(provenance_env):
+    """Two interleaved record() round-trips must preserve both entries.
+
+    The test delay hook forces the two critical sections to overlap: each
+    subprocess loads provenance, sleeps, then writes. Without the lock the
+    second writer's load predates the first writer's save, so the first write
+    is lost (classic read-modify-write race). With the lock the writes
+    serialize and both slugs survive.
+
+    Teeth check: remove the _provenance_lock() wrapper in provenance.py and
+    this test FAILS (one slug missing) — confirming it catches the defect, not
+    merely a different implementation.
+    """
+    import concurrent.futures
+
+    delay_env = {"DREAM_PROVENANCE_TEST_DELAY": "0.5"}
+
+    def write(slug):
+        return _run_provenance("record", slug, "project-x", home=provenance_env, extra_env=delay_env)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
+        f1 = ex.submit(write, "slug_one")
+        f2 = ex.submit(write, "slug_two")
+        r1, r2 = f1.result(), f2.result()
+
+    assert r1.returncode == 0, r1.stderr
+    assert r2.returncode == 0, r2.stderr
+
+    data = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "slug_one" in data["entries"], "lost write: slug_one missing"
+    assert "slug_two" in data["entries"], "lost write: slug_two missing"
