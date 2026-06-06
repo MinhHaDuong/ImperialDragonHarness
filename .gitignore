@@ -21,6 +21,7 @@
 !docs/**
 !memory/
 !memory/**
+memory/.provenance.lock
 !tickets/
 !tickets/**
 tickets/tools/go/*.test
