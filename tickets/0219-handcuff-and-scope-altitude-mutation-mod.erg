@@ -12,6 +12,7 @@ Author: MinhHaDuong
 2026-06-05T18:12Z MinhHaDuong unlabel deferred
 2026-06-05T18:12Z Minh Ha-Duong note parking condition MET (2026-06-05): authorized fang-v1 validating run completed on git-erg — canary gate PASS (both guards caught their primary canaries), 86 caught / 3 toothless (all true coverage gaps) / 3 equivalent; report at ~/git-erg/FANG-AUDIT.md. Count drift vs the May prototype (90/8/4) explained by test improvements since and per-run mutation sampling; the methodology reproduced end-to-end (precheck gate, 17 isolated audits, skeptics, serialized guards). Remaining input before raid: pick the second-language validation target (AEDIST Python suite is the candidate)
 2026-06-05T18:12Z claude note run residue findings to absorb in this ticket's scaffolding work: (1) seeded guard worktrees skip auto-reclaim (untracked seed file makes them dirty); (2) audit agents hand-roll /tmp/fang-erg-* scratch worktrees on detached HEAD — add a post-run cleanup step to the skill when touching the workflow here
+2026-06-06T00:00Z MinhHaDuong note author directives 2026-06-06 (supersede conflicting 0182 exit-criteria text): (1) Just Work — replace the hardcoded CONFIG with a run-start DISCOVERY phase, overrides only optional; (2) deliberately REWRITE the 0182 adherence tests to guard the new discovery contract (do not bounce, do not delete silently); (3) validation run EXCLUDED — satisfy via documented zero-prep launch path for ~/aedist-technical-report; (4) absorb the two run-residue cleanups. Full text in body section "Author directives".
 --- body ---
 ## Context
 
@@ -33,6 +34,48 @@ behavior-preservation skeptic) lives in 0182's body — read it first.
   fixes, pairing table, verdict rules, lens design)
 - ~/.claude/plans/fang-audit-erg-prototype.js — the proven workflow
   script 0182 extracts from
+
+## Author directives (2026-06-06)
+
+These supersede any conflicting text in 0182's exit criteria. The execute
+agent MUST carry all four.
+
+1. **Just Work (tm) — discovery REPLACES CONFIG.** The skill must work in
+   whatever project dir it is launched, with NO per-repo CONFIG block to
+   pre-author. REMOVE the hardcoded CONFIG (the pairing table, RUN_TEST,
+   language heuristics baked into `fang-audit.js`) and REPLACE it with a
+   run-start DISCOVERY phase: an agent reads the launch repo (Makefile,
+   pyproject.toml, go.mod, the test tree, imports and call sites) and DERIVES
+   the test command, the test↔source pairing table, and language mutation
+   heuristics. This is informed derivation by READING — that is allowed. The
+   BANNED thing is the blind filename-glob heuristic (`X_test → X.go`, which
+   broke on `refs_git → refs.go`). Explicit knobs survive ONLY as optional
+   OVERRIDES, never as prerequisites. Precedent: the 0184 `test-quality.py`
+   runner/adapter pattern. Canary/guard designation stays an explicit opt-in
+   (it validates the audit itself); with NO guards designated, SKIP the canary
+   gate OPENLY — never fake it.
+2. **Rewrite the 0182 adherence tests deliberately.**
+   `tests/test_fang_audit_skill.py` currently enforces the explicit-CONFIG
+   shape (`test_config_block_declares_explicit_knobs`,
+   `test_pairing_table_is_explicit_map_not_heuristic`,
+   `test_config_is_defaults_merged_with_args`, etc.). REWRITE them to guard the
+   NEW contract: discovery phase present, overrides optional, filename-glob
+   heuristics banned. Do NOT bounce off them; do NOT delete them silently —
+   replace with equivalents for the new design, citing this directive in the
+   commit message.
+3. **Validation run is EXCLUDED from this raid.** Satisfy the "non-Go repo OR
+   documented plug-in path" exit criterion via the DOCUMENTED-PATH branch: the
+   discovery phase makes a `~/aedist-technical-report` (uv Python, 30+ test
+   files) run zero-prep; document the exact launch procedure (session rooted in
+   `~/aedist-technical-report`, invoke fang-audit, expected cost scale vs the
+   1.3M-token / 29-min git-erg run) in the skill docs. Do NOT attempt the real
+   AEDIST run — it cannot launch from a `~/.claude`-rooted session (Workflow
+   agents are session-bound). The real run is a separate human-authorized
+   follow-up.
+4. **Absorb the two run-residue cleanups** (log 2026-06-05T18:12Z): (a) seeded
+   guard worktrees skip auto-reclaim because the untracked seed file makes them
+   dirty — fix reclaim; (b) audit agents hand-roll `/tmp/fang-erg-*` scratch
+   worktrees on detached HEAD — add a post-run cleanup step.
 
 ## Actions
 
@@ -63,14 +106,31 @@ regression test: scope mode flags the surviving sibling site.
 
 ## Exit criteria
 
+- [ ] DISCOVERY phase replaces the hardcoded CONFIG (directive 1): a run-start
+      agent reads the launch repo and derives test command + pairing table +
+      mutation heuristics; explicit knobs survive only as optional overrides;
+      the blind filename-glob heuristic is banned; with no guards designated the
+      canary gate is skipped openly, never faked.
 - [ ] Handcuff mode implemented: behavior-preserving operators + inverted
-      oracle + behavior-preservation skeptic
+      oracle + behavior-preservation skeptic (its own agent role)
 - [ ] Scope/altitude mode implemented: sibling-site replay, instance-pinned
       contracts flagged for class-guard promotion
+- [ ] Both modes pipelined AFTER the fang pass in the SAME workflow (shared
+      discovery, worktree setup, baseline-green, canary gate); separate agent
+      roles per oracle (never one agent juggling red=good and red=bad)
 - [ ] Unified per-test report covers all three axes (fang? / handcuff? /
       right-scope?) sortable by risk x churn weighting
-- [ ] Language-pluggable: validated on at least one non-Go repo or a
-      documented plug-in path
+- [ ] 0182 adherence tests REWRITTEN to guard the new discovery contract
+      (directive 2): discovery present, overrides optional, filename-glob banned
+      — replaced, not bounced off, not deleted silently
+- [ ] Run-residue cleanups absorbed (directive 4): (a) seeded guard worktrees
+      auto-reclaim despite the untracked seed file; (b) post-run cleanup step
+      for hand-rolled /tmp/fang-erg-* scratch worktrees on detached HEAD
+- [ ] Language-pluggable satisfied via the DOCUMENTED-PATH branch (directive 3):
+      the zero-prep ~/aedist-technical-report launch procedure + expected cost
+      scale documented in the skill docs. NO real AEDIST run is attempted here.
+- [ ] Fixture tests per the Test section (over-scoped assertion flagged by
+      handcuff; instance-pinned sibling flagged by scope mode)
 - [ ] make check passes
 
 ## Related
