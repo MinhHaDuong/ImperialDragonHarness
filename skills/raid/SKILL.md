@@ -139,13 +139,15 @@ individual `/gaze` verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 
-**Token economy rule**: Any time a ticket must be created in any phase, invoke
-`/ticket-new` — never write the file directly or compute the next ID manually.
-`/ticket-new` calls `erg next-id` and `erg validate <file>` (file arg, not
-directory), keeping mechanical work inside the tool where it belongs.
+**Token economy rule**: Any time a ticket must be created in any phase, create it
+with `tickets/erg new "<title>"` — never write the file directly or compute the
+next ID manually. `erg new` allocates the next free ID and writes a valid
+`%erg 0.1` file (preamble + `created` log line + empty body) race-safely; fill
+the body, then `erg validate tickets/<new-file>.erg` (file arg, not directory)
+and `erg check tickets/`, keeping mechanical work inside the tool where it belongs.
 
 **Bundle follow-up tickets into the spawning PR.** When a raid or review
-surfaces a follow-up, open it via `/ticket-new` and commit the `.erg` onto the
+surfaces a follow-up, create it via `tickets/erg new` and commit the `.erg` onto the
 current PR branch — the ticket only, never the fix. Reference it from the PR
 body (`Related follow-up: tickets/NNNN`, or `Scope overflow: tickets/NNNN` when
 it comes from a verify-gate verdict). The PR's `**Ticket:**` line still closes
@@ -156,7 +158,7 @@ work.
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 - `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
 - `scope_overflow` in the verdict is empty or all entries have suggested disposition
-  TICKETED (caller creates tickets via `/ticket-new` and adds `Scope overflow:
+  TICKETED (caller creates tickets via `tickets/erg new` and adds `Scope overflow:
   tickets/NNNN` to the PR body before merging).
 
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops

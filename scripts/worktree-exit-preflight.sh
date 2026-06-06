@@ -29,8 +29,8 @@ Blocked: worktree '$path' has uncommitted state — ExitWorktree would destroy i
 $status
 
 Commit (and push) anything you mean to keep before calling ExitWorktree. For
-ticket drafts filed during /roar sweeps, finish the /ticket-new commit
-step. For genuine WIP, salvage:
+ticket drafts filed during /roar sweeps, commit the new tickets/NNNN-*.erg
+(erg new writes it; you must commit it). For genuine WIP, salvage:
 
   ~/.claude/scripts/worktree-salvage.sh "$path"
 

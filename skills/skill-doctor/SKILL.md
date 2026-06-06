@@ -58,7 +58,7 @@ Ask the user which patterns to ticket before proceeding.
 
 ## 4. Open tickets
 
-For each approved pattern, create a ticket via `/ticket-new`:
+For each approved pattern, create a ticket via `tickets/erg new "<title>"`:
 
 - **Title**: `skill-doctor: {signature} — {one-line fix summary}`
 - **Context**: evidence from the survey, frequency × severity score,

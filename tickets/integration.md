@@ -15,8 +15,8 @@ if git diff --cached --name-only | grep -q '^tickets/erg$'; then
     branch=$(git branch --show-current)
     if [ "$branch" != "main" ]; then
         echo "pre-commit: do not commit tickets/erg in feature branches." >&2
-        echo " CI rebuilds the binary after merge. Use 'make build' and test" >&2
-        echo " with build/erg. To override: git commit --no-verify" >&2
+        echo " CI rebuilds the binary after merge. Build from git-erg source and" >&2
+        echo " test with that binary. To override: git commit --no-verify" >&2
         exit 1
     fi
 fi
@@ -36,7 +36,7 @@ if [ -n "$erg_files" ]; then
             exit 1
         fi
     else
-        echo "ERROR: erg binary not found. Run 'make build' first." >&2
+        echo "ERROR: erg binary not found. Refresh the vendored binary: git pull (tickets/erg is committed), or build from git-erg source." >&2
         exit 1
     fi
 fi

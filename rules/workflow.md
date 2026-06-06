@@ -88,6 +88,14 @@ When a ticket has multiple sub-tasks that will land in separate PRs: split into 
 
 Do NOT put the same `**Ticket:**` line in multiple PRs unless the intent is to close it on the first merge. Use `Ticket-ref:` for the non-closing PRs.
 
+**Tracking-ticket convention.** When investigation spawns sub-tickets, the
+original ticket becomes a **tracking ticket** — leave it open. Create each
+sub-ticket referencing the tracker, then edit the tracker to list every child.
+As with the planned multi-PR split above, the tracker stays open until every
+child is closed — and then closes only after the integration review at `/roar`
+step 8 (all children closed → re-read child diffs, run the full suite, verify
+exit criteria), not on the bare event of the last child merging.
+
 # Compaction
 
 When compacting, preserve the list of modified files, test commands, and current implementation plan.
