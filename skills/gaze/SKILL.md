@@ -225,6 +225,11 @@ abort), after removing the review worktree and before returning control to
 the caller — the caller must see this report before any merge step:
 
 ```bash
+git rev-parse --show-toplevel               # FIRST: confirm cwd is the session
+                                            # worktree — the forks just returned,
+                                            # so a drifted cwd would make the two
+                                            # reads below report a foreign tree's
+                                            # state (rules/git.md § anchor)
 git status --porcelain                      # invoking session worktree
 git branch --show-current                   # must equal the branch on entry
 git -C <primary-repo-root> status --porcelain
@@ -236,7 +241,12 @@ git -C <primary-repo-root> status --porcelain
   `git add` to sweep.
 - **Unexpected branch** → switch back to the entry branch and flag it. Never
   end the skill with the session worktree on a different branch than it was
-  on at phase 1.
+  on at phase 1. This runs right after the review forks return, so the shell
+  cwd may sit in a foreign worktree: confirm the tree first
+  (`git rev-parse --show-toplevel` should equal the session worktree), then
+  anchor the corrective switch — `git -C <session-worktree> switch <entry-branch>`,
+  not a bare `git switch` against an assumed cwd (rules/git.md § anchor across
+  a forked-skill boundary).
 - Anything that cannot be restored cleanly → downgrade the verdict to
   ESCALATE; a contaminated workspace must not feed a merge.
 
