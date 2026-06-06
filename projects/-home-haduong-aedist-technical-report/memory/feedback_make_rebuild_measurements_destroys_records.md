@@ -33,3 +33,14 @@ rely on the Makefile's destructive prepass.
 
 Long-term fix: `rebuild-measurements` should either be transactional
 (stage-then-replace) or scoped to a single cohort.
+
+**2026-06-06 update (v2.1 re-score):** worse than mid-build failure — even a
+SUCCESSFUL rebuild cannot reproduce the committed mart: (1) census-era records
+are restorable-only (raw replies archived, 0422) so regeneration yields ~108 of
+562 rows; (2) restoring them BEFORE assemble pollutes the mart +149 rows (the
+101 Exp2 turn records are created AFTER mart assembly in canonical ordering and
+must be absent at assemble time); (3) `reconciliation_*.csv` transients left in
+outputs/exp1_batch2 by evaluate poison `score_exp1`'s filename glob (140 rows
+instead of 70). A reference flip = surgical row replacement in the committed
+mart (match by result_file, replace only re-scored rows), never a fresh
+assemble. Full protocol: gate doc `data/reference/extensions_standalone_vs_absorbed.md`.
