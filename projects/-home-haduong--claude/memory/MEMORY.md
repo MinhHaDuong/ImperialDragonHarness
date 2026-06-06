@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — Author directive: skills auto-discover repo specifics at run start (0184 adapter precedent); explicit inputs are optional overrides; revise old explicit-CONFIG adherence tests deliberately
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'; worktrees cut from the SESSION repo — cross-repo skills need a session in the target repo; probe before expensive fan-outs
 - [Next move: git-erg migration](project_git_erg_migration_next.md) — Author's declared focus as of 2026-06-04; 0216 dogfood migration in git-erg; IDH tickets 0190/0191 are companions; check git-erg tickets ~0216 first
 - [gh pr edit broken — use REST](feedback_gh_pr_edit_broken_use_rest.md) — gh pr edit hits a Projects-classic GraphQL deprecation; PATCH via gh api repos/.../pulls/N instead
