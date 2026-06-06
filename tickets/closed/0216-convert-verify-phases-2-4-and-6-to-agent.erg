@@ -14,6 +14,7 @@ Closed: autoclosed — PR #329
 2026-06-06T13:27Z claude note plan: convert gaze phases 2-4 + 6 from context:fork to read-only Agents pinned to /tmp/review-<pr> (NOT isolation:worktree, which cuts a fresh tree on main); embed each sub-skill procedure imperatively, return structured block orchestrator parses; built-in /review Agent-WRAPped; only REROLL fix agent keeps isolation:worktree
 2026-06-06T13:27Z claude note exit criterion 2 is post-merge-empirical (skills resolve globally); evidence = first clean /gaze run after merge, expected on this raid's wave-2 PRs; evidence will be appended to this (closed) ticket
 2026-06-06T14:15Z Integration Test closed — autoclosed — PR #329
+2026-06-06T15:12Z claude note criterion-2 evidence (post-merge): gaze runs on PRs 332/333 still loaded the pre-merge fork text (primary checkout was 13 commits behind; under-execution recurred, recovered per protocol). After primary sync, the PR 334 gaze completed clean on first attempt (verdict posted, worktree cleaned, no drift) but its memory-only diff hit fast-exit paths (agents=0) — Agent fan-out not exercised. Full fan-out validation deferred to the next substantive PR gaze
 --- body ---
 ## Context
 
