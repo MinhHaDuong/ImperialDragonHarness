@@ -1,0 +1,92 @@
+%erg 0.1
+Title: fang-audit v2 hardening: test-identity normalization, gate enforcement, report parity
+Created: 2026-06-06
+Author: claude
+
+--- log ---
+2026-06-06T10:55Z claude created — post-merge /code-review of PR #316 (high effort, 7 finder angles, adversarial verify); 3 CONFIRMED correctness defects + verified advisories
+
+--- body ---
+## Context
+
+PR #316 (ticket 0219) landed the discovery phase + handcuff/scope passes
+for skills/fang-audit/. Its gaze ran without the full review-pr/simplify
+passes; a post-merge /code-review (7 angles, adversarial verification)
+found defects the adherence tests cannot see — they are string-presence
+checks, and the defects are runtime-semantics.
+
+**BLOCKS the AEDIST validation run.** Defect 1 fires exactly on
+path-prefixed test layouts (Python `tests/` dirs): launched today, the
+~3-5M-token AEDIST run would return an empty scope pass, a no-op
+priority sort, and an all-n/a three-axis table.
+
+## Confirmed defects (adversarially verified, quoted-line evidence)
+
+1. **Test-identity key mismatch** — dicts written with `base(a.testFile)`
+   (basename) but read with raw `BEHAVIORAL[].test` (discovery may return
+   `tests/test_foo.py`). Three dead features on path-prefixed repos:
+   scope pass never dispatches (`caughtOpsByFile`, ~l.644/649), handcuff
+   priority sort is a no-op (`fangByFile`, ~l.625/627), three-axis table
+   all-zero (`_file` vs `name`, ~l.778-793). Go repos (bare co-located
+   filenames) mask it. Root fix: ONE canonical normalization at the
+   l.172 BEHAVIORAL mapping; ban per-site base() on keys.
+2. **Empty RUN_TEST passes every gate** — schema has no minLength, the
+   post-discovery abort (~l.157) checks only BEHAVIORAL.length, FALLBACKS
+   has no RUN_TEST entry. `RUN_TEST:''` → every agent gets a blank test
+   command → all mutations trivially "survive" → false-accusation flood.
+3. **Precheck gate not enforced** — abort is `gate==='fail'` only;
+   PRECHECK_SCHEMA.gate is a bare string (no enum). A real agent
+   returning `gate:'skipped'/'Pass'/'unknown'` passes the flakiness gate
+   AND leaves `precheckSkipped=false`, masking it in the return value.
+   Fix: schema `enum: ['pass','fail']` (Workflow validates + retries on
+   mismatch) and require `gate==='pass'` affirmatively.
+
+## Verified advisories (fix in the same sweep)
+
+- Precheck open-skip is invisible in the Markdown report (canary skip
+  has a ⏭️ banner; precheck skip only log() + return field). Add the
+  mirror banner to the L assembly.
+- DISCOVERY_SCHEMA enforces none of the discovery-quality contract:
+  `rationale` optional (a glob-derived table passes the only machine
+  gate — the banned heuristic returns through the side door), non-1:1
+  pairs unprotected. Require rationale; add an adherence test that the
+  prompt demands import/call-site evidence.
+- Adherence tests are vacuous w.r.t. defect 1 — string-presence checks
+  stay green while the features are inert. Add a key-consistency test
+  (extract write-keys/read-keys, assert one normalization).
+- fangByFile double-counts a file present in both BEHAVIORAL and GUARDS
+  (populated from all findings) — filter on `_isGuardFile`.
+- Pass-shape is 3 hand-wired copies: applyRules/handcuffRules/scopeRules
+  identical template-expanders; skepticize/handcuffSkepticize differ only
+  in filter/prompt/schema/label (labels already diverged: testFunc
+  dropped from hc-skeptic). Extract expandRules() + runSkeptic() before
+  a 4th lens (0183) forces a fifth copy.
+- Mechanical agents (precheck, cleanup, churn) run on default Opus while
+  skeptics pin sonnet; churn's input (file list) is known at start yet it
+  waits for all passes. Pin cheap models; dispatch churn concurrently.
+- SKILL.md drift: the git-erg reference reproduction now needs
+  undocumented GUARDS+UNTRACKED_SEED overrides (discovery cannot derive
+  them); "Python adapter ... if one exists" implies an adapter
+  test-quality.py does not have (`--adapter` choices: go only) — a user
+  wiring PRECHECK_CMD manually gets argparse exit 2 on every run.
+
+## Relevant files
+
+- skills/fang-audit/fang-audit.js — all defects
+- skills/fang-audit/SKILL.md — doc drift items
+- tests/test_fang_audit_skill.py — vacuous-test fixes, new guards
+
+## Exit criteria
+
+- [ ] One canonical test-identity normalization (BEHAVIORAL mapping
+      site); scope pass, handcuff sort, and three-axis table verified
+      live on a path-prefixed fixture (tests/ subdir layout)
+- [ ] RUN_TEST validated non-empty before fan-out (schema minLength
+      and/or truthiness abort)
+- [ ] PRECHECK_SCHEMA.gate enum ['pass','fail']; abort requires
+      affirmative pass; real-agent 'skipped' cannot mask as a pass
+- [ ] Precheck skip banner in the Markdown report, mirroring canary
+- [ ] Adherence test catches a write-key/read-key normalization split
+      (must FAIL on the pre-fix code)
+- [ ] Advisories addressed or explicitly waived in the PR body
+- [ ] make check passes
