@@ -39,6 +39,21 @@ def test_spawn_inside_closure_unmarked():
     _inner()
 
 
+@pytest.mark.skipif(True, reason="integration only on linux")
+def test_skipif_reason_says_integration_unmarked():
+    """`skipif` whose *reason string* contains the word `integration` is NOT the
+    `integration` marker. A substring/`\\b`-regex check on the decorator text is
+    bypassed by the reason string; the structural AST match is not -> FLAG."""
+    r(["true"])
+
+
+@pytest.mark.no_integration
+def test_no_integration_marker_unmarked():
+    """`@pytest.mark.no_integration` contains `integration` as a substring but is
+    a different mark (attr == `no_integration`) -> FLAG."""
+    r(["true"])
+
+
 # ── MUST NOT FLAG ────────────────────────────────────────────────────────────
 
 

@@ -478,47 +478,68 @@ def _build_alias_map(tree: ast.AST) -> dict[str, str]:
     return aliases
 
 
-def _has_integration_marker(decorator_list: list, module_markers: list[str]) -> bool:
+def _is_integration_mark(node: ast.AST) -> bool:
+    """True iff a marker AST node resolves to the pytest ``integration`` mark.
+
+    Structural, not textual: a marker counts iff its mark *expression* is the
+    attribute ``pytest.mark.integration``. For a decorator/marker node ``node``,
+    the mark expression is ``node.func`` when it is a call
+    (``@pytest.mark.integration(...)``) and ``node`` itself otherwise
+    (``@pytest.mark.integration``).
+
+    This deliberately rejects two substring traps that a textual check (``in``,
+    or even a ``\\b``-regex on the unparsed node) accepts:
+      * ``@pytest.mark.skipif(True, reason="integration only")`` — the word
+        ``integration`` appears, with word boundaries, *inside the reason
+        string*; here the mark expression is ``pytest.mark.skipif`` (attr
+        ``skipif``), so it does not match;
+      * ``@pytest.mark.no_integration`` — attr is ``no_integration``, a
+        different mark whose name merely contains the substring.
+    """
+    expr = node.func if isinstance(node, ast.Call) else node
+    return isinstance(expr, ast.Attribute) and ast.unparse(expr) == "pytest.mark.integration"
+
+
+def _has_integration_marker(decorator_list: list, module_markers: list[ast.AST]) -> bool:
     """True if this function carries the pytest `integration` marker.
 
     Sources, any of which suffices:
-      * a decorator whose unparsed text contains the token `integration`
-        (``@pytest.mark.integration``);
-      * a module- or class-level ``pytestmark`` that contains `integration`
-        (passed in via `module_markers`, already unparsed).
+      * a decorator that resolves to ``pytest.mark.integration``;
+      * a module- or class-level ``pytestmark`` entry that resolves to it
+        (passed in via `module_markers` as AST nodes).
 
-    Token-specific on purpose: ``@pytest.mark.skipif(...)`` and
-    ``pytestmark = pytest.mark.skipif(...)`` do NOT count.
+    Mark resolution is structural (see `_is_integration_mark`), so
+    ``@pytest.mark.skipif(...)`` and ``pytestmark = pytest.mark.skipif(...)``
+    do NOT count even when their text contains the substring `integration`.
     """
-    for dec in decorator_list:
-        if "integration" in ast.unparse(dec):
-            return True
-    return any("integration" in m for m in module_markers)
+    if any(_is_integration_mark(dec) for dec in decorator_list):
+        return True
+    return any(_is_integration_mark(m) for m in module_markers)
 
 
-def _unparse_pytestmark(value: ast.AST) -> list[str]:
-    """Unparse a `pytestmark` assignment value into a list of marker strings.
+def _pytestmark_nodes(value: ast.AST) -> list[ast.AST]:
+    """Marker AST nodes from a `pytestmark` assignment value.
 
     `pytestmark` may be a single marker or a list/tuple of markers. Returns the
-    unparsed text of each element (so the caller can token-match `integration`).
+    element nodes (so the caller can match them structurally).
     """
     if isinstance(value, (ast.List, ast.Tuple)):
-        return [ast.unparse(elt) for elt in value.elts]
-    return [ast.unparse(value)]
+        return list(value.elts)
+    return [value]
 
 
-def _collect_pytestmarks(body: list) -> list[str]:
+def _collect_pytestmarks(body: list) -> list[ast.AST]:
     """Find `pytestmark = ...` assignments directly in a body (module or class).
 
-    Returns the unparsed marker strings. Walks only direct statements, so a
-    class's pytestmark is read for that class, the module's for the module.
+    Returns the marker AST nodes. Walks only direct statements, so a class's
+    pytestmark is read for that class, the module's for the module.
     """
-    marks: list[str] = []
+    marks: list[ast.AST] = []
     for stmt in body:
         if isinstance(stmt, ast.Assign):
             for target in stmt.targets:
                 if isinstance(target, ast.Name) and target.id == "pytestmark":
-                    marks.extend(_unparse_pytestmark(stmt.value))
+                    marks.extend(_pytestmark_nodes(stmt.value))
     return marks
 
 

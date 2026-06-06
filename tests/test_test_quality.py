@@ -426,6 +426,25 @@ def test_static_lens_ignores_comments_strings_and_marked_tests():
     assert "test_marked_spawn" not in flagged
 
 
+def test_static_lens_marker_match_is_structural_not_substring():
+    """The `integration` marker is matched structurally (AST attribute), not by a
+    substring or `\\b`-regex on the decorator text. Two bypasses of the old
+    substring check MUST now be flagged:
+
+      * `@pytest.mark.skipif(True, reason="integration only on linux")` — the
+        word `integration` (with word boundaries) is inside the *reason string*,
+        so even a `\\b`-regex on the unparsed decorator matches it spuriously;
+      * `@pytest.mark.no_integration` — `integration` is a substring of a
+        different mark name.
+
+    Both spawn and neither carries the real marker, so both are violations. A
+    genuinely `@pytest.mark.integration`-marked spawn stays NOT flagged."""
+    flagged = _violation_funcs(SAMPLE_HYGIENE)
+    assert "test_skipif_reason_says_integration_unmarked" in flagged
+    assert "test_no_integration_marker_unmarked" in flagged
+    assert "test_marked_spawn" not in flagged
+
+
 def test_static_lens_module_pytestmark_covers_all_tests():
     """A module-level `pytestmark` list containing `integration` exempts every
     test in the module — even one that spawns."""
@@ -438,6 +457,9 @@ def test_static_lens_class_pytestmark_resolution():
     flagged = _violation_funcs(SAMPLE_CLASS_MARK)
     assert "test_spawn_covered_by_class_mark" not in flagged
     assert "test_spawn_under_skipif_only" in flagged
+    # Class pytestmark `skipif(reason="integration only")` is structurally not
+    # the integration mark -> the substring bug exempted it; now FLAGGED.
+    assert "test_spawn_under_skipif_reason_integration" in flagged
 
 
 def test_static_lens_identities_are_repo_relative():

@@ -27,3 +27,13 @@ class TestSkipifOnly:
     def test_spawn_under_skipif_only(self):
         """Class pytestmark is skipif (not integration) -> FLAG."""
         subprocess.run(["true"], check=False)
+
+
+class TestSkipifReasonIntegration:
+    pytestmark = pytest.mark.skipif(True, reason="integration only")
+
+    def test_spawn_under_skipif_reason_integration(self):
+        """Class pytestmark is `skipif` whose reason string says `integration` —
+        structurally NOT the `integration` mark -> FLAG (substring/`\\b`-regex on
+        the unparsed pytestmark would wrongly exempt this)."""
+        subprocess.run(["true"], check=False)
