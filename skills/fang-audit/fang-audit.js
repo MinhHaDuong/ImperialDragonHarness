@@ -3,151 +3,178 @@
 // EXTRACTED from the proven prototype that produced the validating 19-file
 // git-erg run (~1.3M tokens, ~29 min, 90 caught / 8 toothless, canary PASS).
 // See skills/fang-audit/SKILL.md for the prototype→skill correspondence and
-// the EXPENSIVE-RUN warning. This is fang-only v1 (ticket 0182); handcuff,
-// scope/altitude, and the three-axis report live in ticket 0219.
+// the EXPENSIVE-RUN warning.
+//
+// Three mutation modes, ONE workflow (ticket 0219):
+//   - fang     (sensitivity): behavior-CHANGING mutation → test must go RED.
+//   - handcuff (robustness):  behavior-PRESERVING refactor → test must stay GREEN.
+//   - scope    (altitude):    a caught mutation's operator replayed across
+//                             sibling sites → siblings survive = instance-pinned.
+//
+// Just Work (tm), ticket 0219 directive 1: there is NO per-repo CONFIG block to
+// pre-author. A run-start DISCOVERY phase reads the LAUNCH repo (Makefile,
+// pyproject.toml, go.mod, the test tree, imports + call sites) and DERIVES the
+// test command, the test↔source pairing table, and language mutation
+// heuristics. This is informed derivation by READING — allowed. The BANNED
+// thing is the blind filename-glob heuristic (X_test→X.go, which broke on
+// refs_git→refs.go). Explicit knobs survive ONLY as optional OVERRIDES (args),
+// never as prerequisites. Precedent: the 0184 test-quality.py runner/adapter.
 
 export const meta = {
   name: 'fang-audit',
-  description: 'Mutation-test the configured test harness: does each test FAIL on the defect it claims to catch? Reports toothless tests. No source/test changes persist. EXPENSIVE on-demand audit (the validating run was ~1.3M tokens / ~29 min).',
+  description: 'Mutation-test the launch repo: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Reports a unified three-axis per-test table. No source/test changes persist. Discovers its own config — no per-repo setup. EXPENSIVE on-demand audit (the validating fang-only run was ~1.3M tokens / ~29 min).',
   phases: [
+    { title: 'Discovery', detail: 'an agent reads the launch repo and derives test command + pairing table + mutation heuristics (no per-repo CONFIG)' },
     { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
-    { title: 'Audit', detail: 'behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
+    { title: 'Audit', detail: 'fang pass — behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
     { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
-    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive)' },
+    { title: 'Handcuff', detail: 'robustness pass — behavior-PRESERVING refactors, inverted oracle (red = over-scoped), own skeptic' },
+    { title: 'Scope', detail: 'altitude pass — replay each caught operator at sibling sites; surviving siblings = instance-pinned contract' },
+    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive); skipped openly if none discovered/designated' },
+    { title: 'Cleanup', detail: 'reclaim any hand-rolled scratch worktrees the audit agents left on detached HEAD' },
   ],
 }
 
 // ============================================================================
-// DEFAULTS — the validated git-erg reference configuration, kept as living
-// documentation of every knob. Δ9: NEVER edit this file per repo — the target
-// repo owns its config in `.fang-audit.json` at its root, which the SKILL.md
-// invocation reads and passes as the Workflow `args` input; args override
-// these defaults key-by-key. Everything below the merge is the repo-agnostic
-// engine (verbatim from the prototype except the marked deltas).
+// OVERRIDES — there are NO required knobs (ticket 0219 directive 1). The
+// DISCOVERY phase derives everything from the launch repo at run start. The
+// keys below are the OPTIONAL overrides an invoker may pass via the Workflow
+// `args` input to pin a value discovery would otherwise derive — NOT a
+// prerequisite the user must author. Anything the args do not pin, discovery
+// fills. The merge order is: discovery result, then args on top (an explicit
+// override always wins over a derived value).
+//
+// Optional override keys (all may be omitted — discovery supplies them):
+//   PROJECT, LANGUAGE, PACKAGE_HINT, SRC_DIR  — labels / orientation.
+//   OUTPUT                                    — report path (default below).
+//   RUN_TEST, DEFAULT_TAGS, GUARD_TAGS        — test command + tag variants.
+//   MUTATION_HEURISTICS                       — minimal compiling mutation hints.
+//   HANDCUFF_HEURISTICS                       — behavior-PRESERVING refactor hints.
+//   BEHAVIORAL                                — test↔source pairing table.
+//   GUARDS                                    — designated canary files (opt-in).
+//   UNTRACKED_SEED                            — uncommitted build inputs to copy.
+//   PRECHECK_CMD                              — the 0184 flakiness gate command.
+//   RISK                                      — per-file risk multiplier (human-owned).
+//   HOME                                      — for ~/ path expansion (sandbox has no process).
 // ============================================================================
 
-const DEFAULTS = {
-  // Human-readable name of the project under audit (report title only).
-  PROJECT: 'YOUR-PROJECT',
-
-  // Where the workflow writes the final report. Throwaway worktrees die with
-  // the run, so this MUST be an absolute path in the MAIN repo (untracked is
-  // fine). NO hardcoded /home — use `~/your-repo/FANG-AUDIT.md`; the engine
-  // expands a leading `~/` via the args.HOME knob (the workflow sandbox has
-  // no Node `process` global, so HOME cannot come from the environment).
-  OUTPUT: '~/YOUR-REPO/FANG-AUDIT.md',
-
-  // <TAGS> = build-tag flags for the DEFAULT suite (usually empty string).
+// Engine fallbacks for the few knobs that are not safety-critical to derive.
+// These are NOT a pairing table or a test command (those MUST come from
+// discovery or an explicit override — never a name heuristic). They are the
+// inert defaults the report uses when neither discovery nor args supply them.
+const FALLBACKS = {
+  PROJECT: 'launch-repo',
+  LANGUAGE: 'the launch repo',
+  PACKAGE_HINT: '',
+  SRC_DIR: '.',
+  OUTPUT: '~/FANG-AUDIT.md',
   DEFAULT_TAGS: '',
-  // <TAGS> for the guard (perf-sensitive) suite, e.g. '-tags scaling'.
-  GUARD_TAGS: '-tags scaling',
-
-  // RUN_TEST — the language-specific test command each agent runs, as prose
-  // embedded in the procedure. The engine substitutes <TAGS>. Keep <COUNT>
-  // (the cache-busting flag) explicit: a cached PASS would falsely exonerate a
-  // mutation. Go example below; for other languages give the equivalent
-  // (e.g. `pytest -p no:cacheprovider`, `cargo test`).
-  RUN_TEST: 'cd src/go && go test <TAGS> -count=1 ./...',
-
-  // Language label + the package/working directory the test command runs in,
-  // surfaced in prompts so the agent orients. SRC_DIR is the directory holding
-  // the test + source files, relative to the repo root (used in the procedure
-  // text the agent follows).
-  LANGUAGE: 'Go',
-  PACKAGE_HINT: 'package main, in src/go/',
-  SRC_DIR: 'src/go',
-
-  // UNTRACKED_SEED (M4) — inputs the test build needs that are NOT committed,
-  // so a fresh worktree (which only has the committed tree) lacks them. The
-  // guard agent copies each from `from` into `dest` if missing, BEFORE the
-  // baseline check. Empty list = no seeding (fully generic). Keep `from` paths
-  // out of the /home/[a-z] form — use a leading `~/` (expanded via args.HOME).
-  // (The git-erg guard build references an untracked resource_test.go that
-  // shares the //go:build scaling compile unit with scaling_test.go; without
-  // it the scaling build fails to compile and the canary falsely FAILs.)
-  UNTRACKED_SEED: [
-    { dest: 'src/go/resource_test.go', from: '~/git-erg/src/go/resource_test.go' },
-  ],
-
-  // Mutation heuristics — language-specific examples of a MINIMAL, COMPILING,
-  // behavior-CHANGING mutation. These steer the agent away from strawmen.
+  GUARD_TAGS: '',
   MUTATION_HEURISTICS:
-    'flip a boundary < to <=, drop a Close(), skip a validation branch, ' +
-    'off-by-one an index, negate a predicate',
-
-  // TEST↔SOURCE pairing table (M1). NOT a name heuristic — an explicit map.
-  // Non-1:1 repos always need this; even 1:1 repos benefit from the audit
-  // trail. `test` is the test file, `src` the source target(s) it may mutate.
-  BEHAVIORAL: [
-    { test: 'atomicwrite_test.go', src: ['atomicwrite.go'] },
-    { test: 'check_test.go',       src: ['check.go'] },
-    { test: 'close_test.go',       src: ['close.go'] },
-    { test: 'config_test.go',      src: ['config.go'] },
-    { test: 'contract_test.go',    src: ['check.go', 'list.go', 'validate.go'] },
-    { test: 'erg_test.go',         src: ['erg.go'] },
-    { test: 'identity_test.go',    src: ['identity.go'] },
-    { test: 'list_test.go',        src: ['list.go'] },
-    { test: 'migrate_test.go',     src: ['migrate.go'] },
-    { test: 'new_test.go',         src: ['new.go'] },
-    { test: 'nextid_test.go',      src: ['nextid.go'] },
-    { test: 'ref_test.go',         src: ['ref.go'] },
-    { test: 'refs_test.go',        src: ['refs.go'] },
-    { test: 'refs_git_test.go',    src: ['refs.go'] },
-    { test: 'resolve_test.go',     src: ['main.go'] },
-    { test: 'tag_test.go',         src: ['tag.go'] },
-    { test: 'validate_test.go',    src: ['validate.go'] },
-  ],
-
-  // GUARDS — DESIGNATED canary files (perf-sensitive guard tests with a known
-  // primary invariant). `canary` is the explicit, workflow-author-written
-  // mutation that MUST trip the guard. Canary designation is a CONFIG input —
-  // NEVER an agent claim (this is the isCanary-pollution fix, crit 7).
-  GUARDS: [
-    { test: 'scaling_test.go', src: ['erg.go'],
-      canary: 'In erg.go make loadErgs (line ~664) re-parse each ticket more than once — e.g. wrap the per-file parse in a nested loop over the corpus so total work is O(N^2). This reintroduces the quadratic re-parse the scaling guard exists to catch; TestScalingLinear* must go red.' },
-    { test: 'resource_test.go', src: ['check.go', 'list.go', 'close.go', 'rm.go', 'ready.go', 'erg.go'],
-      canary: 'Introduce a file-descriptor leak in a corpus read/command path exercised by TestScalingFDHygiene (the cmdCheck/cmdList/cmdReady/cmdClose/cmdRm read path). E.g. os.Open a file (or open a git pipe) without closing it, or delete a Close()/defer f.Close() on the ticket-read path. TestScalingFDHygiene must report a leaked fd.' },
-  ],
-
-  // DETERMINISM PRECHECK (crit 5) — the cheap, zero-token gate run BEFORE any
-  // mutation. Delegated to the 0184 utility's flakiness subcommand (exit 0 =
-  // stable, exit 2 = new flakiness). You cannot mutation-test a flaky suite.
-  // The precheck agent runs this verbatim and reports the exit code + JSON.
-  PRECHECK_CMD:
-    'python3 ~/.claude/scripts/test-quality.py flakiness --package-dir src/go --runs 3',
-
-  // RISK weights (crit 6) — OPTIONAL per-file risk multiplier for the report
-  // sort. The ticket is explicit: do NOT automate the risk judgment — risk is
-  // a human-supplied input. Default 1.0 for any file not listed. Example: a
-  // security invariant (header-injection sanitize) outranks a cosmetic check.
-  RISK: {
-    // 'identity_test.go': 3.0,
-  },
+    'a MINIMAL, COMPILING, behavior-CHANGING edit to a mapped source target: ' +
+    'flip a boundary < to <=, drop a resource Close()/cleanup, skip a validation ' +
+    'branch, off-by-one an index, negate a predicate',
+  HANDCUFF_HEURISTICS:
+    'a behavior-PRESERVING refactor of a mapped source target: rename a local ' +
+    'variable, reorder two independent statements, swap an equivalent construct ' +
+    '(for↔while, if-else↔ternary), change an UNEXPORTED representation that the ' +
+    "tests should not observe. Must NOT change any value, ordering, or effect the " +
+    "test legitimately depends on — only the internal form.",
+  BEHAVIORAL: [],
+  GUARDS: [],
+  UNTRACKED_SEED: [],
+  PRECHECK_CMD: '',
+  RISK: {},
 }
 
 // ============================================================================
-// ENGINE — repo-agnostic below this line. Verbatim from the prototype except
-// where marked Δ.
+// ENGINE — repo-agnostic below this line.
 // ============================================================================
 
-// Δ9: per-repo config arrives via the Workflow `args` input (read from the
-// target repo's `.fang-audit.json` by the SKILL.md invocation) and overrides
-// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side.
-// The workflow sandbox has NO Node `process` global, so HOME must be supplied
-// by the invoker as args.HOME; without it, `~/` paths pass through unchanged
-// (the invoker should then pre-expand them in the config it passes).
-// Δ10: tolerate args delivered as a JSON-encoded STRING — observed 2026-06-05:
-// the harness handed the object through as a string, the old typeof check
-// silently dropped it, and the whole run fell back to DEFAULTS (harmless only
-// because the git-erg config IS the DEFAULTS reference; fatal for any other repo).
-let _cfg = args
-if (typeof _cfg === 'string') { try { _cfg = JSON.parse(_cfg) } catch { _cfg = null } }
-if (!(_cfg && typeof _cfg === 'object')) _cfg = {}
-const HOME = typeof _cfg.HOME === 'string' ? _cfg.HOME : ''
+// Normalize args (ticket 0223: the harness may deliver args as a JSON-encoded
+// STRING). These are the OPTIONAL overrides — every key may be absent.
+let _args = args
+if (typeof _args === 'string') { try { _args = JSON.parse(_args) } catch { _args = null } }
+if (!(_args && typeof _args === 'object')) _args = {}
+const HOME = typeof _args.HOME === 'string' ? _args.HOME : ''
 const expand = p => (typeof p === 'string' && HOME) ? p.replace(/^~(?=\/)/, HOME) : p
-const CONFIG = Object.assign({}, DEFAULTS, _cfg)
+
+// ---- Phase 0a: DISCOVERY (read-only — derive config from the launch repo) ----
+// An agent reads the repo and DERIVES the test command, the test↔source
+// pairing table, mutation + handcuff heuristics, and (optionally) guard
+// candidates. Read-only: NON-isolated (no mutation, like the skeptic). The
+// derived object merges UNDER the args, so an explicit override always wins.
+const DISCOVERY_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    PROJECT: { type: 'string' },
+    LANGUAGE: { type: 'string' },
+    PACKAGE_HINT: { type: 'string' },
+    SRC_DIR: { type: 'string', description: 'directory the test command runs in, relative to repo root' },
+    RUN_TEST: { type: 'string', description: 'the cache-busting test command; <TAGS> placeholder for build-tag flags' },
+    DEFAULT_TAGS: { type: 'string' },
+    GUARD_TAGS: { type: 'string' },
+    PRECHECK_CMD: { type: 'string', description: 'the 0184 test-quality.py flakiness gate invocation for this repo' },
+    MUTATION_HEURISTICS: { type: 'string' },
+    HANDCUFF_HEURISTICS: { type: 'string' },
+    BEHAVIORAL: { type: 'array', items: {
+      type: 'object', additionalProperties: false,
+      properties: {
+        test: { type: 'string' },
+        src: { type: 'array', items: { type: 'string' } },
+        rationale: { type: 'string', description: 'WHY this pairing — the import/call-site evidence, proving it is read-derived not glob-derived' },
+      },
+      required: ['test', 'src'],
+    } },
+    evidence: { type: 'string', description: 'what files were read (Makefile/pyproject/go.mod/test tree) and how the command + pairings were derived' },
+  },
+  required: ['RUN_TEST', 'BEHAVIORAL', 'SRC_DIR'],
+}
+
+phase('Discovery')
+const discovered = await agent(
+  `You are the DISCOVERY phase of a mutation-testing audit. You run in the LAUNCH repo (the repo this session is rooted in). Your job: by READING the repo, DERIVE the configuration the audit needs. Do NOT guess from filenames alone — derive from real evidence (build files, imports, call sites). The blind filename-glob heuristic (X_test → X.go) is BANNED: it returned a NONEXISTENT file for 5 of 19 git-erg tests, including both canaries.
+
+READ (as available — different repos use different ones):
+  - Build/test config: Makefile, pyproject.toml, go.mod, package.json, Cargo.toml, pytest.ini/tox.ini, justfile.
+  - The test tree: every test file (Go *_test.go, Python tests/test_*.py / *_test.py, etc.).
+  - For EACH test file, its imports and the symbols it calls — that is how you map it to the SOURCE file(s) it actually exercises. A test that imports and calls funcs from foo.go pairs to foo.go; a test exercising several modules pairs to all of them (non-1:1 is normal — encode it).
+
+DERIVE and return:
+  - RUN_TEST: the exact test command, WITH a cache-buster (go: -count=1; pytest: -p no:cacheprovider; cargo: cargo test) — a cached PASS would falsely exonerate a mutation. Put a <TAGS> placeholder where build-tag flags go (empty string if the language has no build tags). SRC_DIR = the directory the command runs in.
+  - PRECHECK_CMD: the 0184 determinism gate for this repo, of the form 'python3 ~/.claude/scripts/test-quality.py flakiness --package-dir <DIR> --runs 3' (Go) or the documented adapter invocation for the language. If the 0184 utility has no adapter for this language, return PRECHECK_CMD as an empty string (the precheck will then warn-and-proceed, not hard-gate).
+  - MUTATION_HEURISTICS: language-specific examples of a MINIMAL, COMPILING, behavior-CHANGING mutation.
+  - HANDCUFF_HEURISTICS: language-specific examples of a behavior-PRESERVING refactor (rename local, reorder independent statements, equivalent-construct swap, unexported-representation change).
+  - BEHAVIORAL: the explicit test↔source pairing table — one {test, src:[...], rationale} per behavioral test file. The rationale MUST cite the import/call-site evidence, so it is provably read-derived, not name-derived.
+  - PROJECT / LANGUAGE / PACKAGE_HINT: orientation labels.
+  - evidence: which files you read and how you derived the command + pairings.
+
+Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
+  { label: 'discovery:launch-repo', phase: 'Discovery', schema: DISCOVERY_SCHEMA }
+).catch(e => { log(`discovery agent error: ${e}`); return null })
+
+if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
+  if (!_args.BEHAVIORAL || !_args.BEHAVIORAL.length) {
+    const msg = 'ABORT: discovery did not derive a test↔source pairing table and no BEHAVIORAL override was supplied. Cannot audit without knowing which source each test exercises (the banned filename-glob heuristic is the only alternative — refused). Re-run from the target repo root, or pass an explicit BEHAVIORAL override.'
+    log(msg)
+    return { aborted: true, reason: msg, discovered }
+  }
+  log('discovery returned no pairing table; falling back to the explicit BEHAVIORAL override supplied in args.')
+}
+
+// Merge order (ticket 0219 directive 1): FALLBACKS < discovery < args.
+// An explicit override always wins over a derived value; a derived value
+// always wins over the inert engine fallback. No required per-repo CONFIG.
+const CONFIG = Object.assign({}, FALLBACKS, discovered || {}, _args)
+// Normalize the derived/overridden BEHAVIORAL to the engine's {test, src} shape
+// (discovery adds a `rationale` the engine ignores).
+CONFIG.BEHAVIORAL = (CONFIG.BEHAVIORAL || []).map(p => ({ test: p.test, src: p.src }))
+CONFIG.GUARDS = CONFIG.GUARDS || []
+CONFIG.RISK = CONFIG.RISK || {}
 CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
 CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))
+log(`discovery: ${CONFIG.BEHAVIORAL.length} test↔source pairings, RUN_TEST="${CONFIG.RUN_TEST}", ${CONFIG.GUARDS.length} designated guard(s).`)
 
 const { BEHAVIORAL, GUARDS } = CONFIG
 
@@ -245,15 +272,23 @@ ${applyRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
 
 // Untracked inputs the guard build needs but that are absent from a fresh
 // worktree (only the committed tree propagates). The guard agent copies these
-// in before the baseline check — Δ from the prototype only in that the source
-// path is a CONFIG knob, not hardcoded. Empty list => no copy line.
-const SEED_INSTRUCTIONS = (CONFIG.UNTRACKED_SEED || [])
-  .map(s => `    test -f ${s.dest} || cp ${s.from} ${s.dest}`)
+// in before the baseline check; the source path is a CONFIG knob, not
+// hardcoded. Empty list => no copy line.
+//
+// 0219 directive 4(a): the seed copy left an UNTRACKED file in the worktree,
+// which made the tree dirty so the harness auto-reclaim refused to recycle it
+// (it conservatively keeps any worktree with changes). Stage the seed via
+// `git add -f` so the working tree is CLEAN after seeding — the seed lives in
+// the index of a throwaway worktree, harms nothing, and reclaim sees a clean
+// tree. Mutations are still `git checkout -- <file>`-reverted as before; the
+// staged seed is not a source target so it is never mutated.
+const SEED_CLEAN_INSTRUCTIONS = (CONFIG.UNTRACKED_SEED || [])
+  .map(s => `    test -f ${s.dest} || cp ${s.from} ${s.dest}; git add -f ${s.dest}`)
   .join('\n')
 
 function guardPrompt(file) {
-  const seed = SEED_INSTRUCTIONS
-    ? `\n- Some test inputs the guard build needs are UNTRACKED and may be ABSENT from this worktree. Copy each in if missing, FIRST:\n${SEED_INSTRUCTIONS}`
+  const seed = SEED_CLEAN_INSTRUCTIONS
+    ? `\n- Some test inputs the guard build needs are UNTRACKED and may be ABSENT from this worktree. Copy each in if missing, then \`git add -f\` it so the tree stays CLEAN (an untracked seed makes the worktree dirty and blocks auto-reclaim — 0219 directive 4a). FIRST:\n${SEED_CLEAN_INSTRUCTIONS}`
     : ''
   return `You are mutation-testing a designated GUARD/canary test for ${CONFIG.PROJECT}, ${CONFIG.PACKAGE_HINT}. These guard tests already ship "negative controls"; your job is to confirm the guard's PRIMARY invariant actually trips under a real defect, then audit its other assertions.
 
@@ -270,7 +305,9 @@ ${file.canary}
 The canary MUST classify as "caught" (a guard test in this file goes red). If it does NOT, that is a critical signal the harness is miswired — still report it truthfully.
 
 After the canary, audit the file's OTHER assertions per the standard procedure.
-${applyRules(CONFIG.GUARD_TAGS).replaceAll('<TESTFILE>', file.test)}`
+${applyRules(CONFIG.GUARD_TAGS).replaceAll('<TESTFILE>', file.test)}
+
+CLEANUP (do LAST): leave the worktree CLEAN — `git checkout -- .` any mutated source so the tree has no uncommitted changes (the staged seed is fine). This lets the harness auto-reclaim this worktree (0219 directive 4a).`
 }
 
 function skepticPrompt(file, f) {
@@ -313,9 +350,204 @@ async function skepticize(audit, file) {
   return audit
 }
 
+// ============================================================================
+// HANDCUFF pass (ticket 0219 — robustness axis). Behavior-PRESERVING refactor
+// of a source target → the test must STAY GREEN. A test that goes RED is
+// OVER-SCOPED (a handcuff): it asserts on internal form the contract does not
+// promise, and it blocks legitimate refactors. INVERTED oracle vs fang:
+// here red = BAD. A SEPARATE agent role owns this oracle — never the fang
+// agent (red=good there); juggling both invites misclassification (0182 §
+// "one workflow, two passes").
+// ============================================================================
+
+const HANDCUFF_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    testFile: { type: 'string' },
+    sourceFiles: { type: 'array', items: { type: 'string' } },
+    baselineGreen: { type: 'boolean' },
+    findings: { type: 'array', items: {
+      type: 'object', additionalProperties: false,
+      properties: {
+        refactor: { type: 'string', description: 'the behavior-PRESERVING change applied' },
+        preservationArgument: { type: 'string', description: 'WHY this is behavior-neutral on every input the test legitimately exercises' },
+        // Inverted oracle: handcuff (red on a true refactor) is the accusation;
+        // robust (stayed green) is the healthy verdict; not-preserving is the
+        // skeptic withdrawing the accusation; compile-error is skipped.
+        result: { type: 'string', enum: ['handcuff', 'robust', 'not-preserving', 'compile-error', 'skipped'] },
+        failingTests: { type: 'array', items: { type: 'string' } },
+        evidence: { type: 'string' },
+        suggestion: { type: 'string', description: 'for a handcuff: how to loosen the over-scoped assertion to the real contract' },
+      },
+      required: ['refactor', 'result'],
+    } },
+    summary: { type: 'string' },
+  },
+  required: ['testFile', 'findings', 'summary'],
+}
+
+// The handcuff pass's OWN skeptic, symmetric to the equivalent-mutant skeptic
+// (0182 § "the handcuff pass needs its OWN skeptic"). When a test goes red on a
+// supposed refactor, verify the refactor was TRULY behavior-preserving. If it
+// secretly changed behavior, the red is a LEGITIMATE catch (a fang), NOT a
+// handcuff — withdraw the accusation (result → not-preserving). Mirror image of
+// the false-accusation guard.
+const HANDCUFF_SKEPTIC_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    finalVerdict: { type: 'string', enum: ['handcuff', 'not-preserving'] },
+    reasoning: { type: 'string' },
+    behaviorChange: { type: 'string', description: 'if not-preserving: the concrete input where the refactored code differs observably' },
+  },
+  required: ['finalVerdict', 'reasoning'],
+}
+
+const HANDCUFF_RULES = `
+PROCEDURE (do exactly this):
+1. Read <SRC_DIR>/<TESTFILE> and the source target(s). Confirm baseline is green: <RUN_TEST> must PASS. Set baselineGreen. If not, STOP: one finding result="compile-error", baselineGreen=false.
+2. Identify 1-6 behavior-PRESERVING refactors of the source target(s) — changes that a competent reviewer would approve as pure cleanup, touching ONLY internal form: rename a local, reorder two independent statements, swap an equivalent construct, change an UNEXPORTED representation the contract does not promise (<HANDCUFF_HEURISTICS>). Each MUST preserve every value, ordering, and effect the test legitimately depends on.
+3. For EACH refactor, in sequence:
+   a. Apply it (must still COMPILE; if not, result="compile-error", pick another).
+   b. Run: <RUN_TEST> — capture output. Record FAILED tests into failingTests.
+   c. ALWAYS restore pristine before the next: git checkout -- <file>. Never hand-revert.
+4. CLASSIFY (inverted oracle — red is BAD here):
+   - "robust": the suite stayed GREEN under the refactor. Healthy — the test tolerates legitimate evolution.
+   - "handcuff" (ACCUSATION): a test went RED on a TRULY behavior-preserving refactor. The test is over-scoped — it asserts on internal form the contract does not promise. In preservationArgument, give a POSITIVE argument that the refactor changed no observable behavior (not merely "looks fine"). In suggestion, say how to loosen the assertion to the real contract.
+   - "not-preserving": a test went red but on reflection the refactor SECRETLY changed behavior — then the red is a legitimate fang, NOT a handcuff. Withdraw: put the distinguishing behavior change in evidence. (The skeptic will re-check every handcuff for exactly this.)
+You are in an isolated throwaway git worktree — all edits are discarded. Return the structured object.`
+
+function handcuffRules(tags) {
+  return HANDCUFF_RULES
+    .replaceAll('<RUN_TEST>', CONFIG.RUN_TEST.replaceAll('<TAGS>', tags))
+    .replaceAll('<TAGS>', tags)
+    .replaceAll('<HANDCUFF_HEURISTICS>', CONFIG.HANDCUFF_HEURISTICS)
+    .replaceAll('<SRC_DIR>', CONFIG.SRC_DIR)
+}
+
+function handcuffPrompt(file) {
+  return `You are mutation-testing whether a ${CONFIG.LANGUAGE} test is a "handcuff": does it wrongly go RED when the code is refactored WITHOUT changing behavior? Repo: ${CONFIG.PROJECT}, ${CONFIG.PACKAGE_HINT}. THIS IS THE INVERTED ORACLE: a test going red on a true refactor is a DEFECT (over-scoped), the opposite of the fang pass.
+
+ASSIGNMENT
+- Test file: ${file.test}
+- Source target(s) you may refactor: ${file.src.join(', ')}
+- <TAGS> = (none — default suite)
+${handcuffRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
+}
+
+function handcuffSkepticPrompt(file, f) {
+  return `Cross-model adversarial check of a HANDCUFF accusation on ${CONFIG.PROJECT} test ${file.test} (source: ${(f.sourceFiles||file.src).join(', ')}). The audit agent applied a refactor it claims is behavior-PRESERVING, and a test went RED — accusing the test of being over-scoped (a handcuff).
+
+REFACTOR APPLIED: ${f.refactor}
+AGENT'S PRESERVATION ARGUMENT: ${f.preservationArgument || '(none given)'}
+TESTS THAT WENT RED: ${(f.failingTests||[]).join(', ') || '(none)'}
+
+Your job is to REFUTE the accusation by proving the refactor was NOT truly behavior-preserving: construct a concrete input, within the test's legitimate domain, where the refactored code produces OBSERVABLY DIFFERENT output/ordering/effect than the original. If you succeed, the red is a LEGITIMATE fang and finalVerdict="not-preserving" (accusation withdrawn) — put the input in behaviorChange. If the refactor truly changes nothing observable, the test IS over-scoped and finalVerdict="handcuff" (accusation stands). You may read the files; you need not run the suite.`
+}
+
+async function handcuffSkepticize(audit, file) {
+  if (!audit || !Array.isArray(audit.findings)) return audit
+  const targets = audit.findings.map((f, i) => ({ f, i })).filter(x => x.f.result === 'handcuff')
+  if (!targets.length) return audit
+  const verdicts = await parallel(targets.map(x => () =>
+    agent(handcuffSkepticPrompt(file, x.f), {
+      label: `hc-skeptic:${file.test}`.slice(0, 60),
+      phase: 'Handcuff', model: 'sonnet', schema: HANDCUFF_SKEPTIC_SCHEMA,
+    })
+  ))
+  verdicts.forEach((v, k) => {
+    if (!v) return
+    const i = targets[k].i
+    audit.findings[i].skepticVerdict = v.finalVerdict
+    audit.findings[i].skepticReasoning = v.reasoning
+    if (v.behaviorChange) audit.findings[i].skepticBehaviorChange = v.behaviorChange
+    audit.findings[i].result = v.finalVerdict // skeptic has final say: handcuff <-> not-preserving
+  })
+  return audit
+}
+
+// ============================================================================
+// SCOPE / ALTITUDE pass (ticket 0219 — class-coverage axis). For each
+// behavior-CHANGING mutation the fang pass CAUGHT, replay the SAME operator at
+// every structurally-similar SIBLING site. If only the site with a regression
+// test goes red and the siblings SURVIVE, the test is pinned to one INSTANCE
+// when the defect is a CLASS — it guards the past, not the future. Oracle:
+// sibling-survives = under-scoped (instance-pinned) contract → flag for
+// promotion to a class/invariant guard. SEPARATE agent role.
+// ============================================================================
+
+const SCOPE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    testFile: { type: 'string' },
+    findings: { type: 'array', items: {
+      type: 'object', additionalProperties: false,
+      properties: {
+        operator: { type: 'string', description: 'the caught mutation operator being replayed' },
+        originSite: { type: 'string', description: 'the site whose regression test caught the original mutation' },
+        siblingSites: { type: 'array', items: { type: 'string' }, description: 'structurally-similar sites the operator was replayed at' },
+        // class-guarded: every sibling also caught -> the test guards the CLASS.
+        // instance-pinned: at least one sibling SURVIVED -> under-scoped, flag
+        //   for promotion to a class/invariant guard.
+        // no-siblings: no structurally-similar site exists -> nothing to widen to.
+        result: { type: 'string', enum: ['class-guarded', 'instance-pinned', 'no-siblings', 'skipped'] },
+        survivingSiblings: { type: 'array', items: { type: 'string' }, description: 'sibling sites where the replayed operator was NOT caught' },
+        evidence: { type: 'string' },
+        suggestion: { type: 'string', description: 'for instance-pinned: the class/invariant guard to promote to' },
+      },
+      required: ['operator', 'result'],
+    } },
+    summary: { type: 'string' },
+  },
+  required: ['testFile', 'findings', 'summary'],
+}
+
+const SCOPE_RULES = `
+PROCEDURE (do exactly this):
+1. Read <SRC_DIR>/<TESTFILE> and the source target(s). Confirm baseline is green: <RUN_TEST> must PASS. If not, STOP: one finding result="skipped" with evidence.
+2. You are given a list of CAUGHT mutation operators this test file already detected at their origin sites (below). For EACH operator:
+   a. Find every STRUCTURALLY-SIMILAR sibling site — the same kind of code construct elsewhere in the mapped source target(s) (e.g. the same boundary comparison on a different field, the same resource open/close pattern in a sibling function, the same validation branch for a parallel input). List them in siblingSites. If there is NO structurally-similar sibling, result="no-siblings" and move on.
+   b. Apply the SAME operator at each sibling site, one at a time (must COMPILE). Run: <RUN_TEST>. Record whether THIS test file's funcs go red. ALWAYS restore pristine: git checkout -- <file>.
+3. CLASSIFY:
+   - "class-guarded": EVERY sibling-site replay was also caught by this file's tests. The test guards the whole CLASS — right altitude.
+   - "instance-pinned" (ACCUSATION): at least one sibling SURVIVED (no own-file test went red). The test is pinned to one INSTANCE; the defect class has unguarded members. Put the surviving sites in survivingSiblings and, in suggestion, name the class/invariant guard to promote to (a table-driven test over all sites, or an invariant assertion).
+   - "no-siblings": no structurally-similar site exists, so there is nothing to widen to (not an accusation).
+You are in an isolated throwaway git worktree — all edits are discarded. Return the structured object.`
+
+function scopeRules(tags) {
+  return SCOPE_RULES
+    .replaceAll('<RUN_TEST>', CONFIG.RUN_TEST.replaceAll('<TAGS>', tags))
+    .replaceAll('<TAGS>', tags)
+    .replaceAll('<SRC_DIR>', CONFIG.SRC_DIR)
+}
+
+function scopePrompt(file, caughtOps) {
+  const ops = caughtOps.map((c, i) => `${i + 1}. [${c.testFunc}] ${c.mutation}`).join('\n')
+  return `You are auditing the ALTITUDE / SCOPE of a ${CONFIG.LANGUAGE} test: does it guard the whole defect CLASS, or just the one INSTANCE it has a regression test for? Repo: ${CONFIG.PROJECT}, ${CONFIG.PACKAGE_HINT}.
+
+ASSIGNMENT
+- Test file: ${file.test}
+- Source target(s): ${file.src.join(', ')}
+- CAUGHT operators to replay at sibling sites:
+${ops || '(none — return an empty findings array)'}
+- <TAGS> = (none — default suite)
+${scopeRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
+}
+
 // ---- Δ5: Phase 0 — determinism precheck GATE (blocks the fan-out) ----
 phase('Precheck')
-const precheck = await agent(
+// Δ0219: discovery may report no PRECHECK_CMD when the 0184 utility has no
+// adapter for the launch repo's language. The gate then degrades to
+// warn-and-proceed (an OPEN skip, never a faked PASS) rather than aborting a
+// language it simply cannot pre-vet. The report records the un-vetted state.
+let precheckSkipped = false
+if (!CONFIG.PRECHECK_CMD) {
+  precheckSkipped = true
+  log('precheck SKIPPED openly — discovery found no 0184 flakiness adapter for this language; verdicts are NOT determinism-vetted. Stabilize manually before trusting toothless rows.')
+}
+const precheck = precheckSkipped ? { exitCode: 0, gate: 'skipped' } : await agent(
   `Run the determinism precheck for ${CONFIG.PROJECT} and report the result. You cannot mutation-test a flaky suite, so this gate runs BEFORE any mutation.
 
 Run EXACTLY this command from the repo root and capture its exit code and stdout:
@@ -341,7 +573,7 @@ if (!precheck || precheck.exitCode !== 0 || precheck.gate === 'fail') {
   log(msg)
   return { aborted: true, reason: msg, precheck }
 }
-log(`precheck PASS — suite stable (exit ${precheck.exitCode}, gate=${precheck.gate}); proceeding to mutation audit.`)
+if (!precheckSkipped) log(`precheck PASS — suite stable (exit ${precheck.exitCode}, gate=${precheck.gate}); proceeding to mutation audit.`)
 
 // ---- Phase 1+2: behavioral audit -> skeptic (pipeline, no barrier) ----
 phase('Audit')
@@ -377,9 +609,78 @@ for (const file of GUARDS) {
 
 const all = [...behavioral, ...guards].filter(Boolean)
 
-// ---- Deterministic report assembly (no LLM formatting of N objects) ----
+// Report helpers — hoisted above the handcuff/scope phases (which key fang
+// counts and caught-operators by basename) so they are in scope there too.
 const esc = s => String(s == null ? '' : s).replace(/\n+/g, ' ').replace(/\|/g, '\\|').trim()
 const base = p => String(p || '').split('/').pop()
+
+// ---- Phase 4: HANDCUFF pass (robustness — INVERTED oracle, own skeptic) ----
+// Pipelined AFTER the fang pass in the SAME workflow (shared discovery,
+// worktree setup, baseline-green). 0182: prioritise files that showed fangs /
+// are non-trivial — a file with no fang is unlikely to be over-scoped, and the
+// budget is better spent on the ones doing real assertion work.
+phase('Handcuff')
+const fangByFile = {}
+all.forEach(a => (a.findings || []).forEach(f => {
+  if (f.result === 'caught') fangByFile[base(a.testFile)] = (fangByFile[base(a.testFile)] || 0) + 1
+}))
+const handcuffTargets = [...BEHAVIORAL].sort((x, y) => (fangByFile[x.test] || 0) < (fangByFile[y.test] || 0) ? 1 : -1)
+const handcuffs = await pipeline(
+  handcuffTargets,
+  // Δ8: isolation:'worktree' — the handcuff agent MUTATES (refactors) source
+  // and runs the suite; concurrent loops on a shared checkout corrupt each
+  // other, exactly as in the fang pass.
+  file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })
+            .then(a => { if (a) a.testFile = a.testFile || file.test; return a }),
+  (audit, file) => handcuffSkepticize(audit, file),
+)
+
+// ---- Phase 5: SCOPE / ALTITUDE pass (class coverage — sibling replay) ----
+// Depends on the fang pass: it replays each file's CAUGHT operators at sibling
+// sites. A file with no caught mutations has nothing to replay → skipped.
+phase('Scope')
+const caughtOpsByFile = {}
+behavioral.filter(Boolean).forEach(a => {
+  const fileName = base(a.testFile)
+  ;(a.findings || []).filter(f => f.result === 'caught').forEach(f => {
+    (caughtOpsByFile[fileName] = caughtOpsByFile[fileName] || []).push({ testFunc: f.testFunc, mutation: f.mutation })
+  })
+})
+const scopeTargets = BEHAVIORAL.filter(f => (caughtOpsByFile[f.test] || []).length)
+const scopes = await parallel(scopeTargets.map(file => () =>
+  // Δ8: isolation:'worktree' — the scope agent MUTATES (replays operators at
+  // sibling sites) and runs the suite; must be isolated like fang/handcuff.
+  agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', schema: SCOPE_SCHEMA, isolation: 'worktree' })
+    .then(a => { if (a) a.testFile = a.testFile || file.test; return a })
+    .catch(e => { log(`scope ${file.test} agent error: ${e}`); return null })
+))
+
+// ---- 0219 directive 4(b): post-run CLEANUP of hand-rolled scratch worktrees ----
+// Observed on the 2026-06-05 run: some audit agents hand-rolled their own
+// `git worktree add /tmp/fang-<project>-*` scratch trees (on detached HEAD)
+// instead of relying solely on the harness `isolation:'worktree'` checkout,
+// and those scratch worktrees outlived the run — `git worktree list` kept
+// stale detached entries and the /tmp dirs lingered. A single read-only
+// cleanup agent prunes them after all mutation passes are done. It is
+// CONSERVATIVE: it removes ONLY worktrees whose path matches the
+// /tmp/fang-<project>-* scratch pattern, never the session checkout or any
+// named worktree, then runs `git worktree prune`.
+phase('Cleanup')
+await agent(
+  `Post-run cleanup for the fang-audit of ${CONFIG.PROJECT}. During the audit, some agents may have hand-rolled scratch git worktrees under /tmp (paths like \`/tmp/fang-${CONFIG.PROJECT}-*\` or \`/tmp/fang-*\`), typically on a detached HEAD, that outlived the run. Remove ONLY those scratch worktrees — never the session checkout, never any worktree under .claude/worktrees/, never a worktree on a named branch.
+
+PROCEDURE (read-then-act, conservatively):
+1. \`git worktree list --porcelain\` — list every worktree.
+2. For each entry whose worktree PATH starts with \`/tmp/fang-\` (a scratch tree this audit created), run \`git worktree remove --force <path>\` (force is safe — these are throwaway scratch trees). Skip anything not matching that /tmp/fang- prefix.
+3. \`git worktree prune\` to drop any remaining stale administrative entries.
+4. Report which paths you removed (or "none found").
+
+If \`git worktree list\` shows no /tmp/fang- entries, do nothing and report "none found". Do NOT mutate source, do NOT remove anything outside the /tmp/fang- prefix.`,
+  { label: 'cleanup:scratch-worktrees', phase: 'Cleanup' }
+).catch(e => log(`cleanup agent error (non-fatal): ${e}`))
+
+// ---- Deterministic report assembly (no LLM formatting of N objects) ----
+// (esc/base hoisted above the handcuff/scope phases.)
 // Δ7: carry _isGuardFile down onto each finding so canary scoping is by
 // CONFIG-dispatched role, not by a self-asserted flag.
 const flat = all.flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile), _isGuardFile: !!a._isGuardFile })))
@@ -397,7 +698,20 @@ const siblingOnly = survived.filter(f => f.failingTests && f.failingTests.length
 // patched this ad hoc with a filename regex; the principle is now baked in:
 // canary designation is a workflow input, never an agent claim).
 const canaryFindings = flat.filter(f => f._isGuardFile && f.isCanary)
-const canaryOK = canaryFindings.length >= GUARDS.length && canaryFindings.every(f => f.result === 'caught')
+// Ticket 0219 directive 1: with NO guards designated, there is no canary gate
+// to run — skip it OPENLY (canarySkipped) rather than faking a PASS on an
+// empty set. canaryOK is reserved for a real, non-empty gate.
+const canarySkipped = GUARDS.length === 0
+const canaryOK = !canarySkipped && canaryFindings.length >= GUARDS.length && canaryFindings.every(f => f.result === 'caught')
+
+// ---- 0219: flatten the HANDCUFF (robustness) and SCOPE (altitude) passes ----
+const hcFlat = (handcuffs || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile) })))
+const handcuffHits = hcFlat.filter(f => f.result === 'handcuff')        // over-scoped (red on a true refactor)
+const robust = hcFlat.filter(f => f.result === 'robust')
+const notPreserving = hcFlat.filter(f => f.result === 'not-preserving') // refactor secretly changed behavior — a fang, not a handcuff
+const scFlat = (scopes || []).filter(Boolean).flatMap(a => (a.findings || []).map(f => ({ ...f, _file: base(a.testFile) })))
+const instancePinned = scFlat.filter(f => f.result === 'instance-pinned') // under-scoped: guards one instance, not the class
+const classGuarded = scFlat.filter(f => f.result === 'class-guarded')
 
 // ---- Δ4: FREE-RIDER metrics (oracle-strength + diagnosticity) ----
 // Both derived from the mutation data already collected — NO extra runs.
@@ -451,6 +765,33 @@ const churnWeight = f => (churnByFile[f._file] || 0)
 const rxc = f => riskWeight(f) * churnWeight(f)
 const survivedRanked = [...survived].sort((a, b) => rxc(b) - rxc(a))
 
+// ---- 0219: unified per-FILE three-axis roll-up (fang? / handcuff? / right-scope?) ----
+// One row per behavioral file, sortable by risk × churn so the highest
+// blast-radius × change-frequency files surface first. Each axis:
+//   fang?        — ≥1 same-file caught mutation? (sensitivity; 'partial' if it
+//                  also has a survived/toothless finding, 'no' if only survived).
+//   handcuff?    — did any TRULY behavior-preserving refactor make it go red?
+//                  (over-scoped — robustness defect).
+//   right-scope? — instance-pinned if any caught operator's siblings survived
+//                  (under-scoped — guards the instance, not the class); else
+//                  'class' if siblings were also caught.
+const fileSet = [...new Set(BEHAVIORAL.map(f => f.test))]
+const threeAxis = fileSet.map(name => {
+  const fileCaught = caught.filter(f => f._file === name).length
+  const fileSurvived = survived.filter(f => f._file === name).length
+  const hc = handcuffHits.filter(f => f._file === name).length
+  const pinned = instancePinned.filter(f => f._file === name).length
+  const classOK = classGuarded.filter(f => f._file === name).length
+  return {
+    file: name,
+    fang: fileCaught > 0 ? (fileSurvived ? 'partial' : 'yes') : (fileSurvived ? 'no' : 'n/a'),
+    fangCaught: fileCaught, fangSurvived: fileSurvived,
+    handcuff: hc > 0 ? 'over-scoped' : 'robust', handcuffHits: hc,
+    rightScope: pinned > 0 ? 'instance-pinned' : (classOK > 0 ? 'class' : 'n/a'), pinnedHits: pinned,
+    risk: (CONFIG.RISK[name] || 1.0), churn: (churnByFile[name] || 0),
+  }
+}).sort((a, b) => (b.risk * b.churn) - (a.risk * a.churn))
+
 const L = []
 L.push(`# Fang Audit — \`${CONFIG.PROJECT}\` ${CONFIG.LANGUAGE} test harness`)
 L.push('')
@@ -458,7 +799,9 @@ L.push('_Mutation-testing audit: each test was probed by breaking the code it co
 L.push('')
 L.push('## Canary (validity gate)')
 L.push('')
-if (canaryOK) {
+if (canarySkipped) {
+  L.push('⏭️ **SKIPPED (openly)** — no guard/canary files were designated for this run (an explicit human opt-in, never auto-discovered). The mutation harness was therefore NOT self-validated against a known-trippable canary. The findings below are the audit\'s best effort; to add a validity gate, pass a `GUARDS` override naming a perf-sensitive guard test and its primary canary mutation.')
+} else if (canaryOK) {
   L.push('✅ **PASS** — every designated guard test caught its primary canary mutation, so the mutation harness itself works and the findings below are trustworthy:')
   canaryFindings.forEach(f => L.push(`- \`${f._file}\` → **${f.result}** — ${esc(f.mutation)}`))
 } else {
@@ -480,6 +823,21 @@ L.push(`| 🔧 compile-error (mutation skipped) | ${compileErr.length} |`)
 L.push(`| **files audited** | ${all.length} / ${BEHAVIORAL.length + GUARDS.length} |`)
 L.push('')
 L.push('_Counts are mutations probed, not tests. The 🦷 toothless rows are the actionable headline; the two sub-rows partition them. `caught` is the healthy majority._')
+L.push('')
+
+// ---- 0219: the unified THREE-AXIS per-test table (the headline of v2) ----
+L.push('## 🧭 Three-axis scoping — one row per test, sorted by risk × churn')
+L.push('')
+L.push('_The boundary a test draws over code-versions can be wrong three ways. **Fang** (sensitivity): does it go RED on a real defect? **Handcuff** (robustness): does it wrongly go RED on a behavior-preserving refactor? **Right-scope** (altitude): does it guard the whole defect CLASS, or just the one INSTANCE it has a regression test for? Right-scoped on all three = bites the defect, tolerates refactors, guards the class._')
+L.push('')
+L.push('| Test file | risk×churn | 🦷 fang? | 🔓 handcuff? | 🧬 right-scope? |')
+L.push('|---|---|---|---|---|')
+const fangCell = a => a.fang === 'yes' ? `✅ yes (${a.fangCaught})` : a.fang === 'partial' ? `⚠️ partial (${a.fangCaught}✓/${a.fangSurvived}🦷)` : a.fang === 'no' ? `🦷 no (${a.fangSurvived} toothless)` : '— n/a'
+const hcCell = a => a.handcuff === 'over-scoped' ? `🔓 OVER-SCOPED (${a.handcuffHits})` : '✅ robust'
+const scCell = a => a.rightScope === 'instance-pinned' ? `🧬 INSTANCE-PINNED (${a.pinnedHits})` : a.rightScope === 'class' ? '✅ class' : '— n/a'
+threeAxis.forEach(a => L.push(`| \`${esc(a.file)}\` | ${(a.risk * a.churn).toFixed(1)} (r${a.risk}×c${a.churn}) | ${fangCell(a)} | ${hcCell(a)} | ${scCell(a)} |`))
+L.push('')
+L.push('_Each axis is a SEPARATE oracle run by a SEPARATE agent role (never one agent juggling red=good and red=bad). The fang and scope passes share the behavior-changing mutation data; the handcuff pass applies behavior-PRESERVING refactors. Details for each axis follow below._')
 L.push('')
 
 L.push('## 🦷 Toothless tests (survived a real, distinguishing mutation) — sorted by risk × churn')
@@ -547,6 +905,33 @@ else {
 }
 L.push('')
 
+// ---- 0219: HANDCUFF (robustness) detail section ----
+L.push('## 🔓 Handcuffs (over-scoped — went RED on a behavior-preserving refactor)')
+L.push('')
+L.push('_The INVERTED oracle: a test that goes red when the code is refactored WITHOUT changing behavior is over-scoped — it asserts on internal form the contract does not promise and blocks legitimate evolution. Each row survived the handcuff pass AND its own behavior-preservation skeptic (which re-checked that the refactor was truly behavior-neutral; a secret behavior change is a fang, not a handcuff, and was withdrawn)._')
+L.push('')
+if (!handcuffHits.length) L.push('_None — every probed refactor was tolerated (robust). ' + robust.length + ' robust check(s)' + (notPreserving.length ? `, ${notPreserving.length} red(s) withdrawn as legitimate fangs (refactor secretly changed behavior).` : '.') + '_')
+else {
+  L.push('| Test file | Refactor applied | Tests that wrongly went red | Why behavior-preserving | Suggested loosening |')
+  L.push('|---|---|---|---|---|')
+  handcuffHits.forEach(f => L.push(`| \`${esc(f._file)}\` | ${esc(f.refactor)} | ${esc((f.failingTests||[]).join(', '))} | ${esc(f.preservationArgument || f.skepticReasoning)} | ${esc(f.suggestion)} |`))
+  if (notPreserving.length) { L.push(''); L.push(`_${notPreserving.length} candidate handcuff(s) were withdrawn by the skeptic as legitimate fangs (the refactor secretly changed behavior)._`) }
+}
+L.push('')
+
+// ---- 0219: SCOPE / ALTITUDE (class coverage) detail section ----
+L.push('## 🧬 Instance-pinned tests (under-scoped — guard one instance, not the class)')
+L.push('')
+L.push('_For each behavior-changing mutation the fang pass CAUGHT, the same operator was replayed at structurally-similar SIBLING sites. If only the site with a regression test goes red and the siblings survive, the test is pinned to one INSTANCE when the defect is a CLASS — it guards the past, not the future. Flag for promotion to a class/invariant guard._')
+L.push('')
+if (!instancePinned.length) L.push('_None — every caught operator that had siblings was also caught at those siblings (right altitude), or had no structurally-similar sibling. ' + classGuarded.length + ' class-guarded operator(s)._')
+else {
+  L.push('| Test file | Operator | Origin site | Surviving sibling sites | Suggested class guard |')
+  L.push('|---|---|---|---|---|')
+  instancePinned.forEach(f => L.push(`| \`${esc(f._file)}\` | ${esc(f.operator)} | ${esc(f.originSite)} | ${esc((f.survivingSiblings||[]).join(', '))} | ${esc(f.suggestion)} |`))
+}
+L.push('')
+
 L.push('## Per-file summaries')
 L.push('')
 all.forEach(a => {
@@ -556,8 +941,14 @@ all.forEach(a => {
 })
 L.push('')
 L.push('## Next step (out of scope here)')
-L.push('Applying the suggested fangs is a follow-up ticket — this audit changes no test code. Spot-check 2–3 toothless rows against their distinguishing input before acting.')
+L.push('Applying the suggested fangs (sensitivity), loosening the handcuffs (robustness), and promoting instance-pinned tests to class guards (altitude) are follow-up tickets — this audit changes no test code. Spot-check 2–3 rows on each axis against their evidence before acting.')
 
-return { report: L.join('\n'), output: CONFIG.OUTPUT, canaryOK,
-  counts: { survived: survived.length, gaps: gaps.length, caught: caught.length, equivalent: equivalent.length, compileErr: compileErr.length, files: all.length },
-  freeRiders: { oracleStrength, diagnosticity }, churnByFile, raw: all }
+return { report: L.join('\n'), output: CONFIG.OUTPUT, canaryOK, canarySkipped, precheckSkipped,
+  counts: {
+    survived: survived.length, gaps: gaps.length, caught: caught.length,
+    equivalent: equivalent.length, compileErr: compileErr.length, files: all.length,
+    handcuffs: handcuffHits.length, robust: robust.length, notPreserving: notPreserving.length,
+    instancePinned: instancePinned.length, classGuarded: classGuarded.length,
+  },
+  freeRiders: { oracleStrength, diagnosticity }, threeAxis, churnByFile,
+  raw: { fang: all, handcuff: handcuffs, scope: scopes } }
