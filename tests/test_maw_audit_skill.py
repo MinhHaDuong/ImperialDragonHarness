@@ -1,4 +1,4 @@
-"""Structural regression tests for the fang-audit skill.
+"""Structural regression tests for the maw-audit skill (formerly fang-audit).
 
 Origin: ticket 0182 (fang-only v1). REWRITTEN for ticket 0219 (author
 directive 2026-06-06, directive 2): the skill no longer carries a hardcoded
@@ -10,7 +10,7 @@ shape — the old assertions (test_config_block_declares_explicit_knobs,
 test_pairing_table_is_explicit_map_not_heuristic, test_config_is_defaults_
 merged_with_args) enforced the design 0219 reverses and are replaced here.
 
-The workflow itself (``skills/fang-audit/fang-audit.js``) needs live agents to
+The workflow itself (``skills/maw-audit/maw-audit.js``) needs live agents to
 run end-to-end, so it cannot be exercised in CI. What IS mechanically checkable
 is its STRUCTURE — and the structure is where the ticket's contract lives:
 
@@ -38,8 +38,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SKILL_DIR = REPO / "skills" / "fang-audit"
-JS = SKILL_DIR / "fang-audit.js"
+SKILL_DIR = REPO / "skills" / "maw-audit"
+JS = SKILL_DIR / "maw-audit.js"
 MD = SKILL_DIR / "SKILL.md"
 
 
@@ -48,13 +48,13 @@ def js() -> str:
 
 
 def test_skill_files_exist():
-    assert JS.is_file(), "fang-audit.js missing"
+    assert JS.is_file(), "maw-audit.js missing"
     assert MD.is_file(), "SKILL.md missing"
 
 
 def test_frontmatter_has_name_and_description():
     front = MD.read_text()
-    assert re.search(r"^name:\s*fang-audit\s*$", front, re.MULTILINE)
+    assert re.search(r"^name:\s*maw-audit\s*$", front, re.MULTILINE)
     assert re.search(r"^description:\s*", front, re.MULTILINE)
 
 
@@ -524,9 +524,13 @@ def test_skill_md_describes_discovery_not_config_file():
     assert "discovery" in text.lower() or "Discovery" in text, (
         "SKILL.md does not describe the discovery phase"
     )
-    # The old per-repo config-file prerequisite must be gone as a REQUIREMENT.
+    # The old per-repo config-file prerequisite must be gone as a REQUIREMENT
+    # (under either the old or the renamed skill name).
     assert "If `.fang-audit.json` is missing, STOP" not in text, (
         "stale 'missing config -> STOP' prerequisite remains"
+    )
+    assert "If `.maw-audit.json` is missing, STOP" not in text, (
+        "stale 'missing config -> STOP' prerequisite remains (renamed form)"
     )
 
 

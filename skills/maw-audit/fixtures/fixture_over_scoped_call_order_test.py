@@ -3,7 +3,7 @@
 This test deliberately asserts on the exact CALL ORDER of the notifications —
 internal form the `notify_all` contract does NOT promise. It therefore goes RED
 under a behavior-preserving reorder of the independent notifications, which is
-exactly the handcuff (over-scope) defect the fang-audit handcuff pass must flag.
+exactly the handcuff (over-scope) defect the maw-audit handcuff pass must flag.
 
 It is NOT collected by the project test run (the filename is
 `fixture_..._test.py`, not `test_*.py`); it is an artifact the handcuff pass

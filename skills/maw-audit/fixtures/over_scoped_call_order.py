@@ -1,6 +1,6 @@
 """Handcuff fixture — a test that is OVER-SCOPED on mock call ORDER.
 
-This is a durable validation ANCHOR for the fang-audit handcuff (robustness)
+This is a durable validation ANCHOR for the maw-audit handcuff (robustness)
 pass, not production code and not a runnable demo. It embodies the property the
 handcuff pass must flag: a test that goes RED on a behavior-PRESERVING refactor.
 

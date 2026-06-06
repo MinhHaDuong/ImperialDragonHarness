@@ -1,6 +1,6 @@
 """Scope/altitude fixture — an INSTANCE-PINNED regression test.
 
-A durable validation ANCHOR for the fang-audit scope (altitude) pass, not
+A durable validation ANCHOR for the maw-audit scope (altitude) pass, not
 production code. It embodies the property the scope pass must flag: a test that
 catches a defect at ONE site but leaves a structurally-parallel SIBLING site
 unguarded — it guards the past instance, not the future class.

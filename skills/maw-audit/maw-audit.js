@@ -1,8 +1,10 @@
-// fang-audit.js — fan-out mutation-testing workflow (Workflow tool script).
+// maw-audit.js — fan-out mutation-testing workflow (Workflow tool script).
+// (Renamed from fang-audit when the handcuff + scope passes landed: the maw —
+// the beast's jaws as a whole — audits every tooth, not just the fang.)
 //
 // EXTRACTED from the proven prototype that produced the validating 19-file
 // git-erg run (~1.3M tokens, ~29 min, 90 caught / 8 toothless, canary PASS).
-// See skills/fang-audit/SKILL.md for the prototype→skill correspondence and
+// See skills/maw-audit/SKILL.md for the prototype→skill correspondence and
 // the EXPENSIVE-RUN warning.
 //
 // Three mutation modes, ONE workflow (ticket 0219):
@@ -21,8 +23,8 @@
 // never as prerequisites. Precedent: the 0184 test-quality.py runner/adapter.
 
 export const meta = {
-  name: 'fang-audit',
-  description: 'Mutation-test the launch repo: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Reports a unified three-axis per-test table. No source/test changes persist. Discovers its own config — no per-repo setup. EXPENSIVE on-demand audit (the validating fang-only run was ~1.3M tokens / ~29 min).',
+  name: 'maw-audit',
+  description: 'Full-jaw mutation-testing audit (the maw = the beast\'s devouring jaws — every tooth at once, not just one fang). For each test: does it FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Reports a unified three-axis per-test table. No source/test changes persist. Discovers its own config — no per-repo setup. EXPENSIVE on-demand audit (the validating fang-only run was ~1.3M tokens / ~29 min).',
   phases: [
     { title: 'Discovery', detail: 'an agent reads the launch repo and derives test command + pairing table + mutation heuristics (no per-repo CONFIG)' },
     { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
@@ -67,7 +69,7 @@ const FALLBACKS = {
   LANGUAGE: 'the launch repo',
   PACKAGE_HINT: '',
   SRC_DIR: '.',
-  OUTPUT: '~/FANG-AUDIT.md',
+  OUTPUT: '~/MAW-AUDIT.md',
   DEFAULT_TAGS: '',
   GUARD_TAGS: '',
   MUTATION_HEURISTICS:
@@ -596,7 +598,7 @@ if (!precheckSkipped && (!precheck || precheck.exitCode !== 0 || precheck.gate !
   // mis-invocation (argparse usage error also exits 2) before declaring flaky.
   const flaky = precheck && precheck.exitCode === 2 && precheck.gate === 'fail'
   const msg = flaky
-    ? `ABORT: suite is flaky, verdicts untrustworthy — ${detail}. Stabilize the suite (see the flakiness report) before running the fang audit.`
+    ? `ABORT: suite is flaky, verdicts untrustworthy — ${detail}. Stabilize the suite (see the flakiness report) before running the maw audit.`
     : `ABORT: determinism precheck did not pass cleanly — ${detail}. Cannot trust mutation verdicts on an un-vetted suite.`
   log(msg)
   return { aborted: true, reason: msg, precheck }
@@ -706,19 +708,20 @@ const scopes = await parallel(scopeTargets.map(file => () =>
 // stale detached entries and the /tmp dirs lingered. A single read-only
 // cleanup agent prunes them after all mutation passes are done. It is
 // CONSERVATIVE: it removes ONLY worktrees whose path matches the
-// /tmp/fang-<project>-* scratch pattern, never the session checkout or any
-// named worktree, then runs `git worktree prune`.
+// /tmp/maw-* or /tmp/fang-* scratch patterns (agents improvise these names
+// from the audit name in their prompts; fang- is the pre-rename legacy),
+// never the session checkout or any named worktree, then `git worktree prune`.
 phase('Cleanup')
 await agent(
-  `Post-run cleanup for the fang-audit of ${CONFIG.PROJECT}. During the audit, some agents may have hand-rolled scratch git worktrees under /tmp (paths like \`/tmp/fang-${CONFIG.PROJECT}-*\` or \`/tmp/fang-*\`), typically on a detached HEAD, that outlived the run. Remove ONLY those scratch worktrees — never the session checkout, never any worktree under .claude/worktrees/, never a worktree on a named branch.
+  `Post-run cleanup for the maw-audit of ${CONFIG.PROJECT}. During the audit, some agents may have hand-rolled scratch git worktrees under /tmp (paths like \`/tmp/maw-${CONFIG.PROJECT}-*\`, \`/tmp/maw-*\`, or the legacy \`/tmp/fang-*\`), typically on a detached HEAD, that outlived the run. Remove ONLY those scratch worktrees — never the session checkout, never any worktree under .claude/worktrees/, never a worktree on a named branch.
 
 PROCEDURE (read-then-act, conservatively):
 1. \`git worktree list --porcelain\` — list every worktree.
-2. For each entry whose worktree PATH starts with \`/tmp/fang-\` (a scratch tree this audit created), run \`git worktree remove --force <path>\` (force is safe — these are throwaway scratch trees). Skip anything not matching that /tmp/fang- prefix.
+2. For each entry whose worktree PATH starts with \`/tmp/maw-\` or \`/tmp/fang-\` (a scratch tree this audit created), run \`git worktree remove --force <path>\` (force is safe — these are throwaway scratch trees). Skip anything not matching those prefixes.
 3. \`git worktree prune\` to drop any remaining stale administrative entries.
 4. Report which paths you removed (or "none found").
 
-If \`git worktree list\` shows no /tmp/fang- entries, do nothing and report "none found". Do NOT mutate source, do NOT remove anything outside the /tmp/fang- prefix.`,
+If \`git worktree list\` shows no /tmp/maw- or /tmp/fang- entries, do nothing and report "none found". Do NOT mutate source, do NOT remove anything outside those prefixes.`,
   { label: 'cleanup:scratch-worktrees', phase: 'Cleanup', model: 'sonnet' }  // 0226 advisory: mechanical list-then-prune — pin the cheap model
 ).catch(e => log(`cleanup agent error (non-fatal): ${e}`))
 
@@ -836,9 +839,9 @@ const threeAxis = fileSet.map(name => {
 }).sort((a, b) => (b.risk * b.churn) - (a.risk * a.churn))
 
 const L = []
-L.push(`# Fang Audit — \`${CONFIG.PROJECT}\` ${CONFIG.LANGUAGE} test harness`)
+L.push(`# Maw Audit — \`${CONFIG.PROJECT}\` ${CONFIG.LANGUAGE} test harness`)
 L.push('')
-L.push('_Mutation-testing audit: each test was probed by breaking the code it covers and checking whether the test goes red. Generated by the `fang-audit` fan-out workflow. No source or test files were changed in the repo — all mutations lived and died in throwaway worktrees._')
+L.push('_Full-jaw mutation-testing audit (fang / handcuff / scope): each test was probed by breaking the code it covers and checking whether the test goes red, by refactoring behavior-preservingly and checking it stays green, and by replaying caught mutations at sibling sites. Generated by the `maw-audit` fan-out workflow. No source or test files were changed in the repo — all mutations lived and died in throwaway worktrees._')
 L.push('')
 L.push('## Canary (validity gate)')
 L.push('')
