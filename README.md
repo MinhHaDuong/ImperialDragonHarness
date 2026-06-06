@@ -82,7 +82,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
-| `/fang-audit` | "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch? Surfaces toothless tests. EXPENSIVE on-demand (the validating run was ~1.3M tokens / ~29 min); never invoke casually." |
+| `/fang-audit` | "Fan-out mutation-testing audit — does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Surfaces toothless, over-scoped, and instance-pinned tests. Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually." |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
