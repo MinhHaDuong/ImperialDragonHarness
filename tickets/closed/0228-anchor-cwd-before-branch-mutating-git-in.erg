@@ -2,10 +2,14 @@
 Title: Anchor cwd before branch-mutating git in skills (forked-skill cwd resets)
 Created: 2026-06-06
 Author: claude
+Closed: autoclosed — PR #332
 
 --- log ---
 2026-06-06T11:52Z claude created
 
+2026-06-06T14:23Z claude note hook feasibility judged: PreToolUse sees only command+cwd, cannot detect fork-return; blanket matcher false-positives on linear flow; sentinel-file mechanism rejected as disproportionate — decision: rule + existing cd-primary guard
+2026-06-06T14:23Z claude note audit: gaze postcondition + raid Phase-7 merge/checkout fork-adjacent (anchored); raid salvage switch borderline (verify note); molt switch -c linear-flow, roar merge-base read-only, merge cd-fetch same-compound, scripts out-of-scope — all correct as-is
+2026-06-06T14:49Z Integration Test closed — autoclosed — PR #332
 --- body ---
 ## Context
 
@@ -44,6 +48,6 @@ while the unanchored form would not.
 
 ## Exit criteria
 
-- [ ] Rule line landed in rules/git.md or rules/workflow.md
-- [ ] gaze/merge/raid/roar/molt skill texts anchor branch-mutating git
-- [ ] Hook feasibility judged; decision logged in this ticket
+- [x] Rule line landed in rules/git.md or rules/workflow.md
+- [x] gaze/merge/raid/roar/molt skill texts anchor branch-mutating git
+- [x] Hook feasibility judged; decision logged in this ticket

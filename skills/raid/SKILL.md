@@ -164,6 +164,11 @@ For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
 the PR — it stays open for human review.
 
+This phase runs immediately after the execute/verify forks return, so the shell
+cwd may sit in a foreign worktree. Before the first branch-mutating git below,
+confirm the tree: `git rev-parse --show-toplevel` must equal the session worktree
+(rules/git.md § anchor across a forked-skill boundary).
+
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
 2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch. <!-- harness-extension-point -->
@@ -171,7 +176,8 @@ For each eligible PR, sequentially within the wave:
 4. Run `/merge <pr-number>`. This atomically closes the ticket and merges via GitHub API.
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
 
-After all waves: `git checkout main && git pull --rebase origin main`, then
+After all waves, in one compound so the `cd` persists across the rebase:
+`cd <session-worktree> && git checkout main && git pull --rebase origin main`, then
 `make check`. New failures → revert last merge + ticket.
 
 ## Phase 8: Celebrate (per-merged-PR)
@@ -218,7 +224,9 @@ survives the deletion:
 This commits everything on the agent's branch and pushes it. A PreToolUse guard
 enforces the order: `git worktree remove` is blocked while the worktree has
 uncommitted changes. Relaunch the finisher on the **existing** branch with
-`git switch <branch>` (NOT `-c`); it inspects the salvaged WIP via
+`git switch <branch>` (NOT `-c`) — if this follows a killed-agent fork, confirm
+the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor across
+a forked-skill boundary); it inspects the salvaged WIP via
 `git show --stat HEAD` before continuing rather than starting from scratch.
 Salvage is the FIRST step of any restart, not an afterthought.
 (memory: feedback_killed_agent_salvage)
