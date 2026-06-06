@@ -301,3 +301,58 @@ def test_provenance_concurrent_record_loses_neither_write(provenance_env):
     data = json.loads(_run_provenance("show", home=provenance_env).stdout)
     assert "slug_one" in data["entries"], "lost write: slug_one missing"
     assert "slug_two" in data["entries"], "lost write: slug_two missing"
+
+
+@pytest.mark.integration
+def test_provenance_read_during_write_never_torn(provenance_env):
+    """A reader interleaved with a writer never observes a half-written file.
+
+    Writes truncate-then-write are non-atomic: a reader landing between the
+    truncate and the content flush sees a partial (or empty) file and raises
+    JSONDecodeError (ticket 0225). The atomic _save_provenance stages the full
+    document in a temp file and os.replace()s it, so the live file is never
+    partial — a reader sees the complete old-or-new document.
+
+    The DREAM_PROVENANCE_WRITE_DELAY hook pins the writer mid-write (after the
+    temp file is staged, before the replace). We launch the read solidly inside
+    that window and assert it loads a valid document with the pre-existing entry
+    intact.
+
+    Teeth check: replace the atomic body of _save_provenance with the
+    instrumented non-atomic form
+
+        with open(PROVENANCE_PATH, "w") as f:   # truncates the live file
+            _write_delay()                        # reader sees 0 bytes here
+            f.write(text)
+
+    and this test FAILS — the reader subprocess exits nonzero on
+    json.loads("") — confirming it catches the torn read, not merely a
+    different implementation.
+    """
+    import concurrent.futures
+    import time
+
+    # Seed a valid old document with no delay.
+    seed = _run_provenance("record", "slug_old", "project-x", home=provenance_env)
+    assert seed.returncode == 0, seed.stderr
+
+    write_delay_env = {"DREAM_PROVENANCE_WRITE_DELAY": "0.5"}
+
+    def write():
+        return _run_provenance(
+            "record", "slug_new", "project-y", home=provenance_env, extra_env=write_delay_env
+        )
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+        writer = ex.submit(write)
+        # Let the writer reach its mid-write delay, then read inside the window.
+        time.sleep(0.2)
+        reader = _run_provenance("show", home=provenance_env)
+        w = writer.result()
+
+    assert w.returncode == 0, w.stderr
+    assert reader.returncode == 0, f"reader saw a torn file: {reader.stderr}"
+    data = json.loads(reader.stdout)  # raises if reader captured a partial write
+    # The reader must see a complete document: the old entry is always present
+    # (the new entry may or may not have landed, depending on old-or-new).
+    assert "slug_old" in data["entries"], "reader lost the pre-existing entry"

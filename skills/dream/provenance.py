@@ -14,6 +14,7 @@ import fcntl
 import json
 import os
 import sys
+import tempfile
 import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -26,9 +27,17 @@ PROJECTS_BASE = Path.home() / ".claude" / "projects"
 DECAY_DAYS = 90
 
 # Test-only hook: seconds to sleep between read and write inside a locked
-# mutation, used to force critical-section overlap in the race test. Unset in
-# production. See tests/test_dream.py::test_provenance_concurrent_record_*.
+# mutation, used to force critical-section overlap in the lost-write race test.
+# Unset in production. See tests/test_dream.py::test_provenance_concurrent_record_*.
 _TEST_DELAY_ENV = "DREAM_PROVENANCE_TEST_DELAY"
+
+# Test-only hook: seconds to sleep mid-write — after the full content is staged
+# in the temp file but before os.replace publishes it. Lets the torn-read test
+# land a reader inside the write window. In the atomic implementation the live
+# file is still the intact old document here, so a reader sees old-or-new but
+# never a tear. Unset in production.
+# See tests/test_dream.py::test_provenance_read_during_write_never_torn.
+_WRITE_DELAY_ENV = "DREAM_PROVENANCE_WRITE_DELAY"
 
 
 @contextmanager
@@ -59,13 +68,45 @@ def _load_provenance() -> dict:
 
 
 def _save_provenance(data: dict) -> None:
+    """Atomically replace the provenance file.
+
+    Readers take no lock and load lock-free (ticket 0225), so the write must be
+    all-or-nothing: a non-atomic write_text truncates then writes, exposing a
+    window where a concurrent reader sees a partial file and raises
+    JSONDecodeError. We stage the full content in a temp file in the same
+    directory (same filesystem — os.replace requires it), then os.replace onto
+    the live path. The rename is atomic, so a reader always observes the
+    complete old-or-new document, never a tear — without serializing readers
+    against writers."""
     PROVENANCE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    PROVENANCE_PATH.write_text(json.dumps(data, indent=2) + "\n")
+    text = json.dumps(data, indent=2) + "\n"
+    fd, tmp = tempfile.mkstemp(
+        dir=PROVENANCE_PATH.parent, prefix=".provenance.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        _write_delay()
+        os.replace(tmp, PROVENANCE_PATH)
+    except BaseException:
+        # Leave no orphan temp file if staging or replace fails.
+        try:
+            os.unlink(tmp)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def _test_delay() -> None:
     """Sleep between read and write when the test hook is set (no-op in prod)."""
     delay = os.environ.get(_TEST_DELAY_ENV)
+    if delay:
+        time.sleep(float(delay))
+
+
+def _write_delay() -> None:
+    """Sleep mid-write when the write hook is set (no-op in prod)."""
+    delay = os.environ.get(_WRITE_DELAY_ENV)
     if delay:
         time.sleep(float(delay))
 
