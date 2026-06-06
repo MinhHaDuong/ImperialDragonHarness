@@ -1,0 +1,53 @@
+{
+  "project": "ImperialDragonHarness",
+  "granularity": "file",
+  "filesJudged": 3,
+  "filesEscalated": 1,
+  "findings": [
+    {
+      "identity": "skills/test-audit-llm/fixtures/fixture_payment_gateway_test.py",
+      "lens": "faithfulness",
+      "severity": "high",
+      "confidence": "high",
+      "rationale": "The test replaces PaymentGateway with a MagicMock, so the real charge() arithmetic and validation never execute. The test stays green even if charge() is gutted.",
+      "suggestion": "Instantiate the real PaymentGateway and assert on its return value / ledger; mock only true external boundaries, never the subject under test.",
+      "escalated": true
+    },
+    {
+      "identity": "skills/test-audit-llm/fixtures/fixture_payment_gateway_test.py",
+      "lens": "intent",
+      "severity": "high",
+      "confidence": "high",
+      "rationale": "Named test_charge_succeeds but asserts the internal call sequence on a mock; it never checks that a charge succeeded. The name lies about the contract under test.",
+      "suggestion": "Rename to test_charge_asserts_call_order (truthful) and replace it with a test that asserts the settled total.",
+      "escalated": true
+    },
+    {
+      "identity": "skills/test-audit-llm/fixtures/fixture_payment_gateway_test.py",
+      "lens": "negative-space",
+      "severity": "medium",
+      "confidence": "high",
+      "rationale": "Only the single happy path is exercised. The amount<=0 guard, the over-limit branch, and the short-account boundary in charge() are never tested.",
+      "suggestion": "Add cases for amount<=0, amount>limit, and len(account)<3 asserting the ValueError each raises.",
+      "escalated": true
+    },
+    {
+      "identity": "skills/test-audit-llm/fixtures/fixture_payment_gateway_test.py",
+      "lens": "change-detector",
+      "severity": "medium",
+      "confidence": "high",
+      "rationale": "Asserts gw.mock_calls equals an exact sequence — it pins the internal call order rather than the observable outcome, and breaks on any harmless refactor.",
+      "suggestion": "Assert the observable result (the settled total) instead of the call sequence.",
+      "escalated": true
+    },
+    {
+      "identity": "tests/test_git_utils.py",
+      "lens": "negative-space",
+      "severity": "low",
+      "confidence": "low",
+      "rationale": "Illustrative low-confidence finding on a real repo test: the happy-path resolution is covered but the not-a-repo / detached-HEAD branches may be untested. Flagged for strong-model re-judge.",
+      "suggestion": "Confirm the error branches are exercised; add a case for a non-repo path if not.",
+      "escalated": false
+    }
+  ]
+}
