@@ -609,8 +609,8 @@ def static_lens(test_files: list[Path], root: Path) -> dict:
     return {
         "lens": "static",
         "scanned": scanned,
-        "violations": sorted(violations, key=lambda v: v["identity"]),
-        "clean": scanned - len({v["identity"] for v in violations}),
+        "violations": violations,
+        "clean": scanned - len({v["identity"].split("::")[0] for v in violations}),
         "unparseable": sorted(unparseable),
     }
 
