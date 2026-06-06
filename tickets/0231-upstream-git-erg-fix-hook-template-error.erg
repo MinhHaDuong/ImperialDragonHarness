@@ -6,6 +6,7 @@ Author: MinhHaDuong
 --- log ---
 2026-06-06T13:28Z MinhHaDuong created
 
+2026-06-06T14:46Z claude note related find during raid: primary-checkout main diverged (dream commit e3dfb27 unpushed, local-only); rescued via branch dream-aedist-memory-20260606 + PR #334, main realigned to origin. Root cause class: a skill committing to local main without push/PR — same family as beat checkout model
 --- body ---
 ## Context
 
