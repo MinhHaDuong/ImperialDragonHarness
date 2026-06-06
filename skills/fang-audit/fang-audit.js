@@ -3,151 +3,178 @@
 // EXTRACTED from the proven prototype that produced the validating 19-file
 // git-erg run (~1.3M tokens, ~29 min, 90 caught / 8 toothless, canary PASS).
 // See skills/fang-audit/SKILL.md for the prototype→skill correspondence and
-// the EXPENSIVE-RUN warning. This is fang-only v1 (ticket 0182); handcuff,
-// scope/altitude, and the three-axis report live in ticket 0219.
+// the EXPENSIVE-RUN warning.
+//
+// Three mutation modes, ONE workflow (ticket 0219):
+//   - fang     (sensitivity): behavior-CHANGING mutation → test must go RED.
+//   - handcuff (robustness):  behavior-PRESERVING refactor → test must stay GREEN.
+//   - scope    (altitude):    a caught mutation's operator replayed across
+//                             sibling sites → siblings survive = instance-pinned.
+//
+// Just Work (tm), ticket 0219 directive 1: there is NO per-repo CONFIG block to
+// pre-author. A run-start DISCOVERY phase reads the LAUNCH repo (Makefile,
+// pyproject.toml, go.mod, the test tree, imports + call sites) and DERIVES the
+// test command, the test↔source pairing table, and language mutation
+// heuristics. This is informed derivation by READING — allowed. The BANNED
+// thing is the blind filename-glob heuristic (X_test→X.go, which broke on
+// refs_git→refs.go). Explicit knobs survive ONLY as optional OVERRIDES (args),
+// never as prerequisites. Precedent: the 0184 test-quality.py runner/adapter.
 
 export const meta = {
   name: 'fang-audit',
-  description: 'Mutation-test the configured test harness: does each test FAIL on the defect it claims to catch? Reports toothless tests. No source/test changes persist. EXPENSIVE on-demand audit (the validating run was ~1.3M tokens / ~29 min).',
+  description: 'Mutation-test the launch repo: does each test FAIL on the defect it claims to catch (fang), STAY GREEN under refactors (handcuff), and guard the whole defect CLASS (scope)? Reports a unified three-axis per-test table. No source/test changes persist. Discovers its own config — no per-repo setup. EXPENSIVE on-demand audit (the validating fang-only run was ~1.3M tokens / ~29 min).',
   phases: [
+    { title: 'Discovery', detail: 'an agent reads the launch repo and derives test command + pairing table + mutation heuristics (no per-repo CONFIG)' },
     { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
-    { title: 'Audit', detail: 'behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
+    { title: 'Audit', detail: 'fang pass — behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
     { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
-    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive)' },
+    { title: 'Handcuff', detail: 'robustness pass — behavior-PRESERVING refactors, inverted oracle (red = over-scoped), own skeptic' },
+    { title: 'Scope', detail: 'altitude pass — replay each caught operator at sibling sites; surviving siblings = instance-pinned contract' },
+    { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive); skipped openly if none discovered/designated' },
+    { title: 'Cleanup', detail: 'reclaim any hand-rolled scratch worktrees the audit agents left on detached HEAD' },
   ],
 }
 
 // ============================================================================
-// DEFAULTS — the validated git-erg reference configuration, kept as living
-// documentation of every knob. Δ9: NEVER edit this file per repo — the target
-// repo owns its config in `.fang-audit.json` at its root, which the SKILL.md
-// invocation reads and passes as the Workflow `args` input; args override
-// these defaults key-by-key. Everything below the merge is the repo-agnostic
-// engine (verbatim from the prototype except the marked deltas).
+// OVERRIDES — there are NO required knobs (ticket 0219 directive 1). The
+// DISCOVERY phase derives everything from the launch repo at run start. The
+// keys below are the OPTIONAL overrides an invoker may pass via the Workflow
+// `args` input to pin a value discovery would otherwise derive — NOT a
+// prerequisite the user must author. Anything the args do not pin, discovery
+// fills. The merge order is: discovery result, then args on top (an explicit
+// override always wins over a derived value).
+//
+// Optional override keys (all may be omitted — discovery supplies them):
+//   PROJECT, LANGUAGE, PACKAGE_HINT, SRC_DIR  — labels / orientation.
+//   OUTPUT                                    — report path (default below).
+//   RUN_TEST, DEFAULT_TAGS, GUARD_TAGS        — test command + tag variants.
+//   MUTATION_HEURISTICS                       — minimal compiling mutation hints.
+//   HANDCUFF_HEURISTICS                       — behavior-PRESERVING refactor hints.
+//   BEHAVIORAL                                — test↔source pairing table.
+//   GUARDS                                    — designated canary files (opt-in).
+//   UNTRACKED_SEED                            — uncommitted build inputs to copy.
+//   PRECHECK_CMD                              — the 0184 flakiness gate command.
+//   RISK                                      — per-file risk multiplier (human-owned).
+//   HOME                                      — for ~/ path expansion (sandbox has no process).
 // ============================================================================
 
-const DEFAULTS = {
-  // Human-readable name of the project under audit (report title only).
-  PROJECT: 'YOUR-PROJECT',
-
-  // Where the workflow writes the final report. Throwaway worktrees die with
-  // the run, so this MUST be an absolute path in the MAIN repo (untracked is
-  // fine). NO hardcoded /home — use `~/your-repo/FANG-AUDIT.md`; the engine
-  // expands a leading `~/` via the args.HOME knob (the workflow sandbox has
-  // no Node `process` global, so HOME cannot come from the environment).
-  OUTPUT: '~/YOUR-REPO/FANG-AUDIT.md',
-
-  // <TAGS> = build-tag flags for the DEFAULT suite (usually empty string).
+// Engine fallbacks for the few knobs that are not safety-critical to derive.
+// These are NOT a pairing table or a test command (those MUST come from
+// discovery or an explicit override — never a name heuristic). They are the
+// inert defaults the report uses when neither discovery nor args supply them.
+const FALLBACKS = {
+  PROJECT: 'launch-repo',
+  LANGUAGE: 'the launch repo',
+  PACKAGE_HINT: '',
+  SRC_DIR: '.',
+  OUTPUT: '~/FANG-AUDIT.md',
   DEFAULT_TAGS: '',
-  // <TAGS> for the guard (perf-sensitive) suite, e.g. '-tags scaling'.
-  GUARD_TAGS: '-tags scaling',
-
-  // RUN_TEST — the language-specific test command each agent runs, as prose
-  // embedded in the procedure. The engine substitutes <TAGS>. Keep <COUNT>
-  // (the cache-busting flag) explicit: a cached PASS would falsely exonerate a
-  // mutation. Go example below; for other languages give the equivalent
-  // (e.g. `pytest -p no:cacheprovider`, `cargo test`).
-  RUN_TEST: 'cd src/go && go test <TAGS> -count=1 ./...',
-
-  // Language label + the package/working directory the test command runs in,
-  // surfaced in prompts so the agent orients. SRC_DIR is the directory holding
-  // the test + source files, relative to the repo root (used in the procedure
-  // text the agent follows).
-  LANGUAGE: 'Go',
-  PACKAGE_HINT: 'package main, in src/go/',
-  SRC_DIR: 'src/go',
-
-  // UNTRACKED_SEED (M4) — inputs the test build needs that are NOT committed,
-  // so a fresh worktree (which only has the committed tree) lacks them. The
-  // guard agent copies each from `from` into `dest` if missing, BEFORE the
-  // baseline check. Empty list = no seeding (fully generic). Keep `from` paths
-  // out of the /home/[a-z] form — use a leading `~/` (expanded via args.HOME).
-  // (The git-erg guard build references an untracked resource_test.go that
-  // shares the //go:build scaling compile unit with scaling_test.go; without
-  // it the scaling build fails to compile and the canary falsely FAILs.)
-  UNTRACKED_SEED: [
-    { dest: 'src/go/resource_test.go', from: '~/git-erg/src/go/resource_test.go' },
-  ],
-
-  // Mutation heuristics — language-specific examples of a MINIMAL, COMPILING,
-  // behavior-CHANGING mutation. These steer the agent away from strawmen.
+  GUARD_TAGS: '',
   MUTATION_HEURISTICS:
-    'flip a boundary < to <=, drop a Close(), skip a validation branch, ' +
-    'off-by-one an index, negate a predicate',
-
-  // TEST↔SOURCE pairing table (M1). NOT a name heuristic — an explicit map.
-  // Non-1:1 repos always need this; even 1:1 repos benefit from the audit
-  // trail. `test` is the test file, `src` the source target(s) it may mutate.
-  BEHAVIORAL: [
-    { test: 'atomicwrite_test.go', src: ['atomicwrite.go'] },
-    { test: 'check_test.go',       src: ['check.go'] },
-    { test: 'close_test.go',       src: ['close.go'] },
-    { test: 'config_test.go',      src: ['config.go'] },
-    { test: 'contract_test.go',    src: ['check.go', 'list.go', 'validate.go'] },
-    { test: 'erg_test.go',         src: ['erg.go'] },
-    { test: 'identity_test.go',    src: ['identity.go'] },
-    { test: 'list_test.go',        src: ['list.go'] },
-    { test: 'migrate_test.go',     src: ['migrate.go'] },
-    { test: 'new_test.go',         src: ['new.go'] },
-    { test: 'nextid_test.go',      src: ['nextid.go'] },
-    { test: 'ref_test.go',         src: ['ref.go'] },
-    { test: 'refs_test.go',        src: ['refs.go'] },
-    { test: 'refs_git_test.go',    src: ['refs.go'] },
-    { test: 'resolve_test.go',     src: ['main.go'] },
-    { test: 'tag_test.go',         src: ['tag.go'] },
-    { test: 'validate_test.go',    src: ['validate.go'] },
-  ],
-
-  // GUARDS — DESIGNATED canary files (perf-sensitive guard tests with a known
-  // primary invariant). `canary` is the explicit, workflow-author-written
-  // mutation that MUST trip the guard. Canary designation is a CONFIG input —
-  // NEVER an agent claim (this is the isCanary-pollution fix, crit 7).
-  GUARDS: [
-    { test: 'scaling_test.go', src: ['erg.go'],
-      canary: 'In erg.go make loadErgs (line ~664) re-parse each ticket more than once — e.g. wrap the per-file parse in a nested loop over the corpus so total work is O(N^2). This reintroduces the quadratic re-parse the scaling guard exists to catch; TestScalingLinear* must go red.' },
-    { test: 'resource_test.go', src: ['check.go', 'list.go', 'close.go', 'rm.go', 'ready.go', 'erg.go'],
-      canary: 'Introduce a file-descriptor leak in a corpus read/command path exercised by TestScalingFDHygiene (the cmdCheck/cmdList/cmdReady/cmdClose/cmdRm read path). E.g. os.Open a file (or open a git pipe) without closing it, or delete a Close()/defer f.Close() on the ticket-read path. TestScalingFDHygiene must report a leaked fd.' },
-  ],
-
-  // DETERMINISM PRECHECK (crit 5) — the cheap, zero-token gate run BEFORE any
-  // mutation. Delegated to the 0184 utility's flakiness subcommand (exit 0 =
-  // stable, exit 2 = new flakiness). You cannot mutation-test a flaky suite.
-  // The precheck agent runs this verbatim and reports the exit code + JSON.
-  PRECHECK_CMD:
-    'python3 ~/.claude/scripts/test-quality.py flakiness --package-dir src/go --runs 3',
-
-  // RISK weights (crit 6) — OPTIONAL per-file risk multiplier for the report
-  // sort. The ticket is explicit: do NOT automate the risk judgment — risk is
-  // a human-supplied input. Default 1.0 for any file not listed. Example: a
-  // security invariant (header-injection sanitize) outranks a cosmetic check.
-  RISK: {
-    // 'identity_test.go': 3.0,
-  },
+    'a MINIMAL, COMPILING, behavior-CHANGING edit to a mapped source target: ' +
+    'flip a boundary < to <=, drop a resource Close()/cleanup, skip a validation ' +
+    'branch, off-by-one an index, negate a predicate',
+  HANDCUFF_HEURISTICS:
+    'a behavior-PRESERVING refactor of a mapped source target: rename a local ' +
+    'variable, reorder two independent statements, swap an equivalent construct ' +
+    '(for↔while, if-else↔ternary), change an UNEXPORTED representation that the ' +
+    "tests should not observe. Must NOT change any value, ordering, or effect the " +
+    "test legitimately depends on — only the internal form.",
+  BEHAVIORAL: [],
+  GUARDS: [],
+  UNTRACKED_SEED: [],
+  PRECHECK_CMD: '',
+  RISK: {},
 }
 
 // ============================================================================
-// ENGINE — repo-agnostic below this line. Verbatim from the prototype except
-// where marked Δ.
+// ENGINE — repo-agnostic below this line.
 // ============================================================================
 
-// Δ9: per-repo config arrives via the Workflow `args` input (read from the
-// target repo's `.fang-audit.json` by the SKILL.md invocation) and overrides
-// DEFAULTS key-by-key. Tilde-expand the two path-bearing knobs script-side.
-// The workflow sandbox has NO Node `process` global, so HOME must be supplied
-// by the invoker as args.HOME; without it, `~/` paths pass through unchanged
-// (the invoker should then pre-expand them in the config it passes).
-// Δ10: tolerate args delivered as a JSON-encoded STRING — observed 2026-06-05:
-// the harness handed the object through as a string, the old typeof check
-// silently dropped it, and the whole run fell back to DEFAULTS (harmless only
-// because the git-erg config IS the DEFAULTS reference; fatal for any other repo).
-let _cfg = args
-if (typeof _cfg === 'string') { try { _cfg = JSON.parse(_cfg) } catch { _cfg = null } }
-if (!(_cfg && typeof _cfg === 'object')) _cfg = {}
-const HOME = typeof _cfg.HOME === 'string' ? _cfg.HOME : ''
+// Normalize args (ticket 0223: the harness may deliver args as a JSON-encoded
+// STRING). These are the OPTIONAL overrides — every key may be absent.
+let _args = args
+if (typeof _args === 'string') { try { _args = JSON.parse(_args) } catch { _args = null } }
+if (!(_args && typeof _args === 'object')) _args = {}
+const HOME = typeof _args.HOME === 'string' ? _args.HOME : ''
 const expand = p => (typeof p === 'string' && HOME) ? p.replace(/^~(?=\/)/, HOME) : p
-const CONFIG = Object.assign({}, DEFAULTS, _cfg)
+
+// ---- Phase 0a: DISCOVERY (read-only — derive config from the launch repo) ----
+// An agent reads the repo and DERIVES the test command, the test↔source
+// pairing table, mutation + handcuff heuristics, and (optionally) guard
+// candidates. Read-only: NON-isolated (no mutation, like the skeptic). The
+// derived object merges UNDER the args, so an explicit override always wins.
+const DISCOVERY_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    PROJECT: { type: 'string' },
+    LANGUAGE: { type: 'string' },
+    PACKAGE_HINT: { type: 'string' },
+    SRC_DIR: { type: 'string', description: 'directory the test command runs in, relative to repo root' },
+    RUN_TEST: { type: 'string', description: 'the cache-busting test command; <TAGS> placeholder for build-tag flags' },
+    DEFAULT_TAGS: { type: 'string' },
+    GUARD_TAGS: { type: 'string' },
+    PRECHECK_CMD: { type: 'string', description: 'the 0184 test-quality.py flakiness gate invocation for this repo' },
+    MUTATION_HEURISTICS: { type: 'string' },
+    HANDCUFF_HEURISTICS: { type: 'string' },
+    BEHAVIORAL: { type: 'array', items: {
+      type: 'object', additionalProperties: false,
+      properties: {
+        test: { type: 'string' },
+        src: { type: 'array', items: { type: 'string' } },
+        rationale: { type: 'string', description: 'WHY this pairing — the import/call-site evidence, proving it is read-derived not glob-derived' },
+      },
+      required: ['test', 'src'],
+    } },
+    evidence: { type: 'string', description: 'what files were read (Makefile/pyproject/go.mod/test tree) and how the command + pairings were derived' },
+  },
+  required: ['RUN_TEST', 'BEHAVIORAL', 'SRC_DIR'],
+}
+
+phase('Discovery')
+const discovered = await agent(
+  `You are the DISCOVERY phase of a mutation-testing audit. You run in the LAUNCH repo (the repo this session is rooted in). Your job: by READING the repo, DERIVE the configuration the audit needs. Do NOT guess from filenames alone — derive from real evidence (build files, imports, call sites). The blind filename-glob heuristic (X_test → X.go) is BANNED: it returned a NONEXISTENT file for 5 of 19 git-erg tests, including both canaries.
+
+READ (as available — different repos use different ones):
+  - Build/test config: Makefile, pyproject.toml, go.mod, package.json, Cargo.toml, pytest.ini/tox.ini, justfile.
+  - The test tree: every test file (Go *_test.go, Python tests/test_*.py / *_test.py, etc.).
+  - For EACH test file, its imports and the symbols it calls — that is how you map it to the SOURCE file(s) it actually exercises. A test that imports and calls funcs from foo.go pairs to foo.go; a test exercising several modules pairs to all of them (non-1:1 is normal — encode it).
+
+DERIVE and return:
+  - RUN_TEST: the exact test command, WITH a cache-buster (go: -count=1; pytest: -p no:cacheprovider; cargo: cargo test) — a cached PASS would falsely exonerate a mutation. Put a <TAGS> placeholder where build-tag flags go (empty string if the language has no build tags). SRC_DIR = the directory the command runs in.
+  - PRECHECK_CMD: the 0184 determinism gate for this repo, of the form 'python3 ~/.claude/scripts/test-quality.py flakiness --package-dir <DIR> --runs 3' (Go) or the documented adapter invocation for the language. If the 0184 utility has no adapter for this language, return PRECHECK_CMD as an empty string (the precheck will then warn-and-proceed, not hard-gate).
+  - MUTATION_HEURISTICS: language-specific examples of a MINIMAL, COMPILING, behavior-CHANGING mutation.
+  - HANDCUFF_HEURISTICS: language-specific examples of a behavior-PRESERVING refactor (rename local, reorder independent statements, equivalent-construct swap, unexported-representation change).
+  - BEHAVIORAL: the explicit test↔source pairing table — one {test, src:[...], rationale} per behavioral test file. The rationale MUST cite the import/call-site evidence, so it is provably read-derived, not name-derived.
+  - PROJECT / LANGUAGE / PACKAGE_HINT: orientation labels.
+  - evidence: which files you read and how you derived the command + pairings.
+
+Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
+  { label: 'discovery:launch-repo', phase: 'Discovery', schema: DISCOVERY_SCHEMA }
+).catch(e => { log(`discovery agent error: ${e}`); return null })
+
+if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
+  if (!_args.BEHAVIORAL || !_args.BEHAVIORAL.length) {
+    const msg = 'ABORT: discovery did not derive a test↔source pairing table and no BEHAVIORAL override was supplied. Cannot audit without knowing which source each test exercises (the banned filename-glob heuristic is the only alternative — refused). Re-run from the target repo root, or pass an explicit BEHAVIORAL override.'
+    log(msg)
+    return { aborted: true, reason: msg, discovered }
+  }
+  log('discovery returned no pairing table; falling back to the explicit BEHAVIORAL override supplied in args.')
+}
+
+// Merge order (ticket 0219 directive 1): FALLBACKS < discovery < args.
+// An explicit override always wins over a derived value; a derived value
+// always wins over the inert engine fallback. No required per-repo CONFIG.
+const CONFIG = Object.assign({}, FALLBACKS, discovered || {}, _args)
+// Normalize the derived/overridden BEHAVIORAL to the engine's {test, src} shape
+// (discovery adds a `rationale` the engine ignores).
+CONFIG.BEHAVIORAL = (CONFIG.BEHAVIORAL || []).map(p => ({ test: p.test, src: p.src }))
+CONFIG.GUARDS = CONFIG.GUARDS || []
+CONFIG.RISK = CONFIG.RISK || {}
 CONFIG.OUTPUT = expand(CONFIG.OUTPUT)
 CONFIG.UNTRACKED_SEED = (CONFIG.UNTRACKED_SEED || []).map(s => ({ ...s, from: expand(s.from) }))
+log(`discovery: ${CONFIG.BEHAVIORAL.length} test↔source pairings, RUN_TEST="${CONFIG.RUN_TEST}", ${CONFIG.GUARDS.length} designated guard(s).`)
 
 const { BEHAVIORAL, GUARDS } = CONFIG
 
@@ -315,7 +342,16 @@ async function skepticize(audit, file) {
 
 // ---- Δ5: Phase 0 — determinism precheck GATE (blocks the fan-out) ----
 phase('Precheck')
-const precheck = await agent(
+// Δ0219: discovery may report no PRECHECK_CMD when the 0184 utility has no
+// adapter for the launch repo's language. The gate then degrades to
+// warn-and-proceed (an OPEN skip, never a faked PASS) rather than aborting a
+// language it simply cannot pre-vet. The report records the un-vetted state.
+let precheckSkipped = false
+if (!CONFIG.PRECHECK_CMD) {
+  precheckSkipped = true
+  log('precheck SKIPPED openly — discovery found no 0184 flakiness adapter for this language; verdicts are NOT determinism-vetted. Stabilize manually before trusting toothless rows.')
+}
+const precheck = precheckSkipped ? { exitCode: 0, gate: 'skipped' } : await agent(
   `Run the determinism precheck for ${CONFIG.PROJECT} and report the result. You cannot mutation-test a flaky suite, so this gate runs BEFORE any mutation.
 
 Run EXACTLY this command from the repo root and capture its exit code and stdout:
@@ -341,7 +377,7 @@ if (!precheck || precheck.exitCode !== 0 || precheck.gate === 'fail') {
   log(msg)
   return { aborted: true, reason: msg, precheck }
 }
-log(`precheck PASS — suite stable (exit ${precheck.exitCode}, gate=${precheck.gate}); proceeding to mutation audit.`)
+if (!precheckSkipped) log(`precheck PASS — suite stable (exit ${precheck.exitCode}, gate=${precheck.gate}); proceeding to mutation audit.`)
 
 // ---- Phase 1+2: behavioral audit -> skeptic (pipeline, no barrier) ----
 phase('Audit')
