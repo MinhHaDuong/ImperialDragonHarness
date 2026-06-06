@@ -41,3 +41,33 @@ Rules agents must know:
 On GitHub, `tickets/erg-github` (a separate committed helper, not an `erg` subcommand) adds a `verify` check that fails a PR referencing a still-open ticket -- so close the ticket in the same PR (`erg close`).
 
 In doubt, run `erg spec` (file format) or `erg --help --all` / `erg COMMAND --help` for command documentation.
+
+## Handoff-document sections
+
+When a ticket is created as a handoff document (a new agent will pick it up
+cold), the body should include these sections so that agent has complete
+context:
+
+```markdown
+## Context
+What problem or need this addresses. Why now.
+
+## Relevant files
+- `path/to/file.py` — role in this task
+
+## Actions
+1. Concrete step
+2. Concrete step
+
+## Test
+- What test to write first (red step of TDD)
+
+## Verification
+- [ ] How to confirm each action worked
+
+## Invariants
+- What must not break (tests, build, existing behavior)
+
+## Exit criteria
+- Definition of done — when is this ticket complete?
+```
