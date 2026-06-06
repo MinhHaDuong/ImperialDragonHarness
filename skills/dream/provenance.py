@@ -10,15 +10,46 @@ Manages ~/.claude/memory/.provenance.json which tracks:
 """
 
 import argparse
+import fcntl
 import json
+import os
 import sys
+import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 HARNESS_MEMORY = Path.home() / ".claude" / "memory"
 PROVENANCE_PATH = HARNESS_MEMORY / ".provenance.json"
+PROVENANCE_LOCK = HARNESS_MEMORY / ".provenance.lock"
 PROJECTS_BASE = Path.home() / ".claude" / "projects"
 DECAY_DAYS = 90
+
+# Test-only hook: seconds to sleep between read and write inside a locked
+# mutation, used to force critical-section overlap in the race test. Unset in
+# production. See tests/test_dream.py::test_provenance_concurrent_record_*.
+_TEST_DELAY_ENV = "DREAM_PROVENANCE_TEST_DELAY"
+
+
+@contextmanager
+def _provenance_lock():
+    """Serialize the read-modify-write cycle across concurrent processes.
+
+    The cron recipe fires /dream for all projects at 02:00; each consolidation
+    issues an unlocked read-modify-write against the shared .provenance.json,
+    so concurrent runs could clobber each other (ticket 0224). We hold an
+    advisory flock on a sidecar lock file — not on the json itself, whose
+    write_text truncation would fight a lock held on the same fd. flock
+    auto-releases on fd close / process exit, so a crashed run leaves no stale
+    lock (unlike an O_EXCL lockfile)."""
+    PROVENANCE_LOCK.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(PROVENANCE_LOCK, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 def _load_provenance() -> dict:
@@ -32,34 +63,71 @@ def _save_provenance(data: dict) -> None:
     PROVENANCE_PATH.write_text(json.dumps(data, indent=2) + "\n")
 
 
+def _test_delay() -> None:
+    """Sleep between read and write when the test hook is set (no-op in prod)."""
+    delay = os.environ.get(_TEST_DELAY_ENV)
+    if delay:
+        time.sleep(float(delay))
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def record(args):
     """Record that an entry was seen in a project consolidation."""
-    data = _load_provenance()
-    entries = data["entries"]
-
     slug = args.slug
     project = args.project
-    now = _now_iso()
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        _test_delay()
+        now = _now_iso()
 
-    if slug not in entries:
-        entries[slug] = {
-            "projects": [project],
-            "first_seen": now,
-            "last_confirmed": now,
-            "promoted": False,
-        }
-    else:
-        entry = entries[slug]
-        if project not in entry["projects"]:
-            entry["projects"].append(project)
-        entry["last_confirmed"] = now
+        if slug not in entries:
+            entries[slug] = {
+                "projects": [project],
+                "first_seen": now,
+                "last_confirmed": now,
+                "promoted": False,
+            }
+        else:
+            entry = entries[slug]
+            if project not in entry["projects"]:
+                entry["projects"].append(project)
+            entry["last_confirmed"] = now
 
-    _save_provenance(data)
-    print(json.dumps(entries[slug], indent=2))
+        _save_provenance(data)
+        result = entries[slug]
+    print(json.dumps(result, indent=2))
+
+
+def confirm(args):
+    """Refresh last_confirmed on a promoted entry.
+
+    Closes the decay-confirmation gap (ticket 0224): once an entry is promoted,
+    its project-level copy is tombstoned, so later consolidations no longer
+    `record` the slug and last_confirmed never refreshes — every promoted entry
+    decay-flags at 90 days regardless of continued relevance. When a later
+    consolidation finds a promoted harness entry still supported by the
+    project's content, it calls `confirm` to refresh the timestamp. Unlike
+    `record`, this does not mutate the project list (the harness entry has no
+    project of origin to append)."""
+    slug = args.slug
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        if slug not in entries:
+            print(f"Unknown entry: {slug}", file=sys.stderr)
+            sys.exit(1)
+        if not entries[slug].get("promoted"):
+            print(f"Not a promoted entry: {slug}", file=sys.stderr)
+            sys.exit(1)
+        _test_delay()
+        entries[slug]["last_confirmed"] = _now_iso()
+        _save_provenance(data)
+        result = entries[slug]
+    print(json.dumps(result, indent=2))
 
 
 def candidates(args):
@@ -75,14 +143,16 @@ def candidates(args):
 
 def promote(args):
     """Mark an entry as promoted."""
-    data = _load_provenance()
     slug = args.slug
-    if slug not in data["entries"]:
-        print(f"Unknown entry: {slug}", file=sys.stderr)
-        sys.exit(1)
-    data["entries"][slug]["promoted"] = True
-    data["entries"][slug]["promoted_at"] = _now_iso()
-    _save_provenance(data)
+    with _provenance_lock():
+        data = _load_provenance()
+        if slug not in data["entries"]:
+            print(f"Unknown entry: {slug}", file=sys.stderr)
+            sys.exit(1)
+        _test_delay()
+        data["entries"][slug]["promoted"] = True
+        data["entries"][slug]["promoted_at"] = _now_iso()
+        _save_provenance(data)
     print(f"Promoted: {slug}")
 
 
@@ -133,6 +203,12 @@ def main():
     promote_p = sub.add_parser("promote", help="Mark entry as promoted to harness.")
     promote_p.add_argument("slug", help="Entry slug to promote")
     promote_p.set_defaults(func=promote)
+
+    confirm_p = sub.add_parser(
+        "confirm", help="Refresh last_confirmed on a promoted entry (resets decay clock)."
+    )
+    confirm_p.add_argument("slug", help="Promoted entry slug still relevant")
+    confirm_p.set_defaults(func=confirm)
 
     decay_p = sub.add_parser(
         "decay", help=f"List promoted entries unconfirmed for >{DECAY_DAYS} days."
