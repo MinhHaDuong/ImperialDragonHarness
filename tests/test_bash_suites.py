@@ -23,6 +23,7 @@ TESTS_DIR = Path(__file__).resolve().parent
 SH_SUITES = sorted(TESTS_DIR.glob("test_*.sh"))
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("script", SH_SUITES, ids=lambda p: p.name)
 def test_shell_suite(script: Path):
     """Each tests/*.sh suite must exit 0."""

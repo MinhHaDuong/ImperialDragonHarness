@@ -117,6 +117,7 @@ def test_helper_appends_when_run_twice_same_day(tmp_path):
     assert "second" in body
 
 
+@pytest.mark.integration
 def test_helper_requires_project_arg(tmp_path):
     env = os.environ.copy()
     env["HOME"] = str(tmp_path / "home")

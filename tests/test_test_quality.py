@@ -375,3 +375,122 @@ def test_cli_exposes_flakiness_gate_and_run_subcommands():
     assert "EXIT_REGRESSION" in src
     assert "--baseline" in src
     assert "--update-baseline" in src
+
+
+def test_cli_exposes_static_subcommand():
+    src = (SCRIPTS / "test-quality.py").read_text()
+    assert '"static"' in src
+    assert "cmd_static" in src
+
+
+# ── static lens: AST marker hygiene (ticket 0229) ────────────────────────────
+#
+# The teeth test asserts the lens's BEHAVIOUR against committed fixtures, not a
+# string in the source. The fixtures live in tests/fixtures/sample_*.py (named
+# sample_* so pytest never collects them as tests). A gutted lens that returns
+# no violations would fail `test_static_lens_flags_aliased_unmarked_spawn`; a
+# lens that flagged comments/strings/marked tests would fail the NOT-flagged
+# assertions — so this test proves the AST machinery, both directions.
+
+SAMPLE_HYGIENE = FIXTURES / "sample_marker_hygiene.py"
+SAMPLE_MODULE_MARK = FIXTURES / "sample_module_pytestmark.py"
+SAMPLE_CLASS_MARK = FIXTURES / "sample_class_pytestmark.py"
+
+
+def _violation_funcs(path, prefix="F"):
+    src = path.read_text()
+    return {v["identity"].split("::", 1)[1] for v in tq.python_marker_violations(src, prefix)}
+
+
+def test_static_lens_flags_aliased_unmarked_spawn():
+    """`from subprocess import run as r`; call in an unmarked test -> FLAG.
+
+    This is the core teeth assertion: a gutted lens (returns []) fails here.
+    """
+    flagged = _violation_funcs(SAMPLE_HYGIENE)
+    assert "test_aliased_spawn_unmarked" in flagged
+    assert "test_attr_spawn_unmarked" in flagged
+    assert "test_aliased_module_sleep_unmarked" in flagged
+
+
+def test_static_lens_attributes_call_in_closure_to_test():
+    """A spawn inside a closure defined within the test still flags the test."""
+    assert "test_spawn_inside_closure_unmarked" in _violation_funcs(SAMPLE_HYGIENE)
+
+
+def test_static_lens_ignores_comments_strings_and_marked_tests():
+    """subprocess in a comment/string is not a call; a marked spawn is exempt."""
+    flagged = _violation_funcs(SAMPLE_HYGIENE)
+    assert "test_subprocess_only_in_comment_and_string" not in flagged
+    assert "test_no_spawn_at_all" not in flagged
+    assert "test_marked_spawn" not in flagged
+
+
+def test_static_lens_marker_match_is_structural_not_substring():
+    """The `integration` marker is matched structurally (AST attribute), not by a
+    substring or `\\b`-regex on the decorator text. Two bypasses of the old
+    substring check MUST now be flagged:
+
+      * `@pytest.mark.skipif(True, reason="integration only on linux")` — the
+        word `integration` (with word boundaries) is inside the *reason string*,
+        so even a `\\b`-regex on the unparsed decorator matches it spuriously;
+      * `@pytest.mark.no_integration` — `integration` is a substring of a
+        different mark name.
+
+    Both spawn and neither carries the real marker, so both are violations. A
+    genuinely `@pytest.mark.integration`-marked spawn stays NOT flagged."""
+    flagged = _violation_funcs(SAMPLE_HYGIENE)
+    assert "test_skipif_reason_says_integration_unmarked" in flagged
+    assert "test_no_integration_marker_unmarked" in flagged
+    assert "test_marked_spawn" not in flagged
+
+
+def test_static_lens_module_pytestmark_covers_all_tests():
+    """A module-level `pytestmark` list containing `integration` exempts every
+    test in the module — even one that spawns."""
+    assert _violation_funcs(SAMPLE_MODULE_MARK) == set()
+
+
+def test_static_lens_class_pytestmark_resolution():
+    """Class-level pytestmark covers methods in that class only; a skipif-only
+    class pytestmark does NOT count as `integration`."""
+    flagged = _violation_funcs(SAMPLE_CLASS_MARK)
+    assert "test_spawn_covered_by_class_mark" not in flagged
+    assert "test_spawn_under_skipif_only" in flagged
+    # Class pytestmark `skipif(reason="integration only")` is structurally not
+    # the integration mark -> the substring bug exempted it; now FLAGGED.
+    assert "test_spawn_under_skipif_reason_integration" in flagged
+
+
+def test_static_lens_identities_are_repo_relative():
+    """Identity prefix is the path relative to root, so it is stable in CI."""
+    report = tq.static_lens([SAMPLE_HYGIENE], FIXTURES.parent.parent)
+    for v in report["violations"]:
+        assert v["identity"].startswith("tests/fixtures/sample_marker_hygiene.py::")
+
+
+def test_static_ratchet_baselines_known_violations():
+    report = {"violations": [{"identity": "a::x"}, {"identity": "b::y"}]}
+    out = tq.static_ratchet(report, {"a::x"})
+    assert out["regressed"] is True
+    assert out["new"] == ["b::y"]
+    assert out["baselined"] == ["a::x"]
+
+
+# ── dogfood: the IDH repo's own suite must be clean per the lens ─────────────
+
+
+def test_repo_suite_has_no_new_marker_violations():
+    """Dogfood: run the static lens over the repo's real tests/test_*.py and
+    assert no NEW violations against the committed baseline. Runs IN-PROCESS
+    (never shells out) so the lens does not flag this very test for spawning —
+    and so it stays a fast (unmarked) check in `make check-fast`."""
+    root = FIXTURES.parent.parent  # repo root
+    report = tq.static_lens(tq.discover_test_files(root), root)
+    baseline_path = root / "tests" / "static-baseline.json"
+    baseline_ids = set(json.loads(baseline_path.read_text()).get("static", []))
+    rr = tq.static_ratchet(report, baseline_ids)
+    assert rr["new"] == [], (
+        "new marker-hygiene violations (add @pytest.mark.integration, or "
+        f"baseline deliberately): {rr['new']}"
+    )

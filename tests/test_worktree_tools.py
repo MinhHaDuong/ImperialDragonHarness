@@ -169,6 +169,7 @@ def test_guard_resolves_relative_path_against_json_cwd(origin):
     assert "uncommitted WIP" in res.stderr
 
 
+@pytest.mark.integration
 def test_guard_handles_malformed_json():
     """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
     res = subprocess.run(
@@ -345,6 +346,7 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+@pytest.mark.integration
 def test_preflight_defaults_to_cwd(origin):
     """No arg → check the current directory. Mirrors how skill prose invokes
     it from inside the worktree it is about to exit."""
@@ -361,6 +363,7 @@ def test_preflight_defaults_to_cwd(origin):
     assert "0998-draft.erg" in res.stderr
 
 
+@pytest.mark.integration
 def test_preflight_errors_on_missing_path():
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
