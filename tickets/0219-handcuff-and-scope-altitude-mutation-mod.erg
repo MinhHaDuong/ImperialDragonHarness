@@ -129,8 +129,13 @@ regression test: scope mode flags the surviving sibling site.
 - [ ] Language-pluggable satisfied via the DOCUMENTED-PATH branch (directive 3):
       the zero-prep ~/aedist-technical-report launch procedure + expected cost
       scale documented in the skill docs. NO real AEDIST run is attempted here.
-- [ ] Fixture tests per the Test section (over-scoped assertion flagged by
-      handcuff; instance-pinned sibling flagged by scope mode)
+- [ ] Fixture anchors per the Test section: (i) the over-scoped mock-call-order
+      assertion + its behavior-preserving refactor; (ii) the instance-pinned
+      regression + its uncovered parallel sibling — committed under
+      skills/fang-audit/fixtures/; structural tests assert each fixture embodies
+      its property. Runtime FLAGGING (handcuff/scope going red/surviving) is
+      verified on the documented validation path (directive 3), not re-run here
+      — same bucket as the proven fang mode and the AEDIST run; never faked.
 - [ ] make check passes
 
 ## Related

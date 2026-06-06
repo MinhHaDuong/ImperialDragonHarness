@@ -434,3 +434,70 @@ def test_skill_md_describes_discovery_not_config_file():
     assert "If `.fang-audit.json` is missing, STOP" not in text, (
         "stale 'missing config -> STOP' prerequisite remains"
     )
+
+
+# ── ticket Test section: fixtures EMBODY their defect property ───────────────
+# These assert that each fixture genuinely embodies the property the mutation
+# mode must flag (statically checkable). They do NOT execute the handcuff/scope
+# oracle or simulate its verdict — runtime flagging needs a live agent run in
+# the Workflow sandbox (no local JS runtime; same bucket as the proven fang
+# mode and the directive-3 AEDIST run), verified on the documented validation
+# path. Reimplementing the oracle in Python to manufacture a green "it's
+# flagged" result would be a fake verdict (directive 1: never fake it) and a
+# tautological test (raid Phase 3 antipattern). We anchor the inputs; the path
+# proves the outputs.
+
+FIXTURES = SKILL_DIR / "fixtures"
+
+
+def test_handcuff_fixture_embodies_over_scoped_call_order():
+    """The handcuff fixture's test must assert on call ORDER (over-scoped),
+    while the source's contract promises only the OUTCOME — so a behavior-
+    preserving reorder makes it go red. That property is what the handcuff
+    pass flags."""
+    src = (FIXTURES / "over_scoped_call_order.py").read_text()
+    tst = (FIXTURES / "fixture_over_scoped_call_order_test.py").read_text()
+    # The TEST over-asserts on ORDER (mock_calls sequence / call ordering).
+    assert "mock_calls ==" in tst, (
+        "handcuff fixture test does not assert on call ORDER (the over-scope)"
+    )
+    # The SOURCE documents the behavior-preserving reorder (the refactor that
+    # the handcuff pass applies and that this over-scoped test wrongly catches).
+    assert "behavior-PRESERVING refactor" in src and "reversed(" in src, (
+        "handcuff fixture source lacks the behavior-preserving reorder anchor"
+    )
+
+
+def test_scope_fixture_embodies_instance_pinned_sibling():
+    """The scope fixture must have TWO structurally-parallel sites sharing one
+    class defect, with a regression test for only ONE — so the replayed
+    operator survives at the unguarded sibling. That property is what the scope
+    pass flags."""
+    src = (FIXTURES / "instance_pinned_validation.py").read_text()
+    tst = (FIXTURES / "fixture_instance_pinned_test.py").read_text()
+    # Two parallel validators sharing the same bound-check class defect.
+    assert "def validate_username" in src and "def validate_email" in src, (
+        "scope fixture lacks two structurally-parallel sites"
+    )
+    assert src.count("len(") >= 2 and src.count("> MAX_LEN") >= 2, (
+        "scope fixture sibling sites do not share the same class defect"
+    )
+    # A regression test for site A only — NO sibling test for site B.
+    assert "def test_username_rejects_overlong" in tst, (
+        "scope fixture missing the instance regression test"
+    )
+    assert "def test_email_rejects_overlong" not in tst, (
+        "scope fixture has a sibling test — then it is NOT instance-pinned"
+    )
+
+
+def test_fixtures_are_excluded_from_collection():
+    """The fixture test files are deliberately over-scoped / instance-pinned
+    anchors the audit reads, not project tests — pytest must be configured to
+    NOT collect them (else their intentional failures break the suite)."""
+    cfg = (REPO / "pytest.ini").read_text()
+    assert re.search(r"norecursedirs\s*=.*skills/\*/fixtures", cfg), (
+        "pytest.ini must exclude skills/*/fixtures from collection"
+    )
+    # And the fixture files must actually live there.
+    assert list(FIXTURES.glob("fixture_*_test.py")), "no fixture test anchors present"
