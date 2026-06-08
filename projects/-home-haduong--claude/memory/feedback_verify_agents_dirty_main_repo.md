@@ -1,6 +1,6 @@
 ---
 name: feedback_verify_agents_dirty_main_repo
-description: Verify sub-agents contaminate the invoking checkout — contracts shipped in IDH PR #262; 0202 validation done (headline clean, milder in-fork drift 3x) — spot-check stays until 0216 lands the Agent-spawn conversion
+description: Verify sub-agents contaminate the invoking checkout — contracts shipped in IDH PR #262; 0202 validation done (headline clean, milder in-fork drift 3x); structural fix landed (0216 Agent-spawn pinned-cwd + 0228 cwd-anchoring closed) — spot-check is now a fallback, not standing
 metadata: 
   node_type: memory
   type: feedback
@@ -25,11 +25,14 @@ is mechanical. The rogue-push mode is not yet deterministically killed.
 2026-06-05): headline containment HELD — zero off-task runs, foreign files,
 rogue pushes — but milder in-fork drift recurred 3x (under-execution,
 out-of-role rebase attempt, malformed log line), so the escalation fired as
-ticket 0216 (Agent-spawned sub-skills with pinned cwd). Keep the manual
-spot-check after verify runs and before any `erg-pr-merge` until 0216 lands:
-(1) `git status --porcelain` in the invoking checkout — discard foreign files;
-(2) `gh pr list --state open` — close rogue PRs; (3) confirm the expected
-branch. Known benign tail (2026-06-05): a gaze fork may leave the session
-worktree detached or on the PR branch — re-switch, don't panic.
+ticket 0216 (Agent-spawned sub-skills with pinned cwd). 0216 and 0228
+(cwd-anchoring across the fork boundary) have since closed (verified
+2026-06-08) — the structural fix is in place, so the manual spot-check is now
+a **fallback**, not a standing requirement. If you still observe drift after a
+verify/fork run, the same three checks apply: (1) `git status --porcelain` in
+the invoking checkout — discard foreign files; (2) `gh pr list --state open` —
+close rogue PRs; (3) confirm the expected branch. Known benign tail
+(2026-06-05): a gaze fork may leave the session worktree detached or on the PR
+branch — re-switch, don't panic.
 
 See also: [[feedback_rogue_agent_pattern]], [[feedback_parallel_execute_branch_contamination]]
