@@ -1,9 +1,3 @@
----
-name: IDH ticket store
-description: "IDH" means Imperial Dragon Harness — its tickets live at ~/.claude/tickets/
-type: reference
-originSessionId: 2d9ca21e-07dc-4935-9c57-82e9a576b8ca
----
-"IDH" = Imperial Dragon Harness (the Claude Code harness in ~/.claude/).
-Ticket store: `~/.claude/tickets/` (open) and `~/.claude/tickets/closed/` (closed).
-Same %erg v1 format as project tickets.
+# DELETED 2026-06-08T12:50Z: IDH ticket store
+# Reason: Fully subsumed by reference_ticket_store_map, which now inlines the IDH location, closed/ subdir, and %erg v1 format detail.
+# Original content preserved in git history.

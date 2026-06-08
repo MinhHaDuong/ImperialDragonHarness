@@ -16,9 +16,10 @@ interchangeable -- file a ticket in the store that owns the concern:
   prompted this correction turned out NOT to be a host issue at all -- it is
   stock gofmt behavior; see [[feedback_gofmt_smartquotes_vs_ascii]]. The
   store-map distinction below still stands.)
-- **`~/.claude/tickets`** — the Imperial Dragon Harness (IDH) itself: harness
-  rules, skills, hooks, cross-project coordination. Per [[reference_idh_tickets]].
-  NOT for host/machine config.
+- **`~/.claude/tickets`** — the Imperial Dragon Harness (IDH = the Claude Code
+  harness in `~/.claude/`) itself: harness rules, skills, hooks, cross-project
+  coordination. Open in `tickets/`, closed in `tickets/closed/`, same %erg v1
+  format as project tickets. NOT for host/machine config.
 - **`~/git-erg/tickets`** — the erg tool's own development (source, tests, docs).
 - Project stores (`~/Climate_finance`, `~/aedist-technical-report`,
   `~/fuzzy-corpus`, `~/cadens`, `~/chemin-de-voix`, ...) — each project's own
