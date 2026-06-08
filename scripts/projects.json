@@ -1,1 +1,10 @@
-[]
+[
+  { "name": "harness", "path": "~/.claude" },
+  { "name": "git-erg", "path": "~/git-erg" },
+  { "name": "chemin-de-voix", "path": "~/chemin-de-voix" },
+  { "name": "padme", "path": "~/padme" },
+  { "name": "Climate_finance", "path": "~/Climate_finance" },
+  { "name": "aedist-technical-report", "path": "~/aedist-technical-report" },
+  { "name": "fuzzy-corpus", "path": "~/fuzzy-corpus" },
+  { "name": "cadens", "path": "~/cadens" }
+]
