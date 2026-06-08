@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-06T12:16Z
+Last updated: 2026-06-08T00:00Z
 
 ## North star
 
-A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines.
+A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-06-06T12:16Z -->
+<!-- generated 2026-06-08T00:00Z -->
 
 **Tickets:** 7 ready · 2 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  271d15f chore: housekeeping fixes (sweep)
-  6e93166 Merge pull request #325 from MinhHaDuong/ticket-triage-0183-0227
-  b70ee60 tickets: undefer 0183 (parking condition met), file 0229 static test-hygiene tier
-  be8ef03 Merge pull request #324 from MinhHaDuong/skill-descriptions-discoverability
-  1ec14c0 skills: descriptions lead with the plain function — theme after sentence one
+  c8e8f01 Merge pull request #339 from MinhHaDuong/fix-balance-rule-idh
+  138534e raid: balance rule reads deliverable off the north star, not a fixed list
+  e548f55 Merge pull request #337 from MinhHaDuong/roar-followups-20260606
+  f63e0ff Merge pull request #336 from MinhHaDuong/dream-aedist-v21-leftovers
+  6077cf3 roar: file raid follow-ups 0233/0234, save staleness memory
 
 ## Blockers
 
@@ -23,10 +23,10 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **Balance debt**: 2026-06-05 AND 06-06 were all tooling — next raid must advance a deliverable (STATE milestone work or a project repo)
-- **AEDIST maw-audit run**: unblocked (0226), author-deferred 2026-06-06 — launch from a session rooted in `~/aedist-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
+- **0216 fan-out evidence**: the next substantive PR /gaze completes 0216's criterion-2 proof (PR #334's gaze hit agents=0 on a trivial diff) — no action, just observe and append to the closed ticket
+- **0227 multi-repo wrapper sweep**: parent open; one session per repo (chemin-de-voix, git-erg, aedist, Climate-finance, cadens, fuzzy-corpus, llm-benchmarks, home-dir)
+- **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/aedist-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
 - **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
-- **0216**: convert verify phases 2-4/6 to Agent() sub-agents (orthogonal, Claude-native); lands before 0206's verify/SKILL.md edits
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 - Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
 
