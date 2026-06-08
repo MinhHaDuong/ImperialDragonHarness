@@ -19,6 +19,16 @@ followed by `git add <file> && git commit -m 'chore(supervisor): <description>'`
 before proceeding to the next action. Uncommitted tracked files cause the next
 beat cycle's dirty-tree pre-flight to abort.
 
+**Commit on a branch, not main.** Every `chore(supervisor): …` commit below
+lands a tracked write in `$HARNESS_DIR`. If `$HARNESS_DIR` is the **primary**
+checkout, its pre-commit hook refuses commits on `main` (everything lands via
+branch + PR). Before the first such commit in a cycle, ensure you are on a
+supervisor branch — `git -C $HARNESS_DIR rev-parse --abbrev-ref HEAD` must not
+be `main`; if it is, `git -C $HARNESS_DIR switch -c supervisor-$(date +%F)` —
+and open a PR for the accumulated chore commits rather than pushing to main.
+(Commits made from a raid/agent worktree are unaffected; the guard only fires in
+the primary checkout.)
+
 ## 1. Survey
 
 Pre-flight: verify no dual-journal state exists (`canonical` vs `logs/` path). If both

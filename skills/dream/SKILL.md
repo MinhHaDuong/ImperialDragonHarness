@@ -127,9 +127,19 @@ those decay-flag is the intended signal for human review.
 
 **8. Commit.**
 
+`commit.py` commits into `~/.claude` directly. The `~/.claude` pre-commit hook
+**refuses a commit on `main` in the primary checkout** (everything lands via
+branch + PR). Before committing, ensure `~/.claude` is on a branch, not main:
+
 ```bash
+git -C ~/.claude rev-parse --abbrev-ref HEAD   # must NOT print "main"
+# if it does: git -C ~/.claude switch -c dream-consolidate-$(date +%F)
 python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
 ```
+
+Then push the branch and open a PR for the consolidation (do not merge to main
+directly). The override `ALLOW_MAIN_COMMIT=1` exists for deliberate cases only —
+do not use it to bypass the branch-and-PR flow during a routine dream.
 
 ### Promotion pass
 
@@ -175,6 +185,9 @@ c. Overwrite the project-level entry with a tombstone:
 If `--dry-run`: print candidates, gate evaluations, and proposed promotions without writing anything.
 
 **12. Commit promotions.**
+
+As in step 8, ensure `~/.claude` is on a branch (not main) before committing —
+the primary-checkout pre-commit hook refuses main commits.
 
 ```bash
 python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
