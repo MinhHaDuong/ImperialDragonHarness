@@ -2,10 +2,12 @@
 Title: Ratchet test: gaze reviewer agents must stay non-isolation (pinned-cwd read-only)
 Created: 2026-06-06
 Author: Integration Test
+Closed: autoclosed — PR #348
 
 --- log ---
 2026-06-06T14:58Z Integration Test created
 
+2026-06-08T12:33Z Integration Test closed — autoclosed — PR #348
 --- body ---
 ## Context
 
