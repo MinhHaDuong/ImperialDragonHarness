@@ -130,6 +130,7 @@ def test_ticket_state_no_tickets_dir(tmp_path):
     out = ps.ticket_state(tmp_path)  # no tickets/ subdir
     assert out["ready"] is None
     assert out["error"] == "no tickets/ directory"
+    assert out["closed_unarchived"] == []  # key present in every return path
 
 
 def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch):
@@ -149,6 +150,36 @@ def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch
     out = ps.ticket_state(tmp_path)
     assert out["error"] == "erg not found"
     assert out["open"] == 1  # only the non-Closed ticket counted
+    # The closed ticket sits in tickets/ (not tickets/closed/) — unarchived.
+    assert out["closed_unarchived"] == ["0002"]
+
+
+def test_ticket_state_flags_closed_but_unarchived(tmp_path, monkeypatch):
+    """A top-level tickets/*.erg carrying a Closed: header is the
+    close-without-archive escape — flag its id, exclude it from `open`."""
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    (tickets / "closed").mkdir()
+    # Two genuinely open, one closed-but-unarchived in tickets/, one properly archived.
+    (tickets / "0010-open-a.erg").write_text("%erg 0.1\nTitle: A\n")
+    (tickets / "0011-open-b.erg").write_text("%erg 0.1\nTitle: B\n")
+    (tickets / "0012-done.erg").write_text("%erg 0.1\nClosed: 2026-06-01\nTitle: done\n")
+    (tickets / "closed" / "0009-archived.erg").write_text(
+        "%erg 0.1\nClosed: 2026-05-01\nTitle: archived\n"
+    )
+    erg_output = (
+        '[{"id": "0010", "title": "A", "file": "0010-open-a.erg", "closed": null,'
+        ' "refs": [], "tags": [], "blocked_by": []},'
+        ' {"id": "0011", "title": "B", "file": "0011-open-b.erg", "closed": null,'
+        ' "refs": [], "tags": [], "blocked_by": []}]'
+    )
+    monkeypatch.setattr(ps.shutil, "which", lambda _x: "/usr/bin/erg")
+    monkeypatch.setattr(ps, "run", lambda args, cwd: _cp(erg_output))
+
+    out = ps.ticket_state(tmp_path)
+    assert out["closed_unarchived"] == ["0012"]  # only the unarchived closed one
+    assert out["open"] == 2  # the archived ticket in closed/ is not scanned
+    assert out["ready"] == 2
 
 
 def test_ticket_state_ready_ids_populated(tmp_path, monkeypatch):

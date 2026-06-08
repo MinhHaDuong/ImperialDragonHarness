@@ -108,6 +108,27 @@ def housekeeping_state(project):
     }
 
 
+def _scan_top_level_tickets(tickets_dir):
+    """Scan tickets/*.erg (non-recursive — tickets/closed/ is excluded).
+
+    Returns (open_count, closed_unarchived_ids). A .erg file sitting directly in
+    tickets/ with a `Closed:` header is a closed ticket that was never archived
+    into tickets/closed/ — the close-without-archive escape that happens when a
+    PR merges outside erg-pr-merge (which would have run `erg archive`). This is
+    a deliberately narrow structural check, not the full `erg check` folder/header
+    warning: it never fires on a stale-binary false positive, only on the loophole.
+    """
+    open_count = 0
+    closed_unarchived = []
+    for f in sorted(tickets_dir.glob("*.erg")):
+        text = f.read_text(errors="replace")
+        if any(line.startswith("Closed:") for line in text.splitlines()[:10]):
+            closed_unarchived.append(f.stem.split("-")[0])
+        else:
+            open_count += 1
+    return open_count, closed_unarchived
+
+
 def ticket_state(project):
     tickets_dir = project / "tickets"
     if not tickets_dir.is_dir():
@@ -115,6 +136,7 @@ def ticket_state(project):
             "ready": None,
             "open": None,
             "ready_ids": [],
+            "closed_unarchived": [],
             "error": "no tickets/ directory",
         }
 
@@ -127,33 +149,29 @@ def ticket_state(project):
                 "ready": None,
                 "open": None,
                 "ready_ids": [],
+                "closed_unarchived": [],
                 "error": f"erg failed: {r.stderr.strip()}",
             }
         ready_list = json.loads(r.stdout)
     except FileNotFoundError:
-        erg_files = list(tickets_dir.glob("*.erg"))
-        open_count = 0
-        for f in erg_files:
-            text = f.read_text(errors="replace")
-            if not any(line.startswith("Closed:") for line in text.splitlines()[:10]):
-                open_count += 1
+        open_count, closed_unarchived = _scan_top_level_tickets(tickets_dir)
         return {
             "ready": None,
             "open": open_count,
             "ready_ids": [],
+            "closed_unarchived": closed_unarchived,
             "error": "erg not found",
         }
 
     ready_ids = [t["id"] for t in ready_list]
+    open_count, closed_unarchived = _scan_top_level_tickets(tickets_dir)
 
-    erg_files = list(tickets_dir.glob("*.erg"))
-    open_count = 0
-    for f in erg_files:
-        text = f.read_text(errors="replace")
-        if not any(line.startswith("Closed:") for line in text.splitlines()[:10]):
-            open_count += 1
-
-    return {"ready": len(ready_ids), "open": open_count, "ready_ids": ready_ids}
+    return {
+        "ready": len(ready_ids),
+        "open": open_count,
+        "ready_ids": ready_ids,
+        "closed_unarchived": closed_unarchived,
+    }
 
 
 def branch_state(project):
