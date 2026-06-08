@@ -3,7 +3,7 @@
 ## Key insights
 
 - **Isolation is the core discipline.** One ticket, one worktree, one PR — no cross-contamination. Branch existence is the claim; no external state tags needed.
-- **Empirical verification before belief.** Verify ticket premises before implementing; verify agent claims (confabulated precedents, remote agents' sandbox-specific failures) with a cheap local check; verify fork output actually answers the request before consuming it.
+- **Empirical verification before belief.** Verify ticket premises before implementing; verify agent claims (confabulated precedents, remote agents' sandbox-specific failures) with a cheap local check; verify fork output actually answers the request before consuming it; verify the delivery gate (CI, hook) actually runs a check before claiming the exit criterion met.
 - **Negative controls must prove the property they claim.** Vacuous passes hide behind green checkmarks — a path-only snapshot "detecting overwrites", a control depending on a git-template artifact. Red-step TDD (prove the control fails first) is the antidote.
 - **Guards beat prose.** Every invariant that mattered got mechanized (docs drift, CMDS coverage, scope confinement); prose-only contracts rot. The merge pipeline matured the same way: the script now self-recovers from GitHub races — the remaining traps are human shortcuts.
 - **One canonical source, no copies.** Edit `src/go/assets/` not the deployed copy; rebase against `origin/main` not local main; the traveling binary converges by PR from one reference blob.
@@ -18,7 +18,6 @@
 - [raid branch as annotation carrier](feedback_raid_branch_annotation_carrier.md) — push raid branch; execute agents import annotated tickets via fetch + checkout FETCH_HEAD; 5/5 clean in raid 219-224
 - [verify gate requires ticket reference](feedback_verify_gate_ticket_ref.md) — add `**Ticket:** tickets/<name>.erg` to PR body before opening; /verify fails at phase 1 without it
 - [erg offline contract](project_erg_offline_contract.md) — erg must work offline in isolated VMs; network resolution is opt-in via --resolve, not the default
-- [IDH ticket store](reference_idh_tickets.md) — "IDH" = Imperial Dragon Harness; tickets at ~/.claude/tickets/
 - [scope audit must use two-dot git range](feedback_scope_audit_git_range.md) — raid Phase 7: use `git log base..branch`, never `base...branch`, or you mistake parallel main commits for PR scope creep
 - [llama-server workload on padme](project_llama_server_workload.md) — two instances run unattended OCR cleaning on Qwen3.5-9B; do not restart, benchmark, or hit endpoints
 - [doc writing conventions](feedback_doc_writing_conventions.md) — PEP prose marked GENERATED for human review; spec is agent-first; align code literally on spec
@@ -57,3 +56,4 @@
 - [meta-test: owner pays](feedback_meta_test_owner_pays.md) — coverage meta-tests fail on whichever PR is in flight when a parallel key lands; add the fixture in your PR, never an exemption
 - [Workflow sandbox contract](feedback_workflow_sandbox_contract.md) — no process global; args may arrive stringified; schemas must tolerate stringified ints; decorative agents degrade not die; resume needs byte-identical CONFIG
 - [red-control: no cooperating instrumentation](feedback_redcontrol_no_cooperating_instrumentation.md) — mutate the defect only, never the counter; a guard whose signal lives inside the mutable region can be orphaned by the defect it watches (0240/gaze r1)
+- [verify delivery gate runs check](feedback_verify_delivery_gate_runs_check.md) — "gate G now catches Y" exit criteria: read G's actual config (CI yml, hook) for the line invoking the check; a green local make check doesn't prove the server-side gate runs it (0241/advisor)
