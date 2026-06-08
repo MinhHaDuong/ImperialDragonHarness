@@ -1071,6 +1071,62 @@
       "first_seen": "2026-06-08T10:21:56Z",
       "last_confirmed": "2026-06-08T10:21:56Z",
       "promoted": false
+    },
+    "project_server_management": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "padme-llm-backend-llama-server": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "project_pending_reboot_kernel_635": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "user_profile": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "feedback_languages": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "feedback_no_wrapper_skills": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
+    },
+    "feedback_worktree_stale_after_agent": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T11:08:32Z",
+      "promoted": false
     }
   }
 }
