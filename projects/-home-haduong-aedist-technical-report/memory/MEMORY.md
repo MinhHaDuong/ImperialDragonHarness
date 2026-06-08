@@ -17,6 +17,7 @@
 - [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
 
 - [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
+- [Make stamp discipline](feedback_make_stamp_discipline.md) — dynamic multi-output stamps (armN_flat) are CORRECT; single-output-dressed-as-stamp is the hack (exp1_cross_eval, 0460); pair conversion with .DELETE_ON_ERROR (was build-wide missing; 0461 generalizes)
 - [Archive move: outputs/ is record-only](project_archive_move_record_only_outputs.md) — raw replies in archive/outputs/ since edda724b; rules/scripts reading raw data must point at archive; tab_decomposition_fix FROZEN (0424)
 - [Concurrent author-session raids](feedback_concurrent_author_session_raids.md) — re-verify ticket open/closed on origin/main before every execute launch; never touch sibling-session worktrees; don't bundle whole tickets/ snapshots into content PRs
 - [Pre-commit hook commit ordering](feedback_precommit_hook_commit_ordering.md) — adherence hook runs working-tree tests against the index; order multi-commit series green, slice with `git commit -- <paths>`
@@ -110,7 +111,7 @@
 - [Experiment costs](project_experiment_costs.md) — Exp1 $2.85 / Exp3 arm1 $12.97 / Exp3 arm2 $14.48 / Exp3 total $27.44 / grand total $30.29 (as of 2026-05-25)
 - [Modify/delete rebase](feedback_modify_delete_rebase.md) — when parallel commit deletes a file the branch modifies, accept deletion then manually migrate new content to surviving location; check for build refactor commits before starting Makefile work
 - [Presence metrics saturate in Exp 1](feedback_presence_metrics_saturate.md) — source_presence/field_completeness trivially 1.0 in parametric condition; use diversity/spread/validity metrics instead
-- [API merge fetch after](feedback_api_merge_fetch_after.md) — after gh api .../merge, run git fetch origin before reading git log origin/main; local ref is stale until fetch
+- [API merge fetch after](feedback_api_merge_fetch_after.md) — after gh api .../merge, run git fetch origin before reading git log origin/main; local ref is stale until fetch. Also: `fetch --prune` can race the merge → false `--is-ancestor` "not merged" during cleanup; verify via `gh pr view` headRefOid + explicit `fetch origin main`, never `-D` on the false negative
 - [Verify artifacts after Python fix](feedback_verify_artifacts_after_fix.md) — always rebuild PDFs after patching a plot script; stale pre-fix PDFs in working tree look modified but are wrong; size shrink signals regression
 - [Bash cd-to-primary-repo trap](feedback_bash_cd_primary_repo_trap.md) — in a worktree session, prefixing Bash with `cd /home/haduong/<repo>` routes git/erg/commit to the PRIMARY repo on main; run git bare, never `git add -A` with untracked data present
 - [Figure verify: worst-case panel](feedback_figure_verify_worst_case_panel.md) — when checking a multi-panel figure for title/label overlap, render+inspect the longest/two-line-title panel, not an easy representative; structural tests give no visual signal
