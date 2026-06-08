@@ -34,7 +34,7 @@ If $ARGUMENTS is "all open": read open tickets from git-erg `tickets/` or forge.
 Otherwise: parse comma-separated ticket IDs.
 
 Prioritize:
-1. Scientific deliverables first
+1. North-star deliverables first (what the project's product is — manuscripts/figures for a science project, skills/rules/tests for this harness or git-erg; see § Balance rule)
 2. Gaps with north star (STATE.md)
 3. Ripest open issues
 4. Inline markers (FIXME, TODO, HACK)
@@ -188,8 +188,8 @@ HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)
 
-- [ ] Opened at least one deliverable-forward merge request?
-- [ ] Tooling/deliverable ratio within bounds?
+- [ ] Opened at least one north-star-forward merge request?
+- [ ] Tooling/deliverable ratio within bounds? (N/A for a tooling/library project — the harness IS the deliverable; see § Balance rule)
 - [ ] Self-reviewed at least one merge request?
 - [ ] `make check` passes on main?
 

@@ -19,5 +19,9 @@ a fixed papers/slides list. The category flips with the project type.
 deliverable-balance justification and STATE.md should not carry a "balance
 debt — all tooling" warning. Apply the ≥60/≤40 ratio only where the north
 star names a non-tooling product (manuscripts, data, slides). Author
-correction, 2026-06-08. Fixed in skills/raid/SKILL.md § Balance rule.
+correction, 2026-06-08. The assumption lives in three spots in
+skills/raid/SKILL.md — § Balance rule (definition), Phase 1 "Prioritize"
+("north-star deliverables first"), and the mid-session checkpoint (ratio
+N/A for tooling projects); a roar sweep caught the latter two after the
+first fix touched only the definition. Edit all three together.
 Related: [[feedback_skills_just_work_no_config_blocks]].
