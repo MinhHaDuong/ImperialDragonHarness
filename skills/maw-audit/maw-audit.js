@@ -276,11 +276,22 @@ PROCEDURE (do exactly this):
 6. For every "survived" finding, put a concrete fix in suggestion: a stronger assertion, or a negative-control test (deliberately break the invariant and assert the guard trips).
 You are in an isolated throwaway git worktree at the repo root — all your edits are discarded; mutate freely. Return the structured object.`
 
-function applyRules(tags) {
-  return RULES
+// One templater for all three rule bodies (ticket 0232). The fang (RULES),
+// handcuff (HANDCUFF_RULES) and scope (SCOPE_RULES) passes each ran a near-
+// identical .replaceAll() chain over a different RULES string; the only real
+// difference was WHICH heuristics token the body carries. Each body contains at
+// most ONE heuristic token, so replacing BOTH <MUTATION_HEURISTICS> and
+// <HANDCUFF_HEURISTICS> with the single `heuristics` arg is a no-op on whichever
+// is absent (replaceAll on a missing token is a no-op) — and a no-op on the
+// scope body, which carries neither (heuristics defaults to ''). Order is
+// preserved (RUN_TEST, TAGS, heuristics, SRC_DIR) so the generated prompts stay
+// byte-identical to the three former functions.
+function expandRules(rulesText, tags, heuristics = '') {
+  return rulesText
     .replaceAll('<RUN_TEST>', CONFIG.RUN_TEST.replaceAll('<TAGS>', tags))
     .replaceAll('<TAGS>', tags)
-    .replaceAll('<MUTATION_HEURISTICS>', CONFIG.MUTATION_HEURISTICS)
+    .replaceAll('<MUTATION_HEURISTICS>', heuristics)
+    .replaceAll('<HANDCUFF_HEURISTICS>', heuristics)
     .replaceAll('<SRC_DIR>', CONFIG.SRC_DIR)
 }
 
@@ -291,7 +302,7 @@ ASSIGNMENT
 - Test file: ${file.test}
 - Source target(s) you may mutate: ${file.src.join(', ')}
 - <TAGS> = (none — this is a default-suite test; run with no build tags)
-${applyRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
+${expandRules(RULES, CONFIG.DEFAULT_TAGS, CONFIG.MUTATION_HEURISTICS).replaceAll('<TESTFILE>', file.test)}`
 }
 
 // Untracked inputs the guard build needs but that are absent from a fresh
@@ -329,7 +340,7 @@ ${file.canary}
 The canary MUST classify as "caught" (a guard test in this file goes red). If it does NOT, that is a critical signal the harness is miswired — still report it truthfully.
 
 After the canary, audit the file's OTHER assertions per the standard procedure.
-${applyRules(CONFIG.GUARD_TAGS).replaceAll('<TESTFILE>', file.test)}
+${expandRules(RULES, CONFIG.GUARD_TAGS, CONFIG.MUTATION_HEURISTICS).replaceAll('<TESTFILE>', file.test)}
 
 CLEANUP (do LAST): leave the worktree CLEAN — `git checkout -- .` any mutated source so the tree has no uncommitted changes (the staged seed is fine). This lets the harness auto-reclaim this worktree (0219 directive 4a).`
 }
@@ -442,14 +453,6 @@ PROCEDURE (do exactly this):
    - "not-preserving": a test went red but on reflection the refactor SECRETLY changed behavior — then the red is a legitimate fang, NOT a handcuff. Withdraw: put the distinguishing behavior change in evidence. (The skeptic will re-check every handcuff for exactly this.)
 You are in an isolated throwaway git worktree — all edits are discarded. Return the structured object.`
 
-function handcuffRules(tags) {
-  return HANDCUFF_RULES
-    .replaceAll('<RUN_TEST>', CONFIG.RUN_TEST.replaceAll('<TAGS>', tags))
-    .replaceAll('<TAGS>', tags)
-    .replaceAll('<HANDCUFF_HEURISTICS>', CONFIG.HANDCUFF_HEURISTICS)
-    .replaceAll('<SRC_DIR>', CONFIG.SRC_DIR)
-}
-
 function handcuffPrompt(file) {
   return `You are mutation-testing whether a ${CONFIG.LANGUAGE} test is a "handcuff": does it wrongly go RED when the code is refactored WITHOUT changing behavior? Repo: ${CONFIG.PROJECT}, ${CONFIG.PACKAGE_HINT}. THIS IS THE INVERTED ORACLE: a test going red on a true refactor is a DEFECT (over-scoped), the opposite of the fang pass.
 
@@ -457,7 +460,7 @@ ASSIGNMENT
 - Test file: ${file.test}
 - Source target(s) you may refactor: ${file.src.join(', ')}
 - <TAGS> = (none — default suite)
-${handcuffRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
+${expandRules(HANDCUFF_RULES, CONFIG.DEFAULT_TAGS, CONFIG.HANDCUFF_HEURISTICS).replaceAll('<TESTFILE>', file.test)}`
 }
 
 function handcuffSkepticPrompt(file, f) {
@@ -540,13 +543,6 @@ PROCEDURE (do exactly this):
    - "no-siblings": no structurally-similar site exists, so there is nothing to widen to (not an accusation).
 You are in an isolated throwaway git worktree — all edits are discarded. Return the structured object.`
 
-function scopeRules(tags) {
-  return SCOPE_RULES
-    .replaceAll('<RUN_TEST>', CONFIG.RUN_TEST.replaceAll('<TAGS>', tags))
-    .replaceAll('<TAGS>', tags)
-    .replaceAll('<SRC_DIR>', CONFIG.SRC_DIR)
-}
-
 function scopePrompt(file, caughtOps) {
   const ops = caughtOps.map((c, i) => `${i + 1}. [${c.testFunc}] ${c.mutation}`).join('\n')
   return `You are auditing the ALTITUDE / SCOPE of a ${CONFIG.LANGUAGE} test: does it guard the whole defect CLASS, or just the one INSTANCE it has a regression test for? Repo: ${CONFIG.PROJECT}, ${CONFIG.PACKAGE_HINT}.
@@ -557,7 +553,7 @@ ASSIGNMENT
 - CAUGHT operators to replay at sibling sites:
 ${ops || '(none — return an empty findings array)'}
 - <TAGS> = (none — default suite)
-${scopeRules(CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
+${expandRules(SCOPE_RULES, CONFIG.DEFAULT_TAGS).replaceAll('<TESTFILE>', file.test)}`
 }
 
 // ---- Δ5: Phase 0 — determinism precheck GATE (blocks the fan-out) ----
