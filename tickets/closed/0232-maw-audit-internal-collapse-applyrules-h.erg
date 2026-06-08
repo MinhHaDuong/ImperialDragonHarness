@@ -2,10 +2,12 @@
 Title: maw-audit internal: collapse applyRules/handcuffRules/scopeRules into one expandRules
 Created: 2026-06-06
 Author: claude
+Closed: autoclosed — PR #349
 
 --- log ---
 2026-06-06T14:31Z claude created
 
+2026-06-08T12:34Z Integration Test closed — autoclosed — PR #349
 --- body ---
 ## Context
 
