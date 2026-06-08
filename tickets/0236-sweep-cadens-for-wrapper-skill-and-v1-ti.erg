@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Sweep cadens for wrapper-skill and v1-ticket residue
+Created: 2026-06-08
+Author: Integration Test
+Label: deferred
+
+--- log ---
+2026-06-08T12:42Z Integration Test created
+
+--- body ---
+## Context
+
+Child of tracker [[0227]], split out as **deferred**. cadens was held back
+from the 2026-06-08 `/scry` sweep because it carries a **149-file untracked
+scaffold** (recorded in 0227's log): a residue grep there is unreliable and
+a sweep PR risks entangling the scaffold. The wrapper/v1 sweep is the same
+as sibling child [[0235]], but cadens needs its working tree resolved first.
+
+## Blocker
+
+The untracked 149-file scaffold must be committed, gitignored, or removed
+so the repo has a clean baseline before the sweep. This is the author's
+call — cadens's scaffold intent is not derivable from this repo.
+
+## Actions
+
+1. Resolve the untracked scaffold (commit / gitignore / remove — author decides).
+2. Then run the standard residue sweep from a session rooted in cadens:
+   grep `.claude/skills/ticket-*`, `%erg v1`, `Status:` mutation guidance,
+   `tickets/tools/go`; remove via PR or justify clean.
+3. Record the outcome in tracker [[0227]].
+
+## Exit criteria
+
+- cadens scaffold baseline resolved.
+- cadens swept; residue removed via PR or justified clean.
+- Tracker [[0227]] updated.
