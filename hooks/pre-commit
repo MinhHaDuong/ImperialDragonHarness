@@ -1,4 +1,48 @@
 #!/bin/sh
+# --- main-branch-guard ---
+# Refuse a direct commit on `main` in the PRIMARY checkout. Commits on a
+# branch are fine; commits from any worktree (raid/agent worktrees) are fine
+# even on main, because worktree branches are the normal flow there.
+#
+# Discriminator: a linked worktree's per-worktree git dir (--git-dir) differs
+# from the primary repo's shared git dir (--git-common-dir). In the primary
+# checkout the two are the SAME path; in any linked worktree they differ.
+#   - primary checkout: git_dir == common_dir  -> guard may fire
+#   - linked worktree:  git_dir != common_dir  -> guard stays silent
+# (Both are resolved to absolute paths first; --git-common-dir can be relative,
+#  e.g. ".git", which would otherwise never compare equal to the absolute
+#  --absolute-git-dir and silently disable the guard everywhere.)
+#
+# Skipped when: CI=true (or GITHUB_ACTIONS), a rebase/merge/cherry-pick is in
+# progress (those replay commits and must not be blocked), or the operator
+# sets ALLOW_MAIN_COMMIT=1 for a deliberate primary-checkout main commit.
+if [ "${ALLOW_MAIN_COMMIT:-}" != "1" ] && [ -z "${CI:-}" ] && [ -z "${GITHUB_ACTIONS:-}" ]; then
+    git_dir=$(git rev-parse --absolute-git-dir)
+    if [ ! -e "$git_dir/MERGE_HEAD" ] && \
+       [ ! -d "$git_dir/rebase-merge" ] && \
+       [ ! -d "$git_dir/rebase-apply" ] && \
+       [ ! -e "$git_dir/CHERRY_PICK_HEAD" ]; then
+        current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+        if [ "$current_branch" = "main" ]; then
+            # Resolve the shared (common) git dir to an absolute path.
+            common_dir=$(git rev-parse --git-common-dir 2>/dev/null || echo "")
+            case "$common_dir" in
+                /*) ;;
+                "") ;;
+                *)  common_dir="$(cd "$common_dir" 2>/dev/null && pwd)" ;;
+            esac
+            if [ -n "$common_dir" ] && [ "$git_dir" = "$common_dir" ]; then
+                echo "ERROR: refusing to commit directly on main in the primary checkout." >&2
+                echo "Everything lands via branch + PR. Switch to a branch first:" >&2
+                echo "    git switch -c <branch>" >&2
+                echo "Override (deliberate cases only): ALLOW_MAIN_COMMIT=1 git commit ..." >&2
+                exit 1
+            fi
+        fi
+    fi
+fi
+# --- main-branch-guard ---
+
 # --- erg-source-guard ---
 # Reject any staged changes under tickets/tools/go/ — erg source is read-only
 # in IDH. All edits must go to the git-erg project.

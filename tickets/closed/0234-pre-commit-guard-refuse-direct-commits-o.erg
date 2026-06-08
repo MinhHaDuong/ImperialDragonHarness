@@ -2,10 +2,12 @@
 Title: Pre-commit guard: refuse direct commits on main in the primary checkout
 Created: 2026-06-06
 Author: Integration Test
+Closed: Pre-commit guard refuses primary-checkout main commits; dream/nightbeat skill texts audited
 
 --- log ---
 2026-06-06T14:58Z Integration Test created
 
+2026-06-08T12:19Z Integration Test closed — Pre-commit guard refuses primary-checkout main commits; dream/nightbeat skill texts audited
 --- body ---
 ## Context
 
