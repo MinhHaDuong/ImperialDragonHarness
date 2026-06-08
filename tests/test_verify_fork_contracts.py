@@ -92,6 +92,52 @@ def test_erg_pr_merge_stages_no_blanket_tickets_dir():
     )
 
 
+def _normalize(text: str) -> str:
+    """Collapse runs of whitespace so newline-wrapped sentences match."""
+    return re.sub(r"\s+", " ", text)
+
+
+def test_gaze_phase_2_4_reviewers_forbid_isolation():
+    """Phases 2–4 reviewer agents are pinned-cwd read-only; giving them
+    `isolation: "worktree"` cuts a fresh tree from the session repo on main,
+    re-introducing the wrong-branch failure (ticket 0216, rogue PR #243).
+    The prohibition must stay in the phase 2–4 block."""
+    norm = _normalize(VERIFY)
+    assert 'Do **not** give these agents `isolation: "worktree"`' in norm, (
+        "gaze/SKILL.md: phase 2–4 block dropped the reviewer isolation prohibition"
+    )
+
+
+def test_gaze_phase_6_gate_forbids_isolation():
+    """The phase-6 gate agent is likewise read-only pinned-cwd; the prohibition
+    is phrased differently here (`never isolation: "worktree"`) and wraps a
+    newline, so normalize before matching."""
+    norm = _normalize(VERIFY)
+    assert 'never `isolation: "worktree"`' in norm, (
+        "gaze/SKILL.md: phase-6 gate block dropped the isolation prohibition"
+    )
+
+
+def test_gaze_only_reroll_fix_agent_gets_isolation():
+    """Only the REROLL fix agent (a mutator) may receive isolation: the four
+    `isolation: "worktree"` occurrences are the two prohibitions (phase 2–4,
+    phase 6), the phase 2–4 exception note, and the single phase-`Branch on
+    verdict` grant. A regression worth catching is a *reviewer or gate* spawn
+    gaining isolation — flag any occurrence whose surrounding context is a
+    read-only reviewer/gate spawn rather than a prohibition or the fix grant."""
+    norm = _normalize(VERIFY)
+    occurrences = norm.count('isolation: "worktree"')
+    assert occurrences == 4, (
+        "gaze/SKILL.md: expected exactly 4 `isolation: \"worktree\"` sites "
+        f"(2 prohibitions + 1 exception note + 1 REROLL grant), found {occurrences}; "
+        "a new occurrence may be a reviewer/gate spawn wrongly gaining isolation"
+    )
+    # The sole grant lives in the REROLL fix-agent line.
+    assert 'spawn a fix subagent with `isolation: "worktree"`' in norm, (
+        "gaze/SKILL.md: the REROLL fix-agent isolation grant changed or was removed"
+    )
+
+
 def test_no_bare_stash_in_skills_and_scripts():
     """The stash stack is repo-global (shared across every worktree): a
     clean-tree `git stash` + `git stash pop` round-trip pops someone else's
