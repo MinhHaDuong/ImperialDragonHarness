@@ -10,6 +10,7 @@ Author: claude
 2026-06-06T13:11Z claude note split: harness-repo portion (actions 1-3, 5, hook ride-along) moved to child 0230 for the raid; this parent retains the multi-repo sweep (action 4), one PR per repo, stays open until all repos done
 2026-06-08T10:16Z claude note erg-footprint sweep executed via /scry 2026-06-08: fuzzy-corpus #60, Oeconomia-Climate-finance #794, aedist #783, padme #19 (CLAUDE.md to @tickets/AGENTS.md, deleted ticket-* skills + stale rules/tickets.md). chemin-de-voix/git-erg/.claude verified clean. Those PRs were filed Ticket:none — linking retroactively. Remaining: cadens (deferred, 149-file untracked scaffold), llm-benchmarks, home-dir, aedist -docs/-experiments/-slides
 2026-06-08T12:43Z claude note decomposed into a tracking ticket: remaining-repo sweep → child 0235, cadens (deferred) → child 0236. This ticket stays open until both children close. Body restructured as a tracker.
+2026-06-08T13:05Z claude note reversed the 0235/0236 split (author call): those children described work in OTHER repos but lived in IDH's store, where the destination-repo session never looks. Per AGENTS.md tickets are per-repo; cross-repo work is filed in the destination repo (or a forge issue), not parked here. Removed 0235/0236; folded the remaining-repo sweep back into a self-contained per-repo checklist above. The actionable per-repo ticket, when a substantive change is needed, is created in that repo at sweep time.
 --- body ---
 ## Context
 
@@ -25,48 +26,47 @@ The wrapper test: does the skill add logic beyond invoking one tool?
 If not, it is command aliasing — replace with an instruction line and
 delete. Skills are for multi-step orchestration only.
 
-## Tracker
+## Campaign tracker
 
-This is a **tracking ticket** (rules/workflow.md § tracking-ticket
-convention). The actual sweeps land as per-repo PRs in their own repos
-(agents are session-bound); this ticket stays open until every repo below
-is resolved and both children close. The wrapper test: does the skill add
-logic beyond invoking one tool? If not, it is command aliasing — replace
-with an instruction line and delete.
+This is a **campaign tracking ticket**: a multi-repo residue sweep. Each
+repo's sweep runs in a session rooted in *that* repo (agents are
+session-bound) and lands as a per-repo PR **in that repo** (`Ticket: none`
+there — the actionable ticket, if a substantive change is needed, is filed
+in the destination repo, not here). This ticket holds only the checklist and
+stays open until every repo below is resolved. The harness-repo portion was a
+real IDH child — [[0230]], CLOSED.
 
-Children:
-- [[0230]] — harness repo (skill audit, wrapper deletion, catalog, hook). CLOSED.
-- [[0235]] — remaining repos: llm-benchmarks, home-dir, aedist-docs/-experiments/-slides. OPEN.
-- [[0236]] — cadens (deferred; blocked on 149-file untracked scaffold). OPEN.
+The wrapper test: does the skill add logic beyond invoking one tool? If not,
+it is command aliasing — replace with an instruction line and delete. Residue
+patterns to grep: `.claude/skills/ticket-*`, `%erg v1`, `Status:` mutation
+guidance, `tickets/tools/go`.
 
-Per-repo status:
+Per-repo checklist:
 
 | Repo | Status |
 |------|--------|
-| padme | done (PRs #5–#7) |
-| fuzzy-corpus | done (#60) |
-| Oeconomia-Climate-finance | done (#794) |
-| aedist-technical-report | done (#783) |
-| chemin-de-voix | clean |
-| git-erg | clean |
-| .claude (harness) | done (child 0230) |
-| llm-benchmarks | pending → 0235 |
-| home-dir | pending → 0235 |
-| aedist-docs | pending → 0235 |
-| aedist-experiments | pending → 0235 |
-| aedist-slides | pending → 0235 |
-| cadens | deferred → 0236 |
-| Climate-finance | not yet assessed (assess under 0235) |
+| padme | [x] done (PRs #5–#7) |
+| fuzzy-corpus | [x] done (#60) |
+| Oeconomia-Climate-finance | [x] done (#794) |
+| aedist-technical-report | [x] done (#783) |
+| chemin-de-voix | [x] clean |
+| git-erg | [x] clean |
+| .claude (harness) | [x] done (child 0230) |
+| llm-benchmarks | [ ] pending |
+| home-dir | [ ] pending |
+| aedist-docs | [ ] pending |
+| aedist-experiments | [ ] pending |
+| aedist-slides | [ ] pending |
+| Climate-finance | [ ] assess (separate repo from Oeconomia-Climate-finance, or alias?) |
+| cadens | [ ] deferred — blocked on 149-file untracked scaffold (needs author baseline decision) |
 
 ## Test
 
 For each swept repo: grep transcript showing zero hits for the residue
-patterns (`.claude/skills/ticket-*`, `%erg v1`, `Status:` mutation
-guidance, `tickets/tools/go`), or a merged removal PR.
+patterns above, or a merged removal PR in that repo. Record the outcome
+(done / clean / PR#) in this ticket's log.
 
 ## Exit criteria
 
-- [x] Child [[0230]] (harness repo) closed
-- [ ] Child [[0235]] (remaining repos) closed
-- [ ] Child [[0236]] (cadens) closed
-- [ ] Every padme repo in the table above resolved (done / clean / justified)
+- [x] Harness-repo child [[0230]] closed
+- [ ] Every repo in the checklist above resolved (done / clean / justified)
