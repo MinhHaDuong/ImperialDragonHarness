@@ -12,6 +12,15 @@
 # real `git commit` invocations.
 set -euo pipefail
 
+# Neutralize ambient CI markers and any inherited override so the refusal
+# cases are deterministic. The guard intentionally skips when CI / GITHUB_ACTIONS
+# is set (the ticket excludes CI), and GitHub Actions runners always export
+# GITHUB_ACTIONS=true — without scrubbing them here, every "should refuse"
+# case would silently pass-through under CI and the suite would fail only on
+# the runner, not locally. The override sub-cases re-set CI/ALLOW_MAIN_COMMIT
+# inline for the one invocation that exercises them.
+unset CI GITHUB_ACTIONS ALLOW_MAIN_COMMIT 2>/dev/null || true
+
 cd "$(dirname "$0")/.."
 REPO_ROOT="$PWD"
 HOOK_SRC="$REPO_ROOT/hooks/pre-commit"
