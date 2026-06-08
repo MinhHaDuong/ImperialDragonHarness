@@ -2,11 +2,14 @@
 Title: Upstream git-erg: fix hook-template error text 'Run make build first'
 Created: 2026-06-06
 Author: MinhHaDuong
+Closed: autoclosed — PR #354
 
 --- log ---
 2026-06-06T13:28Z MinhHaDuong created
 
 2026-06-06T14:46Z claude note related find during raid: primary-checkout main diverged (dream commit e3dfb27 unpushed, local-only); rescued via branch dream-aedist-memory-20260606 + PR #334, main realigned to origin. Root cause class: a skill committing to local main without push/PR — same family as beat checkout model
+2026-06-08T13:40Z claude note upstream half landed in git-erg as ticket 0242 (PR #301 + rebuilt bootstrap binary 8e825b3); the filing ticket lives in git-erg's own store, not here. This PR completes the IDH half: re-vendored tickets/erg from git-erg origin/main (strings clean, erg check passes). Corrected the stale "CI rebuilds" action note — IDH's binary is tracked/hand-committed, refreshed on a feature PR. Closes 0231.
+2026-06-08T13:16Z Integration Test closed — autoclosed — PR #354
 --- body ---
 ## Context
 
@@ -36,16 +39,24 @@ The durable fix therefore belongs upstream in git-erg, not in IDH.
 2. Replace with project-agnostic wording, e.g. "erg binary not found. Refresh
    the vendored binary (git pull if committed) or build from the git-erg
    source project." Avoid assuming a `make build` target in the consuming repo.
-3. Rebuild the git-erg binary; re-vendor `tickets/erg` into IDH on a main-only
-   merge (CI rebuilds after merge — do not commit the binary on a feature PR).
+3. Rebuild the git-erg binary; re-vendor `tickets/erg` into IDH by copying
+   git-erg's committed bootstrap binary onto a feature branch and committing it.
+   (Correction: IDH's `tickets/erg` is **tracked and hand-committed** — it is
+   NOT gitignored and NOT CI-built; CI only runs `erg check`. The original
+   "CI rebuilds after merge — do not commit on a feature PR" note was a
+   misconception. The binary is refreshed like any tracked file, on a feature
+   PR; the 0234 main-commit guard does not block feature-branch commits.)
 
 ## Test
 
-- `strings <new erg binary> | grep "Run 'make build' first"` returns nothing.
+- `strings tickets/erg | grep -c "Run 'make build' first"` returns 0.
+- `./tickets/erg check tickets/` still passes (the swapped binary is functional).
 
 ## Exit criteria
 
-- [ ] git-erg hook template no longer says "Run 'make build' first".
-- [ ] `erg install --hooks` in a vendored-binary project no longer reintroduces
-      the stale text.
-- [ ] IDH re-vendored binary carries the corrected template.
+- [x] git-erg hook template no longer says "Run 'make build' first"
+      (git-erg ticket 0242, PR #301; rebuilt bootstrap binary 8e825b3).
+- [x] `erg install --hooks` in a vendored-binary project no longer reintroduces
+      the stale text (the rebuilt binary's embedded template is agnostic).
+- [x] IDH re-vendored binary carries the corrected template (this PR;
+      `strings tickets/erg` → 0 stale hits, agnostic text present).
