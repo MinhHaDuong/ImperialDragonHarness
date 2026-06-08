@@ -11,6 +11,7 @@ Author: claude
 2026-06-08T10:16Z claude note erg-footprint sweep executed via /scry 2026-06-08: fuzzy-corpus #60, Oeconomia-Climate-finance #794, aedist #783, padme #19 (CLAUDE.md to @tickets/AGENTS.md, deleted ticket-* skills + stale rules/tickets.md). chemin-de-voix/git-erg/.claude verified clean. Those PRs were filed Ticket:none — linking retroactively. Remaining: cadens (deferred, 149-file untracked scaffold), llm-benchmarks, home-dir, aedist -docs/-experiments/-slides
 2026-06-08T12:43Z claude note decomposed into a tracking ticket: remaining-repo sweep → child 0235, cadens (deferred) → child 0236. This ticket stays open until both children close. Body restructured as a tracker.
 2026-06-08T13:05Z claude note reversed the 0235/0236 split (author call): those children described work in OTHER repos but lived in IDH's store, where the destination-repo session never looks. Per AGENTS.md tickets are per-repo; cross-repo work is filed in the destination repo (or a forge issue), not parked here. Removed 0235/0236; folded the remaining-repo sweep back into a self-contained per-repo checklist above. The actionable per-repo ticket, when a substantive change is needed, is created in that repo at sweep time.
+2026-06-08T13:20Z claude note read-only residue recon of the remaining repos: llm_benchmarks clean (no erg), Climate_finance clean for this scope (no wrapper skills; one v1 closed ticket only). home-dir + aedist -docs/-experiments/-slides do not exist on this machine (over-enumerated). cadens is the lone residue, but it is UNTRACKED/local-only on cadens main (half-applied adoption scaffold) — the 149-file deferral is stale; remaining work is an author decision on cadens's adoption shape, not a mechanical sweep. Checklist updated accordingly.
 --- body ---
 ## Context
 
@@ -52,13 +53,11 @@ Per-repo checklist:
 | chemin-de-voix | [x] clean |
 | git-erg | [x] clean |
 | .claude (harness) | [x] done (child 0230) |
-| llm-benchmarks | [ ] pending |
-| home-dir | [ ] pending |
-| aedist-docs | [ ] pending |
-| aedist-experiments | [ ] pending |
-| aedist-slides | [ ] pending |
-| Climate-finance | [ ] assess (separate repo from Oeconomia-Climate-finance, or alias?) |
-| cadens | [ ] deferred — blocked on 149-file untracked scaffold (needs author baseline decision) |
+| llm_benchmarks | [x] clean — no tickets/ dir, no .claude erg footprint; repo does not use erg |
+| Climate_finance | [x] clean — no wrapper skills / tools-go / rules-tickets; CLAUDE.md→@AGENTS.md (root + tickets/AGENTS.md both present, valid variant); one %erg v1 *closed* ticket (cosmetic, optional `erg migrate`) |
+| home-dir repo | [x] n/a — no such repo on this machine |
+| aedist-docs / -experiments / -slides | [x] n/a — no such repos here; only aedist-technical-report exists (swept #783) |
+| cadens | [ ] **author decision** — residue (.claude/skills/ticket-{close,new,ready}, rules/tickets.md, CLAUDE.md) is UNTRACKED/local-only on cadens main, not committed: a half-applied adoption scaffold. The "149-file" deferral is stale. Decide: drop the untracked wrappers (no PR), or adopt canonically (commit .claude with CLAUDE.md=@tickets/AGENTS.md, no wrapper skills). |
 
 ## Test
 
