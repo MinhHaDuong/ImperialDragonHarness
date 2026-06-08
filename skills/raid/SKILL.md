@@ -18,7 +18,7 @@ and enforcing invariants.
 
 **Deliverable work ≥60%, tooling ≤40%.** If two consecutive tickets were tooling, the next must advance a deliverable. Track in session log.
 
-**Deliverables**: items in `STATE.md` under current milestone — papers, slides, reading notes, figures, responses to reviewers. Tooling: tests, hygiene, refactoring, harness improvements.
+**Deliverables**: whatever the project's north star names as its product. For a *science* project that's papers, slides, reading notes, figures, responses to reviewers — and tooling (tests, hygiene, refactoring) is the supporting infrastructure the rule throttles. For a *tooling/library* project (e.g. this harness, git-erg) the product **is** the skills, rules, tests, and helpers — that work is the deliverable, not the throttled category, and the ratio does not apply. Read "deliverable" off `STATE.md`'s north star, never off a fixed papers/slides list.
 
 **Escape hatch**: if `make check-fast` fails and blocks all deliverable work, tooling may exceed 40%. Document why.
 
