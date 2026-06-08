@@ -2,6 +2,7 @@
 Title: Delete thin CLI-wrapper skills; sweep all padme repos for residue
 Created: 2026-06-06
 Author: claude
+Closed: autoclosed — PR #355
 
 --- log ---
 2026-06-06T11:43Z claude created
@@ -13,6 +14,7 @@ Author: claude
 2026-06-08T13:05Z claude note reversed the 0235/0236 split (author call): those children described work in OTHER repos but lived in IDH's store, where the destination-repo session never looks. Per AGENTS.md tickets are per-repo; cross-repo work is filed in the destination repo (or a forge issue), not parked here. Removed 0235/0236; folded the remaining-repo sweep back into a self-contained per-repo checklist above. The actionable per-repo ticket, when a substantive change is needed, is created in that repo at sweep time.
 2026-06-08T13:20Z claude note read-only residue recon of the remaining repos: llm_benchmarks clean (no erg), Climate_finance clean for this scope (no wrapper skills; one v1 closed ticket only). home-dir + aedist -docs/-experiments/-slides do not exist on this machine (over-enumerated). cadens is the lone residue, but it is UNTRACKED/local-only on cadens main (half-applied adoption scaffold) — the 149-file deferral is stale; remaining work is an author decision on cadens's adoption shape, not a mechanical sweep. Checklist updated accordingly.
 2026-06-08T14:05Z claude note cadens adopted canonically (author go-ahead): removed the untracked wrapper scaffold and wired CLAUDE.md to @tickets/AGENTS.md (cadens PR #45, merged). All checklist repos now resolved — closing 0227.
+2026-06-08T13:24Z Integration Test closed — autoclosed — PR #355
 --- body ---
 ## Context
 
