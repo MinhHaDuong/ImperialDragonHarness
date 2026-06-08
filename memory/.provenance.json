@@ -1077,7 +1077,7 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:08Z",
       "promoted": false
     },
     "padme-llm-backend-llama-server": {
@@ -1085,7 +1085,7 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
       "promoted": false
     },
     "project_pending_reboot_kernel_635": {
@@ -1101,7 +1101,7 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
       "promoted": false
     },
     "feedback_languages": {
@@ -1109,7 +1109,7 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
       "promoted": false
     },
     "feedback_no_wrapper_skills": {
@@ -1117,7 +1117,7 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
       "promoted": false
     },
     "feedback_worktree_stale_after_agent": {
@@ -1125,7 +1125,23 @@
         "-home-haduong-padme"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
-      "last_confirmed": "2026-06-08T11:08:32Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
+      "promoted": false
+    },
+    "project-nvidia-580-hold-posture": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T22:31:11Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
+      "promoted": false
+    },
+    "feedback_host_file_writes": {
+      "projects": [
+        "-home-haduong-padme"
+      ],
+      "first_seen": "2026-06-08T22:31:11Z",
+      "last_confirmed": "2026-06-08T22:31:11Z",
       "promoted": false
     }
   }
