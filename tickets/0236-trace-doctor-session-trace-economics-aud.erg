@@ -8,6 +8,7 @@ Author: claude
 2026-06-10T14:05Z claude note children updated: 0237/0239 closed, 0240 filed (phase 2b)
 2026-06-10T15:08Z claude note 0240 closed (PR #370); 0243 filed (phase 3, H1-H13 fixed)
 2026-06-10T15:38Z claude note 0243 closed (PR #374); 0244 filed (phase 4)
+2026-06-10T16:40Z claude note 0244 executed: addressable $2356/28d exact; H10 confound confirmed (~4x); H12/H5 dissolved; phase-5 shortlist fixed
 2026-06-10T15:23Z claude note phase 3 complete (0243, PR #374) — report docs/trace-hypotheses-2026-06.md: 13/13 hypotheses resolved, ranked $/week list; H4/H5/quality routed to phase 4; phase 4-5 filing unblocked
 --- body ---
 ## Context
@@ -115,7 +116,9 @@ Children:
 - 0239 — phase 2a missed compact/clear opportunity detector (closed)
 - 0240 — phase 2b LLM open-coding of the stratified trace sample (closed)
 - 0243 — phase 3 hypothesis testing on the full census (closed)
-- 0244 — phase 4 counterfactual accounting of ranked recommendations
+- 0244 — phase 4 counterfactual accounting (closed)
+- (phase 5 to be filed: A/B shortlist from 0244 = model right-sizing
+  of long mains + verification convergence, quality-guarded)
 - (phases 4-5 to be filed once 0243 resolves H1-H13; counterfactual
   accounting and targeted A/B consume its ranked recommendation list)
 
