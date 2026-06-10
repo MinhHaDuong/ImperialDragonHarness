@@ -10,6 +10,7 @@ Author: claude
 2026-06-10T15:38Z claude note 0243 closed (PR #374); 0244 filed (phase 4)
 2026-06-10T15:23Z claude note phase 3 complete (0243, PR #374) — report docs/trace-hypotheses-2026-06.md: 13/13 hypotheses resolved, ranked $/week list; H4/H5/quality routed to phase 4; phase 4-5 filing unblocked
 2026-06-10T16:40Z claude note 0244 executed: addressable $2356/28d exact; H10 confound confirmed (~4x); H12/H5 dissolved; phase-5 shortlist fixed
+2026-06-10T20:09Z claude note 0245 filed (phase 5 A/B); remaining beyond children: trace-doctor skill assembly + phase-4 adopt items #1/#3
 --- body ---
 ## Context
 
@@ -117,10 +118,14 @@ Children:
 - 0240 — phase 2b LLM open-coding of the stratified trace sample (closed)
 - 0243 — phase 3 hypothesis testing on the full census (closed)
 - 0244 — phase 4 counterfactual accounting (closed)
-- (phase 5 to be filed: A/B shortlist from 0244 = model right-sizing
-  of long mains + verification convergence, quality-guarded)
-- (phases 4-5 to be filed once 0243 resolves H1-H13; counterfactual
-  accounting and targeted A/B consume its ranked recommendation list)
+- 0245 — phase 5 targeted A/B: model right-sizing of long mains +
+  verification convergence, quality-guarded
+
+Not owned by any child (integration-review checklist):
+- `trace-doctor` skill assembly (the tracker's deliverable)
+- phase-4 adopt items: #1 micro-turn discipline rule in
+  rules/workflow.md, #3 wire `trace-compact-audit.py` into the monthly
+  trace-doctor run (folds into skill assembly)
 
 ## Exit criteria
 
