@@ -10,20 +10,32 @@ Author: claude
 ## Context
 
 A spot analysis of one live raid wave in aedist-technical-report (session
-96516ff3, 2026-06-10) measured ~$234 for a single wave, with this cost
-profile across 15 agents:
+96516ff3, 2026-06-10) measured this cost profile across 16 agent traces
+(deduped by message id, all-Opus pricing — an UPPER bound, since ~20% of
+messages were actually Sonnet):
 
-| Category     | Tokens | ~$  |
-|--------------|--------|-----|
-| cache_read   | 77.5 M | 116 |
-| cache_write  | 4.6 M  | 86  |
-| output       | 399 K  | 30  |
-| fresh input  | 136 K  | 2   |
+| Category     | Tokens | ~$ (upper) |
+|--------------|--------|------------|
+| cache_read   | 57.5 M | 86         |
+| cache_write  | 2.4 M  | 45         |
+| output       | 264 K  | 20         |
+| fresh input  | 74 K   | 1          |
+
+Total ~$152 upper bound, plausibly ~$130-140 with the real model mix.
+METHOD WARNING (found by skeptical review of this very ticket, the
+first version of which claimed $234): one assistant message spans
+multiple JSONL rows — one per content block — each repeating the same
+`message.usage` object. Summing usage per ROW overstates ~2.7x (248
+usage rows vs 96 unique message ids in the main trace). Any accounting
+MUST dedupe by `message.id`. This bug is now a mandatory fixture case
+in 0237.
 
 Suspected waste patterns (all N=1, hence this ticket): cache_read grows
 ~quadratically with agent turn count; a READ-ONLY recon agent drifted to
-113 turns / ~$9; /gaze cost appears independent of diff size; per-agent
-prompt preambles re-cache-write the same project context.
+113 turns; /gaze cost appears independent of diff size; per-agent
+prompt preambles re-cache-write the same project context. (Per-agent $
+figures from the first analysis pass are tainted by the row-vs-message
+bug above; rankings likely survive, magnitudes do not.)
 
 N=1 is not evidence. The author directed a systematic study — "like
 skill-doctor, but bigger": census the traces, derive empirical

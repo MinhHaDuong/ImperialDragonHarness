@@ -53,40 +53,62 @@ detection. This ticket productionizes that idea.
 3. Session-level rollup (second CSV or JSON section): entry skill if
    detectable from the first Skill call or prompt prefix, agent count,
    total $, wall-clock span.
-4. Schema tolerance: count and report skipped/unparseable lines per
+4. CRITICAL — dedupe usage by `message.id`: one assistant message spans
+   multiple JSONL rows (one per content block), each repeating the same
+   `usage` object. Summing per row overstates ~2.7x (measured: 248
+   usage rows vs 96 unique message ids in one main trace). Count one
+   usage per unique message id. Also skip `<synthetic>` model records
+   (harness-injected, no real API cost) but count them in a reported
+   `synthetic_messages` column.
+5. Schema tolerance: count and report skipped/unparseable lines per
    file — no silent truncation. Parser must not crash on records
    missing `message` or `usage`.
-5. Run the census over the live corpus; commit the summary report
+6. Run the census over the live corpus; commit the summary report
    (markdown, distributions + top-20 most expensive agents) under
    `docs/trace-census-2026-06.md`. Do NOT commit the raw CSV (it may
    embed prompt fragments; the report carries only aggregates).
-6. Pricing table: per-model $/Mtok constants for opus/sonnet/haiku/fable
+7. Pricing table: per-model $/Mtok constants for opus/sonnet/haiku/fable
    current generations, with an "unknown model" fallback that flags the
-   row rather than guessing.
+   row rather than guessing. Price each MESSAGE by its own `model`
+   field — sessions mix models (measured: 129 of 649 messages in the
+   reference session were Sonnet under an Opus orchestrator).
 
 ## Test
 
-- `tests/test_trace_stats.py` first (red): feed a fixture JSONL (3-4
-  hand-written records: one assistant+usage, one tool_use Bash repeated
-  twice, one malformed line) and assert: token sums, repeated-command
-  count = 2, malformed-line count = 1. Pure unit test, no markers.
+- `tests/test_trace_stats.py` first (red): feed a fixture JSONL with
+  hand-written records covering: one assistant message whose usage
+  object is REPEATED across 3 rows with the same `message.id` (must be
+  counted once — this is the bug that inflated the motivating analysis
+  2.7x), one `<synthetic>` model record (excluded from $, counted in
+  synthetic_messages), one tool_use Bash repeated twice, one malformed
+  line. Assert: token sums equal the single-counted values,
+  repeated-command count = 2, malformed-line count = 1. Pure unit
+  test, no markers.
 - CLI flag presence via source inspection, not subprocess --help.
 
 ## Verification
 
 - [ ] `uv run python scripts/trace-stats.py --days 28 --json` runs over
-      the live corpus without crashing and reports >2000 sessions parsed
+      the live corpus without crashing and reports >2000 trace FILES
+      parsed (the 28-day corpus had ~2,305 files on 2026-06-10; files
+      include subagent traces — sessions are far fewer; report both
+      counts separately)
 - [ ] Skipped-line count is reported and <5% of total lines
-- [ ] Spot-check: totals for session 96516ff3 (aedist) match the
-      2026-06-10 manual analysis (~399K output, ~77.5M cache_read
-      across main+14 subagents)
+- [ ] Spot-check on session 96516ff3 (aedist): the script's per-file
+      unique-message-id count must be well below its raw usage-row
+      count (248 rows -> 96 ids in the main trace at review time),
+      proving dedupe is active; deduped totals should be in the
+      neighborhood of the corrected 2026-06-10 review numbers (~264K
+      output, ~57.5M cache_read across main+15 subagents) — the
+      session was still LIVE when measured, so match approximately and
+      document the gap
 - [ ] `make check-fast` passes
 
 ## Invariants
 
 - Zero LLM/API calls in the script (pure I/O helper — see
   feedback_skill_architecture memory)
-- No hardcoded /home/user paths (check-agnostic)
+- No hardcoded absolute home paths — use `~/...` (check-agnostic)
 - Raw trace content (prompts, file contents) never lands in committed
   artifacts — aggregates only
 
