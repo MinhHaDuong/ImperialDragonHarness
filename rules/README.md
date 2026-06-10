@@ -10,6 +10,7 @@ files on demand when their scope signal applies to your task.
 | [state.md](./state.md) | skill-list: `/lair` | STATE.md format spec — sections, length cap, pruning rules. |
 | `tickets/AGENTS.md` (project-level) | skill-list: `ticket-*`, `hunt` | Ticket format rules injected via `@tickets/AGENTS.md` in project CLAUDE.md — no global rules file needed. |
 | [coding-python.md](./coding-python.md) | condition: project contains `*.py` (or `pyproject.toml` / `setup.py`) | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
+| [coding-bash.md](./coding-bash.md) | condition: project contains `*.sh` | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 
 Compliance is verified ex post by the `verify-adherence` skill — this
 index is the single source of truth on when each rule file applies.

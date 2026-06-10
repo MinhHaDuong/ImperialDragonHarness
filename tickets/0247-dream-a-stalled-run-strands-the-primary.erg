@@ -1,0 +1,68 @@
+%erg 0.1
+Title: dream: a stalled run strands the primary checkout on the consolidation branch
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T22:18Z Integration Test created
+
+--- body ---
+## Context
+The 2026-06-09 nightly dream run on `-home-haduong-padme` committed its
+consolidation (9a59678) on `dream-consolidate-2026-06-09` in the primary
+checkout and stalled before SKILL.md step 8 (push + open PR). The
+checkout sat stranded off main with a dirty tree for two days:
+
+- the daily-pull timer could not update the checkout (sessions were
+  injected stale rules/ and MEMORY.md the whole time);
+- beat's dirty-tree pre-flight blocked every cycle, so housekeeping's
+  orphan adoption stopped and memory drift accumulated invisibly
+  (gitignore whitelist hides new entry files from status);
+- the consolidation itself later landed independently as PR #359,
+  making the stranded commit redundant but leaving the wreck in place.
+
+Second occurrence: the reflog shows `rescue/dream-git-erg-memory-20260608`
+the previous day. The drift was salvaged by hand both times (this time:
+PR carrying this ticket). 0241 fixes the PR body content; this ticket is
+about the run dying between commit and push and what it leaves behind.
+
+## Relevant files
+- `skills/dream/SKILL.md` — step 8 (commit + push + PR) and overall run
+  structure; no recovery path today
+- `skills/nightbeat-supervisor/SKILL.md` — cycle-outcome watcher; does
+  not currently check the primary checkout's branch/tree state
+- `scripts/` — candidate home for a shared "checkout is on main and
+  clean" probe
+
+## Actions
+1. Make dream's exit path unconditional: after the consolidation commit,
+   push + open the PR immediately; on any failure after branching,
+   switch the primary checkout back to main before exiting (the branch
+   keeps the commit — losing the *checkout position* is the damage, not
+   the work).
+2. Evaluate running dream in a worktree like every other writing skill
+   (memory files live inside the repo, so a worktree sees its own copy;
+   the PR flow is identical and the primary checkout is never moved).
+   If rejected, record why in the skill.
+3. nightbeat-supervisor: at each cycle start, probe the primary checkout
+   — not on main, or dirty beyond settings.json → diagnose/repair or
+   escalate instead of letting beats fail silently for days.
+
+## Test
+- Adherence: SKILL.md step 8 contains the push-or-restore contract
+  (string match), same style as the 0241 decision-table check.
+- Supervisor: unit test for the probe (fixture repo on a stale branch →
+  flagged; on clean main → silent).
+
+## Verification
+- [ ] A dream run killed between commit and push leaves the primary
+      checkout on main, clean, with the branch intact
+- [ ] Supervisor cycle on a stranded checkout reports/repairs it
+
+## Invariants
+- Consolidation commits are never lost (branch preserved)
+- `make check` passes
+
+## Exit criteria
+- [ ] No dream exit path leaves the primary checkout off main
+- [ ] Stranded-checkout state is detected within one nightbeat cycle

@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [No ruff ping-pong](feedback_no_ruff_ping_pong.md) — PostToolUse ruff hook fires after EVERY Edit; batch related edits so no intermediate state has unused imports; write new files complete in one Write
 - [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — Author directive: skills auto-discover repo specifics at run start (0184 adapter precedent); explicit inputs are optional overrides; also resolve missing args from authoritative state (branch→MR) and never fabricate example IDs in refusal messages (wrong-PR anchoring, 2026-06-10)
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'; worktrees cut from the SESSION repo — cross-repo skills need a session in the target repo; probe before expensive fan-outs
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — Skill frontmatter model: does NOT propagate to spawned children (Agent resolves to session model); per-invocation `model` (enum sonnet|opus|haiku|fable) is the only reliable lever; `effort` is not an Agent/Workflow launch param at all; CLAUDE_CODE_SUBAGENT_MODEL is a precedence-#1 cap
@@ -38,3 +39,4 @@
 - [Big artifacts go to /data/models](project_data_disk_model_store.md) — LLM weights/GGUFs never in homedir; /data/models/gguf/<family>/ is the writable store; LLAMA_CACHE=/data/models/cache is intended config — fix perms, don't redirect to homedir
 - [Primary-checkout staleness gates skills](feedback_primary_checkout_staleness_gates_skills.md) — Skills resolve from ~/.claude; merged skill changes are inert until that checkout pulls; check it for divergence (unpushed/uncommitted local-main work) before judging new-mechanism behavior
 - [Harness is the deliverable](feedback_harness_is_the_deliverable.md) — IDH/git-erg: the harness IS the product; the raid balance rule (deliverable ≥60%/tooling ≤40%) is for science projects only — no "balance debt" for harness work here
+- [padme PYTEST_ADDOPTS is invalid](project_padme_pytest_addopts_invalid.md) — /etc/profile.d/dev-cache.sh exports --cache-dir (not a pytest flag); every bare pytest aborts; override with -o cache_dir=...; permanent fix lives in padme repo
