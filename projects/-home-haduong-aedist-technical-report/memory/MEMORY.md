@@ -9,15 +9,18 @@
 - Stale pre-fix PDFs: after patching a plot script, always rebuild before committing — PDFs in working tree may predate the fix; size should grow when adding content, shrink signals regression.
 - Conference delivered 2026-05-27 (Econom'IA 2026 at Thema/Cergy) — paper writing phase now open; H1-H4 and OSF preregistration relevant again for journal submission.
 - The arXiv preprint = slides/manuscript/main.md; report.tex is internal ("no future"). See [[project-preprint-target-main-md]].
-- Reference v2.1 (173 plants, extensions standalone) adopted 2026-06-06; master replay pending (0458); never hardcode the reference size — use reference_plant_count(). See [[project-reference-v2-adopted]].
+- Reference = **177 plants (v2.4)**; manuscript reconciled to 177 by 0501/#909 (2026-06-10) — no longer stale; `reference_plant_count()` is the source of truth, never hardcode the size. See [[project-reference-v2-adopted]].
+- User hedges ("typically", "often") = curatorial judgment, NOT mechanical rules — don't carve absolutes. Reference boundary: a project = proposed development (typically a power complex), any status, any channel; a potential site (E542 candidate location) is excluded; the decision is the compiler's. See [[feedback-preserve-hedges-not-absolutes]].
 
 ## Entries
 - [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 deferred (pre-registered, never close-silently); H5 wiki count in Annex C (5/20 optimised violations); Annex E = recognition matrix
 - [Reference v2.1 adopted](project_reference_v2_adopted.md) — 173 plants PR #780 (extensions standalone); master replay pending (0458); ratchet 0447
 - [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
+- [Peek/kill sibling sessions](reference_peek_kill_sibling_sessions.md) — no cross-session viewer; peek via `tail -f` of `~/.claude/projects/<proj>/*.jsonl`; map PID→worktree with `readlink /proc/<pid>/cwd` (the one matching your cwd is YOU — don't kill it); kill only idle+merged+no-lock; remove worktree after process dead
 
 - [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
 - [Make stamp discipline](feedback_make_stamp_discipline.md) — dynamic multi-output stamps (armN_flat) are CORRECT; single-output-dressed-as-stamp is the hack (exp1_cross_eval, 0460); pair conversion with .DELETE_ON_ERROR (was build-wide missing; 0461 generalizes)
+- [Greedy-glob class](project_greedy_glob_class.md) — CLOSED (0495/0496/0499); run-dir consumers skip reconciliation_ PREFIX + _filtered.csv SUFFIX (the real filtered artifact is a suffix not a filtered_ prefix); standing test test_no_colocated_output_leak.py; verify artifact name against the writer not the ticket premise
 - [Archive move: outputs/ is record-only](project_archive_move_record_only_outputs.md) — raw replies in archive/outputs/ since edda724b; rules/scripts reading raw data must point at archive; tab_decomposition_fix FROZEN (0424)
 - [Concurrent author-session raids](feedback_concurrent_author_session_raids.md) — re-verify ticket open/closed on origin/main before every execute launch; never touch sibling-session worktrees; don't bundle whole tickets/ snapshots into content PRs
 - [Pre-commit hook commit ordering](feedback_precommit_hook_commit_ordering.md) — adherence hook runs working-tree tests against the index; order multi-commit series green, slice with `git commit -- <paths>`
@@ -25,6 +28,11 @@
 - [erg close bookkeeping conflict](feedback_erg_close_bookkeeping_conflict.md) — parallel closes of sibling blockers conflict in the THIRD ticket's Blocked-by lines; keep both notes, drop both headers
 - [quickpr limitations](feedback_quickpr_limitations.md) — no renames/deletions; restoring the starting branch reverts working-tree edits
 - [Parallel push during investigation](feedback_parallel_push_during_investigation.md) — always branch from `origin/main` after fetch, not local HEAD; user may push directly while agent investigates
+- [Worktree agent env leak](feedback_worktree_agent_env_leak.md) — isolation:worktree agent pointed at primary repo's gitignored .env leaked file edits to primary checkout; copy secret INTO worktree, check `git -C <primary> status` after
+- [Raid wave stale base](feedback_raid_wave_stale_base.md) — dependent wave N+1 agent based off stale local main (pre-dep-merge) silently reverts the dependency; verify `merge-base --is-ancestor <dep-sha> <new-branch>` before content work
+- [Concurrent pipelines, shared tickets](feedback_concurrent_pipelines_shared_tickets.md) — 2026-06-10 root cause: terminal /raid + claude.ai/code web session worked same ticket store, no lock; CLI + harness exonerated; fix = fetch-fresh base, rebase-before-merge, no-revert-closed guard, check worktrees+procs before spawning
+- [Tactical editorial round 0522](project_tactical_editorial_round_0522.md) — EXECUTED 2026-06-10: anchors blessed, whole-MS pass shipped as PR #935 (awaiting author sign-off); spine = "constraint is data not model"
+- [Conversation ≠ manuscript](feedback_conversation_not_manuscript.md) — author's in-session questions are for the agent's eyes only, never insert into prose; voice: never "accord with", prefer plain verbs
 
 - [Argparse defaults drift](feedback_argparse_defaults_drift.md) — when Makefile output paths change, update argparse defaults + docstrings in generating scripts too; grep src/ before declaring done
 - [Chore branch + data commits](feedback_rebase_chore_data_branch.md) — don't mix data commits (CSV scoring, figure rebuilds) onto chore/ base branches; causes dense rebase conflicts at merge
@@ -103,6 +111,8 @@
 - [git existence check](feedback_git_existence_check.md) — `git ls-tree ref path && echo` false-positives; use `git cat-file -e ref:path` to test a path exists at a ref
 - [Squash merge disabled](project_squash_merge_disabled.md) — disabled 2026-05-25; use `--merge` / `merge_method=merge` everywhere; git merge-base works correctly for new PRs
 - [Use auto-merge when CI blocks](feedback_use_auto_merge.md) — erg-pr-merge fails on pending CI? → `gh pr merge N --merge --auto`; don't poll, move on
+- [Auto-merge bypasses ticket close](feedback_auto_merge_bypasses_ticket_close.md) — `gh pr merge --auto` merges but leaves the **Ticket:** OPEN; only /merge (erg-pr-merge) closes it; close manually via chore branch after (0492/#888/#889)
+- [erg close does not auto-archive](feedback_erg_close_no_auto_archive.md) — `erg close` writes Closed: header but does NOT git-mv to closed/; erg check warns; git mv in same commit (7 piled up by 2026-06-09)
 - [PR without Ticket line](feedback_pr_no_ticket_line.md) — follow-on PRs with no **Ticket:** line: skip erg-pr-merge, go straight to `gh api .../merge`; rebase if `strict: true` branch protection
 - [Plot axis: ask count vs ratio](feedback_plot_axis_ask_count_vs_ratio.md) — before implementing a derived Y-axis metric, ask if user wants absolute count or ratio; ratios have denominator edge cases
 - [exp2_interactive_smoke PYTHONPATH](feedback_exp2_interactive_smoke_pythonpath.md) — requires `PYTHONPATH=.` prefix; `experiments/` is not an installed package
@@ -116,3 +126,5 @@
 - [Bash cd-to-primary-repo trap](feedback_bash_cd_primary_repo_trap.md) — in a worktree session, prefixing Bash with `cd /home/haduong/<repo>` routes git/erg/commit to the PRIMARY repo on main; run git bare, never `git add -A` with untracked data present
 - [Figure verify: worst-case panel](feedback_figure_verify_worst_case_panel.md) — when checking a multi-panel figure for title/label overlap, render+inspect the longest/two-line-title panel, not an easy representative; structural tests give no visual signal
 - [Matplotlib annotation autoscale](feedback_matplotlib_annotation_autoscale.md) — ax.plot leader lines outside the data area silently expand axes limits, desyncing multi-panel rows; pin set_ylim after all artists; verify alignment by pixel-measuring separators
+- [Autonomous raid + cross-machine pickup](feedback_autonomous_raid_doudou_pickup.md) — "autonomous mode" + destination machine = full pipeline without pausing; merge+push everything for clean handoff
+- [Ticket premises are hypotheses](feedback_ticket_premises_are_hypotheses.md) — agent-authored ticket premises are often confidently wrong; the 483/486/487/488 raid overturned 3 of 4; verify against data before executing

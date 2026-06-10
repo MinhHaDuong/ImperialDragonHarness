@@ -9,9 +9,12 @@
 
 ## Entries
 
+- [systemd linked vs enabled](project-systemd-linked-vs-enabled.md) — deploy order: disable first, then ln -sf, never enable on-demand units; systemctl disable removes ALL symlinks including manual ln -sf ones
+
 - [Server management](project_server_management.md) — padme monitoring architecture: bash L2, python L3, rust L4 planned
 - [LLM backend: llama-server](padme-llm-backend-llama-server.md) — local inference is llama-server (llama.cpp) :8080 serving Qwen3.6-35B-A3B; ollama removed (0010); config + gotchas
 - [NVIDIA 580 hold posture](project-nvidia-580-hold-posture.md) — why padme pins proprietary 580 + the exact apt-mark hold set the quarterly baseline expects (HWE metas not bare; retire at 26.04)
+- [Secure Boot disabled / fwupd-MOK gotcha](project-secureboot-disabled-fwupd-mok.md) — SB off since 2026-06-10 (ticket 0041); fwupd firmware updates can de-trust the nvidia DKMS MOK → no GUI; MOK Manager renders on the boot GPU
 - [User profile](user_profile.md) — senior researcher, homelab sysadmin, KISS philosophy, prefers uv/apt-only
 - [Language preferences](feedback_languages.md) — bash for system scripts, python for LLM integration, rust for high-frequency infra
 - [No wrapper skills](feedback_no_wrapper_skills.md) — don't wrap self-documenting CLIs in skills; CLAUDE.md instructions + direct invocation
