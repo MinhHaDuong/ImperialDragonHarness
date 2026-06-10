@@ -35,4 +35,16 @@ close rogue PRs; (3) confirm the expected branch. Known benign tail
 (2026-06-05): a gaze fork may leave the session worktree detached or on the PR
 branch — re-switch, don't panic.
 
+**Merging while the primary holds the PR branch** (recipe validated on PR #359,
+2026-06-10): when the primary checkout sits on the PR branch (dirty, possibly
+owned by another live session), don't move its files. From a fresh worktree:
+(1) `git -C ~/.claude switch --detach` — frees the branch name in place, same
+commit, dirty files untouched; (2) `git switch --ignore-other-worktrees <branch>`
+in the worktree if the detach must be avoided (only safe when no commits will be
+added, e.g. `Ticket: none`); (3) after the mandatory pre-merge rebase, the old
+SHA the primary still sits on is no longer an ancestor of origin/main — verify
+merge equivalence with `git cherry origin/main <old-sha> <base>` (`-` prefix =
+patch already upstream), not `merge-base --is-ancestor`. The /roar pre-check
+hits the same false negative after any rebase-then-merge.
+
 See also: [[feedback_rogue_agent_pattern]], [[feedback_parallel_execute_branch_contamination]]
