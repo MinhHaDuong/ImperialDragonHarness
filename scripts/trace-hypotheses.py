@@ -97,6 +97,7 @@ def compute_all(all_rows: list[dict]) -> dict:
     )
     ts = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ts)
+    max_5m_pricing = max(ts.PRICING.values(), key=lambda p: p["cache_write_5m"])
     for r in rows:
         p = ts.resolve_pricing(r.get("model") or "")
         if p is None:
@@ -177,9 +178,18 @@ def compute_all(all_rows: list[dict]) -> dict:
         "H5": {
             "verdict": "needs-data",
             "note": "spawn-boundary redundancy needs per-message cache_creation; phase-4 extraction",
+            # Per-row family 5m write rate; unknown models priced at the
+            # fleet-max rate so the figure stays a true upper bound (the
+            # census has fable subagents, which bill 2x the opus rate).
             "subagent_cache_write_usd_upper": round(
                 sum(
-                    r["cache_creation_input_tokens"] * 6.25 / 1e6  # opus 5m upper
+                    r["cache_creation_input_tokens"]
+                    * (
+                        (ts.resolve_pricing(r.get("model") or "") or max_5m_pricing)[
+                            "cache_write_5m"
+                        ]
+                    )
+                    / 1e6
                     for r in subs
                 ),
                 2,

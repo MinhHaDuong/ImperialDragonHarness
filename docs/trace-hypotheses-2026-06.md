@@ -28,7 +28,7 @@ census — 1,790 agents, 309 sessions, $6,705 total (≈ $1,676/week). The
 | H2 | top-decile context concentration | cr/turn by cost decile: 24K (d1) → 161K (d10), 6.8×; log-log exponent 1.18 | **Supported** (as reframed; the quadratic form stays rejected) |
 | H3 | read-only agents drift past budget | 68 agents, $96, 1.4% of spend | **Confirmed-but-small** — deprioritize |
 | H4 | gaze cost independent of diff size | needs forge join (`--pr-stats`) | **Needs-data** → phase 4 |
-| H5 | spawn-boundary redundancy | subagent cache_write ≤ $572 upper; per-message overlap needs phase-4 extraction | **Plausible, needs-data** |
+| H5 | spawn-boundary redundancy | subagent cache_write ≤ $498 upper (each row at its family's 5m write rate — the census has fable subagents at 2× the opus rate, so flat opus pricing is not a bound); per-message overlap needs phase-4 extraction | **Plausible, needs-data** |
 | H6 | mains are the cost center | 75.4% of $ from main agents | **Supported** |
 | H7 | Opus mains sit off the cost curve | mean log-residual, mains: opus **+1.04** (≈2.8× over curve), sonnet +0.00, haiku −0.55 | **Supported** |
 | H8 | compaction late or absent | 64 missed runs, **$1,044** recoverable (upper bound), 135 compactions observed | **Supported** |

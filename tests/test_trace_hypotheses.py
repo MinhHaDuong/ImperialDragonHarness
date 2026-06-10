@@ -99,6 +99,22 @@ def test_h12_reread_cost():
     assert abs(res["H12"]["reread_usd"] - 6.0) < 1e-9
 
 
+def test_h5_subagent_cache_write_priced_per_family():
+    # Upper bound must price each subagent row at ITS family's 5m write rate:
+    # fable bills 12.5/MTok — flat opus pricing (6.25) would understate it 2x.
+    rows = [
+        _row(agent_id="agent-f", model="claude-fable-5", cache_creation_input_tokens=1_000_000),
+        _row(
+            session_id="s2",
+            agent_id="agent-o",
+            model="claude-opus-4-8",
+            cache_creation_input_tokens=1_000_000,
+        ),
+    ]
+    res = th.compute_all(rows)
+    assert abs(res["H5"]["subagent_cache_write_usd_upper"] - (12.5 + 6.25)) < 1e-6
+
+
 def test_h2_loglog_exponent_recovers_power_law():
     rows = [_row(session_id=f"s{n}", turns=n, cost_usd=float(n**1.5)) for n in (2, 4, 8, 16, 32)]
     exp = th.fit_loglog(rows)
