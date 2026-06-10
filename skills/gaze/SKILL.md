@@ -214,9 +214,9 @@ round: 1 | 2
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
-  `model: claude-fable-5`, `effort: high` (a mutator/coder — top tier where it
-  earns its keep, not the reviewer's sonnet), feeding it the
-  unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
+  `model: fable` (a mutator/coder — top tier where it earns its keep, not the
+  reviewer's sonnet; effort is not an Agent launch param, so it tracks the
+  session effort), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `/tmp/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the

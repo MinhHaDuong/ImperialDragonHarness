@@ -16,12 +16,16 @@ and enforcing invariants.
 
 ## Model policy (rightsizing)
 
-A raid fans out N concurrent agents — the cost lever is the **per-invocation**
-`model`/`effort` on each Agent launch, NOT this skill's frontmatter. A skill's
-`model:` frontmatter is not in the subagent inheritance chain, so an unpinned
-launch silently runs at whatever the session model is; left unpinned on a
-top-tier session that is the runaway "top-model × max-effort × N-wide" wave.
-So every launch below pins explicitly:
+A raid fans out N concurrent agents — the cost lever is the **per-invocation
+`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku|
+fable`), NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
+the subagent inheritance chain, so an unpinned launch silently runs at whatever
+the session model is; left unpinned on a top-tier session that is the runaway
+"top-model × N-wide" wave. **Effort is not an Agent launch parameter** — a
+spawned agent runs at the *session* effort, which neither this prose nor the
+frontmatter can pin per-child; so set the session effort (`high` is the sweet
+spot) before running a raid, and never rely on `max`. Every launch below pins
+`model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
@@ -30,14 +34,14 @@ So every launch below pins explicitly:
   line numbers/signatures exist, do these tickets conflict) → `model: haiku`. No
   judgement, just lookups; the cheapest tier suffices.
 - **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
-  `model: claude-fable-5`, `effort: high`. Top capability where it earns its keep,
-  high (not `max`) effort to avoid the runaway.
+  `model: fable`. Top capability where it earns its keep; its effort is the
+  session effort (run the raid at `high` for the fable/high sweet spot).
 - **Per-ticket `/gaze`** (Phase 6) → `/gaze` pins its own reviewer models; do not
   override.
 
 Never launch a raid agent without an explicit `model`. If a future role genuinely
-needs `max` effort or a different tier, pin it at that call site with a one-line
-rationale — don't lift the default.
+needs a different tier, pin it at that call site with a one-line rationale — don't
+lift the default.
 
 ## Balance rule
 
@@ -140,8 +144,8 @@ Group tickets into waves:
 - Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
 
-For each wave, launch agents with `isolation: "worktree"` and
-`model: claude-fable-5`, `effort: high` (per § Model policy — the coders).
+For each wave, launch agents with `isolation: "worktree"` and `model: fable`
+(per § Model policy — the coders; effort is the session effort, run at `high`).
 Each agent follows `/hunt` workflow. Push branch when done, create merge request.
 
 Wait for wave to complete.
