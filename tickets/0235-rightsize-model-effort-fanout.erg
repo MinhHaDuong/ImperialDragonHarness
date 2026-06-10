@@ -6,6 +6,7 @@ Label: needs-human
 
 --- log ---
 2026-06-10T00:00Z minh created from explore-model-rightsizing review
+2026-06-10T00:00Z minh note implemented fixes 1+2 + author directives: raid per-invocation pins (orchestrator fable/high; Imagine/Plan/integration-review sonnet; Phase-4 feasibility haiku; Execute fable/high); gaze+review-pr+review-pr-prose+verify-adherence reviewers sonnet (gaze REROLL mutator fable/high); maw-audit fang/handcuff/scope/guard agents opus->sonnet; skill-doctor effort:medium; healthcheck/molt/scry/nightbeat-report sonnet/low. Env-cap (fix 3) DEFERRED; adherence test (Test section) still open.
 
 --- body ---
 ## Context
@@ -96,11 +97,26 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
   today's gaze/review-pr/verify-adherence; GREEN after fix 2).
 
 ## Verification
-- [ ] raid frontmatter no longer pins a stale model; effort is not `max`
-- [ ] raid's execute/review Agent launches carry explicit per-invocation model/effort
-- [ ] gaze/review-pr/review-pr-prose/verify-adherence pin reviewers to Sonnet
-- [ ] Adherence test added; proven RED on pre-fix state, GREEN after
-- [ ] `CLAUDE_CODE_SUBAGENT_MODEL`-vs-Workflow interaction documented before any cap lands
+- [x] raid frontmatter no longer pins a stale model; effort is not `max` (now fable-5/high)
+- [x] raid's execute/review Agent launches carry explicit per-invocation model/effort
+- [x] gaze/review-pr/review-pr-prose/verify-adherence pin reviewers to Sonnet
+- [ ] Adherence test added; proven RED on pre-fix state, GREEN after (STILL OPEN — offered, not yet built)
+- [x] `CLAUDE_CODE_SUBAGENT_MODEL` cap DECISION recorded: deferred this pass — see Decisions
+
+## Decisions
+- **Env cap (fix 3) deferred.** Author opted not to set `CLAUDE_CODE_SUBAGENT_MODEL`
+  in this pass. Rationale: it is precedence #1, so a global value would override the
+  now-deliberate per-agent pins in the Workflow `.js` skills (maw-audit, test-audit-llm)
+  and the per-invocation pins just added to raid/gaze/review-pr — and whether it even
+  reaches Workflow agents is unverified. The per-invocation/frontmatter pins now in place
+  achieve the rightsizing without the blunt-instrument risk. Revisit only as a deliberate
+  safety backstop with the Workflow interaction verified first.
+- **maw-audit effort.** `effort` is not a per-agent knob in the Workflow `agent()` opts
+  (only `model`), so maw-audit's Sonnet agents track the session effort — "sonnet medium"
+  is satisfied on the model axis; the medium-effort half is session-controlled, not pinnable.
+- **maw-audit cross-tier skeptic.** Downgrading the audit Opus->Sonnet makes the skeptic
+  same-tier (Sonnet-on-Sonnet). Recorded in SKILL.md; re-pin the skeptic to a different
+  model if cross-tier skepticism is wanted back.
 
 ## Invariants
 - Do not let a global env cap silently override the Workflow skills' Opus/Sonnet/
