@@ -91,10 +91,14 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
 4. (Upstream + optional) `UserPromptSubmit` hook to neutralize the ultracode
    trigger when the surrounding text negates it.
 
-## Test
-- An adherence test asserting every skill that launches a fan-out either pins a
-  per-invocation `model` on its Agent calls or is on an explicit allowlist (RED on
-  today's gaze/review-pr/verify-adherence; GREEN after fix 2).
+## Test — DONE (`tests/test_model_rightsizing.py`)
+- Asserts (1) every Workflow `agent()` in a skill `.js` pins a valid short-token
+  model; (2) every fan-out SKILL.md body names a per-invocation model (`.js`-backed
+  skills exempt, allowlist escape hatch); (3) no full `claude-<id>` leaks into a
+  SKILL.md body (the per-invocation token must be `sonnet|opus|haiku|fable`).
+  Ships a string/template/comment-aware JS lexer with an independent line-based
+  cross-check so a desync that silently drops calls fails loudly (it would have —
+  the first naive scanner found 3 of 10 calls in maw-audit).
 - **Sweep was not exhaustive** for the first wave (raid + four review skills +
   maw-audit). The four flagged laggards were then audited:
   - `release` — **fixed**: 3 parallel audit agents (security / UX / doc-coherence)
@@ -112,7 +116,10 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
 - [x] raid frontmatter no longer pins a stale model; effort is not `max` (now fable-5/high)
 - [x] raid's execute/review Agent launches carry explicit per-invocation `model` (effort is NOT an Agent launch param — see Decisions)
 - [x] gaze/review-pr/review-pr-prose/verify-adherence pin reviewers to Sonnet
-- [ ] Adherence test added; proven RED on pre-fix state, GREEN after (STILL OPEN — offered, not yet built)
+- [x] Adherence test added (`tests/test_model_rightsizing.py`); proven RED on pre-fix
+      origin/main (10 offenders: 5 unpinned `.js` agents + 5 unpinned fan-out bodies),
+      GREEN after. It even caught a real miss: maw-audit's run-start **Discovery** agent
+      was unpinned (the first sweep focused on fang/handcuff/scope/skeptic) — now `sonnet`.
 - [x] `CLAUDE_CODE_SUBAGENT_MODEL` cap DECISION recorded: deferred this pass — see Decisions
 
 ## Decisions
