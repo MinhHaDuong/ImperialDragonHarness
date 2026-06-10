@@ -3,11 +3,13 @@ Title: Rightsize harness model/effort — replace decorative raid pin, cap fan-o
 Created: 2026-06-10
 Author: minh
 Label: needs-human
+Closed: autoclosed — PR #360
 
 --- log ---
 2026-06-10T00:00Z minh created from explore-model-rightsizing review
 2026-06-10T00:00Z minh note implemented fixes 1+2 + author directives: raid per-invocation pins (orchestrator fable/high; Imagine/Plan/integration-review sonnet; Phase-4 feasibility haiku; Execute fable/high); gaze+review-pr+review-pr-prose+verify-adherence reviewers sonnet (gaze REROLL mutator fable/high); maw-audit fang/handcuff/scope/guard agents opus->sonnet; skill-doctor effort:medium; healthcheck/molt/scry/nightbeat-report sonnet/low. Env-cap (fix 3) DEFERRED; adherence test (Test section) still open.
 
+2026-06-10T09:32Z Integration Test closed — autoclosed — PR #360
 --- body ---
 ## Context
 Review of the IDH harness for model auto-choice and rightsizing, prompted by the
