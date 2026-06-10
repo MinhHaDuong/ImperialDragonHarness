@@ -178,3 +178,78 @@ def test_cli_flags_present():
     for flag in ("--projects-dir", "--days", "--output", "--json"):
         assert flag in src, f"missing CLI flag {flag}"
     assert "ArgumentParser" in src
+
+
+# --- ticket 0243 detector columns (H10/H11/H13) ---
+
+
+def _tool_row(msg_id, name, tool_input, ts_str="2026-06-09T10:00:00.000Z"):
+    block = {"type": "tool_use", "id": f"{msg_id}_tu", "name": name, "input": tool_input}
+    return _assistant_row(msg_id, "claude-opus-4-8", USAGE, block, ts_str=ts_str)
+
+
+def _result_row(text):
+    return {
+        "type": "user",
+        "timestamp": "2026-06-09T10:02:00.000Z",
+        "message": {
+            "role": "user",
+            "content": [{"type": "tool_result", "tool_use_id": "x", "content": text}],
+        },
+    }
+
+
+def test_nav_and_idle_turns_classified(tmp_path):
+    rows = [
+        _tool_row("m1", "Bash", {"command": "cd /tmp"}),
+        _tool_row("m2", "Bash", {"command": "git status"}),
+        _tool_row("m3", "Bash", {"command": "uv run pytest -q"}),
+        _assistant_row("m4", "claude-opus-4-8", USAGE, {"type": "text", "text": "thinking"}),
+    ]
+    f = tmp_path / "nav.jsonl"
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    stats = ts.parse_trace_file(f)
+    assert stats["nav_turns"] == 2  # cd + git status
+    assert stats["idle_turns"] == 1  # m4 has no tool_use
+    assert stats["max_nav_run"] == 2  # m1,m2 consecutive
+
+
+def test_merge_marker_turn_recorded(tmp_path):
+    rows = [
+        _tool_row("m1", "Bash", {"command": "gh pr view"}),
+        _result_row("Merge queued; lands when required checks pass."),
+        _tool_row("m2", "Bash", {"command": "git log"}),
+    ]
+    f = tmp_path / "merged.jsonl"
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    stats = ts.parse_trace_file(f)
+    assert stats["merge_marker_turn"] == 1  # marker arrived after turn 1
+    assert stats["turns"] == 2
+
+
+def test_no_merge_marker_is_none(tmp_path):
+    stats = ts.parse_trace_file(_write_fixture(tmp_path))
+    assert stats["merge_marker_turn"] is None
+
+
+def test_verify_gaze_skill_count(tmp_path):
+    rows = [
+        _tool_row("m1", "Skill", {"skill": "verify"}),
+        _tool_row("m2", "Skill", {"skill": "gaze"}),
+        _tool_row("m3", "Skill", {"skill": "celebrate"}),
+    ]
+    f = tmp_path / "vg.jsonl"
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    stats = ts.parse_trace_file(f)
+    assert stats["verify_gaze_skills"] == 2
+
+
+def test_new_csv_columns_declared():
+    for col in (
+        "nav_turns",
+        "idle_turns",
+        "max_nav_run",
+        "merge_marker_turn",
+        "verify_gaze_skills",
+    ):
+        assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
