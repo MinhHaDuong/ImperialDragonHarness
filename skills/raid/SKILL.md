@@ -30,9 +30,11 @@ spot) before running a raid, and never rely on `max`. Every launch below pins
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
   below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work").
-- **Verify-feasibility** agents (Phase 4 — mechanical cross-checks: do these paths/
-  line numbers/signatures exist, do these tickets conflict) → `model: haiku`. No
-  judgement, just lookups; the cheapest tier suffices.
+- **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
+  checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
+  conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
+  → `model: sonnet` (pattern recognition across N plans, not lookup — a missed
+  registry conflict cost a resurrection agent for 3 of 4 merges).
 - **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
   `model: fable`. Top capability where it earns its keep; its effort is the
   session effort (run the raid at `high` for the fable/high sweet spot).
@@ -109,8 +111,11 @@ the execute agent prompt and the agent creates the file as its first step.
 
 ## Phase 4: Verify feasibility
 
-Launch agents by cluster to cross-check plans (`model: haiku` per § Model policy —
-mechanical lookups, no judgement):
+Launch agents by cluster to cross-check plans (`model: haiku` for the mechanical
+existence checks — paths/lines/signatures; `model: sonnet` for the cross-ticket
+conflict and cross-cutting-registry scan, which is judgement across N plans, not
+lookup — missing it cost a resurrection agent for 3 of 4 merges, memory
+`feedback_rebase_drop_cascade`):
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts
