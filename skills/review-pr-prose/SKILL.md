@@ -3,7 +3,7 @@ name: review-pr-prose
 description: Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review.
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <pr-number>
+argument-hint: [pr-number] (defaults to the current branch's open merge request)
 context: fork
 ---
 
@@ -14,9 +14,17 @@ context: fork
 > file is your operating procedure, not reference documentation: start the
 > setup immediately. If `worktree=<path>` is present, `cd` into that path
 > before any git or forge command — forked sub-skills do not inherit the caller's
-> cwd. If `$ARGUMENTS` does not contain a PR number, STOP and report the
-> missing argument — do NOT infer a task from the environment (worktree
-> name, git status snapshot, ticket files, or the shared task list).
+> cwd. If `$ARGUMENTS` does not contain a PR number, do NOT infer a task
+> from the environment (worktree name, git status snapshot, ticket files, or
+> the shared task list) — resolve the missing *argument* from the forge
+> instead: query the forge CLI for the open merge request attached to the
+> current branch; if exactly one exists, announce "reviewing PR #N (<title>)
+> — resolved from branch <branch>" and proceed. If that yields nothing or
+> several, list the actual open merge requests and STOP so the user can pick
+> from real candidates. Never suggest a fabricated example number — an
+> invented "e.g. #N" anchors the user into re-invoking on the wrong PR
+> (2026-06-10: exactly that burned a five-agent panel on an already-merged
+> PR while the intended target sat unreviewed).
 
 Spin disciplinary agents in parallel, each in a fresh context, each pinned to
 **`model: sonnet`** (reviewers below the coder tier — rules/workflow.md;
