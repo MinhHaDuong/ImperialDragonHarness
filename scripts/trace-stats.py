@@ -90,6 +90,23 @@ USAGE_KEYS = (
     "cache_creation_input_tokens",
 )
 
+# Ticket 0243 (H11): a turn is "navigational" when every tool call on it
+# matches this — pure orientation, no mutation, no new information source.
+NAV_COMMAND_RE = re.compile(
+    r"^\s*(?:cd|ls|pwd)\b|^\s*git\s+(?:status|log|branch|show-current)\b"
+)
+
+# Ticket 0243 (H10): delivery completed inside the session. Matched against
+# JSON-encoded tool_result content; upper bound (quoted text also matches).
+MERGE_MARKER_RE = re.compile(r"Merge queued|Pull Request successfully merged|state=MERGED")
+
+# Ticket 0243 (H13): verification machinery re-entry.
+VERIFY_SKILLS = {"verify", "gaze", "verify-gate"}
+
+
+def _is_nav_tool(name: str, tool_input: dict) -> bool:
+    return name == "Bash" and bool(NAV_COMMAND_RE.search(str(tool_input.get("command", ""))))
+
 
 def resolve_pricing(model_id: str) -> dict | None:
     """Map a model id to its pricing family; None for unknown models."""
@@ -156,6 +173,10 @@ def parse_trace_file(path: Path) -> dict:
     first_ts = last_ts = None
     final_cache_read = 0
     entry_skill = None
+    turn_tool_kinds: list[list[str]] = []  # per non-synthetic turn: "nav"/"work" per tool
+    msg_turn_index: dict[str, int] = {}
+    merge_marker_turn: int | None = None
+    verify_gaze = 0
 
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -192,6 +213,8 @@ def parse_trace_file(path: Path) -> dict:
                     if model == "<synthetic>":
                         synthetic += 1
                     else:
+                        msg_turn_index[msg_id] = len(turn_tool_kinds)
+                        turn_tool_kinds.append([])
                         models[model] += 1
                         for k in USAGE_KEYS:
                             tokens[k] += usage.get(k, 0) or 0
@@ -212,6 +235,13 @@ def parse_trace_file(path: Path) -> dict:
                         name = block.get("name", "?")
                         tool_counts[name] += 1
                         tool_input = block.get("input") or {}
+                        turn_idx = msg_turn_index.get(msg.get("id") or "")
+                        if turn_idx is not None:
+                            turn_tool_kinds[turn_idx].append(
+                                "nav" if _is_nav_tool(name, tool_input) else "work"
+                            )
+                        if name == "Skill" and tool_input.get("skill") in VERIFY_SKILLS:
+                            verify_gaze += 1
                         if name in WRITE_TOOLS:
                             wrote_files = True
                         elif name == "Read" and tool_input.get("file_path"):
@@ -227,21 +257,35 @@ def parse_trace_file(path: Path) -> dict:
                     for block in content:
                         if isinstance(block, dict) and block.get("type") == "tool_result":
                             try:
-                                tool_result_bytes += len(
-                                    json.dumps(block.get("content", ""))
-                                )
+                                result_text = json.dumps(block.get("content", ""))
                             except (TypeError, ValueError):
-                                pass
+                                continue
+                            tool_result_bytes += len(result_text)
+                            if merge_marker_turn is None and MERGE_MARKER_RE.search(
+                                result_text
+                            ):
+                                merge_marker_turn = len(turn_tool_kinds)
                 elif isinstance(content, str) and entry_skill is None:
                     for m in re.finditer(r"<command-name>/?([\w-]+)</command-name>", content):
                         if m.group(1) not in BUILTIN_COMMANDS:
                             entry_skill = m.group(1)
                             break
 
+    nav_flags = [bool(kinds) and all(k == "nav" for k in kinds) for kinds in turn_tool_kinds]
+    max_nav_run = run = 0
+    for flag in nav_flags:
+        run = run + 1 if flag else 0
+        max_nav_run = max(max_nav_run, run)
+
     return {
         **tokens,
         "cost_usd": cost,
         "turns": len(seen_ids) - synthetic,
+        "nav_turns": sum(nav_flags),
+        "idle_turns": sum(1 for kinds in turn_tool_kinds if not kinds),
+        "max_nav_run": max_nav_run,
+        "merge_marker_turn": merge_marker_turn,
+        "verify_gaze_skills": verify_gaze,
         "synthetic_messages": synthetic,
         "unknown_model_messages": unknown_model,
         "skipped_lines": skipped,
@@ -295,6 +339,11 @@ CSV_COLUMNS = [
     "read_only",
     "ask_user_questions",
     "final_cache_read",
+    "nav_turns",
+    "idle_turns",
+    "max_nav_run",
+    "merge_marker_turn",
+    "verify_gaze_skills",
     "entry_skill",
     "path",
 ]
@@ -325,6 +374,13 @@ def build_row(project: str, session_id: str, agent_id: str, path: Path, stats: d
         "read_only": stats["read_only"],
         "ask_user_questions": stats["ask_user_questions"],
         "final_cache_read": stats["final_cache_read"],
+        "nav_turns": stats["nav_turns"],
+        "idle_turns": stats["idle_turns"],
+        "max_nav_run": stats["max_nav_run"],
+        "merge_marker_turn": (
+            "" if stats["merge_marker_turn"] is None else stats["merge_marker_turn"]
+        ),
+        "verify_gaze_skills": stats["verify_gaze_skills"],
         "entry_skill": stats["entry_skill"] or "",
         "path": str(path),
     }
