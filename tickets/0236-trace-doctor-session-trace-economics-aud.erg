@@ -109,6 +109,7 @@ verify the skill runs end-to-end on live traces).
 
 Children:
 - 0237 — phase 1 census script + first report
+- 0239 — phase 2a missed compact/clear opportunity detector
 - (phases 2-5 to be filed once the census shows what is real; the
   discovery phase 2 is filed FIRST, before any confirmatory work, so
   the hypothesis list is fixed before testing begins)

@@ -1,0 +1,56 @@
+%erg 0.1
+Title: trace-doctor phase 2a: missed compact/clear opportunity detector
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T12:14Z Integration Test created
+
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit), phase 2a —
+mechanical anomaly mining, zero LLM tokens. Author request (2026-06-10,
+during 0237 review): "check for missed compact and clear opportunities."
+
+The 0237 census showed cache_read is 63% of spend and main sessions are
+76% of it; H8 ("context never shrinks") is the matching hypothesis seed.
+Compactions are detectable in traces: `type: "system"` records with
+`subtype: "compact_boundary"` (e.g. 11 boundaries in the 5,255-turn
+chemin-de-voix session). `/clear` shows up as a `<command-name>clear`
+user record and resets context (next turn's cache_read drops).
+
+## Relevant files
+
+- `scripts/trace-stats.py` — extend, or add a sibling
+  `scripts/trace-compact-audit.py`; reuse its dedupe-by-message.id parser
+- `docs/trace-census-2026-06.md` — census baseline + H8
+- `tickets/0236-trace-doctor-session-trace-economics-aud.erg` — tracker
+
+## Actions
+
+1. Per agent, extract the per-turn cache_read trajectory (unique
+   message.id order) and the positions of compact_boundary / clear events.
+2. Define "missed opportunity" mechanically, e.g.: a run of >=N turns with
+   per-turn cache_read above a threshold T (start at N=30, T=300K) that
+   contains no compact_boundary and no clear; report the $ that the run
+   cost vs. the counterfactual where context drops to the post-compact
+   median observed in sessions that DID compact.
+3. Aggregate: count of missed-opportunity runs, $ upper bound, by project
+   and entry skill; top-20 sessions ranked by recoverable $.
+4. Report under docs/ (aggregates only, no prompt fragments).
+
+## Test
+
+- Fixture trace with a synthetic cache_read ramp and one compact_boundary:
+  assert the detector flags the un-compacted ramp and not the compacted one.
+
+## Invariants
+
+- Zero LLM/API calls; no raw trace content in committed artifacts.
+
+## Exit criteria
+
+- [ ] Detector script committed with passing unit tests
+- [ ] Missed-compact/clear report committed with the $ counterfactual,
+      clearly labeled as an upper bound
