@@ -6,6 +6,7 @@ Author: Integration Test
 --- log ---
 2026-06-10T15:35Z Integration Test created
 2026-06-10T15:55Z claude note H10 spec sharpened per author challenge: last-marker segmentation, relocation premium, mandated-work classification
+2026-06-10T16:10Z claude note skeptical-review constraints added: shadow dollars, bucket dedup, reflexivity, H2 mixture, H13 confounder, phase-2b containment
 
 --- body ---
 ## Context
@@ -47,6 +48,30 @@ priority order (by $/week at stake):
    cache_read rate, from per-trace Read paths.
 6. **H5 extraction**: per-message cache_creation overlap across sibling
    subagents (first-turn cache_write similarity), zero-LLM.
+
+## Skeptical-review constraints (2026-06-10, binding on the report)
+
+- **Shadow dollars**: all $ are list-price API-equivalents under
+  subscription auth — they measure capacity consumption, never invoiced
+  money. State this in the report header before any number.
+- **No double counting**: H10/H11/H13 buckets overlap; the report must
+  publish a DEDUPLICATED total addressable figure alongside the
+  per-recommendation numbers (per-turn $ attributed to at most one
+  bucket, priority order documented).
+- **Reflexivity**: the corpus contains the trace-doctor study's own
+  sessions (gaze-heavy, multi-PR, top-decile). Exclude or separately
+  label sessions whose entry skill or project marks them as
+  harness-study work; report sensitivity with/without.
+- **H2 mixture**: recompute decile concentration segmented by agent
+  type (main vs subagent) — the pooled exponent risks Simpson-style
+  artifacts.
+- **H13 difficulty confounder**: verification re-entry plausibly
+  correlates with genuinely hard PRs; the incremental-$ figure must be
+  conditioned on the forge-join difficulty proxies (diff size, REROLL
+  count) before re-entry is labeled avoidable.
+- **Phase-2b language containment**: open-coding cluster prose (Haiku
+  digest narration) is hypothesis color, not evidence — the phase-4
+  report cites only computed statistics.
 
 ## Relevant files
 
