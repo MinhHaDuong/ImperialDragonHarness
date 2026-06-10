@@ -138,6 +138,24 @@ def test_per_message_pricing_uses_each_models_rate(tmp_path):
     assert abs(stats["cost_usd"] - expected) < 1e-12
 
 
+def test_cache_write_split_with_only_1h_key(tmp_path):
+    usage = dict(USAGE, cache_creation_input_tokens=300)
+    usage["cache_creation"] = {"ephemeral_1h_input_tokens": 200}  # no 5m key
+    f = tmp_path / "split.jsonl"
+    row = _assistant_row("msg_H", "claude-opus-4-8", usage, {"type": "text", "text": "x"})
+    f.write_text(json.dumps(row) + "\n")
+    stats = ts.parse_trace_file(f)
+    p = ts.PRICING["opus"]
+    expected = (
+        100 * p["input"]
+        + 50 * p["output"]
+        + 1000 * p["cache_read"]
+        + 100 * p["cache_write_5m"]  # 300 total - 200 in the 1h bucket
+        + 200 * p["cache_write_1h"]
+    ) / 1_000_000
+    assert abs(stats["cost_usd"] - expected) < 1e-12
+
+
 def test_unknown_model_flagged_not_priced(tmp_path):
     f = tmp_path / "unk.jsonl"
     row = _assistant_row("msg_U", "future-model-9", USAGE, {"type": "text", "text": "x"})

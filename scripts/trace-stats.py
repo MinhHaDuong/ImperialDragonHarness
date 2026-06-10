@@ -116,12 +116,12 @@ def _message_cost(model: str, usage: dict) -> float:
     if p is None:
         return 0.0
     cache_creation = usage.get("cache_creation") or {}
+    total_write = usage.get("cache_creation_input_tokens", 0) or 0
+    write_1h = cache_creation.get("ephemeral_1h_input_tokens", 0) or 0
     write_5m = cache_creation.get("ephemeral_5m_input_tokens")
-    write_1h = cache_creation.get("ephemeral_1h_input_tokens", 0)
-    if write_5m is None and write_1h == 0:
-        # No split available: treat the whole creation count as 5m.
-        write_5m = usage.get("cache_creation_input_tokens", 0) or 0
-        write_1h = 0
+    if write_5m is None:
+        # No 5m key: whatever the 1h bucket doesn't account for was 5m.
+        write_5m = max(0, total_write - write_1h)
     dollars = (
         (usage.get("input_tokens", 0) or 0) * p["input"]
         + (usage.get("output_tokens", 0) or 0) * p["output"]
@@ -364,6 +364,8 @@ def run_census(projects_dir: Path, days: int) -> tuple[list[dict], dict]:
     files_seen = 0
     files_skipped_old = 0
     files_unreadable = 0
+    corpus_skipped_lines = 0
+    corpus_total_lines = 0
     for project, session_id, agent_id, path in iter_trace_files(projects_dir):
         files_seen += 1
         try:
@@ -372,6 +374,8 @@ def run_census(projects_dir: Path, days: int) -> tuple[list[dict], dict]:
             log.warning("unreadable %s: %s", path, e)
             files_unreadable += 1
             continue
+        corpus_skipped_lines += stats["skipped_lines"]
+        corpus_total_lines += stats["total_lines"]
         if stats["last_ts"] is None or stats["last_ts"] < cutoff:
             files_skipped_old += 1
             continue
@@ -381,6 +385,8 @@ def run_census(projects_dir: Path, days: int) -> tuple[list[dict], dict]:
         "files_in_window": len(rows),
         "files_skipped_old_or_undated": files_skipped_old,
         "files_unreadable": files_unreadable,
+        "corpus_skipped_lines": corpus_skipped_lines,
+        "corpus_total_lines": corpus_total_lines,
     }
     return rows, meta
 
