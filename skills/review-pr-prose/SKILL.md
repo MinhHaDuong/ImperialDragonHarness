@@ -18,7 +18,10 @@ context: fork
 > missing argument — do NOT infer a task from the environment (worktree
 > name, git status snapshot, ticket files, or the shared task list).
 
-Spin disciplinary agents in parallel, each in a fresh context. Prose review reads **full text**, not just diff.
+Spin disciplinary agents in parallel, each in a fresh context, each pinned to
+**`model: sonnet`** (reviewers below the coder tier — rules/workflow.md;
+an unpinned Agent inherits the session model and silently runs the fan-out at
+top tier). Prose review reads **full text**, not just diff.
 
 ## Setup
 

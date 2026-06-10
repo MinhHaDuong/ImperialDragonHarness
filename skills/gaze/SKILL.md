@@ -100,7 +100,10 @@ Every reviewer agent's prompt:
 
 Spawn the applicable agents **in a single message, as parallel background
 agents** (so the fan-out runs concurrently), then wait for all to return and
-collect their structured outputs.
+collect their structured outputs. Pin every read-only reviewer to
+**`model: sonnet`** — reviewers stay below the coder tier (rules/workflow.md
+§ "Sonnet reviews Opus's work"), and an unpinned Agent inherits the session
+model, so on a top-tier session this fan-out is silently a top-model wave.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=/tmp/review-<pr-number>`
 is the equivalent procedure). **Label-skip:** if the PR carries the
@@ -166,7 +169,8 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only** background
-Agent, cwd **pinned to** `/tmp/review-<pr-number>` (the equivalent fork call is
+Agent, **`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
+`/tmp/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`); never
 `isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
 cwd, no commits/pushes/branches/PRs; the gate's **one** permitted write is the
@@ -209,7 +213,9 @@ round: 1 | 2
 
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
-- **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`, feeding it the
+- **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
+  `model: claude-fable-5`, `effort: high` (a mutator/coder — top tier where it
+  earns its keep, not the reviewer's sonnet), feeding it the
   unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `/tmp/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
