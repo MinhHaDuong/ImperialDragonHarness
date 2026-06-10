@@ -17,7 +17,7 @@ A green test suite tells you nothing about whether a test would go **red** if th
 code it covers regressed — nor whether it goes red on a harmless refactor, nor
 whether it guards the whole defect class or just one instance. This skill answers
 all three, per test, empirically — mutate the source, run the test, observe
-red/green — using the `Workflow` fan-out capability, one Opus agent per test file
+red/green — using the `Workflow` fan-out capability, one Sonnet agent per test file
 in its own throwaway git worktree. Output is an audit report with suggestions;
 **no test or source code is changed** in the real tree (mutations live and die in
 worktrees).
@@ -39,8 +39,11 @@ Right-scoped on all three = bites the defect, tolerates refactors, guards the
 whole class.
 
 > ⚠️ **EXPENSIVE — on-demand only.** The validating git-erg fang-only run was
-> **~1.3M tokens / ~29 minutes** across ~31 agents (one Opus agent per test file
-> + a Sonnet skeptic per accusation). The three-axis run is larger still (it adds
+> **~1.3M tokens / ~29 minutes** across ~31 agents — but that figure was measured
+> when the audit agents ran on Opus; the audit agents are now pinned to Sonnet
+> (0235), so a comparable run is cheaper (one Sonnet agent per test file + an Opus
+> skeptic per accusation — skeptics are cross-tier but low-volume). The three-axis
+> run is larger still (it adds
 > a handcuff and a scope pass). This is NOT a per-PR gate and NOT a casual check.
 > Run it deliberately, on a stable suite. The cheap per-PR tier is the
 > `test-quality.py` flakiness/independence/speed utility (zero tokens) — see the
@@ -118,17 +121,20 @@ Phases:
    no flakiness adapter for the language, the gate **skips openly** (warn-and-
    proceed) rather than aborting a language it cannot pre-vet — the report records
    the un-vetted state.
-2. **Audit — fang pass** (fan-out, Opus, `isolation: 'worktree'`) — one agent per
+2. **Audit — fang pass** (fan-out, Sonnet, `isolation: 'worktree'`) — one agent per
    behavioral test file. Each runs a self-contained mutate→test→revert loop and
    classifies every behavior-CHANGING mutation (see verdict rules).
-3. **Skeptic** (Sonnet, per accusation) — every `survived` (toothless) and every
-   `equivalent` verdict passes through a cross-model adversarial skeptic.
-4. **Handcuff pass** (fan-out, Opus, isolated; own Sonnet skeptic) — applies
+3. **Skeptic** (Opus, per accusation) — every `survived` (toothless) and every
+   `equivalent` verdict passes through a **cross-tier** adversarial skeptic: the
+   audit runs on Sonnet, the skeptic on Opus (0235). Skeptics fire per-accusation
+   (a small fraction of the audit fan-out's volume), so the stronger tier is cheap
+   and preserves the audit's core cross-model adversarial guarantee.
+4. **Handcuff pass** (fan-out, Sonnet, isolated; own Opus skeptic) — applies
    behavior-PRESERVING refactors with the INVERTED oracle (red = over-scoped). Its
    skeptic re-checks every accusation: a red on a refactor that *secretly* changed
    behavior is a legitimate fang, withdrawn (mirror of the equivalent-mutant
    skeptic).
-5. **Scope pass** (fan-out, Opus, isolated) — replays each fang-caught operator at
+5. **Scope pass** (fan-out, Sonnet, isolated) — replays each fang-caught operator at
    sibling sites; surviving siblings = instance-pinned contract.
 6. **Guards** (serialized) — the designated canary guard tests run alone (not
    under fan-out load). Skipped openly if none designated.

@@ -1,0 +1,167 @@
+%erg 0.1
+Title: Rightsize harness model/effort — replace decorative raid pin, cap fan-out subagents
+Created: 2026-06-10
+Author: minh
+Label: needs-human
+Closed: autoclosed — PR #360
+
+--- log ---
+2026-06-10T00:00Z minh created from explore-model-rightsizing review
+2026-06-10T00:00Z minh note implemented fixes 1+2 + author directives: raid per-invocation pins (orchestrator fable/high; Imagine/Plan/integration-review sonnet; Phase-4 feasibility haiku; Execute fable/high); gaze+review-pr+review-pr-prose+verify-adherence reviewers sonnet (gaze REROLL mutator fable/high); maw-audit fang/handcuff/scope/guard agents opus->sonnet; skill-doctor effort:medium; healthcheck/molt/scry/nightbeat-report sonnet/low. Env-cap (fix 3) DEFERRED; adherence test (Test section) still open.
+
+2026-06-10T09:32Z Integration Test closed — autoclosed — PR #360
+--- body ---
+## Context
+Review of the IDH harness for model auto-choice and rightsizing, prompted by the
+concern: "I don't want to risk fan-out of Fable at max effort or Opus ultracode."
+The review found that model/effort rightsizing is enforced ad hoc in 3-4 skills
+and ignored in the fan-out skills where it matters most; the one harness-level
+cap that exists is unused. Author steer: **Fable 5 / high is the sweet spot;
+`max` effort is the thing to avoid on a fan-out; Opus 4.6 is stale.**
+
+## Findings
+
+**F1 (HIGH) — raid pins effort:max and no per-invocation model on its fan-out.**
+`skills/raid/SKILL.md` frontmatter: `model: claude-opus-4-6`, `effort: max`.
+Phases 2/3/4/5/6 all "launch agent(s)" with NO per-invocation `model`/`effort`.
+- The reliable lever for subagent model is the per-invocation `model` param (or a
+  subagent-definition frontmatter) — neither is used.
+- A skill's `model:` frontmatter is NOT in the documented Agent-subagent
+  inheritance chain (env `CLAUDE_CODE_SUBAGENT_MODEL` > per-invocation `model` >
+  subagent-def frontmatter > main-conversation model). So the fan-out model is
+  whatever the *turn* resolves to — best case Opus 4.6 (stale; current is 4.8;
+  still an 8-wide max-effort wave), worst case (frontmatter inert + Fable
+  session) Fable at max effort = the exact named nightmare. Neither is rightsized.
+- Effort propagation from a skill to children is undocumented (low confidence);
+  do not assume `effort: max` reaches children, but do not assume it doesn't.
+
+**F2 (HIGH) — the stated rightsizing rule is enforced in ~3 of ~30 skills.**
+`rules/workflow.md:79`: "Reviewers use a different model than the coder. Sonnet
+reviews Opus's work." Actually enforced only in: `maw-audit.js` (Opus heavy /
+Sonnet skeptic / Haiku-free), `test-audit-llm.js` (Haiku bulk / Sonnet escalate),
+`nightbeat-supervisor` (`Agent(model="opus")`), `skill-doctor` (frontmatter
+`model: sonnet`). The review fan-outs the rule is literally about pin nothing and
+run at the session model — same tier as the coder:
+- `gaze` — 7 spawn refs, 0 model pins
+- `review-pr` — 3 spawn refs, 0 pins
+- `review-pr-prose` — 1 spawn ref, 0 pins
+- `verify-adherence` — 5 spawn refs, 0 pins
+
+**F3 (MEDIUM) — a clean harness-level cap exists but is unset.**
+`CLAUDE_CODE_SUBAGENT_MODEL` (resolution precedence #1) caps every Agent-tool
+subagent's model regardless of session model or skill text. It is currently unset
+(`settings.json` env block: only `UV_ENV_FILE`, `BASH_ENV`). Caveats before
+adopting: (a) precedence #1 means it OVERRIDES deliberate per-invocation pins too,
+so a permanent global value could clobber raid's intended coder tier — scope it or
+pair with per-invocation overrides; (b) the Workflow `.js` skills (maw-audit,
+test-audit-llm) spawn via a separate code path that inherits the *session* model —
+**verify whether the env var reaches Workflow agents before relying on it** (if it
+does NOT, that is good: the cap protects the unpinned Agent-tool review fan-outs
+without disturbing the Workflow skills' careful Opus/Sonnet/Haiku choices).
+
+**F4 (LOW) — no harness-level effort cap exists.** There is no env/setting
+equivalent to `CLAUDE_CODE_SUBAGENT_MODEL` for effort. `effort: max` fan-outs have
+no override valve other than editing each skill.
+
+**F5 (UPSTREAM, not an IDH defect) — the ultracode keyword detector fires on
+negative mentions.** This session: the user wrote "I don't want to risk ... Opus
+ultracode" and was opted INTO ultracode multi-agent orchestration. The detector is
+Claude Code core (not present in this repo), a substring trigger with no negation/
+intent awareness. The only IDH-level mitigation is a `UserPromptSubmit` hook that
+strips/guards the trigger when negated. File upstream; track the hook idea here.
+
+## Relevant files
+- `skills/raid/SKILL.md` — frontmatter pin (F1); Phase 2-6 agent launches
+- `skills/gaze/SKILL.md`, `skills/review-pr/SKILL.md`,
+  `skills/review-pr-prose/SKILL.md`, `skills/verify-adherence/SKILL.md` — unpinned
+  reviewer fan-outs (F2)
+- `skills/maw-audit/maw-audit.js`, `skills/test-audit-llm/test-audit-llm.js` —
+  the canonical good pattern (per-agent model pins) to mirror
+- `rules/workflow.md:79` — the policy text the fixes make real
+- `settings.json` env block — where a `CLAUDE_CODE_SUBAGENT_MODEL` cap would live
+
+## Actions (proposed — confirm direction first)
+1. raid: drop the decorative `model: claude-opus-4-6`; set `effort: high` (not
+   max); add explicit per-invocation `model`/`effort` on the spawned Agent calls —
+   execute/coder agents at the chosen target (Fable 5 / high per author steer),
+   reviewer/imagine/plan agents at Sonnet. The per-invocation param is the only
+   lever the docs guarantee works.
+2. Pin reviewers to Sonnet in gaze / review-pr / review-pr-prose / verify-adherence
+   per workflow.md:79 — makes the stated rule real where it matters.
+3. Evaluate `CLAUDE_CODE_SUBAGENT_MODEL` as a backstop cap AFTER verifying it does
+   not clobber the Workflow `.js` skills' deliberate pins.
+4. (Upstream + optional) `UserPromptSubmit` hook to neutralize the ultracode
+   trigger when the surrounding text negates it.
+
+## Test — DONE (`tests/test_model_rightsizing.py`)
+- Asserts (1) every Workflow `agent()` in a skill `.js` pins a valid short-token
+  model; (2) every fan-out SKILL.md body names a per-invocation model (`.js`-backed
+  skills exempt, allowlist escape hatch); (3) no full `claude-<id>` leaks into a
+  SKILL.md body (the per-invocation token must be `sonnet|opus|haiku|fable`).
+  Ships a string/template/comment-aware JS lexer with an independent line-based
+  cross-check so a desync that silently drops calls fails loudly (it would have —
+  the first naive scanner found 3 of 10 calls in maw-audit).
+- **Sweep was not exhaustive** for the first wave (raid + four review skills +
+  maw-audit). The four flagged laggards were then audited:
+  - `release` — **fixed**: 3 parallel audit agents (security / UX / doc-coherence)
+    were unpinned → now `model: sonnet` (read-and-audit reviewers, judgement not
+    lookup).
+  - `nightbeat-supervisor` — **already disciplined**: its one escalation/diagnosis
+    agent is explicitly `Agent(model="opus")` (rare deep root-cause path; defensible).
+  - `related-work-note` — **N/A**: inline research/writing skill, no fan-out.
+  - `deep-research` — **out of scope**: not an IDH skill (plugin/built-in; the repo
+    has only `docs/20260404-review/05-deep-research.md`).
+  - The adherence test must still cover ALL skills so future fan-outs can't drift
+    back to unpinned.
+
+## Verification
+- [x] raid frontmatter no longer pins a stale model; effort is not `max` (now fable-5/high)
+- [x] raid's execute/review Agent launches carry explicit per-invocation `model` (effort is NOT an Agent launch param — see Decisions)
+- [x] gaze/review-pr/review-pr-prose/verify-adherence pin reviewers to Sonnet
+- [x] Adherence test added (`tests/test_model_rightsizing.py`); proven RED on pre-fix
+      origin/main (10 offenders: 5 unpinned `.js` agents + 5 unpinned fan-out bodies),
+      GREEN after. It even caught a real miss: maw-audit's run-start **Discovery** agent
+      was unpinned (the first sweep focused on fang/handcuff/scope/skeptic) — now `sonnet`.
+- [x] `CLAUDE_CODE_SUBAGENT_MODEL` cap DECISION recorded: deferred this pass — see Decisions
+
+## Decisions
+- **Env cap (fix 3) deferred.** Author opted not to set `CLAUDE_CODE_SUBAGENT_MODEL`
+  in this pass. Rationale: it is precedence #1, so a global value would override the
+  now-deliberate per-agent pins in the Workflow `.js` skills (maw-audit, test-audit-llm)
+  and the per-invocation pins just added to raid/gaze/review-pr — and whether it even
+  reaches Workflow agents is unverified. The per-invocation/frontmatter pins now in place
+  achieve the rightsizing without the blunt-instrument risk. Revisit only as a deliberate
+  safety backstop with the Workflow interaction verified first.
+- **maw-audit effort.** `effort` is not a per-agent knob in the Workflow `agent()` opts
+  (only `model`), so maw-audit's Sonnet audit agents track the session effort — "sonnet
+  medium" is satisfied on the model axis; the medium-effort half is session-controlled.
+- **maw-audit cross-tier skeptic — RESTORED in-PR** (review finding #2). The audit agents
+  run on Sonnet; the skeptics (`skepticize` ~L374, `handcuffSkepticize` ~L483) are pinned
+  to **Opus**, restoring the cross-model adversarial guarantee. Skeptics fire per-accusation
+  (small fraction of fan-out volume), so the stronger tier is cheap. Supersedes the earlier
+  same-tier note.
+- **raid Phase 4 split** (review finding #1). Feasibility cross-checks are not uniformly
+  mechanical: path/line/signature existence → `haiku`, but the cross-ticket-conflict and
+  cross-cutting-registry scan that gates Phase 5.0 is judgement across N plans → `sonnet`
+  (a missed registry conflict cost a resurrection agent for 3 of 4 merges,
+  `feedback_rebase_drop_cascade`).
+- **`effort:` frontmatter honoured for inline skills** (review finding #3). Per Claude Code
+  skills docs, `effort:` is a recognized SKILL.md field that "overrides the session effort
+  level while the skill is active" (claude-code-guide, high confidence). The five skills
+  gaining it (healthcheck/molt/scry/nightbeat-report/skill-doctor) run **inline**, so they
+  rely on this documented behavior — NOT on effort *propagation to spawned children*, which
+  is the undocumented/low-confidence part and which none of them depend on. Gold-standard
+  confirmation = a live telemetry probe (run `/healthcheck` on a top-tier session, inspect
+  thinking depth); deferred to the adherence-test follow-up, which should assert whichever
+  lever proves real and drop any pin shown inert.
+
+## Invariants
+- Do not let a global env cap silently override the Workflow skills' Opus/Sonnet/
+  Haiku tiering (maw-audit, test-audit-llm) — those are deliberate.
+- Keep `make check-skills-drift` / README catalog in sync if any SKILL.md frontmatter changes.
+
+## Exit criteria
+- Fan-out skills choose model/effort by the documented-reliable lever, not
+  decorative frontmatter; the "reviewers below coder tier" rule is enforced where
+  it matters; a harness-level cap is either adopted (with the Workflow interaction
+  verified) or explicitly rejected with rationale recorded here.

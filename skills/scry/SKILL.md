@@ -1,5 +1,7 @@
 ---
 name: scry
+model: sonnet
+effort: low
 description: Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals.
 user-invocable: true
 argument-hint: "[--mode {default|nightbeat-history}] [--project <name>] [--hours N]"

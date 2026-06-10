@@ -163,7 +163,9 @@ in practice.
 ### 3. Semantic subagent (fallback only)
 
 Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
-concerns not covered by phases 1–2. Spin **one** subagent with:
+concerns not covered by phases 1–2. Spin **one** subagent, pinned to
+**`model: sonnet`** (a reviewer, below the coder tier — rules/workflow.md; left
+unpinned it inherits the session model and runs at top tier), with:
 
 - The diff.
 - The relevant `.claude/rules/*.md` files.

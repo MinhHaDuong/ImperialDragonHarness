@@ -28,8 +28,8 @@ export const meta = {
   phases: [
     { title: 'Discovery', detail: 'an agent reads the launch repo and derives test command + pairing table + mutation heuristics (no per-repo CONFIG)' },
     { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
-    { title: 'Audit', detail: 'fang pass — behavioral test files, one Opus agent each, mutate→test→revert in isolated worktrees' },
-    { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
+    { title: 'Audit', detail: 'fang pass — behavioral test files, one Sonnet agent each, mutate→test→revert in isolated worktrees' },
+    { title: 'Skeptic', detail: 'cross-tier Opus skeptic adversarially re-checks every survived/equivalent verdict (audit runs on Sonnet)' },
     { title: 'Handcuff', detail: 'robustness pass — behavior-PRESERVING refactors, inverted oracle (red = over-scoped), own skeptic' },
     { title: 'Scope', detail: 'altitude pass — replay each caught operator at sibling sites; surviving siblings = instance-pinned contract' },
     { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive); skipped openly if none discovered/designated' },
@@ -158,7 +158,7 @@ DERIVE and return:
   - evidence: which files you read and how you derived the command + pairings.
 
 Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
-  { label: 'discovery:launch-repo', phase: 'Discovery', schema: DISCOVERY_SCHEMA }
+  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'fable', schema: DISCOVERY_SCHEMA }  // 0235: model 'fable' — a singleton whose derivation gates the whole audit, so top capability is cheap insurance. Effort is NOT a Workflow agent() opt, so the intended 'low' tracks the session effort, not pinnable here.
 ).catch(e => { log(`discovery agent error: ${e}`); return null })
 
 if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
@@ -371,7 +371,7 @@ async function skepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(skepticPrompt(file, x.f), {
       label: `skeptic:${file.test}:${x.f.testFunc}`.slice(0, 60),
-      phase: 'Skeptic', model: 'sonnet', schema: SKEPTIC_SCHEMA,
+      phase: 'Skeptic', model: 'opus', schema: SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet audit; per-accusation volume, so cheap, and it is the audit's core adversarial guarantee
     })
   ))
   verdicts.forEach((v, k) => {
@@ -480,7 +480,7 @@ async function handcuffSkepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(handcuffSkepticPrompt(file, x.f), {
       label: `hc-skeptic:${file.test}`.slice(0, 60),
-      phase: 'Handcuff', model: 'sonnet', schema: HANDCUFF_SKEPTIC_SCHEMA,
+      phase: 'Handcuff', model: 'opus', schema: HANDCUFF_SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet handcuff pass (see Skeptic note)
     })
   ))
   verdicts.forEach((v, k) => {
@@ -577,7 +577,7 @@ This is the 0184 test-quality utility's flakiness gate. Exit-code contract:
   - exit 0 = suite is stable (or all flakiness is baselined) -> gate "pass"
   - exit 2 = NEW flakiness found -> gate "fail"
 The JSON report on stdout carries a "gate" field ("pass"/"fail"); read it to confirm. Report exitCode, gate, any flaky test identities, and a short evidence excerpt. Do NOT mutate anything.`,
-  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin the cheap model (mirrors the skeptics), don't burn Opus
+  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin a cheap model; sonnet here (the cross-tier skeptics run on opus)
 ).catch(() => null)  // Δ10: a precheck agent error falls into the abort path below, not an opaque crash
 
 // 0226 d3: require an AFFIRMATIVE pass on the real-agent path — `gate === 'pass'`,
@@ -611,7 +611,7 @@ phase('Audit')
 // read-and-judge, no execution.
 const behavioral = await pipeline(
   BEHAVIORAL,
-  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', schema: AUDIT_SCHEMA, isolation: 'worktree' })
+  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', model: 'sonnet', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model); effort is not a per-agent knob in Workflow agent(), so it tracks the session effort
             .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH, not the agent's self-report (mirrors the canary-tag rule below — never read it back from the agent)
   (audit, file) => skepticize(audit, file),
 )
@@ -623,7 +623,7 @@ for (const file of GUARDS) {
   // Δ10: a single guard-agent failure must not discard the behavioral results
   // already collected — degrade to null (the canary gate then reports SUSPECT,
   // which is the honest verdict when a guard agent dies).
-  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8
+  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', model: 'sonnet', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8; 0235: pinned sonnet (mutation agent, mirrors the fang pass)
     .catch(e => { log(`guard ${file.test} agent error: ${e}`); return null })
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
@@ -671,7 +671,7 @@ const handcuffs = await pipeline(
   // Δ8: isolation:'worktree' — the handcuff agent MUTATES (refactors) source
   // and runs the suite; concurrent loops on a shared checkout corrupt each
   // other, exactly as in the fang pass.
-  file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })
+  file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', model: 'sonnet', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model)
             .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH (see audit wrapper)
   (audit, file) => handcuffSkepticize(audit, file),
 )
@@ -691,7 +691,7 @@ const scopeTargets = BEHAVIORAL.filter(f => (caughtOpsByFile[f.test] || []).leng
 const scopes = await parallel(scopeTargets.map(file => () =>
   // Δ8: isolation:'worktree' — the scope agent MUTATES (replays operators at
   // sibling sites) and runs the suite; must be isolated like fang/handcuff.
-  agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', schema: SCOPE_SCHEMA, isolation: 'worktree' })
+  agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', model: 'sonnet', schema: SCOPE_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model)
     .then(a => { if (a) a.testFile = file.test; return a })  // 0226 d1: identity from DISPATCH (see audit wrapper)
     .catch(e => { log(`scope ${file.test} agent error: ${e}`); return null })
 ))
@@ -902,7 +902,7 @@ else {
   L.push('|---|---|---|---|---|---|')
   survivedRanked.forEach(f => L.push(`| \`${esc(f._file)}\` | \`${esc(f.testFunc)}\` | ${rxc(f).toFixed(1)} (r${riskWeight(f)}×c${churnWeight(f)}) | ${esc(f.mutation)} | ${esc(f.survivedJustification)} | ${esc(f.suggestion)} |`))
   L.push('')
-  L.push('_Each row survived both the Opus audit and the Sonnet adversarial skeptic. "Distinguishing input" is a concrete case where the mutated code is observably wrong yet no same-file test failed. Sorted by risk × churn so the highest-blast-radius × change-frequency gaps surface first; risk is the human-supplied weight (default 1)._')
+  L.push('_Each row survived both the Sonnet audit and the cross-tier Opus adversarial skeptic. "Distinguishing input" is a concrete case where the mutated code is observably wrong yet no same-file test failed. Sorted by risk × churn so the highest-blast-radius × change-frequency gaps surface first; risk is the human-supplied weight (default 1)._')
 }
 L.push('')
 
