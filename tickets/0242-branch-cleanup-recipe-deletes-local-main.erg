@@ -1,0 +1,71 @@
+%erg 0.1
+Title: branch-cleanup recipe deletes local main; ExitWorktree discard nukes original branch
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T14:33Z Integration Test created
+
+--- body ---
+## Context
+
+Two related branch-loss footguns bit the 2026-06-10 gaze/merge/roar session
+on PR #370 (both recovered, no data lost):
+
+1. The stale-branch cleanup recipe in `rules/git.md` ("Delete branches
+   after merge") iterates all local branches and deletes any that is an
+   ancestor of `origin/main`. Local `main` is always such an ancestor, so
+   running the loop from any non-main branch deletes local `main`.
+   Observed: `deleted main`; recreated with `git branch main origin/main`.
+
+2. `skills/roar/SKILL.md` step 9b tells the agent that ExitWorktree's
+   "N commits would be discarded" warning is a false alarm when the
+   merge-base pre-check passed, and to authorize `discard_changes`. But
+   ExitWorktree restores the session to the ORIGINAL checkout, and with
+   `discard_changes: true` it also deleted the original branch
+   (`dream-consolidate-2026-06-09`), leaving the primary checkout on a
+   detached HEAD with an unmerged commit orphaned (another session's
+   in-progress dream work). Recovered via reflog + `git switch -c`.
+
+A third minor wart from the same loop: `git branch -d` refuses merged
+branches whose upstream is gone (deleteBranchOnMerge), so the recipe
+silently leaves them behind; after `merge-base --is-ancestor` has
+verified the branch, `-D` is the correct deletion.
+
+## Relevant files
+
+- `rules/git.md` — "Delete branches after merge" recipe
+- `skills/roar/SKILL.md` — step 9b ExitWorktree note
+
+## Actions
+
+1. Patch the `rules/git.md` loop: skip `main` (and the current branch)
+   explicitly, and use `-D` after the merge-base probe has verified the
+   branch is an ancestor of `origin/main`:
+   `[ "$b" = main ] && continue` + `git branch -D "$b"`.
+2. Amend roar step 9b: before authorizing `discard_changes`, verify the
+   ORIGINAL branch (the one the primary checkout will return to) is
+   either pushed or merged; if it carries unmerged commits, use
+   `action: "keep"` or re-point the branch after exit. Document the
+   detached-HEAD + reflog recovery path.
+
+## Test
+
+- Adherence-style check that the `rules/git.md` recipe text contains the
+  main-exclusion guard (string match on the rule file).
+
+## Verification
+
+- [ ] Recipe in rules/git.md skips main and current branch
+- [ ] roar SKILL.md step 9b warns about original-branch deletion
+- [ ] `make check` passes
+
+## Invariants
+
+- No behavioral change to ExitWorktree itself (tooling owned elsewhere);
+  this ticket fixes the documented recipes only.
+
+## Exit criteria
+
+- [ ] Both rule/skill texts patched and merged
+- [ ] Adherence test guards the git.md recipe
