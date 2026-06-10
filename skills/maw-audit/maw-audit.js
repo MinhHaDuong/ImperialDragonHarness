@@ -29,7 +29,7 @@ export const meta = {
     { title: 'Discovery', detail: 'an agent reads the launch repo and derives test command + pairing table + mutation heuristics (no per-repo CONFIG)' },
     { title: 'Precheck', detail: 'determinism gate (flakiness re-run); abort if the suite is flaky' },
     { title: 'Audit', detail: 'fang pass — behavioral test files, one Sonnet agent each, mutate→test→revert in isolated worktrees' },
-    { title: 'Skeptic', detail: 'Sonnet adversarially re-checks every survived/equivalent verdict' },
+    { title: 'Skeptic', detail: 'cross-tier Opus skeptic adversarially re-checks every survived/equivalent verdict (audit runs on Sonnet)' },
     { title: 'Handcuff', detail: 'robustness pass — behavior-PRESERVING refactors, inverted oracle (red = over-scoped), own skeptic' },
     { title: 'Scope', detail: 'altitude pass — replay each caught operator at sibling sites; surviving siblings = instance-pinned contract' },
     { title: 'Guards', detail: 'designated canary guard tests, serialized (perf-sensitive); skipped openly if none discovered/designated' },
@@ -158,7 +158,7 @@ DERIVE and return:
   - evidence: which files you read and how you derived the command + pairings.
 
 Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
-  { label: 'discovery:launch-repo', phase: 'Discovery', schema: DISCOVERY_SCHEMA }
+  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'sonnet', schema: DISCOVERY_SCHEMA }  // 0235: pinned sonnet (was unpinned → inherited session model). Singleton, runs once; its derivation gates the whole audit, so it is a defensible candidate to bump to opus if a wrong RUN_TEST/pairing ever slips through.
 ).catch(e => { log(`discovery agent error: ${e}`); return null })
 
 if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
