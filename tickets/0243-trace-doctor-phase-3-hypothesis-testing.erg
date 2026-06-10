@@ -1,0 +1,89 @@
+%erg 0.1
+Title: trace-doctor phase 3: hypothesis testing on the full census
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T15:05Z Integration Test created
+
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit), phase 3:
+CONFIRMATION. The hypothesis list is now fixed — census seeds H1–H8
+(docs/trace-census-2026-06.md §d) merged with discovered H10–H13
+(docs/trace-open-coding-2026-06.md, ticket 0240; H9 folded into H5).
+Per the 0236 study design, confirmation runs on the FULL 28-day census,
+never on the 30-trace discovery sample (tainted by design).
+
+Goal: turn each hypothesis into a computed statistic over the corpus,
+rank the supported ones by measured $/week saving, and produce the
+recommendation list that phases 4–5 (counterfactual accounting, targeted
+A/B) will consume. Include the quality baseline: trace → PR outcome join
+(merged / REROLL / ESCALATE) so cost cuts can be weighed against
+delivery quality.
+
+## Relevant files
+
+- `docs/trace-open-coding-2026-06.md` — consolidated H1–H13 table, each
+  with its full-census statistic (the spec for this ticket)
+- `scripts/trace-stats.py` — census engine; H10/H11/H13 need new
+  per-agent columns (merge-success marker position, navigational/idle
+  turn classification, verify/gaze invocation count)
+- `scripts/trace-compact-audit.py` — H8's statistic already exists
+  (recoverable-$ detector); run it over the full corpus, don't rebuild
+- `docs/trace-census-2026-06.md` — census aggregates to reuse for H1/H6
+- `~/.claude/projects/` — live corpus (~2,300 traces, 28-day window)
+
+## Actions
+
+1. Extend `scripts/trace-stats.py` with the new detectors (zero LLM
+   tokens, same dedupe rules): H10 merge-marker turn index, H11
+   navigational/idle turn counts and run lengths, H13 verify/gaze
+   Skill-invocation count. Add the D1 chore: flag `turns == 0` rows.
+2. New `scripts/trace-hypotheses.py`: reads the census CSV, computes the
+   thirteen statistics from the H-table, emits a JSON/markdown summary
+   with per-hypothesis verdict (supported / not supported / needs-forge-
+   join) and estimated $/week at stake. Forge joins (H4 diff size, the
+   quality baseline) go through the forge CLI, cached to a committed
+   CSV so the analysis re-runs offline.
+3. Run over the full corpus; write `docs/trace-hypotheses-2026-06.md`:
+   per-hypothesis section (statistic, number, verdict, caveats) and the
+   ranked recommendation table ($/week, quality risk, phase-4 vs
+   phase-5 routing).
+
+## Test
+
+- Red first: `tests/test_trace_hypotheses.py` — fixture census CSV with
+  known H10/H11/H13 signatures; assert each statistic computes the
+  expected value; include a `turns == 0` row and assert it is flagged
+  and excluded from $ statistics.
+
+## Verification
+
+- [ ] New trace-stats columns covered by fixture tests (existing tests
+      stay green — column additions only, no accounting changes)
+- [ ] `trace-hypotheses.py --census <csv>` runs end-to-end on the live
+      corpus; any hypothesis it cannot compute is listed as such in the
+      report (no silent drops)
+- [ ] Report ranks recommendations by $/week with the quality baseline
+      alongside
+- [ ] `make check` passes
+
+## Invariants
+
+- Zero LLM calls in committed scripts
+- No trace content in committed artifacts (aggregates only)
+- Discovery sample never used for confirmation; all statistics computed
+  on the full census
+- Existing census/compact-audit accounting unchanged (dedupe by
+  message.id, synthetic exclusion)
+
+## Exit criteria
+
+- [ ] `trace-stats.py` extended + `trace-hypotheses.py` committed, tests
+      green
+- [ ] `docs/trace-hypotheses-2026-06.md` committed with all thirteen
+      hypotheses resolved (supported / not supported / needs-data) and
+      the ranked $/week recommendation list
+- [ ] Tracker 0236 updated; phase 4 filing unblocked
