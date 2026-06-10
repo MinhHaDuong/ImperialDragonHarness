@@ -41,7 +41,38 @@ INT_COLS = (
     "idle_turns",
     "max_nav_run",
     "verify_gaze_skills",
+    "merge_markers",
+    "tail_turns",
+    "tail_mandated_turns",
+    "bucket_tail_cr",
+    "bucket_vg_cr",
+    "bucket_micro_cr",
+    "first_turn_cache_write",
+    "excess_file_reads",
 )
+
+OPTIONAL_INT_COLS = ("merge_marker_turn", "merge_marker_turn_last", "vg_second_turn")
+
+# Ticket 0244 (H10'): context a fresh wrap-up session would carry per turn.
+FRESH_BASELINE_TOKENS = 15_000
+# Ticket 0244 (H12'): assumed tokens per redundant file read (stated bound).
+ASSUMED_READ_TOKENS = 2_000
+# Reflexivity: PRs produced by the trace-doctor study itself (2026-06).
+STUDY_PRS = frozenset({358, 359, 367, 368, 370, 371, 372, 373, 374, 375, 376, 377})
+
+import importlib.util  # noqa: E402
+
+_TS_SPEC = importlib.util.spec_from_file_location(
+    "trace_stats", Path(__file__).resolve().parent / "trace-stats.py"
+)
+_TS = importlib.util.module_from_spec(_TS_SPEC)
+_TS_SPEC.loader.exec_module(_TS)
+_MAX_PRICING = max(_TS.PRICING.values(), key=lambda p: p["cache_write_5m"])
+
+
+def _rate(row: dict, key: str) -> float:
+    """$/token for this row's dominant model; fleet-max keeps bounds honest."""
+    return ((_TS.resolve_pricing(row.get("model") or "") or _MAX_PRICING)[key]) / 1e6
 
 
 def load_census(path: Path) -> list[dict]:
@@ -52,8 +83,9 @@ def load_census(path: Path) -> list[dict]:
             for k in INT_COLS:
                 r[k] = int(float(r.get(k) or 0))
             r["cost_usd"] = float(r.get("cost_usd") or 0)
-            mm = r.get("merge_marker_turn")
-            r["merge_marker_turn"] = int(float(mm)) if mm not in (None, "") else None
+            for k in OPTIONAL_INT_COLS:
+                v = r.get(k)
+                r[k] = int(float(v)) if v not in (None, "") else None
             r["read_only"] = str(r.get("read_only")) == "True"
             rows.append(r)
     return rows
@@ -203,11 +235,11 @@ def compute_all(all_rows: list[dict]) -> dict:
         "H8": {"verdict": "needs-data", "note": "run scripts/trace-compact-audit.py --json"},
         "H10": {
             "sessions_with_marker": len(marked),
-            "tail_usd": round(tail_usd, 2),
+            "tail_usd": round(tail_usd, 4),
             "tail_share_of_total": round(_share(tail_usd, total), 4),
         },
         "H11": {
-            "micro_usd": round(micro_usd, 2),
+            "micro_usd": round(micro_usd, 4),
             "micro_share": round(_share(micro_usd, total), 4),
             "max_nav_run_p99": (
                 sorted(r["max_nav_run"] for r in rows)[int(0.99 * (len(rows) - 1))]
@@ -242,6 +274,145 @@ def merge_optional_inputs(results: dict, compact_json: Path | None, pr_stats: Pa
     return results
 
 
+def _session_prs(row: dict) -> list[int]:
+    return [int(n) for n in str(row.get("pr_numbers") or "").split(";") if n]
+
+
+def compute_refined(
+    rows: list[dict], pr_join: dict | None, study_prs: frozenset | set = STUDY_PRS
+) -> dict:
+    """Ticket 0244: refined statistics over the DISJOINT turn buckets.
+
+    Buckets are computed per-turn in trace-stats.py with priority
+    tail > vg > micro, so the three $ figures are additive by
+    construction — the dedup total is a sum, not an estimate.
+    """
+    rows = [r for r in rows if r["turns"] > 0]
+    mains = [r for r in rows if r["agent_id"] == "main"]
+    subs = [r for r in rows if r["agent_id"] != "main"]
+
+    tail_usd = sum(r["bucket_tail_cr"] * _rate(r, "cache_read") for r in mains)
+    premium_usd = sum(
+        max(0, r["bucket_tail_cr"] - r["tail_turns"] * FRESH_BASELINE_TOKENS)
+        * _rate(r, "cache_read")
+        for r in mains
+    )
+    tail_turns_total = sum(r["tail_turns"] for r in mains)
+    mandated_total = sum(r["tail_mandated_turns"] for r in mains)
+
+    vg_usd = sum(r["bucket_vg_cr"] * _rate(r, "cache_read") for r in mains)
+    micro_usd = sum(r["bucket_micro_cr"] * _rate(r, "cache_read") for r in rows)
+    reread_usd = sum(
+        r["excess_file_reads"] * ASSUMED_READ_TOKENS * _rate(r, "cache_read") for r in rows
+    )
+    preamble_usd = sum(r["first_turn_cache_write"] * _rate(r, "cache_write_5m") for r in subs)
+
+    study_sessions = {
+        (r["project"], r["session_id"])
+        for r in mains
+        if set(_session_prs(r)) & set(study_prs)
+    }
+    non_study = [r for r in rows if (r["project"], r["session_id"]) not in study_sessions]
+    micro_excl = sum(r["bucket_micro_cr"] * _rate(r, "cache_read") for r in non_study)
+    tail_excl = sum(
+        r["bucket_tail_cr"] * _rate(r, "cache_read")
+        for r in non_study
+        if r["agent_id"] == "main"
+    )
+
+    results = {
+        "note": "shadow dollars: list-price API-equivalents under subscription auth — "
+        "capacity consumption, not invoices",
+        "H10r": {
+            "tail_usd": round(tail_usd, 4),
+            "premium_usd": round(premium_usd, 4),
+            "mandated_share": round(mandated_total / tail_turns_total, 3)
+            if tail_turns_total
+            else 0.0,
+            "sessions_with_marker": sum(1 for r in mains if r["merge_markers"] > 0),
+        },
+        "H11r": {"micro_usd": round(micro_usd, 4)},
+        "H13r": {
+            "vg_usd": round(vg_usd, 4),
+            "reentry_sessions": sum(1 for r in mains if r["vg_second_turn"] is not None),
+        },
+        "H12r": {"reread_usd_upper": round(reread_usd, 4)},
+        "H5r": {"preamble_usd_upper": round(preamble_usd, 4)},
+        "dedup": {
+            "addressable_usd": round(tail_usd + vg_usd + micro_usd, 4),
+            "note": "buckets disjoint per turn (tail > vg > micro); sum is exact, "
+            "but overlaps H8's compaction counterfactual",
+        },
+        "reflexivity": {
+            "study_sessions": len(study_sessions),
+            "micro_usd_excl_study": round(micro_excl, 4),
+            "tail_usd_excl_study": round(tail_excl, 4),
+        },
+        "H2_segmented": {
+            "mains_cr_per_turn_deciles": _cr_deciles(mains),
+            "subagents_cr_per_turn_deciles": _cr_deciles(subs),
+        },
+    }
+
+    if pr_join:
+        by_pr = {int(k[1]): v for k, v in pr_join.items()}
+        joined, reentry_diffs, other_diffs, merged, rerolls, escalates = 0, [], [], 0, 0, 0
+        joined_prs = set()
+        for r in mains:
+            diffs = [
+                int(by_pr[n].get("additions") or 0) + int(by_pr[n].get("deletions") or 0)
+                for n in _session_prs(r)
+                if n in by_pr
+            ]
+            if not diffs:
+                continue
+            joined += 1
+            (reentry_diffs if r["verify_gaze_skills"] >= 2 else other_diffs).append(sum(diffs))
+            for n in _session_prs(r):
+                if n in by_pr and n not in joined_prs:
+                    joined_prs.add(n)
+                    merged += 1 if str(by_pr[n].get("merged")) in ("True", "true") else 0
+                    rerolls += int(by_pr[n].get("reroll_mentions") or 0)
+                    escalates += int(by_pr[n].get("escalate_mentions") or 0)
+        results["H4r"] = {
+            "joined_sessions": joined,
+            "reentry_median_diff": statistics.median(reentry_diffs) if reentry_diffs else None,
+            "other_median_diff": statistics.median(other_diffs) if other_diffs else None,
+        }
+        results["quality"] = {
+            "joined_prs": len(joined_prs),
+            "merged_rate": round(merged / len(joined_prs), 3) if joined_prs else None,
+            "reroll_mentions": rerolls,
+            "escalate_mentions": escalates,
+        }
+    else:
+        results["H4r"] = {"verdict": "needs-data"}
+        results["quality"] = {"verdict": "needs-data"}
+    return results
+
+
+def _cr_deciles(rows: list[dict]) -> list[int]:
+    by_cost = sorted(rows, key=lambda r: r["cost_usd"])
+    out = []
+    if not by_cost:
+        return out
+    size = max(1, len(by_cost) // 10)
+    for d in range(10):
+        chunk = by_cost[d * size : (d + 1) * size] if d < 9 else by_cost[9 * size :]
+        turns = sum(r["turns"] for r in chunk)
+        cr = sum(r["cache_read_input_tokens"] for r in chunk)
+        out.append(round(cr / turns) if turns else 0)
+    return out
+
+
+def load_pr_join(path: Path) -> dict:
+    join = {}
+    with open(path, newline="", encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            join[(r["repo"], int(r["pr"]))] = r
+    return join
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compute H1-H13 statistics over the trace census CSV."
@@ -257,6 +428,8 @@ def main() -> None:
 
     rows = load_census(args.census)
     results = merge_optional_inputs(compute_all(rows), args.compact_audit_json, args.pr_stats)
+    pr_join = load_pr_join(args.pr_stats) if args.pr_stats and args.pr_stats.exists() else None
+    results["refined"] = compute_refined(rows, pr_join)
     text = json.dumps(results, indent=2)
     if args.output:
         args.output.write_text(text + "\n", encoding="utf-8")
