@@ -8,7 +8,7 @@
 
 ## Entries
 
-- [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — Author directive: skills auto-discover repo specifics at run start (0184 adapter precedent); explicit inputs are optional overrides; revise old explicit-CONFIG adherence tests deliberately
+- [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — Author directive: skills auto-discover repo specifics at run start (0184 adapter precedent); explicit inputs are optional overrides; also resolve missing args from authoritative state (branch→MR) and never fabricate example IDs in refusal messages (wrong-PR anchoring, 2026-06-10)
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'; worktrees cut from the SESSION repo — cross-repo skills need a session in the target repo; probe before expensive fan-outs
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — Skill frontmatter model: does NOT propagate to spawned children (Agent resolves to session model); per-invocation `model` (enum sonnet|opus|haiku|fable) is the only reliable lever; `effort` is not an Agent/Workflow launch param at all; CLAUDE_CODE_SUBAGENT_MODEL is a precedence-#1 cap
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — Session-trace JSONL repeats the same message.usage on every content-block row; sum per unique message.id or overstate ~2.7x; price per-message model field; skip `<synthetic>` records (bit the trace-doctor motivation numbers, 2026-06-10)
