@@ -96,5 +96,12 @@ detection. This ticket productionizes that idea.
 - [ ] Census report `docs/trace-census-2026-06.md` committed with
       distributions for: $ by category, turns per agent by role,
       cache_read vs turns scatter (table or numbers, figure optional)
-- [ ] Report ends with a "candidate hypotheses for phase 2" section
-      listing which of H1-H5 (see 0236) the census supports
+- [ ] Report ends with a "discovery feedstock" section (input to the
+      phase-2 hypothesis-discovery child, see 0236): (a) top-20 cost
+      outliers WITH residuals from a cost ~ f(turns) fit — agents far
+      off the curve, not just big ones; (b) any bimodal/heavy-tailed
+      distributions the census surfaced; (c) a stratified random sample
+      frame (project x entry-skill x cost-decile, including cheap
+      deciles) listing trace paths for the LLM open-coding pass; (d)
+      only then, which of the H1-H5 seeds the aggregates appear to
+      support — clearly labeled as seeds from N=1, not findings

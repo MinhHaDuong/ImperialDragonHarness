@@ -35,27 +35,50 @@ Corpus available (verified 2026-06-10): ~2,305 session JSONL traces,
 `~/.claude/projects/`. Small enough for a full census in the
 deterministic pass; sampling is reserved for LLM-judged phases.
 
-## Study design (four phases, each a child ticket)
+## Study design (five phases, each a child ticket)
 
 1. **Census** (child: 0237) — pure-Python `scripts/trace-stats.py`, one
    row per agent with cost, shape, and waste-signature detectors. Zero
    LLM tokens. First report over the 28-day corpus.
-2. **Hypothesis testing** — turn the N=1 findings into statistics over
-   the census output: H1 cache_read dominates $; H2 cost ~ turns²; H3
+2. **Hypothesis DISCOVERY** — we cannot confirm what we never looked
+   for, and the seed hypotheses come from N=1. Two instruments:
+   a. *Mechanical anomaly mining* (zero tokens, extends the census):
+      Pareto analysis ($ concentration: which 5% of agents take 50% of
+      spend); residuals after fitting cost ~ f(turns) — agents far off
+      the curve are unexplained patterns; clustering agents by
+      tool-histogram + shape; cost per merged-PR-line joined via the
+      forge CLI; flag any distribution the census shows as bimodal or
+      heavy-tailed.
+   b. *LLM open-coding of a stratified random sample*: sample traces by
+      project x entry-skill x cost-decile — including the CHEAP deciles
+      (frugal sessions show what good looks like) — and have a
+      cheap-model reader narrate per trace "where did tokens go, what
+      was avoidably spent, what context was carried but never used".
+      Cluster the narratives into candidate waste patterns
+      (grounded-theory open coding -> axial coding), like skill-doctor
+      clusters failures. Output: a hypothesis list H1..Hn where H1-H5
+      below are merely seeds.
+3. **Hypothesis testing** — turn the discovered + seeded hypotheses
+   into statistics over the census output. Seeds from the N=1 spot
+   analysis: H1 cache_read dominates $; H2 cost ~ turns²; H3
    read-only agents drift past any reasonable budget; H4 gaze cost is
    independent of diff size (join to PR diff stats via the forge CLI);
    H5 duplicate prompt-preamble cache_writes across sibling agents are
-   material. Output: recommendations ranked by measured $/week saving,
-   plus a quality baseline (trace -> PR outcome join: merged / REROLL /
-   ESCALATE).
-3. **Counterfactual accounting** — for each recommendation, compute the
+   material. Discovered hypotheses get the same treatment: a measurable
+   statistic, tested on the FULL census (the discovery sample is
+   tainted for confirmation — discover on the sample, confirm on the
+   census, or split the corpus if a discovered pattern needs LLM
+   reading to measure). Output: recommendations ranked by measured
+   $/week saving, plus a quality baseline (trace -> PR outcome join:
+   merged / REROLL / ESCALATE).
+4. **Counterfactual accounting** — for each recommendation, compute the
    saving from existing traces before re-running anything. E.g. "cap
    recon at N turns": truncate the trace at turn N and have a cheap
    model judge whether the final report was already derivable. "Skip
    full gaze on trivial diffs": count gaze runs on small prose diffs
    that APPROVED with zero findings. Filters the list to the 1-2
    measures accounting cannot settle.
-4. **Targeted A/B** — for those 1-2 measures only: either re-run ~5
+5. **Targeted A/B** — for those 1-2 measures only: either re-run ~5
    closed tickets from their original SHA with old vs new prompt
    (compare tokens AND quality: does the PR still pass gaze), or ship
    the measure behind a flag and let a week of nightbeat be the B arm.
@@ -74,7 +97,9 @@ verify the skill runs end-to-end on live traces).
 
 Children:
 - 0237 — phase 1 census script + first report
-- (phases 2-4 to be filed once the census shows what is real)
+- (phases 2-5 to be filed once the census shows what is real; the
+  discovery phase 2 is filed FIRST, before any confirmatory work, so
+  the hypothesis list is fixed before testing begins)
 
 ## Exit criteria
 
