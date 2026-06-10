@@ -623,7 +623,7 @@ for (const file of GUARDS) {
   // Δ10: a single guard-agent failure must not discard the behavioral results
   // already collected — degrade to null (the canary gate then reports SUSPECT,
   // which is the honest verdict when a guard agent dies).
-  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8
+  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', model: 'sonnet', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8; 0235: pinned sonnet (mutation agent, mirrors the fang pass)
     .catch(e => { log(`guard ${file.test} agent error: ${e}`); return null })
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
