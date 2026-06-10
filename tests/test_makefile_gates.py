@@ -21,14 +21,12 @@ def target_recipe(name: str) -> str:
 
 def test_check_runs_full_pytest_suite():
     rule = target_recipe("check")
-    runs_pytest_directly = "pytest tests/" in rule and "-m" not in rule
-    deps = rule.splitlines()[0]
-    delegates = any(
-        dep in deps for dep in ("check-tests", "test")
-    ) and "pytest tests/" in target_recipe("check-tests" if "check-tests" in deps else "test")
-    assert runs_pytest_directly or delegates, (
-        "coding-python.md defines 'make check' as the full test suite "
-        f"(integration + slow included); current rule:\n{rule}"
+    if "check-tests" in rule.splitlines()[0]:
+        rule = target_recipe("check-tests")
+    assert re.search(r"pytest tests/\s*$", rule, re.MULTILINE), (
+        "coding-python.md defines 'make check' as the full test suite — "
+        "pytest over tests/ with no marker filter or other trailing args; "
+        f"current rule:\n{rule}"
     )
 
 
