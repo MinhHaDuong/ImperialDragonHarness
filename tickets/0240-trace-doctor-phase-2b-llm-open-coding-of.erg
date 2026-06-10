@@ -1,0 +1,102 @@
+%erg 0.1
+Title: trace-doctor phase 2b: LLM open-coding of stratified trace sample
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T14:01Z Integration Test created
+
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit), phase 2
+instrument (b): hypothesis DISCOVERY by LLM open-coding. The phase-1
+census (0237, closed) replaced N=1 anecdotes with distributions and
+ends with a "discovery feedstock" section that this ticket consumes:
+a stratified random sample frame of 30 main traces (project x
+entry-skill x session-cost-decile, seed 237, cheap deciles included
+deliberately — frugal sessions show what good looks like).
+
+Goal: have a cheap-model reader narrate each sampled trace ("where did
+tokens go, what was avoidably spent, what context was carried but never
+used"), then cluster the narratives into candidate waste patterns
+(grounded-theory open coding -> axial coding, like skill-doctor clusters
+failures). Output: a hypothesis list H1..Hn in which the census seeds
+H1-H8 are merely members — discovery runs BEFORE any confirmatory work
+so the phase-3 hypothesis list is fixed before testing begins (0236).
+
+Sample-decile sessions range up to $253 / 40 agents — raw JSONL traces
+are far too large to hand to a reader agent. A deterministic digest
+step must compress each trace first.
+
+## Relevant files
+
+- `docs/trace-census-2026-06.md` § "(c) Stratified random sample frame"
+  — the 30 trace paths (relative to `~/.claude/projects/`), seed 237
+- `scripts/trace-stats.py` — phase-1 census; reuse its JSONL parsing,
+  message-id dedupe, and per-agent accounting (do NOT re-implement;
+  the row-vs-message 2.7x overstatement bug is fixture-guarded there)
+- `tests/test_trace_compact_audit.py` — phase-2a sibling; pattern for
+  trace-fixture tests
+- `~/.claude/skills/skill-doctor/SKILL.md` — the clustering model this
+  phase imitates (survey -> open coding -> axial coding -> report)
+
+## Actions
+
+1. Write `scripts/trace-digest.py` (pure Python, zero LLM tokens):
+   given a main-trace path, emit a compact per-turn digest — turn index,
+   role, tool calls (name + truncated args), token deltas
+   (fresh/cache_read/cache_write/output via the deduped accounting from
+   trace-stats.py), message-size markers, compact/clear events, and
+   subagent spawn points. Target ≤ ~2K tokens per digested trace.
+2. Run it over the 30 sample-frame traces; commit digests under
+   `docs/trace-open-coding-2026-06/` (handoff artifacts, committed per
+   git.md — they are inputs to the reader pass and the audit trail).
+3. Open-coding pass: one cheap-model agent (Haiku) per digest, prompted
+   to narrate where tokens went and what was avoidably spent, returning
+   structured observations. LLM calls happen ONLY via Claude Code
+   agents (Agent tool / Workflow) — never `anthropic.Anthropic()` in a
+   helper script (skill-architecture rule).
+4. Axial-coding pass: one stronger-model agent clusters the 30
+   narratives into named candidate hypotheses with per-trace evidence
+   counts; merge with census seeds H1-H8 into a single deduped list.
+5. Write `docs/trace-open-coding-2026-06.md`: method (model used,
+   prompt, sample provenance), per-cluster summary with example quotes,
+   and the consolidated hypothesis list H1..Hn each with a proposed
+   measurable statistic for phase 3.
+
+## Test
+
+- Red first: `tests/test_trace_digest.py` — feed a small fixture trace
+  (reuse/extend the phase-2a fixture style) and assert the digest
+  contains the turn count, a known tool call, correct deduped token
+  totals, and stays under a size budget. Must include the multi-row
+  single-message-id fixture (the 2.7x bug) asserting tokens are counted
+  once.
+
+## Verification
+
+- [ ] `uv run python scripts/trace-digest.py --trace <path>` runs on a
+      live trace from the sample frame and emits a ≤2K-token digest
+- [ ] All 30 sample traces digested; count of digests == count of frame
+      rows (any unreadable/expired trace explicitly listed as dropped —
+      no silent truncation)
+- [ ] Report's hypothesis list cites ≥1 trace per hypothesis
+- [ ] `make check` passes
+
+## Invariants
+
+- Zero LLM calls inside committed scripts (digest is pure Python)
+- No raw trace content (user prompts, file contents) in committed
+  artifacts — digests carry tool names, token numbers, and structural
+  markers only (same privacy invariant as 0237/0239)
+- Discovery sample is tainted for confirmation: phase 3 confirms on the
+  FULL census, never on these 30 traces (0236 study design)
+
+## Exit criteria
+
+- [ ] `scripts/trace-digest.py` + tests committed and green
+- [ ] 30-trace digest set + `docs/trace-open-coding-2026-06.md`
+      committed, ending with the consolidated phase-3 hypothesis list
+      (census seeds merged, each hypothesis with a measurable statistic)
+- [ ] Tracker 0236 updated: this child listed, phase-3 filing unblocked
