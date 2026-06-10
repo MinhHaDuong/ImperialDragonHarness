@@ -371,7 +371,7 @@ async function skepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(skepticPrompt(file, x.f), {
       label: `skeptic:${file.test}:${x.f.testFunc}`.slice(0, 60),
-      phase: 'Skeptic', model: 'sonnet', schema: SKEPTIC_SCHEMA,
+      phase: 'Skeptic', model: 'opus', schema: SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet audit; per-accusation volume, so cheap, and it is the audit's core adversarial guarantee
     })
   ))
   verdicts.forEach((v, k) => {
@@ -480,7 +480,7 @@ async function handcuffSkepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(handcuffSkepticPrompt(file, x.f), {
       label: `hc-skeptic:${file.test}`.slice(0, 60),
-      phase: 'Handcuff', model: 'sonnet', schema: HANDCUFF_SKEPTIC_SCHEMA,
+      phase: 'Handcuff', model: 'opus', schema: HANDCUFF_SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet handcuff pass (see Skeptic note)
     })
   ))
   verdicts.forEach((v, k) => {
@@ -577,7 +577,7 @@ This is the 0184 test-quality utility's flakiness gate. Exit-code contract:
   - exit 0 = suite is stable (or all flakiness is baselined) -> gate "pass"
   - exit 2 = NEW flakiness found -> gate "fail"
 The JSON report on stdout carries a "gate" field ("pass"/"fail"); read it to confirm. Report exitCode, gate, any flaky test identities, and a short evidence excerpt. Do NOT mutate anything.`,
-  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin the cheap model (mirrors the skeptics)
+  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin a cheap model; sonnet here (the cross-tier skeptics run on opus)
 ).catch(() => null)  // Δ10: a precheck agent error falls into the abort path below, not an opaque crash
 
 // 0226 d3: require an AFFIRMATIVE pass on the real-agent path — `gate === 'pass'`,
@@ -902,7 +902,7 @@ else {
   L.push('|---|---|---|---|---|---|')
   survivedRanked.forEach(f => L.push(`| \`${esc(f._file)}\` | \`${esc(f.testFunc)}\` | ${rxc(f).toFixed(1)} (r${riskWeight(f)}×c${churnWeight(f)}) | ${esc(f.mutation)} | ${esc(f.survivedJustification)} | ${esc(f.suggestion)} |`))
   L.push('')
-  L.push('_Each row survived both the Sonnet audit and the Sonnet adversarial skeptic. "Distinguishing input" is a concrete case where the mutated code is observably wrong yet no same-file test failed. Sorted by risk × churn so the highest-blast-radius × change-frequency gaps surface first; risk is the human-supplied weight (default 1)._')
+  L.push('_Each row survived both the Sonnet audit and the cross-tier Opus adversarial skeptic. "Distinguishing input" is a concrete case where the mutated code is observably wrong yet no same-file test failed. Sorted by risk × churn so the highest-blast-radius × change-frequency gaps surface first; risk is the human-supplied weight (default 1)._')
 }
 L.push('')
 

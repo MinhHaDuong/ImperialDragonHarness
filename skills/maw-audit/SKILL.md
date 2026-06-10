@@ -40,9 +40,10 @@ whole class.
 
 > ⚠️ **EXPENSIVE — on-demand only.** The validating git-erg fang-only run was
 > **~1.3M tokens / ~29 minutes** across ~31 agents — but that figure was measured
-> when the audit agents ran on Opus; they are now pinned to Sonnet (0235), so a
-> comparable run is cheaper (one Sonnet agent per test file + a Sonnet skeptic per
-> accusation). The three-axis run is larger still (it adds
+> when the audit agents ran on Opus; the audit agents are now pinned to Sonnet
+> (0235), so a comparable run is cheaper (one Sonnet agent per test file + an Opus
+> skeptic per accusation — skeptics are cross-tier but low-volume). The three-axis
+> run is larger still (it adds
 > a handcuff and a scope pass). This is NOT a per-PR gate and NOT a casual check.
 > Run it deliberately, on a stable suite. The cheap per-PR tier is the
 > `test-quality.py` flakiness/independence/speed utility (zero tokens) — see the
@@ -123,12 +124,12 @@ Phases:
 2. **Audit — fang pass** (fan-out, Sonnet, `isolation: 'worktree'`) — one agent per
    behavioral test file. Each runs a self-contained mutate→test→revert loop and
    classifies every behavior-CHANGING mutation (see verdict rules).
-3. **Skeptic** (Sonnet, per accusation) — every `survived` (toothless) and every
-   `equivalent` verdict passes through an adversarial skeptic. Note (0235): with
-   the audit on Sonnet this is now a same-tier Sonnet-on-Sonnet check — an
-   independently-prompted second pass, not a stronger model. If cross-tier
-   skepticism is wanted back, pin the skeptic to a different model than the audit.
-4. **Handcuff pass** (fan-out, Sonnet, isolated; own Sonnet skeptic) — applies
+3. **Skeptic** (Opus, per accusation) — every `survived` (toothless) and every
+   `equivalent` verdict passes through a **cross-tier** adversarial skeptic: the
+   audit runs on Sonnet, the skeptic on Opus (0235). Skeptics fire per-accusation
+   (a small fraction of the audit fan-out's volume), so the stronger tier is cheap
+   and preserves the audit's core cross-model adversarial guarantee.
+4. **Handcuff pass** (fan-out, Sonnet, isolated; own Opus skeptic) — applies
    behavior-PRESERVING refactors with the INVERTED oracle (red = over-scoped). Its
    skeptic re-checks every accusation: a red on a refactor that *secretly* changed
    behavior is a legitimate fang, withdrawn (mirror of the equivalent-mutant
