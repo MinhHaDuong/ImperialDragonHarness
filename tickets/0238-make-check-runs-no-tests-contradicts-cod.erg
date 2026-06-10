@@ -1,0 +1,43 @@
+%erg 0.1
+Title: make check runs no tests — contradicts coding-python.md gate definition
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T12:12Z Integration Test created
+
+--- body ---
+## Context
+
+`rules/coding-python.md` defines `make check` as "full suite including
+integration + slow tests — run before opening a PR". In this repo the
+`check` target runs only `check-skills-drift` + `check-agnostic-*` — zero
+pytest. Surfaced by the /review-pr run on PR #365 (pre-existing, untouched
+by that PR). Sessions relying on `make check` as the pre-PR gate silently
+skip 500 tests.
+
+Related environment trap found in the same review: padme's
+`/etc/profile.d/dev-cache.sh` exports
+`PYTEST_ADDOPTS="--cache-dir=/data/cache/pytest"`, an invalid pytest flag
+that aborts every bare pytest run. That fix belongs in the padme repo
+(file a ticket there); noted here because the broken env var masks itself
+when `make check` runs no pytest at all.
+
+## Relevant files
+
+- `Makefile` — `check:` target (currently no pytest)
+- `rules/coding-python.md` — gate definitions
+
+## Actions
+
+1. Add the full pytest run to `check`: `python3 -m pytest tests/`
+   (keep the existing drift + agnostic prerequisites).
+
+## Verification
+
+- [ ] `make check` runs the 500-test suite and the static checks
+
+## Exit criteria
+
+- [ ] `make check` matches the coding-python.md definition
+- [ ] CI (or a hygiene test) would catch a future regression of the target
