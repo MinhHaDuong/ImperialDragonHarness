@@ -36,10 +36,29 @@ _TS_SPEC = importlib.util.spec_from_file_location(
 ts = importlib.util.module_from_spec(_TS_SPEC)
 _TS_SPEC.loader.exec_module(ts)
 
-CLEAR_RE = re.compile(r"<command-name>/?clear</command-name>")
+# A real /clear record pairs the two tags across an actual newline; trace
+# text *quoted* inside a session (e.g. trace-doctor work) keeps the JSON
+# escape as literal backslash-n and so does not match.
+CLEAR_RE = re.compile(
+    r"<command-name>/?clear</command-name>\s*\n\s*<command-message>clear</command-message>"
+)
 
 # Used only if the corpus contains no compaction to take a median from.
 DEFAULT_POST_COMPACT_TOKENS = 20_000
+
+
+def _user_text_parts(content) -> list[str]:
+    """Text of a user record: plain string, or the text blocks of list-form
+    content (tool_result blocks carry no commands and are skipped)."""
+    if isinstance(content, str):
+        return [content]
+    if isinstance(content, list):
+        return [
+            b["text"]
+            for b in content
+            if isinstance(b, dict) and b.get("type") == "text" and isinstance(b.get("text"), str)
+        ]
+    return []
 
 
 def parse_trajectory(path: Path) -> dict:
@@ -109,12 +128,12 @@ def parse_trajectory(path: Path) -> dict:
                         post_compact_reads.append(cache_read)
                         awaiting_post_read = False
             elif rec_type == "user":
-                if isinstance(content, str):
-                    if CLEAR_RE.search(content):
+                for text in _user_text_parts(content):
+                    if CLEAR_RE.search(text):
                         events.append({"kind": "clear"})
                     elif entry_skill is None:
                         for m in re.finditer(
-                            r"<command-name>/?([\w-]+)</command-name>", content
+                            r"<command-name>/?([\w-]+)</command-name>", text
                         ):
                             if m.group(1) not in ts.BUILTIN_COMMANDS:
                                 entry_skill = m.group(1)

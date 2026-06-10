@@ -130,6 +130,38 @@ def test_recoverable_usd_never_negative():
     assert tca.run_recoverable_usd(turns, median_post=20_000) == 0.0
 
 
+def test_quoted_clear_does_not_break_run(tmp_path):
+    """Trace text quoted in a user message keeps the JSON-escaped newline as
+    a literal backslash-n: not a real /clear, must not break the run."""
+    quoted = {
+        "type": "user",
+        "timestamp": "2026-06-09T10:30:00.000Z",
+        "message": {
+            "role": "user",
+            "content": "look: <command-name>/clear</command-name>\\n<command-message>clear</command-message>",
+        },
+    }
+    rows = _ramp(17, prefix="a") + [quoted] + _ramp(17, prefix="b")
+    traj = tca.parse_trajectory(_write(tmp_path, rows))
+    runs = tca.find_missed_runs(traj["events"], min_run=30, threshold=300_000)
+    assert len(runs) == 1
+    assert runs[0]["length"] == 34
+
+
+def test_clear_detected_in_list_form_content(tmp_path):
+    listy = {
+        "type": "user",
+        "timestamp": "2026-06-09T10:30:00.000Z",
+        "message": {
+            "role": "user",
+            "content": [{"type": "text", "text": _clear_row()["message"]["content"]}],
+        },
+    }
+    rows = _ramp(17, prefix="a") + [listy] + _ramp(17, prefix="b")
+    traj = tca.parse_trajectory(_write(tmp_path, rows))
+    assert tca.find_missed_runs(traj["events"], min_run=30, threshold=300_000) == []
+
+
 def test_malformed_lines_tolerated(tmp_path):
     f = tmp_path / "bad.jsonl"
     f.write_text("{not json\n" + json.dumps(_assistant_row("ok", 400_000)) + "\n")
