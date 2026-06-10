@@ -221,8 +221,9 @@ def merge_optional_inputs(results: dict, compact_json: Path | None, pr_stats: Pa
         data = json.loads(compact_json.read_text())
         results["H8"] = {
             "verdict": "computed",
-            "recoverable_usd_upper": data.get("recoverable_usd_upper")
-            or data.get("total_recoverable_usd"),
+            "recoverable_usd_upper": data.get("recoverable_usd_upper_bound")
+            or data.get("recoverable_usd_upper"),
+            "missed_runs": data.get("missed_runs"),
             "source": str(compact_json),
         }
     if pr_stats and pr_stats.exists():

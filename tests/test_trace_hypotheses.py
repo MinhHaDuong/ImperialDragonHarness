@@ -121,6 +121,14 @@ def test_load_census_types(tmp_path):
     assert rows[0]["read_only"] is False
 
 
+def test_h8_reads_compact_audit_key(tmp_path):
+    j = tmp_path / "compact.json"
+    j.write_text('{"missed_runs": 64, "recoverable_usd_upper_bound": 1044.29}')
+    res = th.merge_optional_inputs({"H4": {"verdict": "needs-data"}, "H8": {}}, j, None)
+    assert res["H8"]["recoverable_usd_upper"] == 1044.29
+    assert res["H8"]["missed_runs"] == 64
+
+
 def test_cli_flags_present():
     src = (SCRIPTS / "trace-hypotheses.py").read_text()
     for flag in ("--census", "--output", "--compact-audit-json", "--pr-stats"):
