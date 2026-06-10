@@ -17,7 +17,15 @@ Verify the branch has been merged before proceeding:
 ```bash
 git fetch origin && git merge-base --is-ancestor HEAD origin/main
 ```
-If the current branch is not merged into origin/main, stop and tell the user. Do not continue with roar.
+If the ancestry check fails, do not stop yet: a rebase at the merge gate
+(mandatory per `rules/git.md`) rewrites the SHA, so a checkout still on the
+pre-rebase commit is patch-equivalent but not an ancestor. Fall back to:
+```bash
+git cherry origin/main HEAD <merge-base-or-branch-point>
+```
+A `-` prefix on every listed commit means the patches are already upstream —
+treat that as merged and proceed. Only if commits show `+` (genuinely absent
+from origin/main) stop and tell the user. Do not continue with roar in that case.
 
 ## Reflect and update
 

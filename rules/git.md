@@ -19,8 +19,9 @@
   ```bash
   git fetch --prune
   for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
+    [ "$b" = main ] && continue   # main is always an ancestor; nothing protects it when HEAD is detached
     git merge-base --is-ancestor "$b" origin/main && git branch -d "$b"
   done
   ```
-  The old `git branch -vv | awk '/: gone]/'` pipeline silently no-ops under rtk output rewriting; the merge-probe loop keys on exit code, not parsed stdout, so it stays robust under any hook. The healthcheck's branch hygiene check flags stale locals; this is how to resolve them. Do not use `git branch -D` on a branch whose PR you have not verified is merged.
+  The old `git branch -vv | awk '/: gone]/'` pipeline silently no-ops under rtk output rewriting; the merge-probe loop keys on exit code, not parsed stdout, so it stays robust under any hook. The `main` guard is load-bearing: with the primary checkout detached, `git branch -d main` succeeds (2026-06-10: the unguarded loop deleted local main during a /roar hygiene pass; recovered via `git branch --track main origin/main`). Also expect spurious `-d` refusals from a stale detached HEAD — `-d` checks merged-into-HEAD, not into origin/main; when the is-ancestor probe passed, `-D` is safe. The healthcheck's branch hygiene check flags stale locals; this is how to resolve them. Do not use `git branch -D` on a branch whose PR you have not verified is merged.
 - **Don't gitignore handoff artifacts.** Generated files that a downstream workpackage consumes (figures, tables, macros `\input`ed by the manuscript) are durable state — commit them. Caches, LaTeX aux files, and the final rendered PDF are regenerable — gitignore.
