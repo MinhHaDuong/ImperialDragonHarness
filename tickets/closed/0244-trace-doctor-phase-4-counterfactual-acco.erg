@@ -2,12 +2,14 @@
 Title: trace-doctor phase 4: counterfactual accounting of ranked recommendations
 Created: 2026-06-10
 Author: Integration Test
+Closed: autoclosed — PR #378
 
 --- log ---
 2026-06-10T15:35Z Integration Test created
 2026-06-10T15:55Z claude note H10 spec sharpened per author challenge: last-marker segmentation, relocation premium, mandated-work classification
 2026-06-10T16:10Z claude note skeptical-review constraints added: shadow dollars, bucket dedup, reflexivity, H2 mixture, H13 confounder, phase-2b containment
 
+2026-06-10T19:15Z Integration Test closed — autoclosed — PR #378
 --- body ---
 ## Context
 

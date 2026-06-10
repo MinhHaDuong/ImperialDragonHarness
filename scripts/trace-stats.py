@@ -103,9 +103,29 @@ MERGE_MARKER_RE = re.compile(r"Merge queued|Pull Request successfully merged|sta
 # Ticket 0243 (H13): verification machinery re-entry.
 VERIFY_SKILLS = {"verify", "gaze", "verify-gate"}
 
+# Ticket 0244 (H10'): PR numbers cited in a merge-marker tool result.
+PR_NUMBER_RE = re.compile(r"(?:PR\s*#|pulls/)(\d+)")
+
+# Ticket 0244 (H10'): harness-mandated wrap-up work — memory/STATE writes,
+# branch hygiene, wrap-up skills. Used only to classify tail turns.
+MANDATED_PATH_RE = re.compile(r"/memory/|MEMORY\.md|STATE\.md")
+MANDATED_BASH_RE = re.compile(r"^\s*git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close")
+MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "housekeeping"}
+PATH_TOOLS = {"Read", "Edit", "Write", "NotebookEdit"}
+
 
 def _is_nav_tool(name: str, tool_input: dict) -> bool:
     return name == "Bash" and bool(NAV_COMMAND_RE.search(str(tool_input.get("command", ""))))
+
+
+def _is_mandated_tool(name: str, tool_input: dict) -> bool:
+    if name in PATH_TOOLS:
+        return bool(MANDATED_PATH_RE.search(str(tool_input.get("file_path", ""))))
+    if name == "Bash":
+        return bool(MANDATED_BASH_RE.search(str(tool_input.get("command", ""))))
+    if name == "Skill":
+        return tool_input.get("skill") in MANDATED_SKILLS
+    return False
 
 
 def resolve_pricing(model_id: str) -> dict | None:
@@ -177,6 +197,12 @@ def parse_trace_file(path: Path) -> dict:
     msg_turn_index: dict[str, int] = {}
     merge_marker_turn: int | None = None
     verify_gaze = 0
+    turn_cache_read: list[int] = []  # per non-synthetic turn, parallel to turn_tool_kinds
+    turn_mandated: list[bool] = []
+    merge_marker_turns: list[int] = []
+    pr_numbers: list[int] = []
+    vg_turns: list[int] = []  # 0-based turn index of each verify/gaze invocation
+    first_turn_cache_write = 0
 
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -213,8 +239,14 @@ def parse_trace_file(path: Path) -> dict:
                     if model == "<synthetic>":
                         synthetic += 1
                     else:
+                        if not turn_tool_kinds:
+                            first_turn_cache_write = (
+                                usage.get("cache_creation_input_tokens", 0) or 0
+                            )
                         msg_turn_index[msg_id] = len(turn_tool_kinds)
                         turn_tool_kinds.append([])
+                        turn_cache_read.append(usage.get("cache_read_input_tokens", 0) or 0)
+                        turn_mandated.append(False)
                         models[model] += 1
                         for k in USAGE_KEYS:
                             tokens[k] += usage.get(k, 0) or 0
@@ -240,8 +272,12 @@ def parse_trace_file(path: Path) -> dict:
                             turn_tool_kinds[turn_idx].append(
                                 "nav" if _is_nav_tool(name, tool_input) else "work"
                             )
+                            if _is_mandated_tool(name, tool_input):
+                                turn_mandated[turn_idx] = True
                         if name == "Skill" and tool_input.get("skill") in VERIFY_SKILLS:
                             verify_gaze += 1
+                            if turn_idx is not None:
+                                vg_turns.append(turn_idx)
                         if name in WRITE_TOOLS:
                             wrote_files = True
                         elif name == "Read" and tool_input.get("file_path"):
@@ -261,10 +297,14 @@ def parse_trace_file(path: Path) -> dict:
                             except (TypeError, ValueError):
                                 continue
                             tool_result_bytes += len(result_text)
-                            if merge_marker_turn is None and MERGE_MARKER_RE.search(
-                                result_text
-                            ):
-                                merge_marker_turn = len(turn_tool_kinds)
+                            if MERGE_MARKER_RE.search(result_text):
+                                if merge_marker_turn is None:
+                                    merge_marker_turn = len(turn_tool_kinds)
+                                merge_marker_turns.append(len(turn_tool_kinds))
+                                for m in PR_NUMBER_RE.finditer(result_text):
+                                    n = int(m.group(1))
+                                    if n not in pr_numbers:
+                                        pr_numbers.append(n)
                 elif isinstance(content, str) and entry_skill is None:
                     for m in re.finditer(r"<command-name>/?([\w-]+)</command-name>", content):
                         if m.group(1) not in BUILTIN_COMMANDS:
@@ -277,6 +317,29 @@ def parse_trace_file(path: Path) -> dict:
         run = run + 1 if flag else 0
         max_nav_run = max(max_nav_run, run)
 
+    # Ticket 0244: disjoint per-turn cache_read buckets, priority
+    # tail (after LAST merge marker) > vg (after 2nd verify/gaze) >
+    # micro (nav/idle, never the final turn) > core. Turn numbers are
+    # 1-based to match the marker convention (marker value = turns
+    # completed when it arrived).
+    n_turns = len(turn_tool_kinds)
+    last_marker = merge_marker_turns[-1] if merge_marker_turns else None
+    vg_second = vg_turns[1] + 1 if len(vg_turns) >= 2 else None
+    bucket_tail_cr = bucket_vg_cr = bucket_micro_cr = 0
+    tail_turn_count = tail_mandated = 0
+    for i in range(n_turns):
+        number = i + 1
+        cr = turn_cache_read[i]
+        if last_marker is not None and number > last_marker:
+            bucket_tail_cr += cr
+            tail_turn_count += 1
+            if turn_mandated[i]:
+                tail_mandated += 1
+        elif vg_second is not None and number > vg_second:
+            bucket_vg_cr += cr
+        elif (nav_flags[i] or not turn_tool_kinds[i]) and i != n_turns - 1:
+            bucket_micro_cr += cr
+
     return {
         **tokens,
         "cost_usd": cost,
@@ -286,6 +349,17 @@ def parse_trace_file(path: Path) -> dict:
         "max_nav_run": max_nav_run,
         "merge_marker_turn": merge_marker_turn,
         "verify_gaze_skills": verify_gaze,
+        "merge_markers": len(merge_marker_turns),
+        "merge_marker_turn_last": last_marker,
+        "tail_turns": tail_turn_count,
+        "tail_mandated_turns": tail_mandated,
+        "bucket_tail_cr": bucket_tail_cr,
+        "bucket_vg_cr": bucket_vg_cr,
+        "bucket_micro_cr": bucket_micro_cr,
+        "vg_second_turn": vg_second,
+        "first_turn_cache_write": first_turn_cache_write,
+        "excess_file_reads": sum(max(0, c - 1) for c in read_paths.values()),
+        "pr_numbers": pr_numbers,
         "synthetic_messages": synthetic,
         "unknown_model_messages": unknown_model,
         "skipped_lines": skipped,
@@ -344,6 +418,17 @@ CSV_COLUMNS = [
     "max_nav_run",
     "merge_marker_turn",
     "verify_gaze_skills",
+    "merge_markers",
+    "merge_marker_turn_last",
+    "tail_turns",
+    "tail_mandated_turns",
+    "bucket_tail_cr",
+    "bucket_vg_cr",
+    "bucket_micro_cr",
+    "vg_second_turn",
+    "first_turn_cache_write",
+    "excess_file_reads",
+    "pr_numbers",
     "entry_skill",
     "path",
 ]
@@ -381,6 +466,19 @@ def build_row(project: str, session_id: str, agent_id: str, path: Path, stats: d
             "" if stats["merge_marker_turn"] is None else stats["merge_marker_turn"]
         ),
         "verify_gaze_skills": stats["verify_gaze_skills"],
+        "merge_markers": stats["merge_markers"],
+        "merge_marker_turn_last": (
+            "" if stats["merge_marker_turn_last"] is None else stats["merge_marker_turn_last"]
+        ),
+        "tail_turns": stats["tail_turns"],
+        "tail_mandated_turns": stats["tail_mandated_turns"],
+        "bucket_tail_cr": stats["bucket_tail_cr"],
+        "bucket_vg_cr": stats["bucket_vg_cr"],
+        "bucket_micro_cr": stats["bucket_micro_cr"],
+        "vg_second_turn": "" if stats["vg_second_turn"] is None else stats["vg_second_turn"],
+        "first_turn_cache_write": stats["first_turn_cache_write"],
+        "excess_file_reads": stats["excess_file_reads"],
+        "pr_numbers": ";".join(str(n) for n in stats["pr_numbers"]),
         "entry_skill": stats["entry_skill"] or "",
         "path": str(path),
     }

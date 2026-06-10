@@ -253,3 +253,119 @@ def test_new_csv_columns_declared():
         "verify_gaze_skills",
     ):
         assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
+
+
+# --- ticket 0244 refined probes: disjoint turn buckets + join feedstock ---
+
+
+def _merge_result_row(pr=370):
+    return _result_row(f"PR #{pr}\nMerge queued; lands when required checks pass.")
+
+
+def _cr_tool_row(msg_id, name, tool_input, cache_read):
+    r = _tool_row(msg_id, name, tool_input)
+    r["message"]["usage"] = dict(USAGE, cache_read_input_tokens=cache_read)
+    return r
+
+
+def _write_rows(tmp_path, rows, name="t.jsonl"):
+    f = tmp_path / name
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    return f
+
+
+def test_last_marker_not_first(tmp_path):
+    """Two merge markers: tail counts only turns after the LAST one."""
+    rows = [
+        _tool_row("m1", "Bash", {"command": "gh pr merge"}),
+        _merge_result_row(101),
+        _tool_row("m2", "Bash", {"command": "uv run pytest"}),
+        _tool_row("m3", "Bash", {"command": "gh pr merge"}),
+        _merge_result_row(102),
+        _tool_row("m4", "Bash", {"command": "uv run pytest"}),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["merge_markers"] == 2
+    assert stats["merge_marker_turn_last"] == 3
+    assert stats["tail_turns"] == 1  # only m4
+    assert stats["pr_numbers"] == [101, 102]
+
+
+def test_bucket_cache_read_disjoint(tmp_path):
+    """Each turn's cache_read lands in exactly ONE bucket: tail > vg > micro > core."""
+    rows = [
+        _cr_tool_row("m1", "Bash", {"command": "cd /tmp"}, 100),  # nav -> micro
+        _cr_tool_row("m2", "Bash", {"command": "uv run pytest"}, 200),  # core
+        _merge_result_row(),
+        _cr_tool_row("m3", "Bash", {"command": "cd /x"}, 400),  # nav but after marker -> tail
+        _cr_tool_row("m4", "Bash", {"command": "git log"}, 800),  # after marker -> tail
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["bucket_tail_cr"] == 1200  # m3+m4
+    assert stats["bucket_micro_cr"] == 100  # m1 only
+    assert stats["bucket_vg_cr"] == 0
+    total = stats["bucket_tail_cr"] + stats["bucket_vg_cr"] + stats["bucket_micro_cr"]
+    assert total <= stats["cache_read_input_tokens"]
+
+
+def test_final_idle_turn_excluded_from_micro(tmp_path):
+    rows = [
+        _tool_row("m1", "Bash", {"command": "uv run pytest"}),
+        _assistant_row("m2", "claude-opus-4-8", USAGE, {"type": "text", "text": "answer"}),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["idle_turns"] == 1  # 0243 screening stat unchanged
+    assert stats["bucket_micro_cr"] == 0  # final turn never billed to micro
+
+
+def test_vg_bucket_after_second_invocation(tmp_path):
+    rows = [
+        _cr_tool_row("m1", "Skill", {"skill": "verify"}, 100),
+        _cr_tool_row("m2", "Skill", {"skill": "gaze"}, 200),  # 2nd: later turns -> vg
+        _cr_tool_row("m3", "Skill", {"skill": "celebrate"}, 400),
+        _cr_tool_row("m4", "Skill", {"skill": "verify"}, 800),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["vg_second_turn"] == 2
+    assert stats["bucket_vg_cr"] == 1200  # m3+m4
+
+
+def test_mandated_tail_classification(tmp_path):
+    rows = [
+        _tool_row("m1", "Bash", {"command": "gh pr merge"}),
+        _merge_result_row(),
+        _tool_row("m2", "Write", {"file_path": "/home/u/.claude/projects/x/memory/note.md"}),
+        _tool_row("m3", "Edit", {"file_path": "/home/u/repo/STATE.md"}),
+        _tool_row("m4", "Edit", {"file_path": "/home/u/repo/src/feature.py"}),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["tail_turns"] == 3
+    assert stats["tail_mandated_turns"] == 2  # memory + STATE, not feature.py
+
+
+def test_first_turn_cache_write_and_excess_reads(tmp_path):
+    rows = [
+        _tool_row("m1", "Read", {"file_path": "/a.md"}),
+        _tool_row("m2", "Read", {"file_path": "/a.md"}),
+        _tool_row("m3", "Read", {"file_path": "/b.md"}),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["first_turn_cache_write"] == USAGE["cache_creation_input_tokens"]
+    assert stats["excess_file_reads"] == 1  # /a.md read twice
+
+
+def test_bucket_csv_columns_declared():
+    for col in (
+        "merge_markers",
+        "merge_marker_turn_last",
+        "tail_turns",
+        "tail_mandated_turns",
+        "bucket_tail_cr",
+        "bucket_vg_cr",
+        "bucket_micro_cr",
+        "vg_second_turn",
+        "first_turn_cache_write",
+        "excess_file_reads",
+        "pr_numbers",
+    ):
+        assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
