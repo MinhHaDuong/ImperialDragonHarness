@@ -5,6 +5,7 @@ Author: Integration Test
 
 --- log ---
 2026-06-10T15:35Z Integration Test created
+2026-06-10T15:55Z claude note H10 spec sharpened per author challenge: last-marker segmentation, relocation premium, mandated-work classification
 
 --- body ---
 ## Context
@@ -27,8 +28,21 @@ priority order (by $/week at stake):
    agent's final turn), recompute the micro-turn bound.
 3. **H13 incremental cost** (≤$520/wk): per-invocation $ delta within
    the 43 re-entry sessions — cost of 2nd+ verify/gaze invocations only.
-4. **H10 settling** (≥$242/wk lower): per-turn cache_read attribution of
-   post-marker turns (trace-level pass) instead of the linear share.
+4. **H10 settling** (≥$242/wk, label disputed): the phase-3 statistic
+   has a first-marker confound — `merge_marker_turn` records only the
+   FIRST merge, so in multi-PR sessions all later legitimate delivery
+   work counts as "tail" (a 2026-06-10 interactive session merged 8 PRs;
+   under first-marker accounting ~95% of it is "tail"). Author challenge
+   (2026-06-10): tail work is mostly harness-MANDATED (memory, roar,
+   STATE, branch hygiene), so the question is placement, not existence.
+   Required: (a) segment per merge marker — tail = turns after the LAST
+   marker only, with per-segment inter-PR work excluded; (b) compute the
+   RELOCATION PREMIUM, not turn cost: (tail turns at observed
+   cache_read) − (same turns at fresh-session baseline ~15K context);
+   (c) classify tail turns structurally (memory/STATE/branch-hygiene
+   tool patterns vs new feature work) before labeling anything
+   avoidable. The deliverable number for recommendation 4 is the
+   premium, with the mandated-work share stated alongside.
 5. **H12 refine**: re-read cost = (repeats-1) x file size x family
    cache_read rate, from per-trace Read paths.
 6. **H5 extraction**: per-message cache_creation overlap across sibling
@@ -65,7 +79,10 @@ priority order (by $/week at stake):
 - Red first: fixture trace containing a PR-number-bearing tool result →
   `trace-pr-join.py` extracts the right number; fixture census rows →
   each refined statistic (H10', H11', H12', H13') computes the expected
-  value; final-turn exclusion asserted for H11'.
+  value; final-turn exclusion asserted for H11'. For H10': a fixture
+  trace with TWO merge markers must attribute only post-LAST-marker
+  turns to the tail, and the premium fixture must price tail turns at
+  (observed − baseline) cache_read, not full cost.
 
 ## Verification
 
