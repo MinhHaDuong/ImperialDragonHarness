@@ -2,10 +2,12 @@
 Title: trace-doctor phase 2a: missed compact/clear opportunity detector
 Created: 2026-06-10
 Author: Integration Test
+Closed: autoclosed — PR #367
 
 --- log ---
 2026-06-10T12:14Z Integration Test created
 
+2026-06-10T13:56Z Integration Test closed — autoclosed — PR #367
 --- body ---
 ## Context
 
