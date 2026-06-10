@@ -1,0 +1,129 @@
+%erg 0.1
+Title: trace-doctor phase 1: trace-stats census script + first report
+Created: 2026-06-10
+Author: claude
+
+--- log ---
+2026-06-10T11:18Z claude created
+
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit). Phase 1:
+a deterministic, zero-LLM-token census of all Claude Code session traces
+from the last 28 days, to replace N=1 anecdotes about token waste with
+distributions. See 0236 for the full study design and the motivating
+spot analysis (~$234/raid-wave, cache_read dominant).
+
+A throwaway prototype exists from the spot analysis (written to /tmp,
+not preserved): it parsed one session JSONL + its subagents directory
+and emitted per-agent token totals, tool histograms, and repeated-Bash
+detection. This ticket productionizes that idea.
+
+## Relevant files
+
+- `~/.claude/projects/<project-dir>/*.jsonl` — main-session traces; one
+  JSON object per line; assistant messages carry
+  `message.usage.{input_tokens,output_tokens,cache_read_input_tokens,cache_creation_input_tokens}`
+- `~/.claude/projects/<project-dir>/<session-id>/subagents/agent-*.jsonl`
+  — subagent traces (note: under the WORKTREE-suffixed project dir when
+  the session ran in a worktree)
+- `scripts/skill-doctor-survey.py` — the sibling survey script; match
+  its CLI/JSON-output conventions
+- `scripts/trace-stats.py` — NEW, the deliverable
+- `rules/coding-python.md` — argparse on every entry point, logging not
+  print, no hardcoded paths, uv workflow
+
+## Actions
+
+1. Write `scripts/trace-stats.py` with argparse:
+   `--projects-dir` (default `~/.claude/projects`), `--days N`
+   (default 28), `--output CSV`, `--json` (summary to stdout).
+2. Per agent (main session or subagent file), emit one CSV row:
+   project (worktree suffix stripped), session id, agent id or "main",
+   date (from in-record timestamps, NOT file mtime), model id,
+   turn count, tokens by the 4 usage categories, $ via a per-model
+   pricing table, tool-use histogram (JSON column), total tool-result
+   bytes, plus waste-signature columns:
+   - max times the same file path was Read
+   - max times an identical Bash command ran
+   - read_only flag (no Edit/Write/NotebookEdit) combined with turns
+   - count of AskUserQuestion calls
+   - cache_read of the final turn (context-size proxy)
+3. Session-level rollup (second CSV or JSON section): entry skill if
+   detectable from the first Skill call or prompt prefix, agent count,
+   total $, wall-clock span.
+4. CRITICAL — dedupe usage by `message.id`: one assistant message spans
+   multiple JSONL rows (one per content block), each repeating the same
+   `usage` object. Summing per row overstates ~2.7x (measured: 248
+   usage rows vs 96 unique message ids in one main trace). Count one
+   usage per unique message id. Also skip `<synthetic>` model records
+   (harness-injected, no real API cost) but count them in a reported
+   `synthetic_messages` column.
+5. Schema tolerance: count and report skipped/unparseable lines per
+   file — no silent truncation. Parser must not crash on records
+   missing `message` or `usage`.
+6. Run the census over the live corpus; commit the summary report
+   (markdown, distributions + top-20 most expensive agents) under
+   `docs/trace-census-2026-06.md`. Do NOT commit the raw CSV (it may
+   embed prompt fragments; the report carries only aggregates).
+7. Pricing table: per-model $/Mtok constants for opus/sonnet/haiku/fable
+   current generations, with an "unknown model" fallback that flags the
+   row rather than guessing. Price each MESSAGE by its own `model`
+   field — sessions mix models (measured: 129 of 649 messages in the
+   reference session were Sonnet under an Opus orchestrator).
+
+## Test
+
+- `tests/test_trace_stats.py` first (red): feed a fixture JSONL with
+  hand-written records covering: one assistant message whose usage
+  object is REPEATED across 3 rows with the same `message.id` (must be
+  counted once — this is the bug that inflated the motivating analysis
+  2.7x), one `<synthetic>` model record (excluded from $, counted in
+  synthetic_messages), one tool_use Bash repeated twice, one malformed
+  line. Assert: token sums equal the single-counted values,
+  repeated-command count = 2, malformed-line count = 1. Pure unit
+  test, no markers.
+- CLI flag presence via source inspection, not subprocess --help.
+
+## Verification
+
+- [ ] `uv run python scripts/trace-stats.py --days 28 --json` runs over
+      the live corpus without crashing and reports >2000 trace FILES
+      parsed (the 28-day corpus had ~2,305 files on 2026-06-10; files
+      include subagent traces — sessions are far fewer; report both
+      counts separately)
+- [ ] Skipped-line count is reported and <5% of total lines
+- [ ] Spot-check on session 96516ff3 (aedist): the script's per-file
+      unique-message-id count must be well below its raw usage-row
+      count (248 rows -> 96 ids in the main trace at review time),
+      proving dedupe is active; deduped totals should be in the
+      neighborhood of the corrected 2026-06-10 review numbers (~264K
+      output, ~57.5M cache_read across main+15 subagents) — the
+      session was still LIVE when measured, so match approximately and
+      document the gap
+- [ ] `make check-fast` passes
+
+## Invariants
+
+- Zero LLM/API calls in the script (pure I/O helper — see
+  feedback_skill_architecture memory)
+- No hardcoded absolute home paths — use `~/...` (check-agnostic)
+- Raw trace content (prompts, file contents) never lands in committed
+  artifacts — aggregates only
+
+## Exit criteria
+
+- [ ] `scripts/trace-stats.py` committed with passing unit tests
+- [ ] Census report `docs/trace-census-2026-06.md` committed with
+      distributions for: $ by category, turns per agent by role,
+      cache_read vs turns scatter (table or numbers, figure optional)
+- [ ] Report ends with a "discovery feedstock" section (input to the
+      phase-2 hypothesis-discovery child, see 0236): (a) top-20 cost
+      outliers WITH residuals from a cost ~ f(turns) fit — agents far
+      off the curve, not just big ones; (b) any bimodal/heavy-tailed
+      distributions the census surfaced; (c) a stratified random sample
+      frame (project x entry-skill x cost-decile, including cheap
+      deciles) listing trace paths for the LLM open-coding pass; (d)
+      only then, which of the H1-H5 seeds the aggregates appear to
+      support — clearly labeled as seeds from N=1, not findings
