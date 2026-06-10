@@ -229,8 +229,11 @@ def test_refined_h5_subagent_first_write_per_family():
 
 
 def test_refined_reflexivity_sensitivity():
+    # The reflexivity check is scoped to IDH sessions (project == -home-haduong--claude);
+    # the "study" row must use the IDH project to be counted.
     rows = [
         _row244(
+            project="-home-haduong--claude",
             cost_usd=10.0, pr_numbers="374", bucket_micro_cr=1_000_000, session_id="study"
         ),
         _row244(cost_usd=5.0, session_id="other", bucket_micro_cr=1_000_000),
@@ -250,9 +253,16 @@ def test_refined_h12_excess_read_bound():
 
 
 def test_refined_h4_quality_join():
+    # Sessions must use a project that maps to a repo so project_to_repo resolves.
     rows = [
-        _row244(session_id="a", cost_usd=10.0, pr_numbers="1", verify_gaze_skills=2),
-        _row244(session_id="b", cost_usd=2.0, pr_numbers="2"),
+        _row244(
+            project="-home-haduong--claude",
+            session_id="a", cost_usd=10.0, pr_numbers="1", verify_gaze_skills=2,
+        ),
+        _row244(
+            project="-home-haduong--claude",
+            session_id="b", cost_usd=2.0, pr_numbers="2",
+        ),
     ]
     pr_join = {
         ("ImperialDragonHarness", 1): {
@@ -269,3 +279,89 @@ def test_refined_h4_quality_join():
     assert res["H4r"]["reentry_median_diff"] == 1000
     assert res["H4r"]["other_median_diff"] == 10
     assert res["quality"]["merged_rate"] == 1.0
+
+
+# --- ticket 0244 review fixes: collision, blank-row, reflexivity ---
+
+
+def test_collision_regression():
+    """Finding 1: same PR number in two repos must not collide — each session
+    must join its own repo's diff stats."""
+    rows = [
+        _row244(
+            project="-home-haduong--claude", session_id="idh", pr_numbers="45",
+            verify_gaze_skills=0,
+        ),
+        _row244(
+            project="-home-haduong-padme", session_id="padme", pr_numbers="45",
+            verify_gaze_skills=2,
+        ),
+    ]
+    pr_join = {
+        ("ImperialDragonHarness", 45): {
+            "additions": 84, "deletions": 3, "merged": "True",
+            "reroll_mentions": 0, "escalate_mentions": 0,
+        },
+        ("padme", 45): {
+            "additions": 2, "deletions": 0, "merged": "True",
+            "reroll_mentions": 0, "escalate_mentions": 0,
+        },
+    }
+    res = th.compute_refined(rows, pr_join=pr_join)
+    # both sessions should join (each to the right repo's row)
+    assert res["H4r"]["joined_sessions"] == 2
+    # reentry session (padme, gaze_skills=2) should use padme's diff (2+0=2)
+    assert res["H4r"]["reentry_median_diff"] == 2
+    # other session (idh) should use IDH's diff (84+3=87)
+    assert res["H4r"]["other_median_diff"] == 87
+
+
+def test_blank_row_regression():
+    """Finding 2: blank rows (merged='') must be excluded from merged_rate
+    and diff accumulation, and must surface in quality.unresolved_prs."""
+    rows = [
+        _row244(
+            project="-home-haduong--claude", session_id="s1", pr_numbers="300",
+            verify_gaze_skills=0,
+        ),
+        _row244(
+            project="-home-haduong--claude", session_id="s2", pr_numbers="999",
+            verify_gaze_skills=0,
+        ),
+    ]
+    pr_join = {
+        ("ImperialDragonHarness", 300): {
+            "additions": 50, "deletions": 10, "merged": "True",
+            "reroll_mentions": 1, "escalate_mentions": 0,
+        },
+        ("ImperialDragonHarness", 999): {
+            "additions": "", "deletions": "", "merged": "",
+            "reroll_mentions": "", "escalate_mentions": "",
+        },
+    }
+    res = th.compute_refined(rows, pr_join=pr_join)
+    # blank row must not count toward merged_rate denominator (only 1 resolved)
+    assert res["quality"]["merged_rate"] == 1.0
+    # blank PR must show up in unresolved_prs count
+    assert res["quality"]["unresolved_prs"] == 1
+    # blank row must not contribute to diff lists
+    assert res["H4r"]["joined_sessions"] == 1
+
+
+def test_reflexivity_repo_qualification():
+    """Finding 4: only sessions from the IDH project count as study sessions.
+    A non-IDH session citing a STUDY_PRS number must NOT be counted."""
+    study_pr = next(iter(th.STUDY_PRS))
+    rows = [
+        _row244(
+            project="-home-haduong-padme", session_id="non_idh",
+            pr_numbers=str(study_pr), bucket_micro_cr=1_000_000,
+        ),
+        _row244(
+            project="-home-haduong--claude", session_id="idh",
+            pr_numbers=str(study_pr), bucket_micro_cr=1_000_000,
+        ),
+    ]
+    res = th.compute_refined(rows, pr_join=None, study_prs=th.STUDY_PRS)
+    # only the IDH session qualifies as a study session
+    assert res["reflexivity"]["study_sessions"] == 1

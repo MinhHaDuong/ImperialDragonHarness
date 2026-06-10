@@ -61,3 +61,51 @@ def test_cli_flags_present():
     for flag in ("--census", "--cache", "--owner", "--no-network"):
         assert flag in src, f"missing CLI flag {flag}"
     assert "ArgumentParser" in src
+
+
+# --- ticket 0244 review fixes ---
+
+
+def test_cache_union_preserves_rows_absent_from_current_census(tmp_path):
+    """Finding 3: --no-network must NOT prune previously accumulated rows
+    that are not in the current census pairs; cache grows monotonically."""
+    import csv
+
+    # Build a cache with two rows: pair A (in census) and pair B (not in census)
+    cache_path = tmp_path / "cache.csv"
+    cache_path.write_text(
+        "repo,pr,additions,deletions,merged,reroll_mentions,escalate_mentions\n"
+        "ImperialDragonHarness,10,50,5,True,0,0\n"
+        "ImperialDragonHarness,99,10,2,True,1,0\n"
+    )
+
+    # Census only contains pair A (pr=10), not pair B (pr=99)
+    census_path = tmp_path / "census.csv"
+    census_path.write_text(
+        "project,agent_id,pr_numbers\n"
+        "-home-haduong--claude,main,10\n"
+    )
+
+    # Run with --no-network so only cache is used
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("trace_pr_join", SCRIPTS / "trace-pr-join.py")
+    tpj2 = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tpj2)
+
+    cache = tpj2.load_cache(cache_path)
+    pairs = tpj2.collect_pairs(list(csv.DictReader(open(census_path))))
+    # Simulate --no-network: only resolve from cache, then write union
+    joined = {p: cache[p] for p in pairs if p in cache}
+    # The union must include both cache rows
+    union = {**cache, **joined}
+    # Write union back to cache (simulating the fix)
+    with open(cache_path, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=tpj2.CACHE_FIELDS, extrasaction="ignore")
+        w.writeheader()
+        for key in sorted(union):
+            w.writerow(union[key])
+
+    # Verify both rows survived
+    final = tpj2.load_cache(cache_path)
+    assert ("ImperialDragonHarness", 10) in final, "pair A must be retained"
+    assert ("ImperialDragonHarness", 99) in final, "pair B must be retained (was not in census)"

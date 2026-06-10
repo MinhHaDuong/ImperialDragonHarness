@@ -18,7 +18,6 @@ import json
 import logging
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 log = logging.getLogger("trace-pr-join")
@@ -145,14 +144,15 @@ def main() -> None:
     else:
         joined = build_join(pairs, cache, lambda r, n: gh_fetch_pr(args.owner, r, n))
 
+    # Finding 3: always persist the UNION so previously accumulated rows
+    # not in the current census are retained; cache only grows.
+    union = {**cache, **joined}
     with open(args.cache, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=CACHE_FIELDS, extrasaction="ignore")
         w.writeheader()
-        for key in sorted(joined):
-            w.writerow(joined[key])
-    log.info("join: %d pairs, %d resolved, cache %s", len(pairs), len(joined), args.cache)
-    if not pairs:
-        sys.exit(0)
+        for key in sorted(union):
+            w.writerow(union[key])
+    log.info("join: %d pairs, %d resolved, cache %s", len(pairs), len(union), args.cache)
 
 
 if __name__ == "__main__":

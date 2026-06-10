@@ -16,9 +16,10 @@ $6,768 total (≈ $1,692/week).
 - H10 premium = tail cache_read − (tail turns × 15K fresh-session
   baseline), per family pricing, floored per agent.
 - Forge join: `scripts/trace-pr-join.py`, 117 (repo, PR) pairs from
-  merge markers, 113 resolved (cache committed at
-  `docs/trace-pr-join-2026-06.csv`; failures recorded blank, listed by
-  the run log, not dropped).
+  merge markers, 112 resolved (5 unresolved, listed blank in the cache:
+  -claude-projects 67/366, git-erg 309, padme 321/322); cache committed at
+  `docs/trace-pr-join-2026-06.csv`; blank rows excluded from merged-rate
+  denominator and diff accumulation, reported separately as `unresolved_prs`.
 - Reflexivity sensitivity: sessions whose merge markers cite the
   study's own PRs are recomputed out.
 - Open-coding prose is cited nowhere below; every number is computed.
@@ -38,13 +39,16 @@ $6,768 total (≈ $1,692/week).
 
 ## Forge join: H4 and the quality baseline
 
-- 34 sessions joined to PRs; 113 PRs total: **merged rate 95.6%**, 33
-  REROLL mentions, 18 ESCALATE mentions.
+- 33 sessions joined to PRs; **112 resolved of 117 pairs (5 unresolved,
+  listed blank in the cache); merged rate 112/112 = 100%**; 33 REROLL
+  mentions, 18 ESCALATE mentions. Merged-rate is saturated at 100%, so
+  the operative phase-5 guardrail metric is REROLL mentions/PR (33 over
+  112) and ESCALATE mentions (18), not merged-rate.
 - **H4 (gaze cost vs diff size)**: re-entry sessions' median joined diff
-  is **465 lines vs 577** for single-pass sessions — re-entry is NOT
+  is **465 lines vs 597** for single-pass sessions — re-entry is NOT
   explained by bigger diffs. Combined with phase 3's finding that the
   one gaze-entry top-5 session cost $254, the evidence leans toward
-  verification cost being decoupled from diff size, but 34 joined
+  verification cost being decoupled from diff size, but 33 joined
   sessions is thin; treat as supported-weakly.
 - **H13 difficulty conditioning**: same comparison — re-entry sessions
   do not carry larger diffs, so the $1,038 vg bucket is not explained
@@ -57,7 +61,7 @@ $6,768 total (≈ $1,692/week).
 | # | Recommendation | Refined $/wk | Routing |
 |---|----------------|--------------|---------|
 | 1 | Micro-turn discipline (batch navigation, no idle-turn chains) | $268 exact | **Adopt now**: prompt-rule in workflow.md (batch read-only git/cd into one compound; no consecutive single-nav turns). Cheap, no quality risk; re-measure next census |
-| 2 | Verification convergence (gaze/verify single-pass) | $259 upper | **Phase-5 A/B (shortlist)**: not explained by difficulty; measure REROLL-rate guardrail |
+| 2 | Verification convergence (gaze/verify single-pass) | $259 upper | **Phase-5 A/B (shortlist)**: not explained by difficulty; measure REROLL/PR (33/112) and ESCALATE (18) as guardrail |
 | 3 | Compaction policy | ≤$261 (H8 upper; overlaps buckets) | **Adopt as advisory**: wire `trace-compact-audit.py` into the monthly trace-doctor run; no separate A/B |
 | 4 | Post-delivery tail relocation | $57 premium | **Reject the fresh-session mechanism** — premium too small for the machinery; compact-before-wrap-up (covered by #3) captures most of it |
 | 5 | Model right-sizing of long Opus mains | unresolved by accounting | **Phase-5 A/B (shortlist)**: largest unresolved lever (mains = 75% of spend, Opus +1.04 off-curve); quality measured via gaze verdicts |
@@ -68,7 +72,8 @@ $6,768 total (≈ $1,692/week).
 **Phase-5 shortlist (the 1–2 measures accounting cannot settle):**
 model right-sizing of long mains, and verification convergence. Both
 need live A/B because their cost is entangled with delivery quality;
-both carry the quality baseline above as the guardrail metric.
+both carry REROLL mentions/PR (33/112) and ESCALATE mentions (18) as
+the operative guardrail metrics (merged-rate is saturated at 100%).
 
 ## What accounting could not settle, and why
 

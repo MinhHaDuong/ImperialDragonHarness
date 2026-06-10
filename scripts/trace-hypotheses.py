@@ -69,6 +69,12 @@ _TS = importlib.util.module_from_spec(_TS_SPEC)
 _TS_SPEC.loader.exec_module(_TS)
 _MAX_PRICING = max(_TS.PRICING.values(), key=lambda p: p["cache_write_5m"])
 
+_TPJ_SPEC = importlib.util.spec_from_file_location(
+    "trace_pr_join", Path(__file__).resolve().parent / "trace-pr-join.py"
+)
+_TPJ = importlib.util.module_from_spec(_TPJ_SPEC)
+_TPJ_SPEC.loader.exec_module(_TPJ)
+
 
 def _rate(row: dict, key: str) -> float:
     """$/token for this row's dominant model; fleet-max keeps bounds honest."""
@@ -307,10 +313,14 @@ def compute_refined(
     )
     preamble_usd = sum(r["first_turn_cache_write"] * _rate(r, "cache_write_5m") for r in subs)
 
+    # Finding 4: qualify reflexivity by project — only IDH sessions can cite
+    # STUDY_PRS (those are IDH PR numbers; non-IDH sessions may cite the same
+    # bare integers that happen to collide and must not be flagged as reflexive).
     study_sessions = {
         (r["project"], r["session_id"])
         for r in mains
-        if set(_session_prs(r)) & set(study_prs)
+        if r["project"] == "-home-haduong--claude"
+        and set(_session_prs(r)) & set(study_prs)
     }
     non_study = [r for r in rows if (r["project"], r["session_id"]) not in study_sessions]
     micro_excl = sum(r["bucket_micro_cr"] * _rate(r, "cache_read") for r in non_study)
@@ -355,25 +365,46 @@ def compute_refined(
     }
 
     if pr_join:
-        by_pr = {int(k[1]): v for k, v in pr_join.items()}
+        # Finding 1: key by (repo, pr) not bare number — collisions across repos
+        # would silently overwrite each other.  Resolve each session's repo from
+        # its project field using trace-pr-join.py's project_to_repo mapping.
         joined, reentry_diffs, other_diffs, merged, rerolls, escalates = 0, [], [], 0, 0, 0
-        joined_prs = set()
+        joined_prs: set[tuple[str, int]] = set()
+        unresolved_prs: set[tuple[str, int]] = set()
         for r in mains:
-            diffs = [
-                int(by_pr[n].get("additions") or 0) + int(by_pr[n].get("deletions") or 0)
+            repo = _TPJ.project_to_repo(r["project"])
+            if repo is None:
+                continue
+            # Finding 2: skip blank rows entirely (merged=="") — they are
+            # unresolved pairs, not failed merges, and must not pollute the
+            # merged_rate denominator or diff accumulation.
+            pr_rows = [
+                (n, pr_join[(repo, n)])
                 for n in _session_prs(r)
-                if n in by_pr
+                if (repo, n) in pr_join
+            ]
+            resolved = [
+                (n, v) for n, v in pr_rows if str(v.get("merged")) != ""
+            ]
+            blank = [
+                (n, v) for n, v in pr_rows if str(v.get("merged")) == ""
+            ]
+            for n, _ in blank:
+                unresolved_prs.add((repo, n))
+            diffs = [
+                int(v.get("additions") or 0) + int(v.get("deletions") or 0)
+                for _, v in resolved
             ]
             if not diffs:
                 continue
             joined += 1
             (reentry_diffs if r["verify_gaze_skills"] >= 2 else other_diffs).append(sum(diffs))
-            for n in _session_prs(r):
-                if n in by_pr and n not in joined_prs:
-                    joined_prs.add(n)
-                    merged += 1 if str(by_pr[n].get("merged")) in ("True", "true") else 0
-                    rerolls += int(by_pr[n].get("reroll_mentions") or 0)
-                    escalates += int(by_pr[n].get("escalate_mentions") or 0)
+            for n, v in resolved:
+                if (repo, n) not in joined_prs:
+                    joined_prs.add((repo, n))
+                    merged += 1 if str(v.get("merged")) in ("True", "true") else 0
+                    rerolls += int(v.get("reroll_mentions") or 0)
+                    escalates += int(v.get("escalate_mentions") or 0)
         results["H4r"] = {
             "joined_sessions": joined,
             "reentry_median_diff": statistics.median(reentry_diffs) if reentry_diffs else None,
@@ -384,6 +415,7 @@ def compute_refined(
             "merged_rate": round(merged / len(joined_prs), 3) if joined_prs else None,
             "reroll_mentions": rerolls,
             "escalate_mentions": escalates,
+            "unresolved_prs": len(unresolved_prs),
         }
     else:
         results["H4r"] = {"verdict": "needs-data"}
