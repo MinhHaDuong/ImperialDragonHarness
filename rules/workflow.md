@@ -77,6 +77,7 @@ misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.
 
 - **Don't spawn for simple tasks.** Single-file edits, grep, reading files — work directly.
 - **Reviewers use a different model than the coder.** Sonnet reviews Opus's work; different blind spots catch more.
+- **Pin `model` per-invocation on every fan-out launch — frontmatter does not propagate.** A skill's `model:` frontmatter never reaches the agents it spawns (an Agent-tool child resolves to the session model; a Workflow `agent()` inherits it), so for fan-out it is decorative. Set `model` on each launch: reviewers below the coder tier, mechanical lookups at `haiku`, coders at the top tier. Use the short enum token (`sonnet|opus|haiku|fable`) on a launch — a full `claude-*` id is valid only in frontmatter. `effort` is **not** a launch parameter: a spawned child runs at the *session* effort, not pinnable per-call (set the session effort before a fan-out). Enforced by `tests/test_model_rightsizing.py`; mechanics in memory `feedback_subagent_model_effort_levers`.
 - **Max 4 concurrent agents.** Beyond that, coordination overhead exceeds the gains.
 - **One well-prompted agent first.** Only add agents when a single agent clearly can't handle the task.
 
