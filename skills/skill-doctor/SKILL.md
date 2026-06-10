@@ -4,6 +4,7 @@ description: Weekly failure-pattern analysis across journals, logs, and git hist
 user-invocable: true
 argument-hint: "[--days N]"
 model: sonnet
+effort: medium
 ---
 
 # Skill Doctor $ARGUMENTS
