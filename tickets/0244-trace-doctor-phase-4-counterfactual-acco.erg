@@ -1,0 +1,92 @@
+%erg 0.1
+Title: trace-doctor phase 4: counterfactual accounting of ranked recommendations
+Created: 2026-06-10
+Author: Integration Test
+
+--- log ---
+2026-06-10T15:35Z Integration Test created
+
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit), phase 4.
+Phase 3 (0243, closed) resolved H1-H13 on the full census and produced a
+ranked recommendation list with screening bounds
+(docs/trace-hypotheses-2026-06.md). This phase computes, from existing
+traces alone, what each recommendation would actually have saved — no
+re-running, no LLM judging of full traces — and routes the survivors:
+adopt cheaply / phase-5 A/B / reject with evidence.
+
+The report's "Phase-4 feedstock" section is the spec. Work items in
+priority order (by $/week at stake):
+
+1. **Forge join first** (H4 + quality baseline): without it no
+   recommendation can carry a quality-risk column, so it gates the rest.
+2. **H11 tightening** (≤$542/wk upper): reclassify idle turns
+   (reasoning-before-action vs trailing communication; exclude each
+   agent's final turn), recompute the micro-turn bound.
+3. **H13 incremental cost** (≤$520/wk): per-invocation $ delta within
+   the 43 re-entry sessions — cost of 2nd+ verify/gaze invocations only.
+4. **H10 settling** (≥$242/wk lower): per-turn cache_read attribution of
+   post-marker turns (trace-level pass) instead of the linear share.
+5. **H12 refine**: re-read cost = (repeats-1) x file size x family
+   cache_read rate, from per-trace Read paths.
+6. **H5 extraction**: per-message cache_creation overlap across sibling
+   subagents (first-turn cache_write similarity), zero-LLM.
+
+## Relevant files
+
+- `docs/trace-hypotheses-2026-06.md` — verdicts, bounds, feedstock spec
+- `scripts/trace-hypotheses.py` — extend; `--pr-stats` input exists as
+  a stub awaiting the forge-join CSV
+- `scripts/trace-stats.py` — per-trace passes for items 4-6 belong here
+  or in a sibling script reusing its dedupe conventions
+- `scripts/trace-compact-audit.py` — pattern for trace-level
+  counterfactuals (H8's "had it compacted" logic)
+
+## Actions
+
+1. `scripts/trace-pr-join.py`: extract PR numbers from main-trace tool
+   results (gh/erg-pr-merge output), query the forge CLI for diff size
+   and review outcome (merged / REROLL / ESCALATE count from verdict
+   comments), cache to a committed CSV (`docs/trace-pr-join-2026-06.csv`).
+   Re-runnable offline from the cache.
+2. Extend the census/hypotheses scripts per items 2-6 above; every new
+   statistic gets a fixture test first (red), same zero-LLM and
+   no-trace-content invariants.
+3. `docs/trace-counterfactuals-2026-06.md`: per recommendation — the
+   settled $/week number, its quality-risk column from the join, and
+   the routing decision (adopt / A/B / reject). Explicitly list what
+   accounting could NOT settle and why those 1-2 measures go to
+   phase 5.
+
+## Test
+
+- Red first: fixture trace containing a PR-number-bearing tool result →
+  `trace-pr-join.py` extracts the right number; fixture census rows →
+  each refined statistic (H10', H11', H12', H13') computes the expected
+  value; final-turn exclusion asserted for H11'.
+
+## Verification
+
+- [ ] Forge-join CSV committed and reproducible from cache without
+      network
+- [ ] Refined bounds replace screening bounds in the new report, each
+      labeled with direction (upper/lower/exact)
+- [ ] Every recommendation routed: adopt / phase-5 A/B / reject
+- [ ] `make check` passes
+
+## Invariants
+
+- Zero LLM calls in committed scripts
+- No trace content in committed artifacts (PR numbers and aggregates ok)
+- Existing census accounting untouched (column/script additions only)
+- Discovery sample still never used for confirmation
+
+## Exit criteria
+
+- [ ] `trace-pr-join.py` + refined statistics committed, tests green
+- [ ] `docs/trace-counterfactuals-2026-06.md` committed with settled
+      $/week per recommendation, quality-risk column, and routing
+      (including the explicit phase-5 shortlist of 1-2 measures)
+- [ ] Tracker 0236 updated; phase 5 filing unblocked
