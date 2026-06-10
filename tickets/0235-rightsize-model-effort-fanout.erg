@@ -95,10 +95,15 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
 - An adherence test asserting every skill that launches a fan-out either pins a
   per-invocation `model` on its Agent calls or is on an explicit allowlist (RED on
   today's gaze/review-pr/verify-adherence; GREEN after fix 2).
+- **Sweep was not exhaustive.** This pass covered raid + the four review skills +
+  maw-audit. Other potential fan-out skills (`deep-research`, `release`,
+  `related-work-note`, `nightbeat-supervisor`) were not audited for unpinned
+  launches — the adherence test must cover ALL skills so "enforced where it matters"
+  is not overread into "enforced everywhere".
 
 ## Verification
 - [x] raid frontmatter no longer pins a stale model; effort is not `max` (now fable-5/high)
-- [x] raid's execute/review Agent launches carry explicit per-invocation model/effort
+- [x] raid's execute/review Agent launches carry explicit per-invocation `model` (effort is NOT an Agent launch param — see Decisions)
 - [x] gaze/review-pr/review-pr-prose/verify-adherence pin reviewers to Sonnet
 - [ ] Adherence test added; proven RED on pre-fix state, GREEN after (STILL OPEN — offered, not yet built)
 - [x] `CLAUDE_CODE_SUBAGENT_MODEL` cap DECISION recorded: deferred this pass — see Decisions
@@ -112,11 +117,27 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
   achieve the rightsizing without the blunt-instrument risk. Revisit only as a deliberate
   safety backstop with the Workflow interaction verified first.
 - **maw-audit effort.** `effort` is not a per-agent knob in the Workflow `agent()` opts
-  (only `model`), so maw-audit's Sonnet agents track the session effort — "sonnet medium"
-  is satisfied on the model axis; the medium-effort half is session-controlled, not pinnable.
-- **maw-audit cross-tier skeptic.** Downgrading the audit Opus->Sonnet makes the skeptic
-  same-tier (Sonnet-on-Sonnet). Recorded in SKILL.md; re-pin the skeptic to a different
-  model if cross-tier skepticism is wanted back.
+  (only `model`), so maw-audit's Sonnet audit agents track the session effort — "sonnet
+  medium" is satisfied on the model axis; the medium-effort half is session-controlled.
+- **maw-audit cross-tier skeptic — RESTORED in-PR** (review finding #2). The audit agents
+  run on Sonnet; the skeptics (`skepticize` ~L374, `handcuffSkepticize` ~L483) are pinned
+  to **Opus**, restoring the cross-model adversarial guarantee. Skeptics fire per-accusation
+  (small fraction of fan-out volume), so the stronger tier is cheap. Supersedes the earlier
+  same-tier note.
+- **raid Phase 4 split** (review finding #1). Feasibility cross-checks are not uniformly
+  mechanical: path/line/signature existence → `haiku`, but the cross-ticket-conflict and
+  cross-cutting-registry scan that gates Phase 5.0 is judgement across N plans → `sonnet`
+  (a missed registry conflict cost a resurrection agent for 3 of 4 merges,
+  `feedback_rebase_drop_cascade`).
+- **`effort:` frontmatter honoured for inline skills** (review finding #3). Per Claude Code
+  skills docs, `effort:` is a recognized SKILL.md field that "overrides the session effort
+  level while the skill is active" (claude-code-guide, high confidence). The five skills
+  gaining it (healthcheck/molt/scry/nightbeat-report/skill-doctor) run **inline**, so they
+  rely on this documented behavior — NOT on effort *propagation to spawned children*, which
+  is the undocumented/low-confidence part and which none of them depend on. Gold-standard
+  confirmation = a live telemetry probe (run `/healthcheck` on a top-tier session, inspect
+  thinking depth); deferred to the adherence-test follow-up, which should assert whichever
+  lever proves real and drop any pin shown inert.
 
 ## Invariants
 - Do not let a global env cap silently override the Workflow skills' Opus/Sonnet/
