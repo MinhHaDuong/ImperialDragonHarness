@@ -1,0 +1,86 @@
+%erg 0.1
+Title: trace-doctor: session-trace economics audit (tracking)
+Created: 2026-06-10
+Author: claude
+
+--- log ---
+2026-06-10T11:18Z claude created
+
+--- body ---
+## Context
+
+A spot analysis of one live raid wave in aedist-technical-report (session
+96516ff3, 2026-06-10) measured ~$234 for a single wave, with this cost
+profile across 15 agents:
+
+| Category     | Tokens | ~$  |
+|--------------|--------|-----|
+| cache_read   | 77.5 M | 116 |
+| cache_write  | 4.6 M  | 86  |
+| output       | 399 K  | 30  |
+| fresh input  | 136 K  | 2   |
+
+Suspected waste patterns (all N=1, hence this ticket): cache_read grows
+~quadratically with agent turn count; a READ-ONLY recon agent drifted to
+113 turns / ~$9; /gaze cost appears independent of diff size; per-agent
+prompt preambles re-cache-write the same project context.
+
+N=1 is not evidence. The author directed a systematic study — "like
+skill-doctor, but bigger": census the traces, derive empirical
+recommendations, then validate cost-saving measures before adopting them.
+
+Corpus available (verified 2026-06-10): ~2,305 session JSONL traces,
+~0.7 GB, last 28 days, across 5 active projects (aedist-technical-report
+758, IDH 678, git-erg 591, chemin-de-voix 150, padme 96) under
+`~/.claude/projects/`. Small enough for a full census in the
+deterministic pass; sampling is reserved for LLM-judged phases.
+
+## Study design (four phases, each a child ticket)
+
+1. **Census** (child: 0237) — pure-Python `scripts/trace-stats.py`, one
+   row per agent with cost, shape, and waste-signature detectors. Zero
+   LLM tokens. First report over the 28-day corpus.
+2. **Hypothesis testing** — turn the N=1 findings into statistics over
+   the census output: H1 cache_read dominates $; H2 cost ~ turns²; H3
+   read-only agents drift past any reasonable budget; H4 gaze cost is
+   independent of diff size (join to PR diff stats via the forge CLI);
+   H5 duplicate prompt-preamble cache_writes across sibling agents are
+   material. Output: recommendations ranked by measured $/week saving,
+   plus a quality baseline (trace -> PR outcome join: merged / REROLL /
+   ESCALATE).
+3. **Counterfactual accounting** — for each recommendation, compute the
+   saving from existing traces before re-running anything. E.g. "cap
+   recon at N turns": truncate the trace at turn N and have a cheap
+   model judge whether the final report was already derivable. "Skip
+   full gaze on trivial diffs": count gaze runs on small prose diffs
+   that APPROVED with zero findings. Filters the list to the 1-2
+   measures accounting cannot settle.
+4. **Targeted A/B** — for those 1-2 measures only: either re-run ~5
+   closed tickets from their original SHA with old vs new prompt
+   (compare tokens AND quality: does the PR still pass gaze), or ship
+   the measure behind a flag and let a week of nightbeat be the B arm.
+   Honest constraint: LLM sessions do not replay deterministically and
+   replays burn real tokens — this phase is narrow by design.
+
+Deliverable at the end: a `trace-doctor` skill modeled on skill-doctor
+(survey script + interpretation + tickets out, never auto-applies),
+runnable monthly or on-demand.
+
+## Tracking discipline
+
+This is a tracking ticket — it stays open until all children are closed,
+and then closes only after the integration review (re-read child diffs,
+verify the skill runs end-to-end on live traces).
+
+Children:
+- 0237 — phase 1 census script + first report
+- (phases 2-4 to be filed once the census shows what is real)
+
+## Exit criteria
+
+- [ ] All child tickets closed
+- [ ] `trace-doctor` skill exists and produces a ranked recommendation
+      report from a live 28-day trace corpus
+- [ ] At least one cost-saving measure validated (phase 3 or 4) and
+      either adopted in a skill/prompt or explicitly rejected with
+      measured evidence
