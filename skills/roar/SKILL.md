@@ -59,7 +59,20 @@ from origin/main) stop and tell the user. Do not continue with roar in that case
        (`git merge-base --is-ancestor HEAD origin/main`) has already
        passed, the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
-       stale local main. Authorize `discard_changes` in that case.
+       stale local main. But `discard_changes` does more than remove the
+       worktree: ExitWorktree restores the session to the ORIGINAL
+       checkout, and with `discard_changes: true` it also deletes the
+       original branch — the one the primary checkout returns to. So
+       BEFORE authorizing `discard_changes`, verify that ORIGINAL branch
+       is pushed or merged (`git -C <primary> merge-base --is-ancestor
+       <original-branch> origin/main`, or check it has an up-to-date
+       upstream). If it carries unmerged commits, use `action: "keep"`
+       instead (2026-06-10: discard_changes deleted
+       `dream-consolidate-2026-06-09` and orphaned another session's
+       unmerged commit at a detached HEAD). Recovery if the branch was
+       deleted anyway: find the commit in `git reflog` (or the deletion
+       message prints its sha) and re-create the branch with
+       `git switch -c <branch> <sha>`.
     Skip if not in a worktree.
 10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
