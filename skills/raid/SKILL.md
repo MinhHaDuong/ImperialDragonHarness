@@ -4,8 +4,8 @@ description: Work through multiple tickets autonomously: pick targets, implement
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
-model: claude-opus-4-6
-effort: max
+model: claude-fable-5
+effort: high
 ---
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
@@ -13,6 +13,31 @@ effort: max
 A raid does not redefine skills. It calls `/hunt`,
 `/review-pr`, `/roar`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
+
+## Model policy (rightsizing)
+
+A raid fans out N concurrent agents — the cost lever is the **per-invocation**
+`model`/`effort` on each Agent launch, NOT this skill's frontmatter. A skill's
+`model:` frontmatter is not in the subagent inheritance chain, so an unpinned
+launch silently runs at whatever the session model is; left unpinned on a
+top-tier session that is the runaway "top-model × max-effort × N-wide" wave.
+So every launch below pins explicitly:
+
+- **Imagine / Plan / integration-review** agents (read-only judgement — scope
+  reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
+  below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work").
+- **Verify-feasibility** agents (Phase 4 — mechanical cross-checks: do these paths/
+  line numbers/signatures exist, do these tickets conflict) → `model: haiku`. No
+  judgement, just lookups; the cheapest tier suffices.
+- **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
+  `model: claude-fable-5`, `effort: high`. Top capability where it earns its keep,
+  high (not `max`) effort to avoid the runaway.
+- **Per-ticket `/gaze`** (Phase 6) → `/gaze` pins its own reviewer models; do not
+  override.
+
+Never launch a raid agent without an explicit `model`. If a future role genuinely
+needs `max` effort or a different tier, pin it at that call site with a one-line
+rationale — don't lift the default.
 
 ## Balance rule
 
@@ -43,7 +68,8 @@ Read each ticket + STATE.md. Group by milestone. Identify dependency order and w
 
 ## Phase 2: Imagine (parallel)
 
-For each ticket, launch an agent (background, no isolation needed — read-only):
+For each ticket, launch an agent (background, no isolation needed — read-only;
+`model: sonnet` per § Model policy):
 - Read ticket + STATE.md + surrounding code
 - Reimagine: why now, why this scope, what's the simplest path
 - **Antipattern scan (scope).** YAGNI (search the package registry —
@@ -64,7 +90,8 @@ a comment explaining what the Imagine agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 
-For each reimagined ticket, launch an agent (background):
+For each reimagined ticket, launch an agent (background; `model: sonnet` per
+§ Model policy):
 - Read ticket + actual source code
 - Write Actions, first test, dependencies
 - **Antipattern scan.** Tautological tests — would this test catch a
@@ -78,7 +105,8 @@ the execute agent prompt and the agent creates the file as its first step.
 
 ## Phase 4: Verify feasibility
 
-Launch agents by cluster to cross-check plans:
+Launch agents by cluster to cross-check plans (`model: haiku` per § Model policy —
+mechanical lookups, no judgement):
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts
@@ -112,7 +140,8 @@ Group tickets into waves:
 - Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
 
-For each wave, launch agents with `isolation: "worktree"`.
+For each wave, launch agents with `isolation: "worktree"` and
+`model: claude-fable-5`, `effort: high` (per § Model policy — the coders).
 Each agent follows `/hunt` workflow. Push branch when done, create merge request.
 
 Wait for wave to complete.
@@ -128,7 +157,7 @@ max-concurrent-agents cap (see Subagents in rules/workflow.md). Phase 7 merges
 stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
-subagent (read-only) to check:
+subagent (read-only; `model: sonnet` per § Model policy) to check:
 - Do the merged/merge-pending PRs compose without contradiction?
 - Does `make check` still pass if we imagine them all merged?
 - Are there testing gaps visible only at wave granularity (e.g., two PRs touching the
