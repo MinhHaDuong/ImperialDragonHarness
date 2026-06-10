@@ -95,11 +95,18 @@ strips/guards the trigger when negated. File upstream; track the hook idea here.
 - An adherence test asserting every skill that launches a fan-out either pins a
   per-invocation `model` on its Agent calls or is on an explicit allowlist (RED on
   today's gaze/review-pr/verify-adherence; GREEN after fix 2).
-- **Sweep was not exhaustive.** This pass covered raid + the four review skills +
-  maw-audit. Other potential fan-out skills (`deep-research`, `release`,
-  `related-work-note`, `nightbeat-supervisor`) were not audited for unpinned
-  launches — the adherence test must cover ALL skills so "enforced where it matters"
-  is not overread into "enforced everywhere".
+- **Sweep was not exhaustive** for the first wave (raid + four review skills +
+  maw-audit). The four flagged laggards were then audited:
+  - `release` — **fixed**: 3 parallel audit agents (security / UX / doc-coherence)
+    were unpinned → now `model: sonnet` (read-and-audit reviewers, judgement not
+    lookup).
+  - `nightbeat-supervisor` — **already disciplined**: its one escalation/diagnosis
+    agent is explicitly `Agent(model="opus")` (rare deep root-cause path; defensible).
+  - `related-work-note` — **N/A**: inline research/writing skill, no fan-out.
+  - `deep-research` — **out of scope**: not an IDH skill (plugin/built-in; the repo
+    has only `docs/20260404-review/05-deep-research.md`).
+  - The adherence test must still cover ALL skills so future fan-outs can't drift
+    back to unpinned.
 
 ## Verification
 - [x] raid frontmatter no longer pins a stale model; effort is not `max` (now fable-5/high)
