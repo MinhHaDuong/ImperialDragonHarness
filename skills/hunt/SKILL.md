@@ -30,8 +30,9 @@ argument-hint: <ticket-id>
    rebase, branch, or leave uncommitted files in a worktree it does not own
    (2026-06-11: a hunt inherited an orchestration session's worktree, rebased its
    branch, and stranded in-progress test edits there). Before the first
-   branch-mutating command, confirm ownership: `git rev-parse --show-toplevel`
-   must end in `t$ARGUMENTS`.
+   branch-mutating command, confirm ownership:
+   `basename "$(git rev-parse --show-toplevel)"` must be exactly `t$ARGUMENTS`
+   (rules/git.md § anchor branch-mutating git across a forked-skill boundary).
 4. Create or checkout the ticket branch:
    ```bash
    git switch -c t$ARGUMENTS-short-description
