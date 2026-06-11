@@ -23,7 +23,16 @@ argument-hint: <ticket-id>
      stray file in the shared `tickets/`), and open the
      merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
-3. If not already in a worktree, enter one: call `EnterWorktree` with name `t$ARGUMENTS`.
+3. Enter the ticket's **own** worktree: unless the current worktree is already named
+   `t$ARGUMENTS`, call `EnterWorktree` with name `t$ARGUMENTS` — even if the session
+   already sits inside some other worktree. "Already in a worktree" is NOT isolation:
+   a shared or `explore-*` worktree may host a live session, and a hunt must never
+   rebase, branch, or leave uncommitted files in a worktree it does not own
+   (2026-06-11: a hunt inherited an orchestration session's worktree, rebased its
+   branch, and stranded in-progress test edits there). Before the first
+   branch-mutating command, confirm ownership:
+   `basename "$(git rev-parse --show-toplevel)"` must be exactly `t$ARGUMENTS`
+   (rules/git.md § anchor branch-mutating git across a forked-skill boundary).
 4. Create or checkout the ticket branch:
    ```bash
    git switch -c t$ARGUMENTS-short-description
