@@ -1,0 +1,65 @@
+%erg 0.1
+Title: gaze fork returns at fanout-start, never delivers the gate verdict
+Created: 2026-06-11
+Author: claude
+
+--- log ---
+2026-06-11T21:01Z claude created
+
+--- body ---
+## Context
+Twice-confirmed defect. When `/gaze <pr>` runs as a forked skill execution,
+the fork can end its turn right after launching its reviewer battery,
+returning a fanout-start narration ("reviewers are running in parallel...")
+as its final result instead of the verdict. The background reviewers keep
+running and deliver via task-notifications, but the fork's own phases 5
+(simplify) and 6 (verify-gate) never execute — no verdict is produced and
+no one re-collects the reviewer outputs.
+
+Occurrences:
+- 2026-06-11, aedist 0538 raid, `/gaze 977` — orchestrator relaunched a
+  duplicate reviewer battery (6 streams).
+- 2026-06-11, aedist 0540 raid, `/gaze 978` — TWICE in a row (retry bailed
+  identically); orchestrator fell back to manual reviewers + `/verify-gate`
+  (7 streams total).
+
+Project memory (aedist): `feedback_gaze_fork_orphans_reviewers.md`.
+
+## Relevant files
+- `skills/gaze/SKILL.md` — the skill whose forked execution bails at fanout
+
+## Actions
+1. Diagnose why the fork ends after launching background reviewers — most
+   likely the skill text launches reviewers with run_in_background and then
+   ends the turn (background completions re-invoke the MAIN loop, not the
+   fork, so the fork is done the moment it stops calling tools).
+2. Fix in the skill text — candidate approaches, pick one:
+   a. Launch reviewers as FOREGROUND parallel Agent calls inside the fork
+      (single message, multiple tool uses) so the fork blocks until all
+      return, then proceed to simplify + verify-gate; or
+   b. Keep background launches but make the fork's final message a explicit
+      resumable handoff: list reviewer agent IDs and instruct the caller to
+      run `/verify-gate <pr>` once notifications arrive (codify the manual
+      fallback the 0540 raid used).
+3. Document the failure mode + caller-side recovery in the skill
+   (one paragraph: "if this skill returns before a verdict...").
+
+## Test
+- Hard to unit-test a fork; minimum: an adherence-style grep test that the
+  SKILL.md contains no run_in_background reviewer launch followed by
+  turn-ending prose (if approach (a)), or contains the handoff contract
+  section (if approach (b)).
+
+## Verification
+- [ ] `/gaze <pr>` on a real PR returns a verdict (APPROVED/REROLL/ESCALATE)
+      or an explicit resumable handoff — never a bare fanout narration.
+- [ ] No duplicate reviewer batteries needed by the caller.
+
+## Invariants
+- Reviewer model pinning (sonnet panels) unchanged.
+- verify-gate remains the only verdict emitter; gaze never merges.
+
+## Exit criteria
+- [ ] Root cause of the fanout-start return identified and written in this log.
+- [ ] Skill fixed per one of the approaches above.
+- [ ] Failure mode + recovery documented in SKILL.md.
