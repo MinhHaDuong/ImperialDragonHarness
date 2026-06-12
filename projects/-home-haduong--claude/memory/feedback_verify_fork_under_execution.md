@@ -23,3 +23,11 @@ three completion markers before accepting the result: (1) a verdict line
 Deterministic fix ticketed as 0216 (Agent-spawn conversion with pinned cwd).
 Positive signal from the same cycle: the permission guard DENIED an
 out-of-role force-push from a verify fix loop — guard layers work.
+
+Re-confirmed 2026-06-12 (raid 0253, PR #393) — after 0216/0228 closed: two
+consecutive `/gaze` forks returned mid-run status text ("waiting for
+reviewers") instead of a verdict; retry-once did NOT cure it. Working
+fallback: the orchestrator collects the reviewer agents' results (they
+arrive as task notifications) and runs `/verify-gate` directly with the
+findings summarized in args — the gate completed and posted the verdict
+comment first try.
