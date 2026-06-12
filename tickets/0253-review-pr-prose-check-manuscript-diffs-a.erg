@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-06-12T09:30Z HDMX-coding-agent created
+2026-06-12T12:00Z claude note raid plan: insert Editorial-brief auditor section between AI-tells auditor and Synthesis; ratchet test tests/test_review_pr_prose_skill.py (RED first, then GREEN)
 
 --- body ---
 ## Context
@@ -55,6 +56,6 @@ standing hook for a per-project editorial-brief file.
 
 ## Exit criteria
 
-- [ ] Skill loads and applies `docs/editorial-brief.md` when present
-- [ ] Brief format documented in the skill
+- [x] Skill loads and applies `docs/editorial-brief.md` when present
+- [x] Brief format documented in the skill
 - [ ] AEDIST 0557 can reference this as done
