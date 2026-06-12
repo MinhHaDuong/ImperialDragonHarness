@@ -1,0 +1,60 @@
+%erg 0.1
+Title: review-pr-prose: check manuscript diffs against a project editorial-brief file
+Created: 2026-06-12
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-12T09:30Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Companion to AEDIST ticket `tickets/0557-demote-positive-prose-literal-adherence.erg`.
+
+CI adherence tests that pin *positive* prose literals ("abstract must
+contain '<sentence>'") break on every legitimate authorial rewrite
+(AEDIST PR #1014). The agreed split: grep-able *negative* guards stay in
+CI; positive semantic intent (claim X stays hedged, abstract leads with
+result Y) moves to review-time, where an LLM panel can judge meaning.
+The review-pr-prose skill is where that judgment lives — it needs a
+standing hook for a per-project editorial-brief file.
+
+## Relevant files
+
+- `skills/review-pr-prose/SKILL.md` — the panel prompt to extend
+
+## Actions
+
+1. Add a step to review-pr-prose: if the project defines an editorial
+   brief (default location `docs/editorial-brief.md`, discoverable;
+   gracefully skip when absent per the skills-degrade-gracefully rule),
+   load it and have the panel check the manuscript diff against each
+   standing decision, reporting per-entry verdicts (upheld / violated /
+   not touched by this diff).
+2. Keep it forge-agnostic and project-agnostic: the brief format is
+   "one decision per entry: decision + rationale + originating ticket";
+   the skill documents the expected format, projects own the content.
+3. Update the skills catalog if the description changes (`make
+   skills-catalog`).
+
+## Test
+
+- Skill-text check in IDH's test suite (if present) or manual: invoking
+  review-pr-prose on a repo *without* a brief proceeds without error;
+  with a brief, the panel output contains a per-entry verdict section.
+
+## Verification
+
+- [ ] review-pr-prose run on AEDIST manuscript PR reports brief verdicts
+- [ ] Run on a project with no brief degrades silently
+
+## Invariants
+
+- Existing panel perspectives unchanged; the brief check is additive.
+- No hardcoded project paths or forge commands in the skill text.
+
+## Exit criteria
+
+- [ ] Skill loads and applies `docs/editorial-brief.md` when present
+- [ ] Brief format documented in the skill
+- [ ] AEDIST 0557 can reference this as done
