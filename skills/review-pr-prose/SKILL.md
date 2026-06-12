@@ -49,6 +49,25 @@ Agents with relevant expertise should use available tools (web search for litera
 
 One agent is always the **AI-tells auditor**. It reads `config/ai-tells.yml` for blacklisted words, phrases, conditional words, density limits, and patterns to flag. It scans the full text (not just the diff) and reports every violation with line number, context, and severity. This agent has no other role — it is a specialized lint pass.
 
+## Editorial-brief auditor (when present)
+
+If the project defines an editorial brief at `docs/editorial-brief.md`, one agent is the **editorial-brief auditor** (pinned `model: sonnet` like the rest of the panel). Skip silently when the file is absent — this check is project-specific and optional (skills degrade gracefully).
+
+The skill owns the schema, projects own the content. Expected brief format — one standing decision per entry, each entry carrying:
+
+- a decision title;
+- **Decision:** one sentence;
+- **Rationale:** one or two sentences;
+- **Ticket:** originating ticket reference.
+
+The auditor reads the brief plus the manuscript diff and reports a per-entry verdict table:
+
+| Entry | Verdict | Evidence |
+|---|---|---|
+| decision title | upheld / violated / not touched by this diff | line ref, or "not in diff" |
+
+Violations must cite the line. This agent has no other role — its table goes verbatim into the Synthesis step.
+
 ## Synthesis
 
 1. Preserve dissent verbatim.
