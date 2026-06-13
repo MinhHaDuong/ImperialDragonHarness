@@ -4,7 +4,7 @@ description: Work through multiple tickets autonomously: pick targets, implement
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
-model: claude-fable-5
+model: claude-opus-4-8
 effort: high
 ---
 
@@ -17,8 +17,8 @@ and enforcing invariants.
 ## Model policy (rightsizing)
 
 A raid fans out N concurrent agents — the cost lever is the **per-invocation
-`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku|
-fable`), NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
+`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku`),
+NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
 the subagent inheritance chain, so an unpinned launch silently runs at whatever
 the session model is; left unpinned on a top-tier session that is the runaway
 "top-model × N-wide" wave. **Effort is not an Agent launch parameter** — a
@@ -36,8 +36,9 @@ spot) before running a raid, and never rely on `max`. Every launch below pins
   → `model: sonnet` (pattern recognition across N plans, not lookup — a missed
   registry conflict cost a resurrection agent for 3 of 4 merges).
 - **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
-  `model: fable`. Top capability where it earns its keep; its effort is the
-  session effort (run the raid at `high` for the fable/high sweet spot).
+  `model: opus`. Top available tier — Fable 5 is blocked by government order, do
+  not pin it; its effort is the session effort (run the raid at `high` for the
+  opus/high sweet spot).
 - **Per-ticket `/gaze`** (Phase 6) → `/gaze` pins its own reviewer models; do not
   override.
 
@@ -149,7 +150,7 @@ Group tickets into waves:
 - Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
 
-For each wave, launch agents with `isolation: "worktree"` and `model: fable`
+For each wave, launch agents with `isolation: "worktree"` and `model: opus`
 (per § Model policy — the coders; effort is the session effort, run at `high`).
 Each agent follows `/hunt` workflow. Push branch when done, create merge request.
 

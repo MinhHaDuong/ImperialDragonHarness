@@ -10,7 +10,7 @@ fan-out. This test makes that discipline enforceable instead of conventional:
 2. Every SKILL.md that launches a fan-out names a per-invocation model in its
    BODY (not just frontmatter).
 3. No full `claude-<id>` model id leaks into a SKILL.md body — per-invocation
-   pins must use the short Agent enum token (`sonnet|opus|haiku|fable`); the full
+   pins must use the short Agent enum token (`sonnet|opus|haiku`); the full
    id is valid only in frontmatter (a different code path).
 
 See memory feedback_subagent_model_effort_levers.
@@ -23,7 +23,10 @@ REPO = Path(__file__).resolve().parents[1]
 SKILLS = REPO / "skills"
 
 # The Agent-launch `model` enum (and the Workflow agent() model tokens).
-VALID_MODELS = {"sonnet", "opus", "haiku", "fable"}
+# Fable 5 removed 2026-06-13: blocked by government order, no longer selectable.
+# Historical Fable runs stay cost-accounted in scripts/trace-*.py (analytics over
+# past data at Fable's 2x rate), but no skill may pin it as a tier going forward.
+VALID_MODELS = {"sonnet", "opus", "haiku"}
 
 # A per-invocation model pin in prose or code: `model: sonnet`, `model="opus"`,
 # backtick-wrapped, quoted, etc. Captures the tier token.
@@ -225,7 +228,7 @@ def test_workflow_js_agents_pin_valid_model():
                 offenders.append(f"{js.relative_to(REPO)}: agent() uses full claude-<id> (use short token): …{snippet}…")
     assert not offenders, (
         "Workflow agent() calls must pin a valid short-token model "
-        "(sonnet|opus|haiku|fable) — frontmatter does not reach them (0235):\n"
+        "(sonnet|opus|haiku) — frontmatter does not reach them (0235):\n"
         + "\n".join(offenders)
     )
 
@@ -261,7 +264,7 @@ def test_no_full_model_id_in_skill_bodies():
                 offenders.append(f"{md.parent.name}: {line.strip()[:90]}")
     assert not offenders, (
         "per-invocation model pins in a SKILL.md body must use the short Agent "
-        "enum token (sonnet|opus|haiku|fable), not a full claude-<id> "
+        "enum token (sonnet|opus|haiku), not a full claude-<id> "
         "(valid only in frontmatter, a different code path — 0235):\n"
         + "\n".join(offenders)
     )
