@@ -158,7 +158,7 @@ DERIVE and return:
   - evidence: which files you read and how you derived the command + pairings.
 
 Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
-  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'fable', schema: DISCOVERY_SCHEMA }  // 0235: model 'fable' — a singleton whose derivation gates the whole audit, so top capability is cheap insurance. Effort is NOT a Workflow agent() opt, so the intended 'low' tracks the session effort, not pinnable here.
+  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'opus', schema: DISCOVERY_SCHEMA }  // 0235: model 'opus' (Fable 5 blocked by gov order) — a singleton whose derivation gates the whole audit, so top capability is cheap insurance. Effort is NOT a Workflow agent() opt, so the intended 'low' tracks the session effort, not pinnable here.
 ).catch(e => { log(`discovery agent error: ${e}`); return null })
 
 if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
