@@ -210,7 +210,15 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch. <!-- harness-extension-point -->
+2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch.
+   **If the PR branch is already bound to an Execute agent's worktree**,
+   `gh pr checkout` fails (`fatal: '<branch>' is already used by worktree at …`)
+   and the shell cwd self-resets so a plain `cd` into that worktree does not
+   persist for the `/merge` skill. Switch the *session* into the existing
+   worktree instead: `EnterWorktree` with `path:
+   .claude/worktrees/agent-<id>` (the path from the Execute agent's completion
+   notification), then run `/merge` there. Do not delete and re-checkout the
+   branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Run `/merge <pr-number>`. This atomically closes the ticket and merges via GitHub API.
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
