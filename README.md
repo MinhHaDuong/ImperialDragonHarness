@@ -82,6 +82,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
+| `/external-peer-review` | Get external peer reviews of a manuscript PDF from real OpenAI and Mistral models via OpenRouter, then synthesize them into one verdict. Each model adopts a reviewer persona (a grinchy senior nitpicker, a bright doctoral student) and returns a full review; the skill weighs convergent findings across reviewers. Complements the simulated /review-pr-prose panel by sending the paper to genuinely external frontier models. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
