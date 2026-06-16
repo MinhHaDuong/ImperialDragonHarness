@@ -25,6 +25,8 @@ memory/.provenance.lock
 !tickets/
 !tickets/**
 tickets/tools/go/*.test
+!rules/
+!rules/**
 
 # Makefile for harness targets (skills catalog, checks, etc.)
 !Makefile
