@@ -29,6 +29,18 @@ skill **never signs** a tag — that is the human's sole responsibility.
   resolved before a release. Degrade gracefully with a warning if there is no
   `tickets/` directory or no `erg` binary available (the gate is informational
   in that case, not blocking).
+- **Research-artifact citability (WARN, graceful).** If the release ships a
+  research artifact — `CITATION.cff`, a manuscript, or a `data/` tree — check
+  that the **code and data** have a persistent identifier (a real DOI), not
+  only the paper. Flag — do **not** HALT — when `CITATION.cff` carries a
+  placeholder DOI (`10.XXXXX`-style), when the sole code/data pointer is a
+  mutable forge URL, or when no Zenodo/DOI deposit is referenced. Rationale:
+  disseminating the paper is not disseminating the work — "errors must be
+  locatable" needs a citable deposit, and a paper-only release silently omits
+  the artifact (deposit a snapshot, cite the Zenodo **concept** DOI). WARN not
+  HALT, because the deposit may be deliberately deferred; the point is to make
+  that a conscious choice, not an oversight. Skip silently if the release is
+  not a research artifact.
 
 ## 2. Parallel audits
 
