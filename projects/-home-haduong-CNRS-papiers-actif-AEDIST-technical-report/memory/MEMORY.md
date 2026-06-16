@@ -34,12 +34,15 @@
 - French-language report about Vietnamese thermal power plants as AI benchmark task
 
 ## Active
+- [Orphaned WIP = unlanded exit-criteria](feedback_orphaned_wip_is_unlanded_exit_criteria.md) — uncommitted WIP in a stale worktree may be a closed ticket's dropped deliverable; preserve, verify it runs, re-ticket (0609→0673)
+- [Side book — *Idées reçues* / finance climat](project_book_idees_recues_finance_climat.md) — separate repo; Le Cavalier Bleu dossier ready to send via Romain Blachier
+- [Editorial / trade-book working style](feedback_editorial_book_work.md) — multi-agent sims welcomed; grand-public legibility; no namedrop/family in pitch files
 - [Reference v1 defects & pipeline](project_reference_fix1.md) — v1 scores as-is, defects documented (PROVENANCE checklist); fix1 leapfrogged, never shipped; corrections via pipe 0420→0416→0419, adoption 0413 after 0412; fix the master + regenerate, never patch downstream
 - [No invented names](feedback_no_invented_names.md) — reference names must be source-attested; disambiguate structurally (status/units), never synthesize a name
 - [Verbatim by construction](feedback_verbatim_by_construction.md) — line-shaped edits via grep/sed/awk + count guards, not csv round-trips; diff-vs-source is the provenance evidence
 - [Three-quality argument](project_three_quality_argument.md) — paper's spine: data / answer / method, four limits split 2/2, method quality is perpendicular not a fifth limit (ticket chain 0145–0154)
 - [Coherence axis decomposition](project_coherence_axis_decomposition.md) — Coherence dimension → internal/external reference-free composites, per-row pass/fail; + `level` enum dimension (granularity, capacity plausibility is level-conditional); ticket chain 0201→0396→0397, 0401→0402
-- [Econom'IA 2026](project_economia_2026.md) — talk delivered & archived: tag economia-2026-cergy (bbc4a013), HAL hal-05644906, release with presented PDF
+- [Econom'IA 2026](project_economia_2026.md) — talk delivered & archived: tag economia-2026-cergy (bbc4a013), HAL hal-05644906, release with presented PDF; technical report diffused 2026-06-15: tag economia-2026-report (2da83d04), 65pp widow-free; deposited on HAL 2026-06-16 as working paper hal-05658462 (type UNDEFINED, CC-BY, seeAlso→talk; arXiv deferred to v2)
 - [Exp 1 module scheme](project_exp1_module_scheme.md) — modules renamed 1-6/A-D; Exp 1 baseline = 2_goal+5_table
 - [Exp 1 design decisions](project_exp1_design_decisions.md) — URL unguarded (intentional), >30MW in both files, Notes column; pending: harness.py + README + Annex A (ticket 0175)
 - [Reproducible pipeline](feedback_reproducible_pipeline.md) — test harness must be clear and reproducible
@@ -71,11 +74,19 @@
 - [No typo callouts](feedback_no_typo_callouts.md) — never reference user typos in tickets, commits, or any durable artefact
 - [No ps -ef](feedback_no_ps_ef_in_claude.md) — process listings with cmd-line args leak API keys via Claude Code's bash wrapper
 - [Check sister files first](feedback_check_sister_files_first.md) — before writing integration code, read an existing sibling that already solves the same problem
+- [Display-name sweep hits plot scripts](feedback_display_name_sweep_includes_plot_scripts.md) — stale model-name fix in prose must sweep `plot_*.py` label maps too (they render into manuscript figures); disambiguate vs genuinely-different registry entries before fixing
 - [Local 9B near ceiling](project_local_9b_near_ceiling.md) — qwen3.5:9b at F1=0.984 on direct (n=1); may collapse priority-3 scope if reproduces
 - [Pydantic unknown kwargs](feedback_pydantic_unknown_kwargs.md) — test schema *projection effects* (asymmetric values), not literal construction; BaseModel accepts unknown kwargs silently
 - [STRUCTURED_DIRS registry](project_structured_dirs_registry.md) — Makefile has hardcoded sweep-dir list; new outputs must be registered or extract skips them
 - [Ticket housekeeping via PR](feedback_ticket_housekeeping_on_main.md) — ALL main-targeted commits (tickets, STATE) go through branch+PR; GH006 branch protection rejects direct pushes; merge with `--merge --auto`, never squash
 - [gaze fork dies in bg jobs](feedback_gaze_fork_dies_in_background_jobs.md) — in background sessions run sonnet reviewers + /verify-gate directly; /gaze's forked reviewers evaporate
+- [Teams worklist purges completed](feedback_teams_worklist_purges_completed.md) — shared worklist is real but completed tasks vanish; collect results from agent return values, pre-tier model per batch, smoke-test one first
+- [Verify against synced main](feedback_verify_against_synced_main.md) — sync local checkout to origin before any verification/review fan-out; a stale tree yields false FAILs on already-merged fixes
+- [Shell timeout, no loops](feedback_shell_timeout_no_loops.md) — shells stall on gh/git/CI calls; wrap every network call in `timeout`, never write shell poll-loops; queue native auto-merge and check back later
+- [Teams raid region bundling](feedback_teams_raid_region_bundling.md) — large prose-edit wave via Teams: sweeps-first, bundle tickets by manuscript region (one PR/section), emitters merge free, invasive PR last, red-team at end
+- [Render & adjust tables](feedback_render_and_adjust_tables.md) — after ANY table change, always render the PDF and check/adjust column widths of ALL tables (overfull \hbox); never assume fit
+- [No caveats in captions](feedback_no_caveats_in_captions.md) — captions state plainly what the figure/table shows; caveats, hedges, method qualifications go in body/annex, never the caption
+- [Pagination widow verification](feedback_pagination_widow_verification.md) — fix widows by shaving signposts/roadmaps/recaps first; verify by rendering the exact page to PNG and Reading it (not pdftotext grep); cross-PR layouts interact
 - [haiku truncated final reports](feedback_haiku_truncated_final_reports.md) — haiku agents end turn on narration instead of long structured reports; run mechanical checks inline or demand one-line verdicts
 - [rtk git log stale](feedback_rtk_git_log_stale.md) — rtk-filtered `git log` hides/lags merge commits; use `rtk proxy git` for ground truth on git state
 - [Build from user worktree](feedback_build_from_user_worktree.md) — user edits main tree while you're in a worktree → same file diverges; build from their source, verify before `checkout --`
@@ -89,3 +100,4 @@
 - [~/.claude = IDH checkout](reference_claude_dir_is_idh.md) — the live harness dir is the ImperialDragonHarness clone on doudou; PR then `git -C ~/.claude pull`
 - [Stacked PR waves](feedback_stacked_pr_waves.md) — same-file raid waves go out stacked (base = previous wave's branch); rebase the stack at every gate, the author lands decisions mid-raid
 - [BG merge anchoring + auto-merge race](feedback_bg_merge_anchoring.md) — erg-pr-merge in bg sessions: anchor `cd <pr-worktree> && …` in one compound; check PR state before any retry (bounced run may have queued auto-merge)
+- [pgrep self-match watcher](feedback_pgrep_self_match_watcher.md) — watcher loops that `pgrep -f` their own pattern self-match and never exit; gate on a captured PID + timeout fallback
