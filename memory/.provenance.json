@@ -1010,10 +1010,11 @@
     },
     "reference_zotero": {
       "projects": [
-        "-home-haduong-aedist-technical-report"
+        "-home-haduong-aedist-technical-report",
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
       ],
       "first_seen": "2026-06-05T19:26:10Z",
-      "last_confirmed": "2026-06-06T12:24:11Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
       "promoted": false
     },
     "feedback_skills_just_work_no_config_blocks": {
@@ -1142,6 +1143,550 @@
       ],
       "first_seen": "2026-06-08T22:31:11Z",
       "last_confirmed": "2026-06-08T22:31:11Z",
+      "promoted": false
+    },
+    "user_platform": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:17Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "project_release_needs_codedata_doi": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_durable_reminder_is_blocked_open_ticket": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_no_article_for_working_paper": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_ruff_hook_reports_not_deletes": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_orphaned_wip_is_unlanded_exit_criteria": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "project_book_idees_recues_finance_climat": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_editorial_book_work": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "project_reference_fix1": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_no_invented_names": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:24Z",
+      "last_confirmed": "2026-06-16T10:22:24Z",
+      "promoted": false
+    },
+    "feedback_verbatim_by_construction": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "project_three_quality_argument": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "project_coherence_axis_decomposition": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "project_economia_2026": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "project_exp1_module_scheme": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "project_exp1_design_decisions": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "feedback_reproducible_pipeline": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "feedback_make_not_loops": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "feedback_local_vs_cloud": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "feedback_pipeline_ux": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:25Z",
+      "last_confirmed": "2026-06-16T10:22:25Z",
+      "promoted": false
+    },
+    "feedback_fast_pipelines": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "feedback_review_before_merge": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "feedback_gh_merge_worktree": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "feedback_nohup_path": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "project_pdf_converters": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "reference_emmy": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "feedback_evaluate_all_overwrite": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "project_sweep2_results": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "reference_autonomous_padme": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "reference_tmux_padme": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:26Z",
+      "last_confirmed": "2026-06-16T10:22:26Z",
+      "promoted": false
+    },
+    "feedback_worktree_not_stash": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_evaluate_all_quality": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_ollama_num_ctx": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "project_model_registry_consolidation": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_shared_utils": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_pipe_table_splitting": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_multiturn_all_turns": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_autonomous_means_execute": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:27Z",
+      "last_confirmed": "2026-06-16T10:22:27Z",
+      "promoted": false
+    },
+    "feedback_no_typo_callouts": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_no_ps_ef_in_claude": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_check_sister_files_first": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_display_name_sweep_includes_plot_scripts": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "project_local_9b_near_ceiling": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_pydantic_unknown_kwargs": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "project_structured_dirs_registry": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_ticket_housekeeping_on_main": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_gaze_fork_dies_in_background_jobs": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:28Z",
+      "last_confirmed": "2026-06-16T10:22:28Z",
+      "promoted": false
+    },
+    "feedback_teams_worklist_purges_completed": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_verify_against_synced_main": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_shell_timeout_no_loops": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_teams_raid_region_bundling": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_render_and_adjust_tables": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_no_caveats_in_captions": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_pagination_widow_verification": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_haiku_truncated_final_reports": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_rtk_git_log_stale": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_build_from_user_worktree": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:29Z",
+      "last_confirmed": "2026-06-16T10:22:29Z",
+      "promoted": false
+    },
+    "feedback_live_edit_build_watcher": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_cleanroom_force_rebuild_test": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_stale_line_numbers_across_waves": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_use_quickpr_for_chores": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_erg_id_collision": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_merge_review_merge_cadence": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_handoff_in_state_not_tickets": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "reference_claude_dir_is_idh": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_stacked_pr_waves": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:30Z",
+      "last_confirmed": "2026-06-16T10:22:30Z",
+      "promoted": false
+    },
+    "feedback_bg_merge_anchoring": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:31Z",
+      "last_confirmed": "2026-06-16T10:22:31Z",
+      "promoted": false
+    },
+    "feedback_pgrep_self_match_watcher": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-16T10:22:31Z",
+      "last_confirmed": "2026-06-16T10:22:31Z",
       "promoted": false
     }
   }

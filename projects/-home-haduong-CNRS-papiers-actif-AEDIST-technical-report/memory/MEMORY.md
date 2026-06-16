@@ -1,13 +1,13 @@
 # AEDIST Technical Report - Project Memory
 
 ## Key insights
-<!-- /dream consolidation 2026-06-12 -->
+<!-- /dream consolidation 2026-06-16 -->
 
 - Anchor on stable identifiers, never on position: label-keyed test extraction, grep-relocation over line hints, slug-keyed memories — every positional anchor (line numbers, section titles, annex letters) broke at least once during the 2026-06 manuscript waves.
-- In multi-session and background work, cwd and branch state are not yours: parallel sessions legitimately move a worktree's branch; anchor every mutating command in one compound (`cd X && …` / `git -C`) and verify with `rev-parse` before branch-mutating git.
+- In multi-session and background work, cwd and branch state are not yours: parallel sessions legitimately move a worktree's branch; sync to origin before any fan-out, anchor every mutating command in one compound (`cd X && …` / `git -C`), and verify with `rev-parse`. Forge automation is also not idempotent — check forge state before retrying a merge.
 - Agent-surveyed numbers are hypotheses; committed artifacts are the source of truth — re-derive before writing prose, and guard quoted literals with re-derivation tests.
-- Close-then-merge automation is not idempotent: check forge state (`gh pr view --json state`) before retrying any merge step — a bounced-looking run may already have queued the merge.
-- Negative guards + label contracts let prose restructure freely; positive wording pins force test-chasing — editorial intent lives in the brief, not in CI (polarity rule).
+- The ticket/state dependency graph is the only durable "remember later" primitive: reminders → an OPEN ticket `Blocked-by` the trigger (auto-fires in `erg ready` when it closes); handoffs → STATE + edges; closed tickets and orphaned worktree WIP silently lose their unlanded content (re-ticket it, never leave it in a closed ticket's notes).
+- Dissemination is not the paper — code+data need their own persistent citable DOI (a mutable forge URL is not one), and register precision matters ("article" = peer-reviewed only; negative prose guards beat positive wording pins — the polarity rule).
 
 ## Project Structure
 - **Monorepo**: code absorbed into report repo (2026-04-02). aedist GitHub archived.
@@ -34,6 +34,10 @@
 - French-language report about Vietnamese thermal power plants as AI benchmark task
 
 ## Active
+- [Release needs code+data DOI](project_release_needs_codedata_doi.md) — disseminating the paper isn't disseminating the work; persistent DOI for code+data (Zenodo concept 10.5281/zenodo.20715179) is a release exit criterion, not a GitHub URL
+- [Durable reminder = blocked open ticket](feedback_durable_reminder_is_blocked_open_ticket.md) — "remember in N months" goes in an OPEN ticket Blocked-by the trigger (auto-surfaces in erg ready), never a closed-ticket note
+- ["Article" = peer-reviewed only](feedback_no_article_for_working_paper.md) — never call a working paper/preprint an "article" (EN or FR); use working paper/preprint/report/étude/document de travail
+- [Ruff hook reports, not deletes](feedback_ruff_hook_reports_not_deletes.md) — global lint-on-edit hook now exempts F401/I001/UP from autofix; import-in-same-Edit rule is hygiene not trap-avoidance; AEDIST workflow.md § ruff is stale
 - [Orphaned WIP = unlanded exit-criteria](feedback_orphaned_wip_is_unlanded_exit_criteria.md) — uncommitted WIP in a stale worktree may be a closed ticket's dropped deliverable; preserve, verify it runs, re-ticket (0609→0673)
 - [Side book — *Idées reçues* / finance climat](project_book_idees_recues_finance_climat.md) — separate repo; Le Cavalier Bleu dossier ready to send via Romain Blachier
 - [Editorial / trade-book working style](feedback_editorial_book_work.md) — multi-agent sims welcomed; grand-public legibility; no namedrop/family in pitch files
