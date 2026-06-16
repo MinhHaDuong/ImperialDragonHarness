@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Grow prose/_all.md: LLMism guards + Elements of Style
+Created: 2026-06-16
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-16T09:57Z HDMX-coding-agent created
+
+--- body ---
+## Context
+PR #404 shipped the per-file rule-injection hook and seeded
+`rules/prose/_all.md` with a starter set of universal-prose rules (LLMism
+guards + a few Elements of Style entries). The hook injects this file's full
+body on the first prose edit (`.tex` `.qmd` `.md` `.txt`) of every session, in
+every project. The seed is deliberately small; this ticket grows it into the
+durable universal-prose layer.
+
+## Relevant files
+- `rules/prose/_all.md` — the file to grow (currently a marked seed).
+- `scripts/inject_rule_on_edit.py` — injects it (no change needed).
+- The injected body counts against a 10k-char `additionalContext` cap
+  (`MAX_CONTEXT` in the hook), so keep entries terse — one line each.
+
+## Actions
+1. Expand the LLMism-guard list from real observed tics (add a guard only when
+   it has been seen in actual drafts — see the seed's own scope note).
+2. Round out the Elements of Style load-bearing rules.
+3. Keep each entry one line; the whole file must stay well under ~6k chars so
+   it composes with doctype/lang bodies without tripping truncation.
+
+## Test
+- First write a guard test in `tests/` that fails if `rules/prose/_all.md`
+  exceeds a size budget (e.g. 6000 chars) — pins the "stays terse" invariant
+  before adding content.
+
+## Verification
+- [ ] `rules/prose/_all.md` size under budget; guard test green.
+- [ ] Every new guard is one line, declarative (not imperative — hook-output
+      convention), and corresponds to a real observed defect.
+
+## Invariants
+- Do not bloat: the file is injected verbatim every prose session.
+- Declarative framing only (imperative text reads as prompt injection).
+
+## Exit criteria
+- prose/_all.md expanded with vetted LLMism + style entries, size-guarded by a
+  test, `make check-tests` green.
