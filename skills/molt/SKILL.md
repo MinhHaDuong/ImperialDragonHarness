@@ -72,7 +72,7 @@ Run full repo housekeeping and act on every finding.
    ```bash
    ~/.claude/scripts/worktree-gc.sh
    ```
-   Skips any worktree with uncommitted changes (and the one it runs from), never `rm -rf`s, silent when there is nothing to clean. Safe here because step 0 already confirmed no other live session, and the git phase above ran `git fetch --prune` so gone branches are detectable. See tickets 0169, 0195.
+   Skips any worktree with uncommitted changes (and the one it runs from), never `rm -rf`s, silent when there is nothing to clean. Safe here because step 0 already confirmed no other live session, and the git phase above ran `git fetch --prune` so gone branches are detectable. See tickets 0169, 0195. **A worktree the GC skips for uncommitted changes is a signal, not just an obstacle:** diff it before moving on — orphaned WIP may be a closed ticket's dropped exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally; 2026-06-16 ticket 0609's mandated test sat uncommitted after PR #1111 closed it with only the data fix). If so, preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
