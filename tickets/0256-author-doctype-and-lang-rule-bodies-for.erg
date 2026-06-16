@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Author doctype/ and lang/ rule bodies for the injection hook
+Created: 2026-06-16
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-16T09:57Z HDMX-coding-agent created
+
+--- body ---
+## Context
+PR #404 shipped the per-file rule-injection hook with four axes:
+format / doctype / lang / prose. The hook RESOLVES doctype (sniffed from
+`\documentclass` for `.tex`, or a project manifest) and lang (project
+manifest), but `rules/doctype/` and `rules/lang/` have NO rule bodies yet, so
+those two axes currently inject nothing. This ticket authors the content.
+The engine is already live; this is pure content.
+
+## Relevant files
+- `rules/doctype/<value>.md` — to create (e.g. techreport, slides, book,
+  article, blogpost). Values come from `\documentclass` sniff
+  (`DOCUMENTCLASS_DOCTYPE` map in the hook: report→techreport, beamer→slides,
+  book→book, article→article) or a manifest `doctype`.
+- `rules/lang/<value>.md` — to create (e.g. `fr.md`, `en.md`).
+- `scripts/inject_rule_on_edit.py` — `candidate_rule_files()` already probes
+  `rules/<axis>/<value>.md`; missing files skip silently. No code change needed
+  to light these up — just add the files.
+- `rules/README.md` — already documents the axis model; add index rows for the
+  new files.
+
+## Actions
+1. Decide the initial doctype set worth rules (start with what is actually
+   used: techreport, slides, book — see the surveyed `\documentclass` values).
+2. Write each `rules/doctype/<v>.md` with conventions specific to that document
+   type (not format, not language — those are separate axes).
+3. Write `rules/lang/fr.md` and `rules/lang/en.md` with language-specific prose
+   norms (e.g. FR typographic spacing, quotation marks).
+4. Keep each terse (composes with format + prose bodies under the 10k cap).
+5. Add a row per new file to `rules/README.md`.
+
+## Test
+- Guard test: for each `rules/doctype/*.md` and `rules/lang/*.md`, assert it is
+  reachable — i.e. its `<value>` is a possible output of the hook's resolver
+  (in `DOCUMENTCLASS_DOCTYPE` values, or a documented lang). Catches orphan
+  rule files that can never be injected.
+
+## Verification
+- [ ] At least techreport/slides/book doctype bodies + fr/en lang bodies exist.
+- [ ] Each is reachable by the resolver (guard test green).
+- [ ] README index lists them; declarative framing; terse.
+
+## Invariants
+- Axis separation: doctype files carry ONLY document-type conventions; language
+  rules go in lang/, format rules in format/, universal prose in prose/_all.md.
+
+## Exit criteria
+- doctype/ and lang/ populated for the in-use types, reachable, indexed,
+  `make check-tests` green.
