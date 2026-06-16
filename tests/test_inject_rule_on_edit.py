@@ -179,3 +179,68 @@ def test_hook_silent_for_unstyled_file(tmp_path):
     )
     assert res.returncode == 0
     assert res.stdout.strip() == ""
+
+
+# --- glob matcher (direct) ---------------------------------------------------
+
+@pytest.mark.parametrize(
+    "rel,glob,expected",
+    [
+        ("slides/manuscript/main.tex", "slides/manuscript/**/*.tex", True),
+        ("slides/manuscript/sub/main.tex", "slides/manuscript/**/*.tex", True),
+        ("slides/x.qmd", "**/*.qmd", True),
+        ("book/index.qmd", "*.qmd", True),  # slash-less -> basename fallback
+        ("a/main.tex", "slides/**/*.tex", False),
+        ("src/foo.py", "*.py", True),  # basename fallback
+        ("src/foo.py", "src/*.py", True),
+        ("src/deep/foo.py", "src/*.py", False),  # * does not cross /
+    ],
+)
+def test_glob_match(rel, glob, expected):
+    assert inj.glob_match(rel, glob) is expected
+
+
+def test_glob_match_rejects_pathological_glob():
+    # Many '*' would drive catastrophic backtracking; the complexity cap returns
+    # False fast instead of hanging past the hook timeout.
+    assert inj.glob_match("a/b/c/d/e/f.tex", "**a**b**c**d**e**f**g") is False
+
+
+def test_manifest_non_match_leaves_sniffed_doctype(tmp_path):
+    repo = _manifest_repo(
+        tmp_path,
+        '[[map]]\nglob = "other/**/*.tex"\ndoctype = "slides"\n',  # does NOT match
+    )
+    f = repo / "slides" / "manuscript" / "main.tex"
+    f.write_text("\\documentclass{report}\n")
+    axes = inj.resolve_axes(str(f))
+    assert axes["doctype"] == "techreport"  # sniff survives when no glob matches
+
+
+def test_candidate_prefers_convention_over_alias(tmp_path):
+    rules = tmp_path
+    (rules / "format").mkdir()
+    (rules / "format" / "python.md").write_text("canonical")
+    (rules / "coding-python.md").write_text("legacy alias")  # both exist
+    files = inj.candidate_rule_files({"format": "python"}, rules)
+    assert [f.name for f in files] == ["python.md"]  # canonical wins, alias skipped
+
+
+@pytest.mark.integration
+def test_hook_truncates_oversized_context(tmp_path):
+    rules = tmp_path / "rules"
+    (rules / "format").mkdir(parents=True)
+    (rules / "format" / "python.md").write_text("X" * 20000)  # > MAX_CONTEXT
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    payload = json.dumps(
+        {"session_id": "big", "tool_input": {"file_path": str(tmp_path / "x.py")}}
+    )
+    res = subprocess.run(
+        ["python3", str(_HOOK), "--rules-dir", str(rules)],
+        input=payload, capture_output=True, text=True,
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+    )
+    ctx = json.loads(res.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert len(ctx) < 10000
+    assert "truncated" in ctx

@@ -59,6 +59,9 @@ EXT_FORMAT = {
 }
 PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
 
+# Keep injected context under the platform's 10,000-char additionalContext cap.
+MAX_CONTEXT = 9500
+
 # \documentclass{X} -> doctype axis value.
 DOCUMENTCLASS_DOCTYPE = {
     "report": "techreport",
@@ -99,10 +102,18 @@ def _glob_to_regex(glob: str) -> str:
 
 def glob_match(rel: str, glob: str) -> bool:
     """Match a repo-relative path against a glob. A slash-less glob also matches
-    on the basename alone (so `*.qmd` means "any .qmd anywhere")."""
-    if re.match(_glob_to_regex(glob), rel):
+    on the basename alone (so `*.qmd` means "any .qmd anywhere").
+
+    Manifest globs are author-controlled, but guard anyway: collapse runs of 3+
+    stars (typos like ``***/``) to ``**`` and reject absurd globs, so a many-``**``
+    pattern can't drive catastrophic regex backtracking past the hook timeout."""
+    glob = re.sub(r"\*{3,}", "**", glob)
+    if len(glob) > 200 or glob.count("*") > 8:
+        return False
+    pattern = _glob_to_regex(glob)
+    if re.match(pattern, rel):
         return True
-    return "/" not in glob and re.match(_glob_to_regex(glob), rel.rsplit("/", 1)[-1]) is not None
+    return "/" not in glob and re.match(pattern, rel.rsplit("/", 1)[-1]) is not None
 
 
 def format_for(path: str) -> str | None:
@@ -138,7 +149,7 @@ def find_manifest(path: str) -> Path | None:
     return None
 
 
-def manifest_axes(path: str, manifest: Path) -> dict:
+def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
     """Resolve doctype/lang overrides + default_lang from the project manifest.
 
     The first ``[[map]]`` whose glob matches the file (relative to the dir that
@@ -154,11 +165,13 @@ def manifest_axes(path: str, manifest: Path) -> dict:
         rel = str(Path(path).resolve().relative_to(repo_root))
     except ValueError:
         rel = Path(path).name
-    out: dict = {}
+    out: dict[str, str] = {}
     default_lang = data.get("default_lang")
     if isinstance(default_lang, str):
         out["lang"] = default_lang
     for entry in data.get("map", []):
+        if not isinstance(entry, dict):
+            continue  # malformed [[map]] entry — skip it, not the whole file
         glob = entry.get("glob")
         if not isinstance(glob, str):
             continue
@@ -170,7 +183,7 @@ def manifest_axes(path: str, manifest: Path) -> dict:
     return out
 
 
-def resolve_axes(path: str) -> dict:
+def resolve_axes(path: str) -> dict[str, str]:
     """Compose all axis values for the edited file.
 
     format from extension; doctype from markup sniff then manifest override;
@@ -179,7 +192,7 @@ def resolve_axes(path: str) -> dict:
     fmt = format_for(path)
     if fmt is None:
         return {}
-    axes: dict = {"format": fmt}
+    axes: dict[str, str] = {"format": fmt}
     if fmt in PROSE_FORMATS:
         axes["prose"] = "_all"
 
@@ -196,7 +209,7 @@ def resolve_axes(path: str) -> dict:
     return axes
 
 
-def candidate_rule_files(axes: dict, rules_dir: Path) -> list[Path]:
+def candidate_rule_files(axes: dict[str, str], rules_dir: Path) -> list[Path]:
     """Existing rule files for the resolved axes, in injection order.
 
     Convention: ``rules/<axis>/<value>.md``. Format has a legacy-alias fallback
@@ -219,11 +232,12 @@ def candidate_rule_files(axes: dict, rules_dir: Path) -> list[Path]:
 
 def marker_path(session_id: str, rule: Path) -> Path:
     base = Path(os.environ.get("TMPDIR", "/tmp")) / "claude-rule-inject"
-    sid = session_id or "nosession"
+    # session_id is untrusted stdin — sanitize so it cannot escape the dir.
+    sid = re.sub(r"[^A-Za-z0-9_-]", "_", session_id or "nosession")[:64]
     return base / f"{sid}.{rule.parent.name}.{rule.name}"
 
 
-def build_context(path: str, axes: dict, files: list[Path]) -> str:
+def build_context(path: str, axes: dict[str, str], files: list[Path]) -> str:
     fmt = axes.get("format", "")
     desc = ", ".join(f"{k}={v}" for k, v in axes.items())
     parts = [
@@ -276,6 +290,8 @@ def main() -> int:
         return 0
 
     context = build_context(file_path, axes, fresh)
+    if len(context) > MAX_CONTEXT:
+        context = context[:MAX_CONTEXT] + "\n\n[... truncated at the additionalContext size limit ...]"
     json.dump(
         {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": context}},
         sys.stdout,
@@ -284,7 +300,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Advisory hook: never block the edit. Catch SystemExit too (argparse on a
+    # bad invocation raises it) so the hook can never exit non-zero, which a
+    # PreToolUse hook signals as "block the tool".
     try:
-        sys.exit(main())
-    except Exception:  # advisory hook: any failure must not block the edit
-        sys.exit(0)
+        main()
+    except (Exception, SystemExit):
+        pass
+    sys.exit(0)
