@@ -16,7 +16,7 @@ fail=0
 out=$(bash scripts/on-start.sh 2>&1 || true)
 
 # 1. Index headers/scope signals must appear in the hook output.
-for needle in "workflow.md" "git.md" "always" "condition"; do
+for needle in "workflow.md" "git.md" "always" "edit of"; do
   if ! grep -qF "$needle" <<<"$out"; then
     echo "FAIL: hook output missing index marker '$needle'"
     fail=1

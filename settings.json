@@ -178,6 +178,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $HOME/.claude/scripts/inject_rule_on_edit.py",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
