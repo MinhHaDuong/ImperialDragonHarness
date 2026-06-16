@@ -70,15 +70,32 @@
       "Bash(ssh -o ConnectTimeout=5 -o BatchMode=yes padme \"uname -n; df -h ~/chemin-de-voix 2>/dev/null | tail -1; df -h ~/data 2>/dev/null | tail -1\")",
       "Bash(pkill -f \"ssh -C padme\")",
       "Bash(pkill -f \"dd if=/dev/urandom bs=1M count=500\")",
-      "Bash(ssh padme ' *)"
+      "Bash(ssh padme ' *)",
+      "mcp__claude_ai_Gmail__search_threads",
+      "mcp__claude_ai_Gmail__get_thread",
+      "Bash(rtk ls *)",
+      "Read(//home/haduong/CNRS/papiers/actif/AEDIST-technical-report/slides/manuscript/**)",
+      "Bash(rtk read *)",
+      "WebSearch",
+      "Bash(python3 -c \"import fpdf2; print\\('fpdf2 ok'\\)\")",
+      "Bash(python3 -c \"import reportlab; print\\('reportlab ok'\\)\")",
+      "Bash(pandoc --version)",
+      "Bash(fc-list)",
+      "Bash(fc-list --format=\"%{family}\\\\n\")",
+      "Bash(grep -i \"free\\\\|dejavu\\\\|liberation\\\\|noto sans$\\\\|ubuntu\")",
+      "Read(//home/haduong/CNRS/papiers/actif/AEDIST-technical-report/**)",
+      "Bash(rtk git *)",
+      "Bash(rtk grep *)"
     ],
     "defaultMode": "auto",
     "additionalDirectories": [
       "/home/haduong/CNRS/projets/actifs/chemin-de-voix",
       "/home/haduong/data/projets/chemin-de-voix/corpus",
-      "/tmp"
+      "/tmp",
+      "/home/haduong/CNRS/papiers/actif/AEDIST-technical-report/tickets"
     ]
   },
+  "model": "opus",
   "hooks": {
     "SessionStart": [
       {
@@ -177,11 +194,12 @@
     ],
     "Stop": []
   },
-  "advisorModel": "opus",
+  "effortLevel": "high",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "teammateMode": "auto",
   "skipAutoPermissionPrompt": true
 }
