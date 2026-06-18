@@ -1,0 +1,55 @@
+%erg 0.1
+Title: roar: degrade gracefully in no-forge repos
+Created: 2026-06-17
+Author: Minh Ha-Duong
+
+--- log ---
+2026-06-17T11:14Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`/roar`'s Pre-check and several later steps probe `origin/main`
+(`git fetch origin`, `git merge-base --is-ancestor HEAD origin/main`,
+`git cherry origin/main …`). In a repo with no forge remote these all fail or
+are moot, and the operator must hand-adapt every step. `molt` and `healthcheck`
+already degrade gracefully for absent forge conventions; `roar` does not.
+
+Surfaced 2026-06-17 running `/roar` on the `~/CNRS/html` homepage repo
+(direct-to-master, only an ssh co-development remote `padme`, no `origin`, no
+CI). Every ancestry check had to be reasoned around by hand; the run still
+completed correctly, which proves the steps *can* degrade — the skill just
+doesn't say how.
+
+## Relevant files
+- `skills/roar/SKILL.md` — Pre-check block (the `origin/main` fetch +
+  `merge-base --is-ancestor`, ~lines 16-29); later `origin/main` references in
+  the Exit-worktree step (~lines 59, 67-68) and hygiene step 11.
+- `skills/molt/SKILL.md`, `skills/healthcheck/SKILL.md` — reference wording for
+  graceful degradation when a forge convention is absent.
+
+## Actions
+1. Add a **no-forge** clause to Pre-check: if `git remote get-url origin` fails
+   (no `origin`), there is no forge gate — "merged" means committed to the local
+   default branch. Verify with `git merge-base --is-ancestor HEAD <default>`
+   (master/main) and skip every `origin/main` probe below as moot.
+2. Audit the other `origin/main` references (exit-worktree, hygiene) and give
+   each a no-forge fallback or an explicit "skip when no origin".
+3. Mirror the declarative degradation wording `molt`/`healthcheck` use.
+
+## Test
+- Skill-doc change. Confirm `tests/test_skill_descriptions.py` still passes
+  (description/frontmatter unchanged). If a roar-logic test exists, extend it;
+  otherwise none required.
+
+## Verification
+- [ ] A `/roar` run in a no-forge repo (html) needs zero hand-adaptation.
+- [ ] Pre-check contains a no-origin branch; each `origin/main` step has a
+      no-forge fallback.
+
+## Invariants
+- Forge-repo behaviour unchanged: when `origin` exists the current flow runs as-is.
+- Skill `description`/frontmatter unchanged (description test stays green).
+
+## Exit criteria
+- Pre-check and downstream steps handle a missing `origin`; verified on the html
+  repo; `make check` passes.
