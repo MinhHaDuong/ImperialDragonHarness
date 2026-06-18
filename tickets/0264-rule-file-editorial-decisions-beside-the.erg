@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Rule: file editorial decisions beside the submission they decide on
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T12:25Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+When a journal's editorial decision (referee reports, accept/reject/R&R letter)
+arrives, it lands as an email or PDF with no obvious home in the repo. In the
+Oeconomia–Climate-finance project this surfaced concretely: the round-1 decision
+arrived as a 1.8 MB print-to-PDF and sat untracked in a misnamed root folder
+(`rewrite for Economia/`). The author's instinct was clear and worth codifying as
+a harness rule: **a decision is filed beside the submission it decides on**, not
+in a new dated release folder, and as tracked diffable text, not a binary PDF.
+
+There is already a precedent in that project:
+`release/2026-01-14 Special Issue.../20260216 decision.txt` sits next to its
+submission. The new round-1 reports followed the same shape:
+`release/2026-03-18 Oeconomia/referee-reports.md`
+(MinhHaDuong/Oeconomia-Climate-finance PR #809).
+
+## Proposed rule
+
+> **Editorial decisions and referee reports are filed alongside the submission
+> they decide on** — inside that submission's existing
+> `release/<date> <venue>/` folder — as tracked, diffable text (`.md`/`.txt`),
+> never in a new release folder. Extract the text from the received PDF/email;
+> the received binary is transient and need not be tracked. Verify the extracted
+> text is token-complete against the source before discarding the original.
+
+## Relevant files
+
+- `rules/prose/_all.md` — universal prose layer (probably not the right home).
+- `rules/doctype/` — doctype-specific rules; a `techreport`/manuscript doctype
+  rule could carry submission-correspondence conventions.
+- Project-side: `.claude/skills/submission-branch/` and
+  `.claude/rules/state-roadmap.md` (`## Submissions` section) — the rule may be
+  better as a project-specific submission-workflow convention than a global rule.
+
+## Open question (decide during execution)
+
+Is this a **global** harness rule or a **project** convention? The
+`release/<date> <venue>/` layout is specific to the academic-writing projects, so
+a global rule may not generalise to code projects. Candidate: a new
+`rules/doctype/manuscript.md` (or extend the submission-branch skill docs), with
+the global rulebook only pointing to it. The ticket only proposes the rule; the
+PR that implements it settles placement.
+
+## Exit criteria
+
+- [ ] Decide global-vs-project placement and add the rule text to the chosen file.
+- [ ] Cross-reference the precedent (Oeconomia `release/2026-03-18 Oeconomia/referee-reports.md`).
+- [ ] If global, ensure `rules/README.md` axis table / index points to it.
