@@ -210,9 +210,9 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. `gh pr checkout <pr-number>` — `/merge` requires being on the PR head branch.
+2. Check out the PR head branch — `/merge` requires being on it.
    **If the PR branch is already bound to an Execute agent's worktree**,
-   `gh pr checkout` fails (`fatal: '<branch>' is already used by worktree at …`)
+   checking out the branch fails (`fatal: '<branch>' is already used by worktree at …`)
    and the shell cwd self-resets so a plain `cd` into that worktree does not
    persist for the `/merge` skill. Switch the *session* into the existing
    worktree instead: `EnterWorktree` with `path:
