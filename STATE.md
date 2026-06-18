@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-18T10:15Z
+Last updated: 2026-06-18T10:17Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-06-18T09:32Z -->
+<!-- generated 2026-06-18T10:17Z -->
 
-**Tickets:** 14 ready · 2 blocked — `erg ready tickets/` for full list
+**Tickets:** 22 ready · 2 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  fdb6cf9 Merge pull request #409 from MinhHaDuong/rule-uv-cache-venv-fs
-  6dc56da rules(python): require uv cache and project env on one filesystem
-  269565e Merge pull request #407 from MinhHaDuong/dream-consolidate-2026-06-16
-  18a367a dream: consolidate -home-haduong-CNRS-papiers-actif-AEDIST-technical-report memory (69→69)
-  e2ca7c0 Merge pull request #406 from MinhHaDuong/harness-release-codedata-doi-check
+  db8f06b Merge pull request #419 from MinhHaDuong/state-target-quick-tickets
+  96319ce state: target the quick-win trio (0261/0258/0255) as next actions
+  f5a535d Merge pull request #418 from MinhHaDuong/memory-erg-pr-merge-needs-close-claim
+  19feb82 memory(feedback): erg-pr-merge needs a close-claim line in the PR body
+  11d9ab5 Merge pull request #387 from MinhHaDuong/tickets/raid-0537-harness-findings
 
 ## Blockers
 
