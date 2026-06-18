@@ -1,0 +1,54 @@
+%erg 0.1
+Title: gaze: forked run returns before its background reviewers finish (background sessions get no verdict)
+Created: 2026-06-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-06-11T09:59Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+During the AEDIST raid on 2026-06-11 (background job, tickets 0505-0507),
+`/gaze 949` was invoked twice. Both times the skill returned immediately as
+"completed (forked execution)" with a result like "Three reviewers launched
+in parallel ... waiting for them to complete" — but the fork had already
+exited. The reviewers were `run_in_background` agents; when the fork ends
+its turn, nobody is left to receive their completion notifications, so they
+evaporate: no verdict, no PR comment, nothing in the parent session's
+TaskList. Interactive sessions don't hit this because the fork's loop stays
+alive to await the children.
+
+Workaround used (worked for PRs #949/#955/#960 of aedist-technical-report):
+the caller launches the reviewer pair as awaited foreground Agent calls
+(`model: sonnet`, read-only), fixes findings, then calls `/verify-gate`,
+which completes synchronously and posts its verdict. Recorded in AEDIST
+project memory as `feedback_gaze_fork_dies_in_background_jobs.md`.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — the phase that launches the three reviewers
+  (adherence, built-in review, multi-perspective panel)
+
+## Actions
+
+1. Make the reviewer launches blocking inside the fork: either issue the
+   three Agent calls in one message as foreground (parallel, awaited) calls,
+   or follow each background launch with an explicit await before the skill
+   text allows the turn to end.
+2. State the concurrency contract in the skill text (rules/workflow.md:
+   every multi-item step declares parallel-background vs sequential-blocking
+   and why) — here: parallel-foreground, because a forked skill must not end
+   its turn with children in flight.
+
+## Test
+
+- In a background (non-interactive) session, run `/gaze <PR>` on a trivial
+  open PR: the skill result must contain the reviewers' outputs (or the gate
+  verdict), not a "waiting for them to complete" message.
+
+## Exit criteria
+
+- [ ] `/gaze` never ends its forked turn while reviewer agents are in flight
+- [ ] Skill text declares the launch mode per the concurrency-discipline rule
+- [ ] Background-session run produces a posted verdict end-to-end
