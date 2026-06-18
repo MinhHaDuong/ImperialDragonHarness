@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [R&R intake is laborious](feedback_rr_intake_is_laborious.md) — Ingesting an editor decision + reviewer comments has no skill; done by hand it burns turns (Gmail re-search, comment recount, coverage verified 2-3×). Check `release/` not Gmail, archive to a known path, verify coverage once. Fix ticketed IDH 0265 (2026-06-18)
 - [No ruff ping-pong](feedback_no_ruff_ping_pong.md) — PostToolUse ruff hook fires after EVERY Edit; batch related edits so no intermediate state has unused imports; write new files complete in one Write
 - [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — Author directive: skills auto-discover repo specifics at run start (0184 adapter precedent); explicit inputs are optional overrides; also resolve missing args from authoritative state (branch→MR) and never fabricate example IDs in refusal messages (wrong-PR anchoring, 2026-06-10)
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'; worktrees cut from the SESSION repo — cross-repo skills need a session in the target repo; probe before expensive fan-outs
