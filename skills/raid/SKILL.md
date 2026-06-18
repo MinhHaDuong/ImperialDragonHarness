@@ -34,7 +34,11 @@ spot) before running a raid, and never rely on `max`. Every launch below pins
   checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
   conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
   → `model: sonnet` (pattern recognition across N plans, not lookup — a missed
-  registry conflict cost a resurrection agent for 3 of 4 merges).
+  registry conflict cost a resurrection agent for 3 of 4 merges). Haiku
+  launches must demand a ONE-LINE verdict, never a multi-section report —
+  haiku ends its turn on process narration instead of emitting long
+  structured final messages (two truncated returns, raid 557 2026-06-12);
+  if the check needs a structured report, run the greps inline or use sonnet.
 - **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
   `model: opus`. Top available tier — Fable 5 is blocked by government order, do
   not pin it; its effort is the session effort (run the raid at `high` for the
