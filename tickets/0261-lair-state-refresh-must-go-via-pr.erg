@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Lair step 10 must land STATE.md via a PR, not a local ff-merge + push to main
+Created: 2026-06-18
+Author: minh
+
+--- log ---
+2026-06-18T10:00Z minh created
+
+--- body ---
+## Context
+The `lair` skill step 10 says: refresh STATE.md on a throwaway branch, then
+"Commit, merge to main via fast-forward, delete branch." It implies local main
+carries the commit and gets pushed. But the GitHub gate is closed — `main` is
+branch-protected and direct pushes are rejected (`rules/git.md`: "no
+direct-push-to-main path"). During the 2026-06-18 lair run the local ff-merge
+succeeded, leaving local main one commit ahead of origin, and `git push origin
+main` was rejected by repository rules. Recovery required moving the commit to a
+branch, `git reset --mixed` back to origin/main, restoring STATE.md, and opening
+a PR by hand — the exact dance the gate is meant to prevent.
+
+## Relevant files
+- `skills/lair/SKILL.md` — step 10 (Refresh STATE.md)
+
+## Actions
+1. Rewrite step 10 to: create `housekeeping-state-YYYY-MM-DD` from main, run
+   `refresh-STATE.py`, hand-edit, commit, push the branch, open a PR
+   (`Ticket: none`), and let it merge through the normal gate (auto-merge).
+2. Drop the "merge to main via fast-forward, delete branch" local-merge wording.
+3. Keep the throwaway-branch naming and the prune step for after the PR merges.
+
+## Test
+- Source-inspection test: `skills/lair/SKILL.md` step 10 must not instruct a
+  local merge to main or a `git push origin main`; it must mention opening a PR.
+  (Add to `tests/` as a string-match adherence test.)
+
+## Verification
+- [ ] Step 10 text routes STATE.md through a branch + PR
+- [ ] No "merge to main via fast-forward" or push-to-main instruction remains
+- [ ] A dry lair run produces a STATE PR, not a rejected main push
+
+## Invariants
+- The gate stays closed; STATE.md is not special-cased.
+
+## Exit criteria
+- Lair step 10 lands STATE.md via PR with no direct-main-push step; adherence
+  test green.
