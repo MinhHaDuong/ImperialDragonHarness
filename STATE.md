@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-06-18T09:32Z
+Last updated: 2026-06-18T10:15Z
 
 ## North star
 
@@ -23,6 +23,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
+- **Quick-win trio (do next, lowest-risk first)**: 0261 (lair step 10 → STATE via PR, not ff-merge to main) · 0258 (roar degrades in no-forge repos) · 0255 (grow prose/_all.md, size-guarded). Each is a self-contained skill/rule edit with a test.
 - **0216 fan-out evidence**: the next substantive PR /gaze completes 0216's criterion-2 proof (PR #334's gaze hit agents=0 on a trivial diff) — no action, just observe and append to the closed ticket
 - **dream/beat-on-stale-checkout guard gap** (NEW, found 2026-06-08): the 0234 main-commit guard is inert on a primary checkout that never pulled it — a dream session committed git-erg memory straight to local main and diverged (rescued via PR #357). Fix: dream/beat pre-flight should sync (or refuse on a diverged) primary checkout before committing. Needs a ticket.
 - **Verify-reviewer-panel cluster** (only open work left): 0206 (Copilot seat — needs forge config + ≥5-MR trial), 0217/0207 (OS-sandboxed agnostic seats), 0205 (panel contract + decorrelation evidence). 0227/0231/0232/0233/0234 closed this session; cadens now canonical (cadens PR #45)
