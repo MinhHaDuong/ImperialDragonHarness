@@ -211,5 +211,8 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "teammateMode": "auto",
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  }
 }
