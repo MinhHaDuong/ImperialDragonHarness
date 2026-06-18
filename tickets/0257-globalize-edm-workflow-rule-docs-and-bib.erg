@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Globalize EDM workflow rule and index-source skill (docs and bib staging to Zotero)
+Created: 2026-06-17
+Author: minh
+
+--- log ---
+2026-06-17T11:45Z minh created
+2026-06-17T12:20Z minh note scope extended — also globalize the index-source skill (built project-local, sibling of zotero-import)
+
+--- body ---
+## Context
+A reusable EDM (electronic document management) discipline emerged while
+realigning the « 100 milliards » book project's sources into Zotero. It is
+project-agnostic and should become a global harness rule so every IDH project
+follows it. The rule is currently captured only as a *project-local* memory in
+the book project; it reaches the global harness today only via a `/dream`
+promotion pass. The author wants it globalized deliberately, as a hard rule.
+
+The discipline: **Zotero is the system of record** for source documents and
+bibliography. `docs/` (source PDFs/HTML *and* the author's own `*.md` research
+notes) and project `.bib` files are **staging only** — git-ignored, never
+tracked. Staging is periodically synced to Zotero (correct item type, real
+author/date/pagination, file attachment) and **purged on archival after
+publication** (Zotero retains everything). Reports carry a page count.
+
+## Relevant files
+- `~/.claude/projects/-home-haduong-CNRS-papiers-actif-Comment-d-penser-plus-de-100-milliards-de-dollars---Projet-Livre/memory/edm-workflow.md` — the source memory (canonical wording, `Why:` / `How to apply:`).
+- `~/.claude/rules/README.md` — the rules index table; a new rule must be registered here.
+- `~/.claude/rules/git.md` — already says "Don't gitignore handoff artifacts … commit them; caches/PDFs are regenerable — gitignore." The EDM rule extends this: source docs live in Zotero, not git.
+- `~/.claude/skills/zotero-import/SKILL.md`, `~/.claude/scripts/zotero-import.py` — the RIS+attachment importer the rule relies on; `index-source` is its URL sibling.
+- `<book-project>/.claude/skills/index-source/` — the `index-source` skill, **already built and tested project-local** (`SKILL.md`, `scripts/probe-url.py` stdlib-only probe, `scripts/selftest.sh` 14 assertions, registered in the book project's `check.sh`). To be ported to the harness. The book project path is `~/.claude/projects/-home-haduong-CNRS-papiers-actif-Comment-d-penser-plus-de-100-milliards-de-dollars---Projet-Livre/` → actual repo dir under the user's CNRS tree.
+
+## Actions
+1. Author `~/.claude/rules/edm.md` from the memory body: Zotero = system of record; `docs/` + `.bib` = git-ignored staging; sync→Zotero; purge on archival post-publication; reports get page counts; notes archived too.
+2. Register it in `rules/README.md` (index table + per-file injection axis if it should inject on `.bib`/`docs` edits — decide scope: always-on vs skill-list vs format).
+3. Reconcile with `git.md` (cross-reference, no contradiction on what is/ isn't tracked).
+4. Port the `index-source` skill to `~/.claude/skills/index-source/` (sibling of `zotero-import`): copy `SKILL.md` + `scripts/`, keep the references to the global `zotero-import.py`, regenerate the skills catalog (`make skills-catalog`), and wire `selftest.sh` into harness CI. The rule and the skill cite each other.
+5. Land via the harness branch + PR flow (main is read-only).
+
+## Test
+- Add/extend an adherence test (mirror `tests/test_skill_descriptions.py` style) asserting `rules/edm.md` exists and is listed in `rules/README.md` — catch index drift.
+- Run `index-source/scripts/selftest.sh` in harness CI (14 offline assertions, no network) and `make check-skills-drift`.
+
+## Verification
+- [ ] `rules/edm.md` exists, content matches the memory's intent.
+- [ ] `rules/README.md` table references it with the correct scope signal.
+- [ ] No contradiction with `git.md` on tracking policy.
+- [ ] Adherence/drift test passes.
+- [ ] `index-source` skill present globally, its `selftest.sh` green in CI, skills catalog regenerated (`make check-skills-drift` clean).
+
+## Invariants
+- Do not weaken `git.md`'s "commit handoff artifacts" rule — EDM concerns *source documents and staging*, not generated artifacts a downstream workpackage consumes.
+- Rule text stays forge-agnostic and declarative (per `rules/workflow.md` § Writing Skills and Hooks).
+
+## Exit criteria
+- `rules/edm.md` merged to harness main, indexed, drift-tested; the book project's `memory/edm-workflow.md` can then point to it as the global source.
+- `index-source` skill globalized next to `zotero-import`, selftest green in CI, catalog regenerated; the book project's copy removed or left as a thin pointer.
