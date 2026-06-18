@@ -1,0 +1,54 @@
+%erg 0.1
+Title: healthcheck: flag when working-tree hooks differ from origin/main (stale-hook-in-worktree trap)
+Created: 2026-06-18
+Author: HDMX-coding-agent
+
+--- log ---
+2026-06-18T00:00Z HDMX-coding-agent created
+
+--- body ---
+## Context
+When a repo sets `core.hooksPath` to a directory inside the working tree (e.g.
+`hooks/`, as Oeconomia does), git resolves it to an absolute path under the
+MAIN checkout. Every worktree then runs the MAIN checkout's hooks, not its own
+checked-out copy. Consequence: a hook fix that is merged and present on
+`origin/main` does NOT take effect for new worktrees until the main checkout's
+working tree is actually on a commit that has it.
+
+This bit a real session (2026-06-18, Oeconomia #797/#801): the worktree-
+creation hook fix was merged, yet `EnterWorktree` kept running the OLD hook
+because a parallel session held the main checkout on a pre-fix branch. It looked
+like the fix had failed; it had not. Diagnosing it cost a full confused round.
+
+A cheap healthcheck would have caught it: compare the working-tree hooks against
+`origin/main` and warn on drift.
+
+## Relevant files
+- `skills/healthcheck/SKILL.md` — add a git-hygiene check (the healthcheck is
+  generic and degrades gracefully where a convention is absent).
+
+## Actions
+1. In healthcheck, when the repo uses a working-tree `core.hooksPath` (the path
+   resolves inside the work tree, not `.git/`), diff that directory against
+   `origin/main:<hooksPath>`. Warn if they differ, naming the stale files —
+   "worktrees will run the main checkout's stale hooks until it is updated".
+2. No-op silently when `core.hooksPath` is unset or points into `.git/` (the
+   normal case, where the trap does not exist).
+
+## Test
+- A test that, given a repo whose working-tree hooks differ from origin/main,
+  the check reports drift; and given they match (or hooksPath is in .git/), it
+  stays silent.
+
+## Verification
+- [ ] Drift between working-tree hooks and origin/main is reported.
+- [ ] Silent when hooksPath is unset or under .git/.
+- [ ] Degrades gracefully with no remote / detached HEAD.
+
+## Invariants
+- Healthcheck stays advisory (never a hard gate); it only warns.
+- Forge-agnostic: compare against the tracked default branch, not a named forge.
+
+## Exit criteria
+- Healthcheck warns when a working-tree hooksPath is stale vs origin/main, so the
+  "new worktrees silently run an old hook" trap is caught before it confuses.
