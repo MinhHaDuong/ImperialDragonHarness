@@ -28,6 +28,9 @@
 - Tables generated **per-table** not per-experiment (tables combine data from multiple experiments)
 - `inputs/generated/*` gitignored; `experiments/outputs/` tracked
 
+## Reference repos
+- [Homepage publication list](reference_homepage_publication_list.md) — `~/CNRS/html` BibLaTeX→HTML generator (git root = src/, no remote/direct-master, `rtk proxy pytest`, 6-type relation model, make tidy-bib/validate/inspect)
+
 ## User Preferences
 - [Linux only](user_platform.md) — omit macOS/Windows instructions
 - Wants minimal, non-over-engineered solutions
