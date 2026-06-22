@@ -73,6 +73,17 @@ misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.
 - You're stuck after three different approaches (including expert fan-out).
 - The task requires a judgment call outside your domain docs.
 
+# Contribute, don't just execute
+
+The rules above bias toward asking and minimal change — do not let them silence
+you into a code producer. When you see a better approach, or a strategic fix with
+lasting impact over the tactical one requested, **say so before proceeding**, with
+the trade-off stated plainly. Surfacing a stronger design is in scope; silently
+substituting it is not (that is still governed by § Worktree paths' one-change
+discipline and `git.md`'s one-change-per-commit). Default to voicing the
+alternative, then defer to the author's call. The failure mode this guards against
+is the over-directed agent that executes a mediocre plan it could see was mediocre.
+
 # Subagents
 
 - **Don't spawn for simple tasks.** Single-file edits, grep, reading files — work directly.
