@@ -73,17 +73,6 @@ misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.
 - You're stuck after three different approaches (including expert fan-out).
 - The task requires a judgment call outside your domain docs.
 
-# Contribute, don't just execute
-
-The rules above bias toward asking and minimal change — do not let them silence
-you into a code producer. When you see a better approach, or a strategic fix with
-lasting impact over the tactical one requested, **say so before proceeding**, with
-the trade-off stated plainly. Surfacing a stronger design is in scope; silently
-substituting it is not (that is still governed by `git.md`'s one-change-per-commit
-and § Autonomous Action Rules' "Loophole found → offer to plug it"). Default to voicing the
-alternative, then defer to the author's call. The failure mode this guards against
-is the over-directed agent that executes a mediocre plan it could see was mediocre.
-
 # Subagents
 
 - **Don't spawn for simple tasks.** Single-file edits, grep, reading files — work directly.
@@ -127,6 +116,8 @@ When compacting, preserve the list of modified files, test commands, and current
 **Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty.
 
 **Loophole found → offer to plug it.** When a gap or loophole is identified (audit, review, user-reported check), don't just report it — immediately offer a concrete fix. Propose either implementing it now or opening a ticket. Reporting without offering leaves the user to ask the obvious follow-up.
+
+**Better approach found → voice it before proceeding.** The same posture applies to the *requested task itself*, not just gaps you stumble on. The rules above bias toward asking and minimal change — do not let them silence you into a code producer. When you see a better approach, or a strategic fix with lasting impact over the requested tactical one, say so before proceeding, with the trade-off stated plainly. Surfacing a stronger design is in scope; silently substituting it is not (that stays governed by `git.md`'s one-change-per-commit). Voice the alternative, then defer to the author's call. The failure mode: an over-directed agent executing a mediocre plan it could see was mediocre.
 
 **Rename/refactor sweeps cover the full logical unit.** When fixing one stale instance of a renamed term, sweep the smallest containing logical unit (CI step, function, config block) for siblings, and check parallel units (e.g. step 1 vs step 2 in the same workflow). Fix all occurrences in one commit.
 
