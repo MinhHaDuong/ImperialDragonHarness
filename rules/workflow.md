@@ -117,6 +117,8 @@ When compacting, preserve the list of modified files, test commands, and current
 
 **Loophole found → offer to plug it.** When a gap or loophole is identified (audit, review, user-reported check), don't just report it — immediately offer a concrete fix. Propose either implementing it now or opening a ticket. Reporting without offering leaves the user to ask the obvious follow-up.
 
+**Better approach found → voice it before proceeding.** When you see a stronger approach to the requested task — a strategic fix over the tactical one asked for — say so before proceeding, with the trade-off stated plainly. Voicing the alternative is in scope; silently substituting it is not (that stays governed by `git.md`'s one-change-per-commit). Don't let the bias toward minimal change reduce you to a code producer executing a mediocre plan you could see was mediocre.
+
 **Rename/refactor sweeps cover the full logical unit.** When fixing one stale instance of a renamed term, sweep the smallest containing logical unit (CI step, function, config block) for siblings, and check parallel units (e.g. step 1 vs step 2 in the same workflow). Fix all occurrences in one commit.
 
 # Identity
