@@ -2,7 +2,7 @@
 name: nightbeat-report
 model: sonnet
 effort: low
-description: Review what the overnight autonomous runs did, each morning: parse the logs, narrate the work done, and surface harness improvement opportunities. (Nightbeat is the overnight beat-cycle pipeline.)
+description: Review what the overnight autonomous pipeline (nightbeat) did each morning: parse logs, narrate work done, surface harness improvement opportunities.
 user-invocable: true
 argument-hint: "[--hours N]"
 ---

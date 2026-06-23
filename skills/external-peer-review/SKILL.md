@@ -1,6 +1,6 @@
 ---
 name: external-peer-review
-description: Get external peer reviews of a manuscript PDF from real OpenAI and Mistral models via OpenRouter, then synthesize them into one verdict. Each model adopts a reviewer persona (a grinchy senior nitpicker, a bright doctoral student) and returns a full review; the skill weighs convergent findings across reviewers. Complements the simulated /review-pr-prose panel by sending the paper to genuinely external frontier models.
+description: Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict.
 user-invocable: true
 disable-model-invocation: false
 argument-hint: <pdf-path> [--models openai/gpt-5.5,mistralai/mistral-large-2512] [--personas grinchy,student] [--text]

@@ -1,6 +1,6 @@
 ---
 name: test-audit-llm
-description: "Read-and-judge audit of test quality: one judge reads each test file and scores four lenses — faithfulness (does it exercise real paths or a mocked fiction?), intent legibility (does the name lie? does it pass for the wrong reason?), negative-space coverage (only the happy path?), and change-detector smell (asserts HOW the code works, not WHAT it produces?). Runs nothing — no mutation, no test execution. Cheap-model bulk pass plus strong-model escalation for the top flagged files. Advisory only: findings feed ticket creation, never a CI gate. The read-and-judge sibling to maw-audit (which mutates and runs); this one only reads. EXPENSIVE on-demand, but much cheaper than maw-audit (no compile/run loop)."
+description: "Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. Runs nothing — advisory only; findings feed ticket creation."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[run in the target repo; it discovers the test-file list itself — optional overrides via the Workflow args input]"

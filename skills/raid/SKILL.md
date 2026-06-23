@@ -1,6 +1,6 @@
 ---
 name: raid
-description: Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. This is the Imperial Dragon raid — parallel agents under strict isolation discipline.
+description: Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
