@@ -76,44 +76,44 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 
 | Command | Description |
 |---------|-------------|
-| `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). One beat is the heartbeat unit of the overnight autonomous pipeline (nightbeat). |
+| `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/celebrate` | Deprecated — renamed to /roar. Warns, then delegates to the new name. |
 | `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
-| `/external-peer-review` | Get external peer reviews of a manuscript PDF from real OpenAI and Mistral models via OpenRouter, then synthesize them into one verdict. Each model adopts a reviewer persona (a grinchy senior nitpicker, a bright doctoral student) and returns a full review; the skill weighs convergent findings across reviewers. Complements the simulated /review-pr-prose panel by sending the paper to genuinely external frontier models. |
+| `/external-peer-review` | Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
-| `/hunt` | Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase. |
+| `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
-| `/maw-audit` | "Audit test-suite quality by mutation testing: verify that each test actually catches the defect it claims to catch, stays green under harmless refactors, and guards the whole defect class rather than one instance. The three lenses: fang (a behavior-changing mutation must turn the test RED — else toothless), handcuff (a behavior-preserving refactor must keep it GREEN — else over-scoped), scope (a caught mutation replayed at sibling sites — survivors mean instance-pinned). Discovers its own config — no per-repo setup. EXPENSIVE on-demand (the validating fang-only run was ~1.3M tokens / ~29 min); never invoke casually. The name: the maw is the beast's devouring jaws — the audit inspects every tooth, not just one fang. Formerly fang-audit." |
+| `/maw-audit` | "Mutation-testing audit of test quality across three lenses: fang (detects defects), handcuff (tolerates safe refactors), scope (covers the defect class). EXPENSIVE — invoke deliberately. Auto-discovers config." |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
-| `/nightbeat-report` | Review what the overnight autonomous runs did, each morning: parse the logs, narrate the work done, and surface harness improvement opportunities. (Nightbeat is the overnight beat-cycle pipeline.) |
+| `/nightbeat-report` | Review what the overnight autonomous pipeline (nightbeat) did each morning: parse logs, narrate work done, surface harness improvement opportunities. |
 | `/nightbeat-supervisor` | Supervise the overnight autonomous pipeline (nightbeat) continuously: watch each cycle outcome, merge ready PRs, diagnose and repair failures, escalate when stuck. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
-| `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous sweep run. Returns PICK:<id>, CLOSED:<id>, or IDLE. |
-| `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. This is the Imperial Dragon raid — parallel agents under strict isolation discipline. |
+| `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous run. |
+| `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
 | `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
-| `/reviewers` | "Reviewer-panel management for /gaze — list, request, harvest, scorecard (review-is-CI seats)" |
+| `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
 | `/scry` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
 | `/start-ticket` | Deprecated — renamed to /hunt. Warns, then delegates to the new name. |
-| `/test-audit-llm` | "Read-and-judge audit of test quality: one judge reads each test file and scores four lenses — faithfulness (does it exercise real paths or a mocked fiction?), intent legibility (does the name lie? does it pass for the wrong reason?), negative-space coverage (only the happy path?), and change-detector smell (asserts HOW the code works, not WHAT it produces?). Runs nothing — no mutation, no test execution. Cheap-model bulk pass plus strong-model escalation for the top flagged files. Advisory only: findings feed ticket creation, never a CI gate. The read-and-judge sibling to maw-audit (which mutates and runs); this one only reads. EXPENSIVE on-demand, but much cheaper than maw-audit (no compile/run loop)." |
+| `/test-audit-llm` | "Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. No test execution — advisory only; findings feed ticket creation." |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
 | `/verify` | Deprecated — renamed to /gaze. Warns, then delegates to the new name. |
-| `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. Emits suggested tests for any semantic finding so the LLM surface shrinks over time. |
+| `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
 | `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Never merges. |
-| `/zotero-import` | Import one or more PDFs into Zotero. Extracts metadata from the document, resolves identifiers online when available, checks for duplicates in the local Zotero library, writes a combined RIS file, and hands it to xdg-open so the user's environment decides what to do with it. |
+| `/zotero-import` | Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and write a RIS file for import. |
 
 <!-- skills:end -->
 

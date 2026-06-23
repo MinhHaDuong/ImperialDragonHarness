@@ -1,6 +1,6 @@
 ---
 name: pick-ticket
-description: Pick the lowest-risk available ticket for an autonomous sweep run. Returns PICK:<id>, CLOSED:<id>, or IDLE.
+description: Pick the lowest-risk available ticket for an autonomous run.
 user-invocable: true
 argument-hint:
 ---

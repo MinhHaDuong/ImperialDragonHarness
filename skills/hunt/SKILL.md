@@ -1,6 +1,6 @@
 ---
 name: hunt
-description: Begin work on a ticket. Creates worktree, writes first test, transitions to Execute phase.
+description: Begin work on a ticket — creates a worktree and writes the first test.
 disable-model-invocation: true
 user-invocable: true
 argument-hint: <ticket-id>
