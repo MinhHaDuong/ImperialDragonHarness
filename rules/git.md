@@ -15,7 +15,7 @@
 - **Merge-bounce recovery.** `erg-pr-merge` legitimately bounces in sequence; each bounce has a specific retry — do not blanket-fall back to `gh pr merge`:
   - *"close: no ticket found" on a retry* — the FIRST run already `erg close`d + archived + pushed the close commit (the script is **not** idempotent past that step). Do NOT re-run it and do NOT hand-close the ticket; the close commit is already on the branch, so finish with `gh pr merge <N> --merge` directly once CI is green.
   - *"must run from PR branch" after a fast-forward* — HEAD detached after `merge --ff-only`; `git checkout <branch>`, then retry.
-- **Delete branches after merge.** All repos use `deleteBranchOnMerge: true` on GitHub, so the remote branch disappears automatically when a PR merges. Clean up stale local branches with:
+- **Delete branches after merge.** `deleteBranchOnMerge` is per-repo — check it, don't assume. Where it is `true` (e.g. the harness repo) the remote branch disappears automatically when a PR merges; where it is `false` (e.g. `CIRED/cired.digital`, confirmed 2026-06-23 — and `gh pr merge --delete-branch` does *not* override it, plus its client-side checkout step can abort from a worktree, leaving the remote branch alive) you must delete the remote branch manually: `git push origin --delete <branch>`. Verify with `gh api repos/<owner>/<repo> --jq .delete_branch_on_merge`. Either way, clean up stale local branches with:
   ```bash
   git fetch --prune
   cur=$(git branch --show-current)
