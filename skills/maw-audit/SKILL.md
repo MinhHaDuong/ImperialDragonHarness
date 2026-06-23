@@ -1,6 +1,6 @@
 ---
 name: maw-audit
-description: "Mutation-testing audit of test quality across three lenses: fang (detects defects), handcuff (tolerates safe refactors), scope (covers the defect class). EXPENSIVE — invoke deliberately. Auto-discovers config."
+description: "Mutation-testing audit of test-suite quality — verifies each test detects defects, tolerates safe refactors, and guards the whole defect class. EXPENSIVE — invoke deliberately. Auto-discovers config."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[run in the target repo; it discovers its own config — optional overrides via the Workflow args input]"

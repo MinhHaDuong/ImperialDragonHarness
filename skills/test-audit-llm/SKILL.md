@@ -1,6 +1,6 @@
 ---
 name: test-audit-llm
-description: "Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. No test execution — advisory only; findings feed ticket creation."
+description: "Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. Runs nothing — advisory only; findings feed ticket creation."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[run in the target repo; it discovers the test-file list itself — optional overrides via the Workflow args input]"
