@@ -1688,6 +1688,38 @@
       "first_seen": "2026-06-16T10:22:31Z",
       "last_confirmed": "2026-06-16T10:22:31Z",
       "promoted": false
+    },
+    "project_zotero_pivot": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-archiveCIRED"
+      ],
+      "first_seen": "2026-06-23T10:01:53Z",
+      "last_confirmed": "2026-06-23T10:01:53Z",
+      "promoted": false
+    },
+    "feedback_merge_workflow": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-archiveCIRED"
+      ],
+      "first_seen": "2026-06-23T10:01:53Z",
+      "last_confirmed": "2026-06-23T10:01:53Z",
+      "promoted": false
+    },
+    "project_index_architecture": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-archiveCIRED"
+      ],
+      "first_seen": "2026-06-23T10:01:53Z",
+      "last_confirmed": "2026-06-23T10:01:53Z",
+      "promoted": false
+    },
+    "project_recueil_merge": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-archiveCIRED"
+      ],
+      "first_seen": "2026-06-23T10:01:53Z",
+      "last_confirmed": "2026-06-23T10:01:53Z",
+      "promoted": false
     }
   }
 }
