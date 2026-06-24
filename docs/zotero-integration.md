@@ -1,6 +1,6 @@
 # Zotero Integration — IDH Architecture
 
-**Status**: Draft — 2026-06-24  
+**Status**: Draft — 2026-06-24
 **Principle**: KISS and YAGNI at all layers.
 
 ---
@@ -9,15 +9,15 @@
 
 Five concrete use cases drive what capabilities matter.
 
-**archiveCIRED** — institutional archive, 686 items, French academic papers 1970–2013, scanned PDFs. Needs: bulk enrichment (HAL, OpenAlex, CrossRef), OCR, dedup, multi-library access.
+**archiveCIRED** — institutional archive, 686 items, French academic papers 1970–2013, scanned PDFs. Needs: bulk enrichment (HAL, OpenAlex, CrossRef), OCR, dedup, multi-library access, field linting and normalization.
 
 **Publications list** — personal list of research outputs (homepage, CV). Needs: keep `Ha-Duong.bib`, HAL deposits, and Zotero citation keys in sync after each new publication.
 
-**AEDIST** — energy transition analysis paper. `related-work-note` + `refs.bib` covers this. Zotero integration only if the manuscript bibliography exceeds ~100 items.
+**AEDIST** — energy transition analysis. Manage information sources HITL, periodically discovers, harvest, index, store relevant documents on energy transition and infrastructure in target countries. May scale up.
 
-**CIRED.digital** — RAG over CIRED research corpus. Needs: metadata export for ingestion into a retrieval index.
+**CIRED.digital** — RAG over CIRED research corpus. Needs: import from HAL with fulltext, metadata export with fulltext for ingestion into a retrieval index.
 
-**Periodic activity report** — CNRS/HCERES rapport d'activité. Needs: filtered publication export by year/type.
+**Periodic activity report** — CNRS/HCERES rapport d'activité. Needs: filtered publication export by year/type, contents organization, summarization and presentation.
 
 ---
 
@@ -43,9 +43,7 @@ No custom formats. CSL-JSON is richer (use for RAG and activity report). RIS is 
 
 Client functions stay in the project (`reconcile_zotero.py`) until `/dream` finds two projects using them. Dream already promotes project-level patterns to the harness when a threshold is crossed — this is that mechanism. No explicit hook needed.
 
----
-
-## Backend interface: Bash
+### 5. Backend interface: Bash
 
 All Zotero operations go through Bash-callable Python scripts. No MCP dependency.
 
@@ -56,13 +54,14 @@ All Zotero operations go through Bash-callable Python scripts. No MCP dependency
 
 MCP (`zotero-mcp-server`) is a useful optional overlay for HITL sessions but the harness never depends on it for correctness.
 
-**API layer**: Zotero Web API v3 (REST, JSON). No wrapper library — stdlib HTTP suffices.  
-**Local reads**: Zotero SQLite via `?immutable=1`. Already in `~/.claude/scripts/zotero-import.py`.  
+**API layer**: Zotero Web API v3 (REST, JSON). No wrapper library — stdlib HTTP suffices. 
+**Local reads**: Zotero SQLite via `?immutable=1`. Already in `~/.claude/scripts/zotero-import.py`. 
 **Credentials**: `~/.config/keys/<project>.env` as `KEY=VALUE`.
 
-### Multi-library access
+### 6. Multi-library access
 
-Own library: `users/{uid}`, writes allowed.  
+Own library: `users/{uid}`, writes allowed.
+
 Foreign group (Base R2DS, archiveCIRED group): `groups/{gid}`, **read-only**. Group-scoped API key required. Writes are always guarded to `users/{uid}`. Validate library string format early; fail fast on malformed input.
 
 ---
@@ -100,11 +99,3 @@ Every mutating skill must:
 
 Each capability: one script, one skill, no shared framework beyond the RIS contract.
 
----
-
-## Not in scope
-
-- pyzotero — stdlib covers all needs
-- MCP server — nothing blocks on it now
-- AEDIST — `related-work-note` + `refs.bib` covers it
-- Custom export formats — RIS or CSL-JSON only
