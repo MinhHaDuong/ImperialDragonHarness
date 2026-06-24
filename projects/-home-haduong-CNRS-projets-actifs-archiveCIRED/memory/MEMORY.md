@@ -2,15 +2,19 @@
 
 ## Key insights
 
-- The project pivoted from HAL mass-deposit to a **private Zotero group** to sidestep rights triage; a mature catalogue (inari/Bordignon) already existed, so the work is reconciliation/dedup/enrichment, not bulk import.
-- **Match Zotero records by identifier, never by title** — the Sachs fonds reuses titles across distinct works. The same rule in matching code: Jaccard + author/year corroboration, never bare title-containment.
-- The data backbone is a **two-layer index**: physical `file_index.json` (1991 files) → logical `doc_index.json` (1112 docs); the old `index.json` is superseded.
-- Antonin's "recueil 50 ans" was **mirrored into a My-Library collection** (VPDB49CK, 131 items) instead of joined by a (nonexistent) mapping table; deleting the source group is gated on a zero-information-loss audit (ticket 0025).
-- Tooling discipline: every Zotero-writing script needs `--backup` with `--apply`; the **committed `tickets/erg` bootstrap can drift** behind the installed binary (caused a `Label:`/`refresh-STATE.py` failure) — keep it current.
+- Match Zotero records by identifier (CIR_/ENPC/docid), never by title — the Sachs fonds reuses titles across distinct works.
+- Enrichments land in two phases (build then run); `erg-pr-merge` autoclosing on build is a trap — verify a run has landed before treating an enrichment ticket as done.
+- The ENPC_LEESU fonds has structurally incomplete metadata (no creator, no date); exclude it from all automated enrichments and completeness audits.
+- Zotero rejects `publicationTitle` for non-journalArticle types (HTTP 400); Crossref `container-title` must be mapped type-specifically — same bug exists in HAL and OpenAlex scripts (ticket 0042).
+- The committed `tickets/erg` bootstrap binary can lag the installed one; always `erg update` before sweeps and suspect staleness when an erg command "doesn't exist."
 
 ## Entries
 
-- [Zotero pivot (2026-05-16)](project_zotero_pivot.md) — HAL deferred; private Zotero group; catalogue deduplicated 1378→686 (PR #7); match by id never title; 0015 unblocked (mirrored)
-- [Merge workflow lessons (2026-05-16)](feedback_merge_workflow.md) — squash-merge divergence; guard hook blocks reset --hard on clean tree (ask via `!`); a missing erg subcommand/header usually means a stale committed bootstrap binary (0027)
+- [Zotero pivot & catalogue state (2026-06-24)](project_zotero_pivot.md) — HAL deferred; private Zotero group; 686 notices deduplicated; match by id never title; enrichments 0022+0038 done
+- [Merge workflow lessons (2026-05-16)](feedback_merge_workflow.md) — squash-merge divergence; guard hook blocks reset --hard on clean tree (ask via `!`); stale committed erg bootstrap binary
 - [Index architecture (2026-05-16)](project_index_architecture.md) — file_index.json (1991 files) + doc_index.json (1112 docs); replaces index.json
-- [Recueil merge (2026-06-23)](project_recueil_merge.md) — Antonin's group mirrored into collection VPDB49CK (131 items); group deletion FROZEN until ticket 0025 audit confirms zero info loss
+- [Recueil merge — DONE 2026-06-24](project_recueil_merge.md) — volet complet, all tickets closed; 131↔131 zero-loss proven (0025 GO); group kept+renamed; 18 new docs imported; 8 best-scans marked principal/copy
+- [Inari archive mapping](reference_inari_archive_mapping.md) — local archive mirrors inari bucket kCj0pHP0/zotero/www/; recueil bucket Wehurei6 is separate — don't conclude "not on inari" from one bucket
+- [LEESU incomplete metadata (2026-06-24)](project_leesu_incomplete_meta.md) — notices sans creator ou sans date sont toutes ENPC_LEESU ; exclure ce fonds des audits de complétude
+- [Ticket: none pour housekeeping (2026-06-24)](feedback_ticket_none_housekeeping.md) — PRs qui créent/rouvrent un ticket sans compléter le travail → Ticket: none (pas **Ticket:**)
+- [Enrichment build-vs-run gap (2026-06-24)](project_enrichment_build_vs_run.md) — 0023/0024/0038 autoclos sur le build du harnais, pas sur le run ; seul 0022 HAL a enrichi (88) ; vérifier qu'un run a landé avant de croire « fait » (garde 0040)

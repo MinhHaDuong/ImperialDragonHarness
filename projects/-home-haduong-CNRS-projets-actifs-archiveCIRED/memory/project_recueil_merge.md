@@ -1,11 +1,24 @@
 ---
 name: project_recueil_merge
-description: "Antonin's Recueil_CIRED group mirrored into a My-Library collection (131 items); group deletion FROZEN until ticket 0025 audit returns zero information loss"
+description: "Recueil volet COMPLETE (2026-06-24): Antonin's Recueil_CIRED group mirrored into My-Library collection VPDB49CK (131), zero-loss proven, group kept+renamed, all tickets closed"
 metadata: 
   node_type: memory
   type: project
   originSessionId: 9ab720bf-5060-4796-8455-6c9e7417e171
 ---
+
+**VOLET RECUEIL TERMINÉ (2026-06-24)** — tickets 0015, 0018, 0019, 0025, 0029 tous fermés.
+- 0025 (audit zéro-perte) clos **GO** : bijection injective 131↔131 + audit champ-à-champ.
+  Le groupe n'est PAS supprimé : conservé, renommé `Recueil_CIRED_tout_importé` (trace).
+  Plan en avant = copier les docs CIRED sur une bibliothèque adossée ENPC (0037/0030).
+- 0019 : corrections d'Antonin propagées (1 vraie : +2 auteurs sur Z83SYUK5) ; les faux
+  positifs étaient du bruit typographique. Publications distinctes liées (`relations`), pas fusionnées.
+- 0018 : 18 docs nouveaux au catalogue (13 importés via Crossref/HAL DOI + 2 grises saisies
+  depuis les PDF ; tag `recueil-50ans-ajout-0018`, hors VPDB49CK). 8 meilleurs scans tranchés :
+  2 fichiers gardés par notice, `url`=principal / `extra`=l'autre marqué (« moins bonne copie » ou source).
+- Audit (`verify_recueil_mirror.metadata_missing`) durci : tolère les étiquettes typo (`vol.`/`n°`/`p.`).
+
+Historique ci-dessous (état au 2026-06-23, avant clôture) :
 
 Antonin's separate Zotero group `Recueil_CIRED` (id 2511149, 131 notices) was the
 "recueil 50 ans CIRED" selection. Decision (not a separate group): **mirror it into
