@@ -7,17 +7,41 @@
 
 ## Reference use cases
 
-Five concrete use cases drive what capabilities actually matter.
+Five concrete use cases drive what capabilities matter.
 
-**archiveCIRED** — institutional archive, 686 items, French academic papers 1970–2013, scanned PDFs. Needs: bulk enrichment (HAL, OpenAlex, CrossRef), OCR, dedup, multi-library access (own library + group library).
+**archiveCIRED** — institutional archive, 686 items, French academic papers 1970–2013, scanned PDFs. Needs: bulk enrichment (HAL, OpenAlex, CrossRef), OCR, dedup, multi-library access.
 
-**Publications list** — personal list of research outputs (homepage, CV). Needs: keep bibLaTeX (`refs.bib`), HAL deposits, and Zotero citation keys in sync after each new publication. Zotero is the authoritative source; `update-publist` and `bib-merge` are downstream consumers.
+**Publications list** — personal list of research outputs (homepage, CV). Needs: keep `Ha-Duong.bib`, HAL deposits, and Zotero citation keys in sync after each new publication.
 
-**AEDIST** — energy transition statistical analysis paper. Needs: bibliography management for a manuscript in progress (`refs.bib`), source provenance tracking. `related-work-note` + `refs.bib` already covers this. Zotero adds value only if the manuscript bibliography grows too large to manage by hand.
+**AEDIST** — energy transition analysis paper. `related-work-note` + `refs.bib` covers this. Zotero integration only if the manuscript bibliography exceeds ~100 items.
 
-**CIRED.digital** — RAG over CIRED research corpus. Needs: clean metadata export (title, authors, year, abstract, type, DOI, URL) for ingestion into a retrieval index. Zotero is the source; the RAG pipeline is the consumer. Blocked on index schema.
+**CIRED.digital** — RAG over CIRED research corpus. Needs: metadata export for ingestion into a retrieval index.
 
-**Periodic activity report** — annual or biennial researcher activity report (rapport d'activité CNRS/HCERES). Needs: filtered export of recent publications by year/type, formatted for the report template. Zotero is the source; the report is the output.
+**Periodic activity report** — CNRS/HCERES rapport d'activité. Needs: filtered publication export by year/type.
+
+---
+
+## Structural decisions
+
+### 1. Source of truth: `CNRS/html/Ha-Duong.bib`
+
+`Ha-Duong.bib` is the authoritative bibliography. Zotero and HAL are downstream consumers. Sync direction: bib → Zotero (import), bib → HAL (deposit via `update-publist`). Zotero is not written to derive the bib; the bib is written to populate Zotero.
+
+This has worked for 30+ years. Do not reconsider until a concrete pain point forces it.
+
+### 2. Shared mutation format: RIS
+
+RIS is the interchange format across all skills. Every mutating skill is a pure function: items in → corrected RIS out. A single apply step diffs the RIS against current Zotero state and writes the delta (PATCH/PUT with `If-Unmodified-Since-Version`).
+
+Skills compose by piping RIS: `lint | enrich | apply`. No shared framework needed beyond that contract.
+
+### 3. Export format: RIS or CSL-JSON only
+
+No custom formats. CSL-JSON is richer (use for RAG and activity report). RIS is simpler (use when Zotero import/export is the destination). Choose per consumer; never invent a third format.
+
+### 4. Harness-level extraction trigger: dream-time
+
+Client functions stay in the project (`reconcile_zotero.py`) until `/dream` finds two projects using them. Dream already promotes project-level patterns to the harness when a threshold is crossed — this is that mechanism. No explicit hook needed.
 
 ---
 
@@ -26,23 +50,32 @@ Five concrete use cases drive what capabilities actually matter.
 All Zotero operations go through Bash-callable Python scripts. No MCP dependency.
 
 **Why Bash, not MCP:**
-- The safety contract (backup → dry-run → apply) is expressed as script flags. MCP write tools have no natural slot for this — calls are immediate and opaque.
-- Autonomous sessions (`raid`, `nightbeat`, `beat`) run headless; an MCP server may not be up. A script always works.
-- The read pattern here is batch (fetch all items, process, emit JSON), not interactive item-by-item queries where MCP shines.
+- The safety contract (backup → dry-run → apply) is expressed as script flags. MCP write tools have no natural slot for this.
+- Autonomous sessions (`raid`, `nightbeat`, `beat`) run headless; an MCP server may not be up.
+- The read pattern here is batch, not interactive item-by-item queries.
 
-MCP (`zotero-mcp-server`) is a useful optional overlay for HITL sessions — ad-hoc queries, interactive dedup — but the harness never depends on it for correctness.
+MCP (`zotero-mcp-server`) is a useful optional overlay for HITL sessions but the harness never depends on it for correctness.
 
 **API layer**: Zotero Web API v3 (REST, JSON). No wrapper library — stdlib HTTP suffices.  
-**Local reads**: Zotero SQLite via `?immutable=1` (works while Zotero is running). Already in `~/.claude/scripts/zotero-import.py`.  
+**Local reads**: Zotero SQLite via `?immutable=1`. Already in `~/.claude/scripts/zotero-import.py`.  
 **Credentials**: `~/.config/keys/<project>.env` as `KEY=VALUE`.
+
+### Multi-library access
+
+Own library: `users/{uid}`, writes allowed.  
+Foreign group (Base R2DS, archiveCIRED group): `groups/{gid}`, **read-only**. Group-scoped API key required. Writes are always guarded to `users/{uid}`. Validate library string format early; fail fast on malformed input.
 
 ---
 
-## Safety contract (every mutating skill)
+## Safety contract
 
-1. Fetch and save current state to a timestamped JSON backup before writing.
-2. Write with `If-Unmodified-Since-Version` — reject on concurrent edit.
-3. Dry-run by default. `--apply` requires `--backup` path.
+Every mutating skill must:
+
+1. Fetch and save current state to `outputs/zotero-backups/<skill>-<ISO8601>.json` before writing.
+2. Output a RIS file of desired state; never write directly.
+3. Apply with `If-Unmodified-Since-Version` — reject on concurrent edit.
+4. Dry-run by default; `--apply` requires the backup path.
+5. In autonomous/background sessions: auto-apply only high-confidence changes; write low-confidence proposals to the RIS ledger and stop. Never block waiting for input.
 
 ---
 
@@ -56,15 +89,16 @@ MCP (`zotero-mcp-server`) is a useful optional overlay for HITL sessions — ad-
 
 | Capability | Use case | Trigger |
 |---|---|---|
-| **Lint** — normalize field formats (date, DOI, pages, language) | archiveCIRED | First normalization ticket |
-| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex | archiveCIRED | Tickets 0022–0023 |
-| **Find PDF** — Unpaywall lookup + attach | archiveCIRED | Ticket 0030 |
+| **Lint** — normalize field formats (date ISO 8601, DOI prefix, pages en-dash, language code) | archiveCIRED | First normalization ticket |
+| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs RIS | archiveCIRED | Tickets 0022–0023 |
+| **Upload PDF** — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | Ticket 0030 |
+| **Find PDF** — Unpaywall lookup + attach; jurisdiction gate before grey-web | archiveCIRED | Ticket 0037 |
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Ticket 0006 |
-| **Export (metadata)** — filtered JSON/CSV export by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
-| **Key sync** — keep citation keys consistent across Zotero / refs.bib / HAL | Publications list | Next homepage refresh |
-| **Dedup** — candidate pairs + HITL merge | archiveCIRED, publications list | When second project triggers it |
+| **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
+| **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
+| **Dedup** — candidate pairs + HITL merge; auto-apply DOI-exact matches only | archiveCIRED, publications list | When second project triggers it |
 
-Each capability: one script, one skill, no shared framework.
+Each capability: one script, one skill, no shared framework beyond the RIS contract.
 
 ---
 
@@ -72,12 +106,5 @@ Each capability: one script, one skill, no shared framework.
 
 - pyzotero — stdlib covers all needs
 - MCP server — nothing blocks on it now
-- AEDIST — `related-work-note` + `refs.bib` covers it; no Zotero integration needed unless manuscript bibliography exceeds ~100 items
-
----
-
-## Open questions (for the review)
-
-1. Should client functions (pagination, rate-limit retry, credential loading) move to a harness-level script now, or only when a second project needs them?
-2. Does the activity report need a dedicated skill or is a parameterized export enough?
-3. What does "Base R2DS read access" concretely require?
+- AEDIST — `related-work-note` + `refs.bib` covers it
+- Custom export formats — RIS or CSL-JSON only
