@@ -39,7 +39,7 @@ During an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolu
 
 **No exceptions. Everything goes through a PR.** `STATE.md`, ticket lifecycle, memory files, config — all changes land via branch + PR. The GitHub gate is closed; there is no direct-push-to-main path.
 
-For everything else (source code, manuscript prose, data files): if `git branch --show-current` is `main`, stop and switch to a branch first.
+For everything else (source code, data files): if `git branch --show-current` is `main`, stop and switch to a branch first. Exception: manuscript prose in paper repos is co-edited in place in the author's checkout during interactive sessions — see `rules/git.md` § Prose workpackages.
 
 The same trap exists on the Bash surface: prefixing a command with `cd <primary-repo-root> &&` silently lands `git`/`erg` mutations on the primary checkout (on main) instead of the worktree branch. A PreToolUse guard blocks `cd <primary-repo-root> && <mutating git/erg>` during worktree sessions; read-only inspection (`git status`, `git log`) is not penalised, and an intentional primary-repo mutation should use `git -C <path>` rather than a `cd`.
 
