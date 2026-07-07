@@ -2,10 +2,12 @@
 Title: Author doctype/ and lang/ rule bodies for the injection hook
 Created: 2026-06-16
 Author: HDMX-coding-agent
+Closed: authored rules/doctype/{techreport,slides,book}.md and rules/lang/{fr,en}.md, indexed in rules/README.md, reachability + size guard test tests/test_rules_axis_bodies.py
 
 --- log ---
 2026-06-16T09:57Z HDMX-coding-agent created
 
+2026-07-07T11:37Z Claude closed — authored rules/doctype/{techreport,slides,book}.md and rules/lang/{fr,en}.md, indexed in rules/README.md, reachability + size guard test tests/test_rules_axis_bodies.py
 --- body ---
 ## Context
 PR #404 shipped the per-file rule-injection hook with four axes:

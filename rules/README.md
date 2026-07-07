@@ -12,6 +12,11 @@ files on demand when their scope signal applies to your task.
 | [coding-python.md](./coding-python.md) | edit of `*.py` (alias: `format/python`) | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | edit of `*.sh` (alias: `format/bash`) | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 | [prose/_all.md](./prose/_all.md) | edit of any prose file (`*.tex` `*.qmd` `*.md` `*.txt`) | Universal prose rules: LLMism guards, Elements of Style. |
+| [doctype/techreport.md](./doctype/techreport.md) | edit of a `techreport` file (`\documentclass{report}` or manifest) | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
+| [doctype/slides.md](./doctype/slides.md) | edit of a `slides` file (`\documentclass{beamer}` or manifest) | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
+| [doctype/book.md](./doctype/book.md) | edit of a `book` file (`\documentclass{book}` or manifest) | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
+| [lang/fr.md](./lang/fr.md) | edit of a `lang = "fr"` file (manifest) | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
+| [lang/en.md](./lang/en.md) | edit of a `lang = "en"` file (manifest) | English norms: one spelling variety, serial comma, sentence-case headings. |
 
 Compliance is verified ex post by the `verify-adherence` skill — this
 index is the single source of truth on when each rule file applies.
