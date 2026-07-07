@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-06-16 -->
+<!-- last-reviewed: 2026-07-07 -->
 # Prose rules — every prose file
 
 Applies to all prose formats (tex, qmd, md, txt) regardless of document type or
@@ -17,6 +17,14 @@ These are the tics that mark text as machine-written. Cut them.
 - **No summary that restates the body** ("In conclusion, as we have seen…"). End on a point, not a recap.
 - **No hedging stacks**: "may potentially", "could possibly", "it seems likely that perhaps". One hedge maximum.
 - **No second-person life-coaching** ("Let's dive in", "You've got this") in formal prose.
+- **No em-dash chains**: at most one em-dash per paragraph — a second usually hides a sentence that wants a period.
+- **No transition-word drumbeat**: "Moreover", "Furthermore", "Additionally", "Notably" opening consecutive sentences; let the logic carry the link.
+- **No importance inflation**: "crucial", "critical", "key", "vital", "essential" — reserve for claims that would change a decision.
+- **No panorama adjectives**: "comprehensive", "holistic", "multifaceted", "nuanced" — name what is covered instead.
+- **No filler verbs of inquiry**: "unpack", "explore", "dive deeper into" — state the finding, not the gesture of looking.
+- **No "significant" without a test**: in scientific prose the word claims statistics; write "large" or give the number otherwise.
+- **No weak copulas where a verb exists**: "serves as", "acts as", "plays a role in" — "X regulates Y", not "X plays a role in regulating Y".
+- **No bold-lead bullet cascades in running prose**: if every paragraph is a bullet with a bolded lead, it is a list, not an argument — write the paragraph.
 
 ## Elements of Style — the load-bearing few
 
@@ -26,6 +34,11 @@ These are the tics that mark text as machine-written. Cut them.
 - **Use definite, specific, concrete language.** A number beats "several"; a name beats "various stakeholders".
 - **Keep related words together.** Subject next to verb; modifier next to what it modifies.
 - **One paragraph, one idea.** If a paragraph turns, it is two paragraphs.
+- **Begin each paragraph with its topic sentence.** The argument should be readable from first sentences alone.
+- **Place the emphatic word at the end of the sentence.** The last slot carries the stress; do not spend it on a qualifier.
+- **Express coordinate ideas in parallel form.** Items in a series share one grammatical shape.
+- **Avoid the feeble qualifiers**: "rather", "very", "little", "pretty" — they drain the word they modify.
+- **Do not overstate.** One unearned superlative makes the reader doubt every other claim.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 
 ## Scope note

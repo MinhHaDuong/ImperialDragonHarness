@@ -2,10 +2,12 @@
 Title: Grow prose/_all.md: LLMism guards + Elements of Style
 Created: 2026-06-16
 Author: HDMX-coding-agent
+Closed: prose/_all.md grown: +10 LLMism guards, +5 Elements of Style entries, all one-liners; size + one-line ratchets in tests/test_prose_all_budget.py
 
 --- log ---
 2026-06-16T09:57Z HDMX-coding-agent created
 
+2026-07-07T11:49Z Claude closed — prose/_all.md grown: +10 LLMism guards, +5 Elements of Style entries, all one-liners; size + one-line ratchets in tests/test_prose_all_budget.py
 --- body ---
 ## Context
 PR #404 shipped the per-file rule-injection hook and seeded
