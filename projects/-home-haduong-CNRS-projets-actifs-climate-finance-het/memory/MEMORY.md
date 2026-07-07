@@ -3,9 +3,9 @@
 ## Key insights
 - The repo is a **4-paper research programme** (`climate-finance-het`); the Œconomia R&R is the active deadline track, run as a version ladder (v2.0.3 → v2.0.5) gated by tracker tickets. Submission records live outside the repo under `papiers/<state>/<track>/`.
 - **Methodological honesty is a hard norm**: computation *corroborates* history (don't oversell breaks / claim "Paris didn't matter"); cite only pipeline numbers traceable to an archived output.
-- **Heavy worktree + parallel-session discipline**: shared uv env on /data, data on-demand, never rebase with dirty DVC symlinks, branch-before-edit, check the filesystem before asserting work undone.
+- **Heavy worktree + parallel-session discipline**: shared uv env on /data, data on-demand, never rebase with dirty DVC symlinks, branch-before-edit, check the filesystem before asserting work undone. Edit/Write's isolation guard is path-based, not session-based — a sibling worktree of the *same* repo is blocked (fall back to Bash), a different repo's worktree isn't. Ticket-ID collisions across parallel branches are routine (git-erg#282) — renumber to the next free ID and fix cross-references, don't treat it as an error.
 - The author optimizes for **diamond-OA integrity over prestige** (no APC, CNRS Section 41), an HET academic register (not motivational), and weekends off.
-- **Two-machine flow** (doudou ↔ padme): data flows padme→doudou only; uv isn't in non-interactive PATH; phase separation (a manuscript build never triggers Phase 1).
+- **Two-machine flow** (doudou ↔ padme): data flows padme→doudou only; uv isn't in non-interactive PATH; phase separation (a manuscript build never triggers Phase 1). CPU-only hosts (doudou): `model.half()` (fp16) is GPU-only in practice — far slower than fp32 on CPU, not just "less optimal".
 
 ## ⚠️ Read first — project relocated/renamed 2026-06-19
 - [Reorg 0159 relocation](project_reorg_0159_relocation.md) — engine now `~/CNRS/projets/actifs/climate-finance-het/` (GitHub `climate-finance-het`); records in `papiers/<state>/<track>/`; older memories referencing the old path/name are stale. Follow-up: ticket 0160.
@@ -52,10 +52,10 @@
 - Non-interactive SSH doesn't source `/etc/profile.d/` — use `/etc/environment` for env vars that must always apply
 
 ## DOIfetch sync procedure
-- See [project_doifetch_sync.md](project_doifetch_sync.md) for full details
+- [DOIfetch sync procedure](project_doifetch_sync.md) — external tool at `~/CNRS/code/DOIfetch/` (never checked in); syncs PDFs and missing references
 
 ## DVC integration
-- See [project_dvc_integration.md](project_dvc_integration.md) for full details
+- [DVC integration (complete)](project_dvc_integration.md) — Phase 1 data versioning, pipeline DAG, machine sync, reproducibility archives set up 2026-03-15 (#101–#116)
 
 ## OpenRouter / LLM
 - API key in `~/.bashrc` (OPENROUTER_API_KEY)
@@ -73,13 +73,14 @@
 ## Toolchain
 - [project_uv_path_fix.md](project_uv_path_fix.md) — `$(UV_RUN)` + PATH export in Makefile (#719); follow-on 0088 for release templates
 - [project_worktree_env_data.md](project_worktree_env_data.md) — worktrees: shared uv env on /data (#797), data on-demand via `make data` (#801), absolute core.hooksPath gotcha; tickets 0145/0157
+- [project_writing_build_phase_separation.md](project_writing_build_phase_separation.md) — manuscript PDF builds clean-room from git-tracked handoff artifacts via manuscript.mk + Quarto profile (#833, 0131); other papers pending in 0163
 
 ## Technical report
 - [project_techrep_rewrite.md](project_techrep_rewrite.md) — structural rewrite plan: reproducibility note framing, two-part structure, variable geometry
 - [project_techrep_split.md](project_techrep_split.md) — split into corpus-report.qmd + analysis-only technical-report.qmd (2026-04-14)
 
 ## Break detection
-- [feedback_oversell_breaks.md](feedback_oversell_breaks.md) — mid-2010s JS divergence is real; don't claim "Paris didn't matter"; computation corroborates history
+- [feedback_oversell_breaks.md](feedback_oversell_breaks.md) — mid-2010s JS divergence is real; don't claim "Paris didn't matter"; computation corroborates history, not the reverse
 
 ## Imperial Dragon harness
 - [project_imperial_dragon.md](project_imperial_dragon.md) — Dragon Dreaming → Imperial Dragon (5 claws); generic harness at ~/.claude/ backed by ImperialDragonHarness repo; PR #628
@@ -115,6 +116,8 @@
 ## Feedback
 - [feedback_erg_close_archive.md](feedback_erg_close_archive.md) — PROVISIONAL (pending erg close step-4 auto-archive): `erg close` and `erg archive` are separate; run both when closing pre-PR or /gaze flags the unarchived ticket (burned a round on 0149)
 - [feedback_enterworktree_stuck_cwd.md](feedback_enterworktree_stuck_cwd.md) — EnterWorktree/cwd-skills target the wrong repo when session base cwd is parked off-project; fall back to manual `git worktree add` + `git -C`
+- [feedback_worktree_isolation_is_path_based.md](feedback_worktree_isolation_is_path_based.md) — Edit/Write's isolation guard checks the target path, not session state: a sibling worktree of the *same* repo is blocked (use Bash instead), a different repo's manually-created worktree is not
+- [feedback_stale_worktree_make.md](feedback_stale_worktree_make.md) — session stays bound to a stale pre-merge worktree; `make` runs old Makefile — run builds from the main checkout (`make -C <primary>`), verify merged targets there
 - [feedback_het_register.md](feedback_het_register.md) — manuscript prose = HET academic register, not American motivational/business-book cadence (no "cash out", "this is what X is", punchy beats)
 - [feedback_yaml_quoting.md](feedback_yaml_quoting.md) — use `'"phrase"'` not `"phrase"` in corpus_collect.yaml for phrase search queries
 - [feedback_no_long_running.md](feedback_no_long_running.md) — don't launch long-running tasks (make, rendering); let user run in their terminal
@@ -136,6 +139,7 @@
 - [feedback_make_corpus.md](feedback_make_corpus.md) — never suggest bare `dvc repro`; always use `make corpus` (padme) or `make corpus-sync` (doudou)
 - [feedback_no_rebase_dvc.md](feedback_no_rebase_dvc.md) — never rebase when DVC symlinks are dirty; use merge + stash/pop
 - [feedback_simplest_fix.md](feedback_simplest_fix.md) — don't add hooks/exceptions; restructure the operation to work within existing rules (e.g. ff merge vs --no-ff)
+- [feedback_decide_dont_micromanage.md](feedback_decide_dont_micromanage.md) — sweep the whole logical unit, use the compile-time mechanism, apply one coherent convention, state the judgment calls — don't hardcode/half-do/ask piecemeal
 - [feedback_ssh_padme.md](feedback_ssh_padme.md) — can SSH from doudou to padme; don't say "I can't reach padme"
 - [feedback_ssh_padme_path.md](feedback_ssh_padme_path.md) — always prepend PATH=$HOME/.local/bin for padme SSH (uv not in non-interactive PATH)
 - [feedback_weekend_boundary.md](feedback_weekend_boundary.md) — no project work on weekends; mental health is non-negotiable
@@ -143,9 +147,10 @@
 - [feedback_dropna_before_merge.md](feedback_dropna_before_merge.md) — always dropna before merge/set_index on DOI; pandas NaN==NaN causes cartesian explosion
 - [feedback_grep_before_commit.md](feedback_grep_before_commit.md) — grep whole project before committing pattern fixes; don't rely on reading individual files
 - [feedback_inspect_ref_readonly.md](feedback_inspect_ref_readonly.md) — inspect another ref with git grep/show, never git checkout (detaches HEAD, clobbers a parallel session's branch)
-- [feedback_oversell_breaks.md](feedback_oversell_breaks.md) — mid-2010s JS divergence is real; computation corroborates history, not the reverse
 - [feedback_tectonic_next.md](feedback_tectonic_next.md) — next project: Tectonic + plain LaTeX, not Quarto (incremental builds)
 - [feedback_verify_deferral_tracker.md](feedback_verify_deferral_tracker.md) — verify deferral tracker still open + in-scope before closing; rehome if orphaned
 - [feedback_no_tool_for_single_use.md](feedback_no_tool_for_single_use.md) — single-use op → run the command, don't build a tested reusable tool (scrapped #804)
 - [feedback_file_decisions_with_submission.md](feedback_file_decisions_with_submission.md) — file journal decisions/referee reports as tracked text beside their submission folder; verify extraction before deleting source
 - [feedback_manuscript_number_provenance.md](feedback_manuscript_number_provenance.md) — cite only pipeline numbers that trace to an archived output; v1-pinned manuscript can silently drift from live-pipeline stats (the 0.68 case)
+- [feedback_visual_verify_citations.md](feedback_visual_verify_citations.md) — render the PDF and eyeball it; visual verification catches citation/bib errors (wrong paper, wrong author, umlaut) that grep and CI miss
+- [feedback_pr_creates_ticket_no_close.md](feedback_pr_creates_ticket_no_close.md) — a PR that files a new follow-up ticket uses Ticket-ref + Ticket none, never **Ticket:** (closes it on merge)
