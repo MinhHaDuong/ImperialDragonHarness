@@ -2,10 +2,12 @@
 Title: roar: degrade gracefully in no-forge repos
 Created: 2026-06-17
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #435
 
 --- log ---
 2026-06-17T11:14Z Minh Ha-Duong created
 
+2026-07-07T06:15Z Minh Ha-Duong closed — autoclosed — PR #435
 --- body ---
 ## Context
 `/roar`'s Pre-check and several later steps probe `origin/main`

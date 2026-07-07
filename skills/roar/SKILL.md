@@ -36,6 +36,17 @@ A `-` prefix on every listed commit means the patches are already upstream —
 treat that as merged and proceed. Only if commits show `+` (genuinely absent
 from origin/main) stop and tell the user. Do not continue with roar in that case.
 
+No-forge repo (`git remote get-url origin` fails — no `origin`, e.g. a
+direct-to-master checkout with only ssh peers): there is no forge gate.
+"Merged" means committed to the local default branch — verify with
+`git merge-base --is-ancestor HEAD <master|main>` — and every `origin/main`
+probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
+missing prerequisite yields an explicit skip with a one-line reason, never a
+fail. Concretely: step 9's ancestry checks compare against the local default
+branch; skip step 10 (upstream-gone status cannot register without a remote);
+step 11 reduces to checking that local branches are merged into the default
+branch — there are no remote branches nor merge requests to inspect.
+
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
@@ -82,6 +93,8 @@ from origin/main) stop and tell the user. Do not continue with roar in that case
        deleted anyway: find the commit in `git reflog` (or the deletion
        message prints its sha) and re-create the branch with
        `git switch -c <branch> <sha>`.
+    No-forge repo: every ancestry probe in this step compares against the
+    local default branch instead of `origin/main`.
     Skip if not in a worktree.
 10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
@@ -89,9 +102,13 @@ from origin/main) stop and tell the user. Do not continue with roar in that case
     ~/.claude/scripts/worktree-gc.sh
     ```
     Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to clean. See tickets 0169, 0195.
+    Skip in a no-forge repo: without a remote, `[gone]` can never register —
+    say so in one line.
 11. **Verify hygiene**:
     - `git branch -a` → no stale remote branches
     - Check for stale merge requests
+    - No-forge repo: only check that local branches are merged into the
+      default branch; there are no remote branches nor merge requests.
 12. **Offer** to improve workflow rules if lessons were learned.
 
 Note: STATE.md is updated on main during `/lair`, not here.
