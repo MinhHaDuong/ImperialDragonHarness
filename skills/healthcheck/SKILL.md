@@ -22,7 +22,7 @@ First, run the mechanical probe to collect structured state:
 python3 ~/.claude/scripts/project-state.py "$(git rev-parse --show-toplevel)" --tests
 ```
 
-Parse the JSON output. Use its fields to populate checks 1–10 below without re-running git commands — the probe covers everything through check 9; only check 10 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
+Parse the JSON output. Use its fields to populate checks 1–11 below without re-running git commands — the probe covers everything through check 10; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
 
 ## Checks
 
@@ -53,7 +53,8 @@ Parse the JSON output. Use its fields to populate checks 1–10 below without re
 7. **Tests green** — from `tests.status` / `tests.detail`. Skip if `tests.runner == "none"`.
 8. **Housekeeping** — from `housekeeping.state` / `housekeeping.age_hours` / `housekeeping.branch`. Report `ok` if `state == "clean"` (age ≤ 12 h), `warn` if `state == "needed"` (overdue) or `state == "tidying"` (a `claude/housekeeping-*` branch is in flight). Skip if probe missing.
 9. **Ticket archival** — from `tickets.closed_unarchived` (list of ticket IDs sitting in `tickets/*.erg` with a `Closed:` header, never moved to `tickets/closed/`). `ok` if empty; `warn` listing the IDs otherwise. This is the close-without-archive escape: a PR merged outside `erg-pr-merge` skips the `erg archive` step. Classify the fix as **fix-now** — `tickets/erg archive` (moves all closed tickets to `tickets/closed/`; commit the move). Skip if `tickets.error` is set or no `tickets/` directory.
-10. **Docs freshness (deep verification)** — cross-check status/directive docs (`STATE.md`, `README.md`, etc.):
+10. **Hook freshness** — from `hooks`. Skip (silent) if `hooks.hooks_path` is null or `hooks.in_worktree` is false — no working-tree `core.hooksPath`, so the stale-hook-in-worktree trap does not exist. `skip` with the reason if `hooks.error` is set (no remote, detached HEAD). `warn` if `hooks.stale_files` is non-empty, naming the files: "working-tree hooks differ from origin/<default> — worktrees will run the main checkout's stale hooks until it is updated". `ok` if in-worktree hooks match the default branch. Advisory only, never a hard gate.
+11. **Docs freshness (deep verification)** — cross-check status/directive docs (`STATE.md`, `README.md`, etc.):
    - **Staleness** — flag docs whose content predates recent repo activity
    - **Ticket cross-check** — references to tickets whose status contradicts
      the doc (todo but closed, done but open, broken ref). Skip if no `.erg` tickets.
@@ -79,6 +80,7 @@ Parse the JSON output. Use its fields to populate checks 1–10 below without re
 | Tests green      | ...    | N passed / K failed          |
 | Housekeeping     | ...    | clean / needed / tidying     |
 | Ticket archival  | ...    | N closed-but-unarchived      |
+| Hook freshness   | ...    | in sync / N stale / skip     |
 | Docs freshness   | ...    | N docs scanned, K stale refs |
 ```
 
