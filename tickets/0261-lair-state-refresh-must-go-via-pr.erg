@@ -2,10 +2,12 @@
 Title: Lair step 10 must land STATE.md via a PR, not a local ff-merge + push to main
 Created: 2026-06-18
 Author: minh
+Closed: lair step 10 rewritten to land STATE.md via branch + PR through the normal gate; adherence test tests/test_lair_state_via_pr.py green
 
 --- log ---
 2026-06-18T10:00Z minh created
 
+2026-07-07T11:19Z Claude closed — lair step 10 rewritten to land STATE.md via branch + PR through the normal gate; adherence test tests/test_lair_state_via_pr.py green
 --- body ---
 ## Context
 The `lair` skill step 10 says: refresh STATE.md on a throwaway branch, then
