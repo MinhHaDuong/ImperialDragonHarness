@@ -2,10 +2,12 @@
 Title: healthcheck: flag when working-tree hooks differ from origin/main (stale-hook-in-worktree trap)
 Created: 2026-06-18
 Author: HDMX-coding-agent
+Closed: hooks_state collector in scripts/project-state.py (silent when hooksPath unset or under .git/, advisory drift report vs origin/<default>) + Hook freshness check 10 in skills/healthcheck/SKILL.md; unit tests + synthetic-repo end-to-end verified
 
 --- log ---
 2026-06-18T00:00Z HDMX-coding-agent created
 
+2026-07-07T11:53Z Claude closed — hooks_state collector in scripts/project-state.py (silent when hooksPath unset or under .git/, advisory drift report vs origin/<default>) + Hook freshness check 10 in skills/healthcheck/SKILL.md; unit tests + synthetic-repo end-to-end verified
 --- body ---
 ## Context
 When a repo sets `core.hooksPath` to a directory inside the working tree (e.g.

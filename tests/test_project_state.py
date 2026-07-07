@@ -196,3 +196,81 @@ def test_ticket_state_ready_ids_populated(tmp_path, monkeypatch):
     out = ps.ticket_state(tmp_path)
     assert out["ready"] == 2, "ready_ids should include all erg-ready tickets"
     assert out["ready_ids"] == ["0042", "0043"]
+
+
+# ── hooks_state (ticket 0260: stale-hook-in-worktree trap) ───────────────────
+
+
+def _hooks_responder(config_out, config_rc=0, toplevel="/proj",
+                     common_dir="/proj/.git", diff_out="", diff_rc=0):
+    def responder(args):
+        if args[:3] == ["git", "config", "core.hooksPath"]:
+            return _cp(config_out, config_rc)
+        if "--show-toplevel" in args:
+            return _cp(toplevel + "\n")
+        if "--git-common-dir" in args:
+            return _cp(common_dir + "\n")
+        if args[:2] == ["git", "diff"]:
+            return _cp(diff_out, diff_rc)
+        return _cp("", 1)
+
+    return responder
+
+
+def test_hooks_state_silent_when_hookspath_unset(monkeypatch):
+    _patch_run(monkeypatch, _hooks_responder("", config_rc=1))
+    out = ps.hooks_state(Path("/proj"))
+    assert out["in_worktree"] is False
+    assert out["stale_files"] == []
+
+
+def test_hooks_state_silent_when_hookspath_under_git_dir(monkeypatch):
+    _patch_run(monkeypatch, _hooks_responder(".git/hooks\n"))
+    out = ps.hooks_state(Path("/proj"))
+    assert out["in_worktree"] is False
+    assert out["stale_files"] == []
+
+
+def test_hooks_state_reports_drift(monkeypatch):
+    _patch_run(
+        monkeypatch,
+        _hooks_responder("hooks\n", diff_out="hooks/pre-commit\nhooks/pre-push\n"),
+    )
+    monkeypatch.setattr(ps, "_default_branch", lambda _p: "main")
+    out = ps.hooks_state(Path("/proj"))
+    assert out["in_worktree"] is True
+    assert out["stale_files"] == ["hooks/pre-commit", "hooks/pre-push"]
+
+
+def test_hooks_state_silent_when_hooks_match_default_branch(monkeypatch):
+    _patch_run(monkeypatch, _hooks_responder("hooks\n", diff_out=""))
+    monkeypatch.setattr(ps, "_default_branch", lambda _p: "main")
+    out = ps.hooks_state(Path("/proj"))
+    assert out["in_worktree"] is True
+    assert out["stale_files"] == []
+    assert "error" not in out
+
+
+def test_hooks_state_degrades_without_remote(monkeypatch):
+    _patch_run(
+        monkeypatch,
+        _hooks_responder(
+            "hooks\n",
+            diff_out="",
+            diff_rc=128,
+        ),
+    )
+    monkeypatch.setattr(ps, "_default_branch", lambda _p: "main")
+    out = ps.hooks_state(Path("/proj"))
+    assert out["in_worktree"] is True
+    assert out["stale_files"] == []
+    assert "error" in out
+
+
+def test_hooks_state_wired_into_collectors():
+    import inspect
+
+    source = inspect.getsource(ps.main)
+    assert '"hooks": hooks_state' in source, (
+        "hooks_state must be a collector so the healthcheck skill sees it"
+    )

@@ -291,6 +291,58 @@ def test_state(project):
     return {"runner": "none", "status": "skip", "detail": "no test runner detected"}
 
 
+def hooks_state(project):
+    """Stale-hook-in-worktree trap (ticket 0260). A ``core.hooksPath`` inside
+    the working tree resolves to an absolute path under the MAIN checkout, so
+    every worktree runs the main checkout's hooks — a merged hook fix takes
+    effect only once the main checkout's working tree carries it. Report drift
+    between the working-tree hooks and the tracked default branch. Advisory
+    only; silent when hooksPath is unset or lives under the git dir."""
+    silent = {"hooks_path": None, "in_worktree": False, "stale_files": []}
+    r = run(["git", "config", "core.hooksPath"], project)
+    hooks_path = r.stdout.strip() if r.returncode == 0 else ""
+    if not hooks_path:
+        return silent
+
+    top_r = run(["git", "rev-parse", "--show-toplevel"], project)
+    if top_r.returncode != 0:
+        return silent
+    top = Path(top_r.stdout.strip())
+    git_r = run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], project
+    )
+    git_dir = Path(git_r.stdout.strip()) if git_r.returncode == 0 else top / ".git"
+    abs_hooks = Path(hooks_path)
+    if not abs_hooks.is_absolute():
+        abs_hooks = top / hooks_path
+
+    def _under(child, parent):
+        try:
+            child.relative_to(parent)
+            return True
+        except ValueError:
+            return False
+
+    if _under(abs_hooks, git_dir) or not _under(abs_hooks, top):
+        return {**silent, "hooks_path": hooks_path}
+
+    rel = abs_hooks.relative_to(top).as_posix()
+    default = _default_branch(project)
+    diff = run(["git", "diff", "--name-only", f"origin/{default}", "--", rel], project)
+    if diff.returncode != 0:
+        return {
+            "hooks_path": rel,
+            "in_worktree": True,
+            "stale_files": [],
+            "error": f"cannot diff against origin/{default}: {diff.stderr.strip()[:80]}",
+        }
+    return {
+        "hooks_path": rel,
+        "in_worktree": True,
+        "stale_files": [ln.strip() for ln in diff.stdout.splitlines() if ln.strip()],
+    }
+
+
 def pr_state(project):
     r = run(
         ["gh", "pr", "list", "--json", "number,title,headRefName", "--limit", "50"],
@@ -335,6 +387,7 @@ def main():
         "tickets": ticket_state,
         "branches": branch_state,
         "worktrees": worktree_state,
+        "hooks": hooks_state,
         "prs": pr_state,
     }
 
