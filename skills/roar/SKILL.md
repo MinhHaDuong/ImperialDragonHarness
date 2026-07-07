@@ -11,6 +11,15 @@ user-invocable: true
 
 Run after the branch has been merged. Do not skip steps.
 
+## Non-git projects
+
+When the working directory is not a git repository (manuscripts, data
+folders): skip the pre-check and steps 7-11; run steps 1-6 and 12.
+Telemetry: use `"branch":"none-non-git-project"`. The step-3 sweep
+records findings in the project's notes instead of erg tickets. State
+explicitly which steps were skipped and why.
+(Precedent: Œconomia manuscript wrap-up, 2026-07-07.)
+
 ## Pre-check
 
 Verify the branch has been merged before proceeding:
