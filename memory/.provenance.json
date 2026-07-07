@@ -1761,6 +1761,46 @@
       "first_seen": "2026-07-07T15:22:20Z",
       "last_confirmed": "2026-07-07T15:22:20Z",
       "promoted": false
+    },
+    "feedback_raid_for_proofs": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-07T18:55:32Z",
+      "last_confirmed": "2026-07-07T18:55:32Z",
+      "promoted": false
+    },
+    "feedback_verify_uncommitted_files_before_acting": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-07T18:55:32Z",
+      "last_confirmed": "2026-07-07T18:55:32Z",
+      "promoted": false
+    },
+    "feedback_erg_validate_closed_ticket_blocked_by": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-07T18:55:32Z",
+      "last_confirmed": "2026-07-07T18:55:32Z",
+      "promoted": false
+    },
+    "frais-reels-2026": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-07T18:55:32Z",
+      "last_confirmed": "2026-07-07T18:55:32Z",
+      "promoted": false
+    },
+    "hal-sword-deposit": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-07T18:55:32Z",
+      "last_confirmed": "2026-07-07T18:55:32Z",
+      "promoted": false
     }
   }
 }
