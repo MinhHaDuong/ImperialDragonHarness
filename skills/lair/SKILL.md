@@ -27,9 +27,10 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
 9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
-10. **Refresh STATE.md** on a throwaway branch:
+10. **Refresh STATE.md** on a throwaway branch, landed through the normal PR gate (main is branch-protected — there is no direct-push-to-main path, and STATE.md is not special-cased; rules/git.md):
     a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
     b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
     c. Prune: delete items checked off before this session.
-    d. Commit, merge to main via fast-forward, delete branch.
+    d. Commit, `git push -u origin housekeeping-state-YYYY-MM-DD`, open a PR (`Ticket: none`) and enable auto-merge so it lands through the gate.
+    e. After the PR merges, delete the throwaway branch (local and remote).
 11. **Memory consolidation** — run `/dream <project>` where `<project>` is the current project directory name. This delegates to the autonomous consolidation skill (includes staleness check, dedup, and Park reflection).
