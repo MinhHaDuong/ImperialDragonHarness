@@ -40,6 +40,17 @@ def test_ruff():
     assert result.returncode == 0, result.stdout.decode()
 ```
 
+A project that maintains a bibliography (manuscript, report, docs) should also
+have a **cited-works-availability** adherence test: assert every work cited in
+the prose resolves to a locally-stored fulltext (a `file=`/attachment whose PDF
+sits in the reference folder) or an explicit allowlist of the genuinely
+unattainable. This turns the scholarly-integrity norm "cite only what you keep
+locally" (`prose/_all.md`) into a mechanical gate. Keep the allowlist
+source-agnostic about *how* works are acquired — that is the author's call — and
+add a redundant-entry check so a work is removed from the list once its fulltext
+lands. Reference implementation: `tests/test_cited_works_available.py` +
+`config/no-fulltext-allowlist.txt` in climate-finance-het (ticket 0189).
+
 Classify each test by **cost**, not by the mechanism it happens to use:
 
 | Tier | Marker | Belongs here | Gate |
