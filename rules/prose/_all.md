@@ -28,6 +28,10 @@ These are the tics that mark text as machine-written. Cut them.
 - **One paragraph, one idea.** If a paragraph turns, it is two paragraphs.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 
+## Scholarly integrity
+
+- **Cite only what you have read — therefore keep it available.** Every work cited must have its full text stored locally in the project's reference folder (e.g. `docs/articles/`, gitignored); you cannot cite what you have not read. Verify each new bib entry's metadata against the source itself (copyright page / EPUB OPF), never fabricate. The local library is the working set; it moves to the reference manager (Zotero) at publication.
+
 ## Scope note
 
 This is a seed. Grow it deliberately — add a guard only when you have seen the
