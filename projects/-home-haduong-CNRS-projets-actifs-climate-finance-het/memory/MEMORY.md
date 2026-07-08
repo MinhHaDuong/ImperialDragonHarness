@@ -149,3 +149,5 @@
 - [feedback_no_tool_for_single_use.md](feedback_no_tool_for_single_use.md) — single-use op → run the command, don't build a tested reusable tool (scrapped #804)
 - [feedback_file_decisions_with_submission.md](feedback_file_decisions_with_submission.md) — file journal decisions/referee reports as tracked text beside their submission folder; verify extraction before deleting source
 - [feedback_manuscript_number_provenance.md](feedback_manuscript_number_provenance.md) — cite only pipeline numbers that trace to an archived output; v1-pinned manuscript can silently drift from live-pipeline stats (the 0.68 case)
+- [feedback_read_before_cite.md](feedback_read_before_cite.md) — a reference enters the manuscript only after it is read and its core-relevance argued; no referee-checkbox padding (Mitchell/Deaton/Escobar case)
+- [feedback_fetch_before_sibling_merge.md](feedback_fetch_before_sibling_merge.md) — multi-PR wave on one file: fetch before each sibling merge + grep-verify the union (stale origin/main silently drops siblings' additions)
