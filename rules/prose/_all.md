@@ -22,6 +22,8 @@ These are the tics that mark text as machine-written. Cut them.
 - **No importance inflation**: "crucial", "critical", "key", "vital", "essential" — reserve for claims that would change a decision.
 - **No panorama adjectives**: "comprehensive", "holistic", "multifaceted", "nuanced" — name what is covered instead.
 - **No filler verbs of inquiry**: "unpack", "explore", "dive deeper into" — state the finding, not the gesture of looking.
+- **No authorial winks**: "fittingly", "ironically", "amusingly", litotes like "should not surprise" — state the coincidence or the reflexive fact flat and let the reader feel it (HET manuscript de-winking, 2026-07-08).
+- **No structure words borrowed from music or drama unless exact**: "coda", "overture", "interlude", "finale" — a coda ends the piece; a mid-paper section is not one. Name sections by function (2026-07-08).
 - **No "significant" without a test**: in scientific prose the word claims statistics; write "large" or give the number otherwise.
 - **No weak copulas where a verb exists**: "serves as", "acts as", "plays a role in" — "X regulates Y", not "X plays a role in regulating Y".
 - **No bold-lead bullet cascades in running prose**: if every paragraph is a bullet with a bolded lead, it is a list, not an argument — write the paragraph.
