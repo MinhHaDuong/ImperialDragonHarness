@@ -37,6 +37,27 @@ Merge is always the human's or the raid's call.
   invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
 
+## Fork execution contract
+
+`/gaze` runs as a `context: fork` (see frontmatter). A fork's turn ends the
+instant it stops calling tools. Every agent this skill spawns — the phase 2–4
+reviewers, the phase 6 gate, the REROLL fix agent — must therefore be launched
+**foreground** (`run_in_background: false`), so the fork blocks on the result
+and continues to the next phase when the agent returns. Launching them
+`run_in_background: true` and then "waiting" does not wait: the fork stops
+calling tools, its turn ends, and the background completions re-invoke the
+**MAIN loop**, not the fork. The fork's last message is then a fan-out
+narration ("reviewers are running in parallel…") instead of a verdict, and
+phases 5–6 never run. This orphaned two real gate runs (aedist `/gaze 977`
+and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a duplicate
+reviewer battery.
+
+**Caller-side recovery.** If `/gaze <pr>` ever returns a bare fan-out
+narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
+treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
+the background reviewer notifications, then run `/verify-gate <pr>
+worktree=/tmp/review-<pr>` directly to produce the verdict from their outputs.
+
 ## Phases
 
 ### 1. Setup
@@ -80,9 +101,12 @@ invocations** (ticket 0216). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
-deterministically: each reviewer is a **read-only** background Agent whose
+deterministically: each reviewer is a **read-only, foreground** Agent whose
 cwd is **pinned to the existing review worktree** `/tmp/review-<pr-number>`
-(created in phase 1). Do **not** give these agents `isolation: "worktree"` —
+(created in phase 1). Foreground (`run_in_background: false`) is
+load-bearing, not incidental — see **Fork execution contract** below: this
+skill runs as a `context: fork`, and a fork cannot wait on background
+agents. Do **not** give these agents `isolation: "worktree"` —
 that cuts a *fresh* tree from the session repo on main/HEAD, which is exactly
 the wrong-branch failure this conversion eliminates; only the REROLL fix
 agent (a mutator) gets `isolation: "worktree"`.
@@ -98,9 +122,15 @@ Every reviewer agent's prompt:
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
-Spawn the applicable agents **in a single message, as parallel background
-agents** (so the fan-out runs concurrently), then wait for all to return and
-collect their structured outputs. Pin every read-only reviewer to
+Spawn the applicable agents **in a single message, as parallel foreground
+Agent calls** (`run_in_background: false`) — the single message runs them
+concurrently, and foreground makes the fork block until every one returns
+before it proceeds. Do **not** launch them as background agents: a fork's
+turn ends the moment it stops calling tools, and a background completion
+re-invokes the MAIN loop, not the fork, so a background fan-out returns at
+launch and orphans its reviewers (ticket 0250; see **Fork execution
+contract**). Once all return, collect their structured outputs. Pin every
+read-only reviewer to
 **`model: sonnet`** — reviewers stay below the coder tier (rules/workflow.md
 § "Sonnet reviews Opus's work"), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
@@ -168,8 +198,9 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 ### 6. Gate (the non-rubber-stamp step)
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
-(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only** background
-Agent, **`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
+(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only, foreground**
+Agent (`run_in_background: false`, so the fork blocks on the verdict),
+**`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
 `/tmp/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`); never
 `isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
@@ -216,7 +247,8 @@ round: 1 | 2
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
   `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
   reviewer's sonnet; effort is not an Agent launch param, so it tracks the
-  session effort), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
+  session effort), launched **foreground** (`run_in_background: false`, so the
+  fork blocks until it pushes — see **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `/tmp/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
