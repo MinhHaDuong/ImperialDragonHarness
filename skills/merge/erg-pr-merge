@@ -73,7 +73,7 @@ fi
 IS_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
 if [[ "$IS_DRAFT" == "true" ]]; then
     echo "PR #${PR} is a draft — marking ready for review before merge..."
-    gh pr ready "$PR" || die "could not mark PR #${PR} ready — run 'gh pr ready ${PR}' and retry"
+    gh pr ready "$PR" || die "could not mark PR #${PR} ready — run 'gh pr ready ${PR}' and retry"  # harness-extension-point
 fi
 
 # ── Step 1: find ticket ID ────────────────────────────────────────────────────
