@@ -79,6 +79,34 @@ def test_skill_md_instructs_preserve_evolution():
     assert "evolution" in content.lower() or "preserve" in content.lower()
 
 
+def test_skill_md_has_push_or_restore_contract():
+    """Ticket 0247: dream's exit is unconditional — after every commit, push +
+    open the PR, then switch the primary back to main whether the push succeeded
+    or failed, and only then confirm with the probe. The probe must run AFTER the
+    restore, else it trips on the very off-main state the run just left (the gaze
+    review blocker on the first cut). String-match the contract and its ordering
+    so the SKILL.md instruction cannot silently regress."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "push-or-restore" in content, "missing the push-or-restore contract marker"
+    # The self-contradicting first cut ("leave the checkout on the branch is
+    # fine" followed by an unconditional probe) must stay removed.
+    assert "leave the checkout on the branch is fine" not in content
+    restore = content.find("switch main")
+    probe = content.find("check-primary-checkout.sh ~/.claude")
+    assert restore != -1, "exit does not restore the primary to main"
+    assert probe != -1, "exit does not confirm with the checkout probe"
+    assert restore < probe, "exit must switch back to main BEFORE running the probe"
+
+
+def test_supervisor_probes_primary_checkout():
+    """Ticket 0247: nightbeat-supervisor must probe the primary checkout each
+    cycle so a stranded checkout is detected within one cycle."""
+    content = (
+        DREAM_DIR.parent / "nightbeat-supervisor" / "SKILL.md"
+    ).read_text()
+    assert "check-primary-checkout" in content, "supervisor does not run the checkout probe"
+
+
 def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
 

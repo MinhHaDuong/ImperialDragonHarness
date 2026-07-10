@@ -137,9 +137,20 @@ git -C ~/.claude rev-parse --abbrev-ref HEAD   # must NOT print "main"
 python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
 ```
 
-Then push the branch and open a PR for the consolidation (do not merge to main
-directly). The override `ALLOW_MAIN_COMMIT=1` exists for deliberate cases only —
-do not use it to bypass the branch-and-PR flow during a routine dream.
+Do **not** push yet. The run continues into the promotion pass, where step 12
+adds a *second* commit on this same branch. The single push + PR + return-to-main
+happens once at the end (**step 14, Exit**), so the PR carries every commit and
+no earlier step leaves an uncovered exit window. The override `ALLOW_MAIN_COMMIT=1`
+exists for deliberate cases only — do not use it to bypass the branch-and-PR flow
+during a routine dream.
+
+**Why not run dream in a worktree?** Evaluated (0247) and rejected: `commit.py`
+and the promotion pass hardcode `~/.claude` (`git -C ~/.claude add/commit`, and
+promotions write to `~/.claude/memory/`), so a worktree run would still commit
+onto the *primary* checkout's current branch — worktree isolation would not
+apply. The push-or-restore contract (step 14) plus the nightbeat-supervisor probe address
+the stranding without that refactor. Revisit if `commit.py` is parameterized by
+repo dir.
 
 ### Promotion pass
 
@@ -186,8 +197,12 @@ If `--dry-run`: print candidates, gate evaluations, and proposed promotions with
 
 **12. Commit promotions.**
 
-As in step 8, ensure `~/.claude` is on a branch (not main) before committing —
-the primary-checkout pre-commit hook refuses main commits.
+The run is still on the `dream-consolidate-<date>` branch created in step 8 —
+the checkout is not restored until step 14 — so commit directly. Do **not**
+re-create the branch (a second `git switch -c dream-consolidate-$(date +%F)`
+would collide with step 8's same-day name); if you somehow find yourself on main
+here, the correct recovery is `git switch` back to the existing branch, not a
+new one.
 
 ```bash
 python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
@@ -212,6 +227,35 @@ Output is JSON: promoted entries whose `last_confirmed` date is >90 days ago. Fo
 These entries need human review: confirm (update `last_confirmed`), demote back to project level, or delete.
 
 If `--dry-run`: print the decay report without taking any action.
+
+### Exit — push-or-restore (unconditional)
+
+**14. Push, open the PR, and return the primary to main.**
+
+This is the run's only push and its only checkout restore, placed after every
+commit (steps 8 and 12) so the PR carries the whole consolidation and no earlier
+step leaves an uncovered exit window. Branching in step 8 moved the primary off
+main; a run that died anywhere before here would strand it (ticket 0247: the
+daily-pull timer cannot update the checkout and beat's dirty-tree pre-flight
+blocks every cycle for days, while orphaned memory entries accumulate invisibly
+under the gitignore whitelist). So the exit switches the primary **back to main
+whether the push succeeds or fails** — every commit lives on the branch, so the
+only damage a mid-run death does is the checkout *position*, which this restores.
+
+```bash
+branch="$(git -C ~/.claude branch --show-current)"
+if git -C ~/.claude push -u origin "$branch"; then
+  : # open the PR (forge command) — it carries the step-8 + step-12 commits
+fi
+# Always switch back to main — success or failure. The branch keeps every commit;
+# the PR (once the push lands) carries the consolidation for review.
+git -C ~/.claude switch main
+# Confirm the checkout is not stranded before exiting (must be silent, exit 0):
+~/.claude/scripts/check-primary-checkout.sh ~/.claude
+```
+
+If `--dry-run`: skip this step — no branch or commit was made, so the primary was
+never moved off main.
 
 ## Schedule recipe
 
