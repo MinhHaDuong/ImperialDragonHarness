@@ -2,10 +2,12 @@
 Title: agnostic-guard misses harness-extension-point marker on multi-line command continuation
 Created: 2026-07-10
 Author: minh
+Closed: fixed
 
 --- log ---
 2026-07-10T16:13Z minh created
 
+2026-07-10T16:24Z Minh Ha-Duong closed — fixed
 --- body ---
 ## Context
 
