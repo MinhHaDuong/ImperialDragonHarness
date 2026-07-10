@@ -19,7 +19,9 @@ The DOIfetch tool lives **outside the repo** at `/home/haduong/CNRS/code/DOIfetc
 
 2. **Regenerate missing references list:**
    ```bash
-   uv run python scripts/gen_missing_references.py
+   uv run python scripts/qa_missing_references.py --output docs/missing_references.txt
+   # (renamed from gen_missing_references.py in the prefix sweep #547;
+   #  needs bibtexparser -- run from the main checkout, worktree venvs may lack it)
    # Writes docs/missing_references.txt
    ```
 
