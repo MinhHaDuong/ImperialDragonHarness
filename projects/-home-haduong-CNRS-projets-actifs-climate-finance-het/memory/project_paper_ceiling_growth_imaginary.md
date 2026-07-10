@@ -1,0 +1,36 @@
+---
+name: project_paper_ceiling_growth_imaginary
+description: Next-paper intention — an integrated-modeling paper building the joint-production (von Neumann–Sraffa) IAM whose absence the sent Matarasso–Ha-Duong paper historicizes; plus Edmond/MeSSH 2026 infrastructure scaffold
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 50d861f5-f8cb-4196-9620-4353eb8cad2c
+---
+
+Sparked by Jennifer Edmond's keynote at **MeSSH 2026** (Campus Condorcet, 9–10 July 2026), "The changing faces of infrastructure: towards a new ethic of invisibility for the age of AI". Decision 2026-07-09: **(c) log the link only** — no ticket, no plan yet. Author's stated next intention: attempt **an integrated-modeling paper** (not just history). Same method family as the climate-finance thesis (quantification constructs governable objects → scenarios/models construct governable futures). See [[project_oeconomia_rr_pipeline]].
+
+## The already-written history paper (sent, under review)
+`~/CNRS/papiers/sent/Oeconomia - Joint production/main-20260707.pdf` — **"Le cœur absent / The Absent Core: Joint Production and Climate Macroeconomics, 1970–2000"**, Pierre Matarasso & Minh Ha-Duong, submitted 2026-07-07 to the Œconomia special issue on Climate Economics.
+
+Thesis: the **von Neumann (1937) – Sraffa (1960)** joint-production framework (PJ joint production / AP production alternatives / IN balance inequalities = carrying-capacity bounds) was theoretically fit for climate macro / IAMs, but economists took the other route — Nordhaus/DICE: smooth, single-product aggregate production function for intertemporal optimization; comprehensive joint-production modeling marginalized to ecological economics (Georgescu-Roegen 1971). Explained by a **double lock-in**: (1) by tools (national accounts on square Leontief matrices + continuity econometrics → exclude rectangular, material, discontinuous representations like joint production, which render prices ambiguous); (2) by disciplinary/political culture (privileges behavioral analysis over material balances; stays away from framings that **impose bounds on growth** or acknowledge irreversible waste accumulation). Deeper surviving constraint: the **continuity of mathematical representation**, which obstructs computing discontinuous material transformations. Closing question: "Can discontinuities be modeled within a continuous mathematical framework?"
+
+## The next paper (intention): build the absent core
+An **integrated-modeling paper** that constructs the joint-production / von Neumann–Sraffa IAM the field never built — rectangular activity analysis, balance inequalities, carrying-capacity bounds (the "ceiling"), technological discontinuities. "The absent core made present." The history paper *arms* the modeling paper: the 30-year lock-in it documents pre-empts the "why this exotic framework?" objection.
+
+**Advisor caution reversed (2026-07-09):** my earlier "branch 1 = crowded lane, weak differentiation" warning was about generic logistic/degrowth growth models. It does NOT apply here — the author is a CIRED IAM modeler building the object he has just historically documented as absent. Distinctive, defensible, his own competence. Branch 1 (modelling) and branch 2 (history) here are complementary papers, not rivals.
+
+## Edmond / Critical Infrastructure Studies scaffold (strengthens the history paper on any R&R)
+The MeSSH talk maps almost literally onto "The Absent Core" and gives its double lock-in a legitimated STS vocabulary:
+- **"Lock-in by tools" = Star & Ruhleder's invisible, prescriptive infrastructure.** National accounts / square Leontief matrices are the infrastructure that carries the work *by prescribing* what is representable (smooth, continuous, single-product) — the Lotus-Notes side of "infrastructure carries work without prescribing how" (email = generic vs Lotus Notes = prescribes the workflow).
+- **Infrastructure visible only on breakdown** (Star & Ruhleder). The paper's "a "governed" economy may yield to planetary urgency" = the announced breakdown that would finally make the continuous-representation infrastructure visible/contestable. An infrastructure that never breaks is never contested → solidity = depoliticisation; **history is the artificial breakdown** ("infrastructural inversion", Bowker).
+- **Field**: Critical Infrastructure Studies (Alan Liu, cistudies.org). Anchors to consider: Star & Ruhleder; Bowker & Star *Sorting Things Out* (1999); **Paul Edwards *A Vast Machine*** (climate-data infrastructure — direct STS cousin, likely missing from the paper's bib); Jasanoff & Kim 2009 (sociotechnical imaginaries — the paper already cites co-production of knowledge + social order, so this is one step away).
+- **First infrastructure = Library of Alexandria**, whose Pinakes (Callimachus) already prescribes by classifying — invisible prescription present from day one. Georgescu-Roegen = the paper's already-named, dated "unclassifiable erased".
+- **Epistemicide** (de Sousa Santos): AI's exclusionary tendency has deep roots; Google/PageRank already epistemicidal (ranking buries alternatives). **Writing caution**: keep the *mechanism* (structural exclusion), leave the *word* "épistémicide" (implies murderous intent) to de Sousa Santos — else constat slides into accusation, breaching the methodological-honesty norm ([[feedback_oversell_breaks]]).
+
+## Simon — handle with a distinction (do NOT conflate two marginalizations)
+Author's paraphrase: "Simon wrote we should model static equilibrium more often." Tempting as an ancestor of the ceiling (satisficing = aim at an aspiration threshold and stop, vs optimization = the diverging machine; homeostasis; near-decomposability, *Architecture of Complexity* 1962). **But** "The Absent Core" frames the *behavioral* tradition as the **dominant/privileged** side (over material balances). Simon is behavioral. So Simon is NOT an ally of joint production — he lost on a *different* axis (satisficing vs optimization, inside behaviorism), whereas Georgescu-Roegen lost on the *material-balance* axis. Two distinct marginalizations. If Simon enters, it is as a *second front* of the ceiling imaginary, not as reinforcement for von Neumann–Sraffa — say so explicitly or a referee will catch it.
+
+**TODO — source on pièce before any use:** the Simon "model static equilibrium more often" quote is NOT held locally — absent from `docs/articles/` (only `simonet2022.pdf`, different author) and from the polycentric project's `refs.bib` (`~/CNRS/papiers/actif/polycentric_activity`, rich on general equilibrium / socialist-calculation debate, no Herbert Simon). Get the exact quote page-in-hand. Per [[feedback_read_before_cite]] and [[feedback_manuscript_number_provenance]].
+
+## Reflexive angle on the current climate-finance manuscript (separate takeaway)
+The core subset (papers cited ≥ 50) **is a PageRank** — a citation-count ranking infrastructure, invisible and prescriptive. By Edmond's criteria the selection instrument reproduces the ranking apparatus the thesis critiques. Own it: that is precisely why the *full corpus* (~28,400 works) carries the historical argument while the core serves as control. Turns the most attackable design choice into a demonstration of lucidity; pre-empts the STS/DH referee.
