@@ -169,6 +169,21 @@ settle_mergeable() {
     echo "$state"
 }
 
+# `gh pr merge` can exit non-zero for a purely cosmetic reason: on a repo that
+# still carries Projects (classic), gh's post-action PR fetch fails on the
+# deprecated `projectCards` GraphQL field AFTER the merge or auto-merge has
+# already taken effect (observed on climate-finance-het, 2026-07-10 — `gh pr
+# merge --merge` exited 1 yet the PR was MERGED). Trusting the exit code alone
+# would spuriously retry or abort a merge that actually happened. Confirm the
+# real outcome instead. (ticket 0272)
+merge_took_effect() {
+    local s
+    s=$(gh pr view "$PR" --json state,autoMergeRequest \
+        --jq 'if .state=="MERGED" or .autoMergeRequest!=null then "yes" else "no" end' \
+        2>/dev/null) || return 1  # harness-extension-point
+    [[ "$s" == "yes" ]]
+}
+
 # Queue --auto, retrying once after the post-push mergeability recompute
 # settles. The close-commit push leaves the forge's --auto merge failing with
 # "Pull Request is not mergeable" transiently; the exit code alone cannot tell
@@ -178,12 +193,14 @@ settle_mergeable() {
 try_auto_merge() {
     local err state
     err=$(gh pr merge "$PR" "${MERGE_FLAGS[@]}" 2>&1) && { echo "$err"; return 0; }  # harness-extension-point
+    merge_took_effect && { echo "$err"; echo "gh exited non-zero but merge/auto-merge is in effect (cosmetic error) — continuing."; return 0; }
     echo "$err" >&2
     if echo "$err" | grep -qiE 'not mergeable|base branch was modified'; then
         echo "Post-push mergeability recompute in flight — waiting for it to settle..."
         state=$(settle_mergeable)
         echo "Mergeability settled (${state}); retrying auto-merge once..."
         err=$(gh pr merge "$PR" "${MERGE_FLAGS[@]}" 2>&1) && { echo "$err"; return 0; }  # harness-extension-point
+        merge_took_effect && { echo "$err"; echo "Merge in effect despite gh non-zero exit — continuing."; return 0; }
         echo "$err" >&2
     fi
     return 1
@@ -231,9 +248,11 @@ else
     echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
     watch_checks_or_die
     if in_worktree; then
-        gh pr merge "$PR" --merge          # harness-extension-point
+        gh pr merge "$PR" --merge || merge_took_effect \
+            || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
     else
-        gh pr merge "$PR" --merge --delete-branch  # harness-extension-point
+        gh pr merge "$PR" --merge --delete-branch || merge_took_effect \
+            || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
     fi
     AUTO_QUEUED=0
 fi
