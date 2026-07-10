@@ -29,12 +29,14 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
 - `make check`: everything — run before opening a PR. No coverage is lost by tiering a test slower; `make check` still runs it.
 
-Every Python project must have a ruff adherence test so lint failures are caught locally before CI:
+Every Python project must have a ruff adherence test so lint failures are caught locally before CI. Declare `ruff` as a **pinned dev dependency** (e.g. `ruff>=0.11,<0.12`) and `uv lock` it — an adherence guard's verdict must be machine-independent, and an ambient/system ruff drifts between machines and silently changes rules on upgrade. Resolve the binary with `shutil.which`, not a nested `uv run ruff`: pytest already runs inside the project venv under `make lint`, so the pinned ruff is on PATH; a nested `uv run` re-enters uv from inside uv, spawns a subprocess per call, and breaks under `UV_NO_SYNC` in a clean CI/cloud container.
 
 ```python
 @pytest.mark.adherence
 def test_ruff():
-    result = subprocess.run(["uv", "run", "ruff", "check", "."], capture_output=True)
+    ruff = shutil.which("ruff")
+    assert ruff is not None, "ruff not found — declare it as a pinned dev dependency"
+    result = subprocess.run([ruff, "check", "."], capture_output=True)
     assert result.returncode == 0, result.stdout.decode()
 ```
 
