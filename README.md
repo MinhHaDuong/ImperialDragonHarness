@@ -78,6 +78,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 |---------|-------------|
 | `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
+| `/biblio-saturation` | Saturation bibliographic search by independent web-search subagents — adjudicate factual register lines and adversarially stress a novelty claim until every search angle runs dry. Fleets of finders on disjoint angles (fields, languages, gray literature, citation graph, lateral vocabularies), adversarial judging of every candidate, completeness critic before declaring saturation. |
 | `/celebrate` | Deprecated — renamed to /roar. Warns, then delegates to the new name. |
 | `/check-readiness` | Alias of /scry — multi-repo pre-flight readiness check and interactive triage. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
