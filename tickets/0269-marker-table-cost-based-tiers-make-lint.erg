@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Marker table: cost-based tiers + make lint (was CFH 0220)
+Created: 2026-07-10
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-10T09:56Z HDMX-coding-agent created
+
+--- body ---
+## Context
+Migrated from climate-finance-het ticket 0220 (filed in the wrong repo — the
+target file lives here in the harness, not the consuming project). During the
+CFH test-tiers rethink (its tracker 0213), the project marker taxonomy was
+changed from **mechanism-based** (integration = subprocess/sleep; slow =
+network/real-data) to **cost-based**, adding an `adherence` tier run via a
+separate `make lint`. The global rule table in `rules/coding-python.md` still
+documents the old mechanism-based scheme and does not mention `make lint` or the
+adherence-as-gate concept, so a new project inherits stale tiering guidance.
+
+The reference wording already lives in CFH `.claude/rules/coding.md` (its
+"Test tiers" section, landed by CFH 0214/0216).
+
+## Relevant files
+- `rules/coding-python.md` — the "Marker" table under `## Testing` and the
+  "When writing new tests" bullets (currently the 3-row mechanism table)
+
+## Actions
+1. Replace the 3-row marker table with the four cost-based tiers:
+   - fast *(none)*: pure-Python logic; no heavy numerical dep / matplotlib, no
+     subprocess, no lint → `make check-fast`
+   - `integration`: spawns a subprocess / drives a script / sleep timing → `make check`
+   - `slow`: network, real data, a heavy numerical dependency, or heavy compute → `make check`
+   - `adherence`: ruff / mypy / hygiene / contracts → `make lint`
+2. Document `make check-fast` = `-m "not slow and not integration and not adherence"`,
+   `make lint` = `-m adherence`, `make check` = everything; note no coverage is lost.
+3. Keep it generic — name the *category* (heavy numerical dependency), give deps
+   (dcor/torch/ot/sentence_transformers/matplotlib) as examples only. No
+   project-specific coupling in the shared rule.
+4. Optionally mention the two enforcement patterns as generalizable ideas: a
+   collection-time auto-mark for heavy-import modules, and a duration ratchet —
+   but keep them as references, not prescriptions (they are CFH-owned today).
+
+## Verification
+- [ ] Global table lists fast / integration / slow / adherence by cost.
+- [ ] `make lint` / adherence-as-gate documented globally.
+- [ ] No project-specific names hardcoded (examples only).
+
+## Exit criteria
+- `rules/coding-python.md` marker guidance matches the cost-based taxonomy; a new
+  project inherits correct tiering rules. CFH 0220 closed as migrated here.
