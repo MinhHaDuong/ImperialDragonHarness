@@ -169,15 +169,15 @@ settle_mergeable() {
     echo "$state"
 }
 
-# `gh pr merge` can exit non-zero for a purely cosmetic reason: on a repo that
-# still carries Projects (classic), gh's post-action PR fetch fails on the
-# deprecated `projectCards` GraphQL field AFTER the merge or auto-merge has
-# already taken effect (observed on climate-finance-het, 2026-07-10 — `gh pr
-# merge --merge` exited 1 yet the PR was MERGED). Trusting the exit code alone
+# The `gh` merge command can exit non-zero for a purely cosmetic reason: on a
+# repo that still carries Projects (classic), gh's post-action PR fetch fails on
+# the deprecated `projectCards` GraphQL field AFTER the merge or auto-merge has
+# already taken effect (observed on climate-finance-het, 2026-07-10 — the `gh`
+# merge exited 1 yet the PR was MERGED). Trusting the exit code alone
 # would spuriously retry or abort a merge that actually happened. Confirm the
 # real outcome instead. (ticket 0272)
 merge_took_effect() {
-    local s
+    local s  # harness-extension-point
     s=$(gh pr view "$PR" --json state,autoMergeRequest \
         --jq 'if .state=="MERGED" or .autoMergeRequest!=null then "yes" else "no" end' \
         2>/dev/null) || return 1  # harness-extension-point
@@ -247,10 +247,10 @@ else
     # allow_auto_merge. (ticket 0198)
     echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
     watch_checks_or_die
-    if in_worktree; then
+    if in_worktree; then  # harness-extension-point
         gh pr merge "$PR" --merge || merge_took_effect \
             || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
-    else
+    else  # harness-extension-point
         gh pr merge "$PR" --merge --delete-branch || merge_took_effect \
             || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
     fi
