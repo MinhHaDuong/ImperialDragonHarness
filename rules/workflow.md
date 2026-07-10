@@ -68,6 +68,29 @@ for input Z; cause not yet established," not a verdict dressed as a finding.
 feature — intact binary, deterministic, reproduced by the stdlib — was
 misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.)
 
+# Refactor validation — byte-compare the artifact, not just green tests
+
+A **pure refactor** — a build/layout/rename change that must not alter output
+(moving files, re-cutting a Makefile, renaming a symbol) — is validated by
+producing the artifact **before and after on the same inputs and byte-comparing
+the content**, not by a green test suite. Tests pass on a refactor that silently
+changed or *misplaced* the output; a byte-identical old-vs-new render is the
+proof they can't give. This is the [git.md](./git.md) byte-check discipline (old
+code vs new code on the *same current data*, never against a committed golden)
+applied to build outputs.
+
+- Determinism first: set `SOURCE_DATE_EPOCH` (most toolchains honour it) so a
+  timestamp doesn't masquerade as a content diff. If the format still embeds a
+  path or build dir, compare *content* (`pdftotext`/`pdfimages` hash, extracted
+  text) with a raw byte `cmp` as the strict check — and explain any residual diff
+  (metadata-only vs content) rather than waving it away.
+- Don't over-apply "let the user run the long build" (a *preference*) into "I
+  can't validate this." A clean-room render is often seconds, and the byte-compare
+  is exactly what catches the defect a green suite misses (climate-finance-het
+  deliverables/ reorg, 2026-07-10: 932 tests green, yet the render wrote to the
+  wrong path and a Quarto `output-dir` was dead config — both invisible until the
+  old-vs-new render).
+
 # When to Ask the Author
 
 - You're stuck after three different approaches (including expert fan-out).

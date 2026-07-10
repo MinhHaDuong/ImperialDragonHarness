@@ -74,6 +74,7 @@ Two patterns keep the fast tier honest — generalizable, adopt per project (ref
 ## Build (Make)
 
 - **One output per rule.** Each target should produce a known file so timestamps work.
+- **The target must be the exact path the recipe writes.** `make` checks the recipe's *exit code*, not whether the file appeared — so a tool that writes elsewhere leaves the rule "succeeding" (exit 0) with `$@` absent, silently breaking every downstream consumer and forcing an eternal rebuild. The trap bites when a tool ignores the output path you configured: Quarto's single-file `quarto render <f>.qmd` ignores the project `output-dir` and writes *next to the source*. Name the target where the tool actually writes, or `mv … $@` in the recipe (climate-finance-het deliverables/ reorg, 2026-07-10 — a Makefile-text test can't catch this; only a real build does).
 - **Sentinel stamps for dynamic outputs.** Use a stamp file when a script produces data-dependent filenames.
 - **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
 - **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.
