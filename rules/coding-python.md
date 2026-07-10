@@ -25,8 +25,9 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 ## Testing
 
 - Tests live in `tests/test_<module>.py`. A new script or changed behavior starts with a test.
-- `make check-fast`: unit tests + lint, < 30 s — run during development.
-- `make check`: full suite including integration + slow tests — run before opening a PR.
+- `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), < 30 s — run during development.
+- `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
+- `make check`: everything — run before opening a PR. No coverage is lost by tiering a test slower; `make check` still runs it.
 
 Every Python project must have a ruff adherence test so lint failures are caught locally before CI:
 
@@ -37,16 +38,25 @@ def test_ruff():
     assert result.returncode == 0, result.stdout.decode()
 ```
 
-| Marker | Meaning | Excluded from |
-|--------|---------|---------------|
-| *(none)* | Unit test — pure logic, no subprocess, no sleep | — |
-| `@pytest.mark.integration` | Spawns subprocesses or uses sleep-based timing | `check-fast` |
-| `@pytest.mark.slow` | Requires network access or real data | `check-fast` |
+Classify each test by **cost**, not by the mechanism it happens to use:
+
+| Tier | Marker | Belongs here | Gate |
+|------|--------|--------------|------|
+| fast | *(none)* | pure-Python logic; no heavy numerical dependency (dcor / torch / ot / sentence_transformers / matplotlib), no subprocess, no lint | `make check-fast` |
+| integration | `@pytest.mark.integration` | spawns a subprocess / drives a script / sleep-based timing | `make check` |
+| slow | `@pytest.mark.slow` | network, real data, a heavy numerical dependency, or heavy compute | `make check` |
+| adherence | `@pytest.mark.adherence` | ruff / mypy / hygiene / contracts | `make lint` |
+
+Adherence is a gate, not a unit tier: `make lint` (`-m adherence`) runs it apart from the logic loop, so `make check-fast` stays pure and quick. The named dependencies are examples of the *heavy numerical dependency* category, not a fixed list.
 
 When writing new tests:
 - CLI flag presence: check via source inspection (`open().read()` + string match), not subprocess `--help`.
 - Tests using `subprocess.run()` or `time.sleep()`: mark `@pytest.mark.integration`.
 - Tests needing heavy modules only for `inspect.getsource()`: read the file directly instead.
+
+Two patterns keep the fast tier honest — generalizable, adopt per project (reference implementations live in the climate-finance-het repo, ticket 0216):
+- **Collection-time auto-mark** — a conftest hook marks any test whose module imports a heavy dependency `slow`, so the per-worker import tax never lands in the fast loop.
+- **Duration ratchet** — an `adherence` test fails when a fast-path test exceeds a recorded budget, catching heavy *compute* that no heavy *import* reveals.
 
 ## Build (Make)
 
