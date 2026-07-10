@@ -71,3 +71,23 @@ def test_probe_flags_untracked_new_file(repo):
     (repo / "new.txt").write_text("orphan\n")
     res = _run(repo)
     assert res.returncode != 0
+
+
+@pytest.mark.integration
+def test_probe_flags_detached_head(repo):
+    head = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True
+    ).stdout.strip()
+    _git(repo, "checkout", "-q", head)  # detach HEAD
+    res = _run(repo)
+    assert res.returncode != 0
+
+
+@pytest.mark.integration
+def test_probe_flags_non_git_dir(tmp_path):
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    res = subprocess.run([str(PROBE), str(plain)], capture_output=True, text=True)
+    assert res.returncode != 0
+    # Message goes to stdout, consistent with the other STRANDED reasons.
+    assert "STRANDED" in res.stdout

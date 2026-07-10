@@ -19,10 +19,11 @@ REPO="${1:-$HOME/.claude}"
 DEFAULT_BRANCH="${2:-main}"
 
 if ! git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then
-  echo "STRANDED: $REPO is not a git repository" >&2
+  echo "STRANDED: $REPO is not a git repository"
   exit 1
 fi
 
+# A detached HEAD prints "HEAD" here — not the default branch, so flagged.
 branch="$(git -C "$REPO" rev-parse --abbrev-ref HEAD)"
 if [ "$branch" != "$DEFAULT_BRANCH" ]; then
   echo "STRANDED: $REPO is off $DEFAULT_BRANCH (on $branch)"
@@ -31,8 +32,12 @@ fi
 
 # Tolerate a locally-modified settings.json; flag any other dirt (tracked or
 # untracked). Whitelist-ignored files never appear in porcelain output, so this
-# keys on visible working-tree changes only.
-dirty="$(git -C "$REPO" status --porcelain | awk '{print substr($0,4)}' | grep -vx 'settings.json' || true)"
+# keys on visible working-tree changes only. Capture git status separately so a
+# real status failure aborts under set -e instead of being read as "clean"; the
+# trailing `|| true` guards only grep's no-match exit. quotePath=false keeps
+# non-ASCII paths unquoted so the exact-match whitelist behaves predictably.
+status="$(git -C "$REPO" -c core.quotePath=false status --porcelain)"
+dirty="$(printf '%s\n' "$status" | awk 'NF { print substr($0, 4) }' | grep -vx 'settings.json' || true)"
 if [ -n "$dirty" ]; then
   echo "STRANDED: $REPO has a dirty working tree beyond settings.json:"
   echo "$dirty"
