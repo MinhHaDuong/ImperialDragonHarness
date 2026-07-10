@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Detect consumer-project assumptions in harness skills and tickets.
 # Usage: check-agnostic.sh [dir ...]   (default: skills tickets)
-# Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line.
+# Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line,
+# or (for a `\`-continued multi-line command) on any of its continuation lines.
 # `closed/` subdirs are skipped — closed tickets are frozen archives, not amended.
 set -euo pipefail
 
@@ -46,6 +47,25 @@ check_pattern() {
         fi
         if echo "$line $prev" | grep -q 'harness-extension-point'; then
             continue
+        fi
+        # Multi-line command: if the flagged line ends in a `\` continuation,
+        # scan forward across the continued lines. A marker anywhere in the same
+        # logical command (its natural home is the closing continuation line)
+        # exempts the whole command.
+        if printf '%s' "$line" | grep -q '\\[[:space:]]*$'; then
+            scan=$lineno
+            marked=0
+            while :; do
+                scan=$((scan + 1))
+                cont=$(sed -n "${scan}p" "$file")
+                [ -z "$cont" ] && [ "$scan" -gt "$lineno" ] && break
+                if echo "$cont" | grep -q 'harness-extension-point'; then
+                    marked=1
+                    break
+                fi
+                printf '%s' "$cont" | grep -q '\\[[:space:]]*$' || break
+            done
+            [ "$marked" -eq 1 ] && continue
         fi
         echo "VIOLATION [$pattern]: $file:$lineno: $line"
         fail=1

@@ -123,3 +123,44 @@ def test_catches_mixed_case_and_underscore_script_names(tmp_path):
     assert result.returncode != 0, result.stdout
     assert "VIOLATION" in result.stdout
     assert "scripts/Build_Step2.py" in result.stdout
+
+
+# --- Multi-line command continuation markers (ticket 0273) ---
+#
+# The marker's natural home on a multi-line command is the closing continuation
+# line, not the line carrying the flagged token. A marker anywhere in the same
+# logical command (across `\`-continued lines) must exempt the whole command.
+
+MARKED_MULTILINE = (
+    "# Example skill\n\n"
+    "```bash\n"
+    's=$(gh pr view "$PR" --json state \\\n'
+    "    --jq '.state' \\\n"
+    "    2>/dev/null) || return 1  # harness-extension-point\n"
+    "```\n"
+)
+UNMARKED_MULTILINE = (
+    "# Example skill\n\n"
+    "```bash\n"
+    's=$(gh pr view "$PR" --json state \\\n'
+    "    --jq '.state' \\\n"
+    "    2>/dev/null) || return 1\n"
+    "```\n"
+)
+
+
+def test_marker_on_continuation_line_exempts_command(tmp_path):
+    """A marker on the command's closing continuation line exempts the whole command."""
+    d = _skill_dir(tmp_path)
+    (d / "SKILL.md").write_text(MARKED_MULTILINE)
+    result = _run(d)
+    assert result.returncode == 0, result.stdout
+
+
+def test_unmarked_multiline_command_still_flagged(tmp_path):
+    """No marker anywhere in the command → still a violation (no over-exemption)."""
+    d = _skill_dir(tmp_path)
+    (d / "SKILL.md").write_text(UNMARKED_MULTILINE)
+    result = _run(d)
+    assert result.returncode != 0, result.stdout
+    assert "VIOLATION" in result.stdout
