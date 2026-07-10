@@ -1,4 +1,5 @@
 {
+  "cleanupPeriodDays": 180,
   "env": {
     "UV_ENV_FILE": "/home/haduong/.claude/.env",
     "BASH_ENV": "/home/haduong/.claude/scripts/bash-env.sh"
@@ -85,7 +86,8 @@
       "Bash(grep -i \"free\\\\|dejavu\\\\|liberation\\\\|noto sans$\\\\|ubuntu\")",
       "Read(//home/haduong/CNRS/papiers/actif/AEDIST-technical-report/**)",
       "Bash(rtk git *)",
-      "Bash(rtk grep *)"
+      "Bash(rtk grep *)",
+      "Bash(~/.claude/skills/merge/erg-pr-merge:*)"
     ],
     "defaultMode": "auto",
     "additionalDirectories": [
@@ -204,15 +206,14 @@
     ],
     "Stop": []
   },
-  "effortLevel": "high",
+  "enabledPlugins": {},
+  "effortLevel": "medium",
+  "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
   "teammateMode": "auto",
-  "skipAutoPermissionPrompt": true,
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true
-  }
+  "skipAutoPermissionPrompt": true
 }
