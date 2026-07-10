@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-11T21:01Z claude created
 
+2026-07-10T11:51Z note root cause: gaze runs as context:fork; SKILL.md launched reviewers as background agents then 'waited' — but a fork's turn ends when it stops calling tools, and background completions re-invoke the MAIN loop, not the fork, so it returned at fan-out start. Fix (approach a): foreground run_in_background:false launches for phases 2-4, gate, and fix agent, so the fork blocks. Added Fork execution contract section + caller recovery. Ratchet: tests/test_gaze_fork_blocking.py.
 --- body ---
 ## Context
 Twice-confirmed defect. When `/gaze <pr>` runs as a forked skill execution,
