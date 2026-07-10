@@ -31,6 +31,20 @@ the primary checkout.)
 
 ## 1. Survey
 
+Pre-flight: probe the primary checkout (ticket 0247). A dream or beat run that
+died mid-flight can strand the harness checkout off main with a dirty tree,
+silently blocking the daily-pull timer and every later beat's dirty-tree
+pre-flight:
+
+```bash
+$HARNESS_DIR/scripts/check-primary-checkout.sh "$HARNESS_DIR"
+```
+
+Non-zero means stranded (off main, or dirty beyond settings.json). The
+consolidation commit is safe on its branch, so `git -C "$HARNESS_DIR" switch
+main` restores the position; if the tree is dirty for another reason, diagnose
+or escalate rather than proceeding — beats keep failing until it is clean.
+
 Pre-flight: verify no dual-journal state exists (`canonical` vs `logs/` path). If both
 `<project>/nightbeat-supervisor-journal.jsonl` and `<project>/logs/nightbeat-supervisor-journal.jsonl`
 exist as independent files (not a symlink), stop and open a ticket before proceeding.

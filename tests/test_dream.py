@@ -79,6 +79,27 @@ def test_skill_md_instructs_preserve_evolution():
     assert "evolution" in content.lower() or "preserve" in content.lower()
 
 
+def test_skill_md_step8_has_push_or_restore_contract():
+    """Ticket 0247: dream's exit path must be unconditional — after the commit,
+    push + open the PR; on any failure after branching, restore the primary
+    checkout to main before exiting. String-match the contract so the SKILL.md
+    instruction cannot silently regress."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "push-or-restore" in content, "step 8 missing the push-or-restore contract marker"
+    lowered = content.lower()
+    assert "check-primary-checkout" in content or "switch" in lowered
+    assert "back to main" in lowered or "restore the primary" in lowered
+
+
+def test_supervisor_probes_primary_checkout():
+    """Ticket 0247: nightbeat-supervisor must probe the primary checkout each
+    cycle so a stranded checkout is detected within one cycle."""
+    content = (
+        DREAM_DIR.parent / "nightbeat-supervisor" / "SKILL.md"
+    ).read_text()
+    assert "check-primary-checkout" in content, "supervisor does not run the checkout probe"
+
+
 def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
 

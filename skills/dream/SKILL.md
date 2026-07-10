@@ -141,6 +141,35 @@ Then push the branch and open a PR for the consolidation (do not merge to main
 directly). The override `ALLOW_MAIN_COMMIT=1` exists for deliberate cases only —
 do not use it to bypass the branch-and-PR flow during a routine dream.
 
+**Unconditional exit (push-or-restore contract).** Branching moved the primary
+checkout off main; a run that dies between the commit and the push strands it
+there (ticket 0247: the daily-pull timer can't update the checkout and beat's
+dirty-tree pre-flight blocks every cycle for days, while orphaned memory entries
+accumulate invisibly under the gitignore whitelist). So the exit is
+unconditional: immediately after the commit, push the branch and open the PR;
+on **any** failure after branching, switch the primary back to main before
+exiting. The branch keeps the commit — only the checkout *position* is at
+stake, never the work.
+
+```bash
+branch="$(git -C ~/.claude branch --show-current)"
+if git -C ~/.claude push -u origin "$branch"; then
+  : # open the PR (forge command), then leave the checkout on the branch is fine
+else
+  git -C ~/.claude switch main   # restore on failure; the branch keeps the commit
+fi
+# Confirm the checkout is not stranded before exiting:
+~/.claude/scripts/check-primary-checkout.sh ~/.claude
+```
+
+**Why not run dream in a worktree?** Evaluated (0247) and rejected: `commit.py`
+and the promotion pass hardcode `~/.claude` (`git -C ~/.claude add/commit`, and
+promotions write to `~/.claude/memory/`), so a worktree run would still commit
+onto the *primary* checkout's current branch — worktree isolation would not
+apply. The push-or-restore contract plus the supervisor probe (below) address
+the stranding without that refactor. Revisit if `commit.py` is parameterized by
+repo dir.
+
 ### Promotion pass
 
 Runs after consolidation. Evaluates whether any project-level entries have earned harness-level status.
