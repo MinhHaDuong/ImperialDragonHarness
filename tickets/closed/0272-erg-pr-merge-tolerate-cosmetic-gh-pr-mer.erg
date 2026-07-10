@@ -1,0 +1,40 @@
+%erg 0.1
+Title: erg-pr-merge: tolerate cosmetic gh pr merge failure on Projects-classic repos
+Created: 2026-07-10
+Author: HDMX-coding-agent
+Closed: autoclosed — PR #465
+
+--- log ---
+2026-07-10T15:49Z HDMX-coding-agent created
+
+2026-07-10T16:09Z Minh Ha-Duong closed — autoclosed — PR #465
+--- body ---
+## Context
+On a repo that still carries Projects (classic), `gh pr merge` exits non-zero on
+its post-action PR fetch — the deprecated `projectCards` GraphQL field errors —
+*after* the merge or auto-merge has already taken effect. Observed on
+climate-finance-het 2026-07-10: `gh pr merge 992 --merge` exited 1 yet the PR was
+MERGED. `erg-pr-merge` trusts the exit code, so it would spuriously retry, fall
+back to watch-then-merge, or abort under `set -e` on a merge that already
+happened.
+
+## Change
+Add `merge_took_effect()` — `gh pr view --json state,autoMergeRequest` → true if
+state is MERGED or an auto-merge is queued. After any non-zero `gh pr merge`,
+consult it: if the merge is in effect, treat the non-zero exit as cosmetic and
+continue; only a non-zero exit AND a not-merged PR is a real failure. Wired into
+both `try_auto_merge` (the two --auto attempts) and the watch-then-merge
+fallback.
+
+## Test
+tests/test_erg_pr_merge.sh Case 16: `gh pr merge` cosmetic-fails (exit 1,
+projectCards) but the probe reports MERGED → script succeeds and closes the
+ticket. Case 16b: cosmetic-fail AND probe reports not-merged → script still
+aborts (real failures are not swallowed). Mutation-verified: forcing
+merge_took_effect false turns Case 16 RED, 16b unaffected.
+
+## Exit criteria
+- [x] A merge that took effect but returned non-zero (Projects-classic) is
+      treated as success.
+- [x] A genuine merge failure still aborts.
+- [x] `bash tests/test_erg_pr_merge.sh` green (18 cases).

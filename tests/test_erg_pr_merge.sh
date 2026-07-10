@@ -49,6 +49,11 @@ case "$1 $2" in
         fi
         echo "MERGEABLE"; exit 0
       fi
+      # merge_took_effect probe: --json state,autoMergeRequest --jq '...' →
+      # emit the pre-evaluated "yes"/"no" the script's jq would produce.
+      if [[ "$args" == *"autoMergeRequest"* ]]; then
+        echo "${STUB_MERGE_EFFECT:-no}"; exit 0
+      fi
     fi
     if [[ "$args" == *"title"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
@@ -64,6 +69,12 @@ case "$1 $2" in
     echo "stub: marked ready"; exit 0 ;;
   "pr merge")
     echo "$*" >> "${STUB_MERGE_LOG:-/dev/null}"
+    # Cosmetic post-action failure: gh exits non-zero on the deprecated
+    # projectCards fetch AFTER the merge/queue took effect (Projects-classic).
+    if [[ "${STUB_MERGE_COSMETIC_FAIL:-0}" == "1" ]]; then
+      echo "GraphQL: Projects (classic) is being deprecated ... (repository.pullRequest.projectCards)" >&2
+      exit 1
+    fi
     if [[ "$*" == *"--auto"* ]]; then
       # Post-push recompute race: first --auto fails "not mergeable", a later
       # call (after settle_mergeable) succeeds. Distinct from STUB_AUTO_FAILS,
@@ -166,6 +177,8 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
       STUB_IS_DRAFT="${STUB_IS_DRAFT:-false}" \
       STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
+      STUB_MERGE_COSMETIC_FAIL="${STUB_MERGE_COSMETIC_FAIL:-0}" \
+      STUB_MERGE_EFFECT="${STUB_MERGE_EFFECT:-no}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
       bash "$SCRIPT" 42 )
 }
@@ -502,5 +515,33 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on non-draft PR"; fail=1
 fi
 
+# Case 16: cosmetic post-merge failure (ticket 0272). On a Projects-classic
+# repo, `gh pr merge` exits non-zero on the deprecated projectCards fetch AFTER
+# the merge took effect. The script must confirm the real outcome
+# (merge_took_effect → MERGED) and treat it as success, not retry/abort.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo cosmetic 0274
+BODY16=$'Summary.\n\n**Ticket:** tickets/0274-fixture.erg\n'
+if STUB_MERGE_COSMETIC_FAIL=1 STUB_MERGE_EFFECT=yes \
+   run_merge "$BODY16" "ticket(0274): cosmetic" >/dev/null 2>&1; then
+    if closed_has 0274; then
+        echo "PASS: cosmetic projectCards failure ignored when merge took effect"
+    else
+        echo "FAIL: cosmetic case did not close 0274"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge aborted on a cosmetic post-merge gh failure"; fail=1
+fi
+
+# Case 16b: a GENUINE merge failure (gh non-zero AND PR not merged) must still
+# die — merge_took_effect must not swallow real failures.
+seed_repo genuinefail 0273
+if STUB_MERGE_COSMETIC_FAIL=1 STUB_MERGE_EFFECT=no \
+   run_merge $'Summary.\n\n**Ticket:** tickets/0273-fixture.erg\n' "ticket(0273): genuine" >/dev/null 2>&1; then
+    echo "FAIL: genuine merge failure was swallowed (exited zero)"; fail=1
+else
+    echo "PASS: genuine merge failure still aborts (merge_took_effect=no)"
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated"
