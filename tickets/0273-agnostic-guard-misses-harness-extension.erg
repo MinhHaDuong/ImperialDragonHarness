@@ -1,0 +1,64 @@
+%erg 0.1
+Title: agnostic-guard misses harness-extension-point marker on multi-line command continuation
+Created: 2026-07-10
+Author: minh
+
+--- log ---
+2026-07-10T16:13Z minh created
+
+--- body ---
+## Context
+
+`scripts/check-agnostic.sh` exempts a flagged line only when the marker
+`harness-extension-point` appears on that line OR its single immediately-
+preceding line (`if echo "$line $prev" | grep -q ...`). This breaks for a
+multi-line command, where the natural place for the marker is the *closing*
+continuation line, not the line carrying the `gh` token:
+
+```bash
+    s=$(gh pr view "$PR" --json state,autoMergeRequest \   # flagged: no marker here or above
+        --jq '...' \
+        2>/dev/null) || return 1  # harness-extension-point  # marker lands here, 2 lines down
+```
+
+The guard flags the first line even though the author clearly marked the
+command. It bit twice in one session (2026-07-10, PRs #463 and #465 on
+`skills/merge/erg-pr-merge`): both placed the marker on the command's last line
+and both failed CI. The workaround — move the marker to the preceding line — is
+unintuitive and every future multi-line command is one careless edit from
+re-tripping it (4 such commands already live in `skills/`).
+
+## Relevant files
+- `scripts/check-agnostic.sh` — `check_pattern()`, the `$line $prev` exemption test
+
+## Actions
+1. Treat a marker anywhere within the same logical command as exempting the
+   whole command. Simplest robust rule: when the flagged line ends in a line
+   continuation (`\`), scan forward across continuation lines and exempt if any
+   carries the marker; also keep the existing same/preceding-line check for the
+   single-line case.
+2. Optionally also honor a marker on any line of a contiguous comment block
+   immediately preceding the command (the block-comment case #465's rationale
+   hit), so a marker in the docstring covers the commands it documents.
+
+## Test
+- A fixture with a multi-line command whose marker sits on the closing
+  continuation line must NOT be flagged.
+- A genuinely unmarked multi-line command MUST still be flagged (no
+  over-exemption).
+- Existing single-line marker behavior unchanged.
+
+## Verification
+- [ ] Marker on a continuation line exempts the whole command
+- [ ] Unmarked multi-line command still fails
+- [ ] `bash scripts/check-agnostic.sh` stays clean on current `skills/`
+
+## Invariants
+- No consumer-project assumption slips through unmarked (the guard's purpose).
+- Single-line detection and the `/home/`, `github.com`, script-path patterns
+  are unaffected.
+
+## Exit criteria
+- [ ] Continuation-line markers honored, with a test covering both the exempt
+      and the still-flagged case
+- [ ] CI agnostic-guard green on the whole repo
