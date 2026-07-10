@@ -2,10 +2,12 @@
 Title: erg-pr-merge: auto-ready a draft PR before merging
 Created: 2026-07-10
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #463
 
 --- log ---
 2026-07-10T15:43Z HDMX-coding-agent created
 
+2026-07-10T16:00Z Minh Ha-Duong closed — autoclosed — PR #463
 --- body ---
 ## Context
 `erg-pr-merge` aborts on a draft PR. Roar/raid sweeps file bootstrap tickets as
