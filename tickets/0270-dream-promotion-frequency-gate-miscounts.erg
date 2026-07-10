@@ -1,0 +1,54 @@
+%erg 0.1
+Title: dream promotion frequency gate miscounts path-aliased project as distinct
+Created: 2026-07-10
+Author: minh
+
+--- log ---
+2026-07-10T15:20Z minh created
+
+--- body ---
+## Context
+
+The dream promotion pass gates an entry to harness level on frequency:
+seen in >=2 *distinct* projects. `provenance.py candidates` counts distinct
+projects by their directory-slug key. When one project is reachable under two
+path spellings — a relocated or symlinked tree — the same project registers
+two slugs, and the frequency gate passes on a single project.
+
+Observed 2026-07-10: `reference_zotero` surfaced as a promotion candidate with
+projects `-home-haduong-aedist-technical-report` and
+`-home-haduong-CNRS-papiers-actif-AEDIST-technical-report` — the same AEDIST
+report under two path spellings, not two distinct projects. Caught by hand at
+the gate, but an autonomous dream would promote it: a project-specific note
+elevated to the shared tier on a false frequency count.
+
+## Relevant files
+- `skills/dream/provenance.py` — `candidates` command; distinct-project counting
+- `skills/dream/SKILL.md` — step 10 frequency gate wording
+
+## Actions
+1. Canonicalize the project key before counting distinct projects: resolve
+   symlinks and normalize the real path (e.g. `os.path.realpath`) so aliases
+   collapse to one key. Decide whether to store the canonical key at `record`
+   time or normalize at `candidates` time (normalizing at read time also fixes
+   already-recorded aliases).
+2. Have `candidates` count distinct *canonical* projects, so a single project
+   under N spellings contributes 1 to the frequency gate.
+
+## Test
+- Record the same slug under two path-aliased project keys that resolve to one
+  real path; assert `candidates` does NOT list it (frequency < 2).
+- Record under two genuinely distinct projects; assert it IS listed.
+
+## Verification
+- [ ] `reference_zotero` no longer appears in `candidates` output
+- [ ] A genuinely-cross-project entry still appears
+
+## Invariants
+- Existing promoted entries and their provenance are unchanged.
+- `record`/`promote`/`confirm`/`decay` behavior is otherwise unaffected.
+
+## Exit criteria
+- [ ] Distinct-project count uses canonicalized paths
+- [ ] Test covers alias-collapse and true-distinct cases
+- [ ] `make check` passes
