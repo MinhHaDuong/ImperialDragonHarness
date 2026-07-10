@@ -38,7 +38,7 @@ fi
 
 echo "PR #$PR"
 
-PR_JSON=$(gh pr view "$PR" --json number,headRefName,baseRefName,mergeable,statusCheckRollup,body) # harness-extension-point
+PR_JSON=$(gh pr view "$PR" --json number,headRefName,baseRefName,mergeable,statusCheckRollup,body,isDraft) # harness-extension-point
 PR_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
 BASE_BRANCH=$(echo "$PR_JSON" | jq -r '.baseRefName')
 CURRENT_BRANCH=$(git branch --show-current)
@@ -64,6 +64,16 @@ PENDING=$(echo "$PR_JSON" | jq -r '
     | length')
 if [[ "$PENDING" -gt 0 ]]; then
     die "CI has ${PENDING} check(s) still running — wait for completion"
+fi
+
+# A draft PR is rejected by both auto-merge ("Pull Request is still a draft")
+# and the watch-then-merge fallback. Roar/raid sweeps file bootstrap PRs as
+# draft deliberately; invoking this script is explicit intent to merge, so mark
+# the PR ready rather than aborting at the merge step. (harness-extension-point)
+IS_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
+if [[ "$IS_DRAFT" == "true" ]]; then
+    echo "PR #${PR} is a draft — marking ready for review before merge..."
+    gh pr ready "$PR" || die "could not mark PR #${PR} ready — run 'gh pr ready ${PR}' and retry"
 fi
 
 # ── Step 1: find ticket ID ────────────────────────────────────────────────────

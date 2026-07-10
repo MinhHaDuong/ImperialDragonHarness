@@ -1,0 +1,31 @@
+%erg 0.1
+Title: erg-pr-merge: auto-ready a draft PR before merging
+Created: 2026-07-10
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-10T15:43Z HDMX-coding-agent created
+
+--- body ---
+## Context
+`erg-pr-merge` aborts on a draft PR. Roar/raid sweeps file bootstrap tickets as
+*draft* PRs deliberately (they stay a to-do). When the work is later implemented
+and `/merge` is invoked, auto-merge rejects it ("Pull Request is still a draft")
+and the watch-then-merge fallback also stalls. Observed 2026-07-10 merging
+climate-finance PR #992: the script closed+archived the ticket, then aborted at
+the merge step; the human had to `gh pr ready` by hand and re-merge.
+
+## Change
+Query `isDraft` in the PR JSON; if true, `gh pr ready "$PR"` before the merge
+step. Invoking the script is explicit intent to merge, so readying is correct
+(not a silent policy change). Abort with a clear message if `gh pr ready` fails.
+
+## Test
+tests/test_erg_pr_merge.sh Case 15: a draft PR (STUB_IS_DRAFT=true) must call
+`gh pr ready` (asserted via a ready-log) then close+merge; Case 15b: a non-draft
+PR must NOT call `gh pr ready`. Mutation-verified: neutralizing the ready call
+turns Case 15 RED.
+
+## Exit criteria
+- [x] Draft PR is readied before merge; non-draft PR is not.
+- [x] `bash tests/test_erg_pr_merge.sh` green (16 cases).
