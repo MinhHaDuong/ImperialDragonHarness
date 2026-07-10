@@ -56,9 +56,12 @@ case "$1 $2" in
     # the big composite query
     jq -n \
       --arg n "$STUB_PR" --arg h "$STUB_BRANCH" --arg b "$STUB_BASE" \
-      --arg body "$STUB_BODY" \
-      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body}'
+      --arg body "$STUB_BODY" --arg draft "${STUB_IS_DRAFT:-false}" \
+      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true")}'
     exit 0 ;;
+  "pr ready")
+    echo "$*" >> "${STUB_READY_LOG:-/dev/null}"
+    echo "stub: marked ready"; exit 0 ;;
   "pr merge")
     echo "$*" >> "${STUB_MERGE_LOG:-/dev/null}"
     if [[ "$*" == *"--auto"* ]]; then
@@ -161,6 +164,8 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_AUTO_NOTMERGEABLE_ONCE="${STUB_AUTO_NOTMERGEABLE_ONCE:-}" \
       STUB_MERGEABLE_UNKNOWN_ONCE="${STUB_MERGEABLE_UNKNOWN_ONCE:-}" \
       STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
+      STUB_IS_DRAFT="${STUB_IS_DRAFT:-false}" \
+      STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
       bash "$SCRIPT" 42 )
 }
@@ -463,5 +468,39 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on no-checks registration race"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 15: draft PR (ticket 0271). Roar/raid sweeps file bootstrap PRs as draft;
+# both auto-merge and the watch-then-merge fallback reject a draft. Invoking the
+# script is explicit intent to merge, so it must `gh pr ready` the PR first,
+# then merge and close the ticket. Anti-regression: a non-draft PR (every other
+# case) must NOT call `gh pr ready`.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo draftcase 0271
+RLOG="$WORK/ready15.log"; : > "$RLOG"
+BODY15=$'Summary.\n\n**Ticket:** tickets/0271-fixture.erg\n'
+if STUB_IS_DRAFT=true STUB_READY_LOG="$RLOG" \
+   run_merge "$BODY15" "ticket(0271): draft" >/dev/null 2>&1; then
+    d_miss=0
+    closed_has 0271 || { echo "  not closed: 0271"; d_miss=1; }
+    grep -q -- 'pr ready' "$RLOG" || { echo "  draft PR was not marked ready"; d_miss=1; }
+    if (( d_miss )); then echo "FAIL: draft PR not readied before merge"; fail=1
+    else echo "PASS: draft PR marked ready, then closed and merged"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on draft PR"; fail=1
+fi
+
+# Case 15b: a non-draft PR must NOT invoke `gh pr ready` (no over-firing).
+seed_repo nondraftcase 0272
+RLOG2="$WORK/ready15b.log"; : > "$RLOG2"
+BODY15b=$'Summary.\n\n**Ticket:** tickets/0272-fixture.erg\n'
+if STUB_IS_DRAFT=false STUB_READY_LOG="$RLOG2" \
+   run_merge "$BODY15b" "ticket(0272): nondraft" >/dev/null 2>&1; then
+    if grep -q -- 'pr ready' "$RLOG2"; then
+        echo "FAIL: non-draft PR wrongly marked ready"; fail=1
+    else echo "PASS: non-draft PR does not call gh pr ready (no over-firing)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on non-draft PR"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied"

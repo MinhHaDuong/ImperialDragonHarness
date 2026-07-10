@@ -33,4 +33,4 @@ The script reads close intent from the PR **body** only — never the title:
 
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
 
-Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled).
+Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
