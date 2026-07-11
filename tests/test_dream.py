@@ -282,8 +282,16 @@ def test_provenance_remove_last_project_keeps_promoted_entry(provenance_env):
 
 
 def test_provenance_remove_unknown_slug(provenance_env):
+    """remove of an untracked slug is an idempotent no-op (exit 0, store unchanged).
+
+    SKILL.md step 5 calls remove unconditionally on every DELETE, but 37% of live
+    memory entries predate the provenance store, so a hard-fail would abort a
+    consolidation on the first DELETE of an untracked entry."""
     result = _run_provenance("remove", "nonexistent", "project-alpha", home=provenance_env)
-    assert result.returncode == 1
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"removed": None}
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "nonexistent" not in show["entries"]
 
 
 def test_provenance_decay_empty(provenance_env):

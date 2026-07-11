@@ -152,15 +152,22 @@ def remove(args):
     0241). `remove` drops the named project from the slug's list. When the list
     empties the entry is deleted, UNLESS it is promoted: promotion is one-way,
     a harness-level entry has earned status independent of its origin projects,
-    so it survives with an empty project list."""
+    so it survives with an empty project list.
+
+    An unknown slug is an idempotent no-op ({"removed": null}, exit 0), mirroring
+    `record`'s upsert semantics: SKILL.md step 5 calls `remove` unconditionally on
+    every DELETE, but the provenance store is not synced with MEMORY.md by
+    construction (it postdates much of the corpus — 37% of live entries have no
+    record), so "nothing to remove" is the correct outcome, not a failure that
+    would abort the consolidation on the first DELETE of an untracked entry."""
     slug = args.slug
     project = args.project
     with _provenance_lock():
         data = _load_provenance()
         entries = data["entries"]
         if slug not in entries:
-            print(f"Unknown entry: {slug}", file=sys.stderr)
-            sys.exit(1)
+            print(json.dumps({"removed": None}, indent=2))
+            return
         _test_delay()
         entry = entries[slug]
         changed = False
