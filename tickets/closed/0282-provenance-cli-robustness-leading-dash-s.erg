@@ -2,10 +2,12 @@
 Title: provenance CLI robustness: leading-dash slugs no-op silently; malformed alias table crashes candidates
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #487
 
 --- log ---
 2026-07-11T14:49Z Minh Ha-Duong created
 
+2026-07-11T15:07Z Minh Ha-Duong closed — autoclosed — PR #487
 --- body ---
 ## Context
 Two robustness gaps surfaced during the 2026-07-11 dream-sync raid:
