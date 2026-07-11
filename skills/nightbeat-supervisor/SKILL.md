@@ -14,6 +14,17 @@ this file are illustrative defaults, not the contract.
 
 ## Goal
 
+**Doctrine — autonomous mode trades supervision for time.** The run loses the
+human eye but is freed from the interactivity constraint: nobody is waiting on
+the next reply. The executor therefore shifts its operational cursor toward
+spending that freed time on verification — more independent verification
+passes than an interactive session would afford (independent means a different
+lens or a different agent, never the producer re-reading itself) — and, when
+confidence is low or a judgment call exceeds its depth, escalates, including
+consulting a more capable agent for advice, instead of guessing.
+Cheap-but-plausible loses to slow-but-verified; the deadline is dawn, not the
+next message. The invariants below follow from this premise.
+
 Advance, overnight, the ticket perimeter the author authorized, without
 crossing any human-in-the-loop boundary, and deliver a self-contained morning
 report.
@@ -23,8 +34,10 @@ report.
 1. The queue is *live*: a ticket filed during the run enters the perimeter if
    its lineage traces to an authorized parent; tickets labeled needs-human or
    deferred are always excluded.
-2. Nothing integrates without verification; a failure is diagnosed then
-   retried or re-ticketed, never swallowed.
+2. Nothing integrates without verification, and verification depth scales
+   with the time available — overnight, that means multiple independent
+   passes, not a single self-check; a failure is diagnosed then retried or
+   re-ticketed, never swallowed.
 3. The bounds set at launch (perimeter, cycle/budget ceiling, prohibitions)
    are hard.
 
