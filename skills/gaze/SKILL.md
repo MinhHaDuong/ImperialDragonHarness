@@ -52,6 +52,13 @@ phases 5–6 never run. This orphaned two real gate runs (aedist `/gaze 977`
 and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a duplicate
 reviewer battery.
 
+**The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
+behalf — a reviewer Agent (e.g. Agent C) that itself spins a panel of
+perspective agents — inherits this same rule: the inner launch must be
+foreground too, or the orphan failure simply moves one layer down. A launch
+site is bound by the fork contract whether it is this skill's own or a
+sub-agent's.
+
 **Caller-side recovery.** If `/gaze <pr>` ever returns a bare fan-out
 narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
@@ -184,7 +191,14 @@ prefix — `verifiable:` (a reproducible failing assertion is attached),
 hedged "might break X" phrasing is forbidden — produce the assertion or
 downgrade to `consider:`. Blockers (request-changes / major) are untagged.
 Post the single review on the PR and return the synthesized findings (blockers
-+ tagged minors) as the structured block.
++ tagged minors) as the structured block. This inner panel is itself a fan-out:
+Agent C must launch its perspective agents **foreground**
+(`run_in_background: false`), all in one message, and block until every one
+returns before it synthesizes — a nested fan-out is **not** exempt from the
+fork contract. If Agent C ends its turn with perspective agents in flight, its
+return is premature: gaze inherits the orphan failure one layer down (no
+synthesis, no posted review), exactly the defect the outer contract prevents
+(ticket 0263, `/gaze 479`, 2026-07-11).
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
