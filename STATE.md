@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-11T18:03Z
+Last updated: 2026-07-11T22:30Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-11T18:03Z -->
+<!-- generated 2026-07-11T22:30Z -->
 
-**Tickets:** 15 ready · 4 blocked — `erg ready tickets/` for full list
+**Tickets:** 13 ready · 4 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  fbf4265 Merge pull request #491 from MinhHaDuong/t279-rehome-scratchpad-memory
-  7ce0faa ticket(0279): close and archive — PR #491
-  4301212 refactor(0279): collapse duplicate warning blocks in _load_aliases
-  ef6b5d5 memory: re-home scratchpad-keyed Oeconomia notes; alias-table shape guard (0279)
-  d2a2b47 Merge pull request #489 from MinhHaDuong/adopt-cfhet-orphan-note
+  b3378cf ticket(0286): derive setup-claude-agent.sh project list from projects.json
+  9477071 Merge pull request #497 from MinhHaDuong/t0284-home-reorg-stale-paths
+  666f41e ticket(0284): close and archive — PR #497
+  331d24b Merge pull request #496 from MinhHaDuong/t0262-cross-pr-ticket-collision
+  49db3cf ticket(0262): close and archive — PR #496
 
 ## Blockers
 
