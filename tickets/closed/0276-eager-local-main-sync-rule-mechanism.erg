@@ -2,11 +2,13 @@
 Title: eager local-main sync: rule + mechanism
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #475
 
 --- log ---
 2026-07-11T08:03Z Minh Ha-Duong created
 
 2026-07-11T08:27Z bump verify-reroll — round 1: sync-local-main.sh cd guard (exit-0 contract), index.lock mislabel wording, stderr-blind test, stale memory idiom
+2026-07-11T08:31Z Minh Ha-Duong closed — autoclosed — PR #475
 --- body ---
 ## Context
 
