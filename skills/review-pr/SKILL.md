@@ -47,9 +47,7 @@ runs and no review is ever posted.
 2. **Read the diff** of the merge request.
 3. **Assess risk level** and determine proportional depth (see table below).
 4. **Launch review agents** in parallel — **foreground**
-   (`run_in_background: false`), all in one message, per the concurrency
-   contract above; the fork must block on the panel, never end its turn with
-   reviewers in flight:
+   (`run_in_background: false`), per the concurrency contract above:
 
 | Agent | Focus | Key question |
 |---|---|---|

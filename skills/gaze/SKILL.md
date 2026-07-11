@@ -194,11 +194,8 @@ Post the single review on the PR and return the synthesized findings (blockers
 + tagged minors) as the structured block. This inner panel is itself a fan-out:
 Agent C must launch its perspective agents **foreground**
 (`run_in_background: false`), all in one message, and block until every one
-returns before it synthesizes — a nested fan-out is **not** exempt from the
-fork contract. If Agent C ends its turn with perspective agents in flight, its
-return is premature: gaze inherits the orphan failure one layer down (no
-synthesis, no posted review), exactly the defect the outer contract prevents
-(ticket 0263, `/gaze 479`, 2026-07-11).
+returns before it synthesizes — the fork contract applies recursively (see
+**Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11).
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 

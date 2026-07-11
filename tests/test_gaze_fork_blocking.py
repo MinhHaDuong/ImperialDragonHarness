@@ -25,18 +25,18 @@ import re
 from pathlib import Path
 
 import pytest
+from test_verify_fork_contracts import fork_skill_files
 
 REPO = Path(__file__).resolve().parents[1]
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 
-# The three skills that launch a parallel fan-out from inside a `context: fork`.
-# gaze delegates to the other two; all three must carry the foreground contract
-# *locally*, at the launch site, not merely somewhere in the file (ticket 0263).
-FORK_LAUNCH_SKILLS = {
-    "gaze": GAZE,
-    "review-pr": REPO / "skills" / "review-pr" / "SKILL.md",
-    "review-pr-prose": REPO / "skills" / "review-pr-prose" / "SKILL.md",
-}
+# Every `context: fork` skill must carry the foreground contract *locally*, at
+# each parallel-agent launch site, not merely somewhere in the file (ticket
+# 0263). Auto-discovered from frontmatter via fork_skill_files() so a new fork
+# skill is covered without editing a hand-maintained list — a blind all-skills
+# sweep would over-fire on raid/release, which legitimately launch background
+# agents because they are not forks and can wait on background completions.
+FORK_LAUNCH_SKILLS = {p.parent.name: p for p in fork_skill_files()}
 
 
 def _body(md_text: str) -> str:
