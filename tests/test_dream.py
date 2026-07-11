@@ -294,6 +294,89 @@ def test_provenance_remove_unknown_slug(provenance_env):
     assert "nonexistent" not in show["entries"]
 
 
+# --- Provenance canonical-project gate (ticket 0270: path aliases collapse) ---
+
+
+def _write_aliases(home, mapping):
+    """Write the read-time alias table to <HOME>/.claude/memory/.project-aliases.json."""
+    path = home / ".claude" / "memory" / ".project-aliases.json"
+    path.write_text(json.dumps(mapping))
+
+
+def _seed_provenance(home, slug, projects, promoted=False):
+    """Write .provenance.json directly with one entry under the given project keys.
+
+    Directory-slug project keys begin with `-` (e.g. `-home-haduong--claude`), which
+    argparse in the record CLI parses as `-h`; the decay tests already seed the store
+    directly for the same reason. We exercise candidates() in isolation here."""
+    path = home / ".claude" / "memory" / ".provenance.json"
+    now = "2026-07-11T00:00:00Z"
+    path.write_text(json.dumps({
+        "entries": {
+            slug: {
+                "projects": list(projects),
+                "first_seen": now,
+                "last_confirmed": now,
+                "promoted": promoted,
+            }
+        }
+    }))
+
+
+def test_provenance_candidates_alias_collapse_not_candidate(provenance_env):
+    """Two path-spellings of one project collapse to one canonical project, so a
+    slug recorded under both keys is NOT a promotion candidate (frequency < 2).
+
+    Directory-slug keys, not paths: the AEDIST report registered under both
+    `-home-haduong-aedist-technical-report` and its
+    `-home-haduong-CNRS-papiers-actif-AEDIST-technical-report` spelling. The gate
+    must count distinct *canonical* projects."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _seed_provenance(provenance_env, "reference_zotero", [
+        "-home-haduong-aedist-technical-report",
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == []
+
+
+def test_provenance_candidates_true_distinct_still_candidate(provenance_env):
+    """Teeth-check: with the alias table present, a slug in two genuinely distinct
+    projects is still the sole candidate — the canonicalizer collapses only aliases."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == ["feedback_vim"]
+
+
+def test_provenance_candidates_substring_key_still_distinct(provenance_env):
+    """A key that shares a substring with an aliased key but is not that key stays
+    distinct — guards against substring matching creeping in instead of dict.get()."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _seed_provenance(provenance_env, "feedback_vim", [
+        "-home-haduong-aedist-technical-report",
+        "-home-haduong-aedist-technical-report-notes",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == ["feedback_vim"]
+
+
 def test_provenance_decay_empty(provenance_env):
     result = _run_provenance("decay", home=provenance_env)
     assert result.returncode == 0
