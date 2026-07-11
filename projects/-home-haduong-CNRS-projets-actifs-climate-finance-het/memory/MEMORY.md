@@ -65,6 +65,7 @@
 - [feedback_branch_before_edit.md](feedback_branch_before_edit.md) — always checkout target branch before editing files; never edit on main then move
 - [feedback_make_corpus.md](feedback_make_corpus.md) — never suggest bare `dvc repro`; always use `make corpus` (padme) or `make corpus-sync` (doudou)
 - [feedback_no_rebase_dvc.md](feedback_no_rebase_dvc.md) — never rebase when DVC symlinks are dirty; use merge + stash/pop
+- [feedback_ln_into_existing_dir_autostage.md](feedback_ln_into_existing_dir_autostage.md) — ln -s into an existing dir lands the link INSIDE it; dvc autostage commits the loop symlink (0252 guard: test_no_committed_symlink_under_data)
 - [feedback_simplest_fix.md](feedback_simplest_fix.md) — don't add hooks/exceptions; restructure the operation to work within existing rules (ff merge vs --no-ff)
 - [feedback_ssh_padme.md](feedback_ssh_padme.md) — can SSH doudou→padme; always prepend PATH=$HOME/.local/bin (uv not in non-interactive PATH)
 - [feedback_weekend_boundary.md](feedback_weekend_boundary.md) — no project work on weekends; mental health is non-negotiable
