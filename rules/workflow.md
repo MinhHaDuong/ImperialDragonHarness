@@ -104,6 +104,18 @@ applied to build outputs.
 - **Max 8 concurrent agents** (authorized 2026-06-08). Beyond that, coordination overhead exceeds the gains. Keep watch: when 3+ agents touch the same file or registry, open a coordination PR first (see Phase 5.0 in raid skill).
 - **One well-prompted agent first.** Only add agents when a single agent clearly can't handle the task.
 
+# Reuse gate for autonomous orchestration
+
+Before designing any multi-cycle autonomous orchestration (scheduled loops,
+overnight supervisors, wave runners), inventory the existing skills and
+runbooks catalog and declare, as part of the run plan, either which existing
+piece is reused or why none fits. The declaration is the compliance artifact —
+it makes the reuse decision verifiable ex post, where a silent improvisation
+is not. (Cost of skipping this, 2026-07-10: an hourly autonomous loop was
+improvised from scratch while `nightbeat-supervisor` sat undiscovered in the
+catalog, and its static itinerary missed a mid-run child ticket a live queue
+would have picked up.)
+
 # Ticket discipline for multi-PR work
 
 **A PR closes every ticket named in its `**Ticket:**` lines.** `erg-pr-merge` closes ALL tickets listed in the PR body's `**Ticket:**` lines — unconditionally, regardless of whether all exit-criteria checkboxes are ticked. One ticket per PR remains the recommended review hygiene; list multiple only when they genuinely land together (e.g. raid-wave filings). The `**Ticket:**` (or bare `Ticket:`) line is the close claim. To cite a ticket without closing it, use `Ticket-ref: tickets/NNNN-...`; for a PR that closes nothing, `Ticket: none`. Title prefixes like `chore(0216):` are subject references, never close claims.
@@ -126,7 +138,7 @@ When compacting, preserve the list of modified files, test commands, and current
 
 # Writing Skills and Hooks
 
-**Forge-agnostic language**: Never hardcode `gh` commands or GitHub references in skills or rules. Use "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub". Skills describe *what* to do, not *which tool* to use.
+**Tool-agnostic language**: Skills and rules name *capabilities*, not the current tool that provides them — "schedule a wake-up" not a specific timer-tool name, "delegate to a subagent" not a specific agent-tool name, "list ready tickets" not a specific picker-skill name. The forge case is the canonical instance: never hardcode `gh` commands or GitHub references — "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub". The harness is portable across tool generations; tool names rot, capabilities don't.
 
 **Hook output framing**: Use declarative wording ("Worktree isolation is enabled…") not imperative commands ("INSTRUCTION: call EnterWorktree now"). The model classifies imperative hook instructions as prompt injection and ignores them.
 
