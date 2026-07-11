@@ -1,0 +1,4 @@
+- [Use full hierarchical group codes for Jussieu cohort](feedback_group_codes.md) — label SVCST groups with full code, never bare A/B
+- [Machine roles in IDH setup](project_machine_roles.md) — padme is server (nightbeat), doudou is laptop (no nightbeat)
+- [Barème fiche acteur IEE](project_bareme_fiches_acteur.md) — grille /20 + règles strictes Expression, colonnes IA hors-barème, cumul fiches multiples
+- [Moodle grade CSV format](feedback_moodle_grade_csv_format.md) — fill existing "(Brut)" column in place, never add columns; FR comma decimals
