@@ -9,10 +9,11 @@
 # already landed. This script closes that gap: for the PR under test it lists the
 # ticket IDs it ADDS and fails if any is also added by another OPEN PR.
 #
-# A ticket added relative to the base branch cannot already exist on the base by
-# construction (that is what `--diff-filter=A` against the base means), so the
-# base-branch collision the ticket mentions is covered for free; the live gap is
-# sibling open PRs, which this script enumerates.
+# Two collision surfaces are checked. The base tip: the added-files diff is
+# taken against the merge-base, so an ID that landed on the base AFTER this
+# branch diverged (via an already-merged claimant, absent from any open-PR scan)
+# is invisible to it — the script therefore compares added IDs against the base
+# tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
 # Forge coupling is confined to two calls, each marked `# harness-extension-point`
 # (the isolation idiom used in skills/merge/erg-pr-merge): listing open PRs and
@@ -40,11 +41,12 @@ ticket_ids_from_paths() {  # reads filenames on stdin, prints 4-digit IDs
         | sort -u
 }
 
-# ── this PR's newly-added ticket IDs (local git, no forge call) ───────────────
-OWN_IDS=$(
+# ── this PR's newly-added ticket files (local git, no forge call) ─────────────
+OWN_PATHS=$(
     git diff --diff-filter=A --name-only "${BASE_REF}...HEAD" -- tickets/ \
-        | ticket_ids_from_paths
+        | grep -E '^tickets/[0-9]{4}-.*\.erg$'
 ) || true
+OWN_IDS=$(ticket_ids_from_paths <<< "$OWN_PATHS") || true
 
 if [[ -z "$OWN_IDS" ]]; then
     echo "cross-pr-collision: this PR adds no ticket files — nothing to check."
@@ -53,12 +55,28 @@ fi
 
 echo "cross-pr-collision: this PR adds ticket ID(s): $(echo "$OWN_IDS" | tr '\n' ' ')"
 
+collision=0
+
+# ── base-tip collision (local git, no forge call) ─────────────────────────────
+# The merge-base diff above never sees a ticket that landed on the base tip
+# after this branch diverged, and a merged claimant is invisible to the open-PR
+# scan below. Compare added IDs against the base tip directly. A same-path hit
+# is this PR's own file already landed (not a rival claim), so only a different
+# filename carrying the same ID counts.
+BASE_TICKETS=$(git ls-tree -r --name-only "$BASE_REF" -- tickets/ \
+    | grep -E '^tickets/[0-9]{4}-.*\.erg$' || true)
+while IFS= read -r own_path; do
+    [[ -z "$own_path" ]] && continue
+    id=$(sed -E 's|^tickets/([0-9]{4})-.*|\1|' <<< "$own_path")
+    rivals=$(grep -E "^tickets/${id}-" <<< "$BASE_TICKETS" | grep -vxF "$own_path" || true)
+    [[ -z "$rivals" ]] && continue
+    echo "COLLISION: ticket ID ${id} already exists on ${BASE_REF} as $(tr '\n' ' ' <<< "$rivals")(landed after this branch diverged)." >&2
+    collision=$((collision + 1))
+done <<< "$OWN_PATHS"
+
 # ── enumerate sibling open PRs (forge-specific) ───────────────────────────────
 # harness-extension-point: GitHub CLI — swap this block for another forge's API.
 SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName) # harness-extension-point
-
-# Map each sibling PR number -> the ticket IDs it adds, collision-checking as we go.
-collision=0
 
 while IFS=$'\t' read -r pr_number pr_branch; do
     [[ -z "$pr_number" ]] && continue

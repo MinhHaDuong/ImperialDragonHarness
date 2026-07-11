@@ -18,6 +18,11 @@
 #   (c) own PR adds no ticket file -> exit 0 AND gh is never invoked (fast path).
 #   (d) sibling file fetch fails -> still exit 0 (fail-open) but a WARNING names
 #       the skipped PR, so the degraded check is visible in CI logs.
+#   (e) the same ID landed on the BASE TIP via an already-merged claimant
+#       (different filename) after the branch diverged -> exit 1 naming the base;
+#       the merge-base diff and the open-PR scan are both blind to this one.
+#   (f) the PR's own file (same path) already sits on the base tip -> exit 0;
+#       a same-path hit is not a rival claim.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -189,5 +194,55 @@ else
     echo "FAIL: fetch failure should fail open (exit 0)"; echo "$out"; fail=1
 fi
 
+# Adds a ticket file to the BASE branch after the PR branch diverged, then
+# refreshes origin/$BASE (the repo is its own origin) and returns to the branch.
+land_on_base() {  # $1 = filename under tickets/
+    git -C "$REPO" switch -q "$BASE"
+    cat > "$REPO/tickets/$1" <<ERG
+%erg 0.1
+Title: Landed on base after divergence
+Created: 2026-06-18
+Author: test
+
+--- log ---
+2026-06-18T00:00Z test created
+
+--- body ---
+## Context
+Merged claimant.
+ERG
+    git -C "$REPO" add "tickets/$1"
+    git -C "$REPO" commit -q -m "merged claimant: $1"
+    git -C "$REPO" fetch -q origin
+    git -C "$REPO" switch -q "$BRANCH"
+}
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case (e): same ID landed on the base tip via a merged claimant -> exit 1
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo basecol 0300
+land_on_base "0300-merged-sibling.erg"
+if out=$(SELF_PR_NUMBER=99 STUB_PR_LIST='[]' run_check 2>&1); then
+    echo "FAIL: base-tip collision should have exited non-zero"; echo "$out"; fail=1
+else
+    e_ok=1
+    echo "$out" | grep -q '0300'                  || { echo "  message lacks the colliding ID 0300"; e_ok=0; }
+    echo "$out" | grep -q '0300-merged-sibling'   || { echo "  message does not name the base-tip rival file"; e_ok=0; }
+    echo "$out" | grep -qi 'next'                 || { echo "  message lacks a next-free-ID suggestion"; e_ok=0; }
+    if (( e_ok )); then echo "PASS: base-tip collision fails, names the rival file and a next-free-ID suggestion"
+    else echo "FAIL: base-tip collision message incomplete"; fail=1; fi
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case (f): the PR's own file already sits on the base tip (same path) -> exit 0
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo samepath 0300
+land_on_base "0300-own.erg"     # identical path to the branch's own added file
+if out=$(SELF_PR_NUMBER=99 STUB_PR_LIST='[]' run_check 2>&1); then
+    echo "PASS: same-path base hit is not flagged (exit 0)"
+else
+    echo "FAIL: same-path base hit wrongly flagged as a collision"; echo "$out"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn"
+echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught"
