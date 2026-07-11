@@ -6,6 +6,7 @@ Author: Integration Test
 --- log ---
 2026-06-10T14:10Z Integration Test created
 
+2026-07-11T13:05Z claude note raid plan — lands WITH 0275 as one PR; PR-body anchor moved step 8->14 (0247 restructure); provenance remove op mirrors record; promoted entries survive remove
 --- body ---
 ## Context
 The /gaze review of PR #359 (dream consolidation of -home-haduong-padme)
