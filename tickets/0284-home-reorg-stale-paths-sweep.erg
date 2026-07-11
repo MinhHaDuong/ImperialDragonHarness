@@ -1,0 +1,42 @@
+%erg 0.1
+Title: home-reorg sweep: stale pre-reorg paths outside the nightbeat registry
+Created: 2026-07-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-11T20:40Z Minh Ha-Duong created
+--- body ---
+## Context
+
+PR #493 re-pointed `scripts/projects.json` after the 2026-07 home
+reorganization moved every project out of `~`. Review during that PR's
+verification found stale pre-reorg `~/<name>` paths in files outside that
+PR's logical unit — the nightbeat registry was fixed, but hardcoded paths
+elsewhere still point at the old locations.
+
+## Relevant files
+
+- `scripts/setup-claude-agent.sh:8-11` — hardcoded PROJECTS array
+  (`~/cadens`, `~/Climate_finance`, `~/aedist-technical-report`,
+  `~/fuzzy-corpus`)
+- `skills/maw-audit/SKILL.md:109-110` and `:212-215` — operator launch
+  paths (`~/git-erg`, `~/aedist-technical-report`)
+- `STATE.md:29` — `~/aedist-technical-report` in an active directive
+- `skills/scry/SKILL.md` — pre-existing internal path inconsistency, verify
+  while there
+
+## Actions
+
+1. Re-point each stale path to its post-reorg location. Verify each target
+   with `git -C <path> remote get-url origin` before editing.
+2. Confirm no other pre-reorg `~/<name>` project path survives in the tree.
+
+## Verification
+
+- [ ] Each listed path resolves to a live checkout at its post-reorg location
+- [ ] `scripts/check-agnostic.sh` passes
+
+## Exit criteria
+
+- No pre-reorg `~/<name>` project path remains in the listed files
+- `scripts/check-agnostic.sh` passes

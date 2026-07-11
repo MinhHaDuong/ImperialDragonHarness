@@ -1,0 +1,32 @@
+%erg 0.1
+Title: cadens checkout relocated after home reorg — found and re-registered
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #493
+
+--- log ---
+2026-07-11T20:25Z Minh Ha-Duong created
+
+2026-07-11T20:38Z verify-gate reroll round-1: cadens checkout confirmed live at ~/CNRS/papiers/actif/Cadens (origin github.com/MinhHaDuong/cadens.git, HEAD 7b55808 2026-04-30) — ticket premise false, PR must not drop cadens from registry
+
+2026-07-11T20:40Z gaze note checkout found at ~/CNRS/papiers/actif/Cadens during PR 493 verification; entry re-registered
+2026-07-11T20:45Z Minh Ha-Duong closed — autoclosed — PR #493
+--- body ---
+## Context
+
+The 2026-07 home-directory reorganization moved every project out of `~`.
+The nightbeat supervisor survey (2026-07-11 run) re-pointed six of the seven
+`scripts/projects.json` entries to their new locations, but missed cadens
+because its new directory name is capitalized — `~/CNRS/papiers/actif/Cadens`,
+not the lower-case `cadens` the survey searched for. The entry was removed
+under the false premise that no checkout existed anywhere on this machine.
+
+A review pass during PR #493 verification found the live checkout at
+`~/CNRS/papiers/actif/Cadens` (origin
+`https://github.com/MinhHaDuong/cadens.git`, HEAD 7b55808) and re-registered
+it in `scripts/projects.json`.
+
+## Exit criteria
+
+- [ ] cadens has a working checkout registered in `scripts/projects.json`
+- [ ] `python3 scripts/nightbeat-supervisor-survey.py` runs warning-free
