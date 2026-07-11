@@ -59,32 +59,37 @@ SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName) # harness-ext
 
 # Map each sibling PR number -> the ticket IDs it adds, collision-checking as we go.
 collision=0
-next_id=$(tickets/erg next-id 2>/dev/null || echo "(run ./tickets/erg next-id)")
 
 while IFS=$'\t' read -r pr_number pr_branch; do
     [[ -z "$pr_number" ]] && continue
     [[ -n "$SELF_PR" && "$pr_number" == "$SELF_PR" ]] && continue
 
     # harness-extension-point: GitHub CLI — fetch this PR's changed files.
-    sib_ids=$(
+    # Fail-open by design (hygiene gate; renumber-on-merge stays the backstop),
+    # but say so — a silent skip would look identical to a clean pass in CI logs.
+    if ! sib_files=$(
         gh api "repos/{owner}/{repo}/pulls/${pr_number}/files" --paginate \
-            --jq '.[] | select(.status=="added") | .filename' \
-            2>/dev/null | ticket_ids_from_paths
-    ) || true
+            --jq '.[] | select(.status=="added") | .filename' 2>/dev/null
+    ); then
+        echo "cross-pr-collision: WARNING — could not fetch PR #${pr_number}'s files; check incomplete for that PR." >&2
+        continue
+    fi
+    sib_ids=$(ticket_ids_from_paths <<< "$sib_files") || true
     [[ -z "$sib_ids" ]] && continue
 
-    # Intersection of OWN_IDS and this sibling's added IDs.
+    # Intersection of OWN_IDS and this sibling's added IDs. An empty $shared
+    # feeds the loop one blank line, which the [[ -z ]] guard skips.
     shared=$(comm -12 <(echo "$OWN_IDS") <(echo "$sib_ids") || true)
-    if [[ -n "$shared" ]]; then
-        while IFS= read -r id; do
-            [[ -z "$id" ]] && continue
-            echo "COLLISION: ticket ID ${id} is also added by open PR #${pr_number} (branch ${pr_branch})." >&2
-            collision=$((collision + 1))
-        done <<< "$shared"
-    fi
+    while IFS= read -r id; do
+        [[ -z "$id" ]] && continue
+        echo "COLLISION: ticket ID ${id} is also added by open PR #${pr_number} (branch ${pr_branch})." >&2
+        collision=$((collision + 1))
+    done <<< "$shared"
 done < <(echo "$SIBLINGS_JSON" | jq -r '.[] | [.number, .headRefName] | @tsv')
 
 if [[ "$collision" -ne 0 ]]; then
+    # Only needed on failure — don't spawn erg on the clean path.
+    next_id=$(tickets/erg next-id 2>/dev/null || echo "(run ./tickets/erg next-id)")
     echo "" >&2
     echo "Renumber your ticket(s) to a free ID and fix cross-references (git mv)." >&2
     echo "Next free ID on this branch: ${next_id}" >&2

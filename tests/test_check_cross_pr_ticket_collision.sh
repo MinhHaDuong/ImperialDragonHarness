@@ -16,6 +16,8 @@
 #       message names the sibling PR number.
 #   (b) sibling adds a different ID (0301) -> exit 0.
 #   (c) own PR adds no ticket file -> exit 0 AND gh is never invoked (fast path).
+#   (d) sibling file fetch fails -> still exit 0 (fail-open) but a WARNING names
+#       the skipped PR, so the degraded check is visible in CI logs.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -42,6 +44,7 @@ case "$1 $2" in
   "api "*|"api")
     # Emulate `gh api ... --jq '...'`: emit the already-filtered filenames the
     # script's downstream pipe expects (one per line).
+    [[ -n "${STUB_API_FAIL:-}" ]] && exit 1
     printf '%s\n' ${STUB_SIBLING_FILES:-} ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
@@ -113,6 +116,7 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       SELF_PR_NUMBER="${SELF_PR_NUMBER:-}" \
       STUB_PR_LIST="${STUB_PR_LIST:-[]}" \
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
+      STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
       bash "$SCRIPT" )
 }
@@ -168,5 +172,22 @@ else
     echo "FAIL: no-ticket-add case should exit 0"; echo "$out"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case (d): sibling file fetch fails -> fail-open (exit 0) with a visible WARNING
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo apifail 0300
+if out=$(SELF_PR_NUMBER=99 \
+         STUB_PR_LIST='[{"number":99,"headRefName":"pr-apifail"},{"number":77,"headRefName":"pr-sibling"}]' \
+         STUB_API_FAIL=1 \
+         run_check 2>&1); then
+    if echo "$out" | grep -q 'WARNING' && echo "$out" | grep -q '#77'; then
+        echo "PASS: fetch failure fails open with a WARNING naming PR #77"
+    else
+        echo "FAIL: fetch failure exit 0 but no WARNING naming the skipped PR"; echo "$out"; fail=1
+    fi
+else
+    echo "FAIL: fetch failure should fail open (exit 0)"; echo "$out"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call"
+echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn"
