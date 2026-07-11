@@ -1,0 +1,67 @@
+%erg 0.1
+Title: sync-local-main follow-ups: mechanical post-merge wiring, dedup, report surfacing
+Created: 2026-07-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-11T10:41Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+PR #475 landed the eager local-main sync (rule + `scripts/sync-local-main.sh`
++ session-start and /merge call sites; closed ticket 0276). The /gaze verdict
+flagged four non-blocking follow-ups, recorded here so the last manual steps
+disappear. Parent context: closed ticket 0276.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — auto-queue path returns before the merge
+  lands; the post-merge sync is currently a SKILL.md instruction the model
+  must remember to run
+- `scripts/beat.py` — `_sync_origin_main` duplicates the sync logic in Python
+- `scripts/on-start.sh` — sync runs past `exec >/dev/null`; its report line
+  (e.g. "left untouched: dirty overlap") is discarded
+- `scripts/sync-local-main.sh` — takes only a checkout path today
+
+## Actions
+
+1. `erg-pr-merge`: in the watch-then-merge path, run
+   `sync-local-main.sh` after the merge is confirmed; in the auto-queue
+   path, poll briefly for MERGED and sync on success, else print the
+   one-line reminder it prints today. Keep the script's exit code
+   unaffected by sync outcome.
+2. `beat.py`: replace `_sync_origin_main`'s duplicated logic with a
+   subprocess call to `sync-local-main.sh` (one implementation, one
+   behavior; keep the Python wrapper for logging).
+3. `on-start.sh`: capture the sync report to a file under
+   `$(git rev-parse --git-common-dir)/` (e.g. `sync-local-main.last`) so a
+   "left untouched" outcome is inspectable; optionally emit it above the
+   stdout cutoff on the NEXT session start.
+4. `sync-local-main.sh`: optional second argument naming the branch to
+   sync, defaulting to the detected default branch — for repos whose
+   integration branch is not main/master.
+
+## Test
+
+- Extend `tests/test_sync_local_main.sh` with the branch-argument case.
+- Extend `tests/test_erg_pr_merge.sh`: merged PR triggers one sync call;
+  sync failure does not change erg-pr-merge's exit code.
+- beat: existing `_sync_origin_main` tests keep passing against the
+  subprocess-backed implementation.
+
+## Verification
+
+- [ ] `make check` green (integration tier included)
+- [ ] Report file appears after a session start in a stale repo
+
+## Invariants
+
+- sync-local-main's guarantees are unchanged: only the named branch moves,
+  ff-only, dirty/diverged state untouched, exit 0.
+- erg-pr-merge's merge/close semantics and exit codes are unchanged.
+
+## Exit criteria
+
+- [ ] No call site relies on the model remembering to sync
+- [ ] One sync implementation shared by hook, merge script, and beat
