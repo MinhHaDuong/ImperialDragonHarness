@@ -54,6 +54,10 @@ case "$1 $2" in
       if [[ "$args" == *"autoMergeRequest"* ]]; then
         echo "${STUB_MERGE_EFFECT:-no}"; exit 0
       fi
+      # wait_for_merged probe: --json state --jq '.state' (ticket 0277)
+      if [[ "$args" == *"state"* ]]; then
+        echo "${STUB_STATE:-MERGED}"; exit 0
+      fi
     fi
     if [[ "$args" == *"title"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
@@ -179,6 +183,10 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
       STUB_MERGE_COSMETIC_FAIL="${STUB_MERGE_COSMETIC_FAIL:-0}" \
       STUB_MERGE_EFFECT="${STUB_MERGE_EFFECT:-no}" \
+      STUB_STATE="${STUB_STATE:-MERGED}" \
+      STUB_SYNC_LOG="${STUB_SYNC_LOG:-/dev/null}" \
+      ERG_PR_MERGE_SYNC="${ERG_PR_MERGE_SYNC:-}" \
+      ERG_PR_MERGE_MERGED_TRIES="${ERG_PR_MERGE_MERGED_TRIES:-2}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
       bash "$SCRIPT" 42 )
 }
@@ -543,5 +551,77 @@ else
     echo "PASS: genuine merge failure still aborts (merge_took_effect=no)"
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 17: eager local-main sync (ticket 0277). Once the queued merge lands
+# (state MERGED), the script must invoke sync-local-main exactly once, passing
+# the base branch. ERG_PR_MERGE_SYNC points at a logging stub so the assertion
+# is on invocations, not on git effects.
+# ════════════════════════════════════════════════════════════════════════════
+SYNC_STUB_DIR="$WORK/sync-stub"
+mkdir -p "$SYNC_STUB_DIR"
+cat > "$SYNC_STUB_DIR/sync-ok" <<'SYNCSTUB'
+#!/usr/bin/env bash
+echo "$@" >> "$STUB_SYNC_LOG"
+echo "sync-stub: synced"
+SYNCSTUB
+cat > "$SYNC_STUB_DIR/sync-fail" <<'SYNCSTUB'
+#!/usr/bin/env bash
+echo "$@" >> "$STUB_SYNC_LOG"
+echo "sync-stub: failing deliberately" >&2
+exit 1
+SYNCSTUB
+chmod +x "$SYNC_STUB_DIR/sync-ok" "$SYNC_STUB_DIR/sync-fail"
+
+seed_repo synccase 0277
+SLOG17="$WORK/sync17.log"; : > "$SLOG17"
+BODY17=$'Summary.\n\n**Ticket:** tickets/0277-fixture.erg\n'
+if STUB_STATE=MERGED ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-ok" \
+   STUB_SYNC_LOG="$SLOG17" \
+   run_merge "$BODY17" "ticket(0277): sync" >/dev/null 2>&1; then
+    s_miss=0
+    calls=$(wc -l < "$SLOG17")
+    [[ "$calls" -eq 1 ]] || { echo "  expected exactly 1 sync call, got $calls"; s_miss=1; }
+    grep -q -- "$BASE" "$SLOG17" || { echo "  sync not passed the base branch '$BASE'"; s_miss=1; }
+    if (( s_miss )); then echo "FAIL: merged PR did not trigger exactly one base-branch sync"; fail=1
+    else echo "PASS: merge landed -> sync-local-main invoked once with the base branch"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on the sync happy path"; fail=1
+fi
+
+# Case 17b: sync failure is non-fatal — merge/close semantics and exit code
+# unchanged (ticket 0277 invariant).
+seed_repo syncfail 0278
+SLOG17b="$WORK/sync17b.log"; : > "$SLOG17b"
+BODY17b=$'Summary.\n\n**Ticket:** tickets/0278-fixture.erg\n'
+if STUB_STATE=MERGED ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-fail" \
+   STUB_SYNC_LOG="$SLOG17b" \
+   run_merge "$BODY17b" "ticket(0278): syncfail" >/dev/null 2>&1; then
+    if closed_has 0278 && [[ "$(wc -l < "$SLOG17b")" -eq 1 ]]; then
+        echo "PASS: sync failure tolerated — script still exits 0, ticket closed"
+    else
+        echo "FAIL: sync-failure case lost the close or the sync call"; fail=1
+    fi
+else
+    echo "FAIL: a failing sync changed erg-pr-merge's exit code"; fail=1
+fi
+
+# Case 17c: merge queued but not yet landed (state stays OPEN past the bounded
+# poll) — NO sync call, still exit 0, and the output tells the caller to sync
+# after it lands.
+seed_repo syncqueued 0279
+SLOG17c="$WORK/sync17c.log"; : > "$SLOG17c"
+BODY17c=$'Summary.\n\n**Ticket:** tickets/0279-fixture.erg\n'
+if out=$(STUB_STATE=OPEN ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-ok" \
+   STUB_SYNC_LOG="$SLOG17c" \
+   run_merge "$BODY17c" "ticket(0279): queued" 2>&1); then
+    q_miss=0
+    [[ "$(wc -l < "$SLOG17c")" -eq 0 ]] || { echo "  sync called before the merge landed"; q_miss=1; }
+    echo "$out" | grep -qi "after it lands" || { echo "  no sync-later reminder in output"; q_miss=1; }
+    if (( q_miss )); then echo "FAIL: queued-not-landed path mishandled"; fail=1
+    else echo "PASS: queued-not-landed -> no premature sync, reminder printed, exit 0"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero when the queued merge had not landed"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands"
