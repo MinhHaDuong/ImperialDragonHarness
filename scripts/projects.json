@@ -1,10 +1,9 @@
 [
   { "name": "harness", "path": "~/.claude" },
-  { "name": "git-erg", "path": "~/git-erg" },
-  { "name": "chemin-de-voix", "path": "~/chemin-de-voix" },
-  { "name": "padme", "path": "~/padme" },
-  { "name": "Climate_finance", "path": "~/Climate_finance" },
-  { "name": "aedist-technical-report", "path": "~/aedist-technical-report" },
-  { "name": "fuzzy-corpus", "path": "~/fuzzy-corpus" },
-  { "name": "cadens", "path": "~/cadens" }
+  { "name": "git-erg", "path": "~/CNRS/code/git-erg" },
+  { "name": "chemin-de-voix", "path": "~/CNRS/projets/actifs/chemin-de-voix" },
+  { "name": "padme", "path": "~/CNRS/projets/actifs/padme" },
+  { "name": "climate-finance-het", "path": "~/CNRS/projets/actifs/climate-finance-het" },
+  { "name": "aedist-technical-report", "path": "~/CNRS/papiers/actif/AEDIST-technical-report" },
+  { "name": "fuzzy-corpus", "path": "~/CNRS/papiers/actif/Fuzzy Corpus" }
 ]
