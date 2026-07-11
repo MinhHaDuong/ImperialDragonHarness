@@ -4,4 +4,4 @@
 
 ## Entries
 
-(No entries yet. Entries are promoted from project-level memory when they meet all three gates: frequency across >=2 projects, material cost, and context-independence.)
+- [Zotero library](reference_zotero.md) — userID 95318, API keys in ~/.claude/.env (RO + RW scopes), collection T4X7ZNQL, endpoints

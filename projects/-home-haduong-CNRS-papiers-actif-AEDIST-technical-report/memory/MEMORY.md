@@ -69,7 +69,6 @@
 - API key: `~/.claude/.env` has ANTHROPIC_API_KEY, repo `.env` has OPENROUTER_API_KEY
 - [Autonomous Claude on Padme](reference_autonomous_padme.md) — nohup recipe for ticket-driven autonomous work
 - [Interactive Claude on Padme via tmux](reference_tmux_padme.md) — named tmux session recipe (claude1, claude2, …) for live driving
-- [Zotero library](reference_zotero.md) — userID 95318, API keys in ~/.claude/.env, collection T4X7ZNQL
 - [Worktrees not stash](feedback_worktree_not_stash.md) — use git worktree for cross-branch work, never stash+checkout
 - [evaluate-all record quality](feedback_evaluate_all_quality.md) — spot-check for absolute paths and -runN in model names
 - [Ollama num_ctx](feedback_ollama_num_ctx.md) — /v1/ ignores num_ctx, must use native /api/chat
