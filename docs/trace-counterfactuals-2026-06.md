@@ -81,5 +81,5 @@ the operative guardrail metrics (merged-rate is saturated at 100%).
   needs the A/B, not traces.
 - Whether Sonnet mains deliver gaze-APPROVED PRs at Opus rates — the
   census never observes the counterfactual model.
-- H4 beyond medians — 34 joined sessions is too thin for a regression;
+- H4 beyond medians — 33 joined sessions is too thin for a regression;
   the join cache will accumulate across monthly runs.
