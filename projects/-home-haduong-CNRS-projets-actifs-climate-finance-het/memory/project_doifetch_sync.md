@@ -19,7 +19,9 @@ The DOIfetch tool lives **outside the repo** at `/home/haduong/CNRS/code/DOIfetc
 
 2. **Regenerate missing references list:**
    ```bash
-   uv run python scripts/gen_missing_references.py
+   uv run python scripts/qa_missing_references.py --output docs/missing_references.txt
+   # (renamed from gen_missing_references.py in the prefix sweep #547;
+   #  needs bibtexparser -- run from the main checkout, worktree venvs may lack it)
    # Writes docs/missing_references.txt
    ```
 
@@ -28,4 +30,4 @@ The DOIfetch tool lives **outside the repo** at `/home/haduong/CNRS/code/DOIfetc
    cp docs/missing_references.txt /home/haduong/CNRS/code/DOIfetch/references/missing_references.txt
    ```
 
-**Why:** DOIfetch is an external tool (out of repo) that fetches PDFs by DOI/ISBN/URL. It reads `references/missing_references.txt` as its input queue and writes fetched PDFs to `papers/`. The project's `gen_missing_references.py` script generates that input from `content/bibliography/main.bib` vs `docs/articles/`.
+**Why:** DOIfetch is an external tool (out of repo) that fetches PDFs by DOI/ISBN/URL. It reads `references/missing_references.txt` as its input queue and writes fetched PDFs to `papers/`. The project's `qa_missing_references.py` script generates that input from `content/bibliography/main.bib` vs `docs/articles/`.

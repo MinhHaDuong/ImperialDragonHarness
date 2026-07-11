@@ -1,11 +1,16 @@
 ---
-name: SSH to padme is available
-description: Can SSH from doudou to padme to check progress, run commands, monitor pipeline
-type: feedback
+name: feedback-ssh-padme
+description: Can SSH from doudou to padme; always prepend PATH=$HOME/.local/bin (uv absent from non-interactive PATH)
+metadata:
+  type: feedback
 ---
 
-SSH to padme works from doudou: `ssh padme '...'`. Use it to check pipeline progress, tail logs, inspect processes.
+I can SSH from doudou to padme — never claim "I can't reach padme".
 
-**Why:** User pointed out that bash + ssh means we can monitor padme directly — don't say "I can't reach padme."
+**Why:** both machines are the author's; padme hosts the data/GPU side.
+Non-interactive SSH skips the login profile, so `uv` (at `~/.local/bin/uv`)
+is not on PATH.
 
-**How to apply:** When the user asks to check padme status, use `ssh padme` directly. Remember `uv` is at `~/.local/bin/uv` (not in PATH for non-interactive SSH). Repo is at `~/Oeconomia-Climate-finance`.
+**How to apply:** `ssh padme 'PATH=$HOME/.local/bin:$PATH <command>'` — prepend
+the PATH on every non-interactive invocation. (Merged from
+feedback_ssh_padme_path, dream consolidation 2026-07-10.)

@@ -30,7 +30,7 @@
 
 ## Papers & submission
 - Œconomia R&R: [project_oeconomia_rr_pipeline.md](project_oeconomia_rr_pipeline.md) (version ladder), [project_rr_traceability_ledger.md](project_rr_traceability_ledger.md) (60-remark ledger + HITL sign-off), [project_0171_conclusion_rebuild.md](project_0171_conclusion_rebuild.md), [feedback_version_increment_planning.md](feedback_version_increment_planning.md).
-- Reports & build: [project_techrep_rewrite.md](project_techrep_rewrite.md), [project_techrep_split.md](project_techrep_split.md), [project_writing_build_phase_separation.md](project_writing_build_phase_separation.md), [project_frozen_manuscript_vs_live_companions.md](project_frozen_manuscript_vs_live_companions.md), [project_repo_layout_decision.md](project_repo_layout_decision.md).
+- Reports & build: [project_techrep_rewrite.md](project_techrep_rewrite.md), [project_techrep_split.md](project_techrep_split.md), [project_writing_build_phase_separation.md](project_writing_build_phase_separation.md), [project_frozen_manuscript_vs_live_companions.md](project_frozen_manuscript_vs_live_companions.md), [project_repo_layout_decision.md](project_repo_layout_decision.md), [project_deliverables_render_next_to_source.md](project_deliverables_render_next_to_source.md) (raid 237 — deliverables/ landed, output/ retired).
 - Next papers: [project_paper_ceiling_growth_imaginary.md](project_paper_ceiling_growth_imaginary.md), [project_paper_instrument_circulation.md](project_paper_instrument_circulation.md).
 - Journals: [project_journal_strategy.md](project_journal_strategy.md), [reference_rdj4hss.md](reference_rdj4hss.md), [project_gide_conference.md](project_gide_conference.md).
 - Biblio & cited-works gate: [reference_bib_fulltext_index.md](reference_bib_fulltext_index.md), [reference_cited_works_local_docs_articles.md](reference_cited_works_local_docs_articles.md), [reference_paywalled_acquisition.md](reference_paywalled_acquisition.md), [reference_publist.md](reference_publist.md).
@@ -46,6 +46,7 @@
 - [feedback_het_register.md](feedback_het_register.md) — manuscript prose = HET academic register, not American motivational/business-book cadence
 - [feedback_yaml_quoting.md](feedback_yaml_quoting.md) — use `'"phrase"'` not `"phrase"` in corpus_collect.yaml for phrase search queries
 - [feedback_no_long_running.md](feedback_no_long_running.md) — don't launch long-running tasks (make, rendering); let user run in their terminal
+- [feedback_render_bitcompare_is_the_gate.md](feedback_render_bitcompare_is_the_gate.md) — for a pure build/layout refactor, render old-vs-new + byte-compare content is THE validation gate (clean-room manuscript is ~12s, SOURCE_DATE_EPOCH=0); don't over-apply no-long-running to skip it
 - [feedback_phase_separation.md](feedback_phase_separation.md) — make manuscript must never trigger Phase 1 scripts or API calls
 - [feedback_data_direction.md](feedback_data_direction.md) — data flows padme→doudou only; never push data from doudou to padme
 - [feedback_no_heavy_deps.md](feedback_no_heavy_deps.md) — don't add heavy deps (jupyter) when a simple approach (YAML, hardcode) works
@@ -54,17 +55,18 @@
 - [feedback_no_apc.md](feedback_no_apc.md) — APCs are scams; choose diamond OA venues (integrity, excellence, care)
 - [feedback_parallel_work.md](feedback_parallel_work.md) — user works in VSCode terminal in parallel; check filesystem before asserting something hasn't been done
 - [feedback_no_amend_pr.md](feedback_no_amend_pr.md) — don't amend commits on open PRs; force push makes GitHub diffs confusing
+- [feedback_verify_ai_generated_includes.md](feedback_verify_ai_generated_includes.md) — never cite from an AI-generated-not-human-reviewed include without verifying (phantom ref caught in §11)
+- [feedback_letter_voice_flags.md](feedback_letter_voice_flags.md) — align prose on style-anchor-v205 BEFORE showing it (A-not-B cadence, -ly stacks, jargon); letters in 1st person singular
+- [feedback_a4_paper.md](feedback_a4_paper.md) — always A4 paper format for generated PDFs, never US letter
 - [feedback_no_md_in_md.md](feedback_no_md_in_md.md) — never put markdown (## headings) inside fenced blocks; extract to a real file
 - [feedback_worktree_search.md](feedback_worktree_search.md) — scan parent dirs and /tmp for stale worktree directories, not just `git worktree list`
 - [feedback_no_noverify.md](feedback_no_noverify.md) — never bypass pre-commit hooks with --no-verify; always branch first
 - [feedback_worktree_local_hook_commit.md](feedback_worktree_local_hook_commit.md) — commit a branch's own hook fix via `git -c core.hooksPath=<worktree>/hooks` when hooksPath is absolute
 - [feedback_branch_before_edit.md](feedback_branch_before_edit.md) — always checkout target branch before editing files; never edit on main then move
-- [feedback_onstart_trigger.md](feedback_onstart_trigger.md) — on-start runbook must execute automatically before first response, not wait to be asked
 - [feedback_make_corpus.md](feedback_make_corpus.md) — never suggest bare `dvc repro`; always use `make corpus` (padme) or `make corpus-sync` (doudou)
 - [feedback_no_rebase_dvc.md](feedback_no_rebase_dvc.md) — never rebase when DVC symlinks are dirty; use merge + stash/pop
 - [feedback_simplest_fix.md](feedback_simplest_fix.md) — don't add hooks/exceptions; restructure the operation to work within existing rules (ff merge vs --no-ff)
-- [feedback_ssh_padme.md](feedback_ssh_padme.md) — can SSH from doudou to padme; don't say "I can't reach padme"
-- [feedback_ssh_padme_path.md](feedback_ssh_padme_path.md) — always prepend PATH=$HOME/.local/bin for padme SSH (uv not in non-interactive PATH)
+- [feedback_ssh_padme.md](feedback_ssh_padme.md) — can SSH doudou→padme; always prepend PATH=$HOME/.local/bin (uv not in non-interactive PATH)
 - [feedback_weekend_boundary.md](feedback_weekend_boundary.md) — no project work on weekends; mental health is non-negotiable
 - [feedback_verify_before_advising.md](feedback_verify_before_advising.md) — always WebFetch conference/journal URLs before offering strategic advice
 - [feedback_dropna_before_merge.md](feedback_dropna_before_merge.md) — always dropna before merge/set_index on DOI; pandas NaN==NaN causes cartesian explosion
