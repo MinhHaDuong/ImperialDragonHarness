@@ -5,7 +5,7 @@
 # Usage: sync-local-main.sh [checkout-dir] [branch]
 #   checkout-dir  any checkout/worktree of the repo (default: .)
 #   branch        branch to sync (default: detected default branch) — for
-#                 repos whose integration branch is not main/master (0277)
+#                 repos whose integration branch is not main/master (ticket 0277)
 #
 # Guarantees (see rules/git.md § Local main syncs eagerly):
 # - only the named/default branch moves — never whatever branch happens to be

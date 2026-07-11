@@ -154,7 +154,7 @@ fi
 POLL_INTERVAL="${ERG_PR_MERGE_POLL_INTERVAL:-10}"   # seconds between polls
 MERGE_POLL_TRIES="${ERG_PR_MERGE_POLL_TRIES:-5}"    # mergeability settle polls
 WATCH_RACE_TRIES="${ERG_PR_MERGE_WATCH_TRIES:-3}"   # checks-watch race retries
-MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_TRIES:-12}" # merged-state polls (0277)
+MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-12}" # merged-state polls (ticket 0277)
 
 # Eager local-main sync once the merge lands (ticket 0277; rules/git.md
 # § Local main syncs eagerly). Overridable so the test suite injects a stub.
@@ -256,7 +256,7 @@ sync_local_base() {
     if [[ -x "$SYNC_LOCAL_MAIN" ]]; then
         "$SYNC_LOCAL_MAIN" . "$BASE_BRANCH" || true
     else
-        echo "sync-local-main.sh not found — sync local ${BASE_BRANCH} manually"
+        echo "sync-local-main.sh not found or not executable — sync local ${BASE_BRANCH} manually"
     fi
     return 0
 }

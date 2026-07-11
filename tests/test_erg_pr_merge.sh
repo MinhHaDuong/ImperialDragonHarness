@@ -186,7 +186,7 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_STATE="${STUB_STATE:-MERGED}" \
       STUB_SYNC_LOG="${STUB_SYNC_LOG:-/dev/null}" \
       ERG_PR_MERGE_SYNC="${ERG_PR_MERGE_SYNC:-}" \
-      ERG_PR_MERGE_MERGED_TRIES="${ERG_PR_MERGE_MERGED_TRIES:-2}" \
+      ERG_PR_MERGE_MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-2}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
       bash "$SCRIPT" 42 )
 }

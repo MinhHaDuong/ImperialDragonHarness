@@ -37,14 +37,14 @@ cat "$_script_dir/../rules/README.md" 2>/dev/null || true
 cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
 
 # Surface the previous session start's local-main sync report when it needed
-# attention (dirty overlap, divergence, refusal). A clean fast-forward stays
-# silent — only the outcomes that need a human decision reach the
-# conversation. (ticket 0277)
+# attention (dirty overlap, divergence, refusal). A clean fast-forward — and a
+# routine offline "fetch failed — skipped" — stays silent: only the outcomes
+# that need a human decision reach the conversation. (ticket 0277)
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     _gcd=$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
     _sync_report="${_gcd:+$_gcd/sync-local-main.last}"
     if [ -n "$_sync_report" ] && [ -f "$_sync_report" ] \
-       && grep -qE 'untouched|diverged|refused|failed' "$_sync_report" 2>/dev/null; then
+       && grep -qE 'untouched|diverged|refused' "$_sync_report" 2>/dev/null; then
         echo "Local-main sync (previous session start): $(cat "$_sync_report")"
     fi
 fi
@@ -66,8 +66,12 @@ fi
 # session's first git commands is safe. The report lands in
 # <git-common-dir>/sync-local-main.last (we are past the stdout cutoff);
 # the next session start surfaces it above the cutoff if it needs attention.
+# Write via tmp + mv: concurrent session starts share the common dir, and an
+# atomic rename keeps the report whole (last-writer-wins, never interleaved).
 _gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
 if [ -n "$_gcd" ]; then
-    ( timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
-        > "$_gcd/sync-local-main.last" 2>&1 & )
+    ( { timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
+          > "$_gcd/sync-local-main.last.$$" 2>&1 \
+        && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
+        || rm -f "$_gcd/sync-local-main.last.$$"; } & )
 fi
