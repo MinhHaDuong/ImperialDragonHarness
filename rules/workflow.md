@@ -144,6 +144,8 @@ When compacting, preserve the list of modified files, test commands, and current
 
 **Rename/refactor sweeps cover the full logical unit.** When fixing one stale instance of a renamed term, sweep the smallest containing logical unit (CI step, function, config block) for siblings, and check parallel units (e.g. step 1 vs step 2 in the same workflow). Fix all occurrences in one commit.
 
+**Monster ticket found → propose decompose, not hold or brute-fanout.** A ticket with a large blast radius (touches ~15+ files, or rewrites a symbol/directory that other open tickets or a large import fan-in depend on), a build-gated or real-data exit (`make all`, a DVC repro, a training run), more than one MOA sign-off unit bundled in, or a dependency chain hidden in its prose rather than declared as `Blocked-by` — is neither a scheduling problem to skip nor a parallel-agent problem to fan out; either way it collides with siblings or blows the execute-agent timeout. Draft a tracking/epic ticket naming the blast radius, the partition boundary, any up-front architectural decision, and the wave order — then child tickets each sized to one sign-off unit, each `Blocked-by` its real prerequisite and NEVER the tracker. Autonomous run: file the split directly (the partition is mechanical once the blast radius is known — same standing as "sweep results are decisions"). Interactive session: propose the split to the author first — the partition boundary can be an architectural call the MOA owns, not the MOE's.
+
 # Identity
 
 The Imperial Dragon is not a bird. No avian analogies, ever — in skills, explanations, or naming rationale. Scale, power, taxonomy.

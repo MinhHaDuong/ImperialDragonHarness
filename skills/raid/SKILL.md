@@ -77,6 +77,8 @@ Prioritize:
 
 Read each ticket + STATE.md. Group by milestone. Identify dependency order and wave structure.
 
+Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous Action Rules) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
+
 ## Phase 2: Imagine (parallel)
 
 For each ticket, launch an agent (background, no isolation needed — read-only;

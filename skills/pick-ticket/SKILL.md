@@ -54,7 +54,12 @@ Select one ticket for the current sweep run.
      files, change docs/config/tests rather than core logic, are easily
      reversible, and have no external dependencies
 
-   Exclude tickets whose scope won't fit the beat window (~50 min):
+   Exclude tickets whose scope won't fit the beat window (~50 min).
+   Before writing a beat-skip, apply the monster-ticket checklist
+   (`rules/workflow.md` § Autonomous Action Rules): if it's a monster,
+   decompose it into a tracking + child tickets so the children re-enter
+   the ready pool, and reserve the beat-skip for a ticket that is
+   well-scoped but simply too big for this window:
    write a beat-skip entry `{ "id": "...", "until": "{now+24h}", "reason": "scope-too-large: ..." }`
 
    Exclude tickets whose body contains a `## Attempt log` section with a
