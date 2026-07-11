@@ -59,3 +59,16 @@ def test_empty_when_all_are_ticket_creation():
     with patch("subprocess.run", return_value=_mock_gh_pr_list(prs)):
         results = nbs._list_open_prs(Path("/tmp"), "owner/repo")
     assert results == []
+
+
+def test_existing_projects_skips_missing_paths(tmp_path, capsys):
+    present = tmp_path / "present"
+    present.mkdir()
+    projects = [
+        {"path": present, "name": "present"},
+        {"path": tmp_path / "gone", "name": "gone"},
+    ]
+    kept = nbs._existing_projects(projects)
+    assert [p["name"] for p in kept] == ["present"]
+    err = capsys.readouterr().err
+    assert "gone" in err and "skipping" in err
