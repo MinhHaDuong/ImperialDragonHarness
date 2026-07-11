@@ -354,6 +354,19 @@ def test_first_turn_cache_write_and_excess_reads(tmp_path):
     assert stats["excess_file_reads"] == 1  # /a.md read twice
 
 
+def test_mandated_regex_matches_compound_commands():
+    """Ticket 0246 action 2: the anchor bound only the first alternative, so a
+    compound command like `cd x && git worktree prune` did NOT count as
+    mandated while `cd x && erg close` DID. Both must count now."""
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && git worktree prune"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && erg close 0246"}) is True
+    # regression: leading git-branch/fetch still match unchanged
+    assert ts._is_mandated_tool("Bash", {"command": "git branch -D foo"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "git fetch --prune"}) is True
+    # a non-mandated command still does not match
+    assert ts._is_mandated_tool("Bash", {"command": "uv run pytest -q"}) is False
+
+
 def test_bucket_csv_columns_declared():
     for col in (
         "merge_markers",
