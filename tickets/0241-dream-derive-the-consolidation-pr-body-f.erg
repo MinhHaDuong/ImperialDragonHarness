@@ -7,6 +7,7 @@ Author: Integration Test
 2026-06-10T14:10Z Integration Test created
 
 2026-07-11T13:05Z claude note raid plan — lands WITH 0275 as one PR; PR-body anchor moved step 8->14 (0247 restructure); provenance remove op mirrors record; promoted entries survive remove
+2026-07-11T13:55Z bump verify-reroll — round 1: provenance.py remove() sys.exit(1)s on untracked slug while SKILL.md step 5 mandates the call unconditionally for every DELETE (37% of live entries lack provenance records per built-in reviewer measurement); no guard, no idempotent no-op, no test covers the untracked-slug DELETE path
 --- body ---
 ## Context
 The /gaze review of PR #359 (dream consolidation of -home-haduong-padme)
