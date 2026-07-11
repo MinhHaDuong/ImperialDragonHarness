@@ -1,0 +1,59 @@
+%erg 0.1
+Title: eager local-main sync: rule + mechanism
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #475
+
+--- log ---
+2026-07-11T08:03Z Minh Ha-Duong created
+
+2026-07-11T08:27Z bump verify-reroll — round 1: sync-local-main.sh cd guard (exit-0 contract), index.lock mislabel wording, stderr-blind test, stale memory idiom
+2026-07-11T08:31Z Minh Ha-Duong closed — autoclosed — PR #475
+--- body ---
+## Context
+
+Author is tired of stale local main. On 2026-07-11 a "sync local main"
+request against the primary checkout fast-forwarded another session's
+feature branch instead — the checkout was not on main, and the sync idiom
+assumed it was. The lesson was saved as memory
+(feedback_sync_main_check_primary_branch_first); the author asked to
+promote it to a rule and to make the sync eager.
+
+## Actions
+
+1. `scripts/sync-local-main.sh` — safe sync callable from any worktree:
+   moves only the default branch, ff-only, by ref when unchecked-out,
+   ff-merge in the one worktree holding it, reports (never touches)
+   dirty-overlap or diverged state; always exit 0 (hook-safe).
+2. `scripts/on-start.sh` — call it backgrounded (timeout 60) at session
+   start, in the silent section.
+3. `skills/merge/SKILL.md` — after the merge is confirmed landed, run the
+   sync script; forbid the hand-rolled `merge --ff-only` on the primary.
+4. `rules/git.md` — new bullet "Local main syncs eagerly, by ref — never
+   by assumption" naming the failure mode and the script.
+5. Memory entry updated to point at the rule.
+
+## Test
+
+- `tests/test_sync_local_main.sh` (auto-discovered by test_bash_suites):
+  ff on clean checked-out main; ref update with feature checked out and
+  feature untouched; dirty overlap preserved and reported; diverged main
+  untouched; sync from a linked worktree; silent when in sync; no-origin
+  and non-repo skips.
+
+## Verification
+
+- [ ] Test suite green under `make check`
+- [ ] `make check-fast` green; pipefail/agnostic guards pass
+
+## Invariants
+
+- The script never moves a non-default branch, never discards or stashes
+  working-tree state, never force-updates a diverged main.
+- Session start must not block on network (backgrounded + timeout).
+
+## Exit criteria
+
+- [ ] Rule bullet in rules/git.md; script + call sites merged
+- [ ] Local main is refreshed at session start and post-merge without
+      manual intervention
