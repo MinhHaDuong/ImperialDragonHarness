@@ -1,6 +1,6 @@
 ---
 name: nightbeat-supervisor
-description: Supervise an overnight autonomous work run: keep the authorized ticket queue moving, integrate verified work, diagnose and repair failures, and deliver a self-contained morning report. The nightbeat supervisor governs by intent — a goal and three hard invariants bind; every mechanism (frequency, wake-up, delegation, building blocks) is the executor's declared choice.
+description: Supervise an overnight autonomous work run: keep the authorized ticket queue moving, integrate verified work, diagnose and repair failures, and deliver a self-contained morning report.
 user-invocable: true
 argument-hint: "[--since ISO-TS]"
 ---
@@ -60,7 +60,7 @@ integrate a merge request, append to a journal.
 
 ---
 
-# Illustrative defaults
+## Illustrative defaults
 
 Everything below is **one possible organization** — the arrangement proven in
 production so far — offered as a starting point under the executor's latitude.
@@ -96,7 +96,7 @@ next one lands on). Independent failure diagnoses may be delegated to
   (Commits made from an isolated worktree are unaffected; the guard only fires
   in the primary checkout.)
 
-## 1. Survey
+### 1. Survey
 
 Pre-flight: probe the primary checkout (ticket 0247). A run that died
 mid-flight can strand the harness checkout off main with a dirty tree,
@@ -130,7 +130,7 @@ succeeded tickets via remote branch lookup and the forge API. Outputs
 `{prs_to_merge, failures, watermark_ts, journal_context}`.
 If both lists are empty, write a journal `action=idle` entry and stop.
 
-## 2. Integrate ready work
+### 2. Integrate ready work
 
 For each entry in `prs_to_merge` (which includes the merge-request number,
 the forge repo identifier, and `project_path` derived by the survey helper
@@ -143,8 +143,8 @@ from the project's git remote), sequentially:
    Then run the verification gate on the merge request:
    APPROVED → integrate it with the merge capability.
    REROLL → append the failing criteria as a note on the linked ticket
-   (create the ticket if none
-   is referenced in the merge-request body), then commit the ticket file:
+   (create one if the merge-request body references none), then commit the
+   ticket file:
    ```bash
    cd $HARNESS_DIR
    git add tickets/<ticket>.erg && git commit -m 'chore(supervisor): append REROLL note to <ticket>'
@@ -153,7 +153,7 @@ from the project's git remote), sequentially:
    After the gate and integration complete, return to `$HARNESS_DIR` for the
    next candidate.
 
-## 3. Diagnose and repair
+### 3. Diagnose and repair
 
 For each failure, read the cycle log and ask **why** until you reach an
 actionable root cause:
@@ -208,7 +208,7 @@ If the why-chain bottoms out without reaching anything repairable: escalate
 **Anything else**: open a ticket stating the root cause chain; do not
 auto-repair. Then `git add tickets/<ticket>.erg && git commit -m 'chore(supervisor): ticket for <root-cause>'`.
 
-## 4. Escalate
+### 4. Escalate
 
 Triggers: ESCALATE from the verification gate, why-chain without a repairable
 finding, or the same root cause recurring ≥ 3 consecutive runs for a project.
@@ -218,7 +218,7 @@ strong-reasoning subagent with the log context. Create a
 ticket with the verdict if the fix is outside authority. Commit the ticket:
 `git add tickets/<ticket>.erg && git commit -m 'chore(supervisor): escalation ticket for <project>'`.
 
-## 5. Done
+### 5. Done
 
 Append one journal entry per action taken this cycle to
 `$HARNESS_DIR/nightbeat-supervisor-journal.jsonl`. If no actions were taken,

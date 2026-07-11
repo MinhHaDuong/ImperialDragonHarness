@@ -138,9 +138,7 @@ When compacting, preserve the list of modified files, test commands, and current
 
 # Writing Skills and Hooks
 
-**Forge-agnostic language**: Never hardcode `gh` commands or GitHub references in skills or rules. Use "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub". Skills describe *what* to do, not *which tool* to use.
-
-**Tool-agnostic language (generalizes the above)**: Skills and rules name *capabilities*, not the current tool that provides them — "schedule a wake-up" not a specific timer-tool name, "delegate to a subagent" not a specific agent-tool name, "list ready tickets" not a specific picker-skill name. The harness is portable across tool generations; tool names rot, capabilities don't.
+**Tool-agnostic language**: Skills and rules name *capabilities*, not the current tool that provides them — "schedule a wake-up" not a specific timer-tool name, "delegate to a subagent" not a specific agent-tool name, "list ready tickets" not a specific picker-skill name. The forge case is the canonical instance: never hardcode `gh` commands or GitHub references — "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub". The harness is portable across tool generations; tool names rot, capabilities don't.
 
 **Hook output framing**: Use declarative wording ("Worktree isolation is enabled…") not imperative commands ("INSTRUCTION: call EnterWorktree now"). The model classifies imperative hook instructions as prompt injection and ignores them.
 
