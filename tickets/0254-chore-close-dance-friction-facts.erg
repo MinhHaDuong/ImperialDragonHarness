@@ -5,6 +5,7 @@ Author: orchestrator
 
 --- log ---
 2026-06-12T11:10Z orchestrator created — author asked for facts, not prescriptions
+2026-07-11T20:55Z claude note Imagine outcome: wontfix as machinery — dance rare (86/86 close-archive commits via erg-pr-merge in ~310 merged PRs); failure modes self-correcting or healthcheck-covered; git-add step documented in rules/git.md
 
 --- body ---
 ## Context — observed facts, one session (aedist, 2026-06-12)
@@ -42,6 +43,25 @@ each with its own failure mode. Whether the right move is a helper
 script, an erg-pr-merge mode, a documented recipe, or fewer paths is
 an Imagine-step decision — deliberately not prescribed here.
 
+## Imagine outcome (2026-07-11)
+
+Wontfix as machinery. Three read-only passes over this repo's history
+show the dance is rare and its failure modes already contained:
+
+- All 86 close-and-archive commits in ~310 merged PRs went through
+  erg-pr-merge normally; a genuine hand-rolled chore-close is roughly
+  1 in 150+ merges. The volume does not justify a helper script or a
+  new erg-pr-merge mode.
+- The double-close bounce ("no ticket found" on retry) is
+  self-correcting: it signals a later review round already closed the
+  ticket, and the recovery is to skip.
+- The archive-skip failure already has a healthcheck detector.
+
+The one undocumented step — `git add -u tickets/` after `erg close`,
+before `git mv`/commit, so the `Closed:` header is not dropped — is now
+recorded as a bullet in `rules/git.md` beside the merge-bounce recovery
+recipe. No new machinery; the recipe is the deliverable.
+
 ## Exit criteria
 
-- [ ] Imagine step run on these facts; outcome recorded (even wontfix)
+- [x] Imagine step run on these facts; outcome recorded (even wontfix)
