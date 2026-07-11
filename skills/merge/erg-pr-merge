@@ -282,7 +282,7 @@ if try_auto_merge; then
         sync_local_base
     else
         MERGE_LANDED=0
-        echo "Merge not confirmed landed — check 'gh pr view ${PR}', then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
+        echo "Merge not confirmed landed — check PR #${PR}'s state, then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
     fi
 else
     # Genuine auto-merge-unavailable: repo has auto-merge disabled. Legacy
