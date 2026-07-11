@@ -43,3 +43,21 @@ def test_tracked_write_points_have_commit():
 def test_commit_principle_declared():
     text = _read_skill()
     assert "Commit tracked writes immediately" in text
+
+
+def test_self_modification_guard_is_an_invariant():
+    """The read-only-own-definitions guard must be binding, not advisory.
+
+    It belongs inside the Invariants section, so an executor cannot edit skill
+    definition files mid-run while remaining formally compliant.
+    """
+    text = _read_skill()
+    start = text.find("## Invariants (the only prescriptions)")
+    assert start != -1, "Invariants section header missing"
+    end = text.find("## Executor's latitude", start)
+    assert end != -1, "Executor's latitude section missing"
+    invariants = " ".join(text[start:end].split())
+    assert "skill definition files" in invariants, (
+        "self-modification guard not inside the Invariants section"
+    )
+    assert "read-only" in invariants

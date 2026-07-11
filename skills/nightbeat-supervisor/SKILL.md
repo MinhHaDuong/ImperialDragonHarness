@@ -47,6 +47,9 @@ auditable choice, not a silence.
    re-ticketed, never swallowed.
 3. The bounds set at launch (perimeter, cycle/budget ceiling, prohibitions)
    are hard.
+4. The run never modifies its own governing definitions: skill definition
+   files are read-only mid-run, and the components that drive the run
+   (scheduler, cycle-runner) are quiesced before any edit to them.
 
 ## Executor's latitude
 
@@ -81,7 +84,8 @@ next one lands on). Independent failure diagnoses may be delegated to
   than fixing an itinerary at launch — a child of an authorized parent filed
   mid-run is in scope on the next cycle.
 - Stop the run's scheduler before editing the cycle-runner code, restart it
-  after; never edit skill definition files mid-run.
+  after; never edit skill definition files mid-run (this instantiates
+  invariant 4).
 - **Commit tracked writes immediately.** Every write to a tracked file in
   `$HARNESS_DIR` (`settings.json`, `scripts/beat.py`, `tickets/*.erg`) must be <!-- harness-extension-point -->
   followed by `git add <file> && git commit -m 'chore(supervisor): <description>'`
