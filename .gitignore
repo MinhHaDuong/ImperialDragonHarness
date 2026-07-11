@@ -22,6 +22,17 @@
 !memory/
 !memory/**
 memory/.provenance.lock
+
+# Per-project agent memory (projects/<hash>/memory/): track note bodies + index.
+# The top-level `*` + git's parent-exclusion rule silently ignored these — only
+# force-added ones survived. Re-include the path chain down to memory/ (not the
+# bulky transcripts/session files under projects/), and keep ignoring the
+# transient provenance lock (mirrors the top-level memory/ rules above).
+!projects/
+!projects/*/
+!projects/*/memory/
+!projects/*/memory/**
+projects/*/memory/.provenance.lock
 !tickets/
 !tickets/**
 tickets/tools/go/*.test
