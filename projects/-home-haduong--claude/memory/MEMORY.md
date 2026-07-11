@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Batch decisions, then run to the end](feedback_batch_decisions_run_to_end.md) — author doctrine: one frontloaded question round with defaults, then autonomous through verify/merge/cleanup to a single report; spinners are not deliverables. Promoted to rules/workflow.md (2026-07-11)
 - [Sync main: check the primary checkout's branch first](feedback_sync_main_check_primary_branch_first.md) — the primary checkout may sit on a feature branch; ff-merging origin/main there advances THAT branch. Update by ref (`fetch origin main:main`); preserve dirty overlapping files by backup + re-apply, never discard or bare-stash (2026-07-11)
 - [R&R intake is laborious](feedback_rr_intake_is_laborious.md) — Ingesting an editor decision + reviewer comments has no skill; done by hand it burns turns (Gmail re-search, comment recount, coverage verified 2-3×). Check `release/` not Gmail, archive to a known path, verify coverage once. Fix ticketed IDH 0265 (2026-06-18)
 - [No ruff ping-pong](feedback_no_ruff_ping_pong.md) — PostToolUse ruff hook fires after EVERY Edit; batch related edits so no intermediate state has unused imports; write new files complete in one Write

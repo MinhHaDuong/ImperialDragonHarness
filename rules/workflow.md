@@ -148,6 +148,21 @@ When compacting, preserve the list of modified files, test commands, and current
 
 # Autonomous Action Rules
 
+**Batch the decisions, then run to the end.** The author's attention is the
+scarcest resource in the loop; a spinner is not a deliverable. This is the
+interactive counterpart of the supervisor doctrine (autonomous mode trades
+supervision for time): interactive mode trades a single dense question round
+for a long autonomous tail. When work needs author input, collect every
+foreseeable decision into ONE batched question round — frontload the whole
+set, up to the tool's limit, with a recommended default per question — then
+execute through verification, merge, and cleanup without returning between
+steps, delegating waits to background agents, and deliver one report at the
+end. Never ask sequentially what could be asked together; never park the
+conversation on a wait a background agent could hold. Mid-run returns to the
+author are for genuinely NEW scope or destructive/irreversible actions the
+batched decisions did not cover — not for progress, not for permission to
+continue (author doctrine, 2026-07-11).
+
 **Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty.
 
 **Loophole found → offer to plug it.** When a gap or loophole is identified (audit, review, user-reported check), don't just report it — immediately offer a concrete fix. Propose either implementing it now or opening a ticket. Reporting without offering leaves the user to ask the obvious follow-up.
