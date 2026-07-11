@@ -5,10 +5,10 @@ set -euo pipefail
 
 HARNESS="$HOME/.claude"
 PROJECTS=(
-    "$HOME/aedist-technical-report"
-    "$HOME/cadens"
-    "$HOME/Climate_finance"
-    "$HOME/fuzzy-corpus"
+    "$HOME/CNRS/papiers/actif/AEDIST-technical-report"
+    "$HOME/CNRS/papiers/actif/Cadens"
+    "$HOME/CNRS/projets/actifs/climate-finance-het"
+    "$HOME/CNRS/papiers/actif/Fuzzy Corpus"
 )
 
 echo "── 1. User + group ──────────────────────────────────────────────────────"
