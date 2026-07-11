@@ -26,3 +26,8 @@ default). If the working tree must move to the new main and a dirty file
 overlaps the incoming diff: back the file up, `git checkout -- <file>`,
 ff-merge, then re-apply only the dirty lines on top — never discard, never bare
 stash (stash stack is shared, see rules/git.md).
+
+Promoted to rules/git.md § "Local main syncs eagerly" with mechanism
+`scripts/sync-local-main.sh` (session-start hook + /merge post-step), ticket
+0276, 2026-07-11 — the rule and script are now authoritative; this entry
+records the originating incident.

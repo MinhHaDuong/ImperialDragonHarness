@@ -46,3 +46,9 @@ exec >/dev/null 2>&1
 if [ -f hooks/pre-commit ]; then
     git config core.hooksPath hooks
 fi
+
+# Eager local-main sync (rules/git.md § Local main syncs eagerly).
+# Backgrounded so an offline fetch can never stall session start; the script
+# is ff-only and never touches dirty or diverged state, so racing the
+# session's first git commands is safe.
+( timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" & )

@@ -34,3 +34,18 @@ The script reads close intent from the PR **body** only — never the title:
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
 
 Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
+
+## After the merge lands
+
+Once the merge is confirmed (PR state MERGED — poll if it was queued), sync
+the local default branch:
+
+```bash
+~/.claude/scripts/sync-local-main.sh
+```
+
+This is the eager-sync gate of rules/git.md § Local main syncs eagerly: it
+fast-forwards main by ref (or in whichever worktree has it checked out) and
+never touches dirty or diverged state — report its output if it says
+"left untouched". Do not substitute a hand-rolled `merge --ff-only` on the
+primary checkout: that advances whatever branch is checked out there.
