@@ -367,6 +367,27 @@ def test_mandated_regex_matches_compound_commands():
     assert ts._is_mandated_tool("Bash", {"command": "uv run pytest -q"}) is False
 
 
+def test_mandated_regex_does_not_match_mentions_in_prose():
+    """/gaze simplify follow-up (PR 494): dropping the `^\\s*` anchor entirely
+    made MANDATED_BASH_RE match the keywords anywhere in the command string,
+    including inside quoted/echoed text that never invokes the command. The
+    regex must require the match sit at true command position — start of
+    string or right after a `&&`/`;`/`|` separator — not merely present
+    somewhere in the string."""
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'echo "see: run git branch -D to clean up"'}
+    ) is False
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'git commit -m "mentions erg close in the message"'}
+    ) is False
+    assert ts._is_mandated_tool("Bash", {"command": "erg closed 0246"}) is False
+    # semicolon and pipe separators still count as command position
+    assert ts._is_mandated_tool("Bash", {"command": "somecmd; git branch -D foo"}) is True
+    assert ts._is_mandated_tool(
+        "Bash", {"command": "git branch --list | grep foo"}
+    ) is True
+
+
 def test_bucket_csv_columns_declared():
     for col in (
         "merge_markers",

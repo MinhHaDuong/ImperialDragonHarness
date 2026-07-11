@@ -109,7 +109,9 @@ PR_NUMBER_RE = re.compile(r"(?:PR\s*#|pulls/)(\d+)")
 # Ticket 0244 (H10'): harness-mandated wrap-up work — memory/STATE writes,
 # branch hygiene, wrap-up skills. Used only to classify tail turns.
 MANDATED_PATH_RE = re.compile(r"/memory/|MEMORY\.md|STATE\.md")
-MANDATED_BASH_RE = re.compile(r"\bgit\s+(?:branch|worktree|fetch\s+--prune)|\berg\s+close\b")
+MANDATED_BASH_RE = re.compile(
+    r"(?:^|&&|;|\|)\s*(?:git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close)\b"
+)
 MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "housekeeping"}
 PATH_TOOLS = {"Read", "Edit", "Write", "NotebookEdit"}
 
