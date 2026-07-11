@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Sync main: check the primary checkout's branch first](feedback_sync_main_check_primary_branch_first.md) — the primary checkout may sit on a feature branch; ff-merging origin/main there advances THAT branch. Update by ref (`fetch origin main:main`); preserve dirty overlapping files by backup + re-apply, never discard or bare-stash (2026-07-11)
 - [R&R intake is laborious](feedback_rr_intake_is_laborious.md) — Ingesting an editor decision + reviewer comments has no skill; done by hand it burns turns (Gmail re-search, comment recount, coverage verified 2-3×). Check `release/` not Gmail, archive to a known path, verify coverage once. Fix ticketed IDH 0265 (2026-06-18)
 - [No ruff ping-pong](feedback_no_ruff_ping_pong.md) — PostToolUse ruff hook fires after EVERY Edit; batch related edits so no intermediate state has unused imports; write new files complete in one Write
 - [Skill-lifecycle edits need whole-run reasoning](feedback_skill_lifecycle_edit_whole_run.md) — Adding an exit/cleanup step to a multi-step skill: place it at the true run-end and trace every commit/side-effect between, not at the step where the symptom appears; run /gaze on skill-control-flow changes (IDH 0247)
