@@ -184,13 +184,13 @@ Runs after consolidation. Evaluates whether any project-level entries have earne
 python3 ~/.claude/skills/dream/provenance.py candidates
 ```
 
-Output is JSON: entries seen in >=2 distinct projects that are not yet promoted. If empty, skip to step 13.
+Output is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed) that are not yet promoted. If empty, skip to step 13.
 
 **10. Evaluate each candidate against three gates (all required).**
 
 For each candidate, Claude evaluates inline:
 
-- **Frequency gate** (mechanical, already passed): entry appears in >=2 distinct project consolidations.
+- **Frequency gate** (mechanical, already passed): entry appears in >=2 distinct canonical project consolidations (path aliases collapsed — see `provenance.py` / `memory/.project-aliases.json`).
 - **Cost gate** (Claude judgment): would missing this entry cost >500 tokens to re-derive per session, OR does missing it risk correctness/security failures? If neither, the entry fails.
 - **Context-independence gate** (Claude judgment): apply the three-part test from the research note:
   1. Entity stripping: remove project-specific entities. Does the lesson retain meaning?
