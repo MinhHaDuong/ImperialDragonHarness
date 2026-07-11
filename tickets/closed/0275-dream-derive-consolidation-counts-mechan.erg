@@ -2,11 +2,13 @@
 Title: dream: derive consolidation counts mechanically, not by prose recall
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #483
 
 --- log ---
 2026-07-11T07:32Z Minh Ha-Duong created
 
 2026-07-11T13:05Z claude note raid plan — lands WITH 0241 as one PR; ratchets tightened per antipattern scan (exact identity strings, PR-body proximity); ticket's skill-lint invariant is stale (no such target)
+2026-07-11T14:16Z Minh Ha-Duong closed — autoclosed — PR #483
 --- body ---
 ## Context
 
