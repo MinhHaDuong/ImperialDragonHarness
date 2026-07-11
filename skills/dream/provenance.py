@@ -83,8 +83,21 @@ def _load_aliases() -> dict:
 
 
 def _canonical_project(project: str, aliases: dict) -> str:
-    """Resolve an alias project-slug to its canonical slug; identity otherwise."""
-    return aliases.get(project, project)
+    """Resolve an alias project-slug to its canonical slug; identity otherwise.
+
+    Follows chained aliases ({old->mid, mid->canonical}) to a fixpoint so a
+    multi-hop table collapses fully. A visited-set guards against a cyclic table
+    looping forever: on a cycle we stop and return the last resolved slug, which
+    keeps the result deterministic (ticket 0270 reroll)."""
+    seen = {project}
+    current = project
+    while current in aliases:
+        nxt = aliases[current]
+        if nxt in seen:
+            return current
+        seen.add(nxt)
+        current = nxt
+    return current
 
 
 def _save_provenance(data: dict) -> None:

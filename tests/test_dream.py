@@ -377,6 +377,25 @@ def test_provenance_candidates_substring_key_still_distinct(provenance_env):
     assert [c["slug"] for c in candidates] == ["feedback_vim"]
 
 
+def test_provenance_candidates_chained_alias_not_candidate(provenance_env):
+    """A chained alias table {old->A, A->B} must resolve `old` all the way to B,
+    so a slug recorded under both `old` and `B` collapses to one canonical
+    project and is NOT a candidate. Single-level dict.get() stops at A and
+    wrongly counts {A, B} == 2 (ticket 0270 reroll)."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-old-spelling": "-home-haduong-mid-spelling",
+        "-home-haduong-mid-spelling": "-home-haduong-canonical",
+    })
+    _seed_provenance(provenance_env, "feedback_vim", [
+        "-home-haduong-old-spelling",
+        "-home-haduong-canonical",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == []
+
+
 def test_provenance_decay_empty(provenance_env):
     result = _run_provenance("decay", home=provenance_env)
     assert result.returncode == 0

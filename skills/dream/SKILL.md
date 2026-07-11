@@ -184,7 +184,7 @@ Runs after consolidation. Evaluates whether any project-level entries have earne
 python3 ~/.claude/skills/dream/provenance.py candidates
 ```
 
-Output is JSON: entries seen in >=2 distinct projects that are not yet promoted. If empty, skip to step 13.
+Output is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed) that are not yet promoted. If empty, skip to step 13.
 
 **10. Evaluate each candidate against three gates (all required).**
 
