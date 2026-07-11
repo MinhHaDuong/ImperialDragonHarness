@@ -2,11 +2,13 @@
 Title: Track the untracked per-project memory backlog across all projects
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #484
 
 --- log ---
 2026-07-11T11:08Z Minh Ha-Duong created
 
 2026-07-11T13:05Z claude note raid plan — inventory 103 files / 27 projects, zero credential exclusions (grep+eyeball done); all 27 MEMORY.md untracked; single PR, per-project commits; executor copies from primary tree; follow-up to file: re-home tmp-scratchpad-keyed Oeconomia memory
+2026-07-11T14:17Z Minh Ha-Duong closed — autoclosed — PR #484
 --- body ---
 ## Context
 The `.gitignore` top-level `*` catch-all + git's parent-exclusion rule silently
