@@ -1,0 +1,39 @@
+%erg 0.1
+Title: cadens checkout missing after home reorg — restore or retire registry entry
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Label: needs-human
+
+--- log ---
+2026-07-11T20:25Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+The 2026-07 home-directory reorganization moved every project out of `~`.
+The nightbeat supervisor (2026-07-11 run) re-pointed `scripts/projects.json`
+to the new locations, confirmed by git remote:
+
+- git-erg → `~/CNRS/code/git-erg`
+- chemin-de-voix → `~/CNRS/projets/actifs/chemin-de-voix`
+- padme → `~/CNRS/projets/actifs/padme`
+- climate-finance-het → `~/CNRS/projets/actifs/climate-finance-het`
+- aedist-technical-report → `~/CNRS/papiers/actif/AEDIST-technical-report`
+- fuzzy-corpus → `~/CNRS/papiers/actif/Fuzzy Corpus`
+
+`cadens` is the one project with no git checkout anywhere on doudou:
+`~/data/projets/cadens/` holds only a `raw/` data directory, and no
+directory named cadens under `~/CNRS` is a repository. Its registry entry
+was removed rather than left pointing at the dead `~/cadens` path.
+
+## Actions
+
+1. Author decides: clone cadens back onto this machine (where?), or retire
+   it from the nightbeat perimeter.
+2. If restored, re-add its entry to `scripts/projects.json`.
+
+## Exit criteria
+
+- [ ] cadens either has a working checkout registered in
+      `scripts/projects.json`, or is confirmed retired from the registry
+- [ ] `python3 scripts/nightbeat-supervisor-survey.py` runs warning-free
