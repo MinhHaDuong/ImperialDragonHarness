@@ -4,6 +4,7 @@ Scripts are pure I/O — no LLM calls, no Anthropic dependency.
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -107,6 +108,41 @@ def test_supervisor_probes_primary_checkout():
     assert "check-primary-checkout" in content, "supervisor does not run the checkout probe"
 
 
+def test_skill_md_pr_body_sourced_from_decision_table():
+    """Ticket 0241: the consolidation PR body must be the step-4 decision table
+    verbatim, never free-form summary prose (PR #359 shipped an improvised "all
+    NOOP" body that mismatched the diff). Check co-occurrence in a window, not
+    that each phrase merely appears somewhere in the file."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    lc = content.lower()
+    window = 600
+    found = any(
+        "pr body" in lc[max(0, m.start() - window):m.end() + window]
+        and "free-form" in lc[max(0, m.start() - window):m.end() + window]
+        for m in re.finditer("decision table", lc)
+    )
+    assert found, "PR body / decision table / free-form not co-located in SKILL.md"
+
+
+def test_skill_md_counts_derived_mechanically():
+    """Ticket 0275: before/after counts come from grep on MEMORY.md at base vs
+    head, the ADD list from --diff-filter=A, and the reconciliation identities
+    are stated verbatim so the executor self-checks (PR #471 shipped a
+    prose-recalled "76->74" over a real 72->74)."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "grep -c '^- \\['" in content, "count derivation grep missing"
+    assert "--diff-filter=A" in content, "ADD-list diff filter missing"
+    assert "NOOP + UPDATE + DELETE" in content, "before-count identity missing"
+    assert "NOOP + UPDATE + ADD" in content, "after-count identity missing"
+
+
+def test_skill_md_delete_removes_provenance():
+    """Ticket 0241: a DELETE must drop its provenance record, else deleted
+    entries keep counting toward the promotion frequency gate."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "provenance.py remove" in content, "DELETE does not clean provenance"
+
+
 def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
 
@@ -203,6 +239,50 @@ def test_provenance_promote(provenance_env):
 
 def test_provenance_promote_unknown_slug(provenance_env):
     result = _run_provenance("promote", "nonexistent", home=provenance_env)
+    assert result.returncode == 1
+
+
+# --- Provenance remove (ticket 0241: DELETE cleans provenance) ---
+
+
+def test_provenance_remove_drops_one_project(provenance_env):
+    """remove drops the named project from a multi-project slug; entry survives."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["projects"] == ["project-beta"]
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" in show["entries"]
+
+
+def test_provenance_remove_last_project_deletes_entry(provenance_env):
+    """Removing the last project of an unpromoted entry deletes the entry."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"removed": "feedback_vim"}
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" not in show["entries"]
+
+
+def test_provenance_remove_last_project_keeps_promoted_entry(provenance_env):
+    """Promotion is one-way: a promoted entry survives removal of its last
+    project (its lesson has earned harness-level status independent of origin)."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("promote", "feedback_vim", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["projects"] == []
+    assert data["promoted"] is True
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" in show["entries"]
+
+
+def test_provenance_remove_unknown_slug(provenance_env):
+    result = _run_provenance("remove", "nonexistent", "project-alpha", home=provenance_env)
     assert result.returncode == 1
 
 
