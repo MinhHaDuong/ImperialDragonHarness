@@ -363,7 +363,7 @@ def main():
     tokens = sys.argv[1:]
     wants_help = any(t in ("-h", "--help") for t in tokens)
     if len(tokens) > 1 and "--" not in tokens and not wants_help:
-        tokens = [tokens[0], "--"] + tokens[1:]
+        tokens.insert(1, "--")
 
     args = parser.parse_args(tokens)
     args.func(args)
