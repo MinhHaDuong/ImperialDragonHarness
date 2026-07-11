@@ -354,6 +354,40 @@ def test_first_turn_cache_write_and_excess_reads(tmp_path):
     assert stats["excess_file_reads"] == 1  # /a.md read twice
 
 
+def test_mandated_regex_matches_compound_commands():
+    """Ticket 0246 action 2: the anchor bound only the first alternative, so a
+    compound command like `cd x && git worktree prune` did NOT count as
+    mandated while `cd x && erg close` DID. Both must count now."""
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && git worktree prune"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && erg close 0246"}) is True
+    # regression: leading git-branch/fetch still match unchanged
+    assert ts._is_mandated_tool("Bash", {"command": "git branch -D foo"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "git fetch --prune"}) is True
+    # a non-mandated command still does not match
+    assert ts._is_mandated_tool("Bash", {"command": "uv run pytest -q"}) is False
+
+
+def test_mandated_regex_does_not_match_mentions_in_prose():
+    """/gaze simplify follow-up (PR 494): dropping the `^\\s*` anchor entirely
+    made MANDATED_BASH_RE match the keywords anywhere in the command string,
+    including inside quoted/echoed text that never invokes the command. The
+    regex must require the match sit at true command position — start of
+    string or right after a `&&`/`;`/`|` separator — not merely present
+    somewhere in the string."""
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'echo "see: run git branch -D to clean up"'}
+    ) is False
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'git commit -m "mentions erg close in the message"'}
+    ) is False
+    assert ts._is_mandated_tool("Bash", {"command": "erg closed 0246"}) is False
+    # semicolon and pipe separators still count as command position
+    assert ts._is_mandated_tool("Bash", {"command": "somecmd; git branch -D foo"}) is True
+    assert ts._is_mandated_tool(
+        "Bash", {"command": "git branch --list | grep foo"}
+    ) is True
+
+
 def test_bucket_csv_columns_declared():
     for col in (
         "merge_markers",
