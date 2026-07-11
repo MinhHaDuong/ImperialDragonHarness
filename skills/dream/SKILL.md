@@ -59,10 +59,25 @@ From entries classified NOOP, ADD, or UPDATE: extract 5 high-level insights that
 
 **4. Report.**
 
-Print a summary table:
-- Each filename → decision + one-line reason
-- The 5 extracted insights
-- Counts: N entries before → M after
+Print a summary table — the **decision table**. This table is the SOLE source
+of the step-14 PR body; do not write a separate free-form summary for the PR.
+
+- Each filename → decision (NOOP / ADD / UPDATE / DELETE) + one-line reason.
+- The 5 extracted insights.
+- Counts, **derived mechanically** — never recalled from the run:
+  - `before` = index lines in MEMORY.md at the branch base:
+    ```bash
+    git -C ~/.claude show <base>:<MEMORY.md path> | grep -c '^- \['
+    ```
+  - `after` = index lines in the working copy:
+    ```bash
+    grep -c '^- \[' <memory_dir>/MEMORY.md
+    ```
+  - Reconciliation identity — self-check before reporting:
+    `NOOP + UPDATE + DELETE` must equal `before`, and `NOOP + UPDATE + ADD`
+    must equal `after`. If either fails, recount before reporting.
+- The ADD list = the exact output of
+  `git -C ~/.claude diff --name-only --diff-filter=A`, never a narrative sample.
 
 If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
 
@@ -76,6 +91,13 @@ For each DELETE entry, overwrite its file with a tombstone:
 ```
 
 Use the Edit or Write tool. Never use `rm`.
+
+Then drop the entry's provenance record for this project — otherwise the
+deleted entry keeps counting toward the promotion frequency gate (ticket 0241):
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py remove <entry_slug> <project>
+```
 
 **6. Rewrite MEMORY.md.**
 
@@ -241,6 +263,11 @@ blocks every cycle for days, while orphaned memory entries accumulate invisibly
 under the gitignore whitelist). So the exit switches the primary **back to main
 whether the push succeeds or fails** — every commit lives on the branch, so the
 only damage a mid-run death does is the checkout *position*, which this restores.
+
+The PR body is the step-4 **decision table** verbatim: the per-decision counts,
+the filename-to-decision list, and the `--diff-filter=A` ADD list, never
+free-form summary prose (tickets 0241, 0275: PR #359 and PR #471 shipped
+improvised bodies that mismatched their diffs).
 
 ```bash
 branch="$(git -C ~/.claude branch --show-current)"

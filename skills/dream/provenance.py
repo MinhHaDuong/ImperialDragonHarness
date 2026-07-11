@@ -143,6 +143,46 @@ def record(args):
     print(json.dumps(result, indent=2))
 
 
+def remove(args):
+    """Drop a project from an entry's provenance when the entry is DELETEd.
+
+    A consolidation that classifies an entry DELETE tombstones its file but,
+    without this, leaves the slug in the provenance store — so the dead entry
+    keeps counting toward the >=2-project promotion frequency gate (ticket
+    0241). `remove` drops the named project from the slug's list. When the list
+    empties the entry is deleted, UNLESS it is promoted: promotion is one-way,
+    a harness-level entry has earned status independent of its origin projects,
+    so it survives with an empty project list.
+
+    An unknown slug is an idempotent no-op ({"removed": null}, exit 0), mirroring
+    `record`'s upsert semantics: SKILL.md step 5 calls `remove` unconditionally on
+    every DELETE, but the provenance store is not synced with MEMORY.md by
+    construction (it postdates much of the corpus — 37% of live entries have no
+    record), so "nothing to remove" is the correct outcome, not a failure that
+    would abort the consolidation on the first DELETE of an untracked entry."""
+    slug = args.slug
+    project = args.project
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        if slug not in entries:
+            print(json.dumps({"removed": None}, indent=2))
+            return
+        _test_delay()
+        entry = entries[slug]
+        changed = False
+        if project in entry["projects"]:
+            entry["projects"].remove(project)
+            changed = True
+        deleted = not entry["projects"] and not entry.get("promoted")
+        if deleted:
+            del entries[slug]
+        if changed or deleted:
+            _save_provenance(data)
+        result = {"removed": slug} if deleted else entries[slug]
+    print(json.dumps(result, indent=2))
+
+
 def confirm(args):
     """Refresh last_confirmed on a promoted entry.
 
@@ -235,6 +275,13 @@ def main():
     record_p.add_argument("slug", help="Stable entry identifier (e.g. feedback_vim)")
     record_p.add_argument("project", help="Project directory name")
     record_p.set_defaults(func=record)
+
+    remove_p = sub.add_parser(
+        "remove", help="Drop a project from an entry (DELETE cleanup)."
+    )
+    remove_p.add_argument("slug", help="Stable entry identifier (e.g. feedback_vim)")
+    remove_p.add_argument("project", help="Project directory name to drop")
+    remove_p.set_defaults(func=remove)
 
     candidates_p = sub.add_parser(
         "candidates", help="List promotion candidates (>=2 projects, not promoted)."
