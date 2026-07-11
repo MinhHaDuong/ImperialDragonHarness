@@ -13,6 +13,27 @@ jobs:
       - name: Validate tickets
         run: chmod +x ./tickets/erg && ./tickets/erg check tickets/
 
+  cross-pr-ticket-collision:
+    # Guards the optimistic-ID trap (git-erg#282) across OPEN PRs: fails a PR
+    # whose newly-added ticket ID is also added by another open PR. Only
+    # meaningful on a pull_request event (needs the PR's number and the base ref).
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so `origin/<base>` resolves for the added-ticket diff.
+          fetch-depth: 0
+      - name: Check for cross-PR ticket-ID collisions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_REF: origin/${{ github.base_ref }}
+          SELF_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash scripts/check-cross-pr-ticket-collision.sh
+
   skill-lint:
     runs-on: ubuntu-latest
     steps:

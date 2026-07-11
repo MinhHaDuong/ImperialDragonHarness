@@ -2,10 +2,12 @@
 Title: CI check to detect ticket-ID collisions across open PRs
 Created: 2026-06-18
 Author: minh
+Closed: autoclosed — PR #496
 
 --- log ---
 2026-06-18T10:05Z minh created
 
+2026-07-11T22:24Z Minh Ha-Duong closed — autoclosed — PR #496
 --- body ---
 ## Context
 The optimistic ID allocation trap (git-erg#282, wontfix) bites across *open
