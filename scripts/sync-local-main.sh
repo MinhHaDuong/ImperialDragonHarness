@@ -48,9 +48,11 @@ co_path=$(git worktree list --porcelain | awk -v ref="refs/heads/$default" \
     '$1 == "worktree" { path = substr($0, 10) } $1 == "branch" && $2 == ref { print path }')
 
 if [ -z "$co_path" ]; then
-    # Not checked out anywhere: ff-update the ref directly. fetch refuses
-    # non-ff and checked-out targets, so this can never clobber anything.
-    if git fetch --quiet origin "$default:$default"; then
+    # Not checked out anywhere: ff-update the ref from the remote-tracking
+    # ref line 32 already fetched — fetching from "." costs no second network
+    # round-trip, and fetch still refuses non-ff and checked-out targets, so
+    # this can never clobber anything.
+    if git fetch --quiet . "refs/remotes/origin/$default:refs/heads/$default"; then
         echo "sync-local-main: $default updated by ref $local_sha -> $remote_sha"
     else
         echo "sync-local-main: ref update of $default refused — left untouched"

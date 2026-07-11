@@ -82,14 +82,18 @@ else
     _fail "diverged local main must not be moved (got: $out)"
 fi
 
-# --- case 5: run from a linked worktree → shared main ref still syncs -------
+# --- case 5: run from a linked worktree, main checked out in the primary →
+# main is fast-forwarded across the worktree boundary, worktree untouched ----
 _setup worktree
-git -C "$CLONE" switch --quiet -c feature
 git -C "$CLONE" worktree add --quiet "$SANDBOX/worktree-wt" -b wt-branch >/dev/null
-if bash "$SYNC" "$SANDBOX/worktree-wt" >/dev/null && [ "$(_main_sha "$CLONE")" = "$NEW" ]; then
-    _pass "sync from a linked worktree updates the shared main ref"
+wt_before=$(git -C "$SANDBOX/worktree-wt" rev-parse wt-branch)
+if bash "$SYNC" "$SANDBOX/worktree-wt" >/dev/null \
+   && [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ "$(cat "$CLONE/f.txt")" = "two" ] \
+   && [ "$(git -C "$SANDBOX/worktree-wt" rev-parse wt-branch)" = "$wt_before" ]; then
+    _pass "sync from a linked worktree fast-forwards main in the primary checkout"
 else
-    _fail "sync from a linked worktree should update main"
+    _fail "sync from a linked worktree should ff main where it is checked out"
 fi
 
 # --- case 6: already in sync → silent, exit 0 -------------------------------
