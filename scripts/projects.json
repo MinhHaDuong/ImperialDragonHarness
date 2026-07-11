@@ -5,5 +5,6 @@
   { "name": "padme", "path": "~/CNRS/projets/actifs/padme" },
   { "name": "climate-finance-het", "path": "~/CNRS/projets/actifs/climate-finance-het" },
   { "name": "aedist-technical-report", "path": "~/CNRS/papiers/actif/AEDIST-technical-report" },
-  { "name": "fuzzy-corpus", "path": "~/CNRS/papiers/actif/Fuzzy Corpus" }
+  { "name": "fuzzy-corpus", "path": "~/CNRS/papiers/actif/Fuzzy Corpus" },
+  { "name": "cadens", "path": "~/CNRS/papiers/actif/Cadens" }
 ]
