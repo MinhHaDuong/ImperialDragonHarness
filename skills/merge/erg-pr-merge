@@ -243,7 +243,12 @@ wait_for_merged() {
     for (( i=0; i<MERGED_POLL_TRIES; i++ )); do
         state=$(gh pr view "$PR" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
         [[ "$state" == "MERGED" ]] && return 0
-        sleep "$POLL_INTERVAL"
+        # Closed without merging: this merge will never land — stop polling.
+        [[ "$state" == "CLOSED" ]] && return 1
+        # No sleep after the final poll — the timeout path returns immediately.
+        if (( i + 1 < MERGED_POLL_TRIES )); then
+            sleep "$POLL_INTERVAL"
+        fi
     done
     return 1
 }
@@ -277,7 +282,7 @@ if try_auto_merge; then
         sync_local_base
     else
         MERGE_LANDED=0
-        echo "Merge queued but not yet landed — sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
+        echo "Merge not confirmed landed — check 'gh pr view ${PR}', then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
     fi
 else
     # Genuine auto-merge-unavailable: repo has auto-merge disabled. Legacy
