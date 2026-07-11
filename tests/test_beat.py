@@ -2408,3 +2408,68 @@ class TestFallbackRotation:
             beat.main()
 
         assert raid_calls == [tmp_project]
+
+
+# ── _sync_origin_main — shared sync script behavior (ticket 0277) ─────────────
+
+
+def _run_git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(  # noqa: S603
+        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True
+    )
+
+
+@pytest.mark.integration
+class TestSyncOriginMainSharedScript:
+    """_sync_origin_main delegates to scripts/sync-local-main.sh (ticket 0277).
+
+    The linked-worktree case is the discriminating one: the old Python
+    reimplementation looked only at the project checkout's own branch, so with
+    main checked out in a linked worktree it tried `fetch main:main`, was
+    refused, and silently left main stale. The shared script ff-merges in
+    whichever worktree holds main.
+    """
+
+    def _seed(self, tmp_path: Path) -> tuple[Path, str]:
+        origin = tmp_path / "origin.git"
+        seed = tmp_path / "seed"
+        clone = tmp_path / "clone"
+        _run_git("init", "--quiet", "--bare", "--initial-branch=main", str(origin), cwd=tmp_path)
+        _run_git("init", "--quiet", "--initial-branch=main", str(seed), cwd=tmp_path)
+        (seed / "f.txt").write_text("one\n")
+        _run_git("add", "f.txt", cwd=seed)
+        _run_git(
+            "-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false",
+            "commit", "--quiet", "-m", "c1", cwd=seed,
+        )
+        _run_git("remote", "add", "origin", str(origin), cwd=seed)
+        _run_git("push", "--quiet", "origin", "main", cwd=seed)
+        _run_git("clone", "--quiet", str(origin), str(clone), cwd=tmp_path)
+        (seed / "f.txt").write_text("two\n")
+        _run_git(
+            "-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false",
+            "commit", "--quiet", "-am", "c2", cwd=seed,
+        )
+        _run_git("push", "--quiet", "origin", "main", cwd=seed)
+        new_sha = _run_git("rev-parse", "main", cwd=seed).stdout.strip()
+        return clone, new_sha
+
+    def test_advances_main_checked_out_in_linked_worktree(self, tmp_path):
+        clone, new_sha = self._seed(tmp_path)
+        _run_git("switch", "--quiet", "-c", "feature", cwd=clone)
+        _run_git(
+            "worktree", "add", "--quiet", str(tmp_path / "wt-main"), "main", cwd=clone
+        )
+
+        beat._sync_origin_main(clone)
+
+        got = _run_git("rev-parse", "refs/heads/main", cwd=clone).stdout.strip()
+        assert got == new_sha, "main left stale while checked out in a linked worktree"
+
+    def test_plain_clone_fast_forwards_main(self, tmp_path):
+        clone, new_sha = self._seed(tmp_path)
+
+        beat._sync_origin_main(clone)
+
+        got = _run_git("rev-parse", "refs/heads/main", cwd=clone).stdout.strip()
+        assert got == new_sha

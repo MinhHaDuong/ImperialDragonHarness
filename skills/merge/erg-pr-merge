@@ -154,6 +154,11 @@ fi
 POLL_INTERVAL="${ERG_PR_MERGE_POLL_INTERVAL:-10}"   # seconds between polls
 MERGE_POLL_TRIES="${ERG_PR_MERGE_POLL_TRIES:-5}"    # mergeability settle polls
 WATCH_RACE_TRIES="${ERG_PR_MERGE_WATCH_TRIES:-3}"   # checks-watch race retries
+MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-12}" # merged-state polls (ticket 0277)
+
+# Eager local-main sync once the merge lands (ticket 0277; rules/git.md
+# § Local main syncs eagerly). Overridable so the test suite injects a stub.
+SYNC_LOCAL_MAIN="${ERG_PR_MERGE_SYNC:-$(cd "$(dirname "$0")" && pwd)/../../scripts/sync-local-main.sh}"
 
 # Poll until GitHub finishes recomputing mergeability. The Step-2 close-commit
 # push flips `mergeable` to UNKNOWN transiently; bounded so a genuinely-stuck
@@ -231,6 +236,36 @@ watch_checks_or_die() {
     die "CI checks never registered after ${WATCH_RACE_TRIES} attempts (no checks reported) — aborting merge"
 }
 
+# Poll until the PR reports MERGED — bounded, for the auto-queued path where
+# the merge lands only after required checks pass. (ticket 0277)
+wait_for_merged() {
+    local i state
+    for (( i=0; i<MERGED_POLL_TRIES; i++ )); do
+        state=$(gh pr view "$PR" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+        [[ "$state" == "MERGED" ]] && return 0
+        # Closed without merging: this merge will never land — stop polling.
+        [[ "$state" == "CLOSED" ]] && return 1
+        # No sleep after the final poll — the timeout path returns immediately.
+        if (( i + 1 < MERGED_POLL_TRIES )); then
+            sleep "$POLL_INTERVAL"
+        fi
+    done
+    return 1
+}
+
+# Sync the local base branch once the merge has landed. Never fatal: the sync
+# outcome must not change this script's merge/close semantics or exit code.
+# A missing script (e.g. erg-pr-merge copied out of the harness tree) degrades
+# to the manual reminder. (ticket 0277)
+sync_local_base() {
+    if [[ -x "$SYNC_LOCAL_MAIN" ]]; then
+        "$SYNC_LOCAL_MAIN" . "$BASE_BRANCH" || true
+    else
+        echo "sync-local-main.sh not found or not executable — sync local ${BASE_BRANCH} manually"
+    fi
+    return 0
+}
+
 echo "Queueing merge for PR #${PR}..."
 if in_worktree; then
     MERGE_FLAGS=(--merge --auto)
@@ -241,6 +276,14 @@ fi
 if try_auto_merge; then
     echo "Merge queued; lands when required checks pass."
     AUTO_QUEUED=1
+    if wait_for_merged; then
+        echo "PR #${PR} merged."
+        MERGE_LANDED=1
+        sync_local_base
+    else
+        MERGE_LANDED=0
+        echo "Merge not confirmed landed — check PR #${PR}'s state, then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
+    fi
 else
     # Genuine auto-merge-unavailable: repo has auto-merge disabled. Legacy
     # watch-then-merge path so the script stays usable without
@@ -255,6 +298,8 @@ else
             || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
     fi
     AUTO_QUEUED=0
+    MERGE_LANDED=1
+    sync_local_base
 fi
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
@@ -262,7 +307,11 @@ fi
 if in_worktree; then
     echo "In git worktree — exit the worktree when done."
 elif [[ "${AUTO_QUEUED:-0}" -eq 1 ]]; then
-    echo "Auto-merge queued — leaving local ${BASE_BRANCH} untouched; sync after the PR lands."
+    if [[ "${MERGE_LANDED:-0}" -eq 1 ]]; then
+        echo "Local ${BASE_BRANCH} synced (see sync-local-main report above, if any)."
+    else
+        echo "Auto-merge queued — leaving local ${BASE_BRANCH} untouched; sync after the PR lands."
+    fi
 else
     git checkout "$BASE_BRANCH"
     # Safe fast-forward: skip when local branch has unpushed commits

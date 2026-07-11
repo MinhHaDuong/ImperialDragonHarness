@@ -132,6 +132,26 @@ else
     _fail "nonexistent path must skip cleanly (got: $out, exit $?)"
 fi
 
+# --- case 10: explicit branch argument → the NAMED branch syncs, the default
+# branch is left where it was (ticket 0277) -----------------------------------
+_setup brancharg
+seed="$SANDBOX/brancharg-seed"
+( cd "$seed" && git switch --quiet -c dev &&
+  echo d1 > d.txt && git add d.txt && git commit --quiet -m d1 &&
+  git push --quiet origin dev &&
+  echo d2 > d.txt && git commit --quiet -am d2 && git push --quiet origin dev )
+dev_new=$(git -C "$seed" rev-parse dev)
+git -C "$CLONE" fetch --quiet origin dev
+git -C "$CLONE" branch --quiet dev "$(git -C "$CLONE" rev-parse origin/dev^)"
+main_before=$(_main_sha "$CLONE")
+if bash "$SYNC" "$CLONE" dev >/dev/null \
+   && [ "$(git -C "$CLONE" rev-parse refs/heads/dev)" = "$dev_new" ] \
+   && [ "$(_main_sha "$CLONE")" = "$main_before" ]; then
+    _pass "branch argument syncs the named branch and leaves the default branch alone"
+else
+    _fail "branch argument should sync only the named branch (dev)"
+fi
+
 if (( fail )); then
     exit 1
 fi

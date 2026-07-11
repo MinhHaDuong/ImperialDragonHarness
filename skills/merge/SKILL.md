@@ -37,15 +37,15 @@ Merge is queued via auto-merge; it lands when required checks pass (falls back t
 
 ## After the merge lands
 
-Once the merge is confirmed (PR state MERGED — poll if it was queued), sync
-the local default branch:
+The script itself polls for the merge to land and then runs
+`~/.claude/scripts/sync-local-main.sh` on the base branch (rules/git.md
+§ Local main syncs eagerly) — no manual sync step. Two outputs still need
+action:
 
-```bash
-~/.claude/scripts/sync-local-main.sh
-```
+- "Merge queued but not yet landed" — the bounded poll ran out (slow CI).
+  Confirm the PR reaches MERGED, then run `~/.claude/scripts/sync-local-main.sh`.
+- "left untouched" in the sync report — dirty overlap or divergence where the
+  base branch is checked out; report it to the caller rather than forcing.
 
-This is the eager-sync gate of rules/git.md § Local main syncs eagerly: it
-fast-forwards main by ref (or in whichever worktree has it checked out) and
-never touches dirty or diverged state — report its output if it says
-"left untouched". Do not substitute a hand-rolled `merge --ff-only` on the
-primary checkout: that advances whatever branch is checked out there.
+Do not substitute a hand-rolled `merge --ff-only` on the primary checkout:
+that advances whatever branch is checked out there.
