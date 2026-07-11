@@ -67,7 +67,7 @@ branch — there are no remote branches nor merge requests to inspect.
 
 7. **Close** the ticket if still open.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
-    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria.
+    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR. (2026-07-11, 0240 reorg: a merged `.mk` prerequisite kept a moved script's old flat path; per-move greps and green `make check-fast` all passed — only the integration union grep found it.)
     - Any open → do nothing, tracker stays open.
 9. **Exit worktree** (if in one):
     a. Preflight from inside the worktree:
