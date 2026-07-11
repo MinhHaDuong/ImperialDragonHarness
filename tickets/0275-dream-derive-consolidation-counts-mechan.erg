@@ -1,0 +1,57 @@
+%erg 0.1
+Title: dream: derive consolidation counts mechanically, not by prose recall
+Created: 2026-07-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-11T07:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+PR #471 (dream consolidation of climate-finance-het memory) shipped with a
+title claiming "76→74" when the real index count was 72→74, a NOOP count
+exceeding the base, and an ADD list naming 3 of 5 new files. /gaze round 1
+rerolled on it; an opus fix agent had to recompute the arithmetic by hand.
+Root cause: `skills/dream/SKILL.md` (report section, "Counts: N entries
+before → M after") asks for counts but never says how to obtain them, so the
+executor recalls them from prose instead of measuring.
+
+## Relevant files
+
+- `skills/dream/SKILL.md` — report/PR-body instructions to amend
+- `tests/test_dream*.py` — where a ratchet test would live
+
+## Actions
+
+1. Amend the dream report instructions: before/after entry counts come from
+   counting index lines in MEMORY.md at base vs head (e.g. `git show
+   <base>:<path> | grep -c '^- \['` vs the working copy), never from memory
+   of the run.
+2. Require the ADD/UPDATE/DELETE/NOOP breakdown to reconcile: NOOP + UPDATE +
+   DELETE = before; NOOP + UPDATE + ADD = after. State the identity in the
+   skill so the executor self-checks before opening the PR.
+3. Require the ADD list to be the exact set of created files from
+   `git diff --name-only --diff-filter=A`, not a narrative sample.
+
+## Test
+
+- Ratchet on the skill text: assert the count-derivation and reconciliation
+  instructions are present (RED on current SKILL.md, GREEN after).
+
+## Verification
+
+- [ ] SKILL.md names a mechanical source for every number in the report
+- [ ] Reconciliation identity stated
+- [ ] Ratchet test RED-before/GREEN-after demonstrated
+
+## Invariants
+
+- Existing dream behavior (consolidation logic, tombstones, provenance)
+  unchanged; this touches only the reporting contract.
+- `make check-fast` and skill-lint stay green.
+
+## Exit criteria
+
+- [ ] A future dream PR body's arithmetic is reproducible from the diff alone
+- [ ] Ratchet test merged
