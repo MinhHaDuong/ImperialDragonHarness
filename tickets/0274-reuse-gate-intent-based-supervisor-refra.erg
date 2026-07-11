@@ -1,0 +1,57 @@
+%erg 0.1
+Title: reuse gate + intent-based supervisor reframing
+Created: 2026-07-11
+Author: claude
+
+--- log ---
+2026-07-11T06:16Z claude created
+
+--- body ---
+## Context
+
+A Five-Whys run tonight in the climate-finance-het project surfaced two
+harness-level root causes behind one failure pair:
+
+(a) An hourly autonomous orchestration was improvised via a scheduled-wakeup
+loop without ever consulting the skills catalog, so the existing
+`nightbeat-supervisor` skill went undiscovered.
+
+(b) The improvised run used a static ticket itinerary, so a follow-up ticket
+filed mid-run (that project's 0249, child of an authorized parent) was never
+picked up.
+
+Root causes: no reuse gate exists before improvising orchestration, and the
+supervisor skill prescribes mechanisms (specific scripts, timers, commands)
+instead of intent, which makes it look inapplicable whenever the mechanism
+at hand differs.
+
+## Actions
+
+1. `rules/workflow.md` — add a reuse-gate paragraph near the subagent /
+   orchestration material: before designing any multi-cycle autonomous
+   orchestration, inventory the skills and runbooks catalog and declare in
+   the run plan which existing piece is reused or why none fits.
+2. `rules/workflow.md` § Writing Skills and Hooks — generalize the
+   forge-agnostic bullet to tool-agnostic: skills and rules name
+   capabilities, not the current tool that provides them.
+3. `skills/nightbeat-supervisor/SKILL.md` — reframe by intent (mission
+   command): Goal / Invariants (live queue, verify-before-integrate, hard
+   bounds) / Executor's latitude, with the current operational guidance
+   recast as illustrative defaults. Capability language throughout.
+
+## Verification
+
+- [ ] Reuse-gate paragraph present in `rules/workflow.md`, declarative tone
+- [ ] Tool-agnostic extension present in § Writing Skills and Hooks
+- [ ] SKILL.md restructured Goal / Invariants / Executor's latitude;
+      description first sentence plain and searchable
+- [ ] `make skills-catalog` regenerated README.md; `make check-skills-drift` passes
+- [ ] `make check-fast` passes
+
+## Exit criteria
+
+- [ ] All three edits merged in one PR closing this ticket
+- [ ] A future orchestration plan can be audited ex post for the reuse
+      declaration (the paragraph makes the declaration mandatory)
+- [ ] The supervisor skill contract is the three invariants, not any
+      specific script or timer name
