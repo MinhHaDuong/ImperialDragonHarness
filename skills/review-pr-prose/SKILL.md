@@ -31,6 +31,15 @@ Spin disciplinary agents in parallel, each in a fresh context, each pinned to
 an unpinned Agent inherits the session model and silently runs the fan-out at
 top tier). Prose review reads **full text**, not just diff.
 
+**Concurrency contract (rules/workflow.md § "Concurrency discipline"):
+parallel-FOREGROUND.** This skill runs as a `context: fork` (see frontmatter),
+and a fork's turn ends the instant it stops calling tools. Launch the panel in
+**one message** as **foreground** Agent calls (`run_in_background: false`) so
+the fork blocks until every reviewer returns, then synthesizes. Never launch
+them in the background: a fork cannot wait on background agents — it ends its
+turn at the launch, the completions re-invoke the MAIN loop, and no synthesis
+runs and no review is ever posted.
+
 ## Setup
 
 1. Identify the text: which `.qmd`/`.md` files changed? What is the target venue?

@@ -32,12 +32,22 @@ below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work"), and an
 unpinned Agent inherits the session model, so on a top-tier session this fan-out
 silently becomes a top-model wave.
 
+**Concurrency contract (rules/workflow.md § "Concurrency discipline"):
+parallel-FOREGROUND.** This skill runs as a `context: fork` (see frontmatter),
+and a fork's turn ends the instant it stops calling tools. Launch the panel in
+**one message** as **foreground** Agent calls (`run_in_background: false`) so
+the fork blocks until every reviewer returns, then synthesizes. Never launch
+them in the background: a fork cannot wait on background agents — it ends its
+turn at the launch, the completions re-invoke the MAIN loop, and no synthesis
+runs and no review is ever posted.
+
 ## Setup
 
 1. **Read the issue** linked to the PR. Note the exit criteria.
 2. **Read the diff** of the merge request.
 3. **Assess risk level** and determine proportional depth (see table below).
-4. **Launch review agents** in parallel:
+4. **Launch review agents** in parallel — **foreground**
+   (`run_in_background: false`), per the concurrency contract above:
 
 | Agent | Focus | Key question |
 |---|---|---|
