@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-11T06:16Z claude created
 
+2026-07-11T06:56Z bump verify-reroll — round 1: self-modification guard (never edit skill definition files mid-run) demoted from binding rule to a replaceable Illustrative default; unresolved as of 09fca09
 --- body ---
 ## Context
 
