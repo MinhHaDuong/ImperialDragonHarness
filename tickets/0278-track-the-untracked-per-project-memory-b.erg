@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Track the untracked per-project memory backlog across all projects
+Created: 2026-07-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-11T11:08Z Minh Ha-Duong created
+
+--- body ---
+## Context
+The `.gitignore` top-level `*` catch-all + git's parent-exclusion rule silently
+ignored per-project memory under `projects/<hash>/memory/` — the `!memory/**`
+negation only re-includes the *top-level* `memory/`, and `projects/` was never
+re-included. Historically ~441 note bodies across 9 projects got force-added and
+stay tracked, but new memory bodies fall through: ~522 note bodies were untracked
+and unbacked (a machine loss drops them).
+
+The fixing PR (branch `track-project-memory-gitignore`) adds the `.gitignore`
+re-inclusion for `projects/*/memory/**` and commits the **climate-finance-het**
+project's 3 orphans as the reviewed exemplar. This ticket covers the remaining
+backlog in the OTHER projects — deliberately deferred so ~500 files don't land
+unreviewed in one commit.
+
+## Actions
+1. After the fixing PR merges, for EACH other `projects/<hash>/` dir: list its
+   untracked memory bodies (`git status --porcelain projects/<hash>/memory/`).
+2. Eyeball each project's set before adding — memory bodies may name paths but
+   never credentials (global rule); flag anything machine-specific or stale that
+   should NOT be committed and leave it, noting why.
+3. `git add projects/<hash>/memory/` (explicit path — never `git add -A`, which
+   would also surface transcripts) and commit per project (or a few at a time),
+   so the review stays tractable.
+4. Confirm each project's `MEMORY.md` index is tracked too (some may not be).
+
+## Test / verify
+- After: `git status` shows no untracked `projects/*/memory/*.md`.
+- `comm` the on-disk `find projects/*/memory -name '*.md'` set against
+  `git ls-files 'projects/*/memory/*.md'` — the only diff should be explicitly
+  excluded files (with a recorded reason).
+- The transient `projects/*/memory/.provenance.lock` stays ignored (the fix
+  re-ignores it, mirroring the top-level rule).
+
+## Invariants
+- Never `git add -A` under `projects/` — it un-ignores memory only; transcripts
+  and session files must stay ignored.
+- No credentials in any committed note (global rule; verify on eyeball).
+
+## Exit criteria
+- Every project's memory bodies + `MEMORY.md` are tracked, or explicitly left
+  out with a one-line reason.
+- `git status` clean of untracked `projects/*/memory/*.md` across all projects.
+
