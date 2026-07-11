@@ -1,0 +1,1 @@
+- [Récolte bibliographique horde + bibCNRS](bibcnrs-harvest-workflow.md) — hordes pour l'OA, page HTML de DOI + inotify sur ~/Downloads pour le paywalled
