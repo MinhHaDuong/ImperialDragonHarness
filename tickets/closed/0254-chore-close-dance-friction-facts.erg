@@ -2,11 +2,13 @@
 Title: Chore-close dance friction: facts from the 2026-06-12 orchestrator session
 Created: 2026-06-12
 Author: orchestrator
+Closed: autoclosed — PR #495
 
 --- log ---
 2026-06-12T11:10Z orchestrator created — author asked for facts, not prescriptions
 2026-07-11T20:55Z claude note Imagine outcome: wontfix as machinery — dance rare (86/86 close-archive commits via erg-pr-merge in ~310 merged PRs); failure modes self-correcting or healthcheck-covered; git-add step documented in rules/git.md
 
+2026-07-11T21:24Z Minh Ha-Duong closed — autoclosed — PR #495
 --- body ---
 ## Context — observed facts, one session (aedist, 2026-06-12)
 
