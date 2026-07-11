@@ -5,6 +5,7 @@ Author: Integration Test
 
 --- log ---
 2026-06-11T20:54Z Integration Test created
+2026-07-11T20:55Z claude note Injector located OUTSIDE this repo: /etc/profile.d/dev-cache.sh on host padme, spec'd in the padme repo main-logbook.md:270 (`export PYTEST_ADDOPTS="--cache-dir=/data/cache/pytest"` — invalid flag). padme's quarterly-check.sh only greps for the var's existence, blind to the bad value. Zero harness-side injector (grep confirms; only workaround artifacts). Fix belongs in the padme repo; next step is to file a ticket in padme's own store from a padme session (cross-repo tickets live at the destination). 0248 stays open pending that.
 
 --- body ---
 ## Context
@@ -33,6 +34,30 @@ hooks fail in confusing ways far from the cause.
 ## Verification
 - [ ] In a fresh background job, `uv run pytest --version` and a pre-commit
       hook run succeed with no PYTEST_ADDOPTS workaround.
+
+## Diagnosis (2026-07-11)
+
+The injector is not in this repo. It is `/etc/profile.d/dev-cache.sh`
+on host padme, sourced into every login shell, spec'd in the padme
+repo's `main-logbook.md:270`:
+
+    export PYTEST_ADDOPTS="--cache-dir=/data/cache/pytest"
+
+`--cache-dir` is not a pytest flag (the valid form is
+`-o cache_dir=…`), so the value has been wrong since it was written.
+padme's `quarterly-check.sh` only greps for the variable's existence,
+so it never catches the bad value. A grep of this harness for
+`PYTEST_ADDOPTS` / `--cache-dir=/data/cache/pytest` finds only
+workaround artifacts, no injector.
+
+## Next step
+
+The fix belongs in the padme repo, not here. File a ticket in padme's
+own store from a padme session (per cross-repo-tickets-live-at-
+destination): correct the value to `-o cache_dir=/data/cache/pytest`
+or drop the variable, and teach `quarterly-check.sh` to validate the
+value, not just its presence. Author to action. This ticket stays open
+as the harness-side tracker until padme's fix lands.
 
 ## Exit criteria
 - [ ] No agent needs `env -u PYTEST_ADDOPTS`; retire the memory entry.
