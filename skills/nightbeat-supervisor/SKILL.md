@@ -29,6 +29,13 @@ Advance, overnight, the ticket perimeter the author authorized, without
 crossing any human-in-the-loop boundary, and deliver a self-contained morning
 report.
 
+The morning report carries an audit trace: for each unit of work integrated
+during the run, it states which independent verification passes ran and which
+escalation (e.g. consulting a more capable agent) was used — or why none was
+needed. As with the reuse gate, the declaration is the compliance artifact:
+not escalating stays within the executor's latitude, but as a declared,
+auditable choice, not a silence.
+
 ## Invariants (the only prescriptions)
 
 1. The queue is *live*: a ticket filed during the run enters the perimeter if
@@ -235,4 +242,8 @@ End with:
 
 ```
 supervisor: <ts> — merged: N, repaired: N, tickets: N, escalated: N
+  <integrated unit>: passes=<independent verification passes run>; escalation=<which, or none: reason>
 ```
+
+One `<integrated unit>` line per unit of work integrated this run — this is
+the audit trace the Goal block requires.
