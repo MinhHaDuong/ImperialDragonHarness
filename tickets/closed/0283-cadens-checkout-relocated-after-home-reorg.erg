@@ -2,6 +2,7 @@
 Title: cadens checkout relocated after home reorg — found and re-registered
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #493
 
 --- log ---
 2026-07-11T20:25Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-07-11T20:38Z verify-gate reroll round-1: cadens checkout confirmed live at ~/CNRS/papiers/actif/Cadens (origin github.com/MinhHaDuong/cadens.git, HEAD 7b55808 2026-04-30) — ticket premise false, PR must not drop cadens from registry
 
 2026-07-11T20:40Z gaze note checkout found at ~/CNRS/papiers/actif/Cadens during PR 493 verification; entry re-registered
+2026-07-11T20:45Z Minh Ha-Duong closed — autoclosed — PR #493
 --- body ---
 ## Context
 
