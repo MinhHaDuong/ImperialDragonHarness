@@ -2,10 +2,13 @@
 Title: Re-home memory keyed to throwaway scratchpad project paths
 Created: 2026-07-11
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #491
 
 --- log ---
 2026-07-11T13:08Z Minh Ha-Duong created
 
+2026-07-11T16:11Z Minh Ha-Duong note author decision: base Oeconomia dir; policy notes dropped as rules-canon duplicates; alias added; _load_aliases shape guard bundled
+2026-07-11T16:30Z Minh Ha-Duong closed — autoclosed — PR #491
 --- body ---
 ## Context
 Ticket 0278 tracked the per-project memory backlog. One of its project dirs,

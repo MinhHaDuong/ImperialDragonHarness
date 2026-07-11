@@ -14,3 +14,4 @@
 - [odt-edit-via-unzip](odt-edit-via-unzip.md) — éditer le .odt par unzip/rezip + régénérer le PDF
 - [haduong-paper-collaboration-style](haduong-paper-collaboration-style.md) — tête/mains, DOI vérifiés, standard HPE, fichiers figés
 - [Devise de travail de Minh](devise-integrite-excellence-bienveillance.md) — intégrité, excellence, bienveillance ; un champ contient ce que son nom dit
+- [Discussion Dosquet colloque Gide](project_gide_dosquet_discussion.md) — rapport de relecture du chap. 7 de Dosquet (Monnaie et raison d'État, t. II), Vannes 2026-07-02 ; emplacement dans missions/done + thèses clés

@@ -80,15 +80,28 @@ def _load_aliases() -> dict:
     table degrades to 'no aliases' with a stderr warning rather than crashing
     the caller (ticket 0282): candidates then gates on raw keys, which can
     only over-count — it never wrongly suppresses a candidate."""
-    if PROJECT_ALIASES_PATH.exists():
-        try:
-            return json.loads(PROJECT_ALIASES_PATH.read_text())
-        except json.JSONDecodeError as e:
-            print(
-                f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: {e} — "
-                "treating as empty",
-                file=sys.stderr,
-            )
+    if not PROJECT_ALIASES_PATH.exists():
+        return {}
+    try:
+        table = json.loads(PROJECT_ALIASES_PATH.read_text())
+    except json.JSONDecodeError as e:
+        reason = str(e)
+    else:
+        # Valid JSON of the wrong shape (a scalar, a list, or a dict with
+        # non-string keys/values) parses cleanly but crashes
+        # _canonical_project downstream (`current in aliases` on an int, a
+        # non-str value fed back into the loop). Validate the slug->slug string
+        # contract and degrade to 'no aliases' identically (ticket 0279).
+        if isinstance(table, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in table.items()
+        ):
+            return table
+        reason = "expected an object mapping string slugs to string slugs"
+    print(
+        f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: {reason} — "
+        "treating as empty",
+        file=sys.stderr,
+    )
     return {}
 
 

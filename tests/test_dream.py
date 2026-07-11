@@ -629,3 +629,24 @@ def test_provenance_candidates_survives_malformed_alias_table(provenance_env):
     assert "alias" in result.stderr.lower()  # warned, not silent
     slugs = [c["slug"] for c in json.loads(result.stdout)]
     assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty
+
+
+@pytest.mark.parametrize("payload", ["42", "null", "[1]", '{"a": 1}'])
+def test_provenance_candidates_survives_wrong_shape_alias_table(
+    provenance_env, payload
+):
+    """Ticket 0279: valid JSON of the wrong shape (a scalar, a list, or a dict
+    whose values are not strings) parses cleanly past the JSONDecodeError guard,
+    then crashes _canonical_project downstream (e.g. `current in aliases` on an
+    int, or a non-str alias value fed back into the loop). The shape check must
+    degrade these to 'no aliases' with the same stderr warning, exactly like an
+    unparseable table."""
+    aliases_path = provenance_env / ".claude" / "memory" / ".project-aliases.json"
+    aliases_path.write_text(payload)
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert "alias" in result.stderr.lower()  # warned, not silent
+    slugs = [c["slug"] for c in json.loads(result.stdout)]
+    assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty
