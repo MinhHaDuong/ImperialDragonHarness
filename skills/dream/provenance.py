@@ -82,13 +82,30 @@ def _load_aliases() -> dict:
     only over-count — it never wrongly suppresses a candidate."""
     if PROJECT_ALIASES_PATH.exists():
         try:
-            return json.loads(PROJECT_ALIASES_PATH.read_text())
+            table = json.loads(PROJECT_ALIASES_PATH.read_text())
         except json.JSONDecodeError as e:
             print(
                 f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: {e} — "
                 "treating as empty",
                 file=sys.stderr,
             )
+            return {}
+        # Valid JSON of the wrong shape (a scalar, a list, or a dict with
+        # non-string keys/values) parses cleanly here but crashes
+        # _canonical_project downstream (`current in aliases` on an int, a
+        # non-str value fed back into the loop). Validate the slug->slug string
+        # contract and degrade to 'no aliases' identically (ticket 0279).
+        if not isinstance(table, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in table.items()
+        ):
+            print(
+                f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: "
+                "expected an object mapping string slugs to string slugs — "
+                "treating as empty",
+                file=sys.stderr,
+            )
+            return {}
+        return table
     return {}
 
 

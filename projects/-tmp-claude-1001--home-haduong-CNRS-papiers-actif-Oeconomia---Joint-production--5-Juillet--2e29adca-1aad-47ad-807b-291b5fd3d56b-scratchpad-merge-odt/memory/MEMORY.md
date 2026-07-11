@@ -1,5 +1,7 @@
 # Memory index
 
-- [Discussion Dosquet conf Gide](project_gide_dosquet_discussion.md) — rapport de relecture du chap. 7 de Dosquet, Vannes 2026-07-02 ; emplacement dans missions/done + thèses clés
-- [Prose vs code workflow](feedback_prose_vs_code_workflow.md) — code en worktree+PR, prose éditée en place dans le checkout de l'auteur
-- [Plain directory names](feedback_plain_directory_names.md) — répertoires de workpackages nommés en clair, jamais p1/p3/het
+Répertoire retiré (ticket 0279) : ce projet était clé sur un chemin de
+scratchpad `/tmp/claude-1001/...` qui ne se reproduit jamais. Contenu re-hébergé
+puis marqué par tombstones : `project_gide_dosquet_discussion.md` re-hébergé
+sous le vrai dir Oeconomia ; les deux notes `feedback_*` supprimées (doublon de
+la règle canonique `rules/git.md`, 2026-07-06). Voir les tombstones à côté.
