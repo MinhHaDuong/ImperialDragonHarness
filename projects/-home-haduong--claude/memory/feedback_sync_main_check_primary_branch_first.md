@@ -19,13 +19,13 @@ checked out elsewhere.
 on main turns a routine sync into a mutation of someone else's branch or a
 clobber of their in-flight write.
 
-**How to apply:** before any primary-checkout sync: `git -C ~/.claude branch
---show-current` and `git -C ~/.claude status --short`. Update main without
-touching the checkout via `git -C ~/.claude fetch origin main:main` (ff-only by
-default). If the working tree must move to the new main and a dirty file
-overlaps the incoming diff: back the file up, `git checkout -- <file>`,
-ff-merge, then re-apply only the dirty lines on top — never discard, never bare
-stash (stash stack is shared, see rules/git.md).
+**How to apply:** don't run the raw idiom by hand — run `scripts/sync-local-main.sh
+[checkout]`. It moves only the default branch (never whatever branch is checked
+out), fast-forwards where main lives, refuses a diverged or dirty target, leaves
+local state untouched, and exits 0 (hook-safe). If a dirty file overlaps the
+incoming diff the script reports it and moves nothing: back the file up, `git
+checkout -- <file>`, re-run, then re-apply only the dirty lines on top — never
+discard, never bare stash (stash stack is shared, see rules/git.md).
 
 Promoted to rules/git.md § "Local main syncs eagerly" with mechanism
 `scripts/sync-local-main.sh` (session-start hook + /merge post-step), ticket

@@ -14,7 +14,7 @@
 # escalated to a failure that would break a session start or a merge flow.
 set -euo pipefail
 
-cd "${1:-.}"
+cd "${1:-.}" 2>/dev/null || { echo "sync-local-main: no such directory '${1:-.}' — skipped"; exit 0; }
 
 git rev-parse --git-common-dir >/dev/null 2>&1 || { echo "sync-local-main: not a git repo — skipped"; exit 0; }
 git remote get-url origin >/dev/null 2>&1 || { echo "sync-local-main: no origin remote — nothing to sync"; exit 0; }
@@ -60,6 +60,6 @@ if [ -z "$co_path" ]; then
 elif git -C "$co_path" merge --ff-only --quiet "origin/$default" >/dev/null 2>&1; then
     echo "sync-local-main: $default fast-forwarded at $co_path ($local_sha -> $remote_sha)"
 else
-    echo "sync-local-main: $default checked out at $co_path with conflicting local state — left untouched (back up the dirty file, sync, re-apply; rules/git.md)"
+    echo "sync-local-main: could not fast-forward $default at $co_path (dirty or busy checkout) — left untouched (back up the dirty file, sync, re-apply; rules/git.md)"
 fi
 exit 0

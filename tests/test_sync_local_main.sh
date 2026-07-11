@@ -99,7 +99,7 @@ fi
 # --- case 6: already in sync → silent, exit 0 -------------------------------
 _setup silent
 bash "$SYNC" "$CLONE" >/dev/null   # brings it current
-out=$(bash "$SYNC" "$CLONE")
+out=$(bash "$SYNC" "$CLONE" 2>&1)
 if [ -z "$out" ]; then
     _pass "in-sync repo produces no output"
 else
@@ -122,6 +122,14 @@ if out=$(bash "$SYNC" "$plain") && echo "$out" | grep -q "not a git repo"; then
     _pass "non-repo directory is skipped with exit 0"
 else
     _fail "non-repo directory must skip cleanly"
+fi
+
+# --- case 9: nonexistent path → skip, exit 0 (exit-0 hook contract) ----------
+missing="$SANDBOX/does-not-exist"
+if out=$(bash "$SYNC" "$missing" 2>&1) && echo "$out" | grep -q "skipped"; then
+    _pass "nonexistent path is skipped with exit 0"
+else
+    _fail "nonexistent path must skip cleanly (got: $out, exit $?)"
 fi
 
 if (( fail )); then
