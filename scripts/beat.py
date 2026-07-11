@@ -761,70 +761,30 @@ def _sync_origin_main(project: Path) -> None:
     Called before housekeeping so that both housekeeping_needed() and
     pick-ticket see current ticket state from merged PRs.  All failures
     are non-fatal — the beat continues regardless.
+
+    Delegates to scripts/sync-local-main.sh — the one sync implementation
+    shared with the session-start hook and the merge skill (ticket 0277).
+    Unlike the former Python reimplementation, the script also handles the
+    default branch being checked out in a linked worktree.
     """
-    default_branch = _default_branch(project)
-
-    # Fetch only the default branch; skip on network or auth failure.
-    fetch = subprocess.run(  # noqa: S603
-        ["git", "fetch", "origin", default_branch],
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=project,
-    )
-    if fetch.returncode != 0:
-        _log(
-            f"=== sync: git fetch failed — "
-            f"{(fetch.stderr.strip().splitlines() or ['network error'])[-1][:80]} ==="
+    script = Path(__file__).resolve().parent / "sync-local-main.sh"
+    try:
+        result = subprocess.run(  # noqa: S603
+            ["bash", str(script), str(project)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
         )
+    except subprocess.TimeoutExpired:
+        _log(f"=== sync: timed out after 120s {_now_iso()} ===")
         return
-
-    # Advance local default branch.
-    branch = subprocess.run(  # noqa: S603
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=False,
-        cwd=project,
-    ).stdout.strip()
-
-    if branch == default_branch:
-        # Checked out: ff-merge to advance HEAD.
-        merge = subprocess.run(  # noqa: S603
-            ["git", "merge", "--ff-only", f"origin/{default_branch}"],
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=project,
-        )
-        summary = (merge.stdout.strip().splitlines() or ["already up to date"])[0]
-        if merge.returncode == 0:
-            _log(f"=== sync: {default_branch}: {summary} {_now_iso()} ===")
-        else:
-            _log(
-                f"=== sync: ff-merge skipped — "
-                f"{(merge.stderr.strip().splitlines() or ['local commits ahead'])[-1][:80]} ==="
-            )
-    elif branch != "HEAD":
-        # Not checked out: update local ref without touching HEAD.
-        update = subprocess.run(  # noqa: S603
-            ["git", "fetch", "origin", f"{default_branch}:{default_branch}"],
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=project,
-        )
-        if update.returncode == 0:
-            _log(
-                f"=== sync: {default_branch} updated from origin (HEAD on {branch}) {_now_iso()} ==="
-            )
-        else:
-            _log(
-                f"=== sync: {default_branch} update skipped — "
-                f"{(update.stderr.strip().splitlines() or ['non-fast-forward'])[-1][:80]} ==="
-            )
-    else:
-        _log(f"=== sync: skipped — detached HEAD {_now_iso()} ===")
+    report = result.stdout.strip() or "already in sync"
+    if result.returncode != 0:
+        # The script's contract is exit 0; a non-zero exit means it is
+        # missing or broken, not that the repo is stale.
+        report = (result.stderr.strip().splitlines() or ["sync script failed"])[-1][:120]
+    _log(f"=== sync: {report} {_now_iso()} ===")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
