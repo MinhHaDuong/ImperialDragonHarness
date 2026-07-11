@@ -71,9 +71,14 @@ FOREGROUND = re.compile(
 
 
 def _sentences(text: str) -> list[str]:
-    # Coarse sentence split on ., ;, : and newlines — enough to scope a
-    # background mention to its clause for the negation check.
-    return re.split(r"(?<=[.;:])\s+|\n+", text)
+    # Coarse sentence split on ., ; and newlines — enough to scope a background
+    # mention to its clause for the negation check. Deliberately NOT on ":": the
+    # colon lives inside the very tokens we test (`run_in_background: true/false`),
+    # so splitting there would tear `run_in_background:` from its value and hide
+    # the directive from BACKGROUND_SIGNAL/FOREGROUND (ticket 0263 B2). Dropping
+    # ":" only merges adjacent clauses, which makes negation scoping strictly
+    # safer (a merged clause is more likely to carry a negation word, never less).
+    return re.split(r"(?<=[.;])\s+|\n+", text)
 
 
 def _paragraphs(text: str) -> list[str]:
@@ -83,14 +88,44 @@ def _paragraphs(text: str) -> list[str]:
 
 # A launch-indicator paragraph describes spinning up a battery of agents to run
 # in parallel. The three conjuncts together are what makes it a *launch site*
-# (as opposed to prose that merely mentions parallelism).
-IN_PARALLEL = re.compile(r"\bin parallel\b", re.IGNORECASE)
+# (as opposed to prose that merely mentions parallelism). The parallel signal is
+# the bare word "parallel", not only the "in parallel" bigram: gaze's primary
+# fan-out paragraph reads "as parallel foreground Agent calls" / "parallel Agent
+# calls", which the tighter bigram missed, letting the ratchet skip the very
+# launch site it exists to guard (ticket 0263 B1). The AGENTS + SPAWN_VERB
+# conjuncts keep bare parallelism prose (e.g. "builds compile in parallel") out.
+IN_PARALLEL = re.compile(r"\bparallel\b", re.IGNORECASE)
 AGENTS = re.compile(r"\bagents?\b", re.IGNORECASE)
 SPAWN_VERB = re.compile(r"\b(spin|spawn|launch|run)\b", re.IGNORECASE)
 
 
 def _is_launch_paragraph(p: str) -> bool:
     return bool(IN_PARALLEL.search(p) and AGENTS.search(p) and SPAWN_VERB.search(p))
+
+
+def _has_nonnegated(pattern: re.Pattern, window: str) -> bool:
+    """True if `pattern` matches in at least one clause of `window` that is not
+    in negation context — reuses the file-wide NEGATION/_sentences machinery so
+    a historical or forbidden mention does not count as a live directive."""
+    return any(
+        pattern.search(s) and not NEGATION.search(s) for s in _sentences(window)
+    )
+
+
+def _window_offends(window: str) -> bool:
+    """Whether a launch-paragraph window violates the local foreground contract.
+
+    Two ways to offend (ticket 0263 B2):
+    - a live (non-negated) background directive sits in the window — a fork
+      cannot wait on background agents, so this orphans the children regardless
+      of any foreground token elsewhere; and
+    - no *non-negated* foreground/blocking evidence is present — a historical or
+      forbidden "foreground" mention ("previously ran foreground", "does not run
+      foreground") does not prove the fork waits.
+    """
+    if _has_nonnegated(BACKGROUND_SIGNAL, window):
+        return True
+    return not _has_nonnegated(FOREGROUND, window)
 
 
 def test_no_affirmative_background_launch():
@@ -147,7 +182,7 @@ def test_launch_paragraph_carries_local_foreground_contract(name):
         if not _is_launch_paragraph(p):
             continue
         window = p + "\n" + (paras[i + 1] if i + 1 < len(paras) else "")
-        if not FOREGROUND.search(window):
+        if _window_offends(window):
             offenders.append(p.strip()[:220])
     assert not offenders, (
         f"{name} SKILL.md has a parallel-agent launch paragraph with no local "
@@ -156,3 +191,88 @@ def test_launch_paragraph_carries_local_foreground_contract(name):
         "fan-out in background orphans the children one layer down (ticket "
         f"0263, /gaze 479). Offending paragraph(s): {offenders}"
     )
+
+
+# --- B1: launch-site detection must catch the primary fan-out phrasing --------
+#
+# gaze's primary review fan-out paragraph reads "...as parallel foreground Agent
+# calls..." — it carries no literal "in parallel" bigram, so the old detector
+# never classified it as a launch site and the ratchet skipped it: stripping its
+# local foreground contract stayed green (/gaze 482 round-1 mutation). These
+# synthetic fixtures pin the broadened detection without depending on the exact
+# current SKILL.md prose.
+
+
+def test_is_launch_paragraph_detects_parallel_foreground_phrasing():
+    assert _is_launch_paragraph(
+        "Spawn the applicable agents as parallel foreground Agent calls."
+    )
+
+
+def test_is_launch_paragraph_detects_parallel_agent_calls():
+    assert _is_launch_paragraph(
+        "Launch the reviewers as parallel Agent calls in one message."
+    )
+
+
+def test_is_launch_paragraph_ignores_non_launch_parallel_prose():
+    # A bare mention of parallelism without an agent-spawn directive is not a
+    # launch site — the three conjuncts (parallel + agents + spawn verb) hold.
+    assert not _is_launch_paragraph("The two builds compile in parallel on CI.")
+
+
+def test_real_gaze_primary_launch_paragraph_in_scope():
+    paras = _paragraphs(_body(GAZE.read_text()))
+    launch = [p for p in paras if _is_launch_paragraph(p)]
+    assert any("parallel foreground" in p.lower() for p in launch), (
+        "gaze's primary review fan-out paragraph is not classified as a launch "
+        "site, so the locality ratchet never inspects it — stripping its local "
+        "foreground contract would go unnoticed (ticket 0263 B1)."
+    )
+    assert len(launch) >= 2
+
+
+# --- B2: foreground evidence must survive negation, background must not slip ---
+#
+# The window check had no negation awareness: a live `run_in_background: true`
+# directive, or a negated/historical "foreground" mention, still satisfied the
+# contract because FOREGROUND matched the token regardless of context.
+
+
+def test_window_offends_live_background_directive_despite_foreground_token():
+    window = (
+        "Spawn the panel as parallel Agent calls with "
+        "run_in_background: true and wait. They run foreground-ish."
+    )
+    assert _window_offends(window), (
+        "a live background launch directive must offend even with a stray "
+        "foreground token nearby (ticket 0263 B2a)"
+    )
+
+
+def test_window_offends_negated_historical_foreground():
+    window = (
+        "Launch the reviewers as parallel background agents "
+        "(run_in_background: true). This skill previously ran its panel "
+        "foreground before the 2026-05 redesign."
+    )
+    assert _window_offends(window), (
+        "a live background directive alongside a historical foreground mention "
+        "must offend (ticket 0263 B2b)"
+    )
+
+
+def test_window_offends_when_foreground_only_negated():
+    window = "Spawn parallel agents. This skill does not run foreground."
+    assert _window_offends(window), (
+        "foreground evidence in a negation clause does not prove the fork "
+        "waits (ticket 0263 B2b)"
+    )
+
+
+def test_window_accepts_local_foreground_contract():
+    window = (
+        "Spawn the agents as parallel foreground Agent calls "
+        "(run_in_background: false), blocking until every one returns."
+    )
+    assert not _window_offends(window)

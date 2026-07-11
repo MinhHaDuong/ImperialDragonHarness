@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 
 2026-07-11T13:05Z claude note raid plan — locality defect: fork contract absent at Agent C nested fan-out and in review-pr/review-pr-prose (both context:fork, zero concurrency text); paragraph-scoped ratchet replaces file-wide check; fresh evidence /gaze 479 2026-07-11
 2026-07-11T13:27Z bump verify-reroll — round 1: review-pr BLOCKERS B1/B2 both reproduced live on HEAD e191515 — B1: gaze/SKILL.md phases-2-4 primary launch paragraph ('Spawn the applicable agents ... as parallel foreground Agent calls') has no literal 'in parallel' bigram so _is_launch_paragraph() never scopes the locality ratchet to it; stripping its foreground language keeps all 8 tests green. B2: FOREGROUND regex has no negation filter — planting run_in_background: true beside a negated/historical 'foreground' mention in review-pr-prose's concurrency-contract paragraph keeps test_launch_paragraph_carries_local_foreground_contract[review-pr-prose] green.
+2026-07-11T13:35Z note live probe: /gaze 482 (2026-07-11) ran as a fork with all fan-outs foreground — reviewer panel, simplify agents, round-1 gate and fix agent each returned inline, no orphaned children; end-to-end posted verdict is this run's own PR-482 verdict comment
 --- body ---
 ## Context
 
