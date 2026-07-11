@@ -30,4 +30,4 @@ The DOIfetch tool lives **outside the repo** at `/home/haduong/CNRS/code/DOIfetc
    cp docs/missing_references.txt /home/haduong/CNRS/code/DOIfetch/references/missing_references.txt
    ```
 
-**Why:** DOIfetch is an external tool (out of repo) that fetches PDFs by DOI/ISBN/URL. It reads `references/missing_references.txt` as its input queue and writes fetched PDFs to `papers/`. The project's `gen_missing_references.py` script generates that input from `content/bibliography/main.bib` vs `docs/articles/`.
+**Why:** DOIfetch is an external tool (out of repo) that fetches PDFs by DOI/ISBN/URL. It reads `references/missing_references.txt` as its input queue and writes fetched PDFs to `papers/`. The project's `qa_missing_references.py` script generates that input from `content/bibliography/main.bib` vs `docs/articles/`.
