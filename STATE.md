@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-10T15:14Z
+Last updated: 2026-07-11T18:03Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-10T15:14Z · housekeeping sweep -->
+<!-- generated 2026-07-11T18:03Z -->
 
-**Tickets:** 18 ready · 4 blocked — `erg ready tickets/` for full list
+**Tickets:** 15 ready · 4 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  addacd8 Merge pull request #458 from MinhHaDuong/harness-ruff-shutil-which
-  bcf4f51 rules(python): ruff adherence test resolves via shutil.which + pinned dev dep
-  146debf Merge pull request #456 from MinhHaDuong/roar-247-memory
-  ff30fd8 memory(harness): skill-lifecycle edits need whole-run reasoning
-  148052d Merge pull request #455 from MinhHaDuong/rules-propose-roar-after-merge
+  fbf4265 Merge pull request #491 from MinhHaDuong/t279-rehome-scratchpad-memory
+  7ce0faa ticket(0279): close and archive — PR #491
+  4301212 refactor(0279): collapse duplicate warning blocks in _load_aliases
+  ef6b5d5 memory: re-home scratchpad-keyed Oeconomia notes; alias-table shape guard (0279)
+  d2a2b47 Merge pull request #489 from MinhHaDuong/adopt-cfhet-orphan-note
 
 ## Blockers
 
@@ -23,9 +23,8 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **Quick-win trio (do next, lowest-risk first)**: 0261 (lair step 10 → STATE via PR, not ff-merge to main) · 0258 (roar degrades in no-forge repos) · 0255 (grow prose/_all.md, size-guarded). Each is a self-contained skill/rule edit with a test.
-- **0216 fan-out evidence**: the next substantive PR /gaze completes 0216's criterion-2 proof (PR #334's gaze hit agents=0 on a trivial diff) — no action, just observe and append to the closed ticket
-- **dream/beat-on-stale-checkout guard gap** (NEW, found 2026-06-08): the 0234 main-commit guard is inert on a primary checkout that never pulled it — a dream session committed git-erg memory straight to local main and diverged (rescued via PR #357). Fix: dream/beat pre-flight should sync (or refuse on a diverged) primary checkout before committing. Needs a ticket.
+- **0216 fan-out evidence**: criterion-2 proof accumulated 2026-07-11 — five substantive /gaze runs (#482 #483 #485 #487 #491) fanned out full reviewer batteries; append to the closed ticket, then drop this line
+- **2026-07-11 landings**: eager local-main sync everywhere (0276/0277 — closes the 2026-06-08 stale-checkout guard gap; beat delegates to sync-local-main.sh), dream data-quality wave (0241/0263/0270/0275/0278/0279/0282), memory backlog tracked, batch-decisions doctrine in workflow.md
 - **Verify-reviewer-panel cluster** (only open work left): 0206 (Copilot seat — needs forge config + ≥5-MR trial), 0217/0207 (OS-sandboxed agnostic seats), 0205 (panel contract + decorrelation evidence). 0227/0231/0232/0233/0234 closed this session; cadens now canonical (cadens PR #45)
 - **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/aedist-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
 - **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
