@@ -163,12 +163,15 @@ def remove(args):
             sys.exit(1)
         _test_delay()
         entry = entries[slug]
+        changed = False
         if project in entry["projects"]:
             entry["projects"].remove(project)
+            changed = True
         deleted = not entry["projects"] and not entry.get("promoted")
         if deleted:
             del entries[slug]
-        _save_provenance(data)
+        if changed or deleted:
+            _save_provenance(data)
         result = {"removed": slug} if deleted else entries[slug]
     print(json.dumps(result, indent=2))
 
