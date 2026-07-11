@@ -76,9 +76,19 @@ def _load_aliases() -> dict:
     filesystem paths, so `os.path.realpath` cannot collapse aliases: slug->path
     inversion is ambiguous and a relocated tree's old path no longer exists on
     disk. Instead we keep an explicit, read-time alias table (ticket 0270). A
-    missing table is the common case — no aliases — and yields {}."""
+    missing table is the common case — no aliases — and yields {}. A corrupt
+    table degrades to 'no aliases' with a stderr warning rather than crashing
+    the caller (ticket 0282): candidates then gates on raw keys, which can
+    only over-count — it never wrongly suppresses a candidate."""
     if PROJECT_ALIASES_PATH.exists():
-        return json.loads(PROJECT_ALIASES_PATH.read_text())
+        try:
+            return json.loads(PROJECT_ALIASES_PATH.read_text())
+        except json.JSONDecodeError as e:
+            print(
+                f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: {e} — "
+                "treating as empty",
+                file=sys.stderr,
+            )
     return {}
 
 
@@ -344,7 +354,18 @@ def main():
     show_p = sub.add_parser("show", help="Show full provenance data.")
     show_p.set_defaults(func=show)
 
-    args = parser.parse_args()
+    # Production project keys are directory slugs that begin with '-'
+    # (e.g. -home-haduong-CNRS-...). Without a '--' separator argparse
+    # clusters '-home-…' into '-h' and help-exits 0 — a silent no-op on a
+    # mutating call (ticket 0282). No subcommand takes options, so insert
+    # the separator after the subcommand unless the caller already did, or
+    # is asking for help at either level.
+    tokens = sys.argv[1:]
+    wants_help = any(t in ("-h", "--help") for t in tokens)
+    if len(tokens) > 1 and "--" not in tokens and not wants_help:
+        tokens = [tokens[0], "--"] + tokens[1:]
+
+    args = parser.parse_args(tokens)
     args.func(args)
 
 

@@ -574,3 +574,58 @@ def test_provenance_read_during_write_never_torn(provenance_env):
     # The reader must see a complete document: the old entry is always present
     # (the new entry may or may not have landed, depending on old-or-new).
     assert "slug_old" in data["entries"], "reader lost the pre-existing entry"
+
+
+# ── Provenance CLI robustness (ticket 0282) ────────────────────────────────────
+
+
+def test_provenance_record_leading_dash_project(provenance_env):
+    """Ticket 0282: production project keys are directory slugs that begin
+    with '-' (e.g. -home-haduong-...). argparse clusters '-home-…' into '-h'
+    and help-exits 0 — a silent no-op on a mutating call. The CLI must accept
+    them directly."""
+    result = _run_provenance(
+        "record", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    assert result.returncode == 0, result.stderr
+    show = _run_provenance("show", home=provenance_env)
+    data = json.loads(show.stdout)
+    assert "feedback_vim" in data["entries"], "record silently no-opped"
+    assert data["entries"]["feedback_vim"]["projects"] == [
+        "-home-haduong-some-project"
+    ]
+
+
+def test_provenance_remove_leading_dash_project(provenance_env):
+    """Same defect on the remove verb (SKILL.md step 5 calls it per DELETE)."""
+    _run_provenance(
+        "record", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    result = _run_provenance(
+        "remove", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    assert result.returncode == 0, result.stderr
+    show = _run_provenance("show", home=provenance_env)
+    assert "feedback_vim" not in json.loads(show.stdout)["entries"]
+
+
+def test_provenance_help_still_works(provenance_env):
+    """The separator auto-insert must not eat -h/--help, top-level or per-verb."""
+    top = _run_provenance("--help", home=provenance_env)
+    assert top.returncode == 0 and "record" in top.stdout
+    sub = _run_provenance("record", "-h", home=provenance_env)
+    assert sub.returncode == 0 and "slug" in sub.stdout
+
+
+def test_provenance_candidates_survives_malformed_alias_table(provenance_env):
+    """Ticket 0282: a corrupt .project-aliases.json must degrade to 'no
+    aliases' with a stderr warning, not crash candidates."""
+    aliases_path = provenance_env / ".claude" / "memory" / ".project-aliases.json"
+    aliases_path.write_text("{not json")
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert "alias" in result.stderr.lower()  # warned, not silent
+    slugs = [c["slug"] for c in json.loads(result.stdout)]
+    assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty
