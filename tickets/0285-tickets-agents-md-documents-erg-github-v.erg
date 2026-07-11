@@ -1,0 +1,32 @@
+%erg 0.1
+Title: tickets/AGENTS.md documents erg-github verify, a helper this repo does not ship
+Created: 2026-07-11
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-11T22:21Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`tickets/AGENTS.md` states that on GitHub, `tickets/erg-github` adds a
+`verify` check failing a PR that references a still-open ticket. No such
+helper exists in this repo (confirmed twice during ticket 0262's execution
+and its review, 2026-07-11): CI's `validate-tickets` job runs only
+`erg check tickets/`. The sentence misleads agents into designing around a
+boundary that is not there — 0262's original plan assumed it.
+
+Note: this text comes from the global `~/.claude/tickets/AGENTS.md`, which
+projects mirror; check whether the fix belongs in the shared source, the
+git-erg adopter template, or both.
+
+## Actions
+
+1. Decide: ship the helper (from the git-erg project, if it exists there),
+   or correct the sentence to describe what actually runs.
+2. Apply in the canonical source and re-sync mirrors as appropriate.
+
+## Exit criteria
+
+- `tickets/AGENTS.md` describes only checks that actually run on this repo,
+  or the described helper exists and runs in CI.
