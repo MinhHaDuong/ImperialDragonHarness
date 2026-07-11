@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-06-17T11:14Z Minh Ha-Duong created
+2026-07-11T20:55Z claude note Root cause corrected: not an rtk defect. Reproduced on rtk 0.34.3 — the pipx pytest shim at ~/.local/bin/pytest has a shebang on a deleted interpreter (system Python 3.13→3.14; `pipx list` shows 6 packages with invalid interpreters). rtk's ENOENT cannot distinguish target-missing from interpreter-missing; it resolves ls/git/python3 fine. Workaround `rtk proxy python3 -m pytest` verified; now documented in rules/coding-python.md. No upstream bug warranted — optional UX suggestion only.
 
 --- body ---
 ## Context
@@ -53,6 +54,23 @@ decision on where to land the fix.
 - Do not break other rtk command rewrites.
 - Do not edit `settings.json` / `scripts/shell-init.sh` while another session
   holds them dirty.
+
+## Resolution (2026-07-11)
+
+The root cause is not rtk. Reproduced on rtk 0.34.3: the pipx pytest
+shim at `~/.local/bin/pytest` carries a shebang pointing at a deleted
+interpreter — the system Python moved 3.13→3.14 and `pipx list` shows
+six packages with invalid interpreters. The shim is broken, so any
+spawn of it fails; rtk's ENOENT surfaces the same "No such file or
+directory" whether the target or its interpreter is missing, which
+misread as an rtk fault. rtk resolves `ls`/`git`/`python3` fine.
+
+Workaround chosen (option c): `rtk proxy python3 -m pytest …`, verified
+working and now documented in the Testing section of
+`rules/coding-python.md`, alongside the `pipx reinstall-all` fix for the
+underlying stale-venv case. No upstream rtk bug is warranted — an
+optional UX suggestion (distinguish target-missing from
+interpreter-missing in the error) is the most that applies.
 
 ## Exit criteria
 - Either pytest runs under the hook, or the workaround is documented and
