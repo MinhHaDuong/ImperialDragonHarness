@@ -4,12 +4,58 @@
 set -euo pipefail
 
 HARNESS="$HOME/.claude"
-PROJECTS=(
-    "$HOME/CNRS/papiers/actif/AEDIST-technical-report"
-    "$HOME/CNRS/papiers/actif/Cadens"
-    "$HOME/CNRS/projets/actifs/climate-finance-het"
-    "$HOME/CNRS/papiers/actif/Fuzzy Corpus"
-)
+# Canonical project registry — the single source of truth also read by
+# beat.py, the nightbeat survey, and scry. Override for tests.
+REGISTRY="${PROJECTS_JSON:-$HARNESS/scripts/projects.json}"
+
+# Derive the project directories that get dev-projects group ownership.
+# Reads the registry, expands a leading ~ to $HOME (as the Python consumers do
+# via expanduser), and excludes the harness itself: ~/.claude receives
+# read-only ACL access in steps 4-5, so granting it group write here would
+# contradict that design and expose the config tree. Every other registry
+# entry is a project the overnight agent works on and needs write access to.
+derive_project_dirs() {
+    local name path tsv
+    # Capture jq's output into a variable BEFORE the loop so its exit status is
+    # observable under `set -e`. A `< <(jq …)` process substitution hides jq's
+    # failure — `set -e` only reacts to a pipeline's status under `pipefail`,
+    # and process substitution is neither — so a missing or malformed registry
+    # would silently yield an empty list and exit 0, and the ownership loop
+    # would run zero iterations while the script still printed "Done." A valid
+    # but empty registry (`[]`) yields empty output with jq exit 0, which is a
+    # legitimate degenerate state and must NOT abort.
+    tsv="$(jq -r '.[] | [.name, .path] | @tsv' "$REGISTRY")" \
+        || { echo "derive_project_dirs: failed to read registry $REGISTRY" >&2; exit 1; }
+    # Empty registry (`[]`) → empty $tsv. A here-string of "" still feeds one
+    # blank line, so guard it to avoid emitting a spurious empty project dir.
+    [ -z "$tsv" ] && return 0
+    while IFS=$'\t' read -r name path; do
+        path="${path/#\~/$HOME}"          # expand leading ~ only
+        [ "$path" = "$HARNESS" ] && continue
+        printf '%s\n' "$path"
+    done <<< "$tsv"
+}
+
+# `--list` prints the derived dirs and exits — the testable, side-effect-free
+# entry point. Everything below it mutates the system and needs sudo.
+if [ "${1:-}" = "--list" ]; then
+    derive_project_dirs
+    exit 0
+fi
+
+# Capture first: inside `< <(…)` the function's `exit 1` dies in the child
+# and mapfile sees only closed stdin — a bad registry would yield an empty
+# PROJECTS and a clean "Done." (the exact bug fixed inside the function,
+# recurring at its call site). A top-level command-substitution assignment
+# propagates the failure under `set -e`. Empty output (registry `[]`, or
+# every entry filtered) is legitimate: guard it so a here-string's single
+# blank line does not become one empty project dir.
+derived="$(derive_project_dirs)"
+if [ -z "$derived" ]; then
+    PROJECTS=()
+else
+    mapfile -t PROJECTS <<< "$derived"
+fi
 
 echo "── 1. User + group ──────────────────────────────────────────────────────"
 sudo groupadd -f dev-projects
