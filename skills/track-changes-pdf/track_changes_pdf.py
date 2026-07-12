@@ -78,6 +78,60 @@ def resolve_compiler() -> list[str]:
     )
 
 
+def resolve_ref(git: str, repo: Path, ref: str) -> str:
+    """Resolve a user-supplied ref to a full commit SHA, rejecting option-like values.
+
+    ``git archive`` (and git plumbing generally) parse a leading-dash argument as
+    an option, not a tree-ish — ``git archive --format=tar -o/path HEAD`` writes an
+    arbitrary file with exit 0. A crafted ``--old-ref``/``--new-ref`` value such as
+    ``-o/path`` or ``--remote=<url>`` could redirect the archive write or trigger
+    network access, so reject any option-like ref *before* it reaches a subprocess,
+    then resolve it to a concrete SHA. Downstream callers thus only ever see a
+    40-hex-char commit id, which can never start with ``-``.
+    """
+    if ref.startswith("-"):
+        raise SystemExit(
+            f"refusing ref {ref!r}: a value starting with '-' is parsed as a git "
+            "option, not a commit. Pass a tag, branch, or commit SHA."
+        )
+    result = subprocess.run(
+        [git, "-C", str(repo), "rev-parse", "--verify", "--end-of-options",
+         f"{ref}^{{commit}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            f"could not resolve ref {ref!r} in {repo} to a commit:\n"
+            f"{result.stderr.strip() or '(no stderr)'}"
+        )
+    return result.stdout.strip()
+
+
+def contained_join(base: Path, rel_str: str) -> Path:
+    """Join ``rel_str`` under ``base``, rejecting absolute paths and ``..`` traversal.
+
+    ``pathlib``'s ``/`` silently discards the left operand when the right is
+    absolute (``Path('/a') / '/etc/passwd' == Path('/etc/passwd')``), and a ``..``
+    component escapes the extracted tree. Either lets latexdiff or the compiler
+    read arbitrary local files, so validate before returning the joined path.
+    """
+    rel = Path(rel_str)
+    if rel.is_absolute():
+        raise SystemExit(
+            f"--main-tex must be relative to the repository root, got absolute {rel_str!r}"
+        )
+    base_resolved = base.resolve()
+    joined = (base / rel).resolve()
+    if not joined.is_relative_to(base_resolved):
+        raise SystemExit(
+            f"--main-tex {rel_str!r} escapes the extracted tree "
+            f"({joined} is outside {base_resolved})"
+        )
+    return joined
+
+
 def extract_ref(git: str, repo: Path, ref: str, dest: Path) -> None:
     """Extract the whole tree at ``ref`` into ``dest`` via ``git archive``.
 
@@ -174,6 +228,11 @@ def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
         # Only warn — git archive will give the authoritative error if truly not a repo.
         log.warning("%s does not look like a git repository root", repo)
 
+    # Reject option-like refs and pin each ref to a concrete commit SHA before it
+    # reaches git archive (argument-injection guard).
+    old_ref = resolve_ref(git, repo, old_ref)
+    new_ref = resolve_ref(git, repo, new_ref)
+
     managed_tmp = None
     if workdir is None:
         managed_tmp = tempfile.mkdtemp(prefix="track-changes-pdf-")
@@ -186,11 +245,11 @@ def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
         extract_ref(git, repo, old_ref, old_dir)
         extract_ref(git, repo, new_ref, new_dir)
 
-        rel = Path(main_tex)
-        old_tex = old_dir / rel
-        new_tex = new_dir / rel
+        # Keep --main-tex inside the extracted tree (absolute/.. traversal guard).
+        old_tex = contained_join(old_dir, main_tex)
+        new_tex = contained_join(new_dir, main_tex)
         # Write the diff into the new tree so figures/.bib/class files resolve.
-        diff_tex = new_tex.with_name(f"{rel.stem}-diff.tex")
+        diff_tex = new_tex.with_name(f"{Path(main_tex).stem}-diff.tex")
         run_latexdiff(latexdiff, old_tex, new_tex, diff_tex)
 
         pdf = compile_pdf(compiler, diff_tex.parent, diff_tex)

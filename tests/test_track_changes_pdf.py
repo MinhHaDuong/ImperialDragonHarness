@@ -98,7 +98,67 @@ def test_compiler_prefers_latexmk(monkeypatch):
     assert mod.resolve_compiler()[0] == "latexmk"
 
 
+# --- Input-validation guards (fast, no LaTeX / no git needed) -----------------
+
+def test_resolve_ref_rejects_option_like_ref(tmp_path):
+    """A ref starting with '-' is a git-archive argument-injection vector.
+
+    ``git archive --format=tar -o/path HEAD`` writes an arbitrary file with exit
+    0, so an option-like ref must be rejected before it reaches any subprocess —
+    and must never create a file.
+    """
+    mod = load_helper()
+    git = shutil.which("git") or "git"
+    bad_target = tmp_path / "pwned.tar"
+    bad_ref = f"-o{bad_target}"
+    with pytest.raises(SystemExit) as exc:
+        mod.resolve_ref(git, tmp_path, bad_ref)
+    assert bad_ref in str(exc.value), "error must name the offending ref"
+    assert not bad_target.exists(), "option-like ref must never reach a subprocess"
+
+
+def test_contained_join_rejects_absolute_main_tex(tmp_path):
+    """An absolute --main-tex silently escapes the extracted tree via pathlib '/'."""
+    mod = load_helper()
+    with pytest.raises(SystemExit) as exc:
+        mod.contained_join(tmp_path, "/etc/passwd")
+    assert "absolute" in str(exc.value).lower()
+
+
+def test_contained_join_rejects_traversal_main_tex(tmp_path):
+    """A '..' --main-tex escapes the extracted tree."""
+    mod = load_helper()
+    base = tmp_path / "old"
+    base.mkdir()
+    with pytest.raises(SystemExit) as exc:
+        mod.contained_join(base, "../../../etc/passwd")
+    msg = str(exc.value).lower()
+    assert "escape" in msg or "outside" in msg
+
+
 # --- Real end-to-end (integration + slow) ------------------------------------
+
+
+@pytest.mark.integration
+def test_resolve_ref_resolves_to_full_sha(tmp_path):
+    """A valid ref resolves to a 40-hex-char commit SHA (which can't start '-')."""
+    mod = load_helper()
+    repo = tmp_path / "manuscript"
+    _make_two_ref_repo(repo)
+    git = shutil.which("git")
+    sha = mod.resolve_ref(git, repo, "v1-submitted")
+    assert len(sha) == 40 and all(c in "0123456789abcdef" for c in sha)
+
+
+@pytest.mark.integration
+def test_resolve_ref_bad_ref_errors(tmp_path):
+    mod = load_helper()
+    repo = tmp_path / "manuscript"
+    _make_two_ref_repo(repo)
+    git = shutil.which("git")
+    with pytest.raises(SystemExit) as exc:
+        mod.resolve_ref(git, repo, "no-such-ref")
+    assert "no-such-ref" in str(exc.value)
 
 def _toolchain_present() -> bool:
     return bool(shutil.which("latexdiff")) and bool(
