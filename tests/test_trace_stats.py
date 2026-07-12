@@ -403,3 +403,142 @@ def test_bucket_csv_columns_declared():
         "pr_numbers",
     ):
         assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
+
+
+# --- ticket 0292: six-way tool-call taxonomy + per-category char volume ---
+#
+# Categories (arXiv:2604.21965 §5.2, App. B.2 applied to this harness):
+# execution, reading, navigation, search, writing, other.
+# Bash read-vs-execute rule: a Bash call is classified by its leading command
+# token — a known read-only reader (cat/head/tail/less/more/bat) is reading, a
+# known search tool (grep/rg/find/fd/ag/ack) is search, an orientation command
+# (cd/ls/pwd, git status|log|branch|show-current — the pre-existing nav set) is
+# navigation, and everything else is execution. `ls` stays navigation to keep
+# _is_nav_tool byte-identical (documented, defensible: ls is directory
+# orientation, not content reading).
+
+
+def _result_for(tool_use_id, text):
+    return {
+        "type": "user",
+        "timestamp": "2026-06-09T10:02:00.000Z",
+        "message": {
+            "role": "user",
+            "content": [
+                {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}
+            ],
+        },
+    }
+
+
+def test_categorize_tool_one_per_category():
+    c = ts.categorize_tool
+    # execution
+    assert c("Bash", {"command": "uv run pytest -q"}) == "execution"
+    # reading
+    assert c("Read", {"file_path": "/a.md"}) == "reading"
+    assert c("Bash", {"command": "cat /etc/hosts"}) == "reading"
+    # navigation
+    assert c("Bash", {"command": "cd /tmp"}) == "navigation"
+    assert c("Bash", {"command": "git status"}) == "navigation"
+    assert c("EnterWorktree", {}) == "navigation"
+    # search
+    assert c("Grep", {"pattern": "foo"}) == "search"
+    assert c("Glob", {"pattern": "*.py"}) == "search"
+    assert c("Bash", {"command": "grep -r foo ."}) == "search"
+    assert c("WebSearch", {"query": "x"}) == "search"
+    # writing
+    assert c("Edit", {"file_path": "/a.py"}) == "writing"
+    assert c("Write", {"file_path": "/a.py"}) == "writing"
+    assert c("NotebookEdit", {"notebook_path": "/a.ipynb"}) == "writing"
+    # other
+    assert c("Skill", {"skill": "roar"}) == "other"
+    assert c("AskUserQuestion", {}) == "other"
+    assert c("TodoWrite", {}) == "other"
+
+
+def test_categorize_bash_ambiguous_read_vs_execute():
+    """Pins the documented Bash rule: a read-only command prefix is reading,
+    otherwise the Bash call is execution. `ls` stays navigation."""
+    assert ts.categorize_tool("Bash", {"command": "cat report.md"}) == "reading"
+    assert ts.categorize_tool("Bash", {"command": "python deploy.py"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "ls -la"}) == "navigation"
+
+
+def test_is_nav_tool_unchanged_by_six_way():
+    # regression: _is_nav_tool keeps its exact contract
+    assert ts._is_nav_tool("Bash", {"command": "cd /tmp"}) is True
+    assert ts._is_nav_tool("Bash", {"command": "git status"}) is True
+    assert ts._is_nav_tool("Bash", {"command": "uv run pytest"}) is False
+    # non-Bash navigation tools are NOT nav_tool (Bash-only contract preserved)
+    assert ts._is_nav_tool("EnterWorktree", {}) is False
+
+
+def test_category_call_counts(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    exec_use = {
+        "type": "tool_use",
+        "id": "tu_e",
+        "name": "Bash",
+        "input": {"command": "uv run pytest"},
+    }
+    search_use = {"type": "tool_use", "id": "tu_s", "name": "Grep", "input": {"pattern": "x"}}
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _assistant_row("m2", "claude-opus-4-8", USAGE, exec_use),
+        _assistant_row("m3", "claude-opus-4-8", USAGE, search_use),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_calls"]["reading"] == 1
+    assert stats["category_calls"]["execution"] == 1
+    assert stats["category_calls"]["search"] == 1
+
+
+def test_category_char_volume_joins_result_to_tooluse(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    exec_use = {
+        "type": "tool_use",
+        "id": "tu_e",
+        "name": "Bash",
+        "input": {"command": "uv run pytest"},
+    }
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _result_for("tu_r", "READCONTENT"),
+        _assistant_row("m2", "claude-opus-4-8", USAGE, exec_use),
+        _result_for("tu_e", "EXEC-OUTPUT-IS-LONGER"),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_chars"]["reading"] == len(json.dumps("READCONTENT"))
+    assert stats["category_chars"]["execution"] == len(json.dumps("EXEC-OUTPUT-IS-LONGER"))
+    # invariant: per-category char volumes partition tool_result_bytes
+    assert sum(stats["category_chars"].values()) == stats["tool_result_bytes"]
+
+
+def test_unmatched_result_charged_to_other(tmp_path):
+    """A tool_result whose tool_use_id matches no tool_use lands in 'other',
+    preserving the sum(category_chars) == tool_result_bytes invariant."""
+    rows = [_result_for("no_such_id", "ORPHAN")]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_chars"]["other"] == len(json.dumps("ORPHAN"))
+    assert sum(stats["category_chars"].values()) == stats["tool_result_bytes"]
+
+
+def test_category_csv_columns_declared():
+    for cat in ("execution", "reading", "navigation", "search", "writing", "other"):
+        for metric in ("calls", "chars"):
+            col = f"cat_{cat}_{metric}"
+            assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
+
+
+def test_category_columns_populated_in_row(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _result_for("tu_r", "HELLO"),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    row = ts.build_row("proj", "sess", "main", Path("/x.jsonl"), stats)
+    assert row["cat_reading_calls"] == 1
+    assert row["cat_reading_chars"] == len(json.dumps("HELLO"))
+    assert row["cat_execution_calls"] == 0
