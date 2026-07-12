@@ -188,13 +188,15 @@ def _tool_row(msg_id, name, tool_input, ts_str="2026-06-09T10:00:00.000Z"):
     return _assistant_row(msg_id, "claude-opus-4-8", USAGE, block, ts_str=ts_str)
 
 
-def _result_row(text):
+def _result_row(text, tool_use_id="x"):
     return {
         "type": "user",
         "timestamp": "2026-06-09T10:02:00.000Z",
         "message": {
             "role": "user",
-            "content": [{"type": "tool_result", "tool_use_id": "x", "content": text}],
+            "content": [
+                {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}
+            ],
         },
     }
 
@@ -418,19 +420,6 @@ def test_bucket_csv_columns_declared():
 # orientation, not content reading).
 
 
-def _result_for(tool_use_id, text):
-    return {
-        "type": "user",
-        "timestamp": "2026-06-09T10:02:00.000Z",
-        "message": {
-            "role": "user",
-            "content": [
-                {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}
-            ],
-        },
-    }
-
-
 def test_categorize_tool_one_per_category():
     c = ts.categorize_tool
     # execution
@@ -504,9 +493,9 @@ def test_category_char_volume_joins_result_to_tooluse(tmp_path):
     }
     rows = [
         _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
-        _result_for("tu_r", "READCONTENT"),
+        _result_row("READCONTENT", "tu_r"),
         _assistant_row("m2", "claude-opus-4-8", USAGE, exec_use),
-        _result_for("tu_e", "EXEC-OUTPUT-IS-LONGER"),
+        _result_row("EXEC-OUTPUT-IS-LONGER", "tu_e"),
     ]
     stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
     assert stats["category_chars"]["reading"] == len(json.dumps("READCONTENT"))
@@ -518,7 +507,7 @@ def test_category_char_volume_joins_result_to_tooluse(tmp_path):
 def test_unmatched_result_charged_to_other(tmp_path):
     """A tool_result whose tool_use_id matches no tool_use lands in 'other',
     preserving the sum(category_chars) == tool_result_bytes invariant."""
-    rows = [_result_for("no_such_id", "ORPHAN")]
+    rows = [_result_row("ORPHAN", "no_such_id")]
     stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
     assert stats["category_chars"]["other"] == len(json.dumps("ORPHAN"))
     assert sum(stats["category_chars"].values()) == stats["tool_result_bytes"]
@@ -535,7 +524,7 @@ def test_category_columns_populated_in_row(tmp_path):
     read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
     rows = [
         _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
-        _result_for("tu_r", "HELLO"),
+        _result_row("HELLO", "tu_r"),
     ]
     stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
     row = ts.build_row("proj", "sess", "main", Path("/x.jsonl"), stats)

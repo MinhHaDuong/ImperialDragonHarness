@@ -323,7 +323,9 @@ def parse_trace_file(path: Path) -> dict:
                         turn_idx = msg_turn_index.get(msg.get("id") or "")
                         if turn_idx is not None:
                             turn_tool_kinds[turn_idx].append(
-                                "nav" if _is_nav_tool(name, tool_input) else "work"
+                                "nav"
+                                if name == "Bash" and category == "navigation"
+                                else "work"
                             )
                             if _is_mandated_tool(name, tool_input):
                                 turn_mandated[turn_idx] = True
@@ -498,11 +500,10 @@ CSV_COLUMNS = [
 def build_row(project: str, session_id: str, agent_id: str, path: Path, stats: dict) -> dict:
     dominant_model = stats["models"].most_common(1)
     category_cols = {
-        f"cat_{c}_calls": stats["category_calls"].get(c, 0) for c in TOOL_CATEGORIES
+        f"cat_{c}_{m}": stats[f"category_{m}"].get(c, 0)
+        for c in TOOL_CATEGORIES
+        for m in ("calls", "chars")
     }
-    category_cols.update(
-        {f"cat_{c}_chars": stats["category_chars"].get(c, 0) for c in TOOL_CATEGORIES}
-    )
     return {
         **category_cols,
         "project": project,
