@@ -88,6 +88,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
+| `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/maw-audit` | "Mutation-testing audit of test-suite quality — verifies each test detects defects, tolerates safe refactors, and guards the whole defect class. EXPENSIVE — invoke deliberately. Auto-discovers config." |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
