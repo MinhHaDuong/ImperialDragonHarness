@@ -39,7 +39,7 @@ Rules agents must know:
 - A CI gate catches this trap across *open PRs*: `scripts/check-cross-pr-ticket-collision.sh` (the `cross-pr-ticket-collision` job, `pull_request` events only) lists the ticket IDs a PR adds and fails if any is also added by another open PR, naming the colliding PR and suggesting the next free ID. Per-branch `erg check` cannot see this — each branch's IDs are unique within itself. On a failure, renumber as above (`git mv` + fix cross-references) before merging. The cross-PR enumeration is the only forge-specific part, isolated behind `# harness-extension-point` calls.
 - Artifacts a ticket consumes or produces (reports, data, generated files, scripts) live in their natural location in the project tree and are referenced from the body by path, not embedded wholesale, and not kept as a filename-twinned `0002-slug.md` sidecar the tooling cannot track.
 
-On GitHub, `tickets/erg-github` (a separate committed helper, not an `erg` subcommand) adds a `verify` check that fails a PR referencing a still-open ticket -- so close the ticket in the same PR (`erg close`).
+Ticket validation runs in CI: the `validate-tickets` job runs `erg check tickets/` on every push and PR, and the `cross-pr-ticket-collision` job (above) guards the optimistic-ID trap across open PRs. No forge helper fails a PR for referencing a still-open ticket; closing the ticket in the same PR is a convention, enforced at merge by `erg-pr-merge`, which runs `erg close` on the ticket named in the PR's `**Ticket:**` line.
 
 In doubt, run `erg spec` (file format) or `erg --help --all` / `erg COMMAND --help` for command documentation.
 

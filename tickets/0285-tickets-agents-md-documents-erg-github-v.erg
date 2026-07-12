@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-11T22:21Z Minh Ha-Duong created
 
+2026-07-12T17:24Z claude note git-erg DOES ship tickets/erg-github (asset AGENTS.md L41, dispatch src/go/main.go, test test_erg_github.sh); this repo does not vendor it. Vendoring is a separate author decision. Conservative fix applied: describe the validate-tickets CI job (erg check tickets/) and cross-pr-ticket-collision gate that actually run; close-in-same-PR guidance attributed to erg-pr-merge.
 --- body ---
 ## Context
 
