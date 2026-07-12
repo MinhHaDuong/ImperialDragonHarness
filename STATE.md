@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-11T22:30Z
+Last updated: 2026-07-12T18:40Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-11T22:30Z -->
+<!-- generated 2026-07-12T18:40Z -->
 
-**Tickets:** 13 ready · 4 blocked — `erg ready tickets/` for full list
+**Tickets:** 14 ready · 4 blocked — `erg ready tickets/` for full list
 **Recent commits:**
-  b3378cf ticket(0286): derive setup-claude-agent.sh project list from projects.json
-  9477071 Merge pull request #497 from MinhHaDuong/t0284-home-reorg-stale-paths
-  666f41e ticket(0284): close and archive — PR #497
-  331d24b Merge pull request #496 from MinhHaDuong/t0262-cross-pr-ticket-collision
-  49db3cf ticket(0262): close and archive — PR #496
+  f5f3a20 Merge pull request #504 from MinhHaDuong/t0288-track-changes-pdf
+  42998c5 ticket(0288): close and archive — PR #504
+  2997be3 fix(0288): guard track-changes-pdf against ref/main-tex injection
+  bfca208 simplify(0288): drop dead DIFF_MARKERS constant and redundant .git check
+  192a141 Merge pull request #503 from MinhHaDuong/t0287-ingest-decision-letter
 
 ## Blockers
 

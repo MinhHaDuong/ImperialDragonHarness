@@ -6,7 +6,8 @@ Author: minh
 --- log ---
 2026-06-18T13:46Z minh created
 
-2026-07-12T18:08Z note child 0287 (ingest-decision-letter) landed
+2026-07-12T18:08Z note child 0287 (ingest-decision-letter) landed2026-07-12T20:55Z claude note integration review (both children merged): 0287 PR #503 and 0288 PR #504 landed gaze-APPROVED; merged-main suite 724 passed; live fixture chain verified by the supervisor — archive -> segment (3+3) -> dedupe (6->5+1 atomic) -> coverage (uncovered remark + orphan ticket flagged, exit 1; clean map exit 0). Tracker stays open: the exit criterion's final link (track-changes PDF render) is blocked on latexdiff, absent on doudou — install texlive-extra-utils or run at the next real R&R to close.
+
 --- body ---
 ## Context
 A full day (2026-06-18, ~12 sessions on the Oeconomia — Climate finance
