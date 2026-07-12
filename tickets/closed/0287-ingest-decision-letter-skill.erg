@@ -2,11 +2,13 @@
 Title: Build the ingest-decision-letter skill
 Created: 2026-07-12
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #503
 
 --- log ---
 2026-07-12T17:23Z claude created
 
 2026-07-12T18:04Z bump verify-reroll — round 1: 3 blocking findings unresolved (archive() basename-collision silent overwrite ingest_letter.py:132; coverage() duplicate-id dict-comprehension silently drops ticket mapping ingest_letter.py:283; dedupe() silently discards atomic_of pointing at nonexistent id ingest_letter.py:236) + 6 verifiable: minors unresolved from posted panel review (pullrequestreview-4680504924); simplify commit 9fce88c was quality-only, did not touch any of these lines behaviorally
+2026-07-12T18:16Z Minh Ha-Duong closed — autoclosed — PR #503
 --- body ---
 Child of tracker 0265.
 
