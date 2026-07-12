@@ -454,6 +454,24 @@ def test_categorize_bash_ambiguous_read_vs_execute():
     assert ts.categorize_tool("Bash", {"command": "ls -la"}) == "navigation"
 
 
+def test_categorize_bash_hyphen_boundary_not_a_reader():
+    """A distinct binary that merely shares a reader/searcher prefix up to a
+    hyphen or word char is execution, not reading/search (ticket 0292 gate
+    round 1: \\b fires at the t->- transition, leaking cat-fetch-tool as a
+    reader and find-orphans.sh as a searcher)."""
+    # hyphen boundary: single distinct binaries, not cat/find
+    assert ts.categorize_tool("Bash", {"command": "cat-fetch-tool foo"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "find-orphans.sh"}) == "execution"
+    # word-char boundary: catfoo / finder are not cat / find
+    assert ts.categorize_tool("Bash", {"command": "catfoo"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "finder x"}) == "execution"
+    # legitimate cases still classify correctly
+    assert ts.categorize_tool("Bash", {"command": "cat foo.py"}) == "reading"
+    assert ts.categorize_tool("Bash", {"command": "grep -n x y"}) == "search"
+    assert ts.categorize_tool("Bash", {"command": "find"}) == "search"
+    assert ts.categorize_tool("Bash", {"command": "find; ls"}) == "search"
+
+
 def test_is_nav_tool_unchanged_by_six_way():
     # regression: _is_nav_tool keeps its exact contract
     assert ts._is_nav_tool("Bash", {"command": "cd /tmp"}) is True

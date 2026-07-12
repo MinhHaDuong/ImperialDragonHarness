@@ -121,6 +121,8 @@ Children:
 - 0244 — phase 4 counterfactual accounting (closed)
 - 0245 — phase 5 targeted A/B: model right-sizing of long mains +
   verification convergence, quality-guarded
+- 0292 — six-way tool-call taxonomy + per-category char volume for
+  trace-stats (from the 0266 pillage manifest, technique 5)
 
 Not owned by any child (integration-review checklist):
 - `trace-doctor` skill assembly (the tracker's deliverable)
@@ -136,7 +138,3 @@ Not owned by any child (integration-review checklist):
 - [ ] At least one cost-saving measure validated (phase 3 or 4) and
       either adopted in a skill/prompt or explicitly rejected with
       measured evidence
-
-## Child (2026-07-12)
-
-- 0292 six-way tool-call taxonomy + per-category char volume for trace-stats (from the 0266 pillage manifest, technique 5)

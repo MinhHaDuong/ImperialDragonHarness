@@ -76,8 +76,8 @@ NAV_TOOLS = {"EnterWorktree", "ExitWorktree"}
 # A known read-only content reader is reading; a known search/filter tool is
 # search; an orientation command (cd/ls/pwd, git status|log|branch) is
 # navigation (see NAV_COMMAND_RE); everything else is execution.
-BASH_READ_RE = re.compile(r"^\s*(?:cat|head|tail|less|more|bat)\b")
-BASH_SEARCH_RE = re.compile(r"^\s*(?:grep|egrep|fgrep|rg|ag|ack|find|fd)\b")
+BASH_READ_RE = re.compile(r"^\s*(?:cat|head|tail|less|more|bat)(?=\s|$|[;&|])")
+BASH_SEARCH_RE = re.compile(r"^\s*(?:grep|egrep|fgrep|rg|ag|ack|find|fd)(?=\s|$|[;&|])")
 
 # Built-in CLI commands that appear as <command-name> but are not entry skills.
 BUILTIN_COMMANDS = {
