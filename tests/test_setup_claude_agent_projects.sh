@@ -123,6 +123,43 @@ else
     fail=1
 fi
 
+# --- the MUTATING entry point (no --list) aborts on a bad registry --------
+# Round-2 gate finding on PR #500: the fix inside derive_project_dirs was
+# swallowed again at the call site `mapfile -t PROJECTS < <(derive_project_dirs)`
+# — the child's exit 1 never reaches the parent, PROJECTS goes empty, and the
+# ownership step no-ops behind a clean "Done." Run the real path with a stub
+# sudo first on PATH (never touch the system; on CI sudo is passwordless, so an
+# unstubbed run would REALLY mutate) and assert: non-zero exit, the derive
+# error on stderr, and zero sudo invocations.
+STUBDIR="$TMP/bin"
+mkdir -p "$STUBDIR"
+SUDO_LOG="$TMP/sudo-calls.log"
+: > "$SUDO_LOG"
+cat > "$STUBDIR/sudo" <<STUB
+#!/usr/bin/env bash
+echo "\$*" >> "$SUDO_LOG"
+exit 99
+STUB
+chmod +x "$STUBDIR/sudo"
+
+set +e
+mutate_err="$(PATH="$STUBDIR:$PATH" HOME="$FAKE_HOME" \
+    PROJECTS_JSON="$TMP/does-not-exist.json" bash "$SCRIPT" 2>&1 >/dev/null)"
+mutate_rc=$?
+set -e
+mutate_ok=1
+(( mutate_rc != 0 )) || { echo "  mutating path exited 0 on a bad registry"; mutate_ok=0; }
+grep -q "failed to read registry" <<< "$mutate_err" \
+    || { echo "  no derive error on stderr: [$mutate_err]"; mutate_ok=0; }
+[ ! -s "$SUDO_LOG" ] \
+    || { echo "  sudo was invoked despite the bad registry:"; cat "$SUDO_LOG"; mutate_ok=0; }
+if (( mutate_ok )); then
+    echo "PASS: mutating entry point aborts on a bad registry before any sudo"
+else
+    echo "FAIL: bad registry must abort the mutating path before any sudo"
+    fail=1
+fi
+
 if (( fail )); then
     exit 1
 fi

@@ -43,7 +43,19 @@ if [ "${1:-}" = "--list" ]; then
     exit 0
 fi
 
-mapfile -t PROJECTS < <(derive_project_dirs)
+# Capture first: inside `< <(…)` the function's `exit 1` dies in the child
+# and mapfile sees only closed stdin — a bad registry would yield an empty
+# PROJECTS and a clean "Done." (the exact bug fixed inside the function,
+# recurring at its call site). A top-level command-substitution assignment
+# propagates the failure under `set -e`. Empty output (registry `[]`, or
+# every entry filtered) is legitimate: guard it so a here-string's single
+# blank line does not become one empty project dir.
+derived="$(derive_project_dirs)"
+if [ -z "$derived" ]; then
+    PROJECTS=()
+else
+    mapfile -t PROJECTS <<< "$derived"
+fi
 
 echo "── 1. User + group ──────────────────────────────────────────────────────"
 sudo groupadd -f dev-projects
