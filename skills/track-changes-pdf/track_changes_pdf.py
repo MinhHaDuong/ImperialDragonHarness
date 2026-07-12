@@ -31,11 +31,6 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-# latexdiff marks insertions with \DIFadd and deletions with \DIFdel; the
-# preamble it injects defines these. Presence of the markup in the diff .tex
-# is the machine-checkable signal that a diff was produced.
-DIFF_MARKERS = ("\\DIFadd", "\\DIFdel")
-
 
 class ToolchainError(SystemExit):
     """Raised (as SystemExit) when a required external tool is missing."""
@@ -173,8 +168,9 @@ def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
     compiler = resolve_compiler()
 
     repo = repo.resolve()
-    if not (repo / ".git").exists() and not repo.joinpath(".git").is_file():
-        # A worktree has a .git file, a normal checkout a .git dir; either is fine.
+    if not (repo / ".git").exists():
+        # Path.exists() covers both a normal checkout's .git dir and a
+        # worktree's .git file — either is fine, so a single check suffices.
         # Only warn — git archive will give the authoritative error if truly not a repo.
         log.warning("%s does not look like a git repository root", repo)
 
