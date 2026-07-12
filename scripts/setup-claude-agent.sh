@@ -4,12 +4,33 @@
 set -euo pipefail
 
 HARNESS="$HOME/.claude"
-PROJECTS=(
-    "$HOME/CNRS/papiers/actif/AEDIST-technical-report"
-    "$HOME/CNRS/papiers/actif/Cadens"
-    "$HOME/CNRS/projets/actifs/climate-finance-het"
-    "$HOME/CNRS/papiers/actif/Fuzzy Corpus"
-)
+# Canonical project registry — the single source of truth also read by
+# beat.py, the nightbeat survey, and scry. Override for tests.
+REGISTRY="${PROJECTS_JSON:-$HARNESS/scripts/projects.json}"
+
+# Derive the project directories that get dev-projects group ownership.
+# Reads the registry, expands a leading ~ to $HOME (as the Python consumers do
+# via expanduser), and excludes the harness itself: ~/.claude receives
+# read-only ACL access in steps 4-5, so granting it group write here would
+# contradict that design and expose the config tree. Every other registry
+# entry is a project the overnight agent works on and needs write access to.
+derive_project_dirs() {
+    local name path
+    while IFS=$'\t' read -r name path; do
+        path="${path/#\~/$HOME}"          # expand leading ~ only
+        [ "$path" = "$HARNESS" ] && continue
+        printf '%s\n' "$path"
+    done < <(jq -r '.[] | [.name, .path] | @tsv' "$REGISTRY")
+}
+
+# `--list` prints the derived dirs and exits — the testable, side-effect-free
+# entry point. Everything below it mutates the system and needs sudo.
+if [ "${1:-}" = "--list" ]; then
+    derive_project_dirs
+    exit 0
+fi
+
+mapfile -t PROJECTS < <(derive_project_dirs)
 
 echo "── 1. User + group ──────────────────────────────────────────────────────"
 sudo groupadd -f dev-projects
