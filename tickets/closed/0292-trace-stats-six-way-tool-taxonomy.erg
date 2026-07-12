@@ -2,11 +2,13 @@
 Title: trace-stats: six-way tool-call taxonomy with per-category char volume
 Created: 2026-07-12
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #506
 
 --- log ---
 2026-07-12T18:55Z claude created
 
 2026-07-12T22:31Z impl landed: categorize_tool six-way + per-category calls/chars columns; tests RED->GREEN, make check green
+2026-07-12T22:57Z Minh Ha-Duong closed — autoclosed — PR #506
 --- body ---
 Child of tracker 0266 (pillage manifest,
 docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 5); serves
