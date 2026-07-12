@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Build the ingest-decision-letter skill
+Created: 2026-07-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-12T17:23Z claude created
+
+--- body ---
+Child of tracker 0265.
+
+## Context
+Journal Revise-and-Resubmit *intake* has no harness tooling: a full day
+(2026-06-18, Oeconomia manuscript) was spent by hand extracting the editor
+decision and reviewer comments from PDFs, hunting for already-archived files in
+Gmail, reconciling "60 atomic comments" down to "56 remarks" with no parser, and
+re-verifying two or three times that the created tickets covered every remark
+because no remark-to-ticket ledger existed.
+
+This ticket builds the first of the two skills in tracker 0265:
+`ingest-decision-letter`. It takes a decision letter plus reviewer comments
+(PDF or text; email-thread source is a documented, tool-agnostic capability),
+archives them to the paper repo's `release/<date>/` convention as tracked text,
+parses them into a structured remark ledger (id, reviewer, category, verbatim
+text, source location), dedupes atomic sub-comments against distinct remarks,
+and emits a coverage check that maps remarks to tickets and flags uncovered
+remarks and orphan tickets — turning verification into one deterministic pass.
+
+The second skill (`track-changes-pdf`) is out of scope here; it lands under its
+own child ticket.
+
+## Relevant files
+- `skills/external-peer-review/` — closest sibling (sends our PDF out); reuse
+  its PDF/text plumbing style and persona-free structure.
+- `skills/related-work-note/`, `skills/zotero-import/` — structure-extraction
+  precedents.
+- `README.md` — skills catalog, regenerated via `make skills-catalog`.
+- `tests/test_skill_descriptions.py` — discoverability-first description gate.
+
+## Actions
+1. Spec the remark-ledger JSONL schema (id, reviewer, category, verbatim text,
+   source location, mapped tickets, atomic-of) — the contract the ledger and the
+   coverage check share.
+2. Build `skills/ingest-decision-letter/SKILL.md` + a stdlib-only helper:
+   text/PDF extraction, archive to `release/<date>/`, deterministic first-pass
+   segmentation into a candidate ledger, dedupe, and a coverage report.
+3. Keep the skill tool-agnostic: the email-thread source is named as a
+   capability, not hardcoded tooling; helpers are pure I/O, never call an LLM API.
+4. Regenerate the skills catalog (`make skills-catalog`) and commit the README.
+5. Add `tests/test_ingest_decision_letter.py` with synthesized fictional
+   fixtures (no real editorial content copied in): ledger parse, dedupe, and a
+   coverage check that flags an orphan ticket and an uncovered remark.
+
+## Exit criteria
+- [ ] `ingest-decision-letter` skill exists (SKILL.md + helper), extracts +
+      archives + emits a structured remark ledger from text/PDF sources.
+- [ ] Coverage check reports remark-to-ticket mapping, orphan tickets, and
+      uncovered remarks in one deterministic pass.
+- [ ] Skill listed in `README.md` catalog; `make check-skills-drift` clean.
+- [ ] Description-discoverability and skill-contract tests pass.
+- [ ] `make check` passes; `tickets/erg validate` clean.
