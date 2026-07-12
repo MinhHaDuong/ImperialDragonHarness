@@ -1,0 +1,77 @@
+%erg 0.1
+Title: track-changes-pdf skill — revision-marked PDF via latexdiff between two refs
+Created: 2026-07-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-12T17:22Z claude created
+
+--- body ---
+Child of tracker 0265.
+
+## Context
+Tracker 0265 (R&R intake skill chain) specifies two skills. This is skill 2 of
+2: `track-changes-pdf`. During the 2026-06-18 Oeconomia R&R day a track-changes
+PDF was requested ("do 140 with track-change mode, open it for me to annotate")
+and never delivered — ~14 tool calls were spent assessing feasibility, then the
+work was abandoned because no skill existed.
+
+The repo's review doctrine already names the mechanism: rules/git.md says "the
+review interface for prose is the recompiled PDF and latexdiff between tags".
+This skill mechanizes exactly that — render a revision-marked PDF (insertions
+and deletions highlighted) from a LaTeX manuscript between two git refs, by
+running latexdiff on the refs' sources and then compiling.
+
+## Relevant files
+- `skills/track-changes-pdf/SKILL.md` — the skill entry point.
+- `skills/track-changes-pdf/track_changes_pdf.py` — helper: extract each ref's
+  tree, run latexdiff --flatten, compile the diff .tex to PDF.
+- `skills/external-peer-review/` — sibling precedent for a skill + pure-I/O
+  Python helper with argparse and graceful toolchain degradation.
+- `tests/test_track_changes_pdf.py` — fixture-driven suite.
+- `README.md` — skills catalog, regenerated via `make skills-catalog`.
+
+## Actions
+1. Build the helper: `--repo --old-ref --new-ref --main-tex --output`
+   (argparse, no hardcoded paths). Extract both refs' trees with `git archive`,
+   run `latexdiff --flatten OLD NEW > diff.tex`, compile with latexmk/pdflatex,
+   copy the PDF to `--output`.
+2. Degrade gracefully: if latexdiff or the LaTeX compiler is absent, exit with a
+   clear, actionable install message rather than a stack trace.
+3. Write SKILL.md with a plain, search-findable first sentence and
+   forge-/stack-agnostic prescriptive language.
+4. Regenerate the skills catalog (`make skills-catalog`) and commit README.md.
+5. Tests: a tiny synthetic 2-ref LaTeX repo fixture. Real latexdiff+compile
+   end-to-end when the toolchain is present (integration/slow tier); the
+   toolchain-absent clear-error path in the fast tier.
+
+## Deferred (out of scope for v1)
+- Grouping insertions/deletions by ticket or remark (from tracker 0265) is NOT
+  implemented. latexdiff has no per-remark concept — it diffs two source trees
+  and knows nothing about which ticket authored a change. The future hook is to
+  drive latexdiff per-ticket (one diff per ticket's commit range) and merge the
+  marked outputs, or to tag changes with `\ticket{N}{...}` macros in the source
+  and colour by tag. Recorded here so v1 ships the byte-accurate whole-revision
+  diff first; per-ticket grouping is a follow-up.
+
+## Test
+- Fixture: a temp git repo with a one-sentence LaTeX manuscript, committed at
+  two refs with one sentence changed between them.
+- Toolchain present: run the helper end-to-end, assert the output PDF exists and
+  the intermediate diff .tex carries latexdiff markup (`\DIFadd` / `\DIFdel`).
+  Mark integration (subprocess + compile) / slow.
+- Toolchain absent: force latexdiff missing, assert a clear SystemExit whose
+  message names latexdiff and how to install it. Fast tier, no LaTeX needed.
+
+## Invariants
+- Skill is SKILL.md + a pure-I/O helper; no Anthropic API calls in the helper.
+- Forge-/stack-agnostic skill text (no hardcoded `gh`, no absolute home paths);
+  `make check-agnostic-skills` stays clean.
+- `make check-skills-drift` clean after catalog regeneration.
+- Description first sentence is unthemed (`tests/test_skill_descriptions.py`).
+
+## Exit criteria
+- `skills/track-changes-pdf/` exists (SKILL.md + helper), catalogued in
+  README.md, with a passing fixture-driven test suite.
+- `make check` passes; `tickets/erg validate` accepts this ticket.
+- Per-ticket grouping is recorded as deferred, not silently dropped.
