@@ -54,27 +54,18 @@ _ENUM_MARKER = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
-# Fields every ledger record carries, with their defaults.
-_LEDGER_FIELDS = {
-    "id": "",
-    "reviewer": "",
-    "category": "",
-    "text": "",
-    "source": "",
-    "tickets": list,
-    "atomic_of": None,
-}
-
 
 def _normalize_record(rec: dict) -> dict:
     """Fill missing ledger fields with defaults; leave present ones intact."""
-    out = {}
-    for field, default in _LEDGER_FIELDS.items():
-        if field in rec and rec[field] is not None:
-            out[field] = rec[field]
-        else:
-            out[field] = default() if callable(default) else default
-    return out
+    return {
+        "id": rec.get("id") or "",
+        "reviewer": rec.get("reviewer") or "",
+        "category": rec.get("category") or "",
+        "text": rec.get("text") or "",
+        "source": rec.get("source") or "",
+        "tickets": rec.get("tickets") or [],
+        "atomic_of": rec.get("atomic_of"),
+    }
 
 
 def read_ledger(path: Path) -> list[dict]:
@@ -96,6 +87,12 @@ def write_ledger(records: list[dict], out) -> None:
     """Write records as JSONL to an open text stream."""
     for rec in records:
         out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _print_json(obj: dict) -> None:
+    """Pretty-print a JSON object to stdout, newline-terminated."""
+    json.dump(obj, sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
 
 
 # --------------------------------------------------------------------------- #
@@ -172,8 +169,7 @@ def segment(text: str, reviewer: str, source_name: str) -> list[dict]:
     if marker_idx:
         for k, start in enumerate(marker_idx):
             end = marker_idx[k + 1] if k + 1 < len(marker_idx) else len(lines)
-            body = [ln for ln in lines[start:end]]
-            spans.append((start, body))
+            spans.append((start, lines[start:end]))
     else:
         # Paragraph fallback: split on blank lines.
         start = None
@@ -232,13 +228,13 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     ones carrying ``atomic_of`` set to their canonical id. Distinct remarks are
     the records whose ``atomic_of`` is null.
     """
-    by_id = {r["id"]: r for r in records if r["id"]}
+    known_ids = {r["id"] for r in records if r["id"]}
     canonical_by_text: dict[str, str] = {}
     out = []
     for rec in records:
         rec = dict(rec)
         # Respect an explicit atomic_of that points at a known record.
-        if rec.get("atomic_of") and rec["atomic_of"] in by_id:
+        if rec.get("atomic_of") and rec["atomic_of"] in known_ids:
             out.append(rec)
             continue
         key = _norm_text(rec["text"])
@@ -320,8 +316,7 @@ def _cmd_extract(args) -> int:
 
 def _cmd_archive(args) -> int:
     manifest = archive(args.sources, args.into)
-    json.dump(manifest, sys.stdout, indent=2, ensure_ascii=False)
-    sys.stdout.write("\n")
+    _print_json(manifest)
     return 0
 
 
@@ -355,8 +350,7 @@ def _cmd_coverage(args) -> int:
     if args.tickets_dir:
         universe |= _ticket_ids_from_dir(args.tickets_dir)
     report = coverage(records, universe)
-    json.dump(report, sys.stdout, indent=2, ensure_ascii=False)
-    sys.stdout.write("\n")
+    _print_json(report)
     return 0 if coverage_ok(report) else 1
 
 
