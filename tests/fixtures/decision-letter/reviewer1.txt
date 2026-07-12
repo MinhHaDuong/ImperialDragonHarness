@@ -1,0 +1,10 @@
+Reviewer 1
+
+1. The introduction overstates the novelty of the proposed estimator. Please
+   temper the claims and cite the prior work of Imaginary and Panels (2019).
+
+2. The sample size used in the Section 3 simulation is never stated. Report N
+   and the number of replications.
+
+3. The introduction overstates the novelty of the proposed estimator. Please
+   temper the claims and cite the prior work of Imaginary and Panels (2019).
