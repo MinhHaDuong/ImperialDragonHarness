@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-12T17:23Z claude created
 
+2026-07-12T18:04Z bump verify-reroll — round 1: 3 blocking findings unresolved (archive() basename-collision silent overwrite ingest_letter.py:132; coverage() duplicate-id dict-comprehension silently drops ticket mapping ingest_letter.py:283; dedupe() silently discards atomic_of pointing at nonexistent id ingest_letter.py:236) + 6 verifiable: minors unresolved from posted panel review (pullrequestreview-4680504924); simplify commit 9fce88c was quality-only, did not touch any of these lines behaviorally
 --- body ---
 Child of tracker 0265.
 
@@ -26,8 +27,8 @@ text, source location), dedupes atomic sub-comments against distinct remarks,
 and emits a coverage check that maps remarks to tickets and flags uncovered
 remarks and orphan tickets — turning verification into one deterministic pass.
 
-The second skill (`track-changes-pdf`) is out of scope here; it lands under its
-own child ticket.
+The second skill (`track-changes-pdf`) is out of scope here; it will land under
+its own child ticket.
 
 ## Relevant files
 - `skills/external-peer-review/` — closest sibling (sends our PDF out); reuse

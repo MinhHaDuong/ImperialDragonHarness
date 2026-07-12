@@ -86,7 +86,12 @@ def test_dedupe_folds_identical_duplicate():
     text = (FIX / "reviewer1.txt").read_text()
     recs = il.segment(text, "R1", "reviewer1.txt")
     out, summary = il.dedupe(recs)
-    assert summary == {"input": 3, "remarks": 2, "atomics": 1}
+    assert summary == {
+        "input": 3,
+        "remarks": 2,
+        "atomics": 1,
+        "unknown_atomic_refs": [],
+    }
     folded = [r for r in out if r["atomic_of"] is not None]
     assert len(folded) == 1
     assert folded[0]["id"] == "R1-03"
@@ -104,6 +109,21 @@ def test_dedupe_respects_explicit_atomic_of():
     out, summary = il.dedupe(recs)
     assert summary["remarks"] == 2 and summary["atomics"] == 1
     assert [r for r in out if r["id"] == "R1-02"][0]["atomic_of"] == "R1-01"
+
+
+def test_dedupe_flags_dangling_atomic_of():
+    """A dangling atomic_of (typo from the hand-edit step) is surfaced, not silently
+    rewritten to a distinct remark."""
+    recs = [
+        il._normalize_record({"id": "R1-01", "text": "Parent remark."}),
+        il._normalize_record(
+            {"id": "R1-02", "text": "A sub-point.", "atomic_of": "R9-99"}
+        ),
+    ]
+    out, summary = il.dedupe(recs)
+    assert summary["unknown_atomic_refs"] == ["R1-02"]
+    child = [r for r in out if r["id"] == "R1-02"][0]
+    assert child["atomic_of"] == "R9-99", "dangling ref must not become distinct"
 
 
 def test_dedupe_full_ledger_counts():
@@ -140,6 +160,18 @@ def test_coverage_flags_uncovered_and_orphan_together():
     assert report["uncovered_remarks"] == ["R2-03"]
     assert report["orphan_tickets"] == ["0399"]
     assert report["unknown_ticket_refs"] == []
+    assert not il.coverage_ok(report)
+
+
+def test_coverage_flags_duplicate_remark_id():
+    """Two remarks sharing an id (e.g. re-run segment + concat) are surfaced, not
+    silently collapsed into one mapping."""
+    ledger = [
+        il._normalize_record({"id": "R1-01", "text": "a", "tickets": ["0301"]}),
+        il._normalize_record({"id": "R1-01", "text": "dup", "tickets": ["0302"]}),
+    ]
+    report = il.coverage(ledger, {"0301", "0302"})
+    assert report["duplicate_ids"] == ["R1-01"]
     assert not il.coverage_ok(report)
 
 
@@ -180,6 +212,21 @@ def test_archive_copies_sources_and_writes_manifest(tmp_path):
     assert (into / "reviewer1.txt").exists()
     assert (into / "manifest.json").exists()
     assert len(manifest["entries"]) == 2
+
+
+def test_archive_disambiguates_same_basename_from_different_dirs(tmp_path):
+    d1 = tmp_path / "d1"
+    d2 = tmp_path / "d2"
+    d1.mkdir()
+    d2.mkdir()
+    (d1 / "review.txt").write_text("from dir one")
+    (d2 / "review.txt").write_text("from dir two")
+    into = tmp_path / "release" / "2026-07-12"
+    manifest = il.archive([d1 / "review.txt", d2 / "review.txt"], into)
+    archived = [Path(e["archived"]).name for e in manifest["entries"]]
+    assert len(set(archived)) == 2, "both sources must survive with distinct names"
+    contents = {(into / name).read_text() for name in archived}
+    assert contents == {"from dir one", "from dir two"}, "no source clobbered"
 
 
 # --------------------------------------------------------------------------- #

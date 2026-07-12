@@ -21,7 +21,7 @@ Ledger record (JSONL, one object per line):
     text      verbatim remark text
     source    ``<file>:<line>`` where the remark starts
     tickets   list of ticket ids that address this remark ([] = uncovered)
-    atomic_of parent remark id when this record folds into another ([]-> null)
+    atomic_of parent remark id when this record folds into another (null = distinct)
 
 Example:
     ingest_letter.py segment reviewer1.txt --reviewer R1 > ledger.jsonl
@@ -106,19 +106,49 @@ def extract_text(path: Path) -> str:
                 "pdftotext not found — install poppler-utils to extract PDF "
                 "text, or pass a text file instead."
             )
-        result = subprocess.run(
-            ["pdftotext", "-layout", str(path), "-"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+        try:
+            result = subprocess.run(
+                ["pdftotext", "-layout", str(path), "-"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise SystemExit(
+                f"pdftotext failed on {path}: {e.stderr.strip() or e}. "
+                "The file may be malformed or not a valid PDF."
+            ) from e
         return result.stdout
-    return path.read_text(encoding="utf-8")
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        raise SystemExit(
+            f"{path} is not valid UTF-8 text: {e}. Re-save it as UTF-8, or pass "
+            "the PDF and let pdftotext extract it."
+        ) from e
 
 
 # --------------------------------------------------------------------------- #
 # archive
 # --------------------------------------------------------------------------- #
+def _unique_dest(into: Path, name: str, used: set[str]) -> Path:
+    """Return a destination path in ``into`` that collides with nothing.
+
+    Appends ``-2``, ``-3``, … before the extension when the basename is already
+    taken — by an earlier source in this archive run or a file already on disk —
+    so two same-named sources from different directories both survive instead of
+    the second silently clobbering the first.
+    """
+    stem, suffix = Path(name).stem, Path(name).suffix
+    candidate = name
+    i = 2
+    while candidate in used or (into / candidate).exists():
+        candidate = f"{stem}-{i}{suffix}"
+        i += 1
+    used.add(candidate)
+    return into / candidate
+
+
 def archive(sources: list[Path], into: Path) -> dict:
     """Copy source documents into ``into`` (a release/<date>/ dir).
 
@@ -128,14 +158,15 @@ def archive(sources: list[Path], into: Path) -> dict:
     """
     into.mkdir(parents=True, exist_ok=True)
     entries = []
+    used: set[str] = set()
     for src in sources:
         if not src.exists():
             raise SystemExit(f"source not found: {src}")
-        dest = into / src.name
+        dest = _unique_dest(into, src.name, used)
         shutil.copy2(src, dest)
         entry = {"source": str(src), "archived": str(dest)}
         if src.suffix.lower() == ".pdf":
-            sidecar = dest.with_suffix(".txt")
+            sidecar = _unique_dest(into, dest.stem + ".txt", used)
             sidecar.write_text(extract_text(src), encoding="utf-8")
             entry["text_sidecar"] = str(sidecar)
         entries.append(entry)
@@ -230,11 +261,20 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     """
     known_ids = {r["id"] for r in records if r["id"]}
     canonical_by_text: dict[str, str] = {}
+    unknown_refs: list[str] = []
     out = []
     for rec in records:
         rec = dict(rec)
-        # Respect an explicit atomic_of that points at a known record.
-        if rec.get("atomic_of") and rec["atomic_of"] in known_ids:
+        ref = rec.get("atomic_of")
+        if ref:
+            if ref in known_ids:
+                # Respect an explicit atomic_of that points at a known record.
+                out.append(rec)
+                continue
+            # Dangling atomic_of — likely a typo from the hand-edit step. Surface
+            # it and keep the record's stated (dangling) parent, rather than
+            # silently falling through and treating it as a distinct remark.
+            unknown_refs.append(rec["id"])
             out.append(rec)
             continue
         key = _norm_text(rec["text"])
@@ -251,6 +291,7 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
         "input": len(records),
         "remarks": len(remarks),
         "atomics": len(atomics),
+        "unknown_atomic_refs": sorted(unknown_refs),
     }
     return out, summary
 
@@ -271,16 +312,24 @@ def _ticket_ids_from_dir(tickets_dir: Path) -> set[str]:
 def coverage(records: list[dict], universe: set[str]) -> dict:
     """Cross-check remark-to-ticket mapping against a ticket universe.
 
-    A remark is a record whose ``atomic_of`` is null. Atomic sub-comments
-    inherit their parent's coverage and are not counted separately.
+    A remark is a record whose ``atomic_of`` is null. Atomic sub-comments are
+    folded into their parent and excluded from the count entirely.
 
     Flags:
       uncovered_remarks    remarks addressed by no ticket.
       orphan_tickets       tickets in the universe that address no remark.
       unknown_ticket_refs  ticket ids a remark references but not in the universe.
+      duplicate_ids        remark ids that occur more than once (a re-run/concat
+                           collision that would otherwise silently drop a mapping).
     """
     remarks = [r for r in records if r["atomic_of"] is None]
-    mapping = {r["id"]: list(r.get("tickets") or []) for r in remarks}
+    mapping: dict[str, list[str]] = {}
+    duplicate: set[str] = set()
+    for r in remarks:
+        rid = r["id"]
+        if rid in mapping:
+            duplicate.add(rid)
+        mapping[rid] = list(r.get("tickets") or [])
 
     uncovered = sorted(rid for rid, tks in mapping.items() if not tks)
     referenced = {t for tks in mapping.values() for t in tks}
@@ -293,16 +342,18 @@ def coverage(records: list[dict], universe: set[str]) -> dict:
         "uncovered_remarks": uncovered,
         "orphan_tickets": orphan,
         "unknown_ticket_refs": unknown,
+        "duplicate_ids": sorted(duplicate),
         "map": mapping,
     }
 
 
 def coverage_ok(report: dict) -> bool:
-    """A clean coverage report has no uncovered, orphan, or unknown items."""
+    """A clean coverage report has no uncovered, orphan, unknown, or duplicate items."""
     return not (
         report["uncovered_remarks"]
         or report["orphan_tickets"]
         or report["unknown_ticket_refs"]
+        or report["duplicate_ids"]
     )
 
 
