@@ -2,6 +2,7 @@
 Title: Background-job env injects invalid PYTEST_ADDOPTS --cache-dir flag
 Created: 2026-06-11
 Author: Integration Test
+Closed: autoclosed — PR #499
 
 --- log ---
 2026-06-11T20:54Z Integration Test created
@@ -9,6 +10,7 @@ Author: Integration Test
 
 2026-07-12T17:01Z claude note author deleted /etc/profile.d/dev-cache.sh on host padme (whole file, cache vars included); padme ticket 0004 filed for logbook+quarterly-check sync; rtk pytest verified working on doudou post pipx reinstall-all
 
+2026-07-12T17:03Z Minh Ha-Duong closed — autoclosed — PR #499
 --- body ---
 ## Context
 Background-job sessions carry `PYTEST_ADDOPTS=--cache-dir=/data/cache/pytest`
