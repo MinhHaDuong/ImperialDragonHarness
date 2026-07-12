@@ -15,12 +15,25 @@ REGISTRY="${PROJECTS_JSON:-$HARNESS/scripts/projects.json}"
 # contradict that design and expose the config tree. Every other registry
 # entry is a project the overnight agent works on and needs write access to.
 derive_project_dirs() {
-    local name path
+    local name path tsv
+    # Capture jq's output into a variable BEFORE the loop so its exit status is
+    # observable under `set -e`. A `< <(jq …)` process substitution hides jq's
+    # failure — `set -e` only reacts to a pipeline's status under `pipefail`,
+    # and process substitution is neither — so a missing or malformed registry
+    # would silently yield an empty list and exit 0, and the ownership loop
+    # would run zero iterations while the script still printed "Done." A valid
+    # but empty registry (`[]`) yields empty output with jq exit 0, which is a
+    # legitimate degenerate state and must NOT abort.
+    tsv="$(jq -r '.[] | [.name, .path] | @tsv' "$REGISTRY")" \
+        || { echo "derive_project_dirs: failed to read registry $REGISTRY" >&2; exit 1; }
+    # Empty registry (`[]`) → empty $tsv. A here-string of "" still feeds one
+    # blank line, so guard it to avoid emitting a spurious empty project dir.
+    [ -z "$tsv" ] && return 0
     while IFS=$'\t' read -r name path; do
         path="${path/#\~/$HOME}"          # expand leading ~ only
         [ "$path" = "$HARNESS" ] && continue
         printf '%s\n' "$path"
-    done < <(jq -r '.[] | [.name, .path] | @tsv' "$REGISTRY")
+    done <<< "$tsv"
 }
 
 # `--list` prints the derived dirs and exits — the testable, side-effect-free

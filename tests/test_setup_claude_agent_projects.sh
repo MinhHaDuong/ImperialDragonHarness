@@ -77,6 +77,52 @@ else
     fail=1
 fi
 
+# --- a missing registry fails loudly, not silently empty ------------------
+# set -e does NOT observe jq failing inside `< <(...)` process substitution,
+# so a missing/malformed registry once yielded an empty list and exit 0 —
+# the ownership loop then ran zero iterations while the script reported "Done".
+if missing_out="$(HOME="$FAKE_HOME" PROJECTS_JSON="$TMP/does-not-exist.json" bash "$SCRIPT" --list 2>/dev/null)"; then
+    missing_rc=0
+else
+    missing_rc=$?
+fi
+if (( missing_rc != 0 )) && [ -z "$missing_out" ]; then
+    echo "PASS: missing registry exits non-zero with no derived dirs"
+else
+    echo "FAIL: missing registry should exit non-zero (got rc=$missing_rc, out=[$missing_out])"
+    fail=1
+fi
+
+# --- a malformed-JSON registry also fails loudly --------------------------
+BAD_REG="$TMP/malformed.json"
+printf 'not valid json {[' > "$BAD_REG"
+if malformed_out="$(HOME="$FAKE_HOME" PROJECTS_JSON="$BAD_REG" bash "$SCRIPT" --list 2>/dev/null)"; then
+    malformed_rc=0
+else
+    malformed_rc=$?
+fi
+if (( malformed_rc != 0 )) && [ -z "$malformed_out" ]; then
+    echo "PASS: malformed registry exits non-zero with no derived dirs"
+else
+    echo "FAIL: malformed registry should exit non-zero (got rc=$malformed_rc, out=[$malformed_out])"
+    fail=1
+fi
+
+# --- a valid but empty registry [] is legitimate, not an error ------------
+EMPTY_REG="$TMP/empty.json"
+printf '[]' > "$EMPTY_REG"
+if empty_out="$(HOME="$FAKE_HOME" PROJECTS_JSON="$EMPTY_REG" bash "$SCRIPT" --list 2>/dev/null)"; then
+    empty_rc=0
+else
+    empty_rc=$?
+fi
+if (( empty_rc == 0 )) && [ -z "$empty_out" ]; then
+    echo "PASS: empty registry [] exits 0 with no derived dirs"
+else
+    echo "FAIL: empty registry [] should exit 0 with empty output (got rc=$empty_rc, out=[$empty_out])"
+    fail=1
+fi
+
 if (( fail )); then
     exit 1
 fi
