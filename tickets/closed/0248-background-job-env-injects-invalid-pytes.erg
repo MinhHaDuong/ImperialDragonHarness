@@ -2,11 +2,15 @@
 Title: Background-job env injects invalid PYTEST_ADDOPTS --cache-dir flag
 Created: 2026-06-11
 Author: Integration Test
+Closed: autoclosed — PR #499
 
 --- log ---
 2026-06-11T20:54Z Integration Test created
 2026-07-11T20:55Z claude note Injector located OUTSIDE this repo: /etc/profile.d/dev-cache.sh on host padme, spec'd in the padme repo main-logbook.md:270 (`export PYTEST_ADDOPTS="--cache-dir=/data/cache/pytest"` — invalid flag). padme's quarterly-check.sh only greps for the var's existence, blind to the bad value. Zero harness-side injector (grep confirms; only workaround artifacts). Fix belongs in the padme repo; next step is to file a ticket in padme's own store from a padme session (cross-repo tickets live at the destination). 0248 stays open pending that.
 
+2026-07-12T17:01Z claude note author deleted /etc/profile.d/dev-cache.sh on host padme (whole file, cache vars included); padme ticket 0004 filed for logbook+quarterly-check sync; rtk pytest verified working on doudou post pipx reinstall-all
+
+2026-07-12T17:03Z Minh Ha-Duong closed — autoclosed — PR #499
 --- body ---
 ## Context
 Background-job sessions carry `PYTEST_ADDOPTS=--cache-dir=/data/cache/pytest`
