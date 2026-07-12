@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-06-12T10:40Z orchestrator created from aedist orchestration-night retrospective (2026-06-11/12)
+2026-07-12T18:55Z claude note Imagine analysis delivered (nightbeat, read-only): start-ticket already merged into hunt (0220) so Q2 is half-resolved; /hunt already IS the canonical core; the real gap is /raid wrapping it in prose instead of a mechanical Skill(hunt) invocation (the aedist drift mechanism); beat.py's `claude -p` spawn already solves headless (no 4th skill); concrete Q4 bug: hunt step 3 ownership check expects t<id> but Agent worktrees are named agent-<id>, colliding with EnterWorktree's no-double-create guard. Recommendation: Option A (skill-invokes-skill), 2-3 small PRs, entry points stay at 2. Full note: docs/imagine-0251-entry-points-2026-07-12.md. Awaiting author ratification per exit criteria.
 
 --- body ---
 ## Context

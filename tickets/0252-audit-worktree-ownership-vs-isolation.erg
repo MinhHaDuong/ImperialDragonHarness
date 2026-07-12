@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-06-12T10:55Z orchestrator created from aedist orchestration-night incidents (2026-06-11/12)
+2026-07-12T18:55Z claude note Audit complete (nightbeat, read-only): 15-surface table in docs/audit-0252-worktree-ownership-2026-07-12.md. Root gap: the EnterWorktree lock file is the only ownership artifact and is read only by beat.py cleanup and molt step 0 — both self-protective, never self-verifying; guard-commit-on-main.sh has an I1 false-negative (checks branch, not tree identity). Proposed model: (A) live rev-parse identity preflight on mutating git/erg commands, ship first; (B) EnterWorktree claim binding, author design call; (C) collision-resistant naming, cheap complement. Six candidate fix tickets drafted in the doc, NOT filed — awaiting author discussion per exit criteria.
 
 --- body ---
 ## Context

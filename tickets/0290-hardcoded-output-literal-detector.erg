@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Hardcoded-output-literal detector for the test-quality audit surface
+Created: 2026-07-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-12T18:55Z claude created
+
+--- body ---
+Child of tracker 0266 (pillage manifest,
+docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 2).
+
+## Context
+
+Neither maw-audit (mutation axes) nor test-audit-llm (read-and-judge
+lenses) checks whether an output value is data-derived or memorized. The
+paper's hardcoding audit (arXiv:2604.21965 App. B.4) flags a numeric
+literal asserted or returned with no computation path from data — the
+"toothless test that hardcodes its expected value" failure mode, detected
+mechanically.
+
+## Actions
+
+1. Prototype an AST-based detector (Python `ast`): numeric literal in an
+   assert/return with no data-derived expression upstream in the function.
+2. Decide the home — a test-audit-llm lens vs a maw-audit pre-pass; prefer
+   mechanical-first per the harness invariant; document the choice.
+3. Known-bad fixture (hardcoded expected value, no computation) as anchor.
+
+## Exit criteria
+
+- [ ] Detector implemented, AST-first, LLM only for ambiguous data flow
+- [ ] Wired into the chosen skill and documented
+- [ ] Fixture catches the hardcoded-value case (RED pre-fix)
