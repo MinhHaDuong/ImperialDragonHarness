@@ -69,6 +69,12 @@ argument-hint: <ticket-id>
      - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
    - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
 10. Push the branch and open a merge request.
-11. Review according to `/review-pr`.
+11. Review the merge request. This action is mechanical — invoke the review-pr
+    skill with the PR number:
+    ```
+    Skill(skill: "review-pr", args: <pr-number>)
+    ```
+    Follow the contract the skill loader returns; do not paraphrase or inline its
+    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation, ticket 0293).
 12. Fix all comments regardless of severity.
 13. Repeat 11–12 up to 3 times. If still not clean, escalate (see workflow rules).
