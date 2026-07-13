@@ -33,6 +33,12 @@ The script reads close intent from the PR **body** only — never the title:
 
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
 
+A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can
+leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
+appear to re-open closed tickets and revert prose. That is not WIP — run
+`git reset --hard HEAD` in that worktree before any salvage or gc decision
+(ticket 0249 incident, aedist PR #979).
+
 Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
 ## After the merge lands

@@ -1,6 +1,6 @@
 ---
 name: gaze
-description: Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges.
+description: Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: <pr-number>
@@ -16,8 +16,8 @@ context: fork
 > environment (worktree name, git status snapshot, ticket files, or the shared
 > task list).
 
-One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Never merges.**
-Merge is always the human's or the raid's call.
+One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
+merge** — the merge decision belongs to the caller (the human or the raid).
 
 ## When to use
 
@@ -29,7 +29,7 @@ Merge is always the human's or the raid's call.
 
 - Runs on exactly one PR.
 - Two gate rounds maximum. Third round is forbidden — escalate instead.
-- Never merges. The verdict is structured output; the caller decides.
+- Does not merge. The verdict is structured output; the merge decision belongs to the caller.
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.

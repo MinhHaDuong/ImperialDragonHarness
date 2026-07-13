@@ -5,6 +5,7 @@ Author: Integration Test
 
 --- log ---
 2026-06-11T20:54Z Integration Test created
+2026-07-13T10:00Z claude note Resolution: reworded the merge prohibitions the classifier can see (gaze + verify-gate "Never merges" -> "does not merge, decision belongs to the caller"; aedist memory review-before-merge recast as a sequencing rule) and documented the stale pre-rebase index pitfall in skills/merge. Author closes to test the fix by experience.
 
 --- body ---
 ## Context
