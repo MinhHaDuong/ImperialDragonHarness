@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Supervisor checkpoint pattern](feedback_supervisor_checkpoint_pattern.md) — the primary supervisor chat orchestrates, never executes tickets; clean checkpoint = monitor worker quiescence (open-PR set + heads hash, 30-min quiet), then merge leftover ready PRs, leave drafts to their owners, prune (author doctrine, 2026-07-13)
 - [Classifier prohibition paraphrase](feedback_classifier_prohibition_paraphrase.md) — the auto-mode permission classifier inflates any transcript-visible "Never X" into a blanket ban while STATE.md grants stay invisible; write scope as ownership ("decision belongs to the caller"), sequencing rules in positive form, and quote standing grants into the transcript before gated actions (ticket 0249, 2026-07-13)
 - [Shared-worktree live-session contention](feedback_shared_worktree_live_session_contention.md) — a live session can switch branches under a background job between Bash calls; assert branch and commit in ONE compound in any worktree you didn't create; recover misplaced commits by cherry-pick from a fresh worktree, never by resetting the other branch (2026-07-13)
 - [Imagine plans can absorb the Plan phase](feedback_imagine_plans_can_absorb_plan_phase.md) — raid Phase 3 is redundant when Imagine prompts demand file:line-precise structured plans; keep Phase 4 anchor/conflict checks (0252 raid, 2026-07-13)
