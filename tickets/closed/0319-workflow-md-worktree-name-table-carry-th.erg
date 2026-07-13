@@ -2,10 +2,13 @@
 Title: workflow.md worktree-name table: carry the resolve-$$-to-literal caveat from hunt step 3
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #563
 
 --- log ---
 2026-07-13T16:55Z Minh Ha-Duong created
+2026-07-13T17:30Z Minh Ha-Duong note Doc-prose change with no test surface; make check is the verification. Appended resolve-$$-to-literal caveat to workflow.md worktree-name paragraph.
 
+2026-07-13T20:30Z Minh Ha-Duong closed — autoclosed — PR #563
 --- body ---
 ## Context
 
@@ -23,5 +26,5 @@ call site hand-typed from that table reproduces the InputValidationError.
 
 ## Exit criteria
 
-- [ ] workflow.md `{pid}` description carries the caveat
-- [ ] `make check` passes
+- [x] workflow.md `{pid}` description carries the caveat
+- [x] `make check` passes
