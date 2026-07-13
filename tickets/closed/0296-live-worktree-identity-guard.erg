@@ -2,10 +2,13 @@
 Title: Live worktree-identity preflight guard for mutating git/erg commands
 Created: 2026-07-13
 Author: claude
+Closed: autoclosed — PR #519
 
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (author ratified model A, 2026-07-13)
 
+2026-07-13T07:34Z bump verify-reroll — round 1: git -C whitelist is a substring match over the whole command, allowing a compound command to bypass the mutating-verb block (I1 fall-through unfixed for chained commands)
+2026-07-13T08:25Z Minh Ha-Duong closed — autoclosed — PR #519
 --- body ---
 ## Context
 
