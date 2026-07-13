@@ -45,9 +45,14 @@ _TS_SPEC.loader.exec_module(ts)
 
 # (compiled pattern, human reason). High precision — each class is one a
 # diff-only check cannot see and a reviewer would call a scope violation.
+# The credential-directory patterns must match the *bare* directory too — a
+# `cd ~/.ssh` (no trailing slash, extracted as the token `~/.ssh`) is itself the
+# sensitive act, independent of the relative filename read afterward. So `.ssh`
+# and `.aws` are anchored by a following `/` OR end-of-string, not a mandatory
+# trailing slash.
 FORBIDDEN_PATH_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"/\.ssh/"), "ssh credentials directory"),
-    (re.compile(r"/\.aws/"), "aws credentials directory"),
+    (re.compile(r"/\.ssh(?:/|$)"), "ssh credentials directory"),
+    (re.compile(r"/\.aws(?:/|$)"), "aws credentials directory"),
     (re.compile(r"/\.netrc$"), "netrc credentials file"),
     (re.compile(r"bash-env\.sh$"), "secret-loading bash-env.sh"),
     (re.compile(r"/\.git-credentials$"), "git-credentials file"),
