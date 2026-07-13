@@ -20,10 +20,6 @@ cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 [ -z "$cwd" ] && exit 0
 [ -d "$cwd" ] || exit 0
 
-# The blocked tool, for an accurate message (EnterWorktree vs Skill, …).
-tool=$(echo "$input" | jq -r '.tool_name // "This tool"' 2>/dev/null || echo "This tool")
-[ -z "$tool" ] && tool="This tool"
-
 # Not inside a git repo: the tool fails on its own (or hook-delegated
 # VCS-agnostic mode handles it) — nothing for this guard to judge.
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
@@ -34,6 +30,11 @@ git -C "$cwd" check-ignore -q "$cwd" 2>/dev/null || exit 0
 
 # Parked cwd: a git-ignored runtime directory inside some repo. The tool would
 # target that repo, which is almost never the intended project.
+# The blocked tool, for an accurate message (EnterWorktree vs Skill, …) —
+# extracted only on this rare deny path, keeping the hot allow path to one jq.
+tool=$(echo "$input" | jq -r '.tool_name // "This tool"' 2>/dev/null || echo "This tool")
+[ -z "$tool" ] && tool="This tool"
+
 cat >&2 <<EOF
 Blocked: the session base cwd is parked in a git-ignored runtime directory:
   cwd:  $cwd

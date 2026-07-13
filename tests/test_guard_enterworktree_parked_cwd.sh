@@ -129,7 +129,9 @@ for needle in "parked" "show-toplevel" "worktree add"; do
 done
 
 # --- Wiring ratchet: settings.json routes EnterWorktree through the guard ----
-if jq -e '.hooks.PreToolUse[] | select(.matcher == "EnterWorktree")
+# The matcher may name the tool alone or in a pipe-alternation ("A|B"), so the
+# ratchet matches the tool name as a full alternative, not by equality.
+if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)EnterWorktree(\\||$)"))
           | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
         settings.json >/dev/null 2>&1; then
     echo "PASS: settings.json wires the EnterWorktree guard"
@@ -139,7 +141,7 @@ else
 fi
 
 # --- Wiring ratchet: settings.json routes Skill through the guard (0306) ------
-if jq -e '.hooks.PreToolUse[] | select(.matcher == "Skill")
+if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)Skill(\\||$)"))
           | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
         settings.json >/dev/null 2>&1; then
     echo "PASS: settings.json wires the Skill guard"

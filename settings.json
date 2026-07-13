@@ -163,17 +163,7 @@
         ]
       },
       {
-        "matcher": "EnterWorktree",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/scripts/guard-enterworktree-parked-cwd.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Skill",
+        "matcher": "EnterWorktree|Skill",
         "hooks": [
           {
             "type": "command",
