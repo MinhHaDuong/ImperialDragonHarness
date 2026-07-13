@@ -33,24 +33,26 @@ EOF
 }
 
 # ── roster parsing ───────────────────────────────────────────────────────────
-# Emit one TAB-separated record per seat: name kind status endpoint model
-# trial-ticket. Minimal block parser for the flat panel.yml schema; comment
-# and blank lines are ignored, and an explicit `reviewers: []` yields nothing.
+# Emit one pipe-separated record per seat: name kind status endpoint model
+# login trial-ticket. Minimal block parser for the flat panel.yml schema;
+# comment and blank lines are ignored, and an explicit `reviewers: []` yields
+# nothing.
 roster_records() {
     awk '
         /^[[:space:]]*#/        { next }
         /^reviewers:[[:space:]]*\[\][[:space:]]*$/ { exit }
         /^[[:space:]]*-[[:space:]]*name:/ {
-            if (have) print rec(); have=1; name=val($0); kind=st=ep=mo=tt=""; next
+            if (have) print rec(); have=1; name=val($0); kind=st=ep=mo=lg=tt=""; next
         }
         /^[[:space:]]+kind:/          { kind=val($0) }
         /^[[:space:]]+status:/        { st=val($0) }
         /^[[:space:]]+endpoint:/      { ep=val($0) }
         /^[[:space:]]+model:/         { mo=val($0) }
+        /^[[:space:]]+login:/         { lg=val($0) }
         /^[[:space:]]+trial-ticket:/  { tt=val($0) }
         END { if (have) print rec() }
         function val(line,  v) { sub(/^[^:]*:[[:space:]]*/, "", line); gsub(/^[[:space:]]+|[[:space:]]+$/, "", line); return line }
-        function rec() { return name"\t"kind"\t"st"\t"ep"\t"mo"\t"tt }
+        function rec() { return name"|"kind"|"st"|"ep"|"mo"|"lg"|"tt }
     ' "$PANEL" 2>/dev/null
 }
 
@@ -63,13 +65,21 @@ pr_branch() {  # $1 pr; honor an explicit override first
     gh pr view "$pr" --json headRefName --jq '.headRefName'  # harness-extension-point
 }
 
+# ── Forge reviewer request (forge-specific; swap for another forge) ──────────
+request_forge_reviewer() {  # $1 pr, $2 bot login
+    local pr="$1" login="$2"
+    gh api --method POST \
+        "repos/{owner}/{repo}/pulls/${pr}/requested_reviewers" \
+        -f "reviewers[]=${login}" >/dev/null 2>&1  # harness-extension-point
+}
+
 subcmd="${1:-}"; shift || true
 
 case "$subcmd" in
     list)
         if panel_is_empty; then echo "no reviewers configured"; exit 0; fi
         printf '%-18s %-12s %-9s %s\n' NAME KIND STATUS TRIAL-TICKET
-        while IFS=$'\t' read -r name kind st ep mo tt; do
+        while IFS='|' read -r name kind st ep mo lg tt; do
             printf '%-18s %-12s %-9s %s\n' "$name" "$kind" "${st:-advisory}" "$tt"
         done < <(roster_records)
         ;;
@@ -81,11 +91,21 @@ case "$subcmd" in
         [ -n "$branch" ] || { echo "error: could not resolve branch for MR #${pr}" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"; mkdir -p "$dest"
         ran=0
-        while IFS=$'\t' read -r name kind st ep mo tt; do
+        while IFS='|' read -r name kind st ep mo lg tt; do
             case "$kind" in
                 forge-bot)
-                    # Server-side reviewer; requested via the forge API.
-                    echo "request: forge-bot seat '${name}' — request via forge review API" >&2  # harness-extension-point
+                    # Server-side reviewer, requested on demand — nothing
+                    # fires without this explicit request (0206: no repo-wide
+                    # auto-request lever). Fail-open like every other seat.
+                    if [ -z "$lg" ]; then
+                        echo "request: WARN forge-bot seat '${name}' has no login — skipped" >&2
+                        continue
+                    fi
+                    if request_forge_reviewer "$pr" "$lg"; then
+                        echo "request: forge-bot seat '${name}' requested (${lg}) on MR #${pr}" >&2
+                    else
+                        echo "request: WARN forge-bot seat '${name}' request failed (fail-open)" >&2
+                    fi
                     ;;
                 cli-agent|local-model)
                     # Per-seat fail-open: a seat that errors WARNs and the
@@ -150,7 +170,7 @@ case "$subcmd" in
         [ -n "$pr" ] && [ -n "$seat" ] && [ -n "$verdict" ] || { echo "error: scorecard requires <pr> <seat> <verdict-summary>" >&2; exit 1; }
         # Resolve the seat's trial ticket from the roster.
         tt=""
-        while IFS=$'\t' read -r n k s e m t; do [ "$n" = "$seat" ] && tt="$t"; done < <(roster_records)
+        while IFS='|' read -r n k s e m l t; do [ "$n" = "$seat" ] && tt="$t"; done < <(roster_records)
         [ -n "$tt" ] || { echo "error: seat '${seat}' not in roster (no trial-ticket)" >&2; exit 1; }
         tid=$(sed -n 's#.*/\([0-9]\{4\}\)-.*#\1#p' <<<"$tt")
         # Fixed schema so 0205's integration review is evidence-based, not vibes.

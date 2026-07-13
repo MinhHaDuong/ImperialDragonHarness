@@ -13,6 +13,8 @@ Author: MinhHaDuong
 2026-06-05T06:55Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
 
 2026-07-13T08:50Z MinhHaDuong note design change: auto-request on every MR is too much — some PRs are trivial. Switch to on-demand: the review is requested per-PR when warranted, never enabled repo-wide. Body rewritten accordingly by claude
+
+2026-07-13T09:30Z claude note lever documented: /reviewers request <pr> runs the forge-bot seat via `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (login from panel.yml); gate clause added to skills/gaze/SKILL.md (absent seat silent, requested-but-pending bounded fail-open wait). Exit criteria 1-2 delivered; trial (criteria 3-4) remains
 --- body ---
 ## Context
 
@@ -61,8 +63,8 @@ dispositioned in the gate verdict's evidence table.
 
 ## Exit criteria
 
-- [ ] On-demand request path live; exact forge call documented
-- [ ] Gate clause merged (absent seat is silent; requested-but-pending
+- [x] On-demand request path live; exact forge call documented
+- [x] Gate clause merged (absent seat is silent; requested-but-pending
       gets fail-open bounded wait)
 - [ ] Trial scorecard: ≥5 non-trivial MRs, ≥3 projects, logged here
 - [ ] Promote/drop recommendation recorded for 0205's integration review
