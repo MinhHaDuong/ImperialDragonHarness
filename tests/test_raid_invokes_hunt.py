@@ -47,3 +47,14 @@ def test_phase5_forbids_inlining_hunt_steps():
         "Phase 5 must state that agent prompts do not paraphrase or inline "
         "hunt's steps; the skill loader supplies the live contract"
     )
+
+
+def test_hunt_is_model_invocable():
+    """The mandated Skill(hunt) call only works if hunt allows model invocation."""
+    hunt = SKILL.parent.parent / "hunt" / "SKILL.md"
+    frontmatter = hunt.read_text().split("---")[1]
+    assert "disable-model-invocation: false" in frontmatter, (
+        "skills/hunt/SKILL.md must set disable-model-invocation: false — "
+        "raid Phase 5 mandates Skill(hunt), which the Skill tool refuses "
+        "while model invocation is disabled (hit at runtime, raid 0293)"
+    )

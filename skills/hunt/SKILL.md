@@ -1,7 +1,7 @@
 ---
 name: hunt
 description: Begin work on a ticket — creates a worktree and writes the first test.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 argument-hint: <ticket-id>
 ---
