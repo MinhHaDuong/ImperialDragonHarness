@@ -19,6 +19,25 @@ _payload_with_cwd() {
     printf '{"tool_name":"Write","tool_input":{"file_path":"%s","content":"x"},"cwd":"%s"}' "$fp" "$cwd"
 }
 
+# NotebookEdit carries its target in notebook_path (not file_path). The
+# settings.json matcher includes NotebookEdit, so the guard must read it too.
+_payload_notebook() {
+    local np="$1"
+    printf '{"tool_name":"NotebookEdit","tool_input":{"notebook_path":"%s","new_source":"x"}}' "$np"
+}
+
+_run_hook_notebook() {
+    local wt="$1" pr="$2" np="$3"
+    _payload_notebook "$np" | env _GUARD_WORKTREE_ROOT="$wt" _GUARD_PRIMARY_ROOT="$pr" bash "$HOOK" 2>&1 || true
+}
+
+_rc_notebook() {
+    local wt="$1" pr="$2" np="$3"
+    _payload_notebook "$np" \
+        | env _GUARD_WORKTREE_ROOT="$wt" _GUARD_PRIMARY_ROOT="$pr" bash "$HOOK" \
+            >/dev/null 2>&1 && echo 0 || echo $?
+}
+
 _run_hook() {
     local wt="$1" pr="$2" fp="$3"
     _payload "$fp" | env _GUARD_WORKTREE_ROOT="$wt" _GUARD_PRIMARY_ROOT="$pr" bash "$HOOK" 2>&1 || true
@@ -211,6 +230,35 @@ if [ "$rc" = "0" ]; then
     echo "PASS: unrelated path exits 0"
 else
     echo "FAIL: expected exit 0 for unrelated path; got: $rc"
+    fail=1
+fi
+
+# 14. NotebookEdit whose notebook_path (NOT file_path) targets the primary
+# checkout → deny (exit 2 + corrective message). The settings.json matcher
+# covers NotebookEdit, so the guard must read notebook_path; a jq that reads
+# only file_path returns empty here and silently allows the primary-checkout
+# write (the exact bypass this case guards).
+rc=$(_rc_notebook "$WORKTREE" "$PRIMARY" "$PRIMARY/nb.ipynb")
+if [ "$rc" = "2" ]; then
+    echo "PASS: denies NotebookEdit notebook_path into primary (exit 2)"
+else
+    echo "FAIL: expected exit 2 for NotebookEdit into primary; got: $rc"
+    fail=1
+fi
+out=$(_run_hook_notebook "$WORKTREE" "$PRIMARY" "$PRIMARY/nb.ipynb")
+if echo "$out" | grep -q "Worktree path guard"; then
+    echo "PASS: NotebookEdit into primary emits corrective message"
+else
+    echo "FAIL: expected corrective message for NotebookEdit into primary; got: $out"
+    fail=1
+fi
+
+# 15. NotebookEdit whose notebook_path is inside the worktree → allow (exit 0).
+rc=$(_rc_notebook "$WORKTREE" "$PRIMARY" "$WORKTREE/nb.ipynb")
+if [ "$rc" = "0" ]; then
+    echo "PASS: allows NotebookEdit notebook_path inside worktree (exit 0)"
+else
+    echo "FAIL: expected exit 0 for NotebookEdit inside worktree; got: $rc"
     fail=1
 fi
 
