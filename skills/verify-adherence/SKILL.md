@@ -143,6 +143,29 @@ suggested_test: |
 This is non-blocking — it does not set `adherence: FAIL`. It triggers the ratchet
 so the next `/gaze` cycle opens a follow-up ticket.
 
+### 1.2 Path-access allow/forbid scan (trace-based)
+
+Scans the agent's tool-call **trace** (not the diff) for
+Read/Edit/Write/NotebookEdit/Bash calls that touch a forbidden path — a
+credential/secret file (`~/.ssh`, `~/.aws`, `~/.netrc`, `bash-env.sh`,
+`.git-credentials`) or another session's worktree. This is the scope-violation
+class a diff-only check structurally misses: an agent that READS a forbidden
+path leaves no trace in the diff (arXiv:2604.21965 App. B.3).
+
+Runs only when the caller supplies `trace=<path>` alongside the branch argument
+(mirroring the existing `worktree=<path>` convention). No `trace=` → skip this
+phase silently.
+
+```bash
+python3 ~/.claude/scripts/trace-path-scan.py --trace <path> [--worktree-root <path>] --json
+```
+
+The scan is pure Python, zero LLM tokens. Pass `--worktree-root` (the caller's
+own worktree path) so the other-session-worktree class can fire; without it only
+the credential class runs. Any hit is **blocking**: record each as a
+`mechanical_failures` entry `{tool, path, reason, file:line}` with rule ref
+`verify-adherence#path-access-scan`.
+
 ### 2. Grep rules live as adherence tests (no central bank)
 
 Grep-based checks are just adherence tests that call `rg` or use a regex
@@ -218,6 +241,8 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 - `uv` missing → ESCALATE (environment broken, all phases need it).
 - No `scripts/` directory → skip phase 1.0 silently (legitimate repo layout).
+- No `trace=<path>` argument supplied → skip phase 1.2 silently (the trace is an
+  optional input, like `worktree=`; a standalone author pre-check has none).
 - Phase 1 fails to run (env broken) → ESCALATE; don't fall through.
 - Semantic subagent output lacks `file:line` or `suggested_test` → reject the output and
   flag as adherence-infrastructure bug. Don't silently accept.
