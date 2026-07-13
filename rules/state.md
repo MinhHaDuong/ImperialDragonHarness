@@ -1,7 +1,7 @@
 ---
 paths:
   - "STATE.md"
-last-reviewed: 2026-05-09
+last-reviewed: 2026-07-13
 ---
 
 # STATE.md
@@ -21,11 +21,26 @@ One mechanically generated section (replaced each session from `git log` + `git-
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
-| `## Status` | Ticket summary counts + last 3–5 commits | Machine |
+| `## Status` | Ticket counts + awaiting-author + next picks · open MRs + CI verdict · last 3 first-parent commits | Machine |
 
 **Replace policy — no append.** Each session rewrites `## Status` in full from current git state and bumps `Last updated:` in the preamble. All `##` sections after `## Status` are preserved verbatim. The other hand-edited sections are touched only when the author explicitly updates them.
 
 **Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`.
+
+## Automation level (decided 2026-07-13)
+
+STATE refresh is **wrap-up-triggered only**: `/lair` step 10 runs
+`scripts/refresh-STATE.py`. No cron or hook writes STATE.md.
+
+- The script replaces the machine section only when the heading is exactly
+  `## Status`.
+- Adoption path: with no `## Status` heading, the script appends a generated
+  one at the end of the file.
+- A customized heading (`## Status: <title>`, `## Status snapshot`) marks a
+  hand-maintained section: the script aborts without writing (exit 2). Rename
+  the heading to exactly `## Status` to opt in to machine refresh.
+- Projects with a divergent STATE converge at reactivation, when a session
+  next works there — not by gratuitous churn while dormant.
 
 ## Minimal template
 
@@ -36,9 +51,16 @@ Last updated: YYYY-MM-DDTHH:MMZ
 [One paragraph. Why this project exists, what success looks like. Author-maintained.]
 
 ## Status
-<!-- generated YYYY-MM-DDTHH:MMZ -->
-**Tickets:** N ready · N blocked — `erg ready tickets/` for full list
-**Recent commits:**
+<!-- generated YYYY-MM-DDTHH:MMZ · as of sha -->
+**Tickets:** N ready · N blocked · N awaiting author — `erg ready tickets/` for full list
+  next: NNNN title · NNNN title
+**In flight:** N open PRs (N draft), oldest #N Nd · CI main: success
+**Recent (first-parent):**
   sha msg
   sha msg
 ```
+
+The `as of` sha anchors the hand sections to the repo state they described —
+catch up after dormancy with `git log --oneline <sha>..HEAD`. The in-flight
+and CI facts come from the forge CLI and are omitted when it is unavailable;
+the refresh never fails on their account.
