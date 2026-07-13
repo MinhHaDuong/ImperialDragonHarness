@@ -152,25 +152,11 @@ def get_metrics(repo_root: Path):
     project. Absence of make, absence of the target, a non-zero exit, or a
     timeout all degrade to [] so the refresh never fails on the metrics' account.
     """
-    # Existence probe: `make -n` dry-runs the target without executing it.
-    # Exit 0 means the target is declarable (a Makefile with the rule exists);
-    # any other exit — no Makefile, no such rule, a parse error — means opt-out.
-    # Only the exit code is consulted, never the dry-run text, so unrelated
-    # recipe output cannot fool the probe.
-    try:
-        probe = subprocess.run(
-            ["make", "-n", "state-metrics"],
-            capture_output=True,
-            text=True,
-            cwd=repo_root,
-            timeout=30,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return []
-    if probe.returncode != 0:
-        return []
-    # Target exists — run it silently (`-s` suppresses recipe echo) so stdout is
-    # exactly what the recipe prints, not make's own command lines.
+    # One call does both jobs: a missing Makefile, a missing target, or a parse
+    # error all exit non-zero, so the run's own exit code is the opt-in probe.
+    # `-s` suppresses recipe echo, so stdout is exactly what the recipe prints,
+    # not make's own command lines. Only the exit code gates acceptance, so
+    # unrelated recipe output cannot fool the opt-in decision.
     try:
         r = subprocess.run(
             ["make", "-s", "state-metrics"],

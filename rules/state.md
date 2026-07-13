@@ -34,10 +34,11 @@ without any project-specific logic entering the harness script. The project
 declares a `state-metrics` make target; `refresh-STATE.py` runs it and appends
 its stdout to the block.
 
-- **Opt-in probe:** the refresh dry-runs `make -n state-metrics`. Exit 0 (a
-  Makefile with the rule exists) opts in; any other exit — no Makefile, no such
-  target, a parse error — opts out. Only the exit code is consulted, so the
-  probe is not fooled by unrelated recipe output.
+- **Opt-in probe:** the refresh runs `make -s state-metrics`. Exit 0 (a
+  Makefile with the rule exists and the recipe succeeded) opts in; any other
+  exit — no Makefile, no such target, a parse error, a failing recipe — opts
+  out. Only the exit code is consulted, so the decision is not fooled by
+  unrelated recipe output; `-s` keeps stdout to exactly what the recipe prints.
 - **Content:** the target's stdout lines are appended verbatim after the
   git/ticket/CI lines. Keep them short and self-describing (e.g.
   `Corpus: 1200 docs` · `Health: green`); they share the 20-line budget above.
