@@ -2,10 +2,13 @@
 Title: maw-audit /tmp worktrees: bring under guard coverage or document the exemption
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #543
 
 --- log ---
 2026-07-13T07:18Z Minh Ha-Duong created child of 0252 (found in the 0300 worktree-ownership sweep)
 
+2026-07-13T13:13Z MinhHaDuong note decision option 2 (document exemption): /tmp/maw-* and /tmp/fang-* are detached-HEAD scratch trees hand-rolled by audit agents, never commit/push/track a branch, so main-repo guards have nothing to protect; self-contained cleanup by the Cleanup phase. Exemption recorded at the creation/cleanup site in maw-audit.js + SKILL.md, pinned by test_tmp_scratch_worktree_exemption_documented (0302 pattern).
+2026-07-13T13:29Z Minh Ha-Duong closed — autoclosed — PR #543
 --- body ---
 ## Context
 
@@ -36,5 +39,5 @@ Pick one; do not leave the location silently uncovered.
 
 ## Exit criteria
 
-- [ ] Decision recorded (move applied, or exemption documented at the creation site)
-- [ ] No maw-audit worktree is silently outside guard coverage
+- [x] Decision recorded (move applied, or exemption documented at the creation site)
+- [x] No maw-audit worktree is silently outside guard coverage

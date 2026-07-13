@@ -138,8 +138,12 @@ Phases:
    sibling sites; surviving siblings = instance-pinned contract.
 6. **Guards** (serialized) — the designated canary guard tests run alone (not
    under fan-out load). Skipped openly if none designated.
-7. **Cleanup** — prunes any hand-rolled `/tmp/fang-*` scratch worktrees agents
-   left on detached HEAD.
+7. **Cleanup** — prunes any hand-rolled `/tmp/maw-*` / `/tmp/fang-*` scratch
+   worktrees agents left on detached HEAD. These scratch trees live outside the
+   guarded `*/.claude/worktrees/*` namespace by design (ticket 0303): being on a
+   detached HEAD they never commit, push, or track a branch, so the main-repo
+   protection guards have nothing to protect — their lifecycle is self-contained
+   in this phase. Not an oversight; see the rationale in `maw-audit.js`.
 
 Then the engine assembles a deterministic report (no LLM formatting) and returns
 it; write it to `CONFIG.OUTPUT`.
