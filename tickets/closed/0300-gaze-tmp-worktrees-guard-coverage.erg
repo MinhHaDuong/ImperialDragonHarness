@@ -2,12 +2,14 @@
 Title: Bring gaze review worktrees under guard coverage (move out of /tmp or broaden fast-paths)
 Created: 2026-07-13
 Author: claude
+Closed: autoclosed — PR #518
 
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (audit finding: /tmp review worktrees outside every guard fast-path)
 
 2026-07-13T07:44Z bump verify-reroll — round 1: exit criterion 'All skill-created worktrees live inside guard coverage' is MISSING per literal text (maw-audit's /tmp/maw-*, /tmp/fang-* worktrees remain uncovered, deferred to new ticket 0303, not closed here); plus 2 unresolved verifiable: minors — 0296 identity guard cited as covering the new location does not exist on origin/main, and beat.py's _HARNESS_WORKTREE_RE already matched /tmp/review-<pr> by basename before this move, contra the PR body's stated rationale
 2026-07-13T07:47Z narrow exit criteria + verification to gaze review worktrees only; maw-audit /tmp carve-out tracked at 0303 (reroll fix round 1)
+2026-07-13T08:24Z Minh Ha-Duong closed — autoclosed — PR #518
 --- body ---
 ## Context
 
