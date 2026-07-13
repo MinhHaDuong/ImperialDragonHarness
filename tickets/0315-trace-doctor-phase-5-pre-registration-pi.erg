@@ -1,0 +1,72 @@
+%erg 0.1
+Title: trace-doctor phase 5 pre-registration: pin interventions, decision rule, convergence flag
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T15:48Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Child of 0245 (trace-doctor phase 5 targeted A/B), itself a child of
+tracker 0236. 0245 is not completable in one autonomous pass: measure B
+needs a live nightbeat week and measure A needs paired replays of ~5
+closed tickets. This child carves out everything that MUST land before
+any B-arm data exists (0245 Actions 1-2 plus the test and the flag), so
+the pre-registration ordering is provable from git history. The live
+arms and the verdicts stay on 0245.
+
+## Relevant files
+
+- `tickets/0245-trace-doctor-phase-5-targeted-a-b-model.erg` — the spec;
+  Actions 1-2 are this ticket's scope
+- `docs/trace-counterfactuals-2026-06.md` — routing decision + guardrail
+  baselines (REROLL/PR 33/112, ESCALATE 18)
+- `scripts/trace-stats.py`, `scripts/trace-hypotheses.py`,
+  `scripts/trace-pr-join.py` — committed measurement scripts (reused,
+  untouched)
+- `skills/gaze/SKILL.md` — measure-B intervention surface
+
+## Actions
+
+1. Pin one intervention per measure in `docs/trace-ab-2026-06.md`:
+   A = paired replay of ~5 closed tickets with a Sonnet main;
+   B = convergence rule (after the first full gaze round, REROLL fixes
+   re-check through verify-gate only, no full panel re-run). Confirm or
+   revise 0245's defaults with reasons.
+2. Pre-register in the same doc, before any B-arm data: metric
+   definitions ($ per merged PR / per cycle, REROLL/PR, ESCALATE count,
+   gaze verdict distribution), window dates, exclusion rules
+   (study-session reflexivity), decision rule with thresholds
+   (adopt iff cost drops AND guardrails hold within stated noise).
+3. Implement the decision rule as a pure function
+   (`scripts/trace_ab_decision.py`) with unit tests written red-first:
+   fixture metric values map to expected adopt/reject verdicts;
+   per-window date filtering of guardrail metrics gets a fixture.
+4. Ship the measure-B convergence rule behind an explicit opt-in flag in
+   `skills/gaze/SKILL.md` (default off; the B-arm week turns it on).
+5. Append a note to 0245 and tracker 0236: pre-registration landed,
+   live arms remain.
+
+## Test
+
+- Red first: `tests/test_trace_ab_decision.py` — decision-rule verdicts
+  and window filtering on fixtures, before the implementation exists.
+
+## Invariants
+
+- Zero LLM calls in committed scripts; no trace content in committed
+  artifacts (aggregates ok)
+- Existing census accounting untouched (additive only)
+- No B-arm data collected or interpreted here — this ticket is the
+  ordering proof, not the experiment
+
+## Exit criteria
+
+- [ ] `docs/trace-ab-2026-06.md` pins both interventions and
+      pre-registers metrics, windows, exclusions, decision rule
+- [ ] `scripts/trace_ab_decision.py` pure function + red-first tests pass
+- [ ] gaze convergence flag documented, default off
+- [ ] 0245 and 0236 logs note the split
+- [ ] `make check` passes

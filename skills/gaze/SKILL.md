@@ -349,6 +349,21 @@ wall warn=15min escalate=30min; tokens warn=500k escalate=1M.
 On warn: post `/gaze: slow run` comment, continue. On escalate: stop, post
 `/gaze stopped:` with measured value. Escalate > warn. Check at phase boundaries only.
 
+## Convergence mode (ticket 0315, measure-B pre-registration)
+
+An **opt-in** experimental flag for the phase-5 measure-B A/B (see
+`docs/trace-ab-2026-06.md`). It governs **caller-level** re-invocation of
+`/gaze` on a PR that already carries a completed full gaze round — not the
+internal round-1 REROLL re-entry branch (§ Branch on verdict), which is already
+gate-only and stays unchanged.
+
+When `convergence.enabled` is true (`skills/gaze/telemetry.yml`, env override
+`GAZE_CONVERGENCE_ENABLED`) **and** the PR already carries a completed full
+gaze round (a prior `/verify-gate verdict` comment from an earlier invocation),
+a repeat `/gaze` invocation runs **phase 6 (verify-gate) only** — no phases 2–5
+panel re-run. Default **off** = current practice, so live behaviour is
+unchanged until the B-arm week flips it on.
+
 ## `--force-approve`
 
 Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.

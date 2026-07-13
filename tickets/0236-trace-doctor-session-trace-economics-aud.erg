@@ -12,6 +12,7 @@ Author: claude
 2026-06-10T16:40Z claude note 0244 executed: addressable $2356/28d exact; H10 confound confirmed (~4x); H12/H5 dissolved; phase-5 shortlist fixed
 2026-06-10T20:09Z claude note 0245 filed (phase 5 A/B); remaining beyond children: trace-doctor skill assembly + phase-4 adopt items #1/#3
 2026-07-12T22:31Z child 0292 delivered: six-way tool taxonomy + per-category char volume in scripts/trace-stats.py (PR pending)
+2026-07-13T16:03Z Minh-Ha-Duong note phase-5 pre-registration split to 0315 (docs/trace-ab-2026-06.md + trace_ab_decision.py + gaze convergence flag); live arms remain on 0245
 --- body ---
 ## Context
 
