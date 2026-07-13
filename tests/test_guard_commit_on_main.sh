@@ -113,6 +113,15 @@ mkdir -p "$PLAINWT"                                 # NOT a `git worktree add`
 _assert_blocked "git commit on primary via plain worktree dir (I1)" \
                 "git commit -m x" "$PLAINWT"
 
+# --- bare primary root off main: tree-identity check must fire (0297) ------
+# Round-1 gate finding: the tree-identity check must block even when `.cwd` is
+# the PRIMARY checkout root addressed directly — no `.claude/worktrees/` marker
+# segment in the path. This is the exact scenario from the ticket's Context: a
+# stray `git checkout -B` moves the primary off main; the commit must be blocked
+# regardless of branch name, not just when the cwd is dressed as a worktree path.
+_assert_blocked "git commit on bare primary root off main (0297)" \
+                "git commit -m x" "$PRIMARY2"
+
 # --- positive: a real registered worktree on a feature branch → allowed ----
 # `git worktree add` gives the dir its own toplevel, distinct from the primary
 # root, so the tree-identity check passes through and layer-2 (branch=feature)
