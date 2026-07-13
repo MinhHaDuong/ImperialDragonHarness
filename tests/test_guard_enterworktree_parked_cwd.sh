@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Tests for scripts/guard-enterworktree-parked-cwd.sh — the PreToolUse
-# EnterWorktree hook that denies (exit 2) when the session base cwd is parked
-# in a git-ignored runtime directory, so EnterWorktree would create the
-# worktree in the wrong repo. See ticket 0267.
+# Tests for scripts/guard-enterworktree-parked-cwd.sh — the matcher-agnostic
+# PreToolUse hook (wired for EnterWorktree and Skill) that denies (exit 2) when
+# the session base cwd is parked in a git-ignored runtime directory, so the tool
+# would target the wrong repo. See tickets 0267 (EnterWorktree) and 0306 (Skill).
 #
 # The guard is driven purely by the JSON payload's .cwd field against real
 # directories, so the tests build a throwaway git repo in a temp dir.
@@ -30,15 +30,16 @@ NOREPO="$TMP/norepo"
 mkdir -p "$NOREPO"
 
 _rc() {
-    local cwd="$1"
-    printf '{"tool_name":"EnterWorktree","tool_input":{},"cwd":%s}' \
+    local cwd="$1" tool="${2:-EnterWorktree}"
+    printf '{"tool_name":%s,"tool_input":{},"cwd":%s}' \
+        "$(printf '%s' "$tool" | jq -Rs .)" \
         "$(printf '%s' "$cwd" | jq -Rs .)" \
         | bash "$HOOK" >/dev/null 2>&1 && echo 0 || echo $?
 }
 
 _assert() {
-    local expected="$1" label="$2" cwd="$3"
-    local rc; rc=$(_rc "$cwd")
+    local expected="$1" label="$2" cwd="$3" tool="${4:-EnterWorktree}"
+    local rc; rc=$(_rc "$cwd" "$tool")
     if [[ "$rc" == "$expected" ]]; then
         echo "PASS: $label (exit $rc)"
     else
@@ -56,6 +57,14 @@ _assert 0 "allows cwd at repo root"              "$REPO"
 _assert 0 "allows cwd in tracked subdir"         "$REPO/src"
 _assert 0 "allows cwd outside any repo"          "$NOREPO"
 _assert 0 "allows nonexistent cwd (fail-safe)"   "$TMP/does-not-exist"
+
+# --- Skill invocations: the guard is matcher-agnostic (ticket 0306) ----------
+# A cwd-dependent skill resolves its target repo from the same session base cwd,
+# so a parked cwd must be denied and a repo-root cwd allowed for Skill too.
+_assert 2 "denies Skill from git-ignored dir"    "$REPO/projects"        "Skill"
+_assert 0 "allows Skill at repo root"            "$REPO"                 "Skill"
+_assert 0 "allows Skill in tracked subdir"       "$REPO/src"             "Skill"
+_assert 0 "allows Skill outside any repo"        "$NOREPO"               "Skill"
 
 # --- Payload without .cwd → fail-safe allow ---------------------------------
 rc=$(printf '{"tool_name":"EnterWorktree","tool_input":{}}' \
@@ -79,6 +88,17 @@ for needle in "worktree add" "show-toplevel" "0267"; do
         fail=1
     fi
 done
+
+# --- Deny message names the blocked tool, not a hard-coded EnterWorktree ------
+skill_err=$(printf '{"tool_name":"Skill","tool_input":{},"cwd":%s}' \
+        "$(printf '%s' "$REPO/projects" | jq -Rs .)" \
+        | bash "$HOOK" 2>&1 1>/dev/null) || true
+if grep -qF "Skill resolves its target repo" <<< "$skill_err"; then
+    echo "PASS: Skill deny message names the Skill tool"
+else
+    echo "FAIL: Skill deny message does not name the blocked tool"
+    fail=1
+fi
 
 # --- jq missing → fail-open --------------------------------------------------
 _tmpbin=$(mktemp -d)
@@ -109,12 +129,24 @@ for needle in "parked" "show-toplevel" "worktree add"; do
 done
 
 # --- Wiring ratchet: settings.json routes EnterWorktree through the guard ----
-if jq -e '.hooks.PreToolUse[] | select(.matcher == "EnterWorktree")
+# The matcher may name the tool alone or in a pipe-alternation ("A|B"), so the
+# ratchet matches the tool name as a full alternative, not by equality.
+if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)EnterWorktree(\\||$)"))
           | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
         settings.json >/dev/null 2>&1; then
     echo "PASS: settings.json wires the EnterWorktree guard"
 else
     echo "FAIL: settings.json has no EnterWorktree PreToolUse hook for the guard"
+    fail=1
+fi
+
+# --- Wiring ratchet: settings.json routes Skill through the guard (0306) ------
+if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)Skill(\\||$)"))
+          | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
+        settings.json >/dev/null 2>&1; then
+    echo "PASS: settings.json wires the Skill guard"
+else
+    echo "FAIL: settings.json has no Skill PreToolUse hook for the guard"
     fail=1
 fi
 

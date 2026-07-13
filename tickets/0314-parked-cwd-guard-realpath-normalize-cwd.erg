@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Parked-cwd guard: realpath-normalize cwd to close the symlink-traversal bypass
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T14:36Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Found by the review panel on PR #545 (ticket 0306) and confirmed pre-existing
+since ticket 0267: in `scripts/guard-enterworktree-parked-cwd.sh`, the
+`git check-ignore -q "$cwd"` call errors with "outside repository" when `$cwd`
+reaches the repo through a symlink, and the guard treats the non-zero exit as
+allow. A parked runtime directory addressed via a symlinked path therefore
+bypasses the deny — on both guarded surfaces (EnterWorktree and, since #545,
+Skill).
+
+## Actions
+
+1. Normalize `$cwd` with `realpath` (or `pwd -P` equivalent) before the
+   repo-membership and check-ignore probes.
+2. Add a symlink test case to `tests/test_guard_enterworktree_parked_cwd.sh`:
+   a symlinked path into a git-ignored runtime dir is denied; a symlinked
+   path to a legitimate repo root stays allowed. Red-first.
+
+## Exit criteria
+
+- [ ] Symlinked parked cwd is denied on both surfaces
+- [ ] Symlinked legitimate cwd stays allowed
+- [ ] `make check` passes

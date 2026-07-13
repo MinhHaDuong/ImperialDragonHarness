@@ -163,7 +163,7 @@
         ]
       },
       {
-        "matcher": "EnterWorktree",
+        "matcher": "EnterWorktree|Skill",
         "hooks": [
           {
             "type": "command",
