@@ -632,6 +632,11 @@ fi
 #
 # Runs the real script with cwd set to an arbitrary directory (not just $REPO).
 # ERG is resolved from that cwd so a worktree closes its OWN tickets/.
+add_worktree() {  # $1 target path -> frees $BRANCH from $REPO, adds a linked worktree at $1
+    git -C "$REPO" switch -q "$BASE"
+    git -C "$REPO" worktree add -q "$1" "$BRANCH"
+}
+
 run_merge_at() {  # $1 cwd, $2 body, $3 title
     ( cd "$1"
       PATH="$STUBDIR:$PATH" \
@@ -677,9 +682,8 @@ fi
 # gap: the worktree-true branch was never exercised by any prior case, and it
 # guards against an over-strict reimplementation that rejects a real worktree.
 seed_repo genuinewt 0301
-git -C "$REPO" switch -q "$BASE"          # free $BRANCH for the worktree
 WT19="$REPO/.claude/worktrees/wtgood"
-git -C "$REPO" worktree add -q "$WT19" "$BRANCH"
+add_worktree "$WT19"
 MLOG19="$WORK/merge19.log"; : > "$MLOG19"
 BODY19=$'Summary.\n\n**Ticket:** tickets/0301-fixture.erg\n'
 if out19=$(STUB_MERGE_LOG="$MLOG19" \
@@ -701,9 +705,8 @@ fi
 # 0252 family retires). The tightened predicate scopes to the harness worktree
 # convention: no marker segment → in_worktree() FALSE → --delete-branch present.
 seed_repo offmarker 0302
-git -C "$REPO" switch -q "$BASE"          # free $BRANCH for the worktree
 WT20="$WORK/offmarker-wt"                  # deliberately NOT under .claude/worktrees/
-git -C "$REPO" worktree add -q "$WT20" "$BRANCH"
+add_worktree "$WT20"
 MLOG20="$WORK/merge20.log"; : > "$MLOG20"
 BODY20=$'Summary.\n\n**Ticket:** tickets/0302-fixture.erg\n'
 if STUB_MERGE_LOG="$MLOG20" \
