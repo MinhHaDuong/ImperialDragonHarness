@@ -58,6 +58,43 @@ _assert 0 "allows cwd in tracked subdir"         "$REPO/src"
 _assert 0 "allows cwd outside any repo"          "$NOREPO"
 _assert 0 "allows nonexistent cwd (fail-safe)"   "$TMP/does-not-exist"
 
+# --- Nested repo inside an ignored runtime dir must still deny (ticket 0317) --
+# A `git init` inside a git-ignored runtime dir makes `git rev-parse
+# --show-toplevel` resolve to the nested repo itself: the toplevel self-match
+# would pass and the deny would be bypassed. The guard walks up to the enclosing
+# repo and re-probes, so a parked cwd stays denied even with a nested repo.
+NESTED="$REPO/projects/session-x/scratch"
+git init -q "$NESTED"
+mkdir -p "$NESTED/tracked"
+touch "$NESTED/tracked/keep"
+git -C "$NESTED" add -A
+git -C "$NESTED" -c user.email=t@t -c user.name=t commit -qm init
+
+_assert 2 "denies nested-repo root in ignored dir"   "$NESTED"
+_assert 2 "denies tracked subdir of nested repo"     "$NESTED/tracked"
+
+# --- Registered linked worktree under a whitelist-ignore repo must ALLOW ------
+# The harness's own mandated layout puts every session worktree at
+# <repo>/.claude/worktrees/<name>. When the enclosing repo uses a whitelist-style
+# `*` .gitignore (as the harness repo does), that path is check-ignored by the
+# enclosing repo — but a `git worktree add` worktree is legitimate, not a parked
+# scratch dir. A linked worktree has a .git FILE (a `gitdir:` pointer), unlike a
+# nested `git init` (.git DIRECTORY), so the guard must exempt it from the
+# enclosing-repo walk-up and allow it (ticket 0317 round-1 reroll).
+WL="$TMP/whitelist-repo"
+git init -q "$WL"
+printf '*\n!/.gitignore\n!/src\n!/src/**\n' > "$WL/.gitignore"
+mkdir -p "$WL/src"
+touch "$WL/src/keep"
+git -C "$WL" add -A
+git -C "$WL" -c user.email=t@t -c user.name=t commit -qm init
+# A real linked worktree at the harness-style path (check-ignored by the `*` rule).
+git -C "$WL" -c user.email=t@t -c user.name=t \
+    worktree add -q "$WL/.claude/worktrees/wt" -b wt-branch >/dev/null 2>&1
+
+_assert 0 "allows registered linked worktree root"        "$WL/.claude/worktrees/wt"
+_assert 0 "allows linked worktree root (Skill)"           "$WL/.claude/worktrees/wt"   "Skill"
+
 # --- Skill invocations: the guard is matcher-agnostic (ticket 0306) ----------
 # A cwd-dependent skill resolves its target repo from the same session base cwd,
 # so a parked cwd must be denied and a repo-root cwd allowed for Skill too.
