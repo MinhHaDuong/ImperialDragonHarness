@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Extend the parked-cwd guard to cwd-dependent skill invocations
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T13:10Z claude created
+
+--- body ---
+## Context
+
+Ticket 0267 (closed, PR #516) guarded `EnterWorktree` against a parked
+session base cwd: `scripts/guard-enterworktree-parked-cwd.sh` denies when
+the base cwd sits in a git-ignored runtime directory, because the tool
+would silently target the wrong repo. The 0267 title already named the
+residual this ticket picks up: cwd-dependent *skills* (`/verify-adherence`,
+`/review-pr`, `/healthcheck`, `/molt`, …) resolve their target repo the
+same way, and a session that never calls `EnterWorktree` (background job
+run in place, non-worktree project) can invoke them from a parked cwd with
+no defense.
+
+The guard script is already matcher-agnostic — it reads only the `.cwd`
+field of the hook JSON. Extending coverage is a wiring question, not a new
+script.
+
+## Relevant files
+- `scripts/guard-enterworktree-parked-cwd.sh` — the guard; possibly rename
+  to `guard-parked-cwd.sh` if scope widens
+- `settings.json` — add a `PreToolUse` entry with matcher `Skill` (all
+  skills, simplest) or a per-skill matcher list if false positives appear
+- `tests/test_guard_enterworktree_parked_cwd.sh` — extend the wiring ratchet
+
+## Actions
+1. Decide matcher scope: blanket `Skill` vs an explicit list of
+   repo-targeting skills. Blanket is simpler; check that no legitimate
+   skill runs from a git-ignored cwd (e.g. skills operating on
+   `~/.claude/projects` memory data may be a false positive — verify).
+2. Wire the chosen matcher in `settings.json`.
+3. Extend the test suite's wiring ratchet and add a deny/allow case for a
+   Skill payload.
+4. If renamed, update `rules/workflow.md` reference.
+
+## Test
+- Extend `tests/test_guard_enterworktree_parked_cwd.sh`: a `Skill` payload
+  with a parked cwd is denied; repo-root cwd allowed; wiring ratchet sees
+  the new matcher.
+
+## Verification
+- [ ] Skill invocations from a git-ignored base cwd are denied with the
+      same explanatory message
+- [ ] No false positive on skills that legitimately run outside a repo
+      (memory sweeps, non-git manuscript wrap-ups)
+- [ ] Test suite covers the new matcher
+
+## Invariants
+- The EnterWorktree deny path from 0267 keeps working unchanged.
+- Skills in non-git directories (manuscript folders) stay allowed — the
+  guard already exits 0 when cwd is not inside a repo.
+
+## Exit criteria
+- Parked-cwd protection covers skill invocations (or a documented decision
+  narrows scope to a named skill list), with tests.
