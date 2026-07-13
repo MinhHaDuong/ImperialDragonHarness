@@ -57,6 +57,15 @@ def test_shared_and_explore_worktrees_still_forbidden():
     )
 
 
+def test_clean_tree_gate_is_executable():
+    """The agent-* ownership case names an executable cleanliness check."""
+    step3 = step3_text()
+    assert "git status --porcelain" in step3, (
+        "step 3 must state `git status --porcelain` as the executable cleanliness "
+        "gate for the agent-* ownership case, not just the word 'clean' (ticket 0294)"
+    )
+
+
 def test_rejection_as_confirmation_documented():
     """An `EnterWorktree` rejection in a spawned context is confirmation."""
     step3 = step3_text()
