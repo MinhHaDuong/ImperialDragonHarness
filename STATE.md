@@ -29,7 +29,6 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/CNRS/papiers/actif/AEDIST-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
 - **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
-- Delete the disabled cloud raid routine (claude.ai/code/routines — API has no delete)
 
 ## Backlog
 
