@@ -19,7 +19,9 @@
 # `/reviewers request <pr>` is invoked on a specific merge request — there
 # is no repo-wide auto-request lever, so trivial PRs stay unreviewed.
 #
-# Default: empty roster → /reviewers is a no-op until seats are configured.
+# The shipped roster below is inert until explicitly invoked: no seat fires
+# without `/reviewers request <pr>`. An empty roster (`reviewers: []`) makes
+# /reviewers a no-op entirely.
 # Example cli/model seat (commented; uncomment + adjust to enable):
 #
 #   - name: local-qwen

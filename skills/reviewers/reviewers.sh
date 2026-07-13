@@ -65,6 +65,14 @@ pr_branch() {  # $1 pr; honor an explicit override first
     gh pr view "$pr" --json headRefName --jq '.headRefName'  # harness-extension-point
 }
 
+# ── Forge reviewer request (forge-specific; swap for another forge) ──────────
+request_forge_reviewer() {  # $1 pr, $2 bot login
+    local pr="$1" login="$2"
+    gh api --method POST \
+        "repos/{owner}/{repo}/pulls/${pr}/requested_reviewers" \
+        -f "reviewers[]=${login}" >/dev/null 2>&1  # harness-extension-point
+}
+
 subcmd="${1:-}"; shift || true
 
 case "$subcmd" in
@@ -93,11 +101,7 @@ case "$subcmd" in
                         echo "request: WARN forge-bot seat '${name}' has no login — skipped" >&2
                         continue
                     fi
-                    # GitHub review-request API — swap this call for
-                    # another forge's reviewer request. harness-extension-point
-                    if gh api --method POST \
-                        "repos/{owner}/{repo}/pulls/${pr}/requested_reviewers" \
-                        -f "reviewers[]=${lg}" >/dev/null 2>&1; then
+                    if request_forge_reviewer "$pr" "$lg"; then
                         echo "request: forge-bot seat '${name}' requested (${lg}) on MR #${pr}" >&2
                     else
                         echo "request: WARN forge-bot seat '${name}' request failed (fail-open)" >&2
