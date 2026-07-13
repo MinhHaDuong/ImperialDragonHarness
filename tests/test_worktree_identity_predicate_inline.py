@@ -48,7 +48,11 @@ def _extract_body(relpath: str, fn_name: str) -> list[str]:
     lines = (REPO / relpath).read_text(encoding="utf-8").splitlines()
     open_re = f"{fn_name}() {{"
     start = next(
-        i for i, line in enumerate(lines) if line.strip() == open_re
+        (i for i, line in enumerate(lines) if line.strip() == open_re), None
+    )
+    assert start is not None, (
+        f"definition line `{open_re}` not found in {relpath} — the function was "
+        "renamed or reformatted; update SITES or this parser (ticket 0302)"
     )
     body: list[str] = []
     for line in lines[start + 1 :]:
