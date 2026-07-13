@@ -43,6 +43,8 @@ For everything else (source code, data files): if `git branch --show-current` is
 
 The same trap exists on the Bash surface: prefixing a command with `cd <primary-repo-root> &&` silently lands `git`/`erg` mutations on the primary checkout (on main) instead of the worktree branch. A PreToolUse guard blocks `cd <primary-repo-root> && <mutating git/erg>` during worktree sessions; read-only inspection (`git status`, `git log`) is not penalised, and an intentional primary-repo mutation should use `git -C <path>` rather than a `cd`.
 
+**Parked-cwd trap: `EnterWorktree` resolves the repo from the session base cwd.** `EnterWorktree` (and cwd-dependent skills) target the repo enclosing the *session base cwd* — never wherever the last `cd` landed, since a `cd` inside a Bash call resets after that call. If the base cwd is parked off-project (e.g. left at `~/.claude/projects` by an earlier step or an `ExitWorktree`), the worktree is silently created in the nearest enclosing repo — on 2026-06-19 this put a project worktree inside the harness repo. A PreToolUse guard (`scripts/guard-enterworktree-parked-cwd.sh`) denies `EnterWorktree` when the base cwd sits in a git-ignored runtime directory. After any `EnterWorktree`, run the ownership check: `basename "$(git rev-parse --show-toplevel)"` must match the expected worktree/project name. If the resolved repo is wrong, fall back to manual isolation in the correct repo — `git -C <project> worktree add <project>/.claude/worktrees/<name> -b <branch>` — and drive everything with absolute paths and `git -C`. See ticket 0267.
+
 # Escalation Protocol
 
 When stuck, escalate progressively:
