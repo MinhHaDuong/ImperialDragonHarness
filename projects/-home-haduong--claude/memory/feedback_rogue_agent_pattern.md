@@ -16,3 +16,5 @@ After completing their assigned task, verify/review agents can get confused and 
 - If it sends unsolicited notifications after the verdict, ignore them all — do not engage
 - Check what unauthorized changes it made in the harness repo
 - For re-verify agents specifically: add "your task is complete after delivering APPROVED/REROLL verdict — do not take any further actions" to the prompt
+
+Residual note (folded from verify-agents-dirty-main-repo, 2026-07-13): the cwd-binding root causes were fixed structurally (0216 pinned Agent-spawn cwd, 0228 cwd anchoring, both closed 2026-06-08) — spot-checking the invoking checkout after verify runs is a fallback, not standing procedure; a gaze fork may still leave the session worktree on the PR branch (benign — re-switch).
