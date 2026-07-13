@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-13T16:55Z Minh Ha-Duong created
+2026-07-13T17:30Z Minh Ha-Duong note Doc-prose change with no test surface; make check is the verification. Appended resolve-$$-to-literal caveat to workflow.md worktree-name paragraph.
 
 --- body ---
 ## Context
@@ -23,5 +24,5 @@ call site hand-typed from that table reproduces the InputValidationError.
 
 ## Exit criteria
 
-- [ ] workflow.md `{pid}` description carries the caveat
-- [ ] `make check` passes
+- [x] workflow.md `{pid}` description carries the caveat
+- [x] `make check` passes
