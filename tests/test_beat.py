@@ -2473,3 +2473,20 @@ class TestSyncOriginMainSharedScript:
 
         got = _run_git("rev-parse", "refs/heads/main", cwd=clone).stdout.strip()
         assert got == new_sha
+
+
+class TestHarnessWorktreeRe:
+    """_HARNESS_WORKTREE_RE recognizes both legacy and suffixed `t{N}` names.
+
+    Regression lock, not a bugfix: the pattern is an unanchored prefix match
+    (`t\\d`), so a collision-resistant suffix (`t0296-1234a`, ticket 0298) is
+    already recognized with no beat.py edit. This test pins that behavior so a
+    future re-anchoring of the regex cannot silently drop the suffixed form and
+    strand its locked worktrees during housekeeping cleanup.
+    """
+
+    def test_matches_legacy_bare_ticket_name(self):
+        assert beat._HARNESS_WORKTREE_RE.match("t0296")
+
+    def test_matches_suffixed_ticket_name(self):
+        assert beat._HARNESS_WORKTREE_RE.match("t0296-1234a")
