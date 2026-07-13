@@ -11,7 +11,10 @@ input=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
+# NotebookEdit carries its target in notebook_path, Write/Edit in file_path. A
+# payload has only one, so read either; without this the guard silently exits 0
+# on every NotebookEdit despite the settings.json matcher covering it.
+file_path=$(echo "$input" | jq -r '.tool_input.notebook_path // .tool_input.file_path // empty' 2>/dev/null || true)
 [ -z "$file_path" ] && exit 0
 hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 
