@@ -23,6 +23,9 @@
 #       the merge-base diff and the open-PR scan are both blind to this one.
 #   (f) the PR's own file (same path) already sits on the base tip -> exit 0;
 #       a same-path hit is not a rival claim.
+#   (g) the PR RENAMES a base ticket (delete old slug + add new slug, same ID)
+#       -> exit 0; the old path on the base tip is the PR's own file, not a
+#       rival claimant.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -244,5 +247,39 @@ else
     echo "FAIL: same-path base hit wrongly flagged as a collision"; echo "$out"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case (g): the PR renames a base ticket (same ID, new slug) -> exit 0
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo rename                # branch adds no new ticket; it renames one
+git -C "$REPO" mv tickets/0001-base.erg tickets/0001-renamed.erg
+# Rewrite the body so git's similarity detection does NOT pair the two paths
+# (the real-world trigger: a respec that renames the slug AND rewrites the
+# body shows up as delete(old)+add(new), not R).
+cat > "$REPO/tickets/0001-renamed.erg" <<'ERG'
+%erg 0.1
+Title: Base ticket, respecified beyond similarity recognition
+Created: 2026-06-18
+Author: test
+
+--- log ---
+2026-06-18T00:00Z test created
+2026-06-18T01:00Z test note respecified: new slug, new body
+
+--- body ---
+## Context
+Entirely rewritten so the rename is not detected as one: different sections,
+different wording, different length. The ID is the only thing that survives.
+
+## Exit criteria
+- [ ] nothing in common with the original body
+ERG
+git -C "$REPO" add tickets/0001-renamed.erg
+git -C "$REPO" commit -q -m "rename slug + respec body"
+if out=$(SELF_PR_NUMBER=99 STUB_PR_LIST='[]' run_check 2>&1); then
+    echo "PASS: same-ID rename is not flagged (exit 0)"
+else
+    echo "FAIL: rename wrongly flagged as a base-tip collision"; echo "$out"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught"
+echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught, renames pass"
