@@ -2,6 +2,7 @@
 Title: Audit harness isolation practices: "be in a worktree" vs "be in YOUR worktree"
 Created: 2026-06-12
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #530
 
 --- log ---
 2026-06-12T10:55Z orchestrator created from aedist orchestration-night incidents (2026-06-11/12)
@@ -10,6 +11,7 @@ Author: HDMX-coding-agent
 2026-07-13T06:59Z note Author ratified A + C, deferred B to design (2026-07-13). Children filed: 0296 (A guard), 0297 (guard-commit-on-main fix), 0298 (C naming, blocked-by 0294), 0299 (B design), 0300 (gaze /tmp worktrees), 0301 (erg-pr-merge predicate). Now a tracking ticket; stays open until all children close.
 2026-07-13T07:02Z note 0299 closed wontfix pre-merge (author, 2026-07-13): B claim-binding design not pursued; retained model is A (0296/0297) + C (0298) with 0300/0301 hygiene
 2026-07-13T09:05Z note Integration review at raid wrap-up (2026-07-13): all six children closed (0296 PR#519, 0297 PR#517, 0298 PR#529, 0299 wontfix PR#511, 0300 PR#518, 0301 PR#521); make check green on main at 89ca9b0; union sweep found zero /tmp/review or exact-match t{N} residuals; weak-predicate residuals in two sibling guards ticketed as 0308; EnterWorktree PID-resolution doc gap ticketed as 0309; follow-ups 0302/0303 remain open. Exit criteria verified — closing via PR.
+2026-07-13T09:05Z Minh Ha-Duong closed — autoclosed — PR #530
 --- body ---
 ## Context
 
