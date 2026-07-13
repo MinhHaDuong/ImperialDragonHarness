@@ -15,6 +15,7 @@ Author: MinhHaDuong
 2026-07-13T08:50Z MinhHaDuong note design change: auto-request on every MR is too much — some PRs are trivial. Switch to on-demand: the review is requested per-PR when warranted, never enabled repo-wide. Body rewritten accordingly by claude
 
 2026-07-13T09:30Z claude note lever documented: /reviewers request <pr> runs the forge-bot seat via `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (login from panel.yml); gate clause added to skills/gaze/SKILL.md (absent seat silent, requested-but-pending bounded fail-open wait). Exit criteria 1-2 delivered; trial (criteria 3-4) remains
+2026-07-13T19:33Z claude note trial evidence: the 2026-07-13 pipeline raid ran 11 substantive /gaze batteries (PRs #538-#548, all gated, 3 rerolls with real defects) — exceeds the >=5-MR trial volume for exit criteria 3-4; harvest those runs' panel data before scheduling new trial MRs
 --- body ---
 ## Context
 
