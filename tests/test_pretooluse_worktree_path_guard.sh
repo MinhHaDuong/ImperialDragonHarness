@@ -30,12 +30,29 @@ _run_hook_with_cwd() {
         | env _GUARD_WORKTREE_ROOT="$wt" _GUARD_PRIMARY_ROOT="$pr" bash "$HOOK" 2>&1 || true
 }
 
-# 1. Main-repo path while in worktree → warn
+# Return the guard's exit code (not its output), so a deny (exit 2) is
+# distinguishable from an advisory-then-allow (exit 0). Extra env pairs after
+# the payload args are passed through to the hook (used for GUARD_ALLOW_PRIMARY_EDIT).
+_rc() {
+    local wt="$1" pr="$2" fp="$3"; shift 3
+    _payload "$fp" \
+        | env _GUARD_WORKTREE_ROOT="$wt" _GUARD_PRIMARY_ROOT="$pr" "$@" bash "$HOOK" \
+            >/dev/null 2>&1 && echo 0 || echo $?
+}
+
+# 1. Main-repo path while in worktree → deny (exit 2) with a corrective message
 out=$(_run_hook "$WORKTREE" "$PRIMARY" "$PRIMARY/src/main.py")
 if echo "$out" | grep -q "Worktree path guard"; then
     echo "PASS: warns on main-repo path"
 else
     echo "FAIL: expected warning for main-repo path; got: $out"
+    fail=1
+fi
+rc=$(_rc "$WORKTREE" "$PRIMARY" "$PRIMARY/src/main.py")
+if [ "$rc" = "2" ]; then
+    echo "PASS: denies (exit 2) on main-repo path"
+else
+    echo "FAIL: expected exit 2 for main-repo path; got: $rc"
     fail=1
 fi
 
