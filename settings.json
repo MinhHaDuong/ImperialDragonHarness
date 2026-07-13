@@ -153,6 +153,16 @@
         ]
       },
       {
+        "matcher": "EnterWorktree",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-enterworktree-parked-cwd.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash(git worktree remove*)",
         "hooks": [
           {
