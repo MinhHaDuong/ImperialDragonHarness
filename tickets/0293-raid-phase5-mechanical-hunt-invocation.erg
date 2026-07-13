@@ -1,0 +1,49 @@
+%erg 0.1
+Title: raid Phase 5: invoke /hunt mechanically, not by prose paraphrase
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T06:43Z claude created child of 0251 (PR1 of ratified Option A)
+
+--- body ---
+## Context
+
+Child of tracking ticket 0251. The author ratified Option A
+(skill-invokes-skill): `/hunt` is the single canonical ticket-execution
+core, and every path must invoke it mechanically. `skills/raid/SKILL.md`
+Phase 5 currently says "Each agent follows `/hunt` workflow" — a prose
+paraphrase, not an invocation. A paraphrase is exactly what drifted
+between the aedist Wave A and Wave B prompts (2026-06-11/12): the
+execution contract lived in prompt-writing memory instead of the
+versioned SKILL.md.
+
+## Relevant files
+- `skills/raid/SKILL.md` — Phase 5 (Execute), ~line 153-163
+- `docs/imagine-0251-entry-points-2026-07-12.md` — design note, Option A
+
+## Actions
+1. Rewrite Phase 5 so the execute agent's FIRST action is an imperative,
+   greppable instruction to invoke the hunt skill with the ticket ID —
+   `Skill(skill: "hunt", args: "<id>")` — not a description of what hunt
+   does.
+2. State explicitly that the agent prompt must not paraphrase or inline
+   the hunt steps; the skill loader supplies the live contract.
+
+## Test
+- Extend the skills adherence/hygiene test (or add one) asserting
+  `skills/raid/SKILL.md` contains the imperative Skill-invocation string
+  and no longer the prose "follows `/hunt` workflow" phrasing.
+
+## Verification
+- [ ] Phase 5 opens the agent contract with the mechanical invocation
+- [ ] Test proves RED on the pre-fix text, GREEN after
+
+## Invariants
+- Raid's wave grouping, model policy, and verify/merge phases unchanged
+- Entry-point count stays at 2 (hunt, raid)
+
+## Exit criteria
+- [ ] Phase 5 instructs `Skill(hunt)` imperatively
+- [ ] Guard test in place
+- [ ] `make check` passes

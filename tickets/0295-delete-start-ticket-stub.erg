@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Delete the start-ticket deprecation stub
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T06:43Z claude created child of 0251 (PR3 of ratified Option A)
+
+--- body ---
+## Context
+
+Child of tracking ticket 0251. Ticket 0220 (PR #304) renamed
+`start-ticket` → `hunt`, leaving `skills/start-ticket/SKILL.md` as a
+15-line muscle-memory stub that announces the rename and delegates to
+`/hunt`. The author ratified removing it: with the rename a month old,
+the stub is a dead entry point and the consolidation's goal is fewer
+entry points.
+
+## Relevant files
+- `skills/start-ticket/SKILL.md` — the stub to delete
+- `README.md` — auto-generated skills catalog (regenerate)
+
+## Actions
+1. Delete `skills/start-ticket/` entirely.
+2. Run `make skills-catalog` to regenerate the README catalog.
+3. Sweep the repo for remaining `start-ticket` references (skills, docs,
+   scripts, tests) and update or remove them — full-logical-unit sweep,
+   one commit.
+
+## Test
+- `make check-skills-drift` passes; no `start-ticket` reference survives
+  outside historical material (closed tickets, docs/ archives, git log).
+
+## Verification
+- [ ] `skills/start-ticket/` gone; catalog regenerated
+- [ ] `grep -r start-ticket` clean outside historical material
+
+## Invariants
+- `/hunt` untouched
+- `make check` passes
+
+## Exit criteria
+- [ ] Stub deleted, catalog regenerated, references swept
+- [ ] `make check` passes
