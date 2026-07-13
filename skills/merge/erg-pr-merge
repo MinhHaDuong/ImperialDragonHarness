@@ -14,6 +14,9 @@
 #   0. Verify: on PR head branch, CI green, no conflicts
 #   1. Find ticket ID(s) from "Ticket: tickets/NNNN-..." lines in PR body only;
 #      title prefixes (chore(NNNN)) are subject references, not close claims
+#   1.5 Cross-check each claim against the branch tip: abort if the claimed
+#      ticket file is absent (force-replaced branch, PR #522); warn on a
+#      title/claim disagreement. Override: ERG_PR_MERGE_ALLOW_MISSING_TICKET=1
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
 #   3. Queue auto-merge via the forge CLI; falls back to watch-then-merge if auto-merge disabled
 #   4. If not in worktree: git checkout base && git pull --rebase
@@ -126,6 +129,63 @@ if [[ -z "$TICKET_IDS" ]] && [[ -z "$NOCLOSE" ]] && [[ -d tickets ]]; then
     die "no close-claim in PR body — add a 'Ticket: tickets/NNNN-...' line to close a ticket, 'Ticket-ref: tickets/NNNN-...' to reference one without closing, or 'Ticket: none' if this PR closes nothing. (Title prefixes like chore(NNNN) are NOT close claims.)"
 fi
 
+# ── Step 1.5: cross-check close claims against the branch content ─────────────
+#
+# A PR's Ticket close-claim lives in the body, but the branch content can drift
+# away from it. Shared-worktree contention once force-pushed an unrelated
+# changeset over a branch, leaving a stale `**Ticket:** NNNN` claim pointing at
+# work no longer in the diff (PR #522, 2026-07-13). erg-pr-merge would then
+# close NNNN while landing an unrelated change; the only defense was a human
+# noticing and retitling the PR. Two guards close that gap:
+#
+#  (a) Existence-at-tip (blocking, overridable). If a claimed ticket's file is
+#      absent from tickets/ at the branch tip, the claim cannot belong to this
+#      changeset — abort. This is EXISTENCE-at-tip, not touched-by-diff: a claim
+#      on a ticket the diff never modifies is legitimate (close-by-convention on
+#      merge), so we must not require the diff to touch the ticket file. Without
+#      this guard the absent file only surfaced as a cryptic `erg close` failure
+#      under set -e. Override with ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 to
+#      warn-and-skip the absent ticket instead of aborting.
+#
+#  (b) Title/claim disagreement (non-blocking warn). The #522 branch was
+#      retitled to the replacement work; a title prefix `word(NNNN)` naming a
+#      ticket not among the close claims is a cheap tell of a repurposed branch.
+#      Title prefixes are subject references, not claims, so this only warns —
+#      it must never add friction to a well-formed merge.
+#
+# The diff-touch tell from the ticket (claim names N but the diff touches only
+# ticket M's file) is deliberately NOT implemented: close-by-convention means a
+# valid claim routinely touches no ticket file, so that signal both misses the
+# #522 case (its replacement diff touched no ticket) and false-positives on
+# legitimate convention closes. Existence-at-tip plus the title tell cover the
+# observed failure without that noise.
+
+if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]]; then
+    TIP_TICKETS=$(git ls-tree -r --name-only HEAD -- tickets/ 2>/dev/null || true)
+    MISSING=""
+    while IFS= read -r tid; do
+        [[ -z "$tid" ]] && continue
+        if ! echo "$TIP_TICKETS" | grep -q "^tickets/${tid}-"; then
+            MISSING="${MISSING:+${MISSING} }${tid}"
+        fi
+    done <<< "$TICKET_IDS"
+    if [[ -n "$MISSING" ]]; then
+        if [[ -n "${ERG_PR_MERGE_ALLOW_MISSING_TICKET:-}" ]]; then
+            echo "erg-pr-merge: warning: close-claimed ticket(s) ${MISSING} are absent from tickets/ at the branch tip '${PR_BRANCH}' — ERG_PR_MERGE_ALLOW_MISSING_TICKET set, continuing and skipping their close." >&2
+        else
+            die "close-claimed ticket(s) ${MISSING} are absent from tickets/ at the branch tip '${PR_BRANCH}'. The branch content may have been force-replaced away from the claim (cf. PR #522). Verify the PR's 'Ticket:' lines match the diff; re-run with ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 to override."
+        fi
+    fi
+
+    # Non-blocking title/claim disagreement warn. One extra read-only forge call,
+    # skipped entirely when there is nothing to close. (harness-extension-point)
+    PR_TITLE=$(gh pr view "$PR" --json title --jq '.title' 2>/dev/null || echo "")
+    TITLE_TID=$(echo "$PR_TITLE" | grep -oiP '\(\K\d{3,4}(?=\))' | head -1 || true)
+    if [[ -n "$TITLE_TID" ]] && ! echo "$TICKET_IDS" | grep -qx "$TITLE_TID"; then
+        echo "erg-pr-merge: warning: PR title names ticket ${TITLE_TID} but the close claim(s) are ${TICKET_IDS//$'\n'/, } — verify the branch was not repurposed (cf. PR #522). Title prefixes are subject references, not close claims; proceeding." >&2
+    fi
+fi
+
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────
 
 ERG=${ERG:-erg}
@@ -139,6 +199,13 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
         # stray stash-resurrected file into the close commit and bounced the
         # merge on corpus validation (ticket 0193).
         TICKET_FILE=$(ls tickets/"${tid}"-*.erg 2>/dev/null | head -1 || true)
+        # Reachable only under ERG_PR_MERGE_ALLOW_MISSING_TICKET (Step 1.5 would
+        # otherwise have died): the claimed ticket has no file to close, so skip
+        # it rather than let `erg close` abort the script under set -e.
+        if [[ -z "$TICKET_FILE" ]]; then
+            echo "erg-pr-merge: skipping close of ${tid} — no ticket file at branch tip (override active)." >&2
+            continue
+        fi
         "$ERG" close "$tid" "autoclosed — PR #${PR}"
         "$ERG" archive "$tid" 2>/dev/null || true
         # Stage tracked modifications and deletions across tickets/: this
