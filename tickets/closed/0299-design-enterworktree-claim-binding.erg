@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Design: session-to-worktree claim binding (ownership model B)
+Created: 2026-07-13
+Author: claude
+Closed: wontfix: author decision 2026-07-13 — do not pursue the claim-binding design; A guard (0296) + C naming (0298) are the retained ownership model
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (author deferred B to a design ticket, 2026-07-13)
+
+2026-07-13T07:02Z Minh Ha-Duong closed — wontfix: author decision 2026-07-13 — do not pursue the claim-binding design; A guard (0296) + C naming (0298) are the retained ownership model
+--- body ---
+## Context
+
+Child of tracking ticket 0252. Model B — binding each worktree to the
+session that claimed it, so a sibling's guard refuses to mutate a foreign
+worktree — closes incident I2, which model A (0296) cannot: a sibling
+mutating a foreign worktree is fully self-consistent under A's rev-parse
+check. The author deferred the mechanism choice (2026-07-13); this ticket
+is DESIGN ONLY — no implementation until the design is ratified.
+
+Two candidate mechanisms (details in
+docs/audit-0252-worktree-ownership-2026-07-12.md and the 2026-07-13
+discussion):
+
+1. Piggyback on the existing git lock file
+   (`.git/worktrees/<name>/locked`, content `claude agent <name> (pid N)`),
+   with the guard checking the lock PID is an ancestor of its own process.
+   Zero new state; PID identity fragile across resume/background respawn.
+2. session_id claim file written by a PostToolUse hook on EnterWorktree;
+   guard compares the claim's session_id to its own (hook JSON carries
+   session_id on both sides). Clean identity; new artifact with a
+   lifecycle to own (ExitWorktree, worktree switch, stale-claim reaping,
+   beat.py awareness).
+
+## Actions
+
+1. Experiment: does a RESUMED session keep its session_id? (Decides
+   whether mechanism 2's claims survive resume or need a re-claim path.)
+2. Map the write points: EnterWorktree tool sessions vs
+   Agent(isolation:"worktree") subagent worktrees vs gaze /tmp worktrees
+   (see 0300) — which does each mechanism cover?
+3. Specify claim lifecycle: creation, verification (in the 0296 guard),
+   handoff on worktree switch, reaping of stale claims.
+4. Write the design note under docs/ and present the recommendation to
+   the author.
+
+## Verification
+
+- [ ] Resume/session_id experiment result recorded with the method used
+- [ ] Both mechanisms evaluated against I2 and against the lifecycle map
+
+## Exit criteria
+
+- [ ] Design note merged; author has ratified a mechanism
+- [ ] Implementation sub-ticket(s) filed only after that ratification
