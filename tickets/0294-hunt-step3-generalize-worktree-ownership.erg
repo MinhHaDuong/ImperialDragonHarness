@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-13T06:43Z claude created child of 0251 (PR2 of ratified Option A)
 
+2026-07-13T07:11Z bump verify-reroll — round 1: disable-model-invocation flip untraceable to ticket (scope); ownership predicate lacks executable clean-tree check
 --- body ---
 ## Context
 
