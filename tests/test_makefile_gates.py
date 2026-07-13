@@ -41,3 +41,20 @@ def test_check_fast_excludes_integration_and_slow():
     assert "not integration" in rule and "not slow" in rule, (
         f"'check-fast' must exclude integration and slow tiers; current rule:\n{rule}"
     )
+
+
+def test_check_fast_excludes_adherence():
+    rule = target_recipe("check-fast")
+    assert "not adherence" in rule, (
+        "coding-python.md keeps the adherence tier out of the fast loop — "
+        f"'check-fast' must exclude adherence; current rule:\n{rule}"
+    )
+
+
+def test_lint_runs_adherence_tier_only():
+    rule = target_recipe("lint")
+    assert re.search(r"pytest tests/ -m adherence\s*$", rule, re.MULTILINE), (
+        "coding-python.md defines 'make lint' as the adherence tier only — "
+        "pytest over tests/ filtered to -m adherence; "
+        f"current rule:\n{rule}"
+    )
