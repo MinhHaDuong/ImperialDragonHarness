@@ -159,4 +159,59 @@ else
     fail=1
 fi
 
+# 10. Memory-dir exemption: projects/*/memory/** in the primary checkout is
+# written directly by absolute path by design (the primary .gitignore whitelist
+# tracks it; skills/memory tells every session to write it there). Not denied.
+rc=$(_rc "$WORKTREE" "$PRIMARY" "$PRIMARY/projects/-home-haduong--claude/memory/MEMORY.md")
+if [ "$rc" = "0" ]; then
+    echo "PASS: exempts primary projects/*/memory/** path (exit 0)"
+else
+    echo "FAIL: expected exit 0 for memory-dir path; got: $rc"
+    fail=1
+fi
+out=$(_run_hook "$WORKTREE" "$PRIMARY" "$PRIMARY/projects/-home-haduong--claude/memory/MEMORY.md")
+if [ -z "$out" ]; then
+    echo "PASS: silent for memory-dir path"
+else
+    echo "FAIL: unexpected output for memory-dir path: $out"
+    fail=1
+fi
+
+# 11. Escape hatch: GUARD_ALLOW_PRIMARY_EDIT set → intentional primary edit is
+# allowed. A human pre-authorizes by exporting it BEFORE session start; the hook
+# is spawned by the CLI, so an agent cannot set it mid-turn.
+rc=$(_rc "$WORKTREE" "$PRIMARY" "$PRIMARY/src/main.py" GUARD_ALLOW_PRIMARY_EDIT=1)
+if [ "$rc" = "0" ]; then
+    echo "PASS: escape hatch allows primary edit (exit 0)"
+else
+    echo "FAIL: expected exit 0 with GUARD_ALLOW_PRIMARY_EDIT; got: $rc"
+    fail=1
+fi
+
+# 12. Deny message names the escape hatch so the operator knows the recourse.
+out=$(_run_hook "$WORKTREE" "$PRIMARY" "$PRIMARY/src/main.py")
+if echo "$out" | grep -q "GUARD_ALLOW_PRIMARY_EDIT"; then
+    echo "PASS: deny message names GUARD_ALLOW_PRIMARY_EDIT"
+else
+    echo "FAIL: deny message missing GUARD_ALLOW_PRIMARY_EDIT; got: $out"
+    fail=1
+fi
+
+# 13. Allow cases exit 0 explicitly — silence alone no longer implies allowed
+# now that the guard can deny (exit 2).
+rc=$(_rc "$WORKTREE" "$PRIMARY" "$WORKTREE/src/main.py")
+if [ "$rc" = "0" ]; then
+    echo "PASS: worktree-rooted path exits 0"
+else
+    echo "FAIL: expected exit 0 for worktree-rooted path; got: $rc"
+    fail=1
+fi
+rc=$(_rc "$WORKTREE" "$PRIMARY" "/tmp/unrelated/file.py")
+if [ "$rc" = "0" ]; then
+    echo "PASS: unrelated path exits 0"
+else
+    echo "FAIL: expected exit 0 for unrelated path; got: $rc"
+    fail=1
+fi
+
 exit $fail
