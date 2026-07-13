@@ -5,27 +5,27 @@ set -euo pipefail
 
 cat > /dev/null  # consume stdin
 
-# Identity predicate (ticket 0308): fire only inside a genuine harness worktree,
-# not in any directory that merely carries a `.git` gitdir: file. The old
-# `[ -f .git ] && grep gitdir:` check blocked ANY such tree — a submodule or an
-# ad-hoc worktree — as a false positive on this fail-closed guard. This mirrors
-# `in_worktree()` in skills/merge/erg-pr-merge (0301) and
-# scripts/guard-worktree-identity.sh: the cwd must sit under
-# `.claude/worktrees/<name>` AND `git rev-parse --show-toplevel` must resolve to
-# a tree whose basename is that `<name>` and is not the primary root itself.
-# (0302 will unify these three copies into a shared helper.)
+# Linked-worktree predicate (ticket 0308): fire in ANY linked git worktree,
+# not only harness `.claude/worktrees/<name>` ones. This guard is fail-closed
+# and its whole purpose is to stop `gh pr merge`, which git aborts with
+# `fatal: 'main' is already used by worktree at ...` in EVERY linked worktree
+# (main's ref is locked by the primary checkout) — ad-hoc worktrees included.
+# The old `[ -f .git ] && grep gitdir:` check had one real false positive: a
+# submodule, whose `.git` gitdir: file points at the SUPERPROJECT but whose own
+# ref-store is separate, so it shares no lock. The distinguishing test is
+# git-dir vs git-common-dir: in a linked worktree the git-dir is
+# `.../worktrees/<name>` under the common dir, so the two DIFFER; in the primary
+# checkout and in a submodule the git-dir equals its own common dir, so they are
+# EQUAL. This predicate deliberately DIFFERS from the harness-identity predicate
+# used by the advisory pretooluse path guard and guard-worktree-identity.sh:
+# here we want any linked worktree, not only the named harness ones.
 in_worktree() {
-  local cwd top name prefix
-  cwd=$(pwd -P)
-  prefix=${cwd%%/.claude/worktrees/*}
-  name=${cwd#*/.claude/worktrees/}
-  name=${name%%/*}
-  [ -n "$name" ] || return 1
-  top=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
-  [ -n "$top" ] || return 1
-  [ "$(basename "$top")" = "$name" ] || return 1
-  [ "$top" != "$prefix" ] || return 1
-  return 0
+  local git_dir common_dir
+  git_dir=$(git rev-parse --absolute-git-dir 2>/dev/null) || return 1
+  common_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  [ -n "$git_dir" ] || return 1
+  [ -n "$common_dir" ] || return 1
+  [ "$git_dir" != "$common_dir" ]
 }
 
 if in_worktree; then
