@@ -19,18 +19,30 @@ git -C "$TMPDIR" commit --allow-empty -q -m "init"
 # Rename the default branch to main (handles repos where default is 'master').
 git -C "$TMPDIR" branch -m main 2>/dev/null || true
 
-# Run the hook from inside the temp repo so `git branch --show-current` sees it.
+# Run the hook from inside $TMPDIR, or an explicit cwd (2nd arg). When an
+# explicit cwd is passed, the payload also carries a `.cwd` field (like the
+# sibling guard-cd-primary-repo tests) — reuses the jq payload-construction
+# pattern from tests/test_guard_cd_primary_repo.sh:20-28. Omitting the 2nd
+# arg preserves the plain (no `.cwd`) payload shape used by the original
+# main/master/feature-branch assertions below.
 _run() {
-    local cmd="$1"
-    printf '{"tool_name":"Bash","tool_input":{"command":%s}}' \
-        "$(printf '%s' "$cmd" | jq -Rs .)" \
-        | (cd "$TMPDIR" && bash "$HOOK" >/dev/null 2>&1)
+    local cmd="$1" cwd="${2:-$TMPDIR}"
+    local payload
+    if [[ -n "${2:-}" ]]; then
+        payload=$(printf '{"tool_name":"Bash","tool_input":{"command":%s},"cwd":%s}' \
+            "$(printf '%s' "$cmd" | jq -Rs .)" \
+            "$(printf '%s' "$cwd" | jq -Rs .)")
+    else
+        payload=$(printf '{"tool_name":"Bash","tool_input":{"command":%s}}' \
+            "$(printf '%s' "$cmd" | jq -Rs .)")
+    fi
+    printf '%s' "$payload" | (cd "$cwd" && bash "$HOOK" >/dev/null 2>&1)
     echo $?
 }
 
 _assert_blocked() {
-    local label="$1" cmd="$2"
-    local rc; rc=$(_run "$cmd")
+    local label="$1" cmd="$2" cwd="${3:-}"
+    local rc; rc=$(_run "$cmd" "$cwd")
     if [[ "$rc" == "2" ]]; then
         echo "PASS: blocks $label"
     else
@@ -40,44 +52,8 @@ _assert_blocked() {
 }
 
 _assert_allowed() {
-    local label="$1" cmd="$2"
-    local rc; rc=$(_run "$cmd")
-    if [[ "$rc" == "0" ]]; then
-        echo "PASS: allows $label"
-    else
-        echo "FAIL: expected allow (exit 0) for $label; got exit $rc — cmd: $cmd"
-        fail=1
-    fi
-}
-
-# cwd-aware runner: passes a `.cwd` field in the payload (like the sibling
-# guard-cd-primary-repo tests) AND runs the hook from that directory, so the
-# fixed script (reads `.cwd`) and the old script (reads its process cwd) both
-# see the same tree. Reuses the jq payload-construction pattern from
-# tests/test_guard_cd_primary_repo.sh:20-28.
-_run_at() {
-    local cmd="$1" cwd="$2"
-    printf '{"tool_name":"Bash","tool_input":{"command":%s},"cwd":%s}' \
-        "$(printf '%s' "$cmd" | jq -Rs .)" \
-        "$(printf '%s' "$cwd" | jq -Rs .)" \
-        | (cd "$cwd" && bash "$HOOK" >/dev/null 2>&1)
-    echo $?
-}
-
-_assert_blocked_at() {
-    local label="$1" cmd="$2" cwd="$3"
-    local rc; rc=$(_run_at "$cmd" "$cwd")
-    if [[ "$rc" == "2" ]]; then
-        echo "PASS: blocks $label"
-    else
-        echo "FAIL: expected block (exit 2) for $label; got exit $rc — cmd: $cmd"
-        fail=1
-    fi
-}
-
-_assert_allowed_at() {
-    local label="$1" cmd="$2" cwd="$3"
-    local rc; rc=$(_run_at "$cmd" "$cwd")
+    local label="$1" cmd="$2" cwd="${3:-}"
+    local rc; rc=$(_run "$cmd" "$cwd")
     if [[ "$rc" == "0" ]]; then
         echo "PASS: allows $label"
     else
@@ -134,8 +110,8 @@ git -C "$PRIMARY2" branch -m main 2>/dev/null || true
 git -C "$PRIMARY2" checkout -B feature -q          # I1: primary now off main
 PLAINWT="$PRIMARY2/.claude/worktrees/t001"
 mkdir -p "$PLAINWT"                                 # NOT a `git worktree add`
-_assert_blocked_at "git commit on primary via plain worktree dir (I1)" \
-                   "git commit -m x" "$PLAINWT"
+_assert_blocked "git commit on primary via plain worktree dir (I1)" \
+                "git commit -m x" "$PLAINWT"
 
 # --- positive: a real registered worktree on a feature branch → allowed ----
 # `git worktree add` gives the dir its own toplevel, distinct from the primary
@@ -143,8 +119,8 @@ _assert_blocked_at "git commit on primary via plain worktree dir (I1)" \
 # allows the commit. No false positive on legitimate worktree commits.
 REALWT="$PRIMARY2/.claude/worktrees/t002"
 git -C "$PRIMARY2" worktree add -q -b feature-wt "$REALWT"
-_assert_allowed_at "git commit in real registered worktree on feature branch" \
-                   "git commit -m x" "$REALWT"
+_assert_allowed "git commit in real registered worktree on feature branch" \
+                "git commit -m x" "$REALWT"
 
 if (( fail )); then
     exit 1
