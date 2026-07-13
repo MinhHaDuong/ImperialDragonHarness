@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 STATUS_HEADING = "## Status"
+STATUS_BUDGET = 20  # max lines in the ## Status block (rules/state.md)
 
 
 def _repo_root() -> Path:
@@ -142,11 +143,43 @@ def get_ci(repo_root: Path):
     return runs[0].get("conclusion") or "in progress"
 
 
+def get_metrics(repo_root: Path):
+    """Project-declared metrics lines for the Status block, or [] when opted out.
+
+    Extension point (ticket 0305): a project opts in by declaring a
+    `state-metrics` make target whose stdout is appended to the generated
+    block. No project-specific logic lives here — the recipe belongs to the
+    project. Absence of make, absence of the target, a non-zero exit, a
+    timeout, or non-decodable (non-UTF-8) recipe output all degrade to [] so the
+    refresh never fails on the metrics' account.
+    """
+    # One call does both jobs: a missing Makefile, a missing target, or a parse
+    # error all exit non-zero, so the run's own exit code is the opt-in probe.
+    # `-s` suppresses recipe echo, so stdout is exactly what the recipe prints,
+    # not make's own command lines. Only the exit code gates acceptance, so
+    # unrelated recipe output cannot fool the opt-in decision.
+    try:
+        r = subprocess.run(
+            ["make", "-s", "state-metrics"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, UnicodeDecodeError):
+        return []
+    if r.returncode != 0:
+        return []
+    return [ln for ln in r.stdout.splitlines() if ln.strip()]
+
+
 def _truncate(title, width=48):
     return title if len(title) <= width else title[: width - 1] + "…"
 
 
-def format_status(tickets, commits, head_sha=None, in_flight=None, ci=None):
+def format_status(
+    tickets, commits, head_sha=None, in_flight=None, ci=None, metrics=None
+):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     anchor = f" · as of {head_sha}" if head_sha else ""
     lines = [STATUS_HEADING, f"<!-- generated {now}{anchor} -->", ""]
@@ -174,6 +207,17 @@ def format_status(tickets, commits, head_sha=None, in_flight=None, ci=None):
         lines.append("**Recent (first-parent):**")
         for c in commits:
             lines.append(f"  {c}")
+
+    # Project-declared metrics count against the Status budget; append them last
+    # so any overflow drops the least-orienting content first.
+    if metrics:
+        lines.extend(metrics)
+
+    # Enforce the line budget — truncate the overflow with a marker rather than
+    # silently blow past it (rules/state.md; ticket 0305).
+    if len(lines) > STATUS_BUDGET:
+        marker = f"  … (truncated at {STATUS_BUDGET}-line Status budget)"
+        lines = lines[: STATUS_BUDGET - 1] + [marker]
 
     return lines
 
@@ -261,6 +305,7 @@ def main(repo_root: Path | None = None):
         head_sha=get_head_sha(repo_root),
         in_flight=get_in_flight(repo_root),
         ci=get_ci(repo_root),
+        metrics=get_metrics(repo_root),
     )
 
     new_text = (
