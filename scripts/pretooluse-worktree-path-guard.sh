@@ -1,8 +1,11 @@
 #!/bin/bash
 set -euo pipefail
-# PreToolUse hook: warn when Write/Edit/NotebookEdit targets the main repo
-# path during a worktree session. Non-blocking (exit 0) — advisory only.
-# See ticket 0171.
+# PreToolUse hook: deny (exit 2 + stderr) when Write/Edit/NotebookEdit targets
+# the main repo path during a worktree session — the worktree-path trap
+# (rules/workflow.md § Worktree paths). Ticket 0171 shipped this as an advisory
+# (exit 0); ticket 0318 hardened it to a blocking deny after prose warnings
+# failed to stop 7/11 execute agents in one raid.
+# See tickets 0171 and 0318.
 
 input=$(cat)
 
@@ -75,6 +78,8 @@ case "$file_path" in
         rel="${file_path#$primary_root/}"
         echo "Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
         echo "Did you mean: $worktree_root/$rel" >&2
+        echo "For an intentional primary-checkout edit, export GUARD_ALLOW_PRIMARY_EDIT before starting the session." >&2
+        exit 2
         ;;
 esac
 
