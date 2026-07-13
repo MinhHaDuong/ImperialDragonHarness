@@ -11,6 +11,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 spec = importlib.util.spec_from_file_location(
     "refresh_state", SCRIPTS / "refresh-STATE.py"
@@ -188,6 +190,9 @@ def _fake_run(cmd, repo_root):
 def _patch_subprocess_surfaces(monkeypatch):
     monkeypatch.setattr(rs, "run", _fake_run)
     monkeypatch.setattr(rs, "_gh_json", lambda args, repo_root: None)
+    # get_metrics spawns `make`; stub it so the main() text-surgery tests stay
+    # in the fast tier. Its own behaviour is covered by the integration tests.
+    monkeypatch.setattr(rs, "get_metrics", lambda repo_root: [])
 
 
 def test_main_uses_path_argument(tmp_path, monkeypatch):
@@ -205,6 +210,7 @@ def test_main_uses_path_argument(tmp_path, monkeypatch):
 
     monkeypatch.setattr(rs, "run", checked_run)
     monkeypatch.setattr(rs, "_gh_json", lambda args, repo_root: None)
+    monkeypatch.setattr(rs, "get_metrics", lambda repo_root: [])
     monkeypatch.setattr(sys, "argv", ["refresh-STATE.py", str(tmp_path)])
     rs.main()
 
@@ -258,3 +264,95 @@ def test_main_appends_status_when_heading_absent(tmp_path, monkeypatch):
     out = (tmp_path / "STATE.md").read_text()
     assert "## North star\nwhy we exist" in out  # hand content preserved
     assert "## Status" in out and "abc1234" in out  # generated section appended
+
+
+# state-metrics extension point (ticket 0305): a project-declared `state-metrics`
+# make target appends its stdout to the block; absence/failure degrades to plain.
+
+
+def test_format_status_appends_metrics_lines():
+    lines = rs.format_status(NO_TICKETS, ["abc msg"], metrics=["Corpus: 1200 docs", "Health: green"])
+    joined = "\n".join(lines)
+    assert "Corpus: 1200 docs" in joined
+    assert "Health: green" in joined
+    # metrics come after the git-derived content
+    assert joined.index("abc msg") < joined.index("Corpus: 1200 docs")
+
+
+def test_format_status_truncates_metrics_at_budget_with_marker():
+    metrics = [f"metric line {i}" for i in range(30)]
+    lines = rs.format_status(NO_TICKETS, ["abc msg"], metrics=metrics)
+    assert len(lines) == rs.STATUS_BUDGET
+    assert lines[-1].strip().startswith("…")
+    assert "budget" in lines[-1]
+    # overflow lines dropped, not the core orientation
+    assert lines[0] == rs.STATUS_HEADING
+
+
+def test_format_status_no_truncation_marker_when_within_budget():
+    lines = rs.format_status(NO_TICKETS, ["abc msg"], metrics=["one metric"])
+    assert len(lines) <= rs.STATUS_BUDGET
+    assert not any("budget" in line for line in lines)
+
+
+# get_metrics — real `make` subprocess, so integration tier (rules/coding-python.md)
+
+
+def _write_makefile(repo_root: Path, body: str):
+    (repo_root / "Makefile").write_text(body)
+
+
+@pytest.mark.integration
+def test_get_metrics_returns_lines_when_target_present(tmp_path):
+    _write_makefile(
+        tmp_path,
+        "state-metrics:\n\t@echo 'Corpus: 42 docs'\n\t@echo 'Health: green'\n",
+    )
+    assert rs.get_metrics(tmp_path) == ["Corpus: 42 docs", "Health: green"]
+
+
+@pytest.mark.integration
+def test_get_metrics_empty_when_no_makefile(tmp_path):
+    # No Makefile at all — the probe must not raise, and must degrade to [].
+    assert rs.get_metrics(tmp_path) == []
+
+
+@pytest.mark.integration
+def test_get_metrics_empty_when_target_absent(tmp_path):
+    # A Makefile exists but declares no state-metrics target.
+    _write_makefile(tmp_path, "build:\n\t@echo built\n")
+    assert rs.get_metrics(tmp_path) == []
+
+
+@pytest.mark.integration
+def test_get_metrics_empty_when_target_fails(tmp_path):
+    _write_makefile(tmp_path, "state-metrics:\n\t@echo partial\n\t@exit 1\n")
+    assert rs.get_metrics(tmp_path) == []
+
+
+@pytest.mark.integration
+def test_get_metrics_not_fooled_by_recipe_echo(tmp_path):
+    # With a default target that would print, get_metrics must capture only the
+    # state-metrics recipe's stdout — no recipe command echo, no default target.
+    _write_makefile(
+        tmp_path,
+        "all:\n\t@echo SHOULD_NOT_APPEAR\n\nstate-metrics:\n\t@echo 'only this'\n",
+    )
+    assert rs.get_metrics(tmp_path) == ["only this"]
+
+
+@pytest.mark.integration
+def test_main_appends_metrics_from_target(tmp_path, monkeypatch):
+    """End-to-end: a state-metrics target's stdout lands in the refreshed block."""
+    _repo_with_state(
+        tmp_path,
+        "# P\n\nLast updated: 2020-01-01T00:00Z\n\n## Status\nold\n\n## Blockers\nnone\n",
+    )
+    _write_makefile(tmp_path, "state-metrics:\n\t@echo 'Corpus: 7 docs'\n")
+    monkeypatch.setattr(rs, "run", _fake_run)
+    monkeypatch.setattr(rs, "_gh_json", lambda args, repo_root: None)
+    monkeypatch.setattr(sys, "argv", ["refresh-STATE.py", str(tmp_path)])
+    rs.main()
+    out = (tmp_path / "STATE.md").read_text()
+    assert "Corpus: 7 docs" in out
+    assert "## Blockers\nnone" in out  # trailing hand section preserved

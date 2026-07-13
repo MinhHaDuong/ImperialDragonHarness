@@ -25,7 +25,25 @@ One mechanically generated section (replaced each session from `git log` + `git-
 
 **Replace policy — no append.** Each session rewrites `## Status` in full from current git state and bumps `Last updated:` in the preamble. All `##` sections after `## Status` are preserved verbatim. The other hand-edited sections are touched only when the author explicitly updates them.
 
-**Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`.
+**Line budget:** `## Status` ≤ 20 lines · total ≤ 40 lines. History lives in `git log`, full ticket list via `erg ready tickets/`. Project metrics lines (below) count against the 20-line Status budget; when the block would exceed it the refresh truncates the overflow and appends a `… (truncated at 20-line Status budget)` marker — trailing lines drop first, so the git/ticket orientation is kept over surplus metrics.
+
+## Project metrics extension point (opt-in)
+
+A project may append its own generated metrics lines to the `## Status` block
+without any project-specific logic entering the harness script. The project
+declares a `state-metrics` make target; `refresh-STATE.py` runs it and appends
+its stdout to the block.
+
+- **Opt-in probe:** the refresh dry-runs `make -n state-metrics`. Exit 0 (a
+  Makefile with the rule exists) opts in; any other exit — no Makefile, no such
+  target, a parse error — opts out. Only the exit code is consulted, so the
+  probe is not fooled by unrelated recipe output.
+- **Content:** the target's stdout lines are appended verbatim after the
+  git/ticket/CI lines. Keep them short and self-describing (e.g.
+  `Corpus: 1200 docs` · `Health: green`); they share the 20-line budget above.
+- **Graceful degradation:** absence of `make`, absence of the target, a
+  non-zero exit, or a timeout all degrade to the plain block. The refresh never
+  fails on the metrics' account.
 
 ## Automation level (decided 2026-07-13)
 
