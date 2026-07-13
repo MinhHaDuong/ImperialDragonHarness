@@ -76,6 +76,22 @@ case "$file_path" in
                 ;;
         esac
         rel="${file_path#$primary_root/}"
+        # projects/*/memory/** is tracked via the primary .gitignore whitelist by
+        # design, and skills/memory tells every session to write it directly by
+        # absolute path — so a primary-checkout write there is intended, not the
+        # trap. Scoped narrowly (NOT a blanket projects/* exemption); for a
+        # non-harness project the pattern never matches, so it is a no-op.
+        case "$rel" in
+            projects/*/memory/*) exit 0 ;;
+        esac
+        # Escape hatch: a human pre-authorizes intentional primary edits by
+        # exporting GUARD_ALLOW_PRIMARY_EDIT in the shell/systemd environment
+        # BEFORE session start. The hook is spawned by the CLI, not a Bash-tool
+        # subshell, so an agent cannot set it mid-turn — deliberate, no
+        # self-service bypass.
+        if [ -n "${GUARD_ALLOW_PRIMARY_EDIT:-}" ]; then
+            exit 0
+        fi
         echo "Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
         echo "Did you mean: $worktree_root/$rel" >&2
         echo "For an intentional primary-checkout edit, export GUARD_ALLOW_PRIMARY_EDIT before starting the session." >&2
