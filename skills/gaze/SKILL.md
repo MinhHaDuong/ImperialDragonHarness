@@ -372,13 +372,13 @@ seat-runner. See `skills/reviewers/SKILL.md`.
 
 **Forge automated reviewer** (ticket 0206): the gate's comment-validation
 step includes the forge's automated reviewer (e.g. a requested Copilot
-review), when present — its findings are dispositioned like any panel
+review), when present. Its findings are dispositioned like any panel
 comment: correctness-class only may bounce, style is noted-not-blocking.
 The seat is **on-demand**: a PR nobody requested it on is simply a PR
-without that seat — no warning, no wait. Only when a request WAS made
-(the bot appears in the PR's requested or completed reviewers) and its
-review is still pending while everything else is ready: bounded wait of a
-few minutes, then proceed with a logged WARN — fail-open.
+without that seat, with no warning and no wait. Only when a request WAS
+made (the bot appears in the PR's requested or completed reviewers) and
+its review is still pending while everything else is ready: bounded wait
+of a few minutes, then proceed with a logged WARN — fail-open.
 <!-- harness-extension-point: requested-reviewer detection is
 `gh pr view <pr> --json reviewRequests,reviews` on GitHub. -->
 
