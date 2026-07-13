@@ -78,6 +78,9 @@ ln -s "$REPO" "$LINK_ROOT"
 
 _assert 2 "denies symlinked parked cwd"              "$LINK_PARKED"
 _assert 2 "denies symlinked parked cwd (Skill)"      "$LINK_PARKED"          "Skill"
+# A symlinked ancestor *component* (real leaf under a symlinked root) must also
+# normalize before the probes.
+_assert 2 "denies parked cwd via symlinked ancestor" "$LINK_ROOT/projects/session-x"
 _assert 0 "allows symlinked repo-root cwd"           "$LINK_ROOT"
 _assert 0 "allows symlinked repo-root cwd (Skill)"   "$LINK_ROOT"            "Skill"
 
