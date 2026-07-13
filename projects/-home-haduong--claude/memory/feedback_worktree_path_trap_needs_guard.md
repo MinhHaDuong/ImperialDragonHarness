@@ -1,6 +1,6 @@
 ---
 name: worktree-path-trap-needs-guard
-description: Prompt warnings do not prevent worktree-isolated agents from editing the primary checkout — 7/11 execute agents hit the trap in one raid; only a hook guard closes the class (ticket 0318)
+description: Prompt warnings do not prevent worktree-isolated agents from editing the primary checkout — 7/11 execute agents hit the trap in one raid; the 0318 hook guard (merged PR #562) now denies the class
 metadata: 
   node_type: memory
   type: feedback
@@ -19,9 +19,12 @@ bodies, tool outputs quoting primary paths), not from its git cwd; a prose
 warning competes with every quoted absolute path and loses often.
 
 **How to apply:** do not rely on prompt text to keep agent edits inside a
-worktree. Until ticket 0318 lands (PreToolUse `Edit|Write` guard denying
-primary-checkout writes during worktree sessions, mirroring
-`scripts/guard-cd-primary-repo.sh` on the Bash surface), expect the trap in
-~2/3 of worktree-isolated agent runs and check `git -C <primary> status`
-after each agent returns. Related: [[fork-skills-bare-context]],
+worktree. RESOLVED 2026-07-13: ticket 0318 (PR #562) hardened
+`scripts/pretooluse-worktree-path-guard.sh` from advisory to deny (exit 2)
+on `Write|Edit|NotebookEdit` — primary-checkout writes during worktree
+sessions are now blocked, with a narrow `projects/*/memory/*` exemption and
+a human-only `GUARD_ALLOW_PRIMARY_EDIT` escape hatch. The post-agent
+`git -C <primary> status` spot-check is now a fallback, not standing.
+Residual gaps (realpath/symlink evasion, escape-hatch env provenance) are
+ticketed as 0323. Related: [[fork-skills-bare-context]],
 [[parallel-execute-branch-contamination]].
