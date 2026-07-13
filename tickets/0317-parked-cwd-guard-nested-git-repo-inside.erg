@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-13T15:52Z Minh Ha-Duong created
+2026-07-13T16:30Z Claude note deny extended: walk-up re-probe closes nested-repo escape; 2 tests added (RED-first)
 
 --- body ---
 ## Context
@@ -28,6 +29,6 @@ and the deny is bypassed on both guarded surfaces (EnterWorktree and Skill).
 
 ## Exit criteria
 
-- [ ] Decision recorded (deny extended, or exemption documented at the site)
-- [ ] Test case pins the chosen behavior
-- [ ] `make check` and `make lint` pass
+- [x] Decision recorded (deny extended, or exemption documented at the site)
+- [x] Test case pins the chosen behavior
+- [x] `make check` and `make lint` pass

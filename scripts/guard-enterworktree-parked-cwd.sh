@@ -11,6 +11,33 @@ set -euo pipefail
 # A `cd` inside a Bash call never moves the session base cwd — it resets after
 # every call — so the only reliable signal is the .cwd field of the hook JSON.
 
+# find_enclosing_ignored_toplevel <inner_toplevel>
+# Walk up from the parent of <inner_toplevel>. For each enclosing git repo, test
+# whether <inner_toplevel> sits under a git-ignored path of that repo; on the
+# first such match echo the enclosing repo's toplevel and return 0. Return 1 if
+# no enclosing repo ignores it before the walk reaches / or leaves every repo.
+# Why the walk-up: a `git init` inside a git-ignored runtime dir makes
+# `git rev-parse --show-toplevel` resolve to the nested scratch repo, so the
+# self-match and same-repo check-ignore in the main flow both pass and the
+# parked-cwd deny is bypassed (ticket 0317, flagged by the PR #548 panel). Nested
+# scratch repos in runtime dirs must not defeat the deny; the guard stays
+# deny-only defense-in-depth. A non-ignored enclosing repo (a legit nested
+# checkout) is walked past, not treated as a match.
+find_enclosing_ignored_toplevel() {
+    local inner="$1" dir outer parent
+    dir=$(dirname "$inner")
+    while :; do
+        outer=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || return 1
+        if git -C "$outer" check-ignore -q "$inner" 2>/dev/null; then
+            printf '%s\n' "$outer"
+            return 0
+        fi
+        parent=$(dirname "$outer")
+        [ "$parent" = "$outer" ] && return 1   # reached / — fixed point
+        dir="$parent"
+    done
+}
+
 input=$(cat)
 
 command -v jq &>/dev/null || exit 0
@@ -32,9 +59,17 @@ cwd=$(cd "$cwd" 2>/dev/null && pwd -P) || exit 0
 # VCS-agnostic mode handles it) — nothing for this guard to judge.
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
 
-# At the repo root, or in a tracked subdirectory: repo resolution is correct.
-[ "$cwd" = "$toplevel" ] && exit 0
-git -C "$cwd" check-ignore -q "$cwd" 2>/dev/null || exit 0
+# Nested-repo escape (ticket 0317): if the resolved toplevel is itself parked in
+# a git-ignored path of an enclosing repo, the cwd sits behind a nested scratch
+# repo inside a runtime dir — the self-match and same-repo check-ignore below
+# would both pass and bypass the deny. Deny, reporting the real enclosing project.
+if enclosing=$(find_enclosing_ignored_toplevel "$toplevel"); then
+    toplevel="$enclosing"
+else
+    # At the repo root, or in a tracked subdirectory: repo resolution is correct.
+    [ "$cwd" = "$toplevel" ] && exit 0
+    git -C "$cwd" check-ignore -q "$cwd" 2>/dev/null || exit 0
+fi
 
 # Parked cwd: a git-ignored runtime directory inside some repo. The tool would
 # target that repo, which is almost never the intended project.
