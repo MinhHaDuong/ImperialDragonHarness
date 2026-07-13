@@ -1,0 +1,45 @@
+%erg 0.1
+Title: state-metrics extension point — project-declared generated lines in STATE
+Created: 2026-07-13
+Author: fable
+Blocked-by: 0304
+
+--- log ---
+2026-07-13T10:40Z fable created
+
+--- body ---
+## Context
+
+Some projects hand-maintain quantitative sections in STATE.md (e.g.
+climate-finance-het `## Corpus` / `## Health`) that a project command could
+regenerate; hand-refreshing them is where their staleness risk lives. The
+harness script must stay project-agnostic, so the metrics command belongs to
+the project: an extension point, not harness-baked logic.
+
+## Relevant files
+- `scripts/refresh-STATE.py` — insertion into the generated block
+- `rules/state.md` — document the contract
+
+## Actions
+1. Define the contract: if the repo declares a metrics command (proposed: a
+   `state-metrics` make target; alternatives welcome), `refresh-STATE.py` runs
+   it and appends its stdout lines to the generated `## Status` block.
+2. Failure or absence of the target degrades to the plain block — never blocks
+   the refresh.
+3. Document the contract in `rules/state.md`; count metrics lines against the
+   ≤ 20-line Status budget.
+
+## Test
+- Fixture repo with a `state-metrics` target → lines appear in the block.
+- No target / failing target → plain block, exit 0.
+
+## Verification
+- [ ] Harness repo (no target) refreshes unchanged
+- [ ] `make check` passes
+
+## Invariants
+- No project-specific logic in the harness script.
+
+## Exit criteria
+- A project can regenerate its metrics lines through the standard refresh,
+  opt-in, with graceful degradation; documented and tested.
