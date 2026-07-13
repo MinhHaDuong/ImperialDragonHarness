@@ -74,7 +74,7 @@ header). No secrets in config — credentials load via BASH_ENV (0207).
 
 ## Dependencies
 
-- `~/.claude/scripts/seat-runner-prototype.sh` (ticket 0217) — the
+- `~/.claude/scripts/seat-runner.sh` (ticket 0217) — the
   sandboxed seat execution mechanism `request` invokes. Override with
   `SEAT_RUNNER` for testing.
 - `tickets/erg` — `scorecard` appends the trial log line.

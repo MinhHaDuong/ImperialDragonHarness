@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${REVIEWERS_REPO:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 PANEL="${REVIEWERS_PANEL:-${SCRIPT_DIR}/panel.yml}"
 # The 0217 seat-runner. Overridable so the test suite can stub it.
-SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../../scripts/seat-runner-prototype.sh}"
+SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../../scripts/seat-runner.sh}"
 # Where per-seat findings land for harvest to collect (per merge request).
 FINDINGS_DIR="${REVIEWERS_FINDINGS_DIR:-${TMPDIR:-/tmp}/reviewers}"
 

@@ -1,0 +1,30 @@
+# Container image for the ticket-0217 seat-runner sandbox.
+#
+# Build ONCE, out of band — it is NOT built at test time. The test suite
+# (tests/test_seat_runner.sh) SKIPs every podman-dependent check when this
+# image is absent, so CI never needs a builder:
+#
+#   podman build -t localhost/seat-runner:v1 \
+#       -f scripts/seat-runner/Containerfile scripts/seat-runner
+#
+# The runtime seat mounts the invoking user's ~/.local (read-only) for the
+# aider CLI and its uv venv; that venv's shebangs point at /usr/bin/python3,
+# which the bare ubuntu image lacks — hence python3 here. git + ca-certificates
+# cover the read-only checkout and TLS trust store. The seat runs under
+# --network=none and reaches the model endpoint only through the bind-mounted
+# relay socket (see net-relay.py), so no image-level network config is needed.
+FROM ubuntu:24.04
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3 \
+        git \
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Optional: bake the reviewer CLI into the image instead of mounting it from
+# the host ~/.local. The runtime currently uses the host-mounted aider, so this
+# stays commented; uncomment for a self-contained image.
+#   RUN apt-get update && apt-get install -y --no-install-recommends pipx \
+#       && pipx install aider-chat && rm -rf /var/lib/apt/lists/*
