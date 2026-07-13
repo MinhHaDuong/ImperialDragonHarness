@@ -7,7 +7,6 @@ files must declare the field, document the taxonomy section, and agree on the
 exact five category tokens.
 """
 
-import re
 from pathlib import Path
 
 import pytest
@@ -58,13 +57,9 @@ def test_skill_doctor_has_taxonomy_heading():
 
 @pytest.mark.adherence
 def test_both_files_contain_all_five_tokens():
+    # Each file's set is checked against the fixed TOKENS constant, which also
+    # proves cross-file consistency (both sets equal TOKENS, so they equal
+    # each other) — a separate equality test would be a tautology.
     for path in (VERIFY_GATE, SKILL_DOCTOR):
         found = _taxonomy_tokens(path.read_text())
         assert found == TOKENS, f"{path.name} missing tokens: {TOKENS - found}"
-
-
-@pytest.mark.adherence
-def test_cross_file_token_consistency():
-    vg = _taxonomy_tokens(VERIFY_GATE.read_text())
-    sd = _taxonomy_tokens(SKILL_DOCTOR.read_text())
-    assert vg == sd, f"taxonomy token sets diverge: {vg ^ sd}"
