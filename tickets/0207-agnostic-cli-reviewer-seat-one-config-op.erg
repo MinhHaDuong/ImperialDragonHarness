@@ -2,7 +2,6 @@
 Title: Agnostic CLI reviewer seat — one config, OpenRouter and llama-server endpoints
 Created: 2026-06-04
 Author: MinhHaDuong
-Blocked-by: 0217
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
@@ -16,6 +15,7 @@ Blocked-by: 0217
 2026-06-05T06:56Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
 
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): the seat is just an agnostic CLI reviewer run by the 0217 sandbox-runner — no bespoke ACP agent. Blocked-by flipped 0208→0217 (the runner is the dependency, not a management surface). Prototype already done in 0217: aider --ask over llama-server, contained in rootless podman; scorecard 1 devstral-small-2 (13/13 hallucinations, unusable), scorecard 2 qwen3.6-35b-a3b (1 real cross-file catch, usable, 80 tok/s). This ticket now = generalize that to the {OpenRouter, llama-server} matrix + the advisory trial
+2026-07-13T21:13Z Minh Ha-Duong note blocker 0217 closed — Blocked-by removed.
 --- body ---
 ## Context
 
@@ -44,7 +44,7 @@ the child). llama-server endpoint is plain config (host:port), no secret.
 
 ## Relevant files
 
-- scripts/seat-runner-prototype.sh (0217) — the contained runner this
+- scripts/seat-runner.sh (0217) — the contained runner this
   seat plugs into; v1 already drives aider --ask over llama-server
 - reviewer roster config (0208) — seat = {agent_cmd, endpoint, model}
 - skills/gaze/SKILL.md — panel-extension section (from 0205)
