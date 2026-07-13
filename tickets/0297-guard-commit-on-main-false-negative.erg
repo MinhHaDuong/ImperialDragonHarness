@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Fix guard-commit-on-main.sh false-negative: check tree identity, not branch name
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (author ratified model A, 2026-07-13)
+
+--- body ---
+## Context
+
+Child of tracking ticket 0252. The 0252 audit
+(docs/audit-0252-worktree-ownership-2026-07-12.md) found that
+`guard-commit-on-main.sh` checks only `branch == main`. In incident I1 the
+stray `git checkout -B` moved the PRIMARY checkout onto a feature branch,
+after which the guard happily allowed commits on the primary — the exact
+damage it exists to prevent. The material predicate is "this commit lands
+on the primary checkout", not "the branch is named main".
+
+## Relevant files
+
+- `scripts/guard-commit-on-main.sh` — the guard to fix
+- `scripts/guard-cd-primary-repo.sh` — sibling guard that already consumes `.cwd` from hook JSON; copy its input handling
+
+## Actions
+
+1. Add a tree-identity check: resolve the command's effective cwd
+   (consume `.cwd` from the PreToolUse hook JSON like the sibling guard,
+   instead of trusting the shell's inherited cwd) and block commits whose
+   `git rev-parse --show-toplevel` is the primary checkout root, whatever
+   the branch name.
+2. Keep the existing branch==main check as a second layer.
+
+## Test
+
+- Red first: primary checkout sitting on a non-main branch, hook JSON cwd
+  pointing at it — assert the guard blocks the commit (today it passes).
+
+## Verification
+
+- [ ] Commit on primary checkout blocked regardless of branch name
+- [ ] Commit in a registered worktree on a feature branch still allowed
+- [ ] Guard reads cwd from hook JSON, not from its own process cwd
+
+## Invariants
+
+- `make check` passes; no false positives on normal worktree commits
+
+## Exit criteria
+
+- [ ] Both checks live in the guard with tests proving RED on the pre-fix state
+- [ ] `make check` passes

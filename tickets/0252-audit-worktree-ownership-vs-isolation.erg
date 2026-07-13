@@ -7,6 +7,8 @@ Author: HDMX-coding-agent
 2026-06-12T10:55Z orchestrator created from aedist orchestration-night incidents (2026-06-11/12)
 2026-07-12T18:55Z claude note Audit complete (nightbeat, read-only): 15-surface table in docs/audit-0252-worktree-ownership-2026-07-12.md. Root gap: the EnterWorktree lock file is the only ownership artifact and is read only by beat.py cleanup and molt step 0 — both self-protective, never self-verifying; guard-commit-on-main.sh has an I1 false-negative (checks branch, not tree identity). Proposed model: (A) live rev-parse identity preflight on mutating git/erg commands, ship first; (B) EnterWorktree claim binding, author design call; (C) collision-resistant naming, cheap complement. Six candidate fix tickets drafted in the doc, NOT filed — awaiting author discussion per exit criteria.
 
+2026-07-13T06:59Z note Author ratified A + C, deferred B to design (2026-07-13). Children filed: 0296 (A guard), 0297 (guard-commit-on-main fix), 0298 (C naming, blocked-by 0294), 0299 (B design), 0300 (gaze /tmp worktrees), 0301 (erg-pr-merge predicate). Now a tracking ticket; stays open until all children close.
+2026-07-13T07:02Z note 0299 closed wontfix pre-merge (author, 2026-07-13): B claim-binding design not pursued; retained model is A (0296/0297) + C (0298) with 0300/0301 hygiene
 --- body ---
 ## Context
 
@@ -55,8 +57,21 @@ Constraint: cheap per-command checks only — anchoring discipline
 (`git -C`, rev-parse preflight) must stay ergonomic or it will be
 skipped under load.
 
+## Children (filed 2026-07-13 after author ratification: A + C now, B deferred to design)
+
+- 0296 — live worktree-identity preflight guard (model A, closes I1)
+- 0297 — guard-commit-on-main.sh tree-identity fix (A companion)
+- 0298 — collision-resistant worktree naming (model C; blocked-by 0294)
+- 0299 — design: session-to-worktree claim binding — closed wontfix 2026-07-13 (B not pursued)
+- 0300 — gaze /tmp review worktrees under guard coverage
+- 0301 — erg-pr-merge in_worktree() predicate: tighten or justify
+
+Tracking ticket: stays open until every child is closed, then closes after
+the integration review.
+
 ## Exit criteria
-- [ ] Audit findings recorded (which skills/rules/hooks assume the weak
-      predicate, with file:line inventory).
-- [ ] Ownership model proposed and discussed with the author; execution
-      sub-tickets filed only after that discussion.
+- [x] Audit findings recorded (which skills/rules/hooks assume the weak
+      predicate, with file:line inventory) — docs/audit-0252-worktree-ownership-2026-07-12.md.
+- [x] Ownership model proposed and discussed with the author; execution
+      sub-tickets filed only after that discussion — ratified 2026-07-13,
+      children 0296-0301.
