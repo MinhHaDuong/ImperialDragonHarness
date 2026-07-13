@@ -33,6 +33,8 @@ merge** — the merge decision belongs to the caller (the human or the raid).
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
+- Convergence mode (`convergence.enabled`, default off) may shorten a *repeat* invocation
+  to the gate phase only — see § Convergence mode; it never relaxes the gate itself.
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
   invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
