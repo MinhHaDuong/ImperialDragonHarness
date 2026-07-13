@@ -70,7 +70,7 @@ fi
 
 echo "PR #$PR"
 
-PR_JSON=$(gh pr view "$PR" --json number,headRefName,baseRefName,mergeable,statusCheckRollup,body,isDraft) # harness-extension-point
+PR_JSON=$(gh pr view "$PR" --json number,headRefName,baseRefName,mergeable,statusCheckRollup,body,isDraft,title) # harness-extension-point
 PR_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
 BASE_BRANCH=$(echo "$PR_JSON" | jq -r '.baseRefName')
 CURRENT_BRANCH=$(git branch --show-current)
@@ -177,9 +177,9 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]]; then
         fi
     fi
 
-    # Non-blocking title/claim disagreement warn. One extra read-only forge call,
-    # skipped entirely when there is nothing to close. (harness-extension-point)
-    PR_TITLE=$(gh pr view "$PR" --json title --jq '.title' 2>/dev/null || echo "")
+    # Non-blocking title/claim disagreement warn. Title comes from the Step 0
+    # PR_JSON fetch — no extra forge call.
+    PR_TITLE=$(echo "$PR_JSON" | jq -r '.title // ""')
     TITLE_TID=$(echo "$PR_TITLE" | grep -oiP '\(\K\d{3,4}(?=\))' | head -1 || true)
     if [[ -n "$TITLE_TID" ]] && ! echo "$TICKET_IDS" | grep -qx "$TITLE_TID"; then
         echo "erg-pr-merge: warning: PR title names ticket ${TITLE_TID} but the close claim(s) are ${TICKET_IDS//$'\n'/, } — verify the branch was not repurposed (cf. PR #522). Title prefixes are subject references, not close claims; proceeding." >&2

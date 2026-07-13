@@ -59,14 +59,16 @@ case "$1 $2" in
         echo "${STUB_STATE:-MERGED}"; exit 0
       fi
     fi
-    if [[ "$args" == *"title"* ]]; then
+    if [[ "$args" == *"title"* ]] && [[ "$args" != *"headRefName"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
     fi
-    # the big composite query
+    # the big composite query (carries the title since the Step 1.5 warn
+    # reads it from PR_JSON instead of a second forge call)
     jq -n \
       --arg n "$STUB_PR" --arg h "$STUB_BRANCH" --arg b "$STUB_BASE" \
       --arg body "$STUB_BODY" --arg draft "${STUB_IS_DRAFT:-false}" \
-      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true")}'
+      --arg t "$STUB_TITLE" \
+      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true"),title:$t}'
     exit 0 ;;
   "pr ready")
     echo "$*" >> "${STUB_READY_LOG:-/dev/null}"
