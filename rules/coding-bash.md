@@ -35,6 +35,25 @@ if [ -z "${_TIMER_UNITS[$stem]:-}" ]; then ...
 
 Always use `${arr[$key]:-}` (or `${arr[$key]:-default}`) when the key may not exist.
 
+## Tab-delimited records drop empty fields in `read`
+
+Tab is IFS *whitespace*, so `IFS=$'\t' read` collapses consecutive tabs: an
+empty mid-record field silently shifts every later field left (bit
+reviewers.sh roster parsing, 2026-07-13 — a seat kind with no endpoint/model
+put the trial-ticket in the wrong variable).
+
+```bash
+# WRONG — l gets "g", t gets "" (the empty field vanished)
+printf 'a\tb\t\tg\n' | while IFS=$'\t' read -r k v l t; do ...
+
+# CORRECT — pipe is not IFS whitespace; empty fields survive
+printf 'a|b||g\n' | while IFS='|' read -r k v l t; do ...
+```
+
+Records with possibly-empty middle fields need a non-whitespace delimiter
+(`|`, `;`) or a placeholder value. Tab-delimited `read` is safe only when
+every field is guaranteed non-empty or the empty field is last.
+
 ## General `set -euo pipefail` discipline
 
 - Every script starts with `set -euo pipefail` unless there is an explicit reason not to.
