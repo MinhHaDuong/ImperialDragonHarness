@@ -1,10 +1,12 @@
 #!/bin/bash
 set -euo pipefail
-# PreToolUse hook: deny EnterWorktree when the session base cwd is parked in a
-# git-ignored runtime directory (e.g. ~/.claude/projects, ~/.claude/jobs) —
-# EnterWorktree resolves the target repo from the session base cwd, so a parked
-# cwd silently creates the worktree in the nearest enclosing repo, not the
-# intended project. Exit 0 = allow, Exit 2 = deny. See ticket 0267.
+# PreToolUse hook: deny EnterWorktree — and any cwd-dependent Skill invocation
+# (matcher "Skill") — when the session base cwd is parked in a git-ignored
+# runtime directory (e.g. ~/.claude/projects, ~/.claude/jobs). Both resolve
+# their target repo from the session base cwd, so a parked cwd silently targets
+# the nearest enclosing repo, not the intended project. The guard reads only the
+# .cwd field, so it is matcher-agnostic — the same script serves both matchers.
+# Exit 0 = allow, Exit 2 = deny. See tickets 0267 (EnterWorktree) and 0306 (Skill).
 #
 # A `cd` inside a Bash call never moves the session base cwd — it resets after
 # every call — so the only reliable signal is the .cwd field of the hook JSON.
