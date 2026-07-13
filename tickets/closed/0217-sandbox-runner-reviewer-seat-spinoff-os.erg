@@ -2,6 +2,7 @@
 Title: Sandbox-runner reviewer-seat spinoff — OS-contained agnostic CLI reviewers with normalized findings
 Created: 2026-06-05
 Author: claude
+Closed: autoclosed — PR #564
 
 --- log ---
 2026-06-05T07:35Z claude created
@@ -18,6 +19,7 @@ Author: claude
 2026-07-13T19:59Z claude note Criterion 6 (end-to-end smoke): DONE via the hardened path. Built localhost/seat-runner:v1 from scripts/seat-runner/Containerfile (ubuntu:24.04 + python3/git/ca-certs); stood up a stub OpenAI-compatible endpoint (127.0.0.1:8012, canned /health + /v1/chat/completions returning FINDING|/SUMMARY| lines) and drove the FULL pipeline: seat-runner.sh --network=none reviewed t217-sandbox-net-isolation vs origin/main, reached the endpoint ONLY through the relay socket, self-test passed, and contract-shaped findings landed in the out file (exit 0). Combined with the 2026-06-05 scorecards (real Devstral/Qwen models over a real ~600-line branch diff, local-branch-diff reviewer, no forge round-trip) this closes criterion 6 on the network-hardened design.
 2026-07-13T21:07Z claude note correction: criterion-3 explicit env construction lives in run_seat() at scripts/seat-runner.sh:~183-191; the ~145-160 citation in the 19:59Z note is stale
 2026-07-13T21:07Z claude note bump verify-reroll — round 1: venv-root derivation guard + verifiable minors
+2026-07-13T21:13Z Minh Ha-Duong closed — autoclosed — PR #564
 --- body ---
 ## Context
 
