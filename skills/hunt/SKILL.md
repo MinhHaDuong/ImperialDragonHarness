@@ -25,8 +25,8 @@ argument-hint: <ticket-id>
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. Enter the ticket's **own** worktree, or confirm the spawner already gave you one.
    A worktree is **owned** when either its basename is `t$ARGUMENTS` or begins with
-   `t$ARGUMENTS-` (the collision-resistant suffixed form, e.g. `t$ARGUMENTS-$$`), OR its
-   basename matches `agent-*` (the orchestrator created it for this agent session) AND
+   `t$ARGUMENTS-` (the collision-resistant suffixed form — see the `EnterWorktree`
+   call below), OR its basename matches `agent-*` (the orchestrator created it for this agent session) AND
    `git status --porcelain` prints nothing — the session started inside it and its tree
    is clean (that is what `Agent(isolation:"worktree")` produces). Both conditions must
    hold: an `agent-*` basename over a dirty tree is not proof of ownership. A shared or
@@ -35,7 +35,7 @@ argument-hint: <ticket-id>
    it does not own (2026-06-11: a hunt inherited an orchestration session's worktree,
    rebased its branch, and stranded in-progress test edits there). Resolve ownership
    before the first branch-mutating command:
-   - Already inside an owned worktree — basename `t$ARGUMENTS` or `t$ARGUMENTS-<pid>`, or an `agent-*`
+   - Already inside an owned worktree — basename `t$ARGUMENTS` or beginning with `t$ARGUMENTS-`, or an `agent-*`
      one from an `Agent(isolation:"worktree")` spawn whose `git status --porcelain` is
      empty — means you are isolation-confirmed; proceed to step 4. When such a spawned
      agent has its `EnterWorktree` rejected with "already in a worktree", that rejection
