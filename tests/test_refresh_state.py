@@ -331,6 +331,14 @@ def test_get_metrics_empty_when_target_fails(tmp_path):
 
 
 @pytest.mark.integration
+def test_get_metrics_empty_when_output_not_decodable(tmp_path):
+    # A recipe emitting non-UTF-8 bytes must not crash the refresh: text=True
+    # decodes stdout and raises UnicodeDecodeError, which degrades to [].
+    _write_makefile(tmp_path, "state-metrics:\n\t@printf '\\xff\\xfe metric\\n'\n")
+    assert rs.get_metrics(tmp_path) == []
+
+
+@pytest.mark.integration
 def test_get_metrics_not_fooled_by_recipe_echo(tmp_path):
     # With a default target that would print, get_metrics must capture only the
     # state-metrics recipe's stdout — no recipe command echo, no default target.

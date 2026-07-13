@@ -43,8 +43,8 @@ its stdout to the block.
   git/ticket/CI lines. Keep them short and self-describing (e.g.
   `Corpus: 1200 docs` · `Health: green`); they share the 20-line budget above.
 - **Graceful degradation:** absence of `make`, absence of the target, a
-  non-zero exit, or a timeout all degrade to the plain block. The refresh never
-  fails on the metrics' account.
+  non-zero exit, a timeout, or non-decodable (non-UTF-8) recipe output all
+  degrade to the plain block. The refresh never fails on the metrics' account.
 
 ## Automation level (decided 2026-07-13)
 

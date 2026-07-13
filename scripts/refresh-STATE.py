@@ -149,8 +149,9 @@ def get_metrics(repo_root: Path):
     Extension point (ticket 0305): a project opts in by declaring a
     `state-metrics` make target whose stdout is appended to the generated
     block. No project-specific logic lives here — the recipe belongs to the
-    project. Absence of make, absence of the target, a non-zero exit, or a
-    timeout all degrade to [] so the refresh never fails on the metrics' account.
+    project. Absence of make, absence of the target, a non-zero exit, a
+    timeout, or non-decodable (non-UTF-8) recipe output all degrade to [] so the
+    refresh never fails on the metrics' account.
     """
     # One call does both jobs: a missing Makefile, a missing target, or a parse
     # error all exit non-zero, so the run's own exit code is the opt-in probe.
@@ -165,7 +166,7 @@ def get_metrics(repo_root: Path):
             cwd=repo_root,
             timeout=30,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except (FileNotFoundError, subprocess.TimeoutExpired, UnicodeDecodeError):
         return []
     if r.returncode != 0:
         return []
