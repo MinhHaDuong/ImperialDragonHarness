@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Pin intervention surface to the measured window](feedback_pin_intervention_surface_to_measured_window.md) — git-log the surface before pinning an A/B intervention; the obvious branch may already implement the treatment during the baseline window, making the flag a no-op or the control a live regression (raid 291-245, 2026-07-13)
 - [Worktree-path trap needs a guard](feedback_worktree_path_trap_needs_guard.md) — prompt warnings failed 7/11 execute agents in one raid; the model resolves paths from quoted context, not cwd; check primary status after each agent until the 0318 Edit|Write guard lands (2026-07-13)
 - [Supervisor checkpoint pattern](feedback_supervisor_checkpoint_pattern.md) — the primary supervisor chat orchestrates, never executes tickets; clean checkpoint = monitor worker quiescence (open-PR set + heads hash, 30-min quiet), then merge leftover ready PRs, leave drafts to their owners, prune (author doctrine, 2026-07-13)
 - [Classifier prohibition paraphrase](feedback_classifier_prohibition_paraphrase.md) — the auto-mode permission classifier inflates any transcript-visible "Never X" into a blanket ban while STATE.md grants stay invisible; write scope as ownership ("decision belongs to the caller"), sequencing rules in positive form, and quote standing grants into the transcript before gated actions (ticket 0249, 2026-07-13)
