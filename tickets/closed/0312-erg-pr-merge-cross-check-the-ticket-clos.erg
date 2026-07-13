@@ -2,10 +2,13 @@
 Title: erg-pr-merge: cross-check the Ticket close claim against the PR diff
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #544
 
 --- log ---
 2026-07-13T10:23Z Minh Ha-Duong created
+2026-07-13T00:00Z claude note cross-check implemented in erg-pr-merge: existence-at-tip abort (override ERG_PR_MERGE_ALLOW_MISSING_TICKET) plus title/claim disagreement warn; tests cases 22-25
 
+2026-07-13T13:58Z Minh Ha-Duong closed — autoclosed — PR #544
 --- body ---
 ## Context
 

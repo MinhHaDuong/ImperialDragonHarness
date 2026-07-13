@@ -59,14 +59,16 @@ case "$1 $2" in
         echo "${STUB_STATE:-MERGED}"; exit 0
       fi
     fi
-    if [[ "$args" == *"title"* ]]; then
+    if [[ "$args" == *"title"* ]] && [[ "$args" != *"headRefName"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
     fi
-    # the big composite query
+    # the big composite query (carries the title since the Step 1.5 warn
+    # reads it from PR_JSON instead of a second forge call)
     jq -n \
       --arg n "$STUB_PR" --arg h "$STUB_BRANCH" --arg b "$STUB_BASE" \
       --arg body "$STUB_BODY" --arg draft "${STUB_IS_DRAFT:-false}" \
-      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true")}'
+      --arg t "$STUB_TITLE" \
+      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true"),title:$t}'
     exit 0 ;;
   "pr ready")
     echo "$*" >> "${STUB_READY_LOG:-/dev/null}"
@@ -746,5 +748,78 @@ else
     echo "FAIL: erg-pr-merge exited non-zero from a name-collision lookalike path"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Close-claim / branch-content cross-check (ticket 0312). A PR's Ticket close
+# claim lives in the body, but the branch can drift from it: shared-worktree
+# contention force-pushed an unrelated changeset over t0268-state-guard (PR #522,
+# 2026-07-13), leaving a stale `**Ticket:** 0268` claim. erg-pr-merge would have
+# closed the ticket while landing unrelated work. These cases pin the guard.
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Case 22: stale close claim — the claimed ticket file is ABSENT from
+# tickets/ at the branch tip (the #522 force-replace mode). erg-pr-merge must
+# ABORT before closing or merging, name the missing ticket, and mention the
+# override. No merge may be attempted.
+seed_repo staleclaim 0281
+MLOG22="$WORK/merge22.log"; : > "$MLOG22"
+BODY22=$'Summary.\n\n**Ticket:** tickets/0299-fixture.erg\n'   # 0299 never seeded
+if out22=$(STUB_MERGE_LOG="$MLOG22" run_merge "$BODY22" "ticket(0299): stale" 2>&1); then
+    echo "FAIL: stale close claim (absent ticket) should have aborted, exited zero"; fail=1
+else
+    s_miss=0
+    echo "$out22" | grep -q '0299' || { echo "  abort msg does not name 0299"; s_miss=1; }
+    echo "$out22" | grep -q 'ERG_PR_MERGE_ALLOW_MISSING_TICKET' || { echo "  abort msg lacks override hint"; s_miss=1; }
+    [[ -s "$MLOG22" ]] && { echo "  a merge was attempted despite the stale claim"; s_miss=1; }
+    if closed_has 0281; then echo "  unrelated seeded ticket 0281 was closed"; s_miss=1; fi
+    if (( s_miss )); then echo "FAIL: stale-claim abort message/behavior wrong"; fail=1
+    else echo "PASS: absent-at-tip close claim aborts before merge; names ticket + override"; fi
+fi
+
+# ── Case 23: override — ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 turns the abort
+# into a warn-and-skip. The merge proceeds (exit 0), the absent 0299 is NOT
+# closed (it cannot be), and a warning is emitted.
+seed_repo staleoverride 0282
+BODY23=$'Summary.\n\n**Ticket:** tickets/0299-fixture.erg\n'
+if out23=$(ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 run_merge "$BODY23" "ticket(0299): override" 2>&1); then
+    o_miss=0
+    echo "$out23" | grep -qi 'warning' || { echo "  no warning emitted under override"; o_miss=1; }
+    if closed_has 0299; then echo "  0299 wrongly closed under override"; o_miss=1; fi
+    if (( o_miss )); then echo "FAIL: override path wrong"; fail=1
+    else echo "PASS: override warns and skips the absent ticket, merge proceeds"; fi
+else
+    echo "FAIL: override should let the merge proceed, exited non-zero"; fail=1
+fi
+
+# ── Case 24: title/claim disagreement — a present, valid claim (0290) while the
+# PR TITLE names a different ticket (0289), the tell of a repurposed branch
+# (#522). Non-blocking: the valid claim still closes (exit 0) and a warning
+# naming the title ticket is emitted.
+seed_repo titleclaim 0290
+BODY24=$'Summary.\n\n**Ticket:** tickets/0290-fixture.erg\n'
+if out24=$(run_merge "$BODY24" "ticket(0289): repurposed" 2>&1); then
+    t_miss=0
+    closed_has 0290 || { echo "  valid claim 0290 not closed"; t_miss=1; }
+    echo "$out24" | grep -q 'title names' || { echo "  no title-disagreement warning"; t_miss=1; }
+    echo "$out24" | grep -q '0289'        || { echo "  warning does not name title ticket 0289"; t_miss=1; }
+    if (( t_miss )); then echo "FAIL: title/claim disagreement not warned or claim not honored"; fail=1
+    else echo "PASS: title names a non-claimed ticket -> warn, valid claim still closes"; fi
+else
+    echo "FAIL: title/claim disagreement should be non-blocking, exited non-zero"; fail=1
+fi
+
+# ── Case 25: anti-regression — title agrees with the claim: NO disagreement
+# warning, ticket closes normally (no new friction on well-formed merges).
+seed_repo titlematch 0291
+BODY25=$'Summary.\n\n**Ticket:** tickets/0291-fixture.erg\n'
+if out25=$(run_merge "$BODY25" "ticket(0291): normal" 2>&1); then
+    m_miss=0
+    closed_has 0291 || { echo "  0291 not closed on happy path"; m_miss=1; }
+    echo "$out25" | grep -q 'title names' && { echo "  spurious title warning on matching title"; m_miss=1; }
+    if (( m_miss )); then echo "FAIL: happy-path title match mishandled"; fail=1
+    else echo "PASS: matching title/claim -> no warning, normal close (no new friction)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on matching title/claim happy path"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard)"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip"
