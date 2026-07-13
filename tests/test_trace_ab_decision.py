@@ -59,7 +59,7 @@ def test_boundary_exactly_at_noise_band_adopts_epsilon_over_rejects():
     # Band is baseline*(1+noise) with inclusive <=; parameterized, not hardcoded.
     noise = 0.05
     baseline = _metrics(cost_per_merged_pr=100.0, reroll_per_pr=0.40, escalate_count=20)
-    # reroll exactly at 0.40 * 1.05 = 0.42 → within band (<=)
+    # band = 0.40 * 1.05 ≈ 0.42 (float: 0.42000000000000004); 0.42 <= band holds
     at_band = _metrics(cost_per_merged_pr=90.0, reroll_per_pr=0.42, escalate_count=21)
     assert tad.decide(baseline, at_band, guardrail_noise_pct=noise)["verdict"] == "adopt"
     # epsilon over the band rejects
