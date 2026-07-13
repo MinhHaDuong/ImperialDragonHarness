@@ -7,6 +7,7 @@ Author: HDMX-coding-agent
 2026-06-12T10:40Z orchestrator created from aedist orchestration-night retrospective (2026-06-11/12)
 2026-07-12T18:55Z claude note Imagine analysis delivered (nightbeat, read-only): start-ticket already merged into hunt (0220) so Q2 is half-resolved; /hunt already IS the canonical core; the real gap is /raid wrapping it in prose instead of a mechanical Skill(hunt) invocation (the aedist drift mechanism); beat.py's `claude -p` spawn already solves headless (no 4th skill); concrete Q4 bug: hunt step 3 ownership check expects t<id> but Agent worktrees are named agent-<id>, colliding with EnterWorktree's no-double-create guard. Recommendation: Option A (skill-invokes-skill), 2-3 small PRs, entry points stay at 2. Full note: docs/imagine-0251-entry-points-2026-07-12.md. Awaiting author ratification per exit criteria.
 
+2026-07-13T06:44Z note Author ratified Option A, all three PRs (2026-07-13). Exit criterion met: architecture recorded here + docs/imagine-0251-entry-points-2026-07-12.md. Now a tracking ticket; children 0293 (raid PR1), 0294 (hunt PR2), 0295 (stub deletion PR3) filed. Stays open until all children close, per tracking-ticket convention.
 --- body ---
 ## Context
 
@@ -48,7 +49,23 @@ the imagine step must answer:
 
 Constraint: fewer or equal entry points after the redesign, never more.
 
+## Decision (2026-07-13)
+
+Author ratified **Option A — skill-invokes-skill**, all three PRs, per
+`docs/imagine-0251-entry-points-2026-07-12.md`: `/hunt` stays the single
+canonical execution core; every path invokes it mechanically (in-process
+`Skill(hunt)`, headless `claude -p "/hunt <id>"` as beat.py already
+does). Entry points end at 2 (hunt, raid).
+
+This is now a tracking ticket. Children (one per PR):
+
+- 0293 — raid Phase 5: invoke /hunt mechanically, not by prose paraphrase
+- 0294 — hunt step 3: generalize worktree-ownership predicate for
+  spawned agents
+- 0295 — delete the start-ticket deprecation stub
+
 ## Exit criteria
-- [ ] Imagine discussion held with the author; chosen architecture
+- [x] Imagine discussion held with the author; chosen architecture
       recorded (ADR or ticket log) before any execution sub-tickets
       are filed.
+- [ ] All children (0293, 0294, 0295) closed; integration review done.
