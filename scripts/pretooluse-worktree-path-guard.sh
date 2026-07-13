@@ -12,8 +12,26 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null |
 [ -z "$file_path" ] && exit 0
 hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 
+# Identity predicate (ticket 0308): a genuine harness worktree, not merely a
+# directory carrying a `.git` gitdir: file (a submodule or an ad-hoc worktree
+# would satisfy the old `[ -f .git ] && grep gitdir:` check and trip a spurious
+# advisory). Mirrors `in_worktree()` in skills/merge/erg-pr-merge (0301) and
+# scripts/guard-worktree-identity.sh: the cwd must sit under
+# `.claude/worktrees/<name>` AND `git rev-parse --show-toplevel` must resolve to
+# a tree whose basename is that `<name>` and is not the primary root itself.
+# (0302 will unify these three copies into a shared helper.)
 _in_worktree() {
-    [ -f .git ] && grep -q "gitdir:" .git 2>/dev/null
+    local cwd top name prefix
+    cwd=$(pwd -P)
+    prefix=${cwd%%/.claude/worktrees/*}   # enclosing path before the marker
+    name=${cwd#*/.claude/worktrees/}      # <name>[/subdir...]
+    name=${name%%/*}
+    [ -n "$name" ] || return 1
+    top=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+    [ -n "$top" ] || return 1
+    [ "$(basename "$top")" = "$name" ] || return 1
+    [ "$top" != "$prefix" ] || return 1
+    return 0
 }
 
 # Allow env-var overrides for testing without a real git repo
