@@ -614,10 +614,13 @@ def test_tmp_scratch_worktree_exemption_documented():
     at the creation/cleanup site so a future guard-coverage sweep does not
     re-flag it."""
     src = js()
-    assert "0303" in src, "the /tmp scratch-worktree exemption must cite ticket 0303"
+    marker = "0303 — GUARD-COVERAGE EXEMPTION"
+    assert marker in src, "the /tmp scratch-worktree exemption must cite ticket 0303"
     # The rationale must name the guarded namespace it is exempt from and WHY
-    # (detached HEAD → no branch/commit/push for a guard to protect).
-    cleanup = src[src.index("phase('Cleanup')") - 1200 : src.index("phase('Cleanup')")]
+    # (detached HEAD → no branch/commit/push for a guard to protect). Slice from
+    # the exemption marker to the Cleanup phase it annotates (marker-to-marker,
+    # like the other slices in this file).
+    cleanup = src[src.index(marker) : src.index("phase('Cleanup')")]
     assert ".claude/worktrees" in cleanup, (
         "exemption must reference the guarded .claude/worktrees namespace it sits outside"
     )
