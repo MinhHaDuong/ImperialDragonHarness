@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Worktree-path guard residuals: realpath normalization and escape-hatch env provenance
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T20:27Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+PR #562 (ticket 0318) hardened `scripts/pretooluse-worktree-path-guard.sh`
+from advisory to deny. The /gaze verdict flagged two non-blocking residuals,
+both pre-existing since the guard's creation (ticket 0171):
+
+1. **No realpath/`..` normalization of `file_path`**: the deny is a string
+   prefix match on git-resolved roots; a symlinked or `..`-laden path into
+   the primary checkout evades it. Unobserved defect class so far (the
+   2026-07-13 raid failures were all plain absolute paths) — close only with
+   a red test demonstrating the evasion first.
+2. **Escape-hatch env provenance**: `GUARD_ALLOW_PRIMARY_EDIT` is documented
+   as human-only (hook env is the CLI's launch env, not a Bash-tool subshell),
+   but a BASH_ENV-style poisoning path was raised at review. Establish
+   whether any agent-writable file feeds the hook's environment; document or
+   close the hole.
+
+## Exit criteria
+
+- [ ] Red test showing a normalized-path or symlink evasion, then fix (or a
+      recorded decision that the class stays out of scope, at the probe site)
+- [ ] Escape-hatch env provenance established and documented in the script
+      header
+- [ ] `make check` and `make lint` pass

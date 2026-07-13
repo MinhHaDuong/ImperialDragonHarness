@@ -1,14 +1,20 @@
 #!/bin/bash
 set -euo pipefail
-# PreToolUse hook: warn when Write/Edit/NotebookEdit targets the main repo
-# path during a worktree session. Non-blocking (exit 0) — advisory only.
-# See ticket 0171.
+# PreToolUse hook: deny (exit 2 + stderr) when Write/Edit/NotebookEdit targets
+# the main repo path during a worktree session — the worktree-path trap
+# (rules/workflow.md § Worktree paths). Ticket 0171 shipped this as an advisory
+# (exit 0); ticket 0318 hardened it to a blocking deny after prose warnings
+# failed to stop 7/11 execute agents in one raid.
+# See tickets 0171 and 0318.
 
 input=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
+# NotebookEdit carries its target in notebook_path, Write/Edit in file_path. A
+# payload has only one, so read either; without this the guard silently exits 0
+# on every NotebookEdit despite the settings.json matcher covering it.
+file_path=$(echo "$input" | jq -r '.tool_input.notebook_path // .tool_input.file_path // empty' 2>/dev/null || true)
 [ -z "$file_path" ] && exit 0
 hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 
@@ -73,8 +79,26 @@ case "$file_path" in
                 ;;
         esac
         rel="${file_path#$primary_root/}"
-        echo "Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
+        # projects/*/memory/** is tracked via the primary .gitignore whitelist by
+        # design, and skills/memory tells every session to write it directly by
+        # absolute path — so a primary-checkout write there is intended, not the
+        # trap. Scoped narrowly (NOT a blanket projects/* exemption); for a
+        # non-harness project the pattern never matches, so it is a no-op.
+        case "$rel" in
+            projects/*/memory/*) exit 0 ;;
+        esac
+        # Escape hatch: a human pre-authorizes intentional primary edits by
+        # exporting GUARD_ALLOW_PRIMARY_EDIT in the shell/systemd environment
+        # BEFORE session start. The hook is spawned by the CLI, not a Bash-tool
+        # subshell, so an agent cannot set it mid-turn — deliberate, no
+        # self-service bypass.
+        if [ -n "${GUARD_ALLOW_PRIMARY_EDIT:-}" ]; then
+            exit 0
+        fi
+        echo "BLOCKED: Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
         echo "Did you mean: $worktree_root/$rel" >&2
+        echo "For an intentional primary-checkout edit, export GUARD_ALLOW_PRIMARY_EDIT before starting the session." >&2
+        exit 2
         ;;
 esac
 

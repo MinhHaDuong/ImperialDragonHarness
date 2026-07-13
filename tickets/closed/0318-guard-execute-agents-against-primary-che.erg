@@ -2,10 +2,14 @@
 Title: Guard execute agents against primary-checkout writes during worktree isolation
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #562
 
 --- log ---
 2026-07-13T16:55Z Minh Ha-Duong created
+2026-07-13T18:30Z claude note Hardened existing scripts/pretooluse-worktree-path-guard.sh (0171) from advisory to blocking deny (exit 2); added projects/*/memory/** exemption + GUARD_ALLOW_PRIMARY_EDIT escape hatch; extended tests staged red-first. No settings.json change (already wired at Write|Edit|NotebookEdit).
 
+2026-07-13T20:11Z note fixed verify-reroll round-1 blocker: NotebookEdit notebook_path now guarded
+2026-07-13T20:29Z Minh Ha-Duong closed — autoclosed — PR #562
 --- body ---
 ## Context
 
@@ -40,7 +44,7 @@ git/erg>`); the Edit/Write surface has none.
 
 ## Exit criteria
 
-- [ ] A worktree-isolated agent's Edit/Write to the primary checkout is
+- [x] A worktree-isolated agent's Edit/Write to the primary checkout is
       denied with a corrective message
-- [ ] Non-worktree sessions and legitimate paths unaffected
-- [ ] `make check` and `make lint` pass
+- [x] Non-worktree sessions and legitimate paths unaffected
+- [x] `make check` and `make lint` pass
