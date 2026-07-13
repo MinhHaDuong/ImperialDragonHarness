@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-13T07:18Z Minh Ha-Duong created
 
+2026-07-13T12:55Z MinhHaDuong note decided keep two inline copies (pretooluse _in_worktree + erg-pr-merge in_worktree), no shared lib: only 2 of 4 sites share the exact predicate, guards are fail-closed and read JSON .cwd, sourcing would flip fail-open and couple the skill; drift pinned by tests/test_worktree_identity_predicate_inline.py
 --- body ---
 ## Context
 
