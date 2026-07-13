@@ -12,10 +12,12 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 | Context | Worktree name | Phase |
 |---------|---------------|-------|
 | Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
-| Ticket reference but no branch | `t{N}` | `[→ Plan]` |
-| `/hunt N` | `t{N}` | `[→ Execute]` |
-| Active feature branch + open MR | `t{N}` | `[→ Execute]` |
+| Ticket reference but no branch | `t{N}-{pid}` | `[→ Plan]` |
+| `/hunt N` | `t{N}-{pid}` | `[→ Execute]` |
+| Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
+
+The `{pid}` suffix is a short session discriminator (e.g. `$$`) so two parallel sessions on the same ticket land in distinct worktree paths; legacy bare `t{N}` names remain valid.
 
 After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
 
