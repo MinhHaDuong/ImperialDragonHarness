@@ -2,11 +2,11 @@
 Title: Collision-resistant worktree naming (t{N}-{discriminator})
 Created: 2026-07-13
 Author: claude
-Blocked-by: 0294
 
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (author ratified model C, 2026-07-13); blocked by 0294 which reworks the hunt step 3 ownership predicate this change must compose with
 
+2026-07-13T07:19Z Minh Ha-Duong note blocker 0294 closed — Blocked-by removed.
 --- body ---
 ## Context
 
