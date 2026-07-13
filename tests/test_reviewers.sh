@@ -152,6 +152,59 @@ else
     echo "SKIP: erg binary absent — scorecard erg-integration test"
 fi
 
+# ── forge-bot seat: on-demand request via the forge review API (0206) ────────
+# A forge-bot seat has no seat-runner; `request` asks the forge to run its
+# server-side reviewer on the PR. Stub `gh` to capture the call.
+GHBOT="$WORK/ghbin"; mkdir -p "$GHBOT"
+cat > "$GHBOT/gh" <<'GHSTUB'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "$*" >> "$GH_CALL_LOG"
+[ -n "${GH_FAIL:-}" ] && exit 1
+exit 0
+GHSTUB
+chmod +x "$GHBOT/gh"
+
+BOTROSTER="$WORK/bot.yml"
+cat > "$BOTROSTER" <<'YAML'
+reviewers:
+  - name: copilot
+    kind: forge-bot
+    status: advisory
+    login: copilot-pull-request-reviewer[bot]
+    trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
+YAML
+
+GHLOG="$WORK/gh-calls.log"; : > "$GHLOG"
+bot_err=$(PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" \
+          REVIEWERS_PANEL="$BOTROSTER" REVIEWERS_PR_BRANCH="some-branch" \
+          "$REVIEWERS" request 42 2>&1 >/dev/null)
+assert_contains "request: forge-bot seat requested" "forge-bot seat 'copilot' requested" "$bot_err"
+assert_contains "request: forge API call carries the login" "copilot-pull-request-reviewer[bot]" "$(cat "$GHLOG")"
+assert_contains "request: forge API call targets the PR" "pulls/42/requested_reviewers" "$(cat "$GHLOG")"
+
+# Forge API failure → WARN, fail-open (exit 0).
+bot_fail_err=$(PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" GH_FAIL=1 \
+               REVIEWERS_PANEL="$BOTROSTER" REVIEWERS_PR_BRANCH="some-branch" \
+               "$REVIEWERS" request 42 2>&1 >/dev/null)
+assert_contains "request: forge-bot failure fail-open WARN" "WARN forge-bot seat 'copilot'" "$bot_fail_err"
+assert_exit_0 "request: forge-bot failure exits 0" env PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" GH_FAIL=1 \
+    REVIEWERS_PANEL="$BOTROSTER" REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 42
+
+# A forge-bot seat with no login → WARN, skipped, others unaffected.
+NOLOGIN="$WORK/nologin.yml"
+cat > "$NOLOGIN" <<'YAML'
+reviewers:
+  - name: mystery-bot
+    kind: forge-bot
+    status: advisory
+    trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
+YAML
+nologin_err=$(PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" \
+              REVIEWERS_PANEL="$NOLOGIN" REVIEWERS_PR_BRANCH="some-branch" \
+              "$REVIEWERS" request 42 2>&1 >/dev/null)
+assert_contains "request: forge-bot without login WARNs" "WARN forge-bot seat 'mystery-bot' has no login" "$nologin_err"
+
 # ── arg validation ───────────────────────────────────────────────────────────
 if "$REVIEWERS" request >/dev/null 2>&1; then echo "FAIL: request missing arg should fail"; FAIL=$((FAIL+1)); else echo "PASS: request missing arg fails"; PASS=$((PASS+1)); fi
 

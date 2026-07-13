@@ -12,11 +12,16 @@
 #     # cli-agent / local-model seats also carry:
 #     endpoint:     OpenAI-compatible base URL (e.g. http://127.0.0.1:8012/v1)
 #     model:        model id passed to the seat-runner
+#     # forge-bot seats also carry:
+#     login:        the bot's forge login, passed to the reviewer-request API
+#
+# A forge-bot seat is ON-DEMAND (ticket 0206): it fires only when
+# `/reviewers request <pr>` is invoked on a specific merge request — there
+# is no repo-wide auto-request lever, so trivial PRs stay unreviewed.
 #
 # Default: empty roster → /reviewers is a no-op until seats are configured.
-# Example (commented; uncomment + adjust to enable):
+# Example cli/model seat (commented; uncomment + adjust to enable):
 #
-# reviewers:
 #   - name: local-qwen
 #     kind: local-model
 #     status: advisory
@@ -24,4 +29,9 @@
 #     endpoint: http://127.0.0.1:8012/v1
 #     model: openai/qwen3.6-35b-a3b
 
-reviewers: []
+reviewers:
+  - name: copilot
+    kind: forge-bot
+    status: advisory
+    login: copilot-pull-request-reviewer[bot]
+    trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
