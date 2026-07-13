@@ -24,7 +24,8 @@ argument-hint: <ticket-id>
      merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. Enter the ticket's **own** worktree, or confirm the spawner already gave you one.
-   A worktree is **owned** when either its basename is exactly `t$ARGUMENTS`, OR its
+   A worktree is **owned** when either its basename is `t$ARGUMENTS` or begins with
+   `t$ARGUMENTS-` (the collision-resistant suffixed form, e.g. `t$ARGUMENTS-$$`), OR its
    basename matches `agent-*` (the orchestrator created it for this agent session) AND
    `git status --porcelain` prints nothing — the session started inside it and its tree
    is clean (that is what `Agent(isolation:"worktree")` produces). Both conditions must
@@ -34,17 +35,18 @@ argument-hint: <ticket-id>
    it does not own (2026-06-11: a hunt inherited an orchestration session's worktree,
    rebased its branch, and stranded in-progress test edits there). Resolve ownership
    before the first branch-mutating command:
-   - Already inside an owned worktree — basename `t$ARGUMENTS`, or an `agent-*`
+   - Already inside an owned worktree — basename `t$ARGUMENTS` or `t$ARGUMENTS-<pid>`, or an `agent-*`
      one from an `Agent(isolation:"worktree")` spawn whose `git status --porcelain` is
      empty — means you are isolation-confirmed; proceed to step 4. When such a spawned
      agent has its `EnterWorktree` rejected with "already in a worktree", that rejection
      **is** the confirmation only if the current tree passes the same clean `agent-*`
      check; a rejection over a dirty or non-`agent-*` tree means STOP — the worktree is
      not owned — not an error to proceed through.
-   - Otherwise call `EnterWorktree` with name `t$ARGUMENTS`, even if the session already
-     sits inside some other, unowned worktree.
-   Confirm with `basename "$(git rev-parse --show-toplevel)"`: it must be `t$ARGUMENTS`
-   or the `agent-*` worktree of this session (rules/git.md § anchor branch-mutating git
+   - Otherwise call `EnterWorktree` with name `t$ARGUMENTS-$$` (the `$$` session-PID
+     suffix keeps parallel sessions on the same ticket in distinct worktree paths),
+     even if the session already sits inside some other, unowned worktree.
+   Confirm with `basename "$(git rev-parse --show-toplevel)"`: it must be `t$ARGUMENTS`,
+   begin with `t$ARGUMENTS-`, or be the `agent-*` worktree of this session (rules/git.md § anchor branch-mutating git
    across a forked-skill boundary). Ad hoc orchestrators should not hand-type this
    ownership contract: spawn the hunt headlessly as `~/.claude/scripts/beat.py` does, with
    `claude -p "/hunt <id>"`, so the live SKILL.md text supplies the rule.
