@@ -20,6 +20,14 @@ cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 [ -z "$cwd" ] && exit 0
 [ -d "$cwd" ] || exit 0
 
+# Normalize away symlinks before the repo-membership and check-ignore probes.
+# A path that reaches the repo through a symlink otherwise makes
+# `git check-ignore "$cwd"` error "outside repository", which the guard treats
+# as allow — letting a parked runtime dir addressed via a symlink bypass the
+# deny (ticket 0314). Fail open if resolution fails (e.g. a race removed the
+# dir): a normalization failure must never flip an allow into a deny.
+cwd=$(cd "$cwd" 2>/dev/null && pwd -P) || exit 0
+
 # Not inside a git repo: the tool fails on its own (or hook-delegated
 # VCS-agnostic mode handles it) — nothing for this guard to judge.
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
