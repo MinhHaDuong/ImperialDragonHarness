@@ -25,24 +25,24 @@ counterfactuals note does.
 
 ## 1. Survey
 
-Resolve the window once, then run the four committed scripts in dependency
-order. All intermediate outputs go to a scratch directory; nothing here is
-tracked.
+Run the four committed scripts. All intermediate outputs go to a scratch
+directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
+straight through to each script's own `--days` argparse flag (default 28),
+the same passthrough `skill-doctor` uses — there is no shell-side day
+parsing to keep in sync.
 
 ```bash
 HARNESS_DIR="${HARNESS_DIR:-$HOME/.claude}"
 cd "$HARNESS_DIR"                                         # cache paths below are repo-relative
-DAYS="${1:-28}"; [ "$DAYS" = "--days" ] && DAYS="$2"      # accept `--days N` or bare N
-DAYS="${DAYS:-28}"
 SCRATCH=$(mktemp -d)
 
-# Census: per-agent cost rows, six-way tool taxonomy, nav/idle + merge markers.
-uv run python "$HARNESS_DIR/scripts/trace-stats.py" --days "$DAYS" \
-  --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json"
-
-# Compaction advisory (adopt item #3): --json output feeds H8 downstream.
-uv run python "$HARNESS_DIR/scripts/trace-compact-audit.py" --days "$DAYS" \
-  --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json"
+# Census and compaction advisory are independent full-corpus walks (neither
+# consumes the other's output) — run them concurrently.
+uv run python "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
+  --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
+uv run python "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
+  --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
+wait
 
 # Forge join: reads AND writes the accumulating committed cache (do not create a
 # new dated cache). Add --no-network if the forge is unreachable, and say so in
