@@ -2,11 +2,13 @@
 Title: verify-adherence: path-access allow/forbid scan over the agent tool trace
 Created: 2026-07-12
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #549
 
 --- log ---
 2026-07-12T18:55Z claude created
 
 2026-07-13T16:25Z bump verify-reroll — round 1: BASH_PATH_RE / FORBIDDEN_PATH_PATTERNS miss 'cd <dir> && cat <relative-file>' (e.g. cd ~/.ssh && cat id_rsa evades detection entirely — no trailing slash on dir token, relative filename never tokenized); confirmed live at HEAD 1f6db44, unrelated to 4bea8fd's quoted-path fix
+2026-07-13T17:10Z Minh Ha-Duong closed — autoclosed — PR #549
 --- body ---
 Child of tracker 0266 (pillage manifest,
 docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 1).
