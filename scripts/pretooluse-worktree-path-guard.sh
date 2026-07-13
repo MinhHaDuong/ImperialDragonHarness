@@ -92,7 +92,7 @@ case "$file_path" in
         if [ -n "${GUARD_ALLOW_PRIMARY_EDIT:-}" ]; then
             exit 0
         fi
-        echo "Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
+        echo "BLOCKED: Worktree path guard: '$rel' resolves to the main repo, not the worktree." >&2
         echo "Did you mean: $worktree_root/$rel" >&2
         echo "For an intentional primary-checkout edit, export GUARD_ALLOW_PRIMARY_EDIT before starting the session." >&2
         exit 2
