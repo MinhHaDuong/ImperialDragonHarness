@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (author ratified model A, 2026-07-13)
 
+2026-07-13T07:36Z verify-gate round 1: REROLL — Layer 1 tree-identity check no-ops when .cwd is bare primary root (not under .claude/worktrees/); ticket's own item 'blocked regardless of branch name' unmet — reproduced 4x (2 reviewers + orchestrator + this gate)
 --- body ---
 ## Context
 
