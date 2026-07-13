@@ -158,7 +158,21 @@ Group tickets into waves:
 
 For each wave, launch agents with `isolation: "worktree"` and `model: opus`
 (per § Model policy — the coders; effort is the session effort, run at `high`).
-Each agent follows `/hunt` workflow. Push branch when done, create merge request.
+
+The execute-agent contract's FIRST action is mechanical. The agent invokes the
+hunt skill with the ticket ID:
+
+```
+Skill(skill: "hunt", args: "<id>")
+```
+
+It then follows the contract the skill loader returns. The agent prompt must NOT
+paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
+is the single live execution contract, and the loader supplies it fresh on every
+run. (A prose paraphrase is exactly what drifted between the aedist Wave A and
+Wave B prompts, 2026-06-11/12: the contract lived in prompt-writing memory
+instead of the skill.) The agent pushes its branch and opens a merge request as
+hunt's flow dictates.
 
 Wait for wave to complete.
 
