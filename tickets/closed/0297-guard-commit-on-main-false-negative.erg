@@ -2,10 +2,13 @@
 Title: Fix guard-commit-on-main.sh false-negative: check tree identity, not branch name
 Created: 2026-07-13
 Author: claude
+Closed: autoclosed — PR #517
 
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (author ratified model A, 2026-07-13)
 
+2026-07-13T07:36Z verify-gate round 1: REROLL — Layer 1 tree-identity check no-ops when .cwd is bare primary root (not under .claude/worktrees/); ticket's own item 'blocked regardless of branch name' unmet — reproduced 4x (2 reviewers + orchestrator + this gate)
+2026-07-13T08:22Z Minh Ha-Duong closed — autoclosed — PR #517
 --- body ---
 ## Context
 
