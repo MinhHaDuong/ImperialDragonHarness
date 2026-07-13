@@ -1,0 +1,22 @@
+%erg 0.1
+Title: hunt step 3: spell out how to obtain the session PID for the t{N}-{pid} worktree name
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T09:04Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Found during the 0252 raid wrap-up sweep (2026-07-13). PR #529 (ticket 0298)
+instructs hunt step 3 to request the worktree name `t$ARGUMENTS-$$`, but the
+EnterWorktree name schema rejects `$` characters and nothing tells the model
+how to resolve `$$` first. The gaze verdict on #529 ruled it non-blocking
+(failure mode is a loud InputValidationError, not a silent collision) and
+recommended this documentation fast-follow: spell out obtaining the PID via
+`bash -c 'echo $$'` (or equivalent) before the EnterWorktree call.
+
+## Exit criteria
+- [ ] hunt step 3 shows a literal, executable way to obtain the discriminator
+- [ ] `make check` passes (test_hunt_worktree_ownership.py still green)
