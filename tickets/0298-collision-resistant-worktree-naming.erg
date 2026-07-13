@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Collision-resistant worktree naming (t{N}-{discriminator})
+Created: 2026-07-13
+Author: claude
+Blocked-by: 0294
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (author ratified model C, 2026-07-13); blocked by 0294 which reworks the hunt step 3 ownership predicate this change must compose with
+
+--- body ---
+## Context
+
+Child of tracking ticket 0252 (model C, ratified 2026-07-13). Incident I2
+(aedist, 2026-06-11/12): a raid session checked out its branch in the
+ORCHESTRATOR's worktree path — generic names (`t{N}`) mean two sessions
+working the same ticket resolve to the same worktree path. A session
+discriminator in the name makes sibling entry detectable and collisions
+structurally rare. Audit: docs/audit-0252-worktree-ownership-2026-07-12.md.
+
+Blocked-by 0294 (child of 0251): it generalizes hunt step 3's
+worktree-ownership predicate (t<id> vs agent-<id>); this naming change must
+land on top of that predicate, not race it.
+
+## Relevant files
+
+- `rules/workflow.md` — the worktree naming table
+- `skills/hunt/SKILL.md`, `skills/raid/SKILL.md` — worktree creation sites
+- `scripts/beat.py` — `_HARNESS_WORKTREE_RE` must accept the new suffix
+
+## Actions
+
+1. Extend the naming convention to `t{N}-{discriminator}` (short session
+   PID or equivalent short unique token) in the rules/workflow.md table.
+2. Update hunt/raid worktree-creation instructions to apply the suffix.
+3. Update `_HARNESS_WORKTREE_RE` in beat.py (and any other name-pattern
+   consumers found by grep) to accept both old and new forms during the
+   transition.
+
+## Test
+
+- beat.py regex unit test: matches `t0296-1234a`, still matches legacy `t0296`.
+
+## Verification
+
+- [ ] Two simulated sessions on the same ticket produce distinct worktree paths
+- [ ] beat.py cleanup still recognizes harness worktrees under the new names
+- [ ] Grep sweep confirms no other consumer parses worktree names
+
+## Invariants
+
+- Legacy `t{N}` worktrees remain recognized until they cycle out
+
+## Exit criteria
+
+- [ ] Naming table, hunt/raid, and beat.py updated coherently
+- [ ] `make check` passes
