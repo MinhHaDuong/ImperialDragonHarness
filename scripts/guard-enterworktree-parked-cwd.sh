@@ -27,7 +27,6 @@ cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 # deny (ticket 0314). Fail open if resolution fails (e.g. a race removed the
 # dir): a normalization failure must never flip an allow into a deny.
 cwd=$(cd "$cwd" 2>/dev/null && pwd -P) || exit 0
-[ -z "$cwd" ] && exit 0
 
 # Not inside a git repo: the tool fails on its own (or hook-delegated
 # VCS-agnostic mode handles it) — nothing for this guard to judge.
