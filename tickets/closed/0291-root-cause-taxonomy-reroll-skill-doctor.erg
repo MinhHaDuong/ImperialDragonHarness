@@ -2,10 +2,12 @@
 Title: Root-cause taxonomy for verify-gate REROLL and skill-doctor diagnoses
 Created: 2026-07-12
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #550
 
 --- log ---
 2026-07-12T18:55Z claude created
 
+2026-07-13T17:11Z Minh Ha-Duong closed — autoclosed — PR #550
 --- body ---
 Child of tracker 0266 (pillage manifest,
 docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 7).

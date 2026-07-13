@@ -12,8 +12,15 @@ tokens:
   warn: 500000    # 500k in+out → post "verify: token-heavy run" comment, continue
   escalate: 1000000  # 1M → ESCALATE
 
+# Convergence mode (ticket 0315, phase-5 measure-B A/B). Opt-in: when true and
+# the PR already carries a completed full gaze round, a repeat caller-level
+# /gaze runs phase 6 (verify-gate) only. Default off = current practice.
+convergence:
+  enabled: false
+
 env:
   wall_seconds_warn:      VERIFY_WALL_WARN_S
   wall_seconds_escalate:  VERIFY_WALL_ESCALATE_S
   tokens_warn:            VERIFY_TOKENS_WARN
   tokens_escalate:        VERIFY_TOKENS_ESCALATE
+  convergence_enabled:    GAZE_CONVERGENCE_ENABLED

@@ -6,6 +6,7 @@ Author: Integration Test
 --- log ---
 2026-06-10T20:09Z Integration Test created
 
+2026-07-13T16:03Z Minh Ha-Duong note pre-registration split to 0315: interventions pinned, decision rule + red-first tests landed, gaze convergence flag documented default off; live A/B arms remain here
 --- body ---
 ## Context
 

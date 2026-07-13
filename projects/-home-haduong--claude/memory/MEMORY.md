@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Worktree-path trap needs a guard](feedback_worktree_path_trap_needs_guard.md) — prompt warnings failed 7/11 execute agents in one raid; the model resolves paths from quoted context, not cwd; check primary status after each agent until the 0318 Edit|Write guard lands (2026-07-13)
 - [Supervisor checkpoint pattern](feedback_supervisor_checkpoint_pattern.md) — the primary supervisor chat orchestrates, never executes tickets; clean checkpoint = monitor worker quiescence (open-PR set + heads hash, 30-min quiet), then merge leftover ready PRs, leave drafts to their owners, prune (author doctrine, 2026-07-13)
 - [Classifier prohibition paraphrase](feedback_classifier_prohibition_paraphrase.md) — the auto-mode permission classifier inflates any transcript-visible "Never X" into a blanket ban while STATE.md grants stay invisible; write scope as ownership ("decision belongs to the caller"), sequencing rules in positive form, and quote standing grants into the transcript before gated actions (ticket 0249, 2026-07-13)
 - [Shared-worktree live-session contention](feedback_shared_worktree_live_session_contention.md) — a live session can switch branches under a background job between Bash calls; assert branch and commit in ONE compound in any worktree you didn't create; recover misplaced commits by cherry-pick from a fresh worktree, never by resetting the other branch (2026-07-13)
