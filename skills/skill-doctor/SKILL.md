@@ -47,8 +47,8 @@ Mark each pattern as `covered` (open ticket exists), `recently-fixed`
 
 Present the ranked patterns as a table:
 
-| Rank | Signature | Freq | Sev | Score | Status | Affected Skill |
-|------|-----------|------|-----|-------|--------|----------------|
+| Rank | Signature | Freq | Sev | Score | Status | Affected Skill | Root Cause |
+|------|-----------|------|-----|-------|--------|----------------|------------|
 
 For each `uncovered` pattern, show:
 - **Evidence**: the `evidence` array from the survey (verbatim log/journal excerpts)
@@ -56,6 +56,24 @@ For each `uncovered` pattern, show:
 - **Expected impact**: estimated failure-rate reduction
 
 Ask the user which patterns to ticket before proceeding.
+
+### Root-cause taxonomy
+
+The `Root Cause` column tags each pattern with a shared label for *why* it
+recurs (source: arXiv:2604.21965 §5.3, reframed for the harness, ticket 0291).
+Assign it when you author the report table — a labeling convention, like the
+`Status` column, not a mechanical detector. Same vocabulary as verify-gate's
+`root_cause_class`:
+
+- **Agent Error** — an agent misapplied a rule it had. E.g. a supervisor kept
+  re-raising its own budget.
+- **Extractor Error** — a skill or convention was underspecified. E.g. the merge
+  convention never pinned the exact `**Ticket:**` string.
+- **Original Error** — a pre-existing gap the failures expose. E.g. a missing
+  dirty-tree guard that predates the incidents.
+- **Missing Data** — the survey lacked context. E.g. it re-flagged already-fixed
+  issues for want of a canonical path.
+- **Other** — cause undetermined from the log context.
 
 ## 4. Open tickets
 

@@ -139,6 +139,7 @@ scope_overflow:
     suggested_disposition: TICKETED | ESCALATE
 rationale: |
   <strongest remaining reviewer attack; if APPROVED, why evidence holds>
+root_cause_class: Agent Error | Extractor Error | Original Error | Missing Data | Other  # required on REROLL/ESCALATE
 second_round_needed:   # only if REROLL
   - <prioritised items from unresolved lists>
 ```
@@ -167,6 +168,25 @@ second_round_needed:   # only if REROLL
 **On REROLL**: run `${ERG:-erg} log <ticket-id> "bump verify-reroll — round {n}: {top unresolved criterion}"`
 
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
+
+## Root-cause taxonomy
+
+Every REROLL or ESCALATE verdict carries a `root_cause_class` — a shared label
+for *why* the gate is bouncing (source: arXiv:2604.21965 §5.3, reframed for the
+harness, ticket 0291). This is a labeling convention, like the minor tags, not a
+mechanical detector; assign it when you author the verdict.
+
+- **Agent Error** — the implementer misread the ticket or a rule. E.g. wired
+  `make check-fast` where the ticket asked for `make lint`.
+- **Extractor Error** — the ticket was underspecified. E.g. "document the
+  taxonomy" without naming which file it belongs in.
+- **Original Error** — a pre-existing bug the gate surfaces, unrelated to this
+  diff. E.g. a broken test the branch merely runs into.
+- **Missing Data** — the gate lacked context or access. E.g. `worktree=` not
+  passed, so the diff could not be inspected.
+- **Other** — none of the above; state the reason in `rationale`.
+
+APPROVED verdicts do not carry this field.
 
 ## Minor tag handling
 
