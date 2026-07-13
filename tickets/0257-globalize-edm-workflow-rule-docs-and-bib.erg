@@ -24,11 +24,11 @@ author/date/pagination, file attachment) and **purged on archival after
 publication** (Zotero retains everything). Reports carry a page count.
 
 ## Relevant files
-- `~/.claude/projects/-home-haduong-CNRS-papiers-actif-Comment-d-penser-plus-de-100-milliards-de-dollars---Projet-Livre/memory/edm-workflow.md` — the source memory (canonical wording, `Why:` / `How to apply:`).
+- `~/.claude/projects/-home-haduong-CNRS-papiers-actif-livre-milliards-climat/memory/edm-workflow.md` — the source memory (canonical wording, `Why:` / `How to apply:`). The book project was renamed; this is the resolved path.
 - `~/.claude/rules/README.md` — the rules index table; a new rule must be registered here.
 - `~/.claude/rules/git.md` — already says "Don't gitignore handoff artifacts … commit them; caches/PDFs are regenerable — gitignore." The EDM rule extends this: source docs live in Zotero, not git.
 - `~/.claude/skills/zotero-import/SKILL.md`, `~/.claude/scripts/zotero-import.py` — the RIS+attachment importer the rule relies on; `index-source` is its URL sibling.
-- `<book-project>/.claude/skills/index-source/` — the `index-source` skill, **already built and tested project-local** (`SKILL.md`, `scripts/probe-url.py` stdlib-only probe, `scripts/selftest.sh` 14 assertions, registered in the book project's `check.sh`). To be ported to the harness. The book project path is `~/.claude/projects/-home-haduong-CNRS-papiers-actif-Comment-d-penser-plus-de-100-milliards-de-dollars---Projet-Livre/` → actual repo dir under the user's CNRS tree.
+- `~/CNRS/papiers/actif/livre-milliards-climat/.claude/skills/index-source/` — the `index-source` skill, **already built and tested project-local** (`SKILL.md`, `scripts/probe-url.py` stdlib-only probe, `scripts/selftest.sh` 14 assertions). Resolved path after the book-project rename. To be ported to the harness.
 
 ## Actions
 1. Author `~/.claude/rules/edm.md` from the memory body: Zotero = system of record; `docs/` + `.bib` = git-ignored staging; sync→Zotero; purge on archival post-publication; reports get page counts; notes archived too.
