@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-13T15:48Z Minh Ha-Duong created
 
+2026-07-13T16:59Z gate note verify-reroll-round-1 doc-propagation verifiable minor unresolved: SKILL.md Invariants block still lacks a cross-reference to the convergence flag (skills/gaze/SKILL.md:352); see PR 551 comment 2026-07-13T16:24:44Z
 --- body ---
 ## Context
 
