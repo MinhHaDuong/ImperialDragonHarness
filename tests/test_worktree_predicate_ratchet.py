@@ -24,6 +24,7 @@ made this test fail with that line reported as a non-allowlisted hit; removing
 it restored green.
 """
 
+import functools
 import re
 from pathlib import Path
 
@@ -59,8 +60,16 @@ ALLOWLIST: set[tuple[str, str]] = {
 SCAN_ROOTS = ("scripts", "skills")
 
 
-def iter_hits():
-    """Yield (relpath, lineno, stripped_line) for every weak-predicate match."""
+@functools.lru_cache(maxsize=1)
+def all_hits() -> tuple[tuple[str, int, str], ...]:
+    """(relpath, lineno, stripped_line) for every weak-predicate match.
+
+    Cached: both tests below share one walk of scripts/ and skills/.
+    """
+    return tuple(_iter_hits())
+
+
+def _iter_hits():
     for root in SCAN_ROOTS:
         for path in sorted((REPO / root).rglob("*")):
             if not path.is_file():
@@ -79,7 +88,7 @@ def iter_hits():
 def test_no_weak_worktree_predicate_outside_allowlist():
     offenders = [
         f"{rel}:{lineno}: {stripped}"
-        for rel, lineno, stripped in iter_hits()
+        for rel, lineno, stripped in all_hits()
         if (rel, stripped) not in ALLOWLIST
     ]
     assert not offenders, (
@@ -96,7 +105,7 @@ def test_no_weak_worktree_predicate_outside_allowlist():
 @pytest.mark.adherence
 def test_allowlist_has_no_stale_entries():
     """Every allowlisted line must still exist verbatim — remove it once gone."""
-    live = {(rel, stripped) for rel, _, stripped in iter_hits()}
+    live = {(rel, stripped) for rel, _, stripped in all_hits()}
     stale = sorted(ALLOWLIST - live)
     assert not stale, (
         "ALLOWLIST entries no longer present in the tree — the weak-predicate "
