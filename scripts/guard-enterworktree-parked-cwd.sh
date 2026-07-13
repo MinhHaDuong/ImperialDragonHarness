@@ -38,6 +38,25 @@ find_enclosing_ignored_toplevel() {
     done
 }
 
+# is_registered_linked_worktree <toplevel>
+# True when <toplevel> is a `git worktree add` linked worktree, false for a main
+# checkout, a nested `git init`/clone scratch repo, or a submodule. Detect it by
+# resolving git's OWN dirs, not by probing for a `.git` file (which also matches
+# submodules and ad-hoc worktrees — ticket 0310): a linked worktree's per-tree
+# git dir (--absolute-git-dir → <owner>/.git/worktrees/<name>) differs from the
+# shared common dir (--git-common-dir → <owner>/.git), while a main checkout or a
+# nested scratch repo has the two equal. Both are absolutized before comparison
+# because --git-common-dir can be returned relative.
+is_registered_linked_worktree() {
+    local top="$1" gd cd
+    gd=$(git -C "$top" rev-parse --absolute-git-dir 2>/dev/null) || return 1
+    cd=$(git -C "$top" rev-parse --git-common-dir 2>/dev/null) || return 1
+    case "$cd" in /*) : ;; *) cd="$top/$cd" ;; esac
+    cd=$(cd "$cd" 2>/dev/null && pwd -P) || return 1
+    gd=$(cd "$gd" 2>/dev/null && pwd -P) || return 1
+    [ "$gd" != "$cd" ]
+}
+
 input=$(cat)
 
 command -v jq &>/dev/null || exit 0
@@ -63,7 +82,17 @@ toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
 # a git-ignored path of an enclosing repo, the cwd sits behind a nested scratch
 # repo inside a runtime dir — the self-match and same-repo check-ignore below
 # would both pass and bypass the deny. Deny, reporting the real enclosing project.
-if enclosing=$(find_enclosing_ignored_toplevel "$toplevel"); then
+#
+# But exempt a REGISTERED linked worktree first (round-1 reroll): the harness's
+# own mandated layout puts every session worktree at <repo>/.claude/worktrees/
+# <name>, which the enclosing whitelist-ignore repo (`*` .gitignore) check-ignores
+# — so without this the walk-up would deny the harness's own worktrees. A
+# `git worktree add` worktree is legitimate; skip the walk-up and fall through to
+# the self-match allow. A nested `git init`/clone scratch repo is not a linked
+# worktree, so it still runs the walk-up and stays denied. Deny-only
+# defense-in-depth against accidental scratch repos, not adversaries.
+if ! is_registered_linked_worktree "$toplevel" \
+   && enclosing=$(find_enclosing_ignored_toplevel "$toplevel"); then
     toplevel="$enclosing"
 else
     # At the repo root, or in a tracked subdirectory: repo resolution is correct.
