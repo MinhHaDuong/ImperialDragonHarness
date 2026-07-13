@@ -58,6 +58,21 @@ _assert 0 "allows cwd in tracked subdir"         "$REPO/src"
 _assert 0 "allows cwd outside any repo"          "$NOREPO"
 _assert 0 "allows nonexistent cwd (fail-safe)"   "$TMP/does-not-exist"
 
+# --- Nested repo inside an ignored runtime dir must still deny (ticket 0317) --
+# A `git init` inside a git-ignored runtime dir makes `git rev-parse
+# --show-toplevel` resolve to the nested repo itself: the toplevel self-match
+# would pass and the deny would be bypassed. The guard walks up to the enclosing
+# repo and re-probes, so a parked cwd stays denied even with a nested repo.
+NESTED="$REPO/projects/session-x/scratch"
+git init -q "$NESTED"
+mkdir -p "$NESTED/tracked"
+touch "$NESTED/tracked/keep"
+git -C "$NESTED" add -A
+git -C "$NESTED" -c user.email=t@t -c user.name=t commit -qm init
+
+_assert 2 "denies nested-repo root in ignored dir"   "$NESTED"
+_assert 2 "denies tracked subdir of nested repo"     "$NESTED/tracked"
+
 # --- Skill invocations: the guard is matcher-agnostic (ticket 0306) ----------
 # A cwd-dependent skill resolves its target repo from the same session base cwd,
 # so a parked cwd must be denied and a repo-root cwd allowed for Skill too.
