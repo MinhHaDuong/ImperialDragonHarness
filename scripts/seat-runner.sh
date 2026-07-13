@@ -133,7 +133,8 @@ else
 fi
 
 # ── The sandboxed seat launcher (timeout-wrapped; network-denied) ────────────
-HOMEDIR="/home/haduong"   # aider's uv-tool venv carries absolute shebangs
+HOMEDIR="$HOME"   # aider's uv-tool venv carries absolute shebangs, all under
+                  # the invoking user's $HOME; --userns=keep-id keeps uids aligned
 run_seat() {
     timeout -k 5 "$SEAT_TIMEOUT" podman run --rm \
         --network=none \
