@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-06-18T15:10Z claude created
 2026-07-12T18:55Z claude note Pillage manifest recorded (docs/pillage-0266-agentic-reproduction-2026-07-12.md): paper verified via fetch; verdicts ADOPT 1/2/5/7 -> children 0289 (path-access trace scan), 0290 (hardcoding audit), 0292 (6-way tool taxonomy, serves 0236), 0291 (root-cause taxonomy); ALREADY-COVERED 3/4 (verify-gate corroborated); SKIP 6 (no cheap rerun design) and 8 (no analog). Tracker stays open until children close.
+2026-07-13T17:35Z claude note integration review (raid 291-245): all four children closed - 0289 merged PR #549 (trace-path-scan detector + verify-adherence phase 1.2), 0291 merged PR #550 (five-way root_cause_class in verify-gate + skill-doctor), 0290 closed wontfix (zero-instance audit), 0292 delivered six-way taxonomy in trace-stats.py; full suite green on post-merge main; exit criteria verified - closing
 
 --- body ---
 ## Context
