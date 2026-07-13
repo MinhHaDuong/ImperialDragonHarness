@@ -1,4 +1,4 @@
-"""Adherence-style guards for the global EDM rule (ticket 0257).
+"""Fast-tier rule guards for the global EDM rule (ticket 0257).
 
 The EDM (electronic document management) discipline — Zotero is the system of
 record; `docs/` and `.bib` are git-ignored staging — is globalized as
