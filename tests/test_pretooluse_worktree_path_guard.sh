@@ -105,7 +105,7 @@ fi
 # silent. The weak `[ -f .git ]` predicate warned here (false positive on any
 # gitdir: file); the identity predicate keys on the .claude/worktrees/<name>
 # path segment, so an out-of-convention tree goes silent. Regression for
-# ticket 0308. Exercises the real-git branch of _in_worktree() (no env override).
+# ticket 0308. Exercises the real-git identity-resolution path (no env override).
 _case8_primary=$(mktemp -d)
 git -C "$_case8_primary" init -q
 git -C "$_case8_primary" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
