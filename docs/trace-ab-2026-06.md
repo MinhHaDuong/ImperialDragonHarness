@@ -96,9 +96,15 @@ unit-tested red-first in `tests/test_trace_ab_decision.py`:
 > (`reroll_per_pr`, `escalate_count`) stays **at or below**
 > `baseline * (1 + noise)`. Otherwise **reject**.
 
-- **Noise band**: pre-registered at **10%** (`guardrail_noise_pct = 0.10`). The
-  band is inclusive (`<=`): a guardrail exactly at `baseline * 1.10` still
-  adopts; any excess rejects.
+- **Cost key**: `decide()` compares on `cost_key`, defaulting to
+  `cost_per_merged_pr` (measure A). Measure B passes `cost_key="cost_per_cycle"`,
+  since convergence changes cycles, not merged-PR count. These are the exact
+  dict keys the metric definitions above name — the harvest step reads this doc
+  and builds those keys.
+- **Noise band**: pre-registered at **10%**, exported as the module constant
+  `PREREGISTERED_NOISE_PCT` and used as the `decide()` default; the harvest step
+  uses this value, not an ad-hoc override. The band is inclusive (`<=`): a
+  guardrail exactly at `baseline * 1.10` still adopts; any excess rejects.
 - The guardrail is **binding**: a cost win with a breached guardrail is a
   REJECT. No post-hoc metric shopping — verdicts come only from the metrics
   defined above.
