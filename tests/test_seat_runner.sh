@@ -84,9 +84,12 @@ fi
 # ── reference sweep: the old prototype name is gone outside tickets/ ──────────
 # This suite mentions the old name in its own sweep pattern; exclude it and the
 # append-only ticket history (which keeps the historical name deliberately).
-stale="$(cd "$REPO_ROOT" && grep -rl "seat-runner-prototype" \
-    --include='*.sh' --include='*.md' --include='*.py' --include='*.yml' --include='*.json' . \
-    2>/dev/null | grep -v -e '^\./tickets/' -e 'tests/test_seat_runner.sh' || true)"
+# Scoped to TRACKED files via git grep — immune to nested runtime worktrees
+# and other untracked staging dirs (e.g. leftover .claude/worktrees/ siblings
+# on a primary checkout) that a plain `grep -r .` would wander into.
+stale="$(git -C "$REPO_ROOT" grep -l "seat-runner-prototype" \
+    -- '*.sh' '*.md' '*.py' '*.yml' '*.json' \
+    2>/dev/null | grep -v -e '^tickets/' -e '^tests/test_seat_runner.sh$' || true)"
 if [ -z "$stale" ]; then pass "no seat-runner-prototype refs outside tickets/"; else fail "stale seat-runner-prototype refs: $stale"; fi
 
 # ── tier 2a: timeout behaviour (stubbed podman; no image needed) ─────────────
