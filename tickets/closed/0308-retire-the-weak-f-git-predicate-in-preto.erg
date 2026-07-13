@@ -2,11 +2,13 @@
 Title: Retire the weak [ -f .git ] predicate in pretooluse-worktree-path-guard.sh and block-pr-merge-in-worktree.sh
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #540
 
 --- log ---
 2026-07-13T09:04Z Minh Ha-Duong created
 
 2026-07-13T12:16Z bump verify-reroll — round 1: block-pr-merge guard false-negative on ad-hoc worktrees
+2026-07-13T12:21Z Minh Ha-Duong closed — autoclosed — PR #540
 --- body ---
 ## Context
 
