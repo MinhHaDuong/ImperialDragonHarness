@@ -30,10 +30,13 @@
 #     the real endpoint; container-side the same relay presents the socket as a
 #     loopback TCP port (loopback is per-netns, alive under --network=none) so
 #     aider/litellm get the OPENAI_API_BASE they expect. A misbehaving or
-#     prompt-injected seat can reach the relayed endpoint and NOTHING else — no
-#     arbitrary outbound host, no domain-fronting exfil. (Replaces the v1
-#     --network=host gap: pasta/slirp4netns do full outbound NAT with no
-#     per-destination allowlist, so they were rejected.)
+#     prompt-injected seat can reach the relayed endpoint and NO OTHER NETWORK
+#     DESTINATION — no arbitrary outbound host, no domain-fronting exfil.
+#     (Replaces the v1 --network=host gap: pasta/slirp4netns do full outbound
+#     NAT with no per-destination allowlist, so they were rejected.) The relay
+#     forwards raw bytes to a PLAIN host:port; it does not terminate or preserve
+#     TLS, so it fits a local/plain-HTTP endpoint (0217's target). A real HTTPS
+#     cloud endpoint would need SNI/cert-preserving forwarding — out of scope.
 #   - PER-SEAT TIMEOUT: every container invocation is wrapped in `timeout`
 #     (SEAT_TIMEOUT, default 600s). timeout SIGKILLs only the podman CLIENT —
 #     rootless conmon keeps the container alive — so each seat is named and
@@ -218,8 +221,10 @@ fi
 
 # ── Run the reviewer seat ────────────────────────────────────────────────────
 # Container-side bridge: present the bind-mounted socket as the loopback TCP
-# port aider expects (net-relay.py, reversed), then exec the reviewer. Loopback
-# is per-netns and stays up under --network=none.
+# port aider expects (net-relay.py, reversed), wait for it to bind, then exec
+# the reviewer. Loopback is per-netns and stays up under --network=none. Run
+# under bash, not the image's dash /bin/sh — the readiness wait uses /dev/tcp,
+# a bash builtin dash lacks (without it the wait degrades to a blind sleep).
 echo "seat-runner: reviewing ${BRANCH} vs ${BASE} with ${MODEL}..." >&2
 BRIDGE_AND_REVIEW=$(cat <<EOF
 python3 /net-relay.py --listen tcp:127.0.0.1:${ENDPOINT_PORT} --connect unix:/relay.sock &
@@ -232,7 +237,7 @@ exec ${AIDER_REAL} \\
     --no-stream --map-tokens 0
 EOF
 )
-run_seat sh -c "$BRIDGE_AND_REVIEW" \
+run_seat bash -c "$BRIDGE_AND_REVIEW" \
     > "$WORK/raw.out" 2> "$WORK/raw.err" \
     || { echo "seat-runner: reviewer exited non-zero (or timed out); stderr follows" >&2; tail -20 "$WORK/raw.err" >&2; exit 1; }
 

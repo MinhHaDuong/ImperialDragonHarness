@@ -74,7 +74,7 @@ fi
 # This suite mentions the old name in its own sweep pattern; exclude it and the
 # append-only ticket history (which keeps the historical name deliberately).
 stale="$(cd "$REPO_ROOT" && grep -rl "seat-runner-prototype" \
-    --include='*.sh' --include='*.md' --include='*.py' --include='*.yml' . \
+    --include='*.sh' --include='*.md' --include='*.py' --include='*.yml' --include='*.json' . \
     2>/dev/null | grep -v -e '^\./tickets/' -e 'tests/test_seat_runner.sh' || true)"
 if [ -z "$stale" ]; then pass "no seat-runner-prototype refs outside tickets/"; else fail "stale seat-runner-prototype refs: $stale"; fi
 
