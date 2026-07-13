@@ -42,11 +42,22 @@ ticket_ids_from_paths() {  # reads filenames on stdin, prints 4-digit IDs
 }
 
 # ── this PR's newly-added ticket files (local git, no forge call) ─────────────
+# --no-renames pins a rename to delete(old)+add(new) regardless of git's
+# similarity detection, so classification never depends on how much the
+# rename edited the body.
 OWN_PATHS=$(
-    git diff --diff-filter=A --name-only "${BASE_REF}...HEAD" -- tickets/ \
+    git diff --no-renames --diff-filter=A --name-only "${BASE_REF}...HEAD" -- tickets/ \
         | grep -E '^tickets/[0-9]{4}-.*\.erg$'
 ) || true
 OWN_IDS=$(ticket_ids_from_paths <<< "$OWN_PATHS") || true
+
+# Ticket files this PR deletes. A rename (slug fix) is delete(old)+add(new)
+# with the same ID: the old path still on the base tip is this PR's own file,
+# not a rival claim, and must not trip the base-tip check below.
+OWN_DELETED=$(
+    git diff --no-renames --diff-filter=D --name-only "${BASE_REF}...HEAD" -- tickets/ \
+        | grep -E '^tickets/[0-9]{4}-.*\.erg$'
+) || true
 
 if [[ -z "$OWN_IDS" ]]; then
     echo "cross-pr-collision: this PR adds no ticket files — nothing to check."
@@ -62,13 +73,18 @@ collision=0
 # after this branch diverged, and a merged claimant is invisible to the open-PR
 # scan below. Compare added IDs against the base tip directly. A same-path hit
 # is this PR's own file already landed (not a rival claim), so only a different
-# filename carrying the same ID counts.
+# filename carrying the same ID counts — and among those, a path this PR
+# deletes is its own rename, not a rival.
 BASE_TICKETS=$(git ls-tree -r --name-only "$BASE_REF" -- tickets/ \
     | grep -E '^tickets/[0-9]{4}-.*\.erg$' || true)
 while IFS= read -r own_path; do
     [[ -z "$own_path" ]] && continue
     id=$(sed -E 's|^tickets/([0-9]{4})-.*|\1|' <<< "$own_path")
     rivals=$(grep -E "^tickets/${id}-" <<< "$BASE_TICKETS" | grep -vxF "$own_path" || true)
+    if [[ -n "$rivals" && -n "$OWN_DELETED" ]]; then
+        # drop base-tip paths this PR itself deletes (rename, not a rival)
+        rivals=$(comm -23 <(sort <<< "$rivals") <(sort <<< "$OWN_DELETED") || true)
+    fi
     [[ -z "$rivals" ]] && continue
     echo "COLLISION: ticket ID ${id} already exists on ${BASE_REF} as $(tr '\n' ' ' <<< "$rivals")(landed after this branch diverged)." >&2
     collision=$((collision + 1))
