@@ -1,6 +1,6 @@
 ---
 name: gaze
-description: Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges.
+description: Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: <pr-number>
@@ -16,8 +16,8 @@ context: fork
 > environment (worktree name, git status snapshot, ticket files, or the shared
 > task list).
 
-One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Never merges.**
-Merge is always the human's or the raid's call.
+One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
+merge** — the merge decision belongs to the caller (the human or the raid).
 
 ## When to use
 
@@ -29,7 +29,7 @@ Merge is always the human's or the raid's call.
 
 - Runs on exactly one PR.
 - Two gate rounds maximum. Third round is forbidden — escalate instead.
-- Never merges. The verdict is structured output; the caller decides.
+- Does not merge. The verdict is structured output; the merge decision belongs to the caller.
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
@@ -63,7 +63,7 @@ sub-agent's.
 narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
-worktree=/tmp/review-<pr>` directly to produce the verdict from their outputs.
+worktree=$primary_root/.claude/worktrees/review-<pr>` directly to produce the verdict from their outputs.
 
 ## Phases
 
@@ -78,10 +78,14 @@ root. The worktree is the isolation boundary; no main-repo checkout is ever need
 # Step 1 — Resolve PR number to branch name (forge-specific step)
 PR_BRANCH=<resolved-branch-name>
 
-# Step 2 — Fetch and create an isolated worktree
+# Step 2 — Resolve the primary repo root, then create the worktree under its
+# guarded `.claude/worktrees/` namespace (ticket 0300 — /tmp is outside every
+# guard fast-path; `.claude/worktrees/review-*` is already whitelisted).
+primary_root=$(git rev-parse --show-toplevel)
+primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 git fetch origin "$PR_BRANCH"
-git worktree add /tmp/review-<pr-number> origin/"$PR_BRANCH"
-# All phases 1–6 and the fix agent run inside /tmp/review-<pr-number>.
+git worktree add "$primary_root/.claude/worktrees/review-<pr-number>" origin/"$PR_BRANCH"
+# All phases 1–6 and the fix agent run inside $primary_root/.claude/worktrees/review-<pr-number>.
 # The main repo is never switched, never dirtied.
 ```
 
@@ -89,7 +93,7 @@ On any exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker abort),
 remove the worktree:
 
 ```bash
-git worktree remove /tmp/review-<pr-number> --force
+git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
 ```
 
 - Abort if not mergeable or if there are open merge conflicts.
@@ -109,7 +113,7 @@ conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
 deterministically: each reviewer is a **read-only, foreground** Agent whose
-cwd is **pinned to the existing review worktree** `/tmp/review-<pr-number>`
+cwd is **pinned to the existing review worktree** `$primary_root/.claude/worktrees/review-<pr-number>`
 (created in phase 1). Foreground (`run_in_background: false`) is
 load-bearing, not incidental — see **Fork execution contract** below: this
 skill runs as a `context: fork`, and a fork cannot wait on background
@@ -142,11 +146,11 @@ read-only reviewer to
 § "Sonnet reviews Opus's work"), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
-**Agent A — adherence** (`/verify-adherence <branch> worktree=/tmp/review-<pr-number>`
+**Agent A — adherence** (`/verify-adherence <branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 is the equivalent procedure). **Label-skip:** if the PR carries the
 `verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
 do **not** spawn this agent — the adherence check already ran clean before the
-PR was opened. Otherwise spawn a read-only Agent, cwd `/tmp/review-<pr-number>`,
+PR was opened. Otherwise spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: (1) cheap static checks — for each touched `.py`
 under `scripts/`, probe import resolution (`uv run python -c "import sys;
 sys.path.insert(0,'scripts'); import <m>; getattr(<m>,'<sym>')"`) and run each
@@ -164,18 +168,18 @@ early-exit reads `adherence` and the count of `blocking` findings.
 
 **Agent B — built-in review** (`/review`). This is a built-in slash command
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
-embedded**: spawn a read-only Agent, cwd pinned to `/tmp/review-<pr-number>`,
+embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
 same containment rails, whose prompt simply invokes `/review` on the PR and
 returns the review summary. (Phase 5 `/simplify` is the other built-in slash
 command; it stays as a direct invocation for now — out of this ticket's scope —
 and would be Agent-WRAPped the same way when converted.)
 
-**Agent C — PR review** (`/review-pr <pr-number> worktree=/tmp/review-<pr-number>`
-or `/review-pr-prose <pr-number> worktree=/tmp/review-<pr-number>`).
+**Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
+or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
 **Size-gate:** skip this agent if the PR is small (as computed in phase 1) and
 log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the
 setup summary. Otherwise pick by file type: if any `*.qmd` changed → prose
-panel; else code panel. Spawn a read-only Agent, cwd `/tmp/review-<pr-number>`,
+panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —
 **code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
@@ -203,7 +207,7 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 ### 5. Simplify (sequential)
 
-After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=/tmp/review-<pr-number>`. This phase may commit fixes
+After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
@@ -212,8 +216,8 @@ The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only, foreground**
 Agent (`run_in_background: false`, so the fork blocks on the verdict),
 **`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
-`/tmp/review-<pr-number>` (the equivalent fork call is
-`/verify-gate <pr-number> worktree=/tmp/review-<pr-number>`); never
+`$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
+`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`); never
 `isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
 cwd, no commits/pushes/branches/PRs; the gate's **one** permitted write is the
 `${ERG:-erg} log <ticket-id> …` reroll-bump line (and its PR verdict comment) —
@@ -260,7 +264,7 @@ round: 1 | 2
   reviewer's sonnet; effort is not an Agent launch param, so it tracks the
   session effort), launched **foreground** (`run_in_background: false`, so the
   fork blocks until it pushes — see **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
-  re-spawning the read-only gate Agent** (pinned cwd `/tmp/review-<pr-number>`, as in
+  re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
   still-unresolved items and the gate's rationale. End the skill.
@@ -321,7 +325,7 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 - Telemetry thresholds (see `## Telemetry`).
 
 On **every** circuit-breaker exit (not only ESCALATE): run
-`git worktree remove /tmp/review-<pr-number> --force` before returning so the
+`git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force` before returning so the
 main repo is never left in a partial state.
 
 ## Telemetry
@@ -369,6 +373,18 @@ here. Its findings are **advisory**: the gate dispositions them like any
 panel comment (only verifiable-class may bounce). The full panel-extension
 contract is ticket 0205's deliverable; seat execution is the 0217
 seat-runner. See `skills/reviewers/SKILL.md`.
+
+**Forge automated reviewer** (ticket 0206): the gate's comment-validation
+step includes the forge's automated reviewer (e.g. a requested Copilot
+review), when present. Its findings are dispositioned like any panel
+comment: correctness-class only may bounce, style is noted-not-blocking.
+The seat is **on-demand**: a PR nobody requested it on is simply a PR
+without that seat, with no warning and no wait. Only when a request WAS
+made (the bot appears in the PR's requested or completed reviewers) and
+its review is still pending while everything else is ready: bounded wait
+of a few minutes, then proceed with a logged WARN — fail-open.
+<!-- harness-extension-point: requested-reviewer detection is
+`gh pr view <pr> --json reviewRequests,reviews` on GitHub. -->
 
 ## Output shape
 

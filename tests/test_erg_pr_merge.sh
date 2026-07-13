@@ -623,5 +623,128 @@ else
     echo "FAIL: erg-pr-merge exited non-zero when the queued merge had not landed"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# in_worktree() identity predicate (tickets 0301/0296, incidents I1/I2).
+# The old `[ -f .git ]` gated MERGE_FLAGS (--delete-branch omission) and the
+# post-merge base sync. It fired on ANY `.git`-file dir — a submodule or a
+# worktree outside the harness convention — and never verified the cwd path
+# claim against git's actual toplevel. These cases pin the tightened predicate.
+#
+# Runs the real script with cwd set to an arbitrary directory (not just $REPO).
+# ERG is resolved from that cwd so a worktree closes its OWN tickets/.
+add_worktree() {  # $1 target path -> frees $BRANCH from $REPO, adds a linked worktree at $1
+    git -C "$REPO" switch -q "$BASE"
+    git -C "$REPO" worktree add -q "$1" "$BRANCH"
+}
+
+run_merge_at() {  # $1 cwd, $2 body, $3 title
+    ( cd "$1"
+      PATH="$STUBDIR:$PATH" \
+      ERG="$1/tickets/erg" \
+      STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
+      STUB_BODY="$2" STUB_TITLE="$3" \
+      STUB_AUTO_FAILS=0 \
+      STUB_MERGE_LOG="${STUB_MERGE_LOG:-/dev/null}" \
+      STUB_CHECKS_LOG="${STUB_CHECKS_LOG:-/dev/null}" \
+      STUB_STATE=MERGED \
+      ERG_PR_MERGE_SYNC=/bin/true \
+      ERG_PR_MERGE_MERGED_POLL_TRIES=2 \
+      ERG_PR_MERGE_POLL_INTERVAL=0 \
+      bash "$SCRIPT" 42 )
+}
+
+# ── Case 18: lookalike path — plain dir under `.claude/worktrees/<name>` that
+# is NOT a registered worktree. git resolves --show-toplevel to the enclosing
+# repo (a different basename), so in_worktree() must be FALSE and the script
+# takes the non-worktree branch (--delete-branch present). This guards against
+# a naive path-only reimplementation that would match the marker segment alone.
+# (Under the OLD `[ -f .git ]` predicate this dir has no `.git` file, so old
+# also returned false — not a discriminator against old, a regression guard for
+# the new code. See Case 20 for the case that is RED against the old predicate.)
+seed_repo lookalike 0300
+MLOG18="$WORK/merge18.log"; : > "$MLOG18"
+mkdir -p "$REPO/.claude/worktrees/notaworktree"
+BODY18=$'Summary.\n\n**Ticket:** tickets/0300-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG18" \
+   run_merge_at "$REPO/.claude/worktrees/notaworktree" "$BODY18" "ticket(0300): lookalike" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG18"; then
+        echo "PASS: lookalike path under marker is NOT a worktree (--delete-branch present)"
+    else
+        echo "FAIL: lookalike path wrongly detected as worktree (no --delete-branch)"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a lookalike path"; fail=1
+fi
+
+# ── Case 19: genuine registered worktree under `.claude/worktrees/<name>`.
+# in_worktree() must be TRUE — no --delete-branch, Step 4 prints the worktree
+# message, and the ticket still closes. This closes the pre-existing coverage
+# gap: the worktree-true branch was never exercised by any prior case, and it
+# guards against an over-strict reimplementation that rejects a real worktree.
+seed_repo genuinewt 0301
+WT19="$REPO/.claude/worktrees/wtgood"
+add_worktree "$WT19"
+MLOG19="$WORK/merge19.log"; : > "$MLOG19"
+BODY19=$'Summary.\n\n**Ticket:** tickets/0301-fixture.erg\n'
+if out19=$(STUB_MERGE_LOG="$MLOG19" \
+   run_merge_at "$WT19" "$BODY19" "ticket(0301): genuine worktree" 2>&1); then
+    g_miss=0
+    grep -q -- '--delete-branch' "$MLOG19" && { echo "  --delete-branch present in a real worktree"; g_miss=1; }
+    echo "$out19" | grep -qi 'in git worktree' || { echo "  Step 4 did not report the worktree"; g_miss=1; }
+    closed_has 0301 || { echo "  ticket 0301 not closed from the worktree"; g_miss=1; }
+    if (( g_miss )); then echo "FAIL: genuine worktree not detected / mishandled"; fail=1
+    else echo "PASS: genuine registered worktree detected (no --delete-branch, ticket closed)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a genuine worktree"; fail=1
+fi
+
+# ── Case 20: a real linked worktree OUTSIDE the harness convention (not under
+# `.claude/worktrees/`). This is the RED case against the OLD predicate: it has
+# a `.git` FILE, so `[ -f .git ]` returned TRUE and omitted --delete-branch —
+# the same over-broad match that also fired on git submodules (the defect the
+# 0252 family retires). The tightened predicate scopes to the harness worktree
+# convention: no marker segment → in_worktree() FALSE → --delete-branch present.
+seed_repo offmarker 0302
+WT20="$WORK/offmarker-wt"                  # deliberately NOT under .claude/worktrees/
+add_worktree "$WT20"
+MLOG20="$WORK/merge20.log"; : > "$MLOG20"
+BODY20=$'Summary.\n\n**Ticket:** tickets/0302-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG20" \
+   run_merge_at "$WT20" "$BODY20" "ticket(0302): off-marker worktree" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG20"; then
+        echo "PASS: worktree outside .claude/worktrees/ no longer matched (--delete-branch present; RED vs old [ -f .git ])"
+    else
+        echo "FAIL: off-marker .git-file dir still matched by predicate (no --delete-branch) — old behavior not tightened"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from an off-marker worktree"; fail=1
+fi
+
+# ── Case 21: name-collision lookalike — the ONE case that pins the final
+# `[ "$top" != "$prefix" ]` guard as a genuine discriminator (round-1 /gaze
+# REROLL, ticket 0301). A plain dir under `.claude/worktrees/<name>` whose
+# <name> segment equals the enclosing repo's OWN basename. git resolves
+# --show-toplevel to the enclosing repo, so `basename "$top"` == <name> by
+# coincidence and the line-48 basename check ALONE would pass — only the
+# `top != prefix` guard (top == the enclosing repo == prefix here) rejects it.
+# Case 18 cannot exercise this line: its <name> differs from the repo basename,
+# so it is already rejected at line 48. Deleting only line 49 leaves every other
+# case green but flips THIS one: in_worktree() must be FALSE, so the script takes
+# the non-worktree branch and --delete-branch is present.
+seed_repo collide 0303                        # $REPO basename == "collide"
+MLOG21="$WORK/merge21.log"; : > "$MLOG21"
+mkdir -p "$REPO/.claude/worktrees/collide"    # <name> == "collide" == repo basename; NOT a registered worktree
+BODY21=$'Summary.\n\n**Ticket:** tickets/0303-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG21" \
+   run_merge_at "$REPO/.claude/worktrees/collide" "$BODY21" "ticket(0303): name-collision lookalike" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG21"; then
+        echo "PASS: name-collision lookalike rejected by top!=prefix guard (--delete-branch present)"
+    else
+        echo "FAIL: name-collision lookalike wrongly detected as worktree (top!=prefix guard not enforced)"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a name-collision lookalike path"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard)"

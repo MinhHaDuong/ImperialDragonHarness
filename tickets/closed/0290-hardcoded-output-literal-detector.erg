@@ -2,11 +2,13 @@
 Title: Hardcoded-output-literal detector for the test-quality audit surface
 Created: 2026-07-12
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #514
 
 --- log ---
 2026-07-12T18:55Z claude created
 
 2026-07-13T07:01Z claude note wontfix evidence: inventoried both live suites (IDH tests/ 54 files, chemin-de-voix 33 files) for asserted-literal-without-derivation; zero HARDCODED instances found
+2026-07-13T07:56Z Minh Ha-Duong closed — autoclosed — PR #514
 --- body ---
 Child of tracker 0266 (pillage manifest,
 docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 2).

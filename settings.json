@@ -133,6 +133,16 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-worktree-identity.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash(git commit*)",
         "hooks": [
           {
@@ -148,6 +158,16 @@
           {
             "type": "command",
             "command": "$HOME/.claude/scripts/block-pr-merge-in-worktree.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "EnterWorktree",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-enterworktree-parked-cwd.sh",
             "timeout": 5
           }
         ]

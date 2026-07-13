@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Tighten or justify erg-pr-merge in_worktree() weak predicate
+Created: 2026-07-13
+Author: claude
+Closed: autoclosed — PR #521
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (audit finding: `[ -f .git ]` is the weak predicate verbatim)
+
+2026-07-13T08:00Z bump verify-reroll — round 1: guard line `[ "$top" != "$prefix" ]` (skills/merge/erg-pr-merge:49) is load-bearing but untested by any of cases 18-20; add a case 21 pinning the same-basename-as-enclosing-repo lookalike (basename(top)==name AND top==prefix) before re-review
+2026-07-13T08:27Z Minh Ha-Duong closed — autoclosed — PR #521
+--- body ---
+## Context
+
+Child of tracking ticket 0252. The audit
+(docs/audit-0252-worktree-ownership-2026-07-12.md) found erg-pr-merge's
+`in_worktree()` is literally `[ -f .git ]` — the weak predicate the whole
+0252 family exists to retire. erg-pr-merge mutates aggressively (ticket
+close commit, push, merge), so a false "in worktree" answer is costly.
+This may be acceptable if the 0296 guard already fronts every mutation
+erg-pr-merge performs — in that case, document why and close.
+
+## Relevant files
+
+- erg-pr-merge script (locate via `which erg-pr-merge` / skills/merge)
+- `scripts/` — 0296 guard, for the shared identity check
+
+## Actions
+
+1. Determine what in_worktree() actually gates inside erg-pr-merge and
+   what goes wrong under I1/I2 conditions there.
+2. Either replace the check with the 0296 identity predicate (cwd
+   worktree-name segment == `basename $(git rev-parse --show-toplevel)`,
+   not primary root), or record in the script a comment justifying why
+   the weak check is sufficient given the guard in front of it.
+
+## Test
+
+- If tightened: red first — `[ -f .git ]` true but rev-parse resolving
+  elsewhere must make in_worktree() return false.
+
+## Verification
+
+- [ ] erg-pr-merge still works from a normal worktree end-to-end
+- [ ] Decision (tighten vs justify) recorded in the script
+
+## Invariants
+
+- Merge flow behavior unchanged for the legitimate path
+
+## Exit criteria
+
+- [ ] Predicate tightened or justification comment merged
+- [ ] `make check` passes

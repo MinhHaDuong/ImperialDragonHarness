@@ -1,0 +1,59 @@
+%erg 0.1
+Title: Bring gaze review worktrees under guard coverage (move out of /tmp or broaden fast-paths)
+Created: 2026-07-13
+Author: claude
+Closed: autoclosed — PR #518
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (audit finding: /tmp review worktrees outside every guard fast-path)
+
+2026-07-13T07:44Z bump verify-reroll — round 1: exit criterion 'All skill-created worktrees live inside guard coverage' is MISSING per literal text (maw-audit's /tmp/maw-*, /tmp/fang-* worktrees remain uncovered, deferred to new ticket 0303, not closed here); plus 2 unresolved verifiable: minors — 0296 identity guard cited as covering the new location does not exist on origin/main, and beat.py's _HARNESS_WORKTREE_RE already matched /tmp/review-<pr> by basename before this move, contra the PR body's stated rationale
+2026-07-13T07:47Z narrow exit criteria + verification to gaze review worktrees only; maw-audit /tmp carve-out tracked at 0303 (reroll fix round 1)
+2026-07-13T08:24Z Minh Ha-Duong closed — autoclosed — PR #518
+--- body ---
+## Context
+
+Child of tracking ticket 0252. The audit
+(docs/audit-0252-worktree-ownership-2026-07-12.md) found gaze creates its
+review worktrees under `/tmp/review-<pr>`, outside the `.claude/worktrees/`
+fast-path every guard keys on — so neither the existing guards nor the new
+0296 identity guard cover them. Both audit incidents are uncovered there.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — review-worktree creation site
+- `scripts/guard-*.sh`, `scripts/pretooluse-worktree-path-guard.sh` — fast-path patterns
+- 0296's new guard — must cover whichever location wins
+
+## Actions
+
+1. Decide: move gaze review worktrees under `<repo>/.claude/worktrees/review-<pr>`
+   (preferred — one guarded namespace), or broaden every guard's fast-path
+   to include the /tmp pattern.
+2. Apply the choice; sweep for other skills creating worktrees outside
+   `.claude/worktrees/` (verify forks were known to use /tmp too).
+3. Update cleanup paths (worktree-gc, stale-worktree checks) for the new location.
+
+## Test
+
+- Replay a mutation inside a gaze review worktree and assert the 0296
+  guard evaluates it (not fast-pathed to silence).
+
+## Verification
+
+- [ ] No gaze skill code creates review worktrees outside the guarded namespace
+- [ ] gaze end-to-end still works (review worktree created, used, cleaned)
+
+maw-audit's out-of-namespace worktrees (`/tmp/maw-<project>-*`, legacy
+`/tmp/fang-*`) are a knowingly-deferred carve-out, tracked separately at
+ticket 0303 — out of scope for this ticket.
+
+## Invariants
+
+- gaze behavior unchanged apart from the worktree location
+
+## Exit criteria
+
+- [ ] All gaze-created review worktrees live inside guard coverage
+      (maw-audit's /tmp worktrees are carved out — tracked at ticket 0303)
+- [ ] `make check` passes

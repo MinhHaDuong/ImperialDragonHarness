@@ -29,8 +29,15 @@ diff (the branch is resolved from the PR, or passed explicitly):
 - **cli-agent / local-model**: the seat-runner launches the agnostic CLI
   reviewer inside an OS sandbox over an OpenAI-compatible endpoint
   (OpenRouter or local llama-server), writing per-seat findings.
-- **forge-bot**: requested via the forge's review API.
-  <!-- harness-extension-point -->
+- **forge-bot**: requested via the forge's reviewer-request API, using the
+  seat's `login` from the roster (on GitHub: <!-- harness-extension-point -->
+  `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers
+  -f 'reviewers[]=<login>'`).
+  **On-demand only** (ticket 0206): the seat fires when this subcommand is
+  invoked on a specific merge request — no repo-wide auto-request, so
+  trivial PRs stay unreviewed. Its findings surface as review comments on
+  the merge request itself (not as `harvest` findings files); the gate
+  dispositions them like any panel comment.
 
 **Per-seat fail-open**: a seat that errors or hangs WARNs and the others
 proceed — one seat never blocks the verdict (0205). Empty roster → no-op,

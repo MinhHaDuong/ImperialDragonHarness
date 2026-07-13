@@ -2,10 +2,13 @@
 Title: Autonomous raid merge step: classifier rejects STATE standing authorization
 Created: 2026-06-11
 Author: Integration Test
+Closed: autoclosed — PR #527
 
 --- log ---
 2026-06-11T20:54Z Integration Test created
+2026-07-13T10:00Z claude note Resolution: reworded the merge prohibitions the classifier can see (gaze + verify-gate "Never merges" -> "does not merge, decision belongs to the caller"; aedist memory review-before-merge recast as a sequencing rule) and documented the stale pre-rebase index pitfall in skills/merge. Author closes to test the fix by experience.
 
+2026-07-13T08:03Z Minh Ha-Duong closed — autoclosed — PR #527
 --- body ---
 ## Context
 Raid Phase 7 stalls in unattended sessions: the auto-mode permission

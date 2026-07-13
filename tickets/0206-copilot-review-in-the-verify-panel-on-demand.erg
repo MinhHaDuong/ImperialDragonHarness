@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Copilot review in the verify panel — on-demand request, gate harvest, advisory trial
+Created: 2026-06-04
+Author: MinhHaDuong
+
+--- log ---
+2026-06-04T08:41Z MinhHaDuong created
+
+2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
+
+2026-06-05T06:41Z claude note alternative path recorded: Copilot CLI speaks ACP natively (Jan 2026) and could join as an 0208 seat instead of the forge bot; this ticket's forge-bot approach stands (zero token cost, server-side) — re-evaluate at 0205's integration review
+
+2026-06-05T06:55Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
+
+2026-07-13T08:50Z MinhHaDuong note design change: auto-request on every MR is too much — some PRs are trivial. Switch to on-demand: the review is requested per-PR when warranted, never enabled repo-wide. Body rewritten accordingly by claude
+
+2026-07-13T09:30Z claude note lever documented: /reviewers request <pr> runs the forge-bot seat via `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (login from panel.yml); gate clause added to skills/gaze/SKILL.md (absent seat silent, requested-but-pending bounded fail-open wait). Exit criteria 1-2 delivered; trial (criteria 3-4) remains
+--- body ---
+## Context
+
+Child of tickets/0205 (external-reviewer panel). GitHub Copilot code
+review = cross-vendor reviewer at zero token cost, server-side, async.
+Subscription confirmed (author, 2026-06-04). Copilot comments but never
+approves, so any "required" semantics are enforced as a verify-gate
+disposition precondition, never a forge approval rule.
+
+Author decision (2026-07-13): **on-demand, not auto-request**. Repo-wide
+auto-request reviews every merge request, including trivial ones — waste
+of review latency and noise. The Copilot seat is requested per-PR, by
+the author or by the reviewer-panel tooling, when the change warrants
+outside eyes. No forge-side auto-request lever is enabled.
+
+## Relevant files
+
+- skills/reviewers/SKILL.md — the request verb: add a Copilot seat to
+  a given PR on demand (per-PR reviewer request via the forge API;
+  document the exact mechanism in this ticket's log)
+- skills/gaze/SKILL.md — gate-inputs clause (harvest when present)
+- tickets/0205 — contract + observation-period definition
+
+## Actions
+
+1. On-demand request path: /reviewers can request a Copilot review on
+   a named PR (forge API reviewer request; document the exact call in
+   this ticket's log). No repo setting, no ruleset — nothing fires
+   without an explicit request.
+2. skills/gaze/SKILL.md gate clause: the comment-validation step
+   includes "the forge's automated reviewer, when present" — findings
+   dispositioned like any panel comment; correctness-class only may
+   bounce, style is noted-not-blocking. A PR with no Copilot review is
+   simply a PR without that seat — no warning, no wait. Only when a
+   request WAS made and is still pending: bounded wait (few minutes),
+   then proceed with a logged WARN — fail-open.
+   GitHub-specific mechanics carry <!-- harness-extension-point -->.
+3. Advisory trial per 0205: request the seat on at least 5 non-trivial
+   merge requests across at least 3 projects; log a one-line scorecard
+   per MR (findings, true/false positives) in this ticket.
+
+## Test
+
+First MR of the trial shows a requested-and-harvested Copilot comment
+dispositioned in the gate verdict's evidence table.
+
+## Exit criteria
+
+- [x] On-demand request path live; exact forge call documented
+- [x] Gate clause merged (absent seat is silent; requested-but-pending
+      gets fail-open bounded wait)
+- [ ] Trial scorecard: ≥5 non-trivial MRs, ≥3 projects, logged here
+- [ ] Promote/drop recommendation recorded for 0205's integration review

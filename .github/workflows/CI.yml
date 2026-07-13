@@ -189,6 +189,45 @@ jobs:
           fi
           echo "OK: guard passes clean script"
 
+  tab-ifs-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No IFS=$'\t' read with 3+ fields in shell scripts
+        # Tab is IFS *whitespace*: consecutive tabs collapse, so an empty
+        # middle field silently shifts later fields left (bit reviewers.sh
+        # roster parsing, 2026-07-13). Two-field reads are safe (an empty
+        # field can only be last); three or more need a non-whitespace
+        # delimiter like | or ;. See rules/coding-bash.md.
+        run: |
+          violations=$(grep -Pn "IFS=\\\$'\\\\t'\\s+read\\s+(-\\w+\\s+)*(\\w+\\s+){2,}\\w+" scripts/*.sh skills/*/*.sh 2>/dev/null || true)
+          if [ -n "$violations" ]; then
+            echo "FAIL: tab-delimited read with 3+ fields — empty middle fields collapse; use IFS='|' (rules/coding-bash.md):"
+            echo "$violations"
+            exit 1
+          fi
+          echo "OK: no 3+-field tab-delimited reads found"
+      - name: Self-test — guard must catch a deliberate violation
+        run: |
+          tmp=$(mktemp --suffix=.sh)
+          printf '%s\n' '#!/bin/bash' "while IFS=\$'\\t' read -r a b c; do :; done < f" > "$tmp"
+          violations=$(grep -Pn "IFS=\\\$'\\\\t'\\s+read\\s+(-\\w+\\s+)*(\\w+\\s+){2,}\\w+" "$tmp" 2>/dev/null || true)
+          if [ -z "$violations" ]; then
+            echo "FAIL: guard did not catch 3-field tab read"
+            exit 1
+          fi
+          echo "OK: deliberate violation caught"
+      - name: Self-test — guard must pass 2-field and pipe-delimited reads
+        run: |
+          tmp=$(mktemp --suffix=.sh)
+          printf '%s\n' '#!/bin/bash' "while IFS=\$'\\t' read -r name path; do :; done < f" "while IFS='|' read -r a b c d; do :; done < g" > "$tmp"
+          violations=$(grep -Pn "IFS=\\\$'\\\\t'\\s+read\\s+(-\\w+\\s+)*(\\w+\\s+){2,}\\w+" "$tmp" 2>/dev/null || true)
+          if [ -n "$violations" ]; then
+            echo "FAIL: guard false-positived on safe reads"
+            exit 1
+          fi
+          echo "OK: guard passes safe reads"
+
   pytest-guard:
     runs-on: ubuntu-latest
     steps:

@@ -3,10 +3,13 @@ Title: EnterWorktree (and cwd-skills) resolve the wrong repo when the session ba
 Created: 2026-06-19
 Author: HDMX-coding-agent
 Label: needs-human
+Closed: autoclosed — PR #516
 
 --- log ---
 2026-06-19T11:35Z HDMX-coding-agent created
+2026-07-13T12:00Z claude note author ratified the bug; landed guard-enterworktree-parked-cwd.sh (PreToolUse deny on git-ignored base cwd), workflow.md trap doc, and test suite with doc+wiring ratchets
 
+2026-07-13T07:54Z Minh Ha-Duong closed — autoclosed — PR #516
 --- body ---
 ## Context
 
@@ -50,9 +53,9 @@ isolated worktree in an unrelated repository.
   and asserting it refuses / warns rather than silently picking the harness repo.
 
 ## Verification
-- [ ] `rules/workflow.md` documents the parked-cwd trap + ownership check + fallback
-- [ ] (if action 2) EnterWorktree warns/aborts on an unexpected resolved repo
-- [ ] A test guards whichever action lands
+- [x] `rules/workflow.md` documents the parked-cwd trap + ownership check + fallback
+- [x] (if action 2) EnterWorktree warns/aborts on an unexpected resolved repo — PreToolUse guard `scripts/guard-enterworktree-parked-cwd.sh` denies when the base cwd is git-ignored
+- [x] A test guards whichever action lands — `tests/test_guard_enterworktree_parked_cwd.sh` (guard behaviour + doc ratchet + settings wiring)
 
 ## Invariants
 - Do not break the normal in-project EnterWorktree happy path.

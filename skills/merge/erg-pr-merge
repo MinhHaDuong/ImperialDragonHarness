@@ -22,8 +22,32 @@ set -euo pipefail
 
 die() { echo "erg-pr-merge: $*" >&2; exit 1; }
 
+# Identity predicate (tickets 0301/0296; incidents I1/I2). Do NOT regress to
+# `[ -f .git ]`: that matched ANY dir with a `.git` FILE — a submodule, or a
+# linked worktree outside the harness convention — and trusted the path blindly.
+# Instead require that (a) the cwd sits under a `.claude/worktrees/<name>`
+# segment AND (b) git's own toplevel is exactly that worktree: basename equals
+# <name> and the toplevel is not the enclosing repo before the marker. A plain
+# dir planted under the marker (git resolves to the enclosing repo, a different
+# basename) is correctly rejected. A PreToolUse hook fires once on the outer
+# script invocation and cannot front these internal git calls, so the check is
+# self-contained by design.
 in_worktree() {
-    [ -f .git ] && grep -q "gitdir:" .git 2>/dev/null
+    local cwd top name prefix
+    cwd=$(pwd -P)
+    # No case pre-check needed: when cwd has no `.claude/worktrees/` segment,
+    # both parameter expansions below leave `name` equal to `cwd` (absolute
+    # path, starts with "/"), which the trailing `${name%%/*}` collapses to
+    # the empty string — the `[ -n "$name" ]` guard already rejects it.
+    prefix=${cwd%%/.claude/worktrees/*}   # enclosing path before the marker
+    name=${cwd#*/.claude/worktrees/}      # <name>[/subdir...]
+    name=${name%%/*}
+    [ -n "$name" ] || return 1
+    top=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+    [ -n "$top" ] || return 1
+    [ "$(basename "$top")" = "$name" ] || return 1
+    [ "$top" != "$prefix" ] || return 1
+    return 0
 }
 
 # ── Step 0: resolve PR ────────────────────────────────────────────────────────
@@ -267,7 +291,11 @@ sync_local_base() {
 }
 
 echo "Queueing merge for PR #${PR}..."
-if in_worktree; then
+# cwd cannot change between here and Step 4 (no `cd` on this path), so the
+# identity predicate's answer is invariant for the rest of the run — compute
+# it once instead of re-spawning `git rev-parse`/`basename` at each call site.
+if in_worktree; then IN_WORKTREE=1; else IN_WORKTREE=0; fi
+if [[ "$IN_WORKTREE" -eq 1 ]]; then
     MERGE_FLAGS=(--merge --auto)
 else
     MERGE_FLAGS=(--merge --auto --delete-branch)
@@ -290,7 +318,7 @@ else
     # allow_auto_merge. (ticket 0198)
     echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
     watch_checks_or_die
-    if in_worktree; then  # harness-extension-point
+    if [[ "$IN_WORKTREE" -eq 1 ]]; then  # harness-extension-point
         gh pr merge "$PR" --merge || merge_took_effect \
             || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point
     else  # harness-extension-point
@@ -304,7 +332,7 @@ fi
 
 # ── Step 4: return to base branch (skipped inside a worktree) ────────────────
 
-if in_worktree; then
+if [[ "$IN_WORKTREE" -eq 1 ]]; then
     echo "In git worktree — exit the worktree when done."
 elif [[ "${AUTO_QUEUED:-0}" -eq 1 ]]; then
     if [[ "${MERGE_LANDED:-0}" -eq 1 ]]; then

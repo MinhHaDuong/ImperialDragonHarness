@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Retire the weak [ -f .git ] predicate in pretooluse-worktree-path-guard.sh and block-pr-merge-in-worktree.sh
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T09:04Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Found during the 0252 raid wrap-up sweep (2026-07-13). Ticket 0301 retired
+the weak worktree predicate `[ -f .git ]` in erg-pr-merge, and gaze's PR #521
+review flagged that two sibling guards still carry the exact same predicate:
+
+- `scripts/pretooluse-worktree-path-guard.sh`
+- `scripts/block-pr-merge-in-worktree.sh`
+
+Neither is owned by any 0252 child. Same class, same fix shape as 0301:
+compare the cwd's worktree-name segment against
+`basename $(git rev-parse --show-toplevel)` (see `scripts/guard-worktree-identity.sh`
+and `in_worktree()` in `skills/merge/erg-pr-merge` for the two reference
+implementations), or record a justification comment where the weak check is
+genuinely sufficient.
+
+Related: 0302 (extract shared predicate helper — if 0302 lands first, use the
+helper; if this lands first, it becomes a third copy for 0302 to unify).
+
+## Exit criteria
+- [ ] Both scripts either use the identity predicate or carry a written justification
+- [ ] Tests cover the changed behavior (red-first where the predicate tightens)
+- [ ] `make check` passes
