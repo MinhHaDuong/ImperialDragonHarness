@@ -16,6 +16,14 @@ Author: MinhHaDuong
 
 2026-07-13T09:30Z claude note lever documented: /reviewers request <pr> runs the forge-bot seat via `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (login from panel.yml); gate clause added to skills/gaze/SKILL.md (absent seat silent, requested-but-pending bounded fail-open wait). Exit criteria 1-2 delivered; trial (criteria 3-4) remains
 2026-07-13T19:33Z claude note trial evidence: the 2026-07-13 pipeline raid ran 11 substantive /gaze batteries (PRs #538-#548, all gated, 3 rerolls with real defects) — exceeds the >=5-MR trial volume for exit criteria 3-4; harvest those runs' panel data before scheduling new trial MRs
+2026-07-13T19:43Z claude note correction: the 19:33Z assumption fails — the reviews API shows ZERO Copilot reviews on PRs #538-#548 (the seat was never requested on them; the raid batteries ran without it). No harvestable data there; trial run live instead on the 5 open MRs across 4 projects (request → review posted in 1-2 min each)
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#537 seat=copilot verdict: PASS — 0 verifiable, 0 consider (memory consolidation, 4 files; accurate change summary, no findings)
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#559 seat=copilot verdict: PASS — 0 verifiable, 1 consider (flagged "bounded-wind" slug as typo; FALSE POSITIVE — erg new truncates slugs by design)
+2026-07-13T19:43Z claude note MR climate-finance-het#1016 seat=copilot verdict: PASS — 0 verifiable, 1 consider (header/sample-3 "we" inconsistency; true positive, verified against file lines 9 and 140)
+2026-07-13T19:43Z claude note MR archiveCIRED#59 seat=copilot verdict: PASS — 1 verifiable, 1 consider (Actions§1 allows conferencePaper but Verification requires journalArticle-only: true positive, verified; French spelling "inconditional": true positive; review body written in French, matching the PR language)
+2026-07-13T19:43Z claude note MR padme#66 seat=copilot verdict: PASS — 0 verifiable, 1 consider (grammar fix in ticket prose; true positive)
+2026-07-13T19:43Z claude note trial totals: 5 MRs, 4 projects (meets the 0205 rule-2 bar of >=5 MRs / >=3 projects); 5 findings = 4 true / 1 false positive, 1 verifiable-class; zero spurious bounces; latency 1-2 min per review; zero token cost. Caveat: sample skews to ticket/prose diffs — no complex multi-file code change in the window, exactly where 0205's decorrelation evidence says ensemble value concentrates
+2026-07-13T19:43Z claude note recommendation for 0205 integration review: KEEP AS STANDING ADVISORY SEAT, do not promote to required. Precision (4/5) and cost (zero) justify keeping it on-demand for non-trivial MRs; promotion is barred by 0205 rule 2 until verifiable-class findings prove stable across re-runs AND the seat is observed on complex code diffs, neither demonstrated in this window
 --- body ---
 ## Context
 
@@ -67,5 +75,5 @@ dispositioned in the gate verdict's evidence table.
 - [x] On-demand request path live; exact forge call documented
 - [x] Gate clause merged (absent seat is silent; requested-but-pending
       gets fail-open bounded wait)
-- [ ] Trial scorecard: ≥5 non-trivial MRs, ≥3 projects, logged here
-- [ ] Promote/drop recommendation recorded for 0205's integration review
+- [x] Trial scorecard: ≥5 non-trivial MRs, ≥3 projects, logged here
+- [x] Promote/drop recommendation recorded for 0205's integration review
