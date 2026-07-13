@@ -1,0 +1,50 @@
+%erg 0.1
+Title: erg-pr-merge: cross-check the Ticket close claim against the PR diff
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T10:23Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+A PR's `**Ticket:**` close claim lives in the PR body, but the branch content
+can drift away from it: shared-worktree contention force-pushed an unrelated
+collision-gate fix over `t0268-state-guard` (PR #522, 2026-07-13), leaving the
+original `**Ticket:** 0268` claim pointing at work no longer in the diff. Had
+it merged as-is, erg-pr-merge would have closed 0268 while landing an
+unrelated change. The only defense was a human noticing and retitling the PR.
+
+`erg-pr-merge` parses the Ticket lines from the body and closes them
+unconditionally; nothing verifies the claimed ticket file relates to the diff.
+
+## Relevant files
+- `skills/merge/erg-pr-merge` — parses `**Ticket:**` lines, runs `erg close`
+- `scripts/check-cross-pr-ticket-collision.sh` — precedent for diff-based ticket checks in CI
+
+## Actions
+1. In erg-pr-merge, before closing: warn (or abort with an override flag) when
+   the close-claimed ticket file is neither present in the repo `tickets/` at
+   the branch tip nor touched by the PR diff. A claim on a ticket the diff
+   never touches is legitimate (close-by-convention on merge), so the check is
+   existence-at-tip, not touched-by-diff — decide the exact predicate during
+   implementation; the #522 failure mode is "claimed ticket belongs to a
+   different, replaced changeset".
+2. Consider a cheaper tell: claim names ticket N but the diff touches only
+   ticket M's file, or the PR title prefix and the claim disagree.
+
+## Test
+- Fixture PR body claiming a ticket absent from the branch tip → warn/abort.
+- Normal claim (ticket open at tip) → unchanged behavior.
+
+## Verification
+- [ ] erg-pr-merge flags a close claim inconsistent with the branch content
+- [ ] Happy path unchanged; override documented
+
+## Invariants
+- Existing merge flow for well-formed PRs must not gain friction.
+
+## Exit criteria
+- A repurposed/force-replaced branch can no longer silently close the
+  originally-claimed ticket at merge.
