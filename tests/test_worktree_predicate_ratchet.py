@@ -33,10 +33,12 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 
 # A `-f`/`-e` file-test on a `.git` path: `[ -f .git ]`, `test -f .git`,
-# `[ -f "$dir/.git" ]`, `[ -e .git ]`. The literal dot before `git` is what
-# distinguishes the weak predicate from the strong `git rev-parse
-# --absolute-git-dir` / `--git-common-dir` form (hyphen, no dot).
-WEAK_PREDICATE = re.compile(r"""-[fe][ \t]+["'${]*[\w./-]*\.git\b""")
+# `[ -f "$dir/.git" ]`, `[ -f "${dir}/.git" ]`, `[[ -e ${worktree}/.git ]]`,
+# `[ -e .git ]`. The literal dot before `git` is what distinguishes the weak
+# predicate from the strong `git rev-parse --absolute-git-dir` /
+# `--git-common-dir` form (hyphen, no dot). Braces are included in the prefix
+# and path classes so the house `${var}/.git` idiom cannot slip past the grep.
+WEAK_PREDICATE = re.compile(r"""-[fe][ \t]+["'${}]*[\w./{}-]*\.git\b""")
 
 # Explicit allowlist: (relative path, exact stripped line). Every entry is an
 # explanatory comment that names the old weak check to warn against it — none is
@@ -82,6 +84,41 @@ def _iter_hits():
             for lineno, line in enumerate(text.splitlines(), 1):
                 if WEAK_PREDICATE.search(line):
                     yield rel, lineno, line.strip()
+
+
+@pytest.mark.adherence
+@pytest.mark.parametrize(
+    "line",
+    [
+        "[ -f .git ]",
+        "test -f .git",
+        "[ -e .git ]",
+        '[ -f "$dir/.git" ]',
+        '[ -f "${dir}/.git" ]',
+        "[[ -e ${worktree}/.git ]]",
+    ],
+)
+def test_weak_predicate_regex_catches_known_forms(line):
+    """The ratchet must catch the weak predicate in the house `${var}` idiom.
+
+    Brace-expansion forms (`${dir}/.git`) are the common shell style here, so a
+    regressed weak predicate written that way must not slip past the grep.
+    """
+    assert WEAK_PREDICATE.search(line), line
+
+
+@pytest.mark.adherence
+@pytest.mark.parametrize(
+    "line",
+    [
+        "[ -f .gitignore ]",
+        "git rev-parse --absolute-git-dir",
+        "[ -f .gitmodules ]",
+    ],
+)
+def test_weak_predicate_regex_ignores_safe_forms(line):
+    """Strong detection (`git rev-parse`) and sibling dotfiles are not weak."""
+    assert not WEAK_PREDICATE.search(line), line
 
 
 @pytest.mark.adherence
