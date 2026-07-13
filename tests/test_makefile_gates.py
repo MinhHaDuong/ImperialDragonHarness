@@ -1,7 +1,9 @@
 """Hygiene: Makefile gate targets match the coding-python.md definitions.
 
 `check` is the pre-PR gate: full pytest suite (integration + slow included)
-plus the static checks. `check-fast` is the development gate: unit tests only.
+plus the static checks. `check-fast` is the development gate: unit tests only,
+excluding the integration, slow, and adherence tiers. `lint` is the adherence
+gate: the mechanical `-m adherence` tier run apart from the logic loop.
 Source inspection, not subprocess (ticket 0238).
 """
 
