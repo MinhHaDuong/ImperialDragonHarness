@@ -599,3 +599,28 @@ def test_fixtures_are_excluded_from_collection():
     )
     # And the fixture files must actually live there.
     assert list(FIXTURES.glob("fixture_*_test.py")), "no fixture test anchors present"
+
+
+# ── 0303: /tmp scratch-worktree guard-coverage exemption is documented ────────
+
+
+def test_tmp_scratch_worktree_exemption_documented():
+    """Ticket 0303: maw-audit agents hand-roll detached-HEAD scratch worktrees
+    under /tmp (paths like `/tmp/maw-*`, legacy `/tmp/fang-*`), which sit outside
+    the guarded `*/.claude/worktrees/*` namespace. Unlike gaze's branch-tracking
+    review worktrees (moved under the guarded namespace by ticket 0300), these
+    never commit, never push, and never track a branch, so the main-repo
+    protection guards have nothing to protect. The exemption must be documented
+    at the creation/cleanup site so a future guard-coverage sweep does not
+    re-flag it."""
+    src = js()
+    assert "0303" in src, "the /tmp scratch-worktree exemption must cite ticket 0303"
+    # The rationale must name the guarded namespace it is exempt from and WHY
+    # (detached HEAD → no branch/commit/push for a guard to protect).
+    cleanup = src[src.index("phase('Cleanup')") - 1200 : src.index("phase('Cleanup')")]
+    assert ".claude/worktrees" in cleanup, (
+        "exemption must reference the guarded .claude/worktrees namespace it sits outside"
+    )
+    assert "detached HEAD" in cleanup or "detached-HEAD" in cleanup, (
+        "exemption rationale must anchor on the detached-HEAD (no branch to protect) property"
+    )

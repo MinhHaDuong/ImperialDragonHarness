@@ -707,6 +707,21 @@ const scopes = await parallel(scopeTargets.map(file => () =>
 // /tmp/maw-* or /tmp/fang-* scratch patterns (agents improvise these names
 // from the audit name in their prompts; fang- is the pre-rename legacy),
 // never the session checkout or any named worktree, then `git worktree prune`.
+//
+// 0303 — GUARD-COVERAGE EXEMPTION (decided, not an oversight). These /tmp
+// scratch trees sit OUTSIDE the guarded `*/.claude/worktrees/*` namespace, and
+// that is intentional. Ticket 0300 moved gaze's review worktrees UNDER that
+// namespace because they track a branch and its guards protect commits/pushes
+// from landing on the wrong branch. maw-audit's scratch trees are the opposite:
+// they are on a detached HEAD, never commit, never push, never track a branch,
+// and every mutation an agent makes in them is reverted or discarded — so the
+// main-repo protection guards (`guard-commit-on-main`, the worktree path guard)
+// have nothing to protect here. Their whole lifecycle is self-contained: this
+// Cleanup phase reaps them by path prefix. Moving them under the guarded
+// namespace would buy no safety and complicate the prefix-match reaper. The
+// exemption is recorded here (and pinned by
+// tests/test_maw_audit_skill.py::test_tmp_scratch_worktree_exemption_documented)
+// so a future guard-coverage sweep does not re-flag this as an uncovered gap.
 phase('Cleanup')
 await agent(
   `Post-run cleanup for the maw-audit of ${CONFIG.PROJECT}. During the audit, some agents may have hand-rolled scratch git worktrees under /tmp (paths like \`/tmp/maw-${CONFIG.PROJECT}-*\`, \`/tmp/maw-*\`, or the legacy \`/tmp/fang-*\`), typically on a detached HEAD, that outlived the run. Remove ONLY those scratch worktrees — never the session checkout, never any worktree under .claude/worktrees/, never a worktree on a named branch.
