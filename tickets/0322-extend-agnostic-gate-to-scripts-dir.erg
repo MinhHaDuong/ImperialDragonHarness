@@ -1,0 +1,68 @@
+%erg 0.1
+Title: Extend agnostic gate to scripts/ dir
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T20:08Z claude created
+
+--- body ---
+## Context
+
+`scripts/check-agnostic.sh` scans `skills tickets` by default (CI runs it with
+no args). It never scans `scripts/`, so a hardcoded home path in a shell/python
+helper escapes every mechanical gate — caught only in human review. The
+ticket-0217 seat-runner inherited a hardcoded `HOMEDIR=/home/<user>`; `/gaze`-style
+review caught it and it was fixed to `HOMEDIR="$HOME"` in that PR, but the gate
+gap remains open for the next regression.
+
+## Discovered blocker (why this is its own ticket)
+
+Extending the default DIRS to include `scripts/` immediately surfaces a
+pre-existing violation the ticket-0217 PR should not carry:
+
+    scripts/beat-settings.json:25
+      "command": "/home/<user>/.claude/scripts/guard-destructive-bash.sh"
+
+This is a Claude Code hook command. Whether the harness's hook runner expands
+`~` or `$CLAUDE_PROJECT_DIR` in a hook `command` path is unverified; a blind
+rewrite could break beat's destructive-bash guard. That call must be settled
+before the gate can go green on `scripts/`.
+
+## Relevant files
+- `scripts/check-agnostic.sh` — default DIRS `(skills tickets)`; GLOBAL_PATTERNS
+  apply everywhere, SKILL_PATTERNS gated to `skills*` (so `gh`/`uv`/repo-relative
+  paths in scripts stay legal — verified).
+- `scripts/beat-settings.json` — the pre-existing hardcoded-home violation.
+- `.github/workflows/CI.yml` — `agnostic-guard` job runs `check-agnostic.sh`
+  with no args (picks up whatever the default DIRS are).
+- `Makefile` — `check-agnostic-tickets` / `check-agnostic-skills` targets; a
+  `check-agnostic-scripts` target + `check` dep would give local parity.
+- `tests/test_check_agnostic.py` — where the scripts/-coverage guard tests land.
+
+## Actions
+1. Decide the `beat-settings.json` fix: confirm whether the hook runner expands
+   `~`/`$CLAUDE_PROJECT_DIR` in a `command`; if yes, rewrite to an agnostic form;
+   if no, either add a JSON-safe exemption or scope the scripts/ scan to code
+   files (`*.sh`, `*.py`) so config JSON is out of scope.
+2. Add `scripts` to `check-agnostic.sh` default DIRS (or a dedicated
+   `check-agnostic-scripts` target wired into `check`).
+3. Add regression tests: the real `scripts/` tree is agnostic-clean; a planted
+   `/home/<user>` path under a scripts-named dir is caught; skill-only tokens
+   (`gh`, `uv run`, `./scripts/x.sh`) do NOT fire in scripts/.
+
+## Test
+- `tests/test_check_agnostic.py::test_real_scripts_dir_is_agnostic` — run the
+  gate on the actual `scripts/` dir, assert exit 0 (RED until beat-settings.json
+  is resolved).
+
+## Invariants
+- SKILL_PATTERNS must stay gated to `skills*` — scripts legitimately use `gh`,
+  `uv`, and repo-relative paths.
+- Do not break beat's destructive-bash guard hook.
+
+## Exit criteria
+- [ ] `beat-settings.json` hardcoded home path resolved (agnostic form or scoped-out with rationale)
+- [ ] `check-agnostic.sh` (or a make target in `check`) scans `scripts/`
+- [ ] Regression tests: real scripts/ clean; planted home path caught; skill-only tokens ignored in scripts/
+- [ ] `make check` and the CI `agnostic-guard` job pass
