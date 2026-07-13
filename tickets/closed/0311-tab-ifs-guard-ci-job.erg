@@ -1,0 +1,49 @@
+%erg 0.1
+Title: CI guard against 3+-field tab-delimited read (empty-field collapse)
+Created: 2026-07-13
+Author: fable
+Closed: autoclosed — PR #534
+
+--- log ---
+2026-07-13T13:10Z fable created
+
+2026-07-13T10:15Z Minh Ha-Duong closed — autoclosed — PR #534
+--- body ---
+## Context
+
+Tab is IFS whitespace, so `IFS=$'\t' read` collapses consecutive tabs: an
+empty middle field silently shifts every later field left. This bit
+reviewers.sh roster parsing on 2026-07-13 (a seat kind with no
+endpoint/model put the trial-ticket in the wrong variable); the fix
+(IFS='|') and the rule (rules/coding-bash.md § Tab-delimited records) are
+landed. The class has no standing guard: nothing stops the next 3+-field
+tab read from entering scripts/ or skills/.
+
+Fleet sweep 2026-07-13: two tab-IFS sites remain
+(`scripts/setup-claude-agent.sh:32`, `scripts/check-cross-pr-ticket-collision.sh:97`),
+both 2-field with a schema-guaranteed non-empty first field — the safe
+shape the rule carves out.
+
+## Relevant files
+- `.github/workflows/CI.yml` — guard job family (pipefail-guard, grep-e-guard)
+- `rules/coding-bash.md` — the documented rule this guard mechanizes
+
+## Actions
+1. Add a `tab-ifs-guard` CI job: flag `IFS=$'\t' read` with 3+ variables in
+   `scripts/*.sh` and `skills/*/*.sh`; 2-field reads stay allowed.
+2. Self-tests in the job: catch a deliberate 3-field violation; pass 2-field
+   tab and multi-field pipe-delimited reads.
+
+## Test
+- Guard RED on a synthetic `IFS=$'\t' read -r a b c` script.
+- Guard GREEN on the current tree and on the safe forms.
+
+## Verification
+- [ ] CI job green on this PR (self-tests prove both directions)
+- [ ] Current 2-field sites not flagged
+
+## Invariants
+- Existing guard jobs unchanged; CI.yml stays valid YAML.
+
+## Exit criteria
+- A 3+-field tab-delimited read cannot merge without failing CI.
