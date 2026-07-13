@@ -140,6 +140,10 @@ exit criteria), not on the bare event of the last child merging.
 
 When compacting, preserve the list of modified files, test commands, and current implementation plan.
 
+# Micro-turn discipline
+
+Batch read-only navigational commands (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into one compound Bash call rather than spending one turn per command. The 2026-06 trace census measured navigational-plus-idle turn churn at $268/week (exact attribution, 28-day window) with a p99 navigation-run length of 32 consecutive turns — the single largest addressable bucket (trace-doctor phase 4, `docs/trace-counterfactuals-2026-06.md`). Each idle turn re-reads the full accumulated context, so a chain of single-command turns pays the context tax repeatedly for no new work. When a step needs three lookups, run all three in one tool call; never open a chain of consecutive single-navigation turns.
+
 # Writing Skills and Hooks
 
 **Tool-agnostic language**: Skills and rules name *capabilities*, not the current tool that provides them — "schedule a wake-up" not a specific timer-tool name, "delegate to a subagent" not a specific agent-tool name, "list ready tickets" not a specific picker-skill name. The forge case is the canonical instance: never hardcode `gh` commands or GitHub references — "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub". The harness is portable across tool generations; tool names rot, capabilities don't.
