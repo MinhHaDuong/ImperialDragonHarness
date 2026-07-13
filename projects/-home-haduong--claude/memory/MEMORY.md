@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Skill invocation flag gates Skill(X) mandates](feedback_skill_invocation_flag_gates_mandates.md) — a mandated Skill(X) call fails at runtime when X's frontmatter has disable-model-invocation: true; check the target's flag in the same pass and pin the pair with a guard test (raid 0293, 2026-07-13)
 - [Local-evidence gate for pillaged techniques](feedback_local_evidence_gate_for_pillaged_techniques.md) — inventory the local codebase for the target defect class before implementing a paper-pillaged detector; 0290 closed wontfix on a zero-instance two-suite audit (2026-07-13)
 - [Batch decisions, then run to the end](feedback_batch_decisions_run_to_end.md) — author doctrine: one frontloaded question round with defaults, then autonomous through verify/merge/cleanup to a single report; spinners are not deliverables. Promoted to rules/workflow.md (2026-07-11)
 - [Sync main: check the primary checkout's branch first](feedback_sync_main_check_primary_branch_first.md) — the primary checkout may sit on a feature branch; ff-merging origin/main there advances THAT branch. Update by ref (`fetch origin main:main`); preserve dirty overlapping files by backup + re-apply, never discard or bare-stash (2026-07-11)

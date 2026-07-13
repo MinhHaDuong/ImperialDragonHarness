@@ -1,0 +1,39 @@
+%erg 0.1
+Title: hunt step 11: invoke /review-pr mechanically, not 'according to' prose
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T07:59Z claude created from roar sweep after 0251 raid
+
+--- body ---
+## Context
+
+Roar sweep finding after the 0251 entry-point consolidation. Ticket 0293
+replaced raid Phase 5's "follows `/hunt` workflow" paraphrase with a
+mechanical `Skill(hunt)` invocation, because paraphrases drift. The same
+shape survives in `skills/hunt/SKILL.md` step 11: "Review according to
+`/review-pr`" — an executing agent may paraphrase the review procedure
+instead of invoking the skill. `review-pr` already has
+`disable-model-invocation: false`, so the mechanical call works today.
+
+## Relevant files
+- `skills/hunt/SKILL.md` — step 11
+- `skills/raid/SKILL.md` — Phase 5, the pattern to mirror (ticket 0293)
+
+## Actions
+1. Reword step 11 to an imperative, greppable invocation:
+   `Skill(skill: "review-pr", args: <pr-number>)`.
+2. Extend `tests/test_raid_invokes_hunt.py` (or a sibling guard) to pin
+   the phrasing, mirroring the 0293 guard.
+
+## Test
+- Guard test RED on "according to `/review-pr`", GREEN after.
+
+## Invariants
+- Steps 12-13 (fix comments, repeat up to 3x) unchanged.
+
+## Exit criteria
+- [ ] Step 11 invokes review-pr mechanically
+- [ ] Guard test in place
+- [ ] `make check` passes
