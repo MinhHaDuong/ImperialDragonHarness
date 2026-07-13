@@ -77,6 +77,21 @@ def test_rejection_as_confirmation_documented():
     )
 
 
+def test_pid_discriminator_obtainable():
+    """Step 3 spells out a literal, executable way to obtain the `$$` discriminator.
+
+    Ticket 0309: `EnterWorktree`'s name schema rejects `$` characters, so the
+    model must resolve the session PID to a literal before the call. Step 3 must
+    show how (e.g. `bash -c 'echo $$'`), not just reference the bare `$$` token.
+    """
+    step3 = step3_text()
+    assert "bash -c 'echo $$'" in step3, (
+        "step 3 must show a literal, executable way to obtain the session-PID "
+        "discriminator (e.g. `bash -c 'echo $$'`) before the EnterWorktree call, "
+        "since the name schema rejects `$` characters (ticket 0309)"
+    )
+
+
 def test_headless_pattern_pointer_present():
     """One sentence points ad hoc orchestrators at the beat.py headless pattern."""
     step3 = step3_text()
