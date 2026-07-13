@@ -1,0 +1,71 @@
+%erg 0.1
+Title: gaze fork-liveness contract: bounded window from review comment to verdict, with direct verify-gate fallback
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T19:36Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Twice-seen failure class: a /gaze fork goes silent between posting its
+review comment and posting the verdict comment, with no error surfaced
+to the caller. First seen 2026-07-11 (600s-watchdog stalls, memory
+feedback_agent_stall_watchdog_recovery); recurred 2026-07-13 in raid
+291-245 on PR #551 — the review comment posted at 16:24Z, the simplify
+sub-agents reported, then ~30 min of quiet: no simplify commit, no
+verdict, review worktree mtime frozen. Recovery that worked both times:
+do NOT re-run the panel; drive /verify-gate directly on the PR, fix,
+re-gate round 2. The recovery is proven; the detection and the
+instruction to callers are still tribal knowledge in memory entries.
+Codify both in the skill.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — the contract to extend (Fork execution
+  contract + Branch on verdict sections; telemetry prose near
+  `## Telemetry`)
+- `skills/gaze/telemetry.yml` — existing threshold knobs
+  (wall_seconds.warn: 900); the liveness window belongs here as a knob
+- `skills/verify-gate/SKILL.md` — the fallback path the contract names
+- memory `feedback_agent_stall_watchdog_recovery` — liveness signals
+  (branch tip, worktree mtime, verdict comment); supersede its tactical
+  content once codified
+
+## Actions
+
+1. Add a "Fork liveness" clause to `skills/gaze/SKILL.md`: after the
+   review comment posts, the caller must see either the verdict comment
+   or a bump log line within a bounded window (knob in telemetry.yml,
+   default ~20 min; env override like the existing thresholds).
+2. Name the fallback explicitly: window expired → do not re-run phases
+   2-5; verify completion markers (verdict comment, branch tip motion,
+   review-worktree mtime), then invoke /verify-gate directly on the PR
+   and continue the normal round flow; log a bump line on the ticket.
+3. Add the `liveness` knob to telemetry.yml with env override, same
+   pattern as wall_seconds.
+4. Extend the fork-contract adherence surface: the grep test that pins
+   fork-contract wording (tests/test_verify_fork_contracts.py style)
+   gains assertions that SKILL.md documents the window and the
+   verify-gate fallback.
+
+## Test
+
+- Red first: new assertions in the fork-contract adherence test fail on
+  the pre-fix SKILL.md (no liveness clause, no fallback wording).
+
+## Invariants
+
+- No behavior change to gaze's phases; this is caller-facing contract
+  text + one knob
+- The fallback never relaxes the gate: verify-gate still runs with full
+  rigor, rounds still capped at 2
+
+## Exit criteria
+
+- [ ] SKILL.md documents the liveness window and the direct verify-gate
+      fallback
+- [ ] telemetry.yml carries the knob with env override
+- [ ] Adherence test pins both (RED on pre-fix state)
+- [ ] make check passes
