@@ -96,15 +96,19 @@ def _worktree_segment(path: str) -> str | None:
     return m.group(1) if m else None
 
 
-def classify_path(path: str, worktree_root: str | None = None) -> str | None:
-    """Return a forbidden-class reason for `path`, or None if allowed."""
+def classify_path(path: str, own_worktree_segment: str | None = None) -> str | None:
+    """Return a forbidden-class reason for `path`, or None if allowed.
+
+    `own_worktree_segment` is the caller's own worktree segment, already
+    extracted once by the caller — not the raw worktree-root path — so a
+    scan over many paths doesn't re-derive the same constant on every call.
+    """
     for pattern, reason in FORBIDDEN_PATH_PATTERNS:
         if pattern.search(path):
             return reason
-    if worktree_root:
-        own = _worktree_segment(worktree_root)
+    if own_worktree_segment:
         seen = _worktree_segment(path)
-        if own and seen and seen != own:
+        if seen and seen != own_worktree_segment:
             return f"another session's worktree ({seen})"
     return None
 
@@ -120,6 +124,7 @@ def scan_trace_for_forbidden_paths(
     """
     hits: list[dict] = []
     seen_tool_use_ids: set[str] = set()
+    own_worktree_segment = _worktree_segment(worktree_root) if worktree_root else None
     with open(trace_path, encoding="utf-8") as fh:
         for line_no, raw in enumerate(fh, start=1):
             raw = raw.strip()
@@ -150,7 +155,7 @@ def scan_trace_for_forbidden_paths(
                 if not isinstance(tool_input, dict):
                     continue
                 for path in tool_paths(name, tool_input):
-                    reason = classify_path(path, worktree_root)
+                    reason = classify_path(path, own_worktree_segment)
                     if reason:
                         hits.append(
                             {"tool": name, "path": path, "reason": reason, "line": line_no}
