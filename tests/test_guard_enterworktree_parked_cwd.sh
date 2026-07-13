@@ -66,6 +66,21 @@ _assert 0 "allows Skill at repo root"            "$REPO"                 "Skill"
 _assert 0 "allows Skill in tracked subdir"       "$REPO/src"             "Skill"
 _assert 0 "allows Skill outside any repo"        "$NOREPO"               "Skill"
 
+# --- Symlink traversal: cwd is realpath-normalized before the probes (0314) ---
+# A path that reaches the repo through a symlink must resolve to its real
+# location before the check-ignore probe. Otherwise check-ignore errors
+# "outside repository", the guard falls through to allow, and a parked runtime
+# directory addressed via a symlink bypasses the deny (found by the PR #545 panel).
+LINK_PARKED="$TMP/link-parked"
+ln -s "$REPO/projects/session-x" "$LINK_PARKED"
+LINK_ROOT="$TMP/link-root"
+ln -s "$REPO" "$LINK_ROOT"
+
+_assert 2 "denies symlinked parked cwd"              "$LINK_PARKED"
+_assert 2 "denies symlinked parked cwd (Skill)"      "$LINK_PARKED"          "Skill"
+_assert 0 "allows symlinked repo-root cwd"           "$LINK_ROOT"
+_assert 0 "allows symlinked repo-root cwd (Skill)"   "$LINK_ROOT"            "Skill"
+
 # --- Payload without .cwd → fail-safe allow ---------------------------------
 rc=$(printf '{"tool_name":"EnterWorktree","tool_input":{}}' \
         | bash "$HOOK" >/dev/null 2>&1; echo $?)
