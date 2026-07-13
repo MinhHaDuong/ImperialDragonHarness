@@ -720,5 +720,31 @@ else
     echo "FAIL: erg-pr-merge exited non-zero from an off-marker worktree"; fail=1
 fi
 
+# ── Case 21: name-collision lookalike — the ONE case that pins the final
+# `[ "$top" != "$prefix" ]` guard as a genuine discriminator (round-1 /gaze
+# REROLL, ticket 0301). A plain dir under `.claude/worktrees/<name>` whose
+# <name> segment equals the enclosing repo's OWN basename. git resolves
+# --show-toplevel to the enclosing repo, so `basename "$top"` == <name> by
+# coincidence and the line-48 basename check ALONE would pass — only the
+# `top != prefix` guard (top == the enclosing repo == prefix here) rejects it.
+# Case 18 cannot exercise this line: its <name> differs from the repo basename,
+# so it is already rejected at line 48. Deleting only line 49 leaves every other
+# case green but flips THIS one: in_worktree() must be FALSE, so the script takes
+# the non-worktree branch and --delete-branch is present.
+seed_repo collide 0303                        # $REPO basename == "collide"
+MLOG21="$WORK/merge21.log"; : > "$MLOG21"
+mkdir -p "$REPO/.claude/worktrees/collide"    # <name> == "collide" == repo basename; NOT a registered worktree
+BODY21=$'Summary.\n\n**Ticket:** tickets/0303-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG21" \
+   run_merge_at "$REPO/.claude/worktrees/collide" "$BODY21" "ticket(0303): name-collision lookalike" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG21"; then
+        echo "PASS: name-collision lookalike rejected by top!=prefix guard (--delete-branch present)"
+    else
+        echo "FAIL: name-collision lookalike wrongly detected as worktree (top!=prefix guard not enforced)"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a name-collision lookalike path"; fail=1
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard)"
