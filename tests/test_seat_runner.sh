@@ -50,6 +50,15 @@ else
     fail "timeout wraps the seat invocation"
 fi
 assert_contains "relay bind-mounted into container"  "relay.sock"      "$SRC"
+# timeout SIGKILLs only the podman client (rootless conmon keeps the container
+# alive), so the seat must be --name'd and force-reaped or it leaks/outlives.
+assert_contains "container is named for reaping"     "--name"          "$SRC"
+assert_contains "orphaned container is force-reaped"  "podman rm -f"    "$SRC"
+# ~/.local must NOT be wholesale-mounted (it holds keyrings/wallets/tokens);
+# only the allowlisted CLI venv + interpreter are exposed.
+assert_absent   "no wholesale ~/.local mount"        'HOMEDIR/.local"'  "$CODE"
+assert_contains "allowlisted code-only mounts"       "SEAT_CODE_MOUNTS" "$SRC"
+assert_contains "self-test proves ~/.local scoped"   "LOCAL-SCOPED"     "$SRC"
 
 [ -f "$RELAY" ] && pass "net-relay.py exists" || fail "net-relay.py exists"
 if command -v python3 >/dev/null; then
@@ -74,9 +83,13 @@ if command -v python3 >/dev/null && command -v timeout >/dev/null; then
     STUBBIN="$WORK/stubbin"; mkdir -p "$STUBBIN"
     cat > "$STUBBIN/podman" <<'STUB'
 #!/usr/bin/env bash
-# A seat that hangs far past SEAT_TIMEOUT.
-[ "$1" = "image" ] && exit 0   # `podman image exists ...` probes, if any
-sleep 30
+# Only `podman run` hangs (a seat far past SEAT_TIMEOUT); everything else
+# (image-exists probes, the rm -f reaping call) returns immediately so the
+# measured wall-clock reflects the timeout, not the stub.
+case "${1:-}" in
+    run) sleep 30 ;;
+    *)   exit 0 ;;
+esac
 STUB
     chmod +x "$STUBBIN/podman"
     start=$SECONDS
@@ -106,6 +119,10 @@ else
     # states external network is denied. A reintroduced --network=host would
     # make the probe reach the host and this FAIL.
     assert_contains "self-test proves external network denied" "network denied" "$st_err"
+    # Secret-exposure regression guard: the banner asserts ~/.local is scoped to
+    # the CLI venv. A wholesale ~/.local mount would flip the probe to
+    # LOCAL-OVERMOUNTED and fail the self-test before this banner prints.
+    assert_contains "self-test proves ~/.local scoped" "scoped to CLI venv" "$st_err"
 fi
 
 echo ""

@@ -49,6 +49,12 @@ def connect(spec: str) -> socket.socket:
 
 
 def pump(src: socket.socket, dst: socket.socket) -> None:
+    """Forward src→dst until src closes, then half-close dst's write side.
+
+    Half-close (SHUT_WR) propagates EOF downstream without tearing down the
+    reverse direction, so a client that stops sending its request does not
+    truncate the response still arriving on the other pump.
+    """
     try:
         while True:
             data = src.recv(65536)
@@ -58,11 +64,10 @@ def pump(src: socket.socket, dst: socket.socket) -> None:
     except OSError:
         pass
     finally:
-        for s in (src, dst):
-            try:
-                s.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
+        try:
+            dst.shutdown(socket.SHUT_WR)
+        except OSError:
+            pass
 
 
 def handle(client: socket.socket, target_spec: str) -> None:
@@ -71,8 +76,15 @@ def handle(client: socket.socket, target_spec: str) -> None:
     except OSError:
         client.close()
         return
-    threading.Thread(target=pump, args=(client, upstream), daemon=True).start()
+    t = threading.Thread(target=pump, args=(client, upstream), daemon=True)
+    t.start()
     pump(upstream, client)
+    t.join()
+    for s in (client, upstream):
+        try:
+            s.close()
+        except OSError:
+            pass
 
 
 def main() -> None:

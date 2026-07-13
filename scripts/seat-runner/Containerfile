@@ -7,12 +7,15 @@
 #   podman build -t localhost/seat-runner:v1 \
 #       -f scripts/seat-runner/Containerfile scripts/seat-runner
 #
-# The runtime seat mounts the invoking user's ~/.local (read-only) for the
-# aider CLI and its uv venv; that venv's shebangs point at /usr/bin/python3,
-# which the bare ubuntu image lacks — hence python3 here. git + ca-certificates
+# The runtime seat mounts the invoking user's aider CLI venv + interpreter
+# (read-only, allowlisted — not all of ~/.local); those uv shebangs point at a
+# python3 that the bare ubuntu image lacks, hence python3 here. python3 also
+# runs the container-side relay bridge (net-relay.py). git + ca-certificates
 # cover the read-only checkout and TLS trust store. The seat runs under
 # --network=none and reaches the model endpoint only through the bind-mounted
-# relay socket (see net-relay.py), so no image-level network config is needed.
+# relay socket, so no image-level network config is needed. No curl: the
+# container never makes an outbound HTTP call itself (the host does the health
+# check; the in-container probes use bash /dev/tcp).
 FROM ubuntu:24.04
 
 RUN apt-get update \
@@ -20,7 +23,6 @@ RUN apt-get update \
         python3 \
         git \
         ca-certificates \
-        curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Optional: bake the reviewer CLI into the image instead of mounting it from

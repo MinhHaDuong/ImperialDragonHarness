@@ -15,8 +15,11 @@
 # Containment:
 #   - repo + diff mounted READ-ONLY; container rootfs --read-only
 #     (kernel-enforced; a write attempt fails even for a misbehaving seat)
-#   - HOME is a throwaway tmpfs; the real $HOME is NOT mounted (no ~/.ssh,
-#     no scripts/bash-env.sh, no memory files) except ~/.local (ro, code only)
+#   - HOME is a throwaway tmpfs; the real $HOME is NOT mounted. The reviewer CLI
+#     is exposed by allowlisting ONLY its uv-tool venv and its interpreter (both
+#     pure code) — never all of ~/.local, which also holds keyrings, wallets,
+#     jupyter/neo4j tokens, and browser cookies. The self-test proves ~/.local
+#     is scoped, not wholesale-mounted.
 #   - env is explicitly constructed (no BASH_ENV, no inherited secrets; only
 #     a dummy OPENAI_API_KEY for the local endpoint)
 #   - NETWORK IS DENY-BY-DEFAULT: the seat runs under --network=none, so its
@@ -32,8 +35,10 @@
 #     --network=host gap: pasta/slirp4netns do full outbound NAT with no
 #     per-destination allowlist, so they were rejected.)
 #   - PER-SEAT TIMEOUT: every container invocation is wrapped in `timeout`
-#     (SEAT_TIMEOUT, default 600s). A hung or slow seat is killed and exits
-#     non-zero, loudly; fail-open handling lives one layer up in reviewers.sh.
+#     (SEAT_TIMEOUT, default 600s). timeout SIGKILLs only the podman CLIENT —
+#     rootless conmon keeps the container alive — so each seat is named and
+#     force-removed after the run and in the EXIT trap; a hung or adversarial
+#     seat is both reported non-zero AND reaped, never left orphaned.
 #   - the containment self-test FAILS LOUD if the sandbox itself does not
 #     start: a blocked write only counts when the probe also proves the
 #     sandbox executes. Run it standalone with --self-test-only (no endpoint,
@@ -57,8 +62,6 @@ ENDPOINT="http://127.0.0.1:8012/v1"
 MODEL="openai/devstral-small-2"
 OUT="/dev/stdout"
 IMAGE="localhost/seat-runner:v1"   # ubuntu:24.04 + python3 + git + ca-certs
-                                   # (aider's uv venv symlinks /usr/bin/python3,
-                                   # absent from the bare ubuntu image)
 SEAT_TIMEOUT="${SEAT_TIMEOUT:-600}"
 SELF_TEST_ONLY=0
 
@@ -90,13 +93,40 @@ fi
 EP="${ENDPOINT#*://}"; EP="${EP%%/*}"
 ENDPOINT_HOST="${EP%%:*}"
 ENDPOINT_PORT="${EP##*:}"
-[[ "$ENDPOINT_PORT" == "$ENDPOINT_HOST" ]] && ENDPOINT_PORT=80
+if [[ "$ENDPOINT_PORT" == "$ENDPOINT_HOST" ]]; then   # no explicit port
+    case "$ENDPOINT" in https://*) ENDPOINT_PORT=443 ;; *) ENDPOINT_PORT=80 ;; esac
+fi
 CONTAINER_BASE="${ENDPOINT/${ENDPOINT_HOST}/127.0.0.1}"
+
+HOMEDIR="$HOME"   # --userns=keep-id keeps uids aligned; paths match host
+
+# Resolve the reviewer CLI and its interpreter, and mount ONLY those two pure-
+# code trees — never all of ~/.local (keyrings, wallets, tokens live there).
+# aider's ~/.local/bin launcher is a symlink into a uv-tool venv whose python is
+# itself a symlink to a uv-managed interpreter; both must be reachable.
+AIDER_REAL=""
+SEAT_CODE_MOUNTS=()
+if _aider="$(command -v aider 2>/dev/null)"; then
+    AIDER_REAL="$(readlink -f "$_aider")"
+    _venv="$(dirname "$(dirname "$AIDER_REAL")")"
+    SEAT_CODE_MOUNTS+=(-v "${_venv}:${_venv}:ro")
+    if _py="$(readlink -f "${_venv}/bin/python" 2>/dev/null)" && [[ -n "$_py" ]]; then
+        _pyhome="$(dirname "$(dirname "$_py")")"
+        SEAT_CODE_MOUNTS+=(-v "${_pyhome}:${_pyhome}:ro")
+    fi
+fi
+if [[ "$SELF_TEST_ONLY" -eq 0 && -z "$AIDER_REAL" ]]; then
+    echo "seat-runner: FATAL aider not found on PATH" >&2; exit 1
+fi
 
 WORK=$(mktemp -d)
 RELAY_PID=""
+SEAT_CONTAINERS=()
 cleanup() {
     [[ -n "$RELAY_PID" ]] && kill "$RELAY_PID" 2>/dev/null || true
+    for _c in ${SEAT_CONTAINERS[@]+"${SEAT_CONTAINERS[@]}"}; do
+        podman rm -f "$_c" >/dev/null 2>&1 || true
+    done
     rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -132,30 +162,35 @@ else
     [[ -s "$WORK/review.diff" ]] || { echo "seat-runner: empty diff ${BASE}...${BRANCH}" >&2; exit 1; }
 fi
 
-# ── The sandboxed seat launcher (timeout-wrapped; network-denied) ────────────
-HOMEDIR="$HOME"   # aider's uv-tool venv carries absolute shebangs, all under
-                  # the invoking user's $HOME; --userns=keep-id keeps uids aligned
+# ── The sandboxed seat launcher (timeout-wrapped, reaped; network-denied) ─────
 run_seat() {
+    local cname="seatrun-$$-${RANDOM}"
+    local rc=0
+    SEAT_CONTAINERS+=("$cname")
     timeout -k 5 "$SEAT_TIMEOUT" podman run --rm \
+        --name "$cname" \
         --network=none \
         --userns=keep-id \
         --read-only \
         --tmpfs "$HOMEDIR":rw,size=256m \
         --tmpfs /tmp:rw,size=64m \
-        -v "$HOMEDIR/.local":"$HOMEDIR/.local":ro \
+        ${SEAT_CODE_MOUNTS[@]+"${SEAT_CODE_MOUNTS[@]}"} \
         -v "$WORK/clone":/repo:ro \
         -v "$WORK/review.diff":/review.diff:ro \
         -v "$WORK/prompt.txt":/prompt.txt:ro \
         -v "$WORK/relay.sock":/relay.sock:rw \
         -v "$RELAY":/net-relay.py:ro \
         -e HOME="$HOMEDIR" \
-        -e PATH="$HOMEDIR/.local/bin:/usr/bin:/bin" \
+        -e PATH="/usr/bin:/bin" \
         -e TERM=dumb \
         -e COLUMNS=500 \
         -e OPENAI_API_KEY=local-dummy \
         -e OPENAI_API_BASE="$CONTAINER_BASE" \
         -w /repo \
-        "$IMAGE" "$@"
+        "$IMAGE" "$@" || rc=$?
+    # timeout kills only the podman client; force-reap the container it orphaned.
+    podman rm -f "$cname" >/dev/null 2>&1 || true
+    return "$rc"
 }
 
 # ── Containment self-test (0217: proven, not assumed; alive-then-blocked) ─────
@@ -163,15 +198,18 @@ echo "seat-runner: containment self-test..." >&2
 PROBE=$(run_seat bash -c '
     echo SANDBOX-ALIVE
     touch /repo/PWNED 2>/dev/null && echo WRITE-ALLOWED || echo WRITE-BLOCKED
-    cat '"$HOMEDIR"'/.ssh/id_* '"$HOMEDIR"'/.claude/scripts/bash-env.sh 2>/dev/null \
+    cat '"$HOMEDIR"'/.ssh/id_* '"$HOMEDIR"'/.claude/scripts/bash-env.sh \
+        '"$HOMEDIR"'/.local/share/keyrings/* '"$HOMEDIR"'/.local/share/kwalletd/* 2>/dev/null \
         | grep -q . && echo SECRET-READ || echo SECRET-BLOCKED
+    if ls '"$HOMEDIR"'/.local/share 2>/dev/null | grep -qvx uv; then echo LOCAL-OVERMOUNTED; else echo LOCAL-SCOPED; fi
     if timeout 3 bash -c ": < /dev/tcp/1.1.1.1/443" 2>/dev/null; then echo NET-ALLOWED; else echo NET-BLOCKED; fi
 ') || { echo "seat-runner: FATAL sandbox failed to start" >&2; exit 1; }
 grep -q SANDBOX-ALIVE  <<<"$PROBE" || { echo "seat-runner: FATAL probe did not run" >&2; exit 1; }
 grep -q WRITE-BLOCKED  <<<"$PROBE" || { echo "seat-runner: FATAL repo write was NOT blocked" >&2; exit 1; }
 grep -q SECRET-BLOCKED <<<"$PROBE" || { echo "seat-runner: FATAL secret read was NOT blocked" >&2; exit 1; }
+grep -q LOCAL-SCOPED   <<<"$PROBE" || { echo "seat-runner: FATAL ~/.local over-mounted (secret-exposure regression?)" >&2; exit 1; }
 grep -q NET-BLOCKED    <<<"$PROBE" || { echo "seat-runner: FATAL external network was reachable (network-deny regression?)" >&2; exit 1; }
-echo "seat-runner: containment OK (sandbox alive; repo write blocked; secrets unreachable; external network denied)" >&2
+echo "seat-runner: containment OK (sandbox alive; repo write blocked; secrets unreachable; ~/.local scoped to CLI venv; external network denied)" >&2
 
 if [[ "$SELF_TEST_ONLY" -eq 1 ]]; then
     echo "seat-runner: --self-test-only complete." >&2
@@ -186,7 +224,7 @@ echo "seat-runner: reviewing ${BRANCH} vs ${BASE} with ${MODEL}..." >&2
 BRIDGE_AND_REVIEW=$(cat <<EOF
 python3 /net-relay.py --listen tcp:127.0.0.1:${ENDPOINT_PORT} --connect unix:/relay.sock &
 for _ in \$(seq 1 50); do (: < /dev/tcp/127.0.0.1/${ENDPOINT_PORT}) 2>/dev/null && break; sleep 0.1; done
-exec ${HOMEDIR}/.local/bin/aider \\
+exec ${AIDER_REAL} \\
     --no-git --chat-mode ask --model "${MODEL}" \\
     --message "\$(cat /prompt.txt)" \\
     --read /review.diff \\
