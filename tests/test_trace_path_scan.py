@@ -61,6 +61,35 @@ def test_bash_command_touching_forbidden_path_detected(tmp_path):
     assert ".aws/credentials" in hits[0]["path"]
 
 
+def test_quoted_bash_path_detected(tmp_path):
+    """A quoted path inside a Bash command must still be caught."""
+    trace = _write_trace(tmp_path, [
+        _tool_row("m1", "Bash", {"command": 'cat "~/.ssh/id_rsa"'}),
+    ])
+    hits = tps.scan_trace_for_forbidden_paths(trace)
+    assert len(hits) == 1
+    assert hits[0]["path"] == "~/.ssh/id_rsa"
+    assert "ssh" in hits[0]["reason"].lower()
+
+
+def test_duplicate_tool_use_id_deduped(tmp_path):
+    """The same tool_use block repeated across content rows scores once."""
+    row = _tool_row("m1", "Read", {"file_path": "/home/u/.ssh/id_rsa"})
+    trace = _write_trace(tmp_path, [row, row])
+    hits = tps.scan_trace_for_forbidden_paths(trace)
+    assert len(hits) == 1
+
+
+def test_notebook_path_field_detected(tmp_path):
+    """NotebookEdit carries its path in notebook_path, read defensively."""
+    trace = _write_trace(tmp_path, [
+        _tool_row("m1", "NotebookEdit", {"notebook_path": "/home/u/.aws/nb.ipynb"}),
+    ])
+    hits = tps.scan_trace_for_forbidden_paths(trace)
+    assert len(hits) == 1
+    assert hits[0]["tool"] == "NotebookEdit"
+
+
 def test_other_session_worktree_path_detected(tmp_path):
     trace = _write_trace(tmp_path, [
         _tool_row("m1", "Read", {"file_path": "/home/u/.claude/worktrees/other-session/file.py"}),

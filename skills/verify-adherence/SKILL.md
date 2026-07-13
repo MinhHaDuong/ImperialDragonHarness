@@ -162,9 +162,14 @@ python3 ~/.claude/scripts/trace-path-scan.py --trace <path> [--worktree-root <pa
 
 The scan is pure Python, zero LLM tokens. Pass `--worktree-root` (the caller's
 own worktree path) so the other-session-worktree class can fire; without it only
-the credential class runs. Any hit is **blocking**: record each as a
-`mechanical_failures` entry `{tool, path, reason, file:line}` with rule ref
-`verify-adherence#path-access-scan`.
+the credential class runs. Exit codes: `0` clean, `1` at least one hit, `2` the
+trace path does not exist (an error, **not** a clean pass — treat it like the
+other circuit breakers).
+
+Each JSON hit is `{tool, path, reason, line}`, where `line` is the trace-record
+number. Any hit is **blocking**: record each as a `mechanical_failures` entry
+`{tool, path, reason, file:line}` — using the `--trace` path as `file` and the
+hit's `line` — with rule ref `verify-adherence#path-access-scan`.
 
 ### 2. Grep rules live as adherence tests (no central bank)
 
