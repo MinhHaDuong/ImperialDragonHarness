@@ -20,7 +20,11 @@ cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 [ -z "$cwd" ] && exit 0
 [ -d "$cwd" ] || exit 0
 
-# Not inside a git repo: EnterWorktree fails on its own (or hook-delegated
+# The blocked tool, for an accurate message (EnterWorktree vs Skill, …).
+tool=$(echo "$input" | jq -r '.tool_name // "This tool"' 2>/dev/null || echo "This tool")
+[ -z "$tool" ] && tool="This tool"
+
+# Not inside a git repo: the tool fails on its own (or hook-delegated
 # VCS-agnostic mode handles it) — nothing for this guard to judge.
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
 
@@ -28,21 +32,22 @@ toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || exit 0
 [ "$cwd" = "$toplevel" ] && exit 0
 git -C "$cwd" check-ignore -q "$cwd" 2>/dev/null || exit 0
 
-# Parked cwd: a git-ignored runtime directory inside some repo. EnterWorktree
-# would target that repo, which is almost never the intended project.
+# Parked cwd: a git-ignored runtime directory inside some repo. The tool would
+# target that repo, which is almost never the intended project.
 cat >&2 <<EOF
 Blocked: the session base cwd is parked in a git-ignored runtime directory:
   cwd:  $cwd
   repo: $toplevel
-EnterWorktree resolves the target repo from the session base cwd, so it would
-create the worktree inside '$toplevel' — likely not the intended project. A
-'cd' in a Bash call does not move the base cwd (it resets after every call).
+$tool resolves its target repo from the session base cwd, so it would act on
+'$toplevel' — likely not the intended project. A 'cd' in a Bash call does not
+move the base cwd (it resets after every call).
 
-If '$toplevel' IS the intended repo, run EnterWorktree from its root instead.
-Otherwise fall back to manual isolation in the correct repo:
+If '$toplevel' IS the intended repo, invoke $tool from its root instead.
+Otherwise re-launch the session (or EnterWorktree) with its base cwd at the
+correct repo, or fall back to manual isolation:
   git -C <project> worktree add <project>/.claude/worktrees/<name> -b <branch>
 then drive all work with absolute paths and 'git -C'. After any EnterWorktree,
 verify ownership: basename "\$(git rev-parse --show-toplevel)" must match the
-expected worktree/project name. See ticket 0267.
+expected worktree/project name. See tickets 0267 and 0306.
 EOF
 exit 2
