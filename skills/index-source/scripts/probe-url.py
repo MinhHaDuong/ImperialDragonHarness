@@ -26,7 +26,11 @@ from urllib.parse import urlparse
 UA = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
 log = logging.getLogger("probe-url")
 
-DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", re.I)
+DOI_BARE_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", re.I)
+# Anchor on doi.org/ or "DOI:" preamble so a document's own DOI is preferred
+# over the first bare DOI cited in the body (mirrors zotero-import.py's
+# DOI_ANCHORED_RE / find_doi()).
+DOI_ANCHORED_RE = re.compile(r"(?:doi\.org/|doi[:\s]+)(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)", re.I)
 ARXIV_RE = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5}(v\d+)?)\b", re.I)
 ISBN_RE = re.compile(r"\b97[89][-– ]?(?:\d[-– ]?){9}\d\b")
 
@@ -75,8 +79,12 @@ class MetaParser(HTMLParser):
 
 
 def fetch(url: str, timeout: int) -> tuple[bytes, str, str]:
+    if urlparse(url).scheme not in ("http", "https"):
+        raise ValueError(f"unsupported URL scheme (http/https only): {url}")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
+        if urlparse(r.geturl()).scheme not in ("http", "https"):
+            raise ValueError(f"redirected to unsupported URL scheme: {r.geturl()}")
         return r.read(), r.geturl(), r.headers.get("Content-Type", "")
 
 
@@ -177,10 +185,13 @@ def pdf_info(path: Path) -> dict:
 def find_identifiers(text: str, doi_meta: str = "") -> dict:
     ids: dict = {}
     doi = doi_meta.strip()
-    if not doi and (mo := DOI_RE.search(text)):
-        doi = mo.group(0)
+    if not doi:
+        if mo := DOI_ANCHORED_RE.search(text):
+            doi = mo.group(1)
+        elif mo := DOI_BARE_RE.search(text):
+            doi = mo.group(0)
     if doi:
-        ids["doi"] = doi.rstrip(".")
+        ids["doi"] = doi.rstrip(".,;)»")
     if mo := ARXIV_RE.search(text):
         ids["arxiv"] = mo.group(1)
     if mo := ISBN_RE.search(text):
@@ -220,13 +231,18 @@ def probe_one(url: str, staging: Path, timeout: int) -> dict:
     meta = {} if is_pdf else parse_html(text)
     stem = slugify(f"{host}-{meta.get('title', urlparse(final_url).path)}")
     path = staging / f"{stem}.{ext}"
+    n = 1
+    while path.exists():
+        n += 1
+        path = staging / f"{stem}-{n}.{ext}"
     path.write_bytes(body)
     rec["staged_path"] = str(path)
     rec["mime"] = "application/pdf" if is_pdf else "text/html"
 
     if is_pdf:
         pi = pdf_info(path)
-        rec.update({k: v for k, v in pi.items() if k == "page_count"})
+        if "page_count" in pi:
+            rec["page_count"] = pi["page_count"]
         text = pi.get("first_text", "")
     rec["meta"] = meta
     rec["identifiers"] = find_identifiers(text or "", meta.get("doi_meta", ""))
