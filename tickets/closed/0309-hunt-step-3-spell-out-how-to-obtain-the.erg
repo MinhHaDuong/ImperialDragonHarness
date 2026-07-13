@@ -2,10 +2,13 @@
 Title: hunt step 3: spell out how to obtain the session PID for the t{N}-{pid} worktree name
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #538
 
 --- log ---
 2026-07-13T09:04Z Minh Ha-Duong created
 
+2026-07-13T11:24Z note hunt step 3 shows bash -c echo-PID to resolve discriminator before EnterWorktree; test_pid_discriminator_obtainable added
+2026-07-13T11:33Z Minh Ha-Duong closed — autoclosed — PR #538
 --- body ---
 ## Context
 

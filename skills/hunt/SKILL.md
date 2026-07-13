@@ -42,9 +42,13 @@ argument-hint: <ticket-id>
      **is** the confirmation only if the current tree passes the same clean `agent-*`
      check; a rejection over a dirty or non-`agent-*` tree means STOP — the worktree is
      not owned — not an error to proceed through.
-   - Otherwise call `EnterWorktree` with name `t$ARGUMENTS-$$` (the `$$` session-PID
-     suffix keeps parallel sessions on the same ticket in distinct worktree paths),
-     even if the session already sits inside some other, unowned worktree.
+   - Otherwise call `EnterWorktree` with name `t$ARGUMENTS-<pid>`, where `<pid>`
+     is the session PID — a discriminator that keeps parallel sessions on the same
+     ticket in distinct worktree paths. Resolve it to a literal first (the
+     `EnterWorktree` name schema rejects `$` characters): run `bash -c 'echo $$'`
+     and substitute the number, e.g. pass `t$ARGUMENTS-12345`, not the raw
+     `t$ARGUMENTS-$$`. Call `EnterWorktree` even if the session already sits inside
+     some other, unowned worktree.
    Confirm with `basename "$(git rev-parse --show-toplevel)"`: it must be `t$ARGUMENTS`,
    begin with `t$ARGUMENTS-`, or be the `agent-*` worktree of this session (rules/git.md § anchor branch-mutating git
    across a forked-skill boundary). Ad hoc orchestrators should not hand-type this
