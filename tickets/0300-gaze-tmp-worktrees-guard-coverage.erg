@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Bring gaze review worktrees under guard coverage (move out of /tmp or broaden fast-paths)
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (audit finding: /tmp review worktrees outside every guard fast-path)
+
+--- body ---
+## Context
+
+Child of tracking ticket 0252. The audit
+(docs/audit-0252-worktree-ownership-2026-07-12.md) found gaze creates its
+review worktrees under `/tmp/review-<pr>`, outside the `.claude/worktrees/`
+fast-path every guard keys on — so neither the existing guards nor the new
+0296 identity guard cover them. Both audit incidents are uncovered there.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — review-worktree creation site
+- `scripts/guard-*.sh`, `scripts/pretooluse-worktree-path-guard.sh` — fast-path patterns
+- 0296's new guard — must cover whichever location wins
+
+## Actions
+
+1. Decide: move gaze review worktrees under `<repo>/.claude/worktrees/review-<pr>`
+   (preferred — one guarded namespace), or broaden every guard's fast-path
+   to include the /tmp pattern.
+2. Apply the choice; sweep for other skills creating worktrees outside
+   `.claude/worktrees/` (verify forks were known to use /tmp too).
+3. Update cleanup paths (worktree-gc, stale-worktree checks) for the new location.
+
+## Test
+
+- Replay a mutation inside a gaze review worktree and assert the 0296
+  guard evaluates it (not fast-pathed to silence).
+
+## Verification
+
+- [ ] No harness skill creates worktrees outside the guarded namespace(s)
+- [ ] gaze end-to-end still works (review worktree created, used, cleaned)
+
+## Invariants
+
+- gaze behavior unchanged apart from the worktree location
+
+## Exit criteria
+
+- [ ] All skill-created worktrees live inside guard coverage
+- [ ] `make check` passes

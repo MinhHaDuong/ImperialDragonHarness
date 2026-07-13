@@ -1,0 +1,60 @@
+%erg 0.1
+Title: Live worktree-identity preflight guard for mutating git/erg commands
+Created: 2026-07-13
+Author: claude
+
+--- log ---
+2026-07-13T07:00Z claude created child of 0252 (author ratified model A, 2026-07-13)
+
+--- body ---
+## Context
+
+Child of tracking ticket 0252 (model A, ratified 2026-07-13). Incident I1
+(aedist, 2026-06-11/12): a session's worktree was deregistered mid-session;
+the directory remained, so bare git commands fell through to the PRIMARY
+repo and a `git checkout -B` moved the primary checkout off main. Every
+existing guard checks the weak predicate ("cwd is some worktree") and let
+it through. Full audit: docs/audit-0252-worktree-ownership-2026-07-12.md.
+
+## Relevant files
+
+- `scripts/guard-cd-primary-repo.sh` — closest existing guard; pattern to follow for hook JSON handling
+- `scripts/pretooluse-worktree-path-guard.sh` — sibling PreToolUse guard, advisory
+- `~/.claude/settings.json` — hook registration (PreToolUse, Bash matcher)
+
+## Actions
+
+1. New PreToolUse guard on Bash commands that mutate git/erg state
+   (commit, checkout, switch, merge, rebase, push, reset, erg close/new/log).
+2. Fast-path: if cwd does not contain `/.claude/worktrees/`, exit 0
+   (primary-checkout work is governed by other guards).
+3. Otherwise compare the cwd worktree-name segment against
+   `basename $(git rev-parse --show-toplevel)`; block with an explanatory
+   message on mismatch or when rev-parse resolves to the primary root.
+4. Whitelist explicit `git -C <path>` invocations — that idiom is the
+   sanctioned way to intentionally mutate another tree.
+5. Register the hook; keep total overhead at one rev-parse (~5-20 ms).
+
+## Test
+
+- Red first: simulate I1 — a cwd under `.claude/worktrees/<name>/` whose
+  `git rev-parse --show-toplevel` resolves to the primary root — and assert
+  the guard blocks a `git commit` there.
+
+## Verification
+
+- [ ] Guard blocks mutation when rev-parse resolves outside the cwd worktree
+- [ ] Guard passes normal in-worktree mutation (no false positives in a raid wave)
+- [ ] `git -C` invocations pass through
+- [ ] Read-only git (status, log, diff) is never blocked
+
+## Invariants
+
+- `make check` passes; existing guards unaffected
+- Guard stays cheap enough to run on every Bash call (single rev-parse)
+
+## Exit criteria
+
+- [ ] Guard script + hook registration merged
+- [ ] Tests cover I1 replay, false-positive path, and the `git -C` whitelist
+- [ ] `make check` passes
