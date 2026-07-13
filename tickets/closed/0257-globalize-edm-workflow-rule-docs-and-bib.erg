@@ -2,11 +2,13 @@
 Title: Globalize EDM workflow rule and index-source skill (docs and bib staging to Zotero)
 Created: 2026-06-17
 Author: minh
+Closed: autoclosed — PR #552
 
 --- log ---
 2026-06-17T11:45Z minh created
 2026-06-17T12:20Z minh note scope extended — also globalize the index-source skill (built project-local, sibling of zotero-import)
 
+2026-07-13T17:12Z Minh Ha-Duong closed — autoclosed — PR #552
 --- body ---
 ## Context
 A reusable EDM (electronic document management) discipline emerged while
