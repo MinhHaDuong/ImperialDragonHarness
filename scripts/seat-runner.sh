@@ -103,6 +103,19 @@ CONTAINER_BASE="${ENDPOINT/${ENDPOINT_HOST}/127.0.0.1}"
 
 HOMEDIR="$HOME"   # --userns=keep-id keeps uids aligned; paths match host
 
+# A code-mount root derived by walking up from a resolved binary must never be
+# $HOME, ~/.local, or an ancestor of $HOME: mounting any of those drags the real
+# home (keyrings, wallets, tokens) into the seat, defeating the whole scoping.
+# Fail loud, naming the offending path, rather than silently over-exposing.
+_reject_home_exposing_mount() {  # role resolved-path
+    local _role="$1" _path="$2"
+    if [[ "$_path" == "$HOMEDIR" || "$_path" == "$HOMEDIR"/.local \
+          || "$HOMEDIR" == "$_path" || "$HOMEDIR" == "$_path"/* ]]; then
+        echo "seat-runner: FATAL refusing to mount ${_role} '${_path}' — it is \$HOME, ~/.local, or an ancestor of \$HOME (would expose secrets)" >&2
+        exit 1
+    fi
+}
+
 # Resolve the reviewer CLI and its interpreter, and mount ONLY those two pure-
 # code trees — never all of ~/.local (keyrings, wallets, tokens live there).
 # aider's ~/.local/bin launcher is a symlink into a uv-tool venv whose python is
@@ -112,9 +125,14 @@ SEAT_CODE_MOUNTS=()
 if _aider="$(command -v aider 2>/dev/null)"; then
     AIDER_REAL="$(readlink -f "$_aider")"
     _venv="$(dirname "$(dirname "$AIDER_REAL")")"
+    # The resolved root must actually be a venv, and must not expose $HOME.
+    [[ -f "$_venv/pyvenv.cfg" ]] \
+        || { echo "seat-runner: FATAL resolved venv root '${_venv}' has no pyvenv.cfg — refusing to mount a non-venv tree" >&2; exit 1; }
+    _reject_home_exposing_mount "venv" "$_venv"
     SEAT_CODE_MOUNTS+=(-v "${_venv}:${_venv}:ro")
     if _py="$(readlink -f "${_venv}/bin/python" 2>/dev/null)" && [[ -n "$_py" ]]; then
         _pyhome="$(dirname "$(dirname "$_py")")"
+        _reject_home_exposing_mount "interpreter" "$_pyhome"
         SEAT_CODE_MOUNTS+=(-v "${_pyhome}:${_pyhome}:ro")
     fi
 fi

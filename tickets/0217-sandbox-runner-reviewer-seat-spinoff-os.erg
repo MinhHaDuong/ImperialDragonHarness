@@ -16,6 +16,8 @@ Author: claude
 2026-07-13T19:59Z claude note Criterion 4 (normalizer): evidence-only — already satisfied by closed ticket 0218 (commit 27f5eb1: harvest template-echo drop + dedupe in reviewers.sh, tested in tests/test_reviewers.sh). No normalizer code written here.
 2026-07-13T19:59Z claude note Criterion 5 (per-seat timeout): run_seat wraps every podman invocation in 'timeout -k 5 $SEAT_TIMEOUT' (default 600s); a hung/slow seat is killed non-zero and loud. Fail-open stays one layer up in reviewers.sh (already tested there). Machine proof: tests/test_seat_runner.sh stubs podman with a 30s sleep, sets SEAT_TIMEOUT=2, asserts non-zero exit AND bounded wall-clock (<15s), which catches a dropped timeout wrapper.
 2026-07-13T19:59Z claude note Criterion 6 (end-to-end smoke): DONE via the hardened path. Built localhost/seat-runner:v1 from scripts/seat-runner/Containerfile (ubuntu:24.04 + python3/git/ca-certs); stood up a stub OpenAI-compatible endpoint (127.0.0.1:8012, canned /health + /v1/chat/completions returning FINDING|/SUMMARY| lines) and drove the FULL pipeline: seat-runner.sh --network=none reviewed t217-sandbox-net-isolation vs origin/main, reached the endpoint ONLY through the relay socket, self-test passed, and contract-shaped findings landed in the out file (exit 0). Combined with the 2026-06-05 scorecards (real Devstral/Qwen models over a real ~600-line branch diff, local-branch-diff reviewer, no forge round-trip) this closes criterion 6 on the network-hardened design.
+2026-07-13T21:07Z claude note correction: criterion-3 explicit env construction lives in run_seat() at scripts/seat-runner.sh:~183-191; the ~145-160 citation in the 19:59Z note is stale
+2026-07-13T21:07Z claude note bump verify-reroll — round 1: venv-root derivation guard + verifiable minors
 --- body ---
 ## Context
 
@@ -48,6 +50,9 @@ plumbing (0216 stays Claude-native) and is the natural spinoff.
 - Gated by the open decorrelation question (deep-research wbclco9po):
   how many seats are worth running is unproven; do not scale N before
   that evidence lands.
+- Spun off 0322 (extend-agnostic-gate-to-scripts-dir): the HOMEDIR fix
+  in this ticket exposed that `check-agnostic.sh` never scans `scripts/`,
+  so a hardcoded home path in a shell/python helper escapes the gate.
 
 ## Actions (scoping — refine before execution)
 

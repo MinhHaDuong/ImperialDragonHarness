@@ -59,6 +59,17 @@ assert_contains "orphaned container is force-reaped"  "podman rm -f"    "$SRC"
 assert_absent   "no wholesale ~/.local mount"        'HOMEDIR/.local"'  "$CODE"
 assert_contains "allowlisted code-only mounts"       "SEAT_CODE_MOUNTS" "$SRC"
 assert_contains "self-test proves ~/.local scoped"   "LOCAL-SCOPED"     "$SRC"
+# The derived venv root must be validated before it is bind-mounted: it must be
+# a real venv (pyvenv.cfg) and must not be $HOME / ~/.local / an ancestor of
+# $HOME. A dropped guard would let a mis-resolved aider drag the whole home in.
+assert_contains "venv root validated by pyvenv.cfg"  "pyvenv.cfg"       "$CODE"
+assert_contains "home-exposing mount rejected"       "_reject_home_exposing_mount" "$CODE"
+# The rejection must actually cover the ancestor case, not just equality.
+if printf '%s' "$CODE" | grep -Eq '\$HOMEDIR" == "\$_path"/\*|\$HOMEDIR == \$_path/\*'; then
+    pass "home-exposing guard covers ancestor case"
+else
+    fail "home-exposing guard covers ancestor case"
+fi
 
 [ -f "$RELAY" ] && pass "net-relay.py exists" || fail "net-relay.py exists"
 if command -v python3 >/dev/null; then
@@ -103,6 +114,28 @@ STUB
 else
     echo "SKIP: python3/timeout absent — timeout behaviour test"
 fi
+
+# ── tier 2a′: home-exposing mount is refused before any podman run ───────────
+# Fake an aider that resolves two levels below $HOME, so the derived venv root
+# equals $HOME. With a pyvenv.cfg planted (venv check passes) the ancestor guard
+# must fire and exit non-zero BEFORE run_seat ever calls `podman run`.
+FH="$WORK/fakehome"; mkdir -p "$FH/bin"
+: > "$FH/pyvenv.cfg"                 # make the venv check pass
+printf '#!/bin/sh\n' > "$FH/bin/aider"; chmod +x "$FH/bin/aider"
+STUBBIN2="$WORK/stubbin2"; mkdir -p "$STUBBIN2"
+# A podman stub that FAILS if `run` is ever reached — proves the guard fires first.
+cat > "$STUBBIN2/podman" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+    run) echo "GUARD-BYPASS: podman run reached" >&2; exit 99 ;;
+    *)   exit 0 ;;
+esac
+STUB
+chmod +x "$STUBBIN2/podman"
+guard_err="$(HOME="$FH" PATH="$STUBBIN2:$FH/bin:$PATH" bash "$SR" --self-test-only 2>&1 >/dev/null)" && guard_rc=0 || guard_rc=1
+[ "$guard_rc" -ne 0 ] && pass "home-exposing venv root exits non-zero" || fail "home-exposing venv root exits non-zero"
+assert_contains "guard names the refused mount"      "refusing to mount" "$guard_err"
+assert_absent   "guard fires before any podman run"  "GUARD-BYPASS"      "$guard_err"
 
 # ── tier 2b: real containment self-test (podman + image) ─────────────────────
 if ! command -v podman >/dev/null; then
