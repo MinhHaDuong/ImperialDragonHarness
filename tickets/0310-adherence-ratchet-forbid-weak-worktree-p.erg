@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Adherence ratchet: forbid weak worktree predicates outside an allowlist
+Created: 2026-07-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-13T09:10Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Filed at the 0252-family roar (2026-07-13), per the standing-regression-test
+rule: the weak worktree predicate had class shape — `[ -f .git ]` appeared in
+erg-pr-merge (fixed, 0301) and survives in two sibling guards (0308). A green
+per-PR gate does not stop the class from re-entering in an unrelated future
+script; only a standing adherence test does.
+
+## Actions
+
+1. Adherence-tier test (tests/, @pytest.mark.adherence style used by this
+   repo's bash-suite checks) that greps scripts/ and skills/ for weak
+   worktree predicates (`[ -f .git ]` and close variants) outside an
+   explicit allowlist.
+2. Seed the allowlist with the two 0308 scripts (shrink when 0308 lands)
+   and the explanatory comment in skills/merge/erg-pr-merge:26.
+3. Prove RED by temporarily adding a weak predicate to a scratch script.
+
+## Exit criteria
+- [ ] Ratchet test merged, RED-proven, allowlist documented
+- [ ] Allowlist shrinks with 0308 (cross-reference both tickets)
+- [ ] `make check` passes
