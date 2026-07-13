@@ -2,10 +2,13 @@
 Title: Adherence ratchet: forbid weak worktree predicates outside an allowlist
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #541
 
 --- log ---
 2026-07-13T09:10Z Minh Ha-Duong created
 
+2026-07-13T12:29Z Minh Ha-Duong note RED-proven: scratch script with [ -f .git ] failed the ratchet, removed before commit. Allowlist seeded with 3 surviving explanatory comments only (block-pr-merge-in-worktree.sh:13, pretooluse-worktree-path-guard.sh:17, erg-pr-merge:26) — 0308 already landed (PR #540), so the two guard scripts carry no live weak predicate. Test at tests/test_worktree_predicate_ratchet.py
+2026-07-13T12:50Z Minh Ha-Duong closed — autoclosed — PR #541
 --- body ---
 ## Context
 
