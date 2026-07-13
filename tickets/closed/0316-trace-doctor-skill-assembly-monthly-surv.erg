@@ -1,0 +1,75 @@
+%erg 0.1
+Title: trace-doctor skill assembly: monthly survey and ranked report from committed scripts
+Created: 2026-07-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #553
+
+--- log ---
+2026-07-13T15:48Z Minh Ha-Duong created
+
+2026-07-13T17:16Z Minh Ha-Duong closed — autoclosed — PR #553
+--- body ---
+## Context
+
+Child of tracker 0236 (session-trace economics audit). The study phases
+1-4 are closed and phase 5's live arms run on their own clock (0245,
+0315); the tracker's own deliverable — a `trace-doctor` skill modeled on
+skill-doctor (survey scripts + interpretation + tickets out, never
+auto-applies) — is owned by no child. This ticket assembles it from the
+already-committed scripts, plus the two phase-4 adopt items the tracker
+lists as unowned.
+
+## Relevant files
+
+- `skills/skill-doctor/SKILL.md` — the model to mirror (structure,
+  never-auto-apply discipline, ticket-out flow)
+- `scripts/trace-stats.py` — census, per-agent cost rows, six-way tool
+  taxonomy (0292)
+- `scripts/trace-hypotheses.py` — hypothesis statistics
+- `scripts/trace-pr-join.py` — trace→PR outcome join (cache accumulates)
+- `scripts/trace-compact-audit.py` — missed compact/clear detector
+  (phase-4 adopt item #3: wire into the monthly run)
+- `rules/workflow.md` — phase-4 adopt item #1: micro-turn discipline rule
+- `docs/trace-hypotheses-2026-06.md`, `docs/trace-counterfactuals-2026-06.md`
+  — the interpretation playbook the skill encodes
+
+## Actions
+
+1. Author `skills/trace-doctor/SKILL.md`: run the four committed scripts
+   over the last-28-day corpus under `~/.claude/projects/`, interpret
+   against the phase 3-4 playbook, emit a ranked recommendation report
+   (shadow dollars, stated as such), file tickets for actionable
+   findings; never auto-applies changes.
+2. Wire `trace-compact-audit.py` into that run (adopt item #3).
+3. Add the micro-turn discipline rule to `rules/workflow.md` (adopt
+   item #1), one paragraph, sourced from the phase-4 report.
+4. Regenerate the skills catalog (`make skills-catalog`).
+5. Smoke-run the skill's mechanical part on the live corpus; the report
+   lands in the PR body or docs/, not as tracked per-session data.
+6. Append a note to tracker 0236: skill assembled; integration review
+   then owns only the 0245/0315 loose ends.
+
+## Test
+
+- Extend the skills adherence surface: catalog drift
+  (`make check-skills-drift`) stays green with the new skill; if a
+  description-format test exists (`tests/test_skill_descriptions.py`),
+  the new SKILL.md passes it.
+
+## Invariants
+
+- Zero LLM calls in committed scripts; no per-session trace content in
+  tracked artifacts
+- The skill only reports and files tickets — never edits skills/rules
+  itself
+- Existing scripts stay additive-only
+
+## Exit criteria
+
+- [ ] `skills/trace-doctor/SKILL.md` exists, catalog regenerated, drift
+      check green
+- [ ] compact-audit wired into the documented monthly run
+- [ ] micro-turn rule added to `rules/workflow.md`
+- [ ] Mechanical survey smoke-ran on the live corpus
+- [ ] 0236 log updated
+- [ ] `make check` passes
