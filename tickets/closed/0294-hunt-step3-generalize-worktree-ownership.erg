@@ -2,11 +2,13 @@
 Title: hunt step 3: generalize worktree-ownership predicate for spawned agents
 Created: 2026-07-13
 Author: claude
+Closed: autoclosed — PR #512
 
 --- log ---
 2026-07-13T06:43Z claude created child of 0251 (PR2 of ratified Option A)
 
 2026-07-13T07:11Z bump verify-reroll — round 1: disable-model-invocation flip untraceable to ticket (scope); ownership predicate lacks executable clean-tree check
+2026-07-13T07:19Z Minh Ha-Duong closed — autoclosed — PR #512
 --- body ---
 ## Context
 
