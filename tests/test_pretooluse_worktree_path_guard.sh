@@ -101,4 +101,45 @@ else
     fail=1
 fi
 
+# 8. Real worktree OUTSIDE .claude/worktrees/ (submodule / ad-hoc worktree) →
+# silent. The weak `[ -f .git ]` predicate warned here (false positive on any
+# gitdir: file); the identity predicate keys on the .claude/worktrees/<name>
+# path segment, so an out-of-convention tree goes silent. Regression for
+# ticket 0308. Exercises the real-git branch of _in_worktree() (no env override).
+_case8_primary=$(mktemp -d)
+git -C "$_case8_primary" init -q
+git -C "$_case8_primary" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+git -C "$_case8_primary" worktree add -q "$_case8_primary/adhoc"
+out=$( cd "$_case8_primary/adhoc" \
+       && printf '{"tool_name":"Write","tool_input":{"file_path":"%s/src/main.py","content":"x"}}' "$_case8_primary" \
+       | bash "$HOOK" 2>&1 || true)
+git -C "$_case8_primary" worktree remove --force "$_case8_primary/adhoc" 2>/dev/null || true
+rm -rf "$_case8_primary"
+if [ -z "$out" ]; then
+    echo "PASS: silent in a worktree outside .claude/worktrees/ (identity predicate)"
+else
+    echo "FAIL: expected silence for non-harness worktree; got: $out"
+    fail=1
+fi
+
+# 9. Real harness worktree (.claude/worktrees/<name>) → still warns on a
+# main-repo path. Positive companion to case 8: the tightened predicate keeps
+# firing where it should.
+_case9_primary=$(mktemp -d)
+git -C "$_case9_primary" init -q
+git -C "$_case9_primary" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+mkdir -p "$_case9_primary/.claude/worktrees"
+git -C "$_case9_primary" worktree add -q "$_case9_primary/.claude/worktrees/t001"
+out=$( cd "$_case9_primary/.claude/worktrees/t001" \
+       && printf '{"tool_name":"Write","tool_input":{"file_path":"%s/src/main.py","content":"x"}}' "$_case9_primary" \
+       | bash "$HOOK" 2>&1 || true)
+git -C "$_case9_primary" worktree remove --force "$_case9_primary/.claude/worktrees/t001" 2>/dev/null || true
+rm -rf "$_case9_primary"
+if echo "$out" | grep -q "Worktree path guard"; then
+    echo "PASS: warns in a real harness worktree (identity predicate positive)"
+else
+    echo "FAIL: expected warning in harness worktree; got: $out"
+    fail=1
+fi
+
 exit $fail
