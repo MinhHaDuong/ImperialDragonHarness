@@ -22,8 +22,32 @@ set -euo pipefail
 
 die() { echo "erg-pr-merge: $*" >&2; exit 1; }
 
+# Identity predicate (tickets 0301/0296; incidents I1/I2). Do NOT regress to
+# `[ -f .git ]`: that matched ANY dir with a `.git` FILE — a submodule, or a
+# linked worktree outside the harness convention — and trusted the path blindly.
+# Instead require that (a) the cwd sits under a `.claude/worktrees/<name>`
+# segment AND (b) git's own toplevel is exactly that worktree: basename equals
+# <name> and the toplevel is not the enclosing repo before the marker. A plain
+# dir planted under the marker (git resolves to the enclosing repo, a different
+# basename) is correctly rejected. A PreToolUse hook fires once on the outer
+# script invocation and cannot front these internal git calls, so the check is
+# self-contained by design.
 in_worktree() {
-    [ -f .git ] && grep -q "gitdir:" .git 2>/dev/null
+    local cwd top name prefix
+    cwd=$(pwd -P)
+    case "$cwd" in
+        */.claude/worktrees/*) ;;
+        *) return 1 ;;
+    esac
+    prefix=${cwd%%/.claude/worktrees/*}   # enclosing path before the marker
+    name=${cwd#*/.claude/worktrees/}      # <name>[/subdir...]
+    name=${name%%/*}
+    [ -n "$name" ] || return 1
+    top=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+    [ -n "$top" ] || return 1
+    [ "$(basename "$top")" = "$name" ] || return 1
+    [ "$top" != "$prefix" ] || return 1
+    return 0
 }
 
 # ── Step 0: resolve PR ────────────────────────────────────────────────────────
