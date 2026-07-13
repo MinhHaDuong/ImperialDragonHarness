@@ -39,20 +39,63 @@ case "$cwd" in
     *) exit 0 ;;
 esac
 
+# Normalize away shell quote characters before matching. A quoted verb token
+# (`git "commit"`) otherwise breaks the git↔verb adjacency the regex relies on
+# and slips through. Stripping quotes also splits a semicolon/ampersand that was
+# hiding inside a quoted argument into its own segment below, which only makes
+# the guard MORE conservative (it errs toward the identity check, never away).
+# Two indirections stay opaque to any static command-string scan and are OUT OF
+# SCOPE here: command substitution (`git $(echo commit)`) and git aliases
+# (`git ci` for commit) — a regex cannot see through either without invoking git
+# itself. See ticket 0302 if closing the alias gap ever becomes necessary.
+norm=${cmd//\"/}
+norm=${norm//\'/}
+
+# Mutating-verb patterns, reused by the fast path and the per-segment scan.
+# The git list adds the destructive verbs the original allowlist missed
+# (cherry-pick/revert/apply/am/restore/filter-branch/gc/pull/clean, worktree
+# remove|move|prune|add, branch|tag with a delete/force/move short flag, config,
+# fetch --prune). Dual-mode verbs (branch/tag) are gated only in their
+# destructive flag form so read-only listing (`git branch -vv`) still passes.
+# Long-form flags (`git branch --delete`) are a known residual gap.
+GIT_MUT='\bgit\s+(commit|checkout|switch|merge|rebase|push|reset|add|mv|rm|stash|cherry-pick|revert|apply|am|restore|filter-branch|gc|pull|clean|worktree\s+(remove|move|prune|add)|(branch|tag)\s+-[a-zA-Z]*[dDfFmM]|config|fetch\s+--prune)\b'
+ERG_MUT='\berg\s+(new|close|log|label|unlabel|archive|rm|migrate|init|install|update)\b'
+
 # Fast path 2 (pure string, no git call yet): command carries no mutating verb →
 # read-only git (status/log/diff) and everything else pass untouched.
 # erg's install/update/init also mutate on-disk state (skills/molt calls
 # `erg update` to replace the installed binary), so they are gated too.
-echo "$cmd" | grep -qP '\bgit\s+(commit|checkout|switch|merge|rebase|push|reset|add|mv|rm|stash)\b' \
-  || echo "$cmd" | grep -qP '\berg\s+(new|close|log|label|unlabel|archive|rm|migrate|init|install|update)\b' \
+echo "$norm" | grep -qP "$GIT_MUT" \
+  || echo "$norm" | grep -qP "$ERG_MUT" \
   || exit 0
 
-# Whitelist: an explicit `git -C <path>` names its target tree, so the cwd
-# identity is irrelevant — that idiom is the sanctioned way to mutate another
-# tree on purpose (rules/git.md).
-if echo "$cmd" | grep -qP '\bgit\s+-C\s'; then
-    exit 0
-fi
+# Whitelist, re-checked PER SEGMENT (ticket 0302 reroll). An explicit
+# `git -C <path>` names its target tree, so the cwd identity is irrelevant —
+# the sanctioned cross-tree idiom (rules/git.md). But the exemption is sound
+# ONLY for the segment that carries the -C: a compound like
+# `git -C X status && git commit -m y` must NOT let the leading `git -C` whitelist
+# its trailing BARE `git commit`, which mutates whatever bare git resolves to.
+# The old guard tested the literal substring `git -C ` over the WHOLE command and
+# waved the entire chain through — the I1 fall-through this guard exists to close.
+# Fix: split on shell separators (&&, ||, ;, |, &) and require every MUTATING
+# segment to name -C in ITSELF; any mutating segment without its own -C forces
+# the identity check below. (Note: printf adds a trailing newline so `read`
+# does not drop the final, separator-less segment.)
+needs_check=0
+while IFS= read -r seg; do
+    if echo "$seg" | grep -qP "$GIT_MUT"; then
+        if echo "$seg" | grep -qP '\bgit\s+-C\s'; then
+            continue
+        fi
+        needs_check=1
+        break
+    fi
+    if echo "$seg" | grep -qP "$ERG_MUT"; then
+        needs_check=1
+        break
+    fi
+done < <(printf '%s\n' "$norm" | tr ';&|' '\n')
+[ "$needs_check" -eq 0 ] && exit 0
 
 # cwd = .../.claude/worktrees/<name>/...  →  extract <name> and the primary root.
 worktree_rest="${cwd#*/.claude/worktrees/}"

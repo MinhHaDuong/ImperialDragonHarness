@@ -91,6 +91,37 @@ _assert_allowed "erg new in a real registered worktree" \
 _assert_allowed "git -C whitelist in the broken worktree" \
                 "git -C $PRIMARY commit -m x" "$BROKEN"
 
+# --- (c2) COMPOUND-command whitelist bypass (ticket 0302 reroll) -----------
+# A leading `git -C <path>` in a chained command must NOT whitelist a trailing
+# BARE mutating git/erg that resolves to the wrong tree. Regression for the
+# substring-match bypass: the old guard tested `git -C ` over the whole string.
+_assert_blocked "compound: git -C status && bare git commit" \
+                "git -C $PRIMARY status && git commit -m x" "$BROKEN"
+_assert_blocked "compound: read-only git ; bare erg close" \
+                "git status ; erg close 1 done" "$BROKEN"
+# Two self-contained git -C segments (each names its target) stay whitelisted.
+_assert_allowed "compound: two git -C segments stay whitelisted" \
+                "git -C $PRIMARY status && git -C $PRIMARY commit -m x" "$BROKEN"
+
+# --- newly-gated destructive verbs → BLOCK in the deregistered worktree -----
+_assert_blocked "git cherry-pick in deregistered worktree" \
+                "git cherry-pick abc123" "$BROKEN"
+_assert_blocked "git branch -D in deregistered worktree" \
+                "git branch -D somebranch" "$BROKEN"
+_assert_blocked "git worktree remove in deregistered worktree" \
+                "git worktree remove foo" "$BROKEN"
+_assert_blocked "git config in deregistered worktree" \
+                "git config user.email x@y.z" "$BROKEN"
+_assert_blocked "git pull in deregistered worktree" \
+                "git pull" "$BROKEN"
+# Dual-mode verbs stay allowed in their read-only form (no destructive flag).
+_assert_allowed "git branch -vv (read-only listing) in broken worktree" \
+                "git branch -vv" "$BROKEN"
+
+# --- quoting evasion: git \"commit\" must not slip the verb match -----------
+_assert_blocked "quoted verb git \"commit\" in deregistered worktree" \
+                'git "commit" -m x' "$BROKEN"
+
 # --- (d) read-only git in the broken worktree → ALLOW (verb fast-path) -----
 _assert_allowed "git status in the broken worktree" "git status" "$BROKEN"
 _assert_allowed "git log in the broken worktree"    "git log -1"  "$BROKEN"
