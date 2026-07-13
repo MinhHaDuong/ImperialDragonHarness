@@ -2,12 +2,15 @@
 Title: Consolidate ticket-execution entry points (imagine) — start-ticket / raid / hunt / headless raids
 Created: 2026-06-12
 Author: HDMX-coding-agent
+Closed: Option A delivered via children 0293/0294/0295
 
 --- log ---
 2026-06-12T10:40Z orchestrator created from aedist orchestration-night retrospective (2026-06-11/12)
 2026-07-12T18:55Z claude note Imagine analysis delivered (nightbeat, read-only): start-ticket already merged into hunt (0220) so Q2 is half-resolved; /hunt already IS the canonical core; the real gap is /raid wrapping it in prose instead of a mechanical Skill(hunt) invocation (the aedist drift mechanism); beat.py's `claude -p` spawn already solves headless (no 4th skill); concrete Q4 bug: hunt step 3 ownership check expects t<id> but Agent worktrees are named agent-<id>, colliding with EnterWorktree's no-double-create guard. Recommendation: Option A (skill-invokes-skill), 2-3 small PRs, entry points stay at 2. Full note: docs/imagine-0251-entry-points-2026-07-12.md. Awaiting author ratification per exit criteria.
 
 2026-07-13T06:44Z note Author ratified Option A, all three PRs (2026-07-13). Exit criterion met: architecture recorded here + docs/imagine-0251-entry-points-2026-07-12.md. Now a tracking ticket; children 0293 (raid PR1), 0294 (hunt PR2), 0295 (stub deletion PR3) filed. Stays open until all children close, per tracking-ticket convention.
+2026-07-13T07:25Z note Integration review done (raid 2026-07-13): children 0293 (PR #510), 0294 (PR #512), 0295 (PR #509) all merged and closed; composition verified on main — hunt disable-model-invocation: false, raid Phase 5 mechanical Skill(hunt) invocation, stub deleted, guard tests in place; full suite green (make check exit 0). Entry points: 2 (hunt, raid), per the ratified constraint.
+2026-07-13T07:25Z Minh Ha-Duong closed — Option A delivered via children 0293/0294/0295
 --- body ---
 ## Context
 
