@@ -38,19 +38,14 @@ def test_check_keeps_static_checks():
         assert dep in deps, f"'check' lost its static prerequisite {dep}"
 
 
-def test_check_fast_excludes_integration_and_slow():
+def test_check_fast_excludes_non_fast_tiers():
     rule = target_recipe("check-fast")
-    assert "not integration" in rule and "not slow" in rule, (
-        f"'check-fast' must exclude integration and slow tiers; current rule:\n{rule}"
-    )
-
-
-def test_check_fast_excludes_adherence():
-    rule = target_recipe("check-fast")
-    assert "not adherence" in rule, (
-        "coding-python.md keeps the adherence tier out of the fast loop — "
-        f"'check-fast' must exclude adherence; current rule:\n{rule}"
-    )
+    for marker in ("not integration", "not slow", "not adherence"):
+        assert marker in rule, (
+            "coding-python.md keeps the integration, slow, and adherence tiers "
+            f"out of the fast loop — 'check-fast' must filter '{marker}'; "
+            f"current rule:\n{rule}"
+        )
 
 
 def test_lint_runs_adherence_tier_only():
