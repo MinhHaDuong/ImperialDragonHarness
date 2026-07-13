@@ -19,7 +19,13 @@ hook_cwd=$(echo "$input" | jq -r '.cwd // empty' 2>/dev/null || true)
 # scripts/guard-worktree-identity.sh: the cwd must sit under
 # `.claude/worktrees/<name>` AND `git rev-parse --show-toplevel` must resolve to
 # a tree whose basename is that `<name>` and is not the primary root itself.
-# (0302 will unify these three copies into a shared helper.)
+# Ticket 0302 decided to keep this copy inline rather than extract a shared
+# `scripts/lib/worktree-identity.sh`: the integrity guards read hook-JSON `.cwd`
+# through `git -C` and are fail-closed, so no one helper fits all sites without
+# changing an input model or a failure contract, and sourcing a lib into this
+# fail-open hook would flip its semantics on a missing file. This copy and the
+# one in `skills/merge/erg-pr-merge` are held in lockstep by
+# tests/test_worktree_identity_predicate_inline.py instead.
 _in_worktree() {
     local cwd top name prefix
     cwd=$(pwd -P)

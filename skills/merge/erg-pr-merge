@@ -31,7 +31,12 @@ die() { echo "erg-pr-merge: $*" >&2; exit 1; }
 # dir planted under the marker (git resolves to the enclosing repo, a different
 # basename) is correctly rejected. A PreToolUse hook fires once on the outer
 # script invocation and cannot front these internal git calls, so the check is
-# self-contained by design.
+# self-contained by design. Ticket 0302 kept this copy inline (not a shared
+# `scripts/lib/…` helper) for that reason: sourcing across the scripts/↔skills/
+# boundary would couple this standalone skill to the scripts tree and, under
+# `set -euo pipefail`, turn a missing lib into an abort. It stays byte-identical
+# to `_in_worktree()` in ~/.claude/scripts/pretooluse-worktree-path-guard.sh,
+# pinned by tests/test_worktree_identity_predicate_inline.py.
 in_worktree() {
     local cwd top name prefix
     cwd=$(pwd -P)
