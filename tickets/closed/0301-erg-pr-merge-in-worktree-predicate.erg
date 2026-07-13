@@ -2,11 +2,13 @@
 Title: Tighten or justify erg-pr-merge in_worktree() weak predicate
 Created: 2026-07-13
 Author: claude
+Closed: autoclosed — PR #521
 
 --- log ---
 2026-07-13T07:00Z claude created child of 0252 (audit finding: `[ -f .git ]` is the weak predicate verbatim)
 
 2026-07-13T08:00Z bump verify-reroll — round 1: guard line `[ "$top" != "$prefix" ]` (skills/merge/erg-pr-merge:49) is load-bearing but untested by any of cases 18-20; add a case 21 pinning the same-basename-as-enclosing-repo lookalike (basename(top)==name AND top==prefix) before re-review
+2026-07-13T08:27Z Minh Ha-Duong closed — autoclosed — PR #521
 --- body ---
 ## Context
 
