@@ -14,6 +14,7 @@ and (d) point ad hoc orchestrators at the beat.py headless pattern.
 Text-grep hygiene test — fast tier, no marker.
 """
 
+import functools
 import re
 from pathlib import Path
 
@@ -21,6 +22,7 @@ REPO = Path(__file__).resolve().parents[1]
 SKILL = REPO / "skills" / "hunt" / "SKILL.md"
 
 
+@functools.cache
 def step3_text() -> str:
     """Return step 3's body with whitespace collapsed to single spaces.
 
@@ -50,7 +52,7 @@ def test_shared_and_explore_worktrees_still_forbidden():
     assert "2026-06-11" in step3, (
         "the 2026-06-11 shared-worktree incident rationale must stay in step 3"
     )
-    assert "not owned" in step3.lower() or "NOT owned" in step3, (
+    assert "not owned" in step3.lower(), (
         "step 3 must still name the not-owned case for shared/explore worktrees"
     )
 
@@ -69,7 +71,7 @@ def test_rejection_as_confirmation_documented():
 def test_headless_pattern_pointer_present():
     """One sentence points ad hoc orchestrators at the beat.py headless pattern."""
     step3 = step3_text()
-    assert 'claude -p "/hunt' in step3 or "claude -p '/hunt" in step3, (
+    assert 'claude -p "/hunt' in step3, (
         "step 3 must point ad hoc orchestrators at the `claude -p \"/hunt <id>\"` "
         "headless pattern that beat.py uses, instead of hand-typed contracts"
     )
