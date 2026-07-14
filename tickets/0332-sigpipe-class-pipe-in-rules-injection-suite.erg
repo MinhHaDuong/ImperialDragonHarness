@@ -7,6 +7,7 @@ Author: claude
 2026-07-14T12:40Z claude created
 2026-07-14T11:29Z claude note imagine: single grep|grep site confirmed (no siblings in suite); the pipe is a same-line cooccurrence check — on-start.sh:33 pairs cat and README.md on one line, so one anchored `grep -qE 'cat[^#]*README\.md'` against the file replaces it with no pipe; capture-then-[[ ]] dropped as ceremony; mutation check unchanged
 2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (file:line-precise, phase-3 absorbed per raid-0252 precedent); anchors verified (suite :44, on-start.sh:33); PASS, no overlap with 0333
+2026-07-14T12:50Z claude note execute: replaced the pipe with single anchored `grep -qE 'cat[^#]*README\.md'` (no pipe, cannot SIGPIPE); sibling sweep re-run — line 44 was the sole grep|grep -q in the suite; mutation on throwaway on-start.sh copy (README.md dropped) makes the converted check FAIL loudly, pristine PASSes; suite green standalone, make check green
 
 --- body ---
 ## Context
@@ -47,6 +48,6 @@ here-string flake); this ticket tracks the residual site.
 - Fail-loud semantics preserved; no retry or `|| true` on the assertion itself.
 
 ## Exit criteria
-- [ ] No `grep | grep -q` pipeline remains in tests/test_harness_rules_injection.sh
-- [ ] Mutation check confirms the converted site still fails on needle removal
-- [ ] `make check` passes
+- [x] No `grep | grep -q` pipeline remains in tests/test_harness_rules_injection.sh
+- [x] Mutation check confirms the converted site still fails on needle removal
+- [x] `make check` passes
