@@ -20,6 +20,11 @@ fail=0
 [[ -x "$SCRIPT" ]]  || { echo "FAIL: $SCRIPT not executable"; exit 1; }
 [[ -x "$ERG_BIN" ]] || { echo "FAIL: $ERG_BIN not found";    exit 1; }
 
+# Real git binary, captured before the PATH-shim below shadows it. The framing
+# shim (cases 26-27) delegates every unframed git call here.
+REAL_GIT=$(command -v git)
+export REAL_GIT
+
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -118,6 +123,37 @@ esac
 STUB
 chmod +x "$STUBDIR/gh"
 
+# ── git shim: rtk-style output-rewrite simulator (tickets 0333) ────────────────
+# Inert by default — every git call is exec'd through the real binary unchanged,
+# so the 25 cases above are unaffected. When a SHIM_FRAME_* flag is set it
+# injects rtk-style framing into the stdout of the ONE targeted subcommand,
+# reproducing what an output-rewriting hook does to a parsed git call, to prove
+# erg-pr-merge's extraction survives it. rtk itself only rewrites the outer
+# Bash-tool command, never a script's internal subprocess git calls, so this is
+# a faithful stand-in for the general output-rewriting/framing threat class,
+# not a claim that rtk corrupts these specific in-script calls.
+cat > "$STUBDIR/git" <<'GITSHIM'
+#!/usr/bin/env bash
+set -uo pipefail
+: "${REAL_GIT:?REAL_GIT must point at the real git binary}"
+sub="${1:-}"; sub2="${2:-}"
+# `branch --show-current` is a confirmed rtk rewrite target. Prepend a banner so
+# a naive `$(git branch --show-current)` capture yields a framed, wrong value.
+if [[ -n "${SHIM_FRAME_BRANCH:-}" && "$sub" == "branch" && "$sub2" == "--show-current" ]]; then
+    echo "--- Changes ---"
+    exec "$REAL_GIT" "$@"
+fi
+# The pre-fix existence guard grepped `git ls-tree` stdout. Emit only a framing
+# banner (drop the real listing) so a grep-over-blob guard spuriously reports a
+# present ticket absent; an exit-code check is immune.
+if [[ -n "${SHIM_FRAME_LSTREE:-}" && "$sub" == "ls-tree" ]]; then
+    echo "--- Changes ---"
+    exit 0
+fi
+exec "$REAL_GIT" "$@"
+GITSHIM
+chmod +x "$STUBDIR/git"
+
 # ── seed a standalone repo with open tickets, then a PR branch ────────────────
 # The real erg resolves its tickets/ dir relative to its own binary location
 # (./tickets/erg → ./tickets/), so each fixture repo gets its own erg copy and
@@ -190,6 +226,9 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       ERG_PR_MERGE_SYNC="${ERG_PR_MERGE_SYNC:-}" \
       ERG_PR_MERGE_MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-2}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
+      REAL_GIT="$REAL_GIT" \
+      SHIM_FRAME_BRANCH="${SHIM_FRAME_BRANCH:-}" \
+      SHIM_FRAME_LSTREE="${SHIM_FRAME_LSTREE:-}" \
       bash "$SCRIPT" 42 )
 }
 
@@ -821,5 +860,57 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on matching title/claim happy path"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Output-rewrite tolerance (ticket 0333). erg-pr-merge parses the stdout of two
+# git calls that are confirmed live rtk rewrite targets: `branch --show-current`
+# (branch guard) and, pre-fix, `ls-tree` grepped for ticket presence. An
+# output-rewriting/framing hook that mangles that stdout must not misfire the
+# guards. The framing git shim (SHIM_FRAME_*) reproduces the mangling; these
+# cases were RED before the fix (branch-guard died "must run from PR branch";
+# ls-tree guard spuriously aborted "absent from tickets/").
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Case 26: branch detection survives a framed `branch --show-current`. The
+# shim prepends a banner to its stdout; the pre-fix `$(git branch --show-current)`
+# captured "--- Changes ---\n<branch>" != PR branch and died. The fix reads the
+# branch via rewrite-immune plumbing, so the merge proceeds and closes the ticket.
+seed_repo framebranch 0330
+BODY26=$'Summary.\n\n**Ticket:** tickets/0330-fixture.erg\n'
+if out26=$(SHIM_FRAME_BRANCH=1 run_merge "$BODY26" "ticket(0330): framed branch" 2>&1); then
+    if closed_has 0330; then echo "PASS: branch guard survives framed branch-detection output; ticket closed"
+    else echo "FAIL: framed branch case did not close 0330"; fail=1; fi
+else
+    echo "FAIL: framed branch-detection output made erg-pr-merge die (RED = pre-fix):"; echo "$out26" | sed 's/^/    /'; fail=1
+fi
+
+# ── Case 27: existence guard survives a framed `ls-tree`. The shim replaces the
+# ls-tree listing with a banner, so a grep-over-blob presence check reports the
+# present ticket absent and aborts. The fix checks presence by exit code
+# (compgen glob + `git cat-file -e HEAD:<path>`), immune to stdout framing, so
+# the merge proceeds. Invariant preserved: a genuinely-absent ticket still
+# aborts (case 22, unframed).
+seed_repo framelstree 0331
+BODY27=$'Summary.\n\n**Ticket:** tickets/0331-fixture.erg\n'
+if out27=$(SHIM_FRAME_LSTREE=1 run_merge "$BODY27" "ticket(0331): framed ls-tree" 2>&1); then
+    if closed_has 0331; then echo "PASS: existence guard survives framed ls-tree output; ticket closed"
+    else echo "FAIL: framed ls-tree case did not close 0331"; fail=1; fi
+else
+    echo "FAIL: framed ls-tree output made erg-pr-merge spuriously abort (RED = pre-fix):"; echo "$out27" | sed 's/^/    /'; fail=1
+fi
+
+# ── Case 28: source ratchet — the two output-rewrite-fragile idioms must not
+# return as live code. No `git branch --show-current` invocation (rewrite
+# target) and no `git ls-tree` piped into grep for the presence guard. Full-line
+# comments are stripped first so the fix's own explanatory prose (which names
+# the retired idiom) does not trip the ratchet.
+SCRIPT_CODE=$(grep -vE '^[[:space:]]*#' "$SCRIPT")
+if echo "$SCRIPT_CODE" | grep -qE 'git branch --show-current'; then
+    echo "FAIL: erg-pr-merge still calls 'git branch --show-current' (rewrite-fragile)"; fail=1
+elif echo "$SCRIPT_CODE" | grep -qE 'ls-tree[^|]*\|[^|]*grep'; then
+    echo "FAIL: erg-pr-merge still greps 'git ls-tree' output (rewrite-fragile presence check)"; fail=1
+else
+    echo "PASS: source ratchet — no branch --show-current, no ls-tree|grep presence check remains"
+fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

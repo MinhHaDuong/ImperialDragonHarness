@@ -61,7 +61,19 @@ flush() {
 while IFS= read -r line; do
     case "$line" in
         "worktree "*) flush; path="${line#worktree }" ;;
-        "branch refs/heads/"*) branch="${line#branch refs/heads/}" ;;
+        "branch refs/heads/"*)
+            # A porcelain branch record is `branch refs/heads/<name>` and a
+            # ref name carries no whitespace. Reject a multi-token remainder
+            # (e.g. an appended framing banner like
+            # `branch refs/heads/main is stale`) so a rewritten/framed line
+            # cannot forge a wrong branch value. Fail closed: with no branch
+            # set, flush() skips the worktree — never a wrongful removal.
+            rest="${line#branch refs/heads/}"
+            case "$rest" in
+                *[[:space:]]*) ;;   # multi-token → ignore
+                *) branch="$rest" ;;
+            esac
+            ;;
         "locked"|"locked "*) locked_flag=1 ;;
         "") flush ;;
     esac
