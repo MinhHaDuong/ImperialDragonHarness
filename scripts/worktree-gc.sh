@@ -96,19 +96,30 @@ flush
 # Root on the PRIMARY repo, not on `git rev-parse --show-toplevel`: when this
 # script runs from a linked worktree (the harness's normal cwd — molt/roar
 # invoke it bare with repo=".") that would resolve to the worktree's own root,
-# whose .claude/worktrees/ is absent, silently skipping the scan. `git worktree
-# list --porcelain` always lists the main worktree first, so registered_paths[0]
-# is the primary root regardless of where we were invoked (invocation-invariant,
-# matching the removal pass above).
-primary_root="${registered_paths[0]:-}"
+# whose .claude/worktrees/ is absent, silently skipping the scan.
+# `--git-common-dir` points at the shared .git of the primary checkout, so its
+# parent IS the primary root — from any worktree, registered or not
+# (invocation-invariant; same plumbing idiom as guard-commit-on-main.sh and
+# pretooluse-worktree-path-guard.sh, hardened by ticket 0297 — no dependency
+# on `git worktree list` output ordering).
+git_common_dir=$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+primary_root=""
+[ -n "$git_common_dir" ] && primary_root=$(dirname "$git_common_dir")
 wtdir="$primary_root/.claude/worktrees"
 if [ -n "$primary_root" ] && [ -d "$wtdir" ]; then
+    # Normalize the registered set ONCE, not per husk: realpath is a fork/exec,
+    # and re-resolving m registered paths for each of n husks is O(n*m) spawns
+    # where O(n+m) suffices.
+    declare -a registered_real=()
+    for reg in "${registered_paths[@]:-}"; do
+        [ -z "$reg" ] && continue
+        registered_real+=("$(realpath "$reg" 2>/dev/null || echo "$reg")")
+    done
     while IFS= read -r -d '' dir; do
         rdir=$(realpath "$dir" 2>/dev/null || echo "$dir")
         is_registered=0
-        for reg in "${registered_paths[@]:-}"; do
-            [ -z "$reg" ] && continue
-            rreg=$(realpath "$reg" 2>/dev/null || echo "$reg")
+        for rreg in "${registered_real[@]:-}"; do
+            [ -z "$rreg" ] && continue
             if [ "$rdir" = "$rreg" ]; then is_registered=1; break; fi
         done
         if [ "$is_registered" -eq 0 ]; then
