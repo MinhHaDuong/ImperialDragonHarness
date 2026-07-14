@@ -26,14 +26,17 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 pass() { echo "PASS: $1"; PASS=$((PASS+1)); }
 fail() { echo "FAIL: $1"; FAIL=$((FAIL+1)); }
 assert_contains() {  # label needle haystack
-    # Here-string, not `printf | grep`: with `set -o pipefail`, grep -q closing
-    # the pipe on an early match SIGPIPEs printf (141), which pipefail then
-    # reports as the pipeline status — a nondeterministic false FAIL on a large
-    # haystack. A here-string has no pipe, so no race.
-    if grep -qF -- "$2" <<<"$3"; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
+    # Pure-bash substring match, no subprocess: the quoted needle makes `==`
+    # a literal (glob-free) comparison, identical to `grep -F`. This supersedes
+    # the earlier here-string form (`grep -qF <<<`): a per-call grep subprocess
+    # reading a here-string tmpfile proved to intermittently return no-match
+    # under parallel `make check` load while the haystack was provably intact
+    # (ticket 0329). The bash builtin has neither a pipe nor a tmpfile, so
+    # neither the SIGPIPE race nor the under-load flake can occur.
+    if [[ "$3" == *"$2"* ]]; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
 }
 assert_absent() {  # label needle haystack
-    if grep -qF -- "$2" <<<"$3"; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
+    if [[ "$3" == *"$2"* ]]; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
 }
 
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────
@@ -48,7 +51,8 @@ CODE="$(printf '%s\n' "$SRC" | grep -v '^[[:space:]]*#')"
 assert_absent   "no --network=host in live code"    "--network=host"   "$CODE"
 assert_contains "per-seat timeout env honoured"     "SEAT_TIMEOUT"     "$SRC"
 # The timeout must actually WRAP the container invocation, not merely be read.
-if grep -Eq 'timeout[^|]*"?\$\{?SEAT_TIMEOUT' <<<"$SRC"; then
+re='timeout[^|]*"?\$\{?SEAT_TIMEOUT'
+if [[ "$SRC" =~ $re ]]; then
     pass "timeout wraps the seat invocation"
 else
     fail "timeout wraps the seat invocation"
@@ -69,7 +73,8 @@ assert_contains "self-test proves ~/.local scoped"   "LOCAL-SCOPED"     "$SRC"
 assert_contains "venv root validated by pyvenv.cfg"  "pyvenv.cfg"       "$CODE"
 assert_contains "home-exposing mount rejected"       "_reject_home_exposing_mount" "$CODE"
 # The rejection must actually cover the ancestor case, not just equality.
-if grep -Eq '\$HOMEDIR" == "\$_path"/\*|\$HOMEDIR == \$_path/\*' <<<"$CODE"; then
+re='\$HOMEDIR" == "\$_path"/\*|\$HOMEDIR == \$_path/\*'
+if [[ "$CODE" =~ $re ]]; then
     pass "home-exposing guard covers ancestor case"
 else
     fail "home-exposing guard covers ancestor case"
@@ -154,7 +159,8 @@ assert_contains "https branch adds --add-host"       "--add-host"       "$SRC"
 # The in-container bridge port must be one variable used consistently: in the
 # CONTAINER_BASE the client dials, AND in the container-side relay listen/wait.
 assert_contains "in-container port var in CONTAINER_BASE" 'CONTAINER_PORT}${ENDPOINT_PATH}' "$CODE"
-if grep -Eq 'net-relay.py --listen tcp:127.0.0.1:\$\{CONTAINER_PORT\}' <<<"$CODE"; then
+re='net-relay.py --listen tcp:127.0.0.1:\$\{CONTAINER_PORT\}'
+if [[ "$CODE" =~ $re ]]; then
     pass "in-container port var drives the bridge listen"
 else
     fail "in-container port var drives the bridge listen"
