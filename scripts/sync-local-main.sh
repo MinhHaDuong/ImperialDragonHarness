@@ -53,8 +53,22 @@ fi
 
 # Where (if anywhere) is the default branch checked out? Refs are shared
 # across worktrees, so one sync covers them all.
-co_path=$(git worktree list --porcelain | awk -v ref="refs/heads/$default" \
-    '$1 == "worktree" { path = substr($0, 10) } $1 == "branch" && $2 == ref { print path }')
+#
+# `git worktree list --porcelain` is a live output-rewrite target: a
+# framing/summarising hook can inject banner lines into its stdout. Parse
+# defensively so such lines cannot corrupt the checkout-location extraction:
+#   - grep keeps only lines that begin with a porcelain record key, dropping
+#     any injected banner (e.g. "--- Changes ---"); `|| true` keeps the empty
+#     result from tripping pipefail;
+#   - the awk requires exactly two fields on a `branch` record (NF == 2), so a
+#     malformed, extra-field summary line ("branch refs/heads/main is stale")
+#     cannot satisfy the ref match and double-emit a path.
+# Porcelain paths may contain spaces, so the `worktree` line keeps substr and no
+# arity check. (ticket 0333)
+co_path=$(git worktree list --porcelain 2>/dev/null \
+    | { grep -E '^(worktree |HEAD |branch |detached$|bare$|$)' || true; } \
+    | awk -v ref="refs/heads/$default" \
+        '$1 == "worktree" { path = substr($0, 10) } $1 == "branch" && NF == 2 && $2 == ref { print path }')
 
 if [ -z "$co_path" ]; then
     # Not checked out anywhere: ff-update the ref from the remote-tracking

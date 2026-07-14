@@ -899,11 +899,14 @@ else
 fi
 
 # ── Case 28: source ratchet — the two output-rewrite-fragile idioms must not
-# return. No `git branch --show-current` (rewrite target) and no `git ls-tree`
-# piped into grep for the presence guard.
-if grep -qE 'git branch --show-current' "$SCRIPT"; then
+# return as live code. No `git branch --show-current` invocation (rewrite
+# target) and no `git ls-tree` piped into grep for the presence guard. Full-line
+# comments are stripped first so the fix's own explanatory prose (which names
+# the retired idiom) does not trip the ratchet.
+SCRIPT_CODE=$(grep -vE '^[[:space:]]*#' "$SCRIPT")
+if echo "$SCRIPT_CODE" | grep -qE 'git branch --show-current'; then
     echo "FAIL: erg-pr-merge still calls 'git branch --show-current' (rewrite-fragile)"; fail=1
-elif grep -qE 'ls-tree[^|]*\|[^|]*grep' "$SCRIPT"; then
+elif echo "$SCRIPT_CODE" | grep -qE 'ls-tree[^|]*\|[^|]*grep'; then
     echo "FAIL: erg-pr-merge still greps 'git ls-tree' output (rewrite-fragile presence check)"; fail=1
 else
     echo "PASS: source ratchet — no branch --show-current, no ls-tree|grep presence check remains"
