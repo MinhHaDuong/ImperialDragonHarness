@@ -1,0 +1,62 @@
+%erg 0.1
+Title: gaze phase 5 (/simplify) runs as direct invocation — Agent-wrap it so edits execute inside review-<pr>
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T20:10Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Follow-up from ticket 0342 (doc/test fix: the worktree-path guard is right,
+the "already whitelisted" claim was wrong). 0342 diagnosed but did not fix the
+real functional gap.
+
+Gaze phase 5 `/simplify` is still a **direct invocation** (skills/gaze/SKILL.md
+notes it "stays as a direct invocation for now"), unlike the read-only review
+fan-out (phases 2–4) and Agent B `/review`, which are Agent-WRAPped with cwd
+pinned to `$primary_root/.claude/worktrees/review-<pr-number>`. Because
+`/simplify` runs directly inside the gaze fork, the PreToolUse hook's `pwd -P`
+is the fork's OWN worktree — a SIBLING of `review-<pr>`, not `review-<pr>`
+itself. `scripts/pretooluse-worktree-path-guard.sh` therefore correctly denies
+`/simplify`'s Edit/Write into `review-<pr>` (the acting worktree does not
+contain the target path — verified live in the #602 gaze, raid 207-325-327),
+and `/simplify` falls back to applying its fixes via Bash. The guard has no
+`review-*` allowlist and should not grow one (that would defeat the identity
+check); the fix is to make `/simplify`'s edits execute from inside
+`review-<pr>`.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — the phase 5 `/simplify` invocation site (§ 2–4, the
+  built-in-slash-command note) and the Agent-WRAP pattern already used for
+  Agent B `/review` in the same section
+- `scripts/pretooluse-worktree-path-guard.sh` — the (correct) denying guard
+
+## Actions
+
+1. Convert phase 5 `/simplify` to the same **Agent-WRAP** pattern as Agent B
+   `/review`: spawn a mutator Agent whose cwd is pinned to
+   `$primary_root/.claude/worktrees/review-<pr-number>`, invoking `/simplify` on
+   the PR from inside that worktree, so its Edit/Write pass the identity guard.
+2. Preserve the fork execution contract: `/simplify` mutates, so unlike the
+   read-only reviewers the wrapping Agent needs write capability in the review
+   worktree — but must not push, branch, or open PRs beyond what phase 5 already
+   does. Decide foreground vs `isolation:"worktree"` against the Fork execution
+   contract (a fork cannot wait on background agents).
+3. Update the SKILL.md note (currently "stays as a direct invocation for now …
+   Tracked at ticket 0342's follow-up") to describe the wrapped invocation.
+
+## Test
+
+- Integration/e2e: run gaze phase 5 on a PR with a simplifiable diff and assert
+  `/simplify`'s edits land via Edit/Write inside `review-<pr>` (no Bash-fallback
+  path), i.e. the guard does not deny.
+
+## Exit criteria
+
+- [ ] Phase 5 `/simplify` executes inside `review-<pr>` and its edits pass the
+      worktree-path guard (no Bash fallback)
+- [ ] SKILL.md note updated to reflect the Agent-WRAP
+- [ ] `make check` passes
