@@ -171,7 +171,9 @@ author are for genuinely NEW scope or destructive/irreversible actions the
 batched decisions did not cover — not for progress, not for permission to
 continue (author doctrine, 2026-07-11).
 
-**Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty.
+**Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty. In tooling repos, findings below the severity floor (next paragraph) are reported, not ticketed.
+
+**Severity floor for tooling repos.** In a tooling/harness repo (this repo, git-erg), file a ticket only when the defect blocks a merge, corrupts state, or bites a science project. Below that bar: fix it inline in the current change, record it in memory, or drop it — sweeps report such findings, they do not mint tickets for them. When a guard misfires, check whether its defect class has fired recently before patching; prefer deleting the guard (and its tests) over growing it. Science repos keep normal filing. (Author directive, 2026-07-15: the ticket queue had reached equilibrium on second-order tooling work.)
 
 **Loophole found → offer to plug it.** When a gap or loophole is identified (audit, review, user-reported check), don't just report it — immediately offer a concrete fix. Propose either implementing it now or opening a ticket. Reporting without offering leaves the user to ask the obvious follow-up.
 

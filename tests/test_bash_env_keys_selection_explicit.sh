@@ -276,6 +276,28 @@ _assert_eq "(9) _be_* dst: not leaked into the env" \
 _assert_eq "(9) _be_* dst: shell survives (rc 0)" \
     "$(_load_rc "$FHOME" "$P9")" "0"
 
+# --- (9b) a protected SRC is refused too, not just DST (ticket 0352) --------------
+# provider:SRC=DST reads SRC from the provider file and exports it as DST. The
+# untrusted project .env picks SRC, so a protected SRC must be refused even when
+# DST is innocuous — closing the earlier asymmetry where SRC got only a GUARD_
+# substring check. The refusal fires before the provider file is even consulted.
+P9B="$(_mkproj p9b 'KEYS=huggingface:LD_PRELOAD=SAFE_DST
+')"
+_assert_eq "(9b) protected SRC: DST not set" \
+    "$(_load_var "$FHOME" "$P9B" SAFE_DST)" ""
+_assert_eq "(9b) protected SRC: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P9B")" "0"
+_assert_contains "(9b) protected SRC: warns 'protected name: LD_PRELOAD'" \
+    "$(_load_stderr "$FHOME" "$P9B")" "refusing KEYS export to protected name: LD_PRELOAD"
+
+# --- (9c) a GUARD_ SRC is refused (was the only SRC check before 0352) -----------
+P9C="$(_mkproj p9c 'KEYS=huggingface:GUARD_ALLOW_PRIMARY_EDIT=SAFE_DST2
+')"
+_assert_eq "(9c) GUARD_ SRC: DST not set" \
+    "$(_load_var "$FHOME" "$P9C" SAFE_DST2)" ""
+_assert_eq "(9c) GUARD_ SRC: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P9C")" "0"
+
 # --- (10) missing provider file -> warn 'KEYS provider not found' -----------------
 # A valid provider NAME whose file does not exist: the file-existence check fires
 # before any subshell and must warn the file-missing diagnostic.

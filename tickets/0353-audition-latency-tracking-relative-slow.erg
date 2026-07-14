@@ -1,0 +1,95 @@
+%erg 0.1
+Title: Audition and seat latency tracking; eliminate slow candidates on peer statistics
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Blocked-by: 0348
+
+--- log ---
+2026-07-14T21:13Z Minh Ha-Duong created
+2026-07-14T21:59Z Minh Ha-Duong note Blocked-by 0348 header added — 0348 reached main via PR #613, forward reference now legal
+
+--- body ---
+## Context
+
+Child of tickets/0205. Author directive (2026-07-14 session): "The
+audition and the skill should track response time. Eliminate slow models
+based on statistics of what others do."
+
+Today the audition scorecard carries one aggregate `latency=<s>s` figure
+and nothing acts on it; the `request` path records no latency at all
+(a hanging seat is fail-open WARNed, but a merely slow seat leaves no
+trace). Slowness matters: a reviewer seat sits on the /gaze critical
+path, and a seat that triples review wall-clock must earn that with
+findings.
+
+The elimination criterion is RELATIVE, not an absolute threshold: peer
+candidates on the same frozen board do identical work, so board-relative
+statistics are host- and diff-size-independent. "Slow" = slow compared
+to what the other candidates demonstrate is achievable.
+
+## Relevant files
+
+- `skills/reviewers/reviewers.sh` — audition per-PR timing, scorecard
+  fields, the elimination computation; `request` per-seat timing
+- `skills/reviewers/SKILL.md` — document the latency gate in the
+  audition → trial → promote pipeline
+- `scripts/seat-runner.sh` — source of per-review wall-clock if it
+  already stamps start/end; otherwise time the invocation in reviewers.sh
+- `tests/test_reviewers_audition.sh`, `tests/test_reviewers.sh` —
+  patterns to extend
+
+## Actions
+
+1. **Capture, audition path**: record wall-clock per board PR; extend
+   the scorecard block with distribution figures
+   (`latency-p50=<s>s latency-p95=<s>s` alongside the existing mean, so
+   existing parsers keep working).
+2. **Capture, request path**: time each seat per merge request and put
+   the figure in the seat's `scorecard` fixed-schema line, so live-trial
+   evidence accumulates the same statistic.
+3. **Relative elimination rule**: once ≥2 candidates have audition
+   scorecards on the same board, a candidate whose p50 exceeds
+   REVIEWERS_SLOW_FACTOR × the cross-candidate median p50 (default
+   factor 3) is flagged `SLOW` in its scorecard block and its audition
+   verdict becomes eliminate-slow: it does not proceed to the advisory
+   trial. Roster promotion decisions stay with the author at 0205's
+   integration review; the SLOW flag and trial ineligibility are
+   mechanical.
+4. **Read-back**: `scores` (ticket 0348) gains latency-stat columns and
+   shows the SLOW flag. DEPENDENCY: action 4 needs 0348 merged; add
+   `Blocked-by: 0348` to this header once that ticket reaches main (it
+   is on the unmerged PR #613 branch at filing time, so the header would
+   fail erg check here). Actions 1-3 and 5 are unblocked.
+5. **Docs**: SKILL.md audition section documents the gate, the factor,
+   and the rationale (peer-relative, board-normalized).
+
+## Test
+
+- Fixture trial ticket with three candidates' audition blocks (two
+  normal, one at >3× median p50): the stats pass flags exactly the slow
+  one; boundary case at exactly factor×median is NOT flagged; a single
+  lone candidate is never flagged (no peers, no statistics).
+
+## Verification
+
+- [ ] Audition scorecards from a real run carry p50/p95
+- [ ] request-path scorecard lines carry per-seat latency
+- [ ] Slow-candidate fixture flagged; boundary and lone-candidate cases
+      not flagged
+- [ ] scores displays the latency columns and SLOW flags
+
+## Invariants
+
+- Existing scorecard lines (pre-latency schema) still parse everywhere —
+  WARN, never crash, on lines without the new fields
+- `request` stays per-seat fail-open; audition stays fail-loud
+- Elimination is trial-gating only; roster edits remain manual (0205)
+- `make check` passes
+
+## Exit criteria
+
+- [ ] Per-review latency captured on both audition and request paths
+- [ ] SLOW flag computed peer-relative (factor × median p50, default 3),
+      gates advisory-trial eligibility, never edits the roster
+- [ ] scores shows latency statistics and flags
+- [ ] SKILL.md documents the gate; tests green; `make check` passes
