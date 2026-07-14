@@ -36,7 +36,7 @@ PR_SUBJECT_RE = re.compile(r"^Merge pull request #(\d+) from [^/]+/(.+)$")
 # so a PR with no close commit (Ticket: none, non-erg merge) would otherwise
 # mis-attribute a filing commit's id. If the close format changes, update this.
 CLOSE_COMMIT_RE = re.compile(
-    r"^ticket\((\d+)(?:,\s*\d+)*\): close and archive\b.*PR #\d+$"
+    r"^ticket\((\d+)(?:,\s*\d+)*\): close and archive — PR #\d+$"
 )
 
 
