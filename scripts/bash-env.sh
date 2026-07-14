@@ -52,8 +52,9 @@
 # CLEARED environment (`env -i`), only the requested SRC value is extracted, and
 # DST is exported in the parent with that value assigned LITERALLY (command
 # substitution captures the string; it is never eval'd), so a value with spaces or
-# a $(...) literal is preserved verbatim, never executed. SRC's siblings die with
-# the subshell — only DST lands in the real env. The cleared environment is
+# a $(...) literal is captured literally and never re-evaluated. A single trailing
+# newline is stripped by command-substitution capture; credential values do not
+# carry one. SRC's siblings die with the subshell — only DST lands in the real env. The cleared environment is
 # load-bearing: it drops BASH_ENV (so the extraction `bash -c` cannot re-source
 # this script and fork-bomb under production BASH_ENV=bash-env.sh) and prevents the
 # SRC lookup from resolving against any ambient exported var — only the provider
@@ -244,8 +245,9 @@ if [ -n "${KEYS:-}" ]; then
             #       itself defines — an ambient exported var cannot be smuggled
             #       into DST. A SRC absent from the file exits 4 regardless of env.
             # The value is captured as a string via command substitution and
-            # assigned LITERALLY (never eval'd), preserved verbatim, never
-            # executed. SRC's siblings die with the subshell — only DST reaches
+            # assigned LITERALLY (never eval'd), never re-evaluated; command
+            # substitution strips a single trailing newline (credential values
+            # do not carry one). SRC's siblings die with the subshell — only DST reaches
             # the real env. The `if` wrapper keeps the substitution's exit status
             # from tripping an active `set -e` in the sourcing shell. The inner
             # `.`/`printf`/`[`/`set` are bash builtins, so the empty PATH under
@@ -261,6 +263,11 @@ if [ -n "${KEYS:-}" ]; then
                 _be_rc=$?
                 if [ "$_be_rc" = 4 ]; then
                     printf 'bash-env: KEYS var not found: %s:%s\n' "$_be_prov" "$_be_src" >&2
+                elif [ "$_be_rc" = 3 ]; then
+                    # File is present (existence checked above) but sourcing or
+                    # extraction failed — a distinct condition from a missing file.
+                    printf 'bash-env: KEYS could not read %s:%s (provider file present but source failed)\n' \
+                        "$_be_prov" "$_be_src" >&2
                 else
                     printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
                 fi

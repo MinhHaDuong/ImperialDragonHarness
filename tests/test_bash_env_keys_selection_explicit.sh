@@ -65,6 +65,17 @@ _load_rc() {
     echo $?
 }
 
+# Load bash-env.sh as above and print only its STDERR (the diagnostic warnings),
+# discarding stdout. `2>&1 >/dev/null`: send stderr to the capture, then stdout to
+# the void — so $( ) collects exactly the warnings the script emits.
+_load_stderr() {
+    local home="$1" projdir="$2"
+    HOME="$home" bash -c '
+        cd "$1" || exit 1
+        source "$2"
+    ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
+}
+
 # Load bash-env.sh as above and print `export -p` (the exported environment).
 _load_exports() {
     local home="$1" projdir="$2"
@@ -182,6 +193,8 @@ _assert_eq "(5a) invalid SRC: shell survives (rc 0)" \
     "$(_load_rc "$FHOME" "$P5A")" "0"
 _assert_eq "(5a) invalid SRC: DST not set" \
     "$(_load_var "$FHOME" "$P5A" OPENROUTER_API_KEY)" ""
+_assert_contains "(5a) invalid SRC: warns 'ignoring invalid KEYS entry'" \
+    "$(_load_stderr "$FHOME" "$P5A")" "ignoring invalid KEYS entry"
 # Provider with traversal chars.
 P5B="$(_mkproj p5b 'KEYS=../x:Y
 ')"
@@ -206,6 +219,8 @@ _assert_eq "(5d) absent SRC: shell survives (rc 0)" \
     "$(_load_rc "$FHOME" "$P5D")" "0"
 _assert_eq "(5d) absent SRC: DST not set" \
     "$(_load_var "$FHOME" "$P5D" OPENROUTER_API_KEY)" ""
+_assert_contains "(5d) absent SRC: warns 'KEYS var not found'" \
+    "$(_load_stderr "$FHOME" "$P5D")" "KEYS var not found"
 
 # --- (6) value integrity: spaces and $(...) exported verbatim, NOT executed ------
 rm -f "$WORK/PWNED"
@@ -260,5 +275,31 @@ _assert_eq "(9) _be_* dst: not leaked into the env" \
     "$(_load_var "$FHOME" "$P9" _be_ifs)" ""
 _assert_eq "(9) _be_* dst: shell survives (rc 0)" \
     "$(_load_rc "$FHOME" "$P9")" "0"
+
+# --- (10) missing provider file -> warn 'KEYS provider not found' -----------------
+# A valid provider NAME whose file does not exist: the file-existence check fires
+# before any subshell and must warn the file-missing diagnostic.
+P10="$(_mkproj p10 'KEYS=ghostprovider
+')"
+_assert_contains "(10) missing provider: warns 'KEYS provider not found'" \
+    "$(_load_stderr "$FHOME" "$P10")" "KEYS provider not found"
+
+# --- (11) provider file present but source fails -> distinct rc=3 diagnostic ------
+# broken.env is a valid provider file NAME whose CONTENT has a syntax error (an
+# unterminated array assignment), so the extraction subshell's `. "$file"` fails
+# (exit 3) — a condition distinct from a MISSING file. The two must produce
+# DIFFERENT warnings: rc=3 says "could not read", NOT "provider not found".
+printf 'FOO=(\n' > "$FHOME/.config/keys/broken.env"
+P11="$(_mkproj p11 'KEYS=broken:SOMEVAR=DST
+')"
+_assert_eq "(11) source-failed: DST not set" \
+    "$(_load_var "$FHOME" "$P11" DST)" ""
+_assert_eq "(11) source-failed: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P11")" "0"
+P11_ERR="$(_load_stderr "$FHOME" "$P11")"
+_assert_contains "(11) source-failed: warns 'could not read'" \
+    "$P11_ERR" "could not read"
+_assert_not_contains "(11) source-failed: NOT the file-missing message" \
+    "$P11_ERR" "KEYS provider not found"
 
 exit "$fail"
