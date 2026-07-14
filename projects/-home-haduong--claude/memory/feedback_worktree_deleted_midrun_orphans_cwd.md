@@ -28,12 +28,11 @@ worktree, once deregistered. The parked-cwd guard then denies `EnterWorktree`
 (by design) and the worktree-identity guard blocks every non-`git -C`
 mutation from that path. Recovery is unchanged — `git -C <primary> worktree
 add` for manual isolation, plus delegating committable work and skill
-invocations to `Agent(isolation:"worktree")` subagents. Husk detection/cleanup
-in `worktree-gc` is ticketed as tickets/0325.
+invocations to `Agent(isolation:"worktree")` subagents. Husk detection in
+`worktree-gc` shipped report-only (never removes) under tickets/0325.
 
-Ticket 0325 shipped report-only husk detection (never removes). Ticket 0338
-investigated removal-by-heuristic and confirmed report-only as the PERMANENT
-decision, not a first cut: the only candidate "is this cwd live" signal is a
+Ticket 0338 investigated removal-by-heuristic and confirmed report-only as
+the PERMANENT decision, not a first cut: the only candidate "is this cwd live" signal is a
 per-process `/proc` probe, which is not permission-independent (EACCES and
 ENOENT are indistinguishable from a shell) and is structurally blind to
 remote/network-FS sessions. A live near-miss surfaced during that

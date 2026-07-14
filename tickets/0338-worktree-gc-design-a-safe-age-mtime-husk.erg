@@ -29,11 +29,11 @@ losing it.
 ## Actions
 1. Decide whether automatic husk removal is worth the risk at all — report-only
    may be the correct permanent answer (the 0325 red-team leaned that way).
-2. If pursued, design a provably-safe heuristic: e.g. mtime older than a
+2. (moot — decision was report-only-forever) If pursued, design a provably-safe heuristic: e.g. mtime older than a
    generous threshold AND no live session's base cwd points at it. Establish how
    to detect "live base cwd" reliably (a husk's git commands resolve to the
    primary repo, so there is no cheap in-tree signal — this is the hard part).
-3. Red-first test proving a fresh/live husk is NEVER removed and only a stale,
+3. (moot — removal not implemented) Red-first test proving a fresh/live husk is NEVER removed and only a stale,
    provably-dead one is.
 
 ## Invariants
