@@ -9,6 +9,8 @@ Author: Integration Test
 2026-07-13T16:03Z Minh Ha-Duong note pre-registration split to 0315: interventions pinned, decision rule + red-first tests landed, gaze convergence flag documented default off; live A/B arms remain here
 
 2026-07-14T09:34Z Minh Ha-Duong note authorized measure-A replay spend (5 paired Sonnet replays, smoke-first on 0319); pinned measure-B windows in docs/trace-ab-2026-06.md — control 2026-07-20..2026-07-26 (flag off), treatment 2026-07-27..2026-08-02 (flag on)
+
+2026-07-14T09:46Z Minh Ha-Duong note extended measure-A sample to N=10 (quality-axis power: all-pass 95% lower bound 0.55 to 0.74); entries 6-10 resolved by the unchanged rule — 0291/#550, 0289/#549, 0314/#548, 0313/#547, 0305/#546, no rule-skips; pinned before any replay output was observed (0319 smoke in flight, unharvested)
 --- body ---
 ## Context
 

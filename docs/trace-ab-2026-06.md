@@ -59,6 +59,30 @@ APPROVED but closed 17:11Z, one minute behind 0257 and so outside the top five.
 Four of the five share base `b34c5fe` (a same-evening merge wave); each replay
 still checks out its own recorded base.
 
+### Measure A — sample extension to N=10 (pre-registered 2026-07-14)
+
+The author extended the sample from 5 to 10 on 2026-07-14 to raise the
+quality-axis power: with all passes, the exact 95% lower confidence bound on
+the gaze pass rate rises from 0.55 (N=5) to 0.74 (N=10). Ordering proof: at
+pin time the first replay (0319) was launched but **no replay output had been
+observed or harvested** — this commit predates any measure-A result, so the
+extension is not conditioned on data. The selection rule is unchanged, applied
+to the next qualifying closes below 0257's 17:12Z timestamp; entries 6–10 are
+the next five closes in strict order, with **no rule-skips** between them.
+
+| # | Ticket | PR | Closed (UTC) | Replay base SHA | Title |
+|---|--------|-----|--------------|-----------------|-------|
+| 6 | 0291 | #550 | 17:11Z | `ffd4d3cd23aa74b420c78b8a5fbf433c74f367eb` | Root-cause taxonomy for verify-gate REROLL and skill-doctor diagnoses |
+| 7 | 0289 | #549 | 17:10Z | `ffd4d3cd23aa74b420c78b8a5fbf433c74f367eb` | verify-adherence: path-access allow/forbid scan over the agent tool trace |
+| 8 | 0314 | #548 | 15:54Z | `f9b53b56a20d37c6dff8c95703c3106932390271` | Parked-cwd guard: realpath-normalize cwd to close the symlink-traversal bypass |
+| 9 | 0313 | #547 | 15:24Z | `aa05f181c55ea63727df473d15a27adb07a165d5` | Wire the adherence test tier: make lint target and check-fast exclusion |
+| 10 | 0305 | #546 | 15:03Z | `f42505a3247c2959459ba0b775638bb49c709c7e` | state-metrics extension point — project-declared generated lines in STATE |
+
+All close-timestamps remain on 2026-07-13, before the cutoff. Bases are the
+forge-recorded merge-base of each merge commit's two parents, same as the
+original five. The aggregate measure-A verdict now spans all ten pairs; the
+decision rule (§ Decision rule) is unchanged.
+
 ### Measure A — replay runbook
 
 One paired replay per sampled ticket. The operator drives this manually — no
