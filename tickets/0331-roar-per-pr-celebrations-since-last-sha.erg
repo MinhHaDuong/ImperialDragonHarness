@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-14T09:31Z claude created
 
+2026-07-14T11:04Z bump verify-reroll — round 1: octopus-merge silent undercount in build_records
 --- body ---
 ## Context
 Interactive sessions merge PRs one at a time and roar once at the end (per
