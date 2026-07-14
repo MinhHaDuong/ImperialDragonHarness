@@ -25,6 +25,17 @@
 # The script runs on every bash subprocess, so it stays fast and never aborts on
 # a missing or malformed .env — bad lines in the project file are skipped, never
 # fatal.
+#
+# Least-privilege provider secrets (KEYS=). A project declares which credential
+# providers it needs by setting KEYS=<name,name,...> in its project .env (parsed
+# by the untrusted strict-parse above, so KEYS itself is a plain value). For each
+# declared, VALIDATED provider <name>, and ONLY those, this script sources the
+# user-owned $HOME/.config/keys/<name>.env. Default-deny: no KEYS line means no
+# provider secrets are loaded. Provider names must match ^[a-z0-9-]+$ — anything
+# else (path traversal like ../../x, a slash, uppercase, empty) is ignored with a
+# warning, so KEYS can never source an arbitrary path. The per-provider files are
+# user-owned and TRUSTED, so they are sourced as shell code (contrast the
+# untrusted project .env). A missing provider file warns but is non-fatal.
 
 # --- trusted user-level .env: source as before (full expansion) ---
 set -a  # mark all subsequent assignments for export
@@ -80,4 +91,44 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
         unset _be_line _be_trim _be_key _be_val _be_first _be_last
     fi
     unset _be_proj _be_user
+fi
+
+# --- least-privilege provider secrets: source only the declared KEYS providers ---
+# $KEYS (if any) was set by the project strict-parse above. Split it on commas and
+# source $HOME/.config/keys/<name>.env for each validated provider name only.
+if [ -n "${KEYS:-}" ]; then
+    # Disable globbing while splitting so a stray '*' in KEYS cannot expand to
+    # filenames; restore the caller's setting afterwards.
+    case "$-" in
+        *f*) _be_had_noglob=1 ;;
+        *)   _be_had_noglob=0 ;;
+    esac
+    set -f
+    set -a  # export vars assigned by the sourced (trusted) provider files
+    _be_ifs="$IFS"
+    IFS=','
+    for _be_prov in ${KEYS}; do
+        IFS="$_be_ifs"
+        # trim surrounding whitespace
+        _be_prov="${_be_prov#"${_be_prov%%[![:space:]]*}"}"
+        _be_prov="${_be_prov%"${_be_prov##*[![:space:]]}"}"
+        [ -z "$_be_prov" ] && { IFS=','; continue; }
+        # validate: lowercase, digits and dashes only — blocks path traversal
+        if [[ ! "$_be_prov" =~ ^[a-z0-9-]+$ ]]; then
+            printf 'bash-env: ignoring invalid KEYS provider name: %s\n' "$_be_prov" >&2
+            IFS=','
+            continue
+        fi
+        _be_keyfile="$HOME/.config/keys/$_be_prov.env"
+        if [ -f "$_be_keyfile" ]; then
+            source "$_be_keyfile"
+        else
+            printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
+        fi
+        IFS=','
+    done
+    IFS="$_be_ifs"
+    set +a
+    [ "$_be_had_noglob" = 1 ] || set +f
+    unset _be_ifs _be_prov _be_keyfile _be_had_noglob
 fi

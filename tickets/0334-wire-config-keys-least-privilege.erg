@@ -1,0 +1,72 @@
+%erg 0.1
+Title: Wire per-project least-privilege ~/.config/keys loading via KEYS=
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T10:44Z Minh Ha-Duong created
+2026-07-14T10:44Z Minh Ha-Duong note scoped AEDIST live-secret migration out to destination repo (cross-repo ops rule); harness ticket closes on the wiring mechanism
+
+--- body ---
+## Context
+`scripts/bash-env.sh` sources the user's `~/.claude/.env` (trusted) and strict-parses
+the project `$PWD/.env` (untrusted, ticket 0323 / PR #588). Every project that needs
+a provider token still keeps that secret in its own `.env`, so every bash subprocess
+of every project loads every secret — no least-privilege boundary between providers.
+
+Add an opt-in, default-deny mechanism: a project declares the providers it needs with
+`KEYS=provider1,provider2,...` in its project `.env`. bash-env.sh then sources ONLY
+`$HOME/.config/keys/<provider>.env` for each declared, validated provider. A project
+with no `KEYS` line loads no provider secrets. Provider secrets live once, user-owned,
+under `~/.config/keys/`; projects reference them by name, never by copying the value.
+
+This builds on the merged strict parser: `KEYS` is a normal (non-GUARD) key, so it is
+parsed and exported by the untrusted strict-parse before the provider block runs.
+
+## Relevant files
+- `scripts/bash-env.sh` — add the KEYS provider-loading block after the project
+  strict-parse block; document the mechanism in the header.
+- `tests/test_bash_env_keys_selection.sh` — new hermetic suite (fake HOME + fake
+  `~/.config/keys/*.env` sentinels + crafted project `.env`).
+- `tests/test_bash_env_project_env_parse.sh` — must stay green (no regression).
+
+## Actions
+1. After the project `$PWD/.env` strict-parse block (so `$KEYS` is known), if
+   `${KEYS:-}` is non-empty, split it on commas.
+2. For each name: trim whitespace; validate against `^[a-z0-9-]+$` (reject path
+   traversal / slashes / uppercase / empty with a stderr warning and skip); if valid
+   and `$HOME/.config/keys/<name>.env` exists, `source` it (trusted, user-owned); if
+   the file is missing, warn and continue (non-fatal).
+3. Keep the block `set -euo pipefail`-safe: guard `${KEYS:-}`, no `((...))`, never
+   abort the shell on a missing file/dir (this runs on every bash subprocess).
+4. Document the KEYS mechanism in the bash-env.sh header comment.
+
+## Test
+Write `tests/test_bash_env_keys_selection.sh` first (RED): fake HOME, fake
+`~/.config/keys/{openrouter,mistral,zenodo}.env` holding non-secret sentinels, a temp
+project dir with a crafted `.env`, source bash-env.sh in a subshell, assert on env.
+Cases: (1) `KEYS=openrouter` loads openrouter but NOT mistral; (2) no KEYS line loads
+nothing (default-deny); (3) `KEYS=openrouter,zenodo` loads both; (4) `KEYS=foo/bar`
+and `KEYS=../../etc/passwd` are rejected, nothing sourced, shell survives; (5)
+`KEYS=nonexistent` warns, shell survives, nothing spurious loaded.
+
+## Invariants
+- `tests/test_bash_env_project_env_parse.sh` stays green — the trusted/untrusted split
+  and the GUARD_* refusal from PR #588 are untouched.
+- Provider files are sourced as code; only names matching `^[a-z0-9-]+$` reach the
+  filesystem, so `KEYS` can never source an arbitrary path.
+- The script never aborts a subprocess on a missing/invalid provider.
+
+## Exit criteria
+- [ ] `KEYS=` in a project `.env` sources only the named `~/.config/keys/<name>.env`
+      files; no `KEYS` line loads no provider secrets (default-deny).
+- [ ] Provider names are validated (`^[a-z0-9-]+$`); traversal/invalid names are
+      skipped with a warning and never source a path.
+- [ ] `tests/test_bash_env_keys_selection.sh` covers cases 1-5 and is green; RED was
+      demonstrated against pre-fix bash-env.sh.
+- [ ] `tests/test_bash_env_project_env_parse.sh` and the shell-suite wrapper stay green.
+- [ ] `make lint` passes.
+- [ ] (Deferred — cross-repo ops) Live migration of a project's real secrets into
+      ~/.config/keys/ + adding its KEYS= line is a per-project step tracked at the
+      destination repo, not gated here. AEDIST keeps working via strict-parse until
+      migrated.
