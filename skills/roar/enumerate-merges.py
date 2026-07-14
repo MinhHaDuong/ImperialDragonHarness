@@ -80,21 +80,23 @@ def branch_from_subject(subject: str) -> str | None:
     return m.group(2) if m else None
 
 
-def ticket_from_range(parent1: str, parent2: str, root: str) -> int | None:
+def commits_and_ticket(parent1: str, parent2: str, root: str) -> tuple[int, int | None]:
+    """Return (commit count, ticket id) for a two-dot range in one git call.
+
+    The subject list `git log` returns while scanning for the close commit
+    already has one line per commit, so its length is the commit count — no
+    separate `rev-list --count` spawn needed.
+    """
     subjects = git(
         ["log", "--format=%s", f"{parent1}..{parent2}"], cwd=root
     ).splitlines()
+    ticket = None
     for subject in subjects:
         m = CLOSE_COMMIT_RE.match(subject.strip())
         if m:
-            return int(m.group(1))
-    return None
-
-
-def commits_in_range(parent1: str, parent2: str, root: str) -> int:
-    return int(
-        git(["rev-list", "--count", f"{parent1}..{parent2}"], cwd=root).strip()
-    )
+            ticket = int(m.group(1))
+            break
+    return len(subjects), ticket
 
 
 def files_changed(parent1: str, parent2: str, root: str) -> int:
@@ -115,13 +117,14 @@ def build_records(since_sha: str, project: str, root: str) -> list[dict]:
             # --merges guarantees >= 2 parents; skip defensively otherwise.
             continue
         p1, p2 = parents[0], parents[1]
+        commits, ticket = commits_and_ticket(p1, p2, root)
         records.append(
             {
                 "project": project,
                 "branch": branch_from_subject(subject),
-                "commits": commits_in_range(p1, p2, root),
+                "commits": commits,
                 "files_changed": files_changed(p1, p2, root),
-                "ticket": ticket_from_range(p1, p2, root),
+                "ticket": ticket,
             }
         )
     return records
