@@ -2,12 +2,14 @@
 Title: seat-runner CLI stack hangs on reasoning-field models (glm-5.2, kimi-k2.7-code)
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #618
 
 --- log ---
 2026-07-14T17:55Z claude created
 2026-07-14T20:08Z claude note reimagined+planned by raid — fix at seat-runner layer, aider venv unpinnable from repo
 
 2026-07-14T21:28Z bump verify-reroll — round 1: verdict-switch fallthrough + unguarded probe-body substitution
+2026-07-14T21:52Z Minh Ha-Duong closed — autoclosed — PR #618
 --- body ---
 ## Context
 
