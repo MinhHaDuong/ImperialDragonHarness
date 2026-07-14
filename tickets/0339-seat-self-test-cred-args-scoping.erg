@@ -1,0 +1,47 @@
+%erg 0.1
+Title: seat-runner self-test needlessly injects the endpoint credential
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T13:40Z claude created
+
+--- body ---
+## Context
+
+Follow-up to tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg, raised
+by the review-pr red-team panel on PR #603 (0207 criterion-2 credential
+scrub). `run_seat` always passes `CRED_ARGS` — including a real injected
+`OPENAI_API_KEY` — into the pre-review containment self-test container, not only
+the actual reviewer run. The self-test never needs the endpoint credential: it
+only probes write/secret/network containment. This is a latent least-privilege
+gap. It is currently a non-issue in practice because the self-test runs under
+`--network=none` with no relay and cannot exfiltrate, and its probe output
+(`$PROBE`) is asserted line-by-line rather than echoed wholesale — but the key
+should not be in that container's env at all, and `$PROBE` is not run through
+the 0207 scrub.
+
+## Relevant files
+- `scripts/seat-runner.sh` — `run_seat` (CRED_ARGS injection), the containment
+  self-test call (`PROBE=$(run_seat bash -c '…')`), and the scrub chokepoint.
+
+## Actions
+1. Give `run_seat` a way to omit `CRED_ARGS` (e.g. a flag or a variant) so the
+   self-test container runs with only the dummy key, never the real one.
+2. Confirm no self-test assertion depends on the real key; the probe only needs
+   the dummy.
+
+## Test
+- Extend `tests/test_seat_runner.sh`: with `--credential-env` set to a probe
+  value, assert the SELF-TEST podman invocation's captured env does NOT contain
+  the real value (only the review run may), mirroring the existing argv/env
+  capture stubs.
+
+## Invariants
+- The review run still receives the real credential; the scrub still covers all
+  three reviewer-output echo paths.
+- `make check-fast` and `tests/test_seat_runner.sh` stay green.
+
+## Exit criteria
+- [ ] The containment self-test container never receives the real endpoint key.
+- [ ] A test proves the self-test env carries only the dummy key.
