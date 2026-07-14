@@ -71,6 +71,21 @@ if [ "${file_path#/}" = "$file_path" ]; then
     fi
 fi
 
+# Normalize before the prefix match (ticket 0323, residual 1): a raw path with
+# `..` traversal or through a symlinked directory does not lexically begin with
+# $primary_root and would slip past the string-prefix `case` below. `realpath -m`
+# collapses `..` and resolves symlinks in the existing dir components while
+# tolerating a not-yet-existing leaf (--canonicalize-missing), which is correct
+# at PreToolUse time — the file being written need not exist yet. Fall back to
+# the raw path if realpath is unavailable. primary_root/worktree_root are left
+# as-is: git rev-parse --show-toplevel already canonicalizes them, and they are
+# opaque literals under the _GUARD_*_ROOT test override.
+if command -v realpath &>/dev/null; then
+    file_path=$(realpath -m -- "$file_path" 2>/dev/null || echo "$file_path")
+else
+    echo "guard: realpath unavailable, path normalization skipped" >&2
+fi
+
 case "$file_path" in
     "$primary_root"/*)
         case "$file_path" in
