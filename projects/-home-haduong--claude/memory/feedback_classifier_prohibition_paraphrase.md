@@ -28,6 +28,11 @@ autonomous run must exercise a standing authorization, quote the grant
 verbatim into the transcript before the gated action (ticket 0249 option 2).
 The system-prompt-level "never merge" for background sessions remains outside
 harness control — residual denials there are expected. Effectiveness of the
-wording fix is under observation by experience. Related:
+wording fix is under observation by experience. One objection no quoted
+grant answers: "self-authored and self-reviewed" (raid 245/320, 2026-07-14
+— denied twice with the Phase 7 grant quoted). The author ruled the
+objection valid; cure it with decorrelated external review via the
+reviewer seats and retry once, parking merge-ready only as fallback (raid
+Phase 7 § Merge-permission denial, ticket 0330). Related:
 [[feedback_merge_classifier_blocks_autonomous_raid]] (referenced in ticket
 0249 but never written; this entry supersedes it).
