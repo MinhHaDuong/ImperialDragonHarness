@@ -93,6 +93,11 @@ flush
 # pass above and accumulates. Report-only, never removed: a husk may still be a
 # LIVE session's base cwd (the harness resets the shell cwd there after every
 # command), and deleting it would break that session. We only surface it.
+# Report-only is the PERMANENT decision, not an initial cut (ticket 0338): the
+# only reliable "is this cwd live" signal is a per-process /proc probe, which
+# is not permission-independent (EACCES and ENOENT are indistinguishable from
+# a shell) and blind to remote/network-FS sessions entirely. No age/mtime
+# heuristic closes that gap safely — see ticket 0338 for the investigation.
 # Root on the PRIMARY repo, not on `git rev-parse --show-toplevel`: when this
 # script runs from a linked worktree (the harness's normal cwd — molt/roar
 # invoke it bare with repo=".") that would resolve to the worktree's own root,

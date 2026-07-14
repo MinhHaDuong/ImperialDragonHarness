@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-07-14T13:05Z claude created
+2026-07-14T20:09Z claude note decision: report-only-forever — /proc cwd probe not permission-independent (EACCES=ENOENT), remote sessions undetectable, live near-miss on the raid session's own husk
 
 --- body ---
 ## Context
@@ -40,9 +41,9 @@ losing it.
 - Report-only behavior from 0325 must remain the default.
 
 ## Verification
-- [ ] Decision recorded (remove-with-heuristic vs report-only-forever)
-- [ ] If removal implemented: red-first test proves a fresh/live husk survives
-- [ ] `make check` passes
+- [x] Decision recorded (remove-with-heuristic vs report-only-forever): report-only-forever
+- [x] If removal implemented: red-first test proves a fresh/live husk survives (N/A — removal was not implemented; decision is report-only-forever)
+- [x] `make check` passes
 
 ## Exit criteria
 - A documented decision (remove-with-heuristic vs report-only-forever), and if

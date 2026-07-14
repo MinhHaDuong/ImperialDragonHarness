@@ -30,3 +30,14 @@ mutation from that path. Recovery is unchanged — `git -C <primary> worktree
 add` for manual isolation, plus delegating committable work and skill
 invocations to `Agent(isolation:"worktree")` subagents. Husk detection/cleanup
 in `worktree-gc` is ticketed as tickets/0325.
+
+Ticket 0325 shipped report-only husk detection (never removes). Ticket 0338
+investigated removal-by-heuristic and confirmed report-only as the PERMANENT
+decision, not a first cut: the only candidate "is this cwd live" signal is a
+per-process `/proc` probe, which is not permission-independent (EACCES and
+ENOENT are indistinguishable from a shell) and is structurally blind to
+remote/network-FS sessions. A live near-miss surfaced during that
+investigation — the raid session's own base cwd was itself an unregistered
+husk with five live PIDs holding it as cwd, mtimes hours stale — reinforcing
+that an age/mtime heuristic would plausibly have removed a live session's
+cwd mid-task.
