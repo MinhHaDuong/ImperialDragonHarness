@@ -144,7 +144,7 @@ DERIVE and return:
   - evidence: which config files + directories you read.
 
 Do NOT run anything. Do NOT mutate anything. Return the structured object.`,
-  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'sonnet', schema: DISCOVERY_SCHEMA }
+  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'sonnet', effort: 'low', schema: DISCOVERY_SCHEMA }  // read-only file enumeration — sonnet is sufficient; effort:'low' (no synthesis)
 ).catch(e => { log(`discovery agent error: ${e}`); return null })
 
 if (!discovered || !Array.isArray(discovered.TEST_FILES) || !discovered.TEST_FILES.length) {
@@ -247,7 +247,7 @@ Return the structured object. Do NOT run or mutate anything.`
 phase('Judge')
 const bulk = await pipeline(
   TEST_FILES,
-  file => agent(judgePrompt(file), { label: `judge:${file}`.slice(0, 60), phase: 'Judge', model: 'haiku', schema: JUDGE_SCHEMA })
+  file => agent(judgePrompt(file), { label: `judge:${file}`.slice(0, 60), phase: 'Judge', model: 'haiku', effort: 'low', schema: JUDGE_SCHEMA })  // bulk cheap-model pass; effort:'low'
             .then(a => { if (a) a.testFile = file; return a })
             .catch(e => { log(`judge ${file} error: ${e}`); return null }),
 )
