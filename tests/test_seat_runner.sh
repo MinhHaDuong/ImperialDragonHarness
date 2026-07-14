@@ -26,14 +26,17 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 pass() { echo "PASS: $1"; PASS=$((PASS+1)); }
 fail() { echo "FAIL: $1"; FAIL=$((FAIL+1)); }
 assert_contains() {  # label needle haystack
-    # Here-string, not `printf | grep`: with `set -o pipefail`, grep -q closing
-    # the pipe on an early match SIGPIPEs printf (141), which pipefail then
-    # reports as the pipeline status — a nondeterministic false FAIL on a large
-    # haystack. A here-string has no pipe, so no race.
-    if grep -qF -- "$2" <<<"$3"; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
+    # Pure-bash substring match, no subprocess: the quoted needle makes `==`
+    # a literal (glob-free) comparison, identical to `grep -F`. This supersedes
+    # the earlier here-string form (`grep -qF <<<`): a per-call grep subprocess
+    # reading a here-string tmpfile proved to intermittently return no-match
+    # under parallel `make check` load while the haystack was provably intact
+    # (ticket 0329). The bash builtin has neither a pipe nor a tmpfile, so
+    # neither the SIGPIPE race nor the under-load flake can occur.
+    if [[ "$3" == *"$2"* ]]; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
 }
 assert_absent() {  # label needle haystack
-    if grep -qF -- "$2" <<<"$3"; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
+    if [[ "$3" == *"$2"* ]]; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
 }
 
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────

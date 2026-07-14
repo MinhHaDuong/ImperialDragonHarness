@@ -133,9 +133,12 @@ guardrail here (per the phase-4 routing decision).
   range. `filter_window` does not apply to arm A.
 - **Measure B**: two **disjoint weeks**, one control (flag off) and one
   treatment (flag on), fixed at B-arm launch **before any data is collected**.
-  <!-- TODO(0245): pin the two disjoint week date ranges here at B-arm launch,
-       before collecting any B-arm data. Do not fabricate dates ahead of the
-       run. -->
+  Pinned by the author on 2026-07-14, before any B-arm data collection:
+  - **Control week (flag off)**: 2026-07-20 → 2026-07-26 (UTC, inclusive).
+    Normal operation; no configuration change.
+  - **Treatment week (flag on)**: 2026-07-27 → 2026-08-02 (UTC, inclusive).
+    `convergence.enabled: true` in `skills/gaze/telemetry.yml` (or
+    `GAZE_CONVERGENCE_ENABLED=1`) at week start, reverted at week end.
 
 ## Exclusion rules
 

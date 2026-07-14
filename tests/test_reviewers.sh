@@ -18,9 +18,12 @@ assert_eq() {
 }
 assert_contains() {
     local label="$1" needle="$2" hay="$3"
-    # Here-string, not `printf | grep`: pipefail + grep -q closing the pipe early
-    # SIGPIPEs printf, a nondeterministic false FAIL on a large haystack.
-    if grep -qF -- "$needle" <<<"$hay"; then echo "PASS: $label"; PASS=$((PASS+1))
+    # Pure-bash substring match, no subprocess: the quoted needle is a literal
+    # (glob-free) comparison, identical to `grep -F`. Supersedes the here-string
+    # `grep -qF <<<` form — a per-call grep subprocess reading a here-string
+    # tmpfile intermittently returned no-match under parallel load (ticket 0329);
+    # the bash builtin has neither pipe nor tmpfile.
+    if [[ "$hay" == *"$needle"* ]]; then echo "PASS: $label"; PASS=$((PASS+1))
     else echo "FAIL: $label (missing: $needle)"; echo "  in: $hay"; FAIL=$((FAIL+1)); fi
 }
 assert_exit_0() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then echo "PASS: $label"; PASS=$((PASS+1)); else echo "FAIL: $label (exit $?)"; FAIL=$((FAIL+1)); fi; }
@@ -100,7 +103,7 @@ NOISY
 harv_out=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>/dev/null)
 harv_err=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>&1 >/dev/null)
 # Template-echo line must be dropped, not emitted as a finding.
-if printf '%s' "$harv_out" | grep -qF 'verifiable-or-consider'; then
+if [[ "$harv_out" == *'verifiable-or-consider'* ]]; then
     echo "FAIL: harvest: template-echo leaked through"; FAIL=$((FAIL+1))
 else
     echo "PASS: harvest: template-echo dropped"; PASS=$((PASS+1))

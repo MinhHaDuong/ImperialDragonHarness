@@ -262,4 +262,52 @@ else
     fail=1
 fi
 
+# 16. `..`-traversal evasion (ticket 0323, residual 1): a raw file_path that does
+# NOT lexically begin with $PRIMARY but collapses into it via `..` must still be
+# denied. Without realpath normalization the prefix match on the raw string
+# passes (exit 0, silent bypass); `realpath -m` collapses the `..` — tolerating a
+# not-yet-existing leaf — so the normalized path matches $PRIMARY and denies.
+rc=$(_rc "$WORKTREE" "$PRIMARY" "/home/testuser/x/../repo/evil.py")
+if [ "$rc" = "2" ]; then
+    echo "PASS: denies dot-dot-traversal path that collapses into primary (exit 2)"
+else
+    echo "FAIL: expected exit 2 for dot-dot-traversal into primary; got: $rc"
+    fail=1
+fi
+out=$(_run_hook "$WORKTREE" "$PRIMARY" "/home/testuser/x/../repo/evil.py")
+if echo "$out" | grep -q "Worktree path guard"; then
+    echo "PASS: dot-dot-traversal into primary emits corrective message"
+else
+    echo "FAIL: expected corrective message for dot-dot-traversal; got: $out"
+    fail=1
+fi
+
+# 17. Symlink-through evasion (ticket 0323, residual 1): a file_path routed through
+# a symlink that points at the primary root has a raw string that does NOT start
+# with the real primary-root path, so the prefix match misses (silent bypass).
+# `realpath -m` resolves the symlink in the existing dir components, exposing the
+# primary root, and the guard denies. Real-git fixture (no env override), mirroring
+# cases 8/9 so the identity predicate and root resolution run for real.
+_case17_base=$(mktemp -d)
+_case17_primary="$_case17_base/primary"
+mkdir -p "$_case17_primary"
+git -C "$_case17_primary" init -q
+git -C "$_case17_primary" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+mkdir -p "$_case17_primary/.claude/worktrees"
+git -C "$_case17_primary" worktree add -q "$_case17_primary/.claude/worktrees/t001"
+# Symlink OUTSIDE the primary root pointing back at it; a path through it evades
+# the raw-string prefix match against the real primary-root path.
+ln -s "$_case17_primary" "$_case17_base/plink"
+out=$( cd "$_case17_primary/.claude/worktrees/t001" \
+       && printf '{"tool_name":"Write","tool_input":{"file_path":"%s/src/main.py","content":"x"}}' "$_case17_base/plink" \
+       | bash "$HOOK" 2>&1 || true)
+git -C "$_case17_primary" worktree remove --force "$_case17_primary/.claude/worktrees/t001" 2>/dev/null || true
+rm -r "$_case17_base"
+if echo "$out" | grep -q "Worktree path guard"; then
+    echo "PASS: denies path routed through a symlink into primary (identity predicate)"
+else
+    echo "FAIL: expected deny for symlink-through into primary; got: $out"
+    fail=1
+fi
+
 exit $fail
