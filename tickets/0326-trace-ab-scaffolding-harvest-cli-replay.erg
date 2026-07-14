@@ -1,0 +1,89 @@
+%erg 0.1
+Title: trace-ab scaffolding: harvest CLI, replay runbook, measure-A sample pre-registration
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T05:22Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Child of 0245 (trace-doctor phase 5 targeted A/B), itself a child of
+tracker 0236. This mirrors the 0315 split: 0315 landed the
+pre-registration (interventions, metric definitions, decision rule,
+red-first `trace_ab_decision.py`, gaze convergence flag default off);
+the live A/B arms and the verdicts stay on 0245 because they are
+author-scheduled operations that burn real tokens (measure A: paired
+Sonnet-main replays; measure B: a live convergence-flag nightbeat week).
+
+This child delivers the **offline tooling** those arms will consume:
+the harvest CLI that computes the pre-registered metrics from cached
+census + join inputs, the measure-A replay runbook, and the
+pre-registered measure-A replay sample (deterministic selection, no arm
+data). It writes no verdict and flips no flag.
+
+## Relevant files
+
+- `docs/trace-ab-2026-06.md` — pre-registration (0315); this ticket adds
+  the measure-A sample list and the replay runbook, and leaves the
+  measure-B week TODO(0245) placeholder untouched
+- `scripts/trace_ab_decision.py` — `decide()` / `filter_window()`, reused
+  by the harvest CLI (import only, no edit)
+- `scripts/trace-pr-join.py` — `project_to_repo()` / `collect_pairs()`
+  reused by the harvest CLI (import only, no edit); its cache
+  `docs/trace-pr-join-2026-06.csv` is the join input
+- `scripts/trace-stats.py` — census columns the harvest reads
+  (`cost_usd`, `date`, `pr_numbers`, `verify_gaze_skills`); import only,
+  no edit
+- `docs/trace-counterfactuals-2026-06.md` — guardrail baselines
+  (REROLL/PR 33/112, ESCALATE 18)
+
+## Actions
+
+1. `scripts/trace_ab_harvest.py` — pure, offline harvest CLI. argparse
+   (no hardcoded paths), logging not print, Python 3.10+ builtin
+   generics. Reads a census CSV and the join cache CSV, takes explicit
+   `--window` dates, computes the pre-registered metrics
+   (`cost_per_merged_pr`, `cost_per_cycle`, `reroll_per_pr`,
+   `escalate_count`), and routes them through `decide()` / `filter_window()`
+   from `trace_ab_decision.py`. Reuses `project_to_repo` / `collect_pairs`
+   from `trace-pr-join.py`. Zero LLM calls, zero network, additive only —
+   no edits to trace-stats.py / trace-hypotheses.py / trace-pr-join.py.
+2. `docs/trace-ab-2026-06.md`: pre-register the measure-A replay sample
+   with a deterministic selection rule (chosen ticket IDs, PR numbers,
+   replay base SHAs) and add a short measure-A replay runbook (procedure,
+   not a framework). Leave the measure-B week TODO(0245) placeholder as
+   is — week selection is the author's call.
+3. Log note to 0236: scaffolding landed; live arms remain on 0245.
+
+## Test
+
+- Red first: `tests/test_trace_ab_harvest.py` (fast tier, pure Python,
+  no heavy deps). Fixtures use the phase-4 guardrail baselines verbatim
+  (REROLL/PR 33/112, ESCALATE 18) and map computed metric values to
+  adopt/reject verdicts through the harvest path
+  (`compute_metrics` → `decide`).
+
+## Invariants
+
+- Zero LLM calls, zero network in the harvest CLI
+- No trace content in outputs (aggregates and PR numbers ok)
+- Existing census/join/hypotheses scripts untouched (import/reuse only)
+- No verdict written; no B-arm data collected; the convergence flag
+  stays default off
+- Verdicts, when the arms run on 0245, come only from the pre-registered
+  metrics — this tooling computes them, it does not shop for new ones
+
+## Exit criteria
+
+- [ ] `scripts/trace_ab_harvest.py` computes the pre-registered metrics
+      from cached census + join inputs and routes them through
+      `decide()` / `filter_window()`, offline and zero-LLM
+- [ ] `tests/test_trace_ab_harvest.py` red-first tests pass, fixtures use
+      the 33/112 REROLL and 18 ESCALATE baselines verbatim
+- [ ] `docs/trace-ab-2026-06.md` carries the measure-A replay sample
+      (deterministic rule + ticket IDs, PR numbers, base SHAs) and the
+      replay runbook; measure-B TODO(0245) placeholder untouched
+- [ ] Tracker 0236 log notes the scaffolding landing
+- [ ] `make check` passes
