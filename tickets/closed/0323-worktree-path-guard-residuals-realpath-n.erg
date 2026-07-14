@@ -2,10 +2,13 @@
 Title: Worktree-path guard residuals: realpath normalization and escape-hatch env provenance
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #588
 
 --- log ---
 2026-07-13T20:27Z Minh Ha-Duong created
 
+2026-07-14T10:28Z bump verify-reroll — round 1: GUARD_* refusal missed _GUARD_WORKTREE_ROOT/_GUARD_PRIMARY_ROOT override pair
+2026-07-14T10:35Z Minh Ha-Duong closed — autoclosed — PR #588
 --- body ---
 ## Context
 
