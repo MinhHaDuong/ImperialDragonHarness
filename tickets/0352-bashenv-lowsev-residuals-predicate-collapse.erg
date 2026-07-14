@@ -1,0 +1,32 @@
+%erg 0.1
+Title: bash-env.sh — lower-severity env-var residuals and predicate collapse
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T21:05Z Minh Ha-Duong created
+
+--- body ---
+## Context
+The critical-name denylist in scripts/bash-env.sh (`_be_is_protected_name`) now
+covers the high-severity RCE/hijack classes (GCONV_PATH, LD_*, interpreter
+option vars, git/pager exec vectors). Gaze on PR #610 deferred two low-severity
+tidy-ups.
+
+## Actions
+1. Extend `_be_is_protected_name` with the remaining low-severity vars a hostile
+   project `.env` could set to perturb (not hijack) a child: PS0, TZ, TZDIR,
+   LOCALDOMAIN, TERMINFO, LD_DEBUG, LD_PROFILE, BASH_XTRACEFD, HISTFILE. None is
+   a code-exec vector; each is defence-in-depth.
+2. Collapse any still-duplicated inline `GUARD_`/`_be_*` name checks at the two
+   export sites into the single `_be_is_protected_name` predicate, so the
+   denylist cannot drift between the parse path and the KEYS path.
+
+## Test
+- Extend tests/test_bash_env_keys_protect_critical_names.sh with the new names
+  (assert each is refused on both the strict-parse and KEYS-selection paths).
+
+## Exit criteria
+- [ ] New vars refused on both export paths, red-proven
+- [ ] Single predicate is the only name-policy site (no duplicated inline lists)
+- [ ] make check passes

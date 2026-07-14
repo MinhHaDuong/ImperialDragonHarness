@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Codify BASH_ENV/hook test discipline in rules/coding-bash.md
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #619
+
+--- log ---
+2026-07-14T21:05Z Minh Ha-Duong created
+
+2026-07-14T21:16Z Minh Ha-Duong closed — autoclosed — PR #619
+--- body ---
+## Context
+Three security defects in scripts/bash-env.sh (BASH_ENV re-entry fork bomb,
+ambient-env leak, guard-name forgery) passed a source-in-shell unit suite and
+were caught only by runtime review (PRs #599/#604). The lesson — hook/BASH_ENV
+scripts must be tested through a real hermetic subprocess — lives in memory
+(feedback_bash_env_tests_real_invocation_path) but is not yet a mechanical gate.
+
+## Actions
+1. Add a section to rules/coding-bash.md stating the discipline with a
+   wrong/correct example (`env -i HOME=... BASH_ENV=... bash -c`).
+2. Add tests/test_bash_env_tested_via_subprocess.sh: assert every
+   tests/test_bash_env_*.sh invokes via `env -i` + `BASH_ENV=` + `bash -c` and
+   never sources bash-env.sh directly.
+
+## Exit criteria
+- [ ] Rule section added; last-reviewed bumped
+- [ ] Guard test green on current suite, red-proven against a sourcing test
+- [ ] make lint passes
