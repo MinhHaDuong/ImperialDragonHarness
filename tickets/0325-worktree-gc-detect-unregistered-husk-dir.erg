@@ -1,0 +1,50 @@
+%erg 0.1
+Title: worktree-gc: detect unregistered husk dirs under .claude/worktrees
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T05:16Z Minh Ha-Duong created
+
+--- body ---
+## Context
+On 2026-07-14, session a645ef77 found its base worktree
+`.claude/worktrees/explore-ticket-pipeline` deregistered mid-session, with an
+empty husk directory left behind at the path (containing only an empty
+`.claude/` scratch subdir, likely recreated by the harness to keep the shell
+cwd alive). git commands run inside the husk resolve to the PRIMARY repo, so:
+the parked-cwd guard (`scripts/guard-enterworktree-parked-cwd.sh`) correctly
+denies `EnterWorktree` and cwd-dependent `Skill` calls, and the
+worktree-identity guard (`scripts/guard-worktree-identity.sh`) blocks every
+non-`git -C` mutating Bash command — the session permanently loses its skill
+surface. `scripts/worktree-gc.sh` iterates only REGISTERED worktrees (`git
+worktree list`), so husks are invisible to it and accumulate.
+
+## Relevant files
+- `scripts/worktree-gc.sh` — only sees registered worktrees
+- `scripts/guard-worktree-identity.sh` — the guard whose I1 fall-through message fires in a husk
+- `tickets/0267-*.erg`, `tickets/0306-*.erg`, `tickets/0317-*.erg` — prior parked-cwd work (reference only)
+
+## Actions
+1. Extend worktree-gc.sh: after the registered-worktree pass, list dirs under
+   `.claude/worktrees/` absent from `git worktree list --porcelain`; report
+   each husk found.
+2. Remove a husk only when it is safe: empty of real content (only empty
+   scratch subdirs). NEVER remove a husk that may be a live session's base
+   cwd — the harness resets the shell cwd there after every Bash call, so
+   deletion breaks the session. Safe heuristic to design: report-only by
+   default, or age/mtime threshold.
+
+## Test
+- Red-first: a test creating a fake husk dir under a temp repo's
+  `.claude/worktrees/` and asserting worktree-gc reports it.
+
+## Invariants
+- gc must never remove a registered worktree with uncommitted changes
+  (existing behavior), and never the tree it runs from.
+
+## Exit criteria
+- [ ] worktree-gc.sh detects and reports unregistered husk dirs
+- [ ] Removal (if implemented) is provably safe for live-session base cwds
+- [ ] Test covers husk detection
+- [ ] `make check` passes
