@@ -305,7 +305,7 @@ def test_gc_reports_unregistered_husk_dir(origin):
 def test_gc_reports_husk_when_run_from_linked_worktree(origin):
     """The husk scan must root on the PRIMARY repo, not on the `repo` arg's own
     toplevel — else running gc from a linked worktree (the harness's normal cwd,
-    and how molt/roar invoke it bare) silently skips the scan (ticket 0325)."""
+    and how lair invokes it bare) silently skips the scan (ticket 0325)."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-live", dirty=False)  # live linked worktree
     husk = primary / ".claude" / "worktrees" / "husk-agent-dead"

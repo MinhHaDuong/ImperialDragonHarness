@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Worktree GC belongs to lair only — roar/molt killed live session worktrees
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T21:40Z claude created
+
+--- body ---
+## Context
+On 2026-07-13 the worktree GC (`scripts/worktree-gc.sh`) removed two
+worktrees that were live sessions' base cwds:
+
+- 09:15Z — a roar wrap-up removed `explore-session` while four sessions
+  were active in it.
+- 19:35Z — a roar in `t-gaze-fork-liveness` removed
+  `explore-ticket-pipeline` while one session was mid-flight and two more
+  had started in it two minutes earlier.
+
+The GC's staleness test (upstream `[gone]` + clean tree) reads "branch
+merged" as "worktree unused". A session-base worktree whose checked-out
+branch was pushed and merged (PRs #554/#555 merged from
+`worktree-explore-ticket-pipeline`; deleteBranchOnMerge pruned the remote)
+becomes GC-bait while sessions still sit in it. Removal strands them in
+unregistered husk dirs where git resolves to the primary checkout —
+roughly eight sessions ran unisolated in the `explore-ticket-pipeline`
+husk over the following two days.
+
+Author ruling: roar and molt do nothing outside their isolated
+environment, and never worktree GC. That cleanup belongs to /lair, the
+end-of-day wrap-up.
+
+## Relevant files
+- `skills/roar/SKILL.md` — step 10 (GC) removed; steps renumbered
+- `skills/molt/SKILL.md` — step 1.5 (GC) replaced by a no-GC note
+- `skills/lair/SKILL.md` — step 8 hygiene sweep now owns the GC, with a
+  no-other-live-session precondition
+- `scripts/worktree-gc.sh` — unchanged here; residual hardening below
+
+## Exit criteria
+- [ ] roar SKILL.md no longer invokes `worktree-gc.sh`
+- [ ] molt SKILL.md no longer invokes `worktree-gc.sh`
+- [ ] lair SKILL.md invokes it with the live-session precondition
+- [ ] `make check` passes
+
+## Residual (not this ticket)
+The script itself still lacks a liveness rail and unlocks locked
+worktrees before removing them (`worktree-gc.sh:49-57`), so even a
+lair-time GC can hit a live overnight background session. The
+`explore-ticket-pipeline` husk also still hosts live sessions and needs
+repair. Follow-up if judged worthwhile; see tickets 0325/0338 for husks.
