@@ -21,3 +21,12 @@ Related: `feedback_worktree_path_trap_needs_guard.md` (the guard's origin),
 `feedback_shared_worktree_live_session_contention.md` (a sibling worktree
 hazard). This one is specifically about a worktree *disappearing* out from
 under a running session, not about path confusion between live worktrees.
+
+Re-confirmed 2026-07-14 (session a645ef77): the removed worktree's path can
+persist as an empty husk directory that resolves into the PRIMARY repo, not a
+worktree, once deregistered. The parked-cwd guard then denies `EnterWorktree`
+(by design) and the worktree-identity guard blocks every non-`git -C`
+mutation from that path. Recovery is unchanged — `git -C <primary> worktree
+add` for manual isolation, plus delegating committable work and skill
+invocations to `Agent(isolation:"worktree")` subagents. Husk detection/cleanup
+in `worktree-gc` is ticketed as tickets/0325.
