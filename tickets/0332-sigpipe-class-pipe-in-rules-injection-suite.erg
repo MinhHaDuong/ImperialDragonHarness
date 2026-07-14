@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-14T12:40Z claude created
 2026-07-14T11:29Z claude note imagine: single grep|grep site confirmed (no siblings in suite); the pipe is a same-line cooccurrence check — on-start.sh:33 pairs cat and README.md on one line, so one anchored `grep -qE 'cat[^#]*README\.md'` against the file replaces it with no pipe; capture-then-[[ ]] dropped as ceremony; mutation check unchanged
+2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (file:line-precise, phase-3 absorbed per raid-0252 precedent); anchors verified (suite :44, on-start.sh:33); PASS, no overlap with 0333
 
 --- body ---
 ## Context
