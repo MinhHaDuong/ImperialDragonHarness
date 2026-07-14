@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-14T21:05Z Minh Ha-Duong created
+2026-07-14T21:47Z Minh Ha-Duong note implemented: 9 lower-sev vars added to predicate; both export sites collapsed to the single predicate; KEYS path now checks SRC too (closed the src asymmetry). red-proven, all bash suites + lint green
 
 --- body ---
 ## Context
@@ -27,6 +28,6 @@ tidy-ups.
   (assert each is refused on both the strict-parse and KEYS-selection paths).
 
 ## Exit criteria
-- [ ] New vars refused on both export paths, red-proven
-- [ ] Single predicate is the only name-policy site (no duplicated inline lists)
-- [ ] make check passes
+- [x] New vars refused on both export paths, red-proven
+- [x] Single predicate is the only name-policy site (no duplicated inline lists)
+- [x] make check passes
