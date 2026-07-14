@@ -2,7 +2,6 @@
 Title: External-reviewer panel for verify — contract, decorrelation rule, trial tracker
 Created: 2026-06-04
 Author: MinhHaDuong
-Blocked-by: 0206
 Blocked-by: 0207
 
 --- log ---
@@ -15,6 +14,7 @@ Blocked-by: 0207
 2026-06-05T09:10Z claude note rewritten around review-is-CI (author directive): ACP dropped as the substrate; a reviewer seat is a sandboxed CI-style job (0217 seat-runner), findings normalize to the contract shape, advisory→required is the optional→required-check toggle. Decorrelation evidence landed (docs/research/ensemble-decorrelation-evidence.md): cap N at 2-4, composition>count, the genuinely-different local open-weights seat buys the real independence (prototype: qwen3.6-35b-a3b usable, devstral hallucinated). 0207/0208 re-scoped off ACP; children now blocked-by 0217
 2026-06-05T11:07Z claude note corrective: the 06:41Z ACP-client architecture decision was superseded the same day by ticket 0217 (sandbox-runner spinoff, PR #289 panel + deep-research evidence) — OS-level sandbox (rootless podman) is the load-bearing containment, ACP demoted to optional plumbing. Current seat mechanism: 0217 seat-runner + /reviewers skill (0208, closed). Do not orient from the 06:41Z note
 2026-06-05T11:08Z MinhHaDuong note blocker 0208 closed — Blocked-by removed.
+2026-07-14T05:05Z Minh Ha-Duong note blocker 0206 closed — Blocked-by removed.
 --- body ---
 ## Context
 
