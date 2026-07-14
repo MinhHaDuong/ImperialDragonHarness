@@ -32,10 +32,11 @@ invocations to `Agent(isolation:"worktree")` subagents. Husk detection in
 `worktree-gc` shipped report-only (never removes) under tickets/0325.
 
 Ticket 0338 investigated removal-by-heuristic and confirmed report-only as
-the PERMANENT decision, not a first cut: the only candidate "is this cwd live" signal is a
-per-process `/proc` probe, which is not permission-independent (EACCES and
-ENOENT are indistinguishable from a shell) and is structurally blind to
-remote/network-FS sessions. A live near-miss surfaced during that
+the PERMANENT decision, not a first cut: a local liveness probe exists —
+`[ -L /proc/<pid>/cwd ]` distinguishes a dead PID (not a link) from a live
+same-host PID even without target-read permission (lstat needs none) — but it
+is structurally blind to remote/network-FS sessions, which have no local
+process to probe at all; that gap alone blocks a safe heuristic. A live near-miss surfaced during that
 investigation — the raid session's own base cwd was itself an unregistered
 husk with five live PIDs holding it as cwd, mtimes hours stale — reinforcing
 that an age/mtime heuristic would plausibly have removed a live session's
