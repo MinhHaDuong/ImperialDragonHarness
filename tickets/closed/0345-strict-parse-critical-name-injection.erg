@@ -2,12 +2,14 @@
 Title: strict-parse critical-name/RCE injection hardening (needs policy decision)
 Created: 2026-07-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #610
 
 --- log ---
 2026-07-14T00:00Z Minh Ha-Duong created
 2026-07-14T17:51Z Minh Ha-Duong note Policy (a) chosen: full critical-name denylist on the strict-parse loop. Audit of all 11 project .env files found NONE sets any critical name, so the full set breaks zero existing projects. Factored one shared _be_is_protected_name predicate (0343 set + GCONV_PATH, PYTHONPATH, NODE_OPTIONS, NODE_PATH, PERL5LIB, RUBYOPT) applied at BOTH export points.
 
 2026-07-14T18:09Z bump verify-reroll — round 1: denylist omitted git/pager exec vectors (GIT_SSH_COMMAND, GIT_ASKPASS, LESSOPEN, ...) — added to shared predicate + tests
+2026-07-14T18:15Z Minh Ha-Duong closed — autoclosed — PR #610
 --- body ---
 ## Context
 The untrusted project `$PWD/.env` strict-parse loop in `scripts/bash-env.sh` exports every non-`GUARD_*` key directly. An agent operating in an attacker-controlled repo (one shipping a malicious `.env`) can therefore inject arbitrary environment variables into every harness bash subprocess — attacker controls both name and value. Confirmed code-execution vectors: `GCONV_PATH` (glibc/iconv module load, RCE), `LD_PRELOAD` / `LD_AUDIT`, `BASH_ENV` / `ENV` (bash re-source), plus interpreter hijacks `PYTHONPATH` / `NODE_OPTIONS` / `NODE_PATH` / `PERL5LIB` / `RUBYOPT`, and `PATH` clobber. Reproduced during PR #604 review. This is the higher-severity sibling of ticket 0343 (which hardened only the KEYS-selection export name, where the value is trusted).
