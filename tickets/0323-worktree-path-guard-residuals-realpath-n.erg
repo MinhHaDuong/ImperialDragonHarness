@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-13T20:27Z Minh Ha-Duong created
+2026-07-14T09:35Z Minh Ha-Duong note rescoped residual 2 to strict-parse design; snapshot/restore abandoned per gaze ESCALATE; keys wiring split to 0330
 
 --- body ---
 ## Context
@@ -15,19 +16,54 @@ both pre-existing since the guard's creation (ticket 0171):
 
 1. **No realpath/`..` normalization of `file_path`**: the deny is a string
    prefix match on git-resolved roots; a symlinked or `..`-laden path into
-   the primary checkout evades it. Unobserved defect class so far (the
-   2026-07-13 raid failures were all plain absolute paths) — close only with
-   a red test demonstrating the evasion first.
-2. **Escape-hatch env provenance**: `GUARD_ALLOW_PRIMARY_EDIT` is documented
-   as human-only (hook env is the CLI's launch env, not a Bash-tool subshell),
-   but a BASH_ENV-style poisoning path was raised at review. Establish
-   whether any agent-writable file feeds the hook's environment; document or
-   close the hole.
+   the primary checkout evades it. Fixed in PR #574: `realpath -m`
+   normalization in the path guard and `guard-cd-primary-repo.sh`, with red
+   tests for `..`-traversal and symlink-through evasion.
+2. **Escape-hatch env provenance — a real bypass, not a doc gap.**
+   `bash-env.sh` (BASH_ENV) `source`s the project's `$PWD/.env` as *code* in
+   the same process that holds the guards' authority. A project-controlled
+   `.env` can therefore set `GUARD_ALLOW_PRIMARY_EDIT=1` (or run arbitrary
+   bash) and self-grant the human-only escape hatch. The in-process
+   snapshot/restore attempt (PR #574) is unsound: attacker code sourced in the
+   same process reads the per-process nonce and forges the snapshot var (gaze
+   ESCALATE). The fix must be structural — stop executing project-controlled
+   content as code.
+
+## Decision
+
+Residual 2's snapshot/restore approach (PR #574) is abandoned. Project `.env`
+is loaded by a strict `KEY=VALUE` parse — never `source` — and guard-namespaced
+keys from project-controlled files are refused outright. This removes code
+execution from untrusted `.env`, closing the forge and the whole "`.env` runs
+arbitrary bash" class in one move. Verified safe: the three project `.env`
+files (t101-dvc-init, Cadens, AEDIST-technical-report) use plain literal values
+with no shell expansion.
+
+Centralized secret loading from `~/.config/keys/` — and migrating AEDIST's
+secrets out of its project `.env` — is a separate, harness-wide change tracked
+in ticket 0330, which is `Blocked-by` this one (it needs the strict parser and
+the `KEYS=` declaration line this ticket establishes).
+
+## Relevant files
+- `scripts/bash-env.sh` — replace `source "$PWD/.env"` with a strict KEY=VALUE parse
+- `scripts/pretooluse-worktree-path-guard.sh`, `scripts/guard-cd-primary-repo.sh` — realpath fix (PR #574)
+- `tests/test_pretooluse_worktree_path_guard.sh` — realpath red tests (PR #574)
+- new: `tests/test_bash_env_project_env_parse.sh` — parser rejects `GUARD_*` and code execution
+
+## Test (red first)
+- A project `$PWD/.env` containing `GUARD_ALLOW_PRIMARY_EDIT=1` must NOT set that
+  var in the loaded environment.
+- A project `$PWD/.env` containing a command substitution or arbitrary shell must
+  NOT execute it (no side effect, no code run).
+- A plain `FOO=bar` in a project `.env` still loads as `FOO=bar`.
+- `~/.claude/.env` (user-owned, trusted) retains full behavior.
 
 ## Exit criteria
-
-- [ ] Red test showing a normalized-path or symlink evasion, then fix (or a
-      recorded decision that the class stays out of scope, at the probe site)
-- [ ] Escape-hatch env provenance established and documented in the script
-      header
+- [ ] Realpath/symlink evasion closed with red tests (PR #574) — the residual-1
+      portion merges independently of the residual-2 refactor
+- [ ] `bash-env.sh` loads project `$PWD/.env` via strict KEY=VALUE parse, never
+      `source`; refuses `GUARD_*` keys from the project file
+- [ ] Red tests above prove the forge and code-execution paths are closed
+- [ ] Script header documents the trust boundary: user-owned files trusted;
+      project `.env` is parsed-not-executed with guard keys rejected
 - [ ] `make check` and `make lint` pass

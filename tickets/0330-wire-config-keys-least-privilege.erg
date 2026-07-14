@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Wire ~/.config/keys/ into bash-env.sh with per-project least-privilege key selection
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Blocked-by: 0323
+
+--- log ---
+2026-07-14T09:35Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Secrets live in `~/.config/keys/<provider>.env` (anthropic, openrouter,
+mistral, github, hal, zenodo, huggingface, ...), one file per provider. But
+nothing loads them: `~/.config/keys/` is referenced only by a comment in
+`.bashrc`; `bash-env.sh` does not source it, and `~/.claude/.env` is empty.
+Today the only path by which a real secret reaches an agent's Bash environment
+is a project `.env` being `source`d (e.g. AEDIST-technical-report/.env
+duplicates openrouter/hf/zenodo/hal/github keys) — the mechanism ticket 0323
+removes.
+
+Centralize secret loading in `bash-env.sh`, but do NOT expose every key to
+every project's Bash: an injected or misbehaving agent in project X must not be
+able to read project Y's keys. Load only the providers a project declares it
+needs — least privilege, default deny.
+
+## Design
+- A project declares needed providers with a non-secret line in its `$PWD/.env`,
+  e.g. `KEYS=openrouter,zenodo,hal`. `bash-env.sh` reads it via the ticket-0323
+  strict parser, then sources ONLY `~/.config/keys/<name>.env` for each listed
+  name.
+- No `KEYS` line => no provider secrets loaded (default deny).
+- `~/.config/keys/*.env` files are user-owned and trusted, so sourcing them as
+  code is acceptable; project `.env` stays parsed-not-executed (0323).
+- Validate each declared provider name against `[a-z0-9-]+` before use, so a
+  project cannot traverse to `../` or source an arbitrary path.
+
+## Relevant files
+- `scripts/bash-env.sh` — source selected `~/.config/keys/*.env` after the
+  0323 project-`.env` parse yields the `KEYS` declaration
+- `~/.config/keys/*.env` — per-provider secret store (already populated)
+- `~/CNRS/papiers/actif/AEDIST-technical-report/.env` — migrate its secrets to
+  `~/.config/keys/`, keep only non-secret agent identity/paths + a `KEYS=` line
+- `.bashrc` — comment already notes the move; reconcile
+
+## Test
+- A project declaring `KEYS=openrouter` loads `OPENROUTER_API_KEY` and NOT
+  `MISTRAL_API_KEY`.
+- A project with no `KEYS` line loads no provider secrets.
+- A `KEYS` entry containing `/` or `..` is rejected and sources nothing.
+
+## Exit criteria
+- [ ] `bash-env.sh` sources only declared `~/.config/keys/<provider>.env` files
+- [ ] Provider names validated against `[a-z0-9-]+`; traversal rejected
+- [ ] AEDIST secrets migrated to `~/.config/keys/`; its project `.env` holds no secrets
+- [ ] A project with no `KEYS` declaration gets no provider secrets
+- [ ] `make check` and `make lint` pass
