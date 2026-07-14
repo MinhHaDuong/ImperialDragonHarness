@@ -58,6 +58,15 @@
 #     start: a blocked write only counts when the probe also proves the
 #     sandbox executes. Run it standalone with --self-test-only (no endpoint,
 #     no diff) to prove containment with podman + the image alone.
+#   - HOST-SIDE PRE-FLIGHT PROBE (0347): the sandbox posture above governs the
+#     SEATED reviewer. One check runs OUTSIDE it, host-side, before any container
+#     launch: the reasoning-shape probe (below) POSTs a 1-token completion to the
+#     SAME endpoint the seat will use, carrying the SAME credential — a direct
+#     host→endpoint call, not routed through the --network=none relay. It reaches
+#     only the one configured endpoint (the health probe already dials it), adds
+#     no destination the seat could exfiltrate through, and keeps the key off argv
+#     (mode-600 curl -K config, trap-reaped). It is the host operator's own
+#     pre-flight, on par with the health probe — not part of the seat's sandbox.
 #
 # Usage:
 #   seat-runner.sh --branch BRANCH [--repo PATH] [--base REF]
@@ -72,6 +81,10 @@
 #                          /health); empty string skips the reachability probe.
 #
 # Env: SEAT_TIMEOUT (per-seat wall-clock cap, seconds; default 600)
+#      AIDER_API_TIMEOUT (aider/litellm per-request API timeout, seconds; default
+#      120) — a backstop that converts a silent litellm hang into a stderr
+#      exception the failure tail surfaces, instead of a SEAT_TIMEOUT SIGKILL with
+#      empty stderr (ticket 0347).
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -150,6 +163,22 @@ if [[ -n "$CREDENTIAL_ENV" ]]; then
     CRED_ARGS=(-e OPENAI_API_KEY)
 fi
 
+# Scratch dir + cleanup trap are set up EARLY: the reasoning-shape pre-flight
+# probe below writes a mode-600 curl config file here, and the self-test, relay,
+# and clone all reuse it. cleanup reaps the relay, any orphaned seat container,
+# and $WORK on exit (an early probe/health FATAL is reaped too).
+WORK=$(mktemp -d)
+RELAY_PID=""
+SEAT_CONTAINERS=()
+cleanup() {
+    [[ -n "$RELAY_PID" ]] && kill "$RELAY_PID" 2>/dev/null || true
+    for _c in ${SEAT_CONTAINERS[@]+"${SEAT_CONTAINERS[@]}"}; do
+        podman rm -f "$_c" >/dev/null 2>&1 || true
+    done
+    rm -rf "$WORK"
+}
+trap cleanup EXIT
+
 if [[ "$SELF_TEST_ONLY" -eq 0 ]]; then
     [[ -n "$BRANCH" ]] || { echo "seat-runner: --branch required" >&2; exit 2; }
     # Fail loud if the endpoint is down (0217: unreachable endpoint = non-zero).
@@ -159,6 +188,67 @@ if [[ "$SELF_TEST_ONLY" -eq 0 ]]; then
     if [[ -n "$HEALTH_PATH" ]]; then
         curl -sf --max-time 5 "${SCHEME}://${EP}${HEALTH_PATH}" >/dev/null \
             || { echo "seat-runner: endpoint ${ENDPOINT} unreachable" >&2; exit 1; }
+    fi
+
+    # ── Reasoning-shape pre-flight probe (ticket 0347) ────────────────────────
+    # z-ai/glm-5.2 and moonshotai/kimi-k2.7-code return a `reasoning` /
+    # `reasoning_content` field alongside `content`; the seat's pinned
+    # aider/litellm venv hangs forever waiting for content it never surfaces and
+    # the outer SEAT_TIMEOUT SIGKILL leaves EMPTY stderr — a silent timeout that
+    # burns an audition's wall-clock. Catch that class HERE, host-side, before any
+    # container launch: POST a 1-token completion and fail LOUD if the response
+    # carries a non-empty reasoning field. Only runs when a real credential is
+    # injected (--credential-env), and only when python3 is available (it both
+    # builds the request body — so a $MODEL id with JSON metacharacters cannot
+    # corrupt it — and parses the response). The key never touches curl argv: it
+    # goes in a mode-600 curl config file under $WORK (trap-reaped), and the
+    # response body is parsed IN-MEMORY (piped to python3 stdin), never written to
+    # a file the credential-scrub pass skips. Every fragility — no python3, a curl
+    # config write failure, a connect failure, an unparseable body — WARNs and
+    # falls through: never block a working model on a flaky probe. Verdict codes
+    # from the parser: 0 = reasoning present (FATAL), 1 = absent (proceed), 2 =
+    # unparseable (WARN, proceed).
+    if [[ -n "$CREDENTIAL_ENV" ]] && command -v python3 >/dev/null 2>&1; then
+        _probe_model="${MODEL#openai/}"          # the endpoint knows the raw provider id
+        _probe_rc="$WORK/probe.curlrc"
+        if ! _probe_body="$(python3 -c 'import json,sys; print(json.dumps({"model": sys.argv[1], "max_tokens": 1, "messages": [{"role": "user", "content": "ping"}]}))' "$_probe_model")"; then
+            echo "seat-runner: WARN reasoning-shape probe could not build its request body — proceeding (probe is advisory)" >&2
+        else
+            _probe_resp=""
+            if ! ( umask 077; printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY" > "$_probe_rc" ); then
+                echo "seat-runner: WARN reasoning-shape probe could not write its curl config — proceeding (probe is advisory)" >&2
+            elif _probe_resp="$(curl -sf --max-time 15 -K "$_probe_rc" \
+                    -H 'Content-Type: application/json' -X POST -d "$_probe_body" \
+                    "${ENDPOINT}/chat/completions" 2>/dev/null)"; then
+                rm -f "$_probe_rc"                    # key file gone before the body is parsed
+                _probe_verdict=0
+                printf '%s' "$_probe_resp" | python3 -c '
+import json, sys
+try:
+    d = json.load(sys.stdin)
+    msg = (d.get("choices") or [{}])[0].get("message") or {}
+    r = msg.get("reasoning")
+    if r is None:
+        r = msg.get("reasoning_content")
+    present = bool(r.strip()) if isinstance(r, str) else bool(r)
+    sys.exit(0 if present else 1)
+except Exception:
+    sys.exit(2)
+' || _probe_verdict=$?
+                if [[ "$_probe_verdict" -eq 0 ]]; then
+                    echo "seat-runner: FATAL model '${MODEL}' returns a reasoning-field response — known aider/litellm hang class (ticket 0347)" >&2
+                    exit 1
+                elif [[ "$_probe_verdict" -eq 2 ]]; then
+                    echo "seat-runner: WARN reasoning-shape probe could not parse the response from ${MODEL} — proceeding (probe is advisory)" >&2
+                elif [[ "$_probe_verdict" -ne 1 ]]; then
+                    echo "seat-runner: WARN reasoning-shape probe returned unexpected verdict code ${_probe_verdict} for ${MODEL} — proceeding (probe is advisory)" >&2
+                fi
+                # verdict 1 (no reasoning field): the model is safe — proceed silently.
+            else
+                echo "seat-runner: WARN reasoning-shape probe could not reach ${ENDPOINT}/chat/completions — proceeding (probe is advisory)" >&2
+            fi
+            rm -f "$_probe_rc"                        # idempotent catch-all (also covers the write-fail branch)
+        fi
     fi
 fi
 
@@ -200,18 +290,6 @@ fi
 if [[ "$SELF_TEST_ONLY" -eq 0 && -z "$AIDER_REAL" ]]; then
     echo "seat-runner: FATAL aider not found on PATH" >&2; exit 1
 fi
-
-WORK=$(mktemp -d)
-RELAY_PID=""
-SEAT_CONTAINERS=()
-cleanup() {
-    [[ -n "$RELAY_PID" ]] && kill "$RELAY_PID" 2>/dev/null || true
-    for _c in ${SEAT_CONTAINERS[@]+"${SEAT_CONTAINERS[@]}"}; do
-        podman rm -f "$_c" >/dev/null 2>&1 || true
-    done
-    rm -rf "$WORK"
-}
-trap cleanup EXIT
 
 # ── Host-side relay: /relay.sock ⇄ the real endpoint. The container binds the
 #    socket file; under --network=none it has no other route out. ──────────────
@@ -314,7 +392,7 @@ exec ${AIDER_REAL} \\
     --message "\$(cat /prompt.txt)" \\
     --read /review.diff \\
     --yes-always --no-check-update --no-show-model-warnings --no-pretty \\
-    --no-stream --map-tokens 0
+    --no-stream --map-tokens 0 --timeout "${AIDER_API_TIMEOUT:-120}"
 EOF
 )
 review_rc=0

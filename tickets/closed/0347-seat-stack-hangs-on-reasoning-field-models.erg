@@ -1,0 +1,71 @@
+%erg 0.1
+Title: seat-runner CLI stack hangs on reasoning-field models (glm-5.2, kimi-k2.7-code)
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #618
+
+--- log ---
+2026-07-14T17:55Z claude created
+2026-07-14T20:08Z claude note reimagined+planned by raid — fix at seat-runner layer, aider venv unpinnable from repo
+
+2026-07-14T21:28Z bump verify-reroll — round 1: verdict-switch fallthrough + unguarded probe-body substitution
+2026-07-14T21:52Z Minh Ha-Duong closed — autoclosed — PR #618
+--- body ---
+## Context
+
+During the 2026-07-14 seat audits (0207 log), `z-ai/glm-5.2` and
+`moonshotai/kimi-k2.7-code` never completed a review: the reviewer process
+inside the sandbox produced NO stderr and idled until SEAT_TIMEOUT killed
+it (reproduced at 300s and 540s caps; terra completes the same diff in
+~30s). A direct API probe exonerates the models: both answer a trivial
+prompt over the same endpoint and key in 1-3s, HTTP 200, finish=stop —
+and both return a `reasoning` field alongside `content`. Models that
+worked (gpt-5.6-terra/luna, gpt-4o-mini, deepseek-v4-flash,
+qwen3-coder-next) either emit no reasoning field or a shape the stack
+tolerates. Hypothesis: the seat's pinned aider/litellm venv mishandles
+reasoning-model responses via the `openai/` route — hangs waiting for
+content it never surfaces.
+
+This blocks auditioning reasoning-emitting candidates, which make up
+roughly half of the models on the OpenRouter leaderboard that ticket
+0346's audition board scans.
+
+## Relevant files
+
+- `scripts/seat-runner.sh` — SEAT_TIMEOUT kill is the only symptom surface
+- the aider uv-tool venv (allowlisted into the sandbox) — pinned litellm
+  version lives there
+- `tickets/0346-reviewers-audition-retrospective-benchm.erg` — consumer
+
+## Actions
+
+The aider/litellm venv is a host-level uv-tool install, unpinnable from
+this repo, so the durable fix lives in `scripts/seat-runner.sh`.
+
+1. Reasoning-shape pre-flight probe (the core fix). In `seat-runner.sh`,
+   right after the `--health-path` probe and only when `--credential-env`
+   is set, POST a one-token chat completion (`max_tokens=1`, the target
+   `$MODEL` with any litellm `openai/` route prefix stripped) to
+   `${ENDPOINT}/chat/completions` and inspect it. If the response carries a
+   non-empty `reasoning` / `reasoning_content` field, exit non-zero with a
+   diagnostic naming the hang class — BEFORE any container launch. The key
+   goes in a mode-600 `curl -K` config file under `$WORK` (never argv); the
+   response body is parsed in-memory, never written to a scrub-skipped file.
+   A probe that cannot connect or parse WARNs and falls through — a working
+   model is never blocked on a flaky probe.
+2. aider `--timeout` backstop. Pass `--timeout "${AIDER_API_TIMEOUT:-120}"`
+   to the seat's aider invocation so any future silent hang becomes a
+   litellm exception on stderr that the existing failure tail surfaces,
+   not a SEAT_TIMEOUT SIGKILL with empty stderr.
+3. Hermetic tests in `tests/test_seat_runner.sh`: a RED case (a canned
+   reasoning-shaped body must fail loud before podman is reached) and a
+   negative-space case (an ordinary body must reach podman run) so the
+   probe neither misses the class nor false-blocks every model.
+
+## Exit criteria
+
+- [ ] `z-ai/glm-5.2` and `moonshotai/kimi-k2.7-code` complete a seat
+      review (or the stack fails LOUD with a diagnostic, not a silent
+      timeout)
+- [ ] Canary test pins the reasoning-response shape
+- [ ] `make check` passes
