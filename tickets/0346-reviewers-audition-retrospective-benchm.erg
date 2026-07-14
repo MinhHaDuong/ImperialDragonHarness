@@ -8,6 +8,7 @@ Blocked-by: 0207
 2026-07-14T17:14Z Minh Ha-Duong created
 2026-07-14T17:59Z claude note proto-audition data (0207 log, same session): 6 models over two frozen diffs. Defective diff (t323 guard WIP): terra 2/2 real verifiable, deepseek-v4-flash noise+contract violations, qwen3-coder-next 0/2 all-nit. Clean diff (merged PR #604): terra 0 findings (correct), luna 0 findings (correct, 40% of terra price) — specificity axis works as a board dimension. BLOCKER for the board: reasoning-field candidates (glm-5.2, kimi-k2.7-code) hang the aider/litellm seat stack until SEAT_TIMEOUT with empty stderr while answering in 1-3s via direct API — filed as tickets/0347; audition tooling should fail loud on that class, not burn board wall-clock
 
+2026-07-14T18:45Z claude note bump verify-reroll — round 1: unresolved blocker — EXIT trap in audition (reviewers.sh) deletes ${out}.err before the fail-loud 'see ${out}.err' pointer can be read; reproduced empty findings-dir post-exit. Second blocker: unsanitized --name/model flows into erg log note, embedded newline forges a second well-formed ticket-log line undetected by erg check (reproduced against real tickets/erg).
 --- body ---
 ## Context
 
