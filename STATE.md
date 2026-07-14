@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-14T12:05Z
+Last updated: 2026-07-14T18:30Z
 
 ## North star
 
@@ -23,7 +23,8 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **IDH infra parked** (author, 2026-07-14): focus returns to publishing research. Trace-doctor arc closed — tracker 0236 and phase-5 0245 closed, the A/B design voided (docs/trace-ab-2026-06.md § VOIDED); measure-B weeks cancelled, convergence flag stays default-off. Last open infra item: PR #597 (raid Imagine premise-objection norm, ticket 0336) awaiting author review.
+- **bash-env.sh secret loader: hardened and live** (2026-07-14). The BASH_ENV credential loader is fully hardened and active on every Bash call: realpath path-guard normalization (0323), untrusted project `.env` strict-parsed never sourced with GUARD_* refused (0323), `KEYS=` least-privilege default-deny provider loading (0334), CRLF strip + 256 KiB size cap + realpath set-e safety (0335), explicit `provider:SRC=DST` per-key selection in an `env -i` subshell (0340), and refusal to export KEYS to shell/process-critical names (0343). AEDIST migrated to least-privilege `KEYS=` (all 8 vars, zero inline secrets; a dead inline GitHub PAT was found via live validation and swapped for the valid central token — AEDIST 0679). Open follow-ups: **ticket 0345** (strict-parse critical-name/RCE injection hardening — needs a policy decision: full denylist vs RCE-only subset vs allowlist; recommended the RCE-only subset) and **AEDIST 0680** (optional machine-user PAT). Three durable lessons banked to memory (BASH_ENV tests must exercise the real invocation path; untrusted-.env export is a code-execution class; a secret migration is a credential audit).
+- **IDH infra parked** (author, 2026-07-14): focus returns to publishing research. Trace-doctor arc closed — tracker 0236 and phase-5 0245 closed, the A/B design voided (docs/trace-ab-2026-06.md § VOIDED); measure-B weeks cancelled, convergence flag stays default-off. Raid Imagine premise-objection norm (ticket 0336, PR #597) merged.
 - **0216 fan-out evidence**: criterion-2 proof accumulated 2026-07-11 — five substantive /gaze runs (#482 #483 #485 #487 #491) fanned out full reviewer batteries; append to the closed ticket, then drop this line
 - **Verify-reviewer-panel cluster** (only open work left): 0206 (Copilot seat — needs forge config + ≥5-MR trial), 0217/0207 (OS-sandboxed agnostic seats), 0205 (panel contract + decorrelation evidence). 0227/0231/0232/0233/0234 closed this session; cadens now canonical (cadens PR #45)
 - **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/CNRS/papiers/actif/AEDIST-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
