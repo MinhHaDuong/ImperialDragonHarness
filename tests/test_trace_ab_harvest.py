@@ -15,6 +15,8 @@ import importlib.util
 import math
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 
 spec = importlib.util.spec_from_file_location(
@@ -156,6 +158,39 @@ def test_window_slices_census_before_metrics():
     assert m["n_merged"] == 2
 
 
+# --- guardrail is not diluted by unresolved PRs (blocker 3) ---------------
+
+
+def test_unresolved_pairs_do_not_dilute_reroll_guardrail():
+    # 4 cited PRs, but 2 are absent from the join cache. reroll_per_pr must be
+    # computed over the RESOLVED pairs only, else the guardrail reads falsely
+    # safe (a cited-but-unjoined PR would shrink the ratio toward zero).
+    census, join = _arm(4, 2, 0, 40.0)  # 2 of 4 carry a reroll
+    del join[("padme", 1002)]
+    del join[("padme", 1003)]
+    m = hv.compute_metrics(census, join)
+    assert m["n_pairs"] == 4
+    assert m["n_resolved"] == 2
+    assert m["n_unresolved"] == 2
+    # both resolved pairs carry a reroll -> 2/2, not 2/4
+    assert m["reroll_per_pr"] == 1.0
+
+
+# --- census header validation fails loud (blocker 2) ----------------------
+
+
+def test_load_census_rejects_missing_cost_column(tmp_path):
+    path = tmp_path / "bad.csv"
+    # `Cost_USD` typo: without a header check this silently zeroes cost and
+    # inverts the verdict. The loader must fail at the boundary instead.
+    with open(path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["project", "agent_id", "pr_numbers", "Cost_USD"])
+        w.writeheader()
+        w.writerow({"project": "-home-haduong-padme", "agent_id": "main", "pr_numbers": "1", "Cost_USD": "5"})
+    with pytest.raises(ValueError):
+        hv.load_census(path)
+
+
 # --- CSV loaders round-trip -----------------------------------------------
 
 
@@ -182,3 +217,31 @@ def test_load_census_and_join_round_trip(tmp_path):
     assert m["n_pairs"] == 3
     assert m["reroll_per_pr"] == 1 / 3
     assert m["escalate_count"] == 1
+
+
+def _write_arm_csvs(tmp_path, name, n_pairs, n_reroll, n_escalate, total_cost, start_pr):
+    census, join = _arm(n_pairs, n_reroll, n_escalate, total_cost, start_pr=start_pr)
+    census_path = tmp_path / f"{name}-census.csv"
+    with open(census_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(census[0].keys()))
+        w.writeheader()
+        w.writerows(census)
+    return census_path, join
+
+
+def test_harvest_end_to_end_offline(tmp_path):
+    # Full CLI path: two arm censuses + one shared join cache -> verdict.
+    base_census, base_join = _write_arm_csvs(tmp_path, "base", 112, 33, 18, 1120.0, 1000)
+    cand_census, cand_join = _write_arm_csvs(tmp_path, "cand", 56, 16, 18, 280.0, 5000)
+    join_path = tmp_path / "join.csv"
+    with open(join_path, "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(
+            fh, fieldnames=["repo", "pr", "merged", "reroll_mentions", "escalate_mentions"]
+        )
+        w.writeheader()
+        for row in {**base_join, **cand_join}.values():
+            w.writerow(row)
+    result = hv.harvest(base_census, cand_census, join_path)
+    assert result["verdict"] == "adopt", result["reasons"]
+    assert result["cost_key"] == "cost_per_merged_pr"
+    assert result["baseline"]["reroll_per_pr"] == 33 / 112

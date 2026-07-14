@@ -64,10 +64,29 @@ filter_window = _decision.filter_window
 collect_pairs = _join.collect_pairs
 
 
+# Census columns the harvest actually reads. Validated at the load boundary so a
+# header typo or schema drift (e.g. `Cost_USD`) fails loud instead of silently
+# zeroing cost and inverting the verdict.
+REQUIRED_CENSUS_COLUMNS = ("project", "agent_id", "pr_numbers", "cost_usd")
+
+
 def load_census(path: Path) -> list[dict]:
-    """Read a trace-stats census CSV into a list of row dicts (strings)."""
+    """Read a trace-stats census CSV into a list of row dicts (strings).
+
+    Raises ValueError if any column the harvest reads is missing — a boundary
+    assertion, so a mis-typed or drifted header never silently produces a
+    zeroed metric and a wrong verdict.
+    """
     with open(path, newline="", encoding="utf-8") as fh:
-        return list(csv.DictReader(fh))
+        reader = csv.DictReader(fh)
+        header = set(reader.fieldnames or ())
+        missing = [c for c in REQUIRED_CENSUS_COLUMNS if c not in header]
+        if missing:
+            raise ValueError(
+                f"census {path} is missing required column(s): {missing}; "
+                f"header was {sorted(header)}"
+            )
+        return list(reader)
 
 
 def load_join(path: Path) -> dict[tuple[str, int], dict]:
@@ -79,7 +98,12 @@ def load_join(path: Path) -> dict[tuple[str, int], dict]:
     join: dict[tuple[str, int], dict] = {}
     with open(path, newline="", encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
-            join[(r["repo"], int(r["pr"]))] = r
+            try:
+                pr = int(r["pr"])
+            except (KeyError, ValueError):
+                log.warning("skipping join row with non-integer pr: %r", r.get("pr"))
+                continue
+            join[(r["repo"], pr)] = r
     return join
 
 
@@ -115,11 +139,27 @@ def compute_metrics(
     total_cycles = sum(int(r.get("verify_gaze_skills") or 0) for r in rows)
 
     pairs = collect_pairs(rows)
+    # Guardrail metrics are computed over pairs RESOLVED in the join only. A PR
+    # cited by the census but absent from the join cache carries no known
+    # reroll/escalate count; including it in the denominator would dilute
+    # reroll_per_pr toward false safety. Unresolved pairs are surfaced
+    # (n_unresolved) and logged so a stale cache is visible, not silent.
+    resolved = [p for p in pairs if p in join]
+    n_pairs = len(pairs)
+    n_resolved = len(resolved)
+    n_unresolved = n_pairs - n_resolved
+    if n_unresolved:
+        log.warning(
+            "%d of %d cited PR(s) absent from the join cache — excluded from the "
+            "guardrail denominator: %s",
+            n_unresolved,
+            n_pairs,
+            [p for p in pairs if p not in join],
+        )
+
     n_merged = reroll = escalate = 0
-    for pair in pairs:
-        j = join.get(pair)
-        if j is None:
-            continue
+    for pair in resolved:
+        j = join[pair]
         if str(j.get("merged")) == "True":
             n_merged += 1
         r_mentions = _as_int(j.get("reroll_mentions"))
@@ -129,13 +169,14 @@ def compute_metrics(
         if e_mentions is not None:
             escalate += e_mentions
 
-    n_pairs = len(pairs)
     return {
         "cost_per_merged_pr": total_cost / n_merged if n_merged else math.inf,
         "cost_per_cycle": total_cost / total_cycles if total_cycles else math.inf,
-        "reroll_per_pr": reroll / n_pairs if n_pairs else 0.0,
+        "reroll_per_pr": reroll / n_resolved if n_resolved else 0.0,
         "escalate_count": escalate,
         "n_pairs": n_pairs,
+        "n_resolved": n_resolved,
+        "n_unresolved": n_unresolved,
         "n_merged": n_merged,
         "total_cost": round(total_cost, 4),
         "total_cycles": total_cycles,

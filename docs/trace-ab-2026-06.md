@@ -42,17 +42,20 @@ what makes the sample a fair test of Opus-main delivery quality.
 Resolved sample (ticket → merge PR → replay base SHA, the forge-recorded base
 that equals `git merge-base` of the PR's two parents):
 
-| Ticket | PR | Replay base SHA | Title |
-|--------|-----|-----------------|-------|
-| 0217 | #564 | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | OS-network-isolate the reviewer seat-runner |
-| 0319 | #563 | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | carry resolve-$$-to-literal caveat into workflow.md |
-| 0318 | #562 | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | harden worktree-path guard to a blocking deny |
-| 0317 | #561 | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | close nested-repo escape in parked-cwd guard |
-| 0291 | #550 | `ffd4d3cd23aa74b420c78b8a5fbf433c74f367eb` | shared root-cause taxonomy for verify-gate/skill-doctor |
+| Ticket | PR | Closed (UTC) | Replay base SHA | Title |
+|--------|-----|--------------|-----------------|-------|
+| 0217 | #564 | 21:13Z | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | OS-network-isolate the reviewer seat-runner |
+| 0319 | #563 | 20:30Z | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | carry resolve-$$-to-literal caveat into workflow.md |
+| 0318 | #562 | 20:29Z | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | harden worktree-path guard to a blocking deny |
+| 0317 | #561 | 20:26Z | `b34c5fe2dfa55a8c3fc710f4089a29cd6b74c469` | close nested-repo escape in parked-cwd guard |
+| 0257 | #552 | 17:12Z | `ffd4d3cd23aa74b420c78b8a5fbf433c74f367eb` | globalize EDM discipline and index-source skill |
 
-Skipped by the rule between the qualifying five: 0324/#567 and 0257/#552 and
-0266/#556 (no APPROVED verdict on the merge PR); 0316/#553 and 0315/#33
-(trace-doctor study sessions, reflexivity-excluded — see § Exclusion rules).
+All five close-timestamps are 2026-07-13; the whole day sits strictly before the
+2026-07-14 cutoff. Skipped by the rule between the qualifying five: 0324/#567 and
+0266/#556 (merge PR carries no APPROVED verdict; a fast-fix and a tracker-close,
+respectively); 0316/#553 and 0315/#551 (trace-doctor study sessions,
+reflexivity-excluded per § Exclusion rules). The next-nearest miss is 0291/#550,
+APPROVED but closed 17:11Z, one minute behind 0257 and so outside the top five.
 Four of the five share base `b34c5fe` (a same-evening merge wave); each replay
 still checks out its own recorded base.
 
