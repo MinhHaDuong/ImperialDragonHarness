@@ -9,6 +9,8 @@ Author: Integration Test
 2026-07-13T16:03Z Minh Ha-Duong note pre-registration split to 0315: interventions pinned, decision rule + red-first tests landed, gaze convergence flag documented default off; live A/B arms remain here
 
 2026-07-14T09:34Z Minh Ha-Duong note authorized measure-A replay spend (5 paired Sonnet replays, smoke-first on 0319); pinned measure-B windows in docs/trace-ab-2026-06.md — control 2026-07-20..2026-07-26 (flag off), treatment 2026-07-27..2026-08-02 (flag on)
+
+2026-07-14T12:02Z Minh Ha-Duong note design voided by author after the 0319 smoke: five unfrozen variables (effort axis, gaze re-tiering 0320, obsolete Opus-main premise, unobservable paired baseline, stale join cache) — see the VOIDED section of docs/trace-ab-2026-06.md; measure B cancelled, flag stays default-off; study PRs #585/#586 closed unmerged; process root cause fixed on 0336/PR #597; arc dropped to return author focus to research
 --- body ---
 ## Context
 

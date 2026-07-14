@@ -15,6 +15,8 @@ Author: claude
 2026-07-13T16:03Z Minh Ha-Duong note phase-5 pre-registration split to 0315 (docs/trace-ab-2026-06.md + trace_ab_decision.py + gaze convergence flag); live arms remain on 0245
 2026-07-13T16:10Z Minh Ha-Duong note 0316: trace-doctor skill assembled (skills/trace-doctor/SKILL.md) from committed scripts; adopt items #1 (micro-turn rule in rules/workflow.md) and #3 (compact-audit wired into the monthly run) landed; integration review now owns only the 0245/0315 loose ends
 2026-07-14T05:28Z Minh Ha-Duong note phase-5 A/B scaffolding landed via child 0326 (harvest CLI, replay runbook, measure-A sample); live arms remain on 0245 pending author scheduling — measure-B week dates and measure-A replay authorization
+
+2026-07-14T12:02Z Minh Ha-Duong note integration review at close: all children closed (0245 last, voided by author — phase 5 dropped at smoke, see docs/trace-ab-2026-06.md VOIDED section); deliverables in — trace-doctor skill assembled (0316) and runnable from committed scripts, phase-4 adopt items #1 micro-turn rule and #3 compact-audit advisory landed, six candidate measures rejected by counterfactual accounting with measured evidence; exit criteria met, closing with 0245
 --- body ---
 ## Context
 
@@ -135,9 +137,12 @@ Not owned by any child (integration-review checklist):
 
 ## Exit criteria
 
-- [ ] All child tickets closed
-- [ ] `trace-doctor` skill exists and produces a ranked recommendation
-      report from a live 28-day trace corpus
-- [ ] At least one cost-saving measure validated (phase 3 or 4) and
+- [x] All child tickets closed (0245 last, voided — phase 5 dropped by
+      the author at smoke; see docs/trace-ab-2026-06.md VOIDED section)
+- [x] `trace-doctor` skill exists and produces a ranked recommendation
+      report from a live 28-day trace corpus (0316, skills/trace-doctor/)
+- [x] At least one cost-saving measure validated (phase 3 or 4) and
       either adopted in a skill/prompt or explicitly rejected with
-      measured evidence
+      measured evidence (adopted: micro-turn rule, compact-audit
+      advisory; rejected with evidence: six measures in
+      docs/trace-counterfactuals-2026-06.md)
