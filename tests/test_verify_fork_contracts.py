@@ -16,6 +16,7 @@ REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 
 VERIFY = (SKILLS / "gaze" / "SKILL.md").read_text()
+TELEMETRY = (SKILLS / "gaze" / "telemetry.yml").read_text()
 ERG_PR_MERGE = (SKILLS / "merge" / "erg-pr-merge").read_text()
 
 
@@ -135,6 +136,51 @@ def test_gaze_only_reroll_fix_agent_gets_isolation():
     # The sole grant lives in the REROLL fix-agent line.
     assert 'spawn a fix subagent with `isolation: "worktree"`' in norm, (
         "gaze/SKILL.md: the REROLL fix-agent isolation grant changed or was removed"
+    )
+
+
+def test_gaze_documents_fork_liveness_window():
+    """A silent fork stalls between the review comment and the verdict (twice
+    seen: 2026-07-11, 2026-07-13). The caller-monitored liveness window must be
+    documented in SKILL.md and carried as a knob in telemetry.yml — prose and
+    knob must not drift apart (ticket 0321)."""
+    assert "Fork liveness" in VERIFY, (
+        "gaze/SKILL.md: missing the 'Fork liveness' clause"
+    )
+    assert "fork_liveness_seconds" in VERIFY, (
+        "gaze/SKILL.md: does not name the fork_liveness_seconds knob"
+    )
+    assert "fork_liveness_seconds" in TELEMETRY, (
+        "telemetry.yml: missing the fork_liveness_seconds knob"
+    )
+    assert "GAZE_LIVENESS_WINDOW_S" in VERIFY, (
+        "gaze/SKILL.md: does not name the GAZE_LIVENESS_WINDOW_S env override"
+    )
+    assert "GAZE_LIVENESS_WINDOW_S" in TELEMETRY, (
+        "telemetry.yml: missing the GAZE_LIVENESS_WINDOW_S env override"
+    )
+
+
+def test_gaze_liveness_fallback_names_verify_gate_not_a_rerun():
+    """On window expiry the fallback must skip re-running phases 2–5, drive
+    /verify-gate directly, and key off the three completion markers (verdict
+    comment, branch-tip motion, review-worktree mtime) — never relax the gate
+    (ticket 0321)."""
+    norm = _normalize(VERIFY)
+    assert "do not re-run phases 2–5" in norm.lower(), (
+        "gaze/SKILL.md: liveness fallback does not forbid re-running phases 2–5"
+    )
+    assert "/verify-gate" in norm, (
+        "gaze/SKILL.md: liveness fallback does not name the direct /verify-gate call"
+    )
+    assert "verdict comment" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the verdict-comment marker"
+    )
+    assert "branch-tip" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the branch-tip-motion marker"
+    )
+    assert "mtime" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the review-worktree mtime marker"
     )
 
 
