@@ -16,6 +16,7 @@ Blocked-by: 0207
 2026-06-05T11:08Z MinhHaDuong note blocker 0208 closed — Blocked-by removed.
 2026-07-14T05:05Z Minh Ha-Duong note blocker 0206 closed — Blocked-by removed.
 2026-07-14T17:14Z Minh Ha-Duong note child 0346 filed — /reviewers audition subcommand (frozen benchmark board, duplicate/unique-verified/unique-hallucinated classification); audition filters candidates before the advisory trial, never replaces it
+2026-07-14T21:13Z Minh Ha-Duong note child 0353 filed — latency capture on both paths plus peer-relative SLOW elimination (factor x median p50 on the same board), author directive; blocked-by 0348 for the scores read-back surface
 --- body ---
 ## Context
 
@@ -33,6 +34,7 @@ stays open until children merge + integration review (roar step 7).
 - tickets/0208 — reviewer-management surface (roster, harvest, scorecard)
 - tickets/0217 — sandbox seat-runner (the seat execution mechanism; foundational)
 - tickets/0346 — /reviewers audition: retrospective benchmark board for candidate seats
+- tickets/0353 — latency tracking on audition and request; peer-relative slow-candidate elimination
 
 ## Architecture: review is CI (decided 2026-06-05, supersedes the ACP draft)
 
