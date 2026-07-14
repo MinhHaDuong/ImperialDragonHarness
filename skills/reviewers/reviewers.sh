@@ -462,6 +462,10 @@ case "$subcmd" in
             # quoting `--- log ---` (the %erg template shows one) cannot fabricate
             # a phantom row or spam WARNs (ticket 0348 review, rounds 1–2).
         done < <(
+            # No pre-filter grep here: the `case` above has no default arm, so a
+            # log line matching neither pattern is already a silent no-op -- a
+            # second regex re-stating the same two patterns would only risk
+            # drifting out of sync with the case arms (simplify review, PR 634).
             find "$tickets_dir" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
                 awk '
                     done_log        { next }
@@ -469,7 +473,7 @@ case "$subcmd" in
                     inlog && /^--- /         { inlog=0; done_log=1; next }
                     inlog
                 ' "$f" 2>/dev/null
-            done | grep -E 'audition candidate=|MR .*seat=.*verdict:' || true
+            done
         )
         ;;
 

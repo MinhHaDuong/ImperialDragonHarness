@@ -183,7 +183,7 @@ carries per-token pricing, which is what feeds `REVIEWERS_PRICE_IN_PER_M` /
 `REVIEWERS_PRICE_OUT_PER_M` for the audition `cost` column.
 
 **Rankings.** OpenRouter's usage rankings are website-only
-(`https://openrouter.ai/rankings`) — fetched as a page, not exposed as an API —
+(`https://openrouter.ai/rankings`, fetched as a page, not exposed as an API) —
 a coarse popularity signal, not a review-quality signal.
 
 **Privacy asymmetry.** Auditioning on a free tier is risk-free: the benchmark
