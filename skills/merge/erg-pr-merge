@@ -180,6 +180,13 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]]; then
         # then confirm it is committed at HEAD with `git cat-file -e`, whose
         # verdict is the exit code alone. No parsed git output anywhere. This
         # keeps the ID-prefix match (glob on `${tid}-*.erg`) of the old check.
+        # Accepted limitation: compgen resolves the slug from the WORKING TREE,
+        # so a working tree drifted from HEAD (a dirty rename/delete of the
+        # ticket file) could report a present ticket MISSING. Merge always runs
+        # on a clean PR-branch tip (working tree == HEAD), so this cannot
+        # misfire in practice; resolving the slug from HEAD instead would mean
+        # parsing `git ls-tree` stdout — the exact rewrite exposure this block
+        # removes — so the clean-tree assumption is the deliberate trade-off.
         # (ticket 0333)
         tf=$(compgen -G "tickets/${tid}-*.erg" 2>/dev/null | head -1 || true)
         if [[ -z "$tf" ]] || ! git cat-file -e "HEAD:${tf}" 2>/dev/null; then
