@@ -14,13 +14,25 @@
 #   * $PWD/.env — project-level, UNTRUSTED. An agent, a cloned repo, or any
 #     project write can place it. It is NEVER sourced: it is strict-parsed
 #     KEY=VALUE, values are assigned LITERALLY (no eval / $() / backticks), and
-#     any guard-namespaced key — any key whose name contains GUARD_, covering
-#     both GUARD_* and the leading-underscore _GUARD_* override pair — is
-#     REFUSED. This structurally closes the escape-hatch provenance hole
-#     (ticket 0323, residual 2): a sourced project .env could otherwise forge a
-#     per-process guard nonce (e.g. GUARD_ALLOW_PRIMARY_EDIT) or the worktree-
-#     path override (_GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT), or execute
-#     arbitrary shell via BASH_ENV.
+#     any protected export NAME is REFUSED. Protected names cover BOTH (1) every
+#     guard-namespaced key — any name containing GUARD_, covering GUARD_* and the
+#     leading-underscore _GUARD_* override pair — AND (2) the shell/process/
+#     interpreter-critical set (PATH, LD_PRELOAD/LD_LIBRARY_PATH/LD_AUDIT,
+#     BASH_ENV, ENV, GCONV_PATH, PYTHONPATH, NODE_OPTIONS/NODE_PATH, PERL5LIB,
+#     RUBYOPT, IFS, the prompt/CDPATH/GLOBIGNORE parse vars, the git exec vectors
+#     GIT_SSH_COMMAND/GIT_SSH/GIT_ASKPASS/GIT_EXTERNAL_DIFF, the LESSOPEN/LESSCLOSE
+#     pager hooks, and the BASH_FUNC_* / DYLD_* prefix families). This structurally
+#     closes two holes: the escape-hatch
+#     provenance hole (ticket 0323, residual 2) — a sourced project .env could
+#     forge a per-process guard nonce (e.g. GUARD_ALLOW_PRIMARY_EDIT) or the
+#     worktree-path override (_GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT) or run
+#     arbitrary shell via BASH_ENV — and the critical-name/RCE injection hole
+#     (ticket 0345): because the untrusted file controls both name and value, an
+#     un-denied critical name is a direct code-execution vector (GCONV_PATH iconv
+#     module load, LD_PRELOAD, BASH_ENV re-source, PATH/interpreter clobber) in
+#     every subprocess. The refusal is one shared predicate, _be_is_protected_name,
+#     applied identically here and at the KEYS-selection export below, so the two
+#     denylists cannot drift.
 #
 # The script runs on every bash subprocess, so it stays fast and never aborts on
 # a missing or malformed .env — bad lines in the project file are skipped, never
@@ -66,12 +78,16 @@
 # SRC/DST must each match ^[A-Za-z_][A-Za-z0-9_]*$; a malformed entry
 # warns `ignoring invalid KEYS entry: <entry>` and is skipped. The EXPORT
 # NAME (DST, or SRC in the no-rename form) is additionally refused when it
-# names a shell/process-critical variable — PATH, BASH_ENV, ENV, SHELLOPTS,
-# BASHOPTS, IFS, PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE, LD_PRELOAD,
-# LD_LIBRARY_PATH, LD_AUDIT, or the BASH_FUNC_* / DYLD_* prefix families —
-# alongside the existing GUARD_* / _be_* refusal; such an entry warns `refusing
-# KEYS export to protected name: <name>` and is skipped, so an untrusted .env
-# cannot overwrite a process-critical variable in every subprocess. A named
+# names a shell/process/interpreter-critical variable — PATH, BASH_ENV, ENV,
+# SHELLOPTS, BASHOPTS, IFS, PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE,
+# LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT, GCONV_PATH, PYTHONPATH, NODE_OPTIONS,
+# NODE_PATH, PERL5LIB, RUBYOPT, the git exec vectors GIT_SSH_COMMAND, GIT_SSH,
+# GIT_ASKPASS, GIT_EXTERNAL_DIFF, the LESSOPEN / LESSCLOSE pager hooks, or the
+# BASH_FUNC_* / DYLD_* prefix families —
+# via the shared _be_is_protected_name predicate (ticket 0345), alongside the
+# existing GUARD_* / _be_* refusal; such an entry warns `refusing KEYS export to
+# protected name: <name>` and is skipped, so an untrusted .env cannot overwrite a
+# process-critical variable in every subprocess. A named
 # SRC absent from the file warns `KEYS var not found: <provider>:<SRC>` and
 # is skipped. The per-provider files are user-owned and TRUSTED, so a bare
 # `provider` entry sources them as shell code (contrast the untrusted project
@@ -85,6 +101,38 @@
 # provider to load its secret into the environment. This is cooperative scoping
 # that shrinks default secret exposure, NOT access control against a hostile
 # project .env.
+
+# --- shared protected-name predicate (tickets 0343 + 0345) -------------------
+# Returns success (0) when NAME must never be set by the untrusted project .env,
+# whether through the strict-parse KEY=VALUE loop or a KEYS= selection export.
+# Both export paths call this ONE predicate so their denylists cannot drift.
+# It refuses, as an auditable single `case`:
+#   * any guard-namespaced key — the GUARD_* form and the leading-underscore
+#     _GUARD_* worktree-path override pair (substring match), plus this script's
+#     own _be_* bookkeeping (whose live value the strict-parse loop would corrupt);
+#   * the shell/process/interpreter-critical set: PATH / LD_PRELOAD / LD_LIBRARY_PATH
+#     / LD_AUDIT (code execution), BASH_ENV / ENV (bash re-source), SHELLOPTS /
+#     BASHOPTS / IFS / PS1..PS4 / PROMPT_COMMAND / CDPATH / GLOBIGNORE (parse and
+#     word-split hijack), GCONV_PATH (glibc iconv-module RCE), the interpreter
+#     hijacks PYTHONPATH / NODE_OPTIONS / NODE_PATH / PERL5LIB / RUBYOPT, the git
+#     command-execution vectors GIT_SSH_COMMAND / GIT_SSH / GIT_ASKPASS /
+#     GIT_EXTERNAL_DIFF (the harness runs git constantly, so a project .env that
+#     set one would run its command in every git call) and the pager hooks
+#     LESSOPEN / LESSCLOSE (a `|cmd %s` input pipe runs on every `git log` / `less`),
+#     and the BASH_FUNC_* exported-function and DYLD_* (macOS LD_* analogue) prefix
+#     families.
+_be_is_protected_name() {
+    case "$1" in
+        *GUARD_*|_be_*) return 0 ;;
+        PATH|BASH_ENV|ENV|SHELLOPTS|BASHOPTS|IFS|\
+        PS1|PS2|PS3|PS4|PROMPT_COMMAND|CDPATH|GLOBIGNORE|\
+        LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|\
+        GCONV_PATH|PYTHONPATH|NODE_OPTIONS|NODE_PATH|PERL5LIB|RUBYOPT|\
+        GIT_SSH_COMMAND|GIT_SSH|GIT_ASKPASS|GIT_EXTERNAL_DIFF|LESSOPEN|LESSCLOSE|\
+        BASH_FUNC_*|DYLD_*) return 0 ;;
+    esac
+    return 1
+}
 
 # --- trusted user-level .env: source as before (full expansion) ---
 set -a  # mark all subsequent assignments for export
@@ -150,6 +198,17 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
             # no legitimate project key contains the harness-internal GUARD_ token.
             if [[ "$_be_key" == *GUARD_* ]]; then
                 printf 'bash-env: refusing guard-namespaced key from project .env: %s\n' \
+                    "$_be_key" >&2
+                continue
+            fi
+            # ticket 0345: an untrusted project .env controls both name and value,
+            # so refuse any shell/process/interpreter-critical export NAME (else
+            # GCONV_PATH / LD_PRELOAD / BASH_ENV → RCE, PATH / PYTHONPATH /
+            # NODE_OPTIONS → interpreter clobber, in EVERY subprocess). Shares the
+            # _be_is_protected_name predicate with the KEYS-selection path below,
+            # so the two denylists cannot drift. Default-deny, skip + warn.
+            if _be_is_protected_name "$_be_key"; then
+                printf 'bash-env: refusing protected name from project .env: %s\n' \
                     "$_be_key" >&2
                 continue
             fi
@@ -224,24 +283,23 @@ if [ -n "${KEYS:-}" ]; then
                 IFS=','
                 continue
             fi
-            # shell/process-critical export-name refusal: the export NAME is DST
-            # (== SRC in the no-rename form), chosen by the untrusted project
-            # .env. Refuse names that would subvert every subprocess if a hostile
-            # .env aimed a value at them — PATH/LD_* (code execution), BASH_ENV/ENV
-            # (re-source arbitrary shell), IFS/prompt/CDPATH/GLOBIGNORE (parse and
-            # word-splitting hijack), the BASH_FUNC_* exported-function smuggling
-            # channel, and the DYLD_* macOS analogue of LD_*. Exact names plus two
-            # prefix globs, kept as an auditable `case`. Default-deny, skip + warn.
-            case "$_be_dst" in
-                PATH|BASH_ENV|ENV|SHELLOPTS|BASHOPTS|IFS|\
-                PS1|PS2|PS3|PS4|PROMPT_COMMAND|CDPATH|GLOBIGNORE|\
-                LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|\
-                BASH_FUNC_*|DYLD_*)
-                    printf 'bash-env: refusing KEYS export to protected name: %s\n' \
-                        "$_be_dst" >&2
-                    IFS=','
-                    continue ;;
-            esac
+            # shell/process/interpreter-critical export-name refusal: the export
+            # NAME is DST (== SRC in the no-rename form), chosen by the untrusted
+            # project .env. Refuse names that would subvert every subprocess if a
+            # hostile .env aimed a value at them — PATH/LD_* (code execution),
+            # BASH_ENV/ENV (re-source arbitrary shell), IFS/prompt/CDPATH/GLOBIGNORE
+            # (parse and word-splitting hijack), GCONV_PATH (glibc iconv RCE), the
+            # PYTHONPATH/NODE_OPTIONS/NODE_PATH/PERL5LIB/RUBYOPT interpreter hijacks,
+            # the BASH_FUNC_* exported-function channel, and the DYLD_* macOS
+            # analogue of LD_*. Shares the _be_is_protected_name predicate with the
+            # strict-parse loop above (ticket 0345), so the two denylists cannot
+            # drift. Default-deny, skip + warn.
+            if _be_is_protected_name "$_be_dst"; then
+                printf 'bash-env: refusing KEYS export to protected name: %s\n' \
+                    "$_be_dst" >&2
+                IFS=','
+                continue
+            fi
         fi
         _be_keyfile="$HOME/.config/keys/$_be_prov.env"
         if [ ! -f "$_be_keyfile" ]; then
@@ -305,3 +363,6 @@ if [ -n "${KEYS:-}" ]; then
     unset _be_ifs _be_entry _be_prov _be_sel _be_sel_mode _be_src _be_dst \
           _be_val _be_rc _be_keyfile _be_had_noglob
 fi
+
+# Drop the shared predicate so it does not leak into every subprocess's shell.
+unset -f _be_is_protected_name 2>/dev/null || true
