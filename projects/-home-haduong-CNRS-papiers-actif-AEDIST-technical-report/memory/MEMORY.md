@@ -105,5 +105,5 @@
 - [Handoff in STATE not tickets](feedback_handoff_in_state_not_tickets.md) — handoffs go in STATE.md + MASTERPLAN + Blocked-by edges, never a tracker ticket
 - [~/.claude = IDH checkout](reference_claude_dir_is_idh.md) — the live harness dir is the ImperialDragonHarness clone on doudou; PR then `git -C ~/.claude pull`
 - [Stacked PR waves](feedback_stacked_pr_waves.md) — same-file raid waves go out stacked (base = previous wave's branch); rebase the stack at every gate, the author lands decisions mid-raid
-- [BG merge anchoring + auto-merge race](feedback_bg_merge_anchoring.md) — erg-pr-merge in bg sessions: anchor `cd <pr-worktree> && …` in one compound; check PR state before any retry (bounced run may have queued auto-merge)
+- [BG merge anchoring + auto-merge race](feedback_bg_merge_anchoring.md) — erg-pr-merge in bg sessions: point it at the PR-branch worktree with `-C <pr-worktree>` (ticket 0344); check PR state before any retry (bounced run may have queued auto-merge)
 - [pgrep self-match watcher](feedback_pgrep_self_match_watcher.md) — watcher loops that `pgrep -f` their own pattern self-match and never exit; gate on a captured PID + timeout fallback
