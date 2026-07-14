@@ -10,7 +10,7 @@ Author: Minh Ha-Duong
 ## Context
 
 PR #570 (ticket 0322) rewrote the beat-settings.json destructive-bash guard
-hook path from a hardcoded `/home/haduong/.claude/...` to `$HOME/.claude/...`
+hook path from a hardcoded absolute user-home literal to `$HOME/.claude/...`
 to pass the newly-extended agnostic gate on `scripts/`. The blocker "does the
 hook runner expand `$HOME` in a `command` path?" was settled by in-repo
 evidence rather than a live experiment, and the PR merged with `/gaze` APPROVED
