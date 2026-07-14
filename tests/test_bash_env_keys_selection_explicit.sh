@@ -105,6 +105,20 @@ _assert_eq() {
     fi
 }
 
+# Load bash-env.sh with an EXTRA variable pre-exported into the parent env, then
+# print the value of <var>. Proves the extraction subshell cannot resolve a SRC
+# name against the ambient environment (only against the provider file).
+_load_var_ambient() {
+    local home="$1" projdir="$2" var="$3" amb_name="$4" amb_val="$5"
+    HOME="$home" bash -c '
+        cd "$1" || exit 1
+        export "$4=$5"
+        source "$2"
+        n="$3"
+        printf "%s" "${!n-}"
+    ' _ "$projdir" "$SCRIPT" "$var" "$amb_name" "$amb_val" 2>/dev/null
+}
+
 # Make a project dir <name> holding <env-content> as its .env; echo the dir path.
 _mkproj() {
     local dir="$WORK/$1"
@@ -206,5 +220,45 @@ if [ -e "$WORK/PWNED" ]; then
 else
     echo "PASS: (6) command substitution in value was NOT executed"
 fi
+
+# --- (7) ambient-env leak: SRC absent from the file but present as an exported
+#         ambient var must NOT be resolved — the subshell sees a cleared env ------
+# SRC=AMBIENT_SENTINEL is not defined by zenodo.env, but we pre-export it into the
+# parent with a sentinel value. A leaking extraction subshell would inherit it and
+# smuggle the ambient value into DST; the env -i subshell cannot see it, so DST
+# stays unset and the shell survives.
+P7="$(_mkproj p7 'KEYS=zenodo:AMBIENT_SENTINEL=DEST_VAR
+')"
+_assert_eq "(7) ambient SRC does not leak into DST" \
+    "$(_load_var_ambient "$FHOME" "$P7" DEST_VAR AMBIENT_SENTINEL leakval)" ""
+_assert_eq "(7) ambient-leak entry: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P7")" "0"
+
+# --- (8) DST forging a guard var is refused (default-deny) -----------------------
+# An untrusted project .env must not be able to name GUARD_* / _GUARD_* as the
+# export target — that would forge a per-process guard nonce or the worktree-path
+# override honored by pretooluse-worktree-path-guard.sh.
+P8A="$(_mkproj p8a 'KEYS=huggingface:HF_TOKEN=GUARD_ALLOW_PRIMARY_EDIT
+')"
+_assert_eq "(8a) GUARD_ dst: not set" \
+    "$(_load_var "$FHOME" "$P8A" GUARD_ALLOW_PRIMARY_EDIT)" ""
+_assert_eq "(8a) GUARD_ dst: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P8A")" "0"
+P8B="$(_mkproj p8b 'KEYS=huggingface:HF_TOKEN=_GUARD_WORKTREE_ROOT
+')"
+_assert_eq "(8b) _GUARD_ override dst: not set" \
+    "$(_load_var "$FHOME" "$P8B" _GUARD_WORKTREE_ROOT)" ""
+_assert_eq "(8b) _GUARD_ override dst: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P8B")" "0"
+
+# --- (9) DST clobbering this script's own _be_* bookkeeping is refused -----------
+# `_be_ifs` is live loop state in the sourcing shell; letting an untrusted .env set
+# it mid-run would corrupt the KEYS parse. Reject the entry.
+P9="$(_mkproj p9 'KEYS=huggingface:HF_TOKEN=_be_ifs
+')"
+_assert_eq "(9) _be_* dst: not leaked into the env" \
+    "$(_load_var "$FHOME" "$P9" _be_ifs)" ""
+_assert_eq "(9) _be_* dst: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P9")" "0"
 
 exit "$fail"

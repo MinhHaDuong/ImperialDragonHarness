@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-14T00:00Z Minh Ha-Duong created
 
+2026-07-14T12:50Z bump verify-reroll — round 1: env -i subshell (fork-bomb + ambient-leak) + GUARD_/_be_ DST refusal + regression tests
 --- body ---
 ## Context
 

@@ -48,12 +48,17 @@
 # openrouter.env: OPENROUTER_API_KEY_AEDIST, OPENROUTER_API_KEY_KIEU, EXPIRED_*);
 # sourcing it whole over-shares. Selection is EXPLICIT and VERBOSE — there is no
 # naming convention or suffix-stripping — and it happens at the EXPORT BOUNDARY:
-# for a provider:... entry the file is sourced in an ISOLATED subshell, only the
-# requested SRC value is extracted, and DST is exported in the parent with that
-# value assigned LITERALLY (command substitution captures the string; it is never
-# eval'd), so a value with spaces or a $(...) literal is preserved verbatim, never
-# executed. SRC's siblings die with the subshell — only DST lands in the real env.
-# Least-privilege lives here, not in the filesystem (one file per provider).
+# for a provider:... entry the file is sourced in an ISOLATED subshell run with a
+# CLEARED environment (`env -i`), only the requested SRC value is extracted, and
+# DST is exported in the parent with that value assigned LITERALLY (command
+# substitution captures the string; it is never eval'd), so a value with spaces or
+# a $(...) literal is preserved verbatim, never executed. SRC's siblings die with
+# the subshell — only DST lands in the real env. The cleared environment is
+# load-bearing: it drops BASH_ENV (so the extraction `bash -c` cannot re-source
+# this script and fork-bomb under production BASH_ENV=bash-env.sh) and prevents the
+# SRC lookup from resolving against any ambient exported var — only the provider
+# file's own definitions are visible. Least-privilege lives here, not in the
+# filesystem (one file per provider).
 #
 # Provider names must match ^[a-z0-9-]+$ — anything else (path traversal like
 # ../../x, a slash, uppercase, empty) is ignored with a warning. SRC/DST must each
@@ -199,6 +204,18 @@ if [ -n "${KEYS:-}" ]; then
                 IFS=','
                 continue
             fi
+            # structural refusal (mirrors the project-.env line-138 guard): the
+            # untrusted project .env supplies SRC/DST, so it must not name a
+            # guard-namespaced target (GUARD_* / the _GUARD_* worktree-path
+            # override pair honored by pretooluse-worktree-path-guard.sh) nor
+            # this script's own _be_* bookkeeping, which is live in the sourcing
+            # shell and would be corrupted mid-loop. Default-deny, skip + warn.
+            if [[ "$_be_dst" == *GUARD_* ]] || [[ "$_be_dst" == _be_* ]] || \
+               [[ "$_be_src" == *GUARD_* ]]; then
+                printf 'bash-env: ignoring invalid KEYS entry: %s\n' "$_be_entry" >&2
+                IFS=','
+                continue
+            fi
         fi
         _be_keyfile="$HOME/.config/keys/$_be_prov.env"
         if [ ! -f "$_be_keyfile" ]; then
@@ -215,14 +232,25 @@ if [ -n "${KEYS:-}" ]; then
             source "$_be_keyfile"
             set +a
         else
-            # selection: source the file in an ISOLATED subshell, extract ONLY the
-            # requested SRC value, and export DST in this shell. The value is
-            # captured as a string via command substitution and assigned LITERALLY
-            # (never eval'd), so it is preserved verbatim, never executed. SRC's
-            # siblings die with the subshell — only DST reaches the real env. The
-            # `if` wrapper keeps the substitution's exit status from tripping an
-            # active `set -e` in the sourcing shell.
-            if _be_val="$(bash -c '
+            # selection: source the file in an ISOLATED subshell with a CLEARED
+            # environment (env -i), extract ONLY the requested SRC value, and
+            # export DST in this shell. `env -i` is load-bearing on two counts:
+            #   (1) it drops BASH_ENV, so the `bash -c` does NOT re-source this
+            #       script — in production BASH_ENV=bash-env.sh, so a plain
+            #       `bash -c` here would re-read $PWD/.env, re-hit this selection
+            #       entry, and re-spawn `bash -c` without bound (fork bomb).
+            #   (2) the subshell starts with NO inherited variables, so `${!2}`
+            #       (the SRC lookup) can only resolve names the provider file
+            #       itself defines — an ambient exported var cannot be smuggled
+            #       into DST. A SRC absent from the file exits 4 regardless of env.
+            # The value is captured as a string via command substitution and
+            # assigned LITERALLY (never eval'd), preserved verbatim, never
+            # executed. SRC's siblings die with the subshell — only DST reaches
+            # the real env. The `if` wrapper keeps the substitution's exit status
+            # from tripping an active `set -e` in the sourcing shell. The inner
+            # `.`/`printf`/`[`/`set` are bash builtins, so the empty PATH under
+            # env -i does not matter; `. "$1"` uses an absolute path.
+            if _be_val="$(env -i bash -c '
                     set -a
                     . "$1" >/dev/null 2>&1 || exit 3
                     [ -z "${!2+x}" ] && exit 4
