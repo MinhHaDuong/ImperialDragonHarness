@@ -18,9 +18,17 @@ tokens:
 convergence:
   enabled: false
 
+# Fork liveness window (ticket 0321). After the phase 2–4 review comment posts,
+# the CALLER — not an internal phase boundary — must see the verdict comment or
+# a bump log line within this window; a silent fork cannot self-check. On expiry
+# the caller drives /verify-gate directly (see gaze SKILL.md § Fork execution
+# contract).
+fork_liveness_seconds: 1200  # ~20 min
+
 env:
   wall_seconds_warn:      VERIFY_WALL_WARN_S
   wall_seconds_escalate:  VERIFY_WALL_ESCALATE_S
   tokens_warn:            VERIFY_TOKENS_WARN
   tokens_escalate:        VERIFY_TOKENS_ESCALATE
   convergence_enabled:    GAZE_CONVERGENCE_ENABLED
+  fork_liveness_seconds:  GAZE_LIVENESS_WINDOW_S
