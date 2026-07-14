@@ -18,7 +18,9 @@ assert_eq() {
 }
 assert_contains() {
     local label="$1" needle="$2" hay="$3"
-    if printf '%s' "$hay" | grep -qF -- "$needle"; then echo "PASS: $label"; PASS=$((PASS+1))
+    # Here-string, not `printf | grep`: pipefail + grep -q closing the pipe early
+    # SIGPIPEs printf, a nondeterministic false FAIL on a large haystack.
+    if grep -qF -- "$needle" <<<"$hay"; then echo "PASS: $label"; PASS=$((PASS+1))
     else echo "FAIL: $label (missing: $needle)"; echo "  in: $hay"; FAIL=$((FAIL+1)); fi
 }
 assert_exit_0() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then echo "PASS: $label"; PASS=$((PASS+1)); else echo "FAIL: $label (exit $?)"; FAIL=$((FAIL+1)); fi; }
@@ -150,6 +152,51 @@ YAML
     fi
 else
     echo "SKIP: erg binary absent — scorecard erg-integration test"
+fi
+
+# ── credential-env threads from roster to seat-runner (0207) ─────────────────
+# A seat carrying `credential-env: NAME` must pass `--credential-env NAME` to
+# the seat-runner; a seat without it must NOT pass the flag. The stub captures
+# each seat's full argv so both cases are checked against real invocations.
+CE_STUB="$WORK/seat-runner-ce-stub.sh"
+cat > "$CE_STUB" <<'STUBEOF'
+#!/usr/bin/env bash
+set -euo pipefail
+argv="$*"; out=""
+while [ $# -gt 0 ]; do [ "$1" = "--out" ] && { out="$2"; shift 2; continue; }; shift; done
+name="$(basename "$out" .findings)"
+printf '%s\n' "$argv" > "${out%.findings}.argv"
+{ echo "FINDING|severity=verifiable|file=foo.sh:10|rationale=x"; echo "SUMMARY|findings=1|verdict=revise"; } > "$out"
+STUBEOF
+chmod +x "$CE_STUB"
+
+CEROSTER="$WORK/ce.yml"
+cat > "$CEROSTER" <<'YAML'
+reviewers:
+  - name: seat-with-cred
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://openrouter.ai/api/v1
+    model: openai/stub
+    credential-env: MY_ROSTER_KEY
+  - name: seat-no-cred
+    kind: local-model
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:9/v1
+    model: openai/stub
+YAML
+
+CEDIR="$WORK/ce-findings"
+REVIEWERS_PANEL="$CEROSTER" SEAT_RUNNER="$CE_STUB" REVIEWERS_FINDINGS_DIR="$CEDIR" \
+    REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 77 >/dev/null 2>&1
+assert_contains "request: credential-env seat passes the flag through" \
+    "--credential-env MY_ROSTER_KEY" "$(cat "$CEDIR/77/seat-with-cred.argv" 2>/dev/null || true)"
+if grep -qF -- '--credential-env' "$CEDIR/77/seat-no-cred.argv" 2>/dev/null; then
+    echo "FAIL: request: no-cred seat must not pass --credential-env"; FAIL=$((FAIL+1))
+else
+    echo "PASS: request: no-cred seat omits --credential-env"; PASS=$((PASS+1))
 fi
 
 # ── forge-bot seat: on-demand request via the forge review API (0206) ────────

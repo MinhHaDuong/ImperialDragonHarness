@@ -26,10 +26,14 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 pass() { echo "PASS: $1"; PASS=$((PASS+1)); }
 fail() { echo "FAIL: $1"; FAIL=$((FAIL+1)); }
 assert_contains() {  # label needle haystack
-    if printf '%s' "$3" | grep -qF -- "$2"; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
+    # Here-string, not `printf | grep`: with `set -o pipefail`, grep -q closing
+    # the pipe on an early match SIGPIPEs printf (141), which pipefail then
+    # reports as the pipeline status — a nondeterministic false FAIL on a large
+    # haystack. A here-string has no pipe, so no race.
+    if grep -qF -- "$2" <<<"$3"; then pass "$1"; else fail "$1 (missing: $2)"; echo "  in: $3" >&2; fi
 }
 assert_absent() {  # label needle haystack
-    if printf '%s' "$3" | grep -qF -- "$2"; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
+    if grep -qF -- "$2" <<<"$3"; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
 }
 
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────
@@ -139,6 +143,114 @@ guard_err="$(HOME="$FH" PATH="$STUBBIN2:$FH/bin:$PATH" bash "$SR" --self-test-on
 [ "$guard_rc" -ne 0 ] && pass "home-exposing venv root exits non-zero" || fail "home-exposing venv root exits non-zero"
 assert_contains "guard names the refused mount"      "refusing to mount" "$guard_err"
 assert_absent   "guard fires before any podman run"  "GUARD-BYPASS"      "$guard_err"
+
+# ── tier 1b: new-flag source assertions ──────────────────────────────────────
+# The two new flags must be handled in the arg parser (a case arm each).
+assert_contains "--credential-env flag parsed"       "--credential-env" "$SRC"
+assert_contains "--health-path flag parsed"          "--health-path"    "$SRC"
+# The https branch maps the real hostname to loopback via --add-host so the
+# client still presents valid SNI/cert while the traffic is bridged.
+assert_contains "https branch adds --add-host"       "--add-host"       "$SRC"
+# The in-container bridge port must be one variable used consistently: in the
+# CONTAINER_BASE the client dials, AND in the container-side relay listen/wait.
+assert_contains "in-container port var in CONTAINER_BASE" 'CONTAINER_PORT}${ENDPOINT_PATH}' "$CODE"
+if printf '%s' "$CODE" | grep -Eq 'net-relay.py --listen tcp:127.0.0.1:\$\{CONTAINER_PORT\}'; then
+    pass "in-container port var drives the bridge listen"
+else
+    fail "in-container port var drives the bridge listen"
+fi
+# The secret must NEVER be inlined into podman argv (ps -ef leak). The live code
+# builds the BARE `-e OPENAI_API_KEY` passthrough when a credential is set, so
+# podman reads the value from the process env instead of argv.
+assert_contains "credential passed as bare -e passthrough" "CRED_ARGS=(-e OPENAI_API_KEY)" "$CODE"
+
+# ── tier 2a″: --credential-env moves the secret via ENV, never argv ──────────
+# RED before this feature: seat-runner rejects --credential-env as an unknown
+# arg and exits 2 without ever invoking podman. Stub podman captures its argv
+# and the environment it was launched with.
+if command -v python3 >/dev/null; then
+    STUBBIN3="$WORK/stubbin3"; mkdir -p "$STUBBIN3"
+    cat > "$STUBBIN3/podman" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+    run)
+        [ -n "${PODMAN_ARGV_CAP:-}" ] && printf '%s\n' "$@" > "$PODMAN_ARGV_CAP"
+        [ -n "${PODMAN_ENV_CAP:-}"  ] && env         > "$PODMAN_ENV_CAP"
+        ;;
+esac
+exit 0
+STUB
+    chmod +x "$STUBBIN3/podman"
+
+    PROBE_VAL="probe-${RANDOM}-${RANDOM}"
+    ARGV_CAP="$WORK/cred.argv"; ENV_CAP="$WORK/cred.env"
+    MY_TEST_VAR="$PROBE_VAL" PODMAN_ARGV_CAP="$ARGV_CAP" PODMAN_ENV_CAP="$ENV_CAP" \
+        PATH="$STUBBIN3:$PATH" bash "$SR" --self-test-only --credential-env MY_TEST_VAR \
+        >/dev/null 2>&1 || true
+    if [ -f "$ARGV_CAP" ] && [ -f "$ENV_CAP" ]; then
+        # The secret reaches the container through the process env podman inherits...
+        assert_contains "credential-env: secret reaches podman via process env" \
+            "OPENAI_API_KEY=${PROBE_VAL}" "$(cat "$ENV_CAP")"
+        # ...as a BARE -e passthrough in argv (a line that is exactly the var name)...
+        if grep -qx 'OPENAI_API_KEY' "$ARGV_CAP"; then
+            pass "credential-env: argv carries bare -e OPENAI_API_KEY passthrough"
+        else
+            fail "credential-env: argv carries bare -e OPENAI_API_KEY passthrough"
+        fi
+        # ...and the VALUE must NEVER appear in argv (that is the ps -ef leak).
+        if grep -qF "OPENAI_API_KEY=${PROBE_VAL}" "$ARGV_CAP"; then
+            fail "credential-env: SECRET LEAKED into podman argv (ps -ef visible)"
+        else
+            pass "credential-env: secret absent from podman argv (no ps -ef leak)"
+        fi
+    else
+        fail "credential-env: podman never invoked (arg rejected?)"
+    fi
+
+    # ── https branch: --add-host + 8443 CONTAINER_BASE reach the podman run ──
+    HTTPS_ARGV="$WORK/https.argv"
+    PODMAN_ARGV_CAP="$HTTPS_ARGV" PATH="$STUBBIN3:$PATH" \
+        bash "$SR" --self-test-only --endpoint https://openrouter.ai/api/v1 \
+        >/dev/null 2>&1 || true
+    https_argv="$(cat "$HTTPS_ARGV" 2>/dev/null || true)"
+    assert_contains "https: --add-host maps real host to loopback" \
+        "openrouter.ai:127.0.0.1" "$https_argv"
+    assert_contains "https: container base = scheme + real host + 8443 + path" \
+        "https://openrouter.ai:8443/api/v1" "$https_argv"
+
+    # ── http branch: byte-identical to v1 (no --add-host, same host:port) ────
+    HTTP_ARGV="$WORK/http.argv"
+    PODMAN_ARGV_CAP="$HTTP_ARGV" PATH="$STUBBIN3:$PATH" \
+        bash "$SR" --self-test-only --endpoint http://127.0.0.1:8012/v1 \
+        >/dev/null 2>&1 || true
+    http_argv="$(cat "$HTTP_ARGV" 2>/dev/null || true)"
+    assert_absent   "http: no --add-host on a plain-http endpoint" "add-host" "$http_argv"
+    assert_contains "http: container base unchanged (byte-identical)" \
+        "http://127.0.0.1:8012/v1" "$http_argv"
+else
+    echo "SKIP: python3 absent — credential-env / add-host argv tests"
+fi
+
+# ── tier 2a‴: health-path URL is built from the origin (no double-/api) ───────
+# The probe URL must be SCHEME://AUTHORITY + --health-path, NOT ${ENDPOINT%/v1}
+# + path (which double-prefixes /api for an /api/v1 endpoint). Stub curl to
+# capture the URL and fail so seat-runner stops right at the probe.
+CURLBIN="$WORK/curlbin"; mkdir -p "$CURLBIN"
+cat > "$CURLBIN/curl" <<'STUB'
+#!/usr/bin/env bash
+for a in "$@"; do url="$a"; done          # the URL is the last argument
+[ -n "${CURL_URL_CAP:-}" ] && printf '%s\n' "$url" > "$CURL_URL_CAP"
+exit 22                                    # "unreachable" → seat-runner stops here
+STUB
+chmod +x "$CURLBIN/curl"
+URL_CAP="$WORK/curl.url"
+CURL_URL_CAP="$URL_CAP" PATH="$CURLBIN:${STUBBIN3:-$WORK/stubbin3}:$PATH" \
+    bash "$SR" --endpoint https://openrouter.ai/api/v1 --health-path /api/v1/models \
+    --branch dummy >/dev/null 2>&1 || true
+probe_url="$(cat "$URL_CAP" 2>/dev/null || true)"
+assert_contains "health-path: exact URL built from origin" \
+    "https://openrouter.ai/api/v1/models" "$probe_url"
+assert_absent   "health-path: no double-/api prefix" "api/api" "$probe_url"
 
 # ── tier 2b: real containment self-test (podman + image) ─────────────────────
 if ! command -v podman >/dev/null; then

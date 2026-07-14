@@ -16,6 +16,8 @@ Author: MinhHaDuong
 
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): the seat is just an agnostic CLI reviewer run by the 0217 sandbox-runner — no bespoke ACP agent. Blocked-by flipped 0208→0217 (the runner is the dependency, not a management surface). Prototype already done in 0217: aider --ask over llama-server, contained in rootless podman; scorecard 1 devstral-small-2 (13/13 hallucinations, unusable), scorecard 2 qwen3.6-35b-a3b (1 real cross-file catch, usable, 80 tok/s). This ticket now = generalize that to the {OpenRouter, llama-server} matrix + the advisory trial
 2026-07-13T21:13Z Minh Ha-Duong note blocker 0217 closed — Blocked-by removed.
+2026-07-14T05:29Z claude note raid-207 execute (PR pending): landed criteria 1-2 MACHINERY — seat-runner --credential-env (env-passthrough bare -e, never argv; empty-var fail-loud), --health-path built from origin scheme://authority (fixes double-/api), https end-to-end TLS branch (--add-host real-host:127.0.0.1 + in-container 8443 bridge; http byte-identical), reviewers.sh credential-env roster field threaded through all 3 read-sites, commented OpenRouter panel.yml example. Tests: test_seat_runner.sh 42/42, test_reviewers.sh 27/27, test_net_relay.py 2/2 (unchanged). Local TLS-bridge behavioral proof PASSED (self-signed cloud.test origin, HTTP 200, cert validated end-to-end through raw relay inside --network=none container).
+2026-07-14T05:29Z claude note criterion 2 OpenRouter real smoke record BLOCKED on author provisioning OPENROUTER_API_KEY (not set in this environment); llama-server side smoke-tested under 0217. Advisory trial (criteria 3-4) stays OPEN — PR uses Ticket-ref, does not close this ticket. Containment self-test receives CRED_ARGS but is --network=none, a known non-issue.
 --- body ---
 ## Context
 
@@ -74,7 +76,7 @@ unreachable (fail-loud).
 
 ## Exit criteria
 
-- [ ] Seat runs an agnostic CLI reviewer via the 0217 sandbox-runner, credentials via BASH_ENV minimal-env path
-- [ ] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged
+- [x] Seat runs an agnostic CLI reviewer via the 0217 sandbox-runner, credentials via BASH_ENV minimal-env path
+- [ ] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged (llama-server done under 0217; OpenRouter real smoke blocked on author key — local TLS-bridge transport proof passed)
 - [ ] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
 - [ ] Promote/drop recommendation recorded for 0205's integration review
