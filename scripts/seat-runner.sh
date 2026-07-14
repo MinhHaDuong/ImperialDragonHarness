@@ -312,9 +312,45 @@ exec ${AIDER_REAL} \\
     --no-stream --map-tokens 0
 EOF
 )
+review_rc=0
 run_seat bash -c "$BRIDGE_AND_REVIEW" \
     > "$WORK/raw.out" 2> "$WORK/raw.err" \
-    || { echo "seat-runner: reviewer exited non-zero (or timed out); stderr follows" >&2; tail -20 "$WORK/raw.err" >&2; exit 1; }
+    || review_rc=$?
+
+# ── Credential scrub (0207 red-team, mitigation a) ────────────────────────────
+# The reviewer reads attacker-controllable diff text and its output flows back
+# out, so a prompt-injected diff could coax the injected key into that output.
+# When a REAL credential was injected (--credential-env), redact its exact value
+# from BOTH capture files IN PLACE, BEFORE any path that echoes them: the
+# failure-tail below, the contract-grep that writes $OUT, and the WARN cat. The
+# secret is read from the process env (OPENAI_API_KEY, exported above), never
+# passed on argv; file paths are the only argv. Provider-agnostic — it
+# substitutes the runtime value, not a vendor key pattern. No-op for the local
+# dummy key (CREDENTIAL_ENV empty).
+if [[ -n "$CREDENTIAL_ENV" ]]; then
+    python3 - "$WORK/raw.out" "$WORK/raw.err" <<'PY'
+import os, sys
+
+secret = os.environ.get("OPENAI_API_KEY", "")
+if secret:
+    for path in sys.argv[1:]:
+        try:
+            with open(path, "r", errors="surrogateescape") as fh:
+                data = fh.read()
+        except FileNotFoundError:
+            continue
+        redacted = data.replace(secret, "[REDACTED-CREDENTIAL]")
+        if redacted != data:
+            with open(path, "w", errors="surrogateescape") as fh:
+                fh.write(redacted)
+PY
+fi
+
+if [[ "$review_rc" -ne 0 ]]; then
+    echo "seat-runner: reviewer exited non-zero (or timed out); stderr follows" >&2
+    tail -20 "$WORK/raw.err" >&2
+    exit 1
+fi
 
 # ── Pre-filter: structural contract lines only (harvest is the normalizer) ────
 grep -E '^(FINDING|SUMMARY)\|' "$WORK/raw.out" > "$OUT" || {

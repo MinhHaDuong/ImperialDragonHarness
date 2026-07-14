@@ -167,6 +167,20 @@ fi
 # podman reads the value from the process env instead of argv.
 assert_contains "credential passed as bare -e passthrough" "CRED_ARGS=(-e OPENAI_API_KEY)" "$CODE"
 
+# ── tier 1c: egress is pinned to the single ENDPOINT pair (0207 mitigation b) ──
+# The host-side relay must construct exactly ONE outbound target, and it must be
+# the ENDPOINT host:port pair — no wildcard, no second destination. A seat under
+# --network=none reaches only this relay, so a second or all-hosts target would
+# widen the egress a prompt-injected seat could exfiltrate through.
+host_connects="$(grep -Fc -- '--connect "tcp:${ENDPOINT_HOST}:${ENDPOINT_PORT}"' "$SR" || true)"
+if [ "$host_connects" = "1" ]; then
+    pass "egress: exactly one host-side relay target (the ENDPOINT pair)"
+else
+    fail "egress: expected 1 host-side ENDPOINT relay target, found ${host_connects}"
+fi
+assert_absent "egress: no all-interfaces relay destination"  'tcp:0.0.0.0' "$CODE"
+assert_absent "egress: no wildcard relay destination"        'tcp:*:'      "$CODE"
+
 # ── tier 2a″: --credential-env moves the secret via ENV, never argv ──────────
 # RED before this feature: seat-runner rejects --credential-env as an unknown
 # arg and exits 2 without ever invoking podman. Stub podman captures its argv
@@ -254,6 +268,91 @@ probe_url="$(cat "$URL_CAP" 2>/dev/null || true)"
 assert_contains "health-path: exact URL built from origin" \
     "https://openrouter.ai/api/v1/models" "$probe_url"
 assert_absent   "health-path: no double-/api prefix" "api/api" "$probe_url"
+
+# ── tier 2a⁗: credential scrub — an exfiltrated key never leaves the seat ─────
+# 0207 red-team (mitigation a): the reviewer reads attacker-controllable diff
+# text and its output flows back out, so a prompt-injected diff could coax the
+# injected key into the findings/stderr channels. Stub podman to MODEL that leak:
+# the containment probe emits its markers; the review run "leaks" the credential
+# it was handed (OPENAI_API_KEY, inherited from the process env) into its output.
+# When --credential-env carries a real secret, seat-runner must redact it from
+# BOTH the findings file (grep→$OUT path) AND anything echoed to stderr (the
+# failure-tail path) BEFORE those paths read the captures. The credential is a
+# random dummy string here — never a real key.
+if command -v python3 >/dev/null && command -v git >/dev/null && command -v aider >/dev/null; then
+    # A throwaway repo with a one-line main→feature diff (the review path needs a
+    # non-empty diff; seat-runner clones $REPO and diffs origin/main...feature).
+    EXFIL_REPO="$WORK/exfilrepo"
+    mkdir -p "$EXFIL_REPO"
+    (
+        cd "$EXFIL_REPO"
+        git init -q -b main
+        git config user.email t@t; git config user.name t
+        printf 'line one\n' > f.txt
+        git add f.txt; git commit -qm base
+        git checkout -q -b feature
+        printf 'line one\nline two\n' > f.txt
+        git commit -qam change
+    )
+    # podman stub: the self-test probe carries SANDBOX-ALIVE → emit containment
+    # markers; the review run carries none → "leak" the injected key into a
+    # FINDING line (stdout→raw.out) AND to stderr (raw.err), so BOTH scrub paths
+    # are exercised. The key is read from the stub's own env — exactly how a
+    # compromised seat would obtain it.
+    EXFILBIN="$WORK/exfilbin"; mkdir -p "$EXFILBIN"
+    cat > "$EXFILBIN/podman" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" = run ]; then
+    if printf '%s\n' "$@" | grep -q SANDBOX-ALIVE; then
+        printf 'SANDBOX-ALIVE\nWRITE-BLOCKED\nSECRET-BLOCKED\nLOCAL-SCOPED\nNET-BLOCKED\n'
+    else
+        printf 'FINDING|severity=verifiable|file=f.txt:1|rationale=leaked %s\n' "${OPENAI_API_KEY:-}"
+        printf 'SUMMARY|findings=1|verdict=revise\n'
+        printf 'leaked %s\n' "${OPENAI_API_KEY:-}" >&2
+    fi
+fi
+exit 0
+STUB
+    chmod +x "$EXFILBIN/podman"
+
+    PROBE_VAL="exfil-secret-${RANDOM}-${RANDOM}-${RANDOM}"
+    FINDINGS="$WORK/exfil.findings"
+
+    # Success path: findings file is written from raw.out; assert it is scrubbed.
+    MY_TEST_VAR="$PROBE_VAL" PATH="$EXFILBIN:$PATH" \
+        bash "$SR" --repo "$EXFIL_REPO" --base origin/main --branch feature \
+        --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$FINDINGS" \
+        >/dev/null 2>"$WORK/exfil.stderr.ok" || true
+    findings_out="$(cat "$FINDINGS" 2>/dev/null || true)"
+    assert_absent   "scrub: injected key absent from findings file" "$PROBE_VAL" "$findings_out"
+    assert_contains "scrub: findings carry the redaction marker" "[REDACTED-CREDENTIAL]" "$findings_out"
+
+    # Failure path: a seat that exits non-zero has raw.err tailed to stderr. A
+    # second stub leaks the key to stderr, then exits 1 to drive that tail path.
+    EXFILBIN2="$WORK/exfilbin2"; mkdir -p "$EXFILBIN2"
+    cat > "$EXFILBIN2/podman" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" = run ]; then
+    if printf '%s\n' "$@" | grep -q SANDBOX-ALIVE; then
+        printf 'SANDBOX-ALIVE\nWRITE-BLOCKED\nSECRET-BLOCKED\nLOCAL-SCOPED\nNET-BLOCKED\n'
+        exit 0
+    fi
+    printf 'aider crashed after leaking %s\n' "${OPENAI_API_KEY:-}" >&2
+    exit 1
+fi
+exit 0
+STUB
+    chmod +x "$EXFILBIN2/podman"
+    exfil_stderr="$(MY_TEST_VAR="$PROBE_VAL" PATH="$EXFILBIN2:$PATH" \
+        bash "$SR" --repo "$EXFIL_REPO" --base origin/main --branch feature \
+        --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$WORK/exfil.findings2" 2>&1 >/dev/null || true)"
+    assert_absent   "scrub: injected key absent from failure-path stderr" "$PROBE_VAL" "$exfil_stderr"
+    assert_contains "scrub: failure-path stderr carries the redaction marker" "[REDACTED-CREDENTIAL]" "$exfil_stderr"
+else
+    echo "SKIP: python3/git/aider absent — credential-scrub exfiltration test"
+fi
 
 # ── tier 2b: real containment self-test (podman + image) ─────────────────────
 if ! command -v podman >/dev/null; then
