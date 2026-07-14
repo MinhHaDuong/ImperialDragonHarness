@@ -24,7 +24,11 @@
 #
 # The script runs on every bash subprocess, so it stays fast and never aborts on
 # a missing or malformed .env — bad lines in the project file are skipped, never
-# fatal.
+# fatal, and it stays safe under an already-active `set -e` in the sourcing shell
+# (the realpath dedup below is guarded with `|| true`). The strict parse tolerates
+# CRLF (a trailing \r is dropped, for Windows-edited files) and is bounded: a
+# project .env past a generous byte cap is skipped whole, so a pathological or
+# adversarial one cannot tax every subprocess.
 #
 # Provider-secret scoping (KEYS=). A project declares which credential providers
 # it needs by setting KEYS=<name,name,...> in its project .env (parsed by the
@@ -55,10 +59,29 @@ set +a
 # Claude Code sets PWD to the project dir for each subprocess. Skip if it
 # resolves to the same file as the trusted user-level one (already loaded).
 if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
-    _be_proj="$(realpath "$PWD/.env" 2>/dev/null)"
-    _be_user="$(realpath "$HOME/.claude/.env" 2>/dev/null)"
+    # `|| true` so a realpath failure (e.g. ~/.claude/.env absent, so its parent
+    # dir is missing) cannot abort this script under an active `set -e` in the
+    # sourcing shell. An empty result still compares unequal, so dedup is intact:
+    # when the two files resolve to the same path the project parse is skipped;
+    # when either is absent the paths differ and the project file is parsed.
+    _be_proj="$(realpath "$PWD/.env" 2>/dev/null || true)"
+    _be_user="$(realpath "$HOME/.claude/.env" 2>/dev/null || true)"
     if [ "$_be_proj" != "$_be_user" ]; then
+      # This script is sourced on EVERY bash subprocess, so a pathological or
+      # adversarial project .env must not tax each one. Past a generous byte cap
+      # (256 KiB — no legitimate .env approaches it) skip the file entirely
+      # rather than partially parse and risk a desynced read.
+      _be_cap=262144
+      _be_size="$(wc -c < "$PWD/.env" 2>/dev/null || echo 0)"
+      if [ "${_be_size:-0}" -gt "$_be_cap" ]; then
+        printf 'bash-env: project .env exceeds size cap (%s > %s bytes), skipping\n' \
+            "$_be_size" "$_be_cap" >&2
+      else
         while IFS= read -r _be_line || [ -n "$_be_line" ]; do
+            # tolerate CRLF: a Windows-edited .env ends lines with \r\n and `read`
+            # strips only \n, so drop a surviving trailing CR before parsing (this
+            # also cleans a trailing \r on the KEYS= provider list).
+            _be_line="${_be_line%$'\r'}"
             # strip leading whitespace for blank/comment detection
             _be_trim="${_be_line#"${_be_line%%[![:space:]]*}"}"
             [ -z "$_be_trim" ] && continue          # blank line
@@ -98,6 +121,8 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
             export "$_be_key=$_be_val"
         done < "$PWD/.env"
         unset _be_line _be_trim _be_key _be_val _be_first _be_last
+      fi
+      unset _be_cap _be_size
     fi
     unset _be_proj _be_user
 fi
