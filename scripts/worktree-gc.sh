@@ -106,7 +106,13 @@ git_common_dir=$(git -C "$repo" rev-parse --path-format=absolute --git-common-di
 primary_root=""
 [ -n "$git_common_dir" ] && primary_root=$(dirname "$git_common_dir")
 wtdir="$primary_root/.claude/worktrees"
-if [ -n "$primary_root" ] && [ -d "$wtdir" ]; then
+if [ -n "$primary_root" ] && [ -d "$wtdir" ] && { [ ! -r "$wtdir" ] || [ ! -x "$wtdir" ]; }; then
+    # Fail open, but VISIBLY: a `find` that dies on an unreadable dir inside the
+    # process substitution below is invisible to `set -e`, so the scan would
+    # otherwise report zero husks silently. Signal on stderr, matching the other
+    # anomaly lines, and skip the scan.
+    echo "worktree-gc: cannot scan $wtdir (unreadable) — husk scan skipped" >&2
+elif [ -n "$primary_root" ] && [ -d "$wtdir" ]; then
     # Normalize the registered set ONCE, not per husk: realpath is a fork/exec,
     # and re-resolving m registered paths for each of n husks is O(n*m) spawns
     # where O(n+m) suffices.
@@ -120,10 +126,20 @@ if [ -n "$primary_root" ] && [ -d "$wtdir" ]; then
         is_registered=0
         for rreg in "${registered_real[@]:-}"; do
             [ -z "$rreg" ] && continue
+            # A dir is NOT a husk when it equals a registered worktree OR is an
+            # ancestor of one: a multi-segment name (EnterWorktree allows
+            # `g/leaf`) registers `.../g/leaf`, but find -maxdepth 1 only sees the
+            # container `g`. An exact-path test would false-flag `g` as a husk and
+            # could mislead a human into deleting a live worktree's container.
             if [ "$rdir" = "$rreg" ]; then is_registered=1; break; fi
+            case "$rreg" in "$rdir"/*) is_registered=1; break ;; esac
         done
         if [ "$is_registered" -eq 0 ]; then
-            echo "worktree-gc: husk $(basename "$dir") — unregistered dir at $dir, not GC'd (report-only)"
+            # Print with %q so a control char (e.g. a newline) in the dirname
+            # cannot forge an extra output line — raw interpolation would split
+            # the message and let the name inject a standalone banner-like line.
+            printf 'worktree-gc: husk %q — unregistered dir at %q, not GC'\''d (report-only)\n' \
+                "$(basename "$dir")" "$dir"
             husks=$((husks + 1))
         fi
     done < <(find "$wtdir" -mindepth 1 -maxdepth 1 -type d -print0)

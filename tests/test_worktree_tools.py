@@ -335,6 +335,65 @@ def test_gc_does_not_report_registered_worktree_under_claude_worktrees(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+@pytest.mark.integration
+def test_gc_does_not_report_container_of_nested_registered_worktree(origin):
+    """A registered worktree at .claude/worktrees/g/leaf (multi-segment names are
+    allowed by EnterWorktree's schema) must NOT make the container dir `g` be
+    reported as a husk: `g` is at find's -maxdepth 1 but merely CONTAINS a
+    registered worktree. An exact-path set-difference misses that, false-flagging
+    a live worktree's container (ticket 0325, verify round 1 finding 1)."""
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    leaf = wtdir / "g" / "leaf"
+    leaf.parent.mkdir(parents=True)
+    git(primary, "worktree", "add", "-b", "g-leaf", str(leaf))
+    git(leaf, "push", "-u", "origin", "g-leaf")  # live branch, not gone → kept
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk" not in res.stdout
+    assert str(leaf) in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_husk_name_with_newline_cannot_forge_line(origin):
+    """A husk dirname with an embedded newline must not forge an extra output
+    line: raw interpolation of $(basename) / $dir would split the message and let
+    the name inject a standalone line. Every non-empty stdout line must stay
+    prefixed by the tool banner (ticket 0325, verify round 1 finding 2)."""
+    _, primary = origin
+    husk = primary / ".claude" / "worktrees" / "evil\nFAKE injected line"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    for line in res.stdout.splitlines():
+        if line.strip():
+            assert line.startswith("worktree-gc:"), f"forged line: {line!r}"
+
+
+@pytest.mark.integration
+def test_gc_warns_when_worktrees_dir_unreadable(origin):
+    """When .claude/worktrees/ is unreadable, `find` inside the process
+    substitution fails invisibly to set -e and the scan silently reports zero
+    husks. The scan must fail open WITH a visible stderr signal (ticket 0325,
+    verify round 1 finding 4)."""
+    import os
+
+    if os.geteuid() == 0:
+        pytest.skip("permission gate is a no-op for root")
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    (wtdir / "husk-x" / ".claude").mkdir(parents=True)
+    os.chmod(wtdir, 0o000)
+    try:
+        res = _gc(primary)
+    finally:
+        os.chmod(wtdir, 0o755)
+    assert res.returncode == 0
+    assert "unreadable" in res.stderr.lower()
+
+
 # --------------------------------------------------------------------------- #
 # worktree-exit-preflight.sh — ticket 0174
 # --------------------------------------------------------------------------- #
