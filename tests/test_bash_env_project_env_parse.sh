@@ -221,6 +221,16 @@ _be0345_case LD_AUDIT /evil.so
 _be0345_case BASH_ENV /evil
 _be0345_case ENV /evil
 _be0345_case IFS x
+# git command-execution vectors: the harness runs git constantly, so a project
+# .env setting one is a direct RCE (GIT_SSH_COMMAND runs on every fetch/push,
+# GIT_ASKPASS/GIT_EXTERNAL_DIFF on their respective operations).
+_be0345_case GIT_SSH_COMMAND 'ssh -oProxyCommand=evil'
+_be0345_case GIT_SSH /evil
+_be0345_case GIT_ASKPASS /evil
+_be0345_case GIT_EXTERNAL_DIFF /evil
+# pager input/close hooks: a `|cmd %s` LESSOPEN runs on every `git log` / `less`.
+_be0345_case LESSOPEN '|evil %s'
+_be0345_case LESSCLOSE '|evil %s'
 
 # (6d) IFS must not be turned into an exported variable by a project .env.
 P6D="$WORK/p6d"; mkdir -p "$P6D"

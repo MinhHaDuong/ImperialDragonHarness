@@ -144,9 +144,15 @@ REAL="REAL_SENTINEL_kept_intact"
 # NODE_PATH, PERL5LIB, RUBYOPT) was added in ticket 0345 when both export paths
 # were unified behind the shared _be_is_protected_name predicate; those names go
 # RED against a pre-0345 script, which only covered the 0343 head of this list.
+# The git/pager exec vectors (GIT_SSH_COMMAND, GIT_SSH, GIT_ASKPASS,
+# GIT_EXTERNAL_DIFF, LESSOPEN, LESSCLOSE) were added in the 0345 verify round: the
+# harness runs git constantly, so any of these is a direct command-execution
+# channel if a hostile project .env can aim a value at it.
 for name in PATH BASH_ENV ENV SHELLOPTS BASHOPTS IFS PS1 PS2 PS3 PS4 \
             PROMPT_COMMAND CDPATH GLOBIGNORE LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT \
-            GCONV_PATH PYTHONPATH NODE_OPTIONS NODE_PATH PERL5LIB RUBYOPT; do
+            GCONV_PATH PYTHONPATH NODE_OPTIONS NODE_PATH PERL5LIB RUBYOPT \
+            GIT_SSH_COMMAND GIT_SSH GIT_ASKPASS GIT_EXTERNAL_DIFF \
+            LESSOPEN LESSCLOSE; do
     proj="$(_mkproj "p1_$name" "KEYS=zzz:EVIL=$name
 ")"
     _assert_contains "(1:$name) warns 'protected name: $name'" \

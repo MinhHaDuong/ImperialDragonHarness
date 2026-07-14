@@ -19,8 +19,10 @@
 #     leading-underscore _GUARD_* override pair — AND (2) the shell/process/
 #     interpreter-critical set (PATH, LD_PRELOAD/LD_LIBRARY_PATH/LD_AUDIT,
 #     BASH_ENV, ENV, GCONV_PATH, PYTHONPATH, NODE_OPTIONS/NODE_PATH, PERL5LIB,
-#     RUBYOPT, IFS, the prompt/CDPATH/GLOBIGNORE parse vars, and the BASH_FUNC_* /
-#     DYLD_* prefix families). This structurally closes two holes: the escape-hatch
+#     RUBYOPT, IFS, the prompt/CDPATH/GLOBIGNORE parse vars, the git exec vectors
+#     GIT_SSH_COMMAND/GIT_SSH/GIT_ASKPASS/GIT_EXTERNAL_DIFF, the LESSOPEN/LESSCLOSE
+#     pager hooks, and the BASH_FUNC_* / DYLD_* prefix families). This structurally
+#     closes two holes: the escape-hatch
 #     provenance hole (ticket 0323, residual 2) — a sourced project .env could
 #     forge a per-process guard nonce (e.g. GUARD_ALLOW_PRIMARY_EDIT) or the
 #     worktree-path override (_GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT) or run
@@ -79,7 +81,9 @@
 # names a shell/process/interpreter-critical variable — PATH, BASH_ENV, ENV,
 # SHELLOPTS, BASHOPTS, IFS, PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE,
 # LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT, GCONV_PATH, PYTHONPATH, NODE_OPTIONS,
-# NODE_PATH, PERL5LIB, RUBYOPT, or the BASH_FUNC_* / DYLD_* prefix families —
+# NODE_PATH, PERL5LIB, RUBYOPT, the git exec vectors GIT_SSH_COMMAND, GIT_SSH,
+# GIT_ASKPASS, GIT_EXTERNAL_DIFF, the LESSOPEN / LESSCLOSE pager hooks, or the
+# BASH_FUNC_* / DYLD_* prefix families —
 # via the shared _be_is_protected_name predicate (ticket 0345), alongside the
 # existing GUARD_* / _be_* refusal; such an entry warns `refusing KEYS export to
 # protected name: <name>` and is skipped, so an untrusted .env cannot overwrite a
@@ -110,8 +114,13 @@
 #     / LD_AUDIT (code execution), BASH_ENV / ENV (bash re-source), SHELLOPTS /
 #     BASHOPTS / IFS / PS1..PS4 / PROMPT_COMMAND / CDPATH / GLOBIGNORE (parse and
 #     word-split hijack), GCONV_PATH (glibc iconv-module RCE), the interpreter
-#     hijacks PYTHONPATH / NODE_OPTIONS / NODE_PATH / PERL5LIB / RUBYOPT, and the
-#     BASH_FUNC_* exported-function and DYLD_* (macOS LD_* analogue) prefix families.
+#     hijacks PYTHONPATH / NODE_OPTIONS / NODE_PATH / PERL5LIB / RUBYOPT, the git
+#     command-execution vectors GIT_SSH_COMMAND / GIT_SSH / GIT_ASKPASS /
+#     GIT_EXTERNAL_DIFF (the harness runs git constantly, so a project .env that
+#     set one would run its command in every git call) and the pager hooks
+#     LESSOPEN / LESSCLOSE (a `|cmd %s` input pipe runs on every `git log` / `less`),
+#     and the BASH_FUNC_* exported-function and DYLD_* (macOS LD_* analogue) prefix
+#     families.
 _be_is_protected_name() {
     case "$1" in
         *GUARD_*|_be_*) return 0 ;;
@@ -119,6 +128,7 @@ _be_is_protected_name() {
         PS1|PS2|PS3|PS4|PROMPT_COMMAND|CDPATH|GLOBIGNORE|\
         LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|\
         GCONV_PATH|PYTHONPATH|NODE_OPTIONS|NODE_PATH|PERL5LIB|RUBYOPT|\
+        GIT_SSH_COMMAND|GIT_SSH|GIT_ASKPASS|GIT_EXTERNAL_DIFF|LESSOPEN|LESSCLOSE|\
         BASH_FUNC_*|DYLD_*) return 0 ;;
     esac
     return 1
