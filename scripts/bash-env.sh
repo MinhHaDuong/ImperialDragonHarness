@@ -14,10 +14,13 @@
 #   * $PWD/.env — project-level, UNTRUSTED. An agent, a cloned repo, or any
 #     project write can place it. It is NEVER sourced: it is strict-parsed
 #     KEY=VALUE, values are assigned LITERALLY (no eval / $() / backticks), and
-#     any GUARD_*-namespaced key is REFUSED. This structurally closes the
-#     escape-hatch provenance hole (ticket 0323, residual 2): a sourced project
-#     .env could otherwise forge a per-process guard nonce
-#     (e.g. GUARD_ALLOW_PRIMARY_EDIT) or execute arbitrary shell via BASH_ENV.
+#     any guard-namespaced key — any key whose name contains GUARD_, covering
+#     both GUARD_* and the leading-underscore _GUARD_* override pair — is
+#     REFUSED. This structurally closes the escape-hatch provenance hole
+#     (ticket 0323, residual 2): a sourced project .env could otherwise forge a
+#     per-process guard nonce (e.g. GUARD_ALLOW_PRIMARY_EDIT) or the worktree-
+#     path override (_GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT), or execute
+#     arbitrary shell via BASH_ENV.
 #
 # The script runs on every bash subprocess, so it stays fast and never aborts on
 # a missing or malformed .env — bad lines in the project file are skipped, never
@@ -60,9 +63,14 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
                     _be_val="${_be_val:1:${#_be_val}-2}"
                 fi
             fi
-            # structural refusal: an untrusted file cannot set guard vars
-            if [[ "$_be_key" == GUARD_* ]]; then
-                printf 'bash-env: refusing GUARD_* key from project .env: %s\n' \
+            # structural refusal: an untrusted file cannot set guard vars.
+            # Match every guard-namespaced key — both the GUARD_* form and the
+            # leading-underscore _GUARD_* override pair (_GUARD_WORKTREE_ROOT /
+            # _GUARD_PRIMARY_ROOT) that pretooluse-worktree-path-guard.sh honors
+            # as an unconditional worktree-path override. Substring match, since
+            # no legitimate project key contains the harness-internal GUARD_ token.
+            if [[ "$_be_key" == *GUARD_* ]]; then
+                printf 'bash-env: refusing guard-namespaced key from project .env: %s\n' \
                     "$_be_key" >&2
                 continue
             fi
