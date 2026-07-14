@@ -189,20 +189,27 @@ if [[ "$SELF_TEST_ONLY" -eq 0 ]]; then
     # burns an audition's wall-clock. Catch that class HERE, host-side, before any
     # container launch: POST a 1-token completion and fail LOUD if the response
     # carries a non-empty reasoning field. Only runs when a real credential is
-    # injected (--credential-env). The key never touches curl argv — it goes in a
-    # mode-600 curl config file under $WORK (trap-reaped), and the response body is
-    # parsed IN-MEMORY (piped to python3 stdin), never written to a file the
-    # credential-scrub pass skips. Probe fragility (connect or parse failure) WARNs
-    # and falls through: never block a working model on a flaky probe.
-    if [[ -n "$CREDENTIAL_ENV" ]]; then
+    # injected (--credential-env), and only when python3 is available (it both
+    # builds the request body — so a $MODEL id with JSON metacharacters cannot
+    # corrupt it — and parses the response). The key never touches curl argv: it
+    # goes in a mode-600 curl config file under $WORK (trap-reaped), and the
+    # response body is parsed IN-MEMORY (piped to python3 stdin), never written to
+    # a file the credential-scrub pass skips. Every fragility — no python3, a curl
+    # config write failure, a connect failure, an unparseable body — WARNs and
+    # falls through: never block a working model on a flaky probe. Verdict codes
+    # from the parser: 0 = reasoning present (FATAL), 1 = absent (proceed), 2 =
+    # unparseable (WARN, proceed).
+    if [[ -n "$CREDENTIAL_ENV" ]] && command -v python3 >/dev/null 2>&1; then
         _probe_model="${MODEL#openai/}"          # the endpoint knows the raw provider id
         _probe_rc="$WORK/probe.curlrc"
-        ( umask 077; printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY" > "$_probe_rc" )
-        _probe_body="$(printf '{"model":"%s","max_tokens":1,"messages":[{"role":"user","content":"ping"}]}' "$_probe_model")"
+        _probe_body="$(python3 -c 'import json,sys; print(json.dumps({"model": sys.argv[1], "max_tokens": 1, "messages": [{"role": "user", "content": "ping"}]}))' "$_probe_model")"
         _probe_resp=""
-        if _probe_resp="$(curl -sf --max-time 15 -K "$_probe_rc" \
+        if ! ( umask 077; printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY" > "$_probe_rc" ); then
+            echo "seat-runner: WARN reasoning-shape probe could not write its curl config — proceeding (probe is advisory)" >&2
+        elif _probe_resp="$(curl -sf --max-time 15 -K "$_probe_rc" \
                 -H 'Content-Type: application/json' -X POST -d "$_probe_body" \
                 "${ENDPOINT}/chat/completions" 2>/dev/null)"; then
+            rm -f "$_probe_rc"                    # key file gone before the body is parsed
             _probe_verdict=0
             printf '%s' "$_probe_resp" | python3 -c '
 import json, sys
@@ -217,17 +224,17 @@ try:
 except Exception:
     sys.exit(2)
 ' || _probe_verdict=$?
-            rm -f "$_probe_rc"
             if [[ "$_probe_verdict" -eq 0 ]]; then
                 echo "seat-runner: FATAL model '${MODEL}' returns a reasoning-field response — known aider/litellm hang class (ticket 0347)" >&2
                 exit 1
             elif [[ "$_probe_verdict" -eq 2 ]]; then
                 echo "seat-runner: WARN reasoning-shape probe could not parse the response from ${MODEL} — proceeding (probe is advisory)" >&2
             fi
+            # verdict 1 (no reasoning field): the model is safe — proceed silently.
         else
-            rm -f "$_probe_rc"
             echo "seat-runner: WARN reasoning-shape probe could not reach ${ENDPOINT}/chat/completions — proceeding (probe is advisory)" >&2
         fi
+        rm -f "$_probe_rc"                        # idempotent catch-all (also covers the write-fail branch)
     fi
 fi
 

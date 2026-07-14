@@ -430,6 +430,26 @@ STUB
     assert_contains "reasoning-probe: diagnostic names the hang class" "reasoning-field response" "$rsn_err"
     assert_absent   "reasoning-probe: blocks before any podman run"    "GUARD-BYPASS"             "$rsn_err"
 
+    # RED case, alternate shape: kimi-k2.7-code returns the field as
+    # `reasoning_content` (not `reasoning`). The probe must block on this shape
+    # too — pins the second half of the ticket's reasoning-response canary.
+    RSNBIN_RC="$WORK/rsnbin_rc"; mkdir -p "$RSNBIN_RC"
+    cat > "$RSNBIN_RC/curl" <<'STUB'
+#!/usr/bin/env bash
+printf '{"choices":[{"message":{"content":"ok","reasoning_content":"step-by-step"}}]}'
+exit 0
+STUB
+    chmod +x "$RSNBIN_RC/curl"
+    cp "$RSNBIN/podman" "$RSNBIN_RC/podman"          # same GUARD-BYPASS screamer
+    rsn_rc_err="$(MY_TEST_VAR="probe-key-${RANDOM}" PATH="$RSNBIN_RC:$PATH" \
+        bash "$SR" --repo "$RSN_REPO" --base origin/main --branch feature \
+        --model openai/moonshotai/kimi-k2.7-code --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$WORK/rsn.out.rc" 2>&1 >/dev/null)" && rsn_rc_rc=0 || rsn_rc_rc=1
+    [ "$rsn_rc_rc" -ne 0 ] && pass "reasoning-probe: reasoning_content shape also blocks" \
+        || fail "reasoning-probe: reasoning_content shape also blocks"
+    assert_contains "reasoning-probe: reasoning_content diagnostic names the hang class" "reasoning-field response" "$rsn_rc_err"
+    assert_absent   "reasoning-probe: reasoning_content blocks before any podman run"    "GUARD-BYPASS"             "$rsn_rc_err"
+
     # Negative-space case: an ordinary (content-only) body must NOT block — the
     # review path reaches podman run. Guards against a tautological always-block.
     RSNBIN2="$WORK/rsnbin2"; mkdir -p "$RSNBIN2"
