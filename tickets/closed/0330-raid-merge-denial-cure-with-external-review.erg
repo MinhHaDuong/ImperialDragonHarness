@@ -2,10 +2,12 @@
 Title: Raid Phase 7: cure a merge-permission denial with external review, don't park
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #581
 
 --- log ---
 2026-07-14T09:31Z claude created
 
+2026-07-14T09:40Z Minh Ha-Duong closed — autoclosed — PR #581
 --- body ---
 ## Context
 Raid 245/320 (2026-07-14, job f10f81b4) ended with both PRs APPROVED and
