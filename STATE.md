@@ -27,7 +27,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **0216 fan-out evidence**: criterion-2 proof accumulated 2026-07-11 — five substantive /gaze runs (#482 #483 #485 #487 #491) fanned out full reviewer batteries; append to the closed ticket, then drop this line
 - **Verify-reviewer-panel cluster** (only open work left): 0206 (Copilot seat — needs forge config + ≥5-MR trial), 0217/0207 (OS-sandboxed agnostic seats), 0205 (panel contract + decorrelation evidence). 0227/0231/0232/0233/0234 closed this session; cadens now canonical (cadens PR #45)
 - **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/CNRS/papiers/actif/AEDIST-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
-- **Harden 0217 seat-runner**: network isolation (drop `--network=host`), `fs/read` path-allowlist, credential denyRead, BASH_ENV-stripped minimal env — unblocks 0207
+- **0217 seat-runner hardening: DONE** — network isolation (`--network=none` + single-destination relay), `fs/read` path-allowlist, credential denyRead, and BASH_ENV-stripped minimal env all landed. 0207 criterion-2 credential scrub (redact the injected key from reviewer output before every echo path) delivered by t0207-cred-scrub; OpenRouter real-smoke transport proven end-to-end but auth blocked on a deactivated provisioned key, so criterion 2 stays open pending a valid key; advisory trial (criteria 3-4) still open.
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 
 ## Backlog
