@@ -23,6 +23,7 @@ Author: MinhHaDuong
 2026-07-14T12:47Z claude note raid feasibility PASS — anchors verified inline (network=none:28/249, relay:214, capture:316-322, CREDENTIAL_ENV:84/95); THIRD leak path found beyond the plan's two: seat-runner.sh:322 cats raw.out to stderr on contract-grep failure — scrub must cover it. No cross-ticket file overlap
 2026-07-14T13:20Z claude note raid-207-325-327 execute — criterion-2 MITIGATION shipped: credential scrub at the run_seat capture chokepoint (seat-runner.sh:315-354) redacts the exact runtime OPENAI_API_KEY value in raw.out+raw.err (python3 no-argv heredoc, provider-agnostic, no-op on local dummy) BEFORE all three leak paths: failure tail :351, contract-grep→$OUT :356, WARN cat :358. Mitigation (b) egress-pinning verified already-satisfied (single --connect ENDPOINT-pair relay under --network=none) and pinned by a tier-1 source test. Red-first exfil-sim test added (stub podman leaks the injected key to findings AND stderr; asserts dummy secret absent + [REDACTED-CREDENTIAL] present on success and failure paths). Tests: test_seat_runner.sh 49/49, bash-suites seat_runner 1/1, make check-fast PASS. OpenRouter real smoke vs https://openrouter.ai/api/v1 (openai/gpt-4o-mini, --health-path /api/v1/models): transport PROVEN end-to-end (~8s — health probe OK, TLS relay carried bytes, aider connected and queried, structured auth response returned through the relay) but auth FAILED "User not found" on the provisioned key (deactivated account — ENVIRONMENTAL, not code); LEAK-CHECK PASS (scrub had nothing to leak). Criterion 2 NOT ticked: no judgeable findings without a valid key. Criteria 3-4 stay OPEN; PR Ticket-refs, does not close.
 2026-07-14T13:30Z bump verify-reroll — round 1: follow-up ticket renumbered 0337->0339 (cross-PR ID collision with #599)
+2026-07-14T16:11Z claude note criterion 2 TICKED — OpenRouter real smoke PASSED with author-provisioned OPENROUTER_API_KEY_IDH (key validated HTTP 200, paid tier): containment self-test OK, TLS relay end-to-end, aider+gpt-4o-mini reviewed t0207-cred-scrub vs origin/main and returned 3 contract-format findings (verdict=revise) in ~30s. Leak-check PASS: runtime key value absent from findings and stderr channels (scrub correctly no-op — model never echoed the key). Both endpoint configs now smoke-tested. Criteria 3-4 (advisory trial) stay OPEN
 --- body ---
 ## Context
 
@@ -82,6 +83,6 @@ unreachable (fail-loud).
 ## Exit criteria
 
 - [x] Seat runs an agnostic CLI reviewer via the 0217 sandbox-runner, credentials via BASH_ENV minimal-env path
-- [ ] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged (llama-server done under 0217; OpenRouter real smoke blocked on author key — local TLS-bridge transport proof passed)
+- [x] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged (llama-server under 0217; OpenRouter real smoke 2026-07-14 with OPENROUTER_API_KEY_IDH — 3 judgeable findings, leak-check clean)
 - [ ] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
 - [ ] Promote/drop recommendation recorded for 0205's integration review
