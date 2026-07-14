@@ -28,11 +28,16 @@ import sys
 # GitHub-shaped merge subject: "Merge pull request #123 from owner/branch-name".
 PR_SUBJECT_RE = re.compile(r"^Merge pull request #(\d+) from [^/]+/(.+)$")
 
-# erg-pr-merge writes its close commit as
+# erg-pr-merge writes its close commit as exactly
 #   ticket(<id>[, <id>...]): close and archive — PR #<n>
 # (skills/merge/erg-pr-merge ~line 228; CLOSED_LIST joins IDs with ", ").
-# If that commit format changes, update this regex to match.
-CLOSE_COMMIT_RE = re.compile(r"^ticket\((\d+)(?:,\s*\d+)*\):")
+# Anchor on the whole "close and archive … PR #<n>" template, NOT just the
+# ticket(...) prefix: ordinary ticket-FILING commits also start "ticket(NNNN):",
+# so a PR with no close commit (Ticket: none, non-erg merge) would otherwise
+# mis-attribute a filing commit's id. If the close format changes, update this.
+CLOSE_COMMIT_RE = re.compile(
+    r"^ticket\((\d+)(?:,\s*\d+)*\): close and archive\b.*PR #\d+$"
+)
 
 
 def git(args: list[str], cwd: str | None = None) -> str:
@@ -96,14 +101,10 @@ def files_changed(parent1: str, parent2: str, root: str) -> int:
     # Three-dot (merge-base relative) so a batched session's intervening PRs,
     # which advanced parent1 but are absent from parent2, do not leak in as
     # phantom changes. This is the PR's own diff — what GitHub's "Files changed"
-    # and a raid's immediate per-PR roar record.
-    out = git(["diff", "--stat", f"{parent1}...{parent2}"], cwd=root)
-    lines = [ln for ln in out.splitlines() if ln.strip()]
-    if not lines:
-        return 0
-    # Summary line, e.g. " 3 files changed, 12 insertions(+), 2 deletions(-)".
-    m = re.search(r"(\d+) files? changed", lines[-1])
-    return int(m.group(1)) if m else 0
+    # and a raid's immediate per-PR roar record. --numstat yields one line per
+    # changed file (locale-independent; no summary-line parse to localize).
+    out = git(["diff", "--numstat", f"{parent1}...{parent2}"], cwd=root)
+    return sum(1 for ln in out.splitlines() if ln.strip())
 
 
 def build_records(since_sha: str, project: str, root: str) -> list[dict]:

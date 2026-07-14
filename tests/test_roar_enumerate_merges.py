@@ -143,6 +143,29 @@ def test_multi_ticket_close_takes_first_id(repo):
     assert records[0]["ticket"] == 42
 
 
+def test_filing_commit_not_mistaken_for_close(repo):
+    """A ticket-FILING commit in a PR with no close commit must not attribute.
+
+    Ordinary work commits also start "ticket(NNNN):" (the filing convention).
+    A raid's per-PR roar logs ticket null for a PR that carried no erg-pr-merge
+    close commit; the enumeration must match only the "close and archive — PR #"
+    template, not any ticket(...) subject.
+    """
+    base = head(repo)
+    merge_pr(
+        repo,
+        pr=11,
+        owner_branch="erin/no-close",
+        feature_commits=[
+            ("g.txt", "ticket(0329): file the follow-up ticket"),
+            ("h.txt", "wire up the follow-up"),
+        ],
+    )
+    records, res = enumerate_merges(repo, base)
+    assert len(records) == 1, res.stderr
+    assert records[0]["ticket"] is None
+
+
 def test_non_pr_merge_subject_branch_null_still_emitted(repo):
     base = head(repo)
     merge_pr(

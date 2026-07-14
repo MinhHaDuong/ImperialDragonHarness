@@ -60,7 +60,7 @@ branch — there are no remote branches nor merge requests to inspect.
    SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
    ROWS=""
    if [ -f "$SENTINEL" ] && git merge-base --is-ancestor "$(cat "$SENTINEL")" HEAD; then
-       ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --project "<name>")"
+       ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --project "<name>")" || ROWS=""
    fi
    if [ -n "$ROWS" ]; then
        # Per-PR path: one telemetry-equivalent record per merged PR.
