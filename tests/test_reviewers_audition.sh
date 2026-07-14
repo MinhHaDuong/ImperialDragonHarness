@@ -38,12 +38,14 @@ assert_contains() {
 # stays forge/stack-agnostic; the classifier matches candidate findings by
 # basename + line). PR1 exercises a line-precise panel anchor, a `:*` wildcard
 # panel anchor, and a defect (panel-missed) anchor; PR2 has an empty defect set.
+# PR1's title carries a literal `|`: the parser must not let it shift the
+# pipe-delimited record and corrupt the panel field (regression guard).
 BOARD="$WORK/board.yml"
 cat > "$BOARD" <<'YAML'
 # Toy benchmark board.
 board:
   - pr: 1
-    title: "toy one"
+    title: "toy | one with a pipe"
     base: deadbeef1
     head: cafebabe1
     panel: alpha.sh:10 beta.sh:*
@@ -117,13 +119,13 @@ FDIR="$WORK/findings"
 if [ -x "$ERG_BIN" ]; then
     card="$( cd "$TDIR" && \
         REVIEWERS_FINDINGS_DIR="$FDIR" SEAT_RUNNER="$STUB" ERG="$ERG_FIXTURE" \
-        AUDITION_PRICE_IN_PER_M=1 AUDITION_PRICE_OUT_PER_M=2 \
+        REVIEWERS_PRICE_IN_PER_M=1 REVIEWERS_PRICE_OUT_PER_M=2 \
         "$REVIEWERS" audition openai/toy-candidate \
             --board "$BOARD" --endpoint http://127.0.0.1:9/v1 \
             --trial-ticket "$TRIAL" --name toy-cand 2>/dev/null )"
 
     assert_contains "audition: scorecard names the candidate"   "candidate=toy-cand" "$card"
-    assert_contains "audition: board size reported"             "board=2PR"          "$card"
+    assert_contains "audition: board size reported"             "board=2MR"          "$card"
     assert_contains "audition: total findings counted"          "findings=6"         "$card"
     assert_contains "audition: duplicates classified"           "duplicate=3"        "$card"
     assert_contains "audition: unique-verified classified"      "unique-verified=1"  "$card"
@@ -143,7 +145,7 @@ if [ -x "$ERG_BIN" ]; then
     # Idempotent roster: a second run leaves the sentinel panel.yml untouched.
     ( cd "$TDIR" && \
         REVIEWERS_FINDINGS_DIR="$FDIR" SEAT_RUNNER="$STUB" ERG="$ERG_FIXTURE" \
-        AUDITION_PRICE_IN_PER_M=1 AUDITION_PRICE_OUT_PER_M=2 \
+        REVIEWERS_PRICE_IN_PER_M=1 REVIEWERS_PRICE_OUT_PER_M=2 \
         "$REVIEWERS" audition openai/toy-candidate \
             --board "$BOARD" --endpoint http://127.0.0.1:9/v1 \
             --trial-ticket "$TRIAL" --name toy-cand ) >/dev/null 2>&1 || true
@@ -206,7 +208,7 @@ STUBEOF
                 --board "$SHIPPED" --endpoint http://127.0.0.1:9/v1 \
                 --trial-ticket "$TRIAL" 2>/dev/null )"
         assert_contains "shipped board: audition runs end-to-end" "audition candidate=" "$smoke"
-        assert_contains "shipped board: 10-PR board size" "board=10PR" "$smoke"
+        assert_contains "shipped board: 10-PR board size" "board=10MR" "$smoke"
     fi
 else
     echo "FAIL: skills/reviewers/benchmark-board.yml missing"; FAIL=$((FAIL+1))

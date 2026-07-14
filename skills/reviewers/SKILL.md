@@ -95,14 +95,14 @@ One **scorecard block** is emitted per run and appended to the candidate's
 trial ticket via `erg log` (verb `note`):
 
 ```
-audition candidate=<label> model=<id> board=<N>PR findings=<F> \
+audition candidate=<label> model=<id> board=<N>MR findings=<F> \
   duplicate=<d> unique-verified=<uv> unique-hallucinated=<uh> \
   overlap=<pct>% latency=<s>s cost=<$x|n/a>
 ```
 
 `overlap%` is the share of the candidate's findings that merely duplicate the
 panel. `cost` is `$ per review` from the token counts the seat reports on its
-`SUMMARY` line, priced via `AUDITION_PRICE_IN_PER_M` / `AUDITION_PRICE_OUT_PER_M`
+`SUMMARY` line, priced via `REVIEWERS_PRICE_IN_PER_M` / `REVIEWERS_PRICE_OUT_PER_M`
 (USD per 1M tokens); it is `n/a` when the seat reports no tokens or no price is
 configured — an honest blank, never a fabricated `$0`.
 

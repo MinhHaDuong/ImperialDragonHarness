@@ -90,6 +90,7 @@ board_records() {  # $1 board file
             sub("^[[:space:]]*-?[[:space:]]*" key ":[[:space:]]*", "", line)
             gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
             gsub(/^"|"$/, "", line)
+            gsub(/\|/, "/", line)   # never let a value carry the record delimiter
             return line
         }
         function rec() { return pr"|"title"|"base"|"head"|"panel"|"defects }
@@ -276,6 +277,7 @@ case "$subcmd" in
         [ -f "$board" ] || { echo "error: benchmark board not found: ${board}" >&2; exit 1; }
 
         dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"
+        trap 'rm -rf "$dest"' EXIT   # reap the scratch dir on every exit path
         n_pr=0; tot=0; dup=0; uv=0; uh=0; ptok=0; ctok=0; lat="0"
         while IFS='|' read -r pr title base head panel defects; do
             [ -n "$pr" ] || continue
@@ -292,7 +294,7 @@ case "$subcmd" in
             # cannot be replayed — unreachable endpoint, sandbox failure — voids
             # the whole audition rather than reporting a partial, misleading score.
             if ! "$SEAT_RUNNER" "${sr_args[@]}" >/dev/null 2>"${out}.err"; then
-                echo "audition: FATAL seat-runner failed on board PR #${pr} (candidate=${label}); see ${out}.err" >&2
+                echo "error: audition: seat-runner failed on board MR #${pr} (candidate=${label}); see ${out}.err" >&2
                 exit 1
             fi
             t1=$(date +%s.%N)
@@ -331,27 +333,26 @@ case "$subcmd" in
         # $ per review from token counts, when the seat reported them on SUMMARY;
         # prices are USD per 1M tokens (env-overridable). n/a when no tokens or no
         # price is configured — honest rather than a fabricated $0.
-        price_in="${AUDITION_PRICE_IN_PER_M:-0}"
-        price_out="${AUDITION_PRICE_OUT_PER_M:-0}"
+        price_in="${REVIEWERS_PRICE_IN_PER_M:-0}"
+        price_out="${REVIEWERS_PRICE_OUT_PER_M:-0}"
         cost="n/a"
         if [ $((ptok + ctok)) -gt 0 ]; then
             cost=$(awk -v p="$ptok" -v c="$ctok" -v pi="$price_in" -v po="$price_out" \
                 'BEGIN{ if (pi==0 && po==0) { print "n/a" } else { printf "$%.4f", p/1e6*pi + c/1e6*po } }')
         fi
 
-        card="audition candidate=${label} model=${model} board=${n_pr}PR findings=${tot} duplicate=${dup} unique-verified=${uv} unique-hallucinated=${uh} overlap=${overlap}% latency=${lat}s cost=${cost}"
+        card="audition candidate=${label} model=${model} board=${n_pr}MR findings=${tot} duplicate=${dup} unique-verified=${uv} unique-hallucinated=${uh} overlap=${overlap}% latency=${lat}s cost=${cost}"
         echo "$card"
 
         # Append the scorecard to the candidate's trial ticket (erg verbs:
         # created/note/closed only — audition uses note). Promotion stays manual.
         tid=$(basename "$trial" | grep -oE '^[0-9]{4}' || true)
-        [ -n "$tid" ] || { echo "audition: WARN could not derive a ticket id from '${trial}' — scorecard not logged" >&2; rm -rf "$dest"; exit 1; }
+        [ -n "$tid" ] || { echo "error: audition: could not derive a ticket id from '${trial}' — scorecard not logged" >&2; exit 1; }
         ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
         if ! "$ERG" log "$tid" "claude note ${card}" >/dev/null; then
-            echo "audition: WARN failed to log scorecard to trial ticket ${trial} (id ${tid})" >&2
-            rm -rf "$dest"; exit 1
+            echo "error: audition: failed to log scorecard to trial ticket ${trial} (id ${tid})" >&2
+            exit 1
         fi
-        rm -rf "$dest"
         ;;
 
     ""|--help|-h) usage ;;
