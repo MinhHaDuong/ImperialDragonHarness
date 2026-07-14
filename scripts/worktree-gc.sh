@@ -8,7 +8,11 @@ set -euo pipefail
 # detaches the worktree — branches and commits survive — and we never rm -rf,
 # so a mistaken removal loses no history. Idempotent. Relies on the caller
 # having run `git fetch --prune` first (housekeeping / roar do).
-# Optional arg: repo dir (default: current dir). See tickets 0169, 0195.
+# Also report-only surfaces "husk" dirs under .claude/worktrees/ — directories
+# that are no longer registered worktrees (a session base cwd deregistered
+# mid-session) — which the registered pass cannot see. Husks are never removed
+# (may be a live session's base cwd); see ticket 0325.
+# Optional arg: repo dir (default: current dir). See tickets 0169, 0195, 0325.
 
 repo="${1:-.}"
 removed=0
@@ -89,9 +93,16 @@ flush
 # pass above and accumulates. Report-only, never removed: a husk may still be a
 # LIVE session's base cwd (the harness resets the shell cwd there after every
 # command), and deleting it would break that session. We only surface it.
-toplevel=$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null || true)
-wtdir="$toplevel/.claude/worktrees"
-if [ -n "$toplevel" ] && [ -d "$wtdir" ]; then
+# Root on the PRIMARY repo, not on `git rev-parse --show-toplevel`: when this
+# script runs from a linked worktree (the harness's normal cwd — molt/roar
+# invoke it bare with repo=".") that would resolve to the worktree's own root,
+# whose .claude/worktrees/ is absent, silently skipping the scan. `git worktree
+# list --porcelain` always lists the main worktree first, so registered_paths[0]
+# is the primary root regardless of where we were invoked (invocation-invariant,
+# matching the removal pass above).
+primary_root="${registered_paths[0]:-}"
+wtdir="$primary_root/.claude/worktrees"
+if [ -n "$primary_root" ] && [ -d "$wtdir" ]; then
     while IFS= read -r -d '' dir; do
         rdir=$(realpath "$dir" 2>/dev/null || echo "$dir")
         is_registered=0

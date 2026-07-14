@@ -6,7 +6,9 @@ Exercises:
   - scripts/worktree-gc.sh              — GC stale worktrees (any path/name)
                                           on upstream-gone branches; rails:
                                           clean tree, gone branch, not the
-                                          invoking worktree
+                                          invoking worktree. Also report-only
+                                          surfaces unregistered "husk" dirs
+                                          under .claude/worktrees/ (ticket 0325).
   - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
                                           uncommitted files (incl. untracked).
                                           Closes the ExitWorktree gap that lost
@@ -294,6 +296,22 @@ def test_gc_reports_unregistered_husk_dir(origin):
     (husk / ".claude").mkdir(parents=True)
 
     res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk-agent-dead" in res.stdout
+    assert "husk" in res.stdout
+
+
+@pytest.mark.integration
+def test_gc_reports_husk_when_run_from_linked_worktree(origin):
+    """The husk scan must root on the PRIMARY repo, not on the `repo` arg's own
+    toplevel — else running gc from a linked worktree (the harness's normal cwd,
+    and how molt/roar invoke it bare) silently skips the scan (ticket 0325)."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-live", dirty=False)  # live linked worktree
+    husk = primary / ".claude" / "worktrees" / "husk-agent-dead"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(wt)  # invoked from the linked worktree, not the primary
     assert res.returncode == 0
     assert "husk-agent-dead" in res.stdout
     assert "husk" in res.stdout
