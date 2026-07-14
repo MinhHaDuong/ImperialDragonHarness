@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-14T13:10Z claude created
 2026-07-14T11:29Z claude note imagine: empirical correction — rtk PreToolUse hook (0.34.3) fires ONCE on the outer Bash-tool command text, never on a script's internal subprocess calls, and ls-tree/rev-parse are not in its rewrite table ("No rewrite for"); the #584 incident's root cause is therefore UNCONFIRMED (misdiagnosis recorded, per diagnosis discipline). Script path is skills/merge/erg-pr-merge, not scripts/. Confirmed live rewrite targets to harden: branch --show-current (erg-pr-merge:76), worktree list --porcelain (sync-local-main.sh:56); L164 ls-tree grep-over-blob hardened as fragility, not confirmed exposure. No generic wrapper layer (YAGNI)
+2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (phase-3 absorbed); anchors verified (erg-pr-merge:54,76,164,201; sync-local-main.sh:56; worktree-salvage.sh:22); regression tests extend existing tests/test_erg_pr_merge.sh and tests/test_sync_local_main.sh; PASS, no overlap with 0332
 
 --- body ---
 ## Context
