@@ -1,0 +1,36 @@
+%erg 0.1
+Title: worktree-path guard blocks Edit/Write in review-* worktrees despite 0300 whitelist claim
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T13:35Z claude created
+
+--- body ---
+## Context
+
+Found by the #602 gaze (raid 207-325-327): its simplify phase had to apply
+fixes via Bash because `scripts/pretooluse-worktree-path-guard.sh` denied
+Edit/Write into the `review-*` worktree, while the gaze skill documentation
+states `review-*` worktrees are whitelisted (ticket 0300). Either the guard
+lost the whitelist or the skill doc overstates it — the two contradict.
+
+## Relevant files
+
+- `scripts/pretooluse-worktree-path-guard.sh` — the denying guard
+- `skills/gaze/SKILL.md` — the whitelist claim (ticket 0300 lineage)
+- `tickets/closed/0300-*.erg` — original whitelist decision
+
+## Actions
+
+1. Reproduce: attempt an Edit into a `review-*` worktree path under the
+   guard; capture the denial.
+2. Decide which side is right (guard behavior vs doc claim) against 0300's
+   original decision; fix the loser.
+3. Regression: an adherence or integration test pinning the agreed behavior.
+
+## Exit criteria
+
+- [ ] Guard behavior and gaze SKILL.md agree on review-* worktrees
+- [ ] Test pins the agreed behavior (proven RED on the pre-fix state)
+- [ ] `make check` passes
