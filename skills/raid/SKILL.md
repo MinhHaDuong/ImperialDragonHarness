@@ -131,8 +131,8 @@ the execute agent prompt and the agent creates the file as its first step.
 Launch agents by cluster to cross-check plans (`model: haiku` for the mechanical
 existence checks — paths/lines/signatures; `model: sonnet` for the cross-ticket
 conflict and cross-cutting-registry scan, which is judgement across N plans, not
-lookup — missing it cost a resurrection agent for 3 of 4 merges, memory
-`feedback_rebase_drop_cascade`):
+lookup — missing it cost a resurrection agent for 3 of 4 merges, see § Phase 5.0
+below):
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts

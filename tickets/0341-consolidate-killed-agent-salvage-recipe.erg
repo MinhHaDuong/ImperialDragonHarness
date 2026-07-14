@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-07-14T13:35Z claude created
 2026-07-14T20:09Z claude note planned by raid — sweep found 2 foreign citations (337 + 155); gaze and memory already pointer-shaped, criterion 2 is a verified no-op
+2026-07-14T20:19Z claude note review-pr round 1 found a 3rd foreign citation at line 134-135 that the line-oriented sweep missed (citation wrapped across a markdown line break); fixed and re-verified with a line-wrap-safe sweep
 
 --- body ---
 ## Context
@@ -41,21 +42,33 @@ The "three drift-prone copies" framing overstated the scope: gaze SKILL.md's
 Fork-liveness clause is a distinct gaze-scoped concern (no salvage-recipe
 text, its memory citation resolves locally), and the memory entry
 `feedback_agent_stall_watchdog_recovery.md` was already trimmed to pointers
-by PR #601. The actual defect was two stale citations in
+by PR #601. The actual defect was THREE stale citations in
 `skills/raid/SKILL.md` pointing at memories that exist only in the aedist
-project's store:
+project's store (the third was found by review-pr round 1, not the initial
+plan — see round-1 log entry):
 
 - Line 337: `(memory: feedback_killed_agent_salvage)` — foreign; the same
   content lives locally as `feedback_agent_stall_watchdog_recovery`.
 - Line 155: `(memory: feedback_rebase_drop_cascade)` — foreign; raid's
   Phase 5.0 prose already inlines the full account, the pointer was vestige.
+- Line 134-135: `memory` `feedback_rebase_drop_cascade`) — same foreign name
+  as line 155, restating the same "resurrection agent for 3 of 4 merges"
+  fact in Phase 4's prose; missed by the initial line-oriented sweep because
+  the citation wraps across a markdown line break (`memory` ends line 134,
+  the backtick-fenced name is line 135) — the sweep's `grep -E` is
+  line-oriented and never sees the two halves joined.
 
 Fix applied: line 337 now cites `feedback_agent_stall_watchdog_recovery`
 (exists locally); line 155's dangling parenthetical was deleted, keeping
-"because of this." intact. Gaze SKILL.md and memory files were left
-untouched — no genuine duplication was found there to consolidate.
+"because of this." intact; line 134-135's dangling parenthetical was
+replaced with a cross-reference to § Phase 5.0, which carries the full
+account. Gaze SKILL.md and memory files were left untouched — no genuine
+duplication was found there to consolidate.
 
 ## Sweep command (RED/GREEN evidence, reusable)
+
+Line-oriented (misses line-wrapped citations — use the line-wrap-safe
+variant below for a trustworthy sweep):
 
 ```bash
 grep -rEo "memory[: ]*.?\`?feedback_[a-zA-Z_]+" skills/*/SKILL.md rules/*.md rules/*/*.md 2>/dev/null \
@@ -64,5 +77,20 @@ ls projects/-home-haduong--claude/memory/ | sed 's/\.md$//' | LC_ALL=C sort -u >
 LC_ALL=C comm -23 /tmp/cited.txt /tmp/exist.txt
 ```
 
-RED (before fix): `feedback_killed_agent_salvage`, `feedback_rebase_drop_cascade`.
-GREEN (after fix): empty.
+Line-wrap-safe (joins each file's lines before matching):
+
+```bash
+for f in skills/*/SKILL.md rules/*.md rules/*/*.md; do
+  [ -f "$f" ] && tr '\n' ' ' < "$f"
+  echo
+done 2>/dev/null | grep -oE "memory[: ]*\`?feedback_[a-zA-Z_]+" | grep -oE "feedback_[a-zA-Z_]+" \
+  | LC_ALL=C sort -u > /tmp/cited-safe.txt
+LC_ALL=C comm -23 /tmp/cited-safe.txt /tmp/exist.txt
+```
+
+RED (line-oriented sweep, before any fix): `feedback_killed_agent_salvage`,
+`feedback_rebase_drop_cascade`.
+RED (line-wrap-safe sweep, before the round-1 fix, after the initial two-line
+fix): `feedback_rebase_drop_cascade` (line 134-135, missed by the
+line-oriented sweep).
+GREEN (line-wrap-safe sweep, after all three fixes): empty.
