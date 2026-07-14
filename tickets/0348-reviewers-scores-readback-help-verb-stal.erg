@@ -1,0 +1,97 @@
+%erg 0.1
+Title: /reviewers scores read-back, explicit help verb, stale trial-ticket pointer
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T19:55Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Child of tickets/0205. Three discoverability gaps surfaced while presenting
+the /reviewers CLI (author session, 2026-07-14), just after 0346 landed
+audition:
+
+1. Scorecards are write-only. Trial lines (`scorecard`) and audition blocks
+   accrue as `erg log` lines in each seat's trial ticket, and comparing two
+   candidates means opening the ticket files and eyeballing lines. 0205's
+   integration review ("trial scorecards reviewed; promote/drop decided") has
+   no reading surface.
+2. No explicit `help` subcommand. `reviewers.sh` prints usage only via the
+   unknown-subcommand fallback, which exits 1; a conventional `help` verb
+   exits 0.
+3. Stale roster pointer. `panel.yml`'s copilot seat names
+   `tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg`, but 0206
+   closed and the file moved to `tickets/closed/`. `list` displays the dead
+   path; whether `scorecard` still resolves it depends on how the erg-log
+   step addresses the ticket (by path or ID) — establish that before fixing.
+
+## Relevant files
+
+- `skills/reviewers/reviewers.sh` — add `scores` and `help`; check the
+  scorecard erg-log resolution for item 3
+- `skills/reviewers/SKILL.md` — document both subcommands
+- `skills/reviewers/panel.yml` — refresh or retire the copilot trial-ticket
+  pointer (the seat's trial concluded; its 0205 promote-or-drop review is due
+  and may retire the pointer anyway)
+- `tests/test_reviewers.sh` (and `tests/test_reviewers_audition.sh` for the
+  audition-line parsing) — existing patterns to extend
+
+## Actions
+
+1. `scores [seat-or-candidate]` — read-only. Grep the fixed-schema trial
+   lines (`MR #N seat=… verdict: …`) and audition blocks
+   (`audition candidate=… overlap=…`) out of the trial tickets (searching
+   `tickets/` AND `tickets/closed/`), print one sortable table: candidate/
+   seat, MRs or board size, verifiable/consider or duplicate/unique-verified/
+   unique-hallucinated, overlap %, latency, $ per review. No argument → all
+   seats and candidates. Unparseable line → WARN on stderr, never silently
+   dropped (harvest convention).
+2. `help` — print the usage block, exit 0. Keep the no-arg/unknown-verb
+   fallback at exit 1.
+3. Resolve item 3: determine how `scorecard`'s erg-log step addresses the
+   trial ticket; fix the copilot pointer accordingly (path refresh, or seat
+   retirement if the 0205 review drops it — that decision is the author's,
+   record it in the roster comment either way).
+
+## Candidate extension (author to confirm before implementing)
+
+A read-only `models [endpoint]` verb querying `GET <base>/v1/models` on each
+known endpoint (panel.yml seats + commented examples; key names from
+`~/.config/keys/*.env` via BASH_ENV, never echoed) would answer "what can I
+audition here?" from the CLI. Deferred — not part of this ticket's exit
+criteria unless the author opts in.
+
+## Test
+
+- Extend `tests/test_reviewers.sh`: fixture trial ticket with two scorecard
+  lines and one audition block → `scores` prints both rows with correct
+  fields; a malformed line WARNs; `help` exits 0 and names every subcommand
+  (guards drift when verbs are added).
+
+## Verification
+
+- [ ] `scores` with no args lists copilot's trial lines and the 0346-era
+      audition blocks from the archived 0207/0206 tickets
+- [ ] `scores <candidate>` filters to one candidate
+- [ ] `help` exits 0; no-arg still exits 1
+- [ ] `list` no longer shows a dead trial-ticket path
+
+## Invariants
+
+- `scores`, `help`, and `list` stay read-only — no roster edits, no erg log
+  writes
+- No secrets in config or output; credential handling unchanged (BASH_ENV)
+- Existing subcommand contracts unchanged (`request` fail-open, `audition`
+  fail-loud, audition never touches the roster)
+- `make check` passes
+
+## Exit criteria
+
+- [ ] `scores [seat-or-candidate]` prints the comparison table from trial
+      tickets in `tickets/` and `tickets/closed/`
+- [ ] `help` verb exits 0 with the full usage block
+- [ ] Copilot trial-ticket pointer resolved (refreshed or retired, decision
+      logged)
+- [ ] SKILL.md documents both verbs; tests green; `make check` passes
