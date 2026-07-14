@@ -49,10 +49,12 @@
 #
 # A budget seat on the same endpoint (~30x cheaper; 2026-07-14 same-diff
 # audit in the trial ticket: noisier, weaker catches — trial arbitrates).
-# ROUTING TRAP: OpenRouter model IDs whose prefix is a litellm-native
-# provider (deepseek/, qwen/, ...) MUST keep the openai/ route prefix,
-# else litellm dials the provider's own API host, off-relay, and dies
-# under --network=none with "Temporary failure in name resolution":
+# ROUTING TRAP: `openai/` below is litellm's PROVIDER-ROUTE prefix, not
+# part of the OpenRouter model ID — prepend it to the full OpenRouter ID
+# (which may itself start with deepseek/, qwen/, ...). Without it,
+# litellm reads the ID's first segment as its own native provider and
+# dials that provider's API host directly — off-relay — dying under
+# --network=none with "Temporary failure in name resolution":
 #   - name: openrouter-budget
 #     kind: cli-agent
 #     status: advisory
