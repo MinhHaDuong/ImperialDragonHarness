@@ -221,8 +221,9 @@ STUB
         # with `run_seat --no-cred` (ticket 0339, least-privilege), so the endpoint
         # key must be ABSENT from the self-test argv (this is the only podman run
         # under --self-test-only). The ENV_CAP assertion above is unaffected: the
-        # runner exports OPENAI_API_KEY into its OWN process env for the review run,
-        # which the stub inherits regardless of the -e argv the container receives.
+        # runner unconditionally exports OPENAI_API_KEY into its OWN process env at
+        # credential setup, which the stub inherits regardless of the -e argv the
+        # container receives — so env-inheritance can't discriminate; argv can.
         if grep -qx 'OPENAI_API_KEY' "$ARGV_CAP"; then
             fail "credential-env: self-test container carries the endpoint key (--no-cred not applied)"
         else
