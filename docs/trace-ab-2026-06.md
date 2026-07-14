@@ -1,5 +1,40 @@
 # Trace phase-5 A/B pre-registration — 2026-06 (ticket 0315, trace-doctor phase 5)
 
+## VOIDED 2026-07-14
+
+The author voided this pre-registration on 2026-07-14, after the measure-A
+smoke replay and before any other data collection. The smoke exposed five
+variables the design had not frozen:
+
+1. **Effort level** — arms said "Sonnet main" with no effort setting; the
+   global `effortLevel: high` silently applied, and session traces do not
+   record effort, so the historical arms' effort is unrecoverable.
+2. **Gaze regime** — the reviewer battery was re-tiered mid-study (ticket
+   0320, merged hours before the smoke); the replay was reviewed at
+   `tier: tiny` while the originals faced the full pre-tiering battery.
+3. **Baseline model premise** — the "long Opus mains" finding dates from the
+   June corpus; beat has launched Sonnet mains since April, and the sampled
+   July originals ran under Fable raid mains.
+4. **Paired baseline** — the per-ticket cost slices the pairing needs do not
+   exist: originals ran inside shared multi-agent raid sessions whose main
+   cost amortizes across a wave.
+5. **Join cache** — stale for every July PR, leaving the guardrail
+   denominators unresolved.
+
+Disposition: measure A is dropped; the smoke replay (PR #585, closed
+unmerged, $2.49, gaze-APPROVED) stands as a pilot observation only. Measure B
+is cancelled; `convergence.enabled` stays default-off and the pinned weeks
+below will not run. The harvest tooling (`scripts/trace_ab_harvest.py`,
+`scripts/trace_ab_decision.py`, their tests) remains available. The process
+root cause — the raid Imagine phase rewarding faithful delivery over premise
+challenge — is fixed separately (ticket 0336, PR #597). No successor study is
+scheduled; any future version must define each arm as the full launch-config
+manifest enumerated from the live surface (model, effort, permission mode,
+gaze tier, harness SHA) and compare live head-to-head arms on identical
+inputs, not against a historical corpus.
+
+Everything below is retained unchanged as the historical record.
+
 **Shadow dollars**: every $ below is a list-price API-equivalent under
 subscription auth — capacity consumption (rate limits, context budget), never
 invoiced money. Baselines carry over from the phase-4 counterfactual accounting
