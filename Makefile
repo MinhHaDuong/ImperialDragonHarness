@@ -1,4 +1,4 @@
-.PHONY: skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check check-fast check-tests lint
+.PHONY: skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check check-fast check-tests lint
 
 skills-catalog:
 	./scripts/update-skills-catalog.py
@@ -25,8 +25,11 @@ check-agnostic-tickets:
 check-agnostic-skills:
 	./scripts/check-agnostic.sh skills
 
+check-agnostic-scripts:
+	./scripts/check-agnostic.sh scripts
+
 # Full gate (coding-python.md): the whole suite, integration + slow included.
 check-tests:
 	python3 -m pytest tests/
 
-check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-tests
+check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-tests

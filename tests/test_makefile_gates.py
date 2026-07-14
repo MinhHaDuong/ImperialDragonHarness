@@ -34,7 +34,12 @@ def test_check_runs_full_pytest_suite():
 
 def test_check_keeps_static_checks():
     deps = target_recipe("check").splitlines()[0]
-    for dep in ("check-skills-drift", "check-agnostic-tickets", "check-agnostic-skills"):
+    for dep in (
+        "check-skills-drift",
+        "check-agnostic-tickets",
+        "check-agnostic-skills",
+        "check-agnostic-scripts",
+    ):
         assert dep in deps, f"'check' lost its static prerequisite {dep}"
 
 

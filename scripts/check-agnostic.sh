@@ -7,7 +7,7 @@
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-    DIRS=(skills tickets)
+    DIRS=(skills tickets scripts)
 else
     DIRS=("$@")
 fi
