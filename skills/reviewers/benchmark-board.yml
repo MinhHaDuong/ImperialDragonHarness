@@ -1,0 +1,104 @@
+# Frozen benchmark board for `/reviewers audition` (ticket 0346).
+#
+# Each entry is an ALREADY-MERGED merge request of THIS repo, biased toward
+# complex multi-file CODE changes (ensemble review value concentrates there —
+# ticket 0205). `audition` replays a candidate model over each PR's diff through
+# the 0217 seat-runner and classifies every finding against the ground truth
+# recorded here. Because the board is frozen, every candidate runs the SAME
+# board — cross-candidate comparison becomes sound (the live advisory trial
+# cannot give this: each candidate there sees different PRs).
+#
+# Diff reconstruction (why base/head are commit SHAs, not branch names):
+#   The seat-runner diffs `base...head` (three-dot, merge-base). `head` is the
+#   PR's head commit (the merge commit's second parent) and `base` is main's tip
+#   just before the merge (the first parent). Both are IMMUTABLE object SHAs, so
+#   the exact PR diff is reconstructable forever — even after the branch is
+#   deleted. Recover them for a new entry with, per merge commit MC:
+#     base = MC^1   head = MC^2   (diff = base...head)
+#
+# Ground truth per PR:
+#   panel:   anchors the INTERNAL panel (/gaze reviewers + verify gate) flagged,
+#            recovered from the PR's gate-verdict comments. A candidate finding
+#            matching one of these is a DUPLICATE (redundant; no decorrelation
+#            value). Line-precise where the verdict cited a line, else file-wide.
+#   defects: anchors of REAL defects the panel MISSED but that are confirmed
+#            (a post-merge fix, a follow-up ticket, a later-found regression). A
+#            candidate finding matching one of these (and no panel anchor) is
+#            UNIQUE-VERIFIED — the payoff the audition is measuring. Empty when no
+#            panel-miss has surfaced; append anchors here as they do.
+#   A candidate finding matching NEITHER set is UNIQUE-HALLUCINATED.
+#
+# Anchor form: `basename[:LINE]` or `basename:*`.
+#   - `basename:LINE`  matches a finding at that file (by basename) and line.
+#   - `basename:*` or bare `basename`  matches any line in that file.
+#   Anchors are stored BASENAME-normalized (no directory prefix) so the board
+#   stays forge/stack-agnostic (the agnostic gate forbids repo-relative
+#   `scripts/*.sh` literals in skills/); the classifier likewise reduces each
+#   candidate finding to its basename + line before matching. Basenames are
+#   unique enough within a PR's changed set that collisions do not arise.
+#
+# This board is a DATA artifact, not a script. `audition` never edits it, never
+# edits panel.yml, and never files a seat — promotion stays a manual panel.yml
+# edit + PR at 0205's integration review.
+
+board:
+  - pr: 603
+    title: "seat(0207): scrub injected credential from reviewer output"
+    base: 645e5769d7ac9a465441929ac7d6070b31c6e65f
+    head: afe91e4198bd42317f1b540f7645263b279154a0
+    panel: seat-runner.sh:68 seat-runner.sh:317 seat-runner.sh:358 test_seat_runner.sh:*
+    defects:
+  - pr: 602
+    title: "feat(worktree-gc): report unregistered husk dirs under .claude/worktrees"
+    base: 6019a742db0a64bfa9c15f96f17d2e9ac4f8bea2
+    head: 5ea6aac9a62d6fbded5e3bef74e117561fc2b115
+    panel: worktree-gc.sh:104 worktree-gc.sh:105 worktree-gc.sh:106 worktree-gc.sh:115 worktree-gc.sh:118
+    defects:
+  - pr: 599
+    title: "feat(0337): KEYS= explicit per-key selection and rename (provider:SRC=DST)"
+    base: 458f49e94968b36e54c6126ad9d2a0cd2e7431ef
+    head: d765d99183c652cf55b5afdbf4d8890e7b808a4c
+    panel: bash-env.sh:53 bash-env.sh:55 bash-env.sh:225 bash-env.sh:234 test_bash_env_keys_selection.sh:* test_bash_env_keys_selection_explicit.sh:*
+    defects:
+  - pr: 588
+    title: "fix(0323): strict-parse project .env, refuse GUARD_* keys"
+    base: cd92b7baf86c948c1e17b2a2bd27b10d3b9edfd6
+    head: 46a7fe17cb3a13490b3315a9b8e9a9f1cfe8cfb6
+    panel: bash-env.sh:64 bash-env.sh:72 pretooluse-worktree-path-guard.sh:49 pretooluse-worktree-path-guard.sh:50 pretooluse-worktree-path-guard.sh:83 pretooluse-worktree-path-guard.sh:105 test_bash_env_project_env_parse.sh:*
+    defects:
+  - pr: 584
+    title: "fix(0329): replace flaky grep-here-string boolean checks with pure-bash"
+    base: d10db43acd6997fa8c12a30a98de7235bffc7052
+    head: ba3941f85cd85f98479f09dda49db0aa6ae6afc9
+    panel: seat-runner.sh:* test_seat_runner.sh:* test_harness_rules_injection.sh:44
+    defects:
+  - pr: 580
+    title: "test(0328): pin beat-settings.json hook command resolves at runtime"
+    base: bebbc45a9eeade2dbb03187b699e9575f941f505
+    head: a3f6d5a4c1ff9bb3addae90e6a909d3596231640
+    panel: test_beat_settings_hook_resolves.py:* guard-destructive-bash.sh:*
+    defects:
+  - pr: 575
+    title: "feat(0207): agnostic CLI reviewer seat — OpenRouter + llama-server endpoints"
+    base: baf8e45495a758bab901291dc2690180b7a74d8f
+    head: 72659a14025a5ab20aca5c480e96893c5f4a66c4
+    panel: seat-runner.sh:* test_seat_runner.sh:* reviewers.sh:*
+    defects:
+  - pr: 573
+    title: "feat(0326): offline A/B harvest CLI, replay runbook, measure-A sample"
+    base: 22e6c7714b6ea069abd0e2dddc34d2c4a125b6fa
+    head: 6169206f99629598071e06a6f096cd20a78f61b4
+    panel: trace_ab_harvest.py:* test_trace_ab_harvest.py:*
+    defects:
+  - pr: 572
+    title: "feat(0320): graduated reviewer-battery tiers in /gaze"
+    base: 4c302dfc3080378aad0f479c7368889cca58efc8
+    head: 2a4a2d0095b6fed5df1d747f6fe1e228efc0de76
+    panel: test_verify_fork_contracts.py:*
+    defects:
+  - pr: 570
+    title: "fix(0322): extend agnostic gate to scripts/ dir"
+    base: 57ede102b702dab3a9df21e824dfa0d61dbc1e96
+    head: b89f076993eb57a1c4c11d637097fc5d3faa37bb
+    panel: check-agnostic.sh:*
+    defects:
