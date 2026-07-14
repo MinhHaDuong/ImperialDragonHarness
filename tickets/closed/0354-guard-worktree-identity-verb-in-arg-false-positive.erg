@@ -2,10 +2,11 @@
 Title: guard-worktree-identity false-positive on a mutating verb inside a quoted argument
 Created: 2026-07-14
 Author: Minh Ha-Duong
-Label: deferred
+Closed: wontfix — fail-safe (only over-blocks, never mis-allows), invisible in a healthy worktree; documented as a known residual gap in the guard header. Not worth the fix risk.
 
 --- log ---
 2026-07-14T21:33Z Minh Ha-Duong created
+2026-07-14T21:39Z Minh Ha-Duong closed — wontfix; author decision. The behaviour is documented in the guard header (PR #625); a quote-aware-split fix is not worth reopening the I1 regression surface for a gap that never mis-allows.
 
 --- body ---
 ## Context
@@ -60,4 +61,7 @@ quoting-evasion regressions green. Add two red cases to
 - [ ] I1 replay + `git "commit"` evasion + compound-bypass tests stay green
 - [ ] Guard header note updated (drop "not fixed" once resolved)
 
-Leave OPEN (deferred) — documented gap; fix is low priority.
+Closed wontfix (2026-07-14) — documented as a known residual gap in the guard
+header instead of fixed. Exit criteria left unticked deliberately: the fix was
+declined, not completed. Reopen if the false positive ever bites harder than
+the trivial `git -C` / non-worktree-cwd workaround.
