@@ -34,25 +34,27 @@ EOF
 
 # ── roster parsing ───────────────────────────────────────────────────────────
 # Emit one pipe-separated record per seat: name kind status endpoint model
-# login trial-ticket. Minimal block parser for the flat panel.yml schema;
-# comment and blank lines are ignored, and an explicit `reviewers: []` yields
-# nothing.
+# login trial-ticket credential-env. Minimal block parser for the flat
+# panel.yml schema; comment and blank lines are ignored, and an explicit
+# `reviewers: []` yields nothing. Pipe (not tab) is the delimiter so an empty
+# middle field (e.g. a seat with no credential-env) does not shift later fields.
 roster_records() {
     awk '
         /^[[:space:]]*#/        { next }
         /^reviewers:[[:space:]]*\[\][[:space:]]*$/ { exit }
         /^[[:space:]]*-[[:space:]]*name:/ {
-            if (have) print rec(); have=1; name=val($0); kind=st=ep=mo=lg=tt=""; next
+            if (have) print rec(); have=1; name=val($0); kind=st=ep=mo=lg=tt=ce=""; next
         }
-        /^[[:space:]]+kind:/          { kind=val($0) }
-        /^[[:space:]]+status:/        { st=val($0) }
-        /^[[:space:]]+endpoint:/      { ep=val($0) }
-        /^[[:space:]]+model:/         { mo=val($0) }
-        /^[[:space:]]+login:/         { lg=val($0) }
-        /^[[:space:]]+trial-ticket:/  { tt=val($0) }
+        /^[[:space:]]+kind:/           { kind=val($0) }
+        /^[[:space:]]+status:/         { st=val($0) }
+        /^[[:space:]]+endpoint:/       { ep=val($0) }
+        /^[[:space:]]+model:/          { mo=val($0) }
+        /^[[:space:]]+login:/          { lg=val($0) }
+        /^[[:space:]]+trial-ticket:/   { tt=val($0) }
+        /^[[:space:]]+credential-env:/ { ce=val($0) }
         END { if (have) print rec() }
         function val(line,  v) { sub(/^[^:]*:[[:space:]]*/, "", line); gsub(/^[[:space:]]+|[[:space:]]+$/, "", line); return line }
-        function rec() { return name"|"kind"|"st"|"ep"|"mo"|"lg"|"tt }
+        function rec() { return name"|"kind"|"st"|"ep"|"mo"|"lg"|"tt"|"ce }
     ' "$PANEL" 2>/dev/null
 }
 
@@ -79,7 +81,7 @@ case "$subcmd" in
     list)
         if panel_is_empty; then echo "no reviewers configured"; exit 0; fi
         printf '%-18s %-12s %-9s %s\n' NAME KIND STATUS TRIAL-TICKET
-        while IFS='|' read -r name kind st ep mo lg tt; do
+        while IFS='|' read -r name kind st ep mo lg tt ce; do
             printf '%-18s %-12s %-9s %s\n' "$name" "$kind" "${st:-advisory}" "$tt"
         done < <(roster_records)
         ;;
@@ -91,7 +93,7 @@ case "$subcmd" in
         [ -n "$branch" ] || { echo "error: could not resolve branch for MR #${pr}" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"; mkdir -p "$dest"
         ran=0
-        while IFS='|' read -r name kind st ep mo lg tt; do
+        while IFS='|' read -r name kind st ep mo lg tt ce; do
             case "$kind" in
                 forge-bot)
                     # Server-side reviewer, requested on demand — nothing
@@ -110,8 +112,13 @@ case "$subcmd" in
                 cli-agent|local-model)
                     # Per-seat fail-open: a seat that errors WARNs and the
                     # others proceed — one seat never blocks the verdict (0205).
+                    # Thread the credential-env NAME only when the seat sets it;
+                    # a local, unauthenticated endpoint carries no credential.
+                    cred_args=()
+                    [ -n "$ce" ] && cred_args=(--credential-env "$ce")
                     if "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
+                        ${cred_args[@]+"${cred_args[@]}"} \
                         >/dev/null 2>"${dest}/${name}.err"; then
                         echo "request: seat '${name}' ok → ${dest}/${name}.findings" >&2
                         ran=$((ran+1))
@@ -170,7 +177,7 @@ case "$subcmd" in
         [ -n "$pr" ] && [ -n "$seat" ] && [ -n "$verdict" ] || { echo "error: scorecard requires <pr> <seat> <verdict-summary>" >&2; exit 1; }
         # Resolve the seat's trial ticket from the roster.
         tt=""
-        while IFS='|' read -r n k s e m l t; do [ "$n" = "$seat" ] && tt="$t"; done < <(roster_records)
+        while IFS='|' read -r n k s e m l t ce; do [ "$n" = "$seat" ] && tt="$t"; done < <(roster_records)
         [ -n "$tt" ] || { echo "error: seat '${seat}' not in roster (no trial-ticket)" >&2; exit 1; }
         tid=$(sed -n 's#.*/\([0-9]\{4\}\)-.*#\1#p' <<<"$tt")
         # Fixed schema so 0205's integration review is evidence-based, not vibes.

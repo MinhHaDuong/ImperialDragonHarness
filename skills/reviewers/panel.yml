@@ -12,6 +12,10 @@
 #     # cli-agent / local-model seats also carry:
 #     endpoint:     OpenAI-compatible base URL (e.g. http://127.0.0.1:8012/v1)
 #     model:        model id passed to the seat-runner
+#     credential-env: (optional) name of the env var holding the endpoint's API
+#                   key — passed to the seat-runner as --credential-env and read
+#                   from the BASH_ENV-loaded env, NEVER written here. Omit for a
+#                   local, unauthenticated endpoint.
 #     # forge-bot seats also carry:
 #     login:        the bot's forge login, passed to the reviewer-request API
 #
@@ -22,14 +26,26 @@
 # The shipped roster below is inert until explicitly invoked: no seat fires
 # without `/reviewers request <pr>`. An empty roster (`reviewers: []`) makes
 # /reviewers a no-op entirely.
-# Example cli/model seat (commented; uncomment + adjust to enable):
+# Example cli/model seats (commented; uncomment + adjust to enable):
 #
+# A fully local, free, private llama-server seat — no credential:
 #   - name: local-qwen
 #     kind: local-model
 #     status: advisory
 #     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
 #     endpoint: http://127.0.0.1:8012/v1
 #     model: openai/qwen3.6-35b-a3b
+#
+# An OpenRouter-hosted frontier seat — the key loads via BASH_ENV, never here.
+# The seat-runner bridges the HTTPS endpoint end-to-end through its network
+# sandbox (--add-host + in-container 8443 bridge):
+#   - name: openrouter-frontier
+#     kind: cli-agent
+#     status: advisory
+#     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+#     endpoint: https://openrouter.ai/api/v1
+#     model: openai/gpt-4o-mini
+#     credential-env: OPENROUTER_API_KEY
 
 reviewers:
   - name: copilot
