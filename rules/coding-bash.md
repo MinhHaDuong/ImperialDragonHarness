@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-06-09 -->
+<!-- last-reviewed: 2026-07-14 -->
 # Coding Rules — Bash
 
 ## Arithmetic under `set -e`
@@ -59,3 +59,33 @@ every field is guaranteed non-empty or the empty field is last.
 - Every script starts with `set -euo pipefail` unless there is an explicit reason not to.
 - Functions that intentionally return non-zero use `return 0` explicitly or are called with `|| true` at the call site.
 - Pipe chains: if a failing middle stage is acceptable, isolate it: `result=$(cmd1 | cmd2) || true`.
+
+## BASH_ENV / hook scripts: test via a real subprocess, never source-in-shell
+
+A script that runs through `BASH_ENV` (or any PreToolUse/PostToolUse hook) is
+loaded by a *fresh* non-interactive `bash` on every subprocess. Its real
+behaviour — re-entry when the subprocess itself inherits `BASH_ENV`, ambient-env
+leakage across the `env -i` boundary, export-name collisions with the caller —
+appears only in that invocation path. A test that `source`s the script into the
+test's own shell is blind to all of it: three security defects (a `BASH_ENV`
+re-entry fork bomb, an ambient-env leak, a guard-name forgery) passed the
+source-in-shell unit suite and were caught only by runtime review (PRs
+#599/#604, 2026-07-14).
+
+Test such scripts by spawning a real, hermetic subprocess:
+
+```bash
+# WRONG — blind to re-entry, inheritance, and the export boundary
+source scripts/bash-env.sh
+[ "$SOME_VAR" = expected ] || exit 1
+
+# CORRECT — the real load path, hermetic base env
+out=$(env -i HOME="$tmphome" BASH_ENV="$PWD/scripts/bash-env.sh" \
+        bash -c 'printf %s "$SOME_VAR"')
+[ "$out" = expected ] || exit 1
+```
+
+`env -i` gives a known-empty base env (so an inherited variable can't mask a
+bug), `HOME=` points at a crafted fixture, and `BASH_ENV=` exercises the exact
+mechanism the caller triggers. Enforced by
+`tests/test_bash_env_tested_via_subprocess.sh`.
