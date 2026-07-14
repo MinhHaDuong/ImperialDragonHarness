@@ -102,14 +102,12 @@ PR_BRANCH=<resolved-branch-name>
 # Step 2 — Resolve the primary repo root, then create the worktree under its
 # guarded `.claude/worktrees/` namespace (ticket 0300 — /tmp is outside every
 # guard fast-path). `.claude/worktrees/review-*` is not whitelisted by name; it
-# is covered by the same worktree-identity check as every worktree (the
-# worktree-path guard has no review-* allowlist). An Edit/Write into a review
-# worktree is allowed when the acting process is physically inside that worktree;
-# otherwise it is denied like any main-repo path, save the guard's one general
-# escape hatch — a human-set `GUARD_ALLOW_PRIMARY_EDIT` allows any primary-subtree
-# edit, review-* included (the `projects/*/memory/*` exemption cannot match a
-# review-* path). 0300 moved review worktrees here from /tmp to bring them under
-# that check, not to add a path-pattern allowlist.
+# is covered by the same worktree-identity check as every worktree: an Edit/Write
+# is allowed when the acting process is physically inside that worktree, denied
+# otherwise — save the human-set `GUARD_ALLOW_PRIMARY_EDIT` escape hatch (the
+# `projects/*/memory/*` exemption cannot match a review-* path). 0300 moved
+# review worktrees here from /tmp for that coverage, not for a name allowlist;
+# exact semantics live in `scripts/pretooluse-worktree-path-guard.sh`.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 git fetch origin "$PR_BRANCH"
