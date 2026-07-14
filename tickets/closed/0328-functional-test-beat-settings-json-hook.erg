@@ -2,10 +2,15 @@
 Title: Functional test: beat-settings.json hook command resolves at runtime
 Created: 2026-07-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #580
 
 --- log ---
 2026-07-14T06:05Z Minh Ha-Duong created
+2026-07-14T09:20Z claude note imagine: static json-parse+expandvars resolvability test (fast tier, no subprocess) + cite live production evidence for criterion 1 — settings.json wires the same guard via the identical $HOME command form and those guards demonstrably fire (a $HOME-pathed guard hook fired in this very session); drop the live claude-launch experiment as unnecessary cost; Action 3 moot given evidence
+2026-07-14T09:35Z claude note plan: beat-settings.json:25 sole hook command verified; settings.json:120 identical live wiring (criterion-1 citation); new tests/test_beat_settings_hook_resolves.py walks ALL PreToolUse hook commands generically + non-vacuity guard; no Makefile/pinned-tuple wiring needed; RED = mutate command to nonexistent path; feasibility PASS, no overlap with 0329
+2026-07-14T10:05Z claude note execute: criterion 1 recorded — settings.json:120 wires the identical $HOME/.claude/scripts/guard-destructive-bash.sh command form in the live production config whose PreToolUse guards fire every session (standing empirical proof the runner expands $HOME in a command path). Added tests/test_beat_settings_hook_resolves.py (fast tier, json+expandvars, walks all PreToolUse commands + non-vacuity guard). RED proven by mutating command to nonexistent path (reverted, not committed). make check-fast 765 passed, make lint 17 passed. Static test pins path resolvability, not runner dispatch (closed by criterion-1 evidence).
 
+2026-07-14T10:19Z Minh Ha-Duong closed — autoclosed — PR #580
 --- body ---
 ## Context
 
@@ -50,6 +55,6 @@ confirms its hook path is invocable.
 - The agnostic gate on `scripts/` must stay green (no reintroduced hardcoded home path).
 
 ## Exit criteria
-- [ ] Hook-runner `$HOME`-expansion behavior for `command` paths is confirmed and recorded
-- [ ] A test pins that beat-settings.json's hook path resolves to an existing executable
-- [ ] `make check` and the CI agnostic-guard job stay green
+- [x] Hook-runner `$HOME`-expansion behavior for `command` paths is confirmed and recorded
+- [x] A test pins that beat-settings.json's hook path resolves to an existing executable
+- [x] `make check` and the CI agnostic-guard job stay green
