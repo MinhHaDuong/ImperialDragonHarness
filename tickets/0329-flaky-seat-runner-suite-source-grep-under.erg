@@ -1,0 +1,65 @@
+%erg 0.1
+Title: Flaky: seat-runner suite source-grep checks fail under parallel make check
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T07:05Z claude created
+
+--- body ---
+## Context
+
+Observed 2026-07-14 morning, raid 322/207 wrap-up: three `make check` runs on
+main (post PR #570/#575 merges) each failed
+`tests/test_bash_suites.py::test_shell_suite[test_seat_runner.sh]` with a
+DIFFERENT single source-inspection check missing its needle:
+
+- run 1 (~06:05, three concurrent `make check` + merge sync in flight):
+  `FAIL: network deny-by-default present (missing: --network=none)`
+- runs 2-3 (~06:11, ~06:24): `FAIL: relay bind-mounted into container
+  (missing: relay.sock)`
+
+In every failing run, neighboring checks grepping the SAME `$SRC` region
+passed (`--name`, `podman rm -f`, `SEAT_CODE_MOUNTS`), so file truncation and
+content regressions are ruled out. Both needles are present in
+`scripts/seat-runner.sh` on main. The suite passes 42/42 standalone, passes
+under the exact pytest wrapper solo, and a solo `make check` on the same
+commit exits 0 (818 passed). Cause not yet established — the failure is
+per-`grep -qF <<<"$SRC"` call, correlated with parallel load and/or
+concurrent git activity on the shared primary checkout.
+
+Note: this is NOT the printf|grep SIGPIPE flake — `assert_contains`/
+`assert_absent` already use here-strings (fixed in PR #575, 72659a1).
+
+## Relevant files
+- `tests/test_seat_runner.sh` — `assert_contains` (here-string helper, ~:28),
+  the failing needles at ~:44 (`--network=none`) and :56 (`relay.sock`);
+  `SRC="$(cat ...)"` load at the header
+- `tests/test_bash_suites.py` — the pytest wrapper (one subprocess, 120s)
+- `scripts/seat-runner.sh` — the grepped source (content verified present)
+
+## Actions
+1. Reproduce under load: loop the suite (or `make check`) with competing
+   CPU/xdist pressure; capture a failing run with `set -x` or by dumping
+   `${#SRC}` and the grep exit code on failure.
+2. Discriminate the two candidate causes: (a) here-string/temp-fd behavior
+   under load; (b) `cat` racing a concurrent git checkout/merge rewriting
+   `scripts/seat-runner.sh` in the shared primary checkout (suites resolve
+   `REPO_ROOT` from the test file's own path — under `make -C <primary>` that
+   is the shared checkout other sessions mutate).
+3. Fix per the isolated cause (e.g. snapshot `$SRC` with a length assertion
+   at load time and fail loud on short read; or run the suite from a
+   read-only copy).
+
+## Test
+- A failing-state reproduction (RED) before the fix; after the fix, N
+  consecutive loaded `make check` runs green.
+
+## Invariants
+- Suite must keep failing loud on genuine needle removal (no blanket retry
+  that would mask a real `--network=host` regression).
+
+## Exit criteria
+- [ ] Cause isolated with evidence (not just made-unreproducible)
+- [ ] Fix or mitigation landed; loaded `make check` stable across ≥5 runs
+- [ ] `make check` passes
