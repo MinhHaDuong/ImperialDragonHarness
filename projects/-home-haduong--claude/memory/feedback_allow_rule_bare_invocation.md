@@ -24,9 +24,9 @@ match an existing rule exactly.
 `settings.json` `permissions.allow` for a rule covering the capability, then
 invoke the command bare, spelled exactly as the rule spells it (keep `~` if
 the rule uses `~`). For cwd-dependent scripts run bare, either the script
-takes a path flag ([[0344|erg-pr-merge -C]]) or put the required branch under
-the checkout that the session cwd resolves to (primary-checkout dance:
-`git -C <primary> worktree remove <pr-worktree>` then `git -C <primary>
-checkout <branch>`; back up + reapply any dirty files around it). Side
+takes a path flag (erg-pr-merge -C, ticket 0344) or put the required branch
+under the checkout that the session cwd resolves to — the primary-checkout
+dance: `git -C PRIMARY worktree remove PR-WORKTREE`, then
+`git -C PRIMARY checkout BRANCH`; back up + reapply any dirty files. Side
 effect of a cwd outside any checkout: erg-pr-merge finds no `tickets/erg`
 and silently SKIPS the ticket close — follow with the chore-close recipe.

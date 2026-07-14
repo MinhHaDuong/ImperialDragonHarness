@@ -1,5 +1,5 @@
 %erg 0.1
-Title: erg-pr-merge: add -C <path> so the bare rule-matched invocation works from any cwd
+Title: erg-pr-merge: add a -C PATH flag so the bare rule-matched invocation works from any cwd
 Created: 2026-07-14
 Author: claude
 
@@ -35,8 +35,9 @@ PR required).
 1. Accept `-C <path>` as the first argument: `cd` there before anything
    else, die loudly if the path is missing or not a directory.
 2. Update SKILL.md: document -C, and state that the canonical agent
-   invocation is the bare `~/.claude/skills/merge/erg-pr-merge -C <pr-branch-
-   worktree> <N>` form, which matches the standing allow rule from any cwd.
+   invocation is the bare form
+   `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N`,
+   which matches the standing allow rule from any cwd.
 3. Keep backward compatibility: no -C means current behavior, byte-identical.
 
 ## Test
