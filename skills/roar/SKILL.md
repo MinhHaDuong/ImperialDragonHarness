@@ -123,7 +123,7 @@ branch — there are no remote branches nor merge requests to inspect.
     git fetch --prune origin
     ~/.claude/scripts/worktree-gc.sh
     ```
-    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to clean. See tickets 0169, 0195.
+    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to remove — but it also **reports (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer registered worktrees, so a `worktree-gc: husk …` line may appear without anything being cleaned. That output is informational; husks are already tracked by tickets 0325/0338 — do NOT re-file. See tickets 0169, 0195, 0325.
     Skip in a no-forge repo: without a remote, `[gone]` can never register —
     say so in one line.
 11. **Verify hygiene**:

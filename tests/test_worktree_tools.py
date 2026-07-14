@@ -317,6 +317,24 @@ def test_gc_reports_husk_when_run_from_linked_worktree(origin):
     assert "husk" in res.stdout
 
 
+@pytest.mark.integration
+def test_gc_does_not_report_registered_worktree_under_claude_worktrees(origin):
+    """A REGISTERED worktree living directly under .claude/worktrees/ (the real
+    harness layout) must NOT be flagged as a husk — it is in the registered set,
+    so the set-difference excludes it (ticket 0325)."""
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    wtdir.mkdir(parents=True)
+    wt = wtdir / "agent-live"
+    git(primary, "worktree", "add", "-b", "agent-live", str(wt))
+    git(wt, "push", "-u", "origin", "agent-live")  # live branch, not gone → kept
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
 # --------------------------------------------------------------------------- #
 # worktree-exit-preflight.sh — ticket 0174
 # --------------------------------------------------------------------------- #

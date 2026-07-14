@@ -17,6 +17,14 @@ removal breaks that session. 0325 Action 2 left an open design question:
 #602 (0325) recommended tracking that removal half as a follow-up rather than
 losing it.
 
+## Relevant files
+- `scripts/worktree-gc.sh` — holds the report-only husk scan from 0325; any
+  removal logic would extend the scan block near the `worktree-gc: husk …` line
+- `tests/test_worktree_tools.py` — `test_gc_reports_*_husk_*` cases; a removal
+  test belongs beside them
+- `tickets/0325-worktree-gc-detect-unregistered-husk-dir.erg` — parent ticket
+  that established report-only
+
 ## Actions
 1. Decide whether automatic husk removal is worth the risk at all — report-only
    may be the correct permanent answer (the 0325 red-team leaned that way).
@@ -30,6 +38,11 @@ losing it.
 ## Invariants
 - Never remove a husk that could be a live session's base cwd.
 - Report-only behavior from 0325 must remain the default.
+
+## Verification
+- [ ] Decision recorded (remove-with-heuristic vs report-only-forever)
+- [ ] If removal implemented: red-first test proves a fresh/live husk survives
+- [ ] `make check` passes
 
 ## Exit criteria
 - A documented decision (remove-with-heuristic vs report-only-forever), and if
