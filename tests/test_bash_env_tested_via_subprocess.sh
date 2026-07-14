@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Guard (ticket 0348): BASH_ENV/hook scripts must be tested via a real hermetic
+# Guard (ticket 0351): BASH_ENV/hook scripts must be tested via a real hermetic
 # subprocess, never sourced into the test's own shell.
 #
 # scripts/bash-env.sh is loaded by a FRESH non-interactive bash on every
