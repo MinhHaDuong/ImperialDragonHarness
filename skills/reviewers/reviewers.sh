@@ -20,6 +20,8 @@ SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../../scripts/seat-runner.sh}"
 FINDINGS_DIR="${REVIEWERS_FINDINGS_DIR:-${TMPDIR:-/tmp}/reviewers}"
 # The frozen benchmark board `audition` replays (ticket 0346). Overridable.
 BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
+# The erg binary used to append trial-ticket log lines. Overridable for tests.
+ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
 
 usage() {
     cat >&2 <<'EOF'
@@ -95,6 +97,19 @@ board_records() {  # $1 board file
         }
         function rec() { return pr"|"title"|"base"|"head"|"panel"|"defects }
     ' "$1" 2>/dev/null
+}
+
+# 4-digit ticket ID from a `.../NNNN-slug.erg` path; empty when unmatched.
+# One extractor for every trial-ticket consumer (scorecard, audition).
+_ticket_id_from_path() {  # path
+    basename "$1" | sed -n 's/^\([0-9]\{4\}\)-.*/\1/p'
+}
+
+# Extract one `key=value` field (value runs to the next `|`) from a
+# 0205-contract FINDING line. One decoder for harvest AND audition, so a
+# contract change cannot silently drift between the two subcommands.
+_contract_field() {  # key line
+    sed -n "s/.*${1}=\([^|]*\).*/\1/p" <<<"$2"
 }
 
 # Does candidate finding basename $1 + line $2 match any anchor in list $3?
@@ -214,8 +229,8 @@ case "$subcmd" in
             while IFS= read -r line; do
                 case "$line" in
                     FINDING\|*)
-                        sev=$(sed -n 's/.*severity=\([^|]*\).*/\1/p' <<<"$line")
-                        loc=$(sed -n 's/.*file=\([^|]*\).*/\1/p' <<<"$line")
+                        sev=$(_contract_field severity "$line")
+                        loc=$(_contract_field file "$line")
                         rat=$(sed -n 's/.*rationale=\(.*\)$/\1/p' <<<"$line")
                         if [ -n "$sev" ] && [ -n "$loc" ]; then
                             if [ "$sev" = "verifiable-or-consider" ] || [ "$loc" = "PATH:LINE" ] || [ "$rat" = "ONE SENTENCE" ]; then
@@ -247,10 +262,9 @@ case "$subcmd" in
         tt=""
         while IFS='|' read -r n k s e m l t ce; do [ "$n" = "$seat" ] && tt="$t"; done < <(roster_records)
         [ -n "$tt" ] || { echo "error: seat '${seat}' not in roster (no trial-ticket)" >&2; exit 1; }
-        tid=$(sed -n 's#.*/\([0-9]\{4\}\)-.*#\1#p' <<<"$tt")
+        tid=$(_ticket_id_from_path "$tt")
         # Fixed schema so 0205's integration review is evidence-based, not vibes.
         line="MR #${pr} seat=${seat} verdict: ${verdict}"
-        ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
         "$ERG" log "$tid" "claude note ${line}"
         ;;
 
@@ -306,7 +320,7 @@ case "$subcmd" in
             while IFS= read -r line; do
                 case "$line" in
                     FINDING\|*)
-                        loc=$(sed -n 's/.*file=\([^|]*\).*/\1/p' <<<"$line")
+                        loc=$(_contract_field file "$line")
                         [ -n "$loc" ] || continue
                         tot=$((tot + 1))
                         case "$(_audition_classify "$loc" "$panel" "$defects")" in
@@ -346,9 +360,8 @@ case "$subcmd" in
 
         # Append the scorecard to the candidate's trial ticket (erg verbs:
         # created/note/closed only — audition uses note). Promotion stays manual.
-        tid=$(basename "$trial" | grep -oE '^[0-9]{4}' || true)
+        tid=$(_ticket_id_from_path "$trial")
         [ -n "$tid" ] || { echo "error: audition: could not derive a ticket id from '${trial}' — scorecard not logged" >&2; exit 1; }
-        ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
         if ! "$ERG" log "$tid" "claude note ${card}" >/dev/null; then
             echo "error: audition: failed to log scorecard to trial ticket ${trial} (id ${tid})" >&2
             exit 1
