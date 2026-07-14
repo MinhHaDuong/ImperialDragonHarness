@@ -107,7 +107,7 @@ PR_BRANCH=<resolved-branch-name>
 # otherwise — save the human-set `GUARD_ALLOW_PRIMARY_EDIT` escape hatch (the
 # `projects/*/memory/*` exemption cannot match a review-* path). 0300 moved
 # review worktrees here from /tmp for that coverage, not for a name allowlist;
-# exact semantics live in `scripts/pretooluse-worktree-path-guard.sh`.
+# exact semantics live in `~/.claude/scripts/pretooluse-worktree-path-guard.sh`.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 git fetch origin "$PR_BRANCH"
