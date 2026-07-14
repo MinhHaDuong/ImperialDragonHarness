@@ -14,6 +14,8 @@ repo="${1:-.}"
 removed=0
 skipped_wip=0
 skipped_locked=0
+husks=0
+declare -a registered_paths=()
 
 path=""
 branch=""
@@ -60,7 +62,7 @@ flush() {
 
 while IFS= read -r line; do
     case "$line" in
-        "worktree "*) flush; path="${line#worktree }" ;;
+        "worktree "*) flush; path="${line#worktree }"; registered_paths+=("$path") ;;
         "branch refs/heads/"*)
             # A porcelain branch record is `branch refs/heads/<name>` and a
             # ref name carries no whitespace. Reject a multi-token remainder
@@ -80,8 +82,37 @@ while IFS= read -r line; do
 done < <(git -C "$repo" worktree list --porcelain)
 flush
 
-if [ "$removed" -eq 0 ] && [ "$skipped_wip" -eq 0 ] && [ "$skipped_locked" -eq 0 ]; then
+# Husk scan (ticket 0325): a directory under .claude/worktrees/ that is NOT a
+# registered git worktree is a "husk" — e.g. a session base cwd deregistered
+# mid-session, leaving only a scratch .claude/ subdir behind. git commands run
+# inside a husk resolve to the PRIMARY repo, so it is invisible to the porcelain
+# pass above and accumulates. Report-only, never removed: a husk may still be a
+# LIVE session's base cwd (the harness resets the shell cwd there after every
+# command), and deleting it would break that session. We only surface it.
+toplevel=$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null || true)
+wtdir="$toplevel/.claude/worktrees"
+if [ -n "$toplevel" ] && [ -d "$wtdir" ]; then
+    while IFS= read -r -d '' dir; do
+        rdir=$(realpath "$dir" 2>/dev/null || echo "$dir")
+        is_registered=0
+        for reg in "${registered_paths[@]:-}"; do
+            [ -z "$reg" ] && continue
+            rreg=$(realpath "$reg" 2>/dev/null || echo "$reg")
+            if [ "$rdir" = "$rreg" ]; then is_registered=1; break; fi
+        done
+        if [ "$is_registered" -eq 0 ]; then
+            echo "worktree-gc: husk $(basename "$dir") — unregistered dir at $dir, not GC'd (report-only)"
+            husks=$((husks + 1))
+        fi
+    done < <(find "$wtdir" -mindepth 1 -maxdepth 1 -type d -print0)
+fi
+
+if [ "$removed" -eq 0 ] && [ "$skipped_wip" -eq 0 ] && [ "$skipped_locked" -eq 0 ] && [ "$husks" -eq 0 ]; then
     exit 0   # nothing to GC — stay silent
 fi
-echo "worktree-gc: removed $removed, skipped $skipped_wip with WIP, $skipped_locked locked."
+summary="worktree-gc: removed $removed, skipped $skipped_wip with WIP, $skipped_locked locked."
+if [ "$husks" -gt 0 ]; then
+    summary="$summary $husks husk(s) reported (not removed)."
+fi
+echo "$summary"
 exit 0

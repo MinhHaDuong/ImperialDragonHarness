@@ -283,6 +283,22 @@ def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
     assert str(wt) in _worktree_paths(primary)
 
 
+@pytest.mark.integration
+def test_gc_reports_unregistered_husk_dir(origin):
+    """A husk dir under .claude/worktrees/ that is NOT a registered worktree
+    (a deregistered session base cwd, only a scratch .claude/ left behind) must
+    be reported — report-only, never removed, since it may be a live session's
+    base cwd (ticket 0325)."""
+    _, primary = origin
+    husk = primary / ".claude" / "worktrees" / "husk-agent-dead"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk-agent-dead" in res.stdout
+    assert "husk" in res.stdout
+
+
 # --------------------------------------------------------------------------- #
 # worktree-exit-preflight.sh — ticket 0174
 # --------------------------------------------------------------------------- #
