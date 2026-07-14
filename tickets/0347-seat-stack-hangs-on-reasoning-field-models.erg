@@ -22,8 +22,9 @@ tolerates. Hypothesis: the seat's pinned aider/litellm venv mishandles
 reasoning-model responses via the `openai/` route — hangs waiting for
 content it never surfaces.
 
-This blocks auditioning reasoning-emitting candidates — half the
-OpenRouter leaderboard 0346's audition board wants to scan.
+This blocks auditioning reasoning-emitting candidates, which make up
+roughly half of the OpenRouter leaderboard that ticket 0346's audition
+board is designed to scan.
 
 ## Relevant files
 
@@ -34,9 +35,9 @@ OpenRouter leaderboard 0346's audition board wants to scan.
 
 ## Actions
 
-1. Reproduce outside the sandbox: aider --ask against OpenRouter
-   glm-5.2 via the openai/ route; capture where it hangs (litellm
-   streaming? response parse?).
+1. Reproduce outside the sandbox: `aider --ask` against OpenRouter
+   `z-ai/glm-5.2` via the `openai/` route; capture where it hangs
+   (litellm streaming? response parse?).
 2. Fix smallest-first: litellm/aider upgrade, or a per-model extra-body
    param suppressing the reasoning field, or a response-shim in the seat.
 3. Canary: a cheap seat self-test invocation against a reasoning-model
@@ -45,7 +46,8 @@ OpenRouter leaderboard 0346's audition board wants to scan.
 
 ## Exit criteria
 
-- [ ] glm-5.2 and kimi-k2.7-code complete a seat review (or the stack
-      fails LOUD with a diagnostic, not a silent timeout)
+- [ ] `z-ai/glm-5.2` and `moonshotai/kimi-k2.7-code` complete a seat
+      review (or the stack fails LOUD with a diagnostic, not a silent
+      timeout)
 - [ ] Canary test pins the reasoning-response shape
 - [ ] `make check` passes
