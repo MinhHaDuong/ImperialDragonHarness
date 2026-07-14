@@ -77,6 +77,8 @@ Assign it when you author the report table — a labeling convention, like the
 
 ## 4. Open tickets
 
+Tooling repos: apply the severity floor (rules/workflow.md § Autonomous Action Rules) — findings that don't block a merge, corrupt state, or bite a science project are reported in the run summary, not ticketed.
+
 For each approved pattern, create a ticket via `tickets/erg new "<title>"`:
 
 - **Title**: `skill-doctor: {signature} — {one-line fix summary}`
