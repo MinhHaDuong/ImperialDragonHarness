@@ -123,7 +123,13 @@ _contract_field() {  # key line
 # decodes the pipe-delimited FINDING contract; this one decodes the
 # space-delimited trial-log cards that `scores` reads back (ticket 0348).
 _card_field() {  # key line
-    sed -n "s/.*${1}=\([^ ]*\).*/\1/p" <<<"$2"
+    # First-match, no subprocess: strip up to (and including) the first `key=`,
+    # then take the value up to the next space. A greedy sed `.*key=` would bind
+    # the LAST occurrence and, if a value repeats the key, silently pick the
+    # wrong one — the scorecard parser is likewise first-match (0348 review).
+    local rest="${2#*"$1"=}"
+    [ "$rest" = "$2" ] && return 0   # key absent → empty
+    printf '%s' "${rest%% *}"
 }
 
 # Does candidate finding basename $1 + line $2 match any anchor in list $3?
