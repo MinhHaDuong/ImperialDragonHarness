@@ -7,6 +7,8 @@ Author: Minh Ha-Duong
 2026-07-14T10:44Z Minh Ha-Duong created
 2026-07-14T10:44Z Minh Ha-Duong note scoped AEDIST live-secret migration out to destination repo (cross-repo ops rule); harness ticket closes on the wiring mechanism
 
+2026-07-14T11:06Z Minh Ha-Duong note scoping caveat: KEYS is read from the untrusted project .env with no allowlist; a hostile .env can self-declare any provider name to load that secret. Name validation and never-source-.env still hold, so no arbitrary path and no code execution. This is cooperative default-deny scoping, not access control against a hostile project .env.
+2026-07-14T11:06Z Minh Ha-Duong note bump verify-reroll — round 1: IFS/temp export leak (verifiable) + least-privilege claim scoping caveat
 --- body ---
 ## Context
 `scripts/bash-env.sh` sources the user's `~/.claude/.env` (trusted) and strict-parses

@@ -26,16 +26,25 @@
 # a missing or malformed .env — bad lines in the project file are skipped, never
 # fatal.
 #
-# Least-privilege provider secrets (KEYS=). A project declares which credential
-# providers it needs by setting KEYS=<name,name,...> in its project .env (parsed
-# by the untrusted strict-parse above, so KEYS itself is a plain value). For each
+# Provider-secret scoping (KEYS=). A project declares which credential providers
+# it needs by setting KEYS=<name,name,...> in its project .env (parsed by the
+# untrusted strict-parse above, so KEYS itself is a plain value). For each
 # declared, VALIDATED provider <name>, and ONLY those, this script sources the
-# user-owned $HOME/.config/keys/<name>.env. Default-deny: no KEYS line means no
-# provider secrets are loaded. Provider names must match ^[a-z0-9-]+$ — anything
-# else (path traversal like ../../x, a slash, uppercase, empty) is ignored with a
-# warning, so KEYS can never source an arbitrary path. The per-provider files are
-# user-owned and TRUSTED, so they are sourced as shell code (contrast the
-# untrusted project .env). A missing provider file warns but is non-fatal.
+# user-owned $HOME/.config/keys/<name>.env. Default-deny: no KEYS line loads no
+# provider secrets. Provider names must match ^[a-z0-9-]+$ — anything else (path
+# traversal like ../../x, a slash, uppercase, empty) is ignored with a warning.
+# The per-provider files are user-owned and TRUSTED, so they are sourced as shell
+# code (contrast the untrusted project .env). A missing provider file warns but is
+# non-fatal.
+#
+# Guarantee and its limit. Two properties hold even against a hostile project
+# .env: it never sources a path outside ~/.config/keys/ (name validation), and it
+# never executes the project .env (strict-parsed, never sourced) — so a hostile
+# .env can neither run code nor exfiltrate a secret through the .env itself. But
+# the provider SET is self-declared by that untrusted file, which can name any
+# provider to load its secret into the environment. This is cooperative scoping
+# that shrinks default secret exposure, NOT access control against a hostile
+# project .env.
 
 # --- trusted user-level .env: source as before (full expansion) ---
 set -a  # mark all subsequent assignments for export
@@ -104,7 +113,6 @@ if [ -n "${KEYS:-}" ]; then
         *)   _be_had_noglob=0 ;;
     esac
     set -f
-    set -a  # export vars assigned by the sourced (trusted) provider files
     _be_ifs="$IFS"
     IFS=','
     for _be_prov in ${KEYS}; do
@@ -121,14 +129,19 @@ if [ -n "${KEYS:-}" ]; then
         fi
         _be_keyfile="$HOME/.config/keys/$_be_prov.env"
         if [ -f "$_be_keyfile" ]; then
+            # Enable allexport ONLY around the source, so exactly the variables
+            # the trusted provider file assigns get exported — the loop
+            # bookkeeping (IFS, the _be_* temporaries) is assigned outside
+            # allexport and stays unexported.
+            set -a
             source "$_be_keyfile"
+            set +a
         else
             printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
         fi
         IFS=','
     done
     IFS="$_be_ifs"
-    set +a
     [ "$_be_had_noglob" = 1 ] || set +f
     unset _be_ifs _be_prov _be_keyfile _be_had_noglob
 fi

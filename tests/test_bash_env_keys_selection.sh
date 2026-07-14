@@ -49,6 +49,37 @@ _load_rc() {
     echo $?
 }
 
+# Load bash-env.sh as above and print `export -p` (the exported environment) so a
+# caller can assert whether a variable is or is not marked for export.
+_load_exports() {
+    local home="$1" projdir="$2"
+    HOME="$home" bash -c '
+        cd "$1" || exit 1
+        source "$2"
+        export -p
+    ' _ "$projdir" "$SCRIPT" 2>/dev/null
+}
+
+_assert_contains() {
+    local label="$1" hay="$2" needle="$3"
+    if [[ "$hay" == *"$needle"* ]]; then
+        echo "PASS: $label"
+    else
+        echo "FAIL: $label — [$needle] not found"
+        fail=1
+    fi
+}
+
+_assert_not_contains() {
+    local label="$1" hay="$2" needle="$3"
+    if [[ "$hay" != *"$needle"* ]]; then
+        echo "PASS: $label"
+    else
+        echo "FAIL: $label — [$needle] unexpectedly present"
+        fail=1
+    fi
+}
+
 _assert_eq() {
     local label="$1" got="$2" want="$3"
     if [[ "$got" == "$want" ]]; then
@@ -122,5 +153,38 @@ _assert_eq "(5) nonexistent provider: shell survives (rc 0)" \
     "$(_load_rc "$FHOME" "$P5")" "0"
 _assert_eq "(5) nonexistent provider: nothing loaded" \
     "$(_load_var "$FHOME" "$P5" FAKE_OPENROUTER)" ""
+
+# --- (6) export hygiene: provider vars export; IFS and _be_* temporaries do NOT --
+# Enabling allexport only around each `source` must export exactly what the
+# provider file assigns. IFS and the loop-bookkeeping temporaries are assigned
+# outside allexport, so they must never leak into the child environment.
+P6="$(_mkproj p6 'KEYS=openrouter
+')"
+P6_EXPORTS="$(_load_exports "$FHOME" "$P6")"
+_assert_contains "(6) provider var IS exported (FAKE_OPENROUTER)" \
+    "$P6_EXPORTS" "FAKE_OPENROUTER"
+_assert_not_contains "(6) IFS is NOT exported" \
+    "$P6_EXPORTS" "declare -x IFS"
+_assert_not_contains "(6) no _be_ temporary is exported" \
+    "$P6_EXPORTS" "declare -x _be_"
+
+# --- (7) glob-safety: KEYS=* stays literal, is rejected, sources nothing ---------
+# A decoy file next to the project must not tempt the '*' to expand: set -f keeps
+# it literal, validation rejects it, and nothing is sourced.
+P7="$(_mkproj p7 'KEYS=*
+')"
+touch "$P7/decoy.env"
+_assert_eq "(7) glob KEYS=*: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P7")" "0"
+_assert_eq "(7) glob KEYS=*: nothing sourced" \
+    "$(_load_var "$FHOME" "$P7" FAKE_OPENROUTER)" ""
+
+# --- (8) uppercase provider names are rejected by ^[a-z0-9-]+$ -------------------
+P8="$(_mkproj p8 'KEYS=OpenRouter
+')"
+_assert_eq "(8) uppercase name: shell survives (rc 0)" \
+    "$(_load_rc "$FHOME" "$P8")" "0"
+_assert_eq "(8) uppercase name: nothing loaded" \
+    "$(_load_var "$FHOME" "$P8" FAKE_OPENROUTER)" ""
 
 exit "$fail"
