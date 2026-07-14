@@ -427,22 +427,22 @@ case "$subcmd" in
                     printf "$fmt" audition "$name" "${board:--}" - - "$find" "$dup" "$uv" "$uh" "${ov:--}" "${lat:--}" "${cost:--}"
                     ;;
                 *"MR "*"seat="*"verdict:"*)
-                    # Parse the FIRST occurrence of each field via parameter
-                    # expansion (first-match). A greedy sed `.*<digit> verifiable`
-                    # grabs the LAST digit+keyword, so freeform verdict prose
-                    # ("flagged 3 as verifiable") silently poisons the count — the
-                    # count feeds 0205's promote/drop decision, so a wrong number
-                    # is a wrong decision (ticket 0348 review).
+                    # Extract the counts as one anchored `N verifiable, M consider`
+                    # unit — the exact shape `scorecard` writes. A first- OR
+                    # last-occurrence parse of a lone "N verifiable" is poisoned by
+                    # freeform verdict prose on either side ("5 verifiable issues …
+                    # — 1 verifiable, 2 consider"); the comma-joined pair almost
+                    # never occurs except as the real tally. The count feeds 0205's
+                    # promote/drop decision, so a wrong number is a wrong decision
+                    # (ticket 0348 review, rounds 1–2).
                     seat="${line#*seat=}"; seat="${seat%% *}"
                     mr="${line#*MR }";     mr="${mr%% *}"
-                    if [[ "$line" != *" verifiable"* || "$line" != *" consider"* ]]; then
+                    tally=$(grep -oE '[0-9]+ verifiable, [0-9]+ consider' <<<"$line" | head -1 || true)
+                    if [ -z "$seat" ] || [ -z "$tally" ]; then
                         echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
                     fi
-                    verif="${line%% verifiable*}"; verif="${verif##* }"
-                    cons="${line%% consider*}";    cons="${cons##* }"
-                    if [ -z "$seat" ] || [[ ! "$verif" =~ ^[0-9]+$ ]] || [[ ! "$cons" =~ ^[0-9]+$ ]]; then
-                        echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
-                    fi
+                    verif="${tally%% *}"                 # "N verifiable, M consider" → N
+                    cons="${tally##*, }"; cons="${cons%% *}"   # → M
                     [ -n "$filter" ] && [ "$filter" != "$seat" ] && continue
                     # shellcheck disable=SC2059
                     printf "$fmt" scorecard "$seat" "${mr:--}" "$verif" "$cons" - - - - - - -
@@ -451,11 +451,18 @@ case "$subcmd" in
             # Scan only each ticket's `--- log ---` section, where scorecard/
             # audition append their cards — NOT the body, where a ticket may
             # quote the card schema as documentation (this very ticket does).
-            # Body scanning would spam WARNs and, on a complete quoted example,
-            # fabricate a phantom table row (ticket 0348 review).
+            # The scan latches: it starts at the FIRST `--- log ---`, stops at the
+            # section boundary that follows, and never re-enters — so a body line
+            # quoting `--- log ---` (the %erg template shows one) cannot fabricate
+            # a phantom row or spam WARNs (ticket 0348 review, rounds 1–2).
         done < <(
             find "$tickets_dir" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
-                awk '/^--- log ---/{inlog=1; next} /^--- /{inlog=0} inlog' "$f"
+                awk '
+                    done_log        { next }
+                    !inlog && /^--- log ---/ { inlog=1; next }
+                    inlog && /^--- /         { inlog=0; done_log=1; next }
+                    inlog
+                ' "$f" 2>/dev/null
             done | grep -E 'audition candidate=|MR .*seat=.*verdict:' || true
         )
         ;;

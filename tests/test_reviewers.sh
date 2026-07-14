@@ -286,6 +286,7 @@ Closed: 2026-07-13
 2026-07-13T19:43Z claude note MR ImperialDragonHarness#537 seat=copilot verdict: PASS — 0 verifiable, 1 consider (memory consolidation)
 2026-07-13T19:43Z claude note MR ImperialDragonHarness#559 seat=copilot verdict: PASS — 0 verifiable, 0 consider (accurate summary)
 2026-07-13T19:44Z claude note MR ImperialDragonHarness#560 seat=copilot verdict: PASS — 1 verifiable, 2 consider (rejected 9 verifiable-looking; noted 7 consider-style nits in prose)
+2026-07-13T19:45Z claude note MR ImperialDragonHarness#561 seat=copilot verdict: rejected 8 verifiable, all bogus — true 4 verifiable, 6 consider (final)
 
 --- body ---
 ## Context
@@ -293,6 +294,11 @@ A ticket body may quote the card schema as documentation, e.g.
 audition candidate=doc-example model=x board=99MR findings=1 duplicate=1 unique-verified=1 unique-hallucinated=1 overlap=100% latency=1.0s cost=n/a
 and MR #0 seat=doc-example verdict: PASS — 5 verifiable, 5 consider (illustration).
 These body lines MUST NOT appear in the table (ticket 0348: scan log only).
+
+## Format example
+A trial ticket's log section is delimited like this:
+--- log ---
+2026-01-01T00:00Z claude note MR phantom#1 seat=ghost verdict: PASS — 9 verifiable, 9 consider (body re-entry decoy — must be ignored)
 ERG
 
 scores_out=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>/dev/null)
@@ -314,12 +320,32 @@ else
     echo "PASS: scores: freeform verdict prose did not poison the count"; PASS=$((PASS+1))
 fi
 
+# Poison-BEFORE guard: freeform prose carrying "<digit> verifiable" BEFORE the
+# real tally must not poison the count either — the counts come from the anchored
+# "N verifiable, M consider" unit (0348 review round 2). True tally is 4/6.
+poison2_row=$(printf '%s\n' "$scores_out" | grep 'ImperialDragonHarness#561')
+assert_contains "scores: count anchored to the real tally, not leading prose" \
+    " 4     6 " "$poison2_row"
+if [[ "$poison2_row" == *" 8 "* ]]; then
+    echo "FAIL: scores: leading verdict prose poisoned the count"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: leading verdict prose did not poison the count"; PASS=$((PASS+1))
+fi
+
 # Log-section-only guard: cards quoted in a ticket BODY are documentation, not
 # real trial results — they must never surface as table rows (0348 review).
 if [[ "$scores_out" == *"doc-example"* ]]; then
     echo "FAIL: scores: a body-quoted card leaked into the table"; FAIL=$((FAIL+1))
 else
     echo "PASS: scores: body-quoted cards excluded (log section only)"; PASS=$((PASS+1))
+fi
+
+# Body re-entry guard: a body line quoting "--- log ---" must NOT re-open the
+# scan — the phantom#1/ghost card sits after the real body boundary (0348 r2).
+if [[ "$scores_out" == *"ghost"* || "$scores_out" == *"phantom"* ]]; then
+    echo "FAIL: scores: body-quoted '--- log ---' re-opened the scan (phantom row)"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: body-quoted '--- log ---' did not re-open the scan"; PASS=$((PASS+1))
 fi
 
 # Filter to one name → only that seat/candidate; the other kind is excluded.

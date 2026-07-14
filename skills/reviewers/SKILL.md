@@ -1,6 +1,6 @@
 ---
 name: reviewers
-description: Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats.
+description: Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
@@ -69,17 +69,19 @@ MR #42 seat=local-qwen verdict: PASS — 0 verifiable, 2 consider
 
 ### `/reviewers scores [seat-or-candidate]`
 
-Read back the trial cards — `scorecard` lines and `audition` blocks — that the
+Read back the trial cards (`scorecard` lines and `audition` blocks) that the
 two commands above append to trial tickets, as one sortable comparison table.
 The read surface for 0205's integration review ("trial scorecards reviewed;
 promote/drop decided"): comparing candidates no longer means opening ticket
 files and eyeballing log lines.
 
-The search is **corpus-wide** and **read-only**: it greps every trial ticket
-under `tickets/` (recursing into `tickets/closed/`, so a retired seat's archived
-ticket is still read), and never edits a roster or writes an `erg log` line. A
-scorecard/audition card outlives its ticket's move to `closed/` because both
-resolve the ticket by its 4-digit ID, not by the roster path.
+The search is **corpus-wide** and **read-only**: it greps every trial ticket's
+log section under `tickets/`, recursing into `tickets/closed/`, so a retired
+seat's archived cards are still read. It never edits a roster or writes an
+`erg log` line. (This corpus-wide reach is `scores`-only: `scorecard` *writes*
+via `erg log <ID>`, which resolves IDs among *open* tickets only — logging a new
+card to an archived trial ticket fails "no ticket found". `scores` reads by
+grep, so it is not bound by that.)
 
 ```
 KIND      NAME                 MR/BOARD                   VERIF  CONS  FIND  DUP  UVER  UHAL  OVERLAP   LATENCY     COST
