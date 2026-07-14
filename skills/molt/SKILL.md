@@ -68,13 +68,31 @@ Run full repo housekeeping and act on every finding.
    - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
 
-1.5. **No worktree GC here.** molt runs mid-day, often from roar or beat while
-   sibling sessions are live; it touches nothing outside its own worktree and
-   branch. Worktree GC (`worktree-gc.sh`) runs only at `/lair`, the end-of-day
-   wrap-up. A GC from this step removed live session-base worktrees on
-   2026-07-13: a merged-and-pruned branch reads `[gone]` even while sessions
-   still sit in the tree, and the removal strands them in unregistered husk
-   dirs where git silently resolves to the primary checkout.
+1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of
+   dead trees, never an active session's. Remove any registered worktree on an
+   upstream-gone branch — regardless of path or name, including ones outside
+   `.claude/worktrees/` (intact dirs that `git worktree prune` misses):
+   ```bash
+   ~/.claude/scripts/worktree-gc.sh
+   ```
+   The script enforces the active-session rails itself (ticket 0355 — on
+   2026-07-13 a rail-less GC removed two live sessions' base worktrees, whose
+   merged-and-pruned branches read `[gone]` while sessions still sat in them):
+   it skips any worktree that is a live process's cwd, any locked worktree
+   (lock = in use, mirroring step 0's marker — never unlock-and-remove), any
+   tree with uncommitted changes, and the one it runs from. It never `rm -rf`s
+   and stays silent when there is nothing to report — but it also **reports
+   (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
+   registered worktrees (a session base cwd deregistered mid-session), so a
+   `worktree-gc: husk …` line breaks the silence without anything being
+   cleaned. That output is informational; husks are already tracked by tickets
+   0325/0338 — do NOT re-file. See tickets 0169, 0195, 0325. **A worktree the
+   GC skips for uncommitted changes is a signal, not just an obstacle:** diff
+   it before moving on — orphaned WIP may be a closed ticket's dropped
+   exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**`
+   line unconditionally; 2026-06-16 ticket 0609's mandated test sat
+   uncommitted after PR #1111 closed it with only the data fix). If so,
+   preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git

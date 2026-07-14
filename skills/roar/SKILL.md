@@ -124,9 +124,10 @@ default branch — there are no remote branches nor merge requests to inspect.
       default branch; there are no remote branches nor merge requests.
 11. **Offer** to improve workflow rules if lessons were learned.
 
-Note: STATE.md is updated on main during `/lair`, not here. Worktree GC also
-belongs to `/lair`, not here: roar touches nothing outside its own worktree.
-A mid-day GC from roar removed worktrees that were live session base cwds
-(2026-07-13 — a merged-and-pruned branch reads `[gone]` even while sessions
+Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
+belongs to housekeeping (`/molt`), not here: roar exits and disposes of its
+OWN merged worktree (step 9) and touches nothing outside it. A repo-wide GC
+from roar removed worktrees that were live session base cwds (2026-07-13,
+ticket 0355 — a merged-and-pruned branch reads `[gone]` even while sessions
 still sit in the tree), stranding those sessions in unregistered husk dirs
 where git silently resolves to the primary checkout.
