@@ -912,5 +912,55 @@ else
     echo "PASS: source ratchet — no branch --show-current, no ls-tree|grep presence check remains"
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 29: -C PATH flag (ticket 0344). The standing allow rule
+# `Bash(~/.claude/skills/merge/erg-pr-merge:*)` prefix-matches only the BARE
+# invocation; a `cd X && …` prefix falls through to the stochastic auto-mode
+# classifier. -C lets the bare form target an arbitrary checkout from any cwd.
+# Invoked from $WORK (deliberately NOT a git repo): without -C the script dies
+# at the branch check ("must run from PR branch"); with `-C <repo>` it cds in
+# before any git/gh/erg call and closes the ticket. Companion assertions pin the
+# loud-failure contract: -C with no path, and -C with a non-directory path.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo cflag 0344
+BODY29=$'Summary.\n\n**Ticket:** tickets/0344-fixture.erg\n'
+run_C() {  # args passed verbatim to the script; cwd is $WORK (not a git repo)
+    ( cd "$WORK"
+      PATH="$STUBDIR:$PATH" \
+      ERG="$ERG_LOCAL" \
+      STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
+      STUB_BODY="$BODY29" STUB_TITLE="ticket(0344): cflag" \
+      STUB_AUTO_FAILS=0 \
+      STUB_STATE=MERGED \
+      ERG_PR_MERGE_SYNC=/bin/true \
+      ERG_PR_MERGE_MERGED_POLL_TRIES=2 \
+      ERG_PR_MERGE_POLL_INTERVAL=0 \
+      REAL_GIT="$REAL_GIT" \
+      bash "$SCRIPT" "$@" )
+}
+c_miss=0
+# (a) happy path: -C <repo> from a non-repo cwd closes the ticket
+if run_C -C "$REPO" 42 >/dev/null 2>&1; then
+    closed_has 0344 || { echo "  -C did not close 0344 from a non-repo cwd"; c_miss=1; }
+else
+    echo "  -C <repo> from a non-repo cwd exited non-zero (RED = pre-fix)"; c_miss=1
+fi
+# (b) -C with no PATH argument -> loud failure naming the requirement
+if run_C -C >/dev/null 2>&1; then
+    echo "  -C with no path should have failed"; c_miss=1
+else
+    out29b=$(run_C -C 2>&1 || true)
+    echo "$out29b" | grep -qi 'requires a PATH' || { echo "  -C no-path die lacks 'requires a PATH'"; c_miss=1; }
+fi
+# (c) -C with a non-directory path -> loud failure
+if run_C -C /nonexistent-dir-xyz 42 >/dev/null 2>&1; then
+    echo "  -C nonexistent path should have failed"; c_miss=1
+else
+    out29c=$(run_C -C /nonexistent-dir-xyz 42 2>&1 || true)
+    echo "$out29c" | grep -qi 'is not a directory' || { echo "  -C bad-path die lacks 'is not a directory'"; c_miss=1; }
+fi
+if (( c_miss )); then echo "FAIL: -C PATH flag contract not met"; fail=1
+else echo "PASS: -C PATH cds into the target checkout from any cwd; loud on missing/bad path"; fi
+
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"
