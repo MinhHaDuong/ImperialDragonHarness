@@ -44,8 +44,8 @@
 #     status: advisory
 #     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
 #     endpoint: https://openrouter.ai/api/v1
-#     model: openai/gpt-4o-mini
-#     credential-env: OPENROUTER_API_KEY
+#     model: openai/gpt-5.6-terra
+#     credential-env: OPENROUTER_API_KEY_IDH
 
 reviewers:
   - name: copilot
