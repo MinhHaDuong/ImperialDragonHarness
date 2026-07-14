@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-07-14T17:55Z claude created
+2026-07-14T20:08Z claude note reimagined+planned by raid — fix at seat-runner layer, aider venv unpinnable from repo
 
 --- body ---
 ## Context
@@ -23,8 +24,8 @@ reasoning-model responses via the `openai/` route — hangs waiting for
 content it never surfaces.
 
 This blocks auditioning reasoning-emitting candidates, which make up
-roughly half of the OpenRouter leaderboard that ticket 0346's audition
-board is designed to scan.
+roughly half of the models on the OpenRouter leaderboard that ticket
+0346's audition board scans.
 
 ## Relevant files
 
@@ -35,14 +36,28 @@ board is designed to scan.
 
 ## Actions
 
-1. Reproduce outside the sandbox: `aider --ask` against OpenRouter
-   `z-ai/glm-5.2` via the `openai/` route; capture where it hangs
-   (litellm streaming? response parse?).
-2. Fix smallest-first: litellm/aider upgrade, or a per-model extra-body
-   param suppressing the reasoning field, or a response-shim in the seat.
-3. Canary: a cheap seat self-test invocation against a reasoning-model
-   stub so the incompatibility class is caught before an audition burns
-   wall-clock.
+The aider/litellm venv is a host-level uv-tool install, unpinnable from
+this repo, so the durable fix lives in `scripts/seat-runner.sh`.
+
+1. Reasoning-shape pre-flight probe (the core fix). In `seat-runner.sh`,
+   right after the `--health-path` probe and only when `--credential-env`
+   is set, POST a one-token chat completion (`max_tokens=1`, the target
+   `$MODEL` with any litellm `openai/` route prefix stripped) to
+   `${ENDPOINT}/chat/completions` and inspect it. If the response carries a
+   non-empty `reasoning` / `reasoning_content` field, exit non-zero with a
+   diagnostic naming the hang class — BEFORE any container launch. The key
+   goes in a mode-600 `curl -K` config file under `$WORK` (never argv); the
+   response body is parsed in-memory, never written to a scrub-skipped file.
+   A probe that cannot connect or parse WARNs and falls through — a working
+   model is never blocked on a flaky probe.
+2. aider `--timeout` backstop. Pass `--timeout "${AIDER_API_TIMEOUT:-120}"`
+   to the seat's aider invocation so any future silent hang becomes a
+   litellm exception on stderr that the existing failure tail surfaces,
+   not a SEAT_TIMEOUT SIGKILL with empty stderr.
+3. Hermetic tests in `tests/test_seat_runner.sh`: a RED case (a canned
+   reasoning-shaped body must fail loud before podman is reached) and a
+   negative-space case (an ordinary body must reach podman run) so the
+   probe neither misses the class nor false-blocks every model.
 
 ## Exit criteria
 

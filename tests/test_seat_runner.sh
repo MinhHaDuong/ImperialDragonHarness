@@ -379,6 +379,90 @@ else
     echo "SKIP: python3/git/aider absent — credential-scrub exfiltration test"
 fi
 
+# ── tier 2a⁶: reasoning-shape pre-flight probe (ticket 0347) ─────────────────
+# z-ai/glm-5.2 and moonshotai/kimi-k2.7-code return a `reasoning` field alongside
+# `content`; the seat's pinned aider/litellm venv hangs on that shape and the
+# outer SEAT_TIMEOUT SIGKILL leaves EMPTY stderr — a silent timeout. seat-runner
+# must probe the endpoint host-side (max_tokens=1) BEFORE any container launch and
+# fail LOUD when the response carries a non-empty reasoning field. Both cases stub
+# curl (the probe endpoint) and podman; --health-path "" skips the health probe so
+# every curl call here is the reasoning probe. --credential-env activates the probe
+# (it only runs when a real credential is injected). A throwaway repo supplies the
+# non-empty diff the review path needs on the negative (non-blocking) case.
+if command -v python3 >/dev/null && command -v git >/dev/null && command -v aider >/dev/null; then
+    RSN_REPO="$WORK/rsnrepo"; mkdir -p "$RSN_REPO"
+    (
+        cd "$RSN_REPO"
+        git init -q -b main
+        git config user.email t@t; git config user.name t
+        printf 'line one\n' > f.txt
+        git add f.txt; git commit -qm base
+        git checkout -q -b feature
+        printf 'line one\nline two\n' > f.txt
+        git commit -qam change
+    )
+
+    # RED case: curl returns a reasoning-shaped completion body; the podman stub
+    # screams if `run` is reached. seat-runner must exit non-zero with the hang-
+    # class diagnostic and must NOT have reached any podman run.
+    RSNBIN="$WORK/rsnbin"; mkdir -p "$RSNBIN"
+    cat > "$RSNBIN/curl" <<'STUB'
+#!/usr/bin/env bash
+# The reasoning-shape probe endpoint: a non-empty `reasoning` field beside content.
+printf '{"choices":[{"message":{"content":"ok","reasoning":"let me think about it"}}]}'
+exit 0
+STUB
+    chmod +x "$RSNBIN/curl"
+    cat > "$RSNBIN/podman" <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+    run) echo "GUARD-BYPASS: podman run reached" >&2; exit 99 ;;
+    *)   exit 0 ;;
+esac
+STUB
+    chmod +x "$RSNBIN/podman"
+    rsn_err="$(MY_TEST_VAR="probe-key-${RANDOM}" PATH="$RSNBIN:$PATH" \
+        bash "$SR" --repo "$RSN_REPO" --base origin/main --branch feature \
+        --model openai/z-ai/glm-5.2 --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$WORK/rsn.out" 2>&1 >/dev/null)" && rsn_rc=0 || rsn_rc=1
+    [ "$rsn_rc" -ne 0 ] && pass "reasoning-probe: reasoning-field model exits non-zero" \
+        || fail "reasoning-probe: reasoning-field model exits non-zero"
+    assert_contains "reasoning-probe: diagnostic names the hang class" "reasoning-field response" "$rsn_err"
+    assert_absent   "reasoning-probe: blocks before any podman run"    "GUARD-BYPASS"             "$rsn_err"
+
+    # Negative-space case: an ordinary (content-only) body must NOT block — the
+    # review path reaches podman run. Guards against a tautological always-block.
+    RSNBIN2="$WORK/rsnbin2"; mkdir -p "$RSNBIN2"
+    cat > "$RSNBIN2/curl" <<'STUB'
+#!/usr/bin/env bash
+printf '{"choices":[{"message":{"content":"ok"}}]}'
+exit 0
+STUB
+    chmod +x "$RSNBIN2/curl"
+    cat > "$RSNBIN2/podman" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" = run ]; then
+    : > "${PODMAN_RUN_MARKER:-/dev/null}"          # prove run was reached
+    if printf '%s\n' "$@" | grep -q SANDBOX-ALIVE; then
+        printf 'SANDBOX-ALIVE\nWRITE-BLOCKED\nSECRET-BLOCKED\nLOCAL-SCOPED\nNET-BLOCKED\n'
+    else
+        printf 'SUMMARY|findings=0|verdict=approve\n'
+    fi
+fi
+exit 0
+STUB
+    chmod +x "$RSNBIN2/podman"
+    RUN_MARKER="$WORK/rsn.runmarker"
+    PODMAN_RUN_MARKER="$RUN_MARKER" MY_TEST_VAR="probe-key-${RANDOM}" PATH="$RSNBIN2:$PATH" \
+        bash "$SR" --repo "$RSN_REPO" --base origin/main --branch feature \
+        --model openai/devstral-small-2 --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$WORK/rsn.out2" >/dev/null 2>&1 || true
+    [ -f "$RUN_MARKER" ] && pass "reasoning-probe: ordinary model reaches podman run (no false block)" \
+        || fail "reasoning-probe: ordinary model reaches podman run (no false block)"
+else
+    echo "SKIP: python3/git/aider absent — reasoning-shape probe tests"
+fi
+
 # ── tier 2b: real containment self-test (podman + image) ─────────────────────
 if ! command -v podman >/dev/null; then
     echo "SKIP: podman absent — containment self-test"
