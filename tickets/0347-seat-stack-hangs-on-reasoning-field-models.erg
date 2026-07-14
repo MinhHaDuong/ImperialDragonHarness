@@ -1,0 +1,53 @@
+%erg 0.1
+Title: seat-runner CLI stack hangs on reasoning-field models (glm-5.2, kimi-k2.7-code)
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T17:55Z claude created
+
+--- body ---
+## Context
+
+During the 2026-07-14 seat audits (0207 log), `z-ai/glm-5.2` and
+`moonshotai/kimi-k2.7-code` never completed a review: the reviewer process
+inside the sandbox produced NO stderr and idled until SEAT_TIMEOUT killed
+it (reproduced at 300s and 540s caps; terra completes the same diff in
+~30s). A direct API probe exonerates the models: both answer a trivial
+prompt over the same endpoint and key in 1-3s, HTTP 200, finish=stop —
+and both return a `reasoning` field alongside `content`. Models that
+worked (gpt-5.6-terra/luna, gpt-4o-mini, deepseek-v4-flash,
+qwen3-coder-next) either emit no reasoning field or a shape the stack
+tolerates. Hypothesis: the seat's pinned aider/litellm venv mishandles
+reasoning-model responses via the `openai/` route — hangs waiting for
+content it never surfaces.
+
+This blocks auditioning reasoning-emitting candidates, which make up
+roughly half of the OpenRouter leaderboard that ticket 0346's audition
+board is designed to scan.
+
+## Relevant files
+
+- `scripts/seat-runner.sh` — SEAT_TIMEOUT kill is the only symptom surface
+- the aider uv-tool venv (allowlisted into the sandbox) — pinned litellm
+  version lives there
+- `tickets/0346-reviewers-audition-retrospective-benchm.erg` — consumer
+
+## Actions
+
+1. Reproduce outside the sandbox: `aider --ask` against OpenRouter
+   `z-ai/glm-5.2` via the `openai/` route; capture where it hangs
+   (litellm streaming? response parse?).
+2. Fix smallest-first: litellm/aider upgrade, or a per-model extra-body
+   param suppressing the reasoning field, or a response-shim in the seat.
+3. Canary: a cheap seat self-test invocation against a reasoning-model
+   stub so the incompatibility class is caught before an audition burns
+   wall-clock.
+
+## Exit criteria
+
+- [ ] `z-ai/glm-5.2` and `moonshotai/kimi-k2.7-code` complete a seat
+      review (or the stack fails LOUD with a diagnostic, not a silent
+      timeout)
+- [ ] Canary test pins the reasoning-response shape
+- [ ] `make check` passes
