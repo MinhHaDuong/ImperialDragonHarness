@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Pipeline presentation overlays parallel raids](feedback_pipeline_presentation_overlays_raids.md) — a "ready" ticket may already be claimed by a raid worktree, branch, or open merge request; check worktree list + branch names + open MRs in the same pass and report ready/claimed/blocked lanes (author directive, 2026-07-14)
 - [Worktree deleted mid-run orphans the session base cwd](feedback_worktree_deleted_midrun_orphans_cwd.md) — a worktree disappearing under a running session permanently blocks EnterWorktree/cwd-dependent Skill calls; recover via manual `git -C` isolation + delegate skill invocations to isolation:"worktree" subagents (raid-217, PR #564, 2026-07-13)
 - [Pin intervention surface to the measured window](feedback_pin_intervention_surface_to_measured_window.md) — git-log the surface before pinning an A/B intervention; the obvious branch may already implement the treatment during the baseline window, making the flag a no-op or the control a live regression (raid 291-245, 2026-07-13)
 - [Worktree-path trap needs a guard](feedback_worktree_path_trap_needs_guard.md) — prompt warnings failed 7/11 execute agents in one raid; RESOLVED: the 0318 deny guard merged (PR #562, 2026-07-13), spot-check now a fallback; residuals ticketed 0323
