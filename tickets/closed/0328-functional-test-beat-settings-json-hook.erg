@@ -2,6 +2,7 @@
 Title: Functional test: beat-settings.json hook command resolves at runtime
 Created: 2026-07-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #580
 
 --- log ---
 2026-07-14T06:05Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-07-14T09:35Z claude note plan: beat-settings.json:25 sole hook command verified; settings.json:120 identical live wiring (criterion-1 citation); new tests/test_beat_settings_hook_resolves.py walks ALL PreToolUse hook commands generically + non-vacuity guard; no Makefile/pinned-tuple wiring needed; RED = mutate command to nonexistent path; feasibility PASS, no overlap with 0329
 2026-07-14T10:05Z claude note execute: criterion 1 recorded — settings.json:120 wires the identical $HOME/.claude/scripts/guard-destructive-bash.sh command form in the live production config whose PreToolUse guards fire every session (standing empirical proof the runner expands $HOME in a command path). Added tests/test_beat_settings_hook_resolves.py (fast tier, json+expandvars, walks all PreToolUse commands + non-vacuity guard). RED proven by mutating command to nonexistent path (reverted, not committed). make check-fast 765 passed, make lint 17 passed. Static test pins path resolvability, not runner dispatch (closed by criterion-1 evidence).
 
+2026-07-14T10:19Z Minh Ha-Duong closed — autoclosed — PR #580
 --- body ---
 ## Context
 
