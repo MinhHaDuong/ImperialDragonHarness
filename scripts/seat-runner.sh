@@ -58,6 +58,15 @@
 #     start: a blocked write only counts when the probe also proves the
 #     sandbox executes. Run it standalone with --self-test-only (no endpoint,
 #     no diff) to prove containment with podman + the image alone.
+#   - HOST-SIDE PRE-FLIGHT PROBE (0347): the sandbox posture above governs the
+#     SEATED reviewer. One check runs OUTSIDE it, host-side, before any container
+#     launch: the reasoning-shape probe (below) POSTs a 1-token completion to the
+#     SAME endpoint the seat will use, carrying the SAME credential — a direct
+#     host→endpoint call, not routed through the --network=none relay. It reaches
+#     only the one configured endpoint (the health probe already dials it), adds
+#     no destination the seat could exfiltrate through, and keeps the key off argv
+#     (mode-600 curl -K config, trap-reaped). It is the host operator's own
+#     pre-flight, on par with the health probe — not part of the seat's sandbox.
 #
 # Usage:
 #   seat-runner.sh --branch BRANCH [--repo PATH] [--base REF]
