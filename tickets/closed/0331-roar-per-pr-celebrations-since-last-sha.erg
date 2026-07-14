@@ -2,10 +2,13 @@
 Title: Roar: log one celebration per merged PR since roar-last-sha, not one aggregate blob
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #589
 
 --- log ---
 2026-07-14T09:31Z claude created
 
+2026-07-14T11:04Z bump verify-reroll — round 1: octopus-merge silent undercount in build_records
+2026-07-14T11:07Z Minh Ha-Duong closed — autoclosed — PR #589
 --- body ---
 ## Context
 Interactive sessions merge PRs one at a time and roar once at the end (per

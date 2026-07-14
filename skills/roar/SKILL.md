@@ -50,9 +50,28 @@ branch — there are no remote branches nor merge requests to inspect.
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
-2. **Log to telemetry**: pipe a JSON summary to `~/.claude/skills/roar/log-celebration`:
+2. **Log to telemetry**: log one celebration per merged PR since the sentinel,
+   falling back to a single aggregate entry when no merge commits are found.
+   A batched interactive session merges several PRs then roars once, so a single
+   aggregate blob loses per-ticket attribution (ticket 0331). Enumerate the merge
+   commits in `roar-last-sha..HEAD` and log each as its own record when the
+   sentinel exists, is an ancestor of HEAD, and the enumeration is non-empty:
    ```bash
-   echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
+   SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
+   ROWS=""
+   if [ -f "$SENTINEL" ] && git merge-base --is-ancestor "$(cat "$SENTINEL")" HEAD; then
+       ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --project "<name>")" || ROWS=""
+   fi
+   if [ -n "$ROWS" ]; then
+       # Per-PR path: one telemetry-equivalent record per merged PR.
+       printf '%s\n' "$ROWS" | while IFS= read -r row; do
+           printf '%s\n' "$row" | ~/.claude/skills/roar/log-celebration
+       done
+   else
+       # Aggregate fallback: first roar, rewritten history, squash-merge, or
+       # a no-forge repo where no merge commits exist.
+       echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
+   fi
    ```
    Then write the current HEAD SHA to the sentinel:
    ```bash
