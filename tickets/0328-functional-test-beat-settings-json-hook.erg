@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Functional test: beat-settings.json hook command resolves at runtime
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T06:05Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+PR #570 (ticket 0322) rewrote the beat-settings.json destructive-bash guard
+hook path from a hardcoded `/home/haduong/.claude/...` to `$HOME/.claude/...`
+to pass the newly-extended agnostic gate on `scripts/`. The blocker "does the
+hook runner expand `$HOME` in a `command` path?" was settled by in-repo
+evidence rather than a live experiment, and the PR merged with `/gaze` APPROVED
+and integration review CLEAN.
+
+The agnostic gate now pins the **textual** form (`$HOME/...` reads as agnostic),
+but nothing verifies the hook **functionally resolves** when beat.py launches a
+`claude --print --settings scripts/beat-settings.json` subprocess. If the hook
+runner does not expand `$HOME` in a `command` path, the destructive-bash guard
+would silently fail to fire during every beat cycle — a security-adjacent
+regression the current tests cannot catch. `tests/test_guard_destructive_bash.sh`
+exercises the guard script directly; no test loads beat-settings.json and
+confirms its hook path is invocable.
+
+## Relevant files
+- `scripts/beat-settings.json` — hook `command` is `$HOME/.claude/scripts/guard-destructive-bash.sh`.
+- `scripts/beat.py` (~line 640) — passes the file via `--settings` to the `claude --print` subprocess.
+- `tests/test_guard_destructive_bash.sh` — tests the guard script, not the beat-settings wiring.
+
+## Actions
+1. Confirm empirically whether Claude Code's hook runner expands `$HOME` (and/or
+   `~`, `$CLAUDE_PROJECT_DIR`) in a hook `command` path — this closes the
+   evidence-vs-experiment gap that resolved the 0322 blocker.
+2. Add a test that loads beat-settings.json, resolves the hook `command`, and
+   asserts the target path exists and is executable under the expanded form.
+3. If the runner does NOT expand `$HOME` in a command path, revert to an
+   agnostic-but-resolvable form (and add a `harness-extension-point` exemption
+   if needed) rather than leave the guard dead.
+
+## Test
+- `tests/test_beat_settings_hook_resolves` — parse beat-settings.json, expand
+  the hook command path, assert the resolved file is an executable that exists
+  (RED if `$HOME` is not expanded and the literal `$HOME/...` path is absent).
+
+## Invariants
+- The destructive-bash guard must actually fire during beat cycles.
+- The agnostic gate on `scripts/` must stay green (no reintroduced hardcoded home path).
+
+## Exit criteria
+- [ ] Hook-runner `$HOME`-expansion behavior for `command` paths is confirmed and recorded
+- [ ] A test pins that beat-settings.json's hook path resolves to an existing executable
+- [ ] `make check` and the CI agnostic-guard job stay green
