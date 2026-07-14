@@ -65,7 +65,7 @@ sub-agent's.
 narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
-worktree=$primary_root/.claude/worktrees/review-<pr>` directly to produce the verdict from their outputs.
+worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
 caller must see either the phase-6 verdict comment or a bump log line within
@@ -79,9 +79,9 @@ commit, no verdict, review worktree mtime frozen).
 
 **On window expiry, do not re-run phases 2–5.** Check three completion markers:
 (1) a posted verdict comment, (2) branch-tip motion on the PR branch, (3) the
-review worktree's file mtime. All stale/absent → invoke `/verify-gate
-<pr-number> worktree=$primary_root/.claude/worktrees/review-<pr>` directly (the
-same invocation form Caller-side recovery uses) and continue the normal round
+review worktree's file mtime. All stale/absent → invoke `/verify-gate`
+directly, with the same invocation form as **Caller-side recovery** above
+(one recipe, stated once), and continue the normal round
 flow from its verdict; log a bump line on the ticket. The fallback skips only
 the redundant phase 2–5 re-execution — verify-gate runs at full rigor and the
 two-round cap is unaffected.
