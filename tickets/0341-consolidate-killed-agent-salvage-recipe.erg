@@ -7,6 +7,7 @@ Author: claude
 2026-07-14T13:35Z claude created
 2026-07-14T20:09Z claude note planned by raid — sweep found 2 foreign citations (337 + 155); gaze and memory already pointer-shaped, criterion 2 is a verified no-op
 2026-07-14T20:19Z claude note review-pr round 1 found a 3rd foreign citation at line 134-135 that the line-oriented sweep missed (citation wrapped across a markdown line break); fixed and re-verified with a line-wrap-safe sweep
+2026-07-14T20:25Z claude note review-pr round 2 approved, no blockers; ticked exit-criteria checkboxes (all satisfied) and refreshed the PR summary to describe all three fixes
 
 --- body ---
 ## Context
@@ -31,10 +32,10 @@ citation.
 
 ## Exit criteria
 
-- [ ] raid SKILL.md cites only memories/contracts that exist in this repo
-- [ ] No duplicated salvage-recipe text across gaze SKILL.md, raid SKILL.md,
+- [x] raid SKILL.md cites only memories/contracts that exist in this repo
+- [x] No duplicated salvage-recipe text across gaze SKILL.md, raid SKILL.md,
       and memory entries — one owner, pointers elsewhere
-- [ ] `make check` passes
+- [x] `make check` passes
 
 ## Verified findings (plan agent, against HEAD eb7be4e)
 
