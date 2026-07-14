@@ -211,16 +211,18 @@ if [[ "$SELF_TEST_ONLY" -eq 0 ]]; then
     if [[ -n "$CREDENTIAL_ENV" ]] && command -v python3 >/dev/null 2>&1; then
         _probe_model="${MODEL#openai/}"          # the endpoint knows the raw provider id
         _probe_rc="$WORK/probe.curlrc"
-        _probe_body="$(python3 -c 'import json,sys; print(json.dumps({"model": sys.argv[1], "max_tokens": 1, "messages": [{"role": "user", "content": "ping"}]}))' "$_probe_model")"
-        _probe_resp=""
-        if ! ( umask 077; printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY" > "$_probe_rc" ); then
-            echo "seat-runner: WARN reasoning-shape probe could not write its curl config — proceeding (probe is advisory)" >&2
-        elif _probe_resp="$(curl -sf --max-time 15 -K "$_probe_rc" \
-                -H 'Content-Type: application/json' -X POST -d "$_probe_body" \
-                "${ENDPOINT}/chat/completions" 2>/dev/null)"; then
-            rm -f "$_probe_rc"                    # key file gone before the body is parsed
-            _probe_verdict=0
-            printf '%s' "$_probe_resp" | python3 -c '
+        if ! _probe_body="$(python3 -c 'import json,sys; print(json.dumps({"model": sys.argv[1], "max_tokens": 1, "messages": [{"role": "user", "content": "ping"}]}))' "$_probe_model")"; then
+            echo "seat-runner: WARN reasoning-shape probe could not build its request body — proceeding (probe is advisory)" >&2
+        else
+            _probe_resp=""
+            if ! ( umask 077; printf 'header = "Authorization: Bearer %s"\n' "$OPENAI_API_KEY" > "$_probe_rc" ); then
+                echo "seat-runner: WARN reasoning-shape probe could not write its curl config — proceeding (probe is advisory)" >&2
+            elif _probe_resp="$(curl -sf --max-time 15 -K "$_probe_rc" \
+                    -H 'Content-Type: application/json' -X POST -d "$_probe_body" \
+                    "${ENDPOINT}/chat/completions" 2>/dev/null)"; then
+                rm -f "$_probe_rc"                    # key file gone before the body is parsed
+                _probe_verdict=0
+                printf '%s' "$_probe_resp" | python3 -c '
 import json, sys
 try:
     d = json.load(sys.stdin)
@@ -233,17 +235,20 @@ try:
 except Exception:
     sys.exit(2)
 ' || _probe_verdict=$?
-            if [[ "$_probe_verdict" -eq 0 ]]; then
-                echo "seat-runner: FATAL model '${MODEL}' returns a reasoning-field response — known aider/litellm hang class (ticket 0347)" >&2
-                exit 1
-            elif [[ "$_probe_verdict" -eq 2 ]]; then
-                echo "seat-runner: WARN reasoning-shape probe could not parse the response from ${MODEL} — proceeding (probe is advisory)" >&2
+                if [[ "$_probe_verdict" -eq 0 ]]; then
+                    echo "seat-runner: FATAL model '${MODEL}' returns a reasoning-field response — known aider/litellm hang class (ticket 0347)" >&2
+                    exit 1
+                elif [[ "$_probe_verdict" -eq 2 ]]; then
+                    echo "seat-runner: WARN reasoning-shape probe could not parse the response from ${MODEL} — proceeding (probe is advisory)" >&2
+                elif [[ "$_probe_verdict" -ne 1 ]]; then
+                    echo "seat-runner: WARN reasoning-shape probe returned unexpected verdict code ${_probe_verdict} for ${MODEL} — proceeding (probe is advisory)" >&2
+                fi
+                # verdict 1 (no reasoning field): the model is safe — proceed silently.
+            else
+                echo "seat-runner: WARN reasoning-shape probe could not reach ${ENDPOINT}/chat/completions — proceeding (probe is advisory)" >&2
             fi
-            # verdict 1 (no reasoning field): the model is safe — proceed silently.
-        else
-            echo "seat-runner: WARN reasoning-shape probe could not reach ${ENDPOINT}/chat/completions — proceeding (probe is advisory)" >&2
+            rm -f "$_probe_rc"                        # idempotent catch-all (also covers the write-fail branch)
         fi
-        rm -f "$_probe_rc"                        # idempotent catch-all (also covers the write-fail branch)
     fi
 fi
 

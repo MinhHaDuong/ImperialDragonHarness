@@ -484,6 +484,62 @@ STUB
     else
         echo "SKIP: git/aider absent — reasoning-probe negative-space case"
     fi
+
+    # Test A (item 1): a parser verdict OUTSIDE {0,1,2} — e.g. python3 killed,
+    # exit 42 — must fail LOUD, not silently proceed as "safe". Dispatch python3
+    # on the -c script: the body builder (json.dumps) works; the response parser
+    # (json.load) exits 42. The probe is advisory, so the run proceeds — but a
+    # WARN naming the unexpected verdict code must be emitted (fail-open, LOUD).
+    _rp_realpy="$(command -v python3)"
+    _rpA="$(mktemp -d "$WORK/rpA.XXXXXX")"
+    cat > "$_rpA/curl" <<'STUB'
+#!/usr/bin/env bash
+printf '{"choices":[{"message":{"content":"ok"}}]}'
+exit 0
+STUB
+    printf '%s\n' "$_rp_realpy" > "$_rpA/realpy"
+    cat > "$_rpA/python3" <<'STUB'
+#!/usr/bin/env bash
+script=""; [ "${1:-}" = "-c" ] && script="${2:-}"
+case "$script" in
+    *json.load*)  exit 42 ;;                                              # response parser → unexpected verdict
+    *json.dumps*) printf '{"model":"x","max_tokens":1,"messages":[]}'; exit 0 ;;
+    *) exec "$(cat "$(dirname "$0")/realpy")" "$@" ;;
+esac
+STUB
+    chmod +x "$_rpA/curl" "$_rpA/python3"
+    errA="$(MY_TEST_VAR="probe-key-${RANDOM}" PATH="$_rpA:$PATH" \
+        bash "$SR" --base origin/main --branch feature \
+        --model openai/devstral-small-2 --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$_rpA/out" 2>&1 >/dev/null || true)"
+    assert_contains "reasoning-probe: unexpected verdict code warns loud (not silent-safe)" \
+        "unexpected verdict code" "$errA"
+
+    # Test B (item 2): if the request-body builder (python3 json.dumps) crashes,
+    # the unguarded command substitution used to abort the ENTIRE seat run under
+    # set -euo pipefail. The probe is advisory: a body-build failure must WARN
+    # and fall through to the normal run, not kill the seat for every model.
+    _rpB="$(mktemp -d "$WORK/rpB.XXXXXX")"
+    cat > "$_rpB/curl" <<'STUB'
+#!/usr/bin/env bash
+printf '{"choices":[{"message":{"content":"ok"}}]}'
+exit 0
+STUB
+    cat > "$_rpB/python3" <<'STUB'
+#!/usr/bin/env bash
+script=""; [ "${1:-}" = "-c" ] && script="${2:-}"
+case "$script" in
+    *json.dumps*) echo "boom" >&2; exit 7 ;;                             # body builder crashes
+    *) exit 2 ;;
+esac
+STUB
+    chmod +x "$_rpB/curl" "$_rpB/python3"
+    errB="$(MY_TEST_VAR="probe-key-${RANDOM}" PATH="$_rpB:$PATH" \
+        bash "$SR" --base origin/main --branch feature \
+        --model openai/devstral-small-2 --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$_rpB/out" 2>&1 >/dev/null || true)"
+    assert_contains "reasoning-probe: body-build failure warns and does not abort the seat" \
+        "could not build its request body" "$errB"
 else
     echo "SKIP: python3 absent — reasoning-shape probe tests"
 fi

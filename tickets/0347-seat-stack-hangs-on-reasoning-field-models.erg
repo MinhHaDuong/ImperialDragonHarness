@@ -7,6 +7,7 @@ Author: claude
 2026-07-14T17:55Z claude created
 2026-07-14T20:08Z claude note reimagined+planned by raid — fix at seat-runner layer, aider venv unpinnable from repo
 
+2026-07-14T21:28Z bump verify-reroll — round 1: verdict-switch fallthrough + unguarded probe-body substitution
 --- body ---
 ## Context
 
