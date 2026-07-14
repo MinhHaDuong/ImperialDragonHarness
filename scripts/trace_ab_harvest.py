@@ -52,17 +52,15 @@ def _load_sibling(mod_name: str, filename: str):
     spec.loader.exec_module(mod)
     return mod
 
-# Reused, never edited: the pre-registered decision rule and the forge-join
-# helpers. `decide` / `filter_window` / `PREREGISTERED_NOISE_PCT` are the
-# 0315 pre-registration; `project_to_repo` / `collect_pairs` map census rows
-# to (repo, pr) pairs exactly as the join does.
+# Reused, never edited. `decide` applies the 0315 pre-registered rule (and its
+# 10% `PREREGISTERED_NOISE_PCT` default internally); `filter_window` slices the
+# census; `collect_pairs` maps census rows to (repo, pr) pairs exactly as the
+# join does (it calls the join's own `project_to_repo` internally).
 _decision = _load_sibling("trace_ab_decision", "trace_ab_decision.py")
 _join = _load_sibling("trace_pr_join", "trace-pr-join.py")
 
 decide = _decision.decide
 filter_window = _decision.filter_window
-PREREGISTERED_NOISE_PCT = _decision.PREREGISTERED_NOISE_PCT
-project_to_repo = _join.project_to_repo
 collect_pairs = _join.collect_pairs
 
 
