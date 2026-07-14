@@ -13,8 +13,7 @@ night likely contributed.
 
 **Gaze-fork stall detection and recovery is now codified** in
 `skills/gaze/SKILL.md` § Fork execution contract, "Fork liveness" clause
-(`fork_liveness_seconds` / `GAZE_LIVENESS_WINDOW_S`, default 1200s; three
-completion markers; direct `/verify-gate` fallback). Follow the skill, not
+(`fork_liveness_seconds` / `GAZE_LIVENESS_WINDOW_S`). Follow the skill, not
 this entry, for that path.
 
 **Stalled-coder recovery is codified too**, in `skills/raid/SKILL.md`
