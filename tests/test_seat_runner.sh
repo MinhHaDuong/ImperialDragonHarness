@@ -48,7 +48,7 @@ CODE="$(printf '%s\n' "$SRC" | grep -v '^[[:space:]]*#')"
 assert_absent   "no --network=host in live code"    "--network=host"   "$CODE"
 assert_contains "per-seat timeout env honoured"     "SEAT_TIMEOUT"     "$SRC"
 # The timeout must actually WRAP the container invocation, not merely be read.
-if printf '%s' "$SRC" | grep -Eq 'timeout[^|]*"?\$\{?SEAT_TIMEOUT'; then
+if grep -Eq 'timeout[^|]*"?\$\{?SEAT_TIMEOUT' <<<"$SRC"; then
     pass "timeout wraps the seat invocation"
 else
     fail "timeout wraps the seat invocation"
@@ -69,7 +69,7 @@ assert_contains "self-test proves ~/.local scoped"   "LOCAL-SCOPED"     "$SRC"
 assert_contains "venv root validated by pyvenv.cfg"  "pyvenv.cfg"       "$CODE"
 assert_contains "home-exposing mount rejected"       "_reject_home_exposing_mount" "$CODE"
 # The rejection must actually cover the ancestor case, not just equality.
-if printf '%s' "$CODE" | grep -Eq '\$HOMEDIR" == "\$_path"/\*|\$HOMEDIR == \$_path/\*'; then
+if grep -Eq '\$HOMEDIR" == "\$_path"/\*|\$HOMEDIR == \$_path/\*' <<<"$CODE"; then
     pass "home-exposing guard covers ancestor case"
 else
     fail "home-exposing guard covers ancestor case"
@@ -154,7 +154,7 @@ assert_contains "https branch adds --add-host"       "--add-host"       "$SRC"
 # The in-container bridge port must be one variable used consistently: in the
 # CONTAINER_BASE the client dials, AND in the container-side relay listen/wait.
 assert_contains "in-container port var in CONTAINER_BASE" 'CONTAINER_PORT}${ENDPOINT_PATH}' "$CODE"
-if printf '%s' "$CODE" | grep -Eq 'net-relay.py --listen tcp:127.0.0.1:\$\{CONTAINER_PORT\}'; then
+if grep -Eq 'net-relay.py --listen tcp:127.0.0.1:\$\{CONTAINER_PORT\}' <<<"$CODE"; then
     pass "in-container port var drives the bridge listen"
 else
     fail "in-container port var drives the bridge listen"

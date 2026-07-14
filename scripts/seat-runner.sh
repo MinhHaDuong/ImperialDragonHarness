@@ -20,8 +20,11 @@
 #     pure code) — never all of ~/.local, which also holds keyrings, wallets,
 #     jupyter/neo4j tokens, and browser cookies. The self-test proves ~/.local
 #     is scoped, not wholesale-mounted.
-#   - env is explicitly constructed (no BASH_ENV, no inherited secrets; only
-#     a dummy OPENAI_API_KEY for the local endpoint)
+#   - env is explicitly constructed (no BASH_ENV, no inherited secrets). A
+#     per-seat endpoint credential MAY be injected via --credential-env, read
+#     from the runner's own env and passed as a bare `-e OPENAI_API_KEY` so it
+#     never enters podman argv; a local unauthenticated endpoint uses an inline
+#     dummy OPENAI_API_KEY instead.
 #   - NETWORK IS DENY-BY-DEFAULT: the seat runs under --network=none, so its
 #     netns has no interface but loopback — no route to any host. It reaches
 #     the ONE model endpoint through a bind-mounted Unix-domain socket
