@@ -83,7 +83,8 @@
 # LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT, GCONV_PATH, PYTHONPATH, NODE_OPTIONS,
 # NODE_PATH, PERL5LIB, RUBYOPT, the git exec vectors GIT_SSH_COMMAND, GIT_SSH,
 # GIT_ASKPASS, GIT_EXTERNAL_DIFF, the LESSOPEN / LESSCLOSE pager hooks, or the
-# BASH_FUNC_* / DYLD_* prefix families —
+# BASH_FUNC_* / DYLD_* prefix families (plus the lower-severity perturbation vars
+# of ticket 0352 — see the predicate's `case` for the authoritative list) —
 # via the shared _be_is_protected_name predicate (ticket 0345), alongside the
 # existing GUARD_* / _be_* refusal; such an entry warns `refusing KEYS export to
 # protected name: <name>` and is skipped, so an untrusted .env cannot overwrite a
@@ -120,7 +121,13 @@
 #     set one would run its command in every git call) and the pager hooks
 #     LESSOPEN / LESSCLOSE (a `|cmd %s` input pipe runs on every `git log` / `less`),
 #     and the BASH_FUNC_* exported-function and DYLD_* (macOS LD_* analogue) prefix
-#     families.
+#     families;
+#   * lower-severity perturbation vars (ticket 0352) a hostile .env should not be
+#     able to steer, though none is a code-execution vector: PS0, TZ / TZDIR /
+#     LOCALDOMAIN (locale/resolver), TERMINFO, LD_DEBUG / LD_PROFILE (linker
+#     diagnostics), BASH_XTRACEFD, HISTFILE.
+# The `case` block below is the authoritative enumeration; this prose summarises
+# it by category and may lag — read the `case` when in doubt.
 _be_is_protected_name() {
     case "$1" in
         *GUARD_*|_be_*) return 0 ;;
