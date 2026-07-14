@@ -2,6 +2,7 @@
 Title: trace-doctor: session-trace economics audit (tracking)
 Created: 2026-06-10
 Author: claude
+Closed: autoclosed — PR #598
 
 --- log ---
 2026-06-10T11:18Z claude created
@@ -17,6 +18,7 @@ Author: claude
 2026-07-14T05:28Z Minh Ha-Duong note phase-5 A/B scaffolding landed via child 0326 (harvest CLI, replay runbook, measure-A sample); live arms remain on 0245 pending author scheduling — measure-B week dates and measure-A replay authorization
 
 2026-07-14T12:02Z Minh Ha-Duong note integration review at close: all children closed (0245 last, voided by author — phase 5 dropped at smoke, see docs/trace-ab-2026-06.md VOIDED section); deliverables in — trace-doctor skill assembled (0316) and runnable from committed scripts, phase-4 adopt items #1 micro-turn rule and #3 compact-audit advisory landed, six candidate measures rejected by counterfactual accounting with measured evidence; exit criteria met, closing with 0245
+2026-07-14T12:11Z Minh Ha-Duong closed — autoclosed — PR #598
 --- body ---
 ## Context
 
