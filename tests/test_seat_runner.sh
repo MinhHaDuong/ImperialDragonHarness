@@ -350,6 +350,31 @@ STUB
         --credential-env MY_TEST_VAR --out "$WORK/exfil.findings2" 2>&1 >/dev/null || true)"
     assert_absent   "scrub: injected key absent from failure-path stderr" "$PROBE_VAL" "$exfil_stderr"
     assert_contains "scrub: failure-path stderr carries the redaction marker" "[REDACTED-CREDENTIAL]" "$exfil_stderr"
+
+    # WARN-cat path: a seat that EXITS ZERO but emits NO contract-shaped line
+    # makes the contract-grep fail, so seat-runner cats raw.out to stderr and
+    # exits 1. A third stub leaks the key into that non-contract stdout to prove
+    # the scrub covers this echo path too (the third of the three the fix claims).
+    EXFILBIN3="$WORK/exfilbin3"; mkdir -p "$EXFILBIN3"
+    cat > "$EXFILBIN3/podman" <<'STUB'
+#!/usr/bin/env bash
+if [ "${1:-}" = run ]; then
+    if printf '%s\n' "$@" | grep -q SANDBOX-ALIVE; then
+        printf 'SANDBOX-ALIVE\nWRITE-BLOCKED\nSECRET-BLOCKED\nLOCAL-SCOPED\nNET-BLOCKED\n'
+    else
+        # No FINDING|/SUMMARY| line → contract-grep fails → WARN cat raw.out.
+        printf 'aider babble, no contract lines, key was %s\n' "${OPENAI_API_KEY:-}"
+    fi
+fi
+exit 0
+STUB
+    chmod +x "$EXFILBIN3/podman"
+    warn_stderr="$(MY_TEST_VAR="$PROBE_VAL" PATH="$EXFILBIN3:$PATH" \
+        bash "$SR" --repo "$EXFIL_REPO" --base origin/main --branch feature \
+        --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --credential-env MY_TEST_VAR --out "$WORK/exfil.findings3" 2>&1 >/dev/null || true)"
+    assert_absent   "scrub: injected key absent from WARN-cat stderr" "$PROBE_VAL" "$warn_stderr"
+    assert_contains "scrub: WARN-cat stderr carries the redaction marker" "[REDACTED-CREDENTIAL]" "$warn_stderr"
 else
     echo "SKIP: python3/git/aider absent — credential-scrub exfiltration test"
 fi

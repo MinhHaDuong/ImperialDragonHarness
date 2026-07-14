@@ -25,6 +25,11 @@
 #     from the runner's own env and passed as a bare `-e OPENAI_API_KEY` so it
 #     never enters podman argv; a local unauthenticated endpoint uses an inline
 #     dummy OPENAI_API_KEY instead.
+#   - CREDENTIAL SCRUB (0207): when a real credential is injected, its exact
+#     runtime value is redacted from the reviewer's captured stdout/stderr
+#     before any of them is echoed (findings, failure tail, WARN cat). This is
+#     a literal value substitution — defense-in-depth against the seat's client
+#     verbatim-echoing the key (e.g. an auth-error line), NOT a semantic filter.
 #   - NETWORK IS DENY-BY-DEFAULT: the seat runs under --network=none, so its
 #     netns has no interface but loopback — no route to any host. It reaches
 #     the ONE model endpoint through a bind-mounted Unix-domain socket
