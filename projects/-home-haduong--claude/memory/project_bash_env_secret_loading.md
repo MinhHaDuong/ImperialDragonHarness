@@ -14,7 +14,7 @@ Secrets are loaded into Claude Code bash subprocesses via `BASH_ENV`, not `CLAUD
 
 **Provider secrets load least-privilege via `KEYS=`** (#588/#593): the project `.env` opts in with `KEYS=entry,entry`; only those validated (`^[a-z0-9-]+$`) providers' user-owned `~/.config/keys/<name>.env` are read. Default-deny (no `KEYS` line → no provider secrets); name validation blocks path traversal out of `~/.config/keys/`. This is cooperative scoping (shrinks default exposure), NOT access control against a hostile `.env`.
 
-**Three `KEYS=` entry forms (ticket 0337):** each comma-separated entry is one of —
+**Three `KEYS=` entry forms (ticket 0339):** each comma-separated entry is one of —
 - `provider` — source the WHOLE `~/.config/keys/<provider>.env` (all its vars enter the env). Unchanged.
 - `provider:VAR` — export ONLY `VAR` from that file, under name `VAR`.
 - `provider:SRC=DST` — export ONLY `SRC`, renamed to `DST`. No sibling var enters the env.
