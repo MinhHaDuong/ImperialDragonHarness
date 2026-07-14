@@ -2,6 +2,7 @@
 Title: SIGPIPE-class grep|grep pipe in test_harness_rules_injection.sh:44
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #594
 
 --- log ---
 2026-07-14T12:40Z claude created
@@ -9,6 +10,7 @@ Author: claude
 2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (file:line-precise, phase-3 absorbed per raid-0252 precedent); anchors verified (suite :44, on-start.sh:33); PASS, no overlap with 0333
 2026-07-14T12:50Z claude note execute: replaced the pipe with single anchored `grep -qE 'cat[^#]*README\.md'` (no pipe, cannot SIGPIPE); sibling sweep re-run — line 44 was the sole grep|grep -q in the suite; mutation on throwaway on-start.sh copy (README.md dropped) makes the converted check FAIL loudly, pristine PASSes; suite green standalone, make check green
 
+2026-07-14T12:24Z Minh Ha-Duong closed — autoclosed — PR #594
 --- body ---
 ## Context
 
