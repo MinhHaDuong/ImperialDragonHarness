@@ -48,6 +48,19 @@ esac
 # SCOPE here: command substitution (`git $(echo commit)`) and git aliases
 # (`git ci` for commit) — a regex cannot see through either without invoking git
 # itself. See ticket 0302 if closing the alias gap ever becomes necessary.
+#
+# Known residual FALSE-POSITIVE gap (ticket 0354, accepted, not fixed): a
+# mutating verb token that appears as literal text INSIDE a quoted argument of a
+# read-only command is misread as a mutation. `grep 'erg close' f`, `echo 'git
+# commit later'` both match ERG_MUT/GIT_MUT. Quote-stripping here then lets the
+# `tr ';&|'` split below cut a grep pattern like `'a|erg close|b'` into a bare
+# `erg close` segment. Consequence is bounded and fail-SAFE: it only ever
+# over-blocks, never mis-allows, and in a HEALTHY worktree it does not even
+# block (the identity check passes; cost is one skipped fast-path). It bites
+# only under a real identity mismatch (husk / deregistered worktree) AND when
+# the read-only command's args literally contain a git/erg verb. Workaround:
+# name the tree with `git -C`, or run from a non-worktree cwd. A robust fix
+# (quote-aware split + verb anchored to command position) is deferred in 0354.
 norm=${cmd//\"/}
 norm=${norm//\'/}
 
