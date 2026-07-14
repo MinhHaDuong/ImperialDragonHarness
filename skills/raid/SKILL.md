@@ -4,7 +4,7 @@ description: Work through multiple tickets autonomously: pick targets, implement
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
-model: claude-opus-4-8
+model: claude-sonnet-5
 effort: high
 ---
 
@@ -24,8 +24,11 @@ the session model is; left unpinned on a top-tier session that is the runaway
 "top-model × N-wide" wave. **Effort is not an Agent launch parameter** — a
 spawned agent runs at the *session* effort, which neither this prose nor the
 frontmatter can pin per-child; so set the session effort (`high` is the sweet
-spot) before running a raid, and never rely on `max`. Every launch below pins
-`model` explicitly:
+spot) before running a raid, and never rely on `max`. The frontmatter pins the
+orchestrator itself to Sonnet: the 2026-07 trace census (H7) measured top-tier
+raid mains at ≈4.7× the cost curve while Sonnet mains sit on it, and the
+orchestrator only sequences waves — the coders keep their own pins below. Every
+launch below pins `model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
