@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Detect consumer-project assumptions in harness skills and tickets.
-# Usage: check-agnostic.sh [dir ...]   (default: skills tickets)
+# Usage: check-agnostic.sh [dir ...]   (default: skills tickets scripts)
 # Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line,
 # or (for a `\`-continued multi-line command) on any of its continuation lines.
 # `closed/` subdirs are skipped — closed tickets are frozen archives, not amended.

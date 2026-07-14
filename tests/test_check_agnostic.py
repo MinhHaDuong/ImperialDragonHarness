@@ -34,6 +34,16 @@ def _run(target):
     )
 
 
+def _run_no_args(cwd):
+    """Invoke the gate with no dir args (as CI does), from the given cwd."""
+    return subprocess.run(
+        ["bash", str(SCRIPT)],
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_fails_on_hardcoded_home_path(tmp_path):
     (tmp_path / "0001-bad.erg").write_text(BAD_TICKET)
     result = _run(tmp_path)
@@ -168,12 +178,7 @@ def test_default_no_arg_scan_includes_scripts_dir(tmp_path):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "helper.sh").write_text("HOMEDIR=/home/someone/.claude\n")
-    result = subprocess.run(
-        ["bash", str(SCRIPT)],
-        cwd=tmp_path,
-        capture_output=True,
-        text=True,
-    )
+    result = _run_no_args(tmp_path)
     assert result.returncode != 0, result.stdout
     assert "VIOLATION" in result.stdout
 
