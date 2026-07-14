@@ -1,6 +1,6 @@
 ---
 name: agent-stall-watchdog-recovery
-description: Background agents (an opus coder AND a gaze fork) stalled in one night; opus-coder recovery is salvage+finisher (still tribal knowledge); gaze-fork detection/recovery is now codified in skills/gaze/SKILL.md § Fork execution contract "Fork liveness" clause
+description: Background agents (an opus coder AND a gaze fork) stalled in one night; both recovery paths are codified — gaze fork in skills/gaze/SKILL.md § Fork execution contract "Fork liveness", stalled coder in skills/raid/SKILL.md § Circuit breakers; entry keeps only what the skills don't state
 metadata:
   type: feedback
 ---
@@ -17,10 +17,13 @@ night likely contributed.
 completion markers; direct `/verify-gate` fallback). Follow the skill, not
 this entry, for that path.
 
-**Stalled coder (outside gaze's contract — no codified fallback for this
-path):** `scripts/worktree-salvage.sh <wt>` then relaunch a finisher on the
-EXISTING branch (`git switch`, not `-c`) with push-retry loops for flaky
-network; record a `bump circuit-breaker` line in the ticket log.
+**Stalled-coder recovery is codified too**, in `skills/raid/SKILL.md`
+§ Circuit breakers ("Killing a mid-execution agent — salvage WIP first" and
+"Agent timeout"): salvage via `scripts/worktree-salvage.sh`, relaunch the
+finisher on the EXISTING branch (`git switch`, not `-c`). What raid does not
+capture: wrap the relaunch's pushes in retry loops on a flaky network, and
+the 600s stream watchdog can kill a coder well before raid's 10-minute
+no-push breaker would fire.
 
 **Cross-cutting lesson gaze's contract doesn't state generally:** a relay
 agent watching any forked skill detaches when the fork backgrounds itself —

@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 2026-07-14T12:47Z claude note raid feasibility PASS — anchors verified inline (gaze clause:70-87, memory entry 25 lines, index line 47). No cross-ticket file overlap
 2026-07-14T12:52Z claude note executed — trimmed gaze-fork tactical detail to a SKILL.md pointer, retained opus-coder salvage recipe + cross-cutting relay lesson; updated MEMORY.md index line; incident facts (ticket 0284, PR #496, 2026-07-11) and both [[links]] verified against current entry; no contradiction with clause (1200s, verify-gate fallback)
 
+2026-07-14T13:01Z note gaze round 1 simplify — review panel found skills/raid/SKILL.md § Circuit breakers already codifies the stalled-coder salvage+relaunch recipe (predates this ticket); trimmed that half to a pointer too, retaining only the uncaptured bits (push-retry on flaky network, 600s watchdog vs raid's 10-min breaker timing) plus the relay-detachment lesson; frontmatter description and MEMORY.md index line updated to match
 --- body ---
 ## Context
 
