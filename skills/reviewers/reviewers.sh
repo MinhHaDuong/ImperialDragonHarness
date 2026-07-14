@@ -288,6 +288,11 @@ case "$subcmd" in
             esac
         done
         label="${label:-$model}"
+        # Reject control characters (newlines/CRs) in the values that flow into
+        # the erg-log scorecard card: an embedded newline would forge a second,
+        # well-formed ticket-log line that `erg check` cannot flag.
+        case "$model" in *[$'\n\r']*) echo "error: audition: model must not contain newlines or carriage returns" >&2; exit 1 ;; esac
+        case "$label" in *[$'\n\r']*) echo "error: audition: --name must not contain newlines or carriage returns" >&2; exit 1 ;; esac
         [ -f "$board" ] || { echo "error: benchmark board not found: ${board}" >&2; exit 1; }
 
         dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"
@@ -308,7 +313,11 @@ case "$subcmd" in
             # cannot be replayed — unreachable endpoint, sandbox failure — voids
             # the whole audition rather than reporting a partial, misleading score.
             if ! "$SEAT_RUNNER" "${sr_args[@]}" >/dev/null 2>"${out}.err"; then
-                echo "error: audition: seat-runner failed on board MR #${pr} (candidate=${label}); see ${out}.err" >&2
+                # The scratch dir (and ${out}.err) is reaped by the EXIT trap, so
+                # dump the seat-runner's stderr HERE — a message pointing at the
+                # now-deleted file would be unreachable to the operator.
+                echo "error: audition: seat-runner failed on board MR #${pr} (candidate=${label}); seat-runner stderr follows:" >&2
+                cat "${out}.err" >&2 2>/dev/null || true
                 exit 1
             fi
             t1=$(date +%s.%N)

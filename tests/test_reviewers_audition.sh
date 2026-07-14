@@ -214,5 +214,39 @@ else
     echo "FAIL: skills/reviewers/benchmark-board.yml missing"; FAIL=$((FAIL+1))
 fi
 
+# ── B1: seat-runner failure surfaces the .err diagnostic on stderr ───────────
+# The scratch dir is reaped on exit (EXIT trap), so the error must not merely
+# POINT at a now-deleted .err file — the seat-runner's own stderr has to be
+# dumped to the operator's stderr before exit, or the diagnostic is unreachable.
+B1ERR="$WORK/b1.stderr"
+( cd "$TDIR" && REVIEWERS_FINDINGS_DIR="$FDIR" SEAT_RUNNER="$DEADSTUB" ERG="$ERG_FIXTURE" \
+      "$REVIEWERS" audition openai/toy-candidate --board "$BOARD" \
+          --endpoint http://127.0.0.1:9/v1 --trial-ticket "$TRIAL" ) >/dev/null 2>"$B1ERR" || true
+assert_contains "audition: seat-runner failure dumps .err diagnostic to stderr" \
+    "seat-runner: endpoint unreachable" "$(cat "$B1ERR")"
+
+# ── B2: a newline in --name must not forge a second erg-log line ─────────────
+# An embedded newline in --name/model would otherwise flow verbatim into the
+# `erg log ... note <card>` call and inject a well-formed but forged ticket-log
+# line that `erg check` cannot flag. audition must reject it (exit non-zero)
+# before touching the trial ticket.
+if [ -x "$ERG_BIN" ]; then
+    TF2="$TDIR/tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg"
+    FORGE=$'toy\n2026-01-01T00:00Z attacker note FORGED-AUDITION-LINE'
+    if ( cd "$TDIR" && REVIEWERS_FINDINGS_DIR="$FDIR" SEAT_RUNNER="$STUB" ERG="$ERG_FIXTURE" \
+            "$REVIEWERS" audition openai/toy-candidate --board "$BOARD" \
+                --endpoint http://127.0.0.1:9/v1 --trial-ticket "$TRIAL" \
+                --name "$FORGE" ) >/dev/null 2>&1; then
+        echo "FAIL: audition: newline in --name should exit non-zero"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: audition: newline in --name exits non-zero"; PASS=$((PASS+1))
+    fi
+    if grep -q 'FORGED-AUDITION-LINE' "$TF2"; then
+        echo "FAIL: audition: newline in --name forged a ticket-log line"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: audition: newline in --name did not forge a log line"; PASS=$((PASS+1))
+    fi
+fi
+
 echo ""; echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ] || exit 1
