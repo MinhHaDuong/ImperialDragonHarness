@@ -80,7 +80,7 @@ BASE_BRANCH=$(echo "$PR_JSON" | jq -r '.baseRefName')
 # plumbing and untouched by such rewriting. `|| true` preserves the friendly
 # "must run from PR branch" die on a detached HEAD, where `symbolic-ref
 # --quiet` exits non-zero and would otherwise abort under `set -e`. Same idiom
-# as scripts/worktree-salvage.sh. (ticket 0333)
+# as worktree-salvage.sh. (ticket 0333)
 CURRENT_BRANCH=$(git symbolic-ref --quiet --short HEAD || true)
 
 if [[ "$CURRENT_BRANCH" != "$PR_BRANCH" ]]; then
