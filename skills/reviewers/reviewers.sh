@@ -394,12 +394,12 @@ case "$subcmd" in
     scores)
         # Read back the fixed-schema trial cards — scorecard lines and audition
         # blocks — that `scorecard`/`audition` append to trial tickets, and print
-        # one sortable comparison table. Read-only: greps the ticket store, never
+        # one sortable comparison table. Read-only: reads the ticket store, never
         # edits a roster or writes an erg-log line (ticket 0348). The search is
-        # corpus-wide: `grep -r` over tickets/ recurses into tickets/closed/, so a
-        # retired seat's archived trial ticket is still read back — scorecard/
+        # corpus-wide — every `*.erg` under tickets/ including tickets/closed/, so
+        # a retired seat's archived trial ticket is still read back (scorecard/
         # audition resolve their tickets by 4-digit ID, so a card outlives the
-        # ticket's move to closed/.
+        # ticket's move to closed/) — but confined to each file's log section.
         filter="${1:-}"
         tickets_dir="${REVIEWERS_TICKETS:-${REPO_ROOT}/tickets}"
         fmt='%-9s %-20s %-26s %5s %5s %5s %4s %5s %5s %8s %9s %8s\n'
@@ -427,11 +427,20 @@ case "$subcmd" in
                     printf "$fmt" audition "$name" "${board:--}" - - "$find" "$dup" "$uv" "$uh" "${ov:--}" "${lat:--}" "${cost:--}"
                     ;;
                 *"MR "*"seat="*"verdict:"*)
-                    seat=$(sed -n 's/.*seat=\([^ ]*\).*/\1/p' <<<"$line")
-                    mr=$(sed -n 's/.*MR \([^ ]*\) seat=.*/\1/p' <<<"$line")
-                    verif=$(sed -n 's/.*[^0-9]\([0-9]\{1,\}\) verifiable.*/\1/p' <<<"$line")
-                    cons=$(sed -n 's/.*[^0-9]\([0-9]\{1,\}\) consider.*/\1/p' <<<"$line")
-                    if [ -z "$seat" ] || [ -z "$verif" ] || [ -z "$cons" ]; then
+                    # Parse the FIRST occurrence of each field via parameter
+                    # expansion (first-match). A greedy sed `.*<digit> verifiable`
+                    # grabs the LAST digit+keyword, so freeform verdict prose
+                    # ("flagged 3 as verifiable") silently poisons the count — the
+                    # count feeds 0205's promote/drop decision, so a wrong number
+                    # is a wrong decision (ticket 0348 review).
+                    seat="${line#*seat=}"; seat="${seat%% *}"
+                    mr="${line#*MR }";     mr="${mr%% *}"
+                    if [[ "$line" != *" verifiable"* || "$line" != *" consider"* ]]; then
+                        echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
+                    fi
+                    verif="${line%% verifiable*}"; verif="${verif##* }"
+                    cons="${line%% consider*}";    cons="${cons##* }"
+                    if [ -z "$seat" ] || [[ ! "$verif" =~ ^[0-9]+$ ]] || [[ ! "$cons" =~ ^[0-9]+$ ]]; then
                         echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
                     fi
                     [ -n "$filter" ] && [ "$filter" != "$seat" ] && continue
@@ -439,7 +448,16 @@ case "$subcmd" in
                     printf "$fmt" scorecard "$seat" "${mr:--}" "$verif" "$cons" - - - - - - -
                     ;;
             esac
-        done < <(grep -rhE 'audition candidate=|MR .*seat=.*verdict:' "$tickets_dir" 2>/dev/null || true)
+            # Scan only each ticket's `--- log ---` section, where scorecard/
+            # audition append their cards — NOT the body, where a ticket may
+            # quote the card schema as documentation (this very ticket does).
+            # Body scanning would spam WARNs and, on a complete quoted example,
+            # fabricate a phantom table row (ticket 0348 review).
+        done < <(
+            find "$tickets_dir" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
+                awk '/^--- log ---/{inlog=1; next} /^--- /{inlog=0} inlog' "$f"
+            done | grep -E 'audition candidate=|MR .*seat=.*verdict:' || true
+        )
         ;;
 
     help) usage_text ;;

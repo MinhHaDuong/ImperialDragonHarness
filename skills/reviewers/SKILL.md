@@ -82,14 +82,16 @@ scorecard/audition card outlives its ticket's move to `closed/` because both
 resolve the ticket by its 4-digit ID, not by the roster path.
 
 ```
-KIND      NAME             MR/BOARD                  VERIF  CONS  FIND  DUP  UVER  UHAL  OVERLAP  LATENCY  COST
-audition  hy3-free         10MR                          -     -    59   23     0    36      38%  3419.1s   n/a
-scorecard copilot          ImperialDragonHarness#537     0     0     -    -     -     -        -        -     -
+KIND      NAME                 MR/BOARD                   VERIF  CONS  FIND  DUP  UVER  UHAL  OVERLAP   LATENCY     COST
+audition  hy3-free             10MR                           -     -    59   23     0    36      38%   3419.1s      n/a
+scorecard copilot              ImperialDragonHarness#537      0     0     -    -     -     -        -         -        -
 ```
 
 No argument → all seats and candidates. An argument filters to one seat or
 candidate name. A malformed trial line WARNs on stderr, never silently dropped
-(the harvest convention). `scorecard`'s per-MR columns (`VERIF`/`CONS`) and
+(the harvest convention). Only each ticket's `--- log ---` section is read, so
+a card quoted in a ticket body as documentation is never mistaken for a result.
+`scorecard`'s per-MR columns (`VERIF`/`CONS`) and
 `audition`'s per-board columns (`FIND`/`DUP`/`UVER`/`UHAL`/`OVERLAP`/`LATENCY`/
 `COST`) share one table; a `-` marks a column that does not apply to that row.
 

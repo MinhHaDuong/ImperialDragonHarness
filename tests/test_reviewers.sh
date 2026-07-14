@@ -285,10 +285,14 @@ Closed: 2026-07-13
 --- log ---
 2026-07-13T19:43Z claude note MR ImperialDragonHarness#537 seat=copilot verdict: PASS — 0 verifiable, 1 consider (memory consolidation)
 2026-07-13T19:43Z claude note MR ImperialDragonHarness#559 seat=copilot verdict: PASS — 0 verifiable, 0 consider (accurate summary)
+2026-07-13T19:44Z claude note MR ImperialDragonHarness#560 seat=copilot verdict: PASS — 1 verifiable, 2 consider (rejected 9 verifiable-looking; noted 7 consider-style nits in prose)
 
 --- body ---
 ## Context
-Fixture.
+A ticket body may quote the card schema as documentation, e.g.
+audition candidate=doc-example model=x board=99MR findings=1 duplicate=1 unique-verified=1 unique-hallucinated=1 overlap=100% latency=1.0s cost=n/a
+and MR #0 seat=doc-example verdict: PASS — 5 verifiable, 5 consider (illustration).
+These body lines MUST NOT appear in the table (ticket 0348: scan log only).
 ERG
 
 scores_out=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>/dev/null)
@@ -297,6 +301,26 @@ assert_contains "scores: lists audition candidate" "hy3-free" "$scores_out"
 assert_contains "scores: audition row carries findings count" "59" "$scores_out"
 assert_contains "scores: finds scorecard seat in closed/ ticket" "copilot" "$scores_out"
 assert_contains "scores: scorecard row carries the MR ident" "ImperialDragonHarness#537" "$scores_out"
+
+# Greedy-regex poison guard: a verdict whose freeform prose contains later
+# "<digit> verifiable/consider" phrases must still report the TRUE counts (1/2),
+# taken from the first occurrence — not 9/7 from the parenthetical (0348 review).
+poison_row=$(printf '%s\n' "$scores_out" | grep 'ImperialDragonHarness#560')
+assert_contains "scores: count taken from first occurrence, not poisoned by prose" \
+    " 1     2 " "$poison_row"
+if [[ "$poison_row" == *" 9 "* || "$poison_row" == *" 7 "* ]]; then
+    echo "FAIL: scores: freeform verdict prose poisoned the VERIF/CONS count"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: freeform verdict prose did not poison the count"; PASS=$((PASS+1))
+fi
+
+# Log-section-only guard: cards quoted in a ticket BODY are documentation, not
+# real trial results — they must never surface as table rows (0348 review).
+if [[ "$scores_out" == *"doc-example"* ]]; then
+    echo "FAIL: scores: a body-quoted card leaked into the table"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: body-quoted cards excluded (log section only)"; PASS=$((PASS+1))
+fi
 
 # Filter to one name → only that seat/candidate; the other kind is excluded.
 scores_filt=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores copilot 2>/dev/null)

@@ -240,17 +240,18 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. Check out the PR head branch — `/merge` requires being on it.
-   **If the PR branch is already bound to an Execute agent's worktree**,
-   checking out the branch fails (`fatal: '<branch>' is already used by worktree at …`)
-   and the shell cwd self-resets so a plain `cd` into that worktree does not
-   persist for the `/merge` skill. Switch the *session* into the existing
-   worktree instead: `EnterWorktree` with `path:
-   .claude/worktrees/agent-<id>` (the path from the Execute agent's completion
-   notification), then run `/merge` there. Do not delete and re-checkout the
-   branch. <!-- harness-extension-point -->
+2. No checkout needed — `-C <path>` points the merge tool at a checkout that
+   already has the PR branch. An Execute agent's own worktree qualifies
+   directly: take its path from the agent's completion notification
+   (`.claude/worktrees/agent-<id>`). Do not check out, `cd`, or `EnterWorktree`
+   into it, and do not delete and re-checkout the branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `/merge <pr-number>`. This atomically closes the ticket and merges via GitHub API.
+4. Run `~/.claude/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
+   bare. This atomically closes the ticket and merges via GitHub API. The bare
+   form (no `cd` prefix) prefix-matches the standing allow rule
+   `Bash(~/.claude/skills/merge/erg-pr-merge:*)` from any cwd, where a
+   `cd <path> && …` prefix would fall through to the auto-mode classifier
+   (ticket 0344).
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.

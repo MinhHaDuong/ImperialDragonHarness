@@ -5,6 +5,8 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-14T19:55Z Minh Ha-Duong created
+2026-07-14T22:19Z Minh Ha-Duong closed wontfix — harness cool-down (author): not merge-blocking, not state-corrupting, no science-project impact; scorecards remain readable in the trial tickets directly
+2026-07-15T00:00Z claude note reopened — author directive (2026-07-15) supersedes the wontfix: execute the ticket; PR #634 implements scores + help + pointer refresh
 
 --- body ---
 ## Context
