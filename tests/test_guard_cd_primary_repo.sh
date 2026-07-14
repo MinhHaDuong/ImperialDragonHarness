@@ -83,6 +83,20 @@ _assert_blocked "cd ~/repo && git commit (tilde)" "cd ~/repo && git commit -m x"
 # normalization must catch it.
 _assert_blocked "cd PRIMARY/sub/.. && git commit (dotdot evasion)" \
                 "cd $PRIMARY/sub/.. && git commit -m x"    "$WORKTREE"
+# Evasion (ticket 0323, residual 1): the session cwd is spelled through a symlink
+# alias of the primary root, so primary_root (derived from cwd) stays aliased while
+# the cd target resolves canonical. Normalizing target alone misses it — both sides
+# must be realpath'd. Uses real on-disk fixtures because realpath resolves symlinks
+# in existing components only.
+_symbase=$(mktemp -d)
+mkdir -p "$_symbase/primary/.claude/worktrees/t001"
+ln -s "$_symbase/primary" "$_symbase/alias"
+_assert_blocked "cd CANONICAL primary && git commit, cwd via symlink alias" \
+                "cd $_symbase/primary && git commit -m x" \
+                "$_symbase/alias/.claude/worktrees/t001"
+rm "$_symbase/alias"
+rm -r "$_symbase/primary"
+rmdir "$_symbase"
 
 # --- ALLOW ----------------------------------------------------------------
 # Same cd+commit but cwd is the primary repo itself (not a worktree session).

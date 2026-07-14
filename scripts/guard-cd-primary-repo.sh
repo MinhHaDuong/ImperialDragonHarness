@@ -54,15 +54,21 @@ target="${target%/}"
 target="${target/#\~/$HOME}"
 target="${target//\$HOME/$HOME}"
 
-# Normalize `..` traversal and symlinks before the equality check (ticket 0323,
-# minor A): `cd $primary/sub/.. && git commit` resolves back to $primary but does
-# not lexically equal it, so it would slip past the string compare below. This is
-# the same evasion residual 1 closed in pretooluse-worktree-path-guard.sh.
-# realpath -m collapses `..` and resolves symlinks in existing components while
-# tolerating a not-yet-existing leaf. Warn on the fallback so the degraded
-# (raw-path, still-vulnerable) mode is visible rather than silent.
+# Normalize `..` traversal and symlinks on BOTH sides before the equality check
+# (ticket 0323, residual 1). Two evasions this closes: `cd $primary/sub/.. &&
+# git commit` resolves back to $primary without lexically equalling it (minor A);
+# and a session cwd spelled through a symlink alias of the primary root leaves
+# primary_root aliased while the target resolves canonical, so the two spellings
+# of the same directory would not string-match. Normalizing only one side would
+# miss the second — both target and primary_root must be canonicalized. This
+# closes the symlink/`..` evasion class here for parity with residual 1 in
+# pretooluse-worktree-path-guard.sh (whose roots come from `git rev-parse`, so
+# they are already canonical). realpath -m collapses `..` and resolves symlinks in
+# existing components while tolerating a not-yet-existing leaf. Warn on the
+# fallback so the degraded (raw-path, still-vulnerable) mode is visible.
 if command -v realpath &>/dev/null; then
     target=$(realpath -m -- "$target" 2>/dev/null || echo "$target")
+    primary_root=$(realpath -m -- "$primary_root" 2>/dev/null || echo "$primary_root")
 else
     echo "guard: realpath unavailable, path normalization skipped" >&2
 fi
