@@ -5,6 +5,9 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-14T05:24Z Minh Ha-Duong created
+2026-07-14T12:41Z claude note raid-207-325-327 imagine+plan: premise verified — 0321 closed (PR #571), gaze SKILL.md § Fork execution contract "Fork liveness" clause present (lines 70-87: fork_liveness_seconds/GAZE_LIVENESS_WINDOW_S 1200s, three markers, direct verify-gate fallback); memory entry untouched by #537 (single creation commit 63e0af6). Key insight: entry conflates TWO stall classes — gaze-fork half superseded (trim to pointer), opus-coder salvage recipe RETAINED (no codified contract covers it; aligned with ticket action 2 "keep what the skill does not capture"). Replacement body + MEMORY.md index line drafted, cross-checked no-contradiction vs clause. Both files already tracked (plain add). Sole-change invariant enforced via diff --stat pre-commit check. Drift guard PASS
+2026-07-14T12:47Z claude note raid feasibility PASS — anchors verified inline (gaze clause:70-87, memory entry 25 lines, index line 47). No cross-ticket file overlap
+2026-07-14T12:52Z claude note executed — trimmed gaze-fork tactical detail to a SKILL.md pointer, retained opus-coder salvage recipe + cross-cutting relay lesson; updated MEMORY.md index line; incident facts (ticket 0284, PR #496, 2026-07-11) and both [[links]] verified against current entry; no contradiction with clause (1200s, verify-gate fallback)
 
 --- body ---
 ## Context
@@ -34,9 +37,9 @@ that the skill owns that contract, the memory duplicate can drift from it.
 
 ## Exit criteria
 
-- [ ] `feedback_agent_stall_watchdog_recovery` points at the gaze SKILL.md
+- [x] `feedback_agent_stall_watchdog_recovery` points at the gaze SKILL.md
       liveness clause instead of restating the detection/recovery steps
-- [ ] No detail contradicts the codified contract
+- [x] No detail contradicts the codified contract
 
 ## Dependency
 
