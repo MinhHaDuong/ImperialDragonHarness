@@ -26,7 +26,7 @@
 # The shipped roster below is inert until explicitly invoked: no seat fires
 # without `/reviewers request <pr>`. An empty roster (`reviewers: []`) makes
 # /reviewers a no-op entirely.
-# Example cli/model seats (commented; uncomment + adjust to enable):
+# Example local-model seat (commented; uncomment + adjust to enable):
 #
 # A fully local, free, private llama-server seat — no credential:
 #   - name: local-qwen
@@ -35,33 +35,6 @@
 #     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
 #     endpoint: http://127.0.0.1:8012/v1
 #     model: openai/qwen3.6-35b-a3b
-#
-# An OpenRouter-hosted frontier seat — the key loads via BASH_ENV, never here.
-# The seat-runner bridges the HTTPS endpoint end-to-end through its network
-# sandbox (--add-host + in-container 8443 bridge):
-#   - name: openrouter-frontier
-#     kind: cli-agent
-#     status: advisory
-#     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
-#     endpoint: https://openrouter.ai/api/v1
-#     model: openai/gpt-5.6-terra
-#     credential-env: OPENROUTER_API_KEY_IDH
-#
-# A budget seat on the same endpoint (~30x cheaper; 2026-07-14 same-diff
-# audit in the trial ticket: noisier, weaker catches — trial arbitrates).
-# ROUTING TRAP: `openai/` below is litellm's PROVIDER-ROUTE prefix, not
-# part of the OpenRouter model ID — prepend it to the full OpenRouter ID
-# (which may itself start with deepseek/, qwen/, ...). Without it,
-# litellm reads the ID's first segment as its own native provider and
-# dials that provider's API host directly — off-relay — dying under
-# --network=none with "Temporary failure in name resolution":
-#   - name: openrouter-budget
-#     kind: cli-agent
-#     status: advisory
-#     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
-#     endpoint: https://openrouter.ai/api/v1
-#     model: openai/deepseek/deepseek-v4-flash
-#     credential-env: OPENROUTER_API_KEY_IDH
 
 reviewers:
   - name: copilot
@@ -69,3 +42,28 @@ reviewers:
     status: advisory
     login: copilot-pull-request-reviewer[bot]
     trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
+  # Primary OpenRouter seat — gpt-5.6-luna chosen over gpt-5.6-terra on cost
+  # (author directive 2026-07-14: ~40% of terra's price; matched terra's
+  # specificity in the round-2 same-diff audit — 0 findings on clean code;
+  # sensitivity untested, the 0207 trial arbitrates). Key loads via BASH_ENV,
+  # never here.
+  - name: openrouter-frontier
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://openrouter.ai/api/v1
+    model: openai/gpt-5.6-luna
+    credential-env: OPENROUTER_API_KEY_IDH
+  # Budget seat (~30x cheaper; noisier, weaker catches — trial arbitrates).
+  # ROUTING TRAP: `openai/` is litellm's PROVIDER-ROUTE prefix, not part of
+  # the OpenRouter model ID — prepend it to the full OpenRouter ID (which may
+  # itself start with deepseek/, qwen/, ...). Without it, litellm reads the
+  # ID's first segment as its own native provider and dials that provider's
+  # API host directly — off-relay — dying under --network=none.
+  - name: openrouter-budget
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://openrouter.ai/api/v1
+    model: openai/deepseek/deepseek-v4-flash
+    credential-env: OPENROUTER_API_KEY_IDH
