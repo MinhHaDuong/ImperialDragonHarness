@@ -65,7 +65,26 @@ sub-agent's.
 narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
-worktree=$primary_root/.claude/worktrees/review-<pr>` directly to produce the verdict from their outputs.
+worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
+
+**Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
+caller must see either the phase-6 verdict comment or a bump log line within
+`fork_liveness_seconds` (`skills/gaze/telemetry.yml`, env override
+`GAZE_LIVENESS_WINDOW_S`; default 1200s / ~20 min) — same knob pattern as the
+wall/token thresholds in § Telemetry. Two independent stalls landed in exactly
+this window, both silent: 2026-07-11 (memory
+`feedback_agent_stall_watchdog_recovery`) and 2026-07-13 (raid 291-245, PR
+#551, where the review comment posted, then ~30 min of quiet: no simplify
+commit, no verdict, review worktree mtime frozen).
+
+**On window expiry, do not re-run phases 2–5.** Check three completion markers:
+(1) a posted verdict comment, (2) branch-tip motion on the PR branch, (3) the
+review worktree's file mtime. All stale/absent → invoke `/verify-gate`
+directly, with the same invocation form as **Caller-side recovery** above
+(one recipe, stated once), and continue the normal round
+flow from its verdict; log a bump line on the ticket. The fallback skips only
+the redundant phase 2–5 re-execution — verify-gate runs at full rigor and the
+two-round cap is unaffected.
 
 ## Phases
 
@@ -363,10 +382,14 @@ verdict), `agents` (sub-agent count), `tokens` (sum, use `na` for missing),
 ### Thresholds
 
 Read from `skills/gaze/telemetry.yml`; env vars override. Defaults:
-wall warn=15min escalate=30min; tokens warn=500k escalate=1M.
+wall warn=15min escalate=30min; tokens warn=500k escalate=1M; fork liveness
+window=20min (monitored by the caller, not checked at internal phase
+boundaries).
 
 On warn: post `/gaze: slow run` comment, continue. On escalate: stop, post
-`/gaze stopped:` with measured value. Escalate > warn. Check at phase boundaries only.
+`/gaze stopped:` with measured value. Escalate > warn. Check at phase boundaries
+only — except fork liveness, which a silent fork cannot self-check, so the
+caller monitors it (§ Fork execution contract).
 
 ## Convergence mode (ticket 0315, measure-B pre-registration)
 

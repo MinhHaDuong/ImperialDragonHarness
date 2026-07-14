@@ -1,0 +1,46 @@
+%erg 0.1
+Title: supersede feedback_agent_stall_watchdog_recovery tactical content — fork-liveness now codified in gaze SKILL.md
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T05:24Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Ticket 0321 codified the gaze fork-liveness window (`fork_liveness_seconds`,
+default 1200s, env override `GAZE_LIVENESS_WINDOW_S`) and the direct
+verify-gate fallback in `skills/gaze/SKILL.md` § Fork execution contract, with
+adherence tests pinning both. The memory entry
+`feedback_agent_stall_watchdog_recovery` still carries the tactical detection
+and recovery steps (branch-tip / worktree-mtime / verdict-comment markers, the
+"do not re-run the panel, drive /verify-gate" recipe) as tribal knowledge. Now
+that the skill owns that contract, the memory duplicate can drift from it.
+
+## Actions
+
+1. Trim the tactical detection/recovery detail from the memory entry
+   `feedback_agent_stall_watchdog_recovery` to a short pointer at the gaze
+   SKILL.md § Fork execution contract "Fork liveness" clause (the codified
+   window + fallback).
+2. Keep only what the skill does not capture: the historical incident record
+   and any cross-cutting lesson beyond gaze's own contract.
+
+## Invariants
+
+- Do not edit the memory entry as part of ticket 0321's PR — that PR touches
+  the skill + tests only. The memory trim is this ticket's sole change.
+
+## Exit criteria
+
+- [ ] `feedback_agent_stall_watchdog_recovery` points at the gaze SKILL.md
+      liveness clause instead of restating the detection/recovery steps
+- [ ] No detail contradicts the codified contract
+
+## Dependency
+
+Actionable once tickets/0321-gaze-fork-liveness-contract-bounded-wind.erg
+merges (the skill clause this ticket points the memory at). No hard
+`Blocked-by` header — the memory edit is safe to do independently of 0321's
+review.

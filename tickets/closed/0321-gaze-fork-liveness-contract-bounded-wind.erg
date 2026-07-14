@@ -2,10 +2,14 @@
 Title: gaze fork-liveness contract: bounded window from review comment to verdict, with direct verify-gate fallback
 Created: 2026-07-13
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #571
 
 --- log ---
 2026-07-13T19:36Z Minh Ha-Duong created
 
+2026-07-14T05:20Z claude note RED: fork-liveness window and fallback tests fail on pre-fix SKILL.md/telemetry.yml before edits
+2026-07-14T05:21Z claude note GREEN: both new tests pass after SKILL.md + telemetry.yml edits (12 passed); YAML validates
+2026-07-14T05:47Z Minh Ha-Duong closed — autoclosed — PR #571
 --- body ---
 ## Context
 
