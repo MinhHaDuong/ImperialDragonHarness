@@ -1,0 +1,60 @@
+%erg 0.1
+Title: erg-pr-merge: add -C <path> so the bare rule-matched invocation works from any cwd
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T16:40Z claude created
+
+--- body ---
+## Context
+
+The standing permission rule `Bash(~/.claude/skills/merge/erg-pr-merge:*)`
+(settings.json, committed 2026-07-10) deterministically authorizes merges —
+but only for the BARE invocation: the rule prefix-matches the whole command
+text, so `cd <worktree> && erg-pr-merge N` starts with `cd` and falls through
+to the stochastic auto-mode classifier, which denies self-merges
+unpredictably. The 2026-07-14 raid wave (#601-#603) stalled on exactly this
+until the bare form was found; it then had to round-trip the PRIMARY checkout
+through each PR branch (worktree remove + `git -C` checkout per PR) because
+the script is cwd-based and the session's base cwd was a husk. Two further
+costs of the workaround: the primary dance is contention-prone under parallel
+sessions, and with cwd outside a checkout `erg-pr-merge` found no
+`tickets/erg` binary and SKIPPED the ticket close on #601/#602 (chore-close
+PR required).
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — arg parsing at "Step 0: resolve PR"
+- `skills/merge/SKILL.md` — states "cwd-based — it never takes a repo or
+  path argument"; must be updated to document -C and the bare-invocation
+  permission synergy
+
+## Actions
+
+1. Accept `-C <path>` as the first argument: `cd` there before anything
+   else, die loudly if the path is missing or not a directory.
+2. Update SKILL.md: document -C, and state that the canonical agent
+   invocation is the bare `~/.claude/skills/merge/erg-pr-merge -C <pr-branch-
+   worktree> <N>` form, which matches the standing allow rule from any cwd.
+3. Keep backward compatibility: no -C means current behavior, byte-identical.
+
+## Test
+
+- Red-first: invoke erg-pr-merge -C <tmp-worktree> with a stub gh, assert it
+  operates on the target checkout (branch check reads the -C repo, not cwd).
+
+## Invariants
+
+- Existing callers without -C are untouched (test_erg_pr_merge suites stay
+  green).
+- The -C path must land INSIDE the target checkout before any git/gh/erg
+  call — no half-cd states.
+
+## Exit criteria
+
+- [ ] `erg-pr-merge -C <path> <N>` merges from an arbitrary cwd
+- [ ] SKILL.md documents the flag and the bare-invocation rule synergy
+- [ ] Ticket-close step finds tickets/erg via the -C checkout (no more
+      skipped closes)
+- [ ] `make check` passes
