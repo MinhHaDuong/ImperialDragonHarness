@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-14T00:00Z Minh Ha-Duong created
+2026-07-14T17:51Z Minh Ha-Duong note Policy (a) chosen: full critical-name denylist on the strict-parse loop. Audit of all 11 project .env files found NONE sets any critical name, so the full set breaks zero existing projects. Factored one shared _be_is_protected_name predicate (0343 set + GCONV_PATH, PYTHONPATH, NODE_OPTIONS, NODE_PATH, PERL5LIB, RUBYOPT) applied at BOTH export points.
 
 --- body ---
 ## Context
@@ -22,10 +23,10 @@ A denylist on the strict-parse export NAME must balance security against legitim
 Recommend **(b)** as an immediate low-regret hardening (zero legit-use breakage), with (a)/(c) as a follow-up if the threat model warrants.
 
 ## Exit criteria
-- [ ] Policy (a/b/c) chosen and recorded
-- [ ] Chosen denylist/allowlist applied to the strict-parse loop export path, refusing with a stderr warning (default-deny), reusing/sharing the 0343 critical-name predicate where sensible
-- [ ] Red tests: a project `.env` setting GCONV_PATH / LD_PRELOAD / BASH_ENV (and, if policy (a), PATH/PYTHONPATH) does NOT export it; legit non-critical keys still load
-- [ ] `make check` + `make lint` pass
-- [ ] Memory `project_bash_env_secret_loading.md` updated
+- [x] Policy (a/b/c) chosen and recorded — policy (a), full denylist (zero-breakage audit across 11 project .env files)
+- [x] Chosen denylist/allowlist applied to the strict-parse loop export path, refusing with a stderr warning (default-deny), reusing/sharing the 0343 critical-name predicate where sensible — factored ONE shared `_be_is_protected_name` predicate applied at both the strict-parse loop and the KEYS-selection export
+- [x] Red tests: a project `.env` setting GCONV_PATH / LD_PRELOAD / BASH_ENV (and, if policy (a), PATH/PYTHONPATH) does NOT export it; legit non-critical keys still load — extended tests/test_bash_env_project_env_parse.sh (strict-parse) and tests/test_bash_env_keys_protect_critical_names.sh (selection); all RED pre-fix, GREEN post-fix
+- [x] `make check` + `make lint` pass
+- [x] Memory `project_bash_env_secret_loading.md` updated
 
 Reference: sibling ticket 0343 (KEYS-selection export-name denylist, closed via PR #604).

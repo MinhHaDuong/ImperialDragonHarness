@@ -45,6 +45,25 @@ _load_rc() {
     echo $?
 }
 
+# Load bash-env.sh and print only its STDERR (diagnostic warnings).
+_load_stderr() {
+    local home="$1" projdir="$2"
+    HOME="$home" bash -c '
+        cd "$1" || exit 1
+        source "$2"
+    ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
+}
+
+# Load bash-env.sh and print `export -p` (the exported environment).
+_load_exports() {
+    local home="$1" projdir="$2"
+    HOME="$home" bash -c '
+        cd "$1" || exit 1
+        source "$2"
+        export -p
+    ' _ "$projdir" "$SCRIPT" 2>/dev/null
+}
+
 _assert_eq() {
     local label="$1" got="$2" want="$3"
     if [[ "$got" == "$want" ]]; then
@@ -61,6 +80,36 @@ _assert_file_absent() {
         echo "PASS: $label"
     else
         echo "FAIL: $label — file was created: $path"
+        fail=1
+    fi
+}
+
+_assert_ne() {
+    local label="$1" got="$2" notwant="$3"
+    if [[ "$got" != "$notwant" ]]; then
+        echo "PASS: $label"
+    else
+        echo "FAIL: $label — value is [$got], must NOT equal [$notwant]"
+        fail=1
+    fi
+}
+
+_assert_contains() {
+    local label="$1" hay="$2" needle="$3"
+    if [[ "$hay" == *"$needle"* ]]; then
+        echo "PASS: $label"
+    else
+        echo "FAIL: $label — [$needle] not found"
+        fail=1
+    fi
+}
+
+_assert_not_contains() {
+    local label="$1" hay="$2" needle="$3"
+    if [[ "$hay" != *"$needle"* ]]; then
+        echo "PASS: $label"
+    else
+        echo "FAIL: $label — [$needle] unexpectedly present"
         fail=1
     fi
 }
@@ -123,5 +172,78 @@ printf 'USERKEY=uval\n' > "$USER_HOME/.claude/.env"
 P5="$WORK/p5"; mkdir -p "$P5"   # project dir with NO .env — isolates the user file
 _assert_eq "trusted ~/.claude/.env is sourced (USERKEY=uval)" \
     "$(_load_var "$USER_HOME" "$P5" USERKEY)" "uval"
+
+# --- (6) strict-parse critical-name denylist (ticket 0345, policy a) -----------
+# The untrusted project .env strict-parse loop must refuse shell/process/
+# interpreter-critical export NAMES, not only GUARD_* keys. Attacker controls
+# both name and value here, so an un-denied name is a direct injection into
+# every subprocess: GCONV_PATH → glibc iconv-module RCE, PATH → interpreter
+# clobber, LD_PRELOAD/BASH_ENV → code execution, PYTHONPATH/NODE_OPTIONS →
+# interpreter hijack. The shared predicate _be_is_protected_name refuses them
+# on the strict-parse path (mirroring the KEYS-selection path).
+
+# (6a) GCONV_PATH is refused (not exported) with a warning.
+P6="$WORK/p6"; mkdir -p "$P6"
+printf 'GCONV_PATH=/evil\n' > "$P6/.env"
+_assert_eq "project .env cannot set GCONV_PATH" \
+    "$(_load_var "$EMPTY_HOME" "$P6" GCONV_PATH)" ""
+_assert_contains "project .env GCONV_PATH warns 'refusing protected name'" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6")" "refusing protected name from project .env: GCONV_PATH"
+
+# (6b) PATH is not overwritten by a project .env; the real inherited PATH stays.
+P6B="$WORK/p6b"; mkdir -p "$P6B"
+printf 'PATH=/evil\n' > "$P6B/.env"
+_assert_ne "project .env cannot overwrite PATH with /evil" \
+    "$(_load_var "$EMPTY_HOME" "$P6B" PATH)" "/evil"
+_assert_contains "project .env PATH warns 'refusing protected name'" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6B")" "refusing protected name from project .env: PATH"
+
+# (6c) parametrized: each critical name is refused (value never equals its
+# payload) and warns. IFS is checked additionally via the export attribute
+# (its value is restored to the caller's, not a clean discriminator alone).
+_be0345_case() {  # <key> <payload>
+    local key="$1" payload="$2" dir="$WORK/p6c_$1"
+    mkdir -p "$dir"
+    printf '%s=%s\n' "$key" "$payload" > "$dir/.env"
+    _assert_ne "project .env cannot set $key" \
+        "$(_load_var "$EMPTY_HOME" "$dir" "$key")" "$payload"
+    _assert_contains "project .env $key warns 'refusing protected name'" \
+        "$(_load_stderr "$EMPTY_HOME" "$dir")" "refusing protected name from project .env: $key"
+}
+_be0345_case PYTHONPATH /evil
+_be0345_case NODE_OPTIONS --require=/evil
+_be0345_case NODE_PATH /evil
+_be0345_case PERL5LIB /evil
+_be0345_case RUBYOPT -r/evil
+_be0345_case LD_PRELOAD /evil.so
+_be0345_case LD_LIBRARY_PATH /evil
+_be0345_case LD_AUDIT /evil.so
+_be0345_case BASH_ENV /evil
+_be0345_case ENV /evil
+_be0345_case IFS x
+
+# (6d) IFS must not be turned into an exported variable by a project .env.
+P6D="$WORK/p6d"; mkdir -p "$P6D"
+printf 'IFS=x\n' > "$P6D/.env"
+_assert_not_contains "project .env IFS is NOT exported" \
+    "$(_load_exports "$EMPTY_HOME" "$P6D")" "declare -x IFS"
+
+# (6e) the _be_* bookkeeping namespace is also refused (would corrupt the loop).
+P6E="$WORK/p6e"; mkdir -p "$P6E"
+printf '_be_key=hijack\n' > "$P6E/.env"
+_assert_eq "project .env cannot set _be_ bookkeeping var" \
+    "$(_load_var "$EMPTY_HOME" "$P6E" _be_key)" ""
+
+# --- (7) regression: benign non-critical keys still load normally -------------
+P7="$WORK/p7"; mkdir -p "$P7"
+printf 'PROJECT_DATA=/some/path\n' > "$P7/.env"
+_assert_eq "benign PROJECT_DATA still exports" \
+    "$(_load_var "$EMPTY_HOME" "$P7" PROJECT_DATA)" "/some/path"
+
+# (7b) a KEYS= line is not a protected name; it still parses as a plain value.
+P7B="$WORK/p7b"; mkdir -p "$P7B"
+printf 'KEYS=someprovider\n' > "$P7B/.env"
+_assert_eq "KEYS= line still parses (not refused as protected)" \
+    "$(_load_var "$EMPTY_HOME" "$P7B" KEYS)" "someprovider"
 
 exit "$fail"

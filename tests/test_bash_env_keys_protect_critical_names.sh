@@ -140,8 +140,13 @@ REAL="REAL_SENTINEL_kept_intact"
 # Rename form KEYS=zzz:EVIL=<NAME>. Because these are inherited normally here (a
 # valid PATH etc.), the extraction spawns fine pre-fix, so the "protected name"
 # warning is the clean pre/post discriminator.
+# The GCONV_PATH + interpreter-var tail (GCONV_PATH, PYTHONPATH, NODE_OPTIONS,
+# NODE_PATH, PERL5LIB, RUBYOPT) was added in ticket 0345 when both export paths
+# were unified behind the shared _be_is_protected_name predicate; those names go
+# RED against a pre-0345 script, which only covered the 0343 head of this list.
 for name in PATH BASH_ENV ENV SHELLOPTS BASHOPTS IFS PS1 PS2 PS3 PS4 \
-            PROMPT_COMMAND CDPATH GLOBIGNORE LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT; do
+            PROMPT_COMMAND CDPATH GLOBIGNORE LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT \
+            GCONV_PATH PYTHONPATH NODE_OPTIONS NODE_PATH PERL5LIB RUBYOPT; do
     proj="$(_mkproj "p1_$name" "KEYS=zzz:EVIL=$name
 ")"
     _assert_contains "(1:$name) warns 'protected name: $name'" \
