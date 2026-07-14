@@ -152,7 +152,9 @@ fi
 #    (NOT a secret), passed inline. With --credential-env NAME: read the secret
 #    from that env var HERE, export it, and pass the BARE `-e OPENAI_API_KEY`
 #    form so podman reads the value from the runner's env — never argv (argv
-#    leaks to `ps -ef`). Fail loud if the named var is empty; never echo it. ────
+#    leaks to `ps -ef`). Fail loud if the named var is empty; never echo it.
+#    The containment self-test omits this credential entirely (run_seat --no-cred,
+#    ticket 0339): it probes only isolation and never needs the endpoint key. ────
 CRED_ARGS=(-e OPENAI_API_KEY=local-dummy)
 if [[ -n "$CREDENTIAL_ENV" ]]; then
     if [[ -z "${!CREDENTIAL_ENV:-}" ]]; then
@@ -324,6 +326,14 @@ fi
 
 # ── The sandboxed seat launcher (timeout-wrapped, reaped; network-denied) ─────
 run_seat() {
+    # --no-cred (first arg) runs the container with NO endpoint credential: the
+    # containment self-test only probes write/secret/network isolation and never
+    # needs the real key (ticket 0339, least-privilege). Only the review run gets it.
+    local cred_args=("${CRED_ARGS[@]}")
+    if [[ "${1:-}" == "--no-cred" ]]; then
+        cred_args=()
+        shift
+    fi
     local cname="seatrun-$$-${RANDOM}"
     local rc=0
     SEAT_CONTAINERS+=("$cname")
@@ -345,7 +355,7 @@ run_seat() {
         -e PATH="/usr/bin:/bin" \
         -e TERM=dumb \
         -e COLUMNS=500 \
-        ${CRED_ARGS[@]+"${CRED_ARGS[@]}"} \
+        ${cred_args[@]+"${cred_args[@]}"} \
         -e OPENAI_API_BASE="$CONTAINER_BASE" \
         -w /repo \
         "$IMAGE" "$@" || rc=$?
@@ -356,7 +366,7 @@ run_seat() {
 
 # ── Containment self-test (0217: proven, not assumed; alive-then-blocked) ─────
 echo "seat-runner: containment self-test..." >&2
-PROBE=$(run_seat bash -c '
+PROBE=$(run_seat --no-cred bash -c '
     echo SANDBOX-ALIVE
     touch /repo/PWNED 2>/dev/null && echo WRITE-ALLOWED || echo WRITE-BLOCKED
     cat '"$HOMEDIR"'/.ssh/id_* '"$HOMEDIR"'/.claude/scripts/bash-env.sh \
