@@ -13,6 +13,29 @@ trap 'rm -rf "$SANDBOX"' EXIT
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
 
+# Real git binary, captured before the framing shim (case 11) shadows it.
+REAL_GIT=$(command -v git)
+export REAL_GIT
+# rtk-style output-rewrite simulator for `git worktree list --porcelain` (a
+# confirmed rewrite target). Inert unless SHIM_FRAME_WORKTREE is set; then it
+# frames that one subcommand's stdout — a leading banner plus a malformed,
+# extra-field `branch` line — and delegates every other git call unchanged.
+SHIMDIR="$SANDBOX/bin"
+mkdir -p "$SHIMDIR"
+cat > "$SHIMDIR/git" <<'GITSHIM'
+#!/usr/bin/env bash
+set -uo pipefail
+: "${REAL_GIT:?REAL_GIT must point at the real git binary}"
+if [[ -n "${SHIM_FRAME_WORKTREE:-}" && "${1:-}" == "worktree" && "${2:-}" == "list" ]]; then
+    echo "--- Changes ---"
+    "$REAL_GIT" "$@"
+    echo "branch refs/heads/main is stale"
+    exit 0
+fi
+exec "$REAL_GIT" "$@"
+GITSHIM
+chmod +x "$SHIMDIR/git"
+
 _pass() { echo "PASS: $1"; }
 _fail() { echo "FAIL: $1"; fail=1; }
 
@@ -152,7 +175,25 @@ else
     _fail "branch argument should sync only the named branch (dev)"
 fi
 
+# --- case 11: output-rewrite tolerance (ticket 0333). `git worktree list
+# --porcelain` is a confirmed rtk rewrite target; the checkout-location parse
+# must survive a framed stream. The shim prepends a banner and appends a
+# malformed extra-field `branch refs/heads/main ...` line. Pre-fix, the loose
+# awk double-emitted co_path (banner ignored, but the malformed branch line's
+# $2==ref matched), corrupting it into a multi-line value so `git -C "$co_path"`
+# failed and main was NOT fast-forwarded — RED. The hardened parse filters
+# non-porcelain lines and requires exactly two fields on a branch record, so it
+# still resolves the single real checkout and fast-forwards main.
+_setup framewt
+git -C "$CLONE" worktree add --quiet "$SANDBOX/framewt-wt" -b fw-branch >/dev/null
+if SHIM_FRAME_WORKTREE=1 PATH="$SHIMDIR:$PATH" bash "$SYNC" "$SANDBOX/framewt-wt" >/dev/null \
+   && [ "$(_main_sha "$CLONE")" = "$NEW" ]; then
+    _pass "checkout-location parse survives framed worktree-list output; main fast-forwarded"
+else
+    _fail "framed worktree-list output corrupted the parse; main not fast-forwarded (RED = pre-fix)"
+fi
+
 if (( fail )); then
     exit 1
 fi
-echo "PASS: sync-local-main moves only a fast-forwardable default branch and never touches local state"
+echo "PASS: sync-local-main moves only a fast-forwardable default branch and never touches local state, even under framed git output"
