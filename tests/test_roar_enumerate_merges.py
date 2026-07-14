@@ -159,6 +159,46 @@ def test_non_pr_merge_subject_branch_null_still_emitted(repo):
     assert records[0]["project"] == "testproj"
 
 
+def test_files_changed_excludes_interleaved_merges(repo):
+    """files_changed counts only the PR's own diff, not intervening PRs.
+
+    A batched session merges PRs cut from an older main. When PR-A is cut off
+    C0, PR-B lands on main first, then PR-A is merged, a two-dot M^1..M^2 diff
+    charges PR-A with PR-B's files as phantom changes. The PR's own diff (three
+    dot, merge-base relative — what GitHub and a raid's per-PR roar record) must
+    win.
+    """
+    base = head(repo)  # C0
+    # Cut PR-A off C0, but do not merge it yet.
+    git(repo, "switch", "-c", "feat-A")
+    (repo / "a1.txt").write_text("a1\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-m", "A: one file")
+    git(repo, "switch", "main")
+    # PR-B lands on main first (three files), advancing main under PR-A.
+    merge_pr(
+        repo,
+        pr=20,
+        owner_branch="ben/three-files",
+        feature_commits=[
+            ("b1.txt", "b1"),
+            ("b2.txt", "b2"),
+            ("b3.txt", "b3"),
+        ],
+    )
+    # Now merge PR-A off the advanced main.
+    git(repo, "merge", "--no-ff", "feat-A", "-m",
+        "Merge pull request #21 from ann/feat-A")
+    records, res = enumerate_merges(repo, base)
+    assert len(records) == 2, res.stderr
+    # records[0] = PR-B (no interleaving), records[1] = PR-A (one own file).
+    assert records[0]["branch"] == "three-files"
+    assert records[0]["files_changed"] == 3
+    assert records[1]["branch"] == "feat-A"
+    assert records[1]["files_changed"] == 1
+    assert records[1]["commits"] == 1
+
+
 def test_commits_and_files_changed_counts(repo):
     base = head(repo)
     merge_pr(

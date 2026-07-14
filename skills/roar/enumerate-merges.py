@@ -93,7 +93,11 @@ def commits_in_range(parent1: str, parent2: str, root: str) -> int:
 
 
 def files_changed(parent1: str, parent2: str, root: str) -> int:
-    out = git(["diff", "--stat", f"{parent1}..{parent2}"], cwd=root)
+    # Three-dot (merge-base relative) so a batched session's intervening PRs,
+    # which advanced parent1 but are absent from parent2, do not leak in as
+    # phantom changes. This is the PR's own diff — what GitHub's "Files changed"
+    # and a raid's immediate per-PR roar record.
+    out = git(["diff", "--stat", f"{parent1}...{parent2}"], cwd=root)
     lines = [ln for ln in out.splitlines() if ln.strip()]
     if not lines:
         return 0
