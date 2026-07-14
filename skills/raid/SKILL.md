@@ -131,8 +131,8 @@ the execute agent prompt and the agent creates the file as its first step.
 Launch agents by cluster to cross-check plans (`model: haiku` for the mechanical
 existence checks — paths/lines/signatures; `model: sonnet` for the cross-ticket
 conflict and cross-cutting-registry scan, which is judgement across N plans, not
-lookup — missing it cost a resurrection agent for 3 of 4 merges, memory
-`feedback_rebase_drop_cascade`):
+lookup — missing it cost a resurrection agent for 3 of 4 merges, see § Phase 5.0
+below):
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts
@@ -152,7 +152,7 @@ rebase is cheaper than the coordination overhead.
 **Why**: when N parallel PRs each append to the same cross-cutting set, the
 rebase onto sibling-merged main silently drops each PR's own addition. Wave 2
 (SOTA-adapter raid, 2026-05-20) needed a resurrection agent for 3 of 4 merges
-because of this. (memory: feedback_rebase_drop_cascade)
+because of this.
 
 **How**: before opening any Wave-N PR, open one tiny PR that adds ALL of the
 wave's entries to the shared registries at once, and merge it first. Each
@@ -334,7 +334,7 @@ the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor acro
 a forked-skill boundary); it inspects the salvaged WIP via
 `git show --stat HEAD` before continuing rather than starting from scratch.
 Salvage is the FIRST step of any restart, not an afterthought.
-(memory: feedback_killed_agent_salvage)
+(memory: feedback_agent_stall_watchdog_recovery)
 
 **Agent timeout**: If an agent has not pushed within 10 minutes, salvage its
 worktree (above), then kill it. Split the ticket or relaunch with narrower

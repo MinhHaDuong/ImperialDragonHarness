@@ -77,7 +77,7 @@ branch — there are no remote branches nor merge requests to inspect.
    ```bash
    git rev-parse HEAD > "$(git rev-parse --git-common-dir)/roar-last-sha"
    ```
-3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174).
+3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Tooling repos: apply the severity floor (rules/workflow.md § Autonomous Action Rules) — findings that don't block a merge, corrupt state, or bite a science project are reported in the run summary, not ticketed.
 4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
@@ -123,7 +123,7 @@ branch — there are no remote branches nor merge requests to inspect.
     git fetch --prune origin
     ~/.claude/scripts/worktree-gc.sh
     ```
-    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to remove — but it also **reports (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer registered worktrees, so a `worktree-gc: husk …` line may appear without anything being cleaned. That output is informational; husks are already tracked by tickets 0325/0338 — do NOT re-file. See tickets 0169, 0195, 0325.
+    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to remove — but it also **reports (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer registered worktrees, so a `worktree-gc: husk …` line may appear without anything being cleaned. That output is informational; report-only is the PERMANENT design (ticket 0338 closed the removal-heuristic question — remote sessions are structurally undetectable, so no complete liveness signal exists) — do NOT re-file. See tickets 0169, 0195, 0325, 0338.
     Skip in a no-forge repo: without a remote, `[gone]` can never register —
     say so in one line.
 11. **Verify hygiene**:

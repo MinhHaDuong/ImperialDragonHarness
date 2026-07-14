@@ -231,6 +231,18 @@ _be0345_case GIT_EXTERNAL_DIFF /evil
 # pager input/close hooks: a `|cmd %s` LESSOPEN runs on every `git log` / `less`.
 _be0345_case LESSOPEN '|evil %s'
 _be0345_case LESSCLOSE '|evil %s'
+# lower-severity perturbation vars (ticket 0352): not code-execution vectors, but
+# a hostile project .env should not be able to steer a child's timezone, terminal
+# database, prompt-0, dynamic-linker diagnostics, xtrace fd, or history file.
+_be0345_case PS0 /evil
+_be0345_case LD_DEBUG all
+_be0345_case LD_PROFILE /evil.so
+_be0345_case TZ /evil
+_be0345_case TZDIR /evil
+_be0345_case LOCALDOMAIN evil
+_be0345_case TERMINFO /evil
+_be0345_case BASH_XTRACEFD 2
+_be0345_case HISTFILE /evil
 
 # (6d) IFS must not be turned into an exported variable by a project .env.
 P6D="$WORK/p6d"; mkdir -p "$P6D"

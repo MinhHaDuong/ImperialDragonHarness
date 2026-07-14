@@ -1,0 +1,67 @@
+%erg 0.1
+Title: guard-worktree-identity false-positive on a mutating verb inside a quoted argument
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: wontfix — fail-safe (only over-blocks, never mis-allows), invisible in a healthy worktree; documented as a known residual gap in the guard header. Not worth the fix risk.
+
+--- log ---
+2026-07-14T21:33Z Minh Ha-Duong created
+2026-07-14T21:39Z Minh Ha-Duong closed — wontfix; author decision. The behaviour is documented in the guard header (PR #625); a quote-aware-split fix is not worth reopening the I1 regression surface for a gap that never mis-allows.
+
+--- body ---
+## Context
+`scripts/guard-worktree-identity.sh` gates a mutating git/erg command when the
+cwd claims a harness worktree but git resolves elsewhere (incident I1). Its
+`GIT_MUT`/`ERG_MUT` regexes match the verb token ANYWHERE in the command text,
+including inside a quoted argument of a read-only command. So a read-only
+`grep -nE '...|erg close|erg pr' f` or `echo 'git commit later'` is misread as a
+mutation: quote-stripping (`norm`) plus the `tr ';&|'` split then cuts a grep
+pattern like `'a|erg close|b'` into a bare `erg close` segment with no `git -C`,
+forcing the identity check.
+
+Found 2026-07-14 (session a645ef77) while inspecting AEDIST/harness workflows
+from an orphaned husk cwd — several read-only `grep`/`gh` inspection commands
+were blocked because their grep patterns literally contained `erg close`.
+
+## Severity — accepted as a documented gap, not urgent
+- Fail-SAFE: it only ever over-blocks; it never mis-allows a real mutation.
+- In a HEALTHY worktree it does not even block — the final identity check passes
+  (basename matches, toplevel != primary); the only cost is a skipped fast-path
+  (~one extra rev-parse). It actually blocks ONLY under a real identity
+  mismatch (husk / deregistered worktree) AND when the read-only command's args
+  contain a git/erg verb token.
+- Workaround is trivial: name the tree with `git -C`, or run from a
+  non-worktree cwd, or reword the pattern.
+
+Documented as a known residual gap in the guard header (this ticket referenced
+there), consistent with the already-documented command-substitution and
+git-alias gaps.
+
+## Reproduction (verified against the real guard)
+cwd = a husk under `.claude/worktrees/`; payload fed as `.tool_input.command`:
+- `grep -nE '...|erg close|erg pr' f`  -> exit 2 (false positive)
+- `grep -nE '...|autoclose' f`         -> exit 0
+- `gh pr list --head foo --state all`  -> exit 0
+- `echo 'remember to git commit later'`-> exit 2 (false positive)
+- real bare `git commit -m x`          -> exit 2 (correct, the I1 invariant)
+- `git -C /tmp log --oneline`          -> exit 0
+
+## Possible fix (deferred)
+Root cause is quote-strip + split-on-`|` destroying the argument boundary. A
+robust fix splits on shell separators WITHOUT splitting inside quotes and
+anchors the verb to command position (segment start, after optional
+`env VAR=val` prefixes), while keeping the I1 replay and the `git "commit"`
+quoting-evasion regressions green. Add two red cases to
+`tests/test_guard_worktree_identity.sh`: `grep 'erg close'` and
+`echo 'git commit'` from a mismatched cwd must ALLOW after the fix.
+
+## Exit criteria
+- [ ] Quote-aware segment split; verb matched only in command position
+- [ ] `grep 'erg close'` / `echo 'git commit'` from a mismatched cwd -> allow
+- [ ] I1 replay + `git "commit"` evasion + compound-bypass tests stay green
+- [ ] Guard header note updated (drop "not fixed" once resolved)
+
+Closed wontfix (2026-07-14) — documented as a known residual gap in the guard
+header instead of fixed. Exit criteria left unticked deliberately: the fix was
+declined, not completed. Reopen if the false positive ever bites harder than
+the trivial `git -C` / non-worktree-cwd workaround.

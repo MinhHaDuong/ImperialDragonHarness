@@ -2,7 +2,7 @@
 name: merge
 description: Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI).
 user-invocable: true
-argument-hint: [pr-number]
+argument-hint: [-C path] [pr-number]
 ---
 
 # Merge $ARGUMENTS
@@ -12,11 +12,21 @@ Run:
 ~/.claude/skills/merge/erg-pr-merge $ARGUMENTS
 ```
 
-**Cross-repo prerequisite**: the caller must ensure cwd is the target
-project and the PR branch is checked out before invoking `/merge`. For
-cross-repo flows, this means `cd <project-path> && git fetch origin`
-and checking out the PR branch before the call. The script itself is
-cwd-based — it never takes a repo or path argument.
+**Cross-repo prerequisite**: the script operates on the checkout it runs in,
+with the PR branch checked out. Point it at a checkout in one of two ways:
+
+- **`-C PATH` (preferred for agents)** — the script cds into `PATH` before any
+  git/gh/erg call. The canonical agent invocation is the bare form
+  `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N`, which prefix-matches the
+  standing allow rule `Bash(~/.claude/skills/merge/erg-pr-merge:*)` from any cwd.
+  A `cd WORKTREE && …` prefix does **not** match that rule (the command text no
+  longer starts with the script path), so it falls through to the stochastic
+  auto-mode classifier — use `-C` instead of a `cd` prefix.
+- **Implicit cwd** — with no `-C`, the script uses the current directory, so the
+  caller must `cd <project-path> && git fetch origin` and check out the PR branch
+  before the call.
+
+`-C` with a missing or non-directory path fails loudly before any other work.
 
 ## Ticket lines in the PR body
 

@@ -101,13 +101,21 @@ PR_BRANCH=<resolved-branch-name>
 
 # Step 2 — Resolve the primary repo root, then create the worktree under its
 # guarded `.claude/worktrees/` namespace (ticket 0300 — /tmp is outside every
-# guard fast-path; `.claude/worktrees/review-*` is already whitelisted).
+# guard fast-path). `.claude/worktrees/review-*` is not whitelisted by name; it
+# is covered by the same worktree-identity check as every worktree: an Edit/Write
+# is allowed when the acting process is physically inside that worktree, denied
+# otherwise — save the human-set `GUARD_ALLOW_PRIMARY_EDIT` escape hatch (the
+# `projects/*/memory/*` exemption cannot match a review-* path). 0300 moved
+# review worktrees here from /tmp for that coverage, not for a name allowlist;
+# exact semantics live in `~/.claude/scripts/pretooluse-worktree-path-guard.sh`.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 git fetch origin "$PR_BRANCH"
 git worktree add "$primary_root/.claude/worktrees/review-<pr-number>" origin/"$PR_BRANCH"
-# All phases 1–6 and the fix agent run inside $primary_root/.claude/worktrees/review-<pr-number>.
-# The main repo is never switched, never dirtied.
+# The cwd-pinned reviewer agents and the REROLL fix agent run inside
+# $primary_root/.claude/worktrees/review-<pr-number>; the main repo is never
+# switched, never dirtied. (Exception: phase 5 /simplify is still a direct
+# invocation and runs from the fork's own cwd, not review-<pr> — see its note below.)
 ```
 
 On any exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker abort),
@@ -204,7 +212,11 @@ embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktr
 same containment rails, whose prompt simply invokes `/review` on the PR and
 returns the review summary. (Phase 5 `/simplify` is the other built-in slash
 command; it stays as a direct invocation for now — out of this ticket's scope —
-and would be Agent-WRAPped the same way when converted.)
+and would be Agent-WRAPped the same way when converted. Until it is, `/simplify`
+runs in the fork's own cwd — a sibling worktree, not review-<pr> — so the
+worktree-identity guard denies its Edit/Write and it must apply fixes via Bash;
+the Agent-WRAP is what lets those edits execute inside review-<pr>. Tracked at
+ticket 0349.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).

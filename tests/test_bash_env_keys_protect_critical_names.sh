@@ -148,11 +148,13 @@ REAL="REAL_SENTINEL_kept_intact"
 # GIT_EXTERNAL_DIFF, LESSOPEN, LESSCLOSE) were added in the 0345 verify round: the
 # harness runs git constantly, so any of these is a direct command-execution
 # channel if a hostile project .env can aim a value at it.
-for name in PATH BASH_ENV ENV SHELLOPTS BASHOPTS IFS PS1 PS2 PS3 PS4 \
+for name in PATH BASH_ENV ENV SHELLOPTS BASHOPTS IFS PS0 PS1 PS2 PS3 PS4 \
             PROMPT_COMMAND CDPATH GLOBIGNORE LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT \
+            LD_DEBUG LD_PROFILE \
             GCONV_PATH PYTHONPATH NODE_OPTIONS NODE_PATH PERL5LIB RUBYOPT \
             GIT_SSH_COMMAND GIT_SSH GIT_ASKPASS GIT_EXTERNAL_DIFF \
-            LESSOPEN LESSCLOSE; do
+            LESSOPEN LESSCLOSE \
+            TZ TZDIR LOCALDOMAIN TERMINFO BASH_XTRACEFD HISTFILE; do
     proj="$(_mkproj "p1_$name" "KEYS=zzz:EVIL=$name
 ")"
     _assert_contains "(1:$name) warns 'protected name: $name'" \

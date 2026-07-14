@@ -310,4 +310,48 @@ else
     fail=1
 fi
 
+# 18. Cross-worktree deny (ticket 0342): two sibling harness worktrees under one
+# primary — a session worktree `t-session` and a gaze review worktree
+# `review-999`. A process INSIDE t-session that targets a file inside review-999
+# must be DENIED. The guard has no `review-*` allowlist (0300 moved review
+# worktrees under `.claude/worktrees/` for identity COVERAGE, not to whitelist
+# the name); a path is allowed only when the acting worktree physically contains
+# it. This is the exact scenario gaze phase 5 hits while `/simplify` is a direct
+# invocation: the fork's cwd is a sibling worktree, so its Edit into review-999
+# is denied. Case 19 is its silent-allow companion. Real-git fixture (cases
+# 8/9/17 style) so identity resolution runs for real. Case 18 also guards
+# against "fixing" 0342 by adding a review-* allowlist — that would flip it FAIL.
+_case18_primary=$(mktemp -d)
+git -C "$_case18_primary" init -q
+git -C "$_case18_primary" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+mkdir -p "$_case18_primary/.claude/worktrees"
+git -C "$_case18_primary" worktree add -q "$_case18_primary/.claude/worktrees/t-session"
+git -C "$_case18_primary" worktree add -q "$_case18_primary/.claude/worktrees/review-999"
+out=$( cd "$_case18_primary/.claude/worktrees/t-session" \
+       && printf '{"tool_name":"Write","tool_input":{"file_path":"%s/.claude/worktrees/review-999/fix.py","content":"x"}}' "$_case18_primary" \
+       | bash "$HOOK" 2>&1 || true)
+if echo "$out" | grep -q "Worktree path guard"; then
+    echo "PASS: denies Edit from one worktree into a sibling review-* worktree"
+else
+    echo "FAIL: expected deny for cross-worktree edit into review-999; got: $out"
+    fail=1
+fi
+
+# 19. Silent-allow companion to case 18: a process INSIDE review-999 editing a
+# file inside review-999 is allowed (exit 0, silent) — the acting worktree
+# contains the target. Confirms the deny in case 18 is about worktree identity,
+# not the `review-*` name.
+rc=$( cd "$_case18_primary/.claude/worktrees/review-999" \
+      && printf '{"tool_name":"Write","tool_input":{"file_path":"%s/.claude/worktrees/review-999/fix.py","content":"x"}}' "$_case18_primary" \
+      | bash "$HOOK" >/dev/null 2>&1; echo $? )
+if [ "$rc" = "0" ]; then
+    echo "PASS: allows Edit inside the review-* worktree the process runs from (exit 0)"
+else
+    echo "FAIL: expected exit 0 editing inside review-999 from review-999; got: $rc"
+    fail=1
+fi
+git -C "$_case18_primary" worktree remove --force "$_case18_primary/.claude/worktrees/t-session" 2>/dev/null || true
+git -C "$_case18_primary" worktree remove --force "$_case18_primary/.claude/worktrees/review-999" 2>/dev/null || true
+rm -rf "$_case18_primary"
+
 exit $fail
