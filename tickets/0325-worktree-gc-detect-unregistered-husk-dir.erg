@@ -5,7 +5,13 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-07-14T05:16Z Minh Ha-Duong created
+2026-07-14T12:41Z claude note raid-207-325-327 imagine+plan: premise verified — worktree-gc.sh iterates porcelain only (61-80); live husk fixture confirmed (explore-ticket-pipeline, unregistered, non-empty: .ruff_cache tree, and is a LIVE session base cwd — proof report-only is right). Plan: set-difference husk scan reusing the existing porcelain pass (registered_paths array at case arm 63, scan block after flush 81, summary+silence-guard 83-87), report-only, NO removal (criterion 2 vacuously satisfied per its "if implemented" wording — flagged for reviewer). Red-first pytest test_gc_reports_unregistered_husk_dir in tests/test_worktree_tools.py, @integration. Bash traps covered (empty-array set -u guard, no ((++)), find -print0). Drift guard PASS
+2026-07-14T12:47Z claude note raid feasibility PASS — anchors verified inline (case arm:63, porcelain:80, flush:81, summary:83-87). No cross-ticket file overlap
+2026-07-14T12:55Z claude note executed: red-first test_gc_reports_unregistered_husk_dir added (@integration), proven RED on pre-fix code, GREEN after. worktree-gc.sh husk scan implemented — registered_paths array, set-difference find -print0 loop with realpath-normalised both sides, report-only line per husk, husks counter (husks=$((husks+1))), silence-guard + summary extended. All 24 worktree-tool tests pass; bash -n + shellcheck clean. Criterion 2 vacuously satisfied (report-only, no removal) — left unticked, argued in PR body
+2026-07-14T13:05Z claude note review-pr round 1 (PR #602): reproduced blocker — husk scan rooted on `git rev-parse --show-toplevel`, which for a linked worktree resolves to the worktree's own root; molt/roar invoke gc bare (repo=".") from a worktree cwd, so .claude/worktrees/ was absent and the scan silently skipped. Fixed: root on registered_paths[0] (git lists the main worktree first — invocation-invariant, matches the removal pass). Added red-first test_gc_reports_husk_when_run_from_linked_worktree (proven RED pre-fix). Consistency consider: header comment + test docstring now mention husk capability. Scope consider: filed follow-up ticket 0338 for the deferred age/mtime safe-removal design. 25 tests pass, shellcheck clean
 
+2026-07-14T13:42Z claude note bump verify-reroll round-1: unresolved verifiable minors from review-pr panel — nested-worktree-name false-positive husk report (scripts/worktree-gc.sh:104-129), unescaped newline injection in husk echo line, find -type d lacks -L, unreadable .claude/worktrees/ silently yields zero-husk report; c848620 fixed only the two simplify must-fix findings, none of these four
+2026-07-14T13:47Z verify round 1: fixed findings 1 (nested-worktree false positive via ancestor-prefix check), 2 (log-line forgery via printf %q), 4 (unreadable-dir visible stderr warning); DOWNGRADED finding 3 (symlinked husk) — husks are ordinary dirs left by git deregistration, never symlinks; naive find -L would false-positive on a symlink into a registered target. Report-only scan, low blast radius.
 --- body ---
 ## Context
 On 2026-07-14, session a645ef77 found its base worktree
@@ -44,7 +50,7 @@ worktree list`), so husks are invisible to it and accumulate.
   (existing behavior), and never the tree it runs from.
 
 ## Exit criteria
-- [ ] worktree-gc.sh detects and reports unregistered husk dirs
+- [x] worktree-gc.sh detects and reports unregistered husk dirs
 - [ ] Removal (if implemented) is provably safe for live-session base cwds
-- [ ] Test covers husk detection
-- [ ] `make check` passes
+- [x] Test covers husk detection
+- [x] `make check` passes

@@ -1,0 +1,49 @@
+%erg 0.1
+Title: worktree-gc: design a safe age/mtime husk-removal heuristic (deferred from 0325)
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T13:05Z claude created
+
+--- body ---
+## Context
+Ticket 0325 made `scripts/worktree-gc.sh` **report** unregistered husk dirs
+under `.claude/worktrees/` (dirs that are no longer registered git worktrees).
+It deliberately stopped at report-only — a husk may be a LIVE session's base
+cwd (the harness resets the shell cwd there after every command), so blind
+removal breaks that session. 0325 Action 2 left an open design question:
+"Remove a husk only when it is safe ... age/mtime threshold." A review of PR
+#602 (0325) recommended tracking that removal half as a follow-up rather than
+losing it.
+
+## Relevant files
+- `scripts/worktree-gc.sh` — holds the report-only husk scan from 0325; any
+  removal logic would extend the scan block near the `worktree-gc: husk …` line
+- `tests/test_worktree_tools.py` — `test_gc_reports_*_husk_*` cases; a removal
+  test belongs beside them
+- `tickets/0325-worktree-gc-detect-unregistered-husk-dir.erg` — parent ticket
+  that established report-only
+
+## Actions
+1. Decide whether automatic husk removal is worth the risk at all — report-only
+   may be the correct permanent answer (the 0325 red-team leaned that way).
+2. If pursued, design a provably-safe heuristic: e.g. mtime older than a
+   generous threshold AND no live session's base cwd points at it. Establish how
+   to detect "live base cwd" reliably (a husk's git commands resolve to the
+   primary repo, so there is no cheap in-tree signal — this is the hard part).
+3. Red-first test proving a fresh/live husk is NEVER removed and only a stale,
+   provably-dead one is.
+
+## Invariants
+- Never remove a husk that could be a live session's base cwd.
+- Report-only behavior from 0325 must remain the default.
+
+## Verification
+- [ ] Decision recorded (remove-with-heuristic vs report-only-forever)
+- [ ] If removal implemented: red-first test proves a fresh/live husk survives
+- [ ] `make check` passes
+
+## Exit criteria
+- A documented decision (remove-with-heuristic vs report-only-forever), and if
+  removal is implemented, a test that proves it cannot touch a live husk.
