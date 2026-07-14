@@ -205,8 +205,10 @@ ERG
     git -C "$REPO" switch -q -c "$BRANCH"
 }
 
-run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
-    ( cd "$REPO"
+run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
+    # cwd is $REPO unless RUN_MERGE_CWD overrides it (Case 29 runs from $WORK).
+    ( cd "${RUN_MERGE_CWD:-$REPO}"
+      (( $# >= 3 )) || set -- "$1" "$2" 42
       PATH="$STUBDIR:$PATH" \
       ERG="$ERG_LOCAL" \
       STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
@@ -229,7 +231,7 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       REAL_GIT="$REAL_GIT" \
       SHIM_FRAME_BRANCH="${SHIM_FRAME_BRANCH:-}" \
       SHIM_FRAME_LSTREE="${SHIM_FRAME_LSTREE:-}" \
-      bash "$SCRIPT" 42 )
+      bash "$SCRIPT" "${@:3}" )
 }
 
 closed_has() {  # $1 ticket-number -> 0 if archived under tickets/closed/
@@ -925,18 +927,8 @@ fi
 seed_repo cflag 0344
 BODY29=$'Summary.\n\n**Ticket:** tickets/0344-fixture.erg\n'
 run_C() {  # args passed verbatim to the script; cwd is $WORK (not a git repo)
-    ( cd "$WORK"
-      PATH="$STUBDIR:$PATH" \
-      ERG="$ERG_LOCAL" \
-      STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
-      STUB_BODY="$BODY29" STUB_TITLE="ticket(0344): cflag" \
-      STUB_AUTO_FAILS=0 \
-      STUB_STATE=MERGED \
-      ERG_PR_MERGE_SYNC=/bin/true \
-      ERG_PR_MERGE_MERGED_POLL_TRIES=2 \
-      ERG_PR_MERGE_POLL_INTERVAL=0 \
-      REAL_GIT="$REAL_GIT" \
-      bash "$SCRIPT" "$@" )
+    RUN_MERGE_CWD="$WORK" ERG_PR_MERGE_SYNC=/bin/true \
+        run_merge "$BODY29" "ticket(0344): cflag" "$@"
 }
 c_miss=0
 # (a) happy path: -C <repo> from a non-repo cwd closes the ticket
@@ -946,17 +938,15 @@ else
     echo "  -C <repo> from a non-repo cwd exited non-zero (RED = pre-fix)"; c_miss=1
 fi
 # (b) -C with no PATH argument -> loud failure naming the requirement
-if run_C -C >/dev/null 2>&1; then
+if out29b=$(run_C -C 2>&1); then
     echo "  -C with no path should have failed"; c_miss=1
 else
-    out29b=$(run_C -C 2>&1 || true)
     echo "$out29b" | grep -qi 'requires a PATH' || { echo "  -C no-path die lacks 'requires a PATH'"; c_miss=1; }
 fi
 # (c) -C with a non-directory path -> loud failure
-if run_C -C /nonexistent-dir-xyz 42 >/dev/null 2>&1; then
+if out29c=$(run_C -C /nonexistent-dir-xyz 42 2>&1); then
     echo "  -C nonexistent path should have failed"; c_miss=1
 else
-    out29c=$(run_C -C /nonexistent-dir-xyz 42 2>&1 || true)
     echo "$out29c" | grep -qi 'is not a directory' || { echo "  -C bad-path die lacks 'is not a directory'"; c_miss=1; }
 fi
 if (( c_miss )); then echo "FAIL: -C PATH flag contract not met"; fail=1
