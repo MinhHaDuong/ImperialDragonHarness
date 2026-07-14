@@ -16,6 +16,11 @@ commit, NOT from the branch name (real branch names such as
 
 An empty range prints nothing and exits 0. The sentinel-missing / non-ancestor
 guards live in roar's SKILL.md prose, not here.
+
+Octopus merges (3+ parents) are skipped with a stderr note: the per-PR fields
+are defined for a two-sided PR merge, so an N-way merge is reported rather than
+silently undercounted. The forge's PR-merge path is always 2-parent; octopus
+merges only occur on the standalone/no-forge CLI path.
 """
 
 import argparse
@@ -115,6 +120,14 @@ def build_records(since_sha: str, project: str, root: str) -> list[dict]:
         parents, subject = merge_meta(sha, root)
         if len(parents) < 2:
             # --merges guarantees >= 2 parents; skip defensively otherwise.
+            continue
+        if len(parents) > 2:
+            # Octopus merge: the per-PR fields (branch, commits, files, ticket)
+            # are defined for a two-sided PR merge, so an N-way merge cannot be
+            # reduced to one without silently dropping parents 3..N. Skip it
+            # visibly rather than undercount.
+            print(f"skipping octopus merge {sha} ({len(parents)} parents)",
+                  file=sys.stderr)
             continue
         p1, p2 = parents[0], parents[1]
         commits, ticket = commits_and_ticket(p1, p2, root)

@@ -222,6 +222,47 @@ def test_files_changed_excludes_interleaved_merges(repo):
     assert records[1]["commits"] == 1
 
 
+def test_octopus_merge_skipped_not_undercounted(repo):
+    """An octopus (3+ parent) merge is skipped visibly, not silently reduced.
+
+    build_records only reads parents[0]/parents[1], so an N-way merge would emit
+    one plausible record while dropping every parent beyond the second (its
+    commits, files, and close-commit ticket vanish). It must be skipped with a
+    stderr note instead. Unreachable via the forge's 2-parent PR merge, but the
+    script is a documented standalone CLI where octopus merges occur.
+    """
+    base = head(repo)
+    # A normal PR that must still be emitted, to prove only the octopus is dropped.
+    merge_pr(
+        repo,
+        pr=29,
+        owner_branch="ivan/normal-pr",
+        feature_commits=[("n.txt", "normal work")],
+    )
+    # Two feature branches off main, then a single 3-parent octopus merge.
+    git(repo, "switch", "-c", "octo-1")
+    (repo / "o1.txt").write_text("o1\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-m", "octo one")
+    git(repo, "switch", "main")
+    git(repo, "switch", "-c", "octo-2")
+    (repo / "o2.txt").write_text("o2\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-m", "octo two")
+    git(repo, "switch", "main")
+    git(repo, "merge", "--no-ff", "octo-1", "octo-2", "-m",
+        "Merge pull request #30 from x/octo")
+    octo_sha = head(repo)
+    # Sanity: this really is a 3-parent merge.
+    parents = git(repo, "rev-list", "--parents", "-n", "1", octo_sha).stdout.split()
+    assert len(parents) == 4, parents  # commit + 3 parents
+
+    records, res = enumerate_merges(repo, base)
+    branches = [r["branch"] for r in records]
+    assert branches == ["normal-pr"], res.stderr
+    assert octo_sha[:12] in res.stderr
+
+
 def test_commits_and_files_changed_counts(repo):
     base = head(repo)
     merge_pr(
