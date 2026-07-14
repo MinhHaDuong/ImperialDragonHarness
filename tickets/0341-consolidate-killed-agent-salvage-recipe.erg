@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Consolidate the killed-agent salvage recipe — three drift-prone copies
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T13:35Z claude created
+
+--- body ---
+## Context
+
+Found by the #601 gaze (raid 207-325-327). `skills/raid/SKILL.md:337` cites
+`(memory: feedback_killed_agent_salvage)`, a memory that lives in the aedist
+project's store, not this repo's. With the gaze "Fork liveness" clause
+(skills/gaze/SKILL.md § Fork execution contract) and raid § Circuit breakers
+both codifying stall recovery, and PR #601 trimming the memory entry to
+pointers, the salvage recipe now has three drift-prone homes plus one foreign
+citation.
+
+## Actions
+
+1. Pick one canonical owner for the salvage+relaunch recipe — raid
+   § Circuit breakers is the natural home (it already carries the full
+   recipe and the enforcement guard).
+2. Fix the foreign-store citation at skills/raid/SKILL.md:337 to reference
+   a contract or memory that exists in THIS repo.
+3. Point the other statements (gaze clause, memory entries) at the canonical
+   owner instead of restating the recipe.
+
+## Exit criteria
+
+- [ ] raid SKILL.md cites only memories/contracts that exist in this repo
+- [ ] No duplicated salvage-recipe text across gaze SKILL.md, raid SKILL.md,
+      and memory entries — one owner, pointers elsewhere
+- [ ] `make check` passes
