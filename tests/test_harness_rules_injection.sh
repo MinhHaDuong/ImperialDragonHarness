@@ -41,7 +41,7 @@ for needle in "${body_strings[@]}"; do
 done
 
 # 3. on-start.sh must literally contain a `cat ... README.md` invocation.
-if ! grep -F 'cat' scripts/on-start.sh | grep -qF 'README.md'; then
+if ! grep -qE 'cat[^#]*README\.md' scripts/on-start.sh; then
   echo "FAIL: scripts/on-start.sh missing 'cat ... README.md' invocation"
   fail=1
 fi

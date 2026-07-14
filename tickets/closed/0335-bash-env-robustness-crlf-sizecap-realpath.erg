@@ -1,0 +1,21 @@
+%erg 0.1
+Title: bash-env.sh robustness — CRLF strip, size cap, realpath set -e safety
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #595
+
+--- log ---
+2026-07-14T00:00Z Minh Ha-Duong created
+
+2026-07-14T12:03Z Minh Ha-Duong closed — autoclosed — PR #595
+--- body ---
+## Context
+Follow-ups from the #588 (strict-parse) and #593 (KEYS=) gaze reviews on scripts/bash-env.sh. Non-blocking robustness nits, batched.
+
+## Exit criteria
+- [ ] The project-.env strict parser strips a trailing CR (\r) from values, so a CRLF-terminated project .env (Windows-edited) yields clean values (covers the KEYS= line too — a trailing \r there would corrupt the last provider name)
+- [ ] The project-.env parse is bounded: past a generous cap (e.g. > 5000 lines or > 256 KiB) it stops and warns to stderr, so a pathological/adversarial project .env cannot tax every bash subprocess (this file is sourced on every Bash tool call)
+- [ ] The realpath dedup calls (`_be_proj`/`_be_user="$(realpath …)"`) do not abort bash-env.sh under an already-active `set -e` in the parent shell when $PWD/.env or ~/.claude/.env is absent (guard with `|| true` or an existence check first)
+- [ ] Tests cover: CRLF value strip; the size-cap warning + bounded behavior; realpath-absent safety under `set -e`
+- [ ] Memory projects/-home-haduong--claude/memory/project_bash_env_secret_loading.md refreshed to current reality: user-owned ~/.claude/.env is SOURCED (trusted); project $PWD/.env is STRICT-PARSED never sourced (untrusted), GUARD_*/_GUARD_* keys refused; provider secrets load least-privilege via KEYS= from ~/.config/keys/. Keep it one concept, accurate.
+- [ ] make check and make lint pass

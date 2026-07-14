@@ -96,10 +96,20 @@ Wait for all. Commit reimagined tickets. Report scorecard.
 - New exit criteria added that weren't implied by the original → ESCALATE.
 - Scope narrowed to a strict subset of the original → allowed (simplification).
 - Implementation approach changed but exit criteria preserved → allowed (that's the point).
+- Premise objection (the agent recommends *not executing*, citing the specific
+  commit, config, or regime change that voids the ticket's premise) →
+  **return to author** with the evidence. A success outcome of this phase,
+  not a guard violation.
 
-Reimagination refines *how* to deliver, not *what* to deliver. Any ticket that
-fails the drift guard is pulled from the raid and left for human review with
-a comment explaining what the Imagine agent proposed to change and why.
+The what belongs to the author; the how belongs to the agent. An Imagine
+agent never edits intent: no new deliverables, no substituted goals. But
+delivery presumes the ticket's premises still hold, so check "why now"
+against the current tree and regime — what merged, what changed on the
+ticket's surfaces since its Created date. A ticket whose premise has expired
+is returned to the author with the evidence; that return is the phase doing
+its job, not drift. Any ticket that fails the drift guard is pulled from the
+raid and left for human review with a comment explaining what the Imagine
+agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 

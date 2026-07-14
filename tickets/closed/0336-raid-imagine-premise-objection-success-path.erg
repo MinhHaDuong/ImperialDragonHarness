@@ -1,0 +1,57 @@
+%erg 0.1
+Title: raid Imagine phase: premise objection is a success outcome, not drift
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #597
+
+--- log ---
+2026-07-14T11:56Z Minh Ha-Duong created
+
+2026-07-14T12:10Z Minh Ha-Duong closed — autoclosed — PR #597
+--- body ---
+## Context
+
+The trace-doctor phase-5 A/B design (0245) reached its first authorized
+spend with five unfrozen variables: effort level absent from the arm
+definition, the gaze battery re-tiered mid-study (0320), the "Opus mains"
+premise obsolete (beat defaulted to Sonnet in April; the July originals ran
+under Fable), the paired per-ticket baseline unobservable, and the join
+cache stale. The author voided the design on 2026-07-14.
+
+The premise staleness passed two gates. Ticket 0245's Action 1 said
+"defaults, to be confirmed or revised with reasons"; the 0315
+pre-registration wave wrote "confirming 0245's Action-1 defaults" with no
+reasons. The raid Imagine phase asks "why now", but its closing norm —
+"Reimagination refines *how* to deliver, not *what* to deliver" — combined
+with a drift guard that treats intent-change as a violation, makes silent
+faithful delivery the only rewarded outcome. The norm's real meaning is "do
+not invent work"; as written it also bans questioning stale work, which is
+the opposite defect.
+
+## Actions
+
+1. Recast the closing norm as ownership: the what belongs to the author,
+   the how to the agent; checking the ticket's premises against the current
+   tree and regime (what changed since its Created date) is part of Imagine.
+2. Add a drift-guard outcome: premise objection with cited evidence →
+   return to author, a success path distinct from the ESCALATE defect
+   branches.
+
+## Verification
+
+- [ ] The "refines *how* to deliver, not *what* to deliver" sentence is gone
+- [ ] The drift guard lists the premise-objection outcome with its evidence
+      requirement (specific commit, config, or regime change)
+
+## Invariants
+
+- The guard's defect branches are unchanged: edited exit criteria, added
+  deliverables, and substituted goals still ESCALATE.
+- No new phase, no new agent, no checklist machinery — the change is the
+  norm and one guard outcome.
+
+## Exit criteria
+
+- [ ] skills/raid/SKILL.md Phase 2 carries the ownership norm and the
+      premise-objection return path
+- [ ] `make check` passes
