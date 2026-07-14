@@ -1,0 +1,46 @@
+%erg 0.1
+Title: KEYS selection must refuse shell/process-critical export names
+Created: 2026-07-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-07-14T00:00Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`scripts/bash-env.sh`'s `KEYS=` explicit-selection forms (`provider:VAR` and
+`provider:SRC=DST`) let a PROJECT-controlled, untrusted `.env` choose the EXPORT
+NAME a value lands under. A denylist already refuses `*GUARD_*` and `_be_*`
+targets (guard-nonce forging and this script's own live bookkeeping). Gaze
+flagged a sibling hole in the same class: other shell/process-critical export
+names are not refused. A hostile project `.env` could set
+`KEYS=someprovider:SOMEVAR=PATH` (or `=BASH_ENV`, `=LD_PRELOAD`, `=IFS`) and
+overwrite a critical variable in every subprocess env — code execution
+(PATH/LD_*), arbitrary re-source (BASH_ENV/ENV), or parse/word-splitting hijack
+(IFS/prompt/CDPATH/GLOBIGNORE). The no-rename form `provider:CRITICAL` is the
+same hole (export name == SRC).
+
+## Relevant files
+- `scripts/bash-env.sh` — the export-name refusal goes at the existing
+  `*GUARD_*`/`_be_*` structural-refusal point, applied to the export NAME
+  (`_be_dst`, which equals SRC in the no-rename form).
+- `tests/test_bash_env_keys_protect_critical_names.sh` — new suite, RED-first.
+
+## The denylist
+Exact names: PATH, BASH_ENV, ENV, SHELLOPTS, BASHOPTS, IFS, PS1, PS2, PS3, PS4,
+PROMPT_COMMAND, CDPATH, GLOBIGNORE, LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT.
+Prefix families: `BASH_FUNC_*` (exported-function smuggling) and `DYLD_*` (macOS
+analogue of LD_*). Existing `*GUARD_*` / `_be_*` refusal is kept.
+
+## Exit criteria
+- [ ] The denylist refuses the listed exact names and the two prefixes as export
+      targets (DST, or SRC in the no-rename form).
+- [ ] On a hit, stderr warns `bash-env: refusing KEYS export to protected name:
+      <name>` and the entry is skipped (default-deny; shell survives).
+- [ ] Legitimate renames to ordinary names still work; a bare `provider`
+      whole-file source still works; `*GUARD_*` / `_be_*` still refused.
+- [ ] The selection mechanism itself (env -i subshell, literal capture) is
+      unchanged; only the export-name refusal is added.
+- [ ] Header comment notes protected export names are refused.
+- [ ] New shell suite green; other bash-env suites + wrapper green.
+- [ ] `make check` and `make lint` pass.

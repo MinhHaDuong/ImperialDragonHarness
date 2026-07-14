@@ -64,8 +64,16 @@
 # Provider names must match ^[a-z0-9-]+$ — anything else (path traversal like
 # ../../x, a slash, uppercase, empty) is ignored with a warning. SRC/DST must each
 # match ^[A-Za-z_][A-Za-z0-9_]*$; a malformed entry warns
-# `ignoring invalid KEYS entry: <entry>` and is skipped. A named SRC absent from
-# the file warns `KEYS var not found: <provider>:<SRC>` and is skipped. The
+# `ignoring invalid KEYS entry: <entry>` and is skipped. The EXPORT NAME (DST, or
+# SRC in the no-rename form) is additionally refused when it names a
+# shell/process-critical variable — PATH, BASH_ENV, ENV, SHELLOPTS, BASHOPTS, IFS,
+# PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE, LD_PRELOAD, LD_LIBRARY_PATH,
+# LD_AUDIT, or the BASH_FUNC_* / DYLD_* prefix families — alongside the existing
+# GUARD_* / _be_* refusal; such an entry warns
+# `refusing KEYS export to protected name: <name>` and is skipped, so an untrusted
+# .env cannot overwrite a process-critical variable in every subprocess. A named
+# SRC absent from the file warns `KEYS var not found: <provider>:<SRC>` and is
+# skipped. The
 # per-provider files are user-owned and TRUSTED, so a bare `provider` entry sources
 # them as shell code (contrast the untrusted project .env). A missing provider file
 # warns but is non-fatal.
@@ -217,6 +225,24 @@ if [ -n "${KEYS:-}" ]; then
                 IFS=','
                 continue
             fi
+            # shell/process-critical export-name refusal: the export NAME is DST
+            # (== SRC in the no-rename form), chosen by the untrusted project
+            # .env. Refuse names that would subvert every subprocess if a hostile
+            # .env aimed a value at them — PATH/LD_* (code execution), BASH_ENV/ENV
+            # (re-source arbitrary shell), IFS/prompt/CDPATH/GLOBIGNORE (parse and
+            # word-splitting hijack), the BASH_FUNC_* exported-function smuggling
+            # channel, and the DYLD_* macOS analogue of LD_*. Exact names plus two
+            # prefix globs, kept as an auditable `case`. Default-deny, skip + warn.
+            case "$_be_dst" in
+                PATH|BASH_ENV|ENV|SHELLOPTS|BASHOPTS|IFS|\
+                PS1|PS2|PS3|PS4|PROMPT_COMMAND|CDPATH|GLOBIGNORE|\
+                LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|\
+                BASH_FUNC_*|DYLD_*)
+                    printf 'bash-env: refusing KEYS export to protected name: %s\n' \
+                        "$_be_dst" >&2
+                    IFS=','
+                    continue ;;
+            esac
         fi
         _be_keyfile="$HOME/.config/keys/$_be_prov.env"
         if [ ! -f "$_be_keyfile" ]; then
