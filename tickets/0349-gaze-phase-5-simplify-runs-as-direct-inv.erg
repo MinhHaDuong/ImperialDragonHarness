@@ -29,8 +29,9 @@ check); the fix is to make `/simplify`'s edits execute from inside
 
 ## Relevant files
 
-- `skills/gaze/SKILL.md` — phase 5 `/simplify` invocation site (~lines 205–249)
-  and the Agent-WRAP pattern already used for Agent B `/review` (~lines 199–207)
+- `skills/gaze/SKILL.md` — the phase 5 `/simplify` invocation site (§ 2–4, the
+  built-in-slash-command note) and the Agent-WRAP pattern already used for
+  Agent B `/review` in the same section
 - `scripts/pretooluse-worktree-path-guard.sh` — the (correct) denying guard
 
 ## Actions
@@ -42,7 +43,7 @@ check); the fix is to make `/simplify`'s edits execute from inside
 2. Preserve the fork execution contract: `/simplify` mutates, so unlike the
    read-only reviewers the wrapping Agent needs write capability in the review
    worktree — but must not push, branch, or open PRs beyond what phase 5 already
-   does. Decide foreground vs isolation:"worktree" against the Fork execution
+   does. Decide foreground vs `isolation:"worktree"` against the Fork execution
    contract (a fork cannot wait on background agents).
 3. Update the SKILL.md note (currently "stays as a direct invocation for now …
    Tracked at ticket 0342's follow-up") to describe the wrapped invocation.

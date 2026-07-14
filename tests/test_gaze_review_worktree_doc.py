@@ -27,7 +27,10 @@ SKILL = REPO / "skills" / "gaze" / "SKILL.md"
 
 @pytest.mark.adherence
 def test_review_worktree_not_described_as_whitelisted():
-    text = SKILL.read_text(encoding="utf-8")
+    raw = SKILL.read_text(encoding="utf-8")
+    # Collapse whitespace (incl. the `#`-comment line wraps) so the required
+    # phrases still match if the comment block is reflowed across lines.
+    text = " ".join(raw.replace("#", " ").split())
     assert "already whitelisted" not in text, (
         "skills/gaze/SKILL.md still claims review-* worktrees are 'already "
         "whitelisted' — the guard has no such allowlist (ticket 0342). It "
