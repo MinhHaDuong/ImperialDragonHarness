@@ -5,6 +5,8 @@ Author: claude
 
 --- log ---
 2026-07-14T07:05Z claude created
+2026-07-14T09:20Z claude note imagine: needle-position argument rules out prefix truncation (a)/(b) — checks on LATER source regions passed while an earlier needle missed; refocus on (c) per-call here-string/grep failure; fix candidate: pure-bash [[ == *needle* ]] substring match (no subprocess, no tmpfile), differential-tested under load
+2026-07-14T09:20Z claude note evidence: all three saved failing-run logs (rtk tee 1784006712/1784007098/1784007865) dump the haystack to stderr at failure time and the dump CONTAINS the missed needle (5x network=none, 7-8x relay.sock), with no bash tmpfile/fork/ENOSPC error captured — haystack intact, the individual grep call returned the wrong result; cause (c) strongly indicated
 
 --- body ---
 ## Context
