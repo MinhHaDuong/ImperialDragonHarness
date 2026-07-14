@@ -38,6 +38,7 @@ Author: MinhHaDuong
 2026-07-14T21:34Z claude note MR #618 seat=openrouter-frontier verdict: PASS — 1 verifiable, 0 consider; genuine on-diff bug: empty-string reasoning skips the reasoning_content fallback in the probe parser
 2026-07-14T21:34Z claude note MR #618 seat=openrouter-budget verdict: NOISY — 0 verifiable, 0 consider; silent on a non-clean diff where frontier caught a real parser bug (a miss, not a hallucination)
 2026-07-14T21:49Z claude note audition candidate=nemotron3u-free model=openai/nvidia/nemotron-3-ultra-550b-a55b:free board=10MR findings=12 duplicate=7 unique-verified=0 unique-hallucinated=5 overlap=58% latency=676.6s cost=n/a
+2026-07-14T21:52Z claude note audition tencent/hy3 (paid) VOID — 3 full-board attempts aborted fail-loud mid-board at rotating PRs (~50% per-call failure); direct probe pinned OpenRouter pool instability (DeepInfra 429 upstream, GMICloud raw nginx 404), NOT the 0347 reasoning-field class (completed replays returned contract-shaped findings in 1-2 min, noisy deepseek-like profile). No scorecard by design (partial score misleads). Do not enroll; re-audition if the pool stabilizes or via direct-provider routing. Spend <$0.10
 --- body ---
 ## Context
 
