@@ -1,0 +1,56 @@
+%erg 0.1
+Title: erg-pr-merge existence guard misfires under rtk git-output rewriting
+Created: 2026-07-14
+Author: claude
+
+--- log ---
+2026-07-14T13:10Z claude created
+
+--- body ---
+## Context
+
+During the raid-328/329 merge of PR #584 (2026-07-14), a plain
+`erg-pr-merge 584` run died at its Step 1.5 existence guard with
+"close-claimed ticket(s) 0329 are absent from tickets/ at branch tip" —
+spuriously: `git ls-tree HEAD` showed the file present and the ticket ID was
+correctly resolved. Cause: the rtk Bash hook rewrites `git ls-tree` output
+(injects framing/truncation), corrupting the guard's grep over that output.
+Re-running the helper under `bash -x` happened to bypass the rtk rewrite and
+the guard passed cleanly; the merge then ran through normally.
+
+This is the known "rtk rewrites git output" trap (memory
+`feedback_rtk_rewrites_git_output`) landing inside a critical merge helper.
+The standing workaround for machine-parsed git output is `rtk proxy git ...`,
+but the helper's internals don't use it — so any invocation from a hooked
+shell is exposed, and the `bash -x` escape is an accident, not a fix.
+
+## Relevant files
+- `scripts/erg-pr-merge` — Step 1.5 existence guard (`git ls-tree` + grep);
+  audit the whole script for other machine-parsed git invocations
+- Memory `feedback_rtk_rewrites_git_output` — the trap and the proxy idiom
+
+## Actions
+1. Audit erg-pr-merge for every git invocation whose stdout is parsed
+   (ls-tree, rev-parse lists, diff --name-only, status --porcelain).
+2. Make each robust under output-rewriting hooks: plumbing with explicit
+   format flags parsed by exit code where possible, `rtk proxy git`
+   otherwise — without hardcoding rtk (the script must still work where rtk
+   is absent; probe or use an env-provided GIT wrapper).
+3. Sweep sibling helpers in scripts/ that parse git output for the same
+   exposure (worktree-salvage.sh, sync-local-main.sh at minimum).
+
+## Test
+- A test that runs the Step 1.5 guard logic with a wrapper that injects
+  rtk-style framing lines into git stdout and asserts the guard still
+  resolves presence correctly (RED against the current parsing).
+
+## Invariants
+- The guard must still fail loud when a close-claimed ticket is genuinely
+  absent from the branch tip.
+- `make check` passes.
+
+## Exit criteria
+- [ ] erg-pr-merge's parsed-git call sites are hook-rewrite-proof
+- [ ] Regression test simulating rewritten git output is RED-before/GREEN-after
+- [ ] Sibling helper sweep done (fixed or explicitly cleared)
+- [ ] `make check` passes
