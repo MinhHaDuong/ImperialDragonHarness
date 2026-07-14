@@ -7,6 +7,7 @@ Author: claude
 2026-07-14T13:35Z claude created
 2026-07-14T20:11Z claude note planned by raid — guard correct, doc overclaims; 0300 = coverage not whitelist
 
+2026-07-14T20:45Z bump verify-reroll — round 1: exit criterion 3 (make check) fails — check-agnostic-skills VIOLATION at skills/gaze/SKILL.md:110, self-introduced by /simplify commit fe87ff9's new 'scripts/pretooluse-worktree-path-guard.sh' reference (absent at 9d8da9e); fix by wrapping the path per the pattern's own guidance (~/.claude/scripts/ or a harness-extension-point marker), not by reverting the dedupe
 --- body ---
 ## Context
 
