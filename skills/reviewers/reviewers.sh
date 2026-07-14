@@ -18,6 +18,8 @@ PANEL="${REVIEWERS_PANEL:-${SCRIPT_DIR}/panel.yml}"
 SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../../scripts/seat-runner.sh}"
 # Where per-seat findings land for harvest to collect (per merge request).
 FINDINGS_DIR="${REVIEWERS_FINDINGS_DIR:-${TMPDIR:-/tmp}/reviewers}"
+# The frozen benchmark board `audition` replays (ticket 0346). Overridable.
+BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
 
 usage() {
     cat >&2 <<'EOF'
@@ -28,6 +30,10 @@ Subcommands:
   request <pr> [branch]         Run each seat (0217 seat-runner) over the MR
   harvest <pr>                  Normalize all seats' findings to one file
   scorecard <pr> <seat> <ver>   Append a fixed-schema trial line via erg note
+  audition <model> [opts]       Replay a candidate over the frozen benchmark
+                                board; score decorrelation vs ground truth.
+                                Opts: --endpoint URL --board FILE
+                                --trial-ticket T --credential-env NAME --name L
 EOF
     exit 1
 }
@@ -59,6 +65,67 @@ roster_records() {
 }
 
 panel_is_empty() { [ -z "$(roster_records)" ]; }
+
+# ── benchmark-board parsing (ticket 0346) ────────────────────────────────────
+# Emit one pipe-separated record per board PR: pr title base head panel defects.
+# `panel`/`defects` are space-separated anchor lists (scalar YAML values), so the
+# minimal block parser never has to descend into nested YAML lists. Pipe is the
+# delimiter and `defects` (possibly empty) is last, so an empty middle field
+# cannot shift later fields (rules/coding-bash.md).
+board_records() {  # $1 board file
+    awk '
+        /^[[:space:]]*#/ { next }
+        /^board:[[:space:]]*\[\][[:space:]]*$/ { exit }
+        /^[[:space:]]*-[[:space:]]*pr:/ {
+            if (have) print rec(); have=1
+            pr=fv($0,"pr"); title=base=head=panel=defects=""; next
+        }
+        /^[[:space:]]+title:/   { title=fv($0,"title") }
+        /^[[:space:]]+base:/    { base=fv($0,"base") }
+        /^[[:space:]]+head:/    { head=fv($0,"head") }
+        /^[[:space:]]+panel:/   { panel=fv($0,"panel") }
+        /^[[:space:]]+defects:/ { defects=fv($0,"defects") }
+        END { if (have) print rec() }
+        function fv(line,key,  v) {
+            sub("^[[:space:]]*-?[[:space:]]*" key ":[[:space:]]*", "", line)
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+            gsub(/^"|"$/, "", line)
+            return line
+        }
+        function rec() { return pr"|"title"|"base"|"head"|"panel"|"defects }
+    ' "$1" 2>/dev/null
+}
+
+# Does candidate finding basename $1 + line $2 match any anchor in list $3?
+# Anchor form: basename[:LINE] or basename:* (bare basename == :*).
+_audition_match() {  # cfile cline anchor-string
+    local cf="$1" cl="$2" a af al
+    local -a arr=()
+    read -ra arr <<<"$3"
+    for a in ${arr[@]+"${arr[@]}"}; do
+        case "$a" in
+            *:*) af="${a%%:*}"; al="${a##*:}" ;;
+            *)   af="$a"; al="*" ;;
+        esac
+        [ "$cf" = "$af" ] || continue
+        { [ "$al" = "*" ] || [ "$al" = "$cl" ]; } && return 0
+    done
+    return 1
+}
+
+# Classify one finding location against a PR's ground truth. Echoes exactly one
+# of: duplicate | unique-verified | unique-hallucinated.
+_audition_classify() {  # location panel-anchors defect-anchors
+    local loc="$1" panel="$2" defects="$3" bn cf cl
+    bn="${loc##*/}"                       # drop directory → basename[:line]
+    case "$bn" in
+        *:*) cf="${bn%%:*}"; cl="${bn##*:}" ;;
+        *)   cf="$bn"; cl="" ;;
+    esac
+    if _audition_match "$cf" "$cl" "$panel";   then echo duplicate; return; fi
+    if _audition_match "$cf" "$cl" "$defects"; then echo unique-verified; return; fi
+    echo unique-hallucinated
+}
 
 # ── PR → branch resolution (forge-specific; overridable for tests) ───────────
 pr_branch() {  # $1 pr; honor an explicit override first
@@ -184,6 +251,107 @@ case "$subcmd" in
         line="MR #${pr} seat=${seat} verdict: ${verdict}"
         ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
         "$ERG" log "$tid" "claude note ${line}"
+        ;;
+
+    audition)
+        # Replay a CANDIDATE model over the frozen benchmark board (0346) and
+        # score its decorrelation value against ground truth. The candidate is
+        # NOT a roster seat: audition filters candidates BEFORE the live advisory
+        # trial, and never touches panel.yml.
+        model="${1:-}"; shift || true
+        [ -n "$model" ] || { echo "error: audition requires <model> [--endpoint URL]" >&2; exit 1; }
+        endpoint=""; board="$BENCHMARK_BOARD"; cred=""; label=""
+        trial="tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg"
+        while [ $# -gt 0 ]; do
+            case "$1" in
+                --endpoint)       endpoint="$2"; shift 2 ;;
+                --board)          board="$2"; shift 2 ;;
+                --trial-ticket)   trial="$2"; shift 2 ;;
+                --credential-env) cred="$2"; shift 2 ;;
+                --name)           label="$2"; shift 2 ;;
+                *) echo "error: audition: unknown option '$1'" >&2; exit 1 ;;
+            esac
+        done
+        label="${label:-$model}"
+        [ -f "$board" ] || { echo "error: benchmark board not found: ${board}" >&2; exit 1; }
+
+        dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"
+        n_pr=0; tot=0; dup=0; uv=0; uh=0; ptok=0; ctok=0; lat="0"
+        while IFS='|' read -r pr title base head panel defects; do
+            [ -n "$pr" ] || continue
+            n_pr=$((n_pr + 1))
+            out="${dest}/${pr}.findings"
+            # Reuse the exact seat-runner invocation path `request` uses: one
+            # sandboxed, read-only replay over the PR's reconstructed diff.
+            sr_args=(--repo "$REPO_ROOT" --base "$base" --branch "$head" \
+                     --model "$model" --out "$out")
+            [ -n "$endpoint" ] && sr_args+=(--endpoint "$endpoint")
+            [ -n "$cred" ]     && sr_args+=(--credential-env "$cred")
+            t0=$(date +%s.%N)
+            # Fail-LOUD (unlike request's per-seat fail-open): a candidate that
+            # cannot be replayed — unreachable endpoint, sandbox failure — voids
+            # the whole audition rather than reporting a partial, misleading score.
+            if ! "$SEAT_RUNNER" "${sr_args[@]}" >/dev/null 2>"${out}.err"; then
+                echo "audition: FATAL seat-runner failed on board PR #${pr} (candidate=${label}); see ${out}.err" >&2
+                exit 1
+            fi
+            t1=$(date +%s.%N)
+            lat=$(awk -v s="$lat" -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", s + (b - a)}')
+            # A seat that exited 0 but wrote nothing contributes zero findings —
+            # count the latency (above) and move on rather than crashing on a
+            # missing file.
+            [ -f "$out" ] || continue
+            while IFS= read -r line; do
+                case "$line" in
+                    FINDING\|*)
+                        loc=$(sed -n 's/.*file=\([^|]*\).*/\1/p' <<<"$line")
+                        [ -n "$loc" ] || continue
+                        tot=$((tot + 1))
+                        case "$(_audition_classify "$loc" "$panel" "$defects")" in
+                            duplicate)           dup=$((dup + 1)) ;;
+                            unique-verified)     uv=$((uv + 1)) ;;
+                            unique-hallucinated) uh=$((uh + 1)) ;;
+                        esac
+                        ;;
+                    SUMMARY\|*)
+                        p=$(sed -n 's/.*prompt_tokens=\([0-9]\{1,\}\).*/\1/p' <<<"$line")
+                        c=$(sed -n 's/.*completion_tokens=\([0-9]\{1,\}\).*/\1/p' <<<"$line")
+                        [ -n "$p" ] && ptok=$((ptok + p))
+                        [ -n "$c" ] && ctok=$((ctok + c))
+                        ;;
+                esac
+            done < "$out"
+        done < <(board_records "$board")
+
+        [ "$n_pr" -gt 0 ] || { echo "error: benchmark board is empty: ${board}" >&2; exit 1; }
+
+        # overlap% = share of the candidate's findings that merely duplicate the
+        # internal panel (redundant; the inverse of decorrelation value).
+        overlap=0; [ "$tot" -gt 0 ] && overlap=$(( dup * 100 / tot ))
+        # $ per review from token counts, when the seat reported them on SUMMARY;
+        # prices are USD per 1M tokens (env-overridable). n/a when no tokens or no
+        # price is configured — honest rather than a fabricated $0.
+        price_in="${AUDITION_PRICE_IN_PER_M:-0}"
+        price_out="${AUDITION_PRICE_OUT_PER_M:-0}"
+        cost="n/a"
+        if [ $((ptok + ctok)) -gt 0 ]; then
+            cost=$(awk -v p="$ptok" -v c="$ctok" -v pi="$price_in" -v po="$price_out" \
+                'BEGIN{ if (pi==0 && po==0) { print "n/a" } else { printf "$%.4f", p/1e6*pi + c/1e6*po } }')
+        fi
+
+        card="audition candidate=${label} model=${model} board=${n_pr}PR findings=${tot} duplicate=${dup} unique-verified=${uv} unique-hallucinated=${uh} overlap=${overlap}% latency=${lat}s cost=${cost}"
+        echo "$card"
+
+        # Append the scorecard to the candidate's trial ticket (erg verbs:
+        # created/note/closed only — audition uses note). Promotion stays manual.
+        tid=$(basename "$trial" | grep -oE '^[0-9]{4}' || true)
+        [ -n "$tid" ] || { echo "audition: WARN could not derive a ticket id from '${trial}' — scorecard not logged" >&2; rm -rf "$dest"; exit 1; }
+        ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
+        if ! "$ERG" log "$tid" "claude note ${card}" >/dev/null; then
+            echo "audition: WARN failed to log scorecard to trial ticket ${trial} (id ${tid})" >&2
+            rm -rf "$dest"; exit 1
+        fi
+        rm -rf "$dest"
         ;;
 
     ""|--help|-h) usage ;;

@@ -67,10 +67,77 @@ evidence-based:
 MR #42 seat=local-qwen verdict: PASS — 0 verifiable, 2 consider
 ```
 
+### `/reviewers audition <model> [--endpoint URL]`
+
+Replay a **candidate** model over a frozen benchmark board of already-merged
+merge requests and score its decorrelation value against ground truth (ticket
+0346). This is the cheap filter that runs **before** the live advisory trial:
+every candidate runs the **same** board in about an hour, so cross-candidate
+comparison is sound — a live trial cannot give this, because each candidate
+there sees different merge requests.
+
+For each board PR, `audition` runs the 0217 seat-runner over that PR's
+reconstructed diff (the same sandboxed, read-only invocation path `request`
+uses), then classifies each finding against the board's recorded ground truth:
+
+- **duplicate** — matches an internal-panel finding on that PR (redundant; no
+  decorrelation value).
+- **unique-verified** — not found by the panel, and confirmed real against a
+  recorded panel-missed defect (the payoff).
+- **unique-hallucinated** — not found by the panel and matching no known
+  defect (the noise; e.g. the devstral-small-2 failure mode).
+
+Findings match ground truth by **basename + line** (`file:LINE`, or `file:*`
+for any line in a file) — the board stores anchors basename-normalized so it
+stays forge/stack-agnostic.
+
+One **scorecard block** is emitted per run and appended to the candidate's
+trial ticket via `erg log` (verb `note`):
+
+```
+audition candidate=<label> model=<id> board=<N>PR findings=<F> \
+  duplicate=<d> unique-verified=<uv> unique-hallucinated=<uh> \
+  overlap=<pct>% latency=<s>s cost=<$x|n/a>
+```
+
+`overlap%` is the share of the candidate's findings that merely duplicate the
+panel. `cost` is `$ per review` from the token counts the seat reports on its
+`SUMMARY` line, priced via `AUDITION_PRICE_IN_PER_M` / `AUDITION_PRICE_OUT_PER_M`
+(USD per 1M tokens); it is `n/a` when the seat reports no tokens or no price is
+configured — an honest blank, never a fabricated `$0`.
+
+**Fail-loud**: unlike `request`'s per-seat fail-open, audition aborts non-zero
+if the seat-runner cannot replay a board PR (unreachable endpoint, sandbox
+failure) — a partial score is more misleading than none.
+
+**Audition never touches the roster.** It reads no `panel.yml`, writes no
+`panel.yml`, and files no seat. The pipeline is:
+
+```
+audition (filter)  →  advisory trial (0205 rule 2: ≥5 MRs / ≥3 projects)  →  promote/drop
+```
+
+Promotion — adding a seat to `panel.yml` — stays a **manual** panel edit + merge
+request at 0205's integration review. Audition informs that decision; it does
+not make it.
+
+Options: `--endpoint URL` (OpenAI-compatible base; default is the seat-runner's
+local endpoint), `--board FILE` (default `benchmark-board.yml`), `--trial-ticket
+tickets/NNNN-...` (where the scorecard is logged; default the 0207 trial ticket),
+`--credential-env NAME` (for an authenticated endpoint; threaded to the
+seat-runner, never written to config), `--name LABEL` (candidate label in the
+scorecard; default the model id).
+
 ## Configuration
 
 `skills/reviewers/panel.yml` is the single roster file (schema in its
 header). No secrets in config — credentials load via BASH_ENV (0207).
+
+`skills/reviewers/benchmark-board.yml` is the frozen audition board: ~10
+already-merged multi-file code PRs of this repo, each with `base`/`head` commit
+SHAs (immutable, so the diff is reconstructable forever) and ground-truth
+`panel`/`defects` anchors recovered from the PR's gate verdict. It is a data
+artifact — `audition` reads it, never edits it. Schema in its header.
 
 ## Dependencies
 
