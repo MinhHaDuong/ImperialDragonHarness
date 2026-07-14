@@ -34,6 +34,16 @@ def _run(target):
     )
 
 
+def _run_no_args(cwd):
+    """Invoke the gate with no dir args (as CI does), from the given cwd."""
+    return subprocess.run(
+        ["bash", str(SCRIPT)],
+        cwd=str(cwd),
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_fails_on_hardcoded_home_path(tmp_path):
     (tmp_path / "0001-bad.erg").write_text(BAD_TICKET)
     result = _run(tmp_path)
@@ -147,6 +157,41 @@ UNMARKED_MULTILINE = (
     "    2>/dev/null) || return 1\n"
     "```\n"
 )
+
+
+# --- scripts/ dir coverage (ticket 0322) ---
+#
+# The default scan (no args, as CI runs it) must include scripts/, so a
+# hardcoded home path in a shell/python helper is caught mechanically instead
+# of only in human review. SKILL_PATTERNS must NOT fire in scripts/, which
+# legitimately use gh/uv/repo-relative script paths.
+
+
+def test_real_scripts_dir_is_agnostic():
+    """The actual scripts/ tree passes the agnostic gate (ticket 0322)."""
+    result = _run(SCRIPT.parent)
+    assert result.returncode == 0, result.stdout
+
+
+def test_default_no_arg_scan_includes_scripts_dir(tmp_path):
+    """No-arg invocation (as CI runs it) must scan a scripts/ subdir."""
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "helper.sh").write_text("HOMEDIR=/home/someone/.claude\n")
+    result = _run_no_args(tmp_path)
+    assert result.returncode != 0, result.stdout
+    assert "VIOLATION" in result.stdout
+
+
+def test_skill_patterns_do_not_fire_in_scripts_dir(tmp_path):
+    """gh/uv/repo-relative script tokens are legal in scripts/ — no false fire."""
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "helper.sh").write_text(
+        "gh pr view 5\nuv run pytest\n./scripts/other.sh\n"
+    )
+    result = _run(scripts)
+    assert result.returncode == 0, result.stdout
 
 
 def test_marker_on_continuation_line_exempts_command(tmp_path):

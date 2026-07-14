@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Detect consumer-project assumptions in harness skills and tickets.
-# Usage: check-agnostic.sh [dir ...]   (default: skills tickets)
+# Detect consumer-project assumptions in harness skills, tickets, and scripts.
+# Usage: check-agnostic.sh [dir ...]   (default: skills tickets scripts)
 # Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line,
 # or (for a `\`-continued multi-line command) on any of its continuation lines.
 # `closed/` subdirs are skipped — closed tickets are frozen archives, not amended.
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-    DIRS=(skills tickets)
+    DIRS=(skills tickets scripts)
 else
     DIRS=("$@")
 fi
 
-# Patterns checked everywhere (skills + tickets).
+# Patterns checked everywhere (skills + tickets + scripts).
 # Use class-level patterns — never hardcode a specific username, path, or project name.
 GLOBAL_PATTERNS=(
     '/home/[a-z]'   # any absolute home path (use ~/.claude or $HOME instead)

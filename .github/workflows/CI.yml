@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check for consumer-project assumptions in skills and tickets
+      - name: Check for consumer-project assumptions in skills, tickets, and scripts
         run: bash scripts/check-agnostic.sh
       - name: Self-test — script must catch a deliberate violation
         run: |

@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/home/haduong/.claude/scripts/guard-destructive-bash.sh",
+            "command": "$HOME/.claude/scripts/guard-destructive-bash.sh",
             "timeout": 5
           }
         ]

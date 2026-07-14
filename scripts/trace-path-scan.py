@@ -65,7 +65,7 @@ WORKTREE_RE = re.compile(r"/worktrees/([^/]+)")
 
 # A path-like token inside a Bash command: a run starting with / or ~ (absolute
 # or home-relative), bounded on the left by start-of-string, whitespace, a quote,
-# or `=` — so `cat "~/.ssh/id_rsa"` and `FILE=/home/u/.aws/creds` are caught, not
+# or `=` — so `cat "~/.ssh/id_rsa"` and `FILE=/root/.aws/creds` are caught, not
 # only the bare `cat ~/.aws/credentials` form. Good enough without a full shell
 # parse; the classifier is narrow enough that an over-matched token is harmless.
 BASH_PATH_RE = re.compile(r"(?:^|(?<=[\s\"'=]))([~/][^\s'\"|;&><]*)")
