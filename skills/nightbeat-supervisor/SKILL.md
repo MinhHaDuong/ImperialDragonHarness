@@ -142,10 +142,14 @@ from the project's git remote), sequentially:
 
 1. `bash $HARNESS_DIR/skills/nightbeat-supervisor/check-pr-diff <pr_number> <github_repo>`
    — non-zero exit is a HOLD; add to failures with the helper's reason.
-2. In the target project (`cd <project_path>`), fetch and check out the
-   merge-request branch with the forge tooling of the day. <!-- harness-extension-point -->
+2. Fetch in the target project (`git -C <project_path> fetch origin`). No branch
+   checkout is needed: the merge capability targets a checkout in place via
+   `-C <project_path>`. The bare `~/.claude/skills/merge/erg-pr-merge -C <project_path> <pr_number>`
+   form matches the standing allow rule from any cwd, where a
+   `cd <project_path> && …` prefix would fall through to the auto-mode
+   classifier (ticket 0344). <!-- harness-extension-point -->
    Then run the verification gate on the merge request:
-   APPROVED → integrate it with the merge capability.
+   APPROVED → integrate it with that bare `-C` invocation.
    REROLL → append the failing criteria as a note on the linked ticket
    (create one if the merge-request body references none), then commit the
    ticket file:

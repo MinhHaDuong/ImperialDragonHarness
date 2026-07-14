@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-07-14T20:35Z claude created
+2026-07-14T22:35Z claude note Action 1 accepted-as-is: guard blind spot left as-is. (1) guard self-describes as "one reflex, not a security boundary" (scripts/guard-cd-primary-repo.sh:13) — teaching it erg-pr-merge -C contradicts its YAGNI charter; (2) restricting -C to in_worktree() targets breaks the documented VM/non-worktree use case; (3) practical risk contained by the branch check — a primary checkout on main dies at "must run from PR branch" before the destructive step 4; (4) harness cool-down severity floor (rules/workflow.md, 2026-07-14): guard growth for a non-biting defect class is not licensed.
 
 --- body ---
 ## Context
@@ -39,6 +40,6 @@ tool, kept minimal and additive).
 
 ## Exit criteria
 
-- [ ] Guard blind-spot decision recorded (fix applied, or accepted-as-is with rationale)
-- [ ] raid Phase 7 / nightbeat §2 / AEDIST memory updated to the `-C` idiom (or a
+- [x] Guard blind-spot decision recorded (fix applied, or accepted-as-is with rationale)
+- [x] raid Phase 7 / nightbeat §2 / AEDIST memory updated to the `-C` idiom (or a
       deliberate note why each keeps the cd form)
