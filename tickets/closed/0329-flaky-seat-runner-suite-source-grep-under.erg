@@ -2,13 +2,17 @@
 Title: Flaky: seat-runner suite source-grep checks fail under parallel make check
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #584
 
 --- log ---
 2026-07-14T07:05Z claude created
 2026-07-14T09:20Z claude note imagine: needle-position argument rules out prefix truncation (a)/(b) — checks on LATER source regions passed while an earlier needle missed; refocus on (c) per-call here-string/grep failure; fix candidate: pure-bash [[ == *needle* ]] substring match (no subprocess, no tmpfile), differential-tested under load
 2026-07-14T09:20Z claude note evidence: all three saved failing-run logs (rtk tee 1784006712/1784007098/1784007865) dump the haystack to stderr at failure time and the dump CONTAINS the missed needle (5x network=none, 7-8x relay.sock), with no bash tmpfile/fork/ENOSPC error captured — haystack intact, the individual grep call returned the wrong result; cause (c) strongly indicated
 2026-07-14T09:35Z claude note plan: rewrite grep-here-string boolean checks to bash [[ == * ]] (substring) / [[ =~ ]] (3 regex sites: test_seat_runner.sh:51,72,157) across test_seat_runner.sh + sibling suites (test_reviewers.sh:23,103; test_harness_rules_injection.sh:20,37; test_guard_enterworktree_parked_cwd.sh:139,151; test_setup_claude_agent_projects.sh:152); needle audit clean of glob metachars; mutation test (delete --network=none from a throwaway copy → suite must FAIL) guards fail-loud invariant; bounded differential load run as corroboration; 5x make check post-fix; feasibility PASS, no overlap with 0328
+2026-07-14T09:38Z claude note execute: rewrote grep-here-string boolean checks to pure-bash [[ == * ]] (substring) / [[ =~ ]] (3 regex sites) in test_seat_runner.sh + siblings (test_reviewers.sh, test_harness_rules_injection.sh, test_guard_enterworktree_parked_cwd.sh, test_setup_claude_agent_projects.sh); left grep-v filters, grep-c counter, and grep-qx array/file sites untouched (different mechanism); fail-loud mutation test (delete --network=none -> suite FAILs "missing: --network=none", exits nonzero) PASSED; differential load N=300 serial + 8x300 concurrent under CPU+fork load did NOT reproduce old flake within bound (recorded log evidence already establishes cause); 5x make check all 835 passed (runs 1-4 as 2 concurrent pairs, run 5 solo)
 
+2026-07-14T10:06Z bump verify-reroll — round 1: 3 regex-site grep->[[ =~ ]] conversions matched across newlines, defeating the fail-loud invariant; reverted to grep -Eq and mutation-tested each site
+2026-07-14T10:25Z Minh Ha-Duong closed — autoclosed — PR #584
 --- body ---
 ## Context
 
@@ -63,6 +67,6 @@ Note: this is NOT the printf|grep SIGPIPE flake — `assert_contains`/
   that would mask a real `--network=host` regression).
 
 ## Exit criteria
-- [ ] Cause isolated with evidence (not just made-unreproducible)
-- [ ] Fix or mitigation landed; loaded `make check` stable across ≥5 runs
-- [ ] `make check` passes
+- [x] Cause isolated with evidence (not just made-unreproducible)
+- [x] Fix or mitigation landed; loaded `make check` stable across ≥5 runs
+- [x] `make check` passes

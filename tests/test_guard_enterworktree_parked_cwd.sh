@@ -136,7 +136,7 @@ err=$(printf '{"tool_name":"EnterWorktree","tool_input":{},"cwd":%s}' \
         "$(printf '%s' "$REPO/projects" | jq -Rs .)" \
         | bash "$HOOK" 2>&1 1>/dev/null) || true
 for needle in "worktree add" "show-toplevel" "0267"; do
-    if grep -qF "$needle" <<< "$err"; then
+    if [[ "$err" == *"$needle"* ]]; then
         echo "PASS: deny message mentions '$needle'"
     else
         echo "FAIL: deny message missing '$needle'"
@@ -148,7 +148,7 @@ done
 skill_err=$(printf '{"tool_name":"Skill","tool_input":{},"cwd":%s}' \
         "$(printf '%s' "$REPO/projects" | jq -Rs .)" \
         | bash "$HOOK" 2>&1 1>/dev/null) || true
-if grep -qF "Skill resolves its target repo" <<< "$skill_err"; then
+if [[ "$skill_err" == *"Skill resolves its target repo"* ]]; then
     echo "PASS: Skill deny message names the Skill tool"
 else
     echo "FAIL: Skill deny message does not name the blocked tool"

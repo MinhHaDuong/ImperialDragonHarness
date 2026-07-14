@@ -149,7 +149,7 @@ mutate_rc=$?
 set -e
 mutate_ok=1
 (( mutate_rc != 0 )) || { echo "  mutating path exited 0 on a bad registry"; mutate_ok=0; }
-grep -q "failed to read registry" <<< "$mutate_err" \
+[[ "$mutate_err" == *"failed to read registry"* ]] \
     || { echo "  no derive error on stderr: [$mutate_err]"; mutate_ok=0; }
 [ ! -s "$SUDO_LOG" ] \
     || { echo "  sudo was invoked despite the bad registry:"; cat "$SUDO_LOG"; mutate_ok=0; }
