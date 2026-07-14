@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-07-14T13:35Z claude created
+2026-07-14T20:09Z claude note planned by raid — sweep found 2 foreign citations (337 + 155); gaze and memory already pointer-shaped, criterion 2 is a verified no-op
 
 --- body ---
 ## Context
@@ -33,3 +34,35 @@ citation.
 - [ ] No duplicated salvage-recipe text across gaze SKILL.md, raid SKILL.md,
       and memory entries — one owner, pointers elsewhere
 - [ ] `make check` passes
+
+## Verified findings (plan agent, against HEAD eb7be4e)
+
+The "three drift-prone copies" framing overstated the scope: gaze SKILL.md's
+Fork-liveness clause is a distinct gaze-scoped concern (no salvage-recipe
+text, its memory citation resolves locally), and the memory entry
+`feedback_agent_stall_watchdog_recovery.md` was already trimmed to pointers
+by PR #601. The actual defect was two stale citations in
+`skills/raid/SKILL.md` pointing at memories that exist only in the aedist
+project's store:
+
+- Line 337: `(memory: feedback_killed_agent_salvage)` — foreign; the same
+  content lives locally as `feedback_agent_stall_watchdog_recovery`.
+- Line 155: `(memory: feedback_rebase_drop_cascade)` — foreign; raid's
+  Phase 5.0 prose already inlines the full account, the pointer was vestige.
+
+Fix applied: line 337 now cites `feedback_agent_stall_watchdog_recovery`
+(exists locally); line 155's dangling parenthetical was deleted, keeping
+"because of this." intact. Gaze SKILL.md and memory files were left
+untouched — no genuine duplication was found there to consolidate.
+
+## Sweep command (RED/GREEN evidence, reusable)
+
+```bash
+grep -rEo "memory[: ]*.?\`?feedback_[a-zA-Z_]+" skills/*/SKILL.md rules/*.md rules/*/*.md 2>/dev/null \
+  | grep -oE "feedback_[a-zA-Z_]+" | LC_ALL=C sort -u > /tmp/cited.txt
+ls projects/-home-haduong--claude/memory/ | sed 's/\.md$//' | LC_ALL=C sort -u > /tmp/exist.txt
+LC_ALL=C comm -23 /tmp/cited.txt /tmp/exist.txt
+```
+
+RED (before fix): `feedback_killed_agent_salvage`, `feedback_rebase_drop_cascade`.
+GREEN (after fix): empty.
