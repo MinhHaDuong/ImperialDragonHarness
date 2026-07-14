@@ -2,6 +2,7 @@
 Title: erg-pr-merge existence guard misfires under rtk git-output rewriting
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #596
 
 --- log ---
 2026-07-14T13:10Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-07-14T14:30Z claude note execute: hardened 3 parsed-git sites. erg-pr-merge branch guard -> git symbolic-ref --quiet --short HEAD (plumbing, probe-verified not a rewrite target) with || true for detached-HEAD friendliness; existence guard -> compgen glob (filesystem read) + git cat-file -e HEAD:<path> (exit-code verdict), no parsed stdout. sync-local-main worktree-list parse -> grep-filter to porcelain record keys + NF==2 on the branch record. worktree-salvage.sh:22 already uses the symbolic-ref idiom -> sibling sweep CLEARED, no change. 4 RED-before/GREEN-after cases via a transparent-by-default framing git shim (erg 26 branch, 27 ls-tree reproducing the #584 'absent from tickets/' symptom, 28 source ratchet; sync 11 worktree-list). make check green (846). Framed as general output-rewrite tolerance; scripts carry no rtk reference.
 
 2026-07-14T12:13Z bump verify-reroll — round 1: sibling sweep incomplete (worktree-gc.sh unswept; guard-commit-on-main.sh not cleared)
+2026-07-14T12:29Z Minh Ha-Duong closed — autoclosed — PR #596
 --- body ---
 ## Context
 
