@@ -68,4 +68,9 @@ reviewers:
     kind: forge-bot
     status: advisory
     login: copilot-pull-request-reviewer[bot]
-    trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
+    # 0206 closed and moved to tickets/closed/; path refreshed so `list` shows a
+    # live pointer. `scorecard`/`scores` resolve the trial ticket by its 4-digit
+    # ID (erg log <ID>, corpus-wide), so resolution never depended on this path —
+    # only `list`'s display did. Seat retirement stays the author's call at the
+    # 0205 promote-or-drop review; the seat stays in place (ticket 0348).
+    trial-ticket: tickets/closed/0206-copilot-review-in-the-verify-panel-on-demand.erg

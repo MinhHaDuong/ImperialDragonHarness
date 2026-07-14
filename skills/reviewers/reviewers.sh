@@ -23,8 +23,8 @@ BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
 # The erg binary used to append trial-ticket log lines. Overridable for tests.
 ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
 
-usage() {
-    cat >&2 <<'EOF'
+usage_text() {
+    cat <<'EOF'
 Usage: reviewers.sh <subcommand> [args]
 
 Subcommands:
@@ -32,13 +32,19 @@ Subcommands:
   request <pr> [branch]         Run each seat (0217 seat-runner) over the MR
   harvest <pr>                  Normalize all seats' findings to one file
   scorecard <pr> <seat> <ver>   Append a fixed-schema trial line via erg note
+  scores [seat-or-candidate]    Read back trial scorecards and audition blocks
+                                as one sortable table (corpus-wide, read-only)
   audition <model> [opts]       Replay a candidate over the frozen benchmark
                                 board; score decorrelation vs ground truth.
                                 Opts: --endpoint URL --board FILE
                                 --trial-ticket T --credential-env NAME --name L
+  help                          Print this usage block and exit 0
 EOF
-    exit 1
 }
+
+# Unknown / no verb: usage to stderr, exit 1. The `help` verb prints the same
+# block to stdout and exits 0 (a conventional help contract; ticket 0348).
+usage() { usage_text >&2; exit 1; }
 
 # ── roster parsing ───────────────────────────────────────────────────────────
 # Emit one pipe-separated record per seat: name kind status endpoint model
@@ -110,6 +116,14 @@ _ticket_id_from_path() {  # path
 # contract change cannot silently drift between the two subcommands.
 _contract_field() {  # key line
     sed -n "s/.*${1}=\([^|]*\).*/\1/p" <<<"$2"
+}
+
+# Extract one space-delimited `key=value` field (value runs to the next space)
+# from a scorecard/audition card line. Sibling of `_contract_field`, which
+# decodes the pipe-delimited FINDING contract; this one decodes the
+# space-delimited trial-log cards that `scores` reads back (ticket 0348).
+_card_field() {  # key line
+    sed -n "s/.*${1}=\([^ ]*\).*/\1/p" <<<"$2"
 }
 
 # Does candidate finding basename $1 + line $2 match any anchor in list $3?
@@ -376,6 +390,59 @@ case "$subcmd" in
             exit 1
         fi
         ;;
+
+    scores)
+        # Read back the fixed-schema trial cards — scorecard lines and audition
+        # blocks — that `scorecard`/`audition` append to trial tickets, and print
+        # one sortable comparison table. Read-only: greps the ticket store, never
+        # edits a roster or writes an erg-log line (ticket 0348). The search is
+        # corpus-wide: `grep -r` over tickets/ recurses into tickets/closed/, so a
+        # retired seat's archived trial ticket is still read back — scorecard/
+        # audition resolve their tickets by 4-digit ID, so a card outlives the
+        # ticket's move to closed/.
+        filter="${1:-}"
+        tickets_dir="${REVIEWERS_TICKETS:-${REPO_ROOT}/tickets}"
+        fmt='%-9s %-20s %-26s %5s %5s %5s %4s %5s %5s %8s %9s %8s\n'
+        # shellcheck disable=SC2059  # $fmt is a fixed local format, not user input
+        printf "$fmt" KIND NAME MR/BOARD VERIF CONS FIND DUP UVER UHAL OVERLAP LATENCY COST
+        [ -d "$tickets_dir" ] || exit 0
+        while IFS= read -r line; do
+            [ -n "$line" ] || continue
+            case "$line" in
+                *"audition candidate="*)
+                    name=$(_card_field candidate "$line")
+                    board=$(_card_field board "$line")
+                    find=$(_card_field findings "$line")
+                    dup=$(_card_field duplicate "$line")
+                    uv=$(_card_field unique-verified "$line")
+                    uh=$(_card_field unique-hallucinated "$line")
+                    ov=$(_card_field overlap "$line")
+                    lat=$(_card_field latency "$line")
+                    cost=$(_card_field cost "$line")
+                    if [ -z "$name" ] || [ -z "$find" ] || [ -z "$dup" ] || [ -z "$uv" ] || [ -z "$uh" ]; then
+                        echo "scores: WARN unparseable audition line: ${line}" >&2; continue
+                    fi
+                    [ -n "$filter" ] && [ "$filter" != "$name" ] && continue
+                    # shellcheck disable=SC2059
+                    printf "$fmt" audition "$name" "${board:--}" - - "$find" "$dup" "$uv" "$uh" "${ov:--}" "${lat:--}" "${cost:--}"
+                    ;;
+                *"MR "*"seat="*"verdict:"*)
+                    seat=$(sed -n 's/.*seat=\([^ ]*\).*/\1/p' <<<"$line")
+                    mr=$(sed -n 's/.*MR \([^ ]*\) seat=.*/\1/p' <<<"$line")
+                    verif=$(sed -n 's/.*[^0-9]\([0-9]\{1,\}\) verifiable.*/\1/p' <<<"$line")
+                    cons=$(sed -n 's/.*[^0-9]\([0-9]\{1,\}\) consider.*/\1/p' <<<"$line")
+                    if [ -z "$seat" ] || [ -z "$verif" ] || [ -z "$cons" ]; then
+                        echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
+                    fi
+                    [ -n "$filter" ] && [ "$filter" != "$seat" ] && continue
+                    # shellcheck disable=SC2059
+                    printf "$fmt" scorecard "$seat" "${mr:--}" "$verif" "$cons" - - - - - - -
+                    ;;
+            esac
+        done < <(grep -rhE 'audition candidate=|MR .*seat=.*verdict:' "$tickets_dir" 2>/dev/null || true)
+        ;;
+
+    help) usage_text ;;
 
     ""|--help|-h) usage ;;
     *) echo "error: unknown subcommand '${subcmd}'" >&2; usage ;;

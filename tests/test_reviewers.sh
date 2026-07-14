@@ -255,6 +255,77 @@ nologin_err=$(PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" \
               "$REVIEWERS" request 42 2>&1 >/dev/null)
 assert_contains "request: forge-bot without login WARNs" "WARN forge-bot seat 'mystery-bot' has no login" "$nologin_err"
 
+# ── scores: read-back of trial scorecards + audition blocks (0348) ───────────
+# scores greps the fixed-schema trial lines out of the ticket store — corpus
+# wide, including tickets/closed/ — and prints one sortable table. Read-only:
+# it never edits a roster or writes an erg-log line. Prove the closed/ search
+# by putting the scorecard lines only in a closed ticket.
+STICK="$WORK/score-tickets"; mkdir -p "$STICK/closed"
+cat > "$STICK/0207-trial.erg" <<'ERG'
+%erg 0.1
+Title: Trial fixture
+Created: 2026-07-14
+Author: test
+
+--- log ---
+2026-07-14T20:15Z claude note audition candidate=hy3-free model=openai/tencent/hy3:free board=10MR findings=59 duplicate=23 unique-verified=0 unique-hallucinated=36 overlap=38% latency=3419.1s cost=n/a
+2026-07-14T20:16Z claude note audition candidate=broken model=x board=1MR
+
+--- body ---
+## Context
+Fixture.
+ERG
+cat > "$STICK/closed/0206-copilot.erg" <<'ERG'
+%erg 0.1
+Title: Copilot trial fixture
+Created: 2026-07-13
+Author: test
+Closed: 2026-07-13
+
+--- log ---
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#537 seat=copilot verdict: PASS — 0 verifiable, 1 consider (memory consolidation)
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#559 seat=copilot verdict: PASS — 0 verifiable, 0 consider (accurate summary)
+
+--- body ---
+## Context
+Fixture.
+ERG
+
+scores_out=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>/dev/null)
+assert_contains "scores: header names OVERLAP column" "OVERLAP" "$scores_out"
+assert_contains "scores: lists audition candidate" "hy3-free" "$scores_out"
+assert_contains "scores: audition row carries findings count" "59" "$scores_out"
+assert_contains "scores: finds scorecard seat in closed/ ticket" "copilot" "$scores_out"
+assert_contains "scores: scorecard row carries the MR ident" "ImperialDragonHarness#537" "$scores_out"
+
+# Filter to one name → only that seat/candidate; the other kind is excluded.
+scores_filt=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores copilot 2>/dev/null)
+assert_contains "scores: filter shows the requested seat" "copilot" "$scores_filt"
+if [[ "$scores_filt" == *"hy3-free"* ]]; then
+    echo "FAIL: scores: filter leaked a non-matching candidate"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: filter excludes non-matching rows"; PASS=$((PASS+1))
+fi
+
+# A malformed trial line WARNs on stderr, never silently dropped.
+scores_warn=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>&1 >/dev/null)
+assert_contains "scores: WARN on malformed line" "WARN" "$scores_warn"
+
+# scores is read-only: it must not mutate the ticket store.
+before=$(cat "$STICK/0207-trial.erg" "$STICK/closed/0206-copilot.erg")
+REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores >/dev/null 2>&1
+after=$(cat "$STICK/0207-trial.erg" "$STICK/closed/0206-copilot.erg")
+assert_eq "scores: leaves the ticket store unchanged" "$before" "$after"
+
+# ── help: explicit verb, exit 0, names every subcommand (0348) ───────────────
+assert_exit_0 "help: exits 0" "$REVIEWERS" help
+help_out=$("$REVIEWERS" help 2>/dev/null)
+for verb in list request harvest scorecard audition scores help; do
+    assert_contains "help: names '$verb'" "$verb" "$help_out"
+done
+# No-arg still exits 1 (the unknown/no-verb fallback is unchanged).
+if "$REVIEWERS" >/dev/null 2>&1; then echo "FAIL: no-arg should still exit 1"; FAIL=$((FAIL+1)); else echo "PASS: no-arg still exits 1"; PASS=$((PASS+1)); fi
+
 # ── arg validation ───────────────────────────────────────────────────────────
 if "$REVIEWERS" request >/dev/null 2>&1; then echo "FAIL: request missing arg should fail"; FAIL=$((FAIL+1)); else echo "PASS: request missing arg fails"; PASS=$((PASS+1)); fi
 
