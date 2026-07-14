@@ -2,12 +2,14 @@
 Title: worktree-gc: design a safe age/mtime husk-removal heuristic (deferred from 0325)
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #616
 
 --- log ---
 2026-07-14T13:05Z claude created
 2026-07-14T20:09Z claude note decision: report-only-forever — /proc cwd probe not permission-independent (EACCES=ENOENT), remote sessions undetectable, live near-miss on the raid session's own husk
 2026-07-14T20:43Z claude note bump verify-reroll — round 1: EACCES/ENOENT-indistinguishable claim overreaches in the permanent decision record
 2026-07-14T20:43Z claude note correction: /proc/<pid>/cwd liveness IS locally distinguishable via lstat ([ -L ] true for a live PID even without target-read permission, false for a dead one); the undetectable case is remote/network-FS sessions (no local process to probe), which alone blocks a safe heuristic. Decision unchanged: report-only-forever
+2026-07-14T21:51Z Minh Ha-Duong closed — autoclosed — PR #616
 --- body ---
 ## Context
 Ticket 0325 made `scripts/worktree-gc.sh` **report** unregistered husk dirs
