@@ -217,11 +217,17 @@ STUB
         # The secret reaches the container through the process env podman inherits...
         assert_contains "credential-env: secret reaches podman via process env" \
             "OPENAI_API_KEY=${PROBE_VAL}" "$(cat "$ENV_CAP")"
-        # ...as a BARE -e passthrough in argv (a line that is exactly the var name)...
+        # ...but NOT into the containment self-test container: that run is invoked
+        # with `run_seat --no-cred` (ticket 0339, least-privilege), so the endpoint
+        # key must be ABSENT from the self-test argv (this is the only podman run
+        # under --self-test-only). The ENV_CAP assertion above is unaffected: the
+        # runner unconditionally exports OPENAI_API_KEY into its OWN process env at
+        # credential setup, which the stub inherits regardless of the -e argv the
+        # container receives — so env-inheritance can't discriminate; argv can.
         if grep -qx 'OPENAI_API_KEY' "$ARGV_CAP"; then
-            pass "credential-env: argv carries bare -e OPENAI_API_KEY passthrough"
+            fail "credential-env: self-test container carries the endpoint key (--no-cred not applied)"
         else
-            fail "credential-env: argv carries bare -e OPENAI_API_KEY passthrough"
+            pass "credential-env: self-test container omits the endpoint key (--no-cred, ticket 0339)"
         fi
         # ...and the VALUE must NEVER appear in argv (that is the ps -ef leak).
         if grep -qF "OPENAI_API_KEY=${PROBE_VAL}" "$ARGV_CAP"; then
@@ -308,13 +314,18 @@ if command -v python3 >/dev/null && command -v git >/dev/null && command -v aide
     # FINDING line (stdout→raw.out) AND to stderr (raw.err), so BOTH scrub paths
     # are exercised. The key is read from the stub's own env — exactly how a
     # compromised seat would obtain it.
+    # This stub also captures per-branch argv (self-test vs review) so the test
+    # can prove least-privilege credential scoping (ticket 0339): the self-test
+    # container must NOT receive the endpoint key, the review run must.
     EXFILBIN="$WORK/exfilbin"; mkdir -p "$EXFILBIN"
     cat > "$EXFILBIN/podman" <<'STUB'
 #!/usr/bin/env bash
 if [ "${1:-}" = run ]; then
     if printf '%s\n' "$@" | grep -q SANDBOX-ALIVE; then
+        [ -n "${PODMAN_SELFTEST_ARGV_CAP:-}" ] && printf '%s\n' "$@" > "$PODMAN_SELFTEST_ARGV_CAP"
         printf 'SANDBOX-ALIVE\nWRITE-BLOCKED\nSECRET-BLOCKED\nLOCAL-SCOPED\nNET-BLOCKED\n'
     else
+        [ -n "${PODMAN_REVIEW_ARGV_CAP:-}" ] && printf '%s\n' "$@" > "$PODMAN_REVIEW_ARGV_CAP"
         printf 'FINDING|severity=verifiable|file=f.txt:1|rationale=leaked %s\n' "${OPENAI_API_KEY:-}"
         printf 'SUMMARY|findings=1|verdict=revise\n'
         printf 'leaked %s\n' "${OPENAI_API_KEY:-}" >&2
@@ -326,9 +337,11 @@ STUB
 
     PROBE_VAL="exfil-secret-${RANDOM}-${RANDOM}-${RANDOM}"
     FINDINGS="$WORK/exfil.findings"
+    SELFTEST_ARGV="$WORK/exfil.selftest.argv"; REVIEW_ARGV="$WORK/exfil.review.argv"
 
     # Success path: findings file is written from raw.out; assert it is scrubbed.
     MY_TEST_VAR="$PROBE_VAL" PATH="$EXFILBIN:$PATH" \
+        PODMAN_SELFTEST_ARGV_CAP="$SELFTEST_ARGV" PODMAN_REVIEW_ARGV_CAP="$REVIEW_ARGV" \
         bash "$SR" --repo "$EXFIL_REPO" --base origin/main --branch feature \
         --endpoint http://127.0.0.1:9/v1 --health-path "" \
         --credential-env MY_TEST_VAR --out "$FINDINGS" \
@@ -336,6 +349,24 @@ STUB
     findings_out="$(cat "$FINDINGS" 2>/dev/null || true)"
     assert_absent   "scrub: injected key absent from findings file" "$PROBE_VAL" "$findings_out"
     assert_contains "scrub: findings carry the redaction marker" "[REDACTED-CREDENTIAL]" "$findings_out"
+
+    # ── 0339 least-privilege: the self-test container omits the endpoint key,
+    # the review run keeps it. Argv is the ONLY discriminating channel — the
+    # runner exports OPENAI_API_KEY into its process env, which BOTH stub runs
+    # inherit regardless of the -e flags, so an env-dump check would be a
+    # tautology (passes before AND after the fix). The bare `-e OPENAI_API_KEY`
+    # passthrough puts the var name on its own argv line. The review-run guard is
+    # green before and after the fix — it catches a blanket-strip wrong fix.
+    if [ -f "$SELFTEST_ARGV" ] && grep -qx 'OPENAI_API_KEY' "$SELFTEST_ARGV"; then
+        fail "no-cred: self-test container carries the endpoint key (should be stripped)"
+    else
+        pass "no-cred: self-test container omits the endpoint key (ticket 0339)"
+    fi
+    if [ -f "$REVIEW_ARGV" ] && grep -qx 'OPENAI_API_KEY' "$REVIEW_ARGV"; then
+        pass "no-cred: review run still carries the endpoint key (invariant)"
+    else
+        fail "no-cred: review run lost the endpoint key (over-strip regression?)"
+    fi
 
     # Failure path: a seat that exits non-zero has raw.err tailed to stderr. A
     # second stub leaks the key to stderr, then exits 1 to drive that tail path.

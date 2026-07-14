@@ -2,10 +2,14 @@
 Title: seat-runner self-test needlessly injects the endpoint credential
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #630
 
 --- log ---
 2026-07-14T13:40Z claude created
+2026-07-14T22:02Z claude note planned by raid — --no-cred flag param; argv is the only discriminating test channel (env-dump is tautological)
+2026-07-14T22:20Z claude note implemented stricter than exit criterion: --no-cred gives the self-test container NO key at all (cred_args=()), not the dummy key — a superset that satisfies "never receives the real endpoint key"
 
+2026-07-14T22:21Z Minh Ha-Duong closed — autoclosed — PR #630
 --- body ---
 ## Context
 
