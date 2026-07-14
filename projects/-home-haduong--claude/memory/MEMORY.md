@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Hermetic test: rebase the $HOME prefix onto the checkout root](feedback_hermetic_test_rebase_home_prefix.md) — a test that resolves a `$HOME/.claude/...` path against the filesystem (`is_file()`) must rebase the prefix onto REPO_ROOT (from `__file__`), not the live `$HOME`; else it passes only where `$HOME/.claude` IS the checkout and fails on CI. Pure expansion-equality checks are exempt (ticket 0328, PR #580, 2026-07-14)
 - [API keys live in ~/.config/keys/](reference_keys_config_dir.md) — one .env file per provider (openrouter.env, anthropic.env, openai.env, ...); source the file, load via BASH_ENV pattern, never inline into argv or chat (author, 2026-07-14)
 - [Pipeline presentation overlays parallel raids](feedback_pipeline_presentation_overlays_raids.md) — a "ready" ticket may already be claimed by a raid worktree, branch, or open merge request; check worktree list + branch names + open MRs in the same pass and report ready/claimed/blocked lanes (author directive, 2026-07-14)
 - [Worktree deleted mid-run orphans the session base cwd](feedback_worktree_deleted_midrun_orphans_cwd.md) — a worktree disappearing under a running session permanently blocks EnterWorktree/cwd-dependent Skill calls; recover via manual `git -C` isolation + delegate skill invocations to isolation:"worktree" subagents (raid-217, PR #564, 2026-07-13)
