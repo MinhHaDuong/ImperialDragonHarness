@@ -138,6 +138,39 @@ def test_gaze_only_reroll_fix_agent_gets_isolation():
     )
 
 
+def test_gaze_tier_recorded_in_telemetry_and_output_shape():
+    """The graduated battery tier (ticket 0320) must be auditable: the per-run
+    tier has to surface in BOTH the verdict-footer telemetry template and the
+    `## /gaze actions` output-shape template, so a reviewer can read which
+    battery ran from the posted comment. We assert the token in each rendered
+    template, not the tier-definition prose — the prose can be reworded, but the
+    machine-visible telemetry field is the contract."""
+    # 1. Verdict-footer template — the section under "### Verdict footer".
+    _, _, footer_after = VERIFY.partition("### Verdict footer")
+    assert footer_after, "gaze/SKILL.md: no `### Verdict footer` section found"
+    footer_section = footer_after.split("###", 1)[0]
+    footer_telemetry = [
+        line for line in footer_section.splitlines() if "telemetry:" in line and "wall=" in line
+    ]
+    assert footer_telemetry, (
+        "gaze/SKILL.md: no `telemetry: … wall=…` template in the verdict-footer section"
+    )
+    assert any("tier" in line for line in footer_telemetry), (
+        "gaze/SKILL.md: verdict-footer telemetry template does not carry a "
+        "`tier` field (ticket 0320 exit criterion — tiering must be auditable)"
+    )
+
+    # 2. Output-shape template — the fenced block after "## Output shape".
+    _, _, after = VERIFY.partition("## Output shape")
+    assert after, "gaze/SKILL.md: no `## Output shape` section found"
+    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
+    assert fenced, "gaze/SKILL.md: no fenced template under `## Output shape`"
+    assert any("tier" in block for block in fenced), (
+        "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
+        "a `tier` field (ticket 0320 exit criterion)"
+    )
+
+
 def test_no_bare_stash_in_skills_and_scripts():
     """The stash stack is repo-global (shared across every worktree): a
     clean-tree `git stash` + `git stash pop` round-trip pops someone else's

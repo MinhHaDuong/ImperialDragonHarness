@@ -104,7 +104,16 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
-- Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). A PR is **small** if `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
+- Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
+  - **tiny** — `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
+  - **small** — `pr_lines ≤ 150` and `pr_files ≤ 5` and this is round 1 (and not already tiny).
+  - **full** — everything else, **and unconditionally any round ≥ 2**: a REROLL escalates to the full battery regardless of diff size — #562's round-2 needed the full battery on an unchanged diff. The round-2 override wins over any size test.
+
+  The tier selects which reviewer agents run (see §§ 2–4, 5); phase 6 (`/verify-gate`) is **invariant** — it runs at every tier, never reduced. Per-tier battery:
+  - **tiny** → Agent A (adherence) + phase 6 gate only. Skip Agent B (`/review`), Agent C (`/review-pr`), and phase 5 (`/simplify`) — each skip logged like the existing `review-pr: skipped (…)` line.
+  - **small** → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate. Agent C runs with the reduced "correctness only" perspective set (trivial risk, § 2–4) instead of the full five-perspective panel.
+  - **full** → the complete battery below, unchanged.
+  Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
 
 ### 2–4. Read-only review fan-out (parallel)
@@ -168,7 +177,9 @@ ruff, emit one non-blocking `untested_rules` entry. (4) Only if a
 (each with `severity: blocking|nit`), and `untested_rules`. The orchestrator's
 early-exit reads `adherence` and the count of `blocking` findings.
 
-**Agent B — built-in review** (`/review`). This is a built-in slash command
+**Agent B — built-in review** (`/review`). **Tier-skip:** skip this agent when
+the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup
+summary; it runs on the **small** and **full** tiers. This is a built-in slash command
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
 embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
 same containment rails, whose prompt simply invokes `/review` on the PR and
@@ -178,9 +189,12 @@ and would be Agent-WRAPped the same way when converted.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
-**Size-gate:** skip this agent if the PR is small (as computed in phase 1) and
-log `review-pr: skipped (size-gate: <pr_lines> lines, <pr_files> files)` in the
-setup summary. Otherwise pick by file type: if any `*.qmd` changed → prose
+**Tier-gate:** skip this agent when the tier is **tiny** and log
+`review-pr: skipped (tier: tiny, <pr_lines> lines, <pr_files> files)` in the
+setup summary. When the tier is **small**, run it with the reduced **correctness
+only** perspective set (the `trivial` risk band below) regardless of the risk
+assessment. When the tier is **full**, run the full proportional panel as
+assessed. Otherwise pick by file type: if any `*.qmd` changed → prose
 panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —
@@ -209,7 +223,9 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 ### 5. Simplify (sequential)
 
-After 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
+**Tier-skip:** when the tier is **tiny**, skip this phase and log
+`simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
+**small** and **full** tiers. Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
@@ -338,10 +354,11 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 ### Verdict footer (PR comment)
 
-Appended to verdict comment: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
+Appended to verdict comment: `telemetry: tier=<tiny|small|full> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `wall` (phase-1 to verdict), `agents` (sub-agent count), `tokens` (sum, use `na`
-for missing), `cost~=` (best-effort USD, `na` if incomplete).
+Fields: `tier` (battery tier from phase 1 — `tiny|small|full`), `wall` (phase-1 to
+verdict), `agents` (sub-agent count), `tokens` (sum, use `na` for missing),
+`cost~=` (best-effort USD, `na` if incomplete).
 
 ### Thresholds
 
@@ -413,9 +430,11 @@ final report is the signal.
 ## /gaze actions
 
 round: <n>
+tier: tiny|small|full
 adherence: PASS|FAIL — <n_blocking> blocking
-review-pr: <n_comments_posted> | skipped (size-gate) | skipped (adherence blocking)
-simplify: <n_fixes_applied> | skipped (adherence blocking)
+review: <n_comments_posted> | skipped (tier: tiny)
+review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
+simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
 ## /verify-gate verdict
@@ -433,7 +452,7 @@ Adherence: PASS | FAIL (<count>)
 Rationale:
 <paragraph>
 
-telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
+telemetry: tier=<tiny|small|full> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
 On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
