@@ -7,6 +7,7 @@ Author: claude
 2026-07-14T07:05Z claude created
 2026-07-14T09:20Z claude note imagine: needle-position argument rules out prefix truncation (a)/(b) — checks on LATER source regions passed while an earlier needle missed; refocus on (c) per-call here-string/grep failure; fix candidate: pure-bash [[ == *needle* ]] substring match (no subprocess, no tmpfile), differential-tested under load
 2026-07-14T09:20Z claude note evidence: all three saved failing-run logs (rtk tee 1784006712/1784007098/1784007865) dump the haystack to stderr at failure time and the dump CONTAINS the missed needle (5x network=none, 7-8x relay.sock), with no bash tmpfile/fork/ENOSPC error captured — haystack intact, the individual grep call returned the wrong result; cause (c) strongly indicated
+2026-07-14T09:35Z claude note plan: rewrite grep-here-string boolean checks to bash [[ == * ]] (substring) / [[ =~ ]] (3 regex sites: test_seat_runner.sh:51,72,157) across test_seat_runner.sh + sibling suites (test_reviewers.sh:23,103; test_harness_rules_injection.sh:20,37; test_guard_enterworktree_parked_cwd.sh:139,151; test_setup_claude_agent_projects.sh:152); needle audit clean of glob metachars; mutation test (delete --network=none from a throwaway copy → suite must FAIL) guards fail-loud invariant; bounded differential load run as corroboration; 5x make check post-fix; feasibility PASS, no overlap with 0328
 
 --- body ---
 ## Context

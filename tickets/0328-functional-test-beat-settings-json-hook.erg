@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-07-14T06:05Z Minh Ha-Duong created
 2026-07-14T09:20Z claude note imagine: static json-parse+expandvars resolvability test (fast tier, no subprocess) + cite live production evidence for criterion 1 — settings.json wires the same guard via the identical $HOME command form and those guards demonstrably fire (a $HOME-pathed guard hook fired in this very session); drop the live claude-launch experiment as unnecessary cost; Action 3 moot given evidence
+2026-07-14T09:35Z claude note plan: beat-settings.json:25 sole hook command verified; settings.json:120 identical live wiring (criterion-1 citation); new tests/test_beat_settings_hook_resolves.py walks ALL PreToolUse hook commands generically + non-vacuity guard; no Makefile/pinned-tuple wiring needed; RED = mutate command to nonexistent path; feasibility PASS, no overlap with 0329
 
 --- body ---
 ## Context
