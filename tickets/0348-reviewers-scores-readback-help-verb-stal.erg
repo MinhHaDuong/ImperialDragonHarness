@@ -55,13 +55,25 @@ audition:
    retirement if the 0205 review drops it — that decision is the author's,
    record it in the roster comment either way).
 
+4. SKILL.md "Candidate scouting" section (author opt-in, 2026-07-14):
+   document the discovery mechanics so a fresh session need not reinvent
+   them — endpoint inventory (`~/.config/keys/*.env` = authenticated
+   providers; panel.yml seat examples; probe local llama-server), models
+   per endpoint via `GET <base>/v1/models` (OpenRouter catalog is public,
+   with per-token pricing that feeds `REVIEWERS_PRICE_*`), rankings are
+   website-only (openrouter.ai/rankings, fetched not API'd). Include the
+   privacy asymmetry: audition on free tiers is risk-free (the board
+   replays merged PRs of a public repo) while live advisory trials ship
+   unmerged diffs. Mechanics only — model CHOICE stays judgment, per the
+   no-hard-rules-for-judgment-calls directive.
+
 ## Candidate extension (author to confirm before implementing)
 
 A read-only `models [endpoint]` verb querying `GET <base>/v1/models` on each
-known endpoint (panel.yml seats + commented examples; key names from
-`~/.config/keys/*.env` via BASH_ENV, never echoed) would answer "what can I
-audition here?" from the CLI. Deferred — not part of this ticket's exit
-criteria unless the author opts in.
+known endpoint would answer "what can I audition here?" from the CLI. Still
+deferred — the SKILL.md scouting section (action 4) covers the need
+documentation-first; promote to a verb only if the manual mechanics prove
+tiresome in practice.
 
 ## Test
 
@@ -94,4 +106,6 @@ criteria unless the author opts in.
 - [ ] `help` verb exits 0 with the full usage block
 - [ ] Copilot trial-ticket pointer resolved (refreshed or retired, decision
       logged)
-- [ ] SKILL.md documents both verbs; tests green; `make check` passes
+- [ ] SKILL.md documents both verbs plus the "Candidate scouting" section
+      (endpoint inventory, /v1/models, rankings fetch, privacy asymmetry)
+- [ ] Tests green; `make check` passes
