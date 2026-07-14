@@ -36,6 +36,11 @@ printf 'GUARD_ALLOW_PRIMARY_EDIT=1\n' > "$_projdir/.env"
 # source is skipped. -u BASH_ENV first clears any inherited value; the trailing
 # BASH_ENV="$BASHENV" then sets the one under test.
 _report='echo "${GUARD_ALLOW_PRIMARY_EDIT:-UNSET}"'
+# Combined report over the FULL guard-trusted var set: the escape hatch plus the
+# two test-only root overrides the guard trusts unconditionally (ticket 0323
+# REROLL). Setting both _GUARD_*_ROOT to matching bogus values disarms the guard
+# for every path, so they need the same provenance protection as the escape hatch.
+_report_all='echo "GAPE=${GUARD_ALLOW_PRIMARY_EDIT:-UNSET};WT=${_GUARD_WORKTREE_ROOT:-UNSET};PR=${_GUARD_PRIMARY_ROOT:-UNSET}"'
 
 # (a) No prior value; project .env sets =1 → must NOT survive (dropped).
 got=$( cd "$_projdir" && env -u GUARD_ALLOW_PRIMARY_EDIT -u BASH_ENV \
@@ -55,6 +60,49 @@ if [ "$got" = "1" ]; then
     echo "PASS: pre-session GUARD_ALLOW_PRIMARY_EDIT survives sourcing"
 else
     echo "FAIL: expected '1' (preserved) for inherited-env guard var; got: '$got'"
+    fail=1
+fi
+
+# (c) Forged OLD bookkeeping. The first 0323 fix snapshotted with STATIC,
+# committed names (_be_guard_had / _be_guard_val). Because `.env` is sourced as
+# bash, a static file could set those exact names and forge the snapshot, so the
+# restore re-exported GUARD_ALLOW_PRIMARY_EDIT=1 without the `.env` ever naming
+# it. With unforgeable (per-process-nonce) bookkeeping the forgery is inert: the
+# variable was absent from the launch env, so it must come back UNSET.
+printf 'GUARD_ALLOW_PRIMARY_EDIT=1\n_be_guard_had=1\n_be_guard_val=1\n' > "$_projdir/.env"
+got=$( cd "$_projdir" && env -u GUARD_ALLOW_PRIMARY_EDIT -u BASH_ENV \
+        HOME="$_tmphome" BASH_ENV="$BASHENV" bash -c "$_report" )
+if [ "$got" = "UNSET" ]; then
+    echo "PASS: forged static bookkeeping (_be_guard_had/_be_guard_val) cannot resurrect GUARD_ALLOW_PRIMARY_EDIT"
+else
+    echo "FAIL: forged static bookkeeping smuggled GUARD_ALLOW_PRIMARY_EDIT back; expected UNSET, got: '$got'"
+    fail=1
+fi
+
+# (d) The two test-only root overrides, set only in a project .env, must NOT
+# survive — an agent that sets both to matching bogus values otherwise disarms
+# the guard for every path (ticket 0323 REROLL, blocker 2).
+printf '_GUARD_WORKTREE_ROOT=/nonexistent\n_GUARD_PRIMARY_ROOT=/nonexistent\n' > "$_projdir/.env"
+got=$( cd "$_projdir" && env -u _GUARD_WORKTREE_ROOT -u _GUARD_PRIMARY_ROOT -u BASH_ENV \
+        HOME="$_tmphome" BASH_ENV="$BASHENV" bash -c "$_report_all" )
+if [ "$got" = "GAPE=UNSET;WT=UNSET;PR=UNSET" ]; then
+    echo "PASS: agent-set project .env _GUARD_*_ROOT overrides do not survive sourcing"
+else
+    echo "FAIL: expected all UNSET for agent-set root overrides; got: '$got'"
+    fail=1
+fi
+
+# (e) Genuine pre-session (launch env) root overrides MUST survive even when a
+# project .env also sets them — the legitimate test-override mechanism. The
+# launch value wins; the .env value is dropped.
+printf '_GUARD_WORKTREE_ROOT=/env-bogus\n_GUARD_PRIMARY_ROOT=/env-bogus\n' > "$_projdir/.env"
+got=$( cd "$_projdir" && env -u BASH_ENV \
+        _GUARD_WORKTREE_ROOT=/launch/wt _GUARD_PRIMARY_ROOT=/launch/pr \
+        HOME="$_tmphome" BASH_ENV="$BASHENV" bash -c "$_report_all" )
+if [ "$got" = "GAPE=UNSET;WT=/launch/wt;PR=/launch/pr" ]; then
+    echo "PASS: pre-session _GUARD_*_ROOT overrides survive sourcing (test-override mechanism intact)"
+else
+    echo "FAIL: expected inherited root overrides preserved; got: '$got'"
     fail=1
 fi
 

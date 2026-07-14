@@ -78,6 +78,11 @@ _assert_blocked "cd PRIMARY && git reset HEAD~1" "cd $PRIMARY && git reset HEAD~
 _assert_blocked "cd PRIMARY && git push origin main" "cd $PRIMARY && git push origin main" "$WORKTREE"
 _assert_blocked "cd PRIMARY && erg close 123"   "cd $PRIMARY && erg close 123"            "$WORKTREE"
 _assert_blocked "cd ~/repo && git commit (tilde)" "cd ~/repo && git commit -m x"          "$WORKTREE"
+# Evasion (ticket 0323, minor A): `..` traversal resolves back to PRIMARY but is
+# not lexically equal to it, so a raw string compare misses it. realpath -m
+# normalization must catch it.
+_assert_blocked "cd PRIMARY/sub/.. && git commit (dotdot evasion)" \
+                "cd $PRIMARY/sub/.. && git commit -m x"    "$WORKTREE"
 
 # --- ALLOW ----------------------------------------------------------------
 # Same cd+commit but cwd is the primary repo itself (not a worktree session).

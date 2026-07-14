@@ -82,6 +82,8 @@ fi
 # opaque literals under the _GUARD_*_ROOT test override.
 if command -v realpath &>/dev/null; then
     file_path=$(realpath -m -- "$file_path" 2>/dev/null || echo "$file_path")
+else
+    echo "guard: realpath unavailable, path normalization skipped" >&2
 fi
 
 case "$file_path" in

@@ -54,6 +54,19 @@ target="${target%/}"
 target="${target/#\~/$HOME}"
 target="${target//\$HOME/$HOME}"
 
+# Normalize `..` traversal and symlinks before the equality check (ticket 0323,
+# minor A): `cd $primary/sub/.. && git commit` resolves back to $primary but does
+# not lexically equal it, so it would slip past the string compare below. This is
+# the same evasion residual 1 closed in pretooluse-worktree-path-guard.sh.
+# realpath -m collapses `..` and resolves symlinks in existing components while
+# tolerating a not-yet-existing leaf. Warn on the fallback so the degraded
+# (raw-path, still-vulnerable) mode is visible rather than silent.
+if command -v realpath &>/dev/null; then
+    target=$(realpath -m -- "$target" 2>/dev/null || echo "$target")
+else
+    echo "guard: realpath unavailable, path normalization skipped" >&2
+fi
+
 # Only the primary repo root itself is the offence; subtrees (incl. the
 # worktree path, which lives under primary_root) are fine.
 [ "$target" = "$primary_root" ] || exit 0
