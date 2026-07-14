@@ -71,6 +71,19 @@ if [ "${file_path#/}" = "$file_path" ]; then
     fi
 fi
 
+# Normalize before the prefix match (ticket 0323, residual 1): a raw path with
+# `..` traversal or through a symlinked directory does not lexically begin with
+# $primary_root and would slip past the string-prefix `case` below. `realpath -m`
+# collapses `..` and resolves symlinks in the existing dir components while
+# tolerating a not-yet-existing leaf (--canonicalize-missing), which is correct
+# at PreToolUse time — the file being written need not exist yet. Fall back to
+# the raw path if realpath is unavailable. primary_root/worktree_root are left
+# as-is: git rev-parse --show-toplevel already canonicalizes them, and they are
+# opaque literals under the _GUARD_*_ROOT test override.
+if command -v realpath &>/dev/null; then
+    file_path=$(realpath -m -- "$file_path" 2>/dev/null || echo "$file_path")
+fi
+
 case "$file_path" in
     "$primary_root"/*)
         case "$file_path" in
@@ -90,8 +103,16 @@ case "$file_path" in
         # Escape hatch: a human pre-authorizes intentional primary edits by
         # exporting GUARD_ALLOW_PRIMARY_EDIT in the shell/systemd environment
         # BEFORE session start. The hook is spawned by the CLI, not a Bash-tool
-        # subshell, so an agent cannot set it mid-turn — deliberate, no
-        # self-service bypass.
+        # subshell, so an agent cannot set it mid-turn.
+        #
+        # Provenance is enforced upstream (ticket 0323, residual 2): this hook
+        # runs as a bash subprocess with BASH_ENV=scripts/bash-env.sh, which
+        # sources a project `.env` under `set -a`. Without a guard an agent could
+        # drop a `.env` in its own worktree setting GUARD_ALLOW_PRIMARY_EDIT=1
+        # and have it auto-exported into this env before the check below —
+        # self-service bypass. bash-env.sh now snapshots this one variable and
+        # restores-or-unsets it around the `.env` sourcing, so only a value
+        # present in the launch environment survives. See scripts/bash-env.sh.
         if [ -n "${GUARD_ALLOW_PRIMARY_EDIT:-}" ]; then
             exit 0
         fi
