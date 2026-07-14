@@ -7,6 +7,8 @@ Author: Integration Test
 2026-06-10T20:09Z Integration Test created
 
 2026-07-13T16:03Z Minh Ha-Duong note pre-registration split to 0315: interventions pinned, decision rule + red-first tests landed, gaze convergence flag documented default off; live A/B arms remain here
+
+2026-07-14T09:34Z Minh Ha-Duong note authorized measure-A replay spend (5 paired Sonnet replays, smoke-first on 0319); pinned measure-B windows in docs/trace-ab-2026-06.md — control 2026-07-20..2026-07-26 (flag off), treatment 2026-07-27..2026-08-02 (flag on)
 --- body ---
 ## Context
 
