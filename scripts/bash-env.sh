@@ -61,22 +61,21 @@
 # file's own definitions are visible. Least-privilege lives here, not in the
 # filesystem (one file per provider).
 #
-# Provider names must match ^[a-z0-9-]+$ — anything else (path traversal like
-# ../../x, a slash, uppercase, empty) is ignored with a warning. SRC/DST must each
-# match ^[A-Za-z_][A-Za-z0-9_]*$; a malformed entry warns
-# `ignoring invalid KEYS entry: <entry>` and is skipped. The EXPORT NAME (DST, or
-# SRC in the no-rename form) is additionally refused when it names a
-# shell/process-critical variable — PATH, BASH_ENV, ENV, SHELLOPTS, BASHOPTS, IFS,
-# PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE, LD_PRELOAD, LD_LIBRARY_PATH,
-# LD_AUDIT, or the BASH_FUNC_* / DYLD_* prefix families — alongside the existing
-# GUARD_* / _be_* refusal; such an entry warns
-# `refusing KEYS export to protected name: <name>` and is skipped, so an untrusted
-# .env cannot overwrite a process-critical variable in every subprocess. A named
-# SRC absent from the file warns `KEYS var not found: <provider>:<SRC>` and is
-# skipped. The
-# per-provider files are user-owned and TRUSTED, so a bare `provider` entry sources
-# them as shell code (contrast the untrusted project .env). A missing provider file
-# warns but is non-fatal.
+# Provider names must match ^[a-z0-9-]+$ — anything else (path traversal
+# like ../../x, a slash, uppercase, empty) is ignored with a warning.
+# SRC/DST must each match ^[A-Za-z_][A-Za-z0-9_]*$; a malformed entry
+# warns `ignoring invalid KEYS entry: <entry>` and is skipped. The EXPORT
+# NAME (DST, or SRC in the no-rename form) is additionally refused when it
+# names a shell/process-critical variable — PATH, BASH_ENV, ENV, SHELLOPTS,
+# BASHOPTS, IFS, PS1..PS4, PROMPT_COMMAND, CDPATH, GLOBIGNORE, LD_PRELOAD,
+# LD_LIBRARY_PATH, LD_AUDIT, or the BASH_FUNC_* / DYLD_* prefix families —
+# alongside the existing GUARD_* / _be_* refusal; such an entry warns `refusing
+# KEYS export to protected name: <name>` and is skipped, so an untrusted .env
+# cannot overwrite a process-critical variable in every subprocess. A named
+# SRC absent from the file warns `KEYS var not found: <provider>:<SRC>` and
+# is skipped. The per-provider files are user-owned and TRUSTED, so a bare
+# `provider` entry sources them as shell code (contrast the untrusted project
+# .env). A missing provider file warns but is non-fatal.
 #
 # Guarantee and its limit. Two properties hold even against a hostile project
 # .env: it never sources a path outside ~/.config/keys/ (name validation), and it
