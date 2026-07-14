@@ -95,7 +95,10 @@ branch — there are no remote branches nor merge requests to inspect.
        `git switch -c <branch> <sha>`.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `origin/main`.
-    Skip if not in a worktree.
+    Skip if not in a worktree. When roar runs inside an `isolation:"worktree"`
+    subagent, `ExitWorktree` is unavailable — skip this step; the harness
+    auto-cleans the agent's worktree once its branch is merged and the tree
+    is clean.
 10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
     ```bash
     git fetch --prune origin
