@@ -31,15 +31,44 @@
 # adversarial one cannot tax every subprocess.
 #
 # Provider-secret scoping (KEYS=). A project declares which credential providers
-# it needs by setting KEYS=<name,name,...> in its project .env (parsed by the
-# untrusted strict-parse above, so KEYS itself is a plain value). For each
-# declared, VALIDATED provider <name>, and ONLY those, this script sources the
-# user-owned $HOME/.config/keys/<name>.env. Default-deny: no KEYS line loads no
-# provider secrets. Provider names must match ^[a-z0-9-]+$ — anything else (path
-# traversal like ../../x, a slash, uppercase, empty) is ignored with a warning.
-# The per-provider files are user-owned and TRUSTED, so they are sourced as shell
-# code (contrast the untrusted project .env). A missing provider file warns but is
-# non-fatal.
+# it needs by setting KEYS=<entry,entry,...> in its project .env (parsed by the
+# untrusted strict-parse above, so KEYS itself is a plain value). Default-deny: no
+# KEYS line loads no provider secrets. Each comma-separated entry takes one of
+# three forms:
+#
+#   * provider          — source the whole user-owned
+#     $HOME/.config/keys/<provider>.env (all its variables enter the environment).
+#
+#   * provider:VAR      — from <provider>.env, export ONLY VAR, under the name VAR.
+#
+#   * provider:SRC=DST  — from <provider>.env, export ONLY SRC, renamed to DST.
+#     No other variable from that file enters the environment.
+#
+# The last two forms exist because a provider file may hold several keysets (e.g.
+# openrouter.env: OPENROUTER_API_KEY_AEDIST, OPENROUTER_API_KEY_KIEU, EXPIRED_*);
+# sourcing it whole over-shares. Selection is EXPLICIT and VERBOSE — there is no
+# naming convention or suffix-stripping — and it happens at the EXPORT BOUNDARY:
+# for a provider:... entry the file is sourced in an ISOLATED subshell run with a
+# CLEARED environment (`env -i`), only the requested SRC value is extracted, and
+# DST is exported in the parent with that value assigned LITERALLY (command
+# substitution captures the string; it is never eval'd), so a value with spaces or
+# a $(...) literal is captured literally and never re-evaluated. Trailing newlines
+# are stripped by command-substitution capture; credential values carry none.
+# SRC's siblings die with the subshell — only DST lands in the real env. The cleared environment is
+# load-bearing: it drops BASH_ENV (so the extraction `bash -c` cannot re-source
+# this script and fork-bomb under production BASH_ENV=bash-env.sh) and prevents the
+# SRC lookup from resolving against any ambient exported var — only the provider
+# file's own definitions are visible. Least-privilege lives here, not in the
+# filesystem (one file per provider).
+#
+# Provider names must match ^[a-z0-9-]+$ — anything else (path traversal like
+# ../../x, a slash, uppercase, empty) is ignored with a warning. SRC/DST must each
+# match ^[A-Za-z_][A-Za-z0-9_]*$; a malformed entry warns
+# `ignoring invalid KEYS entry: <entry>` and is skipped. A named SRC absent from
+# the file warns `KEYS var not found: <provider>:<SRC>` and is skipped. The
+# per-provider files are user-owned and TRUSTED, so a bare `provider` entry sources
+# them as shell code (contrast the untrusted project .env). A missing provider file
+# warns but is non-fatal.
 #
 # Guarantee and its limit. Two properties hold even against a hostile project
 # .env: it never sources a path outside ~/.config/keys/ (name validation), and it
@@ -140,33 +169,114 @@ if [ -n "${KEYS:-}" ]; then
     set -f
     _be_ifs="$IFS"
     IFS=','
-    for _be_prov in ${KEYS}; do
+    for _be_entry in ${KEYS}; do
         IFS="$_be_ifs"
         # trim surrounding whitespace
-        _be_prov="${_be_prov#"${_be_prov%%[![:space:]]*}"}"
-        _be_prov="${_be_prov%"${_be_prov##*[![:space:]]}"}"
-        [ -z "$_be_prov" ] && { IFS=','; continue; }
-        # validate: lowercase, digits and dashes only — blocks path traversal
+        _be_entry="${_be_entry#"${_be_entry%%[![:space:]]*}"}"
+        _be_entry="${_be_entry%"${_be_entry##*[![:space:]]}"}"
+        [ -z "$_be_entry" ] && { IFS=','; continue; }
+        # An entry is a bare `provider` or a selection `provider:VAR` /
+        # `provider:SRC=DST`. A colon means selection mode.
+        case "$_be_entry" in
+            *:*) _be_sel_mode=1
+                 _be_prov="${_be_entry%%:*}"
+                 _be_sel="${_be_entry#*:}" ;;
+            *)   _be_sel_mode=0
+                 _be_prov="$_be_entry"
+                 _be_sel="" ;;
+        esac
+        # validate provider: lowercase, digits and dashes only — blocks traversal
         if [[ ! "$_be_prov" =~ ^[a-z0-9-]+$ ]]; then
-            printf 'bash-env: ignoring invalid KEYS provider name: %s\n' "$_be_prov" >&2
+            printf 'bash-env: ignoring invalid KEYS entry: %s\n' "$_be_entry" >&2
             IFS=','
             continue
         fi
+        if [ "$_be_sel_mode" = 1 ]; then
+            # split selector into SRC and DST (DST defaults to SRC when no `=`).
+            # A second `=` lands inside DST and fails the identifier check below,
+            # so `SRC=DST=extra` and `provider:` (empty selector) are rejected.
+            case "$_be_sel" in
+                *=*) _be_src="${_be_sel%%=*}"; _be_dst="${_be_sel#*=}" ;;
+                *)   _be_src="$_be_sel";       _be_dst="$_be_sel" ;;
+            esac
+            if [[ ! "$_be_src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || \
+               [[ ! "$_be_dst" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+                printf 'bash-env: ignoring invalid KEYS entry: %s\n' "$_be_entry" >&2
+                IFS=','
+                continue
+            fi
+            # structural refusal (mirrors the project-.env line-138 guard): the
+            # untrusted project .env supplies SRC/DST, so it must not name a
+            # guard-namespaced target (GUARD_* / the _GUARD_* worktree-path
+            # override pair honored by pretooluse-worktree-path-guard.sh) nor
+            # this script's own _be_* bookkeeping, which is live in the sourcing
+            # shell and would be corrupted mid-loop. Default-deny, skip + warn.
+            if [[ "$_be_dst" == *GUARD_* ]] || [[ "$_be_dst" == _be_* ]] || \
+               [[ "$_be_src" == *GUARD_* ]]; then
+                printf 'bash-env: ignoring invalid KEYS entry: %s\n' "$_be_entry" >&2
+                IFS=','
+                continue
+            fi
+        fi
         _be_keyfile="$HOME/.config/keys/$_be_prov.env"
-        if [ -f "$_be_keyfile" ]; then
-            # Enable allexport ONLY around the source, so exactly the variables
-            # the trusted provider file assigns get exported — the loop
-            # bookkeeping (IFS, the _be_* temporaries) is assigned outside
-            # allexport and stays unexported.
+        if [ ! -f "$_be_keyfile" ]; then
+            printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
+            IFS=','
+            continue
+        fi
+        if [ "$_be_sel_mode" = 0 ]; then
+            # bare provider: whole-file source. Enable allexport ONLY around the
+            # source, so exactly the variables the trusted provider file assigns
+            # get exported — the loop bookkeeping (IFS, the _be_* temporaries) is
+            # assigned outside allexport and stays unexported.
             set -a
             source "$_be_keyfile"
             set +a
         else
-            printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
+            # selection: source the file in an ISOLATED subshell with a CLEARED
+            # environment (env -i), extract ONLY the requested SRC value, and
+            # export DST in this shell. `env -i` is load-bearing on two counts:
+            #   (1) it drops BASH_ENV, so the `bash -c` does NOT re-source this
+            #       script — in production BASH_ENV=bash-env.sh, so a plain
+            #       `bash -c` here would re-read $PWD/.env, re-hit this selection
+            #       entry, and re-spawn `bash -c` without bound (fork bomb).
+            #   (2) the subshell starts with NO inherited variables, so `${!2}`
+            #       (the SRC lookup) can only resolve names the provider file
+            #       itself defines — an ambient exported var cannot be smuggled
+            #       into DST. A SRC absent from the file exits 4 regardless of env.
+            # The value is captured as a string via command substitution and
+            # assigned LITERALLY (never eval'd), never re-evaluated; command
+            # substitution strips trailing newlines (credential values carry
+            # none). SRC's siblings die with the subshell — only DST reaches
+            # the real env. The `if` wrapper keeps the substitution's exit status
+            # from tripping an active `set -e` in the sourcing shell. The inner
+            # `.`/`printf`/`[`/`set` are bash builtins, so the empty PATH under
+            # env -i does not matter; `. "$1"` uses an absolute path.
+            if _be_val="$(env -i bash -c '
+                    set -a
+                    . "$1" >/dev/null 2>&1 || exit 3
+                    [ -z "${!2+x}" ] && exit 4
+                    printf "%s" "${!2}"
+                ' _ "$_be_keyfile" "$_be_src")"; then
+                export "$_be_dst=$_be_val"
+            else
+                _be_rc=$?
+                if [ "$_be_rc" = 4 ]; then
+                    printf 'bash-env: KEYS var not found: %s:%s\n' "$_be_prov" "$_be_src" >&2
+                elif [ "$_be_rc" = 3 ]; then
+                    # File is present (existence checked above) but sourcing or
+                    # extraction failed — a distinct condition from a missing file.
+                    printf 'bash-env: KEYS could not read %s:%s (provider file present but source failed)\n' \
+                        "$_be_prov" "$_be_src" >&2
+                else
+                    printf 'bash-env: KEYS provider not found: %s\n' "$_be_prov" >&2
+                fi
+            fi
         fi
         IFS=','
     done
     IFS="$_be_ifs"
     [ "$_be_had_noglob" = 1 ] || set +f
-    unset _be_ifs _be_prov _be_keyfile _be_had_noglob
+    unset _be_ifs _be_entry _be_prov _be_sel _be_sel_mode _be_src _be_dst \
+          _be_val _be_rc _be_keyfile _be_had_noglob
 fi

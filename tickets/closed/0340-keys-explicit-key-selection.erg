@@ -1,0 +1,76 @@
+%erg 0.1
+Title: KEYS= explicit per-key selection and rename (provider:SRC=DST)
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #599
+
+--- log ---
+2026-07-14T00:00Z Minh Ha-Duong created
+
+2026-07-14T12:50Z bump verify-reroll — round 1: env -i subshell (fork-bomb + ambient-leak) + GUARD_/_be_ DST refusal + regression tests
+2026-07-14T13:42Z Minh Ha-Duong closed — autoclosed — PR #599
+--- body ---
+## Context
+
+`scripts/bash-env.sh` loads provider secrets least-privilege via a
+`KEYS=prov1,prov2` line in the untrusted project `$PWD/.env`: for each
+validated provider it sources the whole user-owned
+`$HOME/.config/keys/<prov>.env`. This over-shares when a provider file holds
+several keysets. `openrouter.env`, for example, defines
+`OPENROUTER_API_KEY_AEDIST`, `OPENROUTER_API_KEY_KIEU`, and `EXPIRED_*`;
+sourcing it whole drops every one of those into the environment, and none of
+the suffixed names matches the plain `OPENROUTER_API_KEY` a consumer expects.
+
+Least-privilege must apply at the **export boundary**, not the filesystem —
+the author's decision is to keep one file per provider (no file proliferation,
+no per-consumer key files) and instead select the exact variable a project
+needs, optionally renaming it, at load time.
+
+## Grammar
+
+Each comma-separated entry in the `KEYS=` value takes one of three forms:
+
+- `provider` — source the whole `$HOME/.config/keys/<provider>.env` (unchanged
+  behaviour; still supported).
+- `provider:VAR` — from `<provider>.env`, export ONLY `VAR`, under the name `VAR`.
+- `provider:SRC=DST` — from `<provider>.env`, export ONLY `SRC`, renamed to
+  `DST`. No other variable from that file enters the environment.
+
+No naming convention: selection and rename are explicit and verbose, with no
+suffix-stripping magic.
+
+Validation: `provider` matches `^[a-z0-9-]+$` (as today); `SRC`/`DST` each match
+`^[A-Za-z_][A-Za-z0-9_]*$`. An entry failing validation is skipped with a stderr
+warning `bash-env: ignoring invalid KEYS entry: <entry>` (default-deny
+preserved). A named `SRC` absent from the file warns
+`bash-env: KEYS var not found: <provider>:<SRC>` and is skipped. A missing
+provider file warns and is skipped, as today.
+
+## Mechanism (security-critical)
+
+A `provider:...` entry must NOT source the provider file into the live
+environment. Instead the file is sourced in an ISOLATED subshell that extracts
+ONLY the requested `SRC` value; the parent exports `DST` with that value
+assigned LITERALLY (command substitution captures the string — it is never
+`eval`'d), so a value containing spaces or `$(...)` is preserved verbatim, never
+executed. Only `DST` lands in the real environment; `SRC`'s siblings (KIEU,
+EXPIRED_*) die with the subshell. Bare `provider` entries keep the existing
+whole-file source path (no subshell). The script runs on every bash subprocess,
+so a subshell is spawned only for `provider:` selection entries.
+
+## Exit criteria
+
+- [ ] The three entry forms parse and resolve correctly (bare, `:VAR`, `:SRC=DST`).
+- [ ] For a selection entry, ONLY `DST` is exported — not `SRC`, not the file's
+      other variables.
+- [ ] Validation rejects bad providers/SRC/DST and malformed entries with the
+      documented warnings; the shell survives (default-deny).
+- [ ] A named-but-absent `SRC` warns and is skipped.
+- [ ] Value integrity: a value with a space and a `$(...)` literal is exported
+      verbatim, not executed.
+- [ ] New `tests/test_bash_env_keys_selection_explicit.sh` covers all of the
+      above; the existing bash-env suites still pass (no regression).
+- [ ] Header comment documents the three forms and that selection happens at the
+      export boundary.
+- [ ] `make lint` and the bash-env shell suites pass; `./tickets/erg check
+      tickets/` passes.
