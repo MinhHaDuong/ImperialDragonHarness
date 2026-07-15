@@ -18,6 +18,8 @@ Blocked-by: 0207
 2026-07-14T17:14Z Minh Ha-Duong note child 0346 filed — /reviewers audition subcommand (frozen benchmark board, duplicate/unique-verified/unique-hallucinated classification); audition filters candidates before the advisory trial, never replaces it
 2026-07-14T19:55Z Minh Ha-Duong note child 0348 filed — scores read-back (the integration review's reading surface), explicit help verb, stale copilot trial-ticket pointer (0206 archived to closed/)
 2026-07-14T21:13Z Minh Ha-Duong note child 0353 filed — latency capture on both paths plus peer-relative SLOW elimination (factor x median p50 on the same board), author directive; blocked-by 0348 for the scores read-back surface
+2026-07-15T06:11Z Minh Ha-Duong note Actions 1-2 landed via PR #638 — gaze panel-extension contract (auto request/harvest/scorecard, fail-open advisory seats) + decorrelation rewording in rules/workflow.md; first two exit criteria satisfied
+2026-07-15T06:11Z Minh Ha-Duong note author reframe (2026-07-15) — squad-management model recorded in the body; the promote/drop endpoint becomes continuous squad management
 --- body ---
 ## Context
 
@@ -107,6 +109,38 @@ locally and mirror into forge CI — no forge round-trip required.
    to generic skill prose, not to tool-specific helpers. Mechanical
    agnostic-guard patterns still require `<!-- harness-extension-point -->`
    escape hatches where literals appear under skills/.
+
+## Squad-management model (author, 2026-07-15)
+
+Reviewer management is football team management. A constantly renewed
+pool of talent exists outside (the OpenRouter catalog, local models);
+some are auditioned; about a dozen are retained on the roster; a
+handful (2-4, per the decorrelation cap) are selected to play each
+game, the lineup depending on the game (diff type, language, risk).
+Performance is monitored continuously (per-PR scorecards, auto-appended
+by gaze) and everybody on the roster is retrospectively assessed on
+past matches (audition-board replays). Monitoring and assessment guide
+team composition.
+
+Consequences for this tracker:
+
+- The exit criterion "promote/drop decided" is reframed: not a one-time
+  verdict but the first iteration of continuous squad management.
+- Roster ≠ lineup (deferred mechanism): panel.yml holds the retained
+  squad; gaze's request step should eventually select the per-game
+  lineup from the diff's traits (capability tag or bench status per
+  seat). Deferred until the squad outgrows the current two active
+  seats — with two seats, everyone plays every game.
+- Incumbent retro-assessment (deferred mechanism): the audition board
+  must grow (each gazed PR with dispositioned findings is a new past
+  match with ground truth) and audition must accept roster members, not
+  only candidates, enabling periodic same-board re-ranking of the whole
+  squad.
+- Pool scouting falls out for free: new arrivals are just names run
+  through the existing audition.
+- Both mechanisms are deliberately NOT ticketed now (2026-07-14
+  cool-down bar); this note is the design anchor for when the author
+  commissions them.
 
 ## Actions
 
