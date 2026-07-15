@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-15T09:00Z
+Last updated: 2026-07-15T07:42Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-15T09:00Z · as of d7597a9 -->
+<!-- generated 2026-07-15T07:42Z · as of f702672 -->
 
-**Tickets:** 1 ready · 1 blocked · 1 deferred — `erg ready tickets/` for full list
-  next: 0207 Agnostic CLI reviewer seat — advisory trial in progress
-**In flight:** 1 open PR (1 draft: #627 worktree-gc rails) · CI main: success
+**Tickets:** 1 ready · 2 blocked — `erg ready tickets/` for full list
+  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo…
+**In flight:** 1 open PR (1 draft), oldest #642 0d · CI main: success
 **Recent (first-parent):**
-  d7597a9 Merge pull request #639 (0356 filed deferred)
-  0539098 Merge pull request #640 (0205 squad design note)
-  3b03d28 Merge pull request #638 (/gaze panel wiring)
+  f702672 Merge pull request #643 from MinhHaDuong/fable-unpurge
+  9fe67ee Merge pull request #627 from MinhHaDuong/t-gc-to-lair
+  9016de4 Merge pull request #641 from MinhHaDuong/lair-2026-07-15
 
 ## Blockers
 
