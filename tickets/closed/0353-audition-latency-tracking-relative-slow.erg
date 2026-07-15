@@ -2,6 +2,7 @@
 Title: Audition and seat latency tracking; eliminate slow candidates on peer statistics
 Created: 2026-07-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #636
 
 --- log ---
 2026-07-14T21:13Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-07-14T22:19Z Minh Ha-Duong closed wontfix — harness cool-down (author): not merge-blocking, not state-corrupting, no science-project impact; audition scorecards already expose mean latency per run, sufficient for seat decisions
 2026-07-15T00:00Z Minh Ha-Duong note reopened under the author's 2026-07-15 raid directive, superseding the PR #632 cool-down close; Blocked-by 0348 now satisfied (0348 merged via PR #634, scores verb on main)
 
+2026-07-15T01:06Z Minh Ha-Duong closed — autoclosed — PR #636
 --- body ---
 ## Context
 
