@@ -132,6 +132,14 @@ _card_field() {  # key line
     printf '%s' "${rest%% *}"
 }
 
+# Elapsed seconds (one decimal) between two `date +%s.%N` stamps. One
+# implementation for request's per-seat timing AND audition's per-PR timing,
+# so a change to how wall-clock is measured cannot drift between the two
+# call sites (ticket 0353 simplify review).
+_elapsed() {  # t0 t1
+    awk -v a="$1" -v b="$2" 'BEGIN{printf "%.1f", b - a}'
+}
+
 # Nearest-rank percentile (1-based) at percentile $1 of the numeric arguments
 # $2..$N. Empty arg list → "0.0". One implementation for audition's per-run
 # p50/p95 AND the peer-relative SLOW median, so the two can never drift apart
@@ -160,14 +168,18 @@ _percentile() {  # pct v1 v2 ...
 _corpus_log_lines() {  # tickets_dir
     local td="$1"
     [ -d "$td" ] || return 0
-    find "$td" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
-        awk '
+    # One awk over the whole file list (FNR==1 resets the per-file latch), not
+    # one awk fork per ticket — the corpus is hundreds of files and `audition`
+    # now scans it on every run (ticket 0353 simplify review). -print0/-0 keep
+    # unusual filenames intact; xargs -r skips awk entirely on an empty list.
+    find "$td" -name '*.erg' -type f -print0 2>/dev/null | sort -z | \
+        xargs -0 -r awk '
+            FNR == 1        { inlog = 0; done_log = 0 }
             done_log        { next }
             !inlog && /^--- log ---/ { inlog=1; next }
             inlog && /^--- /         { inlog=0; done_log=1; next }
             inlog
-        ' "$f" 2>/dev/null
-    done
+        ' 2>/dev/null
 }
 
 # Peer p50 latencies: emit the `latency-p50` seconds (`s` stripped) of every
@@ -283,17 +295,12 @@ case "$subcmd" in
                     # seats run async server-side and get no sidecar — there is
                     # nothing local to time.
                     t0=$(date +%s.%N)
-                    if "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
+                    "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
                         ${cred_args[@]+"${cred_args[@]}"} \
-                        >/dev/null 2>"${dest}/${name}.err"; then
-                        seat_ok=1
-                    else
-                        seat_ok=0
-                    fi
+                        >/dev/null 2>"${dest}/${name}.err" && seat_ok=1 || seat_ok=0
                     t1=$(date +%s.%N)
-                    awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", b - a}' \
-                        > "${dest}/${name}.latency"
+                    _elapsed "$t0" "$t1" > "${dest}/${name}.latency"
                     if [ "$seat_ok" = 1 ]; then
                         echo "request: seat '${name}' ok → ${dest}/${name}.findings" >&2
                         ran=$((ran+1))
@@ -432,7 +439,7 @@ case "$subcmd" in
             if [ "${#_elapsed_ov[@]}" -gt 0 ]; then
                 e="${_elapsed_ov[$((n_pr - 1))]:-0.0}"
             else
-                e=$(awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", b - a}')
+                e=$(_elapsed "$t0" "$t1")
             fi
             lat_samples+=("$e")
             # Existing `latency=` field stays a running SUM across board PRs
