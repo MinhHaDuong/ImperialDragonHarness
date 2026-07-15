@@ -4,3 +4,4 @@
 - [Avoid costume metaphor (HET)](feedback_avoid_costume_metaphor_het.md) — don't repeat/explain the "costume" framing on the HET paper; reads as LLM padding
 - [HET submission branches protected](project_het_submission_branches_protected.md) — climate-finance-het rejects deletion of submission/* branches (server-side rule)
 - [Check sibling tickets before reorg](feedback_check_sibling_tickets_before_reorg.md) — before a cross-repo move, check the other repo's tickets for a prior decision on the same question
+- [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — model needs per-call pin everywhere; effort is settable per-call only via Workflow's agent(), not the Agent tool
