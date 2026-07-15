@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-14T18:30Z
+Last updated: 2026-07-15T09:00Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-13T10:43Z · as of 60177f1 -->
+<!-- generated 2026-07-15T09:00Z · as of d7597a9 -->
 
-**Tickets:** 17 ready · 2 blocked — `erg ready tickets/` for full list
-  next: 0206 Copilot review in the verify panel — on-demand … · 0217 Sandbox-runner reviewer-seat spinoff — OS-conta…
-**In flight:** no open PRs · CI main: success
+**Tickets:** 1 ready · 1 blocked · 1 deferred — `erg ready tickets/` for full list
+  next: 0207 Agnostic CLI reviewer seat — advisory trial in progress
+**In flight:** 1 open PR (1 draft: #627 worktree-gc rails) · CI main: success
 **Recent (first-parent):**
-  60177f1 Merge pull request #535 from MinhHaDuong/roar-checkpoint-wrapup
-  ca3944c Merge pull request #524 from MinhHaDuong/t0304-state-enrichment
-  d5849e0 Merge pull request #522 from MinhHaDuong/t0268-state-guard
+  d7597a9 Merge pull request #639 (0356 filed deferred)
+  0539098 Merge pull request #640 (0205 squad design note)
+  3b03d28 Merge pull request #638 (/gaze panel wiring)
 
 ## Blockers
 
@@ -23,12 +23,10 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 
-- **bash-env.sh secret loader: hardened and live** (2026-07-14). The BASH_ENV credential loader is fully hardened and active on every Bash call: realpath path-guard normalization (0323), untrusted project `.env` strict-parsed never sourced with GUARD_* refused (0323), `KEYS=` least-privilege default-deny provider loading (0334), CRLF strip + 256 KiB size cap + realpath set-e safety (0335), explicit `provider:SRC=DST` per-key selection in an `env -i` subshell (0340), and refusal to export KEYS to shell/process-critical names (0343). AEDIST migrated to least-privilege `KEYS=` (all 8 vars, zero inline secrets; a dead inline GitHub PAT was found via live validation and swapped for the valid central token — AEDIST 0679). Open follow-ups: **ticket 0345** (strict-parse critical-name/RCE injection hardening — needs a policy decision: full denylist vs RCE-only subset vs allowlist; recommended the RCE-only subset) and **AEDIST 0680** (optional machine-user PAT). Three durable lessons banked to memory (BASH_ENV tests must exercise the real invocation path; untrusted-.env export is a code-execution class; a secret migration is a credential audit).
-- **IDH infra parked** (author, 2026-07-14): focus returns to publishing research. Trace-doctor arc closed — tracker 0236 and phase-5 0245 closed, the A/B design voided (docs/trace-ab-2026-06.md § VOIDED); measure-B weeks cancelled, convergence flag stays default-off. Raid Imagine premise-objection norm (ticket 0336, PR #597) merged.
-- **0216 fan-out evidence**: criterion-2 proof accumulated 2026-07-11 — five substantive /gaze runs (#482 #483 #485 #487 #491) fanned out full reviewer batteries; append to the closed ticket, then drop this line
-- **Verify-reviewer-panel cluster** (only open work left): 0206 (Copilot seat — needs forge config + ≥5-MR trial), 0217/0207 (OS-sandboxed agnostic seats), 0205 (panel contract + decorrelation evidence). 0227/0231/0232/0233/0234 closed this session; cadens now canonical (cadens PR #45)
-- **AEDIST maw-audit run**: unblocked (0226), author-deferred — launch from a session rooted in `~/CNRS/papiers/actif/AEDIST-technical-report`, no args, ~3-5M tokens; resolve untracked `census_bars.csv` first
-- **0217 seat-runner hardening: DONE** — network isolation (`--network=none` + single-destination relay), `fs/read` path-allowlist, credential denyRead, and BASH_ENV-stripped minimal env all landed. 0207 criterion-2 credential scrub (redact the injected key from reviewer output before every echo path) delivered by t0207-cred-scrub; OpenRouter real-smoke transport proven end-to-end but auth blocked on a deactivated provisioned key, so criterion 2 stays open pending a valid key; advisory trial (criteria 3-4) still open.
+- **Cool-down doctrine in force** (2026-07-14): file a tooling ticket only if the defect blocks a merge, corrupts state, or bites a science project; throughput points at the science repos — run normal raids/reviews there. Raid closed 0348 (PR #634) and 0353 (PR #636).
+- **External-reviewer advisory trial LIVE, hands-free**: seats openrouter-frontier (gpt-5.6-luna) and openrouter-budget (deepseek-v4-flash) enrolled in `skills/reviewers/panel.yml`; /gaze auto-requests, harvests, and scorecards them on substantive code reviews (PR #638). Each gazed science-repo PR feeds the trial; data accrues on ticket 0207 (needs ≥5 MRs across ≥3 projects per config, then the author's promote/drop call). Check `reviewers.sh scores` periodically.
+- **0205 tracker** (blocked by 0207): author's squad-management model recorded — roster ≠ lineup, incumbent retro-assessment, continuous composition (PR #640); mechanisms deliberately deferred until the trial verdict.
+- **0356 deferred**: cross-project mined-defect benchmark (challenger-vs-squad audition) — revisit after the 0207 promote/drop decision.
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects
 
 ## Backlog
