@@ -1,6 +1,6 @@
 ---
 name: reviewers
-description: Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats.
+description: Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
@@ -67,6 +67,41 @@ evidence-based:
 MR #42 seat=local-qwen verdict: PASS — 0 verifiable, 2 consider
 ```
 
+### `/reviewers scores [seat-or-candidate]`
+
+Read back the trial cards (`scorecard` lines and `audition` blocks) that the
+two commands above append to trial tickets, as one sortable comparison table.
+The read surface for 0205's integration review ("trial scorecards reviewed;
+promote/drop decided"): comparing candidates no longer means opening ticket
+files and eyeballing log lines.
+
+The search is **corpus-wide** and **read-only**: it greps every trial ticket's
+log section under `tickets/`, recursing into `tickets/closed/`, so a retired
+seat's archived cards are still read. It never edits a roster or writes an
+`erg log` line. (This corpus-wide reach is `scores`-only: `scorecard` *writes*
+via `erg log <ID>`, which resolves IDs among *open* tickets only — logging a new
+card to an archived trial ticket fails "no ticket found". `scores` reads by
+grep, so it is not bound by that.)
+
+```
+KIND      NAME                 MR/BOARD                   VERIF  CONS  FIND  DUP  UVER  UHAL  OVERLAP   LATENCY     COST
+audition  hy3-free             10MR                           -     -    59   23     0    36      38%   3419.1s      n/a
+scorecard copilot              ImperialDragonHarness#537      0     0     -    -     -     -        -         -        -
+```
+
+No argument → all seats and candidates. An argument filters to one seat or
+candidate name. A malformed trial line WARNs on stderr, never silently dropped
+(the harvest convention). Only each ticket's `--- log ---` section is read, so
+a card quoted in a ticket body as documentation is never mistaken for a result.
+`scorecard`'s per-MR columns (`VERIF`/`CONS`) and
+`audition`'s per-board columns (`FIND`/`DUP`/`UVER`/`UHAL`/`OVERLAP`/`LATENCY`/
+`COST`) share one table; a `-` marks a column that does not apply to that row.
+
+### `/reviewers help`
+
+Print the usage block to stdout and exit 0. The no-argument and unknown-verb
+paths keep printing usage to stderr and exiting 1.
+
 ### `/reviewers audition <model> [--endpoint URL]`
 
 Replay a **candidate** model over a frozen benchmark board of already-merged
@@ -127,6 +162,35 @@ tickets/NNNN-...` (where the scorecard is logged; default the 0207 trial ticket)
 `--credential-env NAME` (for an authenticated endpoint; threaded to the
 seat-runner, never written to config), `--name LABEL` (candidate label in the
 scorecard; default the model id).
+
+## Candidate scouting
+
+Where candidate models come from — the mechanics of finding something to
+`audition`, so a fresh session need not reinvent them. Model **choice** stays a
+judgment call; this section documents only how to enumerate the options.
+
+**Endpoint inventory.** The authenticated providers are the `*.env` files in
+`~/.config/keys/` — one file per provider (e.g. `openrouter.env`), each holding
+that endpoint's API key. Keys load via the BASH_ENV path (0207); never inline a
+key into config or argv. The commented seat examples in `panel.yml` show the
+two endpoint shapes: a local llama-server (`http://127.0.0.1:8012/v1`, no
+credential) and OpenRouter (`https://openrouter.ai/api/v1`, key via
+`credential-env`). Probe a local `llama-server` by hitting its base URL.
+
+**Models per endpoint.** `GET <base>/v1/models` lists what an endpoint serves.
+OpenRouter's catalog is public (`https://openrouter.ai/api/v1/models`) and
+carries per-token pricing, which is what feeds `REVIEWERS_PRICE_IN_PER_M` /
+`REVIEWERS_PRICE_OUT_PER_M` for the audition `cost` column.
+
+**Rankings.** OpenRouter's usage rankings are website-only
+(`https://openrouter.ai/rankings`, fetched as a page, not exposed as an API) —
+a coarse popularity signal, not a review-quality signal.
+
+**Privacy asymmetry.** Auditioning on a free tier is risk-free: the benchmark
+board replays *already-merged* PRs of a public repo, so nothing unpublished
+leaves the machine. A live advisory trial is different — it ships the *unmerged*
+diff of a real merge request to the endpoint. Weigh a free/third-party endpoint
+accordingly before promoting a candidate from audition to a live seat.
 
 ## Configuration
 
