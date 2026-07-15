@@ -119,8 +119,11 @@ genuinely in-voice, that paragraph is fed back into the user-tier corpus
 (or an explicit "confirmed voice" allowlist) so the same or similar prose
 stops re-triggering. Without this, the tool trains the author to ignore it
 after a handful of wrong flags — a well-known failure mode for lint-style
-tools, and the sharpest edge of the homogenization risk above: a dismiss is
-also how legitimate stylistic drift gets told apart from generated flattening.
+tools, and the sharpest edge of the homogenization risk above. A dismiss
+feeds back into the corpus as a signal, but v1 has no mechanism that tells a
+genuinely-in-voice dismiss apart from one driven by reviewer fatigue — both
+write back identically as "confirmed voice" (see Open questions carried
+forward).
 
 ## Corpus storage (v1: user tier only)
 
@@ -143,7 +146,7 @@ Schema (single stored tier for v1; extra fields anticipate — but do not
 commit to — later tiers and drift tracking):
 
 ```json
-{"id": "content-hash of the paragraph, stable across edits",
+{"id": "content-hash of the paragraph text (v1: changes whenever the text changes; edit-stable identity is the unsolved problem named under Drift tracking, not provided here)",
  "text": "...", "source": "...", "role": "intro|method|results|discussion|other",
  "citation": "doi or bare reference", "added_date": "YYYY-MM-DD",
  "coauthored": false,
@@ -295,3 +298,8 @@ Nothing beyond v1 has an interface decision yet.
   mining real pairs from session transcripts and revision history — no
   heuristic proposed yet, only the requirement that one exists before mining
   starts.
+- How to distinguish a dismiss that means "this really is my voice" from one
+  that means "I am tired of this flag" — both feed back to the corpus as
+  "confirmed voice," so nothing currently separates genuine in-voice prose
+  from reviewer friction. Unsolved; the homogenization countermeasure leans
+  on this distinction it does not yet have.
