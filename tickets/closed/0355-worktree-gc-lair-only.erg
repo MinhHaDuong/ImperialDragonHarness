@@ -2,11 +2,13 @@
 Title: Worktree GC must never touch active sessions — rails in the script, GC stays in molt
 Created: 2026-07-14
 Author: claude
+Closed: autoclosed — PR #627
 
 --- log ---
 2026-07-14T21:40Z claude created
 2026-07-14T22:30Z claude note author refined the ruling: molt (housekeeping) keeps GC but must never touch active sessions; roar only disposes of its own merged worktree; rails moved into worktree-gc.sh itself
 
+2026-07-15T07:07Z Minh Ha-Duong closed — autoclosed — PR #627
 --- body ---
 ## Context
 On 2026-07-13 the worktree GC (`scripts/worktree-gc.sh`) removed two
