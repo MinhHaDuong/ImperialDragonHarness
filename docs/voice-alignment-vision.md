@@ -69,7 +69,10 @@ separately (see Quality-uplift, deferred).
 
 Convergent finding across every review angle: this vision stacks several
 unvalidated layers on an unconfirmed premise. Before committing to
-architecture beyond this point:
+architecture beyond this point (the same local-evidence-gate discipline as
+`feedback_local_evidence_gate_for_pillaged_techniques.md` — ticket 0290's
+zero-instance wontfix precedent, applied here to a vision doc instead of a
+detector implementation):
 
 1. Take the cheapest possible signal — a contrastive stylometric score
    (distance-to-negative-centroid minus distance-to-positive-centroid,
@@ -248,12 +251,14 @@ vision note if pursued; it does not share v1's corpus, auditor, or gate.
 
 - **Default is local-only.** Stylometric scoring (dependency-free baseline
   or a local library) runs entirely on-machine; nothing leaves by default.
-- **OpenRouter cross-check (candidate extension, not v1): opt-in per
-  project**, and sends manuscript paragraph text to a third-party API
-  aggregator. Before this is ever enabled, state the upstream provider's
-  retention/training-use policy for the specific model used, and treat
-  pre-publication manuscript text as confidential by default — this is not
-  a decision to make implicitly by turning the feature on.
+- **OpenRouter cross-check (candidate extension, not v1, opt-in per
+  project — see Candidate extensions -> Perplexity/burstiness scoring for
+  why it is occasional-only)**: sends manuscript paragraph text to a
+  third-party API aggregator. Before this is ever enabled, state the
+  upstream provider's retention/training-use policy for the specific model
+  used, and treat pre-publication manuscript text as confidential by
+  default — this is not a decision to make implicitly by turning the
+  feature on.
 - **LLM qualitative auditor** already sends manuscript text to whichever
   model runs it (Claude, currently) — no different from the existing
   `review-pr-prose` panel's status quo, stated here for completeness rather
