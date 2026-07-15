@@ -97,7 +97,7 @@
       "/home/haduong/CNRS/papiers/actif/AEDIST-technical-report/tickets"
     ]
   },
-  "model": "fable",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -227,7 +227,7 @@
     "Stop": []
   },
   "enabledPlugins": {},
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
