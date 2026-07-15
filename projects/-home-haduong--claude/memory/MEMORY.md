@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Gaze resolves PR numbers in the caller, not the fork](feedback_gaze_resolve_pr_number_before_invoking.md) — /gaze's hard refusal without a PR number is intentional (post-ticket-0193 hardening against fork guesswork); the main loop should resolve an unambiguous PR from conversation context and pass it explicitly, never loosen the fork's no-inference rule (2026-07-15)
 - [statusLine command needs $HOME not ~](project_statusline_command_no_tilde_expansion.md) — settings.json command entries must not rely on tilde expansion; gaze caught a blank-statusline risk (PR #648, 2026-07-15)
 - [Memory-write worktree exemption contradicted by live guard](feedback_memory_writes_bypass_worktree_gate.md) — a primary-checkout memory write was blocked despite the documented exemption; write the worktree copy and land via PR until reconfirmed (2026-07-15)
 - [Harness cool-down: stop second-order tooling](feedback_harness_cooldown_stop_second_order_tooling.md) — author is done with nitpick tickets and fixes-to-fixes (2026-07-14); file a harness ticket only if the defect blocks a merge, corrupts state, or bites a science project; sweeps report instead of minting tickets; prefer deleting a misfiring guard to patching it; point throughput at the science repos
