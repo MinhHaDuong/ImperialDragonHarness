@@ -248,5 +248,111 @@ if [ -x "$ERG_BIN" ]; then
     fi
 fi
 
+# ── ticket 0353: per-run latency stats + peer-relative SLOW gate ─────────────
+# Latency is injected via REVIEWERS_AUDITION_ELAPSED so the stats are
+# deterministic (no sleep, no wall-clock dependence). Peers are hand-written
+# audition cards on the SAME board size (2MR), p50=10.0s each — one open, one
+# archived (proving the closed/ reach) — so the median-vs-mean distinction is
+# real: median(10,10,35)=10 ≠ mean(10,10,35)=18.3.
+if [ -x "$ERG_BIN" ]; then
+    PEERDIR="$WORK/peer-tickets"; mkdir -p "$PEERDIR/closed"
+    cat > "$PEERDIR/0400-peer-a.erg" <<'ERG'
+%erg 0.1
+Title: Peer A
+Created: 2026-07-15
+Author: test
+
+--- log ---
+2026-07-15T00:00Z claude note audition candidate=peer-a model=x board=2MR findings=1 duplicate=0 unique-verified=1 unique-hallucinated=0 overlap=0% latency=20.0s cost=n/a latency-p50=10.0s latency-p95=10.0s
+
+--- body ---
+## Context
+Fixture.
+ERG
+    cat > "$PEERDIR/closed/0401-peer-b.erg" <<'ERG'
+%erg 0.1
+Title: Peer B
+Created: 2026-07-15
+Author: test
+Closed: 2026-07-15
+
+--- log ---
+2026-07-15T00:00Z claude note audition candidate=peer-b model=x board=2MR findings=1 duplicate=0 unique-verified=1 unique-hallucinated=0 overlap=0% latency=20.0s cost=n/a latency-p50=10.0s latency-p95=10.0s
+
+--- body ---
+## Context
+Fixture.
+ERG
+
+    run353() {  # elapsed factor tickets-dir label  → echoes the scorecard card
+        local elapsed="$1" factor="$2" tdir="$3" label="$4"
+        ( cd "$TDIR" && REVIEWERS_FINDINGS_DIR="$WORK/f353" SEAT_RUNNER="$STUB" \
+            ERG="$ERG_FIXTURE" REVIEWERS_TICKETS="$tdir" \
+            REVIEWERS_AUDITION_ELAPSED="$elapsed" REVIEWERS_SLOW_FACTOR="$factor" \
+            "$REVIEWERS" audition openai/toy --board "$BOARD" \
+                --endpoint http://127.0.0.1:9/v1 --trial-ticket "$TRIAL" \
+                --name "$label" 2>/dev/null )
+    }
+
+    # p50/p95 fields present, appended after cost=, and correct (35/35 → 35.0).
+    slow_card=$(run353 "35.0 35.0" 3 "$PEERDIR" cand-slow)
+    assert_contains "0353: card carries latency-p50" "latency-p50=35.0s" "$slow_card"
+    assert_contains "0353: card carries latency-p95" "latency-p95=35.0s" "$slow_card"
+    assert_contains "0353: existing running-sum latency preserved" "latency=70.0s" "$slow_card"
+    # 35 > 3×median(10,10,35)=30 → flagged. A mean-based bug (3×18.3=55) would NOT
+    # flag, so this assertion doubles as the median-not-mean guard.
+    assert_contains "0353: slow candidate flagged SLOW" " SLOW" "$slow_card"
+
+    # Boundary: exactly factor×median (30 = 3×10) is NOT flagged (STRICT >).
+    bound_card=$(run353 "30.0 30.0" 3 "$PEERDIR" cand-bound)
+    assert_contains "0353: boundary p50 present" "latency-p50=30.0s" "$bound_card"
+    if [[ "$bound_card" == *" SLOW"* ]]; then
+        echo "FAIL: 0353: boundary candidate (exactly factor×median) must NOT be flagged"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: 0353: boundary candidate not flagged"; PASS=$((PASS+1))
+    fi
+
+    # Lone candidate: no peers on this board size → never flagged, however slow.
+    LONEDIR="$WORK/lone-tickets"; mkdir -p "$LONEDIR"
+    lone_card=$(run353 "999.0 999.0" 3 "$LONEDIR" cand-lone)
+    if [[ "$lone_card" == *" SLOW"* ]]; then
+        echo "FAIL: 0353: lone candidate (no peers) must never be flagged"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: 0353: lone candidate never flagged"; PASS=$((PASS+1))
+    fi
+
+    # REVIEWERS_SLOW_FACTOR raises the bar: factor 5 → 35 > 5×10=50? no → kept.
+    loose_card=$(run353 "35.0 35.0" 5 "$PEERDIR" cand-loose)
+    if [[ "$loose_card" == *" SLOW"* ]]; then
+        echo "FAIL: 0353: REVIEWERS_SLOW_FACTOR=5 must not flag p50=35 (5×median=50)"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: 0353: REVIEWERS_SLOW_FACTOR raises the threshold"; PASS=$((PASS+1))
+    fi
+    # …and lowers it: factor 2 → 35 > 2×10=20 → flagged.
+    tight_card=$(run353 "35.0 35.0" 2 "$PEERDIR" cand-tight)
+    assert_contains "0353: REVIEWERS_SLOW_FACTOR=2 flags p50=35 (2×median=20)" " SLOW" "$tight_card"
+else
+    echo "SKIP: erg binary absent — 0353 latency/SLOW tests"
+fi
+
+# ── ticket 0353 review: --name/model reject the card's field delimiters ──────
+# A space or `=` in the label would truncate/hijack the first-match
+# `_card_field` read-back (`--name "Local Qwen 30B"` → candidate "Local"),
+# breaking the peer-median self-exclusion and the scores NAME column.
+for bad in "Local Qwen 30B" "foo=bar"; do
+    if "$REVIEWERS" audition openai/toy --board "$BOARD" \
+            --endpoint http://127.0.0.1:9/v1 --name "$bad" >/dev/null 2>&1; then
+        echo "FAIL: 0353: --name '$bad' (space/=) should exit non-zero"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: 0353: --name '$bad' rejected"; PASS=$((PASS+1))
+    fi
+done
+if "$REVIEWERS" audition "openai/toy model" --board "$BOARD" \
+        --endpoint http://127.0.0.1:9/v1 >/dev/null 2>&1; then
+    echo "FAIL: 0353: model with a space should exit non-zero"; FAIL=$((FAIL+1))
+else
+    echo "PASS: 0353: model with a space rejected"; PASS=$((PASS+1))
+fi
+
 echo ""; echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -145,14 +145,37 @@ reviewers:
     endpoint: http://127.0.0.1:9/v1
     model: openai/stub
 YAML
-    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" \
+    TF="$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg"
+    # Point FINDINGS_DIR at a clean dir so no stale sidecar leaks into the
+    # no-sidecar case (default is /tmp/reviewers, shared across runs).
+    SC_FDIR="$WORK/sc-findings"; mkdir -p "$SC_FDIR"
+    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" REVIEWERS_FINDINGS_DIR="$SC_FDIR" \
         "$REVIEWERS" scorecard 42 stub-good "PASS — 0 verifiable, 2 consider" ) >/dev/null 2>&1
-    if "$TSTORE/erg" validate "$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg" >/dev/null 2>&1 \
-       && grep -q 'MR #42 seat=stub-good' "$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg"; then
+    if "$TSTORE/erg" validate "$TF" >/dev/null 2>&1 \
+       && grep -q 'MR #42 seat=stub-good' "$TF"; then
         echo "PASS: scorecard appends a valid erg log line"; PASS=$((PASS+1))
     else
         echo "FAIL: scorecard did not append a valid erg log line"; FAIL=$((FAIL+1))
     fi
+    # ── ticket 0353: request-path latency folds into the scorecard line ──────
+    # No sidecar → the line is byte-identical to the pre-0353 schema (no latency).
+    line42=$(grep 'MR #42 seat=stub-good' "$TF" | head -1)
+    if [[ "$line42" == *"latency="* ]]; then
+        echo "FAIL: scorecard: no-sidecar line must not carry latency="; FAIL=$((FAIL+1))
+    else
+        echo "PASS: scorecard: no-sidecar line is byte-identical (no latency=)"; PASS=$((PASS+1))
+    fi
+    assert_contains "scorecard: no-sidecar line ends at the verdict" \
+        "MR #42 seat=stub-good verdict: PASS — 0 verifiable, 2 consider" "$line42"
+    # A `.latency` sidecar (left by `request`) → its seconds fold in at END.
+    mkdir -p "$SC_FDIR/43"; printf '12.3' > "$SC_FDIR/43/stub-good.latency"
+    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" REVIEWERS_FINDINGS_DIR="$SC_FDIR" \
+        "$REVIEWERS" scorecard 43 stub-good "PASS — 1 verifiable, 0 consider" ) >/dev/null 2>&1
+    line43=$(grep 'MR #43 seat=stub-good' "$TF" | head -1)
+    assert_contains "scorecard: sidecar latency folded into the line" "latency=12.3s" "$line43"
+    "$TSTORE/erg" validate "$TF" >/dev/null 2>&1 \
+        && { echo "PASS: scorecard: ticket still valid after latency-bearing note"; PASS=$((PASS+1)); } \
+        || { echo "FAIL: scorecard: latency-bearing note broke ticket validity"; FAIL=$((FAIL+1)); }
 else
     echo "SKIP: erg binary absent — scorecard erg-integration test"
 fi
