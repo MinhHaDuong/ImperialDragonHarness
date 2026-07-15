@@ -28,7 +28,7 @@ context: fork
 
 Spin multiple agents in parallel, each with a distinct perspective. Run all
 agents in fresh contexts, each pinned to **`model: sonnet`** — reviewers stay
-below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work"), and an
+below the coder tier (rules/workflow.md § "Reviewer decorrelation"), and an
 unpinned Agent inherits the session model, so on a top-tier session this fan-out
 silently becomes a top-model wave.
 

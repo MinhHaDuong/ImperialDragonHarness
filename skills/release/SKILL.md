@@ -47,7 +47,7 @@ skill **never signs** a tag — that is the human's sole responsibility.
 Launch **three background agents in parallel** (single message, all as
 background agents), each pinned to **`model: sonnet`** — these are read-and-audit
 reviewers (security, UX, doc/test coherence), so they stay below the coder tier
-(rules/workflow.md § "Sonnet reviews Opus's work"); left unpinned they inherit
+(rules/workflow.md § "Reviewer decorrelation"); left unpinned they inherit
 the session model and silently run the fan-out at top tier. Wait for all to
 return, then consolidate.
 
