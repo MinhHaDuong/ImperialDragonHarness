@@ -17,7 +17,7 @@ and enforcing invariants.
 ## Model policy (rightsizing)
 
 A raid fans out N concurrent agents — the cost lever is the **per-invocation
-`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku`),
+`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku|fable`),
 NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
 the subagent inheritance chain, so an unpinned launch silently runs at whatever
 the session model is; left unpinned on a top-tier session that is the runaway
