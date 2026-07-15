@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [Gaze resolves PR numbers in the caller, not the fork](feedback_gaze_resolve_pr_number_before_invoking.md) — /gaze's hard refusal without a PR number is intentional (post-ticket-0193 hardening against fork guesswork); the main loop should resolve an unambiguous PR from conversation context and pass it explicitly, never loosen the fork's no-inference rule (2026-07-15)
 - [Harness cool-down: stop second-order tooling](feedback_harness_cooldown_stop_second_order_tooling.md) — author is done with nitpick tickets and fixes-to-fixes (2026-07-14); file a harness ticket only if the defect blocks a merge, corrupts state, or bites a science project; sweeps report instead of minting tickets; prefer deleting a misfiring guard to patching it; point throughput at the science repos
 - [BASH_ENV/hook tests must exercise the real invocation path](feedback_bash_env_tests_real_invocation_path.md) — sourcing a BASH_ENV script in the test's own shell misses re-entry, ambient inheritance, and export-boundary bugs (three security defects passed the unit suite); test via `env -i HOME=… BASH_ENV=… bash -c …` (PRs #599/#604, 2026-07-14)
 - [Untrusted .env export is a code-execution class](feedback_untrusted_env_export_is_code_execution.md) — the RCE surface is the interpreter-critical namespace (GCONV_PATH, LD_PRELOAD/LD_AUDIT, BASH_ENV/ENV, PYTHONPATH/NODE_OPTIONS/NODE_PATH/PERL5LIB/RUBYOPT, PATH), not just GUARD_ vars; default-deny, never source (ticket 0345, 2026-07-14)
