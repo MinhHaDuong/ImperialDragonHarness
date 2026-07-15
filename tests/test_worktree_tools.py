@@ -305,7 +305,7 @@ def test_gc_reports_unregistered_husk_dir(origin):
 def test_gc_reports_husk_when_run_from_linked_worktree(origin):
     """The husk scan must root on the PRIMARY repo, not on the `repo` arg's own
     toplevel — else running gc from a linked worktree (the harness's normal cwd,
-    and how molt/roar invoke it bare) silently skips the scan (ticket 0325)."""
+    and how lair invokes it bare) silently skips the scan (ticket 0325)."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-live", dirty=False)  # live linked worktree
     husk = primary / ".claude" / "worktrees" / "husk-agent-dead"
@@ -483,9 +483,10 @@ def test_preflight_errors_on_missing_path():
     assert res.returncode != 0
 
 
-def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
-    """A locked but unlockable agent-* worktree on a gone branch should be
-    unlocked and removed — exercises the locked-branch code path."""
+def test_gc_skips_locked_gone_worktree(origin):
+    """A locked worktree is an in-use marker (molt's active-session guard
+    reads it that way) — the GC must skip it, never unlock-and-remove: the
+    pre-0355 unlock path defeated the one marker a session could set."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-locked", dirty=False)
     git(primary, "worktree", "lock", str(wt))
@@ -493,5 +494,25 @@ def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "removed agent-locked" in res.stdout
-    assert str(wt) not in _worktree_paths(primary)
+    assert "skip agent-locked (locked" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_skips_live_process_cwd_worktree(origin):
+    """A clean worktree on a gone branch whose dir is a live process's cwd is
+    an ACTIVE session's base, not an abandoned tree — the exact state the
+    2026-07-13 incident removed (ticket 0355). Must be skipped, in place."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-session", dirty=False)
+    make_branch_gone(remote, primary, "agent-session")
+
+    proc = subprocess.Popen(["sleep", "60"], cwd=str(wt))
+    try:
+        res = _gc(primary)
+        assert res.returncode == 0
+        assert "skip agent-session (live process cwd inside" in res.stdout
+        assert str(wt) in _worktree_paths(primary)
+    finally:
+        proc.kill()
+        proc.wait()
