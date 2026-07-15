@@ -70,3 +70,4 @@
 - [Cross-PR ticket-ID collision](feedback_cross_pr_ticket_id_collision.md) — per-branch erg check can't see a duplicate ID across two open PRs; scan open PRs' added ticket files before merging a ticket-filing PR; renumber the later claimant
 - [rtk rewrites git output](feedback_rtk_rewrites_git_output.md) — the rtk hook injects `--- Changes ---` into git diff/porcelain output; use `rtk proxy git ...` when parsing machine output
 - [Draft PR blocks merge](feedback_draft_pr_blocks_merge.md) — a draft PR fails every merge path with cryptic GraphQL errors; check `isDraft` and `gh pr ready` first; erg-pr-merge closes the ticket THEN bounces on draft
+- [Home directory: no new top-level dirs](feedback_home_dir_no_new_top_level.md) — never propose a new top-level dir directly under `~`; reuse an existing one (`~/data`, `~/CNRS`, `~/.claude`) for tool-independent data (2026-07-15)
