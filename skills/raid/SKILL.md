@@ -32,7 +32,7 @@ launch below pins `model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
-  below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work").
+  below the coder tier (rules/workflow.md § "Reviewer decorrelation").
 - **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
   checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
   conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR

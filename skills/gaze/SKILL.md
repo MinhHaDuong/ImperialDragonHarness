@@ -181,7 +181,7 @@ launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Pin every
 read-only reviewer to
 **`model: sonnet`** — reviewers stay below the coder tier (rules/workflow.md
-§ "Sonnet reviews Opus's work"), and an unpinned Agent inherits the session
+§ "Reviewer decorrelation"), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
@@ -434,14 +434,44 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
   `/verify-wave` (not yet drafted) for post-merge integration testing of a batch.
 - **Merging.** Ever. That is the caller's job.
 
-## External reviewer panel (delegation stub)
+## External reviewer panel
 
 The external, decorrelated reviewer panel — sandboxed CI-style seats over
 agnostic CLI reviewers — is managed by the `/reviewers` skill, not inlined
-here. Its findings are **advisory**: the gate dispositions them like any
-panel comment (only verifiable-class may bounce). The full panel-extension
-contract is ticket 0205's deliverable; seat execution is the 0217
-seat-runner. See `skills/reviewers/SKILL.md`.
+here; seat execution is the 0217 seat-runner. See `skills/reviewers/SKILL.md`.
+This section is the panel-extension contract (ticket 0205).
+
+**When seats fire.** Automatically, on **small**- and **full**-tier CODE
+reviews — the decorrelation evidence concentrates ensemble value on
+substantive multi-file code changes. Skip on the **tiny** tier and on prose
+panels (any `*.qmd` changed). Empty roster or `/reviewers` unavailable →
+skip silently: the panel is fail-open and never blocks a gaze run.
+
+**How.** At the phase 2–4 reviewer-battery launch, also invoke
+`/reviewers request <pr>` as a background *shell* job (a Bash call, not an
+agent launch, so the fork-orphan contract does not apply): the sandboxed
+seats (~30–120 s) run concurrently with the internal reviewer battery and
+finish well inside its wall time. Before phase 6, run
+`/reviewers harvest <pr>` synchronously and hand the normalized
+`verifiable:` / `consider:` findings to the gate as panel comments.
+
+**Disposition.** The gate dispositions external findings identically to
+internal ones (0205 rule 1). Seats are **advisory**: only verifiable-class
+findings may bounce. A seat that errors or hangs WARNs and the review
+proceeds — per-seat fail-open; one seat never blocks the verdict.
+
+**Scorecard (the trial).** After the gate verdict, for each seat that
+returned findings, append the trial line:
+`/reviewers scorecard <pr> <seat> "<verdict — N verifiable, M consider, of
+which K adopted>"`. This fills ticket 0207's advisory trial (≥5 MRs across
+≥3 projects per config) passively from normal gaze runs.
+
+**Advisory → required promotion** (0205 rule 2, condensed). A seat runs
+advisory for at least 5 merge requests spanning at least 3 projects before
+promotion. Promotion is flipping its check from optional to required — a
+manual roster edit by the author, never automatic. LLM review is
+non-deterministic: promote only seats whose verifiable-class findings are
+stable across re-runs; advisory is the safe default.
 
 **Forge automated reviewer** (ticket 0206): the gate's comment-validation
 step includes the forge's automated reviewer (e.g. a requested Copilot
