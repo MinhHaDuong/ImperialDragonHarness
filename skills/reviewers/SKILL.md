@@ -193,7 +193,9 @@ local endpoint), `--board FILE` (default `benchmark-board.yml`), `--trial-ticket
 tickets/NNNN-...` (where the scorecard is logged; default the 0207 trial ticket),
 `--credential-env NAME` (for an authenticated endpoint; threaded to the
 seat-runner, never written to config), `--name LABEL` (candidate label in the
-scorecard; default the model id).
+scorecard; default the model id — an **identifier**, so no spaces, `=`, or
+newlines: those are the space-delimited card's field delimiters and would
+corrupt read-back).
 
 Environment: `REVIEWERS_SLOW_FACTOR` (default `3`) sets the SLOW threshold as a
 multiple of the cross-candidate median p50.

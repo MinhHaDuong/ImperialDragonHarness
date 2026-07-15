@@ -43,8 +43,9 @@ to what the other candidates demonstrate is achievable.
 
 1. **Capture, audition path**: record wall-clock per board PR; extend
    the scorecard block with distribution figures
-   (`latency-p50=<s>s latency-p95=<s>s` alongside the existing mean, so
-   existing parsers keep working).
+   (`latency-p50=<s>s latency-p95=<s>s` alongside the existing
+   `latency=` field — which is a running SUM across board PRs, not a
+   mean; left unchanged so existing parsers keep working).
 2. **Capture, request path**: time each seat per merge request and put
    the figure in the seat's `scorecard` fixed-schema line, so live-trial
    evidence accumulates the same statistic.

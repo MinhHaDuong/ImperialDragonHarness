@@ -139,7 +139,9 @@ _card_field() {  # key line
 _percentile() {  # pct v1 v2 ...
     local pct="$1"; shift
     [ "$#" -gt 0 ] || { printf '0.0'; return 0; }
-    printf '%s\n' "$@" | sort -g | awk -v p="$pct" '
+    # LC_ALL=C so `sort -g` and awk read `.` decimals regardless of the ambient
+    # locale (a fr_FR locale would otherwise mis-parse "10.5" on the comma).
+    printf '%s\n' "$@" | LC_ALL=C sort -g | LC_ALL=C awk -v p="$pct" '
         { a[NR]=$0 }
         END {
             x = (p / 100.0) * NR
@@ -177,10 +179,13 @@ _audition_peer_p50s() {  # tickets_dir board_size self_label
         case "$line" in *"audition candidate="*) ;; *) continue ;; esac
         [ "$(_card_field board "$line")" = "${bsize}MR" ] || continue
         p50=$(_card_field latency-p50 "$line")
-        [ -n "$p50" ] || continue
+        p50="${p50%s}"
+        # Emit only a well-formed numeric p50 — a malformed card must not coerce
+        # to 0.0 and silently drag the peer median down (ticket 0353 review).
+        case "$p50" in ''|*[!0-9.]*|*.*.*) continue ;; esac
         lbl=$(_card_field candidate "$line")
         [ "$lbl" = "$self" ] && continue
-        printf '%s\n' "${p50%s}"
+        printf '%s\n' "$p50"
     done
 }
 
@@ -380,11 +385,15 @@ case "$subcmd" in
             esac
         done
         label="${label:-$model}"
-        # Reject control characters (newlines/CRs) in the values that flow into
-        # the erg-log scorecard card: an embedded newline would forge a second,
-        # well-formed ticket-log line that `erg check` cannot flag.
-        case "$model" in *[$'\n\r']*) echo "error: audition: model must not contain newlines or carriage returns" >&2; exit 1 ;; esac
-        case "$label" in *[$'\n\r']*) echo "error: audition: --name must not contain newlines or carriage returns" >&2; exit 1 ;; esac
+        # Reject control characters (newlines/CRs) AND the card's field delimiters
+        # (space, `=`) in the values that flow into the space-delimited scorecard
+        # card. A newline would forge a second ticket-log line `erg check` cannot
+        # flag; a space or `=` truncates or hijacks the first-match `_card_field`
+        # parse — e.g. `--name "Local Qwen 30B"` would read back as `Local`,
+        # breaking the peer-median self-exclusion and the `scores` NAME column
+        # (ticket 0353 review). Candidate labels are identifiers, not prose.
+        case "$model" in *[$'\n\r'\ =]*) echo "error: audition: model must not contain spaces, '=', or newlines" >&2; exit 1 ;; esac
+        case "$label" in *[$'\n\r'\ =]*) echo "error: audition: --name must not contain spaces, '=', or newlines" >&2; exit 1 ;; esac
         [ -f "$board" ] || { echo "error: benchmark board not found: ${board}" >&2; exit 1; }
 
         dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"

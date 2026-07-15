@@ -335,5 +335,24 @@ else
     echo "SKIP: erg binary absent — 0353 latency/SLOW tests"
 fi
 
+# ── ticket 0353 review: --name/model reject the card's field delimiters ──────
+# A space or `=` in the label would truncate/hijack the first-match
+# `_card_field` read-back (`--name "Local Qwen 30B"` → candidate "Local"),
+# breaking the peer-median self-exclusion and the scores NAME column.
+for bad in "Local Qwen 30B" "foo=bar"; do
+    if "$REVIEWERS" audition openai/toy --board "$BOARD" \
+            --endpoint http://127.0.0.1:9/v1 --name "$bad" >/dev/null 2>&1; then
+        echo "FAIL: 0353: --name '$bad' (space/=) should exit non-zero"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: 0353: --name '$bad' rejected"; PASS=$((PASS+1))
+    fi
+done
+if "$REVIEWERS" audition "openai/toy model" --board "$BOARD" \
+        --endpoint http://127.0.0.1:9/v1 >/dev/null 2>&1; then
+    echo "FAIL: 0353: model with a space should exit non-zero"; FAIL=$((FAIL+1))
+else
+    echo "PASS: 0353: model with a space rejected"; PASS=$((PASS+1))
+fi
+
 echo ""; echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ] || exit 1
