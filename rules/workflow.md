@@ -39,7 +39,7 @@ If `origin/main` is ahead and overlaps your area, reconcile first (rebase onto i
 
 During an `EnterWorktree` session, `Edit`/`Write`/`Read` tools accept any absolute path. An edit at `/home/haduong/<repo>/<file>` lands in the **main repo**, not the worktree. Use worktree-rooted paths for code, prose, and data.
 
-**No exceptions. Everything goes through a PR.** `STATE.md`, ticket lifecycle, memory files, config — all changes land via branch + PR. The GitHub gate is closed; there is no direct-push-to-main path.
+**No exceptions except memory. Everything else goes through a PR.** `STATE.md`, ticket lifecycle, config — all changes land via branch + PR. The GitHub gate is closed; there is no direct-push-to-main path. Memory files (`projects/*/memory/**`) are the one carve-out: they're tracked via the primary checkout's `.gitignore` whitelist and the `memory` skill instructs writing them directly by absolute path even mid-worktree-session — `scripts/pretooluse-worktree-path-guard.sh` exempts that path explicitly, so a primary-checkout memory write is intended, not the trap this section otherwise guards against.
 
 For everything else (source code, data files): if `git branch --show-current` is `main`, stop and switch to a branch first. Exception: manuscript prose in paper repos is co-edited in place in the author's checkout during interactive sessions — see `rules/git.md` § Prose workpackages.
 
