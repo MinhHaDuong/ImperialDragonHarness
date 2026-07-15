@@ -18,6 +18,7 @@ Blocked-by: 0207
 2026-07-14T17:14Z Minh Ha-Duong note child 0346 filed — /reviewers audition subcommand (frozen benchmark board, duplicate/unique-verified/unique-hallucinated classification); audition filters candidates before the advisory trial, never replaces it
 2026-07-14T19:55Z Minh Ha-Duong note child 0348 filed — scores read-back (the integration review's reading surface), explicit help verb, stale copilot trial-ticket pointer (0206 archived to closed/)
 2026-07-14T21:13Z Minh Ha-Duong note child 0353 filed — latency capture on both paths plus peer-relative SLOW elimination (factor x median p50 on the same board), author directive; blocked-by 0348 for the scores read-back surface
+2026-07-15T06:10Z note child 0356 filed — cross-project PR benchmark, mined-defect sample + pairwise challenger audition (deferred, no active work planned yet)
 --- body ---
 ## Context
 
@@ -37,6 +38,8 @@ stays open until children merge + integration review (roar step 7).
 - tickets/0346 — /reviewers audition: retrospective benchmark board for candidate seats
 - tickets/0348 — /reviewers scores read-back, help verb, stale trial-ticket pointer
 - tickets/0353 — latency tracking on audition and request; peer-relative slow-candidate elimination
+- tickets/0356 — cross-project PR benchmark: mined-defect sample + pairwise
+  challenger audition (deferred)
 
 ## Architecture: review is CI (decided 2026-06-05, supersedes the ACP draft)
 

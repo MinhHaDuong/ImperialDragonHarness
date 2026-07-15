@@ -1,0 +1,201 @@
+%erg 0.1
+Title: Cross-project PR benchmark: mined-defect sample + pairwise challenger audition
+Created: 2026-07-15
+Author: Minh Ha-Duong
+Label: deferred
+
+--- log ---
+2026-07-15T06:09Z Minh Ha-Duong created
+2026-07-15T06:09Z claude note child of tickets/0205 (external-reviewer panel tracker); deferred at author's request, no active work planned yet
+
+--- body ---
+## Context
+
+`/reviewers audition` replays candidate reviewer models over a frozen 10-PR
+board (`skills/reviewers/benchmark-board.yml`), all from this one repo, with
+every `defects:` (panel-missed ground truth) field empty. This ticket
+captures a design worked out in an interactive session (2026-07-15) covering
+two problems:
+
+1. Single-repo board can't test cross-project generalization.
+2. The scoring is inverted, not just incomplete: with `defects:` empty, any
+   candidate finding that matches neither `panel:` nor `defects:` is
+   classified `unique-hallucinated`. A candidate that correctly catches a
+   real panel-missed bug scores *worse* than a timid one. An adversarial
+   Fable xhigh review of the first draft of this design caught this —
+   power-tuning a sample before fixing the scoring optimizes precision on a
+   biased estimator. Verdict adopted: sample on mined defects (case-control),
+   not on a hardness proxy; defect mining is step 0.
+
+Full design writeup (superseded by nothing newer — this ticket body is the
+authoritative capture): the design lived in a local plan file during the
+session, `~/.claude/plans/right-a-pr-sample-buzzing-floyd.md`, whose content
+is reproduced below since plan files are not durable across sessions.
+
+### Verified facts (checked on the author's machine during the session, not assumed)
+
+- Real population is large and diverse: ~30 git repos under `~/CNRS/**`
+  span tool-coding (`git-erg`, `DOIfetch`, `fs-housekeeper`), quantitative
+  research (`climate-finance-het`, `VN-Power-Scenario`, `VinaPyPSA`), and
+  writing (`AEDIST-technical-report`, `livre-milliards-climat`,
+  `polycentric_activity`). No need to hand-pick 4 repos by style — diversity
+  falls out of "all projects."
+- **Squash-merge is real, not hypothetical**: `git-erg`, `climate-finance-het`,
+  `polycentric_activity`, and `aedist` all have `allow_squash_merge: true`.
+  The `MC^1`/`MC^2` merge-commit-parent SHA recovery the original board uses
+  fails on these. Fix: resolve `base`/`head` from the PR API's own
+  `base.sha`/`head.sha` fields (or `merge_commit_sha` when present), never by
+  walking merge-commit parents.
+- **Cross-owner and access gaps are real**: `DOIfetch`'s remote is
+  `hanhan6688/DoiHarvest` (not the author's account) with null merge-policy
+  fields and zero visible merged PRs via the current token; `CIRED.digital`
+  404s. Owner/repo must be parsed per-remote, never hardcoded to one default
+  owner. A repo the API can't resolve is skipped with a logged warning —
+  population-building must never crash on one bad repo.
+- **Local-only repos exist** (`fs-housekeeper`, no GitHub remote) — excluded
+  from the population outright (no forge PR history to mine).
+- **Private repos are in the real population** (`polycentric_activity`,
+  `livre-milliards-climat`). Author decision: include them, but **opt-in per
+  repo** for which candidates may see them — not a blanket include, not a
+  blanket exclude. Default = not opted in (excluded) until the author
+  explicitly adds a repo to the allowlist.
+
+## Relevant files
+
+- `scripts/trace-pr-join.py` — reuse the gh-API fetch pattern
+  (`gh api repos/{owner}/{repo}/pulls/{n}` +
+  `gh api repos/{owner}/{repo}/issues/{n}/comments --paginate`) and the
+  union-cache-never-shrinks discipline (its Finding 3). Do NOT reuse
+  `project_to_repo()` as-is — it doesn't enumerate repos, it maps a
+  census-supplied project name, and it hardcodes a single owner. The new
+  population step needs its own repo-enumeration (walk the real project
+  tree, e.g. `~/CNRS/**`, resolve `git remote get-url origin` per repo,
+  parse owner/repo from whatever host, skip anything without a GitHub
+  remote or that 404s).
+- `skills/reviewers/benchmark-board.yml` — schema to extend, not replace:
+  populate `defects:` via mining; a `weight:` field is not needed
+  (case-control replaces IPW-reweighted stratification); keep the
+  `panel:`/`defects:` anchor format.
+- `skills/reviewers/reviewers.sh` (`audition` subcommand) — needs real
+  changes: base/head resolution from PR-API SHAs instead of merge-commit
+  parents; a `novel-unadjudicated` bucket in the classifier; batch/
+  stopping-rule loop; incumbent-scorecard caching for pairwise mode.
+- `skills/reviewers/panel.yml` — read-only for audition; the pairwise
+  "incumbent" is resolved from whichever seat currently holds that role.
+- A new private-repo allowlist config (e.g.
+  `skills/reviewers/private-repo-allowlist.yml`): per repo, `excluded`
+  (default) / `local-candidates-only` / `all-candidates`.
+
+## Actions
+
+1. **Defect mining, step 0, whole PR lifecycle.** Mine two kinds of
+   anchors, from open to long after merge: review-time (`panel:` —
+   both verifiable and consider-class comments, mechanical parse of
+   existing review threads) and post-merge (`defects:` — a later
+   commit/PR that fixes lines this PR touched, a revert, a follow-up
+   ticket citing this PR; mechanical where detectable, manual/agent-
+   assisted otherwise). Retain the cheap mechanical proxy
+   (contentiousness: reroll/escalate mentions; size/defect-type) only to
+   PRIORITIZE the manual mining pass — it no longer defines the sample.
+2. **Case-control sample assembly.** All mined cases (capped if mining
+   overproduces) + a facet-matched control set (size, files-changed,
+   language, defect-type-by-title-regex) for hallucination-rate
+   calibration. Emit as a new board YAML.
+3. **Repo enumeration + population fetch.** Walk the real project tree;
+   resolve remote/owner/merge-policy per repo; classify has-remote/
+   no-remote, accessible/404, public/private; apply the private-repo
+   allowlist (default excluded); log every skip with a reason, never a
+   silent drop. Cache to a committed CSV, union-never-shrinks.
+4. **Audition pipeline changes**:
+   - SHA resolution via PR-API fields, not merge-commit parents.
+   - Four-bucket classifier: `duplicate` (matches `panel:`),
+     `unique-verified` (matches `defects:`), `novel-unadjudicated`
+     (matches neither — NOT auto-hallucinated), `unique-hallucinated`
+     (only after a novel finding is reviewed and refuted).
+   - Adjudication protocol: cross-candidate corroboration (2+ independent
+     models flagging the same location is supporting evidence) before a
+     human/panel look; findings that survive get promoted into the
+     board's `defects:` field, growing ground truth over time.
+   - Pairwise challenger-vs-incumbent mode: incumbent's scorecard on the
+     current sample is cached once per reigning-champion period, reused
+     across multiple challengers (never re-run the incumbent per
+     challenger); a win triggers a seat-creation proposal (still the
+     existing manual `panel.yml` edit + PR at 0205's integration review);
+     report per-facet win breakdown (language, defect-type, repo) to
+     surface model fortes for smarter multi-seat selection, not just a
+     single winner-take-all verdict.
+   - Progressive/sequential testing: batch the sample (propose 10-15 PRs
+     per batch); stopping rule evaluated after each batch — fast reject on
+     an early decisive-bad hallucination rate, fast accept once the
+     challenger-vs-incumbent comparison is already decisive at a
+     pre-committed threshold; only genuinely close calls run the full
+     sample.
+5. **Documentation**: `skills/reviewers/SKILL.md` audition section
+   rewritten to describe the mined-defect board, the adjudication loop,
+   pairwise mode, and the private-repo allowlist.
+
+## Test
+
+- Repo enumeration: fixture with a mix of has-remote/no-remote,
+  public/private, accessible/404 repos; assert correct inclusion/exclusion
+  and that a 404 or null-field repo doesn't crash the run.
+- SHA resolution: fixture PRs from both a squash-merge and a merge-commit
+  repo; assert both resolve a reconstructable diff via API-reported SHAs.
+- Defect-mining mechanical pass: fixture with a known revert and a known
+  follow-up-commit-citing-PR-N; assert both are detected as `defects:`
+  candidates.
+- Classifier: fixture candidate findings against known `panel:`/`defects:`
+  anchors; assert the four-bucket classification, and that an unmatched
+  finding lands in `novel-unadjudicated`, never auto-`unique-hallucinated`.
+- Pairwise mode: fixture incumbent + challenger scorecards; assert the
+  incumbent is read from cache (not re-invoked) on a second challenger run.
+- Stopping rule: fixture batch sequence with an early decisive-bad
+  candidate; assert the run stops before the full sample.
+
+## Verification
+
+- [ ] Repo enumeration correctly includes/excludes per the rules above
+- [ ] SHA resolution works on both squash-merge and merge-commit repos
+- [ ] Defect mining produces `defects:` anchors from both review-time and
+      post-merge signals
+- [ ] Classifier never auto-labels an unmatched finding as hallucinated
+- [ ] Pairwise mode reuses a cached incumbent scorecard across challengers
+- [ ] Stopping rule halts early on a decisive batch
+- [ ] `skills/reviewers/SKILL.md` documents the new board, adjudication
+      loop, pairwise mode, and private-repo allowlist
+
+## Invariants
+
+- No secrets in any config: credential-env name only, key loads via the
+  BASH_ENV path (0207 convention)
+- Population-building never crashes on one bad repo (404, null fields,
+  no remote) — log and skip
+- Private-repo inclusion is opt-in only; default is excluded
+- Containment unchanged: candidates run only through the 0217 seat-runner
+  sandbox
+- `make check` passes
+
+## Exit criteria
+
+- [ ] Mined-defect case-control board built and committed, spanning
+      multiple repos with populated `defects:` anchors
+- [ ] `audition` resolves diffs correctly on both squash-merge and
+      merge-commit repos
+- [ ] Four-bucket classifier + adjudication loop implemented; novel
+      findings promotable to `defects:` on confirmation
+- [ ] Pairwise challenger-vs-incumbent mode implemented with incumbent
+      caching and per-facet win breakdown
+- [ ] Progressive/batched testing with a stopping rule implemented
+- [ ] Private-repo allowlist implemented, default-excluded
+- [ ] SKILL.md updated; tests green; `make check` passes
+
+## Open items for whoever picks this up
+
+- Exact time window for the initial population pull.
+- Win criterion for "unseats the incumbent" (proposed: more
+  `unique-verified` at no worse `unique-hallucinated` rate, both
+  post-adjudication) — confirm or adjust before building the pairwise
+  verdict logic.
+- Batch size and stopping-rule thresholds for progressive testing (propose
+  starting conservative, e.g. batches of 10, tightening once real variance
+  is observed).
