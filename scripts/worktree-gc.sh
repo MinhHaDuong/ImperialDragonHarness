@@ -126,9 +126,11 @@ flush
 # registered git worktree is a "husk" — e.g. a session base cwd deregistered
 # mid-session, leaving only a scratch .claude/ subdir behind. git commands run
 # inside a husk resolve to the PRIMARY repo, so it is invisible to the porcelain
-# pass above and accumulates. Report-only, never removed: a husk may still be a
-# LIVE session's base cwd (the harness resets the shell cwd there after every
-# command), and deleting it would break that session. We only surface it.
+# pass above and accumulates. Report-only, never removed — PERMANENTLY, not an
+# initial cut: a husk may still be a LIVE session's base cwd (the harness
+# resets the shell cwd there after every command), and no liveness signal
+# closes that gap safely — see ticket 0338 for the investigation that closed
+# the removal-heuristic question. We only surface it.
 # Root on the PRIMARY repo, not on `git rev-parse --show-toplevel`: when this
 # script runs from a linked worktree (the harness's normal cwd — molt/roar
 # invoke it bare with repo=".") that would resolve to the worktree's own root,

@@ -4,7 +4,7 @@ description: Work through multiple tickets autonomously: pick targets, implement
 disable-model-invocation: false
 user-invocable: true
 argument-hint: [ticket-ids or "all open"]
-model: claude-opus-4-8
+model: claude-sonnet-5
 effort: high
 ---
 
@@ -24,12 +24,15 @@ the session model is; left unpinned on a top-tier session that is the runaway
 "top-model × N-wide" wave. **Effort is not an Agent launch parameter** — a
 spawned agent runs at the *session* effort, which neither this prose nor the
 frontmatter can pin per-child; so set the session effort (`high` is the sweet
-spot) before running a raid, and never rely on `max`. Every launch below pins
-`model` explicitly:
+spot) before running a raid, and never rely on `max`. The frontmatter pins the
+orchestrator itself to Sonnet: the 2026-07 trace census (H7) measured top-tier
+raid mains at ≈4.7× the cost curve while Sonnet mains sit on it, and the
+orchestrator only sequences waves — the coders keep their own pins below. Every
+launch below pins `model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
-  below the coder tier (rules/workflow.md § "Sonnet reviews Opus's work").
+  below the coder tier (rules/workflow.md § "Reviewer decorrelation").
 - **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
   checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
   conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
@@ -131,8 +134,8 @@ the execute agent prompt and the agent creates the file as its first step.
 Launch agents by cluster to cross-check plans (`model: haiku` for the mechanical
 existence checks — paths/lines/signatures; `model: sonnet` for the cross-ticket
 conflict and cross-cutting-registry scan, which is judgement across N plans, not
-lookup — missing it cost a resurrection agent for 3 of 4 merges, memory
-`feedback_rebase_drop_cascade`):
+lookup — missing it cost a resurrection agent for 3 of 4 merges, see § Phase 5.0
+below):
 - File paths, line numbers, function signatures
 - Data assumptions, API key requirements
 - Cross-ticket conflicts
@@ -152,7 +155,7 @@ rebase is cheaper than the coordination overhead.
 **Why**: when N parallel PRs each append to the same cross-cutting set, the
 rebase onto sibling-merged main silently drops each PR's own addition. Wave 2
 (SOTA-adapter raid, 2026-05-20) needed a resurrection agent for 3 of 4 merges
-because of this. (memory: feedback_rebase_drop_cascade)
+because of this.
 
 **How**: before opening any Wave-N PR, open one tiny PR that adds ALL of the
 wave's entries to the shared registries at once, and merge it first. Each
@@ -240,17 +243,18 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. Check out the PR head branch — `/merge` requires being on it.
-   **If the PR branch is already bound to an Execute agent's worktree**,
-   checking out the branch fails (`fatal: '<branch>' is already used by worktree at …`)
-   and the shell cwd self-resets so a plain `cd` into that worktree does not
-   persist for the `/merge` skill. Switch the *session* into the existing
-   worktree instead: `EnterWorktree` with `path:
-   .claude/worktrees/agent-<id>` (the path from the Execute agent's completion
-   notification), then run `/merge` there. Do not delete and re-checkout the
-   branch. <!-- harness-extension-point -->
+2. No checkout needed — `-C <path>` points the merge tool at a checkout that
+   already has the PR branch. An Execute agent's own worktree qualifies
+   directly: take its path from the agent's completion notification
+   (`.claude/worktrees/agent-<id>`). Do not check out, `cd`, or `EnterWorktree`
+   into it, and do not delete and re-checkout the branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `/merge <pr-number>`. This atomically closes the ticket and merges via GitHub API.
+4. Run `~/.claude/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
+   bare. This atomically closes the ticket and merges via GitHub API. The bare
+   form (no `cd` prefix) prefix-matches the standing allow rule
+   `Bash(~/.claude/skills/merge/erg-pr-merge:*)` from any cwd, where a
+   `cd <path> && …` prefix would fall through to the auto-mode classifier
+   (ticket 0344).
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
@@ -334,7 +338,7 @@ the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor acro
 a forked-skill boundary); it inspects the salvaged WIP via
 `git show --stat HEAD` before continuing rather than starting from scratch.
 Salvage is the FIRST step of any restart, not an afterthought.
-(memory: feedback_killed_agent_salvage)
+(memory: feedback_agent_stall_watchdog_recovery)
 
 **Agent timeout**: If an agent has not pushed within 10 minutes, salvage its
 worktree (above), then kill it. Split the ticket or relaunch with narrower

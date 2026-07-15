@@ -63,10 +63,10 @@
 - [PDF converter architecture](project_pdf_converters.md) — 3 shipped, 2 ticketed (#81-#85)
 - Padme: A4000 16GB + 3060 12GB + 128GB RAM, Ollama 0.20.0, project dir `~/aedist-technical-report/`
 - [CNRS Emmy](reference_emmy.md) — CNRS-hosted Mistral instance, potential third inference tier
-- OPENROUTER_API_KEY in .env (renewed 2026-04-02)
+- Repo `.env` holds no secret values since PR #1165 (2026-07-14, ticket 0679): it is only a `KEYS=` manifest naming which central secrets to pull (e.g. `github:AGENT_GH_TOKEN`, `openrouter:OPENROUTER_API_KEY_AEDIST=OPENROUTER_API_KEY`); safe to read and edit directly
 - [evaluate-all overwrites](feedback_evaluate_all_overwrite.md) — run sweeps to separate dirs then merge (#92)
 - [RAG results](project_sweep2_results.md) — Mistral Small 4 beats GPT-5.4 with RAG, $0.89 total
-- API key: `~/.claude/.env` has ANTHROPIC_API_KEY, repo `.env` has OPENROUTER_API_KEY
+- API keys live centrally in `~/.claude/.env` (ANTHROPIC_API_KEY, OPENROUTER_API_KEY_AEDIST, …); the repo `.env` only names them via `KEYS=`
 - [Autonomous Claude on Padme](reference_autonomous_padme.md) — nohup recipe for ticket-driven autonomous work
 - [Interactive Claude on Padme via tmux](reference_tmux_padme.md) — named tmux session recipe (claude1, claude2, …) for live driving
 - [Worktrees not stash](feedback_worktree_not_stash.md) — use git worktree for cross-branch work, never stash+checkout

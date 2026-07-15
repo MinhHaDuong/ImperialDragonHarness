@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # erg-pr-merge — close ticket and merge a PR atomically
 #
-# Usage: erg-pr-merge [PR_NUMBER]
+# Usage: erg-pr-merge [-C PATH] [PR_NUMBER]
 #
 # Must be run from the PR's head branch. Works in git worktrees and on VMs.
 # GitHub-only: requires the GitHub CLI authenticated to the repo's GitHub remote.
 #
-# For cross-repo merges, the caller must cd into the target project and
-# checkout the PR branch before invoking this script. See raid Phase 7
-# and nightbeat-supervisor Phase 2 for the caller contracts.
+# For cross-repo merges, point the script at the target checkout (with the PR
+# branch checked out) either with `-C PATH` (preferred — keeps the invocation
+# bare so it matches the standing allow rule from any cwd) or by cd-ing there
+# first. Prefer `-C PATH` over a `cd PATH && …` prefix: the prefix defeats the
+# allow rule (see SKILL.md). See raid Phase 7 and nightbeat-supervisor Phase 2
+# for the caller contracts.
 #
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts
@@ -24,6 +27,23 @@
 set -euo pipefail
 
 die() { echo "erg-pr-merge: $*" >&2; exit 1; }
+
+# ── Step -1: optional -C PATH (must land before any git/gh/erg call) ──
+# The standing allow rule `Bash(~/.claude/skills/merge/erg-pr-merge:*)` matches
+# only the BARE invocation; a `cd X && …` prefix falls through to the stochastic
+# auto-mode classifier. -C lets the bare form target an arbitrary checkout from
+# any cwd. The cd MUST precede every git/gh/erg call so no half-cd state exists —
+# in particular the ticket-close step's `[[ -d tickets ]]` guard and the
+# `git symbolic-ref` branch check must read the target checkout, not the launch
+# cwd (a husk cwd otherwise skipped the close, ticket 0344). Plain `cd`
+# semantics for a relative path, matching `git -C`; no realpath. (ticket 0344)
+if [[ "${1:-}" == "-C" ]]; then
+    [[ $# -ge 2 ]] || die "-C requires a PATH argument"
+    TARGET_DIR="$2"
+    [[ -d "$TARGET_DIR" ]] || die "-C path '${TARGET_DIR}' is not a directory"
+    cd "$TARGET_DIR" || die "-C: could not cd into '${TARGET_DIR}'"
+    shift 2
+fi
 
 # Identity predicate (tickets 0301/0296; incidents I1/I2). Do NOT regress to
 # `[ -f .git ]`: that matched ANY dir with a `.git` FILE — a submodule, or a

@@ -1,6 +1,6 @@
 ---
 name: reviewers
-description: Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats.
+description: Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats.
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
@@ -43,6 +43,12 @@ diff (the branch is resolved from the PR, or passed explicitly):
 proceed — one seat never blocks the verdict (0205). Empty roster → no-op,
 exits 0. No secrets in config; seat credentials load via the BASH_ENV path.
 
+**Per-seat latency** (ticket 0353): each `cli-agent`/`local-model` seat is timed
+and its wall-clock seconds written to a `<seat>.latency` sidecar beside the
+findings, whatever the outcome (a slow-then-failed seat is still evidence).
+`scorecard` folds that figure into the seat's trial line. `forge-bot` seats run
+async server-side and get **no** sidecar — there is nothing local to time.
+
 ### `/reviewers harvest <pr>`
 
 Collect every seat's findings and normalize the seat-runner's
@@ -64,8 +70,52 @@ Append a fixed-schema trial line to the seat's trial ticket via `erg log`
 evidence-based:
 
 ```
-MR #42 seat=local-qwen verdict: PASS — 0 verifiable, 2 consider
+MR #42 seat=local-qwen verdict: PASS — 0 verifiable, 2 consider latency=48.7s
 ```
+
+When `request` left a `.latency` sidecar for the seat (a `cli-agent`/
+`local-model` seat — see below), its wall-clock seconds fold into the line as a
+trailing `latency=<s>s` field (ticket 0353). Absent a sidecar the line is
+byte-identical to the pre-latency schema — the field is appended at the end, so
+every existing parser is unaffected.
+
+### `/reviewers scores [seat-or-candidate]`
+
+Read back the trial cards (`scorecard` lines and `audition` blocks) that the
+two commands above append to trial tickets, as one sortable comparison table.
+The read surface for 0205's integration review ("trial scorecards reviewed;
+promote/drop decided"): comparing candidates no longer means opening ticket
+files and eyeballing log lines.
+
+The search is **corpus-wide** and **read-only**: it greps every trial ticket's
+log section under `tickets/`, recursing into `tickets/closed/`, so a retired
+seat's archived cards are still read. It never edits a roster or writes an
+`erg log` line. (This corpus-wide reach is `scores`-only: `scorecard` *writes*
+via `erg log <ID>`, which resolves IDs among *open* tickets only — logging a new
+card to an archived trial ticket fails "no ticket found". `scores` reads by
+grep, so it is not bound by that.)
+
+```
+KIND      NAME                 MR/BOARD                   VERIF  CONS  FIND  DUP  UVER  UHAL  OVERLAP   LATENCY      P95     COST  FLAG
+audition  hy3-free             10MR                           -     -    59   23     0    36      38%      9.4s    41.0s      n/a  SLOW
+scorecard copilot              ImperialDragonHarness#537      0     0     -    -     -     -        -     48.7s        -        -     -
+```
+
+No argument → all seats and candidates. An argument filters to one seat or
+candidate name. A malformed trial line WARNs on stderr, never silently dropped
+(the harvest convention). Only each ticket's `--- log ---` section is read, so
+a card quoted in a ticket body as documentation is never mistaken for a result.
+`scorecard`'s per-MR columns (`VERIF`/`CONS`) and `audition`'s per-board columns
+(`FIND`/`DUP`/`UVER`/`UHAL`/`OVERLAP`) share one table; a `-` marks a column that
+does not apply to that row. `LATENCY` shows a candidate's `latency-p50` (the
+gate-relevant stat, falling back to the running-sum `latency=` for older cards)
+and a seat's per-MR latency; `P95` is the candidate's tail latency; `FLAG`
+surfaces the peer-relative `SLOW` verdict (ticket 0353).
+
+### `/reviewers help`
+
+Print the usage block to stdout and exit 0. The no-argument and unknown-verb
+paths keep printing usage to stderr and exiting 1.
 
 ### `/reviewers audition <model> [--endpoint URL]`
 
@@ -97,7 +147,8 @@ trial ticket via `erg log` (verb `note`):
 ```
 audition candidate=<label> model=<id> board=<N>MR findings=<F> \
   duplicate=<d> unique-verified=<uv> unique-hallucinated=<uh> \
-  overlap=<pct>% latency=<s>s cost=<$x|n/a>
+  overlap=<pct>% latency=<s>s cost=<$x|n/a> \
+  latency-p50=<s>s latency-p95=<s>s [SLOW]
 ```
 
 `overlap%` is the share of the candidate's findings that merely duplicate the
@@ -105,6 +156,22 @@ panel. `cost` is `$ per review` from the token counts the seat reports on its
 `SUMMARY` line, priced via `REVIEWERS_PRICE_IN_PER_M` / `REVIEWERS_PRICE_OUT_PER_M`
 (USD per 1M tokens); it is `n/a` when the seat reports no tokens or no price is
 configured — an honest blank, never a fabricated `$0`.
+
+`latency=` is a running **sum** of wall-clock across the board PRs.
+`latency-p50` / `latency-p95` are the per-PR latency distribution (nearest-rank,
+appended after `cost=` so existing parsers are unaffected; ticket 0353).
+
+**Peer-relative SLOW gate** (ticket 0353): a candidate whose `latency-p50`
+exceeds `REVIEWERS_SLOW_FACTOR` × the cross-candidate median p50 (default factor
+**3**) earns a bare trailing ` SLOW` token, and its verdict becomes
+**eliminate-slow** — it does not proceed to the live advisory trial. The
+comparison is against **other candidates that replayed the same board size**:
+identical work, so the statistic is host- and diff-size-independent. It fires
+only with **≥1 peer** (a lone candidate has no basis for comparison) and is a
+**strict** `>`, so a candidate at exactly `factor × median` is kept. The gate
+only reads peers' logged cards and appends to the new candidate's own card — it
+**never edits a prior candidate's line** (append-only) and never touches the
+roster; roster promotion stays the manual call at 0205's integration review.
 
 **Fail-loud**: unlike `request`'s per-seat fail-open, audition aborts non-zero
 if the seat-runner cannot replay a board PR (unreachable endpoint, sandbox
@@ -126,7 +193,41 @@ local endpoint), `--board FILE` (default `benchmark-board.yml`), `--trial-ticket
 tickets/NNNN-...` (where the scorecard is logged; default the 0207 trial ticket),
 `--credential-env NAME` (for an authenticated endpoint; threaded to the
 seat-runner, never written to config), `--name LABEL` (candidate label in the
-scorecard; default the model id).
+scorecard; default the model id — an **identifier**, so no spaces, `=`, or
+newlines: those are the space-delimited card's field delimiters and would
+corrupt read-back).
+
+Environment: `REVIEWERS_SLOW_FACTOR` (default `3`) sets the SLOW threshold as a
+multiple of the cross-candidate median p50.
+
+## Candidate scouting
+
+Where candidate models come from — the mechanics of finding something to
+`audition`, so a fresh session need not reinvent them. Model **choice** stays a
+judgment call; this section documents only how to enumerate the options.
+
+**Endpoint inventory.** The authenticated providers are the `*.env` files in
+`~/.config/keys/` — one file per provider (e.g. `openrouter.env`), each holding
+that endpoint's API key. Keys load via the BASH_ENV path (0207); never inline a
+key into config or argv. The commented seat examples in `panel.yml` show the
+two endpoint shapes: a local llama-server (`http://127.0.0.1:8012/v1`, no
+credential) and OpenRouter (`https://openrouter.ai/api/v1`, key via
+`credential-env`). Probe a local `llama-server` by hitting its base URL.
+
+**Models per endpoint.** `GET <base>/v1/models` lists what an endpoint serves.
+OpenRouter's catalog is public (`https://openrouter.ai/api/v1/models`) and
+carries per-token pricing, which is what feeds `REVIEWERS_PRICE_IN_PER_M` /
+`REVIEWERS_PRICE_OUT_PER_M` for the audition `cost` column.
+
+**Rankings.** OpenRouter's usage rankings are website-only
+(`https://openrouter.ai/rankings`, fetched as a page, not exposed as an API) —
+a coarse popularity signal, not a review-quality signal.
+
+**Privacy asymmetry.** Auditioning on a free tier is risk-free: the benchmark
+board replays *already-merged* PRs of a public repo, so nothing unpublished
+leaves the machine. A live advisory trial is different — it ships the *unmerged*
+diff of a real merge request to the endpoint. Weigh a free/third-party endpoint
+accordingly before promoting a candidate from audition to a live seat.
 
 ## Configuration
 

@@ -145,14 +145,37 @@ reviewers:
     endpoint: http://127.0.0.1:9/v1
     model: openai/stub
 YAML
-    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" \
+    TF="$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg"
+    # Point FINDINGS_DIR at a clean dir so no stale sidecar leaks into the
+    # no-sidecar case (default is /tmp/reviewers, shared across runs).
+    SC_FDIR="$WORK/sc-findings"; mkdir -p "$SC_FDIR"
+    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" REVIEWERS_FINDINGS_DIR="$SC_FDIR" \
         "$REVIEWERS" scorecard 42 stub-good "PASS — 0 verifiable, 2 consider" ) >/dev/null 2>&1
-    if "$TSTORE/erg" validate "$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg" >/dev/null 2>&1 \
-       && grep -q 'MR #42 seat=stub-good' "$TSTORE/0207-agnostic-cli-reviewer-seat-one-config-op.erg"; then
+    if "$TSTORE/erg" validate "$TF" >/dev/null 2>&1 \
+       && grep -q 'MR #42 seat=stub-good' "$TF"; then
         echo "PASS: scorecard appends a valid erg log line"; PASS=$((PASS+1))
     else
         echo "FAIL: scorecard did not append a valid erg log line"; FAIL=$((FAIL+1))
     fi
+    # ── ticket 0353: request-path latency folds into the scorecard line ──────
+    # No sidecar → the line is byte-identical to the pre-0353 schema (no latency).
+    line42=$(grep 'MR #42 seat=stub-good' "$TF" | head -1)
+    if [[ "$line42" == *"latency="* ]]; then
+        echo "FAIL: scorecard: no-sidecar line must not carry latency="; FAIL=$((FAIL+1))
+    else
+        echo "PASS: scorecard: no-sidecar line is byte-identical (no latency=)"; PASS=$((PASS+1))
+    fi
+    assert_contains "scorecard: no-sidecar line ends at the verdict" \
+        "MR #42 seat=stub-good verdict: PASS — 0 verifiable, 2 consider" "$line42"
+    # A `.latency` sidecar (left by `request`) → its seconds fold in at END.
+    mkdir -p "$SC_FDIR/43"; printf '12.3' > "$SC_FDIR/43/stub-good.latency"
+    ( cd "$WORK" && REVIEWERS_PANEL="$SCROSTER" ERG="$TSTORE/erg" REVIEWERS_FINDINGS_DIR="$SC_FDIR" \
+        "$REVIEWERS" scorecard 43 stub-good "PASS — 1 verifiable, 0 consider" ) >/dev/null 2>&1
+    line43=$(grep 'MR #43 seat=stub-good' "$TF" | head -1)
+    assert_contains "scorecard: sidecar latency folded into the line" "latency=12.3s" "$line43"
+    "$TSTORE/erg" validate "$TF" >/dev/null 2>&1 \
+        && { echo "PASS: scorecard: ticket still valid after latency-bearing note"; PASS=$((PASS+1)); } \
+        || { echo "FAIL: scorecard: latency-bearing note broke ticket validity"; FAIL=$((FAIL+1)); }
 else
     echo "SKIP: erg binary absent — scorecard erg-integration test"
 fi
@@ -254,6 +277,127 @@ nologin_err=$(PATH="$GHBOT:$PATH" GH_CALL_LOG="$GHLOG" \
               REVIEWERS_PANEL="$NOLOGIN" REVIEWERS_PR_BRANCH="some-branch" \
               "$REVIEWERS" request 42 2>&1 >/dev/null)
 assert_contains "request: forge-bot without login WARNs" "WARN forge-bot seat 'mystery-bot' has no login" "$nologin_err"
+
+# ── scores: read-back of trial scorecards + audition blocks (0348) ───────────
+# scores greps the fixed-schema trial lines out of the ticket store — corpus
+# wide, including tickets/closed/ — and prints one sortable table. Read-only:
+# it never edits a roster or writes an erg-log line. Prove the closed/ search
+# by putting the scorecard lines only in a closed ticket.
+STICK="$WORK/score-tickets"; mkdir -p "$STICK/closed"
+cat > "$STICK/0207-trial.erg" <<'ERG'
+%erg 0.1
+Title: Trial fixture
+Created: 2026-07-14
+Author: test
+
+--- log ---
+2026-07-14T20:15Z claude note audition candidate=hy3-free model=openai/tencent/hy3:free board=10MR findings=59 duplicate=23 unique-verified=0 unique-hallucinated=36 overlap=38% latency=3419.1s cost=n/a
+2026-07-14T20:16Z claude note audition candidate=broken model=x board=1MR
+
+--- body ---
+## Context
+Fixture.
+ERG
+cat > "$STICK/closed/0206-copilot.erg" <<'ERG'
+%erg 0.1
+Title: Copilot trial fixture
+Created: 2026-07-13
+Author: test
+Closed: 2026-07-13
+
+--- log ---
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#537 seat=copilot verdict: PASS — 0 verifiable, 1 consider (memory consolidation)
+2026-07-13T19:43Z claude note MR ImperialDragonHarness#559 seat=copilot verdict: PASS — 0 verifiable, 0 consider (accurate summary)
+2026-07-13T19:44Z claude note MR ImperialDragonHarness#560 seat=copilot verdict: PASS — 1 verifiable, 2 consider (rejected 9 verifiable-looking; noted 7 consider-style nits in prose)
+2026-07-13T19:45Z claude note MR ImperialDragonHarness#561 seat=copilot verdict: rejected 8 verifiable, all bogus — true 4 verifiable, 6 consider (final)
+
+--- body ---
+## Context
+A ticket body may quote the card schema as documentation, e.g.
+audition candidate=doc-example model=x board=99MR findings=1 duplicate=1 unique-verified=1 unique-hallucinated=1 overlap=100% latency=1.0s cost=n/a
+and MR #0 seat=doc-example verdict: PASS — 5 verifiable, 5 consider (illustration).
+These body lines MUST NOT appear in the table (ticket 0348: scan log only).
+
+## Format example
+A trial ticket's log section is delimited like this:
+--- log ---
+2026-01-01T00:00Z claude note MR phantom#1 seat=ghost verdict: PASS — 9 verifiable, 9 consider (body re-entry decoy — must be ignored)
+ERG
+
+scores_out=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>/dev/null)
+assert_contains "scores: header names OVERLAP column" "OVERLAP" "$scores_out"
+assert_contains "scores: lists audition candidate" "hy3-free" "$scores_out"
+assert_contains "scores: audition row carries findings count" "59" "$scores_out"
+assert_contains "scores: finds scorecard seat in closed/ ticket" "copilot" "$scores_out"
+assert_contains "scores: scorecard row carries the MR ident" "ImperialDragonHarness#537" "$scores_out"
+
+# Greedy-regex poison guard: a verdict whose freeform prose contains later
+# "<digit> verifiable/consider" phrases must still report the TRUE counts (1/2),
+# taken from the first occurrence — not 9/7 from the parenthetical (0348 review).
+poison_row=$(printf '%s\n' "$scores_out" | grep 'ImperialDragonHarness#560')
+assert_contains "scores: count taken from first occurrence, not poisoned by prose" \
+    " 1     2 " "$poison_row"
+if [[ "$poison_row" == *" 9 "* || "$poison_row" == *" 7 "* ]]; then
+    echo "FAIL: scores: freeform verdict prose poisoned the VERIF/CONS count"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: freeform verdict prose did not poison the count"; PASS=$((PASS+1))
+fi
+
+# Poison-BEFORE guard: freeform prose carrying "<digit> verifiable" BEFORE the
+# real tally must not poison the count either — the counts come from the anchored
+# "N verifiable, M consider" unit (0348 review round 2). True tally is 4/6.
+poison2_row=$(printf '%s\n' "$scores_out" | grep 'ImperialDragonHarness#561')
+assert_contains "scores: count anchored to the real tally, not leading prose" \
+    " 4     6 " "$poison2_row"
+if [[ "$poison2_row" == *" 8 "* ]]; then
+    echo "FAIL: scores: leading verdict prose poisoned the count"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: leading verdict prose did not poison the count"; PASS=$((PASS+1))
+fi
+
+# Log-section-only guard: cards quoted in a ticket BODY are documentation, not
+# real trial results — they must never surface as table rows (0348 review).
+if [[ "$scores_out" == *"doc-example"* ]]; then
+    echo "FAIL: scores: a body-quoted card leaked into the table"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: body-quoted cards excluded (log section only)"; PASS=$((PASS+1))
+fi
+
+# Body re-entry guard: a body line quoting "--- log ---" must NOT re-open the
+# scan — the phantom#1/ghost card sits after the real body boundary (0348 r2).
+if [[ "$scores_out" == *"ghost"* || "$scores_out" == *"phantom"* ]]; then
+    echo "FAIL: scores: body-quoted '--- log ---' re-opened the scan (phantom row)"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: body-quoted '--- log ---' did not re-open the scan"; PASS=$((PASS+1))
+fi
+
+# Filter to one name → only that seat/candidate; the other kind is excluded.
+scores_filt=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores copilot 2>/dev/null)
+assert_contains "scores: filter shows the requested seat" "copilot" "$scores_filt"
+if [[ "$scores_filt" == *"hy3-free"* ]]; then
+    echo "FAIL: scores: filter leaked a non-matching candidate"; FAIL=$((FAIL+1))
+else
+    echo "PASS: scores: filter excludes non-matching rows"; PASS=$((PASS+1))
+fi
+
+# A malformed trial line WARNs on stderr, never silently dropped.
+scores_warn=$(REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores 2>&1 >/dev/null)
+assert_contains "scores: WARN on malformed line" "WARN" "$scores_warn"
+
+# scores is read-only: it must not mutate the ticket store.
+before=$(cat "$STICK/0207-trial.erg" "$STICK/closed/0206-copilot.erg")
+REVIEWERS_TICKETS="$STICK" "$REVIEWERS" scores >/dev/null 2>&1
+after=$(cat "$STICK/0207-trial.erg" "$STICK/closed/0206-copilot.erg")
+assert_eq "scores: leaves the ticket store unchanged" "$before" "$after"
+
+# ── help: explicit verb, exit 0, names every subcommand (0348) ───────────────
+assert_exit_0 "help: exits 0" "$REVIEWERS" help
+help_out=$("$REVIEWERS" help 2>/dev/null)
+for verb in list request harvest scorecard audition scores help; do
+    assert_contains "help: names '$verb'" "$verb" "$help_out"
+done
+# No-arg still exits 1 (the unknown/no-verb fallback is unchanged).
+if "$REVIEWERS" >/dev/null 2>&1; then echo "FAIL: no-arg should still exit 1"; FAIL=$((FAIL+1)); else echo "PASS: no-arg still exits 1"; PASS=$((PASS+1)); fi
 
 # ── arg validation ───────────────────────────────────────────────────────────
 if "$REVIEWERS" request >/dev/null 2>&1; then echo "FAIL: request missing arg should fail"; FAIL=$((FAIL+1)); else echo "PASS: request missing arg fails"; PASS=$((PASS+1)); fi

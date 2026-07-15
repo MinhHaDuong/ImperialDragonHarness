@@ -2,10 +2,13 @@
 Title: erg-pr-merge: add a -C PATH flag so the bare rule-matched invocation works from any cwd
 Created: 2026-07-14
 Author: claude
+Closed: merged — PR #617
 
 --- log ---
 2026-07-14T16:40Z claude created
+2026-07-14T20:06Z claude note planned by raid — -C parse lands before any git/gh call; skip trigger is the -d tickets clause, not erg resolution
 
+2026-07-14T22:03Z Minh Ha-Duong closed — merged — PR #617
 --- body ---
 ## Context
 

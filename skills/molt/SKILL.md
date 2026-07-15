@@ -85,8 +85,10 @@ Run full repo housekeeping and act on every finding.
    (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
    registered worktrees (a session base cwd deregistered mid-session), so a
    `worktree-gc: husk …` line breaks the silence without anything being
-   cleaned. That output is informational; husks are already tracked by tickets
-   0325/0338 — do NOT re-file. See tickets 0169, 0195, 0325. **A worktree the
+   cleaned. That output is informational; report-only is the PERMANENT design
+   (ticket 0338 closed the removal-heuristic question — remote sessions are
+   structurally undetectable, so no complete liveness signal exists) — do NOT
+   re-file. See tickets 0169, 0195, 0325, 0338. **A worktree the
    GC skips for uncommitted changes is a signal, not just an obstacle:** diff
    it before moving on — orphaned WIP may be a closed ticket's dropped
    exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**`
@@ -171,6 +173,7 @@ Run full repo housekeeping and act on every finding.
      using a specific title. For test failures, the slug must contain `fix-tests`
      (e.g. `0042-fix-tests-module-not-found`).
    - If a ticket already exists, skip.
+   - Tooling repos: apply the severity floor (rules/workflow.md § Autonomous Action Rules) — findings that don't block a merge, corrupt state, or bite a science project are reported in the run summary, not ticketed.
 
 5. **Log `skip` items.** One line each, no action.
 

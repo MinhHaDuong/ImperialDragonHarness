@@ -2,10 +2,14 @@
 Title: /reviewers scores read-back, explicit help verb, stale trial-ticket pointer
 Created: 2026-07-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #634
 
 --- log ---
 2026-07-14T19:55Z Minh Ha-Duong created
+2026-07-14T22:19Z Minh Ha-Duong closed wontfix — harness cool-down (author): not merge-blocking, not state-corrupting, no science-project impact; scorecards remain readable in the trial tickets directly
+2026-07-15T00:00Z claude note reopened — author directive (2026-07-15) supersedes the wontfix: execute the ticket; PR #634 implements scores + help + pointer refresh
 
+2026-07-15T00:01Z Minh Ha-Duong closed — autoclosed — PR #634
 --- body ---
 ## Context
 
