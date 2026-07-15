@@ -16,6 +16,17 @@ context: fork
 > environment (worktree name, git status snapshot, ticket files, or the shared
 > task list).
 
+**Caller responsibility (before this fork is ever spawned).** The rule above
+binds the fork, which starts with no cwd and no conversation (ticket 0193 —
+a bare fork once guessed its target from ambient state and pushed a rogue
+PR). It does not mean the user must supply a bare number by hand every time.
+The invoking session has a cwd, a conversation, and `gh` — when the user
+types `/gaze` with no argument, resolve the PR number *before* invoking this
+skill: check `gh pr view --json number` for the current branch, or a PR
+already established earlier in the conversation. Invoke with that number
+filled in. Only ask the user for it when no such source exists or two
+candidates conflict.
+
 One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
 merge** — the merge decision belongs to the caller (the human or the raid).
 
