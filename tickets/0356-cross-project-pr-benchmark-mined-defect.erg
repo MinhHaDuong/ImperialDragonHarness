@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Cross-project PR benchmark: mined-defect sample + pairwise challenger audition
+Title: Cross-project PR benchmark: mined-defect sample + challenger-vs-squad audition
 Created: 2026-07-15
 Author: Minh Ha-Duong
 Label: deferred
@@ -7,9 +7,15 @@ Label: deferred
 --- log ---
 2026-07-15T06:09Z Minh Ha-Duong created
 2026-07-15T06:09Z claude note child of tickets/0205 (external-reviewer panel tracker); deferred at author's request, no active work planned yet
+2026-07-15T06:25Z Minh Ha-Duong note adapted to the squad-management model per author review of PR #639 — pairwise unseating verdict replaced by challenger-vs-squad non-redundant-coverage criterion
 
 --- body ---
 ## Context
+
+The governing frame is 0205's `## Squad-management model` section
+(author, 2026-07-15): audition feeds continuous squad management —
+roster composition and per-game lineup selection — not a winner-take-all
+title fight.
 
 `/reviewers audition` replays candidate reviewer models over a frozen 10-PR
 board (`skills/reviewers/benchmark-board.yml`), all from this one repo, with
@@ -79,9 +85,11 @@ is reproduced below since plan files are not durable across sessions.
 - `skills/reviewers/reviewers.sh` (`audition` subcommand) — needs real
   changes: base/head resolution from PR-API SHAs instead of merge-commit
   parents; a `novel-unadjudicated` bucket in the classifier; batch/
-  stopping-rule loop; incumbent-scorecard caching for pairwise mode.
-- `skills/reviewers/panel.yml` — read-only for audition; the pairwise
-  "incumbent" is resolved from whichever seat currently holds that role.
+  stopping-rule loop; per-seat scorecard caching for challenger-vs-squad
+  mode.
+- `skills/reviewers/panel.yml` — read-only for audition; the comparison
+  targets are the active roster seats it lists (one cached scorecard per
+  seat per board revision), and the squad's union of findings.
 - A new private-repo allowlist config (e.g.
   `skills/reviewers/private-repo-allowlist.yml`): per repo, `excluded`
   (default) / `local-candidates-only` / `all-candidates`.
@@ -116,23 +124,32 @@ is reproduced below since plan files are not durable across sessions.
      models flagging the same location is supporting evidence) before a
      human/panel look; findings that survive get promoted into the
      board's `defects:` field, growing ground truth over time.
-   - Pairwise challenger-vs-incumbent mode: incumbent's scorecard on the
-     current sample is cached once per reigning-champion period, reused
-     across multiple challengers (never re-run the incumbent per
-     challenger); a win triggers a seat-creation proposal (still the
+   - Challenger-vs-squad mode: the verdict is not "challenger unseats
+     the incumbent" but "does the challenger add non-redundant coverage
+     to the existing squad" — 0205's decorrelation evidence (composition
+     beats count) applied to the verdict. Each active roster seat's
+     scorecard on the current board is cached once per board revision
+     and reused across challengers (never re-run a seat per challenger);
+     the challenger's findings are classified for overlap against the
+     active roster seats' cached findings and the squad's union of
+     findings, not only against the internal panel's `panel:` anchors.
+     A challenger duplicating an incumbent seat's catches at equal
+     quality adds nothing even if it "wins" head-to-head; one catching
+     different defects adds squad value even if it "loses" overall.
+     Non-redundant coverage triggers a bench/roster proposal (still the
      existing manual `panel.yml` edit + PR at 0205's integration review);
-     report per-facet win breakdown (language, defect-type, repo) to
-     surface model fortes for smarter multi-seat selection, not just a
-     single winner-take-all verdict.
+     report per-facet coverage breakdown (language, defect-type, repo) to
+     surface model fortes feeding future per-game lineup selection, not
+     a single winner-take-all verdict.
    - Progressive/sequential testing: batch the sample (propose 10-15 PRs
      per batch); stopping rule evaluated after each batch — fast reject on
      an early decisive-bad hallucination rate, fast accept once the
-     challenger-vs-incumbent comparison is already decisive at a
+     challenger-vs-squad comparison is already decisive at a
      pre-committed threshold; only genuinely close calls run the full
      sample.
 5. **Documentation**: `skills/reviewers/SKILL.md` audition section
    rewritten to describe the mined-defect board, the adjudication loop,
-   pairwise mode, and the private-repo allowlist.
+   challenger-vs-squad mode, and the private-repo allowlist.
 
 ## Test
 
@@ -147,8 +164,10 @@ is reproduced below since plan files are not durable across sessions.
 - Classifier: fixture candidate findings against known `panel:`/`defects:`
   anchors; assert the four-bucket classification, and that an unmatched
   finding lands in `novel-unadjudicated`, never auto-`unique-hallucinated`.
-- Pairwise mode: fixture incumbent + challenger scorecards; assert the
-  incumbent is read from cache (not re-invoked) on a second challenger run.
+- Challenger-vs-squad mode: fixture roster-seat + challenger scorecards;
+  assert each seat's scorecard is read from cache (not re-invoked) on a
+  second challenger run, and that overlap is classified against every
+  active seat's findings, not only `panel:` anchors.
 - Stopping rule: fixture batch sequence with an early decisive-bad
   candidate; assert the run stops before the full sample.
 
@@ -159,10 +178,11 @@ is reproduced below since plan files are not durable across sessions.
 - [ ] Defect mining produces `defects:` anchors from both review-time and
       post-merge signals
 - [ ] Classifier never auto-labels an unmatched finding as hallucinated
-- [ ] Pairwise mode reuses a cached incumbent scorecard across challengers
+- [ ] Challenger-vs-squad mode reuses cached per-seat scorecards across
+      challengers
 - [ ] Stopping rule halts early on a decisive batch
 - [ ] `skills/reviewers/SKILL.md` documents the new board, adjudication
-      loop, pairwise mode, and private-repo allowlist
+      loop, challenger-vs-squad mode, and private-repo allowlist
 
 ## Invariants
 
@@ -183,8 +203,8 @@ is reproduced below since plan files are not durable across sessions.
       merge-commit repos
 - [ ] Four-bucket classifier + adjudication loop implemented; novel
       findings promotable to `defects:` on confirmation
-- [ ] Pairwise challenger-vs-incumbent mode implemented with incumbent
-      caching and per-facet win breakdown
+- [ ] Challenger-vs-squad mode implemented with per-seat scorecard
+      caching and per-facet coverage breakdown
 - [ ] Progressive/batched testing with a stopping rule implemented
 - [ ] Private-repo allowlist implemented, default-excluded
 - [ ] SKILL.md updated; tests green; `make check` passes
@@ -192,10 +212,12 @@ is reproduced below since plan files are not durable across sessions.
 ## Open items for whoever picks this up
 
 - Exact time window for the initial population pull.
-- Win criterion for "unseats the incumbent" (proposed: more
-  `unique-verified` at no worse `unique-hallucinated` rate, both
-  post-adjudication) — confirm or adjust before building the pairwise
-  verdict logic.
+- Win criterion for "adds squad value" (proposed: adjudicated
+  `unique-verified` findings not already covered by any active roster
+  seat, at a hallucination rate no worse than the squad's worst seat,
+  both post-adjudication; the outcome is a bench/roster proposal —
+  per-facet fortes feeding future per-game lineup selection — not an
+  unseating) — confirm or adjust before building the verdict logic.
 - Batch size and stopping-rule thresholds for progressive testing (propose
   starting conservative, e.g. batches of 10, tightening once real variance
   is observed).
