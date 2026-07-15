@@ -132,6 +132,58 @@ _card_field() {  # key line
     printf '%s' "${rest%% *}"
 }
 
+# Nearest-rank percentile (1-based) at percentile $1 of the numeric arguments
+# $2..$N. Empty arg list → "0.0". One implementation for audition's per-run
+# p50/p95 AND the peer-relative SLOW median, so the two can never drift apart
+# (ticket 0353).
+_percentile() {  # pct v1 v2 ...
+    local pct="$1"; shift
+    [ "$#" -gt 0 ] || { printf '0.0'; return 0; }
+    printf '%s\n' "$@" | sort -g | awk -v p="$pct" '
+        { a[NR]=$0 }
+        END {
+            x = (p / 100.0) * NR
+            r = int(x); if (r < x) r++      # ceil → nearest-rank
+            if (r < 1) r = 1; if (r > NR) r = NR
+            printf "%.1f", a[r]
+        }'
+}
+
+# Emit every ticket's `--- log ---` section lines across the corpus (tickets/
+# and tickets/closed/). The scan latches at the FIRST `--- log ---`, stops at
+# the next section boundary, and never re-enters, so a body line quoting
+# `--- log ---` cannot fabricate a phantom row (ticket 0348). Shared by `scores`
+# (read-back table) and audition's peer-relative SLOW scan (ticket 0353), so
+# both read the same log-only surface from one implementation.
+_corpus_log_lines() {  # tickets_dir
+    local td="$1"
+    [ -d "$td" ] || return 0
+    find "$td" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
+        awk '
+            done_log        { next }
+            !inlog && /^--- log ---/ { inlog=1; next }
+            inlog && /^--- /         { inlog=0; done_log=1; next }
+            inlog
+        ' "$f" 2>/dev/null
+    done
+}
+
+# Peer p50 latencies: emit the `latency-p50` seconds (`s` stripped) of every
+# OTHER candidate's audition card on the SAME board size, read log-only from the
+# ticket corpus. Feeds the peer-relative SLOW gate (ticket 0353).
+_audition_peer_p50s() {  # tickets_dir board_size self_label
+    local td="$1" bsize="$2" self="$3" line p50 lbl
+    _corpus_log_lines "$td" | while IFS= read -r line; do
+        case "$line" in *"audition candidate="*) ;; *) continue ;; esac
+        [ "$(_card_field board "$line")" = "${bsize}MR" ] || continue
+        p50=$(_card_field latency-p50 "$line")
+        [ -n "$p50" ] || continue
+        lbl=$(_card_field candidate "$line")
+        [ "$lbl" = "$self" ] && continue
+        printf '%s\n' "${p50%s}"
+    done
+}
+
 # Does candidate finding basename $1 + line $2 match any anchor in list $3?
 # Anchor form: basename[:LINE] or basename:* (bare basename == :*).
 _audition_match() {  # cfile cline anchor-string
@@ -219,10 +271,25 @@ case "$subcmd" in
                     # a local, unauthenticated endpoint carries no credential.
                     cred_args=()
                     [ -n "$ce" ] && cred_args=(--credential-env "$ce")
+                    # Time the seat, whatever the outcome — a slow-then-failed
+                    # seat is still evidence. The elapsed seconds land in a
+                    # `.latency` sidecar beside the findings; `scorecard` folds
+                    # it into the seat's trial line (ticket 0353). forge-bot
+                    # seats run async server-side and get no sidecar — there is
+                    # nothing local to time.
+                    t0=$(date +%s.%N)
                     if "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
                         ${cred_args[@]+"${cred_args[@]}"} \
                         >/dev/null 2>"${dest}/${name}.err"; then
+                        seat_ok=1
+                    else
+                        seat_ok=0
+                    fi
+                    t1=$(date +%s.%N)
+                    awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", b - a}' \
+                        > "${dest}/${name}.latency"
+                    if [ "$seat_ok" = 1 ]; then
                         echo "request: seat '${name}' ok → ${dest}/${name}.findings" >&2
                         ran=$((ran+1))
                     else
@@ -285,6 +352,11 @@ case "$subcmd" in
         tid=$(_ticket_id_from_path "$tt")
         # Fixed schema so 0205's integration review is evidence-based, not vibes.
         line="MR #${pr} seat=${seat} verdict: ${verdict}"
+        # Fold in the seat's per-MR latency when `request` left a sidecar
+        # (ticket 0353). Appended at END so every existing parser is unaffected;
+        # absent sidecar → byte-identical to the pre-0353 line.
+        latfile="${FINDINGS_DIR}/${pr}/${seat}.latency"
+        [ -f "$latfile" ] && line="${line} latency=$(cat "$latfile")s"
         "$ERG" log "$tid" "claude note ${line}"
         ;;
 
@@ -318,6 +390,13 @@ case "$subcmd" in
         dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"
         trap 'rm -rf "$dest"' EXIT   # reap the scratch dir on every exit path
         n_pr=0; tot=0; dup=0; uv=0; uh=0; ptok=0; ctok=0; lat="0"
+        lat_samples=()
+        # Per-PR elapsed is real wall-clock; REVIEWERS_AUDITION_ELAPSED (a
+        # space-separated list of seconds, one per board PR, indexed by board
+        # position) overrides it so the latency statistics are deterministic
+        # under test — the same override philosophy as SEAT_RUNNER/ERG (0353).
+        _elapsed_ov=()
+        [ -n "${REVIEWERS_AUDITION_ELAPSED:-}" ] && read -ra _elapsed_ov <<<"$REVIEWERS_AUDITION_ELAPSED"
         while IFS='|' read -r pr title base head panel defects; do
             [ -n "$pr" ] || continue
             n_pr=$((n_pr + 1))
@@ -341,7 +420,16 @@ case "$subcmd" in
                 exit 1
             fi
             t1=$(date +%s.%N)
-            lat=$(awk -v s="$lat" -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", s + (b - a)}')
+            if [ "${#_elapsed_ov[@]}" -gt 0 ]; then
+                e="${_elapsed_ov[$((n_pr - 1))]:-0.0}"
+            else
+                e=$(awk -v a="$t0" -v b="$t1" 'BEGIN{printf "%.1f", b - a}')
+            fi
+            lat_samples+=("$e")
+            # Existing `latency=` field stays a running SUM across board PRs
+            # (unchanged — do not turn it into a mean); the distribution stats
+            # are appended separately below (ticket 0353).
+            lat=$(awk -v s="$lat" -v e="$e" 'BEGIN{printf "%.1f", s + e}')
             # A seat that exited 0 but wrote nothing contributes zero findings —
             # count the latency (above) and move on rather than crashing on a
             # missing file.
@@ -384,7 +472,33 @@ case "$subcmd" in
                 'BEGIN{ if (pi==0 && po==0) { print "n/a" } else { printf "$%.4f", p/1e6*pi + c/1e6*po } }')
         fi
 
-        card="audition candidate=${label} model=${model} board=${n_pr}MR findings=${tot} duplicate=${dup} unique-verified=${uv} unique-hallucinated=${uh} overlap=${overlap}% latency=${lat}s cost=${cost}"
+        # Per-run latency distribution (nearest-rank) over the replayed board.
+        p50=$(_percentile 50 ${lat_samples[@]+"${lat_samples[@]}"})
+        p95=$(_percentile 95 ${lat_samples[@]+"${lat_samples[@]}"})
+
+        # Peer-relative SLOW gate (ticket 0353). A candidate is compared only
+        # against OTHER candidates that replayed the SAME board size — identical
+        # work, so the comparison is host- and diff-size-independent. Flag when
+        # this p50 exceeds factor × the cross-candidate median p50 (self included
+        # in the median sample, so a mean-based bug on 10/10/35 is caught). Fires
+        # only with ≥1 peer (a lone candidate has no basis for comparison) and is
+        # a STRICT >, so a boundary candidate at exactly factor × median is kept.
+        # Flagged → the verdict is eliminate-slow (no advisory trial); the prior
+        # candidates' logged lines are never touched (append-only).
+        tickets_dir="${REVIEWERS_TICKETS:-${REPO_ROOT}/tickets}"
+        factor="${REVIEWERS_SLOW_FACTOR:-3}"
+        slow=""
+        peer_p50s=()
+        mapfile -t peer_p50s < <(_audition_peer_p50s "$tickets_dir" "$n_pr" "$label")
+        if [ "${#peer_p50s[@]}" -ge 1 ]; then
+            median=$(_percentile 50 "${peer_p50s[@]}" "$p50")
+            if awk -v x="$p50" -v m="$median" -v f="$factor" 'BEGIN{exit !(x > f * m)}'; then
+                slow=" SLOW"
+                echo "audition: candidate '${label}' flagged SLOW — p50 ${p50}s > ${factor}× peer median ${median}s; eliminate-slow (no advisory trial)" >&2
+            fi
+        fi
+
+        card="audition candidate=${label} model=${model} board=${n_pr}MR findings=${tot} duplicate=${dup} unique-verified=${uv} unique-hallucinated=${uh} overlap=${overlap}% latency=${lat}s cost=${cost} latency-p50=${p50}s latency-p95=${p95}s${slow}"
         echo "$card"
 
         # Append the scorecard to the candidate's trial ticket (erg verbs:
@@ -408,9 +522,9 @@ case "$subcmd" in
         # ticket's move to closed/) — but confined to each file's log section.
         filter="${1:-}"
         tickets_dir="${REVIEWERS_TICKETS:-${REPO_ROOT}/tickets}"
-        fmt='%-9s %-20s %-26s %5s %5s %5s %4s %5s %5s %8s %9s %8s\n'
+        fmt='%-9s %-20s %-26s %5s %5s %5s %4s %5s %5s %8s %9s %8s %8s %5s\n'
         # shellcheck disable=SC2059  # $fmt is a fixed local format, not user input
-        printf "$fmt" KIND NAME MR/BOARD VERIF CONS FIND DUP UVER UHAL OVERLAP LATENCY COST
+        printf "$fmt" KIND NAME MR/BOARD VERIF CONS FIND DUP UVER UHAL OVERLAP LATENCY P95 COST FLAG
         [ -d "$tickets_dir" ] || exit 0
         while IFS= read -r line; do
             [ -n "$line" ] || continue
@@ -424,13 +538,20 @@ case "$subcmd" in
                     uh=$(_card_field unique-hallucinated "$line")
                     ov=$(_card_field overlap "$line")
                     lat=$(_card_field latency "$line")
+                    p50=$(_card_field latency-p50 "$line")
+                    p95=$(_card_field latency-p95 "$line")
                     cost=$(_card_field cost "$line")
                     if [ -z "$name" ] || [ -z "$find" ] || [ -z "$dup" ] || [ -z "$uv" ] || [ -z "$uh" ]; then
                         echo "scores: WARN unparseable audition line: ${line}" >&2; continue
                     fi
                     [ -n "$filter" ] && [ "$filter" != "$name" ] && continue
+                    # LATENCY column shows p50 (the gate-relevant stat); older
+                    # cards without p50 fall back to the running-sum `latency=`.
+                    # The bare ` SLOW` token (ticket 0353) surfaces in FLAG.
+                    latshow="${p50:-$lat}"
+                    flag="-"; case "$line" in *" SLOW") flag="SLOW" ;; esac
                     # shellcheck disable=SC2059
-                    printf "$fmt" audition "$name" "${board:--}" - - "$find" "$dup" "$uv" "$uh" "${ov:--}" "${lat:--}" "${cost:--}"
+                    printf "$fmt" audition "$name" "${board:--}" - - "$find" "$dup" "$uv" "$uh" "${ov:--}" "${latshow:--}" "${p95:--}" "${cost:--}" "$flag"
                     ;;
                 *"MR "*"seat="*"verdict:"*)
                     # Extract the counts as one anchored `N verifiable, M consider`
@@ -443,6 +564,7 @@ case "$subcmd" in
                     # (ticket 0348 review, rounds 1–2).
                     seat="${line#*seat=}"; seat="${seat%% *}"
                     mr="${line#*MR }";     mr="${mr%% *}"
+                    lat=$(_card_field latency "$line")   # per-seat latency (0353), if request left one
                     tally=$(grep -oE '[0-9]+ verifiable, [0-9]+ consider' <<<"$line" | head -1 || true)
                     if [ -z "$seat" ] || [ -z "$tally" ]; then
                         echo "scores: WARN unparseable scorecard line: ${line}" >&2; continue
@@ -451,7 +573,7 @@ case "$subcmd" in
                     cons="${tally##*, }"; cons="${cons%% *}"   # → M
                     [ -n "$filter" ] && [ "$filter" != "$seat" ] && continue
                     # shellcheck disable=SC2059
-                    printf "$fmt" scorecard "$seat" "${mr:--}" "$verif" "$cons" - - - - - - -
+                    printf "$fmt" scorecard "$seat" "${mr:--}" "$verif" "$cons" - - - - - "${lat:--}" - - -
                     ;;
             esac
             # Scan only each ticket's `--- log ---` section, where scorecard/
@@ -461,20 +583,11 @@ case "$subcmd" in
             # section boundary that follows, and never re-enters — so a body line
             # quoting `--- log ---` (the %erg template shows one) cannot fabricate
             # a phantom row or spam WARNs (ticket 0348 review, rounds 1–2).
-        done < <(
             # No pre-filter grep here: the `case` above has no default arm, so a
             # log line matching neither pattern is already a silent no-op -- a
             # second regex re-stating the same two patterns would only risk
             # drifting out of sync with the case arms (simplify review, PR 634).
-            find "$tickets_dir" -name '*.erg' -type f 2>/dev/null | sort | while IFS= read -r f; do
-                awk '
-                    done_log        { next }
-                    !inlog && /^--- log ---/ { inlog=1; next }
-                    inlog && /^--- /         { inlog=0; done_log=1; next }
-                    inlog
-                ' "$f" 2>/dev/null
-            done
-        )
+        done < <(_corpus_log_lines "$tickets_dir")
         ;;
 
     help) usage_text ;;
