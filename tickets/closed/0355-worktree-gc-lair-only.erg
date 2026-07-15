@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Worktree GC must never touch active sessions — rails in the script, GC stays in molt
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #627
+
+--- log ---
+2026-07-14T21:40Z claude created
+2026-07-14T22:30Z claude note author refined the ruling: molt (housekeeping) keeps GC but must never touch active sessions; roar only disposes of its own merged worktree; rails moved into worktree-gc.sh itself
+
+2026-07-15T07:07Z Minh Ha-Duong closed — autoclosed — PR #627
+--- body ---
+## Context
+On 2026-07-13 the worktree GC (`scripts/worktree-gc.sh`) removed two
+worktrees that were live sessions' base cwds:
+
+- 09:15Z — a roar wrap-up removed `explore-session` while four sessions
+  were active in it.
+- 19:35Z — a roar in `t-gaze-fork-liveness` removed
+  `explore-ticket-pipeline` while one session was mid-flight and two more
+  had started in it two minutes earlier.
+
+The GC's staleness test (upstream `[gone]` + clean tree) reads "branch
+merged" as "worktree unused". A session-base worktree whose checked-out
+branch was pushed and merged (PRs #554/#555 merged from
+`worktree-explore-ticket-pipeline`; deleteBranchOnMerge pruned the remote)
+becomes GC-bait while sessions still sit in it. Removal strands them in
+unregistered husk dirs where git resolves to the primary checkout —
+roughly eight sessions ran unisolated in the `explore-ticket-pipeline`
+husk over the following two days.
+
+Author ruling (refined 2026-07-14): housekeeping (/molt) owns worktree GC,
+but it must never touch an active session's worktree; roar exits and
+disposes of its OWN merged worktree only, no repo-wide sweep. The
+active-session protection lives in the script, not in skill prose:
+
+- **Liveness rail** — skip any removal candidate that is a live process's
+  cwd (`/proc/*/cwd` scan; the claude CLI holds its cwd at the session
+  base for the session's life). This is the "live base cwd" signal ticket
+  0338 called the hard part.
+- **Lock rail** — a locked worktree is skipped, never unlock-and-removed.
+  The previous unlock-first behavior defeated the very marker molt's
+  step-0 active-session guard treats as "in use".
+
+## Relevant files
+- `scripts/worktree-gc.sh` — liveness + lock rails; checked past the
+  `[gone]` gate so a quiet repo stays silent
+- `skills/molt/SKILL.md` — step 1.5 GC retained, documents the rails
+- `skills/roar/SKILL.md` — repo-wide GC step removed; step 9 (exit and
+  dispose own worktree) unchanged
+- `skills/lair/SKILL.md` — defers GC to molt (step 1); keeps
+  `git worktree prune` and the orphaned-WIP caveat
+- `tests/test_worktree_tools.py` — locked test flipped to skip;
+  live-process-cwd skip test added
+
+## Exit criteria
+- [ ] roar SKILL.md no longer invokes `worktree-gc.sh`
+- [ ] molt SKILL.md keeps the GC step and documents the rails
+- [ ] `worktree-gc.sh` skips live-process-cwd and locked worktrees
+- [ ] Tests prove both rails (locked skip, live-cwd skip)
+- [ ] `make check` passes
+
+## Residual (not this ticket)
+The `explore-ticket-pipeline` husk still hosts live sessions and needs
+repair once they end. Husk removal policy stays report-only (tickets
+0325/0338).

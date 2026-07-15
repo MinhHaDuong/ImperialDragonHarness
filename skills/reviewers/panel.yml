@@ -41,7 +41,15 @@ reviewers:
     kind: forge-bot
     status: advisory
     login: copilot-pull-request-reviewer[bot]
-    trial-ticket: tickets/0206-copilot-review-in-the-verify-panel-on-demand.erg
+    # 0206 closed and moved to tickets/closed/; path refreshed so `list` shows a
+    # live pointer and `scores` (which greps every *.erg, closed/ included) still
+    # reads this seat's archived trial cards. NOTE: `scorecard` writes via
+    # `erg log <ID>`, which resolves IDs among OPEN tickets only — so logging a
+    # NEW scorecard to this seat now fails "no ticket found". That is moot here:
+    # copilot's trial has concluded; whether to retire the seat is the author's
+    # call at the 0205 promote-or-drop review, so the seat stays in place for now
+    # (ticket 0348).
+    trial-ticket: tickets/closed/0206-copilot-review-in-the-verify-panel-on-demand.erg
   # Primary OpenRouter seat — gpt-5.6-luna chosen over gpt-5.6-terra on cost
   # (author directive 2026-07-14: ~40% of terra's price; matched terra's
   # specificity in the round-2 same-diff audit — 0 findings on clean code;

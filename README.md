@@ -105,7 +105,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
-| `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats. |
+| `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
 | `/scry` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |

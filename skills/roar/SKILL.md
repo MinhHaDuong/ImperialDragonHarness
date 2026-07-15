@@ -14,7 +14,7 @@ Run after the branch has been merged. Do not skip steps.
 ## Non-git projects
 
 When the working directory is not a git repository (manuscripts, data
-folders): skip the pre-check and steps 7-11; run steps 1-6 and 12.
+folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
 Telemetry: use `"branch":"none-non-git-project"`. The step-3 sweep
 records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
@@ -43,9 +43,8 @@ direct-to-master checkout with only ssh peers): there is no forge gate.
 probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
 missing prerequisite yields an explicit skip with a one-line reason, never a
 fail. Concretely: step 9's ancestry checks compare against the local default
-branch; skip step 10 (upstream-gone status cannot register without a remote);
-step 11 reduces to checking that local branches are merged into the default
-branch — there are no remote branches nor merge requests to inspect.
+branch; step 10 reduces to checking that local branches are merged into the
+default branch — there are no remote branches nor merge requests to inspect.
 
 ## Reflect and update
 
@@ -118,19 +117,17 @@ branch — there are no remote branches nor merge requests to inspect.
     subagent, `ExitWorktree` is unavailable — skip this step; the harness
     auto-cleans the agent's worktree once its branch is merged and the tree
     is clean.
-10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
-    ```bash
-    git fetch --prune origin
-    ~/.claude/scripts/worktree-gc.sh
-    ```
-    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to remove — but it also **reports (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer registered worktrees, so a `worktree-gc: husk …` line may appear without anything being cleaned. That output is informational; report-only is the PERMANENT design (ticket 0338 closed the removal-heuristic question — remote sessions are structurally undetectable, so no complete liveness signal exists) — do NOT re-file. See tickets 0169, 0195, 0325, 0338.
-    Skip in a no-forge repo: without a remote, `[gone]` can never register —
-    say so in one line.
-11. **Verify hygiene**:
+10. **Verify hygiene**:
     - `git branch -a` → no stale remote branches
     - Check for stale merge requests
     - No-forge repo: only check that local branches are merged into the
       default branch; there are no remote branches nor merge requests.
-12. **Offer** to improve workflow rules if lessons were learned.
+11. **Offer** to improve workflow rules if lessons were learned.
 
-Note: STATE.md is updated on main during `/lair`, not here.
+Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
+belongs to housekeeping (`/molt`), not here: roar exits and disposes of its
+OWN merged worktree (step 9) and touches nothing outside it. A repo-wide GC
+from roar removed worktrees that were live session base cwds (2026-07-13,
+ticket 0355 — a merged-and-pruned branch reads `[gone]` even while sessions
+still sit in the tree), stranding those sessions in unregistered husk dirs
+where git silently resolves to the primary checkout.

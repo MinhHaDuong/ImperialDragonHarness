@@ -2,14 +2,15 @@
 Title: Audition and seat latency tracking; eliminate slow candidates on peer statistics
 Created: 2026-07-14
 Author: Minh Ha-Duong
-Blocked-by: 0348
-Closed: 2026-07-14
+Closed: autoclosed — PR #636
 
 --- log ---
 2026-07-14T21:13Z Minh Ha-Duong created
 2026-07-14T21:59Z Minh Ha-Duong note Blocked-by 0348 header added — 0348 reached main via PR #613, forward reference now legal
 2026-07-14T22:19Z Minh Ha-Duong closed wontfix — harness cool-down (author): not merge-blocking, not state-corrupting, no science-project impact; audition scorecards already expose mean latency per run, sufficient for seat decisions
+2026-07-15T00:00Z Minh Ha-Duong note reopened under the author's 2026-07-15 raid directive, superseding the PR #632 cool-down close; Blocked-by 0348 now satisfied (0348 merged via PR #634, scores verb on main)
 
+2026-07-15T01:06Z Minh Ha-Duong closed — autoclosed — PR #636
 --- body ---
 ## Context
 
@@ -44,8 +45,9 @@ to what the other candidates demonstrate is achievable.
 
 1. **Capture, audition path**: record wall-clock per board PR; extend
    the scorecard block with distribution figures
-   (`latency-p50=<s>s latency-p95=<s>s` alongside the existing mean, so
-   existing parsers keep working).
+   (`latency-p50=<s>s latency-p95=<s>s` alongside the existing
+   `latency=` field — which is a running SUM across board PRs, not a
+   mean; left unchanged so existing parsers keep working).
 2. **Capture, request path**: time each seat per merge request and put
    the figure in the seat's `scorecard` fixed-schema line, so live-trial
    evidence accumulates the same statistic.
