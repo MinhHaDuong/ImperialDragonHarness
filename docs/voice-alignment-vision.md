@@ -133,7 +133,7 @@ four:
 | Tier | Location | Contents | Status |
 |---|---|---|---|
 | User | `~/data/voice-corpus/user/*.jsonl` | author's own past published/accepted paragraphs | v1 |
-| Project | `<project>/config/voice-corpus/*.jsonl` | prose established in earlier chapters/papers of that project | deferred until user tier proves useful and a project corpus is large enough to matter |
+| Project | `<project>/config/voice-corpus/*.jsonl` | prose established in earlier chapters/papers of that project | deferred until user tier proves useful and a project corpus is large enough to matter — a scout instance already exists: `climate-finance-het/config/voice-corpus/0243-scout-pairs.jsonl`, 3 author-arbitrated (BEFORE=negative, AFTER=positive) mined pairs from ticket 0243's manuscript voice-alignment pass, schema-conformant, seeded at zero mining cost since the arbitration had already happened |
 | Harness | `~/.claude/config/voice-corpus/harness/*.jsonl` | generic cold-start exemplar set | deferred — only relevant before the user tier has enough material, which v1's gate presupposes it does |
 | Manuscript | *(none)* | paragraphs already committed in the current draft | deferred — needs a minimum-word-count gate before it's statistically meaningful (see Known risks); falls back to user tier below that threshold if ever built |
 
@@ -194,6 +194,11 @@ evidentiary weight:
     draft" vs. "the accepted version" needs a reliable heuristic (e.g.
     first Claude-authored version in a session vs. the final commit before
     submission) — this is real design work, not a detail to wave past.
+    First realized instance sidesteps this heuristic entirely: ticket 0243's
+    manuscript voice-alignment pass produced 3 BEFORE/AFTER samples with
+    explicit author accept/amend/reject arbitration, not a commit-diff
+    guess — mined into `climate-finance-het/config/voice-corpus/0243-scout-pairs.jsonl`
+    (see Corpus storage, Project tier).
 - **Synthetic de-idiosyncratization (secondary — training augmentation
   only).** Run the author's own voiced paragraphs through several different
   models to produce flattened/generic rewrites. Cheap, unlimited volume,
