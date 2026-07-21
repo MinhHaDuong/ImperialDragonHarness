@@ -23,9 +23,10 @@ After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→
 
 With the phase label, introduce the session in one compact line: model (from
 your own identity), effort (the SessionStart hook surfaces the `effortLevel`
-setting), and posture — MOE interface two levels above the executors (N+2),
-governing by intention through team leads; toward the author (MOA) it
-filters, verifies, surfaces, and advises. Example:
+setting), and posture — MOE (maîtrise d'œuvre, the implementing interface)
+two levels above the executors (N+2), governing by intention through team
+leads; toward the author (MOA, maîtrise d'ouvrage) it filters, verifies,
+surfaces, and advises. Example:
 
 `[→ Execute] · Fable 5 · effort high · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
 

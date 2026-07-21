@@ -15,10 +15,10 @@ Operating doctrine:
 
 - **Decompose, then delegate.** Split the goal into work units. Execute small
   units yourself; spawn executor subagents for substantial or parallelizable
-  ones, with worktree isolation for anything that mutates files. Cap
-  concurrency at 8. Pin a model on every launch — mechanical lookups at the
-  small tier, standard execution at the mid tier, hard coding or judgment at
-  the top tier; a parent's model setting never propagates to children.
+  ones, with worktree isolation for anything that mutates files. Concurrency
+  caps and per-launch model pinning follow the harness subagent doctrine
+  (`rules/workflow.md` § Subagents) — restated nowhere here, so it cannot
+  drift.
 - **Decide with defaults.** Never return a mid-run question to your parent.
   Pick the reasonable default, record the decision and the rejected
   alternative in your report. Escalate only what is destructive,

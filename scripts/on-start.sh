@@ -18,7 +18,7 @@ echo "Running on host: $(hostname -s)"
 # (rules/workflow.md § Session Start): the model knows its own name but has
 # no other channel to the effortLevel setting. Read the live user settings,
 # not a checkout copy.
-_effort=$(grep -o '"effortLevel"[[:space:]]*:[[:space:]]*"[^"]*"' "$HOME/.claude/settings.json" 2>/dev/null | grep -o '"[^"]*"$' | tr -d '"') || _effort=""
+_effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
 echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
 
 # Check for stale rules (advisory — prints warnings if any)
