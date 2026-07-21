@@ -38,6 +38,8 @@ projects/*/memory/.provenance.lock
 tickets/tools/go/*.test
 !rules/
 !rules/**
+!agents/
+!agents/**
 
 # Makefile for harness targets (skills catalog, checks, etc.)
 !Makefile

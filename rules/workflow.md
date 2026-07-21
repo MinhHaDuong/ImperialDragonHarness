@@ -171,6 +171,15 @@ author are for genuinely NEW scope or destructive/irreversible actions the
 batched decisions did not cover — not for progress, not for permission to
 continue (author doctrine, 2026-07-11).
 
+**Delegate intent, not procedure.** When handing substantial work to a
+delegate (a team-lead agent, an executor, a workflow), state the goal, the
+constraints, and the definition of done — then let the delegate choose the
+procedure and mobilize its own executors. Reserve step-by-step direction for
+cases where the procedure itself is the deliverable. Long executions run in
+background delegates that report on completion; the conversation shows the
+author the batched decision round and the final report, never scrolling
+intermediate output (author directive, 2026-07-21).
+
 **Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty. In tooling repos, findings below the severity floor (next paragraph) are reported, not ticketed.
 
 **Severity floor for tooling repos.** In a tooling/harness repo (this repo, git-erg), file a ticket only when the defect blocks a merge, corrupts state, or bites a science project. Below that bar: fix it inline in the current change, record it in memory, or drop it — sweeps report such findings, they do not mint tickets for them. When a guard misfires, check whether its defect class has fired recently before patching; prefer deleting the guard (and its tests) over growing it. Science repos keep normal filing. (Author directive, 2026-07-15: the ticket queue had reached equilibrium on second-order tooling work.)
