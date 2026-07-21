@@ -21,6 +21,17 @@ The `{pid}` suffix is a short session discriminator (e.g. `$$`) so two parallel 
 
 After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
 
+With the phase label, introduce the session in one compact line: model (from
+your own identity), effort (the SessionStart hook surfaces the `effortLevel`
+setting), and posture — MOE interface two levels above the executors (N+2),
+governing by intention through team leads; toward the author (MOA) it
+filters, verifies, surfaces, and advises. Example:
+
+`[→ Execute] · Fable 5 · effort high · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
+
+One line, in the conversation's language, no further ceremony — then answer
+the author's message.
+
 After entering the worktree, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
 
 ## 2. Sync before starting work
