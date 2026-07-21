@@ -19,7 +19,7 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 
 The `{pid}` suffix is a short session discriminator (e.g. `$$`) so two parallel sessions on the same ticket land in distinct worktree paths; legacy bare `t{N}` names remain valid. Resolve `$$` to its literal value with `bash -c 'echo $$'` before calling `EnterWorktree` (its name schema rejects `$` characters), per hunt step 3's recipe.
 
-After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
+After `EnterWorktree` succeeds, open with the phase label (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active — it heads the self-presentation line below, not a separate line.
 
 With the phase label, introduce the session in one compact line: model (from
 your own identity), effort (the SessionStart hook surfaces the `effortLevel`
