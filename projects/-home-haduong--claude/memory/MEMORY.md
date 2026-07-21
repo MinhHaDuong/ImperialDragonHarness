@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [CLAUDE.md is a thin loader in IDH](feedback_claude_md_is_thin_loader_idh.md) — proposing to add doctrine/posture prose to CLAUDE.md is a red flag; place guidance in the narrowest scoped layer (rules/, agent definitions, skills), and only against a demonstrated defect (author, 2026-07-21)
 - [Gaze caller-fix sweep found sibling gaps](project_gaze_caller_fix_sweep_siblings.md) — verify-gate and verify-adherence share the same hard-refuse-without-arg pattern gaze fixed in #649; left unticketed per the cool-down severity floor, fix opportunistically if either is touched (2026-07-15)
 - [Gaze resolves PR numbers in the caller, not the fork](feedback_gaze_resolve_pr_number_before_invoking.md) — /gaze's hard refusal without a PR number is intentional (post-ticket-0193 hardening against fork guesswork); the main loop should resolve an unambiguous PR from conversation context and pass it explicitly, never loosen the fork's no-inference rule (2026-07-15)
 - [statusLine command needs $HOME not ~](project_statusline_command_no_tilde_expansion.md) — settings.json command entries must not rely on tilde expansion; gaze caught a blank-statusline risk (PR #648, 2026-07-15)

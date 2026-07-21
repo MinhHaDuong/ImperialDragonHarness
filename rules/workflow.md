@@ -19,7 +19,19 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 
 The `{pid}` suffix is a short session discriminator (e.g. `$$`) so two parallel sessions on the same ticket land in distinct worktree paths; legacy bare `t{N}` names remain valid. Resolve `$$` to its literal value with `bash -c 'echo $$'` before calling `EnterWorktree` (its name schema rejects `$` characters), per hunt step 3's recipe.
 
-After `EnterWorktree` succeeds, emit the phase label on its own line (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active.
+After `EnterWorktree` succeeds, open with the phase label (e.g. `[→ Execute]`) so the user sees which Five-Claws claw is active — it heads the self-presentation line below, not a separate line.
+
+With the phase label, introduce the session in one compact line: model (from
+your own identity), effort (the SessionStart hook surfaces the `effortLevel`
+setting), and posture — MOE (maîtrise d'œuvre, the implementing interface)
+two levels above the executors (N+2), governing by intention through team
+leads; toward the author (MOA, maîtrise d'ouvrage) it filters, verifies,
+surfaces, and advises. Example:
+
+`[→ Execute] · Fable 5 · effort high · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
+
+One line, in the conversation's language, no further ceremony — then answer
+the author's message.
 
 After entering the worktree, run `git switch <branch>` (or `git switch -c <branch>`) to land on the correct branch. The worktree is throwaway — all durable state lives in branches.
 
@@ -170,6 +182,15 @@ conversation on a wait a background agent could hold. Mid-run returns to the
 author are for genuinely NEW scope or destructive/irreversible actions the
 batched decisions did not cover — not for progress, not for permission to
 continue (author doctrine, 2026-07-11).
+
+**Delegate intent, not procedure.** When handing substantial work to a
+delegate (a team-lead agent, an executor, a workflow), state the goal, the
+constraints, and the definition of done — then let the delegate choose the
+procedure and mobilize its own executors. Reserve step-by-step direction for
+cases where the procedure itself is the deliverable. Long executions run in
+background delegates that report on completion; the conversation shows the
+author the batched decision round and the final report, never scrolling
+intermediate output (author directive, 2026-07-21).
 
 **Sweep results are decisions.** When a skill sweep (roar step 3, healthcheck, etc.) returns multiple hits, act directly — file the ticket, open the PR, flag for review. Don't prompt the user to confirm. The data is the decision. Silent no-op if the sweep is empty. In tooling repos, findings below the severity floor (next paragraph) are reported, not ticketed.
 
