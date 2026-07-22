@@ -2,7 +2,11 @@
 
 Quality bar for any PDF deliverable that leaves the workshop — journal
 submission, preprint deposit (HAL, Zenodo), personal page, report handoff.
-Applies at the *finishing pass*, after content is frozen.
+
+**Keyword: « finition ».** This pass runs when the author asks for it, and the
+agent *proposes* it when a deliverable enters finalization (submission, deposit,
+upload imminent). Never during drafts: while content moves, pagination polish
+is churn — the finishing pass presupposes frozen content.
 
 ## Automate first, paginate by hand never
 
