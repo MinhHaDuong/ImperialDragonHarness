@@ -183,25 +183,25 @@ for needle in "parked" "show-toplevel" "worktree add"; do
     fi
 done
 
-# --- Wiring ratchet: settings.json routes EnterWorktree through the guard ----
+# --- Wiring ratchet: settings.shared.json routes EnterWorktree through the guard ----
 # The matcher may name the tool alone or in a pipe-alternation ("A|B"), so the
 # ratchet matches the tool name as a full alternative, not by equality.
 if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)EnterWorktree(\\||$)"))
           | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
-        settings.json >/dev/null 2>&1; then
-    echo "PASS: settings.json wires the EnterWorktree guard"
+        settings.shared.json >/dev/null 2>&1; then
+    echo "PASS: settings.shared.json wires the EnterWorktree guard"
 else
-    echo "FAIL: settings.json has no EnterWorktree PreToolUse hook for the guard"
+    echo "FAIL: settings.shared.json has no EnterWorktree PreToolUse hook for the guard"
     fail=1
 fi
 
-# --- Wiring ratchet: settings.json routes Skill through the guard (0306) ------
+# --- Wiring ratchet: settings.shared.json routes Skill through the guard (0306) ------
 if jq -e '.hooks.PreToolUse[] | select(.matcher | test("(^|\\|)Skill(\\||$)"))
           | .hooks[].command | test("guard-enterworktree-parked-cwd")' \
-        settings.json >/dev/null 2>&1; then
-    echo "PASS: settings.json wires the Skill guard"
+        settings.shared.json >/dev/null 2>&1; then
+    echo "PASS: settings.shared.json wires the Skill guard"
 else
-    echo "FAIL: settings.json has no Skill PreToolUse hook for the guard"
+    echo "FAIL: settings.shared.json has no Skill PreToolUse hook for the guard"
     fail=1
 fi
 
