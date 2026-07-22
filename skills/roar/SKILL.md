@@ -97,7 +97,10 @@ default branch — there are no remote branches nor merge requests to inspect.
        (`git merge-base --is-ancestor HEAD origin/main`) has already
        passed, the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
-       stale local main. But `discard_changes` does more than remove the
+       stale local main — it can even name a branch that no longer
+       exists (a parallel session's hygiene pruned it post-merge;
+       `git rev-parse --verify refs/heads/<branch>` confirms,
+       climate-finance-het 2026-07-22). But `discard_changes` does more than remove the
        worktree: ExitWorktree restores the session to the ORIGINAL
        checkout, and with `discard_changes: true` it also deletes the
        original branch — the one the primary checkout returns to. So
