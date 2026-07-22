@@ -82,3 +82,7 @@ if [ -n "$_gcd" ]; then
         && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
         || rm -f "$_gcd/sync-local-main.last.$$"; } & )
 fi
+
+# Settings drift: live settings.json vs tracked settings.shared.json
+# (volatile keys model/effortLevel ignored). Report-only, never blocks.
+"$_script_dir/check-settings-drift.sh" 2>/dev/null || true
