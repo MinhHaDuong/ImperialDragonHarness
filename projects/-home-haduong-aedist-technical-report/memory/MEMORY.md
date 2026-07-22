@@ -49,7 +49,6 @@
 - [Ticket line in PR](feedback_ticket_line_in_pr.md) — only put **Ticket:** in PR body when that ticket will actually be closed; admin PRs omit it
 - [Permutation test power](feedback_permutation_test_power.md) — min attainable p = 1/2^n; with n=4 subjects p<0.05 is unreachable; check before writing threshold
 - [Compute before figure](feedback_compute_before_figure.md) — run throwaway data script first; catches prose claim errors and N-count surprises before writing plot code
-- [Zotero API access](reference_zotero.md) — user ID 95318, API key for downloading PDFs from haduong's library
 - [API keys location](reference_api_keys_location.md) — project `.env` has OPENROUTER_API_KEY; use `UV_ENV_FILE=.env` for experiment scripts, not `~/.claude/.env`
 - [Econom'IA 2026 venue](reference_econom_ia_2026.md) — conference URL and abstract location
 - [Padme local AI infra](project_padme_local_infra.md) — GROBID, Ollama, GPUs; user prefers local-first pipelines

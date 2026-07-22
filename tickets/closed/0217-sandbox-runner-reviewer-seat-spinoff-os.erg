@@ -1,0 +1,95 @@
+%erg 0.1
+Title: Sandbox-runner reviewer-seat spinoff — OS-contained agnostic CLI reviewers with normalized findings
+Created: 2026-06-05
+Author: claude
+Closed: autoclosed — PR #564
+
+--- log ---
+2026-06-05T07:35Z claude created
+
+2026-06-05T08:34Z note prototype evidence (2026-06-05, padme): seat-runner v1 works end-to-end — podman rootless (bwrap blocked by apparmor_restrict_unprivileged_userns=1; podman ships an allowed profile), --read-only rootfs + ro mounts + tmpfs HOME + explicit env; containment self-test is alive-then-blocked (v1 bwrap self-test was fail-open: counted sandbox-failed-to-start as write-blocked). Devstral-Small-2-24B Q4_K_M via llama-server dual-GPU: 32s wall-clock on a ~600-line prose-heavy diff; normalization + fail-loud OK. Review quality: 13/13 findings FALSE POSITIVES (uniform hallucinated missing-trailing-newline, 0 such markers in the diff), summary count off by one — matches docs/research/ensemble-decorrelation-evidence.md prediction that a weak seat on a trivial/prose diff yields noise. Scorecard 1: seat=devstral-small-2-q4km TP=0 FP=13 latency=32s. Next: qwen3.6-27B head-to-head (already in /data/models/gguf/qwen), then a code-heavy diff
+2026-06-05T08:35Z claude note format correction: the 08:34Z line above lacks its author token (erg log takes the line verbatim; spec is {ts} {actor} {verb} {detail}) — author is claude. Appending per append-only rule
+2026-06-05T08:57Z claude note scorecard 2: seat=qwen3.6-35b-a3b (MoE, 3B active) via llama-server dual-GPU shard. SPEED: 80 tok/s generation (6.2x the dense qwen3.6-27b's 12.9 tok/s — confirms MoE active-param thesis; dense 27B took 4m36s and errored, MoE full review 2m23s). QUALITY: 3 findings, and one is a REAL cross-file consistency catch — flagged that THIS ticket's body said 'bubblewrap' while the prototype script uses podman (now fixed). That is exactly the cross-file finding class docs/research/ensemble-decorrelation-evidence.md predicted weak single-shot seats MISS — the MoE caught it. Other two: 1 reasonable-but-misread (aider provenance), 1 nitpick (clone flags). Verdict: USABLE local seat. Contrast scorecard 1 (devstral-small-2-q4km): 13/13 hallucinated false positives, unusable. Recommend qwen3.6-35b-a3b as the local open-weights seat. NORMALIZER GAP found: template-echo lines and duplicate emissions leak past the ^FINDING|/^SUMMARY| grep — tighten to drop literal-template and dedupe. Scorecard 2: seat=qwen3.6-35b-a3b TP=1 FP=2(1 nitpick,1 misread) latency=143s tok/s=80 verdict-quality=usable
+2026-07-13T19:45Z claude note raid-217 imagine+plan: criterion 4 (normalizer) already satisfied via 0218 (commit 27f5eb1, reviewers.sh harvest template-drop+dedupe, tested); reviewers.sh integration landed via 0206/0208. Remaining work: (a) network deny-by-default — replace --network=host with --network=none + host-side UDS relay (pasta/slirp have no per-destination allowlist; UDS bind-mount mechanism validated live on doudou), (b) per-seat timeout (criterion 5 missing half), (c) tests/test_seat_runner.sh with --self-test-only flag (endpoint curl currently precedes self-test — reorder), (d) rename prototype -> scripts/seat-runner.sh (2 refs: reviewers.sh:18, skills/reviewers/SKILL.md). Feasibility anchors verified PASS on doudou (podman 5.7 present, no seat-runner image, no live endpoint — integration tests must skip cleanly on both)
+2026-07-13T19:59Z claude note raid-217 execute landed on branch t217-sandbox-net-isolation. Criterion 1 (network deny-by-default): --network=host replaced with --network=none + host-side generic TCP<->UDS forwarder scripts/seat-runner/net-relay.py; container reaches the endpoint only via one bind-mounted Unix socket, bridged container-side by the same relay on loopback (per-netns, alive under --network=none). Regression-guarded by tests/test_seat_runner.sh (source: --network=none present/--network=host absent in live code; runtime: self-test proves external host 1.1.1.1:443 unreachable). pasta/slirp4netns rejected — full outbound NAT, no per-destination allowlist.
+2026-07-13T19:59Z claude note Criterion 2 (OS-layer write/secret block): proven by machine test — tests/test_seat_runner.sh runs seat-runner.sh --self-test-only against the real localhost/seat-runner:v1 image; probe is alive-then-blocked (SANDBOX-ALIVE + WRITE-BLOCKED + SECRET-BLOCKED + NET-BLOCKED). Supersedes the 2026-06-05 manual scorecards with a repeatable gate; SKIPs cleanly when podman/image absent.
+2026-07-13T19:59Z claude note Criterion 3 (minimal env, BASH_ENV stripped): evidence-only — env is explicitly constructed in run_seat (no BASH_ENV, no inherited secrets; only a dummy OPENAI_API_KEY), lines ~145-160 of scripts/seat-runner.sh. No code change.
+2026-07-13T19:59Z claude note Criterion 4 (normalizer): evidence-only — already satisfied by closed ticket 0218 (commit 27f5eb1: harvest template-echo drop + dedupe in reviewers.sh, tested in tests/test_reviewers.sh). No normalizer code written here.
+2026-07-13T19:59Z claude note Criterion 5 (per-seat timeout): run_seat wraps every podman invocation in 'timeout -k 5 $SEAT_TIMEOUT' (default 600s); a hung/slow seat is killed non-zero and loud. Fail-open stays one layer up in reviewers.sh (already tested there). Machine proof: tests/test_seat_runner.sh stubs podman with a 30s sleep, sets SEAT_TIMEOUT=2, asserts non-zero exit AND bounded wall-clock (<15s), which catches a dropped timeout wrapper.
+2026-07-13T19:59Z claude note Criterion 6 (end-to-end smoke): DONE via the hardened path. Built localhost/seat-runner:v1 from scripts/seat-runner/Containerfile (ubuntu:24.04 + python3/git/ca-certs); stood up a stub OpenAI-compatible endpoint (127.0.0.1:8012, canned /health + /v1/chat/completions returning FINDING|/SUMMARY| lines) and drove the FULL pipeline: seat-runner.sh --network=none reviewed t217-sandbox-net-isolation vs origin/main, reached the endpoint ONLY through the relay socket, self-test passed, and contract-shaped findings landed in the out file (exit 0). Combined with the 2026-06-05 scorecards (real Devstral/Qwen models over a real ~600-line branch diff, local-branch-diff reviewer, no forge round-trip) this closes criterion 6 on the network-hardened design.
+2026-07-13T21:07Z claude note correction: criterion-3 explicit env construction lives in run_seat() at scripts/seat-runner.sh:~183-191; the ~145-160 citation in the 19:59Z note is stale
+2026-07-13T21:07Z claude note bump verify-reroll — round 1: venv-root derivation guard + verifiable minors
+2026-07-13T21:13Z Minh Ha-Duong closed — autoclosed — PR #564
+--- body ---
+## Context
+
+Spinoff identified 2026-06-05 from two converging lines of evidence: the
+PR #289 architecture panel (4 independent reviewers) and a deep-research
+report (docs/research/agnostic-reviewer-landscape.md, 28 sources / 25
+adversarially-verified claims). Both reached the same conclusion: the
+verify external-reviewer panel (0205) should NOT be built as a bespoke
+ACP client. No single existing tool delivers the full stack
+(decorrelated panel + read-only containment + normalized findings), and
+ACP/A2A capability grants + agent "modes" (aider --ask) are
+COOPERATIVE-only — a misbehaving or prompt-injected reviewer bypasses
+them. Genuine containment is OS-level (Seatbelt/bubblewrap), and even
+that leaks secrets by default (credential files readable, allowlist
+without TLS inspection permits domain-fronting exfil).
+
+The reusable, generalizable unit underneath the panel is therefore a
+**sandbox-runner + output-normalizer**: a small tool that turns ANY
+agnostic CLI agent (aider --ask, PR-Agent, gemini, codex, a thin
+OpenAI-compatible caller) into an OS-contained, read-only reviewer seat
+emitting normalized findings. This is broader than verify's internal
+plumbing (0216 stays Claude-native) and is the natural spinoff.
+
+## Relation to existing tickets
+
+- Supersedes the ACP-keystone framing of 0207 (thin agent) and 0208
+  (ACP client harness): ACP becomes OPTIONAL plumbing, the OS sandbox
+  becomes the load-bearing requirement.
+- Feeds 0205 (panel contract/decorrelation rule) as the seat mechanism.
+- Gated by the open decorrelation question (deep-research wbclco9po):
+  how many seats are worth running is unproven; do not scale N before
+  that evidence lands.
+- Spun off 0322 (extend-agnostic-gate-to-scripts-dir): the HOMEDIR fix
+  in this ticket exposed that `check-agnostic.sh` never scans `scripts/`,
+  so a hardcoded home path in a shell/python helper escapes the gate.
+
+## Actions (scoping — refine before execution)
+
+1. Seat-runner: launch a reviewer CLI inside an OS sandbox (rootless
+   podman on this host — bwrap is blocked by
+   apparmor_restrict_unprivileged_userns=1 while podman/crun/runc ship
+   allowed AppArmor profiles; the prototype uses podman) with: read-only
+   repo bind, scoped denyRead on credential/secret paths (~/.ssh, ~/.aws,
+   bash-env.sh, ~/.claude memory), and network isolation (deny by
+   default; allow only the one model endpoint host the seat needs).
+2. Per-seat credential scoping: construct a MINIMAL child env (only the
+   one API key that seat needs; strip BASH_ENV so the child does not
+   re-source the full secret file). Addresses PR #289 red-team MAJOR.
+3. Output normalizer: parse each agent's output (free text / JSON) into
+   the 0205 contract shape (severity + file:line + rationale); a finding
+   that does not parse is surfaced as WARN, never silently dropped.
+   Quantify per-agent normalization reliability (deep-research open gap).
+4. Per-seat fail-open + timeout: one seat hanging or erroring must WARN
+   and continue, never ESCALATE the whole verify run.
+5. Pick a first agnostic seat (aider --ask or a thin OpenAI-compatible
+   caller) and smoke it end-to-end inside the sandbox on one merged PR.
+
+## Test
+
+Seat-runner test: a seat that attempts a repo write is BLOCKED by the
+sandbox (not merely by the agent's mode); a seat that attempts to read a
+denyRead'd credential path is denied; a seat whose endpoint is
+unreachable fails loud; the normalizer turns canned agent output into a
+valid findings file and surfaces an unparseable finding as WARN.
+
+## Exit criteria
+
+- [x] Seat-runner launches a CLI reviewer under an OS sandbox: read-only repo, denyRead on secrets, network deny-by-default
+- [x] Repo-write and credential-read attempts BLOCKED at the OS layer (test proves it, not the agent's cooperative mode)
+- [x] Per-seat minimal-env credential scoping (BASH_ENV stripped from child)
+- [x] Output normalizer to the 0205 contract shape; unparseable findings WARN, not dropped
+- [x] Per-seat fail-open + timeout; one seat's failure never ESCALATEs verify
+- [x] One agnostic seat smoke-tested end-to-end on a real PR

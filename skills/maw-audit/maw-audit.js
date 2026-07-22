@@ -158,7 +158,7 @@ DERIVE and return:
   - evidence: which files you read and how you derived the command + pairings.
 
 Do NOT designate guard/canary files — that is an explicit human opt-in (passed as an override), never auto-discovered. Do NOT mutate anything. Return the structured object.`,
-  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'opus', schema: DISCOVERY_SCHEMA }  // 0235: model 'opus' (Fable 5 blocked by gov order) — a singleton whose derivation gates the whole audit, so top capability is cheap insurance. Effort is NOT a Workflow agent() opt, so the intended 'low' tracks the session effort, not pinnable here.
+  { label: 'discovery:launch-repo', phase: 'Discovery', model: 'fable', effort: 'low', schema: DISCOVERY_SCHEMA }  // 0235: model 'fable' (Fable 5 — gov-order block lifted 2026-07); top capability for a singleton that gates the whole audit. effort:'low' — structured read task, no adversarial reasoning needed.
 ).catch(e => { log(`discovery agent error: ${e}`); return null })
 
 if (!discovered || !Array.isArray(discovered.BEHAVIORAL) || !discovered.BEHAVIORAL.length) {
@@ -371,7 +371,7 @@ async function skepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(skepticPrompt(file, x.f), {
       label: `skeptic:${file.test}:${x.f.testFunc}`.slice(0, 60),
-      phase: 'Skeptic', model: 'opus', schema: SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet audit; per-accusation volume, so cheap, and it is the audit's core adversarial guarantee
+      phase: 'Skeptic', model: 'opus', effort: 'high', schema: SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet audit; per-accusation volume, so cheap, and it is the audit's core adversarial guarantee
     })
   ))
   verdicts.forEach((v, k) => {
@@ -480,7 +480,7 @@ async function handcuffSkepticize(audit, file) {
   const verdicts = await parallel(targets.map(x => () =>
     agent(handcuffSkepticPrompt(file, x.f), {
       label: `hc-skeptic:${file.test}`.slice(0, 60),
-      phase: 'Handcuff', model: 'opus', schema: HANDCUFF_SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet handcuff pass (see Skeptic note)
+      phase: 'Handcuff', model: 'opus', effort: 'high', schema: HANDCUFF_SKEPTIC_SCHEMA,  // 0235: cross-tier — opus skeptic over the sonnet handcuff pass (see Skeptic note)
     })
   ))
   verdicts.forEach((v, k) => {
@@ -577,7 +577,7 @@ This is the 0184 test-quality utility's flakiness gate. Exit-code contract:
   - exit 0 = suite is stable (or all flakiness is baselined) -> gate "pass"
   - exit 2 = NEW flakiness found -> gate "fail"
 The JSON report on stdout carries a "gate" field ("pass"/"fail"); read it to confirm. Report exitCode, gate, any flaky test identities, and a short evidence excerpt. Do NOT mutate anything.`,
-  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — pin a cheap model; sonnet here (the cross-tier skeptics run on opus)
+  { label: 'precheck:flakiness', phase: 'Precheck', model: 'sonnet', effort: 'low', schema: PRECHECK_SCHEMA }  // 0226 advisory: a mechanical run-the-command-and-report agent — sonnet (not haiku) because the cross-tier skeptics run on opus; effort:'low' — run-and-report, no synthesis
 ).catch(() => null)  // Δ10: a precheck agent error falls into the abort path below, not an opaque crash
 
 // 0226 d3: require an AFFIRMATIVE pass on the real-agent path — `gate === 'pass'`,
@@ -611,7 +611,7 @@ phase('Audit')
 // read-and-judge, no execution.
 const behavioral = await pipeline(
   BEHAVIORAL,
-  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', model: 'sonnet', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model); effort is not a per-agent knob in Workflow agent(), so it tracks the session effort
+  file => agent(auditPrompt(file), { label: `audit:${file.test}`, phase: 'Audit', model: 'sonnet', effort: 'high', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model); effort:'high' — mutation-execute-revert-classify is the audit's core quality work
             .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH, not the agent's self-report (mirrors the canary-tag rule below — never read it back from the agent)
   (audit, file) => skepticize(audit, file),
 )
@@ -623,7 +623,7 @@ for (const file of GUARDS) {
   // Δ10: a single guard-agent failure must not discard the behavioral results
   // already collected — degrade to null (the canary gate then reports SUSPECT,
   // which is the honest verdict when a guard agent dies).
-  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', model: 'sonnet', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8; 0235: pinned sonnet (mutation agent, mirrors the fang pass)
+  let a = await agent(guardPrompt(file), { label: `audit:${file.test}`, phase: 'Guards', model: 'sonnet', effort: 'high', schema: AUDIT_SCHEMA, isolation: 'worktree' })  // Δ8; 0235: pinned sonnet, effort:'high' (mutation agent, mirrors the fang pass)
     .catch(e => { log(`guard ${file.test} agent error: ${e}`); return null })
   // Δ7: tag findings from this run STRUCTURALLY as canary-guard findings.
   // Canary designation comes from CONFIG.GUARDS (the workflow knows which
@@ -671,7 +671,7 @@ const handcuffs = await pipeline(
   // Δ8: isolation:'worktree' — the handcuff agent MUTATES (refactors) source
   // and runs the suite; concurrent loops on a shared checkout corrupt each
   // other, exactly as in the fang pass.
-  file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', model: 'sonnet', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model)
+  file => agent(handcuffPrompt(file), { label: `handcuff:${file.test}`, phase: 'Handcuff', model: 'sonnet', effort: 'high', schema: HANDCUFF_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet, effort:'high' (was unpinned → inherited session model)
             .then(a => { if (a) a.testFile = file.test; return a }),  // 0226 d1: identity from DISPATCH (see audit wrapper)
   (audit, file) => handcuffSkepticize(audit, file),
 )
@@ -691,7 +691,7 @@ const scopeTargets = BEHAVIORAL.filter(f => (caughtOpsByFile[f.test] || []).leng
 const scopes = await parallel(scopeTargets.map(file => () =>
   // Δ8: isolation:'worktree' — the scope agent MUTATES (replays operators at
   // sibling sites) and runs the suite; must be isolated like fang/handcuff.
-  agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', model: 'sonnet', schema: SCOPE_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet (was unpinned → inherited session model)
+  agent(scopePrompt(file, caughtOpsByFile[file.test]), { label: `scope:${file.test}`, phase: 'Scope', model: 'sonnet', effort: 'high', schema: SCOPE_SCHEMA, isolation: 'worktree' })  // 0235: pinned sonnet, effort:'high' (was unpinned → inherited session model)
     .then(a => { if (a) a.testFile = file.test; return a })  // 0226 d1: identity from DISPATCH (see audit wrapper)
     .catch(e => { log(`scope ${file.test} agent error: ${e}`); return null })
 ))
@@ -707,6 +707,21 @@ const scopes = await parallel(scopeTargets.map(file => () =>
 // /tmp/maw-* or /tmp/fang-* scratch patterns (agents improvise these names
 // from the audit name in their prompts; fang- is the pre-rename legacy),
 // never the session checkout or any named worktree, then `git worktree prune`.
+//
+// 0303 — GUARD-COVERAGE EXEMPTION (decided, not an oversight). These /tmp
+// scratch trees sit OUTSIDE the guarded `*/.claude/worktrees/*` namespace, and
+// that is intentional. Ticket 0300 moved gaze's review worktrees UNDER that
+// namespace because they track a branch and its guards protect commits/pushes
+// from landing on the wrong branch. maw-audit's scratch trees are the opposite:
+// they are on a detached HEAD, never commit, never push, never track a branch,
+// and every mutation an agent makes in them is reverted or discarded — so the
+// main-repo protection guards (`guard-commit-on-main`, the worktree path guard)
+// have nothing to protect here. Their whole lifecycle is self-contained: this
+// Cleanup phase reaps them by path prefix. Moving them under the guarded
+// namespace would buy no safety and complicate the prefix-match reaper. The
+// exemption is recorded here (and pinned by
+// tests/test_maw_audit_skill.py::test_tmp_scratch_worktree_exemption_documented)
+// so a future guard-coverage sweep does not re-flag this as an uncovered gap.
 phase('Cleanup')
 await agent(
   `Post-run cleanup for the maw-audit of ${CONFIG.PROJECT}. During the audit, some agents may have hand-rolled scratch git worktrees under /tmp (paths like \`/tmp/maw-${CONFIG.PROJECT}-*\`, \`/tmp/maw-*\`, or the legacy \`/tmp/fang-*\`), typically on a detached HEAD, that outlived the run. Remove ONLY those scratch worktrees — never the session checkout, never any worktree under .claude/worktrees/, never a worktree on a named branch.
@@ -718,7 +733,7 @@ PROCEDURE (read-then-act, conservatively):
 4. Report which paths you removed (or "none found").
 
 If \`git worktree list\` shows no /tmp/maw- or /tmp/fang- entries, do nothing and report "none found". Do NOT mutate source, do NOT remove anything outside those prefixes.`,
-  { label: 'cleanup:scratch-worktrees', phase: 'Cleanup', model: 'sonnet' }  // 0226 advisory: mechanical list-then-prune — pin the cheap model
+  { label: 'cleanup:scratch-worktrees', phase: 'Cleanup', model: 'haiku', effort: 'low' }  // 0226 advisory: mechanical list-then-prune — haiku is the cheap model for pure shell work
 ).catch(e => log(`cleanup agent error (non-fatal): ${e}`))
 
 // ---- Deterministic report assembly (no LLM formatting of N objects) ----
@@ -792,7 +807,7 @@ const churnByFile = await (async () => {
   try {
     const res = await agent(
       `For ${CONFIG.PROJECT}, report the git churn (number of commits that touched the file) for each of these test files, using \`git log --follow --oneline -- <file> | wc -l\` from the repo root. Files: ${files.join(', ')}. Return a JSON object mapping each filename to its commit count (a plain number; a numeric string is also accepted).`,
-      { label: 'churn:git-log', phase: 'Guards', model: 'sonnet',  // 0226 advisory: mechanical git-log-and-count — pin the cheap model
+      { label: 'churn:git-log', phase: 'Guards', model: 'haiku', effort: 'low',  // 0226 advisory: mechanical git-log-and-count — haiku is the cheap model for pure shell work
         schema: { type: 'object', additionalProperties: { type: ['integer', 'string'] } } }
     )
     return Object.fromEntries(Object.entries(res || {}).map(([k, v]) => [k, parseInt(v, 10) || 0]))

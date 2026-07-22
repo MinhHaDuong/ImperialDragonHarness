@@ -1,0 +1,9 @@
+- [User — CNRS researcher](user_cnrs.md) — author works at CNRS; Couperin transformative agreements cover most major APCs
+- [Project — fuzzy corpus paper target journal](project_target_journal.md) — submission strategy agreed 2026-04-20
+- [Project — formal model (progressive graph section)](project_formal_model_general.md) — fetched/discovered distinction, authority vs focus solutions, lemma/theorem structure
+- [Reference — Couperin agreements](reference_couperin.md) — check couperin.org for current OA/APC coverage before submission
+- [Project — merge policy](project_merge_policy.md) — direct push to main is blocked; route all merges through GitHub PR
+- [Feedback — worktree preflight](feedback_worktree_preflight.md) — check `git status` on main before editing in a worktree; parallel authors may have WIP on target files
+- [Feedback — lemma dependency check](feedback_lemma_dependency_check.md) — trace proof dependencies line by line before claiming a lemma is oversized
+- [Project — two-workpackage layout](project_workpackage_layout.md) — paper sources in paper/, analysis at root; handoffs are figures/ and output/tables/; build with make -f paper.mk
+- [Compute on padme, not doudou](feedback_compute_on_padme.md) — ML inference and heavy scripts go on padme, not local doudou

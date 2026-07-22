@@ -1,0 +1,36 @@
+%erg 0.1
+Title: provenance CLI robustness: leading-dash slugs no-op silently; malformed alias table crashes candidates
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #487
+
+--- log ---
+2026-07-11T14:49Z Minh Ha-Duong created
+
+2026-07-11T15:07Z Minh Ha-Duong closed — autoclosed — PR #487
+--- body ---
+## Context
+Two robustness gaps surfaced during the 2026-07-11 dream-sync raid:
+1. The 0270 execute agent found `provenance.py record <slug> -home-...`
+   silently no-ops: argparse clusters the leading-dash project slug into
+   `-h`, prints help, exits 0 — yet production project keys ARE
+   leading-dash directory slugs, and SKILL.md steps 5/7 call record/remove
+   with them unconditionally.
+2. The 0270 gaze verdict noted `_load_aliases()` crashes `candidates` on a
+   malformed `memory/.project-aliases.json`.
+
+## Actions
+1. Auto-insert the `--` separator after the subcommand in `main()` when
+   arguments follow and no help flag is present — leading-dash slugs then
+   parse as positionals; zero-arg verbs (show/candidates/decay) unaffected.
+2. `_load_aliases()` catches JSONDecodeError: stderr warning, degrade to
+   no-aliases (candidates then over-counts at worst, never suppresses).
+
+## Test
+- record/remove with a leading-dash project actually mutate the store
+  (RED: silent no-op at exit 0); -h/--help preserved at both levels;
+  candidates survives a corrupt alias table with a warning (RED: crash).
+
+## Exit criteria
+- The documented SKILL.md invocations work verbatim with real slugs
+- `make check` green

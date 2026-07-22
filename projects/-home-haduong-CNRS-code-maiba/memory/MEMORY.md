@@ -1,0 +1,5 @@
+- [Use rispy for RIS parsing](feedback_use_rispy.md) — Don't write custom RIS parser; use rispy library (YAGNI)
+- [Orchestrator: serialize tickets](feedback_orchestrator_sequential.md) — User lands tickets one at a time through their own review; don't parallelize sibling tickets
+- [Persistent-state writes are opt-in](feedback_state_opt_in.md) — Caches, logs, journals default off; users opt in explicitly (per §2.3 zero-state default)
+- [Spike unverified library APIs](feedback_spike_before_implement.md) — Verify external-library symbols exist in the installed version before drafting the TDD red test
+- [Bundle imports with usage in one Edit](feedback_formatter_strips_imports.md) — PostToolUse ruff --fix strips imports between Edits; add import + first usage atomically

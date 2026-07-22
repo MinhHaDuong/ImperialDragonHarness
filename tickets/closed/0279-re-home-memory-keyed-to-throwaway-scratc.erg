@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Re-home memory keyed to throwaway scratchpad project paths
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #491
+
+--- log ---
+2026-07-11T13:08Z Minh Ha-Duong created
+
+2026-07-11T16:11Z Minh Ha-Duong note author decision: base Oeconomia dir; policy notes dropped as rules-canon duplicates; alias added; _load_aliases shape guard bundled
+2026-07-11T16:30Z Minh Ha-Duong closed — autoclosed — PR #491
+--- body ---
+## Context
+Ticket 0278 tracked the per-project memory backlog. One of its project dirs,
+`projects/-tmp-claude-1001--home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet--2e29adca-1aad-47ad-807b-291b5fd3d56b-scratchpad-merge-odt/memory/`,
+holds 4 legitimate notes (`MEMORY.md`, `feedback_plain_directory_names.md`,
+`feedback_prose_vs_code_workflow.md`, and `project_gide_dosquet_discussion.md`
+— the last has unique content). They are keyed to a `/tmp/claude-1001/...`
+scratchpad path that will never recur: a future Oeconomia session runs from the
+real project dir, so memory retrieval keyed on the working-directory hash will
+never surface these notes. The memory is committed (backed up) but orphaned from
+future lookup.
+
+## Relevant files
+- `projects/-tmp-claude-1001--home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet--2e29adca-1aad-47ad-807b-291b5fd3d56b-scratchpad-merge-odt/memory/` — the 4 orphaned notes
+- `projects/-home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet--discussion-HDM-PM/memory/` — the real Oeconomia project dir (candidate re-home target)
+
+## Actions
+1. Confirm the real, recurring Oeconomia project working-directory hash (the dir
+   a normal Oeconomia session resolves to).
+2. Merge the 4 scratchpad-keyed notes into that project's `memory/`, deduping
+   against existing notes (`project_gide_dosquet_discussion.md` is unique;
+   the two `feedback_*` and `MEMORY.md` may overlap — reconcile, don't clobber).
+3. Remove the throwaway `-tmp-claude-1001-...scratchpad-merge-odt` project dir
+   once its content is re-homed.
+
+## Invariants
+- No content loss: `project_gide_dosquet_discussion.md` unique content must
+  survive the move verbatim.
+- Don't clobber existing notes in the target dir on a name collision.
+
+## Exit criteria
+- The 4 notes live under the real Oeconomia project dir and are reachable by a
+  normal Oeconomia session's memory retrieval.
+- The throwaway scratchpad project dir is gone from the tree.
+- Author has arbitrated the re-home target dir (his call).

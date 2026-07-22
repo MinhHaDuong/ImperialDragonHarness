@@ -1,0 +1,45 @@
+%erg 0.1
+Title: gaze: scale the reviewer battery to diff size
+Created: 2026-07-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #572
+
+--- log ---
+2026-07-13T19:32Z Minh Ha-Duong created
+2026-07-14T05:20Z claude note evidence: post-2026-07-13 telemetry confirms small diffs not materially cheaper — PR #563 (9 lines/2 files, inside size-gate) ~378k tokens/7 agents; #561 (119 lines) ~448k; #562 (199 lines, round 2) ~713k/15 agents; #564 (951 lines) ~912k. Existing size-gate only trims /review-pr (phase 4) — #563 datum proves insufficient. Verdict: IMPLEMENT graduated battery tiers.
+
+2026-07-14T09:10Z Minh Ha-Duong closed — autoclosed — PR #572
+--- body ---
+## Context
+
+In the 2026-07-13 pipeline raid, /gaze ran 11 times; 4 runs crossed the
+500k-token warn threshold (peak ~665k on PR #540) and the raid's gaze cost
+dominated its total spend, while several gated diffs were under 100 changed
+lines (e.g. #538: 3 files, one doc paragraph plus one test). The gate's
+verdict quality was excellent (3 rerolls, each a real defect), so the lever
+is not fewer gates — it is a battery sized to the diff. gaze already has a
+size-gate notion (the #542 report mentions "no size-gate skip"); this ticket
+extends it from skip/no-skip to a graduated battery.
+
+## Evidence to gather first
+
+Confirm on telemetry from subsequent raids (e.g. the 291/245 raid running
+2026-07-13) that small-diff gaze runs stay ~400-600k tokens. If they come in
+materially cheaper, close wontfix with the numbers.
+
+## Actions
+
+1. Define 2-3 diff-size tiers (changed lines and file count) in
+   skills/gaze/SKILL.md, mapping each to a reviewer battery (e.g. tiny:
+   adherence + gate only; small: + one review agent; full: current battery).
+2. Keep the anti-rubber-stamp property: /verify-gate always runs, every
+   exit criterion still checked.
+3. Record per-run tier + token count in the verdict telemetry line so the
+   tiering can be audited.
+
+## Exit criteria
+
+- [ ] Battery tiers defined and documented in the gaze skill
+- [ ] verify-gate coverage unchanged at every tier
+- [ ] Telemetry line carries the tier
+- [ ] `make check` passes

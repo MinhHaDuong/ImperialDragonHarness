@@ -14,7 +14,7 @@ Run after the branch has been merged. Do not skip steps.
 ## Non-git projects
 
 When the working directory is not a git repository (manuscripts, data
-folders): skip the pre-check and steps 7-11; run steps 1-6 and 12.
+folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
 Telemetry: use `"branch":"none-non-git-project"`. The step-3 sweep
 records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
@@ -43,22 +43,40 @@ direct-to-master checkout with only ssh peers): there is no forge gate.
 probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
 missing prerequisite yields an explicit skip with a one-line reason, never a
 fail. Concretely: step 9's ancestry checks compare against the local default
-branch; skip step 10 (upstream-gone status cannot register without a remote);
-step 11 reduces to checking that local branches are merged into the default
-branch — there are no remote branches nor merge requests to inspect.
+branch; step 10 reduces to checking that local branches are merged into the
+default branch — there are no remote branches nor merge requests to inspect.
 
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
-2. **Log to telemetry**: pipe a JSON summary to `~/.claude/skills/roar/log-celebration`:
+2. **Log to telemetry**: log one celebration per merged PR since the sentinel,
+   falling back to a single aggregate entry when no merge commits are found.
+   A batched interactive session merges several PRs then roars once, so a single
+   aggregate blob loses per-ticket attribution (ticket 0331). Enumerate the merge
+   commits in `roar-last-sha..HEAD` and log each as its own record when the
+   sentinel exists, is an ancestor of HEAD, and the enumeration is non-empty:
    ```bash
-   echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
+   SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
+   ROWS=""
+   if [ -f "$SENTINEL" ] && git merge-base --is-ancestor "$(cat "$SENTINEL")" HEAD; then
+       ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --project "<name>")" || ROWS=""
+   fi
+   if [ -n "$ROWS" ]; then
+       # Per-PR path: one telemetry-equivalent record per merged PR.
+       printf '%s\n' "$ROWS" | while IFS= read -r row; do
+           printf '%s\n' "$row" | ~/.claude/skills/roar/log-celebration
+       done
+   else
+       # Aggregate fallback: first roar, rewritten history, squash-merge, or
+       # a no-forge repo where no merge commits exist.
+       echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
+   fi
    ```
    Then write the current HEAD SHA to the sentinel:
    ```bash
    git rev-parse HEAD > "$(git rev-parse --git-common-dir)/roar-last-sha"
    ```
-3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174).
+3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Tooling repos: apply the severity floor (rules/workflow.md § Autonomous Action Rules) — findings that don't block a merge, corrupt state, or bite a science project are reported in the run summary, not ticketed.
 4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
@@ -67,7 +85,7 @@ branch — there are no remote branches nor merge requests to inspect.
 
 7. **Close** the ticket if still open.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
-    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria.
+    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR. (2026-07-11, 0240 reorg: a merged `.mk` prerequisite kept a moved script's old flat path; per-move greps and green `make check-fast` all passed — only the integration union grep found it.)
     - Any open → do nothing, tracker stays open.
 9. **Exit worktree** (if in one):
     a. Preflight from inside the worktree:
@@ -79,7 +97,10 @@ branch — there are no remote branches nor merge requests to inspect.
        (`git merge-base --is-ancestor HEAD origin/main`) has already
        passed, the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
-       stale local main. But `discard_changes` does more than remove the
+       stale local main — it can even name a branch that no longer
+       exists (a parallel session's hygiene pruned it post-merge;
+       `git rev-parse --verify refs/heads/<branch>` confirms,
+       climate-finance-het 2026-07-22). But `discard_changes` does more than remove the
        worktree: ExitWorktree restores the session to the ORIGINAL
        checkout, and with `discard_changes: true` it also deletes the
        original branch — the one the primary checkout returns to. So
@@ -95,20 +116,21 @@ branch — there are no remote branches nor merge requests to inspect.
        `git switch -c <branch> <sha>`.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `origin/main`.
-    Skip if not in a worktree.
-10. **GC stale worktrees** (from the main repo): prune any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` — intact dirs that `git worktree prune` misses. The `[gone]` status only registers after the remote-tracking ref is pruned, so fetch first:
-    ```bash
-    git fetch --prune origin
-    ~/.claude/scripts/worktree-gc.sh
-    ```
-    Removes only worktrees with no uncommitted changes (and never the one it runs from); never `rm -rf`s, silent when there is nothing to clean. See tickets 0169, 0195.
-    Skip in a no-forge repo: without a remote, `[gone]` can never register —
-    say so in one line.
-11. **Verify hygiene**:
+    Skip if not in a worktree. When roar runs inside an `isolation:"worktree"`
+    subagent, `ExitWorktree` is unavailable — skip this step; the harness
+    auto-cleans the agent's worktree once its branch is merged and the tree
+    is clean.
+10. **Verify hygiene**:
     - `git branch -a` → no stale remote branches
     - Check for stale merge requests
     - No-forge repo: only check that local branches are merged into the
       default branch; there are no remote branches nor merge requests.
-12. **Offer** to improve workflow rules if lessons were learned.
+11. **Offer** to improve workflow rules if lessons were learned.
 
-Note: STATE.md is updated on main during `/lair`, not here.
+Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
+belongs to housekeeping (`/molt`), not here: roar exits and disposes of its
+OWN merged worktree (step 9) and touches nothing outside it. A repo-wide GC
+from roar removed worktrees that were live session base cwds (2026-07-13,
+ticket 0355 — a merged-and-pruned branch reads `[gone]` even while sessions
+still sit in the tree), stranding those sessions in unregistered husk dirs
+where git silently resolves to the primary checkout.

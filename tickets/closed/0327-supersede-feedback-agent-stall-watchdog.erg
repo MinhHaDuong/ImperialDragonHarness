@@ -1,0 +1,52 @@
+%erg 0.1
+Title: supersede feedback_agent_stall_watchdog_recovery tactical content — fork-liveness now codified in gaze SKILL.md
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Closed: merged — PR #601
+
+--- log ---
+2026-07-14T05:24Z Minh Ha-Duong created
+2026-07-14T12:41Z claude note raid-207-325-327 imagine+plan: premise verified — 0321 closed (PR #571), gaze SKILL.md § Fork execution contract "Fork liveness" clause present (lines 70-87: fork_liveness_seconds/GAZE_LIVENESS_WINDOW_S 1200s, three markers, direct verify-gate fallback); memory entry untouched by #537 (single creation commit 63e0af6). Key insight: entry conflates TWO stall classes — gaze-fork half superseded (trim to pointer), opus-coder salvage recipe RETAINED (no codified contract covers it; aligned with ticket action 2 "keep what the skill does not capture"). Replacement body + MEMORY.md index line drafted, cross-checked no-contradiction vs clause. Both files already tracked (plain add). Sole-change invariant enforced via diff --stat pre-commit check. Drift guard PASS
+2026-07-14T12:47Z claude note raid feasibility PASS — anchors verified inline (gaze clause:70-87, memory entry 25 lines, index line 47). No cross-ticket file overlap
+2026-07-14T12:52Z claude note executed — trimmed gaze-fork tactical detail to a SKILL.md pointer, retained opus-coder salvage recipe + cross-cutting relay lesson; updated MEMORY.md index line; incident facts (ticket 0284, PR #496, 2026-07-11) and both [[links]] verified against current entry; no contradiction with clause (1200s, verify-gate fallback)
+2026-07-14T13:01Z claude note gaze round 1 simplify — review panel found skills/raid/SKILL.md § Circuit breakers already codifies the stalled-coder salvage+relaunch recipe (predates this ticket); trimmed that half to a pointer too, retaining only the uncaptured bits (push-retry on flaky network, 600s watchdog vs raid's 10-min breaker timing) plus the relay-detachment lesson; frontmatter description and MEMORY.md index line updated to match
+2026-07-14T15:51Z claude note copilot external review — fixed 13:01Z log line (actor was missing) and dropped the contract specifics (1200s default, marker count, fallback) from the memory-entry pointer, keeping only the knob names
+2026-07-14T16:33Z claude closed merged via PR #601; erg-pr-merge skipped the close (no erg binary reachable from the session cwd) — closed manually per the chore-close recipe
+--- body ---
+## Context
+
+Ticket 0321 codified the gaze fork-liveness window (`fork_liveness_seconds`,
+default 1200s, env override `GAZE_LIVENESS_WINDOW_S`) and the direct
+verify-gate fallback in `skills/gaze/SKILL.md` § Fork execution contract, with
+adherence tests pinning both. The memory entry
+`feedback_agent_stall_watchdog_recovery` still carries the tactical detection
+and recovery steps (branch-tip / worktree-mtime / verdict-comment markers, the
+"do not re-run the panel, drive /verify-gate" recipe) as tribal knowledge. Now
+that the skill owns that contract, the memory duplicate can drift from it.
+
+## Actions
+
+1. Trim the tactical detection/recovery detail from the memory entry
+   `feedback_agent_stall_watchdog_recovery` to a short pointer at the gaze
+   SKILL.md § Fork execution contract "Fork liveness" clause (the codified
+   window + fallback).
+2. Keep only what the skill does not capture: the historical incident record
+   and any cross-cutting lesson beyond gaze's own contract.
+
+## Invariants
+
+- Do not edit the memory entry as part of ticket 0321's PR — that PR touches
+  the skill + tests only. The memory trim is this ticket's sole change.
+
+## Exit criteria
+
+- [x] `feedback_agent_stall_watchdog_recovery` points at the gaze SKILL.md
+      liveness clause instead of restating the detection/recovery steps
+- [x] No detail contradicts the codified contract
+
+## Dependency
+
+Actionable once tickets/0321-gaze-fork-liveness-contract-bounded-wind.erg
+merges (the skill clause this ticket points the memory at). No hard
+`Blocked-by` header — the memory edit is safe to do independently of 0321's
+review.

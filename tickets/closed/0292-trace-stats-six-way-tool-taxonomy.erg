@@ -1,0 +1,38 @@
+%erg 0.1
+Title: trace-stats: six-way tool-call taxonomy with per-category char volume
+Created: 2026-07-12
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #506
+
+--- log ---
+2026-07-12T18:55Z claude created
+
+2026-07-12T22:31Z impl landed: categorize_tool six-way + per-category calls/chars columns; tests RED->GREEN, make check green
+2026-07-12T22:57Z Minh Ha-Duong closed — autoclosed — PR #506
+--- body ---
+Child of tracker 0266 (pillage manifest,
+docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 5); serves
+tracker 0236 (trace-doctor) — listed there as a child.
+
+## Context
+
+trace-stats.py classifies turns with a binary nav/work discriminator
+(_is_nav_tool, from 0243 H11) plus a raw tool counter. The paper's six-way
+taxonomy — execution, reading, navigation, search, writing, other — with
+per-category character volume (arXiv:2604.21965 §5.2, App. B.2) surfaced
+real per-scaffold behavioral findings; the same cut would sharpen the
+trace-doctor census.
+
+## Actions
+
+1. Extend the classifier to a six-way category function over tool name +
+   input.
+2. Track per-category call count and char volume (extend the existing
+   byte tracking).
+3. Add per-category report columns, joinable by skill/entry point.
+
+## Exit criteria
+
+- [ ] Six-way classifier implemented, pure Python, unit-tested
+- [ ] Report includes per-category count + char volume
+- [ ] 0236 tracker body lists this child

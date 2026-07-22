@@ -17,7 +17,7 @@ out=$(bash scripts/on-start.sh 2>&1 || true)
 
 # 1. Index headers/scope signals must appear in the hook output.
 for needle in "workflow.md" "git.md" "always" "edit of"; do
-  if ! grep -qF "$needle" <<<"$out"; then
+  if [[ "$out" != *"$needle"* ]]; then
     echo "FAIL: hook output missing index marker '$needle'"
     fail=1
   fi
@@ -34,14 +34,14 @@ declare -a body_strings=(
   "always \`uv sync\`"
 )
 for needle in "${body_strings[@]}"; do
-  if grep -qF "$needle" <<<"$out"; then
+  if [[ "$out" == *"$needle"* ]]; then
     echo "FAIL: hook output leaked rule body content: '$needle'"
     fail=1
   fi
 done
 
 # 3. on-start.sh must literally contain a `cat ... README.md` invocation.
-if ! grep -F 'cat' scripts/on-start.sh | grep -qF 'README.md'; then
+if ! grep -qE 'cat[^#]*README\.md' scripts/on-start.sh; then
   echo "FAIL: scripts/on-start.sh missing 'cat ... README.md' invocation"
   fail=1
 fi

@@ -9,8 +9,10 @@ files on demand when their scope signal applies to your task.
 | [git.md](./git.md) | always | Branch discipline, commit-message standards, worktree lifecycle, merge-request workflow; prose-in-place exception for paper repos. |
 | [state.md](./state.md) | skill-list: `/lair` | STATE.md format spec — sections, length cap, pruning rules. |
 | `tickets/AGENTS.md` (project-level) | skill-list: `ticket-*`, `hunt` | Ticket format rules injected via `@tickets/AGENTS.md` in project CLAUDE.md — no global rules file needed. |
+| [edm.md](./edm.md) | skill-list: `zotero-import`, `index-source` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging, synced and purged on archival. |
 | [coding-python.md](./coding-python.md) | edit of `*.py` (alias: `format/python`) | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | edit of `*.sh` (alias: `format/bash`) | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
+| [pdf-finishing.md](./pdf-finishing.md) | finishing pass of any PDF deliverable (submission, deposit, personal page) | Automate pagination (titlesec, widow penalties, dash-ratio widths); scripted pdftotext checklist; variants as archived transform layers. |
 | [prose/_all.md](./prose/_all.md) | edit of any prose file (`*.tex` `*.qmd` `*.md` `*.txt`) | Universal prose rules: LLMism guards, Elements of Style. |
 | [doctype/techreport.md](./doctype/techreport.md) | edit of a `techreport` file (`\documentclass{report}` or manifest) | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | edit of a `slides` file (`\documentclass{beamer}` or manifest) | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |

@@ -20,6 +20,11 @@ fail=0
 [[ -x "$SCRIPT" ]]  || { echo "FAIL: $SCRIPT not executable"; exit 1; }
 [[ -x "$ERG_BIN" ]] || { echo "FAIL: $ERG_BIN not found";    exit 1; }
 
+# Real git binary, captured before the PATH-shim below shadows it. The framing
+# shim (cases 26-27) delegates every unframed git call here.
+REAL_GIT=$(command -v git)
+export REAL_GIT
+
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -49,18 +54,38 @@ case "$1 $2" in
         fi
         echo "MERGEABLE"; exit 0
       fi
+      # merge_took_effect probe: --json state,autoMergeRequest --jq '...' →
+      # emit the pre-evaluated "yes"/"no" the script's jq would produce.
+      if [[ "$args" == *"autoMergeRequest"* ]]; then
+        echo "${STUB_MERGE_EFFECT:-no}"; exit 0
+      fi
+      # wait_for_merged probe: --json state --jq '.state' (ticket 0277)
+      if [[ "$args" == *"state"* ]]; then
+        echo "${STUB_STATE:-MERGED}"; exit 0
+      fi
     fi
-    if [[ "$args" == *"title"* ]]; then
+    if [[ "$args" == *"title"* ]] && [[ "$args" != *"headRefName"* ]]; then
       jq -n --arg t "$STUB_TITLE" '{title:$t}'; exit 0
     fi
-    # the big composite query
+    # the big composite query (carries the title since the Step 1.5 warn
+    # reads it from PR_JSON instead of a second forge call)
     jq -n \
       --arg n "$STUB_PR" --arg h "$STUB_BRANCH" --arg b "$STUB_BASE" \
-      --arg body "$STUB_BODY" \
-      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body}'
+      --arg body "$STUB_BODY" --arg draft "${STUB_IS_DRAFT:-false}" \
+      --arg t "$STUB_TITLE" \
+      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true"),title:$t}'
     exit 0 ;;
+  "pr ready")
+    echo "$*" >> "${STUB_READY_LOG:-/dev/null}"
+    echo "stub: marked ready"; exit 0 ;;
   "pr merge")
     echo "$*" >> "${STUB_MERGE_LOG:-/dev/null}"
+    # Cosmetic post-action failure: gh exits non-zero on the deprecated
+    # projectCards fetch AFTER the merge/queue took effect (Projects-classic).
+    if [[ "${STUB_MERGE_COSMETIC_FAIL:-0}" == "1" ]]; then
+      echo "GraphQL: Projects (classic) is being deprecated ... (repository.pullRequest.projectCards)" >&2
+      exit 1
+    fi
     if [[ "$*" == *"--auto"* ]]; then
       # Post-push recompute race: first --auto fails "not mergeable", a later
       # call (after settle_mergeable) succeeds. Distinct from STUB_AUTO_FAILS,
@@ -97,6 +122,37 @@ case "$1 $2" in
 esac
 STUB
 chmod +x "$STUBDIR/gh"
+
+# ── git shim: rtk-style output-rewrite simulator (tickets 0333) ────────────────
+# Inert by default — every git call is exec'd through the real binary unchanged,
+# so the 25 cases above are unaffected. When a SHIM_FRAME_* flag is set it
+# injects rtk-style framing into the stdout of the ONE targeted subcommand,
+# reproducing what an output-rewriting hook does to a parsed git call, to prove
+# erg-pr-merge's extraction survives it. rtk itself only rewrites the outer
+# Bash-tool command, never a script's internal subprocess git calls, so this is
+# a faithful stand-in for the general output-rewriting/framing threat class,
+# not a claim that rtk corrupts these specific in-script calls.
+cat > "$STUBDIR/git" <<'GITSHIM'
+#!/usr/bin/env bash
+set -uo pipefail
+: "${REAL_GIT:?REAL_GIT must point at the real git binary}"
+sub="${1:-}"; sub2="${2:-}"
+# `branch --show-current` is a confirmed rtk rewrite target. Prepend a banner so
+# a naive `$(git branch --show-current)` capture yields a framed, wrong value.
+if [[ -n "${SHIM_FRAME_BRANCH:-}" && "$sub" == "branch" && "$sub2" == "--show-current" ]]; then
+    echo "--- Changes ---"
+    exec "$REAL_GIT" "$@"
+fi
+# The pre-fix existence guard grepped `git ls-tree` stdout. Emit only a framing
+# banner (drop the real listing) so a grep-over-blob guard spuriously reports a
+# present ticket absent; an exit-code check is immune.
+if [[ -n "${SHIM_FRAME_LSTREE:-}" && "$sub" == "ls-tree" ]]; then
+    echo "--- Changes ---"
+    exit 0
+fi
+exec "$REAL_GIT" "$@"
+GITSHIM
+chmod +x "$STUBDIR/git"
 
 # ── seed a standalone repo with open tickets, then a PR branch ────────────────
 # The real erg resolves its tickets/ dir relative to its own binary location
@@ -149,8 +205,10 @@ ERG
     git -C "$REPO" switch -q -c "$BRANCH"
 }
 
-run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
-    ( cd "$REPO"
+run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
+    # cwd is $REPO unless RUN_MERGE_CWD overrides it (Case 29 runs from $WORK).
+    ( cd "${RUN_MERGE_CWD:-$REPO}"
+      (( $# >= 3 )) || set -- "$1" "$2" 42
       PATH="$STUBDIR:$PATH" \
       ERG="$ERG_LOCAL" \
       STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
@@ -161,8 +219,19 @@ run_merge() {  # $1 body, $2 title  — runs the script with cwd in the repo
       STUB_AUTO_NOTMERGEABLE_ONCE="${STUB_AUTO_NOTMERGEABLE_ONCE:-}" \
       STUB_MERGEABLE_UNKNOWN_ONCE="${STUB_MERGEABLE_UNKNOWN_ONCE:-}" \
       STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
+      STUB_IS_DRAFT="${STUB_IS_DRAFT:-false}" \
+      STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
+      STUB_MERGE_COSMETIC_FAIL="${STUB_MERGE_COSMETIC_FAIL:-0}" \
+      STUB_MERGE_EFFECT="${STUB_MERGE_EFFECT:-no}" \
+      STUB_STATE="${STUB_STATE:-MERGED}" \
+      STUB_SYNC_LOG="${STUB_SYNC_LOG:-/dev/null}" \
+      ERG_PR_MERGE_SYNC="${ERG_PR_MERGE_SYNC:-}" \
+      ERG_PR_MERGE_MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-2}" \
       ERG_PR_MERGE_POLL_INTERVAL=0 \
-      bash "$SCRIPT" 42 )
+      REAL_GIT="$REAL_GIT" \
+      SHIM_FRAME_BRANCH="${SHIM_FRAME_BRANCH:-}" \
+      SHIM_FRAME_LSTREE="${SHIM_FRAME_LSTREE:-}" \
+      bash "$SCRIPT" "${@:3}" )
 }
 
 closed_has() {  # $1 ticket-number -> 0 if archived under tickets/closed/
@@ -463,5 +532,425 @@ else
     echo "FAIL: erg-pr-merge exited non-zero on no-checks registration race"; fail=1
 fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 15: draft PR (ticket 0271). Roar/raid sweeps file bootstrap PRs as draft;
+# both auto-merge and the watch-then-merge fallback reject a draft. Invoking the
+# script is explicit intent to merge, so it must `gh pr ready` the PR first,
+# then merge and close the ticket. Anti-regression: a non-draft PR (every other
+# case) must NOT call `gh pr ready`.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo draftcase 0271
+RLOG="$WORK/ready15.log"; : > "$RLOG"
+BODY15=$'Summary.\n\n**Ticket:** tickets/0271-fixture.erg\n'
+if STUB_IS_DRAFT=true STUB_READY_LOG="$RLOG" \
+   run_merge "$BODY15" "ticket(0271): draft" >/dev/null 2>&1; then
+    d_miss=0
+    closed_has 0271 || { echo "  not closed: 0271"; d_miss=1; }
+    grep -q -- 'pr ready' "$RLOG" || { echo "  draft PR was not marked ready"; d_miss=1; }
+    if (( d_miss )); then echo "FAIL: draft PR not readied before merge"; fail=1
+    else echo "PASS: draft PR marked ready, then closed and merged"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on draft PR"; fail=1
+fi
+
+# Case 15b: a non-draft PR must NOT invoke `gh pr ready` (no over-firing).
+seed_repo nondraftcase 0272
+RLOG2="$WORK/ready15b.log"; : > "$RLOG2"
+BODY15b=$'Summary.\n\n**Ticket:** tickets/0272-fixture.erg\n'
+if STUB_IS_DRAFT=false STUB_READY_LOG="$RLOG2" \
+   run_merge "$BODY15b" "ticket(0272): nondraft" >/dev/null 2>&1; then
+    if grep -q -- 'pr ready' "$RLOG2"; then
+        echo "FAIL: non-draft PR wrongly marked ready"; fail=1
+    else echo "PASS: non-draft PR does not call gh pr ready (no over-firing)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on non-draft PR"; fail=1
+fi
+
+# Case 16: cosmetic post-merge failure (ticket 0272). On a Projects-classic
+# repo, `gh pr merge` exits non-zero on the deprecated projectCards fetch AFTER
+# the merge took effect. The script must confirm the real outcome
+# (merge_took_effect → MERGED) and treat it as success, not retry/abort.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo cosmetic 0274
+BODY16=$'Summary.\n\n**Ticket:** tickets/0274-fixture.erg\n'
+if STUB_MERGE_COSMETIC_FAIL=1 STUB_MERGE_EFFECT=yes \
+   run_merge "$BODY16" "ticket(0274): cosmetic" >/dev/null 2>&1; then
+    if closed_has 0274; then
+        echo "PASS: cosmetic projectCards failure ignored when merge took effect"
+    else
+        echo "FAIL: cosmetic case did not close 0274"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge aborted on a cosmetic post-merge gh failure"; fail=1
+fi
+
+# Case 16b: a GENUINE merge failure (gh non-zero AND PR not merged) must still
+# die — merge_took_effect must not swallow real failures.
+seed_repo genuinefail 0273
+if STUB_MERGE_COSMETIC_FAIL=1 STUB_MERGE_EFFECT=no \
+   run_merge $'Summary.\n\n**Ticket:** tickets/0273-fixture.erg\n' "ticket(0273): genuine" >/dev/null 2>&1; then
+    echo "FAIL: genuine merge failure was swallowed (exited zero)"; fail=1
+else
+    echo "PASS: genuine merge failure still aborts (merge_took_effect=no)"
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 17: eager local-main sync (ticket 0277). Once the queued merge lands
+# (state MERGED), the script must invoke sync-local-main exactly once, passing
+# the base branch. ERG_PR_MERGE_SYNC points at a logging stub so the assertion
+# is on invocations, not on git effects.
+# ════════════════════════════════════════════════════════════════════════════
+SYNC_STUB_DIR="$WORK/sync-stub"
+mkdir -p "$SYNC_STUB_DIR"
+cat > "$SYNC_STUB_DIR/sync-ok" <<'SYNCSTUB'
+#!/usr/bin/env bash
+echo "$@" >> "$STUB_SYNC_LOG"
+echo "sync-stub: synced"
+SYNCSTUB
+cat > "$SYNC_STUB_DIR/sync-fail" <<'SYNCSTUB'
+#!/usr/bin/env bash
+echo "$@" >> "$STUB_SYNC_LOG"
+echo "sync-stub: failing deliberately" >&2
+exit 1
+SYNCSTUB
+chmod +x "$SYNC_STUB_DIR/sync-ok" "$SYNC_STUB_DIR/sync-fail"
+
+seed_repo synccase 0277
+SLOG17="$WORK/sync17.log"; : > "$SLOG17"
+BODY17=$'Summary.\n\n**Ticket:** tickets/0277-fixture.erg\n'
+if STUB_STATE=MERGED ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-ok" \
+   STUB_SYNC_LOG="$SLOG17" \
+   run_merge "$BODY17" "ticket(0277): sync" >/dev/null 2>&1; then
+    s_miss=0
+    calls=$(wc -l < "$SLOG17")
+    [[ "$calls" -eq 1 ]] || { echo "  expected exactly 1 sync call, got $calls"; s_miss=1; }
+    grep -q -- "$BASE" "$SLOG17" || { echo "  sync not passed the base branch '$BASE'"; s_miss=1; }
+    if (( s_miss )); then echo "FAIL: merged PR did not trigger exactly one base-branch sync"; fail=1
+    else echo "PASS: merge landed -> sync-local-main invoked once with the base branch"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on the sync happy path"; fail=1
+fi
+
+# Case 17b: sync failure is non-fatal — merge/close semantics and exit code
+# unchanged (ticket 0277 invariant).
+seed_repo syncfail 0278
+SLOG17b="$WORK/sync17b.log"; : > "$SLOG17b"
+BODY17b=$'Summary.\n\n**Ticket:** tickets/0278-fixture.erg\n'
+if STUB_STATE=MERGED ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-fail" \
+   STUB_SYNC_LOG="$SLOG17b" \
+   run_merge "$BODY17b" "ticket(0278): syncfail" >/dev/null 2>&1; then
+    if closed_has 0278 && [[ "$(wc -l < "$SLOG17b")" -eq 1 ]]; then
+        echo "PASS: sync failure tolerated — script still exits 0, ticket closed"
+    else
+        echo "FAIL: sync-failure case lost the close or the sync call"; fail=1
+    fi
+else
+    echo "FAIL: a failing sync changed erg-pr-merge's exit code"; fail=1
+fi
+
+# Case 17c: merge queued but not yet landed (state stays OPEN past the bounded
+# poll) — NO sync call, still exit 0, and the output tells the caller to sync
+# after it lands.
+seed_repo syncqueued 0279
+SLOG17c="$WORK/sync17c.log"; : > "$SLOG17c"
+BODY17c=$'Summary.\n\n**Ticket:** tickets/0279-fixture.erg\n'
+if out=$(STUB_STATE=OPEN ERG_PR_MERGE_SYNC="$SYNC_STUB_DIR/sync-ok" \
+   STUB_SYNC_LOG="$SLOG17c" \
+   run_merge "$BODY17c" "ticket(0279): queued" 2>&1); then
+    q_miss=0
+    [[ "$(wc -l < "$SLOG17c")" -eq 0 ]] || { echo "  sync called before the merge landed"; q_miss=1; }
+    echo "$out" | grep -qi "after it lands" || { echo "  no sync-later reminder in output"; q_miss=1; }
+    if (( q_miss )); then echo "FAIL: queued-not-landed path mishandled"; fail=1
+    else echo "PASS: queued-not-landed -> no premature sync, reminder printed, exit 0"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero when the queued merge had not landed"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# in_worktree() identity predicate (tickets 0301/0296, incidents I1/I2).
+# The old `[ -f .git ]` gated MERGE_FLAGS (--delete-branch omission) and the
+# post-merge base sync. It fired on ANY `.git`-file dir — a submodule or a
+# worktree outside the harness convention — and never verified the cwd path
+# claim against git's actual toplevel. These cases pin the tightened predicate.
+#
+# Runs the real script with cwd set to an arbitrary directory (not just $REPO).
+# ERG is resolved from that cwd so a worktree closes its OWN tickets/.
+add_worktree() {  # $1 target path -> frees $BRANCH from $REPO, adds a linked worktree at $1
+    git -C "$REPO" switch -q "$BASE"
+    git -C "$REPO" worktree add -q "$1" "$BRANCH"
+}
+
+run_merge_at() {  # $1 cwd, $2 body, $3 title
+    ( cd "$1"
+      PATH="$STUBDIR:$PATH" \
+      ERG="$1/tickets/erg" \
+      STUB_PR="42" STUB_BRANCH="$BRANCH" STUB_BASE="$BASE" \
+      STUB_BODY="$2" STUB_TITLE="$3" \
+      STUB_AUTO_FAILS=0 \
+      STUB_MERGE_LOG="${STUB_MERGE_LOG:-/dev/null}" \
+      STUB_CHECKS_LOG="${STUB_CHECKS_LOG:-/dev/null}" \
+      STUB_STATE=MERGED \
+      ERG_PR_MERGE_SYNC=/bin/true \
+      ERG_PR_MERGE_MERGED_POLL_TRIES=2 \
+      ERG_PR_MERGE_POLL_INTERVAL=0 \
+      bash "$SCRIPT" 42 )
+}
+
+# ── Case 18: lookalike path — plain dir under `.claude/worktrees/<name>` that
+# is NOT a registered worktree. git resolves --show-toplevel to the enclosing
+# repo (a different basename), so in_worktree() must be FALSE and the script
+# takes the non-worktree branch (--delete-branch present). This guards against
+# a naive path-only reimplementation that would match the marker segment alone.
+# (Under the OLD `[ -f .git ]` predicate this dir has no `.git` file, so old
+# also returned false — not a discriminator against old, a regression guard for
+# the new code. See Case 20 for the case that is RED against the old predicate.)
+seed_repo lookalike 0300
+MLOG18="$WORK/merge18.log"; : > "$MLOG18"
+mkdir -p "$REPO/.claude/worktrees/notaworktree"
+BODY18=$'Summary.\n\n**Ticket:** tickets/0300-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG18" \
+   run_merge_at "$REPO/.claude/worktrees/notaworktree" "$BODY18" "ticket(0300): lookalike" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG18"; then
+        echo "PASS: lookalike path under marker is NOT a worktree (--delete-branch present)"
+    else
+        echo "FAIL: lookalike path wrongly detected as worktree (no --delete-branch)"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a lookalike path"; fail=1
+fi
+
+# ── Case 19: genuine registered worktree under `.claude/worktrees/<name>`.
+# in_worktree() must be TRUE — no --delete-branch, Step 4 prints the worktree
+# message, and the ticket still closes. This closes the pre-existing coverage
+# gap: the worktree-true branch was never exercised by any prior case, and it
+# guards against an over-strict reimplementation that rejects a real worktree.
+seed_repo genuinewt 0301
+WT19="$REPO/.claude/worktrees/wtgood"
+add_worktree "$WT19"
+MLOG19="$WORK/merge19.log"; : > "$MLOG19"
+BODY19=$'Summary.\n\n**Ticket:** tickets/0301-fixture.erg\n'
+if out19=$(STUB_MERGE_LOG="$MLOG19" \
+   run_merge_at "$WT19" "$BODY19" "ticket(0301): genuine worktree" 2>&1); then
+    g_miss=0
+    grep -q -- '--delete-branch' "$MLOG19" && { echo "  --delete-branch present in a real worktree"; g_miss=1; }
+    echo "$out19" | grep -qi 'in git worktree' || { echo "  Step 4 did not report the worktree"; g_miss=1; }
+    closed_has 0301 || { echo "  ticket 0301 not closed from the worktree"; g_miss=1; }
+    if (( g_miss )); then echo "FAIL: genuine worktree not detected / mishandled"; fail=1
+    else echo "PASS: genuine registered worktree detected (no --delete-branch, ticket closed)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a genuine worktree"; fail=1
+fi
+
+# ── Case 20: a real linked worktree OUTSIDE the harness convention (not under
+# `.claude/worktrees/`). This is the RED case against the OLD predicate: it has
+# a `.git` FILE, so `[ -f .git ]` returned TRUE and omitted --delete-branch —
+# the same over-broad match that also fired on git submodules (the defect the
+# 0252 family retires). The tightened predicate scopes to the harness worktree
+# convention: no marker segment → in_worktree() FALSE → --delete-branch present.
+seed_repo offmarker 0302
+WT20="$WORK/offmarker-wt"                  # deliberately NOT under .claude/worktrees/
+add_worktree "$WT20"
+MLOG20="$WORK/merge20.log"; : > "$MLOG20"
+BODY20=$'Summary.\n\n**Ticket:** tickets/0302-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG20" \
+   run_merge_at "$WT20" "$BODY20" "ticket(0302): off-marker worktree" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG20"; then
+        echo "PASS: worktree outside .claude/worktrees/ no longer matched (--delete-branch present; RED vs old [ -f .git ])"
+    else
+        echo "FAIL: off-marker .git-file dir still matched by predicate (no --delete-branch) — old behavior not tightened"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from an off-marker worktree"; fail=1
+fi
+
+# ── Case 21: name-collision lookalike — the ONE case that pins the final
+# `[ "$top" != "$prefix" ]` guard as a genuine discriminator (round-1 /gaze
+# REROLL, ticket 0301). A plain dir under `.claude/worktrees/<name>` whose
+# <name> segment equals the enclosing repo's OWN basename. git resolves
+# --show-toplevel to the enclosing repo, so `basename "$top"` == <name> by
+# coincidence and the line-48 basename check ALONE would pass — only the
+# `top != prefix` guard (top == the enclosing repo == prefix here) rejects it.
+# Case 18 cannot exercise this line: its <name> differs from the repo basename,
+# so it is already rejected at line 48. Deleting only line 49 leaves every other
+# case green but flips THIS one: in_worktree() must be FALSE, so the script takes
+# the non-worktree branch and --delete-branch is present.
+seed_repo collide 0303                        # $REPO basename == "collide"
+MLOG21="$WORK/merge21.log"; : > "$MLOG21"
+mkdir -p "$REPO/.claude/worktrees/collide"    # <name> == "collide" == repo basename; NOT a registered worktree
+BODY21=$'Summary.\n\n**Ticket:** tickets/0303-fixture.erg\n'
+if STUB_MERGE_LOG="$MLOG21" \
+   run_merge_at "$REPO/.claude/worktrees/collide" "$BODY21" "ticket(0303): name-collision lookalike" >/dev/null 2>&1; then
+    if grep -q -- '--delete-branch' "$MLOG21"; then
+        echo "PASS: name-collision lookalike rejected by top!=prefix guard (--delete-branch present)"
+    else
+        echo "FAIL: name-collision lookalike wrongly detected as worktree (top!=prefix guard not enforced)"; fail=1
+    fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero from a name-collision lookalike path"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Close-claim / branch-content cross-check (ticket 0312). A PR's Ticket close
+# claim lives in the body, but the branch can drift from it: shared-worktree
+# contention force-pushed an unrelated changeset over t0268-state-guard (PR #522,
+# 2026-07-13), leaving a stale `**Ticket:** 0268` claim. erg-pr-merge would have
+# closed the ticket while landing unrelated work. These cases pin the guard.
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Case 22: stale close claim — the claimed ticket file is ABSENT from
+# tickets/ at the branch tip (the #522 force-replace mode). erg-pr-merge must
+# ABORT before closing or merging, name the missing ticket, and mention the
+# override. No merge may be attempted.
+seed_repo staleclaim 0281
+MLOG22="$WORK/merge22.log"; : > "$MLOG22"
+BODY22=$'Summary.\n\n**Ticket:** tickets/0299-fixture.erg\n'   # 0299 never seeded
+if out22=$(STUB_MERGE_LOG="$MLOG22" run_merge "$BODY22" "ticket(0299): stale" 2>&1); then
+    echo "FAIL: stale close claim (absent ticket) should have aborted, exited zero"; fail=1
+else
+    s_miss=0
+    echo "$out22" | grep -q '0299' || { echo "  abort msg does not name 0299"; s_miss=1; }
+    echo "$out22" | grep -q 'ERG_PR_MERGE_ALLOW_MISSING_TICKET' || { echo "  abort msg lacks override hint"; s_miss=1; }
+    [[ -s "$MLOG22" ]] && { echo "  a merge was attempted despite the stale claim"; s_miss=1; }
+    if closed_has 0281; then echo "  unrelated seeded ticket 0281 was closed"; s_miss=1; fi
+    if (( s_miss )); then echo "FAIL: stale-claim abort message/behavior wrong"; fail=1
+    else echo "PASS: absent-at-tip close claim aborts before merge; names ticket + override"; fi
+fi
+
+# ── Case 23: override — ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 turns the abort
+# into a warn-and-skip. The merge proceeds (exit 0), the absent 0299 is NOT
+# closed (it cannot be), and a warning is emitted.
+seed_repo staleoverride 0282
+BODY23=$'Summary.\n\n**Ticket:** tickets/0299-fixture.erg\n'
+if out23=$(ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 run_merge "$BODY23" "ticket(0299): override" 2>&1); then
+    o_miss=0
+    echo "$out23" | grep -qi 'warning' || { echo "  no warning emitted under override"; o_miss=1; }
+    if closed_has 0299; then echo "  0299 wrongly closed under override"; o_miss=1; fi
+    if (( o_miss )); then echo "FAIL: override path wrong"; fail=1
+    else echo "PASS: override warns and skips the absent ticket, merge proceeds"; fi
+else
+    echo "FAIL: override should let the merge proceed, exited non-zero"; fail=1
+fi
+
+# ── Case 24: title/claim disagreement — a present, valid claim (0290) while the
+# PR TITLE names a different ticket (0289), the tell of a repurposed branch
+# (#522). Non-blocking: the valid claim still closes (exit 0) and a warning
+# naming the title ticket is emitted.
+seed_repo titleclaim 0290
+BODY24=$'Summary.\n\n**Ticket:** tickets/0290-fixture.erg\n'
+if out24=$(run_merge "$BODY24" "ticket(0289): repurposed" 2>&1); then
+    t_miss=0
+    closed_has 0290 || { echo "  valid claim 0290 not closed"; t_miss=1; }
+    echo "$out24" | grep -q 'title names' || { echo "  no title-disagreement warning"; t_miss=1; }
+    echo "$out24" | grep -q '0289'        || { echo "  warning does not name title ticket 0289"; t_miss=1; }
+    if (( t_miss )); then echo "FAIL: title/claim disagreement not warned or claim not honored"; fail=1
+    else echo "PASS: title names a non-claimed ticket -> warn, valid claim still closes"; fi
+else
+    echo "FAIL: title/claim disagreement should be non-blocking, exited non-zero"; fail=1
+fi
+
+# ── Case 25: anti-regression — title agrees with the claim: NO disagreement
+# warning, ticket closes normally (no new friction on well-formed merges).
+seed_repo titlematch 0291
+BODY25=$'Summary.\n\n**Ticket:** tickets/0291-fixture.erg\n'
+if out25=$(run_merge "$BODY25" "ticket(0291): normal" 2>&1); then
+    m_miss=0
+    closed_has 0291 || { echo "  0291 not closed on happy path"; m_miss=1; }
+    echo "$out25" | grep -q 'title names' && { echo "  spurious title warning on matching title"; m_miss=1; }
+    if (( m_miss )); then echo "FAIL: happy-path title match mishandled"; fail=1
+    else echo "PASS: matching title/claim -> no warning, normal close (no new friction)"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on matching title/claim happy path"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Output-rewrite tolerance (ticket 0333). erg-pr-merge parses the stdout of two
+# git calls that are confirmed live rtk rewrite targets: `branch --show-current`
+# (branch guard) and, pre-fix, `ls-tree` grepped for ticket presence. An
+# output-rewriting/framing hook that mangles that stdout must not misfire the
+# guards. The framing git shim (SHIM_FRAME_*) reproduces the mangling; these
+# cases were RED before the fix (branch-guard died "must run from PR branch";
+# ls-tree guard spuriously aborted "absent from tickets/").
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Case 26: branch detection survives a framed `branch --show-current`. The
+# shim prepends a banner to its stdout; the pre-fix `$(git branch --show-current)`
+# captured "--- Changes ---\n<branch>" != PR branch and died. The fix reads the
+# branch via rewrite-immune plumbing, so the merge proceeds and closes the ticket.
+seed_repo framebranch 0330
+BODY26=$'Summary.\n\n**Ticket:** tickets/0330-fixture.erg\n'
+if out26=$(SHIM_FRAME_BRANCH=1 run_merge "$BODY26" "ticket(0330): framed branch" 2>&1); then
+    if closed_has 0330; then echo "PASS: branch guard survives framed branch-detection output; ticket closed"
+    else echo "FAIL: framed branch case did not close 0330"; fail=1; fi
+else
+    echo "FAIL: framed branch-detection output made erg-pr-merge die (RED = pre-fix):"; echo "$out26" | sed 's/^/    /'; fail=1
+fi
+
+# ── Case 27: existence guard survives a framed `ls-tree`. The shim replaces the
+# ls-tree listing with a banner, so a grep-over-blob presence check reports the
+# present ticket absent and aborts. The fix checks presence by exit code
+# (compgen glob + `git cat-file -e HEAD:<path>`), immune to stdout framing, so
+# the merge proceeds. Invariant preserved: a genuinely-absent ticket still
+# aborts (case 22, unframed).
+seed_repo framelstree 0331
+BODY27=$'Summary.\n\n**Ticket:** tickets/0331-fixture.erg\n'
+if out27=$(SHIM_FRAME_LSTREE=1 run_merge "$BODY27" "ticket(0331): framed ls-tree" 2>&1); then
+    if closed_has 0331; then echo "PASS: existence guard survives framed ls-tree output; ticket closed"
+    else echo "FAIL: framed ls-tree case did not close 0331"; fail=1; fi
+else
+    echo "FAIL: framed ls-tree output made erg-pr-merge spuriously abort (RED = pre-fix):"; echo "$out27" | sed 's/^/    /'; fail=1
+fi
+
+# ── Case 28: source ratchet — the two output-rewrite-fragile idioms must not
+# return as live code. No `git branch --show-current` invocation (rewrite
+# target) and no `git ls-tree` piped into grep for the presence guard. Full-line
+# comments are stripped first so the fix's own explanatory prose (which names
+# the retired idiom) does not trip the ratchet.
+SCRIPT_CODE=$(grep -vE '^[[:space:]]*#' "$SCRIPT")
+if echo "$SCRIPT_CODE" | grep -qE 'git branch --show-current'; then
+    echo "FAIL: erg-pr-merge still calls 'git branch --show-current' (rewrite-fragile)"; fail=1
+elif echo "$SCRIPT_CODE" | grep -qE 'ls-tree[^|]*\|[^|]*grep'; then
+    echo "FAIL: erg-pr-merge still greps 'git ls-tree' output (rewrite-fragile presence check)"; fail=1
+else
+    echo "PASS: source ratchet — no branch --show-current, no ls-tree|grep presence check remains"
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 29: -C PATH flag (ticket 0344). The standing allow rule
+# `Bash(~/.claude/skills/merge/erg-pr-merge:*)` prefix-matches only the BARE
+# invocation; a `cd X && …` prefix falls through to the stochastic auto-mode
+# classifier. -C lets the bare form target an arbitrary checkout from any cwd.
+# Invoked from $WORK (deliberately NOT a git repo): without -C the script dies
+# at the branch check ("must run from PR branch"); with `-C <repo>` it cds in
+# before any git/gh/erg call and closes the ticket. Companion assertions pin the
+# loud-failure contract: -C with no path, and -C with a non-directory path.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo cflag 0344
+BODY29=$'Summary.\n\n**Ticket:** tickets/0344-fixture.erg\n'
+run_C() {  # args passed verbatim to the script; cwd is $WORK (not a git repo)
+    RUN_MERGE_CWD="$WORK" ERG_PR_MERGE_SYNC=/bin/true \
+        run_merge "$BODY29" "ticket(0344): cflag" "$@"
+}
+c_miss=0
+# (a) happy path: -C <repo> from a non-repo cwd closes the ticket
+if run_C -C "$REPO" 42 >/dev/null 2>&1; then
+    closed_has 0344 || { echo "  -C did not close 0344 from a non-repo cwd"; c_miss=1; }
+else
+    echo "  -C <repo> from a non-repo cwd exited non-zero (RED = pre-fix)"; c_miss=1
+fi
+# (b) -C with no PATH argument -> loud failure naming the requirement
+if out29b=$(run_C -C 2>&1); then
+    echo "  -C with no path should have failed"; c_miss=1
+else
+    echo "$out29b" | grep -qi 'requires a PATH' || { echo "  -C no-path die lacks 'requires a PATH'"; c_miss=1; }
+fi
+# (c) -C with a non-directory path -> loud failure
+if out29c=$(run_C -C /nonexistent-dir-xyz 42 2>&1); then
+    echo "  -C nonexistent path should have failed"; c_miss=1
+else
+    echo "$out29c" | grep -qi 'is not a directory' || { echo "  -C bad-path die lacks 'is not a directory'"; c_miss=1; }
+fi
+if (( c_miss )); then echo "FAIL: -C PATH flag contract not met"; fail=1
+else echo "PASS: -C PATH cds into the target checkout from any cwd; loud on missing/bad path"; fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

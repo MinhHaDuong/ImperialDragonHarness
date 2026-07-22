@@ -1,0 +1,64 @@
+%erg 0.1
+Title: hunt step 3: generalize worktree-ownership predicate for spawned agents
+Created: 2026-07-13
+Author: claude
+Closed: autoclosed — PR #512
+
+--- log ---
+2026-07-13T06:43Z claude created child of 0251 (PR2 of ratified Option A)
+
+2026-07-13T07:11Z bump verify-reroll — round 1: disable-model-invocation flip untraceable to ticket (scope); ownership predicate lacks executable clean-tree check
+2026-07-13T07:19Z Minh Ha-Duong closed — autoclosed — PR #512
+--- body ---
+## Context
+
+Child of tracking ticket 0251 (Option A ratified: `/hunt` is the single
+execution core every path invokes). Concrete bug found in the imagine
+pass: `skills/hunt/SKILL.md` step 3 requires the worktree basename to be
+exactly `t$ARGUMENTS`, but `Agent(isolation:"worktree")` names its
+worktrees `agent-<id>`. A raid execute agent invoking `Skill(hunt)`
+therefore fails the name check and re-attempts `EnterWorktree`, which
+refuses from inside a worktree session — an error, though the agent's
+isolation is in fact correct.
+
+Scope note: this is one narrow instance of worktree ownership; the
+broader ownership audit belongs to ticket 0252 — do not absorb it.
+
+## Relevant files
+- `skills/hunt/SKILL.md` — step 3, ~line 26-35
+- `docs/imagine-0251-entry-points-2026-07-12.md` — design note, Q4 answer
+- `scripts/beat.py` (~line 1219) — the headless invocation pattern to
+  reference
+
+## Actions
+1. Generalize the ownership predicate in step 3: a worktree is OWNED when
+   its basename is `t$ARGUMENTS` OR it was created by the spawner for
+   this agent (an `agent-*` worktree the agent session started in, with a
+   clean tree). A shared or `explore-*` worktree hosting a live session
+   remains NOT owned — keep the 2026-06-11 incident rationale.
+2. Treat an `EnterWorktree` "already in a worktree" rejection in a
+   spawned-agent context as isolation-confirmed rather than an error,
+   per the design note.
+3. Add one sentence pointing ad hoc orchestrators at the beat.py
+   headless pattern (`claude -p "/hunt <id>"`) instead of hand-typed
+   contracts.
+
+## Test
+- Skills hygiene test asserting step 3 accepts the `agent-*` ownership
+  case (greppable predicate text) and still forbids `explore-*`/shared
+  worktrees.
+
+## Verification
+- [ ] A `Skill(hunt)` invocation from an `Agent(isolation:"worktree")`
+      context passes step 3 without a spurious EnterWorktree attempt
+- [ ] The 2026-06-11 shared-worktree protection is intact
+
+## Invariants
+- Interactive `/hunt` behavior unchanged (still creates/enters `t<id>`)
+- No new entry point
+
+## Exit criteria
+- [ ] Ownership predicate generalized as above
+- [ ] Rejection-as-confirmation branch documented in step 3
+- [ ] beat.py headless pointer sentence added
+- [ ] `make check` passes

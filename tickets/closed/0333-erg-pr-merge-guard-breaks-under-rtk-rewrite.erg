@@ -1,0 +1,93 @@
+%erg 0.1
+Title: erg-pr-merge existence guard misfires under rtk git-output rewriting
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #596
+
+--- log ---
+2026-07-14T13:10Z claude created
+2026-07-14T11:29Z claude note imagine: empirical correction — rtk PreToolUse hook (0.34.3) fires ONCE on the outer Bash-tool command text, never on a script's internal subprocess calls, and ls-tree/rev-parse are not in its rewrite table ("No rewrite for"); the #584 incident's root cause is therefore UNCONFIRMED (misdiagnosis recorded, per diagnosis discipline). Script path is skills/merge/erg-pr-merge, not scripts/. Confirmed live rewrite targets to harden: branch --show-current (erg-pr-merge:76), worktree list --porcelain (sync-local-main.sh:56); L164 ls-tree grep-over-blob hardened as fragility, not confirmed exposure. No generic wrapper layer (YAGNI)
+2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (phase-3 absorbed); anchors verified (erg-pr-merge:54,76,164,201; sync-local-main.sh:56; worktree-salvage.sh:22); regression tests extend existing tests/test_erg_pr_merge.sh and tests/test_sync_local_main.sh; PASS, no overlap with 0332
+2026-07-14T14:30Z claude note execute: hardened 3 parsed-git sites. erg-pr-merge branch guard -> git symbolic-ref --quiet --short HEAD (plumbing, probe-verified not a rewrite target) with || true for detached-HEAD friendliness; existence guard -> compgen glob (filesystem read) + git cat-file -e HEAD:<path> (exit-code verdict), no parsed stdout. sync-local-main worktree-list parse -> grep-filter to porcelain record keys + NF==2 on the branch record. worktree-salvage.sh:22 already uses the symbolic-ref idiom -> sibling sweep CLEARED, no change. 4 RED-before/GREEN-after cases via a transparent-by-default framing git shim (erg 26 branch, 27 ls-tree reproducing the #584 'absent from tickets/' symptom, 28 source ratchet; sync 11 worktree-list). make check green (846). Framed as general output-rewrite tolerance; scripts carry no rtk reference.
+
+2026-07-14T12:13Z bump verify-reroll — round 1: sibling sweep incomplete (worktree-gc.sh unswept; guard-commit-on-main.sh not cleared)
+2026-07-14T12:29Z Minh Ha-Duong closed — autoclosed — PR #596
+--- body ---
+## Context
+
+During the raid-328/329 merge of PR #584 (2026-07-14), a plain
+`erg-pr-merge 584` run died at its Step 1.5 existence guard with
+"close-claimed ticket(s) 0329 are absent from tickets/ at branch tip" —
+spuriously: `git ls-tree HEAD` showed the file present and the ticket ID was
+correctly resolved. Cause: the rtk Bash hook rewrites `git ls-tree` output
+(injects framing/truncation), corrupting the guard's grep over that output.
+Re-running the helper under `bash -x` happened to bypass the rtk rewrite and
+the guard passed cleanly; the merge then ran through normally.
+
+This is the known "rtk rewrites git output" trap (memory
+`feedback_rtk_rewrites_git_output`) landing inside a critical merge helper.
+The standing workaround for machine-parsed git output is `rtk proxy git ...`,
+but the helper's internals don't use it — so any invocation from a hooked
+shell is exposed, and the `bash -x` escape is an accident, not a fix.
+
+## Relevant files
+- `scripts/erg-pr-merge` — Step 1.5 existence guard (`git ls-tree` + grep);
+  audit the whole script for other machine-parsed git invocations
+- Memory `feedback_rtk_rewrites_git_output` — the trap and the proxy idiom
+
+## Actions
+1. Audit erg-pr-merge for every git invocation whose stdout is parsed
+   (ls-tree, rev-parse lists, diff --name-only, status --porcelain).
+2. Make each robust under output-rewriting hooks: plumbing with explicit
+   format flags parsed by exit code where possible, `rtk proxy git`
+   otherwise — without hardcoding rtk (the script must still work where rtk
+   is absent; probe or use an env-provided GIT wrapper).
+3. Sweep sibling helpers in scripts/ that parse git output for the same
+   exposure (worktree-salvage.sh, sync-local-main.sh at minimum).
+
+## Test
+- A test that runs the Step 1.5 guard logic with a wrapper that injects
+  rtk-style framing lines into git stdout and asserts the guard still
+  resolves presence correctly (RED against the current parsing).
+
+## Invariants
+- The guard must still fail loud when a close-claimed ticket is genuinely
+  absent from the branch tip.
+- `make check` passes.
+
+## Sibling sweep disposition
+
+Every helper that parses `git` stdout, with its disposition:
+
+- `skills/merge/erg-pr-merge` — FIXED. Branch guard → `git symbolic-ref`
+  (exit-code verdict); existence guard → compgen glob + `git cat-file -e`
+  (no parsed stdout). Accepted limitation documented at the compgen site:
+  it resolves the slug from the working tree, harmless because merge always
+  runs on a clean PR-branch tip (working tree == HEAD).
+- `scripts/sync-local-main.sh` — FIXED. Worktree-list parse hardened to
+  porcelain record keys + NF==2 on the branch record.
+- `scripts/worktree-salvage.sh` — CLEARED (no change). Already uses the
+  `git symbolic-ref` exit-code idiom.
+- `scripts/worktree-gc.sh` — FIXED. Same `git worktree list --porcelain`
+  loop as sync-local-main.sh, and it is invoked via the Bash tool from
+  `skills/molt` and `skills/roar`. The `branch refs/heads/*` arm now rejects
+  a multi-token remainder (an appended framing banner like
+  `branch refs/heads/main is stale`), which the old arm accepted as the
+  branch name. Fail-closed rationale: even the old mis-parse could not cause
+  a wrongful removal — a bad branch name just fails the later
+  `for-each-ref` upstream-track lookup and the worktree is skipped — but the
+  hardening makes the parse correct rather than merely safe. No dedicated
+  suite exists (`tests/test_worktree_gc.sh` absent); per scope discipline no
+  new suite was created — the hardening is defended by inspection and a
+  RED-before/GREEN-after parser probe recorded in the commit.
+- `scripts/guard-commit-on-main.sh` — CLEARED (no change). Uses
+  `git branch --show-current` (a confirmed rewrite target) but it is a
+  PreToolUse hook, spawned by the hook system and never via the Bash tool,
+  so its internal git call is not subject to the outer Bash-tool rewrite.
+  Out of scope.
+
+## Exit criteria
+- [x] erg-pr-merge's parsed-git call sites are hook-rewrite-proof
+- [x] Regression test simulating rewritten git output is RED-before/GREEN-after
+- [x] Sibling helper sweep done (fixed or explicitly cleared) — see disposition above
+- [x] `make check` passes

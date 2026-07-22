@@ -11,6 +11,11 @@ multiple JSONL rows — one per content block — each repeating the same
 harness-injected and carry no API cost: excluded from $ and token sums,
 counted in `synthetic_messages`.
 
+Ticket 0292: each tool call is also placed in a six-way category (execution,
+reading, navigation, search, writing, other; arXiv:2604.21965 §5.2, App. B.2),
+with per-category call count and per-category tool_result char volume reported
+as `cat_<category>_calls` / `cat_<category>_chars` columns.
+
 Emits JSON summary: {window, files, sessions, totals, skipped_lines, rollup}
 """
 
@@ -61,6 +66,19 @@ PRICING = {
 
 WRITE_TOOLS = {"Edit", "Write", "NotebookEdit"}
 
+# Ticket 0292: six-way tool-call taxonomy (arXiv:2604.21965 §5.2, App. B.2),
+# mapped onto this harness's tool set. Categories are disjoint and total.
+TOOL_CATEGORIES = ("execution", "reading", "navigation", "search", "writing", "other")
+READ_TOOLS = {"Read", "NotebookRead", "WebFetch"}
+SEARCH_TOOLS = {"Grep", "Glob", "WebSearch", "ToolSearch"}
+NAV_TOOLS = {"EnterWorktree", "ExitWorktree"}
+# Bash read-vs-execute rule: classify a Bash call by its leading command token.
+# A known read-only content reader is reading; a known search/filter tool is
+# search; an orientation command (cd/ls/pwd, git status|log|branch) is
+# navigation (see NAV_COMMAND_RE); everything else is execution.
+BASH_READ_RE = re.compile(r"^\s*(?:cat|head|tail|less|more|bat)(?=\s|$|[;&|])")
+BASH_SEARCH_RE = re.compile(r"^\s*(?:grep|egrep|fgrep|rg|ag|ack|find|fd)(?=\s|$|[;&|])")
+
 # Built-in CLI commands that appear as <command-name> but are not entry skills.
 BUILTIN_COMMANDS = {
     "clear",
@@ -109,13 +127,41 @@ PR_NUMBER_RE = re.compile(r"(?:PR\s*#|pulls/)(\d+)")
 # Ticket 0244 (H10'): harness-mandated wrap-up work — memory/STATE writes,
 # branch hygiene, wrap-up skills. Used only to classify tail turns.
 MANDATED_PATH_RE = re.compile(r"/memory/|MEMORY\.md|STATE\.md")
-MANDATED_BASH_RE = re.compile(r"^\s*git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close")
+MANDATED_BASH_RE = re.compile(
+    r"(?:^|&&|;|\|)\s*(?:git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close)\b"
+)
 MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "housekeeping"}
 PATH_TOOLS = {"Read", "Edit", "Write", "NotebookEdit"}
 
 
+def categorize_tool(name: str, tool_input: dict) -> str:
+    """Six-way tool-call category: execution, reading, navigation, search,
+    writing, other (ticket 0292). Total over every tool the harness emits."""
+    if name == "Bash":
+        cmd = str(tool_input.get("command", ""))
+        if NAV_COMMAND_RE.search(cmd):
+            return "navigation"
+        if BASH_READ_RE.search(cmd):
+            return "reading"
+        if BASH_SEARCH_RE.search(cmd):
+            return "search"
+        return "execution"
+    if name in READ_TOOLS:
+        return "reading"
+    if name in SEARCH_TOOLS:
+        return "search"
+    if name in WRITE_TOOLS:
+        return "writing"
+    if name in NAV_TOOLS:
+        return "navigation"
+    return "other"
+
+
 def _is_nav_tool(name: str, tool_input: dict) -> bool:
-    return name == "Bash" and bool(NAV_COMMAND_RE.search(str(tool_input.get("command", ""))))
+    # Bash-only navigation, expressed via the six-way classifier so the two
+    # never drift (categorize_tool maps a Bash orientation command to
+    # "navigation" iff NAV_COMMAND_RE matches — the pre-0292 contract).
+    return name == "Bash" and categorize_tool(name, tool_input) == "navigation"
 
 
 def _is_mandated_tool(name: str, tool_input: dict) -> bool:
@@ -185,6 +231,9 @@ def parse_trace_file(path: Path) -> dict:
     total_lines = 0
     models: Counter = Counter()
     tool_counts: Counter = Counter()
+    category_calls: Counter = Counter()  # ticket 0292: six-way category counts
+    category_chars: Counter = Counter()  # per-category tool_result char volume
+    tool_use_category: dict[str, str] = {}  # block_id -> category, for the join
     read_paths: Counter = Counter()
     bash_commands: Counter = Counter()
     ask_user = 0
@@ -267,10 +316,16 @@ def parse_trace_file(path: Path) -> dict:
                         name = block.get("name", "?")
                         tool_counts[name] += 1
                         tool_input = block.get("input") or {}
+                        category = categorize_tool(name, tool_input)
+                        category_calls[category] += 1
+                        if block_id:
+                            tool_use_category[block_id] = category
                         turn_idx = msg_turn_index.get(msg.get("id") or "")
                         if turn_idx is not None:
                             turn_tool_kinds[turn_idx].append(
-                                "nav" if _is_nav_tool(name, tool_input) else "work"
+                                "nav"
+                                if name == "Bash" and category == "navigation"
+                                else "work"
                             )
                             if _is_mandated_tool(name, tool_input):
                                 turn_mandated[turn_idx] = True
@@ -297,6 +352,11 @@ def parse_trace_file(path: Path) -> dict:
                             except (TypeError, ValueError):
                                 continue
                             tool_result_bytes += len(result_text)
+                            # Ticket 0292: charge these chars to the category of
+                            # the tool_use that produced them; unmatched results
+                            # fall to "other" so the buckets partition the total.
+                            cat = tool_use_category.get(block.get("tool_use_id"), "other")
+                            category_chars[cat] += len(result_text)
                             if MERGE_MARKER_RE.search(result_text):
                                 if merge_marker_turn is None:
                                     merge_marker_turn = len(turn_tool_kinds)
@@ -366,6 +426,8 @@ def parse_trace_file(path: Path) -> dict:
         "total_lines": total_lines,
         "models": models,
         "tool_counts": tool_counts,
+        "category_calls": category_calls,
+        "category_chars": category_chars,
         "tool_result_bytes": tool_result_bytes,
         "max_read_repeat": max(read_paths.values(), default=0),
         "max_bash_repeat": max(bash_commands.values(), default=0),
@@ -408,6 +470,7 @@ CSV_COLUMNS = [
     "total_lines",
     "tool_histogram",
     "tool_result_bytes",
+    *[f"cat_{c}_{m}" for c in TOOL_CATEGORIES for m in ("calls", "chars")],
     "max_read_repeat",
     "max_bash_repeat",
     "read_only",
@@ -436,7 +499,13 @@ CSV_COLUMNS = [
 
 def build_row(project: str, session_id: str, agent_id: str, path: Path, stats: dict) -> dict:
     dominant_model = stats["models"].most_common(1)
+    category_cols = {
+        f"cat_{c}_{m}": stats[f"category_{m}"].get(c, 0)
+        for c in TOOL_CATEGORIES
+        for m in ("calls", "chars")
+    }
     return {
+        **category_cols,
         "project": project,
         "session_id": session_id,
         "agent_id": agent_id,

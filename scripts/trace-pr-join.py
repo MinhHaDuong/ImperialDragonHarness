@@ -87,11 +87,15 @@ def gh_fetch_pr(owner: str, repo: str, n: int) -> dict:
 
 def build_join(pairs: list[tuple[str, int]], cache: dict, fetcher) -> dict:
     """Resolve every pair from cache, then fetcher; fetch failures yield a
-    blank row (merged='') so the join never silently drops a PR."""
+    blank row (merged='') so the join never silently drops a PR.
+
+    A cached row left blank by a prior failed fetch (merged in (None, ''))
+    is re-fetched on this run and overwritten; a resolved row is kept as is."""
     out = dict(cache)
     for repo, n in pairs:
-        if (repo, n) in out:
-            continue
+        cached = out.get((repo, n))
+        if cached is not None and cached.get("merged") not in (None, ""):
+            continue  # resolved row — keep, never re-fetch
         try:
             out[(repo, n)] = fetcher(repo, n)
         except Exception as e:  # noqa: BLE001 — any fetch failure is non-fatal

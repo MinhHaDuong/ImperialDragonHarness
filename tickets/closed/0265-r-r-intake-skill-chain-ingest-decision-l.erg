@@ -1,0 +1,100 @@
+%erg 0.1
+Title: R&R intake skill chain: ingest-decision-letter + track-changes-pdf
+Created: 2026-06-18
+Author: minh
+Closed: autoclosed — PR #508
+
+--- log ---
+2026-06-18T13:46Z minh created
+
+2026-07-12T18:08Z claude note child 0287 (ingest-decision-letter) landed
+2026-07-12T20:55Z claude note integration review (both children merged): 0287 PR #503 and 0288 PR #504 landed gaze-APPROVED; merged-main suite 724 passed; live fixture chain verified by the supervisor — archive -> segment (3+3) -> dedupe (6->5+1 atomic) -> coverage (uncovered remark + orphan ticket flagged, exit 1; clean map exit 0). Tracker stays open: the exit criterion's final link (track-changes PDF render) is blocked on latexdiff, absent on doudou — install texlive-extra-utils or run at the next real R&R to close.
+2026-07-13T06:51Z claude note latexdiff unblocked: on this distro latexdiff is its own package, split out of texlive-extra-utils; author installed latexdiff 1.3.2. test_render_end_to_end now runs live (git archive -> latexdiff -> compiled PDF, no skip) and passes, 16/16 in the module — the final exit-criterion link is verified on doudou. Tracker ready to close.
+
+2026-07-13T06:56Z Minh Ha-Duong closed — autoclosed — PR #508
+--- body ---
+## Context
+A full day (2026-06-18, ~12 sessions on the Oeconomia — Climate finance
+manuscript) was spent doing journal Revise-and-Resubmit *intake* entirely by
+hand, with no harness tooling. A post-hoc sweep of those transcripts isolated
+the expensive steps:
+
+- PDF extraction of the editor decision + reviewer comments — manual.
+- A **vain Gmail search** for the comments — the files had already been moved
+  into `release/Oeconomia*`; nobody knew where they lived, so the search wasted
+  effort.
+- Comment counting reconciled "60 atomic comments" down to "56 remarks" over
+  several turns, with no parser.
+- ~10 thematic tickets created and organised by hand.
+- **Coverage verified two or three times manually** — re-confirming that the
+  tickets cover all 56 remarks each time, because there is no remark↔ticket
+  ledger.
+- A **track-changes PDF** was requested ("do 140 with track-change mode, open
+  it for me to annotate") and never delivered — ~14 tool calls spent assessing
+  feasibility, then abandoned because no skill exists.
+
+This is the gap flagged at the top of that day's harness session: asked "which
+skills/rules/memories ingest an Editor decision letter and Reviewer comments?",
+the answer was *none* — every existing review skill produces reviews of our
+manuscript, the inverse of ingesting a journal's. The day proved the need.
+
+Two skills, one workflow:
+
+1. **`ingest-decision-letter`** — take the decision letter + reviewer comments
+   (PDF / text / email thread; the Gmail MCP tools are available), extract and
+   archive them in a known location, parse into a structured remark ledger (id,
+   reviewer, category, verbatim text, source location), dedupe atomic-vs-remark,
+   and emit a coverage check (which remark maps to which ticket; flag orphans
+   and uncovered remarks) so verification is one deterministic pass, not a
+   manual re-count.
+2. **`track-changes-pdf`** — render a revision-marked PDF (insertions/deletions
+   highlighted, ideally grouped by ticket/remark) from the manuscript so the
+   author can read and annotate, closing the annotate→reply→apply loop.
+
+## Relevant files
+- `~/.claude/skills/external-peer-review/` — closest sibling (sends our PDF
+  out for review); the new intake skill is its inverse. Reuse its PDF/text
+  plumbing and persona-free structure.
+- `~/.claude/skills/related-work-note/`, `~/.claude/skills/zotero-import/` —
+  precedents for skills that extract structure from a document.
+- Gmail MCP tools (`mcp__claude_ai_Gmail__*`) — for the email-thread source so
+  the next intake does not repeat the vain manual search.
+- `~/.claude/README.md` — skills catalog, regenerated via `make skills-catalog`.
+
+## Actions
+1. Spec the remark-ledger schema (id, reviewer, category, verbatim, source loc,
+   mapped-ticket, status) — the contract both skills and the coverage check share.
+2. Build `ingest-decision-letter`: source adapters (PDF / pasted text / Gmail
+   thread) → archive to a known path → emit the ledger → coverage report
+   (remark↔ticket, orphans, gaps).
+3. Build `track-changes-pdf`: manuscript + applied changes → revision-marked PDF
+   grouped by ticket. Decide the toolchain (latexdiff / Quarto track-changes /
+   pandoc critic markup) in the spec.
+4. Regenerate the skills catalog (`make skills-catalog`); add description tests
+   per `tests/test_skill_descriptions.py` (discoverability-first opening
+   sentence).
+5. Land via the harness branch + PR flow (main is read-only).
+
+## Test
+- `ingest-decision-letter` on a fixture decision letter (the archived Oeconomia
+  one is a real corpus) yields the expected remark count and a coverage report
+  that flags a deliberately-removed ticket as an uncovered remark (RED first).
+- `make check-skills-drift` stays clean after catalog regeneration.
+
+## Verification
+- [ ] `ingest-decision-letter` extracts + archives + emits a structured ledger from PDF, text, and a Gmail thread.
+- [ ] Coverage check reports remark↔ticket mapping, orphan tickets, and uncovered remarks — one pass, no manual re-count.
+- [ ] `track-changes-pdf` renders a revision-marked PDF grouped by ticket from a manuscript.
+- [ ] Both skills listed in `README.md` catalog; `make check-skills-drift` clean.
+- [ ] Description tests pass (discoverability-first first sentence).
+
+## Invariants
+- Skills are SKILL.md + pure I/O helpers; no direct Anthropic API calls in helpers (subscription auth).
+- Forge-agnostic language in skill text (no hardcoded `gh`).
+- The intake skill writes archived comments to a known, documented location — never relies on the author re-searching Gmail.
+
+## Exit criteria
+- Both skills exist, are catalogued and tested, and a real decision-letter
+  intake (next Oeconomia resubmission, or a fixture) runs end-to-end: extract →
+  archive → ledger → coverage check → track-changes PDF, with no manual
+  re-counting and no Gmail hunt.

@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Roar: log one celebration per merged PR since roar-last-sha, not one aggregate blob
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #589
+
+--- log ---
+2026-07-14T09:31Z claude created
+
+2026-07-14T11:04Z bump verify-reroll — round 1: octopus-merge silent undercount in build_records
+2026-07-14T11:07Z Minh Ha-Duong closed — autoclosed — PR #589
+--- body ---
+## Context
+Interactive sessions merge PRs one at a time and roar once at the end (per
+rules/git.md, an interactive merge only proposes /roar). Roar then measures
+"everything since roar-last-sha" and logs a single celebrations.jsonl
+entry. On 2026-07-13 the pipeline session merged eleven ticket PRs
+(#538-#548) between 11:34 and 15:54 and the 16:55 roar recorded them as one
+record (51 commits, 36 files, ticket null). Reflection, state refresh, and
+cleanup all happened; what is lost is per-ticket attribution, which bump
+tallies and celebration stats feed on. Raid roars (per merged PR) do not
+have this problem.
+
+## Actions
+1. In roar's telemetry step, enumerate the merge commits in
+   `roar-last-sha..HEAD` on the default branch; recover branch and ticket
+   from each merge-commit subject.
+2. Log one celebration entry per merged PR, falling back to the current
+   aggregate entry only when no merge commits are found (squash-merge
+   repos, no-forge repos).
+
+## Exit criteria
+- [ ] A batched interactive roar produces per-PR celebration entries
+      telemetry-equivalent to a raid's per-PR roars
+- [ ] Aggregate fallback preserved where merge commits are absent
+- [ ] `make check` passes

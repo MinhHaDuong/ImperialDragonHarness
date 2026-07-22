@@ -16,6 +16,7 @@ REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 
 VERIFY = (SKILLS / "gaze" / "SKILL.md").read_text()
+TELEMETRY = (SKILLS / "gaze" / "telemetry.yml").read_text()
 ERG_PR_MERGE = (SKILLS / "merge" / "erg-pr-merge").read_text()
 
 
@@ -135,6 +136,84 @@ def test_gaze_only_reroll_fix_agent_gets_isolation():
     # The sole grant lives in the REROLL fix-agent line.
     assert 'spawn a fix subagent with `isolation: "worktree"`' in norm, (
         "gaze/SKILL.md: the REROLL fix-agent isolation grant changed or was removed"
+    )
+
+
+def test_gaze_tier_recorded_in_telemetry_and_output_shape():
+    """The graduated battery tier (ticket 0320) must be auditable: the per-run
+    tier has to surface in BOTH the verdict-footer telemetry template and the
+    `## /gaze actions` output-shape template, so a reviewer can read which
+    battery ran from the posted comment. We assert the token in each rendered
+    template, not the tier-definition prose — the prose can be reworded, but the
+    machine-visible telemetry field is the contract."""
+    # 1. Verdict-footer template — the section under "### Verdict footer".
+    _, _, footer_after = VERIFY.partition("### Verdict footer")
+    assert footer_after, "gaze/SKILL.md: no `### Verdict footer` section found"
+    footer_section = footer_after.split("###", 1)[0]
+    footer_telemetry = [
+        line for line in footer_section.splitlines() if "telemetry:" in line and "wall=" in line
+    ]
+    assert footer_telemetry, (
+        "gaze/SKILL.md: no `telemetry: … wall=…` template in the verdict-footer section"
+    )
+    assert any("tier" in line for line in footer_telemetry), (
+        "gaze/SKILL.md: verdict-footer telemetry template does not carry a "
+        "`tier` field (ticket 0320 exit criterion — tiering must be auditable)"
+    )
+
+    # 2. Output-shape template — the fenced block after "## Output shape".
+    _, _, after = VERIFY.partition("## Output shape")
+    assert after, "gaze/SKILL.md: no `## Output shape` section found"
+    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
+    assert fenced, "gaze/SKILL.md: no fenced template under `## Output shape`"
+    assert any("tier" in block for block in fenced), (
+        "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
+        "a `tier` field (ticket 0320 exit criterion)"
+    )
+
+
+def test_gaze_documents_fork_liveness_window():
+    """A silent fork stalls between the review comment and the verdict (twice
+    seen: 2026-07-11, 2026-07-13). The caller-monitored liveness window must be
+    documented in SKILL.md and carried as a knob in telemetry.yml — prose and
+    knob must not drift apart (ticket 0321)."""
+    assert "Fork liveness" in VERIFY, (
+        "gaze/SKILL.md: missing the 'Fork liveness' clause"
+    )
+    assert "fork_liveness_seconds" in VERIFY, (
+        "gaze/SKILL.md: does not name the fork_liveness_seconds knob"
+    )
+    assert "fork_liveness_seconds" in TELEMETRY, (
+        "telemetry.yml: missing the fork_liveness_seconds knob"
+    )
+    assert "GAZE_LIVENESS_WINDOW_S" in VERIFY, (
+        "gaze/SKILL.md: does not name the GAZE_LIVENESS_WINDOW_S env override"
+    )
+    assert "GAZE_LIVENESS_WINDOW_S" in TELEMETRY, (
+        "telemetry.yml: missing the GAZE_LIVENESS_WINDOW_S env override"
+    )
+
+
+def test_gaze_liveness_fallback_names_verify_gate_not_a_rerun():
+    """On window expiry the fallback must skip re-running phases 2–5, drive
+    /verify-gate directly, and key off the three completion markers (verdict
+    comment, branch-tip motion, review-worktree mtime) — never relax the gate
+    (ticket 0321)."""
+    norm = _normalize(VERIFY)
+    assert "do not re-run phases 2–5" in norm.lower(), (
+        "gaze/SKILL.md: liveness fallback does not forbid re-running phases 2–5"
+    )
+    assert "/verify-gate" in norm, (
+        "gaze/SKILL.md: liveness fallback does not name the direct /verify-gate call"
+    )
+    assert "verdict comment" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the verdict-comment marker"
+    )
+    assert "branch-tip" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the branch-tip-motion marker"
+    )
+    assert "mtime" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the review-worktree mtime marker"
     )
 
 

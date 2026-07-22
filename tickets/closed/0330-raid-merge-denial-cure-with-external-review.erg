@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Raid Phase 7: cure a merge-permission denial with external review, don't park
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #581
+
+--- log ---
+2026-07-14T09:31Z claude created
+
+2026-07-14T09:40Z Minh Ha-Duong closed — autoclosed — PR #581
+--- body ---
+## Context
+Raid 245/320 (2026-07-14, job f10f81b4) ended with both PRs APPROVED and
+merge-ready, but the auto-mode permission classifier denied `erg-pr-merge`
+twice: it wants a human in the merge loop for self-authored, self-reviewed
+merge requests. The raid parked the PRs and stopped ("needs input"), so the
+merges landed hours later on the author's word and the deferred roar nearly
+evaporated.
+
+The author's verdict: the classifier's objection is valid — the coder and
+the gaze battery share one model family — and the correct move is to cure
+the objection with decorrelated external review, not to give up the
+workflow (and not to exit auto mode or skip permissions). The machinery
+already exists: the 0205 reviewer panel and the 0207 agnostic CLI seats
+(`/reviewers request` / `harvest`) review a diff on a different provider.
+What is missing is the raid Phase 7 recovery path wiring them to the
+denial.
+
+## Relevant files
+- `skills/raid/SKILL.md` — Phase 7 merge steps; today a denial has no
+  handling and improvises into park-and-ask
+- `skills/reviewers/SKILL.md` — the external-seat interface the cure uses
+- `projects/-home-haduong--claude/memory/feedback_classifier_prohibition_paraphrase.md`
+  — records the quoted-grant mitigation; the self-review objection is the
+  case no quoted grant answers
+
+## Actions
+1. Add a "Merge-permission denial" subsection to raid Phase 7: distinguish
+   denial from merge failure; cure via `/reviewers request` + `harvest`,
+   disposition findings through the gate contract, record the external
+   verdict on the merge request, then retry the merge once.
+2. Forbid the two wrong moves explicitly: weakening permissions and
+   hand-merging around the guard.
+3. Fallback (empty roster, seat failure, second denial): park merge-ready,
+   and require the briefing to name the deferred post-merge steps
+   (cleanup + per-PR roar) so an author-word merge doesn't strand them.
+4. Update the classifier-prohibition memory entry with the self-review
+   case and its cure.
+
+## Exit criteria
+- [ ] Raid Phase 7 documents the denial-recovery path (cure, retry once,
+      park as fallback with deferred steps named)
+- [ ] Memory entry updated
+- [ ] `make check` passes

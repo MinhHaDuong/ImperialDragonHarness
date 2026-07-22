@@ -4,6 +4,7 @@ Scripts are pure I/O — no LLM calls, no Anthropic dependency.
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -107,6 +108,41 @@ def test_supervisor_probes_primary_checkout():
     assert "check-primary-checkout" in content, "supervisor does not run the checkout probe"
 
 
+def test_skill_md_pr_body_sourced_from_decision_table():
+    """Ticket 0241: the consolidation PR body must be the step-4 decision table
+    verbatim, never free-form summary prose (PR #359 shipped an improvised "all
+    NOOP" body that mismatched the diff). Check co-occurrence in a window, not
+    that each phrase merely appears somewhere in the file."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    lc = content.lower()
+    window = 600
+    found = any(
+        "pr body" in lc[max(0, m.start() - window):m.end() + window]
+        and "free-form" in lc[max(0, m.start() - window):m.end() + window]
+        for m in re.finditer("decision table", lc)
+    )
+    assert found, "PR body / decision table / free-form not co-located in SKILL.md"
+
+
+def test_skill_md_counts_derived_mechanically():
+    """Ticket 0275: before/after counts come from grep on MEMORY.md at base vs
+    head, the ADD list from --diff-filter=A, and the reconciliation identities
+    are stated verbatim so the executor self-checks (PR #471 shipped a
+    prose-recalled "76->74" over a real 72->74)."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "grep -c '^- \\['" in content, "count derivation grep missing"
+    assert "--diff-filter=A" in content, "ADD-list diff filter missing"
+    assert "NOOP + UPDATE + DELETE" in content, "before-count identity missing"
+    assert "NOOP + UPDATE + ADD" in content, "after-count identity missing"
+
+
+def test_skill_md_delete_removes_provenance():
+    """Ticket 0241: a DELETE must drop its provenance record, else deleted
+    entries keep counting toward the promotion frequency gate."""
+    content = (DREAM_DIR / "SKILL.md").read_text()
+    assert "provenance.py remove" in content, "DELETE does not clean provenance"
+
+
 def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
 
@@ -204,6 +240,160 @@ def test_provenance_promote(provenance_env):
 def test_provenance_promote_unknown_slug(provenance_env):
     result = _run_provenance("promote", "nonexistent", home=provenance_env)
     assert result.returncode == 1
+
+
+# --- Provenance remove (ticket 0241: DELETE cleans provenance) ---
+
+
+def test_provenance_remove_drops_one_project(provenance_env):
+    """remove drops the named project from a multi-project slug; entry survives."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["projects"] == ["project-beta"]
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" in show["entries"]
+
+
+def test_provenance_remove_last_project_deletes_entry(provenance_env):
+    """Removing the last project of an unpromoted entry deletes the entry."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"removed": "feedback_vim"}
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" not in show["entries"]
+
+
+def test_provenance_remove_last_project_keeps_promoted_entry(provenance_env):
+    """Promotion is one-way: a promoted entry survives removal of its last
+    project (its lesson has earned harness-level status independent of origin)."""
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("promote", "feedback_vim", home=provenance_env)
+    result = _run_provenance("remove", "feedback_vim", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["projects"] == []
+    assert data["promoted"] is True
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "feedback_vim" in show["entries"]
+
+
+def test_provenance_remove_unknown_slug(provenance_env):
+    """remove of an untracked slug is an idempotent no-op (exit 0, store unchanged).
+
+    SKILL.md step 5 calls remove unconditionally on every DELETE, but 37% of live
+    memory entries predate the provenance store, so a hard-fail would abort a
+    consolidation on the first DELETE of an untracked entry."""
+    result = _run_provenance("remove", "nonexistent", "project-alpha", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"removed": None}
+    show = json.loads(_run_provenance("show", home=provenance_env).stdout)
+    assert "nonexistent" not in show["entries"]
+
+
+# --- Provenance canonical-project gate (ticket 0270: path aliases collapse) ---
+
+
+def _write_aliases(home, mapping):
+    """Write the read-time alias table to <HOME>/.claude/memory/.project-aliases.json."""
+    path = home / ".claude" / "memory" / ".project-aliases.json"
+    path.write_text(json.dumps(mapping))
+
+
+def _seed_provenance(home, slug, projects, promoted=False):
+    """Write .provenance.json directly with one entry under the given project keys.
+
+    Directory-slug project keys begin with `-` (e.g. `-home-haduong--claude`), which
+    argparse in the record CLI parses as `-h`; the decay tests already seed the store
+    directly for the same reason. We exercise candidates() in isolation here."""
+    path = home / ".claude" / "memory" / ".provenance.json"
+    now = "2026-07-11T00:00:00Z"
+    path.write_text(json.dumps({
+        "entries": {
+            slug: {
+                "projects": list(projects),
+                "first_seen": now,
+                "last_confirmed": now,
+                "promoted": promoted,
+            }
+        }
+    }))
+
+
+def test_provenance_candidates_alias_collapse_not_candidate(provenance_env):
+    """Two path-spellings of one project collapse to one canonical project, so a
+    slug recorded under both keys is NOT a promotion candidate (frequency < 2).
+
+    Directory-slug keys, not paths: the AEDIST report registered under both
+    `-home-haduong-aedist-technical-report` and its
+    `-home-haduong-CNRS-papiers-actif-AEDIST-technical-report` spelling. The gate
+    must count distinct *canonical* projects."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _seed_provenance(provenance_env, "reference_zotero", [
+        "-home-haduong-aedist-technical-report",
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == []
+
+
+def test_provenance_candidates_true_distinct_still_candidate(provenance_env):
+    """Teeth-check: with the alias table present, a slug in two genuinely distinct
+    projects is still the sole candidate — the canonicalizer collapses only aliases."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == ["feedback_vim"]
+
+
+def test_provenance_candidates_substring_key_still_distinct(provenance_env):
+    """A key that shares a substring with an aliased key but is not that key stays
+    distinct — guards against substring matching creeping in instead of dict.get()."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-aedist-technical-report":
+            "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+    })
+    _seed_provenance(provenance_env, "feedback_vim", [
+        "-home-haduong-aedist-technical-report",
+        "-home-haduong-aedist-technical-report-notes",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == ["feedback_vim"]
+
+
+def test_provenance_candidates_chained_alias_not_candidate(provenance_env):
+    """A chained alias table {old->A, A->B} must resolve `old` all the way to B,
+    so a slug recorded under both `old` and `B` collapses to one canonical
+    project and is NOT a candidate. Single-level dict.get() stops at A and
+    wrongly counts {A, B} == 2 (ticket 0270 reroll)."""
+    _write_aliases(provenance_env, {
+        "-home-haduong-old-spelling": "-home-haduong-mid-spelling",
+        "-home-haduong-mid-spelling": "-home-haduong-canonical",
+    })
+    _seed_provenance(provenance_env, "feedback_vim", [
+        "-home-haduong-old-spelling",
+        "-home-haduong-canonical",
+    ])
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    candidates = json.loads(result.stdout)
+    assert [c["slug"] for c in candidates] == []
 
 
 def test_provenance_decay_empty(provenance_env):
@@ -384,3 +574,79 @@ def test_provenance_read_during_write_never_torn(provenance_env):
     # The reader must see a complete document: the old entry is always present
     # (the new entry may or may not have landed, depending on old-or-new).
     assert "slug_old" in data["entries"], "reader lost the pre-existing entry"
+
+
+# ── Provenance CLI robustness (ticket 0282) ────────────────────────────────────
+
+
+def test_provenance_record_leading_dash_project(provenance_env):
+    """Ticket 0282: production project keys are directory slugs that begin
+    with '-' (e.g. -home-haduong-...). argparse clusters '-home-…' into '-h'
+    and help-exits 0 — a silent no-op on a mutating call. The CLI must accept
+    them directly."""
+    result = _run_provenance(
+        "record", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    assert result.returncode == 0, result.stderr
+    show = _run_provenance("show", home=provenance_env)
+    data = json.loads(show.stdout)
+    assert "feedback_vim" in data["entries"], "record silently no-opped"
+    assert data["entries"]["feedback_vim"]["projects"] == [
+        "-home-haduong-some-project"
+    ]
+
+
+def test_provenance_remove_leading_dash_project(provenance_env):
+    """Same defect on the remove verb (SKILL.md step 5 calls it per DELETE)."""
+    _run_provenance(
+        "record", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    result = _run_provenance(
+        "remove", "feedback_vim", "-home-haduong-some-project", home=provenance_env
+    )
+    assert result.returncode == 0, result.stderr
+    show = _run_provenance("show", home=provenance_env)
+    assert "feedback_vim" not in json.loads(show.stdout)["entries"]
+
+
+def test_provenance_help_still_works(provenance_env):
+    """The separator auto-insert must not eat -h/--help, top-level or per-verb."""
+    top = _run_provenance("--help", home=provenance_env)
+    assert top.returncode == 0 and "record" in top.stdout
+    sub = _run_provenance("record", "-h", home=provenance_env)
+    assert sub.returncode == 0 and "slug" in sub.stdout
+
+
+def test_provenance_candidates_survives_malformed_alias_table(provenance_env):
+    """Ticket 0282: a corrupt .project-aliases.json must degrade to 'no
+    aliases' with a stderr warning, not crash candidates."""
+    aliases_path = provenance_env / ".claude" / "memory" / ".project-aliases.json"
+    aliases_path.write_text("{not json")
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert "alias" in result.stderr.lower()  # warned, not silent
+    slugs = [c["slug"] for c in json.loads(result.stdout)]
+    assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty
+
+
+@pytest.mark.parametrize("payload", ["42", "null", "[1]", '{"a": 1}'])
+def test_provenance_candidates_survives_wrong_shape_alias_table(
+    provenance_env, payload
+):
+    """Ticket 0279: valid JSON of the wrong shape (a scalar, a list, or a dict
+    whose values are not strings) parses cleanly past the JSONDecodeError guard,
+    then crashes _canonical_project downstream (e.g. `current in aliases` on an
+    int, or a non-str alias value fed back into the loop). The shape check must
+    degrade these to 'no aliases' with the same stderr warning, exactly like an
+    unparseable table."""
+    aliases_path = provenance_env / ".claude" / "memory" / ".project-aliases.json"
+    aliases_path.write_text(payload)
+    _run_provenance("record", "feedback_vim", "project-alpha", home=provenance_env)
+    _run_provenance("record", "feedback_vim", "project-beta", home=provenance_env)
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert "alias" in result.stderr.lower()  # warned, not silent
+    slugs = [c["slug"] for c in json.loads(result.stdout)]
+    assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty

@@ -1,0 +1,79 @@
+%erg 0.1
+Title: rtk hook fails to run pytest (spawn error)
+Created: 2026-06-17
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #495
+
+--- log ---
+2026-06-17T11:14Z Minh Ha-Duong created
+2026-07-11T20:55Z claude note Root cause corrected: not an rtk defect. Reproduced on rtk 0.34.3 — the pipx pytest shim at ~/.local/bin/pytest has a shebang on a deleted interpreter (system Python 3.13→3.14; `pipx list` shows 6 packages with invalid interpreters). rtk's ENOENT cannot distinguish target-missing from interpreter-missing; it resolves ls/git/python3 fine. Workaround `rtk proxy python3 -m pytest` verified; now documented in rules/coding-python.md. No upstream bug warranted — optional UX suggestion only.
+
+2026-07-11T21:24Z Minh Ha-Duong closed — autoclosed — PR #495
+--- body ---
+## Context
+With the `rtk hook claude` Bash PreToolUse hook active, `pytest` and
+`python3 -m pytest` are rewritten by rtk and fail:
+
+    rtk: Failed to run pytest: Failed to spawn process: No such file or directory (os error 2)
+
+The pytest binary exists (`~/.local/bin/pytest`; `python3 -c "import pytest"`
+works), so the rtk-spawned child cannot resolve it on its PATH. Working
+workaround: `rtk proxy python3 -m pytest …` bypasses the rewrite and runs the
+suite normally (verified 2026-06-17 on the `~/CNRS/html` test suite — 65 passed).
+
+`rtk config.toml` (default, at `~/.config/rtk/config.toml`, uncreated) has **no
+command-passthrough / allowlist knob** — its sections are tracking, display,
+filters (output ignore globs), and tee. So the root fix is in the **rtk binary**
+(an external tool), not this repo. This ticket is the harness-side record +
+decision on where to land the fix.
+
+## Relevant files
+- `settings.json` — the `rtk hook claude` Bash matcher (~line 168). **Do not
+  edit blindly**: another session held `settings.json` and `scripts/shell-init.sh`
+  dirty on 2026-06-17 (unrelated changes); coordinate before touching.
+- `~/.config/rtk/config.toml` — default, no relevant knob.
+- rtk binary (external repo) — actual rewrite logic.
+- `rules/coding-python.md` — candidate home for a documented workaround.
+
+## Actions
+1. Decide the fix locus:
+   a. Patch/report rtk so its pytest rewrite resolves the binary via
+      `python -m pytest` or honours the caller's PATH; or
+   b. add a pytest passthrough/allowlist if rtk gains one; or
+   c. if neither is available, document `rtk proxy python3 -m pytest` as the
+      standing workaround.
+2. If (c): add a one-line note to the Testing section of `rules/coding-python.md`.
+
+## Test
+- Reproduce: run `python3 -m pytest` under the hook → observe the spawn failure.
+- Confirm `rtk proxy python3 -m pytest` succeeds on the same suite.
+
+## Verification
+- [ ] pytest runs cleanly under the hook (rtk fixed) OR the `rtk proxy`
+      workaround is documented where a Python test-writer will see it.
+
+## Invariants
+- Do not break other rtk command rewrites.
+- Do not edit `settings.json` / `scripts/shell-init.sh` while another session
+  holds them dirty.
+
+## Resolution (2026-07-11)
+
+The root cause is not rtk. Reproduced on rtk 0.34.3: the pipx pytest
+shim at `~/.local/bin/pytest` carries a shebang pointing at a deleted
+interpreter — the system Python moved 3.13→3.14 and `pipx list` shows
+six packages with invalid interpreters. The shim is broken, so any
+spawn of it fails; rtk's ENOENT surfaces the same "No such file or
+directory" whether the target or its interpreter is missing, which
+misread as an rtk fault. rtk resolves `ls`/`git`/`python3` fine.
+
+Workaround chosen (option c): `rtk proxy python3 -m pytest …`, verified
+working and now documented in the Testing section of
+`rules/coding-python.md`, alongside the `pipx reinstall-all` fix for the
+underlying stale-venv case. No upstream rtk bug is warranted — an
+optional UX suggestion (distinguish target-missing from
+interpreter-missing in the error) is the most that applies.
+
+## Exit criteria
+- Either pytest runs under the hook, or the workaround is documented and
+  discoverable; the ticket records the rtk-side root cause.

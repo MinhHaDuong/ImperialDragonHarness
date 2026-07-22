@@ -1,0 +1,55 @@
+%erg 0.1
+Title: SIGPIPE-class grep|grep pipe in test_harness_rules_injection.sh:44
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #594
+
+--- log ---
+2026-07-14T12:40Z claude created
+2026-07-14T11:29Z claude note imagine: single grep|grep site confirmed (no siblings in suite); the pipe is a same-line cooccurrence check — on-start.sh:33 pairs cat and README.md on one line, so one anchored `grep -qE 'cat[^#]*README\.md'` against the file replaces it with no pipe; capture-then-[[ ]] dropped as ceremony; mutation check unchanged
+2026-07-14T11:40Z claude note plan+feasibility: imagine output is the plan (file:line-precise, phase-3 absorbed per raid-0252 precedent); anchors verified (suite :44, on-start.sh:33); PASS, no overlap with 0333
+2026-07-14T12:50Z claude note execute: replaced the pipe with single anchored `grep -qE 'cat[^#]*README\.md'` (no pipe, cannot SIGPIPE); sibling sweep re-run — line 44 was the sole grep|grep -q in the suite; mutation on throwaway on-start.sh copy (README.md dropped) makes the converted check FAIL loudly, pristine PASSes; suite green standalone, make check green
+
+2026-07-14T12:24Z Minh Ha-Duong closed — autoclosed — PR #594
+--- body ---
+## Context
+
+Gaze review of PR #584 (ticket 0329) flagged a pre-existing pipeline at
+`tests/test_harness_rules_injection.sh:44`:
+
+```bash
+if ! grep -F 'cat' scripts/on-start.sh | grep -qF 'README.md'; then
+```
+
+Under `set -o pipefail`, the trailing `grep -q` exits on first match and can
+close the pipe before the upstream `grep -F` finishes writing; the upstream
+then dies with SIGPIPE (141), which pipefail reports as the pipeline status —
+a nondeterministic false FAIL. This is the same defect class fixed suite-wide
+in PR #575 (72659a1, printf|grep) and PR #584 (grep-here-string), but this
+site greps a FILE through a filter pipe, so it was out of scope for both.
+
+PR #584 left it untouched deliberately (different mechanism than the 0329
+here-string flake); this ticket tracks the residual site.
+
+## Relevant files
+- `tests/test_harness_rules_injection.sh` — line 44, the `grep | grep -q` pipe
+
+## Actions
+1. Replace the pipe with a form that cannot SIGPIPE, e.g. capture then match:
+   `line=$(grep -F 'cat' scripts/on-start.sh || true)` then
+   `[[ "$line" == *README.md* ]]`; or drop the first stage and match the
+   README.md needle on the cat-line directly with a single grep against the file.
+2. Sweep the same suite for any sibling `grep | grep -q` pipes.
+
+## Test
+- Suite `tests/test_harness_rules_injection.sh` stays green standalone and
+  under `make check`; the converted check still fails loud when the needle is
+  removed from `scripts/on-start.sh` (throwaway-copy mutation).
+
+## Invariants
+- Fail-loud semantics preserved; no retry or `|| true` on the assertion itself.
+
+## Exit criteria
+- [x] No `grep | grep -q` pipeline remains in tests/test_harness_rules_injection.sh
+- [x] Mutation check confirms the converted site still fails on needle removal
+- [x] `make check` passes

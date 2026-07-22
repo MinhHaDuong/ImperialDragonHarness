@@ -2,7 +2,6 @@
 Title: External-reviewer panel for verify — contract, decorrelation rule, trial tracker
 Created: 2026-06-04
 Author: MinhHaDuong
-Blocked-by: 0206
 Blocked-by: 0207
 
 --- log ---
@@ -15,6 +14,13 @@ Blocked-by: 0207
 2026-06-05T09:10Z claude note rewritten around review-is-CI (author directive): ACP dropped as the substrate; a reviewer seat is a sandboxed CI-style job (0217 seat-runner), findings normalize to the contract shape, advisory→required is the optional→required-check toggle. Decorrelation evidence landed (docs/research/ensemble-decorrelation-evidence.md): cap N at 2-4, composition>count, the genuinely-different local open-weights seat buys the real independence (prototype: qwen3.6-35b-a3b usable, devstral hallucinated). 0207/0208 re-scoped off ACP; children now blocked-by 0217
 2026-06-05T11:07Z claude note corrective: the 06:41Z ACP-client architecture decision was superseded the same day by ticket 0217 (sandbox-runner spinoff, PR #289 panel + deep-research evidence) — OS-level sandbox (rootless podman) is the load-bearing containment, ACP demoted to optional plumbing. Current seat mechanism: 0217 seat-runner + /reviewers skill (0208, closed). Do not orient from the 06:41Z note
 2026-06-05T11:08Z MinhHaDuong note blocker 0208 closed — Blocked-by removed.
+2026-07-14T05:05Z Minh Ha-Duong note blocker 0206 closed — Blocked-by removed.
+2026-07-14T17:14Z Minh Ha-Duong note child 0346 filed — /reviewers audition subcommand (frozen benchmark board, duplicate/unique-verified/unique-hallucinated classification); audition filters candidates before the advisory trial, never replaces it
+2026-07-14T19:55Z Minh Ha-Duong note child 0348 filed — scores read-back (the integration review's reading surface), explicit help verb, stale copilot trial-ticket pointer (0206 archived to closed/)
+2026-07-14T21:13Z Minh Ha-Duong note child 0353 filed — latency capture on both paths plus peer-relative SLOW elimination (factor x median p50 on the same board), author directive; blocked-by 0348 for the scores read-back surface
+2026-07-15T06:10Z Minh Ha-Duong note child 0356 filed — cross-project PR benchmark, mined-defect sample + pairwise challenger audition (deferred, no active work planned yet)
+2026-07-15T06:11Z Minh Ha-Duong note Actions 1-2 landed via PR #638 — gaze panel-extension contract (auto request/harvest/scorecard, fail-open advisory seats) + decorrelation rewording in rules/workflow.md; first two exit criteria satisfied
+2026-07-15T06:11Z Minh Ha-Duong note author reframe (2026-07-15) — squad-management model recorded in the body; the promote/drop endpoint becomes continuous squad management
 --- body ---
 ## Context
 
@@ -31,6 +37,11 @@ stays open until children merge + integration review (roar step 7).
 - tickets/0207 — agnostic CLI reviewer seat (OpenRouter + llama-server configs)
 - tickets/0208 — reviewer-management surface (roster, harvest, scorecard)
 - tickets/0217 — sandbox seat-runner (the seat execution mechanism; foundational)
+- tickets/0346 — /reviewers audition: retrospective benchmark board for candidate seats
+- tickets/0348 — /reviewers scores read-back, help verb, stale trial-ticket pointer
+- tickets/0353 — latency tracking on audition and request; peer-relative slow-candidate elimination
+- tickets/0356 — cross-project PR benchmark: mined-defect sample +
+  challenger-vs-squad audition (deferred)
 
 ## Architecture: review is CI (decided 2026-06-05, supersedes the ACP draft)
 
@@ -101,6 +112,38 @@ locally and mirror into forge CI — no forge round-trip required.
    to generic skill prose, not to tool-specific helpers. Mechanical
    agnostic-guard patterns still require `<!-- harness-extension-point -->`
    escape hatches where literals appear under skills/.
+
+## Squad-management model (author, 2026-07-15)
+
+Reviewer management is football team management. A constantly renewed
+pool of talent exists outside (the OpenRouter catalog, local models);
+some are auditioned; about a dozen are retained on the roster; a
+handful (2-4, per the decorrelation cap) are selected to play each
+game, the lineup depending on the game (diff type, language, risk).
+Performance is monitored continuously (per-PR scorecards, auto-appended
+by gaze) and everybody on the roster is retrospectively assessed on
+past matches (audition-board replays). Monitoring and assessment guide
+team composition.
+
+Consequences for this tracker:
+
+- The exit criterion "promote/drop decided" is reframed: not a one-time
+  verdict but the first iteration of continuous squad management.
+- Roster ≠ lineup (deferred mechanism): panel.yml holds the retained
+  squad; gaze's request step should eventually select the per-game
+  lineup from the diff's traits (capability tag or bench status per
+  seat). Deferred until the squad outgrows the current two active
+  seats — with two seats, everyone plays every game.
+- Incumbent retro-assessment (deferred mechanism): the audition board
+  must grow (each gazed PR with dispositioned findings is a new past
+  match with ground truth) and audition must accept roster members, not
+  only candidates, enabling periodic same-board re-ranking of the whole
+  squad.
+- Pool scouting falls out for free: new arrivals are just names run
+  through the existing audition.
+- Both mechanisms are deliberately NOT ticketed now (2026-07-14
+  cool-down bar); this note is the design anchor for when the author
+  commissions them.
 
 ## Actions
 

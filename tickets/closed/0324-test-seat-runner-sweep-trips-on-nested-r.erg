@@ -1,0 +1,27 @@
+%erg 0.1
+Title: test_seat_runner sweep trips on nested runtime worktrees
+Created: 2026-07-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #567
+
+--- log ---
+2026-07-13T21:18Z Minh Ha-Duong created
+
+2026-07-13T21:33Z Minh Ha-Duong closed — autoclosed — PR #567
+--- body ---
+## Context
+`tests/test_seat_runner.sh`'s "stale seat-runner-prototype refs" sweep
+(lines 84-90) runs `grep -rl "seat-runner-prototype" ... .` over the whole
+working tree. On a primary checkout with leftover sibling worktrees under
+`.claude/worktrees/` (untracked runtime dirs, sometimes containing
+pre-rename copies of tracked files), the sweep trips on paths that were
+never part of the tracked source. It passes in CI and in a fresh PR
+worktree (no nested worktrees present) but fails `make check` on a
+checkout that has sibling worktrees. Reproduced 2026-07-13.
+
+## Exit criteria
+- [ ] Sweep uses `git grep` over tracked files only, not `grep -r` over the
+      working tree
+- [ ] `bash tests/test_seat_runner.sh` passes on a checkout containing a
+      nested worktree stub with old refs
+- [ ] `make check-fast` passes

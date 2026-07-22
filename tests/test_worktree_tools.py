@@ -6,7 +6,9 @@ Exercises:
   - scripts/worktree-gc.sh              — GC stale worktrees (any path/name)
                                           on upstream-gone branches; rails:
                                           clean tree, gone branch, not the
-                                          invoking worktree
+                                          invoking worktree. Also report-only
+                                          surfaces unregistered "husk" dirs
+                                          under .claude/worktrees/ (ticket 0325).
   - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
                                           uncommitted files (incl. untracked).
                                           Closes the ExitWorktree gap that lost
@@ -283,6 +285,115 @@ def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
     assert str(wt) in _worktree_paths(primary)
 
 
+@pytest.mark.integration
+def test_gc_reports_unregistered_husk_dir(origin):
+    """A husk dir under .claude/worktrees/ that is NOT a registered worktree
+    (a deregistered session base cwd, only a scratch .claude/ left behind) must
+    be reported — report-only, never removed, since it may be a live session's
+    base cwd (ticket 0325)."""
+    _, primary = origin
+    husk = primary / ".claude" / "worktrees" / "husk-agent-dead"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk-agent-dead" in res.stdout
+    assert "husk" in res.stdout
+
+
+@pytest.mark.integration
+def test_gc_reports_husk_when_run_from_linked_worktree(origin):
+    """The husk scan must root on the PRIMARY repo, not on the `repo` arg's own
+    toplevel — else running gc from a linked worktree (the harness's normal cwd,
+    and how lair invokes it bare) silently skips the scan (ticket 0325)."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-live", dirty=False)  # live linked worktree
+    husk = primary / ".claude" / "worktrees" / "husk-agent-dead"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(wt)  # invoked from the linked worktree, not the primary
+    assert res.returncode == 0
+    assert "husk-agent-dead" in res.stdout
+    assert "husk" in res.stdout
+
+
+@pytest.mark.integration
+def test_gc_does_not_report_registered_worktree_under_claude_worktrees(origin):
+    """A REGISTERED worktree living directly under .claude/worktrees/ (the real
+    harness layout) must NOT be flagged as a husk — it is in the registered set,
+    so the set-difference excludes it (ticket 0325)."""
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    wtdir.mkdir(parents=True)
+    wt = wtdir / "agent-live"
+    git(primary, "worktree", "add", "-b", "agent-live", str(wt))
+    git(wt, "push", "-u", "origin", "agent-live")  # live branch, not gone → kept
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_does_not_report_container_of_nested_registered_worktree(origin):
+    """A registered worktree at .claude/worktrees/g/leaf (multi-segment names are
+    allowed by EnterWorktree's schema) must NOT make the container dir `g` be
+    reported as a husk: `g` is at find's -maxdepth 1 but merely CONTAINS a
+    registered worktree. An exact-path set-difference misses that, false-flagging
+    a live worktree's container (ticket 0325, verify round 1 finding 1)."""
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    leaf = wtdir / "g" / "leaf"
+    leaf.parent.mkdir(parents=True)
+    git(primary, "worktree", "add", "-b", "g-leaf", str(leaf))
+    git(leaf, "push", "-u", "origin", "g-leaf")  # live branch, not gone → kept
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "husk" not in res.stdout
+    assert str(leaf) in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_husk_name_with_newline_cannot_forge_line(origin):
+    """A husk dirname with an embedded newline must not forge an extra output
+    line: raw interpolation of $(basename) / $dir would split the message and let
+    the name inject a standalone line. Every non-empty stdout line must stay
+    prefixed by the tool banner (ticket 0325, verify round 1 finding 2)."""
+    _, primary = origin
+    husk = primary / ".claude" / "worktrees" / "evil\nFAKE injected line"
+    (husk / ".claude").mkdir(parents=True)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    for line in res.stdout.splitlines():
+        if line.strip():
+            assert line.startswith("worktree-gc:"), f"forged line: {line!r}"
+
+
+@pytest.mark.integration
+def test_gc_warns_when_worktrees_dir_unreadable(origin):
+    """When .claude/worktrees/ is unreadable, `find` inside the process
+    substitution fails invisibly to set -e and the scan silently reports zero
+    husks. The scan must fail open WITH a visible stderr signal (ticket 0325,
+    verify round 1 finding 4)."""
+    import os
+
+    if os.geteuid() == 0:
+        pytest.skip("permission gate is a no-op for root")
+    _, primary = origin
+    wtdir = primary / ".claude" / "worktrees"
+    (wtdir / "husk-x" / ".claude").mkdir(parents=True)
+    os.chmod(wtdir, 0o000)
+    try:
+        res = _gc(primary)
+    finally:
+        os.chmod(wtdir, 0o755)
+    assert res.returncode == 0
+    assert "unreadable" in res.stderr.lower()
+
+
 # --------------------------------------------------------------------------- #
 # worktree-exit-preflight.sh — ticket 0174
 # --------------------------------------------------------------------------- #
@@ -372,9 +483,10 @@ def test_preflight_errors_on_missing_path():
     assert res.returncode != 0
 
 
-def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
-    """A locked but unlockable agent-* worktree on a gone branch should be
-    unlocked and removed — exercises the locked-branch code path."""
+def test_gc_skips_locked_gone_worktree(origin):
+    """A locked worktree is an in-use marker (molt's active-session guard
+    reads it that way) — the GC must skip it, never unlock-and-remove: the
+    pre-0355 unlock path defeated the one marker a session could set."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-locked", dirty=False)
     git(primary, "worktree", "lock", str(wt))
@@ -382,5 +494,25 @@ def test_gc_unlocks_and_removes_locked_gone_worktree(origin):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "removed agent-locked" in res.stdout
-    assert str(wt) not in _worktree_paths(primary)
+    assert "skip agent-locked (locked" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_skips_live_process_cwd_worktree(origin):
+    """A clean worktree on a gone branch whose dir is a live process's cwd is
+    an ACTIVE session's base, not an abandoned tree — the exact state the
+    2026-07-13 incident removed (ticket 0355). Must be skipped, in place."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-session", dirty=False)
+    make_branch_gone(remote, primary, "agent-session")
+
+    proc = subprocess.Popen(["sleep", "60"], cwd=str(wt))
+    try:
+        res = _gc(primary)
+        assert res.returncode == 0
+        assert "skip agent-session (live process cwd inside" in res.stdout
+        assert str(wt) in _worktree_paths(primary)
+    finally:
+        proc.kill()
+        proc.wait()

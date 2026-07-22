@@ -56,6 +56,32 @@ def test_fetcher_failure_recorded_not_fatal():
     assert out[("r", 9)]["merged"] == ""  # row present, marked unfetched
 
 
+def test_build_join_refetches_blank_cached_rows(tmp_path):
+    """Ticket 0246 action 1: a cached row left blank by a prior failed fetch
+    (merged in (None, "")) must be re-fetched on a networked run and
+    overwritten; a resolved cached row is never re-fetched."""
+    cached = {
+        # resolved — must be left untouched, no fetch
+        ("r", 1): {"repo": "r", "pr": 1, "additions": 10, "deletions": 2,
+                   "merged": True, "reroll_mentions": 0, "escalate_mentions": 0},
+        # blank — a prior fetch failed; must be re-fetched and overwritten
+        ("r", 2): {"repo": "r", "pr": 2, "additions": "", "deletions": "",
+                   "merged": "", "reroll_mentions": "", "escalate_mentions": ""},
+    }
+    calls = []
+
+    def fetcher(repo, n):
+        calls.append((repo, n))
+        return {"repo": repo, "pr": n, "additions": 7, "deletions": 3,
+                "merged": True, "reroll_mentions": 2, "escalate_mentions": 0}
+
+    out = tpj.build_join([("r", 1), ("r", 2)], cached, fetcher)
+    assert calls == [("r", 2)], "only the blank pair is re-fetched"
+    assert out[("r", 1)]["additions"] == 10, "resolved row untouched"
+    assert out[("r", 2)]["merged"] is True, "blank row overwritten by fetch"
+    assert out[("r", 2)]["additions"] == 7
+
+
 def test_cli_flags_present():
     src = (SCRIPTS / "trace-pr-join.py").read_text()
     for flag in ("--census", "--cache", "--owner", "--no-network"):

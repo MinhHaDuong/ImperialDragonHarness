@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Hardcoded-output-literal detector for the test-quality audit surface
+Created: 2026-07-12
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #514
+
+--- log ---
+2026-07-12T18:55Z claude created
+
+2026-07-13T07:01Z claude note wontfix evidence: inventoried both live suites (IDH tests/ 54 files, chemin-de-voix 33 files) for asserted-literal-without-derivation; zero HARDCODED instances found
+2026-07-13T07:56Z Minh Ha-Duong closed — autoclosed — PR #514
+--- body ---
+Child of tracker 0266 (pillage manifest,
+docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 2).
+
+## Context
+
+Neither maw-audit (mutation axes) nor test-audit-llm (read-and-judge
+lenses) checks whether an output value is data-derived or memorized. The
+paper's hardcoding audit (arXiv:2604.21965 App. B.4) flags a numeric
+literal asserted or returned with no computation path from data — the
+"toothless test that hardcodes its expected value" failure mode, detected
+mechanically.
+
+## Actions
+
+1. Prototype an AST-based detector (Python `ast`): numeric literal in an
+   assert/return with no data-derived expression upstream in the function.
+2. Decide the home — a test-audit-llm lens vs a maw-audit pre-pass; prefer
+   mechanical-first per the harness invariant; document the choice.
+3. Known-bad fixture (hardcoded expected value, no computation) as anchor.
+
+## Resolution — wontfix, not a real issue here
+
+Empirical inventory (2026-07-13) of both live test suites found zero
+instances of the target defect. IDH tests/ (54 files, ~13k lines): 0
+HARDCODED, 1 borderline mirror (test_trace_compact_audit.py), 1 golden
+ratchet with documented regeneration path. chemin-de-voix tests/ (33
+files, 146 literal-assert hits read): 0 HARDCODED — near-misses were
+documented canaries (test_voice_count.py) or deliberate threshold
+assertions on real data. Both suites already practice the antidotes:
+inline eyeball-able fixtures, expected values derived from live config,
+thresholds instead of pasted metrics. A detector would remediate a
+defect class these codebases do not exhibit; the paper's context
+(gating freshly LLM-generated tests) is a different, smaller tool to be
+ticketed if agent-written tests ever show the smell.
+
+## Exit criteria
+
+- [ ] Detector implemented, AST-first, LLM only for ambiguous data flow
+- [ ] Wired into the chosen skill and documented
+- [ ] Fixture catches the hardcoded-value case (RED pre-fix)

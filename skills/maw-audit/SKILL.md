@@ -107,7 +107,7 @@ empty set.
 > The Workflow tool cuts each agent's throwaway worktree from the *session's*
 > repository (probe-verified, ticket 0221). Launched from any other repo, every
 > agent lands in a tree without the configured sources and fails at baseline. To
-> audit `~/git-erg`, open the Claude session in `~/git-erg`.
+> audit `~/CNRS/code/git-erg`, open the Claude session in `~/CNRS/code/git-erg`.
 
 The workflow is a `Workflow`-tool script: `skills/maw-audit/maw-audit.js`.
 Phases:
@@ -138,8 +138,12 @@ Phases:
    sibling sites; surviving siblings = instance-pinned contract.
 6. **Guards** (serialized) — the designated canary guard tests run alone (not
    under fan-out load). Skipped openly if none designated.
-7. **Cleanup** — prunes any hand-rolled `/tmp/fang-*` scratch worktrees agents
-   left on detached HEAD.
+7. **Cleanup** — prunes any hand-rolled `/tmp/maw-*` / `/tmp/fang-*` scratch
+   worktrees agents left on detached HEAD. These scratch trees live outside the
+   guarded `*/.claude/worktrees/*` namespace by design (ticket 0303): being on a
+   detached HEAD they never commit, push, or track a branch, so the main-repo
+   protection guards have nothing to protect — their lifecycle is self-contained
+   in this phase. Not an oversight; see the rationale in `maw-audit.js`.
 
 Then the engine assembles a deterministic report (no LLM formatting) and returns
 it; write it to `CONFIG.OUTPUT`.
@@ -209,10 +213,10 @@ blast-radius × change-frequency findings surface first.
 
 Because discovery derives the config by reading the repo, a non-Go run is
 **zero-prep**: no `.maw-audit.json`, no pairing table to author. The validated
-second-language target is **`~/aedist-technical-report`** (a `uv` Python project,
+second-language target is **`~/CNRS/papiers/actif/AEDIST-technical-report`** (a `uv` Python project,
 30+ test files). The exact launch procedure:
 
-1. Open a Claude session **rooted in `~/aedist-technical-report`** (the
+1. Open a Claude session **rooted in `~/CNRS/papiers/actif/AEDIST-technical-report`** (the
    hard requirement — Workflow agents cut their worktrees from the session repo;
    this run **cannot** be launched from a `~/.claude`-rooted session).
 2. Invoke `maw-audit` with **no args** (or pass `{ "RISK": {...} }` / a `GUARDS`

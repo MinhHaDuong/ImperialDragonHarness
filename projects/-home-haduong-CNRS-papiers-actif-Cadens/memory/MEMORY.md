@@ -1,0 +1,6 @@
+- [Managed-agent mobile dominance](feedback_ccr_mobile_dominance.md) — 86% sessions / 89% events Android-originated; frame as phone-first supervision; "CCR" removed from paper, use "managed-agent"
+- [gh pr merge worktree workaround](reference_gh_pr_merge_worktree.md) — when `gh pr merge` fails on worktree conflict, use `gh api -X PUT .../pulls/N/merge`
+- [Rebase after worktree deletion](feedback_rebase_deleted_worktree.md) — if worktree deleted mid-rebase, cherry-pick commits onto fresh branch from main
+- [last-prompt JSONL record](project_last_prompt_record.md) — slash invocations live in type:last-prompt records (no timestamp), not user message content; ClaudeLocalSource skips them intentionally
+- [slash data undercount](project_slash_data_sparse.md) — 28 rows is a known undercount (ticket 0026); §4.5 + Fig 6 disabled; do not use 28 as a reliable figure
+- [Machine-specific env in .env not settings.json](feedback_env_settings_json.md) — committed settings.json env overrides cause silent failures on other machines; use gitignored .env + Makefile --env-file

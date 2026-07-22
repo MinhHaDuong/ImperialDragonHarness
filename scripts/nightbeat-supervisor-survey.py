@@ -32,6 +32,20 @@ def _load_projects() -> list[dict]:
     ]
 
 
+def _existing_projects(projects: list[dict]) -> list[dict]:
+    """Drop registry entries whose checkout is absent on this machine, with a warning."""
+    kept = []
+    for proj in projects:
+        if proj["path"].is_dir():
+            kept.append(proj)
+        else:
+            print(
+                f"WARNING: project path missing, skipping: {proj['path']}",
+                file=sys.stderr,
+            )
+    return kept
+
+
 def _github_repo(project_path: Path) -> str | None:
     try:
         r = subprocess.run(
@@ -230,7 +244,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    projects = _load_projects()
+    projects = _existing_projects(_load_projects())
 
     for proj in projects:
         canonical = proj["path"] / "nightbeat-supervisor-journal.jsonl"

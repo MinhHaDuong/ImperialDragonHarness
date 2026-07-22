@@ -84,17 +84,19 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/end-session` | Deprecated — renamed to /lair. Warns, then delegates to the new name. |
 | `/external-peer-review` | Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict. |
-| `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Never merges. |
+| `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/housekeeping` | Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
+| `/index-source` | Index/catalogue a document from a URL into Zotero with the right item type and clean metadata. Fetches the page, stages it locally, scrapes author/date/title/identifiers/pagination from meta tags (JSON-LD, citation_*, Dublin Core, OpenGraph) and DOI/arXiv APIs, classifies the Zotero type with judgment, dedupes, and hands a RIS + attachment to Zotero. URL sibling of zotero-import; implements the EDM workflow (docs/ staging → Zotero). |
+| `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/maw-audit` | "Mutation-testing audit of test-suite quality — verifies each test detects defects, tolerates safe refactors, and guards the whole defect class. EXPENSIVE — invoke deliberately. Auto-discovers config." |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
 | `/nightbeat-report` | Review what the overnight autonomous pipeline (nightbeat) did each morning: parse logs, narrate work done, surface harness improvement opportunities. |
-| `/nightbeat-supervisor` | Supervise the overnight autonomous pipeline (nightbeat) continuously: watch each cycle outcome, merge ready PRs, diagnose and repair failures, escalate when stuck. |
+| `/nightbeat-supervisor` | Supervise an overnight autonomous work run: keep the authorized ticket queue moving, integrate verified work, diagnose and repair failures, and deliver a self-contained morning report. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
 | `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous run. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
@@ -103,17 +105,18 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/review-pr` | Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation. |
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
-| `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, and scorecard reviewer seats. |
+| `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
 | `/scry` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
 | `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
-| `/start-ticket` | Deprecated — renamed to /hunt. Warns, then delegates to the new name. |
 | `/test-audit-llm` | "Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. Runs nothing — advisory only; findings feed ticket creation." |
+| `/trace-doctor` | Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings. |
+| `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, highlighting insertions and deletions via latexdiff. Closes the annotate-reply-apply loop for journal revise-and-resubmit rounds. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
 | `/verify` | Deprecated — renamed to /gaze. Warns, then delegates to the new name. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
-| `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Never merges. |
+| `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller. |
 | `/zotero-import` | Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and write a RIS file for import. |
 
 <!-- skills:end -->

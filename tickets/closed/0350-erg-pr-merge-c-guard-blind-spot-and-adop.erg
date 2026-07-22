@@ -1,0 +1,48 @@
+%erg 0.1
+Title: erg-pr-merge -C: guard blind spot and adopt -C in raid/nightbeat/AEDIST callers
+Created: 2026-07-14
+Author: claude
+Closed: autoclosed — PR #633
+
+--- log ---
+2026-07-14T20:35Z claude created
+2026-07-14T22:35Z claude note Action 1 accepted-as-is: guard blind spot left as-is. (1) guard self-describes as "one reflex, not a security boundary" (scripts/guard-cd-primary-repo.sh:13) — teaching it erg-pr-merge -C contradicts its YAGNI charter; (2) restricting -C to in_worktree() targets breaks the documented VM/non-worktree use case; (3) practical risk contained by the branch check — a primary checkout on main dies at "must run from PR branch" before the destructive step 4; (4) harness cool-down severity floor (rules/workflow.md, 2026-07-14): guard growth for a non-biting defect class is not licensed.
+2026-07-14T22:52Z claude note bump verify-reroll — round 1: nightbeat §2 '-C without checkout' bounces at erg-pr-merge branch gate; MEMORY.md index line stale
+
+2026-07-14T22:56Z Minh Ha-Duong closed — autoclosed — PR #633
+--- body ---
+## Context
+
+Follow-up from ticket 0344 / PR #617, which added the `-C PATH` flag to
+`skills/merge/erg-pr-merge`. The review panel surfaced two items deliberately
+left out of that tightly-scoped PR (the script is the raid pipeline's own merge
+tool, kept minimal and additive).
+
+## Actions
+
+1. **Guard blind spot (design decision — author to arbitrate).**
+   `guard-cd-primary-repo.sh` textually matches `cd <primary-repo> && <mutating>`
+   and never sees the in-script `cd` performed by `-C <path>`. So
+   `erg-pr-merge -C <primary-checkout> N` bypasses the guard. Practical risk is
+   low: the destructive Step 4 (`git checkout base` + ff-merge + `--delete-branch`)
+   is only reached when `<path>` already has PR N's branch checked out, which the
+   branch check enforces — a primary checkout on main dies at "must run from PR
+   branch". Two options the review proposed:
+   (a) restrict `-C` to `in_worktree()` targets — but this would break the
+       documented VM / non-worktree use case;
+   (b) teach `guard-cd-primary-repo.sh` about `erg-pr-merge -C <path>` — additive,
+       but contradicts that guard's explicit YAGNI "one reflex only" stance and
+       its "not a security boundary" self-description.
+   Decide whether either is worth doing, or accept the low-risk status quo.
+
+2. **Adopt `-C` in the callers still teaching the pre-`-C` dance** (documentation):
+   raid Phase 7, nightbeat-supervisor Phase 2, and the AEDIST memory entry all
+   still instruct callers to `cd <project> && checkout <branch>` before `/merge`.
+   Update them to the bare `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N`
+   form now that it matches the standing allow rule from any cwd.
+
+## Exit criteria
+
+- [x] Guard blind-spot decision recorded (fix applied, or accepted-as-is with rationale)
+- [x] raid Phase 7 / nightbeat §2 / AEDIST memory updated to the `-C` idiom (or a
+      deliberate note why each keeps the cd form)

@@ -28,6 +28,7 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 - `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), < 30 s — run during development.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
 - `make check`: everything — run before opening a PR. No coverage is lost by tiering a test slower; `make check` still runs it.
+- **pytest spawn failure under the rtk hook.** If `pytest` or `python3 -m pytest` dies under the rtk Bash hook with `Failed to spawn process: No such file or directory (os error 2)`, run it as `rtk proxy python3 -m pytest …` to bypass the rewrite. rtk has no command-passthrough knob (checked `~/.config/rtk/config.toml`, 2026-07-11), so this is the standing workaround. The spawn error can also mean the pytest shim itself is broken — a stale pipx venv after a Python upgrade leaves `~/.local/bin/pytest` pointing at a deleted interpreter; `pipx list` confirms it, `pipx reinstall-all` fixes it.
 
 Every Python project must have a ruff adherence test so lint failures are caught locally before CI. Declare `ruff` as a **pinned dev dependency** (e.g. `ruff>=0.11,<0.12`) and `uv lock` it — an adherence guard's verdict must be machine-independent, and an ambient/system ruff drifts between machines and silently changes rules on upgrade. Resolve the binary with `shutil.which`, not a nested `uv run ruff`: pytest already runs inside the project venv under `make lint`, so the pinned ruff is on PATH; a nested `uv run` re-enters uv from inside uv, spawns a subprocess per call, and breaks under `UV_NO_SYNC` in a clean CI/cloud container.
 
@@ -74,6 +75,7 @@ Two patterns keep the fast tier honest — generalizable, adopt per project (ref
 ## Build (Make)
 
 - **One output per rule.** Each target should produce a known file so timestamps work.
+- **The target must be the exact path the recipe writes.** `make` checks the recipe's *exit code*, not whether the file appeared — so a tool that writes elsewhere leaves the rule "succeeding" (exit 0) with `$@` absent, silently breaking every downstream consumer and forcing an eternal rebuild. The trap bites when a tool ignores the output path you configured: Quarto's single-file `quarto render <f>.qmd` ignores the project `output-dir` and writes *next to the source*. Name the target where the tool actually writes, or `mv … $@` in the recipe (climate-finance-het deliverables/ reorg, 2026-07-10 — a Makefile-text test can't catch this; only a real build does).
 - **Sentinel stamps for dynamic outputs.** Use a stamp file when a script produces data-dependent filenames.
 - **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
 - **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.

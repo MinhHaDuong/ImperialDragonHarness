@@ -1,5 +1,9 @@
 {
   "cleanupPeriodDays": 180,
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/scripts/statusline.sh"
+  },
   "env": {
     "UV_ENV_FILE": "/home/haduong/.claude/.env",
     "BASH_ENV": "/home/haduong/.claude/scripts/bash-env.sh"
@@ -183,6 +187,16 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-worktree-identity.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Bash(git commit*)",
         "hooks": [
           {
@@ -198,6 +212,16 @@
           {
             "type": "command",
             "command": "$HOME/.claude/scripts/block-pr-merge-in-worktree.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "EnterWorktree|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/scripts/guard-enterworktree-parked-cwd.sh",
             "timeout": 5
           }
         ]

@@ -1,0 +1,37 @@
+%erg 0.1
+Title: setup-claude-agent.sh PROJECTS array duplicates projects.json — read the registry instead
+Created: 2026-07-11
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #500
+
+--- log ---
+2026-07-11T22:30Z Minh Ha-Duong created
+
+2026-07-12T17:48Z Minh Ha-Duong closed — autoclosed — PR #500
+--- body ---
+## Context
+
+The 2026-07 home reorg had to be applied twice to the same fact: once in
+`scripts/projects.json` (PR #493) and once in `scripts/setup-claude-agent.sh`'s
+hardcoded `PROJECTS` array (PR #497, ticket 0284). The /gaze simplify pass on
+PR #497 flagged the duplication and correctly scoped the refactor out of that
+string-sweep diff. `scripts/projects.json` is the canonical registry; the
+setup script should derive its list from it (jq is available) so the next
+path change lands in one place.
+
+## Relevant files
+
+- `scripts/setup-claude-agent.sh` — hardcoded PROJECTS array
+- `scripts/projects.json` — canonical registry
+
+## Actions
+
+1. Replace the PROJECTS array with a jq read of projects.json (tilde
+   expansion handled as projects.json consumers do).
+2. Check other scripts for hardcoded copies of the same list.
+
+## Exit criteria
+
+- setup-claude-agent.sh has no hardcoded project list; behavior unchanged
+  for existing projects; a registry edit propagates without touching the
+  script.

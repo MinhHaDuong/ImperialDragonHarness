@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Wire the adherence test tier: make lint target and check-fast exclusion
+Created: 2026-07-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #547
+
+--- log ---
+2026-07-13T12:48Z Minh Ha-Duong created
+
+2026-07-13T15:24Z Minh Ha-Duong closed — autoclosed — PR #547
+--- body ---
+## Context
+
+PR #541 (ticket 0310) registered the `adherence` pytest marker in this repo for
+the first time — the worktree-predicate ratchet runs under it. The /gaze panel
+on #541 flagged the gap: nothing wires the tier. `coding-python.md` prescribes
+`make lint` running `-m adherence` and `make check-fast` excluding it; this
+repo's Makefile has neither, so adherence tests run only inside the full
+`make check` sweep and the fast loop's tier boundary is undeclared.
+
+## Actions
+
+1. Add a `lint` target running the adherence tier (`-m adherence`).
+2. Exclude `-m adherence` (and any other slow tiers this repo uses) from the
+   fast target, per the tiering table in `rules/coding-python.md`.
+3. Verify `make check` still runs everything.
+
+## Exit criteria
+
+- [ ] `make lint` runs the adherence tier only
+- [ ] The fast tier excludes adherence tests
+- [ ] `make check` coverage unchanged

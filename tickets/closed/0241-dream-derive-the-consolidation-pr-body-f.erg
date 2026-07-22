@@ -1,0 +1,58 @@
+%erg 0.1
+Title: dream: derive the consolidation PR body from the decision table; clean provenance on DELETE
+Created: 2026-06-10
+Author: Integration Test
+Closed: autoclosed — PR #483
+
+--- log ---
+2026-06-10T14:10Z Integration Test created
+
+2026-07-11T13:05Z claude note raid plan — lands WITH 0275 as one PR; PR-body anchor moved step 8->14 (0247 restructure); provenance remove op mirrors record; promoted entries survive remove
+2026-07-11T13:55Z bump verify-reroll — round 1: provenance.py remove() sys.exit(1)s on untracked slug while SKILL.md step 5 mandates the call unconditionally for every DELETE (37% of live entries lack provenance records per built-in reviewer measurement); no guard, no idempotent no-op, no test covers the untracked-slug DELETE path
+2026-07-11T14:16Z Minh Ha-Duong closed — autoclosed — PR #483
+--- body ---
+## Context
+The /gaze review of PR #359 (dream consolidation of -home-haduong-padme)
+found the PR body claimed "8 entries, all NOOP / timestamps refreshed"
+while the diff actually contained 1 DELETE + 2 ADD + 1 UPDATE. The body
+had to be rewritten in-review via REST PATCH. Root cause: SKILL.md step 8
+says "push the branch and open a PR" but never specifies the body content,
+so the model improvises a summary instead of reusing the step-4 decision
+table it just produced.
+
+A second gap from the same review: step 7 records provenance for
+surviving entries but nothing removes the record when an entry is
+DELETEd, leaving stale slugs in the provenance store (harmless today —
+unpromoted entries are ignored by decay — but drift accumulates).
+
+Related non-blocking observation (no action here, housekeeping adopts
+orphans): `projects/-home-haduong-padme/memory/feedback_no_sudo.md` is
+absent from that project's MEMORY.md index on main.
+
+## Relevant files
+- `skills/dream/SKILL.md` — step 4 (decision table), step 7 (provenance record), step 8 (commit + PR)
+- `skills/dream/provenance.py` — needs a `remove <slug> <project>` (or equivalent) operation
+
+## Actions
+1. In SKILL.md step 8, require the PR body to be generated from the
+   step-4 decision table: per-decision counts (NOOP/ADD/UPDATE/DELETE)
+   plus the filename → decision list. No free-form "all NOOP" prose.
+2. In step 2/7, when an entry is classified DELETE, drop its provenance
+   record for that project (add the provenance.py operation if missing).
+
+## Test
+- Adherence-style check: SKILL.md step 8 mentions the decision table as
+  the PR-body source (string match on the skill file).
+- Unit test for the new provenance.py removal operation.
+
+## Verification
+- [ ] A dry-run dream on a fixture project produces a PR body matching the decision table
+- [ ] Deleting an entry removes its provenance record
+
+## Invariants
+- Existing provenance records for surviving entries unchanged
+- `make check` passes
+
+## Exit criteria
+- [ ] Dream PR bodies are mechanically derived from the decision table
+- [ ] DELETE cleans up provenance

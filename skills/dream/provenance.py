@@ -23,6 +23,7 @@ from pathlib import Path
 HARNESS_MEMORY = Path.home() / ".claude" / "memory"
 PROVENANCE_PATH = HARNESS_MEMORY / ".provenance.json"
 PROVENANCE_LOCK = HARNESS_MEMORY / ".provenance.lock"
+PROJECT_ALIASES_PATH = HARNESS_MEMORY / ".project-aliases.json"
 PROJECTS_BASE = Path.home() / ".claude" / "projects"
 DECAY_DAYS = 90
 
@@ -65,6 +66,61 @@ def _load_provenance() -> dict:
     if PROVENANCE_PATH.exists():
         return json.loads(PROVENANCE_PATH.read_text())
     return {"entries": {}}
+
+
+def _load_aliases() -> dict:
+    """Map alias project-slug -> canonical project-slug (empty when absent).
+
+    Project keys in the provenance store are Claude-Code directory *slugs*
+    (e.g. `-home-haduong-CNRS-papiers-actif-AEDIST-technical-report`), not
+    filesystem paths, so `os.path.realpath` cannot collapse aliases: slug->path
+    inversion is ambiguous and a relocated tree's old path no longer exists on
+    disk. Instead we keep an explicit, read-time alias table (ticket 0270). A
+    missing table is the common case — no aliases — and yields {}. A corrupt
+    table degrades to 'no aliases' with a stderr warning rather than crashing
+    the caller (ticket 0282): candidates then gates on raw keys, which can
+    only over-count — it never wrongly suppresses a candidate."""
+    if not PROJECT_ALIASES_PATH.exists():
+        return {}
+    try:
+        table = json.loads(PROJECT_ALIASES_PATH.read_text())
+    except json.JSONDecodeError as e:
+        reason = str(e)
+    else:
+        # Valid JSON of the wrong shape (a scalar, a list, or a dict with
+        # non-string keys/values) parses cleanly but crashes
+        # _canonical_project downstream (`current in aliases` on an int, a
+        # non-str value fed back into the loop). Validate the slug->slug string
+        # contract and degrade to 'no aliases' identically (ticket 0279).
+        if isinstance(table, dict) and all(
+            isinstance(k, str) and isinstance(v, str) for k, v in table.items()
+        ):
+            return table
+        reason = "expected an object mapping string slugs to string slugs"
+    print(
+        f"Warning: malformed alias table {PROJECT_ALIASES_PATH}: {reason} — "
+        "treating as empty",
+        file=sys.stderr,
+    )
+    return {}
+
+
+def _canonical_project(project: str, aliases: dict) -> str:
+    """Resolve an alias project-slug to its canonical slug; identity otherwise.
+
+    Follows chained aliases ({old->mid, mid->canonical}) to a fixpoint so a
+    multi-hop table collapses fully. A visited-set guards against a cyclic table
+    looping forever: on a cycle we stop and return the last resolved slug, which
+    keeps the result deterministic (ticket 0270 reroll)."""
+    seen = {project}
+    current = project
+    while current in aliases:
+        nxt = aliases[current]
+        if nxt in seen:
+            return current
+        seen.add(nxt)
+        current = nxt
+    return current
 
 
 def _save_provenance(data: dict) -> None:
@@ -143,6 +199,46 @@ def record(args):
     print(json.dumps(result, indent=2))
 
 
+def remove(args):
+    """Drop a project from an entry's provenance when the entry is DELETEd.
+
+    A consolidation that classifies an entry DELETE tombstones its file but,
+    without this, leaves the slug in the provenance store — so the dead entry
+    keeps counting toward the >=2-project promotion frequency gate (ticket
+    0241). `remove` drops the named project from the slug's list. When the list
+    empties the entry is deleted, UNLESS it is promoted: promotion is one-way,
+    a harness-level entry has earned status independent of its origin projects,
+    so it survives with an empty project list.
+
+    An unknown slug is an idempotent no-op ({"removed": null}, exit 0), mirroring
+    `record`'s upsert semantics: SKILL.md step 5 calls `remove` unconditionally on
+    every DELETE, but the provenance store is not synced with MEMORY.md by
+    construction (it postdates much of the corpus — 37% of live entries have no
+    record), so "nothing to remove" is the correct outcome, not a failure that
+    would abort the consolidation on the first DELETE of an untracked entry."""
+    slug = args.slug
+    project = args.project
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        if slug not in entries:
+            print(json.dumps({"removed": None}, indent=2))
+            return
+        _test_delay()
+        entry = entries[slug]
+        changed = False
+        if project in entry["projects"]:
+            entry["projects"].remove(project)
+            changed = True
+        deleted = not entry["projects"] and not entry.get("promoted")
+        if deleted:
+            del entries[slug]
+        if changed or deleted:
+            _save_provenance(data)
+        result = {"removed": slug} if deleted else entries[slug]
+    print(json.dumps(result, indent=2))
+
+
 def confirm(args):
     """Refresh last_confirmed on a promoted entry.
 
@@ -174,9 +270,14 @@ def confirm(args):
 def candidates(args):
     """List promotion candidates: entries seen in >=2 distinct projects, not yet promoted."""
     data = _load_provenance()
+    aliases = _load_aliases()
     result = []
     for slug, entry in data["entries"].items():
-        if len(entry["projects"]) >= 2 and not entry["promoted"]:
+        # Count distinct *canonical* projects: two path-spellings of one project
+        # (a relocated/symlinked tree registered under two slugs) must count once,
+        # else the frequency gate promotes a single-project note (ticket 0270).
+        canonical = {_canonical_project(p, aliases) for p in entry["projects"]}
+        if len(canonical) >= 2 and not entry["promoted"]:
             result.append({"slug": slug, **entry})
     json.dump(result, sys.stdout, indent=2)
     print()
@@ -236,6 +337,13 @@ def main():
     record_p.add_argument("project", help="Project directory name")
     record_p.set_defaults(func=record)
 
+    remove_p = sub.add_parser(
+        "remove", help="Drop a project from an entry (DELETE cleanup)."
+    )
+    remove_p.add_argument("slug", help="Stable entry identifier (e.g. feedback_vim)")
+    remove_p.add_argument("project", help="Project directory name to drop")
+    remove_p.set_defaults(func=remove)
+
     candidates_p = sub.add_parser(
         "candidates", help="List promotion candidates (>=2 projects, not promoted)."
     )
@@ -259,7 +367,18 @@ def main():
     show_p = sub.add_parser("show", help="Show full provenance data.")
     show_p.set_defaults(func=show)
 
-    args = parser.parse_args()
+    # Production project keys are directory slugs that begin with '-'
+    # (e.g. -home-haduong-CNRS-...). Without a '--' separator argparse
+    # clusters '-home-…' into '-h' and help-exits 0 — a silent no-op on a
+    # mutating call (ticket 0282). No subcommand takes options, so insert
+    # the separator after the subcommand unless the caller already did, or
+    # is asking for help at either level.
+    tokens = sys.argv[1:]
+    wants_help = any(t in ("-h", "--help") for t in tokens)
+    if len(tokens) > 1 and "--" not in tokens and not wants_help:
+        tokens.insert(1, "--")
+
+    args = parser.parse_args(tokens)
     args.func(args)
 
 

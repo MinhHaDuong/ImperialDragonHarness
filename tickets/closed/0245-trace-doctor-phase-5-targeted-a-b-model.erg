@@ -1,0 +1,124 @@
+%erg 0.1
+Title: trace-doctor phase 5: targeted A/B — model right-sizing and verification convergence
+Created: 2026-06-10
+Author: Integration Test
+Closed: autoclosed — PR #598
+
+--- log ---
+2026-06-10T20:09Z Integration Test created
+
+2026-07-13T16:03Z Minh Ha-Duong note pre-registration split to 0315: interventions pinned, decision rule + red-first tests landed, gaze convergence flag documented default off; live A/B arms remain here
+
+2026-07-14T09:34Z Minh Ha-Duong note authorized measure-A replay spend (5 paired Sonnet replays, smoke-first on 0319); pinned measure-B windows in docs/trace-ab-2026-06.md — control 2026-07-20..2026-07-26 (flag off), treatment 2026-07-27..2026-08-02 (flag on)
+
+2026-07-14T12:02Z Minh Ha-Duong note design voided by author after the 0319 smoke: five unfrozen variables (effort axis, gaze re-tiering 0320, obsolete Opus-main premise, unobservable paired baseline, stale join cache) — see the VOIDED section of docs/trace-ab-2026-06.md; measure B cancelled, flag stays default-off; study PRs #585/#586 closed unmerged; process root cause fixed on 0336/PR #597; arc dropped to return author focus to research
+2026-07-14T12:11Z Minh Ha-Duong closed — autoclosed — PR #598
+--- body ---
+## Context
+
+Child of tracking ticket 0236 (session-trace economics audit), phase 5 —
+the final study phase. Phase 4 (0244, closed, PR #378) settled every
+screening bound by counterfactual accounting
+(docs/trace-counterfactuals-2026-06.md) and routed exactly two measures
+to live A/B, because in both cases the cost is entangled with delivery
+quality and existing traces never observe the counterfactual:
+
+- **Measure A — model right-sizing of long Opus mains.** Mains are 75%
+  of spend; Opus mains sit +1.04 off the pooled cost-vs-turns curve.
+  Open question: does a Sonnet main deliver gaze-APPROVED PRs at Opus
+  rates?
+- **Measure B — verification convergence (single-pass gaze/verify).**
+  $259/wk incremental upper bound (vg bucket: turns after the 2nd
+  verify/gaze invocation, 44 sessions). Re-entry is NOT explained by
+  diff size (re-entry median 465 lines vs 597 single-pass), but the
+  bucket contains legitimate round-2 fix work (REROLL loops). Open
+  question: how much of the vg bucket is process overhead vs real fixes?
+
+Quality guardrails fixed by phase 4: merged-rate is saturated (112/112),
+so the operative metrics are REROLL mentions/PR (baseline 33/112),
+ESCALATE mentions (baseline 18), and gaze verdict outcomes.
+
+Honest constraint (study design in 0236): LLM sessions do not replay
+deterministically and replays burn real tokens — this phase is narrow by
+design. No new census machinery; measurement reuses the committed
+scripts. All $ remain shadow dollars (list-price API-equivalents under
+subscription auth), stated as such in the report header.
+
+## Relevant files
+
+- `docs/trace-counterfactuals-2026-06.md` — routing decision + guardrail
+  baselines (the spec for this phase)
+- `scripts/trace-stats.py` — census per-agent cost rows (arm cost
+  measurement)
+- `scripts/trace-hypotheses.py` — vg-bucket / H13 statistics for
+  measure B
+- `scripts/trace-pr-join.py` + `docs/trace-pr-join-2026-06.csv` —
+  REROLL/ESCALATE guardrail extraction; the join cache accumulates
+  across runs
+- `skills/beat/SKILL.md`, `skills/gaze/SKILL.md` — intervention surfaces
+
+## Actions
+
+1. **Pin one intervention per measure** (first commit, before any B-arm
+   data exists). Defaults, to be confirmed or revised with reasons:
+   - A: paired replay — re-run ~5 closed tickets from their original
+     base SHA with a Sonnet main (same skill path), compare against the
+     original Opus traces: total $, and does the fresh PR pass gaze.
+     Paired same-ticket comparison beats week-vs-week for a model
+     change that would otherwise put a whole nightbeat week at risk.
+   - B: nightbeat-week flag — one week with a convergence rule (e.g.
+     after the first full gaze round, REROLL fixes re-check through
+     verify-gate only, no full panel re-run). Convergence only fires on
+     re-entry events, so a live week is the natural unit.
+2. **Pre-register** in `docs/trace-ab-2026-06.md` before B-arm data:
+   metric definitions ($ per merged PR / per cycle, REROLL/PR, ESCALATE
+   count, gaze verdict distribution), window dates, exclusion rules
+   (study-session reflexivity), and the decision rule with thresholds
+   (adopt iff cost drops and guardrails hold within stated noise).
+3. **A arm**: the existing corpus baseline, already measured — weekly $
+   and guardrails from the current census + join cache. No re-runs.
+4. **Run the B arms** on the pinned configs. If both run as live weeks,
+   run them in disjoint weeks to avoid interaction (pre-register the
+   choice).
+5. **Harvest**: re-run census + pr-join over the B windows; compute the
+   pre-registered metrics; write the verdict per measure.
+6. Update tracker 0236: phase 5 done; list what remains for integration
+   review (trace-doctor skill assembly; phase-4 adopt items #1
+   micro-turn rule and #3 compact-audit advisory if still unowned).
+
+## Test
+
+- Red first for any new script logic: per-window date filtering of
+  guardrail metrics gets a fixture (trace rows in/out of window);
+  the pre-registered decision rule, implemented as a pure function,
+  gets unit tests mapping fixture metric values to expected
+  adopt/reject verdicts.
+
+## Verification
+
+- [ ] Interventions and decision rules pre-registered in the report
+      BEFORE B-arm data collection (git history proves the ordering)
+- [ ] B arms ran on the pinned configs (flag/config visible in history)
+- [ ] Metrics computed by committed scripts, reproducible from cached
+      inputs without network
+- [ ] `make check` passes
+
+## Invariants
+
+- Zero LLM calls in committed scripts; no trace content in committed
+  artifacts (PR numbers and aggregates ok)
+- Existing census accounting untouched (additive only)
+- Verdicts come only from pre-registered metrics — no post-hoc metric
+  shopping
+- The quality guardrail is binding: a cost win with degraded guardrails
+  is a REJECT
+
+## Exit criteria
+
+- [ ] Both measures have a verdict in `docs/trace-ab-2026-06.md`:
+      adopt (config-change PR linked) or reject with measured evidence
+- [ ] Guardrail metrics reported against the phase-4 baselines
+      (REROLL/PR 33/112, ESCALATE 18)
+- [ ] Tracker 0236 updated; remaining integration work explicitly
+      listed
+- [ ] `make check` passes

@@ -68,11 +68,33 @@ Run full repo housekeeping and act on every finding.
    - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
    - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
 
-1.5. **GC stale worktrees.** Remove any registered worktree on an upstream-gone branch — regardless of path or name, including ones outside `.claude/worktrees/` (intact dirs that `git worktree prune` misses):
+1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of
+   dead trees, never an active session's. Remove any registered worktree on an
+   upstream-gone branch — regardless of path or name, including ones outside
+   `.claude/worktrees/` (intact dirs that `git worktree prune` misses):
    ```bash
    ~/.claude/scripts/worktree-gc.sh
    ```
-   Skips any worktree with uncommitted changes (and the one it runs from), never `rm -rf`s, silent when there is nothing to clean. Safe here because step 0 already confirmed no other live session, and the git phase above ran `git fetch --prune` so gone branches are detectable. See tickets 0169, 0195. **A worktree the GC skips for uncommitted changes is a signal, not just an obstacle:** diff it before moving on — orphaned WIP may be a closed ticket's dropped exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally; 2026-06-16 ticket 0609's mandated test sat uncommitted after PR #1111 closed it with only the data fix). If so, preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
+   The script enforces the active-session rails itself (ticket 0355 — on
+   2026-07-13 a rail-less GC removed two live sessions' base worktrees, whose
+   merged-and-pruned branches read `[gone]` while sessions still sat in them):
+   it skips any worktree that is a live process's cwd, any locked worktree
+   (lock = in use, mirroring step 0's marker — never unlock-and-remove), any
+   tree with uncommitted changes, and the one it runs from. It never `rm -rf`s
+   and stays silent when there is nothing to report — but it also **reports
+   (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
+   registered worktrees (a session base cwd deregistered mid-session), so a
+   `worktree-gc: husk …` line breaks the silence without anything being
+   cleaned. That output is informational; report-only is the PERMANENT design
+   (ticket 0338 closed the removal-heuristic question — remote sessions are
+   structurally undetectable, so no complete liveness signal exists) — do NOT
+   re-file. See tickets 0169, 0195, 0325, 0338. **A worktree the
+   GC skips for uncommitted changes is a signal, not just an obstacle:** diff
+   it before moving on — orphaned WIP may be a closed ticket's dropped
+   exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**`
+   line unconditionally; 2026-06-16 ticket 0609's mandated test sat
+   uncommitted after PR #1111 closed it with only the data fix). If so,
+   preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
@@ -151,6 +173,7 @@ Run full repo housekeeping and act on every finding.
      using a specific title. For test failures, the slug must contain `fix-tests`
      (e.g. `0042-fix-tests-module-not-found`).
    - If a ticket already exists, skip.
+   - Tooling repos: apply the severity floor (rules/workflow.md § Autonomous Action Rules) — findings that don't block a merge, corrupt state, or bite a science project are reported in the run summary, not ticketed.
 
 5. **Log `skip` items.** One line each, no action.
 

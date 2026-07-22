@@ -14,6 +14,13 @@ fi
 
 echo "Running on host: $(hostname -s)"
 
+# Surface the effort setting for the session's self-presentation line
+# (rules/workflow.md § Session Start): the model knows its own name but has
+# no other channel to the effortLevel setting. Read the live user settings,
+# not a checkout copy.
+_effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
+echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
+
 # Check for stale rules (advisory — prints warnings if any)
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
@@ -36,6 +43,19 @@ cat "$_script_dir/../rules/README.md" 2>/dev/null || true
 # Kept tight — decay pass removes stale entries so injection cost stays bounded.
 cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
 
+# Surface the previous session start's local-main sync report when it needed
+# attention (dirty overlap, divergence, refusal). A clean fast-forward — and a
+# routine offline "fetch failed — skipped" — stays silent: only the outcomes
+# that need a human decision reach the conversation. (ticket 0277)
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+    _gcd=$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
+    _sync_report="${_gcd:+$_gcd/sync-local-main.last}"
+    if [ -n "$_sync_report" ] && [ -f "$_sync_report" ] \
+       && grep -qE 'untouched|diverged|refused' "$_sync_report" 2>/dev/null; then
+        echo "Local-main sync (previous session start): $(cat "$_sync_report")"
+    fi
+fi
+
 # --- Nothing below this line may produce stdout (hook output = conversation context) ---
 exec >/dev/null 2>&1
 
@@ -45,4 +65,20 @@ exec >/dev/null 2>&1
 # Activate project git hooks if a pre-commit hook exists
 if [ -f hooks/pre-commit ]; then
     git config core.hooksPath hooks
+fi
+
+# Eager local-main sync (rules/git.md § Local main syncs eagerly).
+# Backgrounded so an offline fetch can never stall session start; the script
+# is ff-only and never touches dirty or diverged state, so racing the
+# session's first git commands is safe. The report lands in
+# <git-common-dir>/sync-local-main.last (we are past the stdout cutoff);
+# the next session start surfaces it above the cutoff if it needs attention.
+# Write via tmp + mv: concurrent session starts share the common dir, and an
+# atomic rename keeps the report whole (last-writer-wins, never interleaved).
+_gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
+if [ -n "$_gcd" ]; then
+    ( { timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
+          > "$_gcd/sync-local-main.last.$$" 2>&1 \
+        && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
+        || rm -f "$_gcd/sync-local-main.last.$$"; } & )
 fi

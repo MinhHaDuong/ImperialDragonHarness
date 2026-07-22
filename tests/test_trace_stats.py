@@ -188,13 +188,15 @@ def _tool_row(msg_id, name, tool_input, ts_str="2026-06-09T10:00:00.000Z"):
     return _assistant_row(msg_id, "claude-opus-4-8", USAGE, block, ts_str=ts_str)
 
 
-def _result_row(text):
+def _result_row(text, tool_use_id="x"):
     return {
         "type": "user",
         "timestamp": "2026-06-09T10:02:00.000Z",
         "message": {
             "role": "user",
-            "content": [{"type": "tool_result", "tool_use_id": "x", "content": text}],
+            "content": [
+                {"type": "tool_result", "tool_use_id": tool_use_id, "content": text}
+            ],
         },
     }
 
@@ -354,6 +356,40 @@ def test_first_turn_cache_write_and_excess_reads(tmp_path):
     assert stats["excess_file_reads"] == 1  # /a.md read twice
 
 
+def test_mandated_regex_matches_compound_commands():
+    """Ticket 0246 action 2: the anchor bound only the first alternative, so a
+    compound command like `cd x && git worktree prune` did NOT count as
+    mandated while `cd x && erg close` DID. Both must count now."""
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && git worktree prune"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "cd x && erg close 0246"}) is True
+    # regression: leading git-branch/fetch still match unchanged
+    assert ts._is_mandated_tool("Bash", {"command": "git branch -D foo"}) is True
+    assert ts._is_mandated_tool("Bash", {"command": "git fetch --prune"}) is True
+    # a non-mandated command still does not match
+    assert ts._is_mandated_tool("Bash", {"command": "uv run pytest -q"}) is False
+
+
+def test_mandated_regex_does_not_match_mentions_in_prose():
+    """/gaze simplify follow-up (PR 494): dropping the `^\\s*` anchor entirely
+    made MANDATED_BASH_RE match the keywords anywhere in the command string,
+    including inside quoted/echoed text that never invokes the command. The
+    regex must require the match sit at true command position — start of
+    string or right after a `&&`/`;`/`|` separator — not merely present
+    somewhere in the string."""
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'echo "see: run git branch -D to clean up"'}
+    ) is False
+    assert ts._is_mandated_tool(
+        "Bash", {"command": 'git commit -m "mentions erg close in the message"'}
+    ) is False
+    assert ts._is_mandated_tool("Bash", {"command": "erg closed 0246"}) is False
+    # semicolon and pipe separators still count as command position
+    assert ts._is_mandated_tool("Bash", {"command": "somecmd; git branch -D foo"}) is True
+    assert ts._is_mandated_tool(
+        "Bash", {"command": "git branch --list | grep foo"}
+    ) is True
+
+
 def test_bucket_csv_columns_declared():
     for col in (
         "merge_markers",
@@ -369,3 +405,147 @@ def test_bucket_csv_columns_declared():
         "pr_numbers",
     ):
         assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
+
+
+# --- ticket 0292: six-way tool-call taxonomy + per-category char volume ---
+#
+# Categories (arXiv:2604.21965 §5.2, App. B.2 applied to this harness):
+# execution, reading, navigation, search, writing, other.
+# Bash read-vs-execute rule: a Bash call is classified by its leading command
+# token — a known read-only reader (cat/head/tail/less/more/bat) is reading, a
+# known search tool (grep/rg/find/fd/ag/ack) is search, an orientation command
+# (cd/ls/pwd, git status|log|branch|show-current — the pre-existing nav set) is
+# navigation, and everything else is execution. `ls` stays navigation to keep
+# _is_nav_tool byte-identical (documented, defensible: ls is directory
+# orientation, not content reading).
+
+
+def test_categorize_tool_one_per_category():
+    c = ts.categorize_tool
+    # execution
+    assert c("Bash", {"command": "uv run pytest -q"}) == "execution"
+    # reading
+    assert c("Read", {"file_path": "/a.md"}) == "reading"
+    assert c("Bash", {"command": "cat /etc/hosts"}) == "reading"
+    # navigation
+    assert c("Bash", {"command": "cd /tmp"}) == "navigation"
+    assert c("Bash", {"command": "git status"}) == "navigation"
+    assert c("EnterWorktree", {}) == "navigation"
+    # search
+    assert c("Grep", {"pattern": "foo"}) == "search"
+    assert c("Glob", {"pattern": "*.py"}) == "search"
+    assert c("Bash", {"command": "grep -r foo ."}) == "search"
+    assert c("WebSearch", {"query": "x"}) == "search"
+    # writing
+    assert c("Edit", {"file_path": "/a.py"}) == "writing"
+    assert c("Write", {"file_path": "/a.py"}) == "writing"
+    assert c("NotebookEdit", {"notebook_path": "/a.ipynb"}) == "writing"
+    # other
+    assert c("Skill", {"skill": "roar"}) == "other"
+    assert c("AskUserQuestion", {}) == "other"
+    assert c("TodoWrite", {}) == "other"
+
+
+def test_categorize_bash_ambiguous_read_vs_execute():
+    """Pins the documented Bash rule: a read-only command prefix is reading,
+    otherwise the Bash call is execution. `ls` stays navigation."""
+    assert ts.categorize_tool("Bash", {"command": "cat report.md"}) == "reading"
+    assert ts.categorize_tool("Bash", {"command": "python deploy.py"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "ls -la"}) == "navigation"
+
+
+def test_categorize_bash_hyphen_boundary_not_a_reader():
+    """A distinct binary that merely shares a reader/searcher prefix up to a
+    hyphen or word char is execution, not reading/search (ticket 0292 gate
+    round 1: \\b fires at the t->- transition, leaking cat-fetch-tool as a
+    reader and find-orphans.sh as a searcher)."""
+    # hyphen boundary: single distinct binaries, not cat/find
+    assert ts.categorize_tool("Bash", {"command": "cat-fetch-tool foo"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "find-orphans.sh"}) == "execution"
+    # word-char boundary: catfoo / finder are not cat / find
+    assert ts.categorize_tool("Bash", {"command": "catfoo"}) == "execution"
+    assert ts.categorize_tool("Bash", {"command": "finder x"}) == "execution"
+    # legitimate cases still classify correctly
+    assert ts.categorize_tool("Bash", {"command": "cat foo.py"}) == "reading"
+    assert ts.categorize_tool("Bash", {"command": "grep -n x y"}) == "search"
+    assert ts.categorize_tool("Bash", {"command": "find"}) == "search"
+    assert ts.categorize_tool("Bash", {"command": "find; ls"}) == "search"
+
+
+def test_is_nav_tool_unchanged_by_six_way():
+    # regression: _is_nav_tool keeps its exact contract
+    assert ts._is_nav_tool("Bash", {"command": "cd /tmp"}) is True
+    assert ts._is_nav_tool("Bash", {"command": "git status"}) is True
+    assert ts._is_nav_tool("Bash", {"command": "uv run pytest"}) is False
+    # non-Bash navigation tools are NOT nav_tool (Bash-only contract preserved)
+    assert ts._is_nav_tool("EnterWorktree", {}) is False
+
+
+def test_category_call_counts(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    exec_use = {
+        "type": "tool_use",
+        "id": "tu_e",
+        "name": "Bash",
+        "input": {"command": "uv run pytest"},
+    }
+    search_use = {"type": "tool_use", "id": "tu_s", "name": "Grep", "input": {"pattern": "x"}}
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _assistant_row("m2", "claude-opus-4-8", USAGE, exec_use),
+        _assistant_row("m3", "claude-opus-4-8", USAGE, search_use),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_calls"]["reading"] == 1
+    assert stats["category_calls"]["execution"] == 1
+    assert stats["category_calls"]["search"] == 1
+
+
+def test_category_char_volume_joins_result_to_tooluse(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    exec_use = {
+        "type": "tool_use",
+        "id": "tu_e",
+        "name": "Bash",
+        "input": {"command": "uv run pytest"},
+    }
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _result_row("READCONTENT", "tu_r"),
+        _assistant_row("m2", "claude-opus-4-8", USAGE, exec_use),
+        _result_row("EXEC-OUTPUT-IS-LONGER", "tu_e"),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_chars"]["reading"] == len(json.dumps("READCONTENT"))
+    assert stats["category_chars"]["execution"] == len(json.dumps("EXEC-OUTPUT-IS-LONGER"))
+    # invariant: per-category char volumes partition tool_result_bytes
+    assert sum(stats["category_chars"].values()) == stats["tool_result_bytes"]
+
+
+def test_unmatched_result_charged_to_other(tmp_path):
+    """A tool_result whose tool_use_id matches no tool_use lands in 'other',
+    preserving the sum(category_chars) == tool_result_bytes invariant."""
+    rows = [_result_row("ORPHAN", "no_such_id")]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    assert stats["category_chars"]["other"] == len(json.dumps("ORPHAN"))
+    assert sum(stats["category_chars"].values()) == stats["tool_result_bytes"]
+
+
+def test_category_csv_columns_declared():
+    for cat in ("execution", "reading", "navigation", "search", "writing", "other"):
+        for metric in ("calls", "chars"):
+            col = f"cat_{cat}_{metric}"
+            assert col in ts.CSV_COLUMNS, f"missing CSV column {col}"
+
+
+def test_category_columns_populated_in_row(tmp_path):
+    read_use = {"type": "tool_use", "id": "tu_r", "name": "Read", "input": {"file_path": "/a"}}
+    rows = [
+        _assistant_row("m1", "claude-opus-4-8", USAGE, read_use),
+        _result_row("HELLO", "tu_r"),
+    ]
+    stats = ts.parse_trace_file(_write_rows(tmp_path, rows))
+    row = ts.build_row("proj", "sess", "main", Path("/x.jsonl"), stats)
+    assert row["cat_reading_calls"] == 1
+    assert row["cat_reading_chars"] == len(json.dumps("HELLO"))
+    assert row["cat_execution_calls"] == 0

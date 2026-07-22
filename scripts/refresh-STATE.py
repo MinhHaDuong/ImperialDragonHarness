@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 STATUS_HEADING = "## Status"
+STATUS_BUDGET = 20  # max lines in the ## Status block (rules/state.md)
 
 
 def _repo_root() -> Path:
@@ -41,16 +42,24 @@ def run(cmd, repo_root: Path):
         sys.exit(1)
 
 
-def get_commits(repo_root: Path, n=5):
-    return run(["git", "log", "--oneline", f"-{n}"], repo_root).splitlines()
+def get_commits(repo_root: Path, n=3):
+    # --first-parent: merge-level history — one line per landed PR in
+    # merge-commit repos, far more work per line than raw commits.
+    return run(
+        ["git", "log", "--oneline", "--first-parent", f"-{n}"], repo_root
+    ).splitlines()
+
+
+def get_head_sha(repo_root: Path):
+    return run(["git", "rev-parse", "--short", "HEAD"], repo_root)
 
 
 def get_tickets(repo_root: Path):
-    """Return (ready_count, blocked_count) from erg.
+    """Return ticket orientation from erg: counts, awaiting-author, next picks.
 
     `erg ready` lists only ready (unblocked, open) tickets; `erg list` lists
     all open tickets. Neither item carries a `ready` flag, so blocked is
-    derived as open minus ready.
+    derived as open minus ready. Awaiting = open tickets labeled needs-human.
     """
     tickets_dir = repo_root / "tickets"
     erg_bin = tickets_dir / "erg"
@@ -68,27 +77,147 @@ def get_tickets(repo_root: Path):
         print(f"ERROR: erg query failed: {e.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
     ready_count = len(ready)
-    blocked_count = max(len(open_tickets) - ready_count, 0)
-    return ready_count, blocked_count
+    return {
+        "ready": ready_count,
+        "blocked": max(len(open_tickets) - ready_count, 0),
+        "awaiting": sum(
+            1 for t in open_tickets if "needs-human" in (t.get("labels") or [])
+        ),
+        "next": [(t["id"], t["title"]) for t in ready[:2]],
+    }
 
 
-def format_status(ready_count, blocked_count, commits):
+def _gh_json(args, repo_root: Path):
+    """Run a forge-CLI command returning JSON; None when unavailable.
+
+    Absence of the CLI, a missing remote, auth failure, or a timeout all
+    degrade to None — the caller omits the line rather than failing the refresh.
+    """
+    try:
+        r = subprocess.run(
+            ["gh", *args],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=repo_root,
+            timeout=30,
+        )
+        return json.loads(r.stdout)
+    except (
+        FileNotFoundError,
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        json.JSONDecodeError,
+    ):
+        return None
+
+
+def get_in_flight(repo_root: Path):
+    """One-phrase summary of open merge requests, or None when unknowable."""
+    prs = _gh_json(
+        ["pr", "list", "--state", "open", "--json", "number,createdAt,isDraft"],
+        repo_root,
+    )
+    if prs is None:
+        return None
+    if not prs:
+        return "no open PRs"
+    drafts = sum(1 for p in prs if p["isDraft"])
+    oldest = min(prs, key=lambda p: p["createdAt"])
+    created = datetime.fromisoformat(oldest["createdAt"].replace("Z", "+00:00"))
+    age_days = (datetime.now(timezone.utc) - created).days
+    s = f"{len(prs)} open PR{'s' if len(prs) > 1 else ''}"
+    if drafts:
+        s += f" ({drafts} draft)"
+    return f"{s}, oldest #{oldest['number']} {age_days}d"
+
+
+def get_ci(repo_root: Path):
+    """Latest CI conclusion on main, or None when unknowable."""
+    runs = _gh_json(
+        ["run", "list", "--branch", "main", "--limit", "1", "--json", "conclusion"],
+        repo_root,
+    )
+    if not runs:
+        return None
+    return runs[0].get("conclusion") or "in progress"
+
+
+def get_metrics(repo_root: Path):
+    """Project-declared metrics lines for the Status block, or [] when opted out.
+
+    Extension point (ticket 0305): a project opts in by declaring a
+    `state-metrics` make target whose stdout is appended to the generated
+    block. No project-specific logic lives here — the recipe belongs to the
+    project. Absence of make, absence of the target, a non-zero exit, a
+    timeout, or non-decodable (non-UTF-8) recipe output all degrade to [] so the
+    refresh never fails on the metrics' account.
+    """
+    # One call does both jobs: a missing Makefile, a missing target, or a parse
+    # error all exit non-zero, so the run's own exit code is the opt-in probe.
+    # `-s` suppresses recipe echo, so stdout is exactly what the recipe prints,
+    # not make's own command lines. Only the exit code gates acceptance, so
+    # unrelated recipe output cannot fool the opt-in decision.
+    try:
+        r = subprocess.run(
+            ["make", "-s", "state-metrics"],
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, UnicodeDecodeError):
+        return []
+    if r.returncode != 0:
+        return []
+    return [ln for ln in r.stdout.splitlines() if ln.strip()]
+
+
+def _truncate(title, width=48):
+    return title if len(title) <= width else title[: width - 1] + "…"
+
+
+def format_status(
+    tickets, commits, head_sha=None, in_flight=None, ci=None, metrics=None
+):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
-
-    lines = [STATUS_HEADING, f"<!-- generated {now} -->", ""]
+    anchor = f" · as of {head_sha}" if head_sha else ""
+    lines = [STATUS_HEADING, f"<!-- generated {now}{anchor} -->", ""]
 
     # Summary counts only — full list via: erg ready tickets/
-    if ready_count or blocked_count:
+    if tickets["ready"] or tickets["blocked"]:
         summary = (
-            f"**Tickets:** {ready_count} ready · {blocked_count} blocked"
-            " — `erg ready tickets/` for full list"
+            f"**Tickets:** {tickets['ready']} ready · {tickets['blocked']} blocked"
         )
+        if tickets["awaiting"]:
+            summary += f" · {tickets['awaiting']} awaiting author"
+        summary += " — `erg ready tickets/` for full list"
         lines.append(summary)
+        if tickets["next"]:
+            picks = " · ".join(
+                f"{tid} {_truncate(title)}" for tid, title in tickets["next"]
+            )
+            lines.append(f"  next: {picks}")
+
+    flight_bits = [b for b in (in_flight, f"CI main: {ci}" if ci else None) if b]
+    if flight_bits:
+        lines.append(f"**In flight:** {' · '.join(flight_bits)}")
 
     if commits:
-        lines.append("**Recent commits:**")
+        lines.append("**Recent (first-parent):**")
         for c in commits:
             lines.append(f"  {c}")
+
+    # Project-declared metrics count against the Status budget; append them last
+    # so any overflow drops the least-orienting content first.
+    if metrics:
+        lines.extend(metrics)
+
+    # Enforce the line budget — truncate the overflow with a marker rather than
+    # silently blow past it (rules/state.md; ticket 0305).
+    if len(lines) > STATUS_BUDGET:
+        marker = f"  … (truncated at {STATUS_BUDGET}-line Status budget)"
+        lines = lines[: STATUS_BUDGET - 1] + [marker]
 
     return lines
 
@@ -149,6 +278,19 @@ def main(repo_root: Path | None = None):
     text = state_file.read_text()
     preamble, tail = split_at_status(text)
 
+    if tail:
+        heading_line = tail.splitlines()[0]
+        if heading_line.rstrip() != STATUS_HEADING:
+            print(
+                f"ERROR: custom Status heading {heading_line!r} — hand-maintained "
+                "section; refusing to overwrite. Rename it to exactly "
+                f"'{STATUS_HEADING}' to opt in to machine refresh.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+    else:
+        print(f"NOTE: no '{STATUS_HEADING}' heading found — appending a generated one.")
+
     # tail starts with "## Status\n..."; find where Status body ends
     # (i.e. where the next ## heading begins) so we can preserve everything after it.
     status_end = _next_section_idx(tail, len(STATUS_HEADING) + 1)
@@ -157,9 +299,14 @@ def main(repo_root: Path | None = None):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     preamble = refresh_last_updated(preamble, today)
 
-    commits = get_commits(repo_root)
-    ready_count, blocked_count = get_tickets(repo_root)
-    status_lines = format_status(ready_count, blocked_count, commits)
+    status_lines = format_status(
+        get_tickets(repo_root),
+        get_commits(repo_root),
+        head_sha=get_head_sha(repo_root),
+        in_flight=get_in_flight(repo_root),
+        ci=get_ci(repo_root),
+        metrics=get_metrics(repo_root),
+    )
 
     new_text = (
         preamble.rstrip()

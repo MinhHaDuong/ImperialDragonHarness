@@ -1,0 +1,79 @@
+%erg 0.1
+Title: review-378 follow-up: forge-join blank-row retry, mandated-regex anchor, report nits
+Created: 2026-06-10
+Author: claude
+Closed: autoclosed — PR #494
+
+--- log ---
+2026-06-10T20:32Z claude created
+
+2026-06-10T21:55Z claude note action 4 already done by PR #380 (merged 2026-06-10): both 0236 placeholders removed when filing 0245; remaining scope is actions 1-3
+2026-07-11T21:16Z Minh Ha-Duong closed — autoclosed — PR #494
+--- body ---
+## Context
+
+Post-merge five-perspective review of PR #378 (ticket 0244, trace-doctor
+phase 4) found four actionable defects — none blocking, all merged. The
+review comment on PR #378 carries the full panel output and evidence.
+Two are code defects introduced by that PR (would have been
+request-changes pre-merge), two are doc/ticket nits.
+
+## Relevant files
+
+- `scripts/trace-pr-join.py` — `build_join`: blank-row retry defect
+- `scripts/trace-stats.py` — `MANDATED_BASH_RE`: anchor asymmetry
+- `docs/trace-counterfactuals-2026-06.md` — 33 vs 34 joined sessions
+- `tickets/0236-trace-doctor-session-trace-economics-aud.erg` — stale
+  placeholder line in body
+- `docs/trace-pr-join-2026-06.csv` — 5 blank rows currently stuck
+
+## Actions
+
+1. `build_join`: retry pairs whose cached row is blank (`merged == ""`)
+   on networked runs instead of `continue`-skipping everything already
+   in the cache; keep skipping resolved rows. The 5 stuck pairs
+   (-claude-projects 67/366, git-erg 309, padme 321/322) should resolve
+   on the next networked run.
+2. `MANDATED_BASH_RE`: make the anchor symmetric or drop it — currently
+   `^\s*git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close` anchors
+   only the first alternative, so `cd x && git worktree prune` does NOT
+   match while `cd x && erg close` DOES. Decide intended semantics
+   (compound commands SHOULD count as mandated), then regenerate
+   `tail_mandated_turns`/`mandated_share` if the census is re-run.
+3. Fix the report-internal inconsistency: "33 sessions joined" (forge-
+   join section) vs "34 joined sessions" (final section) — recompute
+   `H4r.joined_sessions` and use one value throughout.
+4. Remove the superseded "(phases 4-5 to be filed once 0243 resolves
+   H1-H13 ...)" placeholder from 0236's body (the new phase-5 line
+   stays).
+
+## Test
+
+- Red first: a cache CSV with one blank row + a fetcher stub → networked
+  `build_join` re-fetches the blank pair and overwrites it; resolved
+  rows are not re-fetched.
+- Red first: `_is_mandated_tool("Bash", {"command": "cd x && git worktree prune"})`
+  is True under the fixed regex.
+
+## Verification
+
+- [ ] Networked join run resolves (or re-attempts) the 5 blank pairs
+- [ ] Compound-command mandated test green; existing trace-stats tests
+      untouched and green
+- [ ] Report carries a single joined-sessions count
+- [ ] 0236 body has exactly one forward-looking phase-5 line
+
+## Invariants
+
+- Existing census accounting untouched (the bucket columns and refined
+  statistics of 0244 stay as committed)
+- Zero LLM calls in committed scripts; offline `--no-network` behavior
+  (cache-only, union-preserving) unchanged
+- `make check` passes
+
+## Exit criteria
+
+- [ ] Blank-row retry + symmetric mandated-regex landed with red-first
+      tests
+- [ ] Report and 0236 nits fixed
+- [ ] `make check` passes

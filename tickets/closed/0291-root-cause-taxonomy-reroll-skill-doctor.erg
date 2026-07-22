@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Root-cause taxonomy for verify-gate REROLL and skill-doctor diagnoses
+Created: 2026-07-12
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #550
+
+--- log ---
+2026-07-12T18:55Z claude created
+
+2026-07-13T17:11Z Minh Ha-Duong closed — autoclosed — PR #550
+--- body ---
+Child of tracker 0266 (pillage manifest,
+docs/pillage-0266-agentic-reproduction-2026-07-12.md, technique 7).
+
+## Context
+
+skill-doctor clusters failures by ad hoc named signatures with no shared
+upper vocabulary; verify-gate's REROLL rationale is freeform prose. The
+paper's five-way error taxonomy (arXiv:2604.21965 §5.3) gives a reusable
+"why did this fail" category. This is a labeling convention (like the
+verifiable:/consider:/nofollow: minor tags), not a mechanical detector.
+
+## Actions
+
+1. Reframe for the harness: Agent Error (implementer misread ticket/rule) /
+   Extractor Error (ticket underspecified) / Original Error (pre-existing
+   bug) / Missing Data (missing context or access) / Other.
+2. Add a required root_cause_class field to verify-gate's REROLL rationale
+   and to skill-doctor's per-pattern rows.
+3. Document the five categories with one example each in both SKILL.md
+   files.
+
+## Exit criteria
+
+- [ ] verify-gate REROLL verdicts carry root_cause_class, documented
+- [ ] skill-doctor survey output tags each pattern with root_cause_class
+- [ ] Both SKILL.md files document the taxonomy

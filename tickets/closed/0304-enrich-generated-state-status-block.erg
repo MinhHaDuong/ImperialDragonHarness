@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Enrich the generated STATE ## Status block — orientation per line, not history
+Created: 2026-07-13
+Author: fable
+Closed: autoclosed — PR #524
+
+--- log ---
+2026-07-13T10:40Z fable created
+
+2026-07-13T10:16Z Minh Ha-Duong closed — autoclosed — PR #524
+--- body ---
+## Context
+
+Fleet audit 2026-07-13: the generated `## Status` block spends five of its
+nine lines on `git log --oneline -5`, which duplicates the session-start git
+snapshot. The unique automated value today is one ticket-count line. The
+author authorized investing cycles at refresh time so each generated line
+answers a distinct reader question — what awaits the human, what is half-done,
+is main safe to build on, what just landed — across the reading situations
+(session start, reactivation, cross-repo scan, forge browsing, bare subagent).
+
+## Relevant files
+- `scripts/refresh-STATE.py` — `format_status`, `get_tickets`, `get_commits`
+- `tests/test_refresh_state.py` — format and JSON-schema contract tests
+- `rules/state.md` — minimal template must show the enriched shape
+
+## Actions
+1. Generated comment carries an as-of anchor: `<!-- generated <ts> · as of <short-sha> -->`
+   (reactivation catch-up recipe: `git log <sha>..HEAD`).
+2. Tickets line adds the needs-human count (`N awaiting author`, from erg
+   `labels`) plus a second line naming the top 2 ready tickets (id + truncated title).
+3. In-flight line: open merge requests (count, drafts, oldest age) and last CI
+   conclusion on main — via the forge CLI, omitted gracefully when the CLI or
+   remote is absent.
+4. Commits list becomes `git log --oneline --first-parent -3` (merge-level
+   history: more work per line in merge-commit repos).
+5. Update the `rules/state.md` template; stay within `## Status` ≤ 20 lines.
+
+## Test
+- `format_status` renders the enriched block from fixture inputs (red first).
+- `get_tickets` extracts awaiting-author count and top-ready titles from the
+  real erg JSON schema (field is `labels`, not `tags`).
+- Forge-CLI absent → in-flight/CI line omitted, script still succeeds.
+
+## Verification
+- [ ] Generated block ≤ 20 lines on this repo
+- [ ] Script succeeds in a repo with no forge remote
+- [ ] `make check` passes
+
+## Invariants
+- Guard behavior from ticket 0268 (abort on customized heading, append when
+  absent) unchanged.
+- Hand sections after `## Status` preserved verbatim.
+
+## Exit criteria
+- The enriched block replaces the commits-only format, tested, template updated.

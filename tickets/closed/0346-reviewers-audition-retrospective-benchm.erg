@@ -1,0 +1,119 @@
+%erg 0.1
+Title: /reviewers audition — retrospective benchmark board for candidate seats
+Created: 2026-07-14
+Author: Minh Ha-Duong
+Blocked-by: 0207
+Closed: autoclosed — PR #612
+
+--- log ---
+2026-07-14T17:14Z Minh Ha-Duong created
+2026-07-14T17:59Z claude note proto-audition data (0207 log, same session): 6 models over two frozen diffs. Defective diff (t323 guard WIP): terra 2/2 real verifiable, deepseek-v4-flash noise+contract violations, qwen3-coder-next 0/2 all-nit. Clean diff (merged PR #604): terra 0 findings (correct), luna 0 findings (correct, 40% of terra price) — specificity axis works as a board dimension. BLOCKER for the board: reasoning-field candidates (glm-5.2, kimi-k2.7-code) hang the aider/litellm seat stack until SEAT_TIMEOUT with empty stderr while answering in 1-3s via direct API — filed as tickets/0347; audition tooling should fail loud on that class, not burn board wall-clock
+
+2026-07-14T18:45Z claude note bump verify-reroll — round 1: unresolved blocker — EXIT trap in audition (reviewers.sh) deletes ${out}.err before the fail-loud 'see ${out}.err' pointer can be read; reproduced empty findings-dir post-exit. Second blocker: unsanitized --name/model flows into erg log note, embedded newline forges a second well-formed ticket-log line undetected by erg check (reproduced against real tickets/erg).
+2026-07-14T18:56Z Minh Ha-Duong closed — autoclosed — PR #612
+--- body ---
+## Context
+
+Child of tickets/0205 (external-reviewer panel tracker). Auditioning a
+candidate model for a roster seat today requires a live advisory trial:
+at least 5 merge requests across at least 3 projects (0205 rule 2). That
+takes days of wall-clock per candidate and makes cross-candidate
+comparison unsound — each candidate sees different PRs. Meanwhile the
+author scouts candidates from the OpenRouter weekly rankings (2026-07-14:
+Hy3 free, MiMo-V2.5, DeepSeek V4 Flash/Pro, MiniMax M3, GLM 5.2,
+Nemotron 3 Ultra free), which measure usage, not error-decorrelation —
+the panel's actual selection criterion.
+
+Decided design (author-approved, 2026-07-14 session): ONE new subcommand
+`/reviewers audition <model> [--endpoint URL]`, not separate skills for
+leaderboard-fetching / promotion / correlation / cost-plotting. Audition
+replays the candidate over a FROZEN benchmark board of already-merged
+PRs, so every candidate runs the same board in about an hour. The live
+advisory trial remains the confirmation stage for seats that pass
+audition; promotion stays a human decision at 0205's integration review.
+
+Per-PR finding classification (this is the decorrelation metric,
+operationalized):
+- duplicate — matches an internal-panel finding on the same PR
+  (redundant; no decorrelation value)
+- unique-verified — not found by the internal panel, confirmed real
+  against the PR's ground truth (the payoff)
+- unique-hallucinated — not found by the panel, refuted (the
+  devstral-small-2 failure mode: 13/13 hallucinations = disqualifier)
+
+## Relevant files
+
+- `skills/reviewers/SKILL.md` — add the `audition` subcommand section
+- `skills/reviewers/reviewers.sh` — implement `audition` (reuses the
+  0217 seat-runner invocation path that `request` already uses)
+- `skills/reviewers/panel.yml` — schema comment: audition scorecard
+  fields (overlap %, unique-verified, unique-hallucinated, latency,
+  $ per review)
+- `scripts/seat-runner.sh` — invoked per benchmark PR; no changes
+  expected (read-only replay is its normal mode)
+- `tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg` — trial
+  ticket where audition scorecard blocks are logged via `erg log`
+- `docs/research/ensemble-decorrelation-evidence.md` — the selection
+  rules audition operationalizes (cap 2-4 seats, composition over count)
+
+## Actions
+
+1. Select and freeze the benchmark board: ~10 merged PRs in this repo,
+   biased toward complex multi-file CODE changes (ensemble value
+   concentrates there — 0205), each with recoverable ground truth
+   (internal-panel findings from the PR thread, gate verdict, any
+   post-merge defect). Record the board as a list of PR numbers + ground
+   truth summaries in `skills/reviewers/benchmark-board.yml`.
+2. Implement `audition` in `reviewers.sh`: for each board PR, run the
+   candidate through the seat-runner over that PR's diff, harvest to the
+   0205 contract shape, classify each finding (duplicate /
+   unique-verified / unique-hallucinated) against the board's ground
+   truth.
+3. Emit one scorecard block per audition run (hit rates, overlap %,
+   latency, $ per review from token counts) and append it to the trial
+   ticket via `erg log` (verbs: `created`, `note`, `closed` only —
+   audition lines use `note`).
+4. Document the subcommand in `skills/reviewers/SKILL.md`, including the
+   audition → advisory trial → promote/drop pipeline and the rule that
+   audition never touches the roster (filing the seat stays a manual
+   panel.yml edit + PR).
+
+## Test
+
+- Extend `tests/test_reviewer_seat.sh` pattern: stub OpenAI-compatible
+  endpoint emitting canned findings; run `audition` against a 2-PR toy
+  board with known ground truth; assert the three-way classification,
+  the scorecard block shape, and non-zero exit when the endpoint is
+  unreachable (fail-loud).
+
+## Verification
+
+- [ ] Audition of the stub candidate over the toy board reproduces the
+      expected duplicate/unique-verified/unique-hallucinated counts
+- [ ] Scorecard block appends to the trial ticket via `erg log note` and
+      passes `erg check`
+- [ ] A second audition run of the same candidate is idempotent on the
+      roster (audition writes no panel.yml change)
+
+## Invariants
+
+- No secrets in any config: credential-env name only, key loads via the
+  BASH_ENV path (0207)
+- Containment unchanged: audition runs candidates only through the 0217
+  seat-runner sandbox (read-only repo, minimal env, network
+  deny-by-default plus the endpoint bridge)
+- Advisory-trial protocol (0205 rule 2) is unchanged — audition filters
+  candidates before it, never replaces it
+- `make check` passes
+
+## Exit criteria
+
+- [ ] Frozen benchmark board committed (`benchmark-board.yml`, ~10 PRs
+      with ground truth)
+- [ ] `/reviewers audition <model>` runs the board end-to-end through
+      the seat-runner and prints one scorecard block
+- [ ] Findings classified duplicate / unique-verified /
+      unique-hallucinated against board ground truth
+- [ ] Scorecard logged to the candidate's trial ticket; SKILL.md
+      documents the audition → trial → promote pipeline
+- [ ] Toy-board test green; `make check` passes

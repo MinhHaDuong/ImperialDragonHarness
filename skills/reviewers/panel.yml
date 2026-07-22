@@ -12,11 +12,23 @@
 #     # cli-agent / local-model seats also carry:
 #     endpoint:     OpenAI-compatible base URL (e.g. http://127.0.0.1:8012/v1)
 #     model:        model id passed to the seat-runner
+#     credential-env: (optional) name of the env var holding the endpoint's API
+#                   key — passed to the seat-runner as --credential-env and read
+#                   from the BASH_ENV-loaded env, NEVER written here. Omit for a
+#                   local, unauthenticated endpoint.
+#     # forge-bot seats also carry:
+#     login:        the bot's forge login, passed to the reviewer-request API
 #
-# Default: empty roster → /reviewers is a no-op until seats are configured.
-# Example (commented; uncomment + adjust to enable):
+# A forge-bot seat is ON-DEMAND (ticket 0206): it fires only when
+# `/reviewers request <pr>` is invoked on a specific merge request — there
+# is no repo-wide auto-request lever, so trivial PRs stay unreviewed.
 #
-# reviewers:
+# The shipped roster below is inert until explicitly invoked: no seat fires
+# without `/reviewers request <pr>`. An empty roster (`reviewers: []`) makes
+# /reviewers a no-op entirely.
+# Example local-model seat (commented; uncomment + adjust to enable):
+#
+# A fully local, free, private llama-server seat — no credential:
 #   - name: local-qwen
 #     kind: local-model
 #     status: advisory
@@ -24,4 +36,42 @@
 #     endpoint: http://127.0.0.1:8012/v1
 #     model: openai/qwen3.6-35b-a3b
 
-reviewers: []
+reviewers:
+  - name: copilot
+    kind: forge-bot
+    status: advisory
+    login: copilot-pull-request-reviewer[bot]
+    # 0206 closed and moved to tickets/closed/; path refreshed so `list` shows a
+    # live pointer and `scores` (which greps every *.erg, closed/ included) still
+    # reads this seat's archived trial cards. NOTE: `scorecard` writes via
+    # `erg log <ID>`, which resolves IDs among OPEN tickets only — so logging a
+    # NEW scorecard to this seat now fails "no ticket found". That is moot here:
+    # copilot's trial has concluded; whether to retire the seat is the author's
+    # call at the 0205 promote-or-drop review, so the seat stays in place for now
+    # (ticket 0348).
+    trial-ticket: tickets/closed/0206-copilot-review-in-the-verify-panel-on-demand.erg
+  # Primary OpenRouter seat — gpt-5.6-luna chosen over gpt-5.6-terra on cost
+  # (author directive 2026-07-14: ~40% of terra's price; matched terra's
+  # specificity in the round-2 same-diff audit — 0 findings on clean code;
+  # sensitivity untested, the 0207 trial arbitrates). Key loads via BASH_ENV,
+  # never here.
+  - name: openrouter-frontier
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://openrouter.ai/api/v1
+    model: openai/gpt-5.6-luna
+    credential-env: OPENROUTER_API_KEY_IDH
+  # Budget seat (~30x cheaper; noisier, weaker catches — trial arbitrates).
+  # ROUTING TRAP: `openai/` is litellm's PROVIDER-ROUTE prefix, not part of
+  # the OpenRouter model ID — prepend it to the full OpenRouter ID (which may
+  # itself start with deepseek/, qwen/, ...). Without it, litellm reads the
+  # ID's first segment as its own native provider and dials that provider's
+  # API host directly — off-relay — dying under --network=none.
+  - name: openrouter-budget
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://openrouter.ai/api/v1
+    model: openai/deepseek/deepseek-v4-flash
+    credential-env: OPENROUTER_API_KEY_IDH

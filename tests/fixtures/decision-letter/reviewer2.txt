@@ -1,0 +1,9 @@
+Reviewer 2
+
+Comment 1: Figure 2 is illegible at print size; please increase the font and
+export it as a vector graphic.
+
+Comment 2: The discussion does not engage with the recent literature on robust
+standard errors for short panels.
+
+Comment 3: Typo on page 7: "recieve" should read "receive".

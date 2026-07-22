@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Extract shared worktree-identity predicate helper — or record why three inline copies stay
+Created: 2026-07-13
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #542
+
+--- log ---
+2026-07-13T07:18Z Minh Ha-Duong created
+
+2026-07-13T12:55Z MinhHaDuong note decided keep two inline copies (pretooluse _in_worktree + erg-pr-merge in_worktree), no shared lib: only 2 of 4 sites share the exact predicate, guards are fail-closed and read JSON .cwd, sourcing would flip fail-open and couple the skill; drift pinned by tests/test_worktree_identity_predicate_inline.py
+2026-07-13T13:07Z Minh Ha-Duong closed — autoclosed — PR #542
+--- body ---
+## Context
+
+The 0252 audit fixes land the same worktree-identity predicate — "does
+`git rev-parse --show-toplevel` still match the worktree the cwd claims, and
+is it not the primary root" — inline in three places:
+
+- `scripts/guard-worktree-identity.sh` (0296, this wave)
+- `scripts/guard-commit-on-main.sh` (0297: tree-identity check replaces the
+  branch-name check that I1 defeats)
+- `skills/merge/erg-pr-merge` `in_worktree()` (0301: `[ -f .git ]` weak
+  predicate tightened)
+
+Three copies drift. This ticket decides: extract one shared helper, or record
+why the duplication is deliberate.
+
+## Actions
+
+1. After 0296/0297/0301 have all merged, diff the three implementations and
+   confirm they share the same predicate (they may differ in fail-open vs
+   fail-closed and in what they read — hook JSON `.cwd` vs shell cwd).
+2. Decide: extract a `scripts/lib/worktree-identity.sh` sourced by all three,
+   or document the choice to keep them inline.
+
+## Invariants
+
+- The extraction must not change any of the three call sites' fail-open /
+  fail-closed semantics — those differ by design (advisory vs
+  integrity-protecting guard).
+
+## Exit criteria
+
+- [ ] Either a shared helper is extracted and all three sites use it, OR a
+      short rationale is recorded (in this ticket or a code comment) for why
+      three inline copies stay.
+
+## Note — YAGNI counter-argument
+
+The three scripts are tiny, each a few lines of string-munging plus one
+`rev-parse`, and they intentionally diverge on failure semantics (fail-open for
+the advisory `cd` guard, fail-closed for the integrity guards; JSON `.cwd`
+versus live shell cwd as the input). A shared helper couples three hook scripts'
+failure behaviour into one file, so a change for one site risks the other two —
+which may cost more than the duplication saves. "Record why they stay separate"
+is a legitimate, possibly preferred, outcome of this ticket.
