@@ -28,7 +28,18 @@ round; the fix agent moved it).
 alone is not enough because the archive normally only happens at erg-pr-merge,
 which is too late.
 
-**How to apply:** when closing a ticket on the branch ahead of the PR, run BOTH
-`erg close <id> <reason>` and then `erg archive <id>` (the proper tool — not a
-raw `git mv`), then `git add -u tickets/` and `erg check`. See
+**How to apply:** when closing a ticket on the branch ahead of the PR, run the
+full sequence — staging TWICE, because `erg archive` physically moves the file
+AFTER the first `git add -u` (skipping the second left a stale
+tracked-but-absent blob on main, ticket 0264 / PR #1044, fixed #1046):
+```bash
+tickets/erg close <ID> <reason>
+git add -u tickets/                    # stage the Closed: header edit
+tickets/erg archive tickets/ | sed -n 's#^ARCHIVED #tickets/closed/#p' | xargs -r git add --
+git add -u tickets/                    # stage the deletion of the OLD path — easy to skip
+git status --porcelain tickets/        # no bare M/D at the old path, only the closed/ add
+```
+Never dismiss a pre-commit "cannot open <file>" warning during a ticket close
+as benign without checking for a stray tracked-but-absent path. See
 [[feedback_verify_deferral_tracker]].
+(Absorbed feedback_erg_close_archive_staging_order, dream 2026-07-22.)

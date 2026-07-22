@@ -30,7 +30,8 @@
 - [project_uv_path_fix.md](project_uv_path_fix.md), [project_worktree_env_data.md](project_worktree_env_data.md), [project_doifetch_sync.md](project_doifetch_sync.md), [project_dvc_integration.md](project_dvc_integration.md).
 
 ## Papers & submission
-- RDJ-26561 R&R round 1: [project_rdj26561_rr_round1.md](project_rdj26561_rr_round1.md) — tracker 0274, 16 tickets, deadline ~2026-10-20, 0288 critical path.
+- RDJ-26561 R&R round 1: [project_rdj26561_rr_round1.md](project_rdj26561_rr_round1.md) — tracker 0274, deadline ~2026-10-20; 0288 BUILD merged, 0304 harvest (padme) is critical path.
+- [project_prior_mappings_overlap_0289.md](project_prior_mappings_overlap_0289.md) — prior-mappings overlap probe: 89–91% coverage = curation, >99% discovery; artifacts in revision-rdj26561/; feeds 0278/0283.
 - Œconomia R&R: [project_oeconomia_rr_pipeline.md](project_oeconomia_rr_pipeline.md), [project_rr_traceability_ledger.md](project_rr_traceability_ledger.md), [project_0171_conclusion_rebuild.md](project_0171_conclusion_rebuild.md), [feedback_version_increment_planning.md](feedback_version_increment_planning.md).
 - Reports & build: [project_techrep_rewrite.md](project_techrep_rewrite.md), [project_techrep_split.md](project_techrep_split.md), [project_writing_build_phase_separation.md](project_writing_build_phase_separation.md), [project_frozen_manuscript_vs_live_companions.md](project_frozen_manuscript_vs_live_companions.md), [project_repo_layout_decision.md](project_repo_layout_decision.md), [project_deliverables_render_next_to_source.md](project_deliverables_render_next_to_source.md).
 - Next papers: [project_paper_ceiling_growth_imaginary.md](project_paper_ceiling_growth_imaginary.md), [project_paper_instrument_circulation.md](project_paper_instrument_circulation.md).
@@ -44,9 +45,7 @@
 
 ## Feedback
 - [feedback_erg_close_archive.md](feedback_erg_close_archive.md) — `erg close`/`erg archive` are separate; run both pre-PR
-- [feedback_erg_close_archive_staging_order.md](feedback_erg_close_archive_staging_order.md) — manual close+archive needs a SECOND `git add -u` after `erg archive` runs, or the old path's deletion never stages (left a ghost blob on main, 2026-07-15)
 - [feedback_prclose_onbranch_ticket_none.md](feedback_prclose_onbranch_ticket_none.md) — ticket closed on-branch → PR needs `Ticket: none`, not the archived path
-- [feedback_enterworktree_stuck_cwd.md](feedback_enterworktree_stuck_cwd.md) — EnterWorktree targets the wrong repo when base cwd is parked off-project; fall back to manual `git worktree add`
 - [feedback_het_register.md](feedback_het_register.md) — manuscript prose = HET academic register, not motivational cadence
 - [feedback_no_long_running.md](feedback_no_long_running.md) — don't launch long-running tasks (make, rendering); let user run in terminal
 - [feedback_render_bitcompare_is_the_gate.md](feedback_render_bitcompare_is_the_gate.md) — for a pure build refactor, render old-vs-new + byte-compare IS the validation gate
@@ -84,6 +83,7 @@
 - [feedback_manuscript_number_provenance.md](feedback_manuscript_number_provenance.md) — cite only pipeline numbers traceable to an archived output
 - [feedback_read_before_cite.md](feedback_read_before_cite.md) — a reference enters the manuscript only after being read and argued relevant
 - [feedback_fetch_before_sibling_merge.md](feedback_fetch_before_sibling_merge.md) — multi-PR wave on one file: fetch before each sibling merge, grep-verify the union
+- [feedback_sibling_close_collides_on_shared_blocker.md](feedback_sibling_close_collides_on_shared_blocker.md) — sibling erg closes collide on a shared Blocked-by ticket; pre-merge main into each next sibling before erg-pr-merge
 - [feedback_atomic_tickets_validation_units.md](feedback_atomic_tickets_validation_units.md) — tickets must be atomic — one MOA validation unit per ticket/PR
 - [feedback_bytecheck_old_vs_new_not_golden.md](feedback_bytecheck_old_vs_new_not_golden.md) — byte-check old vs new code on the SAME current data, never a committed golden
 - [feedback_caps_force_pruning_not_compression.md](feedback_caps_force_pruning_not_compression.md) — a size cap forces pruning stale content, never compression to game the number
@@ -126,3 +126,4 @@
 - [feedback_fable_second_opinion_prose_structure.md](feedback_fable_second_opinion_prose_structure.md) — Fable as independent reviewer for manuscript structural TODOs gave concrete, actionable recommendations
 - [feedback_background_session_manuscript_pr_workflow.md](feedback_background_session_manuscript_pr_workflow.md) — background sessions force worktree+PR even for prose-in-place; reconcile primary checkout's stale uncommitted diff after merge
 - [feedback_pdf_layout_automate_dont_hand_paginate.md](feedback_pdf_layout_automate_dont_hand_paginate.md) — automate pagination (titlesec sectionbreak, widow penalties, dash-ratio col widths); variant builds = transform layer script
+- [feedback_rtk_log_hides_merge_commits.md](feedback_rtk_log_hides_merge_commits.md) — rtk-filtered `git log` omits merge commits; verify tips with rev-parse / `rtk proxy git log`
