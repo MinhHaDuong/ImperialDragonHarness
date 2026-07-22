@@ -15,9 +15,13 @@
 ## Entries
 - [Preprint target is main.md](project_preprint_target_main_md.md) — report.tex internal only; 0255-0262 deferred (pre-registered, never close-silently); H5 wiki count in Annex C (5/20 optimised violations); Annex E = recognition matrix
 - [Reference v2.1 adopted](project_reference_v2_adopted.md) — 173 plants PR #780 (extensions standalone); master replay pending (0458); ratchet 0447
+- [Plan-agent test inversion](feedback_plan_agent_test_inversion.md) — reframing plans can sign-flip the original red test while exit criteria stay intact; diff the Test section too (raid 0544)
 - [Async agent continuation](feedback_async_agent_continuation.md) — no SendMessage here; original agent may self-resume; fresh agents need isolation:worktree
+- [Gaze fork async reviewers vs auto-merge](feedback_gaze_fork_async_reviewers_automerge_race.md) — gaze can return mid-flight; never queue auto-merge before all 3 reviewer reports arrive (PR #983 merged 1 min before two real blockers; fix-forward #986)
 - [Peek/kill sibling sessions](reference_peek_kill_sibling_sessions.md) — no cross-session viewer; peek via `tail -f` of `~/.claude/projects/<proj>/*.jsonl`; map PID→worktree with `readlink /proc/<pid>/cwd` (the one matching your cwd is YOU — don't kill it); kill only idle+merged+no-lock; remove worktree after process dead
 
+- [Light review for mechanical diffs](feedback_light_review_for_mechanical_diffs.md) — user CO2 remark (raid 0558): scale review depth to diff risk; pure-substitution diffs get one reviewer, not the gaze panel
+- [Chore-close staging + late close](feedback_chore_close_staging_and_late_close.md) — git add after erg close (git mv stages pre-edit content); re-check closed/ before chore-closing (hunts close late)
 - [Phase build layout](project_phase_build_layout.md) — one .mk per phase since 2026-06-04 (acquire/score/render + root staleness/world); old root verbs tables/figures/census/measurements DELETED
 - [Make stamp discipline](feedback_make_stamp_discipline.md) — dynamic multi-output stamps (armN_flat) are CORRECT; single-output-dressed-as-stamp is the hack (exp1_cross_eval, 0460); pair conversion with .DELETE_ON_ERROR (was build-wide missing; 0461 generalizes)
 - [Greedy-glob class](project_greedy_glob_class.md) — CLOSED (0495/0496/0499); run-dir consumers skip reconciliation_ PREFIX + _filtered.csv SUFFIX (the real filtered artifact is a suffix not a filtered_ prefix); standing test test_no_colocated_output_leak.py; verify artifact name against the writer not the ticket premise
@@ -25,6 +29,7 @@
 - [Concurrent author-session raids](feedback_concurrent_author_session_raids.md) — re-verify ticket open/closed on origin/main before every execute launch; never touch sibling-session worktrees; don't bundle whole tickets/ snapshots into content PRs
 - [Pre-commit hook commit ordering](feedback_precommit_hook_commit_ordering.md) — adherence hook runs working-tree tests against the index; order multi-commit series green, slice with `git commit -- <paths>`
 - [Optimistic concurrency for ticket IDs](feedback_optimistic_concurrency_ticket_ids.md) — no reservation machinery (wontfix 0427, git-erg#282); collision = renumber; CI detects (0418)
+- [Ratchet race + dropped close](feedback_ratchet_ceiling_race_and_dropped_close.md) — ceiling files race parallel prose merges (re-init OK); post-queue rebase can drop erg-pr-merge close commit — check origin/main closed/ before re-closing
 - [erg close bookkeeping conflict](feedback_erg_close_bookkeeping_conflict.md) — parallel closes of sibling blockers conflict in the THIRD ticket's Blocked-by lines; keep both notes, drop both headers
 - [quickpr limitations](feedback_quickpr_limitations.md) — no renames/deletions; restoring the starting branch reverts working-tree edits
 - [Parallel push during investigation](feedback_parallel_push_during_investigation.md) — always branch from `origin/main` after fetch, not local HEAD; user may push directly while agent investigates
@@ -91,6 +96,9 @@
 - [Beamer plain frame sizing](feedback_beamer_plain_frame_sizing.md) — [plain] full-page figure frames need width=\paperwidth AND height=\paperheight with keepaspectratio
 - [size_class per-record split](feedback_size_class_per_record_split.md) — model attrs in measurements.jsonl can vary across reps; resolve once per model before sorting, not per record
 - [/merge leaves worktree on main](feedback_merge_leaves_worktree_on_main.md) — after merge, worktree's HEAD is on local main; branch BEFORE the next Edit or stray commits land on main
+- [Gaze fork orphans reviewers](feedback_gaze_fork_orphans_reviewers.md) — forked /gaze may end mid-flight; its reviewers still deliver via task-notifications; wait a beat before relaunching; if fork bails twice, run /verify-gate directly once reviews are in
+- [Human sign-off criterion not waivable](feedback_human_signoff_criterion_not_waivable.md) — classifier blocks self-waiving "author approves" via STATE override mode; prep everything, needs-input the author
+- [PYTEST_ADDOPTS breaks uv pytest](feedback_pytest_addopts_env_breaks_uv_pytest.md) — bg-job env injects --cache-dir pytest rejects; `env -u PYTEST_ADDOPTS make check`
 - [Main repo on foreign branch](feedback_main_repo_on_foreign_branch.md) — during a raid the main checkout may be on another session's feature branch; ticket-closure/STATE commits meant for main land wrong — switch a worktree to main instead
 - [pathlib with_suffix on dotted stems](feedback_pathlib_with_suffix_dotted_stems.md) — `Path("foo.bar-baz").with_suffix(".x")` returns `foo.x`; use string slicing when input stem may contain dots
 - [make rebuild-measurements destroys records](feedback_make_rebuild_measurements_destroys_records.md) — deletes ALL .record.json before regenerating; if downstream fails you lose cohort records, restore from git
@@ -99,6 +107,7 @@
 - [claude-code-cli route](reference_claude_cli_route.md) — ticket 0160 / PR #395; runs Claude via user's CC session, no ANTHROPIC_API_KEY; suggest for capability checks (NOT controlled sweeps — no T=0/seed/max_tokens)
 - [Run adherence tests locally before push](feedback_run_adherence_locally_before_push.md) — `pytest -m adherence` catches plot-color/import violations in 30s; saves a CI round-trip
 - [erg-pr-merge partial success](feedback_erg_pr_merge_partial_success.md) — if ticket-close push succeeded but merge failed, ticket already closed; skip to `gh api .../merge` directly
+- [Merge classifier blocks autonomous raid](feedback_merge_classifier_blocks_autonomous_raid.md) — classifier ignores STATE standing merge authorization; end raid with needs-input merge handoff; killed erg-pr-merge leaves stale pre-rebase INDEX in PR worktree (reset --hard before gc)
 - [CI chore-bypass via workflow path-filter](project_ci_chore_bypass_workflow.md) — DONE (#458): CI.yml skips lint/tests on ticket/STATE-only diffs (dorny/paths-filter, predicate-quantifier every, fail-safe)
 - [gh pr merge --delete-branch in worktree](feedback_gh_pr_merge_delete_branch_worktree.md) — drop `--delete-branch` from a worktree (main-lock error); merge succeeds server-side; auto-merge now enabled repo-wide
 - [Agent identity separation](project_agent_identity_separation.md) — post-conference: give Copilot/HDMX-coding-agent a non-admin GitHub identity so `enforce_admins: true` actually protects against agent red-merges

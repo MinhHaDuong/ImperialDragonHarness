@@ -91,7 +91,57 @@
       "Read(//home/haduong/CNRS/papiers/actif/AEDIST-technical-report/**)",
       "Bash(rtk git *)",
       "Bash(rtk grep *)",
-      "Bash(~/.claude/skills/merge/erg-pr-merge:*)"
+      "Bash(~/.claude/skills/merge/erg-pr-merge:*)",
+      "Bash(ssh -f -N -L 11434:127.0.0.1:11434 padme)",
+      "Bash(cp __TRACKED_VAR__/ADR.md .)",
+      "Bash(cp -r __TRACKED_VAR__/diagrams report/)",
+      "Bash(mkdir -p tools/pdfOCR2md)",
+      "Bash(cp __TRACKED_VAR__/pdfOCR2md/Makefile __TRACKED_VAR__/pdfOCR2md/pdfOCR2md.py tools/pdfOCR2md/)",
+      "Bash(mkdir -p publications/journal-article)",
+      "Bash(mv src/aedist/select_top.py src/aedist/select_models.py)",
+      "Bash(mv tests/test_select_top.py tests/test_select_models.py)",
+      "Edit(*/.git/hooks/*)",
+      "Bash(git fetch:*)",
+      "Bash(gh repo:*)",
+      "Bash(git -C /home/haduong/.claude status -s)",
+      "Bash(git -C /home/haduong/.claude diff)",
+      "Bash(git -C /home/haduong/.claude log --oneline -5)",
+      "Bash(CLAUDE_PROJECT_DIR=/home/haduong/aedist-technical-report bash -c 'source /home/haduong/.claude/hooks/on-start.sh')",
+      "Bash(bash ~/.claude/hooks/on-start.sh)",
+      "Bash(gh pr:*)",
+      "Bash(make preflight:*)",
+      "Bash(gh issue:*)",
+      "Bash(python -m pytest tests/test_pdf2md_*.py -v)",
+      "Bash(ls:*)",
+      "Bash(wc -l /home/haduong/aedist-technical-report/experiments/data/converter_test/*/Decision-1509.md)",
+      "Bash(nvidia-smi)",
+      "Bash(ps -o pid,ppid,etime,stat,cmd --ppid 241855)",
+      "Bash(ps -o pid,ppid,etime,cmd --ppid 346009)",
+      "Bash(uv run:*)",
+      "Bash(curl -sf http://localhost:11434/api/tags)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(m['name'] for m in d.get\\('models',[]\\) if 'qwen3.5' in m['name']\\)\\)\")",
+      "Bash(mkdir -p /tmp/0021)",
+      "Bash(echo \"launched pid $!\")",
+      "Bash(nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader)",
+      "Bash(kill -0 350276)",
+      "Bash(ps -o etime= -p 350276)",
+      "Bash(echo \"python 350276 STILL RUNNING \\($\\(ps -o etime= -p 350276)",
+      "Bash(ps -o pid,etime,start_time,cmd -p 350276)",
+      "Bash(curl -s http://localhost:11434/api/ps)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:11434/api/show -d '{\"name\":\"qwen3.5:2b\"}')",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('parameters:', d.get\\('parameters',''\\)\\); print\\('template_len:', len\\(d.get\\('template',''\\)\\)\\); print\\('details:', d.get\\('details',{}\\)\\); print\\('model_info keys:', list\\(d.get\\('model_info',{}\\).keys\\(\\)\\)[:20]\\)\")",
+      "Bash(chmod +x /tmp/0021/apply.sh)",
+      "Bash(head -6 tickets/0054* tickets/archive/0054*)",
+      "Bash(wc -l tickets/0060* tickets/0069* tickets/0073*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git worktree:*)",
+      "Bash(git push:*)",
+      "Bash(grep -E \"\\\\.\\(csv|record\\\\.json\\)$\")"
     ],
     "defaultMode": "auto",
     "additionalDirectories": [
@@ -101,7 +151,7 @@
       "/home/haduong/CNRS/papiers/actif/AEDIST-technical-report/tickets"
     ]
   },
-  "model": "sonnet",
+  "model": "fable",
   "hooks": {
     "SessionStart": [
       {
@@ -230,14 +280,19 @@
     ],
     "Stop": []
   },
+  "worktree": {
+    "baseRef": "fresh"
+  },
   "enabledPlugins": {},
-  "effortLevel": "medium",
+  "effortLevel": "low",
   "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
+  "editorMode": "normal",
   "teammateMode": "auto",
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true
 }
