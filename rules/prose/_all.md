@@ -43,6 +43,26 @@ These are the tics that mark text as machine-written. Cut them.
 - **Do not overstate.** One unearned superlative makes the reader doubt every other claim.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 - **Cutting to a word budget? Remove whole before you condense** — see `cutting.md`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
+- **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
+
+## Cutting to a word budget — remove whole before condensing
+
+A cut plan that only shortens passages in place questions nothing. Work in
+this order:
+
+1. **Remove whole first.** Re-read asking which passages are weak,
+   distracting, redundant with an external artifact, or support no reviewer
+   remark and no core claim. Rank those, remove them entire, and check each
+   removal against the coverage ledger so no remark or claim loses its only
+   support.
+2. **Condense the remainder**, ranked, until the budget is met — then stop.
+3. **Displaced is not deleted.** Content with archival value moves to the
+   data package or an appendix, with a one-line pointer left behind.
+
+Whole removal improves the paper; condensation only compresses it. On the
+RDJ-26561 data paper (2026-07-24) seven whole-passage removals covered 633
+words of a 1,240-word target — the largest being analysis results in a data
+paper's introduction that duplicated the deposited tables.
 
 ## Scope note
 
@@ -50,4 +70,3 @@ This is a seed. Grow it deliberately — add a guard only when you have seen the
 defect in real drafts, and keep each entry one line so the injected body stays
 small. Document-type conventions (techreport, slides, book) and language norms
 (fr, en) live in `rules/doctype/` and `rules/lang/`, not here.
-- **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
