@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Writer's arsenal: add the "cut before condense" technique to the prose playbook
+Created: 2026-07-24
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-24T14:55Z HDMX-coding-agent created (author request, climate-finance-het cut-pass session)
+
+--- body ---
+## Context
+
+Word-budget reduction plans drafted by agents default to condensation:
+every passage is shortened in place, none is questioned. On the RDJ-26561
+data paper (climate-finance-het, 2026-07-24), the author rejected a
+condensation-only plan ("the 'only condense' makes me nervous — normally I
+would start by asking which weak/distracting parts can be removed whole").
+The revised pass found 633 words (of a 1,240-word target) in seven
+whole-passage removals — the top one being analysis results smuggled into a
+data paper's introduction, duplicating deposited tables. Condensation then
+only had to cover the remainder. The whole-removal pass is not just cheaper;
+it improves the paper (removes weak/distracting material) where condensation
+merely compresses it.
+
+## The technique (to be encoded)
+
+When cutting a document to a word budget:
+1. **Remove whole first.** Re-read asking: which passages are weak,
+   distracting, redundant with external artifacts, or serve no
+   reviewer-remark / core argument? Rank and remove entire passages, each
+   checked against the coverage ledger (no remark/claim loses its only
+   support).
+2. **Condense the remainder.** Only after whole removals, condense ranked
+   passages until the budget is met — then stop; do not over-cut.
+3. **Displaced ≠ deleted.** Content with archival value moves to the data
+   package / appendix as files, with a one-line pointer.
+
+## Actions
+
+1. Add the technique to the writer's playbook layer — likely a new
+   `rules/prose/` entry or a skill the cut/condense passes load; keep it
+   one-screen, per the prose-rules scope note.
+2. Cross-reference from wherever word-budget/cut passes are prompted
+   (review-pr-prose? a future cut-pass skill?) so agents drafting cut plans
+   apply remove-whole-first by default.
+
+## Exit criteria
+
+- [ ] Technique encoded in the shared rules/skills layer
+- [ ] An agent-drafted cut plan on any project starts with a whole-removal
+      pass without being told
