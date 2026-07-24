@@ -42,6 +42,7 @@ These are the tics that mark text as machine-written. Cut them.
 - **Avoid the feeble qualifiers**: "rather", "very", "little", "pretty" — they drain the word they modify.
 - **Do not overstate.** One unearned superlative makes the reader doubt every other claim.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
+- **Cutting to a word budget? Remove whole before you condense** — see `cutting.md`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
 
 ## Scope note
 

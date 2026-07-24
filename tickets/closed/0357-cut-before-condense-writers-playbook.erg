@@ -2,10 +2,12 @@
 Title: Writer's arsenal: add the "cut before condense" technique to the prose playbook
 Created: 2026-07-24
 Author: HDMX-coding-agent
+Closed: encoded cut-before-condense in rules/prose/cutting.md + _all.md pointer + README index
 
 --- log ---
 2026-07-24T14:55Z HDMX-coding-agent created (author request, climate-finance-het cut-pass session)
 
+2026-07-24T12:34Z Integration Test closed — encoded cut-before-condense in rules/prose/cutting.md + _all.md pointer + README index
 --- body ---
 ## Context
 
@@ -45,6 +47,9 @@ When cutting a document to a word budget:
 
 ## Exit criteria
 
-- [ ] Technique encoded in the shared rules/skills layer
-- [ ] An agent-drafted cut plan on any project starts with a whole-removal
-      pass without being told
+- [x] Technique encoded in the shared rules/skills layer
+      (`rules/prose/cutting.md`, indexed in `rules/README.md`)
+- [x] An agent-drafted cut plan on any project starts with a whole-removal
+      pass without being told — the one-line pointer in `rules/prose/_all.md`
+      injects on every prose edit; the checkable proxy is the ratchet in
+      `tests/test_prose_cutting_rule.py`
