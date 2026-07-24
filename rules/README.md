@@ -14,6 +14,7 @@ files on demand when their scope signal applies to your task.
 | [coding-bash.md](./coding-bash.md) | edit of `*.sh` (alias: `format/bash`) | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 | [pdf-finishing.md](./pdf-finishing.md) | finishing pass of any PDF deliverable (submission, deposit, personal page) | Automate pagination (titlesec, widow penalties, dash-ratio widths); scripted pdftotext checklist; variants as archived transform layers. |
 | [prose/_all.md](./prose/_all.md) | edit of any prose file (`*.tex` `*.qmd` `*.md` `*.txt`) | Universal prose rules: LLMism guards, Elements of Style. |
+| [prose/cutting.md](./prose/cutting.md) | a pass cutting prose to a word/page budget | Remove whole passages before condensing; displaced ≠ deleted; a cut plan starts with the whole-removal pass. |
 | [doctype/techreport.md](./doctype/techreport.md) | edit of a `techreport` file (`\documentclass{report}` or manifest) | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | edit of a `slides` file (`\documentclass{beamer}` or manifest) | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | edit of a `book` file (`\documentclass{book}` or manifest) | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
