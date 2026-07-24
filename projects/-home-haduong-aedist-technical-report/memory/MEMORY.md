@@ -127,3 +127,15 @@
 - [Matplotlib annotation autoscale](feedback_matplotlib_annotation_autoscale.md) — ax.plot leader lines outside the data area silently expand axes limits, desyncing multi-panel rows; pin set_ylim after all artists; verify alignment by pixel-measuring separators
 - [Autonomous raid + cross-machine pickup](feedback_autonomous_raid_doudou_pickup.md) — "autonomous mode" + destination machine = full pipeline without pausing; merge+push everything for clean handoff
 - [Ticket premises are hypotheses](feedback_ticket_premises_are_hypotheses.md) — agent-authored ticket premises are often confidently wrong; the 483/486/487/488 raid overturned 3 of 4; verify against data before executing
+
+## Recovered index lines (2026-07-22, machine-local)
+
+- [Plan-agent test inversion](feedback_plan_agent_test_inversion.md) — reframing plans can sign-flip the original red test while exit criteria stay intact; diff the Test section too (raid 0544)
+- [Gaze fork async reviewers vs auto-merge](feedback_gaze_fork_async_reviewers_automerge_race.md) — gaze can return mid-flight; never queue auto-merge before all 3 reviewer reports arrive (PR #983 merged 1 min before two real blockers; fix-forward #986)
+- [Light review for mechanical diffs](feedback_light_review_for_mechanical_diffs.md) — user CO2 remark (raid 0558): scale review depth to diff risk; pure-substitution diffs get one reviewer, not the gaze panel
+- [Chore-close staging + late close](feedback_chore_close_staging_and_late_close.md) — git add after erg close (git mv stages pre-edit content); re-check closed/ before chore-closing (hunts close late)
+- [Ratchet race + dropped close](feedback_ratchet_ceiling_race_and_dropped_close.md) — ceiling files race parallel prose merges (re-init OK); post-queue rebase can drop erg-pr-merge close commit — check origin/main closed/ before re-closing
+- [Gaze fork orphans reviewers](feedback_gaze_fork_orphans_reviewers.md) — forked /gaze may end mid-flight; its reviewers still deliver via task-notifications; wait a beat before relaunching; if fork bails twice, run /verify-gate directly once reviews are in
+- [Human sign-off criterion not waivable](feedback_human_signoff_criterion_not_waivable.md) — classifier blocks self-waiving "author approves" via STATE override mode; prep everything, needs-input the author
+- [PYTEST_ADDOPTS breaks uv pytest](feedback_pytest_addopts_env_breaks_uv_pytest.md) — bg-job env injects --cache-dir pytest rejects; `env -u PYTEST_ADDOPTS make check`
+- [Merge classifier blocks autonomous raid](feedback_merge_classifier_blocks_autonomous_raid.md) — classifier ignores STATE standing merge authorization; end raid with needs-input merge handoff; killed erg-pr-merge leaves stale pre-rebase INDEX in PR worktree (reset --hard before gc)

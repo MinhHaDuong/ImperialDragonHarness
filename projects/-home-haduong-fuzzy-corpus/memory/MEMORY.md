@@ -1,0 +1,6 @@
+- [Methodology: SWOT, not ranking](methodology_swot.md) — LLM outputs are not ground truth; frame WP7 validation as SWOT characterization of the fuzzy method.
+- [Orchestrator lessons — wave-1](feedback_orchestrator.md) — Execute agents must use their worktree path; use real timestamps; SWOT framing review before first execute wave.
+- [Module boundary rule](feedback_module_boundaries.md) — No cross-script imports; private symbols belong in src/fuzzy_corpus/, not scripts/.
+- [Torch sparse degree computation](feedback_torch_sparse_degrees.md) — Use scatter_add_ on crow/col indices; never .to_dense() or torch.sparse.sum() on CSR.
+- [LaTeX notation conventions and pitfalls](feedback_latex_notation.md) — Operator carousel, no X=X tautologies in notation table, use Edit not sed for renaming, inflationary vs monotone distinction.
+- [Squash merge ticket closure timing](feedback_squash_merge_ticket_closure.md) — Close tickets on main after squash merge lands; closing on the feature branch causes stale-state conflicts.
