@@ -50,3 +50,4 @@ This is a seed. Grow it deliberately — add a guard only when you have seen the
 defect in real drafts, and keep each entry one line so the injected body stays
 small. Document-type conventions (techreport, slides, book) and language norms
 (fr, en) live in `rules/doctype/` and `rules/lang/`, not here.
+- **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
