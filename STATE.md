@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-07-24T13:16Z
+Last updated: 2026-07-24T20:16Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-07-24T13:16Z · as of 6d4324f -->
+<!-- generated 2026-07-24T20:16Z · as of 5fcc49f -->
 
 **Tickets:** 1 ready · 2 blocked — `erg ready tickets/` for full list
   next: 0207 Agnostic CLI reviewer seat — one config, OpenRo…
-**In flight:** 1 open PR, oldest #666 0d · CI main: success
+**In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  6d4324f Merge pull request #667 from MinhHaDuong/t0357-cut-before-condense-playbook
-  a8bed4b Merge pull request #665 from MinhHaDuong/t0357-cut-before-condense
-  23383e6 Merge pull request #663 from MinhHaDuong/untrack-volatile-settings
+  5fcc49f chore: housekeeping fixes (sweep)
+  f7560f6 Merge pull request #669 from MinhHaDuong/memory-erg-ready-stale-branch
+  2fbab44 Merge pull request #666 from MinhHaDuong/t0357-cut-before-condense
 
 ## Blockers
 

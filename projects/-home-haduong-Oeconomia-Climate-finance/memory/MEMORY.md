@@ -1,0 +1,44 @@
+# Memory Index
+
+- [feedback_s2_api_limits.md](feedback_s2_api_limits.md) — S2 search API offset cap and retry behavior
+- [feedback_dvc_locks.md](feedback_dvc_locks.md) — DVC stale lock cleanup before pipeline runs
+- [feedback_dvc_commit_after_repro.md](feedback_dvc_commit_after_repro.md) — After dvc repro, lock/pool files are staged but need explicit commit — never discard
+- [feedback_teaching_scraper.md](feedback_teaching_scraper.md) — DOI cleaning, two-tier filter, LLM extraction limits
+- [feedback_fuzzy_title_matching.md](feedback_fuzzy_title_matching.md) — token_sort_ratio vs token_set_ratio, single-linkage chaining risk, min word guard
+- [feedback_doc_propagation.md](feedback_doc_propagation.md) — Always run doc propagation agent when reviewing PRs that touch scripts/
+- [feedback_longrunning_jobs.md](feedback_longrunning_jobs.md) — Run corpus/DVC stages in foreground (not background) so user sees live progress
+- [feedback_agent_runbooks.md](feedback_agent_runbooks.md) — Subagents must follow start-ticket and review-pr runbooks explicitly
+- [feedback_review_stale_branches.md](feedback_review_stale_branches.md) — PR review pitfalls: stale branches show phantom diffs, verify scope before posting
+- [feedback_chunk_size_tradeoff.md](feedback_chunk_size_tradeoff.md) — Bigger chunks (20K) may hurt extraction with small models; test before changing
+- [project_lms_bias.md](project_lms_bias.md) — LMS harvesting bias: syllabi behind Moodle/Brightspace are unreachable, mention in data paper
+- [project_teaching_methodology_lessons.md](project_teaching_methodology_lessons.md) — Regex>LLM for DOIs, CrossRef>OpenAlex for title lookup, chunk size matters, LMS bias
+- [project_teaching_paper_idea.md](project_teaching_paper_idea.md) — Potential paper on teaching climate finance worldwide, North/South, cryptoimperialism
+- [feedback_kmeans_instability.md](feedback_kmeans_instability.md) — KMeans cluster IDs shuffle with small corpus changes
+- [feedback_s2_disconnect.md](feedback_s2_disconnect.md) — S2 keyword search is wrong tool, use citation graph instead
+- [project_bibcnrs_news.md](project_bibcnrs_news.md) — bibCNRS provides news/discourse, not WoS/EconLit academic literature
+- [reference_repec.md](reference_repec.md) — RePEc mirror as potential future corpus source
+- [feedback_multispace_comparison.md](feedback_multispace_comparison.md) — Test multiple representation spaces when clustering finds no structure
+- [project_rally_loop_20260324.md](project_rally_loop_20260324.md) — Rally loop session prompt saved for celebration
+- [project_north_star.md](project_north_star.md) — Ideal state: green tests, no smells, idempotent pipelines, clean PRs, defined issues
+- [project_multilingual_corpus.md](project_multilingual_corpus.md) — Corpus is multilingual in principle — constrains model choices (BGE-M3 over nomic)
+- [feedback_fix_not_hide.md](feedback_fix_not_hide.md) — Never move/archive/rename files to dodge failing tests — fix in place
+- [project_agent_harness_architecture.md](project_agent_harness_architecture.md) — Harness in .agent/ parallel to .claude/, symlinks for shared elements
+- [feedback_gh_pr_edit_classic_projects.md](feedback_gh_pr_edit_classic_projects.md) — gh pr edit silently fails with Projects Classic — use gh api PATCH
+- [feedback_review_all_comments.md](feedback_review_all_comments.md) — Fix all review comments, not just blocking ones — user enforces runbook literally
+- [feedback_rereview_regressions.md](feedback_rereview_regressions.md) — Review fixes can introduce regressions — re-review must check all affected files
+- [feedback_1fig1script.md](feedback_1fig1script.md) — 1 figure = 1 script, no shared plotting modules
+- [feedback_arch_not_linecount.md](feedback_arch_not_linecount.md) — God module splits: architecture first, not line counting
+- [feedback_fix_root_cause.md](feedback_fix_root_cause.md) — Fix root causes not symptoms: three escalating failures from this session
+- [feedback_agent_specs_detail.md](feedback_agent_specs_detail.md) — Parallel agents need detailed specs, not vague goals
+- [feedback_gh_rest_only.md](feedback_gh_rest_only.md) — Agent token is fine-grained PAT: REST only, no GraphQL
+- [feedback_review_every_pr.md](feedback_review_every_pr.md) — Run /review-pr on every PR before declaring ready, not just the first in a batch
+- [feedback_cache_is_data.md](feedback_cache_is_data.md) — DVC outputs get wiped — caches must hold actual data, not just done-markers
+- [feedback_sweep_after_fix.md](feedback_sweep_after_fix.md) — After fixing a pattern violation, sweep codebase for similar instances and ticket them
+- [feedback_table_as_contract.md](feedback_table_as_contract.md) — M/V splits use CSV tables as contract, no Python import coupling
+- [feedback_gh_merge_502.md](feedback_gh_merge_502.md) — gh pr merge 502: use REST API PUT endpoint as fallback
+- [reference_grobid_padme.md](reference_grobid_padme.md) — GROBID runs locally via podman on padme — 200 cit/sec, port 8070
+- [feedback_purpose_built_over_llm.md](feedback_purpose_built_over_llm.md) — Search for domain tools (GROBID, spaCy) before defaulting to LLM
+- [feedback_worktree_isolation.md](feedback_worktree_isolation.md) — Every conversation in its own worktree via EnterWorktree — fixes parallel VSCode teleport bug
+- [feedback_singleton_test_isolation.md](feedback_singleton_test_isolation.md) — Reset singleton internals, not just config vars, when testing module-level caches
+- [feedback_circuit_breaker_shared.md](feedback_circuit_breaker_shared.md) — Place shared abstractions in pipeline_io.py from the start, not the first script
+- [feedback_io_migration_pattern.md](feedback_io_migration_pattern.md) — I/O migration: extract helpers first, preserve Unicode, .values vs .values(), stamp files for dynamic outputs
