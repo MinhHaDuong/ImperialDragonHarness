@@ -25,7 +25,7 @@ place, none is questioned. Remove whole before you condense — it is cheaper
 ## Why this order
 
 On a real data-paper trim (2026-07-24), a condensation-only plan was rejected
-by the author in favour of asking first "which weak or distracting parts can
+by the author in favor of asking first "which weak or distracting parts can
 be removed whole?" The whole-removal pass found 633 of a 1,240-word target in
 seven passage cuts — the largest being analysis results smuggled into the
 introduction of a *data* paper, already duplicated in deposited tables.
