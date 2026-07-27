@@ -1,0 +1,97 @@
+%erg 0.1
+Title: A project KEYS= overrides the harness KEYS= instead of composing with it
+Created: 2026-07-27
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-27T19:10Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Found by review round 2 of climate-finance-het PR #1190 (its ticket 0364,
+adding a HAL credential selection).
+
+`scripts/bash-env.sh` reads the project `.env` and exports every key it finds
+verbatim, `KEYS` included, before the least-privilege provider block runs. That
+block then reads `$KEYS` as "set by the project strict-parse above". So a
+project `KEYS=` line does not *add* to the harness selection in `~/.claude/.env`
+— it **replaces** it.
+
+Measured (names only, no values): from a directory whose `.env` is only
+`KEYS=openalex:OPENALEX_API_KEY`, `OPENALEX_API_KEY` is present while `HAL_ID`
+and `HAL_PASSWORD` are unset, even though `~/.claude/.env` selects `hal`.
+
+Nothing documents this, and both consequences are wrong-way-round:
+
+1. **A project cannot narrow.** To use one harness-level credential plus its
+   own, a project must re-declare every harness credential it wants. Miss one
+   and it silently vanishes — an auth failure, not a configuration error.
+2. **A project cannot help but broaden.** To make a harness-level tool work
+   from a project directory, the project's `.env` must name that tool's
+   credential, which then reaches *every* bash subprocess started there. In
+   0364 this put `HAL_PASSWORD` into the environment of an entire science
+   repo's test and build runs, for a skill no code in that repo calls.
+
+Both cut against the least-privilege intent the `KEYS=` mechanism exists to
+serve (harness ticket 0343). The second is the one with teeth: the mechanism
+designed to stop a sibling project's keys arriving somewhere now requires
+over-selection to work at all.
+
+## Relevant files
+
+- `scripts/bash-env.sh` — the project strict-parse (~line 216 exports each key)
+  and the provider block below it that consumes `$KEYS`.
+- `scripts/pipeline_keystore.py` in consuming projects — the second apply
+  mechanism; check whether it has the same precedence or a different one, since
+  two mechanisms disagreeing would be worse than either rule alone.
+
+## Actions
+
+1. Decide the precedence rule. Three candidates, in the order I would rank them:
+   - **Compose** — union the harness and project selections. Fixes (1), leaves
+     (2) as-is. Least surprising, and matches how a reader assumes it works.
+   - **Compose with an opt-out** — union by default, `KEYS_EXCLUSIVE=1` (or a
+     `!` prefix) to get today's replace. Fixes both, costs a knob.
+   - **Keep replace, document it loudly.** Cheapest; leaves both consequences.
+2. Apply the same rule in the Python apply path, or state why they differ.
+3. Document the rule where the mechanism is described, not only in a test
+   comment.
+
+Whichever is chosen, `HAL_PASSWORD`'s presence in climate-finance-het's `.env`
+should be revisited: under *compose* it can come from the harness selection
+alone and drop out of the project's environment entirely.
+
+## Test
+
+`tests/` — a hermetic subprocess test, per the BASH_ENV rule in
+`rules/coding-bash.md`: never source the script into the test's own shell.
+Build two fixture `.env` files (a fake `HOME` with a keystore of non-secret
+sentinel values, a project dir selecting only one provider), run
+`env -i HOME=$tmphome BASH_ENV=scripts/bash-env.sh bash -c 'printf %s "$VAR"'`,
+and assert on which names are set. Red before the change under the composing
+rule: the harness-only provider's variable is empty.
+
+Sentinel values only — a test that needs a real credential to pass is a test
+that will one day print one.
+
+## Verification
+
+- [ ] A project selecting one provider still resolves harness-selected ones
+      (or does not, with that documented as the chosen rule)
+- [ ] Both apply mechanisms agree, or the divergence is stated and justified
+- [ ] The rule appears in the mechanism's own documentation
+
+## Invariants
+
+- No credential value in any test fixture, assertion message, or output.
+- Default-deny survives: no change may cause an unnamed provider to load.
+- `_be_is_protected_name` stays the single name-policy site (ticket 0352) —
+  composing must not open a path around it.
+
+## Exit criteria
+
+The precedence between a harness `KEYS=` and a project `KEYS=` is a decided,
+documented, and tested rule rather than an accident of parse order, and a
+project no longer has to over-select credentials to make a harness-level tool
+work.
