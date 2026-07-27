@@ -174,3 +174,93 @@ def test_cli_flags_present():
     for flag in ("--projects-dir", "--days", "--threshold", "--min-run", "--output", "--json"):
         assert flag in src, f"missing CLI flag {flag}"
     assert "ArgumentParser" in src
+
+
+# --- corpus-wide dedup of forked/resumed sessions ----------------------------
+# parse_trajectory dedups turns by message id within ONE file. A fork or resume
+# replays the parent's records verbatim into a NEW file, so the per-file set
+# never sees them and every inherited turn is counted twice. On the 2026-07-27
+# census this overstated recoverable compaction by 27% ($285.33 -> $208.99,
+# same corpus, 12 missed runs -> 8).
+
+from datetime import datetime, timezone  # noqa: E402
+
+
+def _ts(minute):
+    return datetime(2026, 6, 9, 10, minute, tzinfo=timezone.utc)
+
+
+def _traj(events, first_ts):
+    return {"events": events, "first_ts": first_ts}
+
+
+def _turn(msg_id, cache_read=400_000):
+    return {
+        "kind": "turn",
+        "cache_read": cache_read,
+        "model": "claude-opus-4-8",
+        "msg_id": msg_id,
+    }
+
+
+def test_fork_inherited_turns_counted_once():
+    """The child replays the parent's turns; only the parent keeps them."""
+    parent = _traj([_turn("a"), _turn("b")], _ts(0))
+    child = _traj([_turn("a"), _turn("b"), _turn("c")], _ts(5))
+    trajectories = [("p", "parent", "main", parent), ("p", "child", "main", child)]
+
+    dropped = tca.drop_inherited_turns(trajectories)
+
+    assert dropped == 2
+    assert [e["msg_id"] for e in parent["events"]] == ["a", "b"]
+    assert [e["msg_id"] for e in child["events"]] == ["c"], (
+        "child must keep only the turns it actually added"
+    )
+
+
+def test_dedup_is_oldest_first_regardless_of_input_order():
+    """Attribution must follow session start time, not iteration order — the
+    trace-file walk gives no ordering guarantee, so a child listed first would
+    otherwise steal the parent's turns and leave the parent empty."""
+    parent = _traj([_turn("a"), _turn("b")], _ts(0))
+    child = _traj([_turn("a"), _turn("b"), _turn("c")], _ts(5))
+    trajectories = [("p", "child", "main", child), ("p", "parent", "main", parent)]
+
+    tca.drop_inherited_turns(trajectories)
+
+    assert [e["msg_id"] for e in parent["events"]] == ["a", "b"]
+    assert [e["msg_id"] for e in child["events"]] == ["c"]
+
+
+def test_dedup_preserves_compact_and_clear_events():
+    """A fork genuinely re-enters compact/clear state — those events are not
+    inherited spend and must survive, or run detection silently re-merges runs
+    that were really broken."""
+    parent = _traj([_turn("a"), {"kind": "compact"}], _ts(0))
+    child = _traj([_turn("a"), {"kind": "clear"}, _turn("z")], _ts(5))
+    trajectories = [("p", "parent", "main", parent), ("p", "child", "main", child)]
+
+    tca.drop_inherited_turns(trajectories)
+
+    assert [e["kind"] for e in child["events"]] == ["clear", "turn"]
+    assert [e["kind"] for e in parent["events"]] == ["turn", "compact"]
+
+
+def test_turns_without_message_id_are_never_dropped():
+    """Defensive: an unidentifiable turn cannot be proven inherited, so keep it
+    rather than silently under-report."""
+    a = _traj([{"kind": "turn", "cache_read": 1, "model": "m"}], _ts(0))
+    b = _traj([{"kind": "turn", "cache_read": 1, "model": "m"}], _ts(5))
+    trajectories = [("p", "a", "main", a), ("p", "b", "main", b)]
+
+    assert tca.drop_inherited_turns(trajectories) == 0
+    assert len(a["events"]) == 1 and len(b["events"]) == 1
+
+
+def test_distinct_sessions_are_not_deduped():
+    """Two unrelated sessions share no message ids — nothing may be dropped."""
+    a = _traj([_turn("a1"), _turn("a2")], _ts(0))
+    b = _traj([_turn("b1"), _turn("b2")], _ts(5))
+    trajectories = [("p", "a", "main", a), ("p", "b", "main", b)]
+
+    assert tca.drop_inherited_turns(trajectories) == 0
