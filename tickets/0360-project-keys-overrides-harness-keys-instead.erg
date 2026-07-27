@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-07-27T19:10Z HDMX-coding-agent created
+2026-07-27T19:30Z HDMX-coding-agent note Counter-analysis added: union makes the harness selection a global floor, so the ranking above is likely inverted. Diagnostics split to 0361.
 
 --- body ---
 ## Context
@@ -61,6 +62,56 @@ over-selection to work at all.
 Whichever is chosen, `HAL_PASSWORD`'s presence in climate-finance-het's `.env`
 should be revisited: under *compose* it can come from the harness selection
 alone and drop out of the project's environment entirely.
+
+## Counter-analysis (2026-07-27, review of #680/#681)
+
+The ranking in step 1 is probably inverted. It rests on an assumption the
+measurement contradicts: that union leaves consequence (2) unchanged.
+
+`~/.claude/.env` is sourced unconditionally, before any cwd is consulted
+(`bash-env.sh:147`). So under **compose**, the harness selection is not a
+fallback — it is a **global floor no project can narrow**. A harness-level
+`KEYS=hal:HAL_PASSWORD` would put that password in every subprocess of every
+project, which is strictly *more* exposure than today, not less. Measured from
+three startup cwds (`env -i`, sentinel values, names only): `$HOME` and a
+project whose `.env` sets no `KEYS=` both resolve the harness selection; only a
+project setting its own `KEYS=` narrows. Compose deletes that last case — the
+only way a project can currently say "in here, just openalex".
+
+**Compose with an opt-out** inherits the same posture by default: union unless
+the project remembers `KEYS_EXCLUSIVE=1`. Default-broad, where the mechanism's
+stated invariant is default-deny.
+
+Read this way, **replace is already the least-privilege-correct rule** — a
+project that declares its needs gets exactly those and nothing else — and the
+two complaints split cleanly:
+
+- Complaint (1), "a project cannot narrow; a miss is silent", is an
+  **ergonomics/diagnostics** defect, not a precedence one. The fix for a silent
+  drop is to make the drop loud (ticket 0361), not to change who wins.
+- Complaint (2), the one with teeth, dissolves without touching precedence.
+  `update-publist` is a harness-level skill the author runs by hand; it has no
+  claim on a science repo's test and build environment. Run it from a directory
+  that selects `hal` — `$HOME` already does — rather than widening that repo's
+  `.env`. This also answers the `HAL_PASSWORD` question above under *replace*,
+  not only under *compose*.
+
+Proposed rule, therefore: **keep replace, and state the doctrine** — the
+harness `KEYS=` is the selection for directories that declare none; a project
+`KEYS=` is that project's complete declaration; a harness-level tool is run
+from a directory that selects what it needs. One sentence of doctrine and a
+warning, against a precedence change that must land atomically in two apply
+mechanisms.
+
+This is an argument, not a verdict: the precedence of a credential mechanism is
+an architecture call for the author (MOA). Recorded here so the decision starts
+from the measurement rather than from the intuition that union is "least
+surprising".
+
+Still open regardless of the choice: `scripts/pipeline_keystore.py` was not
+found at `~/CNRS/projets-actifs/climate-finance-het`, so whether the second
+apply path agrees is **unverified**. Two mechanisms disagreeing stays worse
+than either rule alone.
 
 ## Test
 
