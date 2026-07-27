@@ -78,6 +78,7 @@ def parse_trajectory(path: Path) -> dict:
     awaiting_post_read = False
     entry_skill = None
     last_ts = None
+    first_ts = None
 
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -94,6 +95,8 @@ def parse_trajectory(path: Path) -> dict:
             tstamp = ts._parse_ts(rec.get("timestamp", ""))
             if tstamp is not None:
                 last_ts = tstamp
+                if first_ts is None:
+                    first_ts = tstamp
 
             rec_type = rec.get("type")
             if rec_type == "system" and rec.get("subtype") == "compact_boundary":
@@ -122,7 +125,12 @@ def parse_trajectory(path: Path) -> dict:
                     seen_ids.add(msg_id)
                     cache_read = usage.get("cache_read_input_tokens", 0) or 0
                     events.append(
-                        {"kind": "turn", "cache_read": cache_read, "model": model}
+                        {
+                            "kind": "turn",
+                            "cache_read": cache_read,
+                            "model": model,
+                            "msg_id": msg_id,
+                        }
                     )
                     if awaiting_post_read:
                         post_compact_reads.append(cache_read)
@@ -145,7 +153,47 @@ def parse_trajectory(path: Path) -> dict:
         "post_compact_tokens": post_compact_tokens,
         "entry_skill": entry_skill,
         "last_ts": last_ts,
+        "first_ts": first_ts,
     }
+
+
+def drop_inherited_turns(trajectories: list[tuple]) -> int:
+    """Strip turns a trajectory inherited from an earlier one, corpus-wide.
+
+    `parse_trajectory` dedups turns by message id within a single file. A fork
+    or resume starts a NEW file that replays the parent's records verbatim —
+    same message ids — so the per-file set never sees them and every inherited
+    turn is counted a second time. On the 2026-07-27 census that inflated the
+    recoverable-compaction figure by ~28% ($278.68 -> ~$201): two session pairs
+    contributed byte-identical runs.
+
+    Trajectories are processed oldest-first so the originating session keeps its
+    turns and the fork contributes only what it actually added. Turns are
+    dropped in place; compact/clear events are left alone, since a fork
+    genuinely re-enters that state. Returns the number of turns dropped.
+    """
+    from datetime import datetime, timezone
+
+    epoch = datetime.min.replace(tzinfo=timezone.utc)
+    ordered = sorted(
+        trajectories,
+        key=lambda item: (item[3]["first_ts"] or epoch, item[1], item[2]),
+    )
+    claimed: set[str] = set()
+    dropped = 0
+    for _, _, _, traj in ordered:
+        kept = []
+        for ev in traj["events"]:
+            if ev["kind"] == "turn":
+                mid = ev.get("msg_id")
+                if mid is not None:
+                    if mid in claimed:
+                        dropped += 1
+                        continue
+                    claimed.add(mid)
+            kept.append(ev)
+        traj["events"] = kept
+    return dropped
 
 
 def find_missed_runs(events: list[dict], min_run: int, threshold: int) -> list[dict]:
@@ -198,6 +246,12 @@ def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) ->
         if traj["last_ts"] is None or traj["last_ts"] < cutoff:
             continue
         trajectories.append((project, session_id, agent_id, traj))
+
+    duplicate_turns = drop_inherited_turns(trajectories)
+    if duplicate_turns:
+        log.info(
+            "dropped %d turns inherited by forked/resumed sessions", duplicate_turns
+        )
 
     post_reads = [r for _, _, _, t in trajectories for r in t["post_compact_reads"]]
     post_tokens = [r for _, _, _, t in trajectories for r in t["post_compact_tokens"]]
@@ -267,6 +321,7 @@ def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) ->
         "threshold_tokens": threshold,
         "files_seen": files_seen,
         "agents_in_window": len(trajectories),
+        "inherited_turns_dropped": duplicate_turns,
         "compactions_observed": compactions,
         "clears_observed": clears,
         "post_compact_median_tokens": median_post,

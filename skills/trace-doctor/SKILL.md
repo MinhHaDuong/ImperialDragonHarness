@@ -92,6 +92,14 @@ a third), which is what a monthly re-measure is for. The compaction advisory
 (H8, from the wired compact-audit input) is reported as an advisory count of
 missed compact/clear runs, not an A/B.
 
+Report `inherited_turns_dropped` from the compact-audit summary alongside H8.
+It counts turns a forked or resumed session replayed from its parent, which the
+audit attributes to the parent only. A non-zero count is normal; a *large* one
+means the window is fork-heavy, so H8's run count reflects fewer distinct
+sessions than `agents_in_window` suggests. Comparing an H8 figure against any
+census taken before 2026-07-27 compares against an inflated number — that run
+overstated recoverable spend by 27% on the same corpus.
+
 ## 3. Cross-reference existing tickets
 
 For each actionable finding, decide whether it is already owned. Search open
