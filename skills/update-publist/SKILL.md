@@ -53,7 +53,11 @@ This directory is NOT a git repo. It deploys over FTP.
 
 ## Step 2: HAL deposit via SWORD
 
-Credentials: `HAL_ID` and `HAL_PASSWORD` from the project `.env`.
+Credentials: `HAL_ID` and `HAL_PASSWORD` live in `~/.config/keys/hal.env` and
+reach the environment because a `KEYS=` line selects them — no `.env` holds a
+credential value. Selection is default-deny, so the shell must start in a
+directory whose `.env` names `hal:HAL_ID,hal:HAL_PASSWORD`; `~/.claude/.env`
+does, which covers a run from anywhere.
 **Never echo, display, log, or commit credential values.** Pass them
 to curl via a chmod-600 temporary config file (`curl -K`), never on the
 command line. Mask `<hal:password>` in any displayed API response.
