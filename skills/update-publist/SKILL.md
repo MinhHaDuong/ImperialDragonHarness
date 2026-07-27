@@ -111,9 +111,18 @@ curl -s 'https://api.archives-ouvertes.fr/search/hal/?q=authIdHal_s:minh-ha-duon
 ```
 
 Standard values for this author:
-- Structure: `#struct-1380080` (CIRED)
+- Structure: `#struct-1380080` (CIRED). **Verified against the HAL ref API,
+  2026-07-27** — a fork of this skill carried `struct-1002424`, which
+  resolves to ECOSYS, an unrelated laboratory. Do not "correct" this id
+  from another document; re-verify it instead:
+  `curl -s 'https://api.archives-ouvertes.fr/ref/structure/?q=docid:1380080&fl=docid,name_s,acronym_s&wt=json'`
+- ORCID: `0000-0001-9988-2100`
 - idhal: `minh-ha-duong`
 - Typology: `COMM` for a conference talk (adjust per doctype)
+- Stamps: CIRED, CNRS
+- Domains: `shs.eco`, `shs.hisphilso` (adjust per paper)
+- File reference in the TEI:
+  `<ref type="file" target="paper.pdf" subtype="author" n="1"/>`
 
 For a journal article, resolve the journal's HAL id rather than typing
 the title into the TEI:
@@ -154,6 +163,15 @@ so it is deleted even on error or interruption. Contents:
 ```
 user = "HAL_ID_VALUE:HAL_PASSWORD_VALUE"
 ```
+
+**Dry run first.** The same request with `-H "X-test: 1"` validates the
+package without creating a record. Run it, read the response, and only
+then repeat without the header.
+
+**Updating an existing deposit** is the same request as a `PUT` to
+`https://api.archives-ouvertes.fr/sword/hal/{hal-id}`. Use it rather
+than a second POST — a second POST creates a duplicate record, and
+duplicates need moderator action to merge.
 
 The SWORD acknowledgement means "stored in workspace" — moderation
 status is confirmed by HAL's email, not the API response.
