@@ -73,9 +73,16 @@ This directory is NOT a git repo. It deploys over FTP.
 
 Credentials: `HAL_ID` and `HAL_PASSWORD` live in `~/.config/keys/hal.env` and
 reach the environment because a `KEYS=` line selects them — no `.env` holds a
-credential value. Selection is default-deny, so the shell must start in a
-directory whose `.env` names `hal:HAL_ID,hal:HAL_PASSWORD`; `~/.claude/.env`
-does, which covers a run from anywhere.
+credential value. Selection is default-deny, so the selection in force must
+name `hal:HAL_ID,hal:HAL_PASSWORD`; `~/.claude/.env` does, which covers any
+startup directory that sets no `KEYS=` of its own.
+
+A project `KEYS=` **replaces** the harness one rather than adding to it
+(ticket 0360), so from a project whose `.env` carries its own `KEYS=` line the
+deposit fails as an ordinary auth error unless that line also names `hal:`.
+Run from a directory with no `KEYS=` of its own, or check first —
+names only, never values:
+`bash -c ': "${HAL_ID:?not selected from this cwd}"'`.
 **Never echo, display, log, or commit credential values.** Pass them
 to curl via a chmod-600 temporary config file (`curl -K`), never on the
 command line. Mask `<hal:password>` in any displayed API response.
