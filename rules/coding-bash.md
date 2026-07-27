@@ -89,3 +89,38 @@ out=$(env -i HOME="$tmphome" BASH_ENV="$PWD/scripts/bash-env.sh" \
 bug), `HOME=` points at a crafted fixture, and `BASH_ENV=` exercises the exact
 mechanism the caller triggers. Enforced by
 `tests/test_bash_env_tested_via_subprocess.sh`.
+
+### Unsetting a variable in the parent does not unset it in the child
+
+`BASH_ENV` re-runs the loader — including its credential selection — at the
+startup of *every* child bash. Whatever the parent set is overwritten:
+
+```bash
+# WRONG — the child gets the real value back from BASH_ENV
+unset OPENAI_API_KEY
+bash -c 'printf %s "$OPENAI_API_KEY"'    # prints the REAL key
+
+# CORRECT — stop the loader from running in children
+export BASH_ENV=
+# or spawn hermetically
+env -i HOME="$h" PATH="$PATH" bash -c '…'
+```
+
+**Assert against a child, never the current shell.** A parent-scope check
+passes while the leak is alive, because re-injection happens at child startup;
+that blind spot made a first attempt at this exact fix a silent no-op
+(2026-07-27).
+
+Two consequences, and the second is the one that bites quietly:
+
+- **Disclosure.** A failing assertion prints what it found. When that is a live
+  credential, the failure message *is* the leak — this spilled two real keys
+  into a terminal and a session transcript.
+- **False confidence.** An inherited variable masks the behaviour under test. A
+  suite asserting "DST not set" was comparing against an ambient value unrelated
+  to the code path: red for the wrong reason, and green-while-testing-nothing had
+  the value happened to match.
+
+Verify with a **fake sentinel** loader, never the real key: point `BASH_ENV` at
+a script exporting a recognisable dummy, run the suite, and grep the output for
+the dummy. Verifying with the real key is how you leak it a second time.
