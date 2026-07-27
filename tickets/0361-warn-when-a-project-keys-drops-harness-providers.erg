@@ -1,0 +1,93 @@
+%erg 0.1
+Title: Warn when a project KEYS= silently drops harness-selected providers
+Created: 2026-07-27
+Author: HDMX-coding-agent
+Blocked-by: 0360
+
+--- log ---
+2026-07-27T19:32Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Split out of ticket 0360, which measured that a project `KEYS=` **replaces**
+the harness `KEYS=` rather than composing with it.
+
+0360's counter-analysis argues replace is the least-privilege-correct rule and
+that the real defect behind its complaint (1) is diagnostic: when a project
+`.env` sets its own `KEYS=`, every provider the harness selected disappears
+with no signal at all. The failure surfaces much later and in the wrong
+vocabulary — a tool reports an ordinary auth error, so the reader debugs the
+credential, the keystore, or the tool, none of which is broken. The
+configuration that caused it is one line in a `.env` the reader was not
+thinking about.
+
+`bash-env.sh` already warns on every *malformed* or *unresolvable* selection
+(`ignoring invalid KEYS entry`, `KEYS var not found`, `KEYS provider not
+found`). The dropped-by-override case is the one silent path left, and it is
+the one that needs no typo to trigger — a correct project `KEYS=` line is
+enough.
+
+Blocked by 0360 because the decision determines whether this work exists: under
+*compose* nothing is ever dropped and the warning is moot. Under *replace*
+(0360's proposal) this warning is the fix.
+
+## Relevant files
+
+- `scripts/bash-env.sh` — the project strict-parse (~line 216, exports each key
+  including `KEYS`) and the provider block (~line 229) that consumes the final
+  `$KEYS`. The harness value must be captured before the strict-parse overwrites
+  it, so the two can be compared.
+- `tests/test_bash_env_keys_selection.sh` and siblings — where the hermetic
+  subprocess pattern already lives.
+
+## Actions
+
+1. Capture the harness `KEYS` into a `_be_*` bookkeeping variable immediately
+   after `~/.claude/.env` is sourced, before the project strict-parse can
+   overwrite it.
+2. After the strict-parse, if both values are non-empty and differ, emit one
+   stderr warning naming **the provider names dropped**, not the values:
+   `bash-env: project KEYS= replaced the harness selection; dropped: hal, zotero`
+3. Stay quiet in every other case: no harness `KEYS=`, no project `KEYS=`,
+   identical selections, or a project selection that is a superset.
+4. `unset` the bookkeeping variable at end of script, as the existing `_be_*`
+   names are, so it does not leak into every subprocess.
+
+## Test
+
+`tests/` — hermetic subprocess per `rules/coding-bash.md`; never source the
+script into the test's own shell. Fixtures: a fake `HOME` whose keystore holds
+**sentinel values only**, plus project dirs exercising each branch.
+
+Assert on stderr, not on the environment:
+
+- harness selects `hal`, project selects `openalex` → warning naming `hal`
+- harness selects `hal`, project `.env` has no `KEYS=` → **no warning**
+- harness and project select the same providers → **no warning**
+- project selects a superset of the harness selection → **no warning**
+- no harness `KEYS=` at all → **no warning**
+
+Red before the change: the first case emits nothing.
+
+## Verification
+
+- [ ] A project `KEYS=` that drops a harness-selected provider names it on stderr
+- [ ] No warning in any of the four quiet cases above
+- [ ] No credential value appears in the warning, any fixture, or any assertion
+- [ ] The bookkeeping variable does not survive into the subprocess environment
+
+## Invariants
+
+- Warning only — the resolved environment is byte-for-byte unchanged by this
+  ticket. Precedence is 0360's to decide, not this one's.
+- `bash-env.sh` keeps no `set -euo pipefail` (it is sourced, not executed).
+- `_be_is_protected_name` stays the single name-policy site (ticket 0352).
+- Sentinel values only: a test that needs a real credential to pass is a test
+  that will one day print one.
+
+## Exit criteria
+
+A project `KEYS=` line that drops a harness-selected provider says so, naming
+the dropped providers and no values, so the failure is read as configuration
+rather than as a broken credential.
