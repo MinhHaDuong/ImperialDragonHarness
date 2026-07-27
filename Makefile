@@ -1,4 +1,4 @@
-.PHONY: skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check check-fast check-tests lint
+.PHONY: skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check check-fast check-tests lint
 
 skills-catalog:
 	./scripts/update-skills-catalog.py
