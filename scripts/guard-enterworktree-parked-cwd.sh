@@ -10,6 +10,20 @@ set -euo pipefail
 #
 # A `cd` inside a Bash call never moves the session base cwd — it resets after
 # every call — so the only reliable signal is the .cwd field of the hook JSON.
+#
+# KEPT despite the upstream fix in Claude Code 2.1.216 (reviewed 2026-07-27).
+# That release fixed "worktree sessions landing in another project's leftover
+# worktree when the working directory did not match the selected project" —
+# reuse of an existing stale worktree. This guard covers three cases it leaves
+# open, so the two are complementary, not redundant:
+#   1. CREATION, not reuse: EnterWorktree resolving a parked cwd to the nearest
+#      enclosing repo and creating a worktree there (2026-06-19 put a project
+#      worktree inside the harness repo). Ticket 0267.
+#   2. Skill invocations: the upstream note says nothing about cwd-dependent
+#      Skill dispatch, which this guard also denies. Ticket 0306.
+#   3. The nested-scratch-repo bypass a `git init` inside an ignored runtime dir
+#      creates, handled by find_enclosing_ignored_toplevel above. Ticket 0317.
+# Re-examine for deletion only when upstream covers creation AND Skill dispatch.
 
 # find_enclosing_ignored_toplevel <inner_toplevel>
 # Walk up from the parent of <inner_toplevel>. For each enclosing git repo, test
