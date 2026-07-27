@@ -214,6 +214,56 @@ _check "harness-KEYS bookkeeping var does not leak" \
 _check "explain-flag bookkeeping var does not leak" \
     "$(_load_var "$FHOME" "$PROJ_OTHER" _be_explain)" ''
 
+# --- 7. An empty project KEYS= drops everything, and says so -----------------
+# `KEYS=` selects nothing, so it drops every harness provider. Guarding the
+# report on a non-empty $KEYS would have made this total drop the single case
+# that reports nothing, while the semantically identical `KEYS=   ` reported.
+PROJ_EMPTY="$(_mkproj proj-empty 'KEYS=
+')"
+_check_contains "empty project KEYS= reports the total drop" \
+    "$(_load_stderr "$FHOME" "$PROJ_EMPTY")" 'dropped: hal'
+
+# --- 8. The untrusted project .env cannot drive the diagnostic --------------
+# The strict-parse exports project keys into the environment, so a project
+# KEYS_EXPLAIN= would otherwise be inherited by NESTED subprocesses and read
+# there as the operator's own setting. Silencing is the direction with teeth: it
+# would let a project switch off the one signal that reveals it dropped a
+# harness credential selection. Both directions are pinned, one level deeper
+# than every other case in this suite.
+_nested_stderr() {
+    local home="$1" projdir="$2" explain="$3"
+    if [ -n "$explain" ]; then
+        ( cd "$projdir" || exit 1
+          env -i HOME="$home" PATH="/usr/bin:/bin" BASH_ENV="$SCRIPT" KEYS_EXPLAIN=1 \
+              bash -c 'bash -c ":"' 2>&1 >/dev/null )
+    else
+        ( cd "$projdir" || exit 1
+          env -i HOME="$home" PATH="/usr/bin:/bin" BASH_ENV="$SCRIPT" \
+              bash -c 'bash -c ":"' 2>&1 >/dev/null )
+    fi
+}
+
+# Silencing: operator asked for the diagnostic; the project tries to switch it off.
+PROJ_MUTE="$(_mkproj proj-mute 'KEYS_EXPLAIN=
+KEYS=openalex:OPENALEX_API_KEY
+')"
+MUTE_ERR="$(_nested_stderr "$FHOME" "$PROJ_MUTE" 1)"
+if [ "$(printf '%s' "$MUTE_ERR" | grep -c 'replaced the harness selection')" -ge 2 ]; then
+    echo "PASS: project .env cannot silence the diagnostic in a nested subprocess"
+else
+    echo "FAIL: project .env silenced the diagnostic in a nested subprocess — got [$MUTE_ERR]" >&2
+    fail=$((fail + 1))
+fi
+_check_contains "project KEYS_EXPLAIN= is refused by name" \
+    "$MUTE_ERR" 'refusing protected name from project .env: KEYS_EXPLAIN'
+
+# Enabling: operator asked for nothing; the project tries to switch it on.
+PROJ_SHOUT="$(_mkproj proj-shout 'KEYS_EXPLAIN=1
+KEYS=openalex:OPENALEX_API_KEY
+')"
+_check_no_warning "project .env cannot enable the diagnostic in a nested subprocess" \
+    "$(_nested_stderr "$FHOME" "$PROJ_SHOUT" '')"
+
 if [ "$fail" -ne 0 ]; then
     echo "FAILED: $fail check(s)" >&2
     exit 1

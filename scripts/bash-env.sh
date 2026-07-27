@@ -164,6 +164,7 @@ _be_is_protected_name() {
         GCONV_PATH|PYTHONPATH|NODE_OPTIONS|NODE_PATH|PERL5LIB|RUBYOPT|\
         GIT_SSH_COMMAND|GIT_SSH|GIT_ASKPASS|GIT_EXTERNAL_DIFF|LESSOPEN|LESSCLOSE|\
         TZ|TZDIR|LOCALDOMAIN|TERMINFO|BASH_XTRACEFD|HISTFILE|\
+        KEYS_EXPLAIN|\
         BASH_FUNC_*|DYLD_*) return 0 ;;
     esac
     return 1
@@ -181,8 +182,16 @@ set +a
 # refuses the whole _be_* bookkeeping namespace.
 _be_harness_keys="${KEYS:-}"
 # Whether to report such a drop. Captured HERE, from the ambient environment or
-# the trusted user .env, so the untrusted project .env can neither enable nor
-# silence it. See the reporting block below for why this is opt-in.
+# the trusted user .env, so the untrusted project .env cannot influence it.
+#
+# Capturing early is necessary but NOT sufficient, and the gap is worth naming:
+# the strict-parse loop exports project keys into the environment, so without a
+# denylist entry a project KEYS_EXPLAIN= would be inherited by every NESTED
+# subprocess and read there as if the operator had set it. The silencing
+# direction is the one with teeth — `KEYS_EXPLAIN=` (empty) in a project .env
+# would be a kill switch on the one signal that reveals that project dropped a
+# harness credential selection. KEYS_EXPLAIN is therefore in
+# _be_is_protected_name, same posture as PATH and BASH_ENV.
 _be_explain="${KEYS_EXPLAIN:-}"
 
 # --- untrusted project-level .env: strict KEY=VALUE parse, never executed ---
@@ -281,8 +290,13 @@ fi
 # Compares PROVIDER names only, so a project naming the same provider with a
 # different selector is not reported: the provider is still in force. Nothing
 # here reads a keystore file or any value.
-if [ -n "${_be_explain:-}" ] && [ -n "${_be_harness_keys:-}" ] && [ -n "${KEYS:-}" ] \
-   && [ "$_be_harness_keys" != "$KEYS" ]; then
+# The inequality alone is the right trigger: when a project declares no KEYS= at
+# all, $KEYS still holds the harness value and the two compare equal, so the
+# quiet cases stay quiet without a separate emptiness guard. Testing `-n $KEYS`
+# as well would have made `KEYS=` (empty, which drops EVERY harness provider)
+# the one drop that reports nothing, while `KEYS=   ` reported normally.
+if [ -n "${_be_explain:-}" ] && [ -n "${_be_harness_keys:-}" ] \
+   && [ "$_be_harness_keys" != "${KEYS:-}" ]; then
     case "$-" in
         *f*) _be_had_noglob=1 ;;
         *)   _be_had_noglob=0 ;;
