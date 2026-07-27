@@ -237,3 +237,47 @@ def test_no_bare_stash_in_skills_and_scripts():
     assert not offenders, "bare git stash in committed tooling:\n" + "\n".join(
         offenders
     )
+
+
+def frontmatter_background(path: Path) -> str | None:
+    """The literal `background:` value declared in a SKILL.md frontmatter."""
+    head = path.read_text().split("---", 2)
+    if len(head) < 3:
+        return None
+    m = re.search(r"^background:\s*(\S+)\s*$", head[1], re.MULTILINE)
+    return m.group(1).lower() if m else None
+
+
+def test_fork_skills_declare_background_explicitly():
+    """Claude Code 2.1.218 made `context: fork` skills background by default.
+
+    A fork cannot wait on a background completion — its turn ends the moment it
+    stops calling tools, and the completion re-invokes the MAIN loop, not the
+    fork (ticket 0250). So whether a fork runs backgrounded is load-bearing for
+    the /gaze pipeline and must never be inherited from an upstream default that
+    has already flipped once. Every fork skill pins it.
+    """
+    missing = [
+        str(p.relative_to(REPO))
+        for p in fork_skill_files()
+        if frontmatter_background(p) is None
+    ]
+    assert not missing, (
+        "context:fork skills with no explicit `background:` in frontmatter — "
+        "they would inherit the upstream default:\n" + "\n".join(missing)
+    )
+
+
+def test_only_the_orchestrator_runs_backgrounded():
+    """gaze is backgrounded so a raid wave gates several PRs concurrently; every
+    sub-skill it invokes as a phase runs foreground so gaze can block on the
+    structured output it parses to branch. Parallelism comes from concurrent
+    tool calls inside one message, never from backgrounding a phase.
+    """
+    for p in fork_skill_files():
+        value = frontmatter_background(p)
+        expected = "true" if p.parent.name == "gaze" else "false"
+        assert value == expected, (
+            f"{p.relative_to(REPO)}: background={value}, expected {expected} "
+            "(only the gaze orchestrator is backgrounded)"
+        )
