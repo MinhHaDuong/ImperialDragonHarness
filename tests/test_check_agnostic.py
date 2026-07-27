@@ -209,3 +209,65 @@ def test_unmarked_multiline_command_still_flagged(tmp_path):
     result = _run(d)
     assert result.returncode != 0, result.stdout
     assert "VIOLATION" in result.stdout
+
+
+# --- PROSE_PATTERNS: vendor-namespaced runtime knobs in doctrine prose --------
+# Regression guard for the 2026-07-27 gap: rules/ was outside the scanned dirs
+# AND no pattern covered vendor env names, so a rule written around
+# CLAUDE_CODE_* passed every gate. Both halves are pinned below — dropping
+# either one alone would let the same text through again.
+
+
+def _rules_dir(tmp_path):
+    """A directory whose name makes check-agnostic.sh apply PROSE_PATTERNS."""
+    d = tmp_path / "rules"
+    d.mkdir()
+    return d
+
+
+VENDOR_LINE = "Set `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` to bound the fan-out.\n"
+
+
+def test_fails_on_vendor_env_var_in_rules(tmp_path):
+    """Doctrine naming a vendor runtime knob rots with the tool — name the
+    capability instead (workflow.md § Writing Skills and Hooks)."""
+    d = _rules_dir(tmp_path)
+    (d / "workflow.md").write_text(f"# Rules\n\n{VENDOR_LINE}")
+    result = _run(d)
+    assert result.returncode == 1, result.stdout
+    assert "CLAUDE_CODE_" in result.stdout
+
+
+def test_vendor_env_var_escape_hatch_in_rules(tmp_path):
+    """The concrete knob may be recorded behind a harness-extension-point."""
+    d = _rules_dir(tmp_path)
+    (d / "workflow.md").write_text(
+        f"# Rules\n\n<!-- harness-extension-point -->\n{VENDOR_LINE}"
+    )
+    result = _run(d)
+    assert result.returncode == 0, result.stdout
+
+
+def test_rules_dir_is_scanned_by_default(tmp_path):
+    """rules/ must be in the default dir list, not just reachable by argument:
+    CI invokes the gate per-dir, and a rules/ target that nothing calls is the
+    gap this test exists for."""
+    d = _rules_dir(tmp_path)
+    (d / "workflow.md").write_text(f"# Rules\n\n{VENDOR_LINE}")
+    result = _run_no_args(tmp_path)
+    assert result.returncode == 1, (
+        "rules/ not scanned when the gate runs with no dir args:\n" + result.stdout
+    )
+
+
+def test_forge_patterns_not_applied_to_rules(tmp_path):
+    """Deliberate boundary: rules/git.md documents forge mechanics concretely
+    by design. Retrofitting SKILL_PATTERNS onto rules/ is a separate cleanup —
+    pin the current scope so widening it is a conscious edit, not a drift."""
+    d = _rules_dir(tmp_path)
+    (d / "git.md").write_text("# Git\n\nRun `gh pr merge` from the branch.\n")
+    result = _run(d)
+    assert result.returncode == 0, (
+        "forge patterns leaked onto rules/ — intended scope is skills/ only:\n"
+        + result.stdout
+    )

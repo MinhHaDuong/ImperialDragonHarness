@@ -5,6 +5,11 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: <branch>
 context: fork
+# Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
+# output. Claude Code 2.1.218 made `context: fork` skills background by default;
+# a fork cannot wait on a background completion, so the default would orphan
+# this phase — ticket 0250.
+background: false
 ---
 
 # Verify adherence — $ARGUMENTS

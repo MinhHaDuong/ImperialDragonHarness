@@ -3,8 +3,13 @@ name: review-pr
 description: Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation.
 disable-model-invocation: false
 user-invocable: true
-argument-hint: [pr-number] (defaults to the current branch's open merge request)
+argument-hint: "[pr-number] (defaults to the current branch's open merge request)"
 context: fork
+# Foreground: /gaze runs this as phase 4 (Agent C) and blocks on its structured
+# output. Claude Code 2.1.218 made `context: fork` skills background by default;
+# a fork cannot wait on a background completion, so the default would orphan
+# this phase — ticket 0250. Standalone use is unaffected.
+background: false
 ---
 
 # Review PR $ARGUMENTS — multi-perspective agent review

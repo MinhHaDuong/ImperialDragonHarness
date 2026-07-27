@@ -5,6 +5,11 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: <pr-number>
 context: fork
+# Foreground: /gaze phase 6 invokes this and must parse its verdict block before
+# branching. Claude Code 2.1.218 made `context: fork` skills background by
+# default; a fork cannot wait on a background completion (its turn ends when it
+# stops calling tools), so the default would orphan this phase — ticket 0250.
+background: false
 ---
 
 # Verify gate — PR $ARGUMENTS

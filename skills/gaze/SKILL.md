@@ -5,6 +5,14 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: <pr-number>
 context: fork
+# Background by intent: /gaze is long-running, and a raid wave gates several PRs
+# at once — backgrounding the orchestrator is what lets those run concurrently.
+# This matches the Claude Code 2.1.218 default; pinned explicitly so a future
+# default flip cannot serialize a wave silently. Its own sub-skills and reviewer
+# agents run FOREGROUND (see "Fork execution contract" below) — the two are
+# different axes: parallelism comes from concurrent tool calls inside one
+# message, never from backgrounding a phase this skill must wait on.
+background: true
 ---
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
