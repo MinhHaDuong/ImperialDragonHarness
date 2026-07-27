@@ -28,8 +28,11 @@ check-agnostic-skills:
 check-agnostic-scripts:
 	./scripts/check-agnostic.sh scripts
 
+check-agnostic-rules:
+	./scripts/check-agnostic.sh rules
+
 # Full gate (coding-python.md): the whole suite, integration + slow included.
 check-tests:
 	python3 -m pytest tests/
 
-check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-tests
+check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-tests

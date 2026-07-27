@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Detect consumer-project assumptions in harness skills, tickets, and scripts.
-# Usage: check-agnostic.sh [dir ...]   (default: skills tickets scripts)
+# Detect consumer-project assumptions in harness skills, rules, tickets, and scripts.
+# Usage: check-agnostic.sh [dir ...]   (default: skills rules tickets scripts)
 # Escape hatch: add  <!-- harness-extension-point -->  on the same or preceding line,
 # or (for a `\`-continued multi-line command) on any of its continuation lines.
 # `closed/` subdirs are skipped — closed tickets are frozen archives, not amended.
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-    DIRS=(skills tickets scripts)
+    DIRS=(skills rules tickets scripts)
 else
     DIRS=("$@")
 fi
@@ -19,8 +19,21 @@ GLOBAL_PATTERNS=(
     '/Users/[A-Z]'  # macOS equivalent
 )
 
+# Patterns checked in the prose that states harness doctrine (skills/ and rules/).
+# Vendor-namespaced environment variables name the tool that currently provides a
+# capability, so doctrine written around them rots when the tool does (workflow.md
+# § "Writing Skills and Hooks"). Name the capability in the rule; if the concrete
+# knob is worth recording, put it behind a harness-extension-point marker.
+# Added 2026-07-27: rules/ was never scanned and no pattern covered vendor env
+# names, so the first violation of this rule reached a merge gate unflagged.
+PROSE_PATTERNS=(
+    'CLAUDE_CODE_[A-Z_]'   # vendor-namespaced runtime knob; name the capability instead
+)
+
 # Patterns checked only in skills/ (ticket bodies may legitimately name consumer projects
-# when documenting mis-filed or related work).
+# when documenting mis-filed or related work). NOT applied to rules/: rules/git.md
+# documents forge mechanics concretely by design, and retrofitting the forge patterns
+# there is a separate cleanup, not this gate's job.
 # Note: consumer project *names* cannot be caught by static grep — the list would be
 # instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
@@ -76,6 +89,17 @@ for dir in "${DIRS[@]}"; do
     for pattern in "${GLOBAL_PATTERNS[@]}"; do
         check_pattern "$pattern" "$dir"
     done
+done
+
+for dir in "${DIRS[@]}"; do
+    # Prose patterns apply wherever harness doctrine is written: skills/ and rules/
+    case "$dir" in
+        skills*|*/skills*|rules*|*/rules*)
+            for pattern in "${PROSE_PATTERNS[@]}"; do
+                check_pattern "$pattern" "$dir"
+            done
+            ;;
+    esac
 done
 
 for dir in "${DIRS[@]}"; do
