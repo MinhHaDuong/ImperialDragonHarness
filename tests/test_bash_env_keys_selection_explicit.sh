@@ -45,9 +45,17 @@ printf "TRICKY_KEY='a b \$(touch %s/PWNED) c'\n" "$WORK" > "$FHOME/.config/keys/
 
 # Load bash-env.sh in a subprocess with $HOME=<home> and PWD=<projdir>, then print
 # the value of environment variable <var> ("" if unset). stderr silenced.
+#
+# `env -i` is load-bearing, not tidiness. The fake HOME isolates the keystore,
+# but a plain `HOME=... bash -c` still inherits the caller's environment — so a
+# real OPENROUTER_API_KEY exported by the harness loader masked the very
+# variable these assertions check. "DST not set" then failed with the ambient
+# value, and printed a live credential into the failure message (2026-07-27).
+# A known-empty base env is the only way an inherited variable cannot mask the
+# behaviour under test (rules/coding-bash.md).
 _load_var() {
     local home="$1" projdir="$2" var="$3"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         n="$3"
@@ -58,7 +66,7 @@ _load_var() {
 # Load bash-env.sh as above but return only the exit code (0 = no shell error).
 _load_rc() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" >/dev/null 2>&1
@@ -70,7 +78,7 @@ _load_rc() {
 # the void — so $( ) collects exactly the warnings the script emits.
 _load_stderr() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
@@ -79,7 +87,7 @@ _load_stderr() {
 # Load bash-env.sh as above and print `export -p` (the exported environment).
 _load_exports() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         export -p
@@ -121,7 +129,7 @@ _assert_eq() {
 # name against the ambient environment (only against the provider file).
 _load_var_ambient() {
     local home="$1" projdir="$2" var="$3" amb_name="$4" amb_val="$5"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         export "$4=$5"
         source "$2"

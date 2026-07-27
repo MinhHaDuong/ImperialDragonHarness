@@ -15,6 +15,41 @@
 # going; a genuine defect FAILs.
 set -euo pipefail
 
+# --- hermetic credential scope (2026-07-27) ----------------------------------
+# Every credential this suite handles is a FIXTURE, injected via
+# --credential-env MY_TEST_VAR; seat-runner re-exports that fixture value as
+# OPENAI_API_KEY for its children, which is why the exfiltration stubs below
+# interpolate "${OPENAI_API_KEY:-}" — they are meant to echo the fixture, and
+# the assertions check the scrub removed it.
+#
+# That only holds if no REAL key is in scope. When the injection does not reach
+# a stub, the stub inherits the ambient environment instead, and a failing
+# assertion prints whatever it found. On 2026-07-27 that spilled a live
+# OpenAI key into a terminal and a session transcript.
+#
+# So: drop every provider credential before anything runs. A stub that misses
+# the injection now prints an empty string, not a secret.
+unset OPENAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY DEEPSEEK_API_KEY \
+      MISTRAL_API_KEY TAVILY_API_KEY ZOTERO_API_KEY ZOTERO_RW_API_KEY
+
+# Unsetting here is NOT enough on its own. BASH_ENV points every child bash at
+# scripts/bash-env.sh, which re-runs the KEYS selection and re-exports the real
+# credential — overriding whatever this parent set. The stubs are bash scripts,
+# so they were being handed the live key no matter what happened up here. Clear
+# BASH_ENV so children stay hermetic; the fixture arrives via --credential-env,
+# which needs no loader.
+export BASH_ENV=
+
+# Assert against a CHILD, not this shell. A parent-scope check passes while the
+# leak is alive, because re-injection happens on child startup — that blind spot
+# is what made the first attempt at this fix a no-op.
+_hermetic_probe="$(bash -c 'printf "%s" "${OPENAI_API_KEY:-}"')"
+if [ -n "$_hermetic_probe" ]; then
+    printf 'FAIL: child processes still receive a credential; suite is not hermetic\n' >&2
+    exit 1
+fi
+unset _hermetic_probe
+
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SR="${REPO_ROOT}/scripts/seat-runner.sh"
 RELAY="${REPO_ROOT}/scripts/seat-runner/net-relay.py"
