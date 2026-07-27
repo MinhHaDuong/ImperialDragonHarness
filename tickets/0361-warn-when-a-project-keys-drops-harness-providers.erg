@@ -2,10 +2,10 @@
 Title: Warn when a project KEYS= silently drops harness-selected providers
 Created: 2026-07-27
 Author: HDMX-coding-agent
-Blocked-by: 0360
 
 --- log ---
 2026-07-27T19:32Z HDMX-coding-agent created
+2026-07-27T20:06Z HDMX-coding-agent note Unblocked: 0360 decided keep-replace. Implemented opt-in (KEYS_EXPLAIN=1), not unconditional — see Deviation.
 
 --- body ---
 ## Context
@@ -86,8 +86,34 @@ Red before the change: the first case emits nothing.
 - Sentinel values only: a test that needs a real credential to pass is a test
   that will one day print one.
 
+## Deviation from the Actions above (2026-07-27, as built)
+
+Step 2 said "emit one stderr warning". As built the report is **opt-in**:
+silent unless `KEYS_EXPLAIN=1` is in the ambient environment or the trusted
+`~/.claude/.env`. The project `.env` can neither enable nor silence it — the
+flag is captured before the project strict-parse runs.
+
+Why the change: `bash-env.sh` is sourced on **every subprocess**, and under
+0360's decided rule a project that narrows is doing the correct thing. An
+unconditional line would therefore fire on every command run in every project
+that declares a selection — warning about correct configuration, which is
+exactly how a diagnostic becomes noise everybody filters. `~/Climate_finance`
+carries a project `KEYS=` line today, so this was not hypothetical.
+
+The precedent is local and current: an unrelated always-on `bash-env` warning
+(`KEYS provider not found: openrouter`) already breaks
+`tests/test_guard_cd_primary_repo.sh` on a machine whose keystore lacks one
+selected provider. Adding a second always-on line would have compounded a
+failure mode already visible in this repo's own suite.
+
+This keeps the exit criterion's intent — an auth mystery becomes a
+configuration finding — while paying nothing on the default path. The cost is
+that the reader must know the flag exists, which is why the doctrine in the
+`bash-env.sh` header names it at the point where the symptom is described.
+
 ## Exit criteria
 
-A project `KEYS=` line that drops a harness-selected provider says so, naming
-the dropped providers and no values, so the failure is read as configuration
-rather than as a broken credential.
+A project `KEYS=` line that drops a harness-selected provider can say so,
+naming the dropped providers and no values, so the failure is read as
+configuration rather than as a broken credential — without the default path
+paying a warning on every subprocess.

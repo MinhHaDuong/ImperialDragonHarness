@@ -56,6 +56,33 @@
 #   * provider:SRC=DST  — from <provider>.env, export ONLY SRC, renamed to DST.
 #     No other variable from that file enters the environment.
 #
+# Precedence: a project KEYS= REPLACES the harness KEYS= in ~/.claude/.env, it
+# does not compose with it (decided in ticket 0360; pinned by
+# tests/test_bash_env_keys_precedence.sh). Read the two roles as:
+#
+#   * the harness KEYS= is the selection for directories that declare none;
+#   * a project KEYS= is that project's COMPLETE declaration of what it loads.
+#
+# Replace is what lets a project narrow, so it is the least-privilege rule.
+# Union was considered and rejected: ~/.claude/.env is sourced before any cwd is
+# consulted, so a union would make the harness selection a global floor no
+# project could narrow — a harness-level KEYS=hal:HAL_PASSWORD would reach every
+# subprocess of every project. That is default-broad, where this mechanism's
+# invariant is default-deny.
+#
+# The corollary is operational: a harness-level tool that needs a credential is
+# run from a directory whose selection names it (~/.claude/.env covers any cwd
+# that declares nothing). Widening a project's .env to make such a tool work is
+# the wrong fix — it puts that credential into every subprocess started there.
+#
+# The Python apply path (scripts/pipeline_keystore.py in consuming projects)
+# agrees: it reads the same final $KEYS, so the same selection wins. It adds an
+# orthogonal first-writer-wins rule at the variable level — it never overwrites
+# an already-set name — which composes with this rule rather than competing.
+#
+# Because replace is silent by construction, the block below reports a harness
+# selection that a project one displaced (ticket 0361) — provider names only.
+#
 # The last two forms exist because a provider file may hold several keysets (e.g.
 # openrouter.env: OPENROUTER_API_KEY_AEDIST, OPENROUTER_API_KEY_KIEU, EXPIRED_*);
 # sourcing it whole over-shares. Selection is EXPLICIT and VERBOSE — there is no
@@ -147,6 +174,17 @@ set -a  # mark all subsequent assignments for export
 [ -f "$HOME/.claude/.env" ] && source "$HOME/.claude/.env"
 set +a
 
+# Remember the trusted selection before the project parse can overwrite it, so
+# a project KEYS= that displaces it can say which providers it dropped (ticket
+# 0361). This holds the KEYS *line* — provider and variable NAMES — never a
+# credential value. The project .env cannot forge it: _be_is_protected_name
+# refuses the whole _be_* bookkeeping namespace.
+_be_harness_keys="${KEYS:-}"
+# Whether to report such a drop. Captured HERE, from the ambient environment or
+# the trusted user .env, so the untrusted project .env can neither enable nor
+# silence it. See the reporting block below for why this is opt-in.
+_be_explain="${KEYS_EXPLAIN:-}"
+
 # --- untrusted project-level .env: strict KEY=VALUE parse, never executed ---
 # Claude Code sets PWD to the project dir for each subprocess. Skip if it
 # resolves to the same file as the trusted user-level one (already loaded).
@@ -222,6 +260,77 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
     fi
     unset _be_proj _be_user
 fi
+
+# --- report a harness selection the project one displaced (ticket 0361) ---
+# Precedence is REPLACE by decision (ticket 0360, rationale in the header). That
+# drops the harness selection with no signal, and the symptom surfaces much
+# later and in the wrong vocabulary: the tool that wanted the credential reports
+# an ordinary auth error, so the reader debugs the credential, the keystore, or
+# the tool — none of which is broken. This block names the dropped providers so
+# that failure reads as configuration instead.
+#
+# OPT-IN, and deliberately so. This script is sourced on EVERY subprocess, and
+# under the decided rule a project that narrows is doing the correct thing — an
+# unconditional line here would fire on every command run in every project that
+# declares a selection, i.e. it would warn about correct configuration. That is
+# how a diagnostic becomes noise everybody learns to filter. It is reached for
+# when the symptom appears:
+#
+#     KEYS_EXPLAIN=1 <command>        # or set KEYS_EXPLAIN=1 in ~/.claude/.env
+#
+# Compares PROVIDER names only, so a project naming the same provider with a
+# different selector is not reported: the provider is still in force. Nothing
+# here reads a keystore file or any value.
+if [ -n "${_be_explain:-}" ] && [ -n "${_be_harness_keys:-}" ] && [ -n "${KEYS:-}" ] \
+   && [ "$_be_harness_keys" != "$KEYS" ]; then
+    case "$-" in
+        *f*) _be_had_noglob=1 ;;
+        *)   _be_had_noglob=0 ;;
+    esac
+    set -f
+    _be_ifs="$IFS"
+
+    # Collect the project's provider names, comma-delimited and comma-fenced so
+    # a substring match cannot alias one provider onto another.
+    _be_proj_provs=","
+    IFS=','
+    for _be_entry in ${KEYS}; do
+        IFS="$_be_ifs"
+        _be_entry="${_be_entry#"${_be_entry%%[![:space:]]*}"}"
+        _be_entry="${_be_entry%"${_be_entry##*[![:space:]]}"}"
+        [ -n "$_be_entry" ] && _be_proj_provs="${_be_proj_provs}${_be_entry%%:*},"
+        IFS=','
+    done
+    IFS="$_be_ifs"
+
+    _be_dropped=""
+    IFS=','
+    for _be_entry in ${_be_harness_keys}; do
+        IFS="$_be_ifs"
+        _be_entry="${_be_entry#"${_be_entry%%[![:space:]]*}"}"
+        _be_entry="${_be_entry%"${_be_entry##*[![:space:]]}"}"
+        if [ -n "$_be_entry" ]; then
+            _be_prov="${_be_entry%%:*}"
+            case "$_be_proj_provs" in
+                *",$_be_prov,"*) : ;;                    # still selected
+                *) case ",$_be_dropped," in
+                       *",$_be_prov,"*) : ;;             # already reported
+                       *) _be_dropped="${_be_dropped:+$_be_dropped,}$_be_prov" ;;
+                   esac ;;
+            esac
+        fi
+        IFS=','
+    done
+    IFS="$_be_ifs"
+    [ "$_be_had_noglob" = 1 ] || set +f
+
+    if [ -n "$_be_dropped" ]; then
+        printf 'bash-env: project KEYS= replaced the harness selection; dropped: %s\n' \
+            "$_be_dropped" >&2
+    fi
+    unset _be_ifs _be_entry _be_prov _be_proj_provs _be_dropped _be_had_noglob
+fi
+unset _be_harness_keys _be_explain
 
 # --- least-privilege provider secrets: source only the declared KEYS providers ---
 # $KEYS (if any) was set by the project strict-parse above. Split it on commas and

@@ -6,6 +6,7 @@ Author: HDMX-coding-agent
 --- log ---
 2026-07-27T19:10Z HDMX-coding-agent created
 2026-07-27T19:30Z HDMX-coding-agent note Counter-analysis added: union makes the harness selection a global floor, so the ranking above is likely inverted. Diagnostics split to 0361.
+2026-07-27T20:05Z HDMX-coding-agent note MOA decided: keep replace, state the doctrine. Documented in bash-env.sh header, pinned by tests/test_bash_env_keys_precedence.sh. Python path verified to agree.
 
 --- body ---
 ## Context
@@ -112,6 +113,25 @@ Still open regardless of the choice: `scripts/pipeline_keystore.py` was not
 found at `~/CNRS/projets-actifs/climate-finance-het`, so whether the second
 apply path agrees is **unverified**. Two mechanisms disagreeing stays worse
 than either rule alone.
+
+## Resolution (2026-07-27)
+
+**Decided by the author: keep replace, state the doctrine.**
+
+The second apply mechanism is at `~/Climate_finance/scripts/pipeline_keystore.py`
+(not the path guessed above). It **agrees**: line 118 reads the same final
+`$KEYS`, so the same selection wins. It adds an orthogonal first-writer-wins
+rule at the variable level (line 155, `if os.environ.get(dst): continue`) —
+it never overwrites an already-set name — which composes with the replace rule
+rather than competing with it. Nothing to change there; the "two mechanisms
+disagreeing" risk is closed.
+
+Landed: the doctrine in the `bash-env.sh` header where the mechanism is
+described, pinned by `tests/test_bash_env_keys_precedence.sh`, and the drop
+diagnostic from 0361 (opt-in — see that ticket for why).
+
+`HAL_PASSWORD` in the science repo's `.env` is filed at the destination rather
+than edited from here, per the cross-repo rule.
 
 ## Test
 
