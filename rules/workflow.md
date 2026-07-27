@@ -157,7 +157,11 @@ When compacting, preserve the list of modified files, test commands, and current
 
 # Micro-turn discipline
 
-Batch read-only navigational commands (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into one compound Bash call rather than spending one turn per command. The 2026-06 trace census measured navigational-plus-idle turn churn at $268/week (exact attribution, 28-day window) with a p99 navigation-run length of 32 consecutive turns — the single largest addressable bucket (trace-doctor phase 4, `docs/trace-counterfactuals-2026-06.md`). Each idle turn re-reads the full accumulated context, so a chain of single-command turns pays the context tax repeatedly for no new work. When a step needs three lookups, run all three in one tool call; never open a chain of consecutive single-navigation turns.
+Batch read-only navigational commands (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into one compound Bash call rather than spending one turn per command. Navigational-plus-idle turn churn costs **≈15.6% of all spend** (exact attribution, final turns excluded), the largest addressable bucket in the census. Each idle turn re-reads the full accumulated context, so a chain of single-command turns pays the context tax repeatedly for no new work. When a step needs three lookups, run all three in one tool call; never open a chain of consecutive single-navigation turns.
+
+The cost is stated as a **share, not a weekly rate**. The 2026-06 census read $268/week; the 2026-07-27 re-measure read $47/week — an 82% fall that tracked an 82% fall in total window activity, while the share held at 15.8% → 15.6%. A weekly figure measures how busy the month was; the share measures the defect. Re-measures update the share (`/trace-doctor`, `docs/trace-counterfactuals-2026-06.md`).
+
+Reading a turn-count fall as proof the rule works is the trap here: p99 navigation-run length fell 32 → 21 over the same period, which is consistent with the rule landing but is not evidence on its own — the two windows differ in volume and composition. Note also what this cost is *not* made of: it is cache-read token spend, so a client-side latency fix does nothing to it (2.1.216's quadratic-normalization fix was mistaken for a reason to retire this rule, 2026-07-27).
 
 # Writing Skills and Hooks
 
