@@ -73,6 +73,44 @@ runs and no review is ever posted.
 | Substantial | All five |
 | High-risk (schema, methodology) | All five + domain experts |
 
+### Round scoping
+
+The table above prices **round 1**. Round 1 always runs the full proportional
+panel — no perspective is skipped on a PR's first review.
+
+Derive the round here, from the PR itself: count the reviews already posted by
+this skill on the merge request; the round is that count plus one. No caller
+passes a round number, and no caller is trusted to have counted — the PR's
+review history is the only source.
+
+For round N > 1, re-run only:
+
+- the perspectives whose round N−1 verdict was **comment** or
+  **request-changes** — those are the ones with something outstanding; and
+- **one regression check**: a single agent covering all the perspectives that
+  cleared in round N−1, asked only whether the fixes since then broke anything
+  those perspectives had approved. One agent for the whole cleared set, not one
+  per perspective — it is a cheap sanity pass, not a re-review.
+
+A perspective that returned **approve** in round N−1 does not run again on its
+own; the regression check stands in for it.
+
+**Reset exception.** If the diff since the last review touches files that were
+not in it, or changes more than roughly half of its lines, the fixes are a
+rewrite rather than a patch — the cleared perspectives cleared different code.
+Treat that round as round 1 and run the full proportional panel.
+
+Model pins are unaffected: scoping changes *which* perspectives run, never
+which model runs them (see § reviewer decorrelation).
+
+This is not gaze's **Convergence mode** (ticket 0315, default off) under
+another name. Round scoping works *within* one review invocation, across its
+rounds, and always runs at least the objecting perspectives plus the
+regression check. Convergence mode works at the *caller* level, deciding
+whether a whole repeat `/gaze` runs its panel again at all. The two are
+orthogonal; neither replaces the other, and enabling or disabling one says
+nothing about the other.
+
 ## Each agent runs
 
 1. Read the issue exit criteria and the diff.

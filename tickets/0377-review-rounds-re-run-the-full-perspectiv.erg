@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-07-28T08:57Z HDMX-coding-agent created
+2026-07-28T13:02Z claude note execute: round scoping landed in review-pr + gaze + hunt 11/13; guard tests/test_review_round_scoping.py
 
 --- body ---
 ## Context
