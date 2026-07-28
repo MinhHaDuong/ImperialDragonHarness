@@ -161,7 +161,7 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
   - **tiny** → Agent A (adherence) + phase 6 gate only. Skip Agent B (`/review`), Agent C (`/review-pr`), and phase 5 (`/simplify`) — each skip logged like the existing `review-pr: skipped (…)` line.
   - **small** → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate. Agent C runs with the reduced "correctness only" perspective set (trivial risk, § 2–4) instead of the full five-perspective panel.
   - **full**, round 1 → the complete battery below, unchanged.
-  - **full**, round ≥ 2 → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
+  - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
 
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
@@ -178,17 +178,36 @@ Agents A and B, phase 5, and the phase 6 gate at full strength every round.
 What it does *not* justify is re-paying for perspectives that had nothing to
 say.
 
+**Reachable trigger.** The only entry into this branch is a *caller-level*
+repeat `/gaze` on a merge request that already carries a prior Agent C
+review: that invocation re-enters phase 1, reclassifies the tier, and finds a
+review history. gaze's internal REROLL re-entry never reaches here — it
+re-runs the **gate only** (§ Branch on verdict) and never returns to phase 1,
+so round scoping neither widens nor narrows it. Two different counters share
+the word "round", and they never interact: the REROLL round-1/round-2 cap
+counts gaze's own internal fix-and-regate attempts *within* one invocation,
+while the round scoped here counts the Agent C reviews posted on the merge
+request *across* invocations.
+
+**Relation to Convergence mode.** Convergence mode (ticket 0315,
+§ Convergence mode, default off) decides at the caller layer whether a repeat
+`/gaze` re-runs its panel at all; round scoping decides what that re-run panel
+runs when convergence is **off** — with convergence on, the repeat is skipped
+entirely and scoping never applies. Its flag is unaffected here.
+
+**gaze does not compute the round.** It reads only whether a prior Agent C
+review exists — a boolean from the merge request's review history, enough to
+select the scoped branch — and passes no round number to Agent C. Agent C's
+embedded procedure derives the round itself, exactly as § Round scoping in
+`skills/review-pr/SKILL.md` prescribes: count the reviews this skill
+previously posted on the merge request, identifiable by the verdict roster
+those reviews always carry; the round is that count plus one.
+
 An unchanged diff does **not** reset scoping. Reset happens only on a
 substantial rewrite: the round's diff touches files the last review did not
-cover, or changes more than roughly half of its lines. Then the round is
-classified as round 1 and the complete battery runs.
-
-Two nearby mechanisms are untouched by this. The internal REROLL re-entry
-branch (§ Branch on verdict) re-runs the **gate only** and always did; round
-scoping neither widens nor narrows it. Convergence mode (ticket 0315,
-§ Convergence mode, default off) governs whether a *caller-level* repeat
-`/gaze` re-runs its panel at all. That is a different decision at a different
-layer, and its flag is unaffected here.
+cover, or changes more than roughly half of its lines. Then Agent C runs the
+full panel for this round — scoping is ignored. The derived round number
+itself is never mutated; only the scoping decision changes.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -272,12 +291,19 @@ or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review
 setup summary. When the tier is **small**, run it with the reduced **correctness
 only** perspective set (the `trivial` risk band below) regardless of the risk
 assessment. When the tier is **full** on round 1, run the full proportional
-panel as assessed; on round ≥ 2, run the panel scoped per § Round scoping —
-only the perspectives whose previous verdict was comment/request-changes (prose:
-minor/major), plus one regression agent covering all the cleared ones, unless
-the diff was substantially rewritten, which resets to the full panel. State the
-round, the scoped perspective list, and the reason for each inclusion in the
-spawned agent's embedded procedure: it does not read this file or
+panel as assessed; when the merge request already carries a prior Agent C
+review (the caller-level repeat `/gaze` case), run the panel scoped per
+§ Round scoping — only the perspectives whose previous verdict was
+comment/request-changes (prose: minor/major), plus one regression agent
+running a single regression check over all the cleared ones, unless the diff
+was substantially rewritten, in which case the full panel runs for this round
+and scoping is ignored. Do **not** state a round number — gaze computes none.
+Instead, have the embedded procedure instruct the spawned agent to derive the
+round itself (count the reviews this skill previously posted on the merge
+request, identifiable by the verdict roster they always carry; the round is
+that count plus one), read the previous round's verdict roster, build the
+scoped perspective list from it, and record the reason for each inclusion.
+Spell that derivation out: the spawned agent does not read this file or
 `skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
 Otherwise pick by file type: if any `*.qmd` changed → prose
 panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,

@@ -49,7 +49,7 @@ runs and no review is ever posted.
 
 1. Identify the text: which `.qmd`/`.md` files changed? What is the target venue?
 2. Read the diff of the merge request.
-3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules).
+3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it.
 
 ## Each agent runs
 
@@ -126,16 +126,16 @@ reviews this skill has already posted there; the round is that count plus one.
 No caller passes a round number.
 
 For round N > 1, re-run only the reviewers whose round N−1 verdict was
-**minor** or **major**, plus one regression reviewer covering the whole
-accepting set — asked only whether the revisions since then broke what those
-reviewers accepted. The AI-tells auditor is exempt from scoping and runs every
+**minor** or **major**, plus one regression agent running a single regression
+check over the whole accepting set — asked only whether the revisions since
+then broke what those reviewers accepted. The AI-tells auditor is exempt from scoping and runs every
 round: it scans the full text, so revised passages are new surface for it
 regardless of who objected last time.
 
 **Reset exception.** If the revision since the last review touches text the
-review did not cover, or rewrites more than roughly half of it, treat the round
-as round 1 and run the full panel — the accepting reviewers accepted different
-prose.
+review did not cover, or rewrites more than roughly half of it, run the full
+panel for this round — scoping is ignored, and the derived round number itself
+is untouched. The accepting reviewers accepted different prose.
 
 This mirrors § Round scoping in `skills/review-pr/SKILL.md` (ticket 0377); keep
 the two in sync.

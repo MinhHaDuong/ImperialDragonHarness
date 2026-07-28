@@ -84,7 +84,15 @@ def test_gaze_agent_c_procedure_carries_round_scoping():
     both since long before this ticket — asserting on it would have passed
     against the unfixed text (verified 2026-07-28) and guarded nothing.
     """
-    agent_c = _text(GAZE).split("**Agent C — PR review**", 1)[1].split("### ", 1)[0]
+    text = _text(GAZE)
+    marker = "**Agent C — PR review**"
+    assert marker in text, (
+        f"skills/gaze/SKILL.md no longer carries the {marker!r} heading, so the "
+        "Agent C block cannot be located. If the phase was renamed, update this "
+        "test's marker; if it was removed, ticket 0377's scoping rule has lost "
+        "the code path it guards."
+    )
+    agent_c = text.split(marker, 1)[1].split("### ", 1)[0]
     assert "Round scoping" in agent_c, (
         "gaze's embedded Agent C procedure must reference § Round scoping. The "
         "spawned agent never reads review-pr/SKILL.md, so a rule stated only "

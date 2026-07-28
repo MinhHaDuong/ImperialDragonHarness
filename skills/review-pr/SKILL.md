@@ -52,7 +52,8 @@ runs and no review is ever posted.
 2. **Read the diff** of the merge request.
 3. **Assess risk level** and determine proportional depth (see table below).
 4. **Launch review agents** in parallel — **foreground**
-   (`run_in_background: false`), per the concurrency contract above:
+   (`run_in_background: false`), per the concurrency contract above. On
+   round ≥ 2, scope the set per § Round scoping below before launching:
 
 | Agent | Focus | Key question |
 |---|---|---|
@@ -87,7 +88,7 @@ For round N > 1, re-run only:
 
 - the perspectives whose round N−1 verdict was **comment** or
   **request-changes** — those are the ones with something outstanding; and
-- **one regression check**: a single agent covering all the perspectives that
+- **one regression check**: a single regression agent covering all the perspectives that
   cleared in round N−1, asked only whether the fixes since then broke anything
   those perspectives had approved. One agent for the whole cleared set, not one
   per perspective — it is a cheap sanity pass, not a re-review.
@@ -98,7 +99,9 @@ own; the regression check stands in for it.
 **Reset exception.** If the diff since the last review touches files that were
 not in it, or changes more than roughly half of its lines, the fixes are a
 rewrite rather than a patch — the cleared perspectives cleared different code.
-Treat that round as round 1 and run the full proportional panel.
+Run the full proportional panel for this round — scoping is ignored. The
+derived round number itself is untouched: the count of posted reviews cannot
+be rolled back, and the review this round posts still increments it.
 
 Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/workflow.md` § Subagents, reviewer
