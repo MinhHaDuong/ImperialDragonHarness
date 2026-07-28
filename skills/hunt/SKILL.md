@@ -24,7 +24,9 @@ argument-hint: <ticket-id> [inline]
      merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 2b. **Route before you execute.** This triage runs once, at hunt entry, before any
-   code is written. Three hunts skip it entirely and proceed straight to step 3:
+   code is written. Step 2's already-met fast path never reaches it, and needs no
+   triage: it executes nothing, it only lands a close through the normal PR flow.
+   Of the hunts that do arrive here, three skip it entirely and proceed straight to step 3:
    an executor already running detached, identified by step 3's worktree ownership
    check (that check is the sole discriminator — do not restate its conditions
    here); a hunt the author invoked with an explicit `inline` argument, which
