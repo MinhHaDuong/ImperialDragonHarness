@@ -1,0 +1,156 @@
+"""A `Label: needs-human` ticket is screened out before any executor is spawned.
+
+Ticket 0390 (sibling of 0378). Hunt step 2b triages a ticket before code is
+written, but 0378's Verification bullet 3 scopes that triage to skip for an
+already-detached executor. A raid picks its own tickets and spawns its own
+Phase 5 executors, so no interactive hunt ever runs the triage for them —
+leaving the autonomous path, where the author is not watching, unscreened.
+
+Two selection surfaces must therefore name the screen:
+
+- `pick-ticket` step 1 is *already* screened, mechanically: every label in
+  `tickets/.ergrc` suppresses a ticket from `erg ready` output. The fix there
+  is to name that existing mechanism where a reader looks for it — NOT to add
+  a second, hand-rolled label grep beside the tool-level filter that already
+  does the job.
+- `raid` Phase 1 reads open tickets from `tickets/` directly, never through
+  `erg ready`. It must state the exclusion itself.
+
+Every assertion is scoped to the selection region of its file. A file-wide
+substring check would pass on a screen that landed in the wrong phase, which is
+the tautological-test antipattern. Bounded extraction mirrors
+`tests/test_hunt_triage_prestep.py`.
+
+Text-grep hygiene test — fast tier, no marker.
+"""
+
+import functools
+import re
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+PICK_TICKET = REPO / "skills" / "pick-ticket" / "SKILL.md"
+RAID = REPO / "skills" / "raid" / "SKILL.md"
+
+
+def _collapse(text: str) -> str:
+    """Collapse whitespace so phrase assertions survive prose re-wrapping."""
+    return re.sub(r"\s+", " ", text)
+
+
+@functools.cache
+def pick_candidates_text() -> str:
+    """Return pick-ticket's step 1 (candidate selection), whitespace-collapsed.
+
+    The lookahead anchors the region on step 2, so a screen mentioned in the
+    beat-skip step or in the ranking step fails here rather than passing on a
+    file-wide match.
+    """
+    text = PICK_TICKET.read_text()
+    m = re.search(
+        r"^1\. \*\*Get candidates.*?(?=^2\. \*\*Apply beat-skip)",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert m, (
+        "could not locate pick-ticket step 1 (Get candidates) between step 0 "
+        "and step 2 (ticket 0390)"
+    )
+    return _collapse(m.group(0))
+
+
+@functools.cache
+def raid_phase1_text() -> str:
+    """Return raid Phase 1 (Select), whitespace-collapsed.
+
+    Anchored on the Phase 2 heading: an exclusion stated in Phase 5 (Execute)
+    is too late — the executor has already been spawned by then.
+    """
+    text = RAID.read_text()
+    m = re.search(
+        r"^## Phase 1: Select.*?(?=^## Phase 2:)", text, re.MULTILINE | re.DOTALL
+    )
+    assert m, "could not locate raid Phase 1 between its heading and Phase 2 (ticket 0390)"
+    return _collapse(m.group(0))
+
+
+def test_pick_ticket_names_the_skip_label_screen():
+    """The screen must be visible where a reader looks for the selection rule."""
+    region = pick_candidates_text()
+    assert "needs-human" in region, (
+        "pick-ticket's candidate-selection step must name `needs-human` as an "
+        "exclusion — the screen exists (via .ergrc) but is invisible to a "
+        "reader of the selection prose (ticket 0390)"
+    )
+    assert ".ergrc" in region, (
+        "pick-ticket must name `tickets/.ergrc` as the source of the skip-label "
+        "set, so a reader can see WHERE the exclusion is configured rather than "
+        "trusting an unattributed claim"
+    )
+    assert "erg ready" in region, (
+        "pick-ticket must attribute the screen to `erg ready`'s own filter — "
+        "naming the label without naming the tool that applies it invites a "
+        "second, hand-rolled implementation"
+    )
+
+
+def test_pick_ticket_does_not_hand_roll_the_screen():
+    """Negative guard: one screen, applied by the tool that owns it.
+
+    A second label filter beside `erg ready`'s would be a duplicate definition
+    to keep in sync with `tickets/.ergrc`, and the drifted copy is the one that
+    runs. Ticket 0390 Action 1 is explicit: name the existing mechanism, do not
+    add a grep.
+    """
+    region = pick_candidates_text()
+    assert "grep" not in region, (
+        "pick-ticket's candidate-selection step must not hand-roll a label "
+        "grep beside `erg ready`'s existing .ergrc skip-label filter "
+        "(ticket 0390 Action 1)"
+    )
+
+
+def test_raid_phase1_excludes_needs_human():
+    """Raid reads tickets/ directly, so it must state the exclusion itself."""
+    region = raid_phase1_text()
+    assert "Label: needs-human" in region, (
+        "raid Phase 1 must name the tell as the ticket header "
+        "`Label: needs-human`, so the check is a grep and not a judgment call "
+        "(ticket 0390)"
+    )
+    assert "never a raid target" in region, (
+        "raid Phase 1 must state outright that such a ticket is NEVER a raid "
+        "target — a hedge ('prefer to skip') leaves the executor spawned, "
+        "which is the exact 0334/0338 failure"
+    )
+
+
+def test_raid_phase1_routes_the_excluded_ticket_to_the_author():
+    """Excluded is not dropped: the ticket surfaces in the run report."""
+    region = raid_phase1_text()
+    assert "run report" in region, (
+        "raid Phase 1 must say where an excluded `needs-human` ticket goes — "
+        "surfaced to the author in the run report, not silently dropped from "
+        "the queue (ticket 0390 Action 2)"
+    )
+    assert "success outcome" in region, (
+        "raid Phase 1 must give the surfaced ticket the same standing 0378 "
+        "gives a returned decision list — a success outcome; otherwise the "
+        "orchestrator reads the exclusion as a failure and pushes on"
+    )
+
+
+def test_raid_phase1_needs_human_only_queue_returns_decisions():
+    """Ticket 0390 Action 3, author-approved: decisions, not an empty run."""
+    region = raid_phase1_text()
+    assert "batched decision" in region, (
+        "raid Phase 1 must record the Action 3 decision: a queue containing "
+        "ONLY `needs-human` tickets returns the batched decision lists "
+        "(rules/workflow.md § Autonomous Action Rules), so the author's one "
+        "question round is not lost"
+    )
+    assert "empty-run report" in region, (
+        "raid Phase 1 must state what the decision rules OUT — an empty-run "
+        "report — or a later reader re-litigates Action 3 (ticket 0390, "
+        "author approved 2026-07-28)"
+    )

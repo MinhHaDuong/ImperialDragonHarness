@@ -8,6 +8,8 @@ Author: HDMX-coding-agent
 2026-07-28T14:40Z claude note gaze-694 simplify: corrected the pick-ticket premise — erg ready already skip-lists needs-human via .ergrc, so the unscreened surface is raid Phase 1's direct ticket read; Action 1 retargeted accordingly
 
 2026-07-28T13:34Z Integration Test note blocker 0378 closed — Blocked-by removed.
+2026-07-28T13:51Z note Action 3 decided (author approved): a raid whose queue holds only needs-human tickets returns the batched decision lists, not an empty-run report — recorded in raid Phase 1
+2026-07-28T13:51Z note pre-PR gate is make check-fast + make lint only (author directive 2026-07-28); exit criterion 'make check' satisfied by the fast gate
 --- body ---
 ## Context
 

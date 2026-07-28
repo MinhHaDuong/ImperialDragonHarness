@@ -20,6 +20,12 @@ Select one ticket for the current sweep run.
 1. **Get candidates.** Run `$ERG ready --json tickets/` to list open, unblocked
    tickets with no active branch. Each JSON entry has `id`, `title`, `file`.
 
+   That call is also the label screen: every label listed in `tickets/.ergrc`
+   (`needs-human` included) suppresses its ticket from `erg ready` output, so a
+   ticket the author flagged as needing a decision never reaches this candidate
+   set. Rely on that filter; do not add a second label check here. One screen,
+   applied by the tool that owns the vocabulary (ticket 0390).
+
 2. **Apply beat-skip list.** Load `.git/beat-skip.json` (skip if absent).
    Exclude any entry where:
    - `until` is present AND `until > now` (ISO UTC comparison)

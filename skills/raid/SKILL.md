@@ -80,6 +80,19 @@ Prioritize:
 
 Read each ticket + STATE.md. Group by milestone. Identify dependency order and wave structure.
 
+**`Label: needs-human` is never a raid target.** That header flags a ticket as
+waiting on an author decision, and a raid runs where the author is not watching.
+Drop it from the queue before wave grouping: no Imagine agent, no plan, no
+Phase 5 executor. It is not lost — name it in the run report with the decisions
+it is waiting on, and count that as a success outcome, the same standing hunt
+step 2b gives a returned batched decision list. `pick-ticket` never sees such a
+ticket (`erg ready` filters it via `tickets/.ergrc`), but Phase 1 reads
+`tickets/` directly, so the exclusion is this skill's own job.
+
+If EVERY ticket in the queue carries the label, the run returns those batched
+decision lists rather than an empty-run report. One question round the author
+can answer in a single pass is the deliverable (decided 2026-07-28, ticket 0390).
+
 Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous Action Rules) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
