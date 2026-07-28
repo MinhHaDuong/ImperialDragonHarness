@@ -23,6 +23,39 @@ argument-hint: <ticket-id>
      stray file in the shared `tickets/`), and open the
      merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
+2b. **Route before you execute.** This triage runs once, at hunt entry, before any
+   code is written. Three hunts skip it entirely and proceed straight to step 3:
+   an executor already running detached, identified by step 3's worktree ownership
+   check (that check is the sole discriminator — do not restate its conditions
+   here); a hunt the author invoked with an explicit `inline` argument, which
+   keeps the co-working behaviour in the author's own session; and a headless run
+   (`claude -p "/hunt <id>"`), which is already the detached case an orchestrator
+   asked for. Only a hunt in the author's live interactive session reaches the
+   fork below.
+   - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
+     `Label: needs-human` header; exit criteria carrying decision verbs (decide,
+     arbitrate, sign-off, choose among); manuscript prose as the deliverable, which
+     rules/git.md § Prose workpackages already reserves for author arbitration; a
+     premise resting on conflicting sources. On a hit, do not execute and write no
+     code. Return ONE batched decision list to the author, each item with a
+     recommended default, and end the turn. That return is a success outcome of the
+     hunt, not a failure, exactly as the raid drift guard treats a premise objection.
+   - **Detach by default.** No tell hit, and the hunt is running in the author's
+     interactive session: hand the ticket to ONE background worktree-isolated
+     agent. Not a raid — for a single ticket its orchestrator and review panels
+     cost more than the ticket returns. Launch with `isolation: "worktree"` and
+     `model: opus` (raid § Model policy, where coders keep the top tier; effort is
+     the session effort, run at `high`). The agent's FIRST action is mechanical:
+     ```
+     Skill(skill: "hunt", args: "$ARGUMENTS")
+     ```
+     The launch prompt must NOT paraphrase, summarize, or inline hunt's steps;
+     `skills/hunt/SKILL.md` is the single live execution contract and the loader
+     supplies it fresh on every run (mirrors raid Phase 5). Instruct the agent to
+     push its branch and open a merge request as hunt's flow dictates. Then report
+     the handoff and end the turn: the interactive session stays at decision
+     altitude instead of accumulating the executor's test dumps, diffs, and review
+     rounds, which measured 5.4x the cost of the same contract run detached.
 3. Enter the ticket's **own** worktree, or confirm the spawner already gave you one.
    A worktree is **owned** when either its basename is `t$ARGUMENTS` or begins with
    `t$ARGUMENTS-` (the collision-resistant suffixed form — see the `EnterWorktree`

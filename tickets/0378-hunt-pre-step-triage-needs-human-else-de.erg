@@ -6,6 +6,8 @@ Author: HDMX-coding-agent
 --- log ---
 2026-07-28T09:09Z HDMX-coding-agent created
 
+2026-07-28T09:21Z note Action 3 sweep: no contradictions. beat.py runs /raid, never /hunt; raid Phase 5 spawns Agent(isolation:worktree) -> agent-* clean worktree, passing step 3 ownership, so triage stays off. gaze/verify-adherence reference only hunt step 9's adherence label. Gap found and closed: the ad-hoc headless 'claude -p /hunt <id>' pattern is now an explicit third skip case in 2b.
+2026-07-28T09:21Z note Exit criterion 3 (one real interactive hunt observed taking the detached path) is post-merge observational — it cannot be satisfied by this execution, which ran as a detached raid Phase 5 executor, not an interactive session.
 --- body ---
 ## Context
 
