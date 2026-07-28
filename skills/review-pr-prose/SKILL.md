@@ -89,6 +89,10 @@ Violations must cite the line. This agent has no other role — its table goes v
 3. Deduplicate convergent findings.
 4. Build the manuscript. Check consistency between prose and data.
 5. Post a single review on the merge request.
+6. Close with a verdict roster: one line per reviewer that ran, giving its
+   verdict (accept / minor / major), including reviewers that accepted with
+   nothing to say. The next round scopes itself from this roster
+   (§ Round scoping), so a reviewer missing from it reads as accepting.
 
 ## Minor/suggestion tags (mandatory)
 
@@ -113,3 +117,25 @@ Rules:
 | Section rewrite | 3 agents (domain + adversarial + copy) |
 | Full paper draft | Full panel (5-6 agents) |
 | Submission-ready | Full panel + response-to-reviewers template |
+
+### Round scoping
+
+The table above prices **round 1**, which always runs the full panel for the
+change's size. Derive the round from the merge request itself: count the
+reviews this skill has already posted there; the round is that count plus one.
+No caller passes a round number.
+
+For round N > 1, re-run only the reviewers whose round N−1 verdict was
+**minor** or **major**, plus one regression reviewer covering the whole
+accepting set — asked only whether the revisions since then broke what those
+reviewers accepted. The AI-tells auditor is exempt from scoping and runs every
+round: it scans the full text, so revised passages are new surface for it
+regardless of who objected last time.
+
+**Reset exception.** If the revision since the last review touches text the
+review did not cover, or rewrites more than roughly half of it, treat the round
+as round 1 and run the full panel — the accepting reviewers accepted different
+prose.
+
+This mirrors § Round scoping in `skills/review-pr/SKILL.md` (ticket 0377); keep
+the two in sync.

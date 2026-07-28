@@ -33,6 +33,7 @@ pytestmark = pytest.mark.adherence
 REPO = Path(__file__).resolve().parents[1]
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 REVIEW_PR = REPO / "skills" / "review-pr" / "SKILL.md"
+REVIEW_PR_PROSE = REPO / "skills" / "review-pr-prose" / "SKILL.md"
 
 
 def _text(path: Path) -> str:
@@ -65,6 +66,35 @@ def test_review_pr_has_round_scoping_section():
         "skills/review-pr/SKILL.md must carry a 'Round scoping' section: "
         "round 1 runs the full proportional panel, later rounds re-run only "
         "the perspectives that objected (ticket 0377)."
+    )
+
+
+def test_gaze_agent_c_procedure_carries_round_scoping():
+    """Gaze spawns Agent C with an EMBEDDED procedure, not a /review-pr fork.
+
+    The spawned agent reads neither gaze/SKILL.md nor review-pr/SKILL.md, so a
+    scoping rule stated only in the doctrine sections never reaches the code
+    path the ticket's cost analysis targets. This slices the Agent C block
+    deliberately: the assertion is about that paragraph, not the file.
+
+    The marker is the section name, not a bare "round": `foreground` and
+    `background` both contain that substring, and the Agent C block has used
+    both since long before this ticket — asserting on it would have passed
+    against the unfixed text (verified 2026-07-28) and guarded nothing.
+    """
+    agent_c = _text(GAZE).split("**Agent C — PR review**", 1)[1].split("### ", 1)[0]
+    assert "Round scoping" in agent_c, (
+        "gaze's embedded Agent C procedure must reference § Round scoping. The "
+        "spawned agent never reads review-pr/SKILL.md, so a rule stated only "
+        "in gaze's doctrine section is inert on the gaze path (ticket 0377)."
+    )
+
+
+def test_prose_sibling_has_round_scoping_section():
+    """Gaze's Agent C is /review-pr OR /review-pr-prose; both need the rule."""
+    assert "Round scoping" in _text(REVIEW_PR_PROSE), (
+        "skills/review-pr-prose/SKILL.md must carry a 'Round scoping' section "
+        "too — gaze points a round >= 2 prose panel at it (ticket 0377)."
     )
 
 

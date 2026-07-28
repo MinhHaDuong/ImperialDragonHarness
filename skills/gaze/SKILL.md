@@ -164,16 +164,19 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
   - **full**, round ≥ 2 → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
 
+- If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
+
 #### Round scoping
 
 **Supersedes the #562 clause.** A round ≥ 2 still resolves to the **full**
 tier, but its Agent C no longer re-runs the whole five-perspective panel by
 default. Agent C re-runs the perspectives that objected in the previous round
 plus one regression check over the cleared ones, per § Round scoping in
-`skills/review-pr/SKILL.md` (ticket 0377). #562's lesson — that a round-2
-battery was needed on an unchanged diff — is preserved by keeping Agents A and
-B, phase 5, and the phase 6 gate at full strength every round; what it does
-*not* justify is re-paying for perspectives that had nothing to say.
+`skills/review-pr/SKILL.md` (ticket 0377). #562's lesson was that a round-2
+battery was needed on an unchanged diff. That lesson is preserved by keeping
+Agents A and B, phase 5, and the phase 6 gate at full strength every round.
+What it does *not* justify is re-paying for perspectives that had nothing to
+say.
 
 An unchanged diff does **not** reset scoping. Reset happens only on a
 substantial rewrite: the round's diff touches files the last review did not
@@ -181,12 +184,11 @@ cover, or changes more than roughly half of its lines. Then the round is
 classified as round 1 and the complete battery runs.
 
 Two nearby mechanisms are untouched by this. The internal REROLL re-entry
-branch (§ Branch on verdict) re-runs the **gate only** and always did — round
-scoping does not widen or narrow it. Convergence mode (ticket 0315, § Convergence
-mode, default off) governs whether a *caller-level* repeat `/gaze` re-runs its
-panel at all; it is a different decision at a different layer and its flag is
-unaffected here.
-- If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
+branch (§ Branch on verdict) re-runs the **gate only** and always did; round
+scoping neither widens nor narrows it. Convergence mode (ticket 0315,
+§ Convergence mode, default off) governs whether a *caller-level* repeat
+`/gaze` re-runs its panel at all. That is a different decision at a different
+layer, and its flag is unaffected here.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -269,8 +271,15 @@ or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review
 `review-pr: skipped (tier: tiny, <pr_lines> lines, <pr_files> files)` in the
 setup summary. When the tier is **small**, run it with the reduced **correctness
 only** perspective set (the `trivial` risk band below) regardless of the risk
-assessment. When the tier is **full**, run the full proportional panel as
-assessed. Otherwise pick by file type: if any `*.qmd` changed → prose
+assessment. When the tier is **full** on round 1, run the full proportional
+panel as assessed; on round ≥ 2, run the panel scoped per § Round scoping —
+only the perspectives whose previous verdict was comment/request-changes (prose:
+minor/major), plus one regression agent covering all the cleared ones, unless
+the diff was substantially rewritten, which resets to the full panel. State the
+round, the scoped perspective list, and the reason for each inclusion in the
+spawned agent's embedded procedure: it does not read this file or
+`skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
+Otherwise pick by file type: if any `*.qmd` changed → prose
 panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —

@@ -125,6 +125,13 @@ nothing about the other.
 3. **Deduplicate** findings across agents.
 4. **Run tests**: `make check`
 5. **Post a single review** on the merge request, attributing each finding to its perspective.
+6. **Close with a verdict roster** — one line per perspective that ran, giving
+   its verdict (approve / comment / request-changes), including the
+   perspectives that returned **approve** with nothing to say. The next round
+   scopes itself from this roster (§ Round scoping), so a perspective missing
+   from it reads as cleared. Dedup (step 3) merges *findings*, never verdicts:
+   a perspective whose only finding was deduped into another's still records
+   its own comment verdict.
 
 ## Minor finding tags (mandatory)
 
