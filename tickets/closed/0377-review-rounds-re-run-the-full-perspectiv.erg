@@ -2,12 +2,14 @@
 Title: review rounds re-run the full perspective panel regardless of prior findings
 Created: 2026-07-28
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #696
 
 --- log ---
 2026-07-28T08:57Z HDMX-coding-agent created
 2026-07-28T13:02Z claude note execute: round scoping landed in review-pr + gaze + hunt 11/13; guard tests/test_review_round_scoping.py
 
 2026-07-28T13:52Z bump verify-reroll — round 1: gaze's round>=2 Agent C tier branch (gaze:163-164,278-281) has no reachable trigger inside gaze's own REROLL loop and gaze never states how it derives the round it must pass to Agent C
+2026-07-28T14:01Z Integration Test closed — autoclosed — PR #696
 --- body ---
 ## Context
 
