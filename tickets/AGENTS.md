@@ -82,3 +82,13 @@ What problem or need this addresses. Why now.
 ## Exit criteria
 - Definition of done — when is this ticket complete?
 ```
+
+**Pure prose tickets omit the `## Test` section: TDD's red step does not
+apply.** A red-first test assumes a machine-checkable positive outcome, and
+prose has none — a test asserting that a specific positive phrasing appears
+breaks on every legitimate rewrite. Verification for prose is review-based:
+the recompiled artifact and the prose review panel. Prose adherence tests
+stay negative-polarity (forbidden phrasings) or mechanical (density ratchets,
+structural presence), and a ticket extends them only when it pins a
+newly-observed defect class, never pro forma to satisfy the template. The
+asymmetry behind the rule: defects are lexically stable, good prose is not.

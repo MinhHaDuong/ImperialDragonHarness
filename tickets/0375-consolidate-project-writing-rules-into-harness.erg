@@ -1,0 +1,63 @@
+%erg 0.1
+Title: Consolidate project writing rules into the harness axis model
+Created: 2026-07-28
+Author: haduong
+Label: deferred
+
+--- log ---
+2026-07-28T08:30Z haduong created
+
+--- body ---
+## Context
+Writing rules have accreted per-project instead of composing from the harness
+axis model (`rules/prose/_all.md`, `rules/doctype/`, `rules/lang/`, project
+manifests holding mappings only). Climate_finance carries a local
+`.claude/rules/writing.md` that mixes two layers: project-specific content
+(core argument, periodization, corpus, citation practices, voice) and
+generalizable doctrine that belongs harness-level. Found while tracing where
+the "prose adherence tests pin negative guards only" rule lives (2026-07-28).
+Other projects likely carry similar local files. Author: "We need to import
+and consolidate the writing rules harness level, this project and others,
+someday."
+
+## Relevant files
+- `rules/prose/_all.md` — universal prose layer; receives generalizable guards
+- `rules/README.md` — axis-model index; update if new rule files appear
+- `~/Climate_finance/.claude/rules/writing.md` — the known mixed-layer case;
+  its "CI test polarity rule" (negative guards + mechanical checks only, no
+  positive phrasing pins) and its editorial-brief pattern (positive intent in
+  `docs/editorial-brief.md`, checked at review time) are the candidates to
+  promote
+- `~/Climate_finance/.claude/rules/oeconomia-style.md`,
+  `review-checklist.md` — same inventory pass
+- `tickets/AGENTS.md` § pure-prose-ticket test polarity — landed with this
+  ticket's PR; the harness-level statement of the polarity asymmetry
+
+## Actions
+1. Inventory writing/prose rules across projects (Climate_finance first, then
+   the other paper repos under `~/CNRS/papiers/` and active project repos).
+2. Classify each rule by layer: universal prose, doctype, lang, or genuinely
+   project-local (argument, corpus, voice).
+3. Promote the generalizable rules into the harness axis files; leave
+   project-local content in place, trimmed of what moved up.
+4. Keep the axis-model invariant: project manifests (`rules-map.toml`) hold
+   path-to-axis mappings only, never rule text.
+5. Update `rules/README.md` index for any new or grown rule file.
+
+## Verification
+- [ ] Each promoted rule appears once, harness-level; no duplicate statement
+      survives in a project-local file
+- [ ] Project-local files retain only content that names the project's own
+      argument, corpus, venue, or voice
+- [ ] `make check` passes in the harness repo
+
+## Invariants
+- Per-file rule injection (`inject_rule_on_edit.py`) keeps working; injected
+  bodies stay small (scope note in `prose/_all.md`)
+- Consumer projects keep rendering/CI green after their local files shrink
+
+## Exit criteria
+- [ ] Inventory note listing every project-local writing rule and its layer
+      verdict
+- [ ] Generalizable rules merged into harness `rules/`; project files trimmed
+- [ ] Rules index updated
