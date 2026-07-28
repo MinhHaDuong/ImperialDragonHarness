@@ -1,0 +1,69 @@
+%erg 0.1
+Title: hunt executors re-run the full test suite mid-loop
+Created: 2026-07-28
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-28T08:57Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+The 2026-07-28 trace analysis of 22 hunt/raid kills in climate-finance-het
+(week of 07-21 → 07-28) measured test execution as the single largest active-time
+bucket: 348 of 1,250 agent-minutes (27.8%), ahead of design narration (26.5%)
+and adherence machinery (10.7%). A median code kill ran the check suite 18
+times; roughly 30% of runs failed (legitimate diagnosis), the rest were
+re-confirmation. The pattern behind the excess: executors re-run full
+`make check` after single-file edits mid-loop, and every review-fix or reroll
+cycle re-runs the full suite again, where the hunt contract already prescribes
+`check-fast` during development and one full `check` before the PR.
+
+Full report: https://claude.ai/code/artifact/daa5be2e-0c1b-4ed1-9dba-3ab2416729b3
+
+## Relevant files
+
+- `skills/hunt/SKILL.md` — steps 7–9 name `make check-fast` and `make check`
+  but set no run budget; step 12 ("Fix all comments") is where full-suite
+  re-runs multiply.
+- `skills/gaze/SKILL.md` — reroll path re-validates; same budget question.
+- `skills/raid/SKILL.md` — Phase 6/7 wording inherits whatever the hunt does.
+
+## Actions
+
+1. Add an explicit test-run budget to the hunt contract: `check-fast` (or the
+   affected test file alone) is the loop gate; full `make check` runs exactly
+   once before opening the PR, and once more only when review fixes touched
+   code outside the fast tier — not per fix cycle.
+2. Mirror the same budget in the gaze/reroll path: a reroll re-runs the tests
+   implicated by the defect plus `check-fast`, and one full `check` at the
+   final gate only.
+3. Keep project-specific escape hatches: a repo whose `check` is cheap may say
+   so in its project rules; the budget is the default, not a cap on diagnosis
+   (a failing run is never wasted).
+
+## Test
+
+- Harness skill-text guard (new `tests/test_hunt_test_budget.py`, in the
+  style of `tests/test_skill_descriptions.py`): assert the hunt SKILL.md
+  names a run budget for full-suite invocations (negative guard on the old
+  unbounded wording, per the prose-test polarity rule).
+
+## Verification
+
+- [ ] hunt SKILL.md states the budget; gaze SKILL.md mirrors it
+- [ ] skill-text guard test passes
+- [ ] next trace re-measure (trace-doctor or ad hoc) shows median full-check
+      runs per kill ≤ 3
+
+## Invariants
+
+- TDD red step unchanged (first test must fail; 19/22 kills honored it)
+- `make check` before PR-open remains mandatory — the budget trims
+  *repetition*, not the gate
+
+## Exit criteria
+
+- [ ] Test-run budget wording landed in hunt + gaze skills
+- [ ] Guard test in place and green
+- [ ] Measured baseline recorded in this ticket's log for the next re-measure
