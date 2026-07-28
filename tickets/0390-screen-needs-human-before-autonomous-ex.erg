@@ -36,8 +36,8 @@ repo.
 
 The fix belongs upstream of hunt, not in step 2b: the screen should stop a
 `needs-human` ticket from being *picked*, so no executor is spawned for it in
-the first place. That is a cheaper and more robust place to stand than asking
-each executor to re-triage.
+the first place. That is a cheaper place to stand than asking every executor to
+re-triage, and it leaves 0378's recursion guard untouched.
 
 ## Relevant files
 
