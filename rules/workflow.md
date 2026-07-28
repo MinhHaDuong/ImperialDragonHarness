@@ -13,9 +13,11 @@ The hook handles worktree entry automatically. When naming the worktree (if prom
 |---------|---------------|-------|
 | Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
 | Ticket reference but no branch | `t{N}-{pid}` | `[→ Plan]` |
-| `/hunt N` | `t{N}-{pid}` | `[→ Execute]` |
+| `/hunt N` | *decided inside hunt — see below* | `[→ Execute]` |
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
+
+Carve-out for `/hunt N`: do **not** enter a worktree before the skill runs. Hunt step 2b (`skills/hunt/SKILL.md`, the authority here) triages the ticket first — needs-human returns a decision list, the default detaches the work to one background executor, and only an `inline` or already-detached hunt enters `t{N}-{pid}` itself, at hunt's own step 3. A pre-emptive `t{N}-*` worktree makes step 3's ownership check read the interactive session as an already-detached executor, so 2b's recursion guard skips the triage.
 
 The `{pid}` suffix is a short session discriminator (e.g. `$$`) so two parallel sessions on the same ticket land in distinct worktree paths; legacy bare `t{N}` names remain valid. Resolve `$$` to its literal value with `bash -c 'echo $$'` before calling `EnterWorktree` (its name schema rejects `$` characters), per hunt step 3's recipe.
 
