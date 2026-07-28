@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 1f0da5ae-caed-4c21-a772-f5b1dfd84436
-  modified: 2026-07-27T11:06:03.963Z
+  modified: 2026-07-28T21:01:30.895Z
 ---
 
 `climate-finance-het` has **no continuous integration**. There is no
@@ -35,6 +35,15 @@ skipping them on a merge wave. On the 2026-07-27 six-PR wave they were the only
 verification that existed (post-merge main: lint 167 passed / 3 skipped,
 check-fast 1140 passed / 6 skipped).
 
+**Update 2026-07-28:** the per-PR gate itself has since eased —
+[[project_merge_gate_eased]] — to `make check-fast` + `make lint` only
+(~40 s); the full `make check` above now runs ex post (`/lair` step 9 on
+main) and pre-PR only when the diff touches the pipeline surface
+(`scripts/`, `libs/`, `dvc.yaml`, Makefiles, slow/integration tests). The
+core claim here — no CI, so a CLEAN `mergeStateStatus` says nothing about
+tests — still holds; only the required local-gate set for a routine PR
+narrowed.
+
 Related: [[feedback_verify_contract]] (what counts as evidence),
 [[feedback_merge_conflict_all_hunks]] (why a clean auto-merge still needs a
-content grep).
+content grep), [[project_merge_gate_eased]] (the current narrowed gate).
