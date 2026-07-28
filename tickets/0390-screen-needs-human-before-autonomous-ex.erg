@@ -1,0 +1,92 @@
+%erg 0.1
+Title: screen Label: needs-human before autonomous execution
+Created: 2026-07-28
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-28T12:05Z HDMX-coding-agent created (adherence finding on the [[0378]] branch)
+2026-07-28T14:40Z claude note gaze-694 simplify: corrected the pick-ticket premise — erg ready already skip-lists needs-human via .ergrc, so the unscreened surface is raid Phase 1's direct ticket read; Action 1 retargeted accordingly
+
+2026-07-28T13:34Z Integration Test note blocker 0378 closed — Blocked-by removed.
+--- body ---
+## Context
+
+[[0378]] gives hunt a step 2b that triages a ticket before any code is
+written: on a `Label: needs-human` tell it returns a batched decision list
+instead of executing. That step is scoped, by 0378's own Verification bullet
+3, to skip entirely for an already-detached executor — "a raid Phase 5
+executor invoking `Skill(hunt)` proceeds straight to execution (no triage, no
+recursive spawn)". The scoping is deliberate: the interactive hunt that
+detaches has already run the triage, so re-running it in the executor buys
+nothing and risks a recursive spawn.
+
+It leaves one path unscreened. A raid picks its own tickets and spawns its own
+Phase 5 executors, so no interactive hunt ever runs the triage for them.
+pick-ticket is already covered: its step 1 calls `erg ready --json`, and every
+label in `tickets/.ergrc` — `needs-human` included — suppresses a ticket from
+`erg ready` output. But raid Phase 1 reads open tickets from `tickets/`
+directly, never through `erg ready` or pick-ticket, and `skills/raid/SKILL.md`
+never mentions `needs-human`. A `needs-human` ticket in an autonomous raid's
+queue is therefore executed with no triage at all — the exact failure 0378
+exists to prevent, at the exact altitude where the author is not watching.
+
+The cost is measured, not hypothetical: both unmerged mixed kills of the
+2026-07-28 climate-finance-het trace window (that project's 0334 and 0338)
+burned full execution cycles before surfacing questions only the author could
+settle. This clears the tooling-repo severity floor because it bites a science
+repo.
+
+The fix belongs upstream of hunt, not in step 2b: the screen should stop a
+`needs-human` ticket from being *picked*, so no executor is spawned for it in
+the first place. That is a cheaper place to stand than asking every executor to
+re-triage, and it leaves 0378's recursion guard untouched.
+
+## Relevant files
+
+- `skills/pick-ticket/SKILL.md` — already screened via `erg ready`'s
+  skip-label filter; at most, name that mechanism in the selection prose so
+  the screen is visible where a reader looks for it.
+- `skills/raid/SKILL.md` — Phase 1 target selection; must not hand a
+  `needs-human` ticket to a Phase 5 executor.
+- `skills/hunt/SKILL.md` — step 2b, unchanged by this ticket; its clause
+  naming this upstream screen should stop pointing at an unfiled gap once
+  this lands.
+- `tickets/.ergrc` — `needs-human` is already in the default label set.
+
+## Actions
+
+1. Name `erg ready`'s skip-label filter (`tickets/.ergrc`) in pick-ticket's
+   selection prose as the existing exclusion mechanism — do not add a second,
+   hand-rolled label grep beside the tool-level filter that already does the
+   job.
+2. State in raid Phase 1 that a `needs-human` ticket is never a raid target,
+   and say where such a ticket goes instead (surfaced to the author in the
+   run report, as a success outcome — the same standing 0378 gives a returned
+   decision list).
+3. Decide and record whether an autonomous run that finds ONLY `needs-human`
+   tickets reports an empty run or returns the decision lists.
+
+## Test
+
+- Red first: a skill-text guard asserting pick-ticket's selection section
+  names `needs-human` as an exclusion, and a sibling asserting raid Phase 1
+  does the same. Bounded-region extraction per
+  `tests/test_hunt_triage_prestep.py`, not a file-wide substring match.
+
+## Verification
+
+- [ ] A ticket carrying `Label: needs-human` is not returned by pick-ticket
+- [ ] A raid run whose queue contains a `needs-human` ticket does not spawn an
+      executor for it and names it in the run report
+
+## Invariants
+
+- Hunt step 2b is unchanged (0378's Verification bullet 3 stands: a detached
+  executor still skips the triage)
+- The author can still force execution of a `needs-human` ticket explicitly
+
+## Exit criteria
+
+- [ ] pick-ticket names its existing skip-label screen and raid Phase 1 excludes `Label: needs-human`
+- [ ] Guard tests in place and green
+- [ ] `make check` and `make lint` pass
