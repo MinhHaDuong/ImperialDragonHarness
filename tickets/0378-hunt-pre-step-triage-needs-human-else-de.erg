@@ -1,0 +1,109 @@
+%erg 0.1
+Title: hunt pre-step: triage needs-human, else detach execution to a background agent
+Created: 2026-07-28
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-28T09:09Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Findings 3 and 4 of the 2026-07-28 trace analysis of 22 climate-finance-het
+kills (report:
+https://claude.ai/code/artifact/daa5be2e-0c1b-4ed1-9dba-3ab2416729b3):
+
+- An interactive `/hunt` runs *in the author's session* — the Skill tool
+  loads the contract inline, so every test dump, diff, and review round
+  accumulates in the main context. Median cost: 404k output tokens per kill
+  and a 68-minute post-PR tail, versus 74k tokens and a 13-minute tail for
+  the same contract run by a raid-style detached executor (5.4×).
+- Tickets whose exit criteria hinge on author judgment stall when hunted:
+  both unmerged mixed kills of the week (climate-finance-het 0334, 0338)
+  burned full execution cycles before surfacing claim-wording questions only
+  the author can settle.
+
+Both are one fork: "does this ticket need the author?" Route accordingly at
+hunt entry, before any code is written. Sibling economics tickets from the
+same analysis: [[0376]] (test-run budget), [[0377]] (review round-scoping).
+
+## Design
+
+New step 2b in `skills/hunt/SKILL.md`, after the exit-criteria read:
+
+1. **Needs-human triage.** Tells, mostly mechanical: `Label: needs-human`
+   (already in the `.ergrc` default label set, currently unused as a router);
+   exit criteria containing decision verbs (decide, arbitrate, sign-off,
+   choose among); manuscript prose as the deliverable (the prose-workpackage
+   rule already mandates author arbitration); premise resting on conflicting
+   sources. On a hit: do NOT execute — return a batched decision list to the
+   author. This generalizes the raid drift-guard's premise-objection path,
+   which already treats such a return as a success outcome.
+2. **Detach by default.** No hit, and the hunt is running in an interactive
+   main session: hand off to ONE background worktree-isolated agent whose
+   first action is `Skill(skill: "hunt", args: "<id>")` — the raid Phase 5
+   launch pattern, model pinned per raid § Model policy. The interactive
+   session reports the handoff and stays at decision altitude. Author
+   override: an explicit "inline" argument keeps the old co-working behavior.
+3. **Recursion guard.** The pre-step must not fire in already-detached
+   executors. Hunt step 3's ownership check (an `agent-*` worktree with a
+   clean tree, or a `t<id>-*` worktree) is the discriminator: an agent that
+   passes it skips the triage.
+
+Decision recorded (MOA arbitrates at execution): redirect target is a single
+detached executor, NOT a full raid — a raid for one ticket buys the
+superstructure the same analysis measured as the top cost (orchestrator
++18–25%, review panels 44–56% of subagent tokens). Reserve a raid for 2–3+
+ripe tickets. Alternative rejected for now: marking the whole skill
+`context: fork` — unconditional forking makes the needs-human branch return
+as a fork report and loses the inline co-working override.
+
+## Relevant files
+
+- `skills/hunt/SKILL.md` — insert step 2b; step 3's ownership check doubles
+  as the recursion guard.
+- `skills/raid/SKILL.md` — Phase 5 launch pattern referenced, unchanged.
+- `tickets/.ergrc` (per-project) — `needs-human` label already in defaults.
+
+## Actions
+
+1. Write step 2b into hunt SKILL.md per the design above, with the three
+   branches (return decisions / detach / inline override) and the recursion
+   guard stated in the contract text.
+2. State the launch line concretely (Agent with worktree isolation, model
+   pin, prompt = mechanical `Skill(hunt)` invocation) so orchestrators and
+   the interactive path share one wording — mirror raid Phase 5's "do not
+   paraphrase the contract" rule.
+3. Sweep the raid/beat launch prompts for contradictions with the new step
+   (they must keep passing the ownership check so triage stays off for them).
+
+## Test
+
+- Skill-text guard in the harness test suite: hunt SKILL.md contains the
+  triage step and the recursion-guard condition (structural presence +
+  negative guard on the old unconditional-execute wording, per the prose-test
+  polarity rule).
+
+## Verification
+
+- [ ] Interactive `/hunt <id>` on a clean ticket hands off to a background
+      executor and the main session ends its turn with the handoff report
+- [ ] `/hunt <id>` on a ticket carrying `Label: needs-human` returns a
+      decision list and writes no code
+- [ ] A raid Phase 5 executor invoking `Skill(hunt)` proceeds straight to
+      execution (no triage, no recursive spawn)
+
+## Invariants
+
+- Hunt contract stays the single live execution contract (no paraphrase in
+  launch prompts)
+- Worktree ownership rules in step 3 unchanged
+- Author can always force inline execution
+
+## Exit criteria
+
+- [ ] Step 2b landed in hunt SKILL.md with triage tells, detach default,
+      inline override, and recursion guard
+- [ ] Skill-text guard test in place and green
+- [ ] One real interactive hunt observed taking the detached path (transcript
+      or session log referenced in this ticket's log)
