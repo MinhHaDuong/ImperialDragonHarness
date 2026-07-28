@@ -103,11 +103,20 @@ def test_pick_ticket_does_not_hand_roll_the_screen():
     add a grep.
     """
     region = pick_candidates_text()
-    assert "grep" not in region, (
+    # Word-boundary match: a bare `rg ` substring also occurs inside `erg ready`,
+    # which is the tool-level filter this guard exists to preserve.
+    tool = re.search(r"\b(grep|rg|awk|sed|jq)\b", region)
+    assert tool is None, (
         "pick-ticket's candidate-selection step must not hand-roll a label "
-        "grep beside `erg ready`'s existing .ergrc skip-label filter "
-        "(ticket 0390 Action 1)"
+        f"screen ({tool.group(0) if tool else ''!r}) beside `erg ready`'s "
+        "existing .ergrc skip-label filter (ticket 0390 Action 1)"
     )
+    for phrase in ("Label:", "label header", "read the label"):
+        assert phrase not in region, (
+            "pick-ticket's candidate-selection step must not describe reading "
+            f"the ticket's label itself ({phrase!r}) — the screen belongs to "
+            "`erg ready`, which owns the .ergrc vocabulary (ticket 0390)"
+        )
 
 
 def test_raid_phase1_excludes_needs_human():
