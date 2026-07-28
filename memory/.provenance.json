@@ -3161,6 +3161,174 @@
       "first_seen": "2026-07-24T20:24:11Z",
       "last_confirmed": "2026-07-24T20:24:11Z",
       "promoted": false
+    },
+    "feedback_scope_discipline": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_lean_methods": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_verify_contract": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_agent_timeout_refactor": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_reimagine_catches_stale_deps": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_null_df_slicing": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "project_companion_paper_design": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "feedback_vars_file_provenance": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:41Z",
+      "last_confirmed": "2026-07-24T20:27:41Z",
+      "promoted": false
+    },
+    "reference_machine_padme": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_a4paper": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_analytical_null_overlay": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_verify_agent_worktree": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_worktree_deletion": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_gh_projects_classic_error": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_autodiscovery_class_guard": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_merge_conflict_all_hunks": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "reference_padme_downloads_dir": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "reference_riomarkers_dataset_book": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_telechargements_scratch": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "reference_cookie_replay_fetch": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
+    },
+    "feedback_env_file_no_override": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:27:42Z",
+      "last_confirmed": "2026-07-24T20:27:42Z",
+      "promoted": false
     }
   }
 }
