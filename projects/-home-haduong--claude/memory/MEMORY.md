@@ -9,6 +9,7 @@
 
 ## Entries
 
+- [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md) — `git push && gh api -f x=y` trips the force-push guard; split the calls or use --field
 - [Verify sibling PRs jointly, not just individually](feedback_verify_sibling_prs_jointly.md) — two PRs each 9/9 green landed a claim and its refutation the same day (#680/#681); per-PR gates pass both by construction
 - [erg ready reads the current branch's tree](feedback_erg_ready_reads_current_branch_tree.md) — a stale branch lists tickets already merged and archived on main
 - [CLAUDE.md is a thin loader in IDH](feedback_claude_md_is_thin_loader_idh.md) — proposing to add doctrine/posture prose to CLAUDE.md is a red flag
