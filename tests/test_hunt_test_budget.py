@@ -21,6 +21,7 @@ text block (not "anywhere in the file") so a fix that mentions check-fast
 in an unrelated step does not satisfy these tests.
 """
 
+import functools
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -28,6 +29,12 @@ HUNT = REPO / "skills" / "hunt" / "SKILL.md"
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 
 BUDGET_KEYWORDS = ("once", "budget")
+
+
+@functools.cache
+def _hunt_text() -> str:
+    """Read hunt/SKILL.md once for the three tests that slice it."""
+    return HUNT.read_text()
 
 
 def _block(text: str, start_marker: str, end_marker: str) -> str:
@@ -39,7 +46,7 @@ def _block(text: str, start_marker: str, end_marker: str) -> str:
 
 def test_hunt_step8_drops_unbounded_full_check_wording():
     """The old 'implement until `make check` passes' loop gate must be gone."""
-    text = HUNT.read_text()
+    text = _hunt_text()
     assert "implement until `make check` passes" not in text, (
         "hunt step 8 still tells the executor to loop on full `make check` — "
         "the loop gate should be `make check-fast` (or the affected test "
@@ -49,7 +56,7 @@ def test_hunt_step8_drops_unbounded_full_check_wording():
 
 def test_hunt_step8_names_check_fast_as_loop_gate():
     """Step 8's replacement wording names check-fast as the loop gate."""
-    text = HUNT.read_text()
+    text = _hunt_text()
     block = _block(text, "8. Announce", "9. Pre-PR self-gate")
     assert "check-fast" in block, (
         "hunt step 8 must name `make check-fast` (or the affected test "
@@ -59,7 +66,7 @@ def test_hunt_step8_names_check_fast_as_loop_gate():
 
 def test_hunt_review_fix_loop_names_a_test_budget():
     """Steps 12-13 must name check-fast and bound full-check re-runs."""
-    text = HUNT.read_text()
+    text = _hunt_text()
     block = _block(text, "12. Fix all comments", "escalate (see workflow rules)")
     assert "check-fast" in block, (
         "hunt's review-fix loop (steps 12-13) must name `make check-fast` "
