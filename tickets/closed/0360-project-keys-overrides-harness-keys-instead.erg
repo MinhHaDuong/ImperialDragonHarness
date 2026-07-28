@@ -2,12 +2,14 @@
 Title: A project KEYS= overrides the harness KEYS= instead of composing with it
 Created: 2026-07-27
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #686
 
 --- log ---
 2026-07-27T19:10Z HDMX-coding-agent created
 2026-07-27T19:30Z HDMX-coding-agent note Counter-analysis added: union makes the harness selection a global floor, so the ranking above is likely inverted. Diagnostics split to 0361.
 2026-07-27T20:05Z HDMX-coding-agent note MOA decided: keep replace, state the doctrine. Documented in bash-env.sh header, pinned by tests/test_bash_env_keys_precedence.sh. Python path verified to agree.
 
+2026-07-28T12:51Z Integration Test closed — autoclosed — PR #686
 --- body ---
 ## Context
 
