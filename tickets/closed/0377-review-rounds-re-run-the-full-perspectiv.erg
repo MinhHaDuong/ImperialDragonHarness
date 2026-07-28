@@ -13,6 +13,8 @@ Closed: autoclosed — PR #696
 
 2026-07-28T13:52Z bump verify-reroll — round 1: gaze's round>=2 Agent C tier branch (gaze:163-164,278-281) has no reachable trigger inside gaze's own REROLL loop and gaze never states how it derives the round it must pass to Agent C
 2026-07-28T14:01Z Integration Test closed — autoclosed — PR #696
+2026-07-28T17:55Z HDMX-coding-agent note live example post-close: climate-finance-het ticket 0640 (one-line caption/threshold alignment, author-scoped "small cheap") still drew the full multi-perspective review panel via /hunt — 4 reviewer seats for a ~1-line diff; proportionality gap persists at panel WIDTH, not round count
+
 --- body ---
 ## Context
 
