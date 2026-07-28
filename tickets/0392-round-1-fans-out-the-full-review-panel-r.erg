@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Round 1 fans out the full review panel regardless of diff size — scope panel WIDTH, not just rounds 2+
+Created: 2026-07-28
+Author: Integration Test
+
+--- log ---
+2026-07-28T15:44Z Integration Test created
+
+--- body ---
+## Context
+
+Ticket 0377 scoped review rounds 2+ to the perspectives that objected, but
+round 1 still launches the full multi-perspective panel whatever the diff.
+Live example (2026-07-28, logged post-close on 0376/0377/0378):
+climate-finance-het ticket 0640, an author-scoped "small cheap" one-line
+caption/threshold alignment, drew 4 reviewer seats via /hunt. The 2026-07
+trace census (memory `hunt_raid_economics_2026-07`) prices the class: review
+panels are 44–56% of raid subagent tokens; one PR got 23 verification agents
+for 1 executor.
+
+The proportionality lever that exists today (`review:trivial` label) modulates
+the *cycle count* at the merge gate, not the *panel width* at round 1.
+
+## Actions
+
+1. Add a mechanical width criterion to /review-pr (and hunt's review step):
+   e.g. diff ≤ N lines, single file, no pipeline surface → one reviewer seat;
+   full panel otherwise. The threshold is a config value, not a judgment call.
+2. Keep the escape: the author or the ticket body can demand the full panel
+   on a small diff (`review:standard`), and any reviewer can escalate to the
+   full panel on suspicion.
+3. Guard per polarity rule: structural presence of the width criterion in the
+   skill text, plus a negative on "unconditionally full panel".
+
+## Exit criteria
+
+- [ ] A trivially-sized diff (per the mechanical criterion) gets one reviewer
+      seat at round 1, not the full panel
+- [ ] Escalation path from single seat to full panel exists and is documented
+- [ ] Guard test covers the criterion's presence
