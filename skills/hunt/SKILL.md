@@ -32,6 +32,12 @@ argument-hint: <ticket-id>
    (`claude -p "/hunt <id>"`), which is already the detached case an orchestrator
    asked for. Only a hunt in the author's live interactive session reaches the
    fork below.
+   Each skip is total, the needs-human branch included: an executor spawned by an
+   interactive hunt was triaged by that hunt before it was spawned, so re-reading
+   the tells buys nothing. A raid, though, picks its own targets and no
+   interactive hunt precedes them. Keeping a `Label: needs-human` ticket out of
+   the ready queue is that upstream picker's job — see [[0390]] — not a second
+   triage here.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
      `Label: needs-human` header; exit criteria carrying decision verbs (decide,
      arbitrate, sign-off, choose among); manuscript prose as the deliverable, which
