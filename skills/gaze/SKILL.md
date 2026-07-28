@@ -382,6 +382,7 @@ The subagent spawned on REROLL receives:
   violations, per-exit-criterion gaps).
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
 - TDD discipline still applies: add a failing test for any behavioural fix before coding.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one full `make check` before the final push — not per fix.
 
 Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 6.
 
