@@ -6,6 +6,7 @@ Blocked-by: 0378
 
 --- log ---
 2026-07-28T12:05Z HDMX-coding-agent created (adherence finding on the [[0378]] branch)
+2026-07-28T14:40Z claude note gaze-694 simplify: corrected the pick-ticket premise — erg ready already skip-lists needs-human via .ergrc, so the unscreened surface is raid Phase 1's direct ticket read; Action 1 retargeted accordingly
 
 --- body ---
 ## Context
@@ -20,13 +21,14 @@ detaches has already run the triage, so re-running it in the executor buys
 nothing and risks a recursive spawn.
 
 It leaves one path unscreened. A raid picks its own tickets and spawns its own
-Phase 5 executors, so no interactive hunt ever runs the triage for them, and
-nothing upstream substitutes: `skills/raid/SKILL.md` never mentions
-`needs-human`, and pick-ticket's exclusion mechanism is a manual
-`.git/beat-skip.json` opt-in file, not a label check. A `needs-human` ticket
-that reaches the ready queue is therefore executed by an autonomous raid with
-no triage at all — the exact failure 0378 exists to prevent, at the exact
-altitude where the author is not watching.
+Phase 5 executors, so no interactive hunt ever runs the triage for them.
+pick-ticket is already covered: its step 1 calls `erg ready --json`, and every
+label in `tickets/.ergrc` — `needs-human` included — suppresses a ticket from
+`erg ready` output. But raid Phase 1 reads open tickets from `tickets/`
+directly, never through `erg ready` or pick-ticket, and `skills/raid/SKILL.md`
+never mentions `needs-human`. A `needs-human` ticket in an autonomous raid's
+queue is therefore executed with no triage at all — the exact failure 0378
+exists to prevent, at the exact altitude where the author is not watching.
 
 The cost is measured, not hypothetical: both unmerged mixed kills of the
 2026-07-28 climate-finance-het trace window (that project's 0334 and 0338)
@@ -41,9 +43,9 @@ re-triage, and it leaves 0378's recursion guard untouched.
 
 ## Relevant files
 
-- `skills/pick-ticket/SKILL.md` — selection criteria; the natural home for a
-  `Label: needs-human` exclusion, beside the existing `.git/beat-skip.json`
-  opt-out.
+- `skills/pick-ticket/SKILL.md` — already screened via `erg ready`'s
+  skip-label filter; at most, name that mechanism in the selection prose so
+  the screen is visible where a reader looks for it.
 - `skills/raid/SKILL.md` — Phase 1 target selection; must not hand a
   `needs-human` ticket to a Phase 5 executor.
 - `skills/hunt/SKILL.md` — step 2b, unchanged by this ticket; its clause
@@ -53,8 +55,10 @@ re-triage, and it leaves 0378's recursion guard untouched.
 
 ## Actions
 
-1. Add a `Label: needs-human` exclusion to pick-ticket's selection criteria,
-   stated as a mechanical grep of the ticket header, not a judgement call.
+1. Name `erg ready`'s skip-label filter (`tickets/.ergrc`) in pick-ticket's
+   selection prose as the existing exclusion mechanism — do not add a second,
+   hand-rolled label grep beside the tool-level filter that already does the
+   job.
 2. State in raid Phase 1 that a `needs-human` ticket is never a raid target,
    and say where such a ticket goes instead (surfaced to the author in the
    run report, as a success outcome — the same standing 0378 gives a returned
@@ -83,6 +87,6 @@ re-triage, and it leaves 0378's recursion guard untouched.
 
 ## Exit criteria
 
-- [ ] pick-ticket excludes `Label: needs-human` and raid Phase 1 states it
+- [ ] pick-ticket names its existing skip-label screen and raid Phase 1 excludes `Label: needs-human`
 - [ ] Guard tests in place and green
 - [ ] `make check` and `make lint` pass

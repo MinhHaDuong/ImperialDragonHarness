@@ -59,7 +59,7 @@ def test_needs_human_label_is_a_tell():
     )
     assert "Label:" in step2b, (
         "step 2b must name the tell as the ticket header `Label: needs-human`, "
-        "so the check is a grep and not a judgement call"
+        "so the check is a grep and not a judgment call"
     )
 
 
@@ -76,15 +76,15 @@ def test_decision_verb_tells_present():
 def test_needs_human_branch_writes_no_code():
     """A hit returns decisions to the author instead of executing."""
     step2b = step2b_text()
-    assert re.search(r"do not execute", step2b, re.IGNORECASE), (
+    assert "do not execute" in step2b, (
         "step 2b's needs-human branch must forbid execution outright — the "
         "0334/0338 kills failed by executing first and asking later"
     )
-    assert re.search(r"batched decision", step2b, re.IGNORECASE), (
+    assert "batched decision" in step2b, (
         "step 2b must return a *batched* decision list (rules/workflow.md "
         "§ Autonomous Action Rules), not a sequential question round"
     )
-    assert re.search(r"success outcome", step2b, re.IGNORECASE), (
+    assert "success outcome" in step2b, (
         "step 2b must state that a return to the author is a success outcome, "
         "generalizing the raid drift-guard's premise-objection path — otherwise "
         "an executor reads the return as a failure and pushes on"
@@ -103,7 +103,7 @@ def test_detach_launch_line_is_mechanical():
         "step 2b's launch line must pin worktree isolation, which is what makes "
         "the spawned agent pass step 3's ownership check"
     )
-    assert "model" in step2b, (
+    assert "model:" in step2b, (
         "step 2b's launch line must pin `model` per raid § Model policy — an "
         "unpinned launch silently inherits the session model"
     )
@@ -127,12 +127,12 @@ def test_inline_override_available():
 def test_recursion_guard_forward_references_step_3():
     """Already-detached executors skip the triage, by step 3's own predicate."""
     step2b = step2b_text()
-    assert re.search(r"step 3", step2b, re.IGNORECASE), (
+    assert "step 3" in step2b, (
         "step 2b's recursion guard must forward-reference step 3's ownership "
         "check as the discriminator; without it a detached executor re-triages "
         "and spawns another executor"
     )
-    assert re.search(r"skip", step2b, re.IGNORECASE), (
+    assert "skip" in step2b, (
         "step 2b must say that an executor passing step 3's check SKIPS the "
         "triage, not merely that it 'may'"
     )
