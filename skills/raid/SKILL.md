@@ -105,8 +105,8 @@ briefing so the choice is visible.
 Do not read that carve-out as "explicit means the author asked." `beat.py`
 builds `/raid <id>` unattended and is today the only programmatic caller, so
 the explicit-ID shape covers both an author typing it and an autonomous sweep.
-The autonomous path stays screened upstream — beat picks through `pick-ticket`,
-whose candidates came from `erg ready` — which is why the carve-out does not
+The autonomous path stays screened upstream: beat picks through `pick-ticket`,
+whose candidates came from `erg ready`, so the carve-out does not
 reopen the hole this phase closes. That safety lives in beat's pick step, not
 here; a future caller that synthesizes IDs some other way needs its own screen.
 
