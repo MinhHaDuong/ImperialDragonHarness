@@ -46,6 +46,7 @@
 - [Don't codify hard rules for judgment calls](feedback_dont_codify_hard_rules.md) — hard rules for "do the sensible thing" conventions make agents lazy
 - [Paper release/ subdir layout](user_paper_release_subdir_layout.md) — one dir per paper under `~/CNRS/papiers/{actif,sent,published}`; immutable append-only `release/<date desc>/` per
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'
+- [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md) — a delegate's own background children complete-notify the top session; don't act, wait for the delegate
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — skill frontmatter model: does NOT propagate to spawned children; per-invocation `model` enum is the only
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
 - [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
