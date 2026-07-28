@@ -6,6 +6,7 @@ Label: deferred
 
 --- log ---
 2026-07-28T08:30Z haduong created
+2026-07-28T08:50Z haduong note Author: sweep ALL sibling project rule files at reimagine time, not only writing.md; prose-ticket TDD clause relocated to Climate_finance writing.md
 
 --- body ---
 ## Context
@@ -30,12 +31,15 @@ someday."
   promote
 - `~/Climate_finance/.claude/rules/oeconomia-style.md`,
   `review-checklist.md` — same inventory pass
-- `tickets/AGENTS.md` § pure-prose-ticket test polarity — landed with this
-  ticket's PR; the harness-level statement of the polarity asymmetry
+- `~/Climate_finance/.claude/rules/writing.md` § prose tickets — the
+  pure-prose-tickets-skip-TDD clause (added 2026-07-28, per author); a
+  promotion candidate for this sweep
 
 ## Actions
-1. Inventory writing/prose rules across projects (Climate_finance first, then
-   the other paper repos under `~/CNRS/papiers/` and active project repos).
+1. At reimagine time, sweep ALL sibling rule files: every project-local
+   `.claude/rules/*` across Climate_finance, the other paper repos under
+   `~/CNRS/papiers/`, and active project repos — not only files named
+   `writing.md`.
 2. Classify each rule by layer: universal prose, doctype, lang, or genuinely
    project-local (argument, corpus, voice).
 3. Promote the generalizable rules into the harness axis files; leave
