@@ -61,14 +61,14 @@ argument-hint: <ticket-id>
 5. Read the files listed in **Relevant files**.
 6. Write the first test from the **Test** section of the ticket.
 7. Run `make check-fast` — confirm the test fails.
-8. Announce `[Plan → Execute]`, then implement until `make check` passes.
+8. Announce `[Plan → Execute]`, then implement until `make check-fast` (or the affected test file alone) passes — that is the loop gate. Full `make check` runs once, immediately before step 10 opens the PR — not per edit.
 9. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 4).
    - Clean → proceed to step 10. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass.
    - Blockers → decide per blocker:
-     - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
+     - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
      - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
    - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
-10. Push the branch and open a merge request.
+10. Run the full `make check` once, then push the branch and open a merge request.
 11. Review the merge request. This action is mechanical — invoke the review-pr
     skill with the PR number:
     ```
@@ -76,5 +76,5 @@ argument-hint: <ticket-id>
     ```
     Follow the contract the skill loader returns; do not paraphrase or inline its
     steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation, ticket 0293).
-12. Fix all comments regardless of severity.
+12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
 13. Repeat 11–12 up to 3 times. If still not clean, escalate (see workflow rules).
