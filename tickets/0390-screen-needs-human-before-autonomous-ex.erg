@@ -2,12 +2,12 @@
 Title: screen Label: needs-human before autonomous execution
 Created: 2026-07-28
 Author: HDMX-coding-agent
-Blocked-by: 0378
 
 --- log ---
 2026-07-28T12:05Z HDMX-coding-agent created (adherence finding on the [[0378]] branch)
 2026-07-28T14:40Z claude note gaze-694 simplify: corrected the pick-ticket premise — erg ready already skip-lists needs-human via .ergrc, so the unscreened surface is raid Phase 1's direct ticket read; Action 1 retargeted accordingly
 
+2026-07-28T13:34Z Integration Test note blocker 0378 closed — Blocked-by removed.
 --- body ---
 ## Context
 
