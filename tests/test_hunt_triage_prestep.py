@@ -124,6 +124,23 @@ def test_inline_override_available():
     )
 
 
+def test_inline_override_states_the_parsing_rule():
+    """Naming an argument without its syntax leaves $ARGUMENTS ambiguous.
+
+    Every other `$ARGUMENTS` substitution in the file (`t$ARGUMENTS-<pid>`,
+    `erg close $ARGUMENTS`) assumes the bare ticket id. Once 2b adds a second
+    accepted argument, the skill must say which token is the id, or those
+    substitutions silently pick up the override word too.
+    """
+    step2b = step2b_text()
+    assert "leading token" in step2b, (
+        "step 2b must state the parsing rule — the ticket id is the LEADING "
+        "TOKEN of $ARGUMENTS, optionally followed by `inline` — so every "
+        "`t$ARGUMENTS` / `erg close $ARGUMENTS` substitution in this file has "
+        "an unambiguous referent (ticket 0378, gaze round-1 reroll)"
+    )
+
+
 def test_recursion_guard_forward_references_step_3():
     """Already-detached executors skip the triage, by step 3's own predicate."""
     step2b = step2b_text()

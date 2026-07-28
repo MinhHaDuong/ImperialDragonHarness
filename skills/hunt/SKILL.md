@@ -3,7 +3,7 @@ name: hunt
 description: Begin work on a ticket — creates a worktree and writes the first test.
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <ticket-id>
+argument-hint: <ticket-id> [inline]
 ---
 
 # Hunt — begin work on ticket $ARGUMENTS
@@ -28,7 +28,11 @@ argument-hint: <ticket-id>
    an executor already running detached, identified by step 3's worktree ownership
    check (that check is the sole discriminator — do not restate its conditions
    here); a hunt the author invoked with an explicit `inline` argument, which
-   keeps the co-working behaviour in the author's own session; and a headless run
+   keeps the co-working behaviour in the author's own session — arguments are
+   `<ticket-id>` optionally followed by `inline`, so the ticket id is the
+   leading token of `$ARGUMENTS` and is what every `t$ARGUMENTS` worktree name
+   and `${ERG:-tickets/erg} close $ARGUMENTS` substitution in this file refers
+   to; and a headless run
    (`claude -p "/hunt <id>"`), which is already the detached case an orchestrator
    asked for. Only a hunt in the author's live interactive session reaches the
    fork below.
