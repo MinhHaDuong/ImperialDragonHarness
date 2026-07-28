@@ -554,6 +554,7 @@ tier: tiny|small|full
 adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
+review-pr scope: full panel | scoped: <objecting perspectives> + regression (omit if round 1)
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 

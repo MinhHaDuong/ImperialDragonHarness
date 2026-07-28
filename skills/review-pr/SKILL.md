@@ -101,7 +101,8 @@ rewrite rather than a patch — the cleared perspectives cleared different code.
 Treat that round as round 1 and run the full proportional panel.
 
 Model pins are unaffected: scoping changes *which* perspectives run, never
-which model runs them (see § reviewer decorrelation).
+which model runs them (`rules/workflow.md` § Subagents, reviewer
+decorrelation).
 
 This is not gaze's **Convergence mode** (ticket 0315, default off) under
 another name. Round scoping works *within* one review invocation, across its
