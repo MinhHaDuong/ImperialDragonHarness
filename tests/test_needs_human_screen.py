@@ -114,11 +114,25 @@ def test_pick_ticket_does_not_hand_roll_the_screen():
     add a grep.
     """
     region = pick_candidates_text()
-    # Two narrowings, both learned from false positives. Word boundaries: a bare
-    # `rg ` substring also occurs inside `erg ready`, the very filter this guard
-    # exists to preserve. A following flag or quote: `grep` and `jq` are also
-    # ordinary nouns in prose ("a grep, not a judgment call"), and only the
-    # command-shaped use is the antipattern.
+    # Polarity first. A pure absence check passes on any paraphrase that never
+    # uses the forbidden words ("drop candidates flagged needs-human"), which
+    # review round 2 demonstrated with a working mutation. Requiring the
+    # delegation to be *stated* means a hand-rolled screen has to contradict a
+    # sentence that is still on the page, which a reader and a diff both catch.
+    assert "Rely on that filter" in region, (
+        "pick-ticket's candidate-selection step must state the delegation "
+        "positively — that `erg ready`'s filter IS the screen — not merely "
+        "avoid the words a duplicate screen would use (ticket 0390 Action 1)"
+    )
+    assert "do not add a second" in region, (
+        "pick-ticket must forbid a second screen in so many words; the "
+        "prohibition is the part a later editor needs to see before adding one"
+    )
+    # Then the absence checks, with two narrowings learned from false positives.
+    # Word boundaries: a bare `rg ` substring also occurs inside `erg ready`,
+    # the very filter this guard exists to preserve. A following flag or quote:
+    # `grep` and `jq` are also ordinary nouns in prose ("a grep, not a judgment
+    # call"), and only the command-shaped use is the antipattern.
     tool = re.search(r"\b(grep|rg|awk|sed|jq)\b(?=\s*[-\"'`])", region)
     assert tool is None, (
         "pick-ticket's candidate-selection step must not hand-roll a label "
@@ -208,15 +222,31 @@ def test_raid_phase1_carves_out_an_explicit_author_id():
     turning a screen into a veto (red-team dissent, review round 1).
     """
     region = raid_phase1_text()
-    assert "/raid <id>" in region, (
-        "raid Phase 1 must name the explicit-ID invocation as the carve-out, "
-        "so the exclusion cannot be read as overriding a ticket the author "
-        "typed (ticket 0390 invariant: explicit forcing stays available)"
+    m = re.search(r"Carve-out: an explicit `/raid <id>` (\w+)", region)
+    assert m, (
+        "raid Phase 1 must carry a labelled carve-out naming the explicit-ID "
+        "invocation, so the exclusion cannot be read as overriding a ticket "
+        "the caller named (ticket 0390 invariant: explicit forcing stays "
+        "available)"
+    )
+    # Polarity, not word presence: review round 2 showed the old assertions
+    # passed verbatim on prose stating the logical NEGATION of the invariant
+    # ("an explicit `/raid <id>` is also dropped during discovery"). The verb
+    # is what carries the meaning, so pin the verb.
+    assert m.group(1) == "runs", (
+        "the carve-out must say the explicitly named ticket RUNS; it currently "
+        f"says {m.group(1)!r}, which inverts the invariant this guard exists "
+        "to hold"
     )
     assert "discovery" in region, (
         "raid Phase 1 must scope the exclusion to target *discovery* — that "
-        "word is what distinguishes the 'all open' sweep from an author-named "
-        "ticket, and without it the two paths are indistinguishable"
+        "word is what distinguishes the 'all open' sweep from a ticket named "
+        "by ID, and without it the two paths are indistinguishable"
+    )
+    assert "beat.py" in region, (
+        "the carve-out must name `beat.py` as a programmatic caller of the "
+        "explicit-ID shape — reading 'explicit' as 'the author asked' is false "
+        "for the only such caller that exists (review round 2)"
     )
 
 

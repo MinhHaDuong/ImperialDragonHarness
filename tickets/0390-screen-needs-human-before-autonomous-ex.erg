@@ -11,6 +11,7 @@ Author: HDMX-coding-agent
 2026-07-28T13:51Z claude note Action 3 decided (author approved): a raid whose queue holds only needs-human tickets returns the batched decision lists, not an empty-run report — recorded in raid Phase 1
 2026-07-28T13:51Z claude note pre-PR gate is make check-fast + make lint only (author directive 2026-07-28); exit criterion 'make check' satisfied by the fast gate
 2026-07-28T14:13Z claude note review-698 round 1: added explicit-/raid-id carve-out (red-team dissent), generalized exclusion to the full .ergrc skip-label set (deferred too), renamed run report -> wrap-up briefing with a Wrap up landing spot, and unstaled hunt SKILL.md's forward reference (wording only; step 2b logic untouched)
+2026-07-28T14:30Z claude note review-698 round 2: record corrections (PR body untouched-claim, guard count, gate numbers; ticket body run report -> briefing) plus two prose folds — beat.py builds /raid <id> unattended so explicit != author-asked, and an empty .ergrc [labels] section fails open; gave both polarity-blind guards real polarity
 --- body ---
 ## Context
 
@@ -64,7 +65,7 @@ re-triage, and it leaves 0378's recursion guard untouched.
    job.
 2. State in raid Phase 1 that a `needs-human` ticket is never a raid target,
    and say where such a ticket goes instead (surfaced to the author in the
-   run report, as a success outcome — the same standing 0378 gives a returned
+   wrap-up briefing, as a success outcome — the same standing 0378 gives a returned
    decision list).
 3. Decide and record whether an autonomous run that finds ONLY `needs-human`
    tickets reports an empty run or returns the decision lists.
@@ -80,7 +81,7 @@ re-triage, and it leaves 0378's recursion guard untouched.
 
 - [ ] A ticket carrying `Label: needs-human` is not returned by pick-ticket
 - [ ] A raid run whose queue contains a `needs-human` ticket does not spawn an
-      executor for it and names it in the run report
+      executor for it and names it in the wrap-up briefing
 
 ## Invariants
 
