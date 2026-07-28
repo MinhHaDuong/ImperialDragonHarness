@@ -19,11 +19,12 @@ Polarity: the negative guards pin the OLD phrasing and may be exact — that
 wording is gone and must not come back. The positive markers stay LOOSE
 (section name only), so the prose can be rewritten without breaking the test.
 
-RED proof (2026-07-28): against the unedited SKILL.md files all four tests
-failed — gaze still carried both old clauses and neither skill had a
-"Round scoping" section.
+RED proof (2026-07-28): against the unedited SKILL.md files the tests
+failed — gaze still carried both old clauses and none of the three skills
+had a "Round scoping" section.
 """
 
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -36,6 +37,7 @@ REVIEW_PR = REPO / "skills" / "review-pr" / "SKILL.md"
 REVIEW_PR_PROSE = REPO / "skills" / "review-pr-prose" / "SKILL.md"
 
 
+@lru_cache(maxsize=None)
 def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
