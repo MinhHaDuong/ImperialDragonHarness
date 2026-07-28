@@ -2,12 +2,22 @@
 Title: screen Label: needs-human before autonomous execution
 Created: 2026-07-28
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #698
 
 --- log ---
 2026-07-28T12:05Z HDMX-coding-agent created (adherence finding on the [[0378]] branch)
 2026-07-28T14:40Z claude note gaze-694 simplify: corrected the pick-ticket premise — erg ready already skip-lists needs-human via .ergrc, so the unscreened surface is raid Phase 1's direct ticket read; Action 1 retargeted accordingly
 
 2026-07-28T13:34Z Integration Test note blocker 0378 closed — Blocked-by removed.
+2026-07-28T13:51Z claude note Action 3 decided (author approved): a raid whose queue holds only needs-human tickets returns the batched decision lists, not an empty-run report — recorded in raid Phase 1
+2026-07-28T13:51Z claude note pre-PR gate is make check-fast + make lint only (author directive 2026-07-28); exit criterion 'make check' satisfied by the fast gate
+2026-07-28T14:13Z claude note review-698 round 1: added explicit-/raid-id carve-out (red-team dissent), generalized exclusion to the full .ergrc skip-label set (deferred too), renamed run report -> wrap-up briefing with a Wrap up landing spot, and unstaled hunt SKILL.md's forward reference (wording only; step 2b logic untouched)
+2026-07-28T14:30Z claude note review-698 round 2: record corrections (PR body untouched-claim, guard count, gate numbers; ticket body run report -> briefing) plus two prose folds — beat.py builds /raid <id> unattended so explicit != author-asked, and an empty .ergrc [labels] section fails open; gave both polarity-blind guards real polarity
+2026-07-28T14:49Z claude note review-698 round 3 correction: the guards are NOT inversion-proof. Reviewer reproduced 3 mutations that keep 8/8 green (appending a retraction sentence after the pinned verb; appending a hand-rolled screen after the delegation phrases; prefixing 'It is a common misreading that'). What they actually catch is deletion and vocabulary drift, not semantic inversion — regex over prose cannot be made polarity-proof, and round 2's 'fixed by pinning meaning' claim overstated it
+2026-07-28T14:50Z claude note review-698 round 3, out-of-scope findings recorded not fixed: erg's label match is case-sensitive on key and value (Label: Needs-Human reaches erg ready output) — pre-existing erg behaviour; and no re-screen runs between raid Phase 1 and Phase 5, so a ticket labelled mid-raid is caught nowhere. Also: full make check has 1 pre-existing environmental failure (test_guard_cd_primary_repo.sh, stderr polluted by a bash-env missing-provider warning), untouched by this branch
+2026-07-28T14:56Z bump verify-reroll — round 1: 4 unresolved verifiable minors (em-dash chain raid SKILL.md:108; stale 'unchanged by this ticket' in Relevant files; case-sensitive label match and mid-raid re-screen gap need explicit disposition — log note in a ticket that closes on merge is not a durable follow-up)
+2026-07-28T15:02Z claude note verify-gate round 1 dispositions, all four: em-dash chain fixed; Relevant-files synced with the folded-in hunt wording fix; case-sensitive label match filed cross-repo as git-erg#325 (GitHub issue, per the cross-repo-coordination convention); Phase 1->5 re-screen window promoted to [[0391]], bundled on this PR branch
+2026-07-28T15:03Z Integration Test closed — autoclosed — PR #698
 --- body ---
 ## Context
 
@@ -48,9 +58,9 @@ re-triage, and it leaves 0378's recursion guard untouched.
   the screen is visible where a reader looks for it.
 - `skills/raid/SKILL.md` — Phase 1 target selection; must not hand a
   `needs-human` ticket to a Phase 5 executor.
-- `skills/hunt/SKILL.md` — step 2b, unchanged by this ticket; its clause
-  naming this upstream screen should stop pointing at an unfiled gap once
-  this lands.
+- `skills/hunt/SKILL.md` — step 2b logic untouched; its clause naming this
+  upstream screen gets a two-line wording fix so it stops pointing at an
+  unfiled gap once this lands.
 - `tickets/.ergrc` — `needs-human` is already in the default label set.
 
 ## Actions
@@ -61,7 +71,7 @@ re-triage, and it leaves 0378's recursion guard untouched.
    job.
 2. State in raid Phase 1 that a `needs-human` ticket is never a raid target,
    and say where such a ticket goes instead (surfaced to the author in the
-   run report, as a success outcome — the same standing 0378 gives a returned
+   wrap-up briefing, as a success outcome — the same standing 0378 gives a returned
    decision list).
 3. Decide and record whether an autonomous run that finds ONLY `needs-human`
    tickets reports an empty run or returns the decision lists.
@@ -77,7 +87,7 @@ re-triage, and it leaves 0378's recursion guard untouched.
 
 - [ ] A ticket carrying `Label: needs-human` is not returned by pick-ticket
 - [ ] A raid run whose queue contains a `needs-human` ticket does not spawn an
-      executor for it and names it in the run report
+      executor for it and names it in the wrap-up briefing
 
 ## Invariants
 
