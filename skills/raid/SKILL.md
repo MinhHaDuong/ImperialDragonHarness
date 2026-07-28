@@ -80,16 +80,25 @@ Prioritize:
 
 Read each ticket + STATE.md. Group by milestone. Identify dependency order and wave structure.
 
-**`Label: needs-human` is never a raid target.** That header flags a ticket as
-waiting on an author decision, and a raid runs where the author is not watching.
-Drop it from the queue before wave grouping: no Imagine agent, no plan, no
-Phase 5 executor. It is not lost — name it in the run report with the decisions
-it is waiting on, and count that as a success outcome, the same standing hunt
-step 2b gives a returned batched decision list. `pick-ticket` never sees such a
-ticket (`erg ready` filters it via `tickets/.ergrc`), but Phase 1 reads
-`tickets/` directly, so the exclusion is this skill's own job.
+**A skip-labelled ticket is never a raid target.** `tickets/.ergrc` lists the
+labels that hold a ticket back (`needs-human` and `deferred` at present) and
+`erg ready` suppresses every one of them, which is why `pick-ticket` never
+offers such a ticket. Phase 1 reads `tickets/` directly and bypasses that
+filter, so the exclusion is this skill's own job: a ticket carrying
+`Label: needs-human`, or any other header listed in `.ergrc`, is dropped before
+wave grouping, with no Imagine agent, no plan, no Phase 5 executor. Read the
+label set from `.ergrc` rather than hardcoding it here.
 
-If EVERY ticket in the queue carries the label, the run returns those batched
+Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
+it is waiting on, and count that as a success outcome — the same standing hunt
+step 2b gives a returned batched decision list.
+
+**Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
+*discovery* (the "all open" path), never a ticket the author named by ID. That
+is the author forcing execution, and it stays available; note the override in
+the briefing so the choice is visible.
+
+If EVERY discovered ticket is skip-labelled, the run returns those batched
 decision lists rather than an empty-run report. One question round the author
 can answer in a single pass is the deliverable (decided 2026-07-28, ticket 0390).
 
@@ -326,6 +335,9 @@ Autonomous mode: ralph loop to next wave.
     ```
     Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
+   Any ticket Phase 1 excluded as skip-labelled is listed here too, with the
+   decisions it is waiting on. When the queue held nothing else, that list is
+   the run's deliverable, not evidence of an idle run.
 3. Write briefing (session log + merge request list + test delta).
 4. Do NOT run `/lair`.
 

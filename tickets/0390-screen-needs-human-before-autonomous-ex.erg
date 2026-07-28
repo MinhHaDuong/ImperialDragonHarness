@@ -10,6 +10,7 @@ Author: HDMX-coding-agent
 2026-07-28T13:34Z Integration Test note blocker 0378 closed — Blocked-by removed.
 2026-07-28T13:51Z claude note Action 3 decided (author approved): a raid whose queue holds only needs-human tickets returns the batched decision lists, not an empty-run report — recorded in raid Phase 1
 2026-07-28T13:51Z claude note pre-PR gate is make check-fast + make lint only (author directive 2026-07-28); exit criterion 'make check' satisfied by the fast gate
+2026-07-28T14:13Z claude note review-698 round 1: added explicit-/raid-id carve-out (red-team dissent), generalized exclusion to the full .ergrc skip-label set (deferred too), renamed run report -> wrap-up briefing with a Wrap up landing spot, and unstaled hunt SKILL.md's forward reference (wording only; step 2b logic untouched)
 --- body ---
 ## Context
 

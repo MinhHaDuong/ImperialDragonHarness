@@ -60,6 +60,17 @@ def pick_candidates_text() -> str:
 
 
 @functools.cache
+def raid_wrapup_text() -> str:
+    """Return raid's Wrap up section, whitespace-collapsed."""
+    text = RAID.read_text()
+    m = re.search(
+        r"^## Wrap up.*?(?=^## Circuit breakers)", text, re.MULTILINE | re.DOTALL
+    )
+    assert m, "could not locate raid's Wrap up section (ticket 0390)"
+    return _collapse(m.group(0))
+
+
+@functools.cache
 def raid_phase1_text() -> str:
     """Return raid Phase 1 (Select), whitespace-collapsed.
 
@@ -103,9 +114,12 @@ def test_pick_ticket_does_not_hand_roll_the_screen():
     add a grep.
     """
     region = pick_candidates_text()
-    # Word-boundary match: a bare `rg ` substring also occurs inside `erg ready`,
-    # which is the tool-level filter this guard exists to preserve.
-    tool = re.search(r"\b(grep|rg|awk|sed|jq)\b", region)
+    # Two narrowings, both learned from false positives. Word boundaries: a bare
+    # `rg ` substring also occurs inside `erg ready`, the very filter this guard
+    # exists to preserve. A following flag or quote: `grep` and `jq` are also
+    # ordinary nouns in prose ("a grep, not a judgment call"), and only the
+    # command-shaped use is the antipattern.
+    tool = re.search(r"\b(grep|rg|awk|sed|jq)\b(?=\s*[-\"'`])", region)
     assert tool is None, (
         "pick-ticket's candidate-selection step must not hand-roll a label "
         f"screen ({tool.group(0) if tool else ''!r}) beside `erg ready`'s "
@@ -134,18 +148,75 @@ def test_raid_phase1_excludes_needs_human():
     )
 
 
-def test_raid_phase1_routes_the_excluded_ticket_to_the_author():
-    """Excluded is not dropped: the ticket surfaces in the run report."""
+def test_raid_phase1_excludes_every_ergrc_label():
+    """The exclusion is the label *set*, not one hardcoded member.
+
+    `tickets/.ergrc` skip-lists `deferred` alongside `needs-human`, and Phase
+    1's rationale — it bypasses `erg ready`, so it must state the exclusion
+    itself — applies to both identically. Hardcoding one member leaves the
+    other unscreened on exactly the path this ticket exists to close.
+    """
     region = raid_phase1_text()
-    assert "run report" in region, (
-        "raid Phase 1 must say where an excluded `needs-human` ticket goes — "
-        "surfaced to the author in the run report, not silently dropped from "
+    assert ".ergrc" in region, (
+        "raid Phase 1 must read its skip-label set from `tickets/.ergrc`, the "
+        "file that already defines the vocabulary (ticket 0390, review round 1)"
+    )
+    assert "deferred" in region, (
+        "raid Phase 1 must cover `deferred` too — it is skip-listed in .ergrc "
+        "on the same footing as `needs-human`, and Phase 1 bypasses the filter "
+        "that would have caught either"
+    )
+
+
+def test_raid_phase1_routes_the_excluded_ticket_to_the_author():
+    """Excluded is not dropped: the ticket surfaces in raid's own artifact."""
+    region = raid_phase1_text()
+    assert "briefing" in region, (
+        "raid Phase 1 must say where an excluded ticket goes, in raid's own "
+        "vocabulary: the wrap-up *briefing* is this skill's artifact ('run "
+        "report' names nothing that exists here) — not silently dropped from "
         "the queue (ticket 0390 Action 2)"
     )
     assert "success outcome" in region, (
         "raid Phase 1 must give the surfaced ticket the same standing 0378 "
         "gives a returned decision list — a success outcome; otherwise the "
         "orchestrator reads the exclusion as a failure and pushes on"
+    )
+
+
+def test_raid_wrapup_has_a_landing_spot_for_excluded_tickets():
+    """A routing claim needs a destination that exists.
+
+    Phase 1 promises the excluded ticket reaches the author. Wrap up is where
+    the briefing is assembled, and it itemizes ESCALATED PRs explicitly; an
+    exclusion with no matching slot there is a promise with no delivery.
+    """
+    region = raid_wrapup_text()
+    assert "skip-labelled" in region, (
+        "raid's Wrap up must itemize the tickets Phase 1 excluded, the way it "
+        "already itemizes ESCALATED PRs — otherwise Phase 1's routing promise "
+        "has no landing spot (ticket 0390, review round 1)"
+    )
+
+
+def test_raid_phase1_carves_out_an_explicit_author_id():
+    """The unconditional exclusion must not revoke the author's force path.
+
+    Ticket 0390's Invariants keep explicit forcing available. Phase 1 accepts
+    comma-separated ticket IDs as well as "all open", so an exclusion stated
+    without a carve-out silently drops a ticket the author typed by hand —
+    turning a screen into a veto (red-team dissent, review round 1).
+    """
+    region = raid_phase1_text()
+    assert "/raid <id>" in region, (
+        "raid Phase 1 must name the explicit-ID invocation as the carve-out, "
+        "so the exclusion cannot be read as overriding a ticket the author "
+        "typed (ticket 0390 invariant: explicit forcing stays available)"
+    )
+    assert "discovery" in region, (
+        "raid Phase 1 must scope the exclusion to target *discovery* — that "
+        "word is what distinguishes the 'all open' sweep from an author-named "
+        "ticket, and without it the two paths are indistinguishable"
     )
 
 

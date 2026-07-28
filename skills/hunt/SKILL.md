@@ -42,8 +42,8 @@ argument-hint: <ticket-id> [inline]
    interactive hunt was triaged by that hunt before it was spawned, so re-reading
    the tells buys nothing. A raid, though, picks its own targets and no
    interactive hunt precedes them. `erg ready` already skip-lists the label out
-   of pick-ticket's queue (`tickets/.ergrc`); screening raid's own target
-   selection is upstream work — see [[0390]] — not a second triage here.
+   of pick-ticket's queue (`tickets/.ergrc`), and raid Phase 1 now screens its
+   own targets ([[0390]]); neither is a second triage here.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
      `Label: needs-human` header; exit criteria carrying decision verbs (decide,
      arbitrate, sign-off, choose among); manuscript prose as the deliverable, which
