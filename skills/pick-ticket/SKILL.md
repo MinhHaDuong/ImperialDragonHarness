@@ -26,6 +26,12 @@ Select one ticket for the current sweep run.
    set. Rely on that filter; do not add a second label check here. One screen,
    applied by the tool that owns the vocabulary (ticket 0390).
 
+   The filter has one asymmetry worth knowing, since beat's autonomous path
+   rests on it: an *absent* `.ergrc` falls back to the default label set, but a
+   present file with an empty `[labels]` section fails open and screens nothing.
+   If tickets that should be held back start reaching the queue, check that
+   section before suspecting the ticket.
+
 2. **Apply beat-skip list.** Load `.git/beat-skip.json` (skip if absent).
    Exclude any entry where:
    - `until` is present AND `until > now` (ISO UTC comparison)
