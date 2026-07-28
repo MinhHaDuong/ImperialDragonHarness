@@ -1,0 +1,46 @@
+%erg 0.1
+Title: re-screen skip labels at raid Phase 5 launch, not only Phase 1
+Created: 2026-07-28
+Author: Integration Test
+Closed: wontfix: author is the labelling actor and is in the loop by definition; the window is hours wide and 0390's Phase 1 screen covers the measured failure mode (0334/0338); growing raid skill text for this corner case contradicts the harness cool-down directive
+
+--- log ---
+2026-07-28T14:58Z Integration Test created
+
+2026-07-28T15:22Z Integration Test closed — wontfix: author is the labelling actor and is in the loop by definition; the window is hours wide and 0390's Phase 1 screen covers the measured failure mode (0334/0338); growing raid skill text for this corner case contradicts the harness cool-down directive
+--- body ---
+## Context
+
+[[0390]] screens skip-labelled tickets (the `.ergrc` set, `needs-human`
+included) out of raid Phase 1 target selection. The screen runs once, at
+selection time. A raid runs for hours: a ticket labelled `needs-human`
+after Phase 1 but before its wave's Phase 5 launch is caught nowhere — the
+executor spawns and burns the full cycle the label exists to prevent.
+Surfaced by verify-gate round 1 on PR #698; recorded there as a log note,
+promoted here to a trackable ticket.
+
+## Relevant files
+
+- `skills/raid/SKILL.md` — Phase 5 wave launch; the natural second screen
+  point is the per-wave launch loop.
+
+## Actions
+
+1. At each wave's Phase 5 launch, re-read the wave's ticket files and drop
+   any that acquired a skip label since Phase 1, routing them to the
+   wrap-up briefing exactly as Phase 1 does.
+
+## Test
+
+- Bounded-region guard on the Phase 5 section naming the re-screen, per
+  tests/test_needs_human_screen.py's extraction pattern.
+
+## Invariants
+
+- Phase 1 screen unchanged; hunt step 2b unchanged.
+
+## Exit criteria
+
+- [ ] Phase 5 launch loop re-screens skip labels per wave
+- [ ] Guard test in place, RED-proven against pre-change text
+- [ ] `make check-fast` and `make lint` pass

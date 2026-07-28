@@ -1,0 +1,82 @@
+%erg 0.1
+Title: review rounds re-run the full perspective panel regardless of prior findings
+Created: 2026-07-28
+Author: HDMX-coding-agent
+Closed: autoclosed — PR #696
+
+--- log ---
+2026-07-28T08:57Z HDMX-coding-agent created
+2026-07-28T09:08Z claude note imagine: premise HOLDS; must add round context to hunt 11-13 loop, relate to gaze convergence.enabled (0315), and argue reset exception against incident #562 (0320); guard test per polarity rule (structural presence + negative on 'unconditionally any round')
+2026-07-28T09:15Z claude note plan: review-pr Round-scoping section, gaze tier-block rewrite superseding #562 clause via reset exception, hunt 11/13 round context, tests/test_review_round_scoping.py (adherence)
+2026-07-28T09:16Z claude note feasibility PASS — all edit anchors verified in live files; cross-ticket overlap on hunt steps 12-13 resolved by sequential waves (0376 then 0377)
+2026-07-28T13:02Z claude note execute: round scoping landed in review-pr + gaze + hunt 11/13; guard tests/test_review_round_scoping.py
+
+2026-07-28T13:52Z bump verify-reroll — round 1: gaze's round>=2 Agent C tier branch (gaze:163-164,278-281) has no reachable trigger inside gaze's own REROLL loop and gaze never states how it derives the round it must pass to Agent C
+2026-07-28T14:01Z Integration Test closed — autoclosed — PR #696
+2026-07-28T17:55Z HDMX-coding-agent note live example post-close: climate-finance-het ticket 0640 (one-line caption/threshold alignment, author-scoped "small cheap") still drew the full multi-perspective review panel via /hunt — 4 reviewer seats for a ~1-line diff; proportionality gap persists at panel WIDTH, not round count
+
+--- body ---
+## Context
+
+The 2026-07-28 trace analysis of three climate-finance-het raids measured
+review panels at 44–56% of all subagent output tokens — the largest cost
+bucket, ahead of gaze/gates (10–22%) and actual execution (20–30%). PR 1172
+alone received 23 verification agents against 1 execute agent: the
+5-perspective review-pr panel (correctness, consistency, scope, red team, doc
+propagation) was re-run wholesale in 3–4 rounds, plus built-in review,
+adherence, two gate rounds, and four simplify angles. Week-wide, review agents
+emitted 5.8M output tokens — more than all 22 execute kills combined (4.9M).
+
+The spend is not empty ritual — post-review fix edits appeared in 17 of 19
+kills that reached review, and gaze bounced 29% of verdicts — but round
+pricing is flat: round N re-runs every perspective even when round N−1 gave
+most perspectives nothing to say.
+
+Full report: https://claude.ai/code/artifact/daa5be2e-0c1b-4ed1-9dba-3ab2416729b3
+
+## Relevant files
+
+- `skills/review-pr/SKILL.md` — the 5-perspective fan-out; no round-scoping
+  rule today.
+- `skills/gaze/SKILL.md` — orchestrates review + reroll; decides what round 2
+  re-runs.
+- `skills/hunt/SKILL.md` — steps 11–13 loop review up to 3 times.
+
+## Actions
+
+1. Add a round-scoping rule: round 1 runs the full panel; round N>1 re-runs
+   only (a) the perspectives that produced comments in round N−1, and (b) one
+   cheap regression check that the fixes did not break what the silent
+   perspectives had cleared. Model pins per § reviewer decorrelation stay
+   as-is.
+2. Apply the same scoping to the gaze reroll path: a REROLL re-review targets
+   the defects named in the verdict, not the whole battery.
+3. State the exception explicitly: a fix that rewrites the diff substantially
+   (new files touched, >~half the diff changed since the last round) resets to
+   a full panel.
+
+## Test
+
+- Skill-text guard (negative, per prose-test polarity): review-pr SKILL.md
+  must contain a round-scoping section; absence of the old
+  every-round-full-panel wording.
+
+## Verification
+
+- [ ] review-pr and gaze skill texts carry the scoping rule and the reset
+      exception
+- [ ] Guard test green
+- [ ] Next raid's per-PR verification-agent count recorded in this ticket's
+      log (baseline: 23 for PR 1172)
+
+## Invariants
+
+- Round-1 coverage unchanged — all five perspectives still run on every PR
+- Reviewer decorrelation rule untouched (panel models stay below coder tier)
+- Verify-gate evidence contract (per-exit-criterion) unchanged
+
+## Exit criteria
+
+- [ ] Round-scoping wording landed in review-pr + gaze skills
+- [ ] Guard test in place and green
+- [ ] One subsequent raid shows scoped rounds in its transcripts (spot-check)

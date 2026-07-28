@@ -80,6 +80,40 @@ Prioritize:
 
 Read each ticket + STATE.md. Group by milestone. Identify dependency order and wave structure.
 
+**A skip-labelled ticket is never a raid target.** `tickets/.ergrc` lists the
+labels that hold a ticket back (`needs-human` and `deferred` at present) and
+`erg ready` suppresses every one of them, which is why `pick-ticket` never
+offers such a ticket. Phase 1 reads `tickets/` directly and bypasses that
+filter, so the exclusion is this skill's own job: a ticket carrying
+`Label: needs-human`, or any other header listed in `.ergrc`, is dropped before
+wave grouping, with no Imagine agent, no plan, no Phase 5 executor. Read the
+label set from `.ergrc` rather than hardcoding it here — and if that file has
+no readable `[labels]` section, fall back to the documented defaults
+(`needs-human`, `deferred`). An *absent* `.ergrc` already falls back inside
+`erg`, but an *empty* `[labels]` section fails open, and a hand-parse that
+inherits that asymmetry screens nothing while looking correct.
+
+Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
+it is waiting on, and count that as a success outcome — the same standing hunt
+step 2b gives a returned batched decision list.
+
+**Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
+*discovery* (the "all open" path), never a ticket named by ID. A named ticket
+is a caller's deliberate choice, so it executes; note the override in the
+briefing so the choice is visible.
+
+Do not read that carve-out as "explicit means the author asked." `beat.py`
+builds `/raid <id>` unattended and is today the only programmatic caller, so
+the explicit-ID shape covers both an author typing it and an autonomous sweep.
+The autonomous path stays screened upstream: beat picks through `pick-ticket`,
+whose candidates came from `erg ready`, so the carve-out does not
+reopen the hole this phase closes. That safety lives in beat's pick step, not
+here; a future caller that synthesizes IDs some other way needs its own screen.
+
+If EVERY discovered ticket is skip-labelled, the run returns those batched
+decision lists rather than an empty-run report. One question round the author
+can answer in a single pass is the deliverable (decided 2026-07-28, ticket 0390).
+
 Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous Action Rules) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
@@ -313,6 +347,9 @@ Autonomous mode: ralph loop to next wave.
     ```
     Format as: `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
+   Any ticket Phase 1 excluded as skip-labelled is listed here too, with the
+   decisions it is waiting on. When the queue held nothing else, that list is
+   the run's deliverable, not evidence of an idle run.
 3. Write briefing (session log + merge request list + test delta).
 4. Do NOT run `/lair`.
 

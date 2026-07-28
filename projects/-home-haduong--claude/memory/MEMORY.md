@@ -9,6 +9,7 @@
 
 ## Entries
 
+- [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md) — `git push && gh api -f x=y` trips the force-push guard; split the calls or use --field
 - [Verify sibling PRs jointly, not just individually](feedback_verify_sibling_prs_jointly.md) — two PRs each 9/9 green landed a claim and its refutation the same day (#680/#681); per-PR gates pass both by construction
 - [erg ready reads the current branch's tree](feedback_erg_ready_reads_current_branch_tree.md) — a stale branch lists tickets already merged and archived on main
 - [CLAUDE.md is a thin loader in IDH](feedback_claude_md_is_thin_loader_idh.md) — proposing to add doctrine/posture prose to CLAUDE.md is a red flag
@@ -45,6 +46,7 @@
 - [Don't codify hard rules for judgment calls](feedback_dont_codify_hard_rules.md) — hard rules for "do the sensible thing" conventions make agents lazy
 - [Paper release/ subdir layout](user_paper_release_subdir_layout.md) — one dir per paper under `~/CNRS/papiers/{actif,sent,published}`; immutable append-only `release/<date desc>/` per
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'
+- [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md) — a delegate's own background children complete-notify the top session; don't act, wait for the delegate
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — skill frontmatter model: does NOT propagate to spawned children; per-invocation `model` enum is the only
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
 - [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
@@ -85,3 +87,4 @@
 - [Raid worktrees miss same-session main commits](feedback_raid_worktree_rebase.md) — rebase the PR branch onto main before merging
 - [CLI verb belongs in the sub-command](feedback_cli_verb_in_subcommand.md) — the script name is the noun; avoid `install-deps.sh uninstall`
 - [Paper idea — harnesses vs. human psychology](project_paper_harnesses_psychology.md) — AI coding harnesses evaluated against what psychology says about how humans work
+- [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md) — awk/printf emit `70,0` under fr_FR; export LC_ALL=C after set -euo pipefail in any test-guarded script

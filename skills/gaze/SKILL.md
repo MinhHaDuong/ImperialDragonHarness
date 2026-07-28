@@ -155,14 +155,59 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
 - Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
   - **tiny** — `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
   - **small** — `pr_lines ≤ 150` and `pr_files ≤ 5` and this is round 1 (and not already tiny).
-  - **full** — everything else, **and unconditionally any round ≥ 2**: a REROLL escalates to the full battery regardless of diff size — #562's round-2 needed the full battery on an unchanged diff. The round-2 override wins over any size test.
+  - **full** — everything else, and any round ≥ 2. The **tiny** and **small** tiers are round-1 classifications only; a round ≥ 2 is never tiny or small.
 
   The tier selects which reviewer agents run (see §§ 2–4, 5); phase 6 (`/verify-gate`) is **invariant** — it runs at every tier, never reduced. Per-tier battery:
   - **tiny** → Agent A (adherence) + phase 6 gate only. Skip Agent B (`/review`), Agent C (`/review-pr`), and phase 5 (`/simplify`) — each skip logged like the existing `review-pr: skipped (…)` line.
   - **small** → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate. Agent C runs with the reduced "correctness only" perspective set (trivial risk, § 2–4) instead of the full five-perspective panel.
-  - **full** → the complete battery below, unchanged.
+  - **full**, round 1 → the complete battery below, unchanged.
+  - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
+
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
+
+#### Round scoping
+
+**Supersedes the #562 clause.** A round ≥ 2 still resolves to the **full**
+tier, but its Agent C no longer re-runs the whole five-perspective panel by
+default. Agent C re-runs the perspectives that objected in the previous round
+plus one regression check over the cleared ones, per § Round scoping in
+`skills/review-pr/SKILL.md` (ticket 0377). #562's lesson was that a round-2
+battery was needed on an unchanged diff. That lesson is preserved by keeping
+Agents A and B, phase 5, and the phase 6 gate at full strength every round.
+What it does *not* justify is re-paying for perspectives that had nothing to
+say.
+
+**Reachable trigger.** The only entry into this branch is a *caller-level*
+repeat `/gaze` on a merge request that already carries a prior Agent C
+review: that invocation re-enters phase 1, reclassifies the tier, and finds a
+review history. gaze's internal REROLL re-entry never reaches here — it
+re-runs the **gate only** (§ Branch on verdict) and never returns to phase 1,
+so round scoping neither widens nor narrows it. Two different counters share
+the word "round", and they never interact: the REROLL round-1/round-2 cap
+counts gaze's own internal fix-and-regate attempts *within* one invocation,
+while the round scoped here counts the Agent C reviews posted on the merge
+request *across* invocations.
+
+**Relation to Convergence mode.** Convergence mode (ticket 0315,
+§ Convergence mode, default off) decides at the caller layer whether a repeat
+`/gaze` re-runs its panel at all; round scoping decides what that re-run panel
+runs when convergence is **off** — with convergence on, the repeat is skipped
+entirely and scoping never applies. Its flag is unaffected here.
+
+**gaze does not compute the round.** It reads only whether a prior Agent C
+review exists — a boolean from the merge request's review history, enough to
+select the scoped branch — and passes no round number to Agent C. Agent C's
+embedded procedure derives the round itself, exactly as § Round scoping in
+`skills/review-pr/SKILL.md` prescribes: count the reviews this skill
+previously posted on the merge request, identifiable by the verdict roster
+those reviews always carry; the round is that count plus one.
+
+An unchanged diff does **not** reset scoping. Reset happens only on a
+substantial rewrite: the round's diff touches files the last review did not
+cover, or changes more than roughly half of its lines. Then Agent C runs the
+full panel for this round — scoping is ignored. The derived round number
+itself is never mutated; only the scoping decision changes.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -245,8 +290,22 @@ or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review
 `review-pr: skipped (tier: tiny, <pr_lines> lines, <pr_files> files)` in the
 setup summary. When the tier is **small**, run it with the reduced **correctness
 only** perspective set (the `trivial` risk band below) regardless of the risk
-assessment. When the tier is **full**, run the full proportional panel as
-assessed. Otherwise pick by file type: if any `*.qmd` changed → prose
+assessment. When the tier is **full** on round 1, run the full proportional
+panel as assessed; when the merge request already carries a prior Agent C
+review (the caller-level repeat `/gaze` case), run the panel scoped per
+§ Round scoping — only the perspectives whose previous verdict was
+comment/request-changes (prose: minor/major), plus one regression agent
+running a single regression check over all the cleared ones, unless the diff
+was substantially rewritten, in which case the full panel runs for this round
+and scoping is ignored. Do **not** state a round number — gaze computes none.
+Instead, have the embedded procedure instruct the spawned agent to derive the
+round itself (count the reviews this skill previously posted on the merge
+request, identifiable by the verdict roster they always carry; the round is
+that count plus one), read the previous round's verdict roster, build the
+scoped perspective list from it, and record the reason for each inclusion.
+Spell that derivation out: the spawned agent does not read this file or
+`skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
+Otherwise pick by file type: if any `*.qmd` changed → prose
 panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —
@@ -382,6 +441,7 @@ The subagent spawned on REROLL receives:
   violations, per-exit-criterion gaps).
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
 - TDD discipline still applies: add a failing test for any behavioural fix before coding.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one full `make check` before the final push — not per fix.
 
 Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 6.
 
@@ -520,6 +580,7 @@ tier: tiny|small|full
 adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
+review-pr scope: full panel | scoped: <objecting perspectives> + regression (omit if round 1)
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 

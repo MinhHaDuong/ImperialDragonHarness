@@ -1,0 +1,78 @@
+%erg 0.1
+Title: hunt executors re-run the full test suite mid-loop
+Created: 2026-07-28
+Author: HDMX-coding-agent
+Closed: autoclosed — PR #692
+
+--- log ---
+2026-07-28T08:57Z HDMX-coding-agent created
+2026-07-28T09:08Z claude note imagine: premise HOLDS; insertion points hunt steps 8,12-13 + gaze fix-agent contract; raid SKILL.md needs no edit; new tests/test_hunt_test_budget.py per one-guard-per-file convention
+2026-07-28T09:15Z claude note plan: 5 edits (hunt 8/9/10/12-13, gaze fix-agent contract) + tests/test_hunt_test_budget.py; follow-up flagged: review-pr:88 and gaze:260 run full make check per synthesis invocation
+2026-07-28T09:16Z claude note feasibility PASS — all edit anchors verified in live files; cross-ticket overlap on hunt steps 12-13 resolved by sequential waves (0376 then 0377)
+2026-07-28T09:18Z claude note baseline: median 18 full-check runs per kill, 27.8% of active agent-minutes (2026-07-28 trace analysis) — target ≤ 3 after budget
+
+2026-07-28T12:42Z claude bump circuit-breaker — wave-1 agent killed by session limit mid step 9; salvaged commit 352740a on t376-test-run-budget, finished inline
+2026-07-28T12:58Z Integration Test closed — autoclosed — PR #692
+2026-07-28T17:55Z HDMX-coding-agent note live example post-close: climate-finance-het ticket 0640 (one-line caption/threshold alignment, author-scoped "small cheap") still drew the full multi-perspective review panel via /hunt — 4 reviewer seats for a ~1-line diff; proportionality gap persists at panel WIDTH, not round count
+
+--- body ---
+## Context
+
+The 2026-07-28 trace analysis of 22 hunt/raid kills in climate-finance-het
+(week of 07-21 → 07-28) measured test execution as the single largest active-time
+bucket: 348 of 1,250 agent-minutes (27.8%), ahead of design narration (26.5%)
+and adherence machinery (10.7%). A median code kill ran the check suite 18
+times; roughly 30% of runs failed (legitimate diagnosis), the rest were
+re-confirmation. The pattern behind the excess: executors re-run full
+`make check` after single-file edits mid-loop, and every review-fix or reroll
+cycle re-runs the full suite again, where the hunt contract already prescribes
+`check-fast` during development and one full `check` before the PR.
+
+Full report: https://claude.ai/code/artifact/daa5be2e-0c1b-4ed1-9dba-3ab2416729b3
+
+## Relevant files
+
+- `skills/hunt/SKILL.md` — steps 7–9 name `make check-fast` and `make check`
+  but set no run budget; step 12 ("Fix all comments") is where full-suite
+  re-runs multiply.
+- `skills/gaze/SKILL.md` — reroll path re-validates; same budget question.
+- `skills/raid/SKILL.md` — Phase 6/7 wording inherits whatever the hunt does.
+
+## Actions
+
+1. Add an explicit test-run budget to the hunt contract: `check-fast` (or the
+   affected test file alone) is the loop gate; full `make check` runs exactly
+   once before opening the PR, and once more only when review fixes touched
+   code outside the fast tier — not per fix cycle.
+2. Mirror the same budget in the gaze/reroll path: a reroll re-runs the tests
+   implicated by the defect plus `check-fast`, and one full `check` at the
+   final gate only.
+3. Keep project-specific escape hatches: a repo whose `check` is cheap may say
+   so in its project rules; the budget is the default, not a cap on diagnosis
+   (a failing run is never wasted).
+
+## Test
+
+- Harness skill-text guard (new `tests/test_hunt_test_budget.py`, in the
+  style of `tests/test_skill_descriptions.py`): assert the hunt SKILL.md
+  names a run budget for full-suite invocations (negative guard on the old
+  unbounded wording, per the prose-test polarity rule).
+
+## Verification
+
+- [ ] hunt SKILL.md states the budget; gaze SKILL.md mirrors it
+- [ ] skill-text guard test passes
+- [ ] next trace re-measure (trace-doctor or ad hoc) shows median full-check
+      runs per kill ≤ 3
+
+## Invariants
+
+- TDD red step unchanged (first test must fail; 19/22 kills honored it)
+- `make check` before PR-open remains mandatory — the budget trims
+  *repetition*, not the gate
+
+## Exit criteria
+
+- [ ] Test-run budget wording landed in hunt + gaze skills
+- [ ] Guard test in place and green
+- [ ] Measured baseline recorded in this ticket's log for the next re-measure
