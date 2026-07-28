@@ -6,6 +6,8 @@ Closed: autoclosed — PR #694
 
 --- log ---
 2026-07-28T09:09Z HDMX-coding-agent created
+2026-07-28T09:20Z claude note raid-378 Phase 2-4 verdict WARN-proceed: premise current (689 was tickets-only, hunt anchors unchanged); insert 2b at SKILL.md:25/26 without renumbering; 2b forward-references step 3's ownership predicate; guard test uses bounded-region extraction, not file-wide substrings; Action 3 sweep pre-verified no-op; exit criterion 3 post-merge observational
+2026-07-28T09:35Z claude bump author-pause — clean 2h pause for session token limit; execute agent killed at gate stage, WIP salvaged and pushed on t0378-hunt-triage-step (6d37e53), finisher relaunched on the existing branch after the pause
 
 2026-07-28T09:21Z HDMX-coding-agent note Action 3 sweep: no contradictions. beat.py runs /raid, never /hunt; raid Phase 5 spawns Agent(isolation:worktree) -> agent-* clean worktree, passing step 3 ownership, so triage stays off. gaze/verify-adherence reference only hunt step 9's adherence label. Gap found and closed: the ad-hoc headless 'claude -p /hunt <id>' pattern is now an explicit third skip case in 2b.
 2026-07-28T09:21Z HDMX-coding-agent note Exit criterion 3 (one real interactive hunt observed taking the detached path) is post-merge observational — it cannot be satisfied by this execution, which ran as a detached raid Phase 5 executor, not an interactive session.
