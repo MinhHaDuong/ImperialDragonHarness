@@ -86,3 +86,4 @@
 - [Raid worktrees miss same-session main commits](feedback_raid_worktree_rebase.md) — rebase the PR branch onto main before merging
 - [CLI verb belongs in the sub-command](feedback_cli_verb_in_subcommand.md) — the script name is the noun; avoid `install-deps.sh uninstall`
 - [Paper idea — harnesses vs. human psychology](project_paper_harnesses_psychology.md) — AI coding harnesses evaluated against what psychology says about how humans work
+- [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md) — awk/printf emit `70,0` under fr_FR; export LC_ALL=C after set -euo pipefail in any test-guarded script
