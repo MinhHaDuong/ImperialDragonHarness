@@ -10,6 +10,7 @@
 # Containment is the seat-runner's OS sandbox (0217), NOT this script.
 # This script holds no secrets; seat credentials load via BASH_ENV (0207).
 set -euo pipefail
+export LC_ALL=C  # every awk/sort float reads and writes `.` decimals under any ambient locale
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${REVIEWERS_REPO:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
