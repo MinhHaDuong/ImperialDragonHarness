@@ -6,6 +6,9 @@ Closed: autoclosed — PR #696
 
 --- log ---
 2026-07-28T08:57Z HDMX-coding-agent created
+2026-07-28T09:08Z claude note imagine: premise HOLDS; must add round context to hunt 11-13 loop, relate to gaze convergence.enabled (0315), and argue reset exception against incident #562 (0320); guard test per polarity rule (structural presence + negative on 'unconditionally any round')
+2026-07-28T09:15Z claude note plan: review-pr Round-scoping section, gaze tier-block rewrite superseding #562 clause via reset exception, hunt 11/13 round context, tests/test_review_round_scoping.py (adherence)
+2026-07-28T09:16Z claude note feasibility PASS — all edit anchors verified in live files; cross-ticket overlap on hunt steps 12-13 resolved by sequential waves (0376 then 0377)
 2026-07-28T13:02Z claude note execute: round scoping landed in review-pr + gaze + hunt 11/13; guard tests/test_review_round_scoping.py
 
 2026-07-28T13:52Z bump verify-reroll — round 1: gaze's round>=2 Agent C tier branch (gaze:163-164,278-281) has no reachable trigger inside gaze's own REROLL loop and gaze never states how it derives the round it must pass to Agent C
