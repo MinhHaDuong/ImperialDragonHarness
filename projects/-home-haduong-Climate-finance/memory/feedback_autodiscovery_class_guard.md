@@ -5,6 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e941c29d-5c40-4794-8c38-de28cfeab946
+  modified: 2026-07-27T19:03:33.426Z
 ---
 
 For a "whole class of scripts must do X" guard (e.g. ticket 0233: every
@@ -32,5 +33,23 @@ all 5 unguarded.
 - Coverage boundary: a Makefile-driven scan only sees Make-wired producers; a
   script writing to the dir via a hardcoded default with no target is invisible
   (same limit as `test_phase_layout`). Accept it or add a source scan.
+
+**Discover the class, but do not hand-roll the enumeration.** Auto-discovery
+fixes the *list*; it does not stop the *walk* from drifting. This repo has one
+sanctioned `scripts/` enumeration, `tests/_script_discovery.all_script_files()`
+(ticket 0260), and the same defect keeps reappearing around it — 0248 for `.mk`
+discovery, 0260 for `scripts/`, then 0346's own new guard shipping an
+`os.walk(SCRIPTS_DIR)` that scanned the frozen `archive*/` trees. Three
+occurrences, each caught by a human reading a diff, none by a test. The 0346
+roar sweep then found two more live divergences (`test_script_hygiene.py:59`,
+`test_import_path_model.py:148`) that test for the literal name `archive` while
+the helper excludes anything `startswith("archive")` — so five
+`archive_traditions/` scripts are enforced as active code, visible in every
+`make lint` run. Filed as 0400, with a standing guard so the fourth occurrence
+fails a test.
+
+The rule: if the repo has a sanctioned enumeration for a file set, route
+through it — a second walk is a second opinion about what the class contains,
+and the two drift in whichever direction nobody is looking.
 
 Related: [[feedback_scope_discipline]] [[feedback_lean_methods]]
