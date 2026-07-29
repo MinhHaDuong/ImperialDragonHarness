@@ -1743,7 +1743,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:13Z",
       "promoted": false
     },
     "feedback_agent_prompt_worktree_rooted_paths": {
@@ -1751,7 +1751,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:13Z",
       "promoted": false
     },
     "feedback_atomic_tickets_validation_units": {
@@ -1759,7 +1759,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:14Z",
       "promoted": false
     },
     "feedback_branch_before_edit": {
@@ -1767,7 +1767,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:14Z",
       "promoted": false
     },
     "feedback_bytecheck_old_vs_new_not_golden": {
@@ -1775,7 +1775,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:14Z",
       "promoted": false
     },
     "feedback_caps_force_pruning_not_compression": {
@@ -1783,7 +1783,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:24Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:14Z",
       "promoted": false
     },
     "feedback_cite_at_existing_locus": {
@@ -1791,7 +1791,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:15Z",
       "promoted": false
     },
     "feedback_cross_repo_ticket_in_owning_repo": {
@@ -1799,7 +1799,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:15Z",
       "promoted": false
     },
     "feedback_data_direction": {
@@ -1807,7 +1807,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:15Z",
       "promoted": false
     },
     "feedback_decide_dont_micromanage": {
@@ -1815,7 +1815,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:15Z",
       "promoted": false
     },
     "feedback_dropna_before_merge": {
@@ -1823,7 +1823,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:16Z",
       "promoted": false
     },
     "feedback_erg_close_archive": {
@@ -1831,7 +1831,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:16Z",
       "promoted": false
     },
     "feedback_evict_to_gitignored_dir_bootstrap": {
@@ -1839,7 +1839,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:17Z",
       "promoted": false
     },
     "feedback_fetch_before_sibling_merge": {
@@ -1847,7 +1847,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:17Z",
       "promoted": false
     },
     "feedback_file_decisions_with_submission": {
@@ -1855,7 +1855,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_followup_lets_parent_close": {
@@ -1863,7 +1863,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_gate_after_full_review": {
@@ -1871,7 +1871,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_gate_execute_on_all_scopers": {
@@ -1879,7 +1879,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:25Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_grep_before_commit": {
@@ -1887,7 +1887,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_het_register": {
@@ -1895,7 +1895,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:19Z",
       "promoted": false
     },
     "feedback_hitl_decision_cite_evidence": {
@@ -1903,7 +1903,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:20Z",
       "promoted": false
     },
     "feedback_inspect_ref_readonly": {
@@ -1911,7 +1911,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:20Z",
       "promoted": false
     },
     "feedback_isolated_venv_proves_installability": {
@@ -1919,7 +1919,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_letter_voice_flags": {
@@ -1927,7 +1927,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_make_corpus": {
@@ -1935,7 +1935,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_manuscript_number_provenance": {
@@ -1943,7 +1943,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_no_amend_pr": {
@@ -1951,7 +1951,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_apc": {
@@ -1959,7 +1959,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_heavy_deps": {
@@ -1967,7 +1967,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_long_running": {
@@ -1975,7 +1975,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_md_in_md": {
@@ -1983,7 +1983,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:26Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_noverify": {
@@ -1991,7 +1991,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_rebase_dvc": {
@@ -1999,7 +1999,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
       "promoted": false
     },
     "feedback_no_shared_env_sync_during_sibling_agent": {
@@ -2007,7 +2007,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:23Z",
       "promoted": false
     },
     "feedback_no_tool_for_single_use": {
@@ -2015,7 +2015,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:23Z",
       "promoted": false
     },
     "feedback_overnight_exploration": {
@@ -2023,7 +2023,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:23Z",
       "promoted": false
     },
     "feedback_oversell_breaks": {
@@ -2031,7 +2031,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:24Z",
       "promoted": false
     },
     "feedback_parallel_work": {
@@ -2039,7 +2039,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:24Z",
       "promoted": false
     },
     "feedback_phase_separation": {
@@ -2047,7 +2047,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:24Z",
       "promoted": false
     },
     "feedback_pilot_one_instance_critiques_the_ticket": {
@@ -2055,7 +2055,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_pin_test_mutation_teeth": {
@@ -2063,7 +2063,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_prclose_onbranch_ticket_none": {
@@ -2071,7 +2071,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_pr_creates_ticket_no_close": {
@@ -2079,7 +2079,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_propagate_notes_to_tickets": {
@@ -2087,7 +2087,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:27Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_quarto_var_vs_meta": {
@@ -2095,7 +2095,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_ratchet_stale_after_rebuild": {
@@ -2103,7 +2103,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:26Z",
       "promoted": false
     },
     "feedback_read_before_cite": {
@@ -2111,7 +2111,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:26Z",
       "promoted": false
     },
     "feedback_render_bitcompare_is_the_gate": {
@@ -2119,7 +2119,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:26Z",
       "promoted": false
     },
     "feedback_reorg_tracker_first_class_guard": {
@@ -2127,7 +2127,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:26Z",
       "promoted": false
     },
     "feedback_review_agent_worktree": {
@@ -2135,7 +2135,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_ruff_fix_breaks_reexport_facades": {
@@ -2143,7 +2143,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_rule9_detector_variable_path_blindspot": {
@@ -2151,7 +2151,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_settled_debates_to_brief": {
@@ -2159,7 +2159,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_simplest_fix": {
@@ -2167,7 +2167,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:28Z",
       "promoted": false
     },
     "feedback_ssh_padme": {
@@ -2175,7 +2175,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:28Z",
       "promoted": false
     },
     "feedback_stale_worktree_make": {
@@ -2183,7 +2183,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:28Z",
       "promoted": false
     },
     "feedback_tectonic_next": {
@@ -2191,7 +2191,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:28Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_active_before_defer_tag": {
@@ -2199,7 +2199,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_ai_generated_includes": {
@@ -2207,7 +2207,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_before_advising": {
@@ -2215,7 +2215,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_datadep_worktree_symlink": {
@@ -2223,7 +2223,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_deferral_tracker": {
@@ -2231,7 +2231,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_verify_makefile_pathrefactor_with_make_n": {
@@ -2239,7 +2239,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_version_increment_planning": {
@@ -2247,7 +2247,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_visual_verify_citations": {
@@ -2255,7 +2255,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_weekend_boundary": {
@@ -2263,7 +2263,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_worktree_local_hook_commit": {
@@ -2271,7 +2271,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_worktree_search": {
@@ -2279,7 +2279,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "feedback_yaml_quoting": {
@@ -2287,7 +2287,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_0171_conclusion_rebuild": {
@@ -2295,7 +2295,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_deliverables_render_next_to_source": {
@@ -2303,7 +2303,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:29Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_doifetch_sync": {
@@ -2311,7 +2311,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_dvc_integration": {
@@ -2319,7 +2319,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_frozen_manuscript_vs_live_companions": {
@@ -2327,7 +2327,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_gide_conference": {
@@ -2335,7 +2335,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:32Z",
       "promoted": false
     },
     "project_imperial_dragon": {
@@ -2343,7 +2343,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:32Z",
       "promoted": false
     },
     "project_journal_strategy": {
@@ -2351,7 +2351,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:32Z",
       "promoted": false
     },
     "project_oeconomia_rr_pipeline": {
@@ -2359,7 +2359,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:32Z",
       "promoted": false
     },
     "project_ollama_experiment": {
@@ -2367,7 +2367,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:33Z",
       "promoted": false
     },
     "project_paper_ceiling_growth_imaginary": {
@@ -2375,7 +2375,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:33Z",
       "promoted": false
     },
     "project_paper_instrument_circulation": {
@@ -2383,7 +2383,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:33Z",
       "promoted": false
     },
     "project_reorg_0159_relocation": {
@@ -2391,7 +2391,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:34Z",
       "promoted": false
     },
     "project_repo_layout_decision": {
@@ -2399,7 +2399,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:34Z",
       "promoted": false
     },
     "project_rr_traceability_ledger": {
@@ -2407,7 +2407,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:34Z",
       "promoted": false
     },
     "project_techrep_rewrite": {
@@ -2415,7 +2415,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:30Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:34Z",
       "promoted": false
     },
     "project_techrep_split": {
@@ -2423,7 +2423,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "project_uv_path_fix": {
@@ -2431,7 +2431,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "project_worktree_env_data": {
@@ -2439,7 +2439,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "project_writing_build_phase_separation": {
@@ -2447,7 +2447,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "reference_agentic_harness": {
@@ -2455,7 +2455,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "reference_agent_identity": {
@@ -2463,7 +2463,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "reference_bib_fulltext_index": {
@@ -2471,7 +2471,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:35Z",
       "promoted": false
     },
     "reference_cited_works_local_docs_articles": {
@@ -2479,7 +2479,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "reference_paywalled_acquisition": {
@@ -2487,7 +2487,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "reference_publist": {
@@ -2495,7 +2495,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "reference_rdj4hss": {
@@ -2503,7 +2503,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "reference_repo_no_ci": {
@@ -2511,7 +2511,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "reference_stats_cache": {
@@ -2519,7 +2519,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:31Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:37Z",
       "promoted": false
     },
     "reference_trackchange_review_workflow": {
@@ -2527,7 +2527,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:32Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:37Z",
       "promoted": false
     },
     "user_cnrs_section41": {
@@ -2535,7 +2535,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:32Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:37Z",
       "promoted": false
     },
     "user_moa_moe_contract": {
@@ -2543,7 +2543,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:32Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:37Z",
       "promoted": false
     },
     "user_orcid": {
@@ -2551,7 +2551,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-10T21:05:32Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:37Z",
       "promoted": false
     },
     "feedback_supervisor_checkpoint_pattern": {
@@ -2735,7 +2735,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:54Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:13Z",
       "promoted": false
     },
     "feedback_background_session_manuscript_pr_workflow": {
@@ -2743,7 +2743,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:54Z",
-      "last_confirmed": "2026-07-22T18:30:03Z",
+      "last_confirmed": "2026-07-29T16:46:14Z",
       "promoted": false
     },
     "feedback_escalate_check_merge_after_note": {
@@ -2751,7 +2751,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:56Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:17Z",
       "promoted": false
     },
     "feedback_fable_second_opinion_prose_structure": {
@@ -2759,7 +2759,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:56Z",
-      "last_confirmed": "2026-07-22T18:30:04Z",
+      "last_confirmed": "2026-07-29T16:46:17Z",
       "promoted": false
     },
     "feedback_gate_verify_branch_not_pr_body": {
@@ -2767,7 +2767,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:56Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
       "promoted": false
     },
     "feedback_hardcoded_secondary_path_survives_input_gate": {
@@ -2775,7 +2775,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:57Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:19Z",
       "promoted": false
     },
     "feedback_interactive_authorization_invisible_to_gates": {
@@ -2783,7 +2783,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:57Z",
-      "last_confirmed": "2026-07-22T18:30:05Z",
+      "last_confirmed": "2026-07-29T16:46:20Z",
       "promoted": false
     },
     "feedback_ln_into_existing_dir_autostage": {
@@ -2791,7 +2791,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:57Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_moving_files_narrows_guard_globs": {
@@ -2799,7 +2799,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:58Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_negative_guard_false_positive_check": {
@@ -2807,7 +2807,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:58Z",
-      "last_confirmed": "2026-07-22T18:30:06Z",
+      "last_confirmed": "2026-07-29T16:46:21Z",
       "promoted": false
     },
     "feedback_pdf_layout_automate_dont_hand_paginate": {
@@ -2815,7 +2815,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:57:59Z",
-      "last_confirmed": "2026-07-22T18:30:07Z",
+      "last_confirmed": "2026-07-29T16:46:24Z",
       "promoted": false
     },
     "feedback_raid_overkill_for_trivial_reference_pattern_fix": {
@@ -2823,7 +2823,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:00Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_raid_scope_triage_before_fanout": {
@@ -2831,7 +2831,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:00Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:25Z",
       "promoted": false
     },
     "feedback_rightsize_agent_model_to_task": {
@@ -2839,7 +2839,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:01Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_user_pulls_land_in_downloads": {
@@ -2847,7 +2847,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:02Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:29Z",
       "promoted": false
     },
     "feedback_verify_new_citations_against_primary_pdf": {
@@ -2855,7 +2855,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:03Z",
-      "last_confirmed": "2026-07-22T18:30:10Z",
+      "last_confirmed": "2026-07-29T16:46:30Z",
       "promoted": false
     },
     "project_file_relocation_move_surface": {
@@ -2863,7 +2863,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:04Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:31Z",
       "promoted": false
     },
     "project_includes_citation_guard_0244": {
@@ -2871,7 +2871,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:04Z",
-      "last_confirmed": "2026-07-22T18:30:11Z",
+      "last_confirmed": "2026-07-29T16:46:32Z",
       "promoted": false
     },
     "project_rdj26561_rr_round1": {
@@ -2879,7 +2879,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:05Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:33Z",
       "promoted": false
     },
     "reference_hal_sword_update_recipe": {
@@ -2887,7 +2887,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T08:58:06Z",
-      "last_confirmed": "2026-07-22T18:30:13Z",
+      "last_confirmed": "2026-07-29T16:46:36Z",
       "promoted": false
     },
     "feedback_rtk_log_hides_merge_commits": {
@@ -2895,7 +2895,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T18:30:08Z",
-      "last_confirmed": "2026-07-22T18:30:08Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "feedback_sibling_close_collides_on_shared_blocker": {
@@ -2903,7 +2903,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T18:30:09Z",
-      "last_confirmed": "2026-07-22T18:30:09Z",
+      "last_confirmed": "2026-07-29T16:46:27Z",
       "promoted": false
     },
     "project_prior_mappings_overlap_0289": {
@@ -2911,7 +2911,7 @@
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
       ],
       "first_seen": "2026-07-22T18:30:12Z",
-      "last_confirmed": "2026-07-22T18:30:12Z",
+      "last_confirmed": "2026-07-29T16:46:33Z",
       "promoted": false
     },
     "project-systemd-linked-vs-enabled": {
@@ -3800,6 +3800,70 @@
       ],
       "first_seen": "2026-07-28T21:03:27Z",
       "last_confirmed": "2026-07-28T21:03:27Z",
+      "promoted": false
+    },
+    "feedback_enterworktree_stuck_cwd": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:16Z",
+      "last_confirmed": "2026-07-29T16:46:16Z",
+      "promoted": false
+    },
+    "feedback_erg_close_archive_staging_order": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:17Z",
+      "last_confirmed": "2026-07-29T16:46:17Z",
+      "promoted": false
+    },
+    "feedback_force_push_denied_rebuild_clean": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:18Z",
+      "last_confirmed": "2026-07-29T16:46:18Z",
+      "promoted": false
+    },
+    "feedback_harness_not_here": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:19Z",
+      "last_confirmed": "2026-07-29T16:46:19Z",
+      "promoted": false
+    },
+    "feedback_no_rebase_when_force_push_denied": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:22Z",
+      "last_confirmed": "2026-07-29T16:46:22Z",
+      "promoted": false
+    },
+    "feedback_onstart_trigger": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:23Z",
+      "last_confirmed": "2026-07-29T16:46:23Z",
+      "promoted": false
+    },
+    "feedback_pdftotext_grep_linebreaks": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:24Z",
+      "last_confirmed": "2026-07-29T16:46:24Z",
+      "promoted": false
+    },
+    "feedback_ssh_padme_path": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-07-29T16:46:28Z",
+      "last_confirmed": "2026-07-29T16:46:28Z",
       "promoted": false
     }
   }

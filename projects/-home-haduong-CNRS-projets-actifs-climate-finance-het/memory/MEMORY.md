@@ -1,7 +1,7 @@
 # Project Memory
 
 ## Key insights
-- 4-paper research programme (`climate-finance-het`); RDJ-26561 data-paper R&R is the active deadline track (tracker 0274, ~2026-10-20). Œconomia v2.0.5 resubmitted 2026-07-21, awaiting editor. Submission records live under `papiers/<state>/<track>/`.
+- 4-paper research programme (`climate-finance-het`); RDJ-26561 revision 1 resubmitted 2026-07-29, awaiting editor. Œconomia v2.0.5 resubmitted 2026-07-21, awaiting editor. Submission records live under `papiers/<state>/<track>/`.
 - **Methodological honesty is a hard norm**: computation *corroborates* history; cite only pipeline numbers traceable to an archived output.
 - **Heavy worktree + parallel-session discipline**: shared uv env on /data, never rebase with dirty DVC symlinks, branch-before-edit, check filesystem before asserting work undone.
 - Author optimizes for **diamond-OA integrity over prestige** (no APC, CNRS Section 41), HET academic register, weekends off.
@@ -30,7 +30,7 @@
 - [project_uv_path_fix.md](project_uv_path_fix.md), [project_worktree_env_data.md](project_worktree_env_data.md), [project_doifetch_sync.md](project_doifetch_sync.md), [project_dvc_integration.md](project_dvc_integration.md).
 
 ## Papers & submission
-- RDJ-26561 R&R round 1: [project_rdj26561_rr_round1.md](project_rdj26561_rr_round1.md) — tracker 0274, deadline ~2026-10-20; 0288 BUILD merged, 0304 harvest (padme) is critical path.
+- RDJ-26561 R&R round 1: [project_rdj26561_rr_round1.md](project_rdj26561_rr_round1.md) — COMPLETE, revision 1 resubmitted 2026-07-29; upload-kit recipe for round 2 inside.
 - [project_prior_mappings_overlap_0289.md](project_prior_mappings_overlap_0289.md) — prior-mappings overlap probe: 89–91% coverage = curation, >99% discovery; artifacts in revision-rdj26561/; feeds 0278/0283.
 - Œconomia R&R: [project_oeconomia_rr_pipeline.md](project_oeconomia_rr_pipeline.md), [project_rr_traceability_ledger.md](project_rr_traceability_ledger.md), [project_0171_conclusion_rebuild.md](project_0171_conclusion_rebuild.md), [feedback_version_increment_planning.md](feedback_version_increment_planning.md).
 - Reports & build: [project_techrep_rewrite.md](project_techrep_rewrite.md), [project_techrep_split.md](project_techrep_split.md), [project_writing_build_phase_separation.md](project_writing_build_phase_separation.md), [project_frozen_manuscript_vs_live_companions.md](project_frozen_manuscript_vs_live_companions.md), [project_repo_layout_decision.md](project_repo_layout_decision.md), [project_deliverables_render_next_to_source.md](project_deliverables_render_next_to_source.md).
@@ -127,3 +127,4 @@
 - [feedback_background_session_manuscript_pr_workflow.md](feedback_background_session_manuscript_pr_workflow.md) — background sessions force worktree+PR even for prose-in-place; reconcile primary checkout's stale uncommitted diff after merge
 - [feedback_pdf_layout_automate_dont_hand_paginate.md](feedback_pdf_layout_automate_dont_hand_paginate.md) — automate pagination (titlesec sectionbreak, widow penalties, dash-ratio col widths); variant builds = transform layer script
 - [feedback_rtk_log_hides_merge_commits.md](feedback_rtk_log_hides_merge_commits.md) — rtk-filtered `git log` omits merge commits; verify tips with rev-parse / `rtk proxy git log`
+- [feedback_pdftotext_grep_linebreaks.md](feedback_pdftotext_grep_linebreaks.md) — line-based grep on pdftotext output false-negatives across line wraps; join text before matching
