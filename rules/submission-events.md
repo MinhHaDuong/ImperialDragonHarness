@@ -19,3 +19,9 @@ Propose both as part of the submission-event wrap-up; they are author-visible
 deliverables, not chores to defer. (Author directive, 2026-07-29, at the
 RDJ-26561 revision-1 resubmission — the homepage and roadmap updates had to
 be asked for after the fact.)
+
+**Check every link you write, on the landing page, not the status code.**
+`curl -sIL` each DOI/URL entering a register and confirm it lands on the
+intended *version* — a DOI can return 200 while resolving to the previous
+deposit (the revision-1 homepage shipped a link to v1.1 and needed a hotfix,
+2026-07-29).
