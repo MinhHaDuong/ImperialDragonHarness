@@ -3,7 +3,7 @@ name: Companion paper method design
 description: Lean 6-method panel for multilayer-detection.qmd (epic 0026), QSS target
 type: project
 originSessionId: 6028d794-8c6f-418a-85d8-eedb55e43fed
-modified: 2026-07-23T18:10:59.759Z
+modified: 2026-07-29T07:06:12.779Z
 ---
 `content/multilayer-detection.qmd` (renamed from companion-paper.qmd in #737).
 Reimagined 2026-04-15 as methods+application paper for QSS.
@@ -37,3 +37,8 @@ methods/structuration paper; interesting results go into the data paper
 (minimal, statistic-backed items) or the Œconomia article at its next
 revision round. The multilayer-detection.qmd plan above is dormant until the
 author says otherwise.
+
+**UPDATE 2026-07-29 (author):** Zoo and multilayer reports are *potential
+future articles* — not active submissions, not mere internal references.
+Priority stays with the RDJ-26561 resubmission (due ~2026-10-20). Author's
+summer vacation starts 2026-07-30; expect a low-activity window.

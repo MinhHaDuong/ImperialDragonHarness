@@ -1,13 +1,16 @@
 ## Key insights
 
-- The corpus pipeline degrades silently at several joints (GROBID down, stale Feather caches, undeclared optional deps, a tracked artifact predating the current `dvc.lock` pin): a headline number that moves between passes is the alarm. Verify the producing stage, or rerun the *old* producer on current inputs to attribute the diff to code vs data, before citing any count (0314, 0330, 0610, 0625, 0641).
-- A check whose "all clear" is indistinguishable from "I could not look" is not a check: `gh pr list --json files`, rtk-rewritten grep, `make -B` on a target no loaded makefile owns, and a `pgrep` match across sibling worktrees all fail silently open. Verify any such instrument against a case known to be positive before trusting its silence.
-- Guards over hand-synced structures, prose claims, or generated/rendered output need the right shape: assert the data-carrying property, not a text pattern, where the defect has a data signature; assert set equality in *both* directions for any pair a human is expected to keep in sync by hand; and red-test every guard by replaying its exact originating defect, not a generic mutation — two of three drafts on one ticket passed the very bug they were written for.
-- Parallel sessions collide on tickets, IDs, and shared worktrees more than the workflow assumes: scan open PRs (enumerate then `gh pr view`, never `gh pr list --json files`) at ticket start *and* again at the merge gate; renumber a colliding ticket ID clear of the frontier, never to the next free one; and in a worktree shared with a peer session mid-merge, push every local commit immediately rather than batching several.
-- Author workflow: batch decisions and execute autonomously to PRs; manuscript prose changes always return to the author for arbitration, and cut plans start with whole-passage removal, never condensation-only. A prose defect class is closed by a repo-wide sweep at wrap-up, not by a standing text-pattern guard that costs lines forever and is still one spelling behind the next instance.
+- The corpus pipeline degrades silently at several joints (GROBID down, stale Feather caches, undeclared optional deps, a tracked artifact predating the current `dvc.lock` pin): a headline number that moves between passes is the alarm. Verify the producing stage, or rerun the *old* producer on current inputs, before citing any count (0314, 0330, 0610, 0625, 0641).
+- A check whose "all clear" is indistinguishable from "I could not look" is not a check: `gh pr list --json files`, rtk-rewritten grep, `make -B` on an unowned target, a `pgrep` match across sibling worktrees, and a bare `--help` probe on an argparse script all fail silently open. Verify the instrument against a known-positive before trusting its silence.
+- Guards need the right shape: assert the data-carrying property where the defect has a data signature; set equality in both directions for hand-synced pairs; red-test every guard by replaying its originating defect. Hand-kept prerequisite lists (the archive Makefile's figures) drift exactly where no guard covers them — the clean-room rebuild is the check of last resort: if you can't rebuild it, don't release it.
+- Parallel sessions collide on tickets, IDs, and shared worktrees: scan open PRs (enumerate then `gh pr view`) at start *and* at the merge gate; renumber clear of the frontier; push every local commit immediately in shared worktrees.
+- Author workflow: batch decisions, execute autonomously to PRs; manuscript prose and letters return to the author for arbitration — and polished correspondence still gets an adversarial claim-verification pass (4 factual errors survived ~25 interactive rounds). A prose defect class closes with a sweep, not a standing text-pattern guard.
 
 ## Entries
-
+- [Letters get claim verification](feedback_letters_get_claim_verification.md) — 124-claim swarm found 4 factual errors in author-polished letters; attribution claims strictest
+- [REALF release rules](reference_realf_release_rules.md) — How-tos 41/42/43/45/51: rebuild-from-package or don't release; changes-highlighted ms; Zenodo/HAL/homepage steps
+- [Quarto pipe tables cannot float](feedback_quarto_pipe_tables_cannot_float.md) — raw-latex-tabular-in-div is the only float pattern; tbl-pos on captions is ignored
+- [Prefer LaTeX over QMD for new papers](feedback_prefer_latex_over_qmd.md) — author 2026-07-29; keep the vars pipeline, emit \newcommand macros
 - [PR scope discipline](feedback_scope_discipline.md) — don't add arch rules/tickets/sweeps to a feature PR branch
 - [Lean over comprehensive](feedback_lean_methods.md) — prefer one right method per concern, shed sunk-cost bias on existing code
 - [Verify contract](feedback_verify_contract.md) — /verify loop for PR gating; anti-rubber-stamp; two rounds max; never merges from skill
@@ -52,7 +55,6 @@
 - [rtk rewrites grep output](feedback_rtk_rewrites_grep_output.md) — silent summary substitution yields plausible wrong counts; re-derive tallies in Python
 - [Union-only defects](feedback_union_only_defects.md) — a guard one PR adds can be broken by a sibling's addition; test the composed tree
 - [Stale branch helper duplicates main](feedback_stale_branch_helper_duplicates_main.md) — adopt main's hardened version, never re-inline
-- [Data-paper release actions](project_datapaper_release_actions.md) — Zenodo retitle + version-string sync, author-only, at the new-version upload
 - [Guard the class, not the stale value](feedback_guard_the_class_not_the_stale_value.md) — a STALE tuple of literals blesses the next wrong value; forbid the shape
 - [Red-test the guard you wrote](feedback_red_test_the_guard_you_wrote.md) — replay the originating defect; two drafts passed it, a rename mutation proved nothing
 - [Check open PRs for the ticket](feedback_check_open_prs_for_ticket.md) — origin/main currency hides a sibling session mid-flight; two PRs for ticket 0359 opened 62s apart
@@ -61,7 +63,6 @@
 - [Filename-keyed guards collide at merge](feedback_filename_keyed_guards_collide_at_merge.md) — retiring an artifact breaks sentinels/allowlists on main; grep origin/main, expect a round per merge
 - [A nullable blank passes the schema](feedback_nullable_blank_passes_the_schema.md) — errors="coerce" hides a lost value where required=false; make the write step strict
 - [Worktree .env is a snapshot](feedback_worktree_env_is_a_snapshot.md) — credential test failing after a merge is often local drift, not main being red
-- [Deposit prose is unguarded](feedback_deposit_prose_is_unguarded.md) — revision-rdj26561/*.md name deposit files with nothing checking them (0403)
 - [Renderer placeholders exit 0](feedback_renderer_placeholder_exit_zero.md) — Quarto writes `?meta:`/`?@ref` and returns 0; render to markdown on stdout and grep stdout AND stderr (captions/citations leave no output mark)
 - [Pin known defects, don't xfail](feedback_pin_known_defect_not_xfail.md) — xfail is content-blind; assert the exact expected set so a second defect can't hide
 - [External panel is inert here](feedback_external_panel_inert.md) — /gaze's cli-agent seats fail open silently; needs REVIEWERS_REPO + the IDH key
