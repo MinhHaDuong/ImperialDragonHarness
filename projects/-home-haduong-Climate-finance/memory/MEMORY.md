@@ -29,3 +29,4 @@
 - [Téléchargements is scratch](feedback_telechargements_scratch.md) — move+checksum+delete downloads to durable homes asap
 - [Cookie-replay fetch](reference_cookie_replay_fetch.md) — author's Firefox cookies unlock oecd.org/one.oecd.org; tabs via recovery.jsonlz4
 - [uv --env-file no override](feedback_env_file_no_override.md) — ambient shell vars shadow refreshed .env keys; pass rotated creds explicitly
+- [Pipe masks exit code](feedback_pipe_masks_exit_code.md) — `cmd | tail` in a background task reports exit 0 on failure; run bare or pipefail
