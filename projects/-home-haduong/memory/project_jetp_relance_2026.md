@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 2aa1b42f-9bc2-47c1-b03d-61a14ac4a8d4
-  modified: 2026-08-10T16:49:43.320Z
+  modified: 2026-08-10T19:54:20.000Z
 ---
 
 Relance du manuscrit « JETP at two » (Ha-Duong & Cassen, hal-04412457,
@@ -27,8 +27,12 @@ dossier.
 - **Pilote « JETP ledger » Vietnam run 1 fait** (`pilote-ledger-vn/`) :
   82 docs recensés, 54 collectés avec provenance, IATI (2 activités JETP
   sur 485 — opacité mesurée) + OECD CRS tirés, 46 lignes de vérité terrain.
-- **Verrous du run 2 (extraction AEDIST)** : (a) ratification par l'auteur
-  de `verite-terrain-brouillon.csv`, (b) RMP intégral à récupérer
+- **Verrous du run 2 (extraction AEDIST)** : (a) arbitrage par l'auteur de
+  `pilote-ledger-vn/feuille-arbitrage.md` — la vérification mécanique est
+  faite (45/46 lignes confirmées mot à mot, verdicts cités dans
+  `verif-verdicts.json` ; la ligne 10 expose une source auto-incohérente
+  15,5 vs 15,0 Md$) ; restent 6 clusters de conflits + 4 questions de
+  convention, du jugement pur ; (b) RMP intégral à récupérer
   (navigation `jetp.moit.gov.vn` — secrétariat sous MOIT, pas MONRE).
   Ne pas lancer l'extraction avant — convenu avec l'auteur et signalé aux
   sessions parallèles.
