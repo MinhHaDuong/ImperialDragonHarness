@@ -18,3 +18,6 @@
 - [Feuille de route → workpackages](project_roadmap_to_workpackage_map.md) — les noms de lignes CNRS diffèrent des répertoires ; les 3 drafts polycentric_activity sont solo
 - [Nextcloud tasks](reference_nextcloud_tasks.md) — CalDAV nx11797.your-storageshare.de, compte Admin, secret dans le trousseau, liste « Personnel » (personal/)
 - [Relance JETP 2026](project_jetp_relance_2026.md) — roadmap Cassen envoyée 10 août, saturation OK, pilote ledger run 1 fait ; run 2 verrouillé sur ratification vérité terrain + RMP
+- [Beat agent SSH-to-padme blind spot](feedback_beat_padme_ssh.md) — beat agents incorrectly exclude tickets that say "SSH to padme"; beat always runs on padme
+- [Nightbeat deployment](project_nightbeat.md) — live nightbeat timer on padme: config values, monitoring commands, timeout chain
+- [padme GPU/CPU idle power](project_padme_gpu_power.md) — RESOLVED: GPU 3060 floor 11W (no D3cold), CPU 70→46W via balanced profile; main-logbook §I
