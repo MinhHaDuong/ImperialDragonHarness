@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 4f38ce30-21e6-43a5-9b5b-36131219140c
-  modified: 2026-08-10T16:40:01.336Z
+  modified: 2026-08-10T18:53:40.649Z
 ---
 
 Liste de tâches Nextcloud de l'auteur, accessible en CalDAV depuis doudou :
@@ -15,6 +15,9 @@ Liste de tâches Nextcloud de l'auteur, accessible en CalDAV depuis doudou :
   `org.qt.keychain`, attribut
   `user=Admin_app-password:https://nx11797.your-storageshare.de/:0`,
   valeur encodée base64) — lisible via `secretstorage`, ne jamais l'afficher.
+  **Deux items du trousseau matchent ce préfixe ; seul le premier est valide**
+  (le second donne 401) — itérer et s'arrêter au premier qui s'authentifie,
+  avec fallback `raw.decode()` si le base64 ne décode pas en UTF-8.
 - Liste acceptant les VTODO : « Personnel » →
   `/remote.php/dav/calendars/Admin/personal/`
   (l'autre calendrier, anniversaires, n'accepte que VEVENT).
@@ -24,3 +27,11 @@ Liste de tâches Nextcloud de l'auteur, accessible en CalDAV depuis doudou :
 - Nextcloud n'émet pas de notification fiable sur les VALARM de VTODO ;
   pour un vrai rappel, doubler d'un email (msmtp configuré sur doudou,
   compte ouvaton, from minh@haduong.com) ou d'un cron.
+
+CardDAV (mêmes identifiants) — carnets d'adresses :
+- Actif : « Contacts » → `/remote.php/dav/addressbooks/users/Admin/contacts-propre/`
+  (~1 850 fiches). Archive figée 2026-02 : `.../contacts/` (~2 100 fiches) — ne pas modifier.
+- Recherche : REPORT `addressbook-query` avec `prop-filter name="FN"` ;
+  création/fusion : PUT/DELETE de `.vcf` individuels. Vérifié 2026-08-10.
+- Avant toute mutation de masse : backup intégral
+  (`~/.local/state/carnet/*.vcf`, passe de dédoublonnage 2026-08-10).
