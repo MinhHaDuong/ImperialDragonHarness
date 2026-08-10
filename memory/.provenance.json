@@ -2660,10 +2660,11 @@
     },
     "feedback_subagent_model_effort_levers": {
       "projects": [
-        "-home-haduong--claude"
+        "-home-haduong--claude",
+        "-home-haduong"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-08-10T16:51:51Z",
       "promoted": false
     },
     "feedback_trace_usage_dedupe_by_message_id": {
@@ -3864,6 +3865,78 @@
       ],
       "first_seen": "2026-07-29T16:46:28Z",
       "last_confirmed": "2026-07-29T16:46:28Z",
+      "promoted": false
+    },
+    "user_bibliography_toolchain": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:50Z",
+      "last_confirmed": "2026-08-10T16:51:50Z",
+      "promoted": false
+    },
+    "feedback_trust_the_llm": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:50Z",
+      "last_confirmed": "2026-08-10T16:51:50Z",
+      "promoted": false
+    },
+    "feedback_skill_topic_boundaries": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:50Z",
+      "last_confirmed": "2026-08-10T16:51:50Z",
+      "promoted": false
+    },
+    "feedback_avoid_costume_metaphor_het": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:50Z",
+      "last_confirmed": "2026-08-10T16:51:50Z",
+      "promoted": false
+    },
+    "project_het_submission_branches_protected": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:50Z",
+      "last_confirmed": "2026-08-10T16:51:50Z",
+      "promoted": false
+    },
+    "feedback_check_sibling_tickets_before_reorg": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:51Z",
+      "last_confirmed": "2026-08-10T16:51:51Z",
+      "promoted": false
+    },
+    "project_roadmap_to_workpackage_map": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:51Z",
+      "last_confirmed": "2026-08-10T16:51:51Z",
+      "promoted": false
+    },
+    "reference_nextcloud_tasks": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:51Z",
+      "last_confirmed": "2026-08-10T16:51:51Z",
+      "promoted": false
+    },
+    "project_jetp_relance_2026": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-08-10T16:51:51Z",
+      "last_confirmed": "2026-08-10T16:51:51Z",
       "promoted": false
     }
   }
