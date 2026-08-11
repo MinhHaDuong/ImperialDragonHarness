@@ -12,6 +12,14 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   `*.md` research notes are staged in a project-local `docs/`, then stored in
   Zotero. `docs/` is git-ignored in full (`*.pdf`, `*.html`, `*.md`) — never
   tracked. Neither binaries nor notes belong in the repo.
+- **Check `docs/` staging *and* Zotero before declaring a source
+  inaccessible.** A source-verification agent lists `docs/` (author-name
+  variants included) and queries the Zotero library before any web search,
+  and every "remained inaccessible" sentence in a note is re-read against
+  both. A scan without a text layer is not inaccessible — `ocrmypdf` is
+  installed. (Eight false "inaccessible" verdicts in one session, HET
+  2026-08-10, including a fake showstopper and three fictitious "human
+  action required" items.)
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
