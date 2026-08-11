@@ -16,10 +16,16 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   inaccessible.** A source-verification agent lists `docs/` (author-name
   variants included) and queries the Zotero library before any web search,
   and every "remained inaccessible" sentence in a note is re-read against
-  both. A scan without a text layer is not inaccessible — `ocrmypdf` is
-  installed. (Eight false "inaccessible" verdicts in one session, HET
-  2026-08-10, including a fake showstopper and three fictitious "human
-  action required" items.)
+  both. For a paywalled work, also query ISTEX (national-licence full text,
+  token in `~/.config/keys/istex.env`) before concluding "institutional
+  access required" — the full chain is docs/ → Zotero → ISTEX → open web →
+  author. Coverage varies by publisher (JRSS-B only from 1997; Elsevier
+  serves native full text through at least 2016). A scan without a text
+  layer is not inaccessible — `ocrmypdf` is installed. (Eight false
+  "inaccessible" verdicts in one session, HET 2026-08-10, including a fake
+  showstopper and three fictitious "human action required" items; ISTEX
+  validated both ways on 2026-08-11 — honest negative on Smith 1961,
+  instant fulltext on Shiozawa 2016.)
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
