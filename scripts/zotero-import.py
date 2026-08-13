@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sqlite3
 import subprocess
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 import configparser
 from configparser import ConfigParser
 from pathlib import Path
@@ -348,6 +352,242 @@ def entry_to_ris(e: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# --- Zotero Web API injection ---------------------------------------------
+# Direct import through api.zotero.org (v3): create the items, then run the
+# three-step file-upload dance per attachment. Replaces the xdg-open handoff
+# when a read-write key is available; `write` stays as artifact and fallback.
+
+ZOTERO_API_BASE = "https://api.zotero.org"
+ZOTERO_ENV_FILE = Path.home() / ".config/keys/zotero.env"
+
+RIS_TO_ZOTERO_TYPE = {
+    "JOUR": "journalArticle",
+    "BOOK": "book",
+    "THES": "thesis",
+    "RPRT": "report",
+    "CHAP": "bookSection",
+    "CONF": "conferencePaper",
+    "MANSCPT": "manuscript",
+    "NEWS": "newspaperArticle",
+    "MGZN": "magazineArticle",
+    "GEN": "document",
+}
+# Zotero item types that carry a real numPages field.
+ZOTERO_NUMPAGES_TYPES = {"book", "thesis", "manuscript", "report"}
+
+
+def load_env_file(path: Path) -> dict[str, str]:
+    """Parse a KEY=VALUE env file, ignoring comments and blank lines."""
+    values: dict[str, str] = {}
+    if not path.exists():
+        return values
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        values[k.strip()] = v.strip()
+    return values
+
+
+def resolve_credentials(args: argparse.Namespace) -> tuple[str, str]:
+    """Return (user_id, rw_key) from flags, environment, then the keys file."""
+    env_file = load_env_file(ZOTERO_ENV_FILE)
+    key = (args.api_key or os.environ.get("ZOTERO_RW_API_KEY")
+           or env_file.get("ZOTERO_RW_API_KEY"))
+    user = (args.user_id or os.environ.get("ZOTERO_USER_ID")
+            or env_file.get("ZOTERO_USER_ID"))
+    if not key:
+        raise SystemExit("inject: no ZOTERO_RW_API_KEY (flag, env, or "
+                         f"{ZOTERO_ENV_FILE})")
+    if not user:
+        raise SystemExit("inject: no ZOTERO_USER_ID (flag, env, or "
+                         f"{ZOTERO_ENV_FILE})")
+    return user, key
+
+
+def author_to_creator(a: str) -> dict[str, str]:
+    a = author_to_ris(a)  # normalize to "Last, First"
+    last, _, first = a.partition(",")
+    if first.strip():
+        return {"creatorType": "author", "firstName": first.strip(),
+                "lastName": last.strip()}
+    return {"creatorType": "author", "name": last.strip()}
+
+
+def entry_to_zotero_item(e: dict[str, Any],
+                         collection: str | None) -> dict[str, Any]:
+    ris_ty = (e.get("type") or RIS_TYPE_DEFAULT).upper()
+    ty = RIS_TO_ZOTERO_TYPE.get(ris_ty, "document")
+    item: dict[str, Any] = {"itemType": ty}
+    extra: list[str] = []
+    if t := e.get("title"):
+        item["title"] = t
+    if st := e.get("shortTitle"):
+        item["shortTitle"] = st
+    if authors := e.get("authors"):
+        item["creators"] = [author_to_creator(a) for a in authors]
+    if y := e.get("year"):
+        item["date"] = str(y)
+    if d := e.get("doi"):
+        if ty == "journalArticle":
+            item["DOI"] = d
+        else:
+            extra.append(f"DOI: {d}")
+    if isbn := e.get("isbn"):
+        if ty in ("book", "bookSection"):
+            item["ISBN"] = isbn
+        else:
+            extra.append(f"ISBN: {isbn}")
+    if url := e.get("url"):
+        item["url"] = url
+    if j := e.get("journal"):
+        item["publicationTitle" if ty == "journalArticle" else "seriesTitle"] = j
+    if v := e.get("volume"):
+        item["volume"] = v
+    if iss := e.get("issue"):
+        item["issue"] = iss
+    if pages := e.get("pages"):
+        item["pages"] = pages
+    if n := e.get("numPages"):
+        if ty in ZOTERO_NUMPAGES_TYPES:
+            item["numPages"] = str(n)
+        else:
+            extra.append(f"pages: {n}")
+    if pub := e.get("publisher"):
+        item["publisher"] = pub
+    if lang := e.get("language"):
+        item["language"] = lang
+    if ab := e.get("abstract"):
+        item["abstractNote"] = " ".join(ab.split())
+    if extra:
+        item["extra"] = "\n".join(extra)
+    if collection:
+        item["collections"] = [collection]
+    return item
+
+
+def api_request(method: str, path: str, key: str,
+                body: bytes | None = None,
+                content_type: str = "application/json",
+                extra_headers: dict[str, str] | None = None) -> Any:
+    """One call against api.zotero.org; returns parsed JSON, raw text, or None."""
+    req = urllib.request.Request(ZOTERO_API_BASE + path, data=body,
+                                 method=method)
+    req.add_header("Zotero-API-Version", "3")
+    req.add_header("Zotero-API-Key", key)
+    if body is not None:
+        req.add_header("Content-Type", content_type)
+    for h, v in (extra_headers or {}).items():
+        req.add_header(h, v)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        raw = resp.read()
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return raw.decode("utf-8", "replace")
+
+
+def upload_attachment(user: str, key: str, parent: str, pdf: Path) -> str:
+    """Create an imported_file attachment under parent and upload the PDF.
+
+    Returns the attachment item key. Zotero's three-step contract: register
+    the attachment item, ask for upload authorization (md5/size/mtime), then
+    either stop on {"exists": 1} or POST prefix+bytes+suffix and confirm.
+    """
+    att = [{
+        "itemType": "attachment",
+        "linkMode": "imported_file",
+        "parentItem": parent,
+        "title": pdf.name,
+        "filename": pdf.name,
+        "contentType": "application/pdf",
+    }]
+    created = api_request("POST", f"/users/{user}/items", key,
+                          json.dumps(att).encode())
+    att_key = created["successful"]["0"]["key"]
+
+    data = pdf.read_bytes()
+    form = urllib.parse.urlencode({
+        "md5": hashlib.md5(data).hexdigest(),
+        "filename": pdf.name,
+        "filesize": len(data),
+        "mtime": int(pdf.stat().st_mtime * 1000),
+    }).encode()
+    auth = api_request("POST", f"/users/{user}/items/{att_key}/file", key,
+                       form, "application/x-www-form-urlencoded",
+                       {"If-None-Match": "*"})
+    if isinstance(auth, dict) and auth.get("exists"):
+        return att_key
+    body = auth["prefix"].encode() + data + auth["suffix"].encode()
+    _external_upload(auth, body)
+    confirm = urllib.parse.urlencode({"upload": auth["uploadKey"]}).encode()
+    api_request("POST", f"/users/{user}/items/{att_key}/file", key,
+                confirm, "application/x-www-form-urlencoded",
+                {"If-None-Match": "*"})
+    return att_key
+
+
+def _external_upload(auth: dict[str, Any], body: bytes) -> None:
+    """POST the assembled upload body to the storage URL Zotero designated."""
+    req = urllib.request.Request(auth["url"], data=body, method="POST")
+    req.add_header("Content-Type", auth["contentType"])
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        resp.read()
+
+
+def cmd_inject(args: argparse.Namespace) -> int:
+    if args.entries_json:
+        entries = json.loads(args.entries_json)
+    elif args.entries_file:
+        entries = json.loads(Path(args.entries_file).read_text())
+    else:
+        entries = json.loads(sys.stdin.read())
+    if isinstance(entries, dict):
+        entries = [entries]
+
+    items = [entry_to_zotero_item(e, args.collection) for e in entries]
+    if args.dry_run:
+        json.dump(items, sys.stdout, indent=2, ensure_ascii=False)
+        sys.stdout.write("\n")
+        return 0
+
+    user, key = resolve_credentials(args)
+    results: list[dict[str, Any]] = []
+    status = 0
+    created = api_request("POST", f"/users/{user}/items", key,
+                          json.dumps(items).encode())
+    for idx, entry in enumerate(entries):
+        row: dict[str, Any] = {"title": entry.get("title")}
+        ok = created.get("successful", {}).get(str(idx))
+        if not ok:
+            row["error"] = created.get("failed", {}).get(str(idx),
+                                                         "not created")
+            results.append(row)
+            status = 1
+            continue
+        row["itemKey"] = ok["key"]
+        if entry.get("attach_pdf") and (p := entry.get("pdf")):
+            pdf = Path(p)
+            if pdf.exists():
+                try:
+                    row["attachmentKey"] = upload_attachment(
+                        user, key, ok["key"], pdf)
+                except (urllib.error.URLError, KeyError, OSError) as exc:
+                    row["attachment_error"] = f"{type(exc).__name__}: {exc}"
+                    status = 1
+            else:
+                row["attachment_error"] = "pdf not found"
+                status = 1
+        results.append(row)
+    json.dump({"library": f"users/{user}", "results": results},
+              sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return status
+
+
 # --- CLI -------------------------------------------------------------------
 
 def resolve_db_path(override: str | None) -> Path | None:
@@ -440,6 +680,19 @@ def main() -> int:
     g.add_argument("--entries-json", help="inline JSON: array of entry dicts")
     g.add_argument("--entries-file", help="path to JSON file with entries")
     pw.set_defaults(func=cmd_write)
+
+    pi = sub.add_parser("inject",
+                        help="create items (and upload PDFs) via the Zotero API")
+    gi = pi.add_mutually_exclusive_group()
+    gi.add_argument("--entries-json", help="inline JSON: array of entry dicts")
+    gi.add_argument("--entries-file", help="path to JSON file with entries")
+    pi.add_argument("--collection", help="collection key to file items under")
+    pi.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pi.add_argument("--api-key", help="RW key (else ZOTERO_RW_API_KEY; "
+                                      "prefer env/keys file over argv)")
+    pi.add_argument("--dry-run", action="store_true",
+                    help="print the Zotero item JSON, do not call the API")
+    pi.set_defaults(func=cmd_inject)
 
     args = p.parse_args()
     return args.func(args)

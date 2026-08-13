@@ -1,0 +1,47 @@
+%erg 0.1
+Title: reviewers: le siège OpenRouter échoue silencieusement — les clés de ~/.config/keys ne sont pas dans l'env des sous-processus
+Created: 2026-08-13
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-13T19:36Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Pendant le gaze de polycentric_activity PR #87 (2026-08-12), le siège
+externe OpenRouter du panel a échoué fail-open : « missing
+OPENROUTER_API_KEY_IDH credential ». Or la clé existe dans
+`~/.config/keys/openrouter.env` (vérifié par l'auteur, 2026-08-13). Le
+SKILL.md de reviewers affirme « Keys load via the BASH_ENV path (0207) »,
+mais `env | grep -c OPENROUTER` retourne 0 dans les sous-processus Bash
+d'une session : la chaîne de chargement des clés ne couvre pas (ou plus)
+openrouter.env. Conséquence : les sièges externes de décorrélation ne
+tournent jamais, silencieusement — le fail-open masque la panne.
+
+## Relevant files
+- `skills/reviewers/panel.yml` — `credential-env: OPENROUTER_API_KEY_IDH`
+- `skills/reviewers/reviewers.sh` — threading de --credential-env
+- le chemin BASH_ENV (0207) — vérifier ce qu'il charge réellement
+
+## Actions
+1. Reproduire : `printenv OPENROUTER_API_KEY_IDH` dans un sous-processus
+   de session (attendu absent) ; identifier où la doc 0207 charge les
+   `*.env` de ~/.config/keys et pourquoi openrouter.env n'y est pas.
+2. Corriger : soit charger les fichiers de clés au chemin BASH_ENV, soit
+   faire résoudre `credential-env` par reviewers.sh depuis
+   ~/.config/keys/<provider>.env quand la variable est absente de l'env
+   (comme le fait scripts/zotero-import.py resolve_credentials).
+3. Transformer le fail-open en signal : un siège dont la credential ne
+   résout pas doit être signalé dans le rapport du panel, pas omis en
+   silence.
+
+## Test
+- Rouge d'abord : un test qui lance le chemin réel (sous-processus
+  hermétique, cf. coding-bash.md § BASH_ENV) et vérifie que la variable
+  du siège résout ; il échoue avant correctif.
+
+## Exit criteria
+- [ ] Un run de panel avec siège OpenRouter obtient sa credential
+- [ ] L'absence de credential produit un avertissement visible, pas un
+      silence
+- [ ] Test rouge/vert commité
