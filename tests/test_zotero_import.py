@@ -224,3 +224,60 @@ def test_zotero_matches_no_hit_returns_empty():
     assert zi.zotero_matches(
         conn, doi="10.9/nope", title=None, year=None, pdf_path=Path("x.pdf")
     ) == []
+
+
+# ── Zotero API item mapping (inject) ─────────────────────────────────────────
+
+
+def test_author_to_creator_splits_first_last():
+    c = zi.author_to_creator("Jane Q. Smith")
+    assert c == {"creatorType": "author", "firstName": "Jane Q.", "lastName": "Smith"}
+
+
+def test_author_to_creator_single_name_uses_name_field():
+    assert zi.author_to_creator("Aristotle") == {"creatorType": "author", "name": "Aristotle"}
+
+
+def test_entry_to_zotero_item_journal_article():
+    item = zi.entry_to_zotero_item(
+        {"type": "JOUR", "title": "T", "authors": ["Jane Smith"], "year": 2015,
+         "doi": "10.1/x", "journal": "Econometrica", "volume": "83",
+         "issue": "4", "pages": "1467-1495", "numPages": 29},
+        collection=None,
+    )
+    assert item["itemType"] == "journalArticle"
+    assert item["DOI"] == "10.1/x"
+    assert item["publicationTitle"] == "Econometrica"
+    assert item["pages"] == "1467-1495"
+    # journalArticle has no numPages field: routed to extra
+    assert "pages: 29" in item["extra"]
+    assert "numPages" not in item
+
+
+def test_entry_to_zotero_item_book_numpages_and_isbn():
+    item = zi.entry_to_zotero_item(
+        {"type": "BOOK", "title": "B", "isbn": "978-0-13-468599-1",
+         "numPages": 300, "doi": "10.2/y"},
+        collection="ABCD1234",
+    )
+    assert item["itemType"] == "book"
+    assert item["ISBN"] == "978-0-13-468599-1"
+    assert item["numPages"] == "300"
+    # book has no DOI field: routed to extra
+    assert "DOI: 10.2/y" in item["extra"]
+    assert item["collections"] == ["ABCD1234"]
+
+
+def test_entry_to_zotero_item_unknown_type_falls_back_to_document():
+    assert zi.entry_to_zotero_item({"type": "XXXX"}, None)["itemType"] == "document"
+
+
+def test_load_env_file_parses_and_ignores_comments(tmp_path):
+    f = tmp_path / "k.env"
+    f.write_text("# comment\nZOTERO_RW_API_KEY=abc\n\nZOTERO_USER_ID = 42\nnoise\n")
+    vals = zi.load_env_file(f)
+    assert vals == {"ZOTERO_RW_API_KEY": "abc", "ZOTERO_USER_ID": "42"}
+
+
+def test_load_env_file_missing_returns_empty(tmp_path):
+    assert zi.load_env_file(tmp_path / "absent.env") == {}

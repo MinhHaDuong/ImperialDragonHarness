@@ -1,6 +1,6 @@
 ---
 name: zotero-import
-description: Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and write a RIS file for import.
+description: Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and inject items with their PDFs through the Zotero Web API (RIS file as fallback).
 disable-model-invocation: false
 user-invocable: true
 argument-hint: <pdf>...
@@ -8,7 +8,7 @@ argument-hint: <pdf>...
 
 # Zotero import
 
-Build a single RIS file from one or more PDFs and hand it to `xdg-open`. The user's MIME associations decide whether it lands in Zotero or a text editor — both outcomes are acceptable. **Never** drive Zotero by other means.
+Build the metadata for one or more PDFs, then `inject` items and attachments directly through the Zotero Web API (decided 2026-08-13; previously the flow ended at `xdg-open` on a RIS file and a human confirmation click). The RIS path remains the fallback when no read-write key is available or the user asks for a manual import.
 
 ## Happy path
 
@@ -18,9 +18,19 @@ Build a single RIS file from one or more PDFs and hand it to `xdg-open`. The use
 4. **If no identifier is present**, search the web for `"<title>" <first author> <year>` to confirm the metadata before writing.
 5. Run `match` against the Zotero DB using the *refined* title (probe's naïve match uses the often-garbage pdfinfo title — don't rely on it).
 6. If duplicates exist, **warn the user and ask** before importing. Default is import-with-warning; remind to dedupe inside Zotero.
-7. Translate the title to English. Put it in the **Short Title** field (RIS `ST`, which Zotero calls "Short Title" / abbreviated title).
-8. `write` one combined RIS file alongside the first PDF.
-9. `xdg-open` the RIS file. Stop. Let the user's environment do the rest.
+7. Translate the title to English. Put it in the **Short Title** field (`shortTitle`, which Zotero calls "Short Title" / abbreviated title).
+8. `write` one combined RIS file alongside the first PDF — the durable import artifact, kept even when injection succeeds.
+9. `inject` the same entries JSON. Report the returned item keys. On any per-entry error, or when no RW key resolves, fall back to `xdg-open` on the RIS file and say so.
+10. Verify: the inject output lists one `itemKey` (plus `attachmentKey` when `attach_pdf` was set) per entry — read one item back if anything looks off. The local `zotero.sqlite` only reflects the change after the desktop client syncs; do not treat a stale local DB as a failed import.
+
+## Injection
+
+`inject` maps the same entries JSON onto Zotero item JSON (RIS type → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`), creates the items in one batch, then uploads each `attach_pdf` PDF as an `imported_file` attachment via Zotero's three-step upload contract.
+
+- Credentials: `ZOTERO_RW_API_KEY` and `ZOTERO_USER_ID`, from the environment or `~/.config/keys/zotero.env`. Never inline a key into argv.
+- `--collection KEY` files the new items under a collection.
+- `--dry-run` prints the item JSON without touching the API — use it to show the user what would be created when the metadata is uncertain.
+- The call returns non-zero if any entry failed; the JSON output carries the per-entry error.
 
 ## Helper script
 
@@ -66,6 +76,6 @@ Always remind the user that Zotero's *Duplicate Items* view (left panel) is the 
 
 End your turn with:
 
-- The RIS file path.
-- One line per PDF: title (orig) — `[type]` — `xdg-open` status — duplicate verdict.
+- One line per PDF: title (orig) — `[type]` — item key (or fallback/xdg-open status) — duplicate verdict.
+- The RIS file path (artifact, and the fallback import route).
 - A reminder about Zotero deduplication if any duplicate-risk entry was imported.
