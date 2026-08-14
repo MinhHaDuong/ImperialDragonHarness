@@ -2,15 +2,17 @@
 # Manuscript builds — assert the product, not the exit code
 
 Loaded when a manuscript build (LaTeX/tectonic, Quarto/pandoc) is set up or
-changed. The Make rule in `coding-python.md` — *`make` checks the recipe's exit
-code, not what the recipe produced* — has a sharper form here: the recipe
-succeeds **and the product is wrong**.
+changed. The Make rule in `coding-python.md` says that `make` checks the
+recipe's exit code, not what the recipe produced. Here that takes a sharper
+form: the recipe succeeds **and the product is wrong**.
 
 ## The defect class
 
 A typesetting toolchain does not fail on an unresolved reference. `tectonic`
-warns, writes the PDF, and the missing citation appears there as `[?]`;
-Quarto/pandoc behaves the same. In code an unresolved symbol is a link error.
+warns, writes the PDF, and the missing citation appears there as `[?]`.
+Quarto/pandoc does the same with a different placeholder: citeproc warns
+`citation X not found` and renders the key itself, in bold, where the
+reference should be. In code an unresolved symbol is a link error.
 A manuscript has no link step — `\cite`/`\ref` are external references, the
 `.bib` is the symbol table, and nothing checks that they resolve. That this is
 a warning is an arbitration of TeX, a batch typesetter built to always emit
@@ -37,9 +39,9 @@ hit the log's 79-column wrap. The **naming** reads the detail lines and the
 Gating on the wrapping channel lies; naming from it alone silently drops a
 long key.
 
-**Quarto/pandoc.** Same class, different strings: citeproc warns on an
-unresolved key and renders `[?]`. Gate on the warning, not on the rendered
-text.
+**Quarto/pandoc.** Same class, different strings: citeproc emits `citation X
+not found` on stderr and renders the bare key in bold, not `[?]`. Gate on the
+warning, never on the rendered text.
 
 ## Wiring it
 
@@ -62,7 +64,8 @@ text.
   BibTeX field warnings are known noise.
 
 The build guard protects the manuscript being built, and can do no more. The
-cross-manuscript purge — victim not rebuilt in that change — is caught at the
-review gate instead, by `verify-adherence` phase 1.0 (c), which reads sources
-rather than logs. Reference implementation: `scripts/check_tex_unresolved.py`
+cross-manuscript purge, whose victim is not rebuilt in that change, is caught
+at the review gate instead, by `verify-adherence` phase 1.0 (c), which reads
+sources rather than logs. That gate runs even in a repo with no `scripts/`
+directory. Reference implementation: `scripts/check_tex_unresolved.py`
 in polycentric_activity (ticket 0091).

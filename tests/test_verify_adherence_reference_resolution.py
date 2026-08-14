@@ -14,6 +14,17 @@ Two clauses are load-bearing and are the ones a paraphrase would quietly lose:
 2. The scope is the **blast radius of the .bib**, not the touched files.
    Restricting to touched files reproduces exactly the blind spot.
 
+Two more clauses were added after the MR #726 review round, each closing a way
+the sub-check could exist on paper and never fire:
+
+3. The "no scripts/ directory" circuit breaker must skip (a) and (b) only.
+   A manuscript-only repo has no scripts/ and is exactly the layout (c) exists
+   for; skipping the whole phase there makes its all-clear indistinguishable
+   from "I could not look".
+4. The enumerated syntax must cover Quarto/pandoc (`@key`), not LaTeX alone.
+   The skip trigger admits `.qmd` and the rule carries a Quarto recipe, so a
+   LaTeX-only enumeration leaves the check textually inert on half its scope.
+
 Text-grep only → fast tier, no marker.
 """
 
@@ -55,6 +66,19 @@ RULES_INDEX = REPO / "rules" / "README.md"
         (
             "rules/manuscript-build.md",
             "the sub-check must point at the rule holding the doctrine and recipes",
+        ),
+        (
+            "**(c) still runs**",
+            "the 'no scripts/ directory' circuit breaker must skip (a) and (b) only "
+            "— a manuscript-only repo has no scripts/ and is precisely the layout "
+            "(c) exists for, so skipping the whole phase there silences the check "
+            "in its own target class",
+        ),
+        (
+            "Quarto/pandoc: same two checks, different syntax",
+            "the enumerated reference forms must cover Quarto/pandoc `@key`, not "
+            "LaTeX alone: the skip trigger admits .qmd and the rule ships a Quarto "
+            "recipe, so a LaTeX-only enumeration is inert on half the declared scope",
         ),
     ],
 )
