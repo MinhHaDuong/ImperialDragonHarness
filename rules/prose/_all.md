@@ -43,6 +43,7 @@ These are the tics that mark text as machine-written. Cut them.
 - **Do not overstate.** One unearned superlative makes the reader doubt every other claim.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 - **Cutting to a word budget? Remove whole before you condense** — see `cutting.md`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
+- **An unresolved `\cite` or `\ref` is a link error, not a warning** — the toolchain writes `[?]` into the PDF and exits 0; gate the build on it (see `manuscript-build.md`).
 - **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
 
 ## Scope note

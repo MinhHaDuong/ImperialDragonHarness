@@ -61,7 +61,7 @@ already ran clean before the PR was opened.
 
 ### 1.0 Cheap static checks (always first, budget <10 s)
 
-Runs before anything else in the mechanical phase. Two sub-checks, both **blocking**;
+Runs before anything else in the mechanical phase. Three sub-checks, all **blocking**;
 failure stops the phase here and does not fall through to 1/2/3. Combined budget <10 s.
 
 **(a) Import resolution.** Parse the diff for every symbol referenced in touched modules
@@ -90,7 +90,30 @@ Catches per-module regressions seconds after the edit, before the full hygiene s
 deep review pays the cost. Failures record as `{test_id, rule_ref, file:line}` with rule
 ref `verify-adherence#per-module-tests`.
 
-Both checks are intentionally cheap. If either exceeds the 10 s budget,
+**(c) Reference resolution (prose).** The prose counterpart of (a), with the same
+blocking verdict: in a manuscript, `\cite`/`\ref` are external references and the
+`.bib` is the symbol table, but there is no link step to reject a dangling one —
+the toolchain warns, writes `[?]` into the PDF, and exits 0. Skip when the diff
+touches no `.tex`/`.qmd`/`.bib`.
+
+**Scope by blast radius, not by touched files.** If the diff modifies a `.bib`,
+check **every manuscript in the repo that cites it**, touched or not. This is the
+whole point of the check: a purge scoped to one manuscript can remove an entry
+from under another, and the victim is not rebuilt in that change, so its own build
+gate stays silent. Restricting to touched files reproduces the blind spot.
+
+Textual, no build — that is what lets it see manuscripts this change never
+rendered:
+
+- every `\cite*{key}` (including multi-key `\citep{a,b}`) resolves to an entry in
+  the project's `.bib`
+- every `\ref`/`\eqref`/`\autoref{label}` resolves to a `\label{...}`
+
+Any unresolved reference → fail with rule ref `verify-adherence#reference-resolution`,
+record `{key, file:line, kind}`. Do not flag `Underfull`/`Overfull` or pre-existing
+BibTeX field warnings. Doctrine and per-tool build recipes: `rules/manuscript-build.md`.
+
+All three checks are intentionally cheap. If any exceeds the 10 s budget,
 ESCALATE rather than silently trimming scope (a trimmed check that drops
 a failing test is worse than no check).
 

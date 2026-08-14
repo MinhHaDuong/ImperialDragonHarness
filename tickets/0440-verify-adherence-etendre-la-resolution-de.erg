@@ -1,0 +1,106 @@
+%erg 0.1
+Title: verify-adherence: étendre la résolution de symboles du code à la prose
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T18:00Z claude-exec created — remonté depuis polycentric_activity 0091
+
+--- body ---
+## Context
+Le harnais tient déjà qu'un symbole non résolu est un échec bloquant.
+`verify-adherence` phase 1.0 (a) : « Any unresolved symbol → fail with rule
+ref `verify-adherence#import-resolution` ». La portée s'arrête à `scripts/*.py`.
+
+Un manuscrit n'a pas d'étape d'édition de liens. `\cite` et `\ref` sont des
+références externes, `refs.bib` est la table des symboles, et rien ne vérifie
+qu'elles résolvent : `tectonic` avertit et écrit quand même le PDF, où la
+référence manquante paraît en `[?]`. Que ce soit un avertissement n'est pas une
+propriété du problème — c'est un arbitrage de TeX, compositeur en mode batch
+conçu pour toujours rendre une sortie.
+
+L'asymétrie tient en une phrase : **une MR qui supprime un `import` échoue au
+gate ; une MR qui supprime une entrée de `refs.bib` passe.**
+
+Le cycle de vie d'un papier a pourtant quatre points de vérification des
+références — et aucun ne regarde cet objet-là :
+
+| Moment | Ce qui vérifie | Ce qu'il vérifie vraiment |
+|---|---|---|
+| Acquisition | `index-source`, `zotero-import`, `edm.md` | la source existe et est stockée |
+| Couverture | `biblio-saturation` | rien de pertinent ne manque |
+| Due diligence | `related-work-note-validate` | tout DOI/URL/eprint **de la note** résout |
+| Versement | `bib-merge` | le `.bib` est propre (doublons, conflits) |
+| Revue | `verify-adherence` (a) | les symboles **des `.py` sous `scripts/`** |
+| Finition | `pdf-finishing.md` item 6 | les liens ajoutés à la finition, en *spot-check* |
+| Soumission | `submission-events.md` | les liens des registres externes |
+
+Chacun vérifie un objet adjacent. Personne ne vérifie que le `\cite{K}` du
+manuscrit trouve `K`.
+
+Le défaut porte au moins cinq dépôts : `polycentric_activity` (3 manuscrits
+tectonic partageant un `refs.bib`), `aedist` (`report/`, `slides/`),
+`Fuzzy Corpus`, `chemin-de-voix`, `climate-finance-het` (Quarto, donc outil
+différent, classe identique — pandoc/citeproc écrit `[?]` sans échouer non
+plus).
+
+## Pourquoi le gate de revue et pas seulement le build
+
+`polycentric_activity` 0091 pose le garde au build : `tectonic --keep-logs`
+puis lecture du `.log`. Il protège le manuscrit qu'on construit, et il ne peut
+pas faire plus.
+
+Le cas qui a motivé le ticket lui échappe : `refs.bib` est partagé, une purge
+scopée à un manuscrit qui ne cite plus une œuvre retire l'entrée sous les pieds
+d'un autre — l'en-tête de ce `refs.bib` porte déjà la trace d'une restauration
+après « la purge HET R48 ». Le manuscrit victime ne rebâtit pas dans cette MR,
+donc son build ne dit rien.
+
+D'où un contrôle qui lit les **sources**, pas un log : il voit les manuscrits
+que la MR n'a pas reconstruits. Les deux sont complémentaires ; aucun ne
+remplace l'autre.
+
+## Relevant files
+- `skills/verify-adherence/SKILL.md` § 1.0 — reçoit le sous-contrôle (c)
+- `rules/manuscript-build.md` — à créer : la norme et les recettes par outil
+- `rules/README.md` — l'index déclare quand chaque règle s'applique
+- `rules/prose/_all.md` — une ligne de renvoi, injectée à toute édition de prose
+
+## Actions
+1. `verify-adherence` phase 1.0 gagne un sous-contrôle **(c) résolution des
+   références (prose)**, au même titre et avec le même verdict que (a).
+2. Le déclencheur est le `.bib`, pas seulement les fichiers touchés : si la MR
+   modifie un `.bib`, le rayon d'action est **tout manuscrit du dépôt qui le
+   cite**, touché ou non. C'est le seul cadrage qui attrape la purge croisée.
+3. Contrôle textuel, sans build : `\cite*{...}` → entrée du `.bib`,
+   `\ref{...}` → `\label{...}`. Tient dans le budget <10 s de la phase.
+4. Écrire `rules/manuscript-build.md` : la classe générique (un outil qui sort
+   0 en produisant un artefact faux exige une assertion sur le produit) et les
+   deux recettes concrètes, tectonic et quarto/pandoc.
+5. Indexer la règle dans `rules/README.md` et y renvoyer depuis
+   `rules/prose/_all.md`.
+
+## Test
+Rouge d'abord, sur le contrat du skill : un test qui échoue tant que la phase
+1.0 ne nomme pas le sous-contrôle prose et son cadrage par le `.bib`.
+
+## Verification
+- [ ] La phase 1.0 décrit (c) avec le même verdict bloquant que (a)
+- [ ] Le cadrage « une modification du `.bib` porte sur tous les manuscrits du
+      dépôt » est écrit noir sur blanc, pas laissé à l'inférence
+- [ ] `rules/manuscript-build.md` existe, est indexé, et couvre tectonic et quarto
+- [ ] `make check` passe
+
+## Invariants
+- Le contrôle reste textuel : il ne doit pas exiger de build, sinon il perd
+  précisément le cas qu'il est là pour attraper
+- Le budget <10 s de la phase 1.0 tient
+- Le harnais ne détient pas d'exécutable sur le chemin du build d'un dépôt :
+  un workpackage d'écriture doit se construire sans harnais, hors ligne. Le
+  harnais porte la norme et la recette ; le dépôt vend les quelques lignes
+
+## Exit criteria
+- [ ] Une MR qui retire d'un `.bib` une entrée encore citée par un manuscrit
+      du dépôt échoue au gate, même si ce manuscrit n'est pas touché
+- [ ] La norme est écrite une fois, au harnais, et non recopiée dans chaque
+      dépôt papier

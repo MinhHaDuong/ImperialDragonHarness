@@ -12,6 +12,7 @@ files on demand when their scope signal applies to your task.
 | [edm.md](./edm.md) | skill-list: `zotero-import`, `index-source` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging, synced and purged on archival. |
 | [coding-python.md](./coding-python.md) | edit of `*.py` (alias: `format/python`) | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | edit of `*.sh` (alias: `format/bash`) | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
+| [manuscript-build.md](./manuscript-build.md) | a manuscript build (LaTeX/tectonic, Quarto/pandoc) is set up or changed | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
 | [pdf-finishing.md](./pdf-finishing.md) | finishing pass of any PDF deliverable (submission, deposit, personal page) | Automate pagination (titlesec, widow penalties, dash-ratio widths); scripted pdftotext checklist; variants as archived transform layers. |
 | [submission-events.md](./submission-events.md) | a manuscript's submission state changes (submitted, resubmitted, accepted, published) | Propagate the event to the external registers: homepage `Ha-Duong.bib` (rebuild + deploy) and CNRS secretariat `Feuille de route <year>.odt` (+ PDF). |
 | [prose/_all.md](./prose/_all.md) | edit of any prose file (`*.tex` `*.qmd` `*.md` `*.txt`) | Universal prose rules: LLMism guards, Elements of Style. |
