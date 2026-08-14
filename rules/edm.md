@@ -1,3 +1,4 @@
+<!-- last-reviewed: 2026-08-14 -->
 # Electronic document management (EDM)
 
 Discipline for source documents and bibliography across writing and research

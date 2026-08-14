@@ -1,3 +1,4 @@
+<!-- last-reviewed: 2026-08-14 -->
 # PDF finishing standard
 
 Quality bar for any PDF deliverable that leaves the workshop — journal
