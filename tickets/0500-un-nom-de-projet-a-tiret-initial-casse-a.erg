@@ -49,6 +49,32 @@ branche de repli est légitime — première exécution, historique réécrit, d
 sans commits de fusion — donc rien ne distingue le repli normal du repli causé
 par un nom refusé.
 
+## Un second défaut du même script, trouvé le même jour par une autre session
+
+Découvert en fermant ce roar : la session `polycentric_activity` a déposé
+`feedback-roar-enumerate-merges-head.md` (2026-08-14T13:49Z) sur un défaut
+*distinct* du même script. `enumerate-merges.py` énumère `<sentinelle>..HEAD`
+avec `HEAD` **en dur**, sans argument pour viser une autre référence. Or `/roar`
+tourne normalement depuis le worktree de la branche qu'on vient de faire
+fusionner, worktree resté sur la pointe de la branche, en deçà du commit de
+fusion. L'énumération manque donc la demande de fusion qu'on vient de célébrer :
+3 entrées au lieu de 4, ce jour-là, sans que rien ne le signale.
+
+Cette note concluait « sous le seuil de gravité, à remonter au harnais si le cas
+se répète ». Il s'est répété — script identique, même journée, même forme :
+**une énumération courte ne se distingue pas d'une énumération juste**. Deux
+sessions indépendantes ont trouvé deux façons différentes pour ce script de
+perdre l'attribution par demande de fusion sans rien dire. Ce n'est plus un
+défaut isolé sous le seuil, c'est une classe, et c'est ce qui justifie le test
+de non-régression demandé plus bas.
+
+Le présent roar y a échappé par accident : il tournait depuis le checkout
+principal sur `main`, donc `HEAD` était à jour. La divergence 16 commits de
+fusion contre 15 lignes a été vérifiée et s'explique — `866d30f` est une fusion
+`main`→branche d'intégration, non une fusion de demande, et le script a raison
+de l'écarter. C'est le genre de contrôle qu'il faut faire à chaque fois, faute
+de quoi un sous-comptage réel passerait pour cet écart-là.
+
 ## Relevant files
 - `skills/roar/enumerate-merges.py` — l'appel qui se dégrade en silence
 - `skills/roar/SKILL.md` — l'extrait de l'étape 2 et son `|| ROWS=""`
@@ -64,6 +90,16 @@ par un nom refusé.
    repli, c'est une perte.
 3. Balayer les autres scripts du harness qui reçoivent un nom de répertoire de
    projet, y compris ceux qui le passent à un sous-processus.
+4. Donner à `enumerate-merges.py` un argument de référence terminale, au lieu de
+   `HEAD` en dur, et faire dire à `/roar` étape 2 sur quelle référence il a
+   énuméré. Un roar lancé depuis un worktree de branche doit soit viser
+   `origin/main`, soit refuser bruyamment.
+5. **Test de non-régression de la classe** (roar étape 4). Deux défauts
+   indépendants du même script en une journée, chacun perdant l'attribution en
+   silence : le test ne doit pas viser un défaut mais l'invariant — pour un
+   intervalle contenant K fusions de demande connues, l'étape 2 écrit K lignes
+   de télémétrie, quel que soit le nom du projet et quelle que soit la référence
+   sur laquelle le worktree est posé.
 
 ## Test
 Rouge d'abord :
@@ -85,4 +121,6 @@ Rouge d'abord :
 ## Exit criteria
 - [ ] Un nom de projet à tiret initial traverse les cinq points d'appel
 - [ ] Un repli sur agrégat dit lequel des deux cas l'a causé
-- [ ] Un test échoue si l'attribution par demande de fusion se re-dégrade
+- [ ] Un roar lancé depuis un worktree de branche n'énumère pas court en silence
+- [ ] Un test de classe échoue si l'attribution par demande de fusion se
+      re-dégrade, par l'une **ou l'autre** des deux voies connues
