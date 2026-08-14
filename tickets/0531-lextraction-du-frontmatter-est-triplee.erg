@@ -1,0 +1,83 @@
+%erg 0.1
+Title: L'extraction du frontmatter est triplée et les regex ont déjà divergé
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T00:00Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Trois endroits découpent le bloc `---` en tête d'un `SKILL.md`, chacun avec
+sa propre expression, et elles ne sont déjà pas identiques :
+
+| fichier | expression |
+|---|---|
+| `tests/test_skill_frontmatter.py:36` | `\A---\n(.*?)\n---\n` |
+| `tests/test_skill_descriptions.py:35` | `\A---\n(.*?)\n---\n` |
+| `scripts/gen-skills-catalog.sh:30` | `\A---\n(.*?)\n---` |
+
+La version shell n'exige pas le saut de ligne final. Sur les 37 `SKILL.md`
+actuels, les trois capturent la même chose — zéro divergence mesurée. Le
+défaut est donc latent, pas actif.
+
+Ce qui le rend gênant : ce sont précisément les consommateurs que le ticket
+0515 vient d'assainir, et 0515 a lui-même ajouté la troisième copie. Le
+garde-fou et la chose gardée partagent une logique dupliquée ; une correction
+appliquée à une copie et pas aux deux autres est exactement le mode de panne
+que 0515 cherchait à fermer.
+
+Trouvé par `/gaze` sur la MR #742, rapporté hors périmètre des Actions
+déclarées de 0515 ; l'auteur a demandé le dépôt du ticket.
+
+## Relevant files
+
+- `scripts/gen-skills-catalog.sh` — copie shell, la divergente
+- `tests/test_skill_frontmatter.py` — garde-fou de structure (0515)
+- `tests/test_skill_descriptions.py` — garde-fou de découvrabilité
+- `rules/workflow.md` § Writing Skills and Hooks — la convention à référencer
+
+## Actions
+
+1. Un helper unique qui prend un chemin de `SKILL.md` et rend le frontmatter
+   parsé, ou lève une erreur nommant le fichier. Emplacement à choisir dans
+   `scripts/` de façon que les tests *et* le générateur puissent l'importer —
+   c'est la contrainte structurante, `gen-skills-catalog.sh` étant un heredoc
+   python dans un script bash.
+2. Les trois appelants passent dessus.
+3. Décider si `gen-skills-catalog.sh` reste un script bash enveloppant du
+   python, ou devient un `.py` appelé directement. L'enveloppe bash n'apporte
+   plus rien depuis que l'argument passe par l'environnement (0515) et elle
+   est ce qui rend l'import malcommode.
+
+## Test
+
+Rouge d'abord : un test `adherence` qui affirme qu'une seule définition de
+l'expression de frontmatter existe dans l'arbre — grep sur `---\\n(.*?)` à
+travers `scripts/` et `tests/`, au plus une occurrence.
+
+Vérifier qu'il est RED sur l'état actuel (il doit compter 3).
+
+## Verification
+
+- [ ] Le test compte 3 avant, 1 après
+- [ ] Le catalogue régénéré est identique octet pour octet avant/après le
+      refactor — c'est un refactor pur, il se valide en comparant le produit,
+      pas en regardant les tests passer
+- [ ] `make check` vert
+- [ ] Le hook pre-commit fonctionne toujours sur un `SKILL.md` modifié
+
+## Invariants
+
+- Le texte du catalogue ne change pas.
+- `test_skill_descriptions.py` garde sa règle de découvrabilité intacte ;
+  seule la façon d'obtenir le frontmatter change.
+- `test_skill_frontmatter.py` doit rester RED sur un frontmatter cassé après
+  le refactor — le vérifier explicitement, un helper partagé qui avale les
+  erreurs désarmerait le garde-fou de 0515.
+
+## Exit criteria
+
+- Une seule implémentation de l'extraction du frontmatter dans le dépôt
+- Un test empêche une quatrième copie d'apparaître

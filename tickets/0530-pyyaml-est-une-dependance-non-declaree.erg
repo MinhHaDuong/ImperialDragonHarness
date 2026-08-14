@@ -1,0 +1,91 @@
+%erg 0.1
+Title: PyYAML est une dépendance non déclarée du dépôt
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T00:00Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Le ticket 0515 a introduit `import yaml` dans trois endroits :
+`scripts/gen-skills-catalog.sh`, `tests/test_skill_frontmatter.py`,
+`tests/test_skill_descriptions.py`. Aucun ne déclare la dépendance, et le
+dépôt n'a nulle part où la déclarer — pas de `pyproject.toml`, pas de
+`requirements.txt`.
+
+Le job `pytest-guard` (`.github/workflows/CI.yml:236`) installe
+`pytest pytest-cov` et rien d'autre. PyYAML n'arrive donc en CI que par
+l'image `ubuntu-latest`, qui le fournit aujourd'hui. C'est vert par
+coïncidence d'environnement, pas par contrat.
+
+Portée plus large que la CI : `make skills-catalog` et le hook pre-commit
+appellent `gen-skills-catalog.sh`, qui importe `yaml` lui aussi. Sur une
+machine où PyYAML manque, le hook casse tout commit touchant un `SKILL.md`.
+
+Le défaut échoue bruyamment (ImportError), pas silencieusement — d'où le
+classement sous le plancher de sévérité. Mais l'épique « faire marcher IDH
+avec pi *et* Claude Code » est exactement la situation où « l'interpréteur
+ambiant a PyYAML » cesse de tenir : un second runtime, une image différente,
+un conteneur clean-room.
+
+Trouvé par `/gaze` sur la MR #742, rapporté et non ticketé sur le moment
+(plancher de sévérité) ; l'auteur a demandé le dépôt du ticket.
+
+## Relevant files
+
+- `.github/workflows/CI.yml:236` — `pip install pytest pytest-cov`
+- `scripts/gen-skills-catalog.sh` — `import yaml`, appelé par le hook pre-commit
+- `tests/test_skill_frontmatter.py`, `tests/test_skill_descriptions.py` — `import yaml`
+
+## Question ouverte (à trancher avant d'agir)
+
+Où déclarer ? Trois options, non équivalentes :
+
+1. **Ajouter PyYAML à la ligne `pip install` de la CI.** Une ligne, répare la
+   CI, ne répare ni le hook pre-commit ni une machine neuve.
+2. **Un `requirements-dev.txt`** lu par la CI et documenté au setup. Couvre les
+   deux, reste léger, n'impose pas d'outillage de packaging au dépôt.
+3. **Un `pyproject.toml`.** C'est ce que `rules/coding-python.md` suppose
+   (dépendances dev épinglées, `uv sync`), mais IDH n'en a jamais eu et en
+   introduire un touche bien plus que cette dépendance.
+
+Recommandation : (2). (1) laisse le hook cassé, ce qui est le mode de panne le
+plus visible pour l'auteur ; (3) est une décision d'architecture qui dépasse
+ce ticket et mérite d'être prise dans le cadre de l'épique pi, pas en passant.
+
+## Actions
+
+1. Trancher la question ci-dessus.
+2. Déclarer la dépendance à l'endroit retenu.
+3. Câbler la CI dessus.
+
+## Test
+
+Rouge d'abord : un test `adherence` qui affirme que tout module importé par
+`tests/` et `scripts/` hors bibliothèque standard est déclaré à l'endroit
+retenu. Doit échouer sur `yaml` avant correction.
+
+Attention au piège du garde-fou creux : un test qui lit la même liste que
+celle qu'il vérifie passe toujours. Le test doit dériver les imports du code
+source, pas de la déclaration.
+
+## Verification
+
+- [ ] Le test est RED avant la déclaration
+- [ ] La CI installe PyYAML explicitement
+- [ ] `make skills-catalog` documenté comme dépendant de PyYAML, ou la
+      dépendance installée par le chemin de setup
+- [ ] `make check` vert
+
+## Invariants
+
+- Ne pas introduire `uv` ni `pyproject.toml` dans IDH sans décision explicite
+  de l'auteur — voir option (3).
+
+## Exit criteria
+
+- PyYAML est déclaré quelque part que la CI et une machine neuve lisent toutes
+  les deux
+- Un test empêche la prochaine dépendance non déclarée d'entrer en silence
