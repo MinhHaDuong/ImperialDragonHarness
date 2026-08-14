@@ -1,0 +1,96 @@
+%erg 0.1
+Title: Typo fine a la finition, pas a la redaction — promouvoir la regle au harness
+Created: 2026-08-14
+Author: claude
+
+--- log ---
+2026-08-14T00:00Z claude created arbitrage auteur du 2026-08-14 dans polycentric_activity ; regle generale actuellement captive d'une memoire projet
+
+--- body ---
+## Context
+
+Arbitrage de l'auteur, 2026-08-14, rendu dans `polycentric_activity` sur la
+question des espaces insécables en Markdown :
+
+> « La typo fine s'applique à la fin, en fonction du language du texte ET du
+> language de balisage (de préférence qui supporte UTF8). »
+
+La règle est générale — elle vaut pour tout texte, dans tout projet — mais elle
+est aujourd'hui consignée dans la mémoire d'un seul projet
+(`projects/-home-haduong-CNRS-projets-actifs-polycentric-activity/memory/feedback-typo-fine-a-la-finition.md`)
+et en tête d'un manifeste de projet. Aucun autre projet ne la verra.
+
+Ce que l'arbitrage corrige dans le rulebook actuel : `rules/lang/fr.md` demande
+l'espace insécable « en Markdown » sans condition de rendu ni de phase, ce qui
+se lit comme une obligation de rédaction. `rules/pdf-finishing.md` porte déjà
+la doctrine « la finition presuppose un contenu gelé » mais ne couvre que le
+PDF, donc ne s'applique pas au Markdown ni au HTML.
+
+Le coût mesuré de l'ambiguïté (polycentric_activity, 2026-08-14) : 41 notes
+`conception/*.md`, 3 633 sites candidats, **un seul** fichier conforme. Le
+dépôt n'avait pas de `rules-map.toml`, donc l'axe *lang* n'était jamais résolu
+et `lang/fr.md` n'était jamais injecté à l'édition ; le seul fichier conforme
+l'est parce qu'une session a lu la règle dans le dump de début de session et
+l'a appliquée de son propre chef. L'auteur a refusé le rétro-port — « pas de
+sed mécanique qui bouzille tout » — et il avait raison au sens strict : les
+quatre faux positifs du fichier conforme étaient tous du math
+(`$G(i,j) := …$`, `$H_0 : f = 0$`) qu'un `sed` aurait corrompus.
+
+## Relevant files
+- `rules/prose/_all.md` — couche universelle ; destination probable de la règle
+- `rules/lang/fr.md` — la clause « espace insécable … en Markdown » à
+  conditionner par phase et par balisage
+- `rules/lang/en.md` — même traitement pour ses clauses typographiques
+  (guillemets, espaces fines, séparateurs de milliers)
+- `rules/pdf-finishing.md` — porte déjà « la finition presuppose un contenu
+  gelé » ; vérifier qu'on ne duplique pas, généraliser au-delà du PDF
+- `rules/README.md` — index du modèle par axes, à mettre à jour si un fichier
+  naît ou grossit
+- `tickets/0375-consolidate-project-writing-rules-into-harness.erg` — balayage
+  plus large des règles locales aux projets ; **voisin, pas parent** : 0375
+  remonte des fichiers de règles existants, ce ticket-ci promeut une décision
+  neuve. Ne pas bloquer l'un par l'autre.
+
+## Actions
+1. Formuler la règle une fois, au bon niveau : la typographie fine s'applique
+   à la finition d'un livrable **rendu**, jamais à la rédaction, et le choix
+   de la passe croise deux axes — langue du texte et langage de balisage.
+2. Conditionner les clauses typographiques de `lang/fr.md` et `lang/en.md` :
+   LaTeX avec babel ou polyglossia produit les insécables, ne rien taper à la
+   main ; Markdown ou HTML rendu en UTF-8 demande une passe manuelle sur le
+   livrable ; texte non rendu ne demande rien.
+3. Poser le corollaire anti-rétro-port : quand un brouillon alimente un
+   livrable, la passe se fait sur le livrable, jamais rétroactivement sur le
+   brouillon source.
+4. Vérifier que `pdf-finishing.md` ne dit pas déjà la même chose sous une
+   autre forme ; fusionner plutôt que juxtaposer si c'est le cas.
+5. Une fois la règle harness-level, retirer la mémoire projet devenue
+   redondante dans `polycentric_activity` et remplacer le préambule de son
+   `.claude/rules-map.toml` par un renvoi.
+
+## Test
+Contrôle négatif avant de déclarer la règle appliquée : prendre un fichier
+Markdown français non rendu et vérifier qu'aucune règle injectée n'exige d'y
+poser des insécables ; prendre un livrable Markdown rendu et vérifier qu'une
+règle l'exige bien. Si les deux cas donnent la même injection, la règle n'a
+pas été conditionnée, seulement reformulée.
+
+## Verification
+- [ ] La règle apparaît **une fois** dans `rules/`, sans énoncé jumeau
+      survivant ailleurs
+- [ ] Les deux cas du contrôle négatif se distinguent
+- [ ] `rules/README.md` reflète tout fichier nouveau ou modifié
+- [ ] `make check` passe dans le dépôt harness
+
+## Invariants
+- L'injection par fichier (`inject_rule_on_edit.py`) continue de fonctionner
+  et les corps injectés restent courts (note de périmètre de `prose/_all.md`).
+- Les manifestes de projet gardent des mappings chemin → axes uniquement,
+  jamais de texte de règle.
+- Aucun rétro-port typographique n'est déclenché sur un dépôt consommateur par
+  cette promotion.
+
+## Exit criteria
+- [ ] Règle promue au niveau harness et indexée
+- [ ] Mémoire projet redondante retirée dans `polycentric_activity`
+- [ ] Aucun fichier de prose modifié dans un dépôt consommateur
