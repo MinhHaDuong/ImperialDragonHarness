@@ -29,6 +29,19 @@
     git merge-base --is-ancestor "$b" origin/main && git branch -D "$b"
   done
   ```
+  Where `deleteBranchOnMerge` is `false`, the *remote* side accumulates the same debt and needs its own sweep — a repo can reach ten stale remote branches with zero open merge requests (polycentric_activity, 2026-08-14). Same probe, one extra guard:
+  ```bash
+  git fetch --prune
+  for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/); do
+    case "$ref" in origin/*) ;; *) continue ;; esac  # skips the bare `origin` symref
+    b="${ref#origin/}"
+    [ "$b" = main ] && continue
+    [ "$b" = HEAD ] && continue
+    git merge-base --is-ancestor "$ref" origin/main && git push origin --delete "$b"
+  done
+  ```
+  The `case` guard is the load-bearing line: `for-each-ref refs/remotes/origin/` also yields the bare `origin` symref (pointing at `origin/HEAD`), whose `${ref#origin/}` strips nothing, so the unguarded loop runs `git push origin --delete origin`. That fails, and under `set -e` it aborts the sweep on its first iteration — leaving every stale branch in place while the run looks like it did something (bit this loop on first use, 2026-08-14). Delete only after the ancestry probe: `git push --delete` has no merged-check of its own, and a remote branch is the only copy of an unmerged colleague's work.
+
   The old `git branch -vv | awk '/: gone]/'` pipeline silently no-ops under rtk output rewriting; the merge-probe loop keys on exit code, not parsed stdout, so it stays robust under any hook. The `main` and current-branch guards are load-bearing: with the primary checkout detached, `git branch -d main` succeeds (2026-06-10: the unguarded loop deleted local main during a /roar hygiene pass; recovered via `git branch --track main origin/main`). The loop uses `-D` deliberately: `-d` checks merged-into-HEAD, not merged-into-origin/main, so it spuriously refuses — and silently leaves behind — merged branches whose upstream is gone (deleteBranchOnMerge) or when HEAD is a stale detached commit; the `merge-base --is-ancestor` probe has just proven the branch is contained in origin/main, which is exactly the safety `-d` is meant to provide. The healthcheck's branch hygiene check flags stale locals; this is how to resolve them. Outside this probe-guarded loop, do not use `git branch -D` on a branch whose PR you have not verified is merged.
 - **Local main syncs eagerly, by ref — never by assumption.** The primary checkout is shared state and may sit on any branch; `git -C <primary> merge --ff-only origin/main` advances *whatever branch is checked out there* (2026-07-11: it silently advanced another session's feature branch). Sync with `scripts/sync-local-main.sh`: it fast-forwards the default branch by ref when nothing has it checked out (`git fetch origin main:main`), ff-merges in the one worktree that does, and reports instead of touching diverged or conflicting state. It runs automatically at session start (on-start.sh, backgrounded) and after `/merge` confirms a merge landed; run it by hand whenever main currency matters. Never `git branch -f main`, never discard or bare-stash a dirty file to force a sync — back the file up, sync, re-apply the lines on top.
 - **Propose `/roar` after a merge lands.** When a merge request merges, offer the post-task wrap-up (`/roar`) rather than stopping silently — it reflects on the work, saves durable lessons to memory, refreshes project state, and cleans up branches. Propose, don't auto-run: the author decides whether to wrap up or push on to the next task.
