@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-07 -->
+<!-- last-reviewed: 2026-08-14 -->
 # English
 
 Language norms only — document-type conventions live in `doctype/`, universal

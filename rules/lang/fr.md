@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-07 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Français
 
 Normes de langue uniquement — les conventions de type de document vivent dans
