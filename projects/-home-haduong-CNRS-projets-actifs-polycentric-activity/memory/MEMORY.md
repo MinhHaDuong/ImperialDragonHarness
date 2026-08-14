@@ -21,8 +21,12 @@
 - [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, la ligne qui ne dit pas ce que ses sœurs disent est le défaut
 - [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md) — dater un changement avec `git log -S`, jamais conclure « c'est le nouveau » depuis le worktree d'une autre session
 - [Sortie rtk — pipes corrigés en v0.45.0, écart résiduel non isolé](feedback-rtk-sortie-git-non-fiable.md) — le test empirique tranche et non la lecture du code amont ; vérifier par effet, jamais en analysant une sortie
+- [/roar sous-compte depuis le worktree de la branche](feedback-roar-enumerate-merges-head.md) — `enumerate-merges.py` vise HEAD en dur ; détacher sur `origin/main` avant l'étape 2, sinon la MR qu'on vient de merger manque sans que rien ne le signale
 - [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md) — une page citée se lit sur la page, jamais interpolée depuis un `pdftotext` du document entier
 - [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md) — le check de fraîcheur alarmait sur les fichiers les mieux tenus et exemptait les dormants ; ne jamais tamponner « revu » sans lire
+- [Affirmation négative sur une source](feedback-affirmation-negative-sur-source.md) — la phrase qui nie est la plus fragile ; le manuscrit citait les pages mêmes qui la démentaient
+- [`checkout <ref> -- fichier` écrase l'index](feedback-checkout-ref-ecrase-l-index.md) — détruit les modifications stagées sans avertir ; `git show <ref>:<chemin>` pour lire
+- [Chercher le contenu, pas le vocabulaire](feedback-chercher-le-contenu-pas-le-vocabulaire.md) — un grep de mots ne dit pas si une source porte le théorème ; la thèse du papier est que les mots manquent
 - [Pas de centaure inversé](feedback-no-inverted-centaur.md) — ne jamais laisser à l'auteur une corvée de vérification résiduelle
 - [Boucle dictée-arbitrage prose](project-boucle-dictee-arbitrage.md) — circuit registre sur main pour les arbitrages de prose dictés
 - [Pagination manuelle HET §3](project-het-hand-pagination.md) — tout ajout déborde une page ; signaler avec options, arbitrage groupé après la dernière PR, repagination à la finition
