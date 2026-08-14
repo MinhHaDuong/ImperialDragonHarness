@@ -36,8 +36,8 @@ Build the metadata for one or more PDFs, then `inject` items and attachments dir
 
 `~/.claude/scripts/zotero-import.py` exposes:
 
-- `probe <pdf>... [--zotero-db PATH]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches`.
-- `match [--title T] [--doi D] [--year Y] [--pdf P] [--zotero-db PATH]` — refined Zotero lookup using the title *you* extracted. Returns scored hits with attachment info and a `pdf_basename_match` flag.
+- `probe <pdf>... [--zotero-db PATH] [--library L]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches` (same shape as `match` output, fed from the raw pdfinfo title).
+- `match [--title T] [--doi D] [--isbn I] [--arxiv A] [--handle H] [--author FIRST-AUTHOR] [--year Y] [--pdf P] [--library L] [--zotero-db PATH]` — deduplication lookup using the metadata *you* refined. Consults its keys strongest first — file content hash (`storageHash`, needs `--pdf` on disk) → persistent identifier (DOI, ISBN, arXiv, handle) → attachment filename → (first author, year, normalised title) → title Jaccard as last resort — and stops at the first key that fires. Output: `matches` (each hit carries `why` = which key fired, `certainty` = exact/strong/weak, attachment info, `pdf_basename_match`), a `verdict` (`match` / `ambiguous` / `none` / `unchecked`), and `consulted`/`skipped` so "found nothing" and "could not look" stay distinguishable. Scope defaults to the **user library** (the inject destination); a group-library copy does not count as already present — pass `--library all` or a numeric libraryID to widen deliberately.
 - `write --out <ris-path> --entries-json '<json>'` — writes the combined RIS. Each entry accepts: `type` (RIS code, default `JOUR`), `title`, `shortTitle`, `authors` (array; `"First Last"` is auto-converted to `"Last, First"`), `year`, `doi`, `isbn`, `issn`, `url`, `journal` (container title, whatever the type), `volume`, `issue`, `pages` (e.g. `"281-285"`), `numPages`, `publisher`, `place`, `number`, `genre`, `conferenceName`, `edition`, `seriesNumber`, `language`, `abstract`, `pdf`, `attach_pdf` (bool). Any other key is **refused**, not ignored — a misspelt key that silently does nothing is the defect this guard exists to prevent.
   - `number` is the type's identifying number: report number, patent number, standard number.
   - `genre` is the type's kind-of-thing label: `"RAND Paper"` on a report, `"PhD thesis"` on a thesis, `"Working paper"` on a manuscript.
@@ -69,12 +69,12 @@ If the network call fails or returns no useful payload, fall back to the documen
 
 ## Duplicate handling
 
-After refined `match`, classify each PDF:
+After refined `match`, classify each PDF by the `verdict`:
 
-- **No hits** → import normally.
-- **Hit with `pdf_basename_match: true`** → almost certainly already imported. Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata).
-- **Hit with `score ≥ 90`, no attachment** → metadata already in Zotero but PDF not attached. Default: **import** so the PDF lands; warn that this will create a duplicate item the user should merge.
-- **Hit with `60 ≤ score < 90`** → ambiguous. Show the candidate(s) to the user and ask.
+- **`verdict: "none"`** → import normally.
+- **`verdict: "match"`** → already present in the destination library (`why` names the key: `storageHash`, `doi`, `isbn`, `arxiv`, `handle`, `filename`, `creator-year-title`). Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata). Exception: if the hit has **no attachment** and the key was metadata-level (not `storageHash`/`filename`), the PDF itself is missing from Zotero — default: **import** so the PDF lands, warning that this creates a duplicate item the user should merge.
+- **`verdict: "ambiguous"`** (only title similarity fired, or several strong candidates tie) → show the candidate(s) to the user and ask. Never silently match, never silently skip.
+- **`verdict: "unchecked"`** → no key could be consulted (no DB, or no usable metadata). Say so explicitly — this is not a clean negative.
 
 Always remind the user that Zotero's *Duplicate Items* view (left panel) is the place to merge afterwards.
 

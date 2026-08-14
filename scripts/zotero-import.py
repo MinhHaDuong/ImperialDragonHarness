@@ -136,92 +136,345 @@ def zotero_open(db_path: Path) -> sqlite3.Connection:
     return sqlite3.connect(uri, uri=True)
 
 
-def zotero_matches(
-    conn: sqlite3.Connection,
-    *,
-    doi: str | None,
-    title: str | None,
-    year: str | None,
-    pdf_path: Path,
-) -> list[dict[str, Any]]:
-    cur = conn.cursor()
+# --- Deduplication matcher --------------------------------------------------
+# Cascade, strongest key first: attachment content hash -> persistent
+# identifier (DOI, ISBN, arXiv, handle) -> attachment filename ->
+# (first author surname, year, normalised title) -> title Jaccard as last
+# resort. The cascade stops at the first key that fires; each hit reports
+# which key matched ("why") and how much to trust it ("certainty").
+# Scope defaults to the user library because injection writes to users/{uid}:
+# a hit that lives only in a read-only group library must not suppress an
+# injection that is genuinely missing from the destination.
+
+USER_LIBRARY = "user"
+ALL_LIBRARIES = "all"
+_NOT_DELETED = "itemID NOT IN (SELECT itemID FROM deletedItems)"
+
+
+def resolve_library_id(conn: sqlite3.Connection,
+                       library: int | str = USER_LIBRARY) -> int | None:
+    """Map the library selector to a libraryID; None means all libraries."""
+    if library == ALL_LIBRARIES:
+        return None
+    if isinstance(library, int):
+        return library
+    if isinstance(library, str) and library.isdigit():
+        return int(library)
+    row = conn.execute(
+        "SELECT libraryID FROM libraries WHERE type='user'").fetchone()
+    return row[0] if row else 1
+
+
+def first_author_surname(author: str) -> str:
+    return author_to_ris(author).partition(",")[0].strip()
+
+
+def _norm_title(s: str) -> str:
+    """Casing- and punctuation-insensitive form for exact title comparison."""
+    s = s.lower().replace("&", " and ")
+    return " ".join(re.sub(r"[^\w\s]", " ", s, flags=re.UNICODE).split())
+
+
+def _attachment_basename(att_path: str) -> str:
+    """Basename of a Zotero attachment path.
+
+    Formats seen in the wild: 'storage:file.pdf' (imported),
+    'attachments:rel/dir/file.pdf' (linked, relative), absolute paths.
+    """
+    tail = att_path.partition(":")[2] or att_path
+    return tail.rsplit("/", 1)[-1]
+
+
+def _attachment_targets(cur: sqlite3.Cursor, lib_id: int | None, *,
+                        storage_hash: str | None = None,
+                        basename: str | None = None) -> set[int]:
+    """Top-level items owning an attachment that matches by hash or basename.
+
+    A parentless attachment stands for itself. This is a primary candidate
+    source: it must never depend on any metadata score.
+    """
+    sql = ("SELECT a.itemID, a.parentItemID, a.path, a.storageHash "
+           "FROM itemAttachments a JOIN items ai ON ai.itemID = a.itemID "
+           f"WHERE a.{_NOT_DELETED}")
+    params: list[Any] = []
+    if lib_id is not None:
+        sql += " AND ai.libraryID = ?"
+        params.append(lib_id)
+    if storage_hash is not None:
+        sql += " AND LOWER(a.storageHash) = LOWER(?)"
+        params.append(storage_hash)
+    targets: set[int] = set()
+    for att_id, parent, path, _h in cur.execute(sql, params).fetchall():
+        if basename is not None and _attachment_basename(path or "") != basename:
+            continue
+        targets.add(parent or att_id)
+    return targets
+
+
+def _field_lookup_sql(lib_id: int | None) -> tuple[str, str]:
+    """(sql, lib_clause) skeleton for one-field item lookups."""
+    lib_clause = " AND i.libraryID = ?" if lib_id is not None else ""
+    sql = ("SELECT i.itemID, v.value FROM items i "
+           "JOIN itemData d ON d.itemID = i.itemID "
+           "JOIN fields f ON f.fieldID = d.fieldID "
+           "JOIN itemDataValues v ON v.valueID = d.valueID "
+           f"WHERE i.{_NOT_DELETED}" + lib_clause)
+    return sql, lib_clause
+
+
+def _identifier_targets(cur: sqlite3.Cursor, lib_id: int | None, *,
+                        doi: str | None, isbn: str | None,
+                        arxiv: str | None, handle: str | None
+                        ) -> dict[int, list[str]]:
+    """Items matching any persistent identifier, with the keys that fired."""
+    base, _ = _field_lookup_sql(lib_id)
+    lib_params: list[Any] = [lib_id] if lib_id is not None else []
+    hits: dict[int, list[str]] = {}
+
+    def add(item_id: int, key: str) -> None:
+        keys = hits.setdefault(item_id, [])
+        if key not in keys:
+            keys.append(key)
+
     if doi:
-        rows = cur.execute(
-            """
-            SELECT i.itemID,
-                   MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
-                   MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
-                   MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
-            FROM items i
-            JOIN itemData d ON d.itemID = i.itemID
-            JOIN fields f   ON f.fieldID = d.fieldID
-            JOIN itemDataValues v ON v.valueID = d.valueID
-            WHERE i.itemID NOT IN (SELECT itemID FROM deletedItems)
-              AND i.itemID IN (
-                  SELECT d2.itemID FROM itemData d2
-                  JOIN fields f2 ON f2.fieldID = d2.fieldID
-                  JOIN itemDataValues v2 ON v2.valueID = d2.valueID
-                  WHERE f2.fieldName='DOI' AND LOWER(v2.value)=LOWER(?)
-              )
-            GROUP BY i.itemID
-            """,
-            (doi,),
-        ).fetchall()
-    else:
-        sql = """
-            SELECT i.itemID,
-                   MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
-                   MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
-                   MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
-            FROM items i
-            JOIN itemData d ON d.itemID = i.itemID
-            JOIN fields f   ON f.fieldID = d.fieldID
-            JOIN itemDataValues v ON v.valueID = d.valueID
-            LEFT JOIN itemAttachments a ON a.itemID = i.itemID AND a.parentItemID IS NOT NULL
-            WHERE i.itemID NOT IN (SELECT itemID FROM deletedItems)
-              AND a.itemID IS NULL
-        """
-        params: list[Any] = []
-        if year:
-            sql += " AND i.itemID IN (SELECT d3.itemID FROM itemData d3 " \
-                   "JOIN fields f3 ON f3.fieldID=d3.fieldID " \
-                   "JOIN itemDataValues v3 ON v3.valueID=d3.valueID " \
-                   "WHERE f3.fieldName='date' AND v3.value LIKE ?)"
-            params.append(f"%{year}%")
-        sql += " GROUP BY i.itemID"
-        rows = cur.execute(sql, params).fetchall()
+        for iid, _v in cur.execute(
+                base + " AND f.fieldName='DOI' AND LOWER(v.value)=LOWER(?)",
+                lib_params + [doi]).fetchall():
+            add(iid, "doi")
+    if isbn:
+        want = re.sub(r"[^0-9Xx]", "", isbn).upper()
+        for iid, v in cur.execute(
+                base + " AND f.fieldName='ISBN'", lib_params).fetchall():
+            stored = {re.sub(r"[^0-9Xx]", "", t).upper()
+                      for t in (v or "").replace(";", " ").split()}
+            if want in stored:
+                add(iid, "isbn")
+    if arxiv:
+        for iid, _v in cur.execute(
+                base + " AND f.fieldName IN ('extra','url','archiveID','number')"
+                       " AND v.value LIKE ?",
+                lib_params + [f"%{arxiv}%"]).fetchall():
+            add(iid, "arxiv")
+    if handle:
+        bare = handle.split("://")[-1]
+        for iid, _v in cur.execute(
+                base + " AND f.fieldName IN ('url','extra')"
+                       " AND v.value LIKE ?",
+                lib_params + [f"%{bare}%"]).fetchall():
+            add(iid, "handle")
+    return hits
+
+
+def _item_fields(cur: sqlite3.Cursor,
+                 item_ids: list[int]) -> dict[int, dict[str, str | None]]:
+    """title/DOI/date per item, for match reporting and title comparison."""
+    if not item_ids:
+        return {}
+    qmarks = ",".join("?" * len(item_ids))
+    rows = cur.execute(
+        f"""
+        SELECT i.itemID,
+               MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
+               MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
+               MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
+        FROM items i
+        LEFT JOIN itemData d ON d.itemID = i.itemID
+        LEFT JOIN fields f   ON f.fieldID = d.fieldID
+        LEFT JOIN itemDataValues v ON v.valueID = d.valueID
+        WHERE i.itemID IN ({qmarks})
+        GROUP BY i.itemID
+        """,
+        item_ids,
+    ).fetchall()
+    return {iid: {"title": t, "doi": d, "date": dt} for iid, t, d, dt in rows}
+
+
+def _creator_year_title_targets(cur: sqlite3.Cursor, lib_id: int | None,
+                                surname: str, year: str,
+                                title_norm: str) -> set[int]:
+    """Items whose first author, year, and normalised title all agree."""
+    sql = ("SELECT DISTINCT i.itemID FROM items i "
+           "JOIN itemCreators ic ON ic.itemID = i.itemID AND ic.orderIndex = 0 "
+           "JOIN creators c ON c.creatorID = ic.creatorID "
+           f"WHERE i.{_NOT_DELETED} AND LOWER(c.lastName) = LOWER(?)")
+    params: list[Any] = [surname]
+    if lib_id is not None:
+        sql += " AND i.libraryID = ?"
+        params.append(lib_id)
+    candidates = [r[0] for r in cur.execute(sql, params).fetchall()]
+    fields = _item_fields(cur, candidates)
+    return {
+        iid for iid in candidates
+        if (meta := fields.get(iid))
+        and meta["date"] and year in meta["date"]
+        and meta["title"] and _norm_title(meta["title"]) == title_norm
+    }
+
+
+def _title_jaccard_hits(cur: sqlite3.Cursor, lib_id: int | None,
+                        title: str, year: str | None
+                        ) -> list[tuple[int, float]]:
+    """Last-resort fuzzy title overlap over top-level items. A guess."""
+    sql = ("SELECT i.itemID, "
+           "MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title "
+           "FROM items i "
+           "JOIN itemData d ON d.itemID = i.itemID "
+           "JOIN fields f   ON f.fieldID = d.fieldID "
+           "JOIN itemDataValues v ON v.valueID = d.valueID "
+           "LEFT JOIN itemAttachments a ON a.itemID = i.itemID "
+           "AND a.parentItemID IS NOT NULL "
+           f"WHERE i.{_NOT_DELETED} AND a.itemID IS NULL")
+    params: list[Any] = []
+    if lib_id is not None:
+        sql += " AND i.libraryID = ?"
+        params.append(lib_id)
+    if year:
+        sql += (" AND i.itemID IN (SELECT d3.itemID FROM itemData d3 "
+                "JOIN fields f3 ON f3.fieldID=d3.fieldID "
+                "JOIN itemDataValues v3 ON v3.valueID=d3.valueID "
+                "WHERE f3.fieldName='date' AND v3.value LIKE ?)")
+        params.append(f"%{year}%")
+    sql += " GROUP BY i.itemID"
 
     def tok(s: str) -> set[str]:
         cleaned = re.sub(r"[^\w\s]", " ", s.lower(), flags=re.UNICODE)
         return {w for w in cleaned.split() if len(w) > 2}
 
-    title_set = tok(title or "")
-    matches: list[dict[str, Any]] = []
-    for item_id, t, d, dt in rows:
-        score = 0
-        why: list[str] = []
-        if doi and d and doi.lower() == d.lower():
-            score = 100
-            why.append("doi")
-        elif title_set and t:
-            b = tok(t)
-            if b:
-                j = len(title_set & b) / len(title_set | b)
-                if j >= 0.6:
-                    score = int(j * 90)
-                    why.append(f"title~{j:.2f}")
-        if score == 0:
+    title_set = tok(title)
+    hits: list[tuple[int, float]] = []
+    for item_id, t in cur.execute(sql, params).fetchall():
+        b = tok(t or "")
+        if not title_set or not b:
             continue
-        if year and dt and year in dt:
+        j = len(title_set & b) / len(title_set | b)
+        if j >= 0.6:
+            hits.append((item_id, j))
+    return hits
+
+
+def classify_matches(matches: list[dict[str, Any]]) -> str:
+    """'match' when a safe key fired unambiguously; 'ambiguous' when only a
+    guess-level key fired or several strong candidates tie; 'none' otherwise."""
+    if not matches:
+        return "none"
+    best = matches[0]["certainty"]
+    if best == "exact":
+        return "match"
+    if best == "strong":
+        strong = [m for m in matches if m["certainty"] == "strong"]
+        return "match" if len(strong) == 1 else "ambiguous"
+    return "ambiguous"
+
+
+def zotero_matches(
+    conn: sqlite3.Connection,
+    *,
+    doi: str | None = None,
+    title: str | None = None,
+    year: str | None = None,
+    pdf_path: Path | None = None,
+    isbn: str | None = None,
+    arxiv: str | None = None,
+    handle: str | None = None,
+    first_author: str | None = None,
+    library: int | str = USER_LIBRARY,
+) -> dict[str, Any]:
+    """Deduplicate one prospective item against the Zotero library.
+
+    Returns {"matches": [...], "verdict": ..., "consulted": [...],
+    "skipped": [...]}. The verdict is "match" (a safe key fired), "ambiguous"
+    (only a guess fired — neither a silent match nor a silent skip), "none"
+    (keys were consulted, nothing matched), or "unchecked" (no key could be
+    consulted — distinguishable from a clean negative by design).
+    """
+    cur = conn.cursor()
+    lib_id = resolve_library_id(conn, library)
+    consulted: list[str] = []
+    skipped: list[str] = []
+    found: dict[int, dict[str, Any]] = {}
+
+    def settle(stage: str, targets: dict[int, list[str]] | set[int],
+               certainty: str, score: int) -> None:
+        for iid in targets:
+            why = targets[iid] if isinstance(targets, dict) else [stage]
+            found[iid] = {"why": why, "certainty": certainty, "score": score}
+
+    # 1. Attachment content hash — exact, immune to metadata quality.
+    if pdf_path is not None and pdf_path.is_file():
+        consulted.append("storageHash")
+        digest = hashlib.md5(pdf_path.read_bytes()).hexdigest()
+        settle("storageHash",
+               _attachment_targets(cur, lib_id, storage_hash=digest),
+               "exact", 100)
+    else:
+        skipped.append("storageHash: no readable PDF")
+
+    # 2. Persistent identifiers.
+    if found:
+        skipped.append("identifier: settled by a stronger key")
+    elif not (doi or isbn or arxiv or handle):
+        skipped.append("identifier: none provided")
+    else:
+        consulted.append("identifier")
+        settle("identifier",
+               _identifier_targets(cur, lib_id, doi=doi, isbn=isbn,
+                                   arxiv=arxiv, handle=handle),
+               "exact", 100)
+
+    # 3. Attachment filename — still independent of any title score.
+    if found:
+        skipped.append("filename: settled by a stronger key")
+    elif pdf_path is None or not pdf_path.name:
+        skipped.append("filename: no PDF name")
+    else:
+        consulted.append("filename")
+        settle("filename",
+               _attachment_targets(cur, lib_id, basename=pdf_path.name),
+               "strong", 85)
+
+    # 4. (first author surname, year, normalised title).
+    if found:
+        skipped.append("creator-year-title: settled by a stronger key")
+    elif not (first_author and year and title):
+        skipped.append("creator-year-title: needs author, year, and title")
+    else:
+        consulted.append("creator-year-title")
+        settle("creator-year-title",
+               _creator_year_title_targets(cur, lib_id,
+                                           first_author_surname(first_author),
+                                           year, _norm_title(title)),
+               "strong", 80)
+
+    # 5. Title Jaccard — last resort; its hits are guesses, never certainties.
+    if found:
+        skipped.append("title-jaccard: settled by a stronger key")
+    elif not title:
+        skipped.append("title-jaccard: no title")
+    else:
+        consulted.append("title-jaccard")
+        for item_id, j in _title_jaccard_hits(cur, lib_id, title, year):
+            found[item_id] = {"why": [f"title~{j:.2f}"], "certainty": "weak",
+                              "score": int(j * 90)}
+
+    fields = _item_fields(cur, list(found))
+    matches: list[dict[str, Any]] = []
+    for iid, hit in found.items():
+        meta = fields.get(iid, {})
+        score, why = hit["score"], list(hit["why"])
+        date = meta.get("date")
+        # creator-year-title already encodes the year agreement.
+        if year and date and year in date and "creator-year-title" not in why:
             score += 5
             why.append("year")
-        matches.append({"itemID": item_id, "title": t, "doi": d, "date": dt,
-                        "score": score, "why": why})
+        matches.append({"itemID": iid, "title": meta.get("title"),
+                        "doi": meta.get("doi"), "date": date,
+                        "score": score, "why": why,
+                        "certainty": hit["certainty"]})
 
     matches.sort(key=lambda m: -m["score"])
     matches = matches[:5]
 
-    # Decorate top hits with attachment info.
+    # Decorate hits with attachment info.
     for m in matches:
         atts = cur.execute(
             """
@@ -236,13 +489,17 @@ def zotero_matches(
             {"path": p, "contentType": ct, "indexedPages": ip, "totalPages": tp}
             for (p, ct, ip, tp) in atts
         ]
-        m["pdf_basename_match"] = any(
-            (p or "").endswith(pdf_path.name) for (p, *_rest) in atts
+        m["pdf_basename_match"] = bool(pdf_path) and any(
+            _attachment_basename(p or "") == pdf_path.name for (p, *_rest) in atts
         )
-    return matches
+
+    verdict = classify_matches(matches) if consulted else "unchecked"
+    return {"matches": matches, "verdict": verdict,
+            "consulted": consulted, "skipped": skipped}
 
 
-def probe_one(pdf: Path, conn: sqlite3.Connection | None) -> dict[str, Any]:
+def probe_one(pdf: Path, conn: sqlite3.Connection | None,
+              library: int | str = USER_LIBRARY) -> dict[str, Any]:
     info = pdfinfo(pdf)
     try:
         page_count = int(info.get("Pages", "0"))
@@ -277,7 +534,9 @@ def probe_one(pdf: Path, conn: sqlite3.Connection | None) -> dict[str, Any]:
     }
     if conn is not None:
         out["zotero_matches"] = zotero_matches(
-            conn, doi=ids["doi"], title=pdfinfo_title, year=year, pdf_path=pdf,
+            conn, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
+            handle=ids["handle"], title=pdfinfo_title, year=year,
+            pdf_path=pdf, library=library,
         )
     else:
         out["zotero_matches"] = None
@@ -904,7 +1163,7 @@ def cmd_probe(args: argparse.Namespace) -> int:
             out.append({"pdf": str(pdf), "error": "not found"})
             continue
         try:
-            out.append(probe_one(pdf, conn))
+            out.append(probe_one(pdf, conn, args.library))
         except Exception as exc:
             out.append({"pdf": str(pdf), "error": f"{type(exc).__name__}: {exc}"})
     payload = {
@@ -920,19 +1179,26 @@ def cmd_probe(args: argparse.Namespace) -> int:
 def cmd_match(args: argparse.Namespace) -> int:
     db_path = resolve_db_path(args.zotero_db)
     if db_path is None:
-        json.dump({"zotero_db": None, "matches": []}, sys.stdout)
+        # No database: "could not look", never a clean negative.
+        json.dump({"zotero_db": None, "matches": [], "verdict": "unchecked",
+                   "consulted": [], "skipped": ["no Zotero database found"]},
+                  sys.stdout)
         sys.stdout.write("\n")
         return 0
     conn = zotero_open(db_path)
-    pdf_path = Path(args.pdf) if args.pdf else Path("/dev/null")
-    matches = zotero_matches(
+    result = zotero_matches(
         conn,
         doi=args.doi,
+        isbn=args.isbn,
+        arxiv=args.arxiv,
+        handle=args.handle,
         title=args.title,
         year=args.year,
-        pdf_path=pdf_path,
+        first_author=args.author,
+        pdf_path=Path(args.pdf) if args.pdf else None,
+        library=args.library,
     )
-    json.dump({"zotero_db": str(db_path), "matches": matches},
+    json.dump({"zotero_db": str(db_path), **result},
               sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return 0
@@ -962,13 +1228,28 @@ def main() -> int:
     pp = sub.add_parser("probe", help="extract metadata + Zotero dup hits")
     pp.add_argument("pdf", nargs="+")
     pp.add_argument("--zotero-db", help="override Zotero sqlite path")
+    pp.add_argument("--library", default=USER_LIBRARY,
+                    help="dedup scope: 'user' (default, the inject "
+                         "destination), 'all', or a numeric libraryID")
     pp.set_defaults(func=cmd_probe)
 
-    pm = sub.add_parser("match", help="refined Zotero lookup by title/doi/year")
-    pm.add_argument("--title", help="title to fuzzy-match")
+    pm = sub.add_parser("match", help="refined Zotero dedup lookup (cascade: "
+                                      "file hash, identifiers, filename, "
+                                      "author-year-title, title overlap)")
+    pm.add_argument("--title", help="title (exact key with --author/--year; "
+                                    "fuzzy last resort alone)")
     pm.add_argument("--doi", help="DOI to exact-match")
-    pm.add_argument("--year", help="year boost")
-    pm.add_argument("--pdf", help="PDF path (used only for attachment basename check)")
+    pm.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
+    pm.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
+    pm.add_argument("--handle", help="handle URL or hdl.handle.net path")
+    pm.add_argument("--author", help="first author (any format); with --year "
+                                     "and --title forms the pre-DOI book key")
+    pm.add_argument("--year", help="publication year")
+    pm.add_argument("--pdf", help="PDF path: content hash when the file "
+                                  "exists, attachment filename either way")
+    pm.add_argument("--library", default=USER_LIBRARY,
+                    help="dedup scope: 'user' (default, the inject "
+                         "destination), 'all', or a numeric libraryID")
     pm.add_argument("--zotero-db", help="override Zotero sqlite path")
     pm.set_defaults(func=cmd_match)
 
