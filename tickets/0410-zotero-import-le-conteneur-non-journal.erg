@@ -1,0 +1,81 @@
+%erg 0.1
+Title: zotero-import: le conteneur non-journal part en seriesTitle, que Zotero refuse
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T09:00Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`inject` échoue en 400 pour tout `conferencePaper` et tout `bookSection`
+portant un conteneur. Rencontré le 2026-08-14 en important les comparateurs
+on-chain de P5 (projet polycentric_activity, ticket 0051) : trois des cinq
+entrées ont été rejetées d'un coup, deux articles de conférence et un
+chapitre LNCS.
+
+    'seriesTitle' is not a valid field for type 'conferencePaper'
+    'seriesTitle' is not a valid field for type 'bookSection'
+
+Cause : `scripts/zotero-import.py:445` range le champ `journal` dans
+`publicationTitle` si le type est `journalArticle`, et dans `seriesTitle`
+sinon.
+
+```python
+item["publicationTitle" if ty == "journalArticle" else "seriesTitle"] = j
+```
+
+Or `seriesTitle` n'est pas un champ universel de repli. Zotero attend
+`proceedingsTitle` pour `conferencePaper` et `bookTitle` pour `bookSection`,
+et refuse `seriesTitle` sur ces deux types. La branche « sinon » n'est
+correcte que pour `report`.
+
+L'échec est franc et bruyant, donc sans risque de corruption silencieuse.
+Le coût est le travail manuel : contourné en injectant sans le champ, puis
+en posant `proceedingsTitle` / `bookTitle` / `series` + `seriesNumber` par
+`PATCH` sur l'API. Le chemin heureux documenté du skill est cassé pour deux
+types d'objets courants en informatique et en économie, où l'article de
+conférence est la forme normale de publication.
+
+## Relevant files
+- `scripts/zotero-import.py:445` — la ligne fautive
+- `scripts/zotero-import.py:363` — `RIS_TO_ZOTERO_TYPE`, la table des types
+- `skills/zotero-import/SKILL.md` — le chemin heureux, étapes 9 et 10
+
+## Actions
+1. Remplacer le ternaire par une table conteneur-par-type :
+   `journalArticle`, `magazineArticle`, `newspaperArticle` →
+   `publicationTitle` ; `conferencePaper` → `proceedingsTitle` ;
+   `bookSection` → `bookTitle` ; `report` → `seriesTitle`. Type sans
+   créneau de conteneur : verser en `extra` plutôt que d'inventer un champ.
+2. Vérifier la même classe de défaut sur les autres champs à créneau
+   variable — `volume`, `issue`, `pages`, `DOI` — plutôt que de corriger
+   la seule ligne rencontrée. `DOI` a déjà son garde (`extra` hors
+   `journalArticle`) ; `volume` et `issue` sont posés sans condition.
+3. Documenter dans le SKILL.md que `CONF` est le code RIS de l'article de
+   conférence : `CPAPER` n'est pas dans la table et retombe en `document`,
+   ce qui est silencieux et fait perdre le type.
+
+## Test
+Un test de correspondance sur la fonction de mise en forme, sans réseau :
+pour chaque type de la table, construire une entrée portant un conteneur et
+affirmer que la clé produite est celle que Zotero accepte pour ce type.
+Le cas `conferencePaper` doit échouer sur le code actuel — c'est l'étape
+rouge. Le contrôle négatif compte autant : un type sans créneau de conteneur
+ne doit produire aucune clé de conteneur, et son conteneur doit se retrouver
+dans `extra`.
+
+## Verification
+- [ ] Le test de correspondance passe pour les six types de la table
+- [ ] Un `inject --dry-run` sur une entrée `CONF` montre `proceedingsTitle`
+- [ ] Un `inject --dry-run` sur une entrée `CHAP` montre `bookTitle`
+- [ ] Un `inject` réel des deux crée les items sans 400
+
+## Invariants
+- `journalArticle` continue de recevoir `publicationTitle` : c'est le seul
+  chemin qui marchait, il ne doit pas régresser.
+- Le repli RIS reste fonctionnel quand aucune clé en écriture ne résout.
+
+## Exit criteria
+- [ ] Un article de conférence et un chapitre de livre s'injectent avec leur
+      conteneur au bon champ, sans intervention manuelle
