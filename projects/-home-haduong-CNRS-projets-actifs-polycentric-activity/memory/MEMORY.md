@@ -20,7 +20,7 @@
 - [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md) — le candidat « secondaire » d'un ticket peut être le support principal ; tirer tous les candidats avant de rédiger
 - [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, la ligne qui ne dit pas ce que ses sœurs disent est le défaut
 - [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md) — dater un changement avec `git log -S`, jamais conclure « c'est le nouveau » depuis le worktree d'une autre session
-- [Sortie rtk non fiable — corrigé en v0.45.0](feedback-rtk-sortie-git-non-fiable.md) — sous 0.34.3, sorties silencieusement filtrées ou tronquées ; garder rtk à jour, `rtk proxy` comme témoin, et ce qui survit au correctif : vérifier par effet, pas en analysant une sortie
+- [Un `git log` nu perd ses merges sous rtk](feedback-rtk-sortie-git-non-fiable.md) — injection `--no-merges` toujours active en v0.45.0 ; le garde est la forme de sortie écrite dans la commande, donc capturer désarme la sonde ; vérifier par effet
 - [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md) — une page citée se lit sur la page, jamais interpolée depuis un `pdftotext` du document entier
 - [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md) — le check de fraîcheur alarmait sur les fichiers les mieux tenus et exemptait les dormants ; ne jamais tamponner « revu » sans lire
 - [Pas de centaure inversé](feedback-no-inverted-centaur.md) — ne jamais laisser à l'auteur une corvée de vérification résiduelle
