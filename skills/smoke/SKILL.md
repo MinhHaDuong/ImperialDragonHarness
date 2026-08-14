@@ -1,6 +1,6 @@
 ---
 name: smoke
-description: Agent environment smoke test — reports runtime identity, auth method, and harness context.
+description: "Agent environment smoke test — reports runtime identity, auth method, and harness context."
 user-invocable: true
 argument-hint:
 ---

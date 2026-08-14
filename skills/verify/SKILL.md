@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Deprecated — renamed to /gaze. Warns, then delegates to the new name.
+description: "Deprecated — renamed to /gaze. Warns, then delegates to the new name."
 disable-model-invocation: true
 user-invocable: true
 ---

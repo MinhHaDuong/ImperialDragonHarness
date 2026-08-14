@@ -1,6 +1,6 @@
 ---
 name: celebrate
-description: Deprecated — renamed to /roar. Warns, then delegates to the new name.
+description: "Deprecated — renamed to /roar. Warns, then delegates to the new name."
 disable-model-invocation: true
 user-invocable: true
 ---

@@ -1,9 +1,9 @@
 ---
 name: related-work-note
-description: Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL.
+description: "Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: free-form inline — see "Inputs" section
+argument-hint: 'free-form inline — see "Inputs" section'
 ---
 
 # Related-work due-diligence note

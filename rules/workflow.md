@@ -175,6 +175,10 @@ Reading a turn-count fall as proof the rule works is the trap here: p99 navigati
 
 **Discoverability-first descriptions**: The first sentence of a SKILL.md `description:` states the plain, unthemed function in the keywords a naive user would search ("Audit test-suite quality…", "Review what the overnight runs did…"). Draconic theming, lore, and harness jargon come after the first sentence. Skill *names* may stay themed — the description's opening sentence is what a user scans to find them. Enforced by `tests/test_skill_descriptions.py`.
 
+**Always quote the free-text frontmatter**: `description:` and `argument-hint:` are wrapped in `"`, or in `'` when the value already contains a double quote. Both carry prose and usage strings, where a colon, a leading `[`, or a quote is a natural thing to write and a YAML special character. `description: Supervise a run: keep the queue moving` is a parse error; `argument-hint: [pr-number]` parses as a list, not as the hint you wrote. Quoting unconditionally makes the frontmatter valid by construction, so nobody has to remember which characters YAML treats specially.
+
+A lenient consumer will not cover for it: Claude Code's own loader displayed four unparseable `SKILL.md` files for months, and the harness now targets more than one runtime. `tests/test_skill_frontmatter.py` parses every frontmatter and asserts both fields come out as strings. Write new consumers the same way — a regex plus `.strip('"')` returns the same "all clear" whether the document is valid or broken (ticket 0515).
+
 # Autonomous Action Rules
 
 **Batch the decisions, then run to the end.** The author's attention is the

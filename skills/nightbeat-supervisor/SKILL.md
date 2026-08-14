@@ -1,6 +1,6 @@
 ---
 name: nightbeat-supervisor
-description: Supervise an overnight autonomous work run: keep the authorized ticket queue moving, integrate verified work, diagnose and repair failures, and deliver a self-contained morning report.
+description: "Supervise an overnight autonomous work run: keep the authorized ticket queue moving, integrate verified work, diagnose and repair failures, and deliver a self-contained morning report."
 user-invocable: true
 argument-hint: "[--since ISO-TS]"
 ---

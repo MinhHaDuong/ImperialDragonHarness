@@ -1,6 +1,6 @@
 ---
 name: check-readiness
-description: Alias of /scry — multi-repo pre-flight readiness check and interactive triage.
+description: "Alias of /scry — multi-repo pre-flight readiness check and interactive triage."
 disable-model-invocation: true
 user-invocable: true
 ---

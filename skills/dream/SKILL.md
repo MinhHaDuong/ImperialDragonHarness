@@ -1,6 +1,6 @@
 ---
 name: dream
-description: Autonomous nightly memory consolidation for one project.
+description: "Autonomous nightly memory consolidation for one project."
 user-invocable: true
 ---
 

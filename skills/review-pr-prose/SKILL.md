@@ -1,6 +1,6 @@
 ---
 name: review-pr-prose
-description: Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review.
+description: "Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] (defaults to the current branch's open merge request)"

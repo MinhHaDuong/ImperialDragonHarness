@@ -1,6 +1,6 @@
 ---
 name: housekeeping
-description: Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs.
+description: "Alias of /molt — repo housekeeping with git sync, healthcheck, and eager fix-now repairs."
 disable-model-invocation: true
 user-invocable: true
 ---

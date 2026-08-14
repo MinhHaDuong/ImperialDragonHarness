@@ -1,9 +1,9 @@
 ---
 name: gaze
-description: Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller.
+description: "Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <pr-number>
+argument-hint: "<pr-number>"
 context: fork
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
