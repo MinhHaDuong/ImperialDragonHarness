@@ -88,3 +88,8 @@
 - [Run the chain, reading code is not enough](feedback_run_the_chain_reveals_what_reading_code_cannot.md) — an argmax over the wrong table range and a vars target missing prerequisites both only surfaced on the first real build (0570)
 - [Prose coupling hides in four forms](feedback_prose_coupling_multiple_detection_paths.md) — grep for quoted numbers misses all of them; a failing guard, a hardcoded plot threshold, a freeze claim, a Makefile pairing each caught one (0641)
 - [Shared worktree during concurrent merge](feedback_shared_worktree_concurrent_merge_collision.md) — a peer session's erg-pr-merge cherry-pick advanced the branch tip under a local commit; recovered by cherry-picking onto the pushed tip from a throwaway worktree (0565)
+- [Letters get a claim-verification pass](feedback_letters_get_claim_verification.md) — correspondence to editors and referees is adversarially checked before sign-off, same as a manuscript
+- [Next deliverable starts in LaTeX](feedback_prefer_latex_over_qmd.md) — author decision 2026-07-29: plain LaTeX, not Quarto/QMD
+- [Captioned pipe tables cannot float](feedback_quarto_pipe_tables_cannot_float.md) — they render as longtables that split across pages; `tbl-pos` on a caption is ignored, only raw-latex-tabular-in-div floats
+- [A pipe masks the command's exit code](feedback_pipe_masks_exit_code.md) — `cmd | tail` reports the pipe's status, so a failed build notifies "completed (exit 0)"
+- [REALF release rules](reference_realf_release_rules.md) — the author's business rules for submitting, revising and releasing research outputs (minh.haduong.com/realf.html)
