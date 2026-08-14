@@ -46,7 +46,10 @@ projects. Zotero is the system of record; git holds neither the sources nor the
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
   item type, scraped metadata, file attachment), and **purge staging on
   archival after publication** — Zotero retains everything.
-- **Reports carry a page count** (`numPages`) in their Zotero metadata.
+- **Reports carry a page count** — pass `numPages` on the entry. The Zotero
+  `report` type has no `numPages` field, so `zotero-import` files it in Extra
+  as the CSL variable `number-of-pages`; that is the correct home, not a
+  fallback.
 
 Why: git repos stay lean (no binary bloat, no report PDFs in history) and
 durable provenance is centralized in Zotero, where it persists and syncs.
