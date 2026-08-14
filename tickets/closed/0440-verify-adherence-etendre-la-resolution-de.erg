@@ -2,11 +2,13 @@
 Title: verify-adherence: étendre la résolution de symboles du code à la prose
 Created: 2026-08-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #726
 
 --- log ---
 2026-08-14T18:00Z claude-exec created — remonté depuis polycentric_activity 0091
 2026-08-14T21:30Z claude-exec note Tour de relecture MR #726 : deux blocants corrigés — le disjoncteur « pas de scripts/ » sautait toute la phase 1.0 donc (c) aussi, dans les dépôts manuscrit-seul qui sont sa cible ; et (c) n'énumérait que la syntaxe LaTeX, inerte sur un dépôt Quarto qu'il prétend couvrir.
 
+2026-08-14T12:52Z Minh Ha-Duong closed — autoclosed — PR #726
 --- body ---
 ## Context
 Le harnais tient déjà qu'un symbole non résolu est un échec bloquant.
