@@ -73,7 +73,7 @@ than re-deriving their rules:
   integration whose diff deletes ticket files.
 - `$HARNESS_DIR/scripts/supervisor-budget.py` — the convergence rule for
   raising a budget or a timeout, including when to stop raising and file a
-  ticket instead. **Not yet written; the cut implies it.**
+  ticket instead. Ask it; do not re-derive the thresholds.
 
 If you find yourself about to invent a threshold, a retry count, or a commit
 convention, it belongs in one of those, not in your reasoning.

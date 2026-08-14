@@ -100,12 +100,22 @@ def test_skill_md_has_push_or_restore_contract():
 
 
 def test_supervisor_probes_primary_checkout():
-    """Ticket 0247: nightbeat-supervisor must probe the primary checkout each
-    cycle so a stranded checkout is detected within one cycle."""
-    content = (
-        DREAM_DIR.parent / "nightbeat-supervisor" / "SKILL.md"
+    """Ticket 0247: a stranded checkout must be detected within one cycle.
+
+    Asserted against the survey helper rather than the skill prose. The probe
+    used to be a step an executor was told to run, which held only for as long
+    as the executor followed the procedure; in the helper it runs whatever the
+    executor decides to do.
+    """
+    survey = (
+        DREAM_DIR.parent.parent / "scripts" / "nightbeat-supervisor-survey.py"
     ).read_text()
-    assert "check-primary-checkout" in content, "supervisor does not run the checkout probe"
+    assert "check-primary-checkout" in survey, (
+        "survey helper does not run the checkout probe"
+    )
+    assert "sys.exit" in survey.split("_check_primary_checkout")[-1][:800], (
+        "checkout probe failure does not stop the survey"
+    )
 
 
 def test_skill_md_pr_body_sourced_from_decision_table():

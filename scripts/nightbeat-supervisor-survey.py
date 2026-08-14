@@ -233,6 +233,28 @@ def _find_open_pr(project_path: Path, ticket_id: str, github_repo: str) -> dict 
     return None
 
 
+def _check_primary_checkout() -> None:
+    """Refuse to survey from a stranded primary checkout (ticket 0247).
+
+    A run that died mid-flight can park the harness checkout off main with a
+    dirty tree, which blocks the daily-pull timer and every later cycle's
+    dirty-tree pre-flight. Detecting it here rather than in the skill prose
+    means the invariant holds whatever the executor chooses to do.
+    """
+    probe = HARNESS_DIR / "scripts" / "check-primary-checkout.sh"
+    if not probe.exists():
+        return
+    result = subprocess.run(
+        [str(probe), str(HARNESS_DIR)], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        sys.exit(
+            f"ERROR: {result.stdout.strip() or 'stranded primary checkout'}. "
+            f"Restore the checkout to its default branch before surveying; "
+            f"cycles keep failing until it is clean."
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -245,6 +267,8 @@ def main() -> None:
     args = parser.parse_args()
 
     projects = _existing_projects(_load_projects())
+
+    _check_primary_checkout()
 
     for proj in projects:
         canonical = proj["path"] / "nightbeat-supervisor-journal.jsonl"
