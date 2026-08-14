@@ -28,9 +28,16 @@ trap 'rm -rf "$WORK"' EXIT
 
 # Load bash-env.sh in a subprocess with $HOME=<home> and PWD=<projdir>, then
 # print the value of environment variable <var> ("" if unset). stderr silenced.
+#
+# `env -i` is load-bearing, not tidiness (ticket 0359). The controlled HOME keeps
+# the real ~/.claude/.env out, but a plain `HOME=… bash -c` still inherits the
+# caller's environment — including the BASH_ENV that re-runs the real loader at
+# child startup, which would make (3) measure the live keystore rather than the
+# size cap. A known-empty base env is the only way an inherited value cannot mask
+# the behaviour under test (rules/coding-bash.md).
 _load_var() {
     local home="$1" projdir="$2" var="$3"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         n="$3"
@@ -43,7 +50,7 @@ _load_var() {
 # "END" on success, "" if the source aborted. stderr silenced.
 _load_sete_reaches_end() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         set -e
         cd "$1" || exit 1
         source "$2"
@@ -54,7 +61,7 @@ _load_sete_reaches_end() {
 # Load bash-env.sh as above but return only the exit code (0 = no shell error).
 _load_rc() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" >/dev/null 2>&1
@@ -64,7 +71,7 @@ _load_rc() {
 # Load bash-env.sh and capture only its stderr (for warning assertions).
 _load_stderr() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
