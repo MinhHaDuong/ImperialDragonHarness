@@ -100,8 +100,9 @@ This exists because the failure it reports is the one that hid. During a live
 `/gaze` the OpenRouter seat failed **open** on a missing credential: the WARN
 went to stderr, `harvest` printed nothing, exited 0, and the panel read as
 complete. An empty harvest that cannot distinguish "clean" from "nothing ran"
-is not a check — the same shape as the `gh pr list --json files` trap in
-`tickets/AGENTS.md`.
+is not a check — the same shape as the merge-request-listing trap recorded in
+`tickets/AGENTS.md`, where a scan that could not look returned the same empty
+result as a scan that found nothing.
 
 ### `/reviewers scorecard <pr> <seat> <verdict-summary>`
 

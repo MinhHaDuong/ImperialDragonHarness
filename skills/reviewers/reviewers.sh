@@ -277,7 +277,7 @@ _keystore_file_for() {  # $1 validated variable name
 }
 
 # Read ONE variable out of a trusted provider file. Same isolation idiom as
-# scripts/bash-env.sh's selection path, for the same two reasons: `env -i` drops
+# ~/.claude/scripts/bash-env.sh's selection path, for the same reasons: `env -i` drops
 # BASH_ENV (so this `bash -c` cannot re-source the harness env script and
 # fork-bomb) and clears the environment (so the lookup can only resolve a name
 # the provider file itself defines — no ambient variable is smuggled in). `set
