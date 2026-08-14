@@ -1,8 +1,8 @@
 ---
 name: release
-description: Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step.
+description: "Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step."
 user-invocable: true
-argument-hint: [new-tag-name]
+argument-hint: "[new-tag-name]"
 ---
 
 # Release $ARGUMENTS

@@ -1,6 +1,6 @@
 ---
 name: memory
-description: Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria.
+description: "Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria."
 disable-model-invocation: false
 user-invocable: true
 ---

@@ -1,6 +1,6 @@
 ---
 name: skill-doctor
-description: Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes.
+description: "Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes."
 user-invocable: true
 argument-hint: "[--days N]"
 model: sonnet

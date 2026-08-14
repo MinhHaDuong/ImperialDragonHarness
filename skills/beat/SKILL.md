@@ -1,6 +1,6 @@
 ---
 name: beat
-description: Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid).
+description: "Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid)."
 user-invocable: true
 argument-hint:
 ---

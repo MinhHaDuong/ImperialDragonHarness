@@ -1,9 +1,9 @@
 ---
 name: zotero-import
-description: Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and inject items with their PDFs through the Zotero Web API (RIS file as fallback).
+description: "Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <pdf>...
+argument-hint: "<pdf>..."
 ---
 
 # Zotero import

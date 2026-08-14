@@ -2,7 +2,7 @@
 name: molt
 model: sonnet
 effort: low
-description: Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps.
+description: "Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
 user-invocable: true
 argument-hint:
 ---

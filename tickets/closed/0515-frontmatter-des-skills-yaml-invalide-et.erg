@@ -1,0 +1,109 @@
+%erg 0.1
+Title: Frontmatter des skills YAML invalide, et aucun garde-fou ne le voit
+Created: 2026-08-14
+Author: Minh Ha-Duong
+Closed: frontmatter YAML valide + garde-fou adherence, PR #742
+
+--- log ---
+2026-08-14T00:00Z Minh Ha-Duong created
+
+2026-08-14T17:59Z Minh Ha-Duong closed — frontmatter YAML valide + garde-fou adherence, PR #742
+--- body ---
+## Context
+
+Quatre `SKILL.md` ne se parsent pas en YAML. Vérifié sur `HEAD` (bc79854)
+avec `yaml.safe_load` sur le frontmatter :
+
+| skill | erreur | cause |
+|---|---|---|
+| `nightbeat-report` | mapping values are not allowed here | `:` + espace dans un scalaire `description:` non quoté |
+| `nightbeat-supervisor` | idem | idem |
+| `raid` | idem | idem, plus `argument-hint: [ticket-ids or "all open"]` |
+| `merge` | while parsing a block mapping | `argument-hint: [-C path] [pr-number]` — séquence de flux invalide |
+
+Un cinquième, `release`, se parse mais rend `argument-hint: [new-tag-name]`
+comme une **liste**, pas une chaîne.
+
+Rien dans le dépôt ne l'a vu, parce que rien ne parse ce frontmatter en YAML :
+
+- `tests/test_skill_descriptions.py:31` extrait la description par regex puis
+  `.strip('"')` — tolère les deux formes ;
+- `scripts/gen-skills-catalog.sh:44` fait exactement pareil.
+
+Le loader de Claude Code est également indulgent (les quatre skills
+s'affichent normalement dans le catalogue de session), donc le défaut est
+**latent** — aujourd'hui. L'épique « faire marcher IDH avec pi *et* Claude
+Code » ajoute un second consommateur dont le parseur est inconnu : la
+tolérance d'un seul harnais n'est plus une garantie.
+
+Deuxième conséquence, celle-là déjà active : `gen-skills-catalog.sh` étant à
+base de regex, il recopie les guillemets dans le tableau du README. Quoter une
+description rend donc `make check-skills-drift` rouge et
+`make skills-catalog` émet `| /raid | "Work through…" |`. Le correctif de
+frontmatter est inapplicable tant que le générateur n'est pas réparé.
+
+## Décision (arbitrée par l'auteur, 2026-08-14)
+
+Option retenue : balayage complet **et** contrainte mécanique.
+
+L'invariant qui porte est « le frontmatter se parse en YAML, et
+`description` / `argument-hint` en ressortent comme des chaînes ». La règle
+« toujours quoter » est plus faible en tant que garde-fou (`description: "il
+a dit "non""` est quoté et cassé) mais c'est la bonne habitude de rédaction :
+elle rend l'invariant vrai par construction, sans demander à l'auteur de
+connaître les caractères spéciaux de YAML. On garde donc les deux — le parse
+comme garde-fou, le quotage comme convention uniforme, avec un message
+d'erreur lisible.
+
+## Relevant files
+
+- `skills/*/SKILL.md` — 40 descriptions et 17 `argument-hint` non quotés sur 42 skills
+- `scripts/gen-skills-catalog.sh` — extraction par regex à remplacer par un parse YAML
+- `tests/test_skill_descriptions.py` — extraction par regex, même correctif
+- `README.md` — catalogue régénéré
+- `rules/workflow.md` § Writing Skills and Hooks — où consigner la convention
+
+## Actions
+
+1. Réparer `gen-skills-catalog.sh` : parser le frontmatter en YAML au lieu de
+   la regex. (Au passage, `SKILLS_DIR` y est mort — le heredoc python ne
+   reçoit pas d'argv, `sys.argv[1]` retombe toujours sur `./skills`.)
+2. Basculer `tests/test_skill_descriptions.py` sur le même parse.
+3. Quoter `description` et `argument-hint` dans les 42 `SKILL.md`.
+4. Régénérer `README.md`.
+5. Consigner la convention dans `rules/workflow.md`.
+
+## Test
+
+Rouge d'abord : `tests/test_skill_frontmatter.py`, marqué `adherence`, qui
+`yaml.safe_load` le frontmatter de chaque `skills/*/SKILL.md` et affirme
+(a) qu'il se parse en dictionnaire, (b) que `description` et `argument-hint`
+sont des chaînes, (c) que leur texte brut est quoté. Doit échouer sur les
+cinq fichiers ci-dessus avant correction.
+
+## Verification
+
+- [ ] Le test neuf est RED sur `HEAD` avant les correctifs, VERT après
+- [ ] `make skills-catalog` après le correctif du générateur, avant le
+      quotage, ne change pas `README.md` (preuve que le parse YAML reproduit
+      la sortie regex sur l'existant)
+- [ ] `README.md` régénéré ne contient aucun guillemet parasite dans le tableau
+- [ ] `make check-skills-drift` vert
+- [ ] `make check` vert
+
+## Invariants
+
+- Le **texte** des descriptions ne change pas — seul le quotage change. Le
+  tableau du README doit rester identique mot pour mot au diff près des
+  guillemets qui n'y entrent pas.
+- `test_skill_descriptions.py` continue d'appliquer la règle de
+  découvrabilité (première phrase non thématisée) à l'identique.
+
+## Exit criteria
+
+- Les 42 `SKILL.md` se parsent en YAML, `description` et `argument-hint` sont
+  des chaînes quotées
+- Un test `adherence` interdit la récidive
+- Le générateur de catalogue et le test de descriptions parsent le YAML au
+  lieu de le deviner
+- `rules/workflow.md` porte la convention

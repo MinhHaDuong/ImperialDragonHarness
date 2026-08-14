@@ -1,6 +1,6 @@
 ---
 name: reviewers
-description: Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats.
+description: "Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<subcommand> [args]"
