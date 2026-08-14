@@ -7,7 +7,10 @@ submission, preprint deposit (HAL, Zenodo), personal page, report handoff.
 **Keyword: « finition ».** This pass runs when the author asks for it, and the
 agent *proposes* it when a deliverable enters finalization (submission, deposit,
 upload imminent). Never during drafts: while content moves, pagination polish
-is churn — the finishing pass presupposes frozen content.
+is churn. The frozen-content precondition is the general finishing doctrine
+(`prose/_all.md`, with the per-language typography in `typo/<lang>.md`, injected
+on any rendered deliverable); this file is its PDF case — pagination, floats,
+glyphs.
 
 ## Automate first, paginate by hand never
 

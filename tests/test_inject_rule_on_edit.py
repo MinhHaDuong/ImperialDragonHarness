@@ -226,6 +226,134 @@ def test_candidate_prefers_convention_over_alias(tmp_path):
     assert [f.name for f in files] == ["python.md"]  # canonical wins, alias skipped
 
 
+# --- typo axis: fine typography applies to a RENDERED deliverable only -------
+# Ticket 0425. The author's arbitrage: fine typography is a finishing pass on a
+# rendered deliverable, crossing two axes — the language of the text and the
+# markup language. A draft that nothing renders owes it nothing. The tests below
+# are the negative control: if the draft and the deliverable resolve the same
+# axes, the rule was reworded rather than conditioned.
+
+def _render_repo(tmp_path):
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "rules-map.toml").write_text(
+        'default_lang = "fr"\n\n[[map]]\nglob = "livrables/**/*.md"\nrender = true\n'
+    )
+    (tmp_path / "conception").mkdir()
+    (tmp_path / "livrables").mkdir()
+    return tmp_path
+
+
+def test_unrendered_markdown_draft_has_no_typo_axis(tmp_path):
+    repo = _render_repo(tmp_path)
+    f = repo / "conception" / "note.md"
+    f.write_text("brouillon")
+    axes = inj.resolve_axes(str(f))
+    assert axes["lang"] == "fr"  # language norms still apply while drafting
+    assert "typo" not in axes  # fine typography does not
+
+
+def test_rendered_markdown_deliverable_gets_typo_axis(tmp_path):
+    repo = _render_repo(tmp_path)
+    f = repo / "livrables" / "rapport.md"
+    f.write_text("livrable")
+    assert inj.resolve_axes(str(f))["typo"] == "fr"
+
+
+def test_tex_is_rendered_by_construction(tmp_path):
+    # LaTeX/Quarto sources exist to be compiled: no manifest flag needed.
+    repo = _render_repo(tmp_path)
+    f = repo / "conception" / "main.tex"
+    f.write_text("\\documentclass{report}\n")
+    assert inj.resolve_axes(str(f))["typo"] == "fr"
+
+
+def test_manifest_render_false_overrides_format_default(tmp_path):
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "rules-map.toml").write_text(
+        'default_lang = "fr"\n\n[[map]]\nglob = "frag/**/*.tex"\nrender = false\n'
+    )
+    (tmp_path / "frag").mkdir()
+    f = tmp_path / "frag" / "part.tex"
+    f.write_text("\\section{x}\n")
+    assert "typo" not in inj.resolve_axes(str(f))
+
+
+def test_typo_axis_needs_a_resolved_lang(tmp_path):
+    # Typography is language-specific: no lang, nothing to inject.
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "rules-map.toml").write_text(
+        '[[map]]\nglob = "*.md"\nrender = true\n'
+    )
+    f = tmp_path / "x.md"
+    f.write_text("x")
+    assert "typo" not in inj.resolve_axes(str(f))
+
+
+def test_candidate_rule_files_places_typo_after_lang(tmp_path):
+    rules = tmp_path
+    for d in ("lang", "typo", "prose"):
+        (rules / d).mkdir()
+    (rules / "lang" / "fr.md").write_text("lang body")
+    (rules / "typo" / "fr.md").write_text("typo body")
+    (rules / "prose" / "_all.md").write_text("prose body")
+    files = inj.candidate_rule_files(
+        {"format": "md", "lang": "fr", "typo": "fr", "prose": "_all"}, rules
+    )
+    assert [f"{f.parent.name}/{f.name}" for f in files] == [
+        "lang/fr.md",
+        "typo/fr.md",
+        "prose/_all.md",
+    ]
+
+
+@pytest.mark.integration
+def test_negative_control_insecable_demanded_only_when_rendered(tmp_path):
+    """End-to-end against the REAL rulebook (ticket 0425's Test section).
+
+    A French Markdown draft must draw no injected rule demanding non-breaking
+    spaces; a French Markdown deliverable declared rendered must draw one.
+    Identical injections here would mean the rule was reworded, not conditioned.
+    """
+    real_rules = Path(__file__).resolve().parent.parent / "rules"
+    repo = _render_repo(tmp_path)
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+
+    def context_for(path, session_id):
+        payload = json.dumps(
+            {"session_id": session_id, "tool_input": {"file_path": str(path)}}
+        )
+        res = subprocess.run(
+            ["python3", str(_HOOK), "--rules-dir", str(real_rules)],
+            input=payload, capture_output=True, text=True,
+            env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+        )
+        assert res.returncode == 0
+        if not res.stdout.strip():
+            return ""
+        return json.loads(res.stdout)["hookSpecificOutput"]["additionalContext"]
+
+    draft = repo / "conception" / "note.md"
+    draft.write_text("brouillon\n")
+    deliverable = repo / "livrables" / "rapport.md"
+    deliverable.write_text("livrable\n")
+
+    draft_ctx = context_for(draft, "sess-draft")
+    deliverable_ctx = context_for(deliverable, "sess-deliverable")
+
+    assert draft_ctx, "a French prose draft still draws its prose + lang rules"
+    assert "insécable" not in draft_ctx, (
+        "an unrendered draft must draw no rule demanding non-breaking spaces"
+    )
+    assert "insécable" in deliverable_ctx, (
+        "a rendered French deliverable must draw the fine-typography rule"
+    )
+    # The injected-body header, not a mere mention: lang/fr.md legitimately
+    # points at typo/fr.md without injecting it.
+    header = "----- typo/fr.md -----"
+    assert header in deliverable_ctx and header not in draft_ctx
+
+
 @pytest.mark.integration
 def test_hook_truncates_oversized_context(tmp_path):
     rules = tmp_path / "rules"

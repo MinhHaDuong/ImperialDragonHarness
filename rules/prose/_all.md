@@ -44,11 +44,13 @@ These are the tics that mark text as machine-written. Cut them.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 - **Cutting to a word budget? Remove whole before you condense** — see `cutting.md`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
 - **An unresolved `\cite` or `\ref` is a link error, not a warning** — the toolchain renders a placeholder and exits 0; gate the build on it (see `manuscript-build.md`).
+- **Fine typography is a finishing pass on the rendered deliverable** — never a drafting obligation, never retro-ported onto the draft source (`typo/<lang>.md`, injected there only; author arbitrage 2026-08-14).
 - **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
 
 ## Scope note
 
 This is a seed. Grow it deliberately — add a guard only when you have seen the
 defect in real drafts, and keep each entry one line so the injected body stays
-small. Document-type conventions (techreport, slides, book) and language norms
-(fr, en) live in `rules/doctype/` and `rules/lang/`, not here.
+small. Document-type conventions (techreport, slides, book), language norms
+(fr, en) and the fine typography of a rendered deliverable live in
+`rules/doctype/`, `rules/lang/` and `rules/typo/`, not here.

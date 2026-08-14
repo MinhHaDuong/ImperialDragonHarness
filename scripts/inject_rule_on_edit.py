@@ -5,7 +5,7 @@ edit of a file along each axis, once per session.
 The rulebook in ``rules/`` is shared across every project. The session-start
 hook injects only the rules INDEX (pointers); bodies are read on demand. This
 hook tightens that for files with style rules: it resolves the edited file along
-four orthogonal axes and injects the body of every matching global rule that
+five orthogonal axes and injects the body of every matching global rule that
 exists, then stays silent for the rest of the session (deduped per
 ``session_id`` + rule file).
 
@@ -15,6 +15,11 @@ Axes (composed per file):
             overridable by a project manifest. e.g. techreport/article/slides.
   lang    — not mechanically detectable; from the project manifest, else the
             manifest's default_lang. e.g. fr/en.
+  typo    — the lang value, but only for a RENDERED deliverable: fine typography
+            is a finishing pass on what gets rendered, never a drafting
+            obligation, so an unrendered draft resolves no typo axis at all.
+            .tex/.qmd are rendered by construction; .md/.txt need a manifest
+            ``render = true`` (and ``render = false`` opts a fragment out).
   prose   — implied for prose formats (tex/qmd/md/txt); injects prose/_all.md
             (LLMism guards, Elements of Style) regardless of doctype/lang.
 
@@ -31,6 +36,9 @@ Project manifest (optional): ``<repo>/.claude/rules-map.toml`` ::
     glob = "slides/manuscript/**/*.tex"
     doctype = "techreport"
     lang = "fr"
+    [[map]]
+    glob = "livrables/**/*.md"
+    render = true
 
 Output: JSON on stdout with ``hookSpecificOutput.additionalContext`` (exit 0).
 Claude surfaces it in a system reminder before the edit runs. Framing is
@@ -58,6 +66,11 @@ EXT_FORMAT = {
     ".txt": "txt",
 }
 PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
+
+# Formats that exist to be compiled: a .tex or .qmd source is a rendered
+# deliverable by construction, so the typo axis resolves with no manifest flag.
+# A .md/.txt may be either a draft or a deliverable — only the project knows.
+RENDERED_FORMATS = {"tex", "qmd"}
 
 # Keep injected context under the platform's 10,000-char additionalContext cap.
 MAX_CONTEXT = 9500
@@ -150,11 +163,12 @@ def find_manifest(path: str) -> Path | None:
 
 
 def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
-    """Resolve doctype/lang overrides + default_lang from the project manifest.
+    """Resolve doctype/lang/render overrides + default_lang from the manifest.
 
     The first ``[[map]]`` whose glob matches the file (relative to the dir that
-    holds ``.claude/``) supplies its doctype/lang. ``default_lang`` is the
-    fallback when no entry sets lang.
+    holds ``.claude/``) supplies its doctype/lang/render. ``default_lang`` is the
+    fallback when no entry sets lang. ``render`` is a bool in the TOML, returned
+    here as ``"true"``/``"false"`` so every axis value stays a string.
     """
     try:
         data = tomllib.loads(manifest.read_text(encoding="utf-8"))
@@ -179,6 +193,8 @@ def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
             for axis in ("doctype", "lang"):
                 if isinstance(entry.get(axis), str):
                     out[axis] = entry[axis]
+            if isinstance(entry.get("render"), bool):
+                out["render"] = "true" if entry["render"] else "false"
             break  # first match wins
     return out
 
@@ -187,7 +203,8 @@ def resolve_axes(path: str) -> dict[str, str]:
     """Compose all axis values for the edited file.
 
     format from extension; doctype from markup sniff then manifest override;
-    lang from manifest (per-glob, else default_lang); prose implied by format.
+    lang from manifest (per-glob, else default_lang); prose implied by format;
+    typo from lang, gated on the file being a rendered deliverable.
     """
     fmt = format_for(path)
     if fmt is None:
@@ -206,6 +223,15 @@ def resolve_axes(path: str) -> dict[str, str]:
         axes["doctype"] = doctype
     if overrides.get("lang"):
         axes["lang"] = overrides["lang"]
+
+    # Fine typography is a finishing pass on a rendered deliverable, and it
+    # crosses two axes — the language of the text and the markup language — so
+    # the typo axis exists only when both a lang and a rendering are known.
+    rendered = fmt in RENDERED_FORMATS
+    if overrides.get("render") in ("true", "false"):
+        rendered = overrides["render"] == "true"
+    if rendered and axes.get("lang"):
+        axes["typo"] = axes["lang"]
     return axes
 
 
@@ -216,7 +242,7 @@ def candidate_rule_files(axes: dict[str, str], rules_dir: Path) -> list[Path]:
     (``rules/coding-<value>.md``) so the flat code rules need no rename.
     """
     files: list[Path] = []
-    for axis in ("format", "doctype", "lang", "prose"):
+    for axis in ("format", "doctype", "lang", "typo", "prose"):
         value = axes.get(axis)
         if not value:
             continue

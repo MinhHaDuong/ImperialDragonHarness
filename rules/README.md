@@ -20,8 +20,10 @@ files on demand when their scope signal applies to your task.
 | [doctype/techreport.md](./doctype/techreport.md) | edit of a `techreport` file (`\documentclass{report}` or manifest) | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | edit of a `slides` file (`\documentclass{beamer}` or manifest) | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | edit of a `book` file (`\documentclass{book}` or manifest) | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
-| [lang/fr.md](./lang/fr.md) | edit of a `lang = "fr"` file (manifest) | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
+| [lang/fr.md](./lang/fr.md) | edit of a `lang = "fr"` file (manifest) | French norms from the first draft on: guillemets « », virgule décimale, casse de phrase, majuscules accentuées. |
 | [lang/en.md](./lang/en.md) | edit of a `lang = "en"` file (manifest) | English norms: one spelling variety, serial comma, sentence-case headings. |
+| [typo/fr.md](./typo/fr.md) | edit of a `lang = "fr"` file that is a **rendered** deliverable | French fine typography at finishing: espaces insécables, séparateur de milliers, babel does it in LaTeX, hands off math. |
+| [typo/en.md](./typo/en.md) | edit of a `lang = "en"` file that is a **rendered** deliverable | English fine typography at finishing: thousands separator, quote punctuation, hands off math. |
 
 Compliance is verified ex post by the `verify-adherence` skill — this
 index is the single source of truth on when each rule file applies.
@@ -52,13 +54,14 @@ marker lie, and nothing downstream can catch that.
 body of every matching **global** rule the first time you edit a file along each
 axis in a session — then stays silent (deduped per `session_id` + rule). Rules
 stay global and shared; only the *mapping* can be project-local. A file resolves
-along four orthogonal axes, and the injected set is their union:
+along five orthogonal axes, and the injected set is their union:
 
 | Axis | Resolved from | Rule path |
 |------|---------------|-----------|
 | **format** | filename extension (project-agnostic) | `format/<value>.md` (legacy alias: `coding-<value>.md`) |
 | **doctype** | `\documentclass` sniff for `.tex`; else project manifest | `doctype/<value>.md` |
 | **lang** | project manifest (`lang` per glob, else `default_lang`) | `lang/<value>.md` |
+| **typo** | the `lang` value, but only when the file is a *rendered* deliverable | `typo/<value>.md` |
 | **prose** | implied for prose formats | `prose/_all.md` |
 
 Missing rule files are skipped silently, so content grows by adding files — no
@@ -71,7 +74,17 @@ default_lang = "fr"
 glob = "slides/manuscript/**/*.tex"
 doctype = "techreport"
 lang = "fr"
+[[map]]
+glob = "livrables/**/*.md"
+render = true
 ```
+
+The **typo** axis is what keeps fine typography a finishing pass rather than a
+drafting obligation (author arbitrage, 2026-08-14). `.tex` and `.qmd` are
+rendered by construction, so they resolve it with no flag; `.md` and `.txt` need
+a `render = true` glob, and `render = false` opts an uncompiled fragment out. A
+draft nothing renders draws its `lang/` norms and no typographic demand at all —
+that difference is the ratchet in `tests/test_inject_rule_on_edit.py`.
 
 The manifest holds path→axis *mappings* only, never rule text — the rulebook
 itself stays here, shared across every project.

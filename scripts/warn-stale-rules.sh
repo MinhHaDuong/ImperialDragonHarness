@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 # Warn if any rule file hasn't been reviewed in 30+ days.
-# Covers rules/*.md and one level of subdirectory (prose/, doctype/, lang/):
+# Covers rules/*.md and one level of subdirectory (prose/, doctype/, lang/, typo/):
 # a narrow rules/*.md glob left seven subdirectory rules unmonitored.
 # Advisory only — always exits 0.
 
