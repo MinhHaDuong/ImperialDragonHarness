@@ -106,15 +106,37 @@ def test_supervisor_probes_primary_checkout():
     used to be a step an executor was told to run, which held only for as long
     as the executor followed the procedure; in the helper it runs whatever the
     executor decides to do.
+
+    Asserts main() actually *calls* the probe. A substring check on the file
+    passes on a defined-but-never-called helper, which is the "all clear" that
+    is indistinguishable from "I could not look".
     """
-    survey = (
+    import ast
+
+    source = (
         DREAM_DIR.parent.parent / "scripts" / "nightbeat-supervisor-survey.py"
     ).read_text()
-    assert "check-primary-checkout" in survey, (
-        "survey helper does not run the checkout probe"
+    assert "check-primary-checkout" in source, (
+        "survey helper does not reference the checkout probe"
     )
-    assert "sys.exit" in survey.split("_check_primary_checkout")[-1][:800], (
-        "checkout probe failure does not stop the survey"
+
+    tree = ast.parse(source)
+    main = next(
+        (
+            n
+            for n in tree.body
+            if isinstance(n, ast.FunctionDef) and n.name == "main"
+        ),
+        None,
+    )
+    assert main is not None, "survey helper has no main()"
+    called = {
+        n.func.id
+        for n in ast.walk(main)
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+    }
+    assert "_check_primary_checkout" in called, (
+        "main() never calls the checkout probe"
     )
 
 
