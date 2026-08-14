@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-08-10T19:57Z
+Last updated: 2026-08-14T18:33Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-08-10T19:57Z · as of 6d660f0 -->
+<!-- generated 2026-08-14T18:33Z · as of de086b6 -->
 
-**Tickets:** 2 ready · 3 blocked — `erg ready tickets/` for full list
-  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
-**In flight:** 3 open PRs (1 draft), oldest #678 14d · CI main: success
+**Tickets:** 10 ready · 4 blocked — `erg ready tickets/` for full list
+  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0359 Spawn bash test children hermetically (env -i) …
+**In flight:** 2 open PRs, oldest #746 0d · CI main: success
 **Recent (first-parent):**
-  6d660f0 Merge pull request #712 from MinhHaDuong/fix-memory-index-union-2026-08-10
-  1c3a68e Merge pull request #711 from MinhHaDuong/housekeeping-memory-cnrs-2026-08-10
-  18595ee Merge pull request #710 from MinhHaDuong/dream-consolidate-2026-08-10
+  de086b6 Merge pull request #745 from MinhHaDuong/memory-gitignore-whitelist-reopen
+  0e96baa Merge pull request #744 from MinhHaDuong/t0530-frontmatter-followups
+  f37ac4a Merge pull request #742 from MinhHaDuong/t-skill-frontmatter-yaml
 
 ## Blockers
 
