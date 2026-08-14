@@ -18,9 +18,9 @@
 - [Rejouer ou reconstruire une branche](feedback-rejouer-ou-reconstruire-une-branche.md) — deux commits qui s'annulent : reconstruire l'état final sur origin/main, pas rebaser
 - [Typo fine à la finition](feedback-typo-fine-a-la-finition.md) — jamais en rédaction ; dépend de la langue du texte ET du balisage ; pas de rétro-port mécanique
 - [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md) — le candidat « secondaire » d'un ticket peut être le support principal ; tirer tous les candidats avant de rédiger
-- [Ligne qui ne peut pas porter la clause de ses sœurs](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, distinguer « aucune clause » de « une clause qui ne peut pas être la bonne » : elles se ressemblent, la réparation diffère
+- [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, la ligne qui ne dit pas ce que ses sœurs disent est le défaut
 - [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md) — dater un changement avec `git log -S`, jamais conclure « c'est le nouveau » depuis le worktree d'une autre session
-- [Sortie sous rtk en désaccord avec l'état](feedback-rtk-sortie-git-non-fiable.md) — observation seule, cause non isolée et inventée deux fois ; vérifier par effet, jamais en analysant une sortie
+- [Sortie rtk — pipes corrigés en v0.45.0, écart résiduel non isolé](feedback-rtk-sortie-git-non-fiable.md) — le test empirique tranche et non la lecture du code amont ; vérifier par effet, jamais en analysant une sortie
 - [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md) — une page citée se lit sur la page, jamais interpolée depuis un `pdftotext` du document entier
 - [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md) — le check de fraîcheur alarmait sur les fichiers les mieux tenus et exemptait les dormants ; ne jamais tamponner « revu » sans lire
 - [Pas de centaure inversé](feedback-no-inverted-centaur.md) — ne jamais laisser à l'auteur une corvée de vérification résiduelle
