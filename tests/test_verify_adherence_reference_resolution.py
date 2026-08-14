@@ -75,6 +75,12 @@ RULES_INDEX = REPO / "rules" / "README.md"
             "in its own target class",
         ),
         (
+            "Two exemptions, or the check cries wolf on valid sources.",
+            "the sub-check must exempt the `\\nocite{*}` wildcard and `@` inside "
+            "code/verbatim contexts — without them a valid manuscript fails the "
+            "gate, and a gate that cries wolf gets routed around",
+        ),
+        (
             "Quarto/pandoc: same two checks, different syntax",
             "the enumerated reference forms must cover Quarto/pandoc `@key`, not "
             "LaTeX alone: the skip trigger admits .qmd and the rule ships a Quarto "

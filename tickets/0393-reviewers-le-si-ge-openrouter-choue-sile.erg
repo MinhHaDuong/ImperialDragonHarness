@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-08-13T19:36Z Minh Ha-Duong created
+2026-08-14T12:58Z claude-exec note cause etablie : le fichier de cles n'a aucun export, donc rien n'atteint un sous-processus ; contournement verifie = sourcer sous set -a. Le fail-open (action 3) reste entier
 
 --- body ---
 ## Context
@@ -17,6 +18,34 @@ mais `env | grep -c OPENROUTER` retourne 0 dans les sous-processus Bash
 d'une session : la chaîne de chargement des clés ne couvre pas (ou plus)
 openrouter.env. Conséquence : les sièges externes de décorrélation ne
 tournent jamais, silencieusement — le fail-open masque la panne.
+
+## Cause établie (2026-08-14)
+
+L'action 1 demandait « identifier où la doc 0207 charge les `*.env` et pourquoi
+openrouter.env n'y est pas ». Ce n'est pas une question de couverture : le
+fichier est bien lu, mais il ne peut rien transmettre.
+
+`~/.config/keys/openrouter.env` contient **7 affectations nues et zéro
+`export`**. Une affectation sans `export` reste une variable de shell, pas une
+variable d'environnement : elle n'est jamais héritée par un processus fils.
+Donc `.` ou `source` sur ce fichier réussit, la variable existe dans le shell
+qui a sourcé, et `printenv` la trouve absente dans le moindre sous-processus —
+exactement le symptôme observé. Le chemin BASH_ENV n'y peut rien : le défaut
+est dans la forme du fichier, pas dans qui le charge.
+
+Correctif vérifié à l'usage pendant le gaze de la MR harnais #726
+(2026-08-14) : sourcer sous `set -a`, qui exporte automatiquement toute
+variable affectée. Cela laisse le fichier de clés intact — préférable à y
+ajouter des `export`, puisque le fichier appartient à l'auteur et que la
+robustesse doit vivre du côté consommateur.
+
+Reste entier, et c'est la moitié qui compte : l'action 3. Le siège a échoué
+**en s'ouvrant**. Un siège de vérification dont la panne se lit comme un
+succès est la pathologie que tout le reste du harnais interdit — un contrôle
+dont le « tout va bien » est indiscernable de « je n'ai pas regardé ». Tant
+que le fail-open subsiste, corriger la credential ne fait que retarder la
+prochaine panne silencieuse. Le siège budget échoue d'ailleurs encore, pour
+une autre raison non instruite.
 
 ## Relevant files
 - `skills/reviewers/panel.yml` — `credential-env: OPENROUTER_API_KEY_IDH`
