@@ -27,6 +27,20 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   showstopper and three fictitious "human action required" items; ISTEX
   validated both ways on 2026-08-11 — honest negative on Smith 1961,
   instant fulltext on Shiozawa 2016.)
+- **A cited page number is read on the page, never interpolated from an
+  extraction.** Keeping the fulltext locally is worth little if the locator is
+  guessed. `pdftotext` over a whole document concatenates body, footnotes,
+  headers, and running feet in an order that is not the layout's, so position
+  in the flow is not proportional to the printed folio: citing p. 262 because
+  the sentence sat around line 290 of a 16-page extract put the reference two
+  pages off the truth, which was p. 260 (HET, Karush footnote, 2026-08-14).
+  Extract the single page (`pdftotext -f N -l N`) and read the folio it
+  carries, or render it and look. Two cheap cross-checks: the running foot
+  often prints the article's official page range (it corrected a bibliographic
+  range in the same pass), and the first page of the *next* chapter bounds the
+  previous one (chapter XX opening at p. 330 confirmed Gale–Kuhn–Tucker at
+  pp. 317–329). A plausible wrong locator is the costly failure — a referee who
+  opens the page and finds nothing stops trusting the whole apparatus.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
