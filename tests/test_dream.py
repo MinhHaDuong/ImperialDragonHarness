@@ -147,6 +147,63 @@ def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
 
 
+# ── Leading-dash project names (ticket 0500) ──────────────────────────────────
+#
+# Every directory under ~/.claude/projects/ begins with '-' (-home-haduong--claude,
+# …). argparse reads such a value as the start of an option, so an unprotected
+# positional aborts with a usage dump before the script runs.
+
+
+@pytest.mark.integration
+def test_read_index_leading_dash_project(tmp_path):
+    project = "-home-haduong--claude"
+    memory = tmp_path / ".claude" / "projects" / project / "memory"
+    memory.mkdir(parents=True)
+    (memory / "MEMORY.md").write_text(
+        "## Entries\n\n- [feedback_vim](feedback_vim.md) — vim\n"
+    )
+    (memory / "feedback_vim.md").write_text("User prefers vim.\n")
+    result = _run(READ_INDEX, project, home=tmp_path)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["project"] == project, "leading dash lost"
+    assert len(data["entries"]) == 1
+
+
+@pytest.mark.integration
+def test_read_index_help_still_works(tmp_path):
+    """The separator auto-insert must not eat -h."""
+    result = _run(READ_INDEX, "--help", home=tmp_path)
+    assert result.returncode == 0
+    assert "project" in result.stdout
+
+
+@pytest.mark.integration
+def test_commit_leading_dash_project(tmp_path):
+    """commit.py's `commit` verb takes the project as its first positional."""
+    home = tmp_path
+    idh = home / ".claude"
+    project = "-home-haduong--claude"
+    memory = idh / "projects" / project / "memory"
+    memory.mkdir(parents=True)
+    (memory / "MEMORY.md").write_text("## Entries\n")
+    subprocess.run(["git", "init", "-b", "main", str(idh)], capture_output=True)
+    for k, v in (
+        ("user.email", "t@example.com"),
+        ("user.name", "T"),
+        ("commit.gpgsign", "false"),
+    ):
+        subprocess.run(["git", "-C", str(idh), "config", k, v], capture_output=True)
+    result = _run(COMMIT_PY, "commit", project, "5", "3", home=home)
+    assert result.returncode == 0, result.stderr
+    log = subprocess.run(
+        ["git", "-C", str(idh), "log", "--format=%s", "-1"],
+        capture_output=True,
+        text=True,
+    )
+    assert project in log.stdout, "commit message lost the project name"
+
+
 def test_no_anthropic_import_in_scripts():
     for script in [READ_INDEX, COMMIT_PY, PROVENANCE_PY]:
         source = script.read_text()
