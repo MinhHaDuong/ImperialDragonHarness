@@ -1,8 +1,11 @@
 ---
 name: feedback_verify_each_before_batch_action
-description: When a sweep buckets multiple items as "the same," verify each individually before committing to a batch action — per-item inspection repeatedly contradicts the batch framing
-metadata:
+description: "When a sweep buckets multiple items as \"the same,\" verify each individually before committing to a batch action — per-item inspection repeatedly contradicts the batch framing"
+metadata: 
+  node_type: memory
   type: feedback
+  originSessionId: a95551ca-2f8f-4b22-8ca0-859f7bf1e1c2
+  modified: 2026-08-14T13:57:35.630Z
 ---
 
 When a sweep or audit groups several items under one label ("these N repos all
@@ -35,6 +38,30 @@ check would have pre-empted all of them.
   strip maintained content for cosmetic uniformity unless explicitly asked.
 - This is the per-item complement to "sweep results are decisions": the sweep
   tells you *where* to look; it does not pre-authorize the *same* action everywhere.
+
+**Recurrence 2026-08-14, twice in one PR-queue drain — and the second form is
+worse, because the batch had only one visible member.**
+- « Ces deux consolidations dream sont périmées par celle qui a fusionné
+  depuis » → vérification fichier par fichier : 3 des 7 sur main, **4 absents**,
+  plus 1 des 2 de la sœur. Les fermer aurait perdu cinq entrées de mémoire.
+- « Le fichier sale du checkout est identique à origin/main, l'écarter ne perd
+  rien » → vrai **du fichier que j'avais regardé**, faux du checkout : il y en
+  avait trois, dont un plus récent que tout ce que j'avais commité, portant une
+  leçon qu'aucune de mes versions n'avait. La commande que j'avais donnée à
+  l'auteur l'aurait détruite.
+
+Le second cas généralise la règle : le piège n'est pas seulement « N items
+groupés sous un label », c'est **inférer d'un échantillon vers un ensemble dont
+on n'a pas établi la taille**. Un instantané de statut du début de session, un
+`git status` d'il y a une heure, un diff sur le seul fichier qu'on a pensé à
+regarder — tous donnent un « lot » de taille 1 qui n'est pas le lot réel. Avant
+d'écarter ou d'écraser quoi que ce soit, **énumérer l'ensemble à cet instant**,
+pas se fier au dernier dénombrement connu.
+
+Corollaire opérationnel gagné le même jour : depuis une session isolée en
+worktree, cette énumération est impossible — voir
+[[feedback_isolated_session_cannot_read_shared_checkout]]. La réponse correcte
+est alors de sortir du worktree, pas d'extrapoler.
 
 See [[reference_git_erg_adopter_canonical_shape]] (the sweep this came from) and
 the harness "Rename/refactor sweeps cover the full logical unit" rule — that says

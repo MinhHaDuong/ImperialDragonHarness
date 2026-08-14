@@ -51,7 +51,8 @@
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
 - [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
 - [git-erg adopter canonical shape](reference_git_erg_adopter_canonical_shape.md) — canonical adopter = CLAUDE.md is `@tickets/AGENTS.md`; detect stale pre-0013 footprints via orphan
-- [Verify each item before a batch action](feedback_verify_each_before_batch_action.md) — a sweep's "these are all the same" is a hypothesis; inspect each item before batch
+- [Verify each item before a batch action](feedback_verify_each_before_batch_action.md) — a sweep's "these are all the same" is a hypothesis; inspect each item before batch — and a batch of apparent size 1 is the worst case
+- [Isolated session can't read the shared checkout](feedback_isolated_session_cannot_read_shared_checkout.md) — the path guard blocks `git -C <primary>` for reads too, so "what's dirty there" is unknowable; ExitWorktree before any discard
 - [gh pr edit broken — use REST](feedback_gh_pr_edit_broken_use_rest.md) — gh pr edit hits a Projects-classic GraphQL deprecation; PATCH via gh api repos/.../pulls/N instead
 - [Harness repo setup](project_harness_repo.md) — ~/.claude tracks ImperialDragonHarness, daily pull via systemd timer; each machine needs a source line in ~/.bashrc
 - [erg binary installation](project_erg_binary.md) — erg committed at tickets/erg in all repos; git pull to update; build from git-erg source if missing
