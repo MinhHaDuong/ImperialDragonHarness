@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-08-13T19:36Z Minh Ha-Duong created
 2026-08-14T12:58Z claude-exec note cause etablie : le fichier de cles n'a aucun export, donc rien n'atteint un sous-processus ; contournement verifie = sourcer sous set -a. Le fail-open (action 3) reste entier
 
+2026-08-14T14:18Z claude-exec note cause corrigee : bash-env.sh source deja les fichiers de cles sous set -a (0334), donc l'absence d'export n'est pas le defaut operant ; le blocage est la selection KEYS= en refus-par-defaut (aucun KEYS dans ~/.claude/.env ni dans le cwd), donc openrouter.env n'est jamais source. Correctif cote consommateur : reviewers.sh resout la variable depuis le keystore. Action 3 faite : harvest nomme sur stdout les sieges qui n'ont pas revu
 --- body ---
 ## Context
 Pendant le gaze de polycentric_activity PR #87 (2026-08-12), le siège
