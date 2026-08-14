@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-07 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Technical report / working paper
 
 Document-type conventions only — language norms live in `lang/`, universal

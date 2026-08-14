@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-24 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Cutting prose to a word budget
 
 Loaded when a pass must reduce a document to a word or page budget (a

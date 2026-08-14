@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-07 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Slides (beamer)
 
 Document-type conventions only — language norms live in `lang/`, universal
