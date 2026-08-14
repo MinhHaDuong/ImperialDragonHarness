@@ -541,6 +541,13 @@ internal ones (0205 rule 1). Seats are **advisory**: only verifiable-class
 findings may bounce. A seat that errors or hangs WARNs and the review
 proceeds — per-seat fail-open; one seat never blocks the verdict.
 
+**Panel integrity** (ticket 0393). `harvest` also emits `SEAT-FAILED:` /
+`SEAT-MISSING:` lines and a `PANEL-INTEGRITY:` headline for every seat that did
+not review. These are **not** findings — do not disposition them — but they
+MUST be carried verbatim into the `/gaze` comment, under the panel section.
+A panel reported as run while its external seats silently never authenticated
+is the failure this exists to prevent: it happened, and the run read as clean.
+
 **Scorecard (the trial).** After the gate verdict, for each seat that
 returned findings, append the trial line:
 `/reviewers scorecard <pr> <seat> "<verdict — N verifiable, M consider, of

@@ -8,7 +8,12 @@
 # 0205 contract shape; `scorecard` appends a fixed-schema trial line.
 #
 # Containment is the seat-runner's OS sandbox (0217), NOT this script.
-# This script holds no secrets; seat credentials load via BASH_ENV (0207).
+# This script holds no secrets. A seat's credential comes from the environment
+# when the BASH_ENV path exported it (0207); when it did not, the variable is
+# resolved from the user's keystore at run time (0393, see § seat credential
+# resolution). Either way the value lives only in a shell variable and reaches
+# the seat-runner through a subshell's environment — never argv, never a file,
+# never any log line.
 set -euo pipefail
 export LC_ALL=C  # every awk/sort float reads and writes `.` decimals under any ambient locale
 
@@ -23,6 +28,9 @@ FINDINGS_DIR="${REVIEWERS_FINDINGS_DIR:-${TMPDIR:-/tmp}/reviewers}"
 BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
 # The erg binary used to append trial-ticket log lines. Overridable for tests.
 ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
+# The user's credential keystore, consulted when a seat's `credential-env`
+# variable is absent from the environment (ticket 0393). Overridable for tests.
+KEYSTORE="${REVIEWERS_KEYSTORE:-$HOME/.config/keys}"
 
 usage_text() {
     cat <<'EOF'
@@ -233,6 +241,99 @@ _audition_classify() {  # location panel-anchors defect-anchors
     echo unique-hallucinated
 }
 
+# ── seat credential resolution (ticket 0393) ─────────────────────────────────
+# A seat's `credential-env: NAME` names the variable holding its endpoint key.
+# The BASH_ENV path (0207) exports it — but only where the cwd's `.env` KEYS=
+# line selects that provider, and that selection is DEFAULT-DENY. From a project
+# whose selection names a different key, or from any cwd declaring none, NAME is
+# simply absent: the seat cannot authenticate, and before 0393 it failed open.
+#
+# Robustness belongs on the CONSUMER side. The key files under the keystore are
+# the author's and are never edited here: they hold bare assignments with no
+# `export`, which is exactly why the extraction below sources under `set -a`.
+#
+# Hygiene, non-negotiable in this block: a resolved value is never printed,
+# logged, written to a file, or placed on any argv. Warnings name variables and
+# provider FILES only. The value lands in one shell variable (_CRED_VALUE) and
+# is exported solely inside the subshell that execs the seat-runner.
+_CRED_VALUE=""
+
+# The keystore file defining NAME, or non-zero when none does. Provider file
+# names are not secrets, so an ambiguity WARN may name them.
+_keystore_file_for() {  # $1 validated variable name
+    local name="$1" f restore
+    local -a hits=()
+    restore="$(shopt -p nullglob)"
+    shopt -s nullglob
+    for f in "$KEYSTORE"/*.env; do
+        grep -Eq "^[[:space:]]*(export[[:space:]]+)?${name}=" "$f" 2>/dev/null && hits+=("$f")
+    done
+    eval "$restore"
+    [ "${#hits[@]}" -gt 0 ] || return 1
+    if [ "${#hits[@]}" -gt 1 ]; then
+        echo "reviewers: WARN credential ${name} is defined in ${#hits[@]} keystore files; using $(basename "${hits[0]}")" >&2
+    fi
+    printf '%s\n' "${hits[0]}"
+}
+
+# Read ONE variable out of a trusted provider file. Same isolation idiom as
+# scripts/bash-env.sh's selection path, for the same two reasons: `env -i` drops
+# BASH_ENV (so this `bash -c` cannot re-source the harness env script and
+# fork-bomb) and clears the environment (so the lookup can only resolve a name
+# the provider file itself defines — no ambient variable is smuggled in). `set
+# -a` is what makes an export-less assignment visible at all. The value is
+# captured as a string and assigned literally, never eval'd; the file's other
+# variables die with the subshell. Exit 3 = unreadable file, 4 = name absent.
+_keystore_value() {  # $1 provider file, $2 validated variable name
+    env -i bash -c '
+        set -a
+        . "$1" >/dev/null 2>&1 || exit 3
+        [ -z "${!2+x}" ] && exit 4
+        printf "%s" "${!2}"
+    ' _ "$1" "$2"
+}
+
+# Resolve a seat's credential into _CRED_VALUE. Returns 0 when the seat can
+# authenticate (either the variable is already exported — _CRED_VALUE stays
+# empty and the seat-runner reads it from the inherited environment — or the
+# keystore supplied it), non-zero when it cannot.
+_resolve_seat_credential() {  # $1 credential-env name
+    local name="$1" file val
+    _CRED_VALUE=""
+    if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        # Also keeps the name out of the grep regex above as a metacharacter.
+        echo "reviewers: WARN credential-env '${name}' is not a valid variable name" >&2
+        return 1
+    fi
+    [ -n "${!name:-}" ] && return 0
+    if ! file="$(_keystore_file_for "$name")"; then
+        echo "reviewers: WARN credential ${name} is neither in the environment nor defined in ${KEYSTORE}/*.env" >&2
+        return 1
+    fi
+    if ! val="$(_keystore_value "$file" "$name")" || [ -z "$val" ]; then
+        echo "reviewers: WARN credential ${name} could not be read from $(basename "$file")" >&2
+        return 1
+    fi
+    _CRED_VALUE="$val"
+    echo "reviewers: credential ${name} resolved from the keystore ($(basename "$file"))" >&2
+    return 0
+}
+
+# Run the seat-runner with a keystore-resolved credential exported ONLY for that
+# process. The export happens in a subshell, so the secret never enters this
+# script's own environment (no other child — `gh`, `erg` — inherits it) and
+# never appears on any argv (`env NAME=value cmd` would leak it to `ps -ef`).
+# With no resolved value the seat-runner is invoked directly and reads the
+# variable from the inherited environment exactly as before.
+_seat_exec() {  # $1 credential-env name (may be empty); rest: seat-runner argv
+    local cname="$1"; shift
+    if [ -n "$cname" ] && [ -n "$_CRED_VALUE" ]; then
+        ( export "${cname}=${_CRED_VALUE}"; exec "$SEAT_RUNNER" "$@" )
+    else
+        "$SEAT_RUNNER" "$@"
+    fi
+}
+
 # ── PR → branch resolution (forge-specific; overridable for tests) ───────────
 pr_branch() {  # $1 pr; honor an explicit override first
     local pr="$1"
@@ -265,7 +366,10 @@ case "$subcmd" in
         branch="${2:-$(pr_branch "$pr")}"
         [ -n "$branch" ] || { echo "error: could not resolve branch for MR #${pr}" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"; mkdir -p "$dest"
-        ran=0
+        ran=0; unrun=0
+        # Per-seat run record for `harvest`'s panel-integrity pass (0393). One
+        # line, `ok` or `fail <reason>`; reasons name variables, never values.
+        _seat_status() { printf '%s\n' "$2" > "${dest}/${1}.status"; }
         while IFS='|' read -r name kind st ep mo lg tt ce; do
             case "$kind" in
                 forge-bot)
@@ -274,12 +378,17 @@ case "$subcmd" in
                     # auto-request lever). Fail-open like every other seat.
                     if [ -z "$lg" ]; then
                         echo "request: WARN forge-bot seat '${name}' has no login — skipped" >&2
+                        _seat_status "$name" "fail seat has no forge login"
+                        unrun=$((unrun+1))
                         continue
                     fi
                     if request_forge_reviewer "$pr" "$lg"; then
                         echo "request: forge-bot seat '${name}' requested (${lg}) on MR #${pr}" >&2
+                        _seat_status "$name" "ok"
                     else
                         echo "request: WARN forge-bot seat '${name}' request failed (fail-open)" >&2
+                        _seat_status "$name" "fail forge reviewer request failed"
+                        unrun=$((unrun+1))
                     fi
                     ;;
                 cli-agent|local-model)
@@ -288,7 +397,20 @@ case "$subcmd" in
                     # Thread the credential-env NAME only when the seat sets it;
                     # a local, unauthenticated endpoint carries no credential.
                     cred_args=()
-                    [ -n "$ce" ] && cred_args=(--credential-env "$ce")
+                    _CRED_VALUE=""
+                    if [ -n "$ce" ]; then
+                        cred_args=(--credential-env "$ce")
+                        # A seat that cannot authenticate is skipped LOUDLY and
+                        # recorded: running it would only reproduce the same
+                        # failure with a vaguer message, and the whole point of
+                        # 0393 is that this outcome must reach the report.
+                        if ! _resolve_seat_credential "$ce"; then
+                            echo "request: WARN seat '${name}' did NOT review — credential ${ce} unresolved (fail-open; reported by harvest)" >&2
+                            _seat_status "$name" "fail credential ${ce} unresolved"
+                            unrun=$((unrun+1))
+                            continue
+                        fi
+                    fi
                     # Time the seat, whatever the outcome — a slow-then-failed
                     # seat is still evidence. The elapsed seconds land in a
                     # `.latency` sidecar beside the findings; `scorecard` folds
@@ -296,7 +418,7 @@ case "$subcmd" in
                     # seats run async server-side and get no sidecar — there is
                     # nothing local to time.
                     t0=$(date +%s.%N)
-                    "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
+                    _seat_exec "$ce" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
                         ${cred_args[@]+"${cred_args[@]}"} \
                         >/dev/null 2>"${dest}/${name}.err" && seat_ok=1 || seat_ok=0
@@ -304,25 +426,36 @@ case "$subcmd" in
                     _elapsed "$t0" "$t1" > "${dest}/${name}.latency"
                     if [ "$seat_ok" = 1 ]; then
                         echo "request: seat '${name}' ok → ${dest}/${name}.findings" >&2
+                        _seat_status "$name" "ok"
                         ran=$((ran+1))
                     else
                         echo "request: WARN seat '${name}' failed (fail-open; see ${dest}/${name}.err)" >&2
+                        _seat_status "$name" "fail seat-runner exited non-zero (see ${name}.err)"
+                        unrun=$((unrun+1))
                     fi
                     ;;
                 *)
                     echo "request: WARN seat '${name}' has unknown kind '${kind}' — skipped" >&2
+                    _seat_status "$name" "fail unknown seat kind '${kind}'"
+                    unrun=$((unrun+1))
                     ;;
             esac
         done < <(roster_records)
         echo "request: ${ran} cli/model seat(s) ran for MR #${pr}" >&2
+        # `if`, not `[ … ] && echo`: a false test as the branch's last command
+        # would become the script's exit status under `set -e` (coding-bash.md).
+        if [ "$unrun" -gt 0 ]; then
+            echo "request: ${unrun} seat(s) did NOT review MR #${pr} — harvest reports them" >&2
+        fi
         ;;
 
     harvest)
         pr="${1:-}"; [ -n "$pr" ] || { echo "error: harvest requires a merge request identifier" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"
-        # No seats ran / empty panel → empty normalized output, exit 0.
-        [ -d "$dest" ] || exit 0
         shopt -s nullglob
+        # A missing dest is no longer an early exit: the panel-integrity pass
+        # below must still run, precisely because "no seat ran" is the case that
+        # used to be indistinguishable from "no seat found anything" (0393).
         for f in "$dest"/*.findings; do
             seat="$(basename "$f" .findings)"
             declare -A _seen=()
@@ -353,6 +486,47 @@ case "$subcmd" in
             done < "$f"
             unset _seen
         done
+
+        # ── panel integrity (ticket 0393) ────────────────────────────────────
+        # A seat that never reviewed must not read as a seat that found nothing.
+        # `request` leaves a `.status` record per seat; every seat that did not
+        # review is named HERE, on STDOUT — the report stream the panel's reader
+        # actually sees. A stderr WARN is exactly what was lost the day the
+        # OpenRouter seat failed open mid-gaze, and an empty harvest that exits
+        # 0 for both "clean" and "nothing ran" is not a check at all.
+        #
+        # Fail-open is preserved deliberately: these are visible lines, not a
+        # non-zero exit, so one dead seat still never blocks a verdict (0205).
+        unreviewed=0
+        while IFS='|' read -r sname skind sst sep smo slg stt sce; do
+            [ -n "$sname" ] || continue
+            status=""
+            if [ -f "${dest}/${sname}.status" ]; then
+                status="$(head -1 "${dest}/${sname}.status")"
+            fi
+            case "$status" in
+                ok*) continue ;;
+                fail*)
+                    echo "SEAT-FAILED: ${sname} — ${status#fail }  [this seat did NOT review]"
+                    unreviewed=$((unreviewed+1))
+                    continue
+                    ;;
+            esac
+            # No run record at all. A forge-bot seat leaves no local findings by
+            # design (its review lands server-side), so only the seats that were
+            # supposed to write findings here can be judged missing.
+            case "$skind" in
+                cli-agent|local-model)
+                    if [ ! -s "${dest}/${sname}.findings" ]; then
+                        echo "SEAT-MISSING: ${sname} — no findings and no run record  [this seat did NOT review]"
+                        unreviewed=$((unreviewed+1))
+                    fi
+                    ;;
+            esac
+        done < <(roster_records)
+        if [ "$unreviewed" -gt 0 ]; then
+            echo "PANEL-INTEGRITY: ${unreviewed} seat(s) did not review this merge request — the findings above are NOT a full panel"
+        fi
         ;;
 
     scorecard)
@@ -403,6 +577,14 @@ case "$subcmd" in
         case "$model" in *[$'\n\r'\ =]*) echo "error: audition: model must not contain spaces, '=', or newlines" >&2; exit 1 ;; esac
         case "$label" in *[$'\n\r'\ =]*) echo "error: audition: --name must not contain spaces, '=', or newlines" >&2; exit 1 ;; esac
         [ -f "$board" ] || { echo "error: benchmark board not found: ${board}" >&2; exit 1; }
+        # Resolve the candidate's credential the same way a seat's is (0393),
+        # but fail LOUD here: audition already refuses to report a partial
+        # score, and an unauthenticated replay is the emptiest partial there is.
+        _CRED_VALUE=""
+        if [ -n "$cred" ]; then
+            _resolve_seat_credential "$cred" \
+                || { echo "error: audition: credential ${cred} unresolved — not in the environment, not defined in ${KEYSTORE}/*.env" >&2; exit 1; }
+        fi
 
         dest="${FINDINGS_DIR}/audition-$$"; mkdir -p "$dest"
         trap 'rm -rf "$dest"' EXIT   # reap the scratch dir on every exit path
@@ -428,7 +610,7 @@ case "$subcmd" in
             # Fail-LOUD (unlike request's per-seat fail-open): a candidate that
             # cannot be replayed — unreachable endpoint, sandbox failure — voids
             # the whole audition rather than reporting a partial, misleading score.
-            if ! "$SEAT_RUNNER" "${sr_args[@]}" >/dev/null 2>"${out}.err"; then
+            if ! _seat_exec "$cred" "${sr_args[@]}" >/dev/null 2>"${out}.err"; then
                 # The scratch dir (and ${out}.err) is reaped by the EXIT trap, so
                 # dump the seat-runner's stderr HERE — a message pointing at the
                 # now-deleted file would be unreachable to the operator.
