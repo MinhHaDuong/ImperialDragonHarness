@@ -246,6 +246,29 @@ fi
 #
 # Credential hygiene: every fixture value below is a synthetic sentinel, and
 # every assertion is on PRESENCE or LENGTH — never on a credential's content.
+# The suite must never run against a real key: a failing assertion prints what
+# it found, so the failure message would BE the leak (rules/coding-bash.md).
+#
+# Hermetic children, mandatory here (rules/coding-bash.md § "Unsetting a
+# variable in the parent does not unset it in the child"): BASH_ENV re-runs the
+# harness loader — credential selection included — at the startup of EVERY child
+# bash, so a check run against the ambient environment can pass on a variable
+# the loader re-injected rather than on the code path under test. Every
+# invocation below is spawned `env -i` with a FAKE BASH_ENV loader that exports
+# one recognisable dummy and no credential: what the seat sees can then only
+# have come from reviewers.sh's own resolution.
+FAKE_LOADER="$WORK/fake-bash-env.sh"
+printf 'export T393_LOADER_SENTINEL=loader-ran-not-a-secret\n' > "$FAKE_LOADER"
+FHOME="$WORK/fake-home"; mkdir -p "$FHOME/.config/keys"
+# The fake HOME's keystore is EMPTY: a lookup that ignored REVIEWERS_KEYSTORE
+# and fell back to $HOME/.config/keys would find nothing — and could never
+# reach the author's real keystore from this suite.
+
+# Run reviewers.sh in a cleared environment with the fake loader in place.
+hermetic_reviewers() {  # $@: reviewers.sh argv; extra env via H_ENV array
+    env -i HOME="$FHOME" PATH="$PATH" BASH_ENV="$FAKE_LOADER" \
+        ${H_ENV[@]+"${H_ENV[@]}"} bash "$REVIEWERS" "$@"
+}
 
 # Stub seat-runner that records only whether the credential arrived and how long
 # it is. It never writes the value anywhere.
@@ -263,10 +286,13 @@ while [ $# -gt 0 ]; do
 done
 val=""
 [ -n "$cred" ] && val="$(printenv "$cred" || true)"
+# The loader sentinel is the CONTROL: it proves BASH_ENV really ran in this
+# child, so "credential absent" cannot be explained by a loader that never fired.
+loader="${T393_LOADER_SENTINEL:-none}"
 if [ -n "$val" ]; then
-    printf 'present len=%s\n' "${#val}" > "${out%.findings}.cred"
+    printf 'present len=%s loader=%s\n' "${#val}" "$loader" > "${out%.findings}.cred"
 else
-    printf 'absent\n' > "${out%.findings}.cred"
+    printf 'absent loader=%s\n' "$loader" > "${out%.findings}.cred"
 fi
 { echo "FINDING|severity=verifiable|file=foo.sh:10|rationale=x"; echo "SUMMARY|findings=1|verdict=revise"; } > "$out"
 STUBEOF
@@ -289,23 +315,27 @@ reviewers:
 YAML
 
 KDIR="$WORK/k-findings"
-k_err=$(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR" \
-        REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch" \
-        "$REVIEWERS" request 393 2>&1 >/dev/null)
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR"
+       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+k_err=$(hermetic_reviewers request 393 2>&1 >/dev/null)
 k_cred="$(cat "$KDIR/393/keyed-seat.cred" 2>/dev/null || echo missing)"
-assert_eq "request: keystore credential reaches the seat (presence + length only)" \
-    "present len=24" "$k_cred"
+# `loader=loader-ran` is the control: the fake BASH_ENV loader DID run in the
+# seat's child shell, and it exported no credential — so a present credential
+# can only have come from reviewers.sh resolving it.
+assert_eq "request: keystore credential reaches a hermetic seat child (presence + length only)" \
+    "present len=24 loader=loader-ran-not-a-secret" "$k_cred"
 
 # The environment wins over the keystore: an already-exported variable is used
 # as-is and the keystore is not consulted. Distinct length (20) proves which
 # source won, without either value ever being printed.
 KDIR2="$WORK/k-findings-env"
-T393_FIXTURE_KEY="env-sentinel-0000000" \
-    REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR2" \
-    REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch" \
-    "$REVIEWERS" request 393 >/dev/null 2>&1
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR2"
+       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch"
+       T393_FIXTURE_KEY="env-sentinel-0000000")
+hermetic_reviewers request 393 >/dev/null 2>&1
 assert_eq "request: an environment credential takes precedence over the keystore" \
-    "present len=20" "$(cat "$KDIR2/393/keyed-seat.cred" 2>/dev/null || echo missing)"
+    "present len=20 loader=loader-ran-not-a-secret" \
+    "$(cat "$KDIR2/393/keyed-seat.cred" 2>/dev/null || echo missing)"
 
 # No credential value may appear in any output or sidecar the run produces.
 leak_hay="$k_err$(cat "$KDIR"/393/* 2>/dev/null || true)"
@@ -329,22 +359,21 @@ reviewers:
 YAML
 
 UDIR="$WORK/u-findings"
-u_err=$(REVIEWERS_PANEL="$UROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR" \
-        REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch" \
-        "$REVIEWERS" request 394 2>&1 >/dev/null)
+H_ENV=(REVIEWERS_PANEL="$UROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR"
+       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+u_err=$(hermetic_reviewers request 394 2>&1 >/dev/null)
 assert_contains "request: unresolved credential WARNs and names the variable" \
     "T393_NOWHERE_KEY" "$u_err"
 assert_contains "request: unresolved credential names the seat" \
     "unauthenticated-seat" "$u_err"
 assert_exit_0 "request: an unresolved credential stays fail-open (exit 0)" \
-    env REVIEWERS_PANEL="$UROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR" \
-    REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 394
+    hermetic_reviewers request 394
 
 # The load-bearing half (ticket 0393 action 3): the panel REPORT — harvest's
 # stdout — must say the seat did not review. A stderr WARN is exactly what was
 # lost the day the seat failed open during a live gaze.
-u_report=$(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$UDIR" \
-           "$REVIEWERS" harvest 394 2>/dev/null)
+H_ENV=(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$UDIR")
+u_report=$(hermetic_reviewers harvest 394 2>/dev/null)
 assert_contains "harvest: report names the seat that did not review" \
     "SEAT-FAILED: unauthenticated-seat" "$u_report"
 assert_contains "harvest: report names the unresolved credential" \
@@ -360,8 +389,8 @@ fi
 # A roster seat with no findings AND no run record — `request` never reached it
 # — is reported too: an empty harvest must never be indistinguishable from a
 # panel that never ran.
-never_report=$(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$WORK/never" \
-               "$REVIEWERS" harvest 500 2>/dev/null)
+H_ENV=(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$WORK/never")
+never_report=$(hermetic_reviewers harvest 500 2>/dev/null)
 assert_contains "harvest: a seat that never ran is reported, not silence" \
     "SEAT-MISSING: unauthenticated-seat" "$never_report"
 
@@ -370,12 +399,11 @@ assert_contains "harvest: a seat that never ran is reported, not silence" \
 QUIET="$WORK/quiet-findings/600"; mkdir -p "$QUIET"
 printf 'ok\n' > "$QUIET/unauthenticated-seat.status"
 printf 'SUMMARY|findings=0|verdict=approve\n' > "$QUIET/unauthenticated-seat.findings"
-quiet_report=$(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$WORK/quiet-findings" \
-               "$REVIEWERS" harvest 600 2>/dev/null)
+H_ENV=(REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$WORK/quiet-findings")
+quiet_report=$(hermetic_reviewers harvest 600 2>/dev/null)
 assert_eq "harvest: a seat that ran and found nothing stays silent" "" "$quiet_report"
-assert_exit_0 "harvest: clean panel still exits 0" \
-    env REVIEWERS_PANEL="$UROSTER" REVIEWERS_FINDINGS_DIR="$WORK/quiet-findings" \
-    "$REVIEWERS" harvest 600
+assert_exit_0 "harvest: clean panel still exits 0" hermetic_reviewers harvest 600
+unset H_ENV
 
 # ── forge-bot seat: on-demand request via the forge review API (0206) ────────
 # A forge-bot seat has no seat-runner; `request` asks the forge to run its
