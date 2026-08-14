@@ -1,0 +1,126 @@
+%erg 0.1
+Title: Un nom de projet à tiret initial casse argparse, et roar avale l'échec en silence
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T16:05Z claude created — constaté à l'étape 2 d'un /roar : la télémétrie par PR se dégradait en agrégat sans rien dire
+
+--- body ---
+## Context
+
+Tout répertoire de `~/.claude/projects/` commence par un tiret :
+`-home-haduong--claude`, `-home-haduong-CNRS-projets-actifs-polycentric-activity`,
+etc. C'est le nom que plusieurs scripts attendent comme valeur d'argument. Or
+argparse lit un tiret initial comme le début d'une option, pas comme une valeur.
+
+Vérifié sur pièce le 2026-08-14, dans les deux sens :
+
+```
+$ python3 skills/dream/read-index.py -home-haduong--claude
+usage: read-index.py [-h] project        ← vidage d'usage, la valeur est perdue
+
+$ python3 skills/dream/read-index.py -- -home-haduong--claude
+{ ... }                                   ← correct
+```
+
+Le séparateur `--` est le remède standard, et il n'est utilisé nulle part.
+
+## Pourquoi ce n'est pas qu'une gêne
+
+Cinq points d'appel sont touchés, mais un seul échoue **en silence**, et c'est
+celui qui compte :
+
+- `skills/roar/enumerate-merges.py` — appelé depuis l'étape 2 de
+  `skills/roar/SKILL.md`, dans un extrait qui se termine par `|| ROWS=""`. Quand
+  argparse refuse le nom, l'échec est avalé, `ROWS` reste vide, et roar bascule
+  sur la branche agrégat : **une seule ligne de télémétrie pour toute la
+  session**, au lieu d'une par demande de fusion. C'est exactement l'attribution
+  par ticket que le ticket 0331 avait été ouvert pour rétablir. Le correctif de
+  0331 est donc inerte dans ce dépôt depuis qu'il existe, sans qu'aucun signal
+  ne l'indique.
+- `skills/dream/read-index.py`, `skills/dream/commit.py`,
+  `skills/dream/provenance.py` (deux sous-commandes) — positionnel `project`.
+  Ceux-là échouent bruyamment, avec un vidage d'usage : gênants, pas dangereux.
+
+La forme générale est celle que `tickets/AGENTS.md` décrit déjà : un contrôle
+dont l'« tout va bien » est indiscernable du « je n'ai pas su regarder ». Ici la
+branche de repli est légitime — première exécution, historique réécrit, dépôt
+sans commits de fusion — donc rien ne distingue le repli normal du repli causé
+par un nom refusé.
+
+## Un second défaut du même script, trouvé le même jour par une autre session
+
+Découvert en fermant ce roar : la session `polycentric_activity` a déposé
+`feedback-roar-enumerate-merges-head.md` (2026-08-14T13:49Z) sur un défaut
+*distinct* du même script. `enumerate-merges.py` énumère `<sentinelle>..HEAD`
+avec `HEAD` **en dur**, sans argument pour viser une autre référence. Or `/roar`
+tourne normalement depuis le worktree de la branche qu'on vient de faire
+fusionner, worktree resté sur la pointe de la branche, en deçà du commit de
+fusion. L'énumération manque donc la demande de fusion qu'on vient de célébrer :
+3 entrées au lieu de 4, ce jour-là, sans que rien ne le signale.
+
+Cette note concluait « sous le seuil de gravité, à remonter au harnais si le cas
+se répète ». Il s'est répété — script identique, même journée, même forme :
+**une énumération courte ne se distingue pas d'une énumération juste**. Deux
+sessions indépendantes ont trouvé deux façons différentes pour ce script de
+perdre l'attribution par demande de fusion sans rien dire. Ce n'est plus un
+défaut isolé sous le seuil, c'est une classe, et c'est ce qui justifie le test
+de non-régression demandé plus bas.
+
+Le présent roar y a échappé par accident : il tournait depuis le checkout
+principal sur `main`, donc `HEAD` était à jour. La divergence 16 commits de
+fusion contre 15 lignes a été vérifiée et s'explique — `866d30f` est une fusion
+`main`→branche d'intégration, non une fusion de demande, et le script a raison
+de l'écarter. C'est le genre de contrôle qu'il faut faire à chaque fois, faute
+de quoi un sous-comptage réel passerait pour cet écart-là.
+
+## Relevant files
+- `skills/roar/enumerate-merges.py` — l'appel qui se dégrade en silence
+- `skills/roar/SKILL.md` — l'extrait de l'étape 2 et son `|| ROWS=""`
+- `skills/dream/read-index.py`, `skills/dream/commit.py`,
+  `skills/dream/provenance.py` — les positionnels qui échouent bruyamment
+
+## Actions
+1. Passer `--` avant le nom de projet à chaque point d'appel, ou accepter le nom
+   par une option qui ne peut pas être confondue.
+2. **Distinguer le repli légitime du repli par échec** dans l'étape 2 de roar :
+   le `|| ROWS=""` doit signaler pourquoi il replie. Un repli silencieux qui
+   couvre à la fois « rien à énumérer » et « l'appel a échoué » n'est pas un
+   repli, c'est une perte.
+3. Balayer les autres scripts du harness qui reçoivent un nom de répertoire de
+   projet, y compris ceux qui le passent à un sous-processus.
+4. Donner à `enumerate-merges.py` un argument de référence terminale, au lieu de
+   `HEAD` en dur, et faire dire à `/roar` étape 2 sur quelle référence il a
+   énuméré. Un roar lancé depuis un worktree de branche doit soit viser
+   `origin/main`, soit refuser bruyamment.
+5. **Test de non-régression de la classe** (roar étape 4). Deux défauts
+   indépendants du même script en une journée, chacun perdant l'attribution en
+   silence : le test ne doit pas viser un défaut mais l'invariant — pour un
+   intervalle contenant K fusions de demande connues, l'étape 2 écrit K lignes
+   de télémétrie, quel que soit le nom du projet et quelle que soit la référence
+   sur laquelle le worktree est posé.
+
+## Test
+Rouge d'abord :
+
+- `read-index.py -home-haduong--claude` doit rendre l'index, pas un vidage
+  d'usage ;
+- `enumerate-merges.py <sha> --project -home-haduong--claude` doit rendre ses
+  lignes ;
+- **contrôle positif** — un test qui appelle l'étape 2 de roar avec un nom à
+  tiret initial et un intervalle contenant des commits de fusion connus doit
+  obtenir une ligne *par* fusion. Un intervalle sans fusion ferait passer le
+  test avec la branche agrégat et ne prouverait rien : c'est le piège que ce
+  ticket décrit, appliqué à sa propre vérification.
+
+## Invariants
+- Aucun changement du format de `celebrations.jsonl` : le champ `project` garde
+  le tiret initial, qui est le nom réel du répertoire.
+
+## Exit criteria
+- [ ] Un nom de projet à tiret initial traverse les cinq points d'appel
+- [ ] Un repli sur agrégat dit lequel des deux cas l'a causé
+- [ ] Un roar lancé depuis un worktree de branche n'énumère pas court en silence
+- [ ] Un test de classe échoue si l'attribution par demande de fusion se
+      re-dégrade, par l'une **ou l'autre** des deux voies connues
