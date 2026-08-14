@@ -178,10 +178,52 @@ répertoire de staging rend l'argument vrai.
   `storageHash`, `creators`/`itemCreators`)
 - `rules/edm.md` — « Periodic sync + purge » : la règle que ce ticket outille
 
+## Question ouverte : pourquoi injecter par l'API seulement ?
+
+Posée par l'auteur le 2026-08-14. Trois canaux existent, l'API n'en est qu'un.
+
+**(i) Fichier RIS + `xdg-open`** — le chemin d'origine, encore documenté comme
+repli. Il demande un clic humain, ne rend aucune clé d'objet, et n'offre aucune
+prise pour une dédup mécanique. Inutilisable sans surveillance.
+
+**(ii) L'API Web** — le choix actuel, décidé le 2026-08-13. Seul canal qui
+fonctionne sans client de bureau, donc le seul que `beat` et nightbeat puissent
+emprunter. C'est la raison du choix, et elle tient. Prix payé : l'écriture part
+au serveur, donc **le miroir sqlite local reste périmé jusqu'à la
+synchronisation du client** — c'est exactement le défaut (c), et le registre md5
+de l'action 3 n'est qu'un emplâtre dessus. S'y ajoutent le plafond de 50 objets,
+les 429, et la dépendance au réseau.
+
+**(iii) Le serveur HTTP local du client** (`127.0.0.1:23119`) — jamais évalué.
+C'est par là que le connecteur de navigateur enregistre ; la préférence
+`extensions.zotero.httpServer` est présente dans le profil. Ni clé d'API, ni
+réseau, et **l'objet atterrit dans le client en cours d'exécution
+immédiatement** : la base locale est à jour dans la seconde, ce qui *dissout* le
+défaut (c) au lieu de le rustiner. Contrainte symétrique : il exige que Zotero
+tourne — au sondage du 2026-08-14, le port était fermé.
+
+Piste à instruire au moment de l'imagine, pas ici : préférer (iii) quand le
+client répond, se rabattre sur (ii) sinon. Si elle tient, l'action 3 devient
+beaucoup moins chère, voire inutile dans le cas interactif. Ne pas l'écrire
+avant la revue d'outillage ci-dessous.
+
+## YAGNI : la revue d'outillage précède le code
+
+Directive de l'auteur, 2026-08-14 : « serious YAGNI at imagine time, there are
+many tools / plugins ». Avant d'écrire le balayage, instruire ce que l'existant
+couvre déjà — le volet natif de Zotero, **Better BibTeX** (qui tient déjà la
+correspondance `.bib` ↔ Zotero que ce balayage reconstruit à la main), les
+greffons de la place, `zotero-mcp`, le connecteur local ci-dessus. Constaté le
+2026-08-14 : le profil porte `"addons": []`, aucun greffon installé — la revue
+est donc ouverte pour de bon. Son livrable est une déclaration écrite de ce qui
+est réutilisé ou de pourquoi rien ne convient (`rules/workflow.md`, § Reuse
+gate). Voir le ticket 0485, qui porte la même exigence pour le dédoublonnage.
+
 ## Actions
 
 Dans cet ordre : les deux premières corrigent le rapprochement *existant* et se
-testent aujourd'hui, sans rien attendre du balayage.
+testent aujourd'hui, sans rien attendre du balayage. Les suivantes attendent la
+revue d'outillage.
 
 1. **Réparer le rapprochement avant de bâtir dessus.** Cadrer `zotero_matches`
    sur le `libraryID` de la destination (défaut a), et faire des pièces jointes

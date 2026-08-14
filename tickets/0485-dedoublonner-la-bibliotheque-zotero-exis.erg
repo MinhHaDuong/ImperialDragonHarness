@@ -1,0 +1,127 @@
+%erg 0.1
+Title: EDM: dédoublonner la bibliothèque Zotero existante — détection locale, fusion dans le client
+Created: 2026-08-14
+Author: Minh Ha-Duong
+Blocked-by: 0455
+
+--- log ---
+2026-08-14T19:10Z claude created — 269 grappes de fichiers md5-identiques sous des parents distincts, invisibles au volet Doublons de Zotero
+
+--- body ---
+## Context
+
+Le ticket 0455 empêche les *nouveaux* doublons au moment de l'injection. Celui-ci
+nettoie ceux qui sont déjà là. Les deux partagent le rapprochement et rien d'autre.
+
+Mesuré le 2026-08-14 sur `~/data/Zotero/zotero.sqlite`, bibliothèque de
+l'utilisateur (libraryID 1, 7 293 objets de premier niveau) : **269 grappes où le
+même md5 de fichier est attaché sous des objets parents distincts**. Le volet
+« Doublons » de Zotero n'en montre aucune — il rapproche sur titre / DOI / ISBN,
+plus créateurs et année, à type d'objet identique, et ne regarde jamais le hash
+du fichier. Ces 269 grappes sont structurellement hors de portée de l'outil vers
+lequel on se tournerait spontanément.
+
+Cette capacité est déjà inscrite au plan : `docs/zotero-integration.md` la liste
+(« **Dedup** — candidate pairs + HITL merge; auto-apply DOI-exact matches only »)
+avec pour déclencheur « when second project triggers it ». Les 269 grappes sont
+ce déclencheur.
+
+## La contrainte local / distant n'est pas un choix de conception
+
+Elle est imposée, et elle décide de la forme de l'outil :
+
+- **La base sqlite locale est en lecture seule par construction.** `zotero_open`
+  l'ouvre en `?immutable=1` (`scripts/zotero-import.py:134`). Rien dans le harness
+  ne peut y écrire, délibérément : le client possède le schéma et l'état de
+  synchronisation de ce fichier.
+- **L'API Web est le seul chemin d'écriture, et elle n'a pas de point d'entrée de
+  fusion.** Une fusion Zotero est un composite côté client : choisir un objet
+  maître, y déplacer pièces jointes et notes filles, réunir collections et
+  étiquettes, mettre les perdants à la corbeille, puis écrire des relations
+  `dc:replaces` sur le maître vers ce qu'il absorbe. La bibliothèque porte déjà
+  **436 relations `dc:replaces`** issues de fusions passées dans le client.
+  Reproduire cela par l'API, c'est réimplémenter la logique du client ; une erreur
+  sur les relations perd la provenance **sans lever d'erreur**.
+- La bibliothèque de groupe (libraryID 3) est en lecture seule de toute façon. Le
+  dédoublonnage ne touche que la bibliothèque 1.
+
+D'où la forme : **détecter en local, fusionner dans le client.**
+
+## YAGNI d'abord — la revue d'outillage précède toute ligne de code
+
+Directive de l'auteur, 2026-08-14 : « serious YAGNI at imagine time, there are
+many tools / plugins ». Cette étape est bloquante et son livrable est une
+**déclaration écrite** — quel outil existant est réutilisé, ou pourquoi aucun ne
+convient (`rules/workflow.md`, § Reuse gate). Une décision de réutilisation tacite
+n'est pas vérifiable après coup ; une déclaration l'est.
+
+État des lieux constaté le 2026-08-14 : le profil Zotero
+(`~/.zotero/zotero/qr3b6poy.default/extensions.json`) porte `"addons": []` —
+**aucun greffon installé**. La revue est donc réellement ouverte, et non un
+exercice de style. À évaluer au minimum :
+
+- **le volet « Doublons » natif de Zotero** — gratuit, sûr, et la fusion y est
+  déjà correcte ; sa seule limite connue est de ne pas voir le hash ;
+- **Better BibTeX** — il tient déjà la correspondance `.bib` ↔ Zotero. S'il est
+  adopté, il change aussi la conception du ticket 0455, dont le balayage
+  reconstruit précisément cette correspondance à la main. À trancher avant
+  d'écrire le balayage, pas après ;
+- les greffons de dédoublonnage et d'utilitaires de la place ;
+- `zotero-mcp` — noté comme surcouche optionnelle HITL dans
+  `docs/zotero-integration.md`, jamais une dépendance de correction ;
+- **le connecteur HTTP local du client** (`127.0.0.1:23119`, préférence
+  `extensions.zotero.httpServer` présente dans le profil) — voir la note du
+  ticket 0455 sur le canal d'injection.
+
+Si le natif plus une exportation suffisent, ce ticket se ferme sans code. C'est
+l'issue préférée.
+
+## Forme visée, si du code s'avère nécessaire
+
+La détection lit la base locale : gratuit, rapide, sans limite de débit, et c'est
+déjà le chemin de code existant. Elle émet des paires candidates classées par la
+clé qui a mordu, avec un lien `zotero://select/library/items/<KEY>` de chaque
+côté. Ce lien n'est pas un confort : pour une paire trouvée par le seul hash, le
+volet « Doublons » ne sait pas amener l'auteur jusqu'à elle.
+
+La fusion se fait dans le client. L'application automatique reste bornée aux
+correspondances exactes par hash ou par DOI, et sous le contrat de sûreté de
+`docs/zotero-integration.md` : sauvegarde → marche à blanc → application.
+
+## Relevant files
+- `scripts/zotero-import.py` — `zotero_matches` : la cascade du ticket 0455 est le
+  détecteur ; l'appliquer par paires sur la bibliothèque au lieu de PDF-contre-
+  bibliothèque suffit à sortir les candidats
+- `docs/zotero-integration.md` — la capacité « Dedup » déjà planifiée, et le
+  contrat de sûreté
+- `rules/edm.md` — Zotero système de référence
+
+## Actions
+1. **Revue d'outillage, bloquante.** Produire la déclaration de réutilisation.
+   Si un outil existant couvre le besoin, fermer ce ticket en le documentant.
+2. Sinon : détecteur en lecture seule sur la base locale, consommant la cascade
+   du ticket 0455 par paires. Sortie : paires classées, clé ayant mordu, liens
+   `zotero://select`.
+3. Rapport seul. Aucune écriture tant que l'auteur n'a pas arbitré sur un
+   échantillon.
+4. Application automatique, si elle est un jour demandée : hash-exact et
+   DOI-exact seulement, sous le contrat sauvegarde → marche à blanc → application.
+
+## Test
+- Un couple md5-identique sous deux parents distincts est sorti comme paire.
+- Un couple que le volet natif voit déjà **et** que le détecteur voit est marqué
+  comme tel, pour que l'auteur sache ce qu'il gagne réellement.
+- **Contrôle positif** : une paire connue-positive sort à chaque exécution, sans
+  quoi « rien trouvé » et « je n'ai pas su regarder » sont le même résultat.
+- La bibliothèque de groupe (libraryID 3) n'apparaît jamais dans les propositions.
+
+## Invariants
+- Aucune écriture dans `zotero.sqlite`, jamais. La base reste ouverte en `immutable=1`.
+- Aucune fusion automatique sans arbitrage de l'auteur au premier passage.
+- Les relations `dc:replaces` existantes ne sont ni réécrites ni contredites.
+
+## Exit criteria
+- [ ] La déclaration de réutilisation est écrite et tranchée
+- [ ] Si code il y a : les 269 grappes par hash sont énumérées avec un lien
+      cliquable de chaque côté, et l'auteur a pu en arbitrer un échantillon
+- [ ] Rien n'a été fusionné automatiquement sans son accord
