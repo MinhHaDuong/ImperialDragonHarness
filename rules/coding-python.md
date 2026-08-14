@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-06-18 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Coding Rules
 
 ## Python (3.10+)

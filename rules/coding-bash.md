@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-14 -->
+<!-- last-reviewed: 2026-08-14 -->
 # Coding Rules — Bash
 
 ## Arithmetic under `set -e`
