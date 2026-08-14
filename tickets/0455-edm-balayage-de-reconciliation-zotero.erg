@@ -1,0 +1,164 @@
+%erg 0.1
+Title: EDM: balayage de réconciliation Zotero au /lair — les deux sens, .bib non nommé, dédup au-delà du DOI
+Created: 2026-08-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-14T15:00Z claude-exec created — l'import Zotero des PDF acquis reste manuel et se perd ; constaté au ticket 0075 du projet polycentric_activity
+
+--- body ---
+## Context
+L'acquisition d'une source produit aujourd'hui trois écritures — le PDF dans
+`docs/`, l'entrée dans le `.bib`, la citation dans le manuscrit — et une
+quatrième qui n'arrive que si quelqu'un y pense : l'injection dans Zotero.
+`edm.md` pose pourtant Zotero comme système de référence et `docs/` comme
+staging transitoire. La quatrième écriture manquante inverse le contrat : le
+staging devient l'archive de fait.
+
+Constaté sur pièce le 2026-08-14 (projet `polycentric_activity`, ticket 0075) :
+trois sources acquises — Levin 1997, Pospelova & Shananin 1998, Shananin 2009 —
+sont dans `docs/` et dans `refs.bib`, aucune dans Zotero. Le ticket a été fermé
+et fusionné avec cette dette explicitement notée en fin de PR. C'est exactement
+le mode de défaillance que `edm.md` appelle « purge on archival » sans jamais
+dire *qui* la déclenche.
+
+**Pourquoi `/lair` et non `/roar`.** Décision prise avec l'auteur le
+2026-08-14. `roar` étape 6 le dit déjà en toutes lettres — « No sweep here —
+sweeps happen at `/lair` » — et trois faits l'appuient :
+
+1. `docs/` est **partagé, pas par tâche**. Les worktrees sont jetables, donc un
+   PDF acquis atterrit dans le `docs/` du checkout principal. Sous sessions
+   parallèles, un balayage par tâche fait scanner le même répertoire par N
+   sessions à la fois : double injection. Un passage quotidien sérialise.
+2. **`roar` ne tourne pas toujours** — jobs de fond, `beat` headless, sessions
+   interrompues. Sous un design roar-only, leurs PDF fuient définitivement.
+3. La plupart des tâches n'acquièrent rien : en `roar` le contrôle serait un
+   no-op quasi permanent taxant chaque clôture.
+
+L'objection sérieuse à `/lair` est la fraîcheur des métadonnées : un jour plus
+tard, un PDF nu dans `docs/` a perdu le contexte de la session qui l'a acquis
+(DOI, provenance ISTEX, date de lecture). Elle tombe si le balayage se pilote
+**par le `.bib`, pas par un listing de `docs/`** — le `.bib` porte déjà
+auteur, titre, DOI, `file=` et une ligne `annote` de provenance, écrits au
+moment de l'acquisition.
+
+Option écartée : un hook `PostToolUse` déclenché à l'arrivée du PDF. L'injection
+demande le réseau et une dédup contre la bibliothèque ; en ligne, elle bloque la
+session et laisse des états d'échec partiel au milieu d'une tâche. La
+réconciliation veut être idempotente et rejouable — c'est la définition d'un
+balayage.
+
+## Les trois contraintes de l'auteur
+
+**(1) Les deux sens, pas un.** Le balayage réconcilie dans les deux directions :
+
+- *sens A* — entrée `.bib` avec `file=` → PDF présent → absent de Zotero → injecter.
+- *sens B* — fichier de `docs/` **sans aucune entrée `.bib`** → orphelin → extraire
+  les métadonnées puis injecter.
+
+Le sens B est le cas dur : l'orphelin n'a pas de métadonnées en main. C'est
+précisément ce que `scripts/zotero-import.py` sait déjà faire (extraction,
+résolution en ligne, dédup) — le sens B est donc l'appel du skill existant sur
+l'ensemble des orphelins, pas du code neuf.
+
+**(2) Aucun nom de `.bib` en dur.** `refs.bib` est le nom de *ce* projet-ci, pas
+une constante du harness. Le balayage découvre les `.bib` du dépôt (glob à la
+racine, et un niveau sous elle), en traite zéro (sortie silencieuse), un, ou
+plusieurs. Le répertoire de staging se déduit de même : des chemins `file=`
+observés, avec `docs/` en défaut seulement quand aucun `.bib` n'existe. Rien de
+ceci n'est un littéral dans le code.
+
+**(3) La dédup ne peut pas être au DOI seul.** Beaucoup de livres, de documents
+de travail et d'articles antérieurs au DOI. État des lieux vérifié sur pièce
+dans `scripts/zotero-import.py` (`zotero_matches`, ~l. 138–235) : le
+rapprochement actuel ne connaît que trois clés — DOI exact (score 100),
+recouvrement de Jaccard sur les tokens du titre ≥ 0,6 (jusqu'à 90), et +5 si
+l'année concorde. D'où les manques, tous constatés dans le code, pas supposés :
+
+- **l'ISBN est extrait et jamais utilisé** — `find_identifier` le renvoie
+  (~l. 78–82), la requête SQL de `zotero_matches` ne le lit pas ;
+- **aucune clé auteur** : un Jaccard sur titre seul confond deux livres nommés
+  « Convex Analysis » ;
+- **aucune clé sur le contenu du fichier** : Zotero stocke pourtant un hash
+  d'attachement, exact et indifférent à la qualité des métadonnées — la
+  meilleure clé qui soit pour un livre pré-DOI ;
+- Jaccard 0,6 est fragile dans les deux sens sur les titres courts.
+
+Cascade visée, du plus sûr au plus faible : hash du fichier → identifiant
+persistant (DOI, ISBN, arXiv, HAL, handle) → (nom du premier auteur, année,
+titre normalisé) → Jaccard actuel en dernier recours.
+
+**Et l'ambiguïté ne s'auto-résout pas.** Sous le seuil d'une clé sûre, le
+balayage *signale* — il n'injecte pas et ne saute pas en silence. Un rapport qui
+ne distingue pas « rien à faire » de « je n'ai pas su regarder » n'est pas un
+contrôle (`tickets/AGENTS.md`, même piège que `gh pr list --json files`).
+
+## Relevant files
+- `skills/zotero-import/SKILL.md` — le skill à étendre d'un mode réconciliation
+- `scripts/zotero-import.py` — extraction, `find_identifier`, `zotero_matches`,
+  `find_zotero_db` ; c'est la dédup à élargir, pas à réécrire
+- `skills/lair/SKILL.md` — étape 8, le balayage d'hygiène qui l'appellera
+- `rules/edm.md` — « Periodic sync + purge » : la règle que ce ticket outille
+
+## Actions
+1. Donner à `zotero-import` un mode réconciliation, appelable seul
+   (`/molt` et nightbeat doivent pouvoir l'atteindre), qui découvre les `.bib`
+   et le staging sans nom en dur, et rapporte les deux sens A et B.
+2. Élargir `zotero_matches` à la cascade ci-dessus. Ajouter d'abord la clé de
+   hash — c'est la seule exacte, et celle qui couvre le cas livre.
+3. Câbler l'appel dans `/lair` étape 8, sous garde : le projet a un `.bib` ou un
+   répertoire de staging, sinon rien.
+4. **Défaut en rapport seul ; l'injection est opt-in.** Un balayage qui écrit
+   dans le système de référence se livre en marche à blanc d'abord.
+5. Rejouer le balayage sur les trois sources en dette du ticket 0075 de
+   `polycentric_activity` : c'est le cas de test réel, et il vide la dette.
+
+## Test
+Rouge d'abord, sur un dépôt-fixture et une bibliothèque Zotero de test :
+
+- un `.bib` **non nommé `refs.bib`** désignant un PDF staged absent de Zotero
+  → le balayage propose exactement une injection (sens A, et la découverte du
+  nom est exercée) ;
+- un PDF orphelin dans le staging, sans entrée `.bib` → une injection proposée
+  (sens B) ;
+- un livre **sans DOI**, déjà dans la bibliothèque sous une casse et une
+  ponctuation de titre différentes → **aucune** double injection (la clé de hash
+  ou la clé auteur+année doit mordre là où le DOI n'existe pas) ;
+- un titre générique partagé par deux ouvrages distincts → signalé comme
+  ambigu, ni injecté ni sauté.
+
+Le suite porte un **contrôle positif**, à l'image du chemin rouge de
+`scripts/check_refsbib_note_provenance.py` : un cas connu-positif doit sortir à
+chaque exécution, sans quoi « rien trouvé » et « je n'ai pas su regarder » sont
+le même résultat.
+
+## Verification
+- [ ] Le mode réconciliation tourne sans qu'aucun nom de `.bib` figure dans le code
+- [ ] Les deux sens A et B sont couverts par un test chacun
+- [ ] Un livre pré-DOI déjà présent n'est pas réinjecté
+- [ ] Un cas ambigu est signalé, ni injecté ni sauté
+- [ ] Le rapport distingue : injecté / déjà présent / ambigu / illisible
+- [ ] `/lair` no-op silencieusement dans un dépôt sans `.bib` ni staging
+
+## Invariants
+- Zotero reste le système de référence : le balayage n'efface jamais `docs/`,
+  la purge après archivage reste une décision d'auteur (`edm.md`)
+- Aucune écriture destructive dans la bibliothèque : on ajoute, on ne fusionne
+  pas d'autorité
+- Le mode par défaut ne mute rien
+
+## Notes
+Le ticket **0410** corrige le rangement du conteneur (`seriesTitle` refusé sur
+`conferencePaper` et `bookSection`). Il n'est pas un bloquant du présent ticket :
+la découverte, la dédup et le rapport se construisent et se testent sans lui.
+Mais il vaut pour l'**injection en masse** — ce sont exactement les types
+d'objets visés par la contrainte (3) de l'auteur. Livrer le mode rapport avant
+0410, n'activer l'injection qu'après.
+
+## Exit criteria
+- [ ] Un PDF acquis et non versé dans Zotero est rattrapé sans intervention,
+      au plus tard au `/lair` suivant, quel que soit le nom du `.bib`
+- [ ] La dédup mord sur un livre pré-DOI, prouvé par un test qui échoue si on
+      retire la clé non-DOI
+- [ ] La dette du ticket 0075 de `polycentric_activity` est soldée par le
+      balayage lui-même, pas à la main
