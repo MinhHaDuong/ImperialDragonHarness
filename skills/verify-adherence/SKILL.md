@@ -120,6 +120,13 @@ rendered:
   labelled block. Enumerating the LaTeX forms alone leaves the check inert on a
   `.qmd` repo it claims to cover.
 
+**Two exemptions, or the check cries wolf on valid sources.** `\nocite{*}` is a
+wildcard meaning "every entry in the `.bib`", not a key — resolving it as one
+fails a legitimate manuscript. And in a `.qmd`, `@` inside fenced blocks, inline
+code, and verbatim spans is not a citation: pandoc ignores it there, so a Python
+decorator or an email address in a code cell is not an unresolved reference.
+Strip those contexts before scanning.
+
 Any unresolved reference → fail with rule ref `verify-adherence#reference-resolution`,
 record `{key, file:line, kind}`. Do not flag `Underfull`/`Overfull` or pre-existing
 BibTeX field warnings. Doctrine and per-tool build recipes: `rules/manuscript-build.md`.
