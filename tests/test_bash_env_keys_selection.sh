@@ -29,9 +29,17 @@ printf 'FAKE_ZENODO=zval\n'      > "$FHOME/.config/keys/zenodo.env"
 
 # Load bash-env.sh in a subprocess with $HOME=<home> and PWD=<projdir>, then print
 # the value of environment variable <var> ("" if unset). stderr silenced.
+#
+# `env -i` is load-bearing, not tidiness (ticket 0359). The fake HOME isolates the
+# keystore, but a plain `HOME=… bash -c` still inherits the caller's environment —
+# including the BASH_ENV that re-runs the real loader at child startup, and any
+# ambient KEYS. The default-deny assertions in (2) and the "undeclared provider is
+# NOT loaded" ones in (1) and (3) measure absence, so an inherited value turns them
+# red against something the code path never touched — and a failing assertion
+# prints what it found (rules/coding-bash.md).
 _load_var() {
     local home="$1" projdir="$2" var="$3"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         n="$3"
@@ -42,7 +50,7 @@ _load_var() {
 # Load bash-env.sh as above but return only the exit code (0 = no shell error).
 _load_rc() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" >/dev/null 2>&1
@@ -53,7 +61,7 @@ _load_rc() {
 # caller can assert whether a variable is or is not marked for export.
 _load_exports() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         export -p
