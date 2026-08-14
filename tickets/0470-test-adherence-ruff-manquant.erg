@@ -1,0 +1,92 @@
+%erg 0.1
+Title: Le dépôt harness n'a pas de test d'adhérence ruff, que coding-python.md rend obligatoire
+Created: 2026-08-14
+Author: minh
+
+--- log ---
+2026-08-14T00:00Z minh created
+
+--- body ---
+## Context
+
+`~/.claude/rules/coding-python.md` pose une obligation par projet :
+
+> Every Python project must have a ruff adherence test so lint failures are
+> caught locally before CI.
+
+Le dépôt harness ne l'a pas. `make lint` (`pytest -m adherence`) sélectionne
+27 tests, tous des ratchets grep/AST sur les skills, les règles et les
+prédicats de worktree — aucun n'appelle ruff. Constaté le 2026-08-14 en
+corrigeant `scripts/zotero-import.py` (PR #730 puis la PR de couverture des
+types) : ruff a dû être lancé à la main sur les fichiers modifiés, hors de
+toute garde.
+
+**L'enjeu est la régression future, pas un état rouge actuel.** `ruff check`
+passe aujourd'hui sur les fichiers touchés, et `ruff` 0.15.21 est installé et
+résolvable sur le PATH. Ce qui manque est le cliquet : rien n'empêche un
+prochain changement d'introduire une violation que personne ne verra avant
+— au mieux — une revue humaine. Le dépôt n'a d'ailleurs pas de tier `lint` en
+CI qui rattraperait le coup.
+
+Deux difficultés propres à ce dépôt, à trancher dans le ticket :
+
+1. **Pas de `pyproject.toml`, pas de `uv`.** La règle demande ruff en
+   dépendance de dev *épinglée* et `uv lock`, pour qu'un verdict d'adhérence
+   soit indépendant de la machine. Le harness lance ses tests avec le
+   `python3` du système. Il faut soit introduire un `pyproject.toml` minimal
+   avec le groupe dev, soit épingler la version autrement (par exemple un
+   `requirements-dev.txt` + une assertion sur `ruff --version` dans le test)
+   et documenter l'écart. Un ruff ambiant non épinglé dérive entre machines
+   et change de règles à chaque montée de version — c'est exactement ce que
+   la règle interdit.
+2. **Périmètre.** `scripts/` contient beaucoup de fichiers anciens. Vérifier
+   si `ruff check .` passe déjà sur tout le dépôt ; sinon, poser le cliquet
+   sur un périmètre explicite (les fichiers déjà propres) plutôt que
+   d'ouvrir un chantier de nettoyage sous couvert d'ajouter une garde.
+
+## Relevant files
+
+- `~/.claude/rules/coding-python.md` — la règle et son implémentation de référence
+- `tests/` — où le test doit atterrir, à côté des autres tests `adherence`
+- `Makefile` — cible `lint` (`pytest tests/ -m adherence`), rien à changer si le test porte le marqueur
+- `pytest.ini` — le marqueur `adherence` est déjà déclaré
+
+## Actions
+
+1. Mesurer d'abord : lancer `ruff check .` à la racine du dépôt et compter les
+   violations. Le résultat décide du périmètre du cliquet.
+2. Épingler la version de ruff (voir difficulté 1) et documenter le choix.
+3. Écrire `tests/test_ruff.py` selon l'implémentation de référence :
+   résolution du binaire par `shutil.which`, **surtout pas** de `uv run`
+   imbriqué, marqueur `@pytest.mark.adherence`.
+4. Si le périmètre est restreint, l'écrire explicitement dans le test avec la
+   raison, et non comme une liste d'exclusions muette.
+
+## Test
+
+Le test *est* le livrable. Étape rouge : introduire volontairement une
+violation triviale (un import inutilisé dans un fichier du périmètre),
+vérifier que `make lint` échoue, retirer la violation, vérifier qu'il passe.
+Sans cette vérification, un test qui ne trouve pas le binaire ou qui vise un
+périmètre vide passerait au vert sans rien garder — le défaut « un contrôle
+dont le tout-va-bien est indistinguable du je-n'ai-pas-regardé ».
+
+## Verification
+
+- [ ] `make lint` inclut le nouveau test et il passe
+- [ ] Le test échoue sur une violation ruff introduite exprès, puis repasse
+- [ ] La version de ruff est épinglée quelque part de versionné
+- [ ] `shutil.which` est utilisé ; aucun `uv run` imbriqué
+- [ ] Le périmètre, s'il est restreint, est justifié dans le source du test
+
+## Invariants
+
+- `make check-fast` reste pur et rapide : le test porte `adherence`, donc il
+  est exclu du tier rapide.
+- Aucun fichier existant n'est reformaté dans ce ticket. Poser la garde et
+  nettoyer le code sont deux changements distincts.
+
+## Exit criteria
+
+Une violation ruff dans le périmètre retenu fait échouer `make lint` en
+local, avec une version de ruff épinglée et versionnée.

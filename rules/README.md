@@ -26,6 +26,26 @@ files on demand when their scope signal applies to your task.
 Compliance is verified ex post by the `verify-adherence` skill — this
 index is the single source of truth on when each rule file applies.
 
+## Review cadence
+
+Each rule body carries a `last-reviewed: YYYY-MM-DD` marker, as an HTML comment
+on the first line or as a frontmatter key where the file has frontmatter.
+`scripts/warn-stale-rules.sh` runs at session start and warns, advisory only,
+when one is 30 or more days old. It scans `rules/*.md` and one level of
+subdirectory, so the `prose/`, `doctype/` and `lang/` bodies are covered. This
+`README.md` is the index rather than a rule body and carries no marker.
+
+A file without a marker is skipped, not flagged, so absence buys permanent
+silence: a new rule body needs its marker at creation. Two files sat unmarked
+and unmonitored for months before the 2026-08-14 review found them.
+
+Read the marker for what it records: deliberate review passes, not edits.
+Nothing bumps it when a rule is amended in place, so an old stamp is weak
+evidence of rot — on 2026-08-14 the two loudest warnings named the two files
+with the most commits since their stamps — and a recent one is worth exactly as
+much as the pass that set it. Stamping a file you have not read makes the
+marker lie, and nothing downstream can catch that.
+
 ## Per-file rule injection (axis model)
 
 `scripts/inject_rule_on_edit.py` (PreToolUse `Edit|Write` hook) injects the full

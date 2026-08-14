@@ -11,6 +11,8 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 spec = importlib.util.spec_from_file_location("zotero_import", SCRIPTS / "zotero-import.py")
 zi = importlib.util.module_from_spec(spec)
@@ -561,8 +563,8 @@ def test_entry_to_zotero_item_journal_article():
     assert item["DOI"] == "10.1/x"
     assert item["publicationTitle"] == "Econometrica"
     assert item["pages"] == "1467-1495"
-    # journalArticle has no numPages field: routed to extra
-    assert "pages: 29" in item["extra"]
+    # journalArticle has no numPages field: routed to extra as a CSL variable
+    assert "number-of-pages: 29" in item["extra"]
     assert "numPages" not in item
 
 
@@ -575,13 +577,424 @@ def test_entry_to_zotero_item_book_numpages_and_isbn():
     assert item["itemType"] == "book"
     assert item["ISBN"] == "978-0-13-468599-1"
     assert item["numPages"] == "300"
-    # book has no DOI field: routed to extra
-    assert "DOI: 10.2/y" in item["extra"]
+    # schema 42 gives `book` a real DOI field; no need for the extra fallback
+    assert item["DOI"] == "10.2/y"
     assert item["collections"] == ["ABCD1234"]
 
 
 def test_entry_to_zotero_item_unknown_type_falls_back_to_document():
     assert zi.entry_to_zotero_item({"type": "XXXX"}, None)["itemType"] == "document"
+
+
+# ── per-type field validity (the 400-from-Zotero class) ─────────────────────
+#
+# Snapshot of the valid field names per item type, read from
+# https://api.zotero.org/schema (schema version 42, consulted 2026-08-14).
+# Deliberately pinned HERE rather than imported from the module under test:
+# the guard below must not be checked against the same table the mapper uses,
+# or it proves nothing. `test_zotero_schema_snapshot_matches_live` (slow tier)
+# re-derives this from the live schema.
+
+SCHEMA_42_FIELDS = {
+    "journalArticle": (
+        "title abstractNote publicationTitle publisher place date volume "
+        "issue section partNumber partTitle pages series seriesTitle "
+        "seriesText journalAbbreviation DOI citationKey url accessDate PMID "
+        "PMCID ISSN archive archiveLocation shortTitle language "
+        "libraryCatalog callNumber rights extra"
+    ).split(),
+    "book": (
+        "title abstractNote series seriesNumber volume numberOfVolumes "
+        "edition date publisher place originalDate originalPublisher "
+        "originalPlace format numPages ISBN DOI citationKey url accessDate "
+        "ISSN archive archiveLocation shortTitle language libraryCatalog "
+        "callNumber rights extra"
+    ).split(),
+    "thesis": (
+        "title abstractNote thesisType university place date series "
+        "seriesNumber numPages DOI ISBN citationKey url accessDate ISSN "
+        "archive archiveLocation shortTitle language libraryCatalog "
+        "callNumber rights extra"
+    ).split(),
+    "report": (
+        "title abstractNote reportNumber reportType institution place date "
+        "seriesTitle seriesNumber pages DOI ISBN citationKey url accessDate "
+        "ISSN archive archiveLocation shortTitle language libraryCatalog "
+        "callNumber rights extra"
+    ).split(),
+    "bookSection": (
+        "title abstractNote bookTitle series seriesNumber volume "
+        "numberOfVolumes edition date publisher place originalDate "
+        "originalPublisher originalPlace format pages ISBN DOI citationKey "
+        "url accessDate ISSN archive archiveLocation shortTitle language "
+        "libraryCatalog callNumber rights extra"
+    ).split(),
+    "conferencePaper": (
+        "title abstractNote proceedingsTitle conferenceName publisher place "
+        "date eventPlace volume issue numberOfVolumes pages series "
+        "seriesNumber DOI ISBN citationKey url accessDate ISSN archive "
+        "archiveLocation shortTitle language libraryCatalog callNumber "
+        "rights extra"
+    ).split(),
+    "manuscript": (
+        "title abstractNote manuscriptType institution place date numPages "
+        "number DOI citationKey url accessDate archive archiveLocation "
+        "shortTitle language libraryCatalog callNumber rights extra"
+    ).split(),
+    "newspaperArticle": (
+        "title abstractNote publicationTitle publisher place date volume "
+        "issue edition section pages ISSN DOI citationKey url accessDate "
+        "archive archiveLocation shortTitle language libraryCatalog "
+        "callNumber rights extra"
+    ).split(),
+    "magazineArticle": (
+        "title abstractNote publicationTitle publisher place date volume "
+        "issue pages ISSN DOI citationKey url accessDate archive "
+        "archiveLocation shortTitle language libraryCatalog callNumber "
+        "rights extra"
+    ).split(),
+    "patent": (
+        "title abstractNote place country assignee issuingAuthority "
+        "patentNumber filingDate pages applicationNumber priorityNumbers "
+        "issueDate priorityDate references legalStatus DOI citationKey url "
+        "accessDate shortTitle language rights extra"
+    ).split(),
+    "standard": (
+        "title abstractNote organization committee type number versionNumber "
+        "edition status date publisher place partNumber partTitle ISBN DOI "
+        "citationKey url accessDate archive archiveLocation shortTitle "
+        "numPages language libraryCatalog callNumber rights extra"
+    ).split(),
+    "webpage": (
+        "title abstractNote websiteTitle websiteType date publisher place DOI "
+        "citationKey url accessDate shortTitle language rights extra"
+    ).split(),
+    "document": (
+        "title abstractNote type date publisher place DOI citationKey url "
+        "accessDate archive archiveLocation shortTitle language "
+        "libraryCatalog callNumber rights extra"
+    ).split(),
+}
+
+# Every input key the mapper knows how to place, all at once. Rendering this
+# for each item type is what exercises the whole cross-product.
+MAXIMAL_ENTRY = {
+    "title": "A Title",
+    "shortTitle": "Short",
+    "authors": ["Paul A. Samuelson"],
+    "year": 1949,
+    "doi": "10.1/xyz",
+    "isbn": "978-0-13-468599-1",
+    "issn": "0012-9682",
+    "url": "https://example.org/a",
+    "journal": "Container Name",
+    "volume": "12",
+    "issue": "3",
+    "pages": "11-24",
+    "numPages": 24,
+    "publisher": "RAND Corporation",
+    "place": "Santa Monica, CA",
+    "number": "P-69",
+    "genre": "RAND Paper",
+    "conferenceName": "Annual Meeting",
+    "edition": "2nd",
+    "seriesNumber": "7",
+    "language": "en",
+    "abstract": "An   abstract.",
+}
+
+
+def _render(ris_type: str) -> dict:
+    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type}, None)
+
+
+def test_every_mapped_type_emits_only_fields_that_type_owns():
+    """The defect class: a field posted to a type that lacks it is a 400."""
+    offenders = {}
+    for ris_type, zot_type in zi.RIS_TO_ZOTERO_TYPE.items():
+        item = _render(ris_type)
+        assert item["itemType"] == zot_type
+        bad = sorted(
+            k for k in item
+            if k not in ("itemType", "creators", "collections")
+            and k not in SCHEMA_42_FIELDS[zot_type]
+        )
+        if bad:
+            offenders[zot_type] = bad
+    assert offenders == {}, f"invalid fields per type: {offenders}"
+
+
+def test_unknown_ris_type_fallback_emits_only_document_fields():
+    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"}, None)
+    assert item["itemType"] == "document"
+    bad = sorted(
+        k for k in item
+        if k not in ("itemType", "creators", "collections")
+        and k not in SCHEMA_42_FIELDS["document"]
+    )
+    assert bad == []
+
+
+def _placed_values(item: dict) -> set[str]:
+    """Every value the item carries, as whole values — never as substrings.
+
+    A substring sweep over the rendered item would let "7" pass because an
+    ISBN happens to contain a 7. Compare complete field values and complete
+    `label: value` lines from Extra instead.
+    """
+    placed = {str(v) for k, v in item.items()
+              if k not in ("creators", "extra", "collections")}
+    placed |= {line.split(": ", 1)[1]
+               for line in item.get("extra", "").splitlines() if ": " in line}
+    return placed
+
+
+def test_no_input_value_is_dropped_for_any_mapped_type():
+    """A value with no home on the target type lands in `extra`, never gone."""
+    losses = {}
+    for ris_type, zot_type in zi.RIS_TO_ZOTERO_TYPE.items():
+        placed = _placed_values(_render(ris_type))
+        missing = sorted(
+            key for key, value in MAXIMAL_ENTRY.items()
+            if key not in ("authors", "abstract") and str(value) not in placed
+        )
+        if missing:
+            losses[zot_type] = missing
+    assert losses == {}, f"values dropped silently: {losses}"
+
+
+def test_report_publisher_is_institution_and_numpages_goes_to_extra():
+    item = _render("RPRT")
+    assert "publisher" not in item
+    assert item["institution"] == "RAND Corporation"
+    assert "numPages" not in item          # report has no numPages field
+    assert item["pages"] == "11-24"        # the real page range keeps `pages`
+    assert "number-of-pages: 24" in item["extra"]
+    assert item["seriesTitle"] == "Container Name"
+    assert item["DOI"] == "10.1/xyz"
+    assert item["ISBN"] == "978-0-13-468599-1"
+    assert "volume: 12" in item["extra"]   # report has no volume field
+    assert "issue: 3" in item["extra"]
+
+
+def test_thesis_publisher_becomes_university():
+    item = _render("THES")
+    assert "publisher" not in item
+    assert item["university"] == "RAND Corporation"
+    assert item["numPages"] == "24"
+    assert "page: 11-24" in item["extra"]  # thesis has no pages field
+
+
+def test_manuscript_publisher_becomes_institution():
+    item = _render("MANSCPT")
+    assert "publisher" not in item
+    assert item["institution"] == "RAND Corporation"
+    assert item["numPages"] == "24"
+    assert "container-title: Container Name" in item["extra"]
+
+
+def test_conference_paper_container_is_proceedings_title():
+    item = _render("CONF")
+    assert item["proceedingsTitle"] == "Container Name"
+    assert "seriesTitle" not in item
+
+
+def test_book_section_container_is_book_title():
+    item = _render("CHAP")
+    assert item["bookTitle"] == "Container Name"
+    assert item["publisher"] == "RAND Corporation"
+
+
+def test_book_container_is_series_and_issue_goes_to_extra():
+    item = _render("BOOK")
+    assert item["series"] == "Container Name"
+    assert item["numPages"] == "24"
+    assert "issue: 3" in item["extra"]
+    assert "page: 11-24" in item["extra"]  # book has no pages field
+
+
+def test_document_fallback_routes_pagination_and_container_to_extra():
+    item = _render("GEN")
+    assert item["publisher"] == "RAND Corporation"
+    for label in ("container-title: Container Name", "volume: 12",
+                  "issue: 3", "page: 11-24", "number-of-pages: 24",
+                  "ISBN: 978-0-13-468599-1"):
+        assert label in item["extra"]
+
+
+# ── RIS code coverage (the silent-downgrade class) ──────────────────────────
+
+
+def test_every_accepted_ris_code_maps_to_a_zotero_type():
+    """A code `write` accepts must not collapse to `document` on `inject`.
+
+    The silent counterpart of the 400 class: no error, no trace, just a
+    generic item where a patent or a standard was meant.
+    """
+    unmapped = sorted(zi.RIS_VALID_TYPES - set(zi.RIS_TO_ZOTERO_TYPE))
+    assert unmapped == [], f"accepted RIS codes with no Zotero type: {unmapped}"
+
+
+def test_every_mapped_zotero_type_has_a_pinned_field_set():
+    """Guard the guard: a new type must arrive with its schema snapshot."""
+    types = set(zi.RIS_TO_ZOTERO_TYPE.values()) | {"document"}
+    assert types - set(SCHEMA_42_FIELDS) == set()
+
+
+@pytest.mark.parametrize(("ris_code", "zot_type"), [
+    ("CPAPER", "conferencePaper"),
+    ("GOVDOC", "report"),
+    ("PAT", "patent"),
+    ("STAND", "standard"),
+    ("UNPB", "manuscript"),
+    ("WEB", "webpage"),
+])
+def test_previously_unmapped_codes_reach_their_type(ris_code, zot_type):
+    assert _render(ris_code)["itemType"] == zot_type
+
+
+def test_unrecognised_ris_code_records_what_it_degraded_from():
+    """Degradation to `document` must leave a trace, not vanish."""
+    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"}, None)
+    assert item["itemType"] == "document"
+    assert "Unmapped RIS type: ZZZZ" in item["extra"]
+
+
+def test_patent_has_no_date_field_and_uses_issue_date():
+    """`date` is not universal: patent carries issueDate instead."""
+    item = _render("PAT")
+    assert "date" not in item
+    assert item["issueDate"] == "1949"
+    assert item["patentNumber"] == "P-69"
+    assert "publisher: RAND Corporation" in item["extra"]  # no home on patent
+
+
+def test_standard_maps_number_and_genre():
+    item = _render("STAND")
+    assert item["number"] == "P-69"
+    assert item["type"] == "RAND Paper"
+    assert item["publisher"] == "RAND Corporation"
+    assert item["numPages"] == "24"
+
+
+def test_webpage_container_is_website_title():
+    item = _render("WEB")
+    assert item["websiteTitle"] == "Container Name"
+    assert item["websiteType"] == "RAND Paper"
+    assert "ISBN: 978-0-13-468599-1" in item["extra"]
+
+
+def test_thesis_genre_is_thesis_type():
+    assert _render("THES")["thesisType"] == "RAND Paper"
+
+
+def test_conference_name_reaches_conference_paper_only():
+    assert _render("CONF")["conferenceName"] == "Annual Meeting"
+    assert "event-title: Annual Meeting" in _render("BOOK")["extra"]
+
+
+# ── acceptance: the memorandum that produced the original 400s ──────────────
+
+
+def test_rand_p69_memorandum_is_complete_in_one_pass():
+    """Samuelson, *Market Mechanisms and Maximization*, RAND P-69 (1949).
+
+    The import that took two 400s and then needed a hand-written PATCH for
+    institution / reportNumber / place / reportType. One `inject` must now
+    produce the whole item.
+    """
+    item = zi.entry_to_zotero_item({
+        "type": "RPRT",
+        "title": "Market Mechanisms and Maximization",
+        "authors": ["Paul A. Samuelson"],
+        "year": 1949,
+        "publisher": "The RAND Corporation",
+        "place": "Santa Monica, CA",
+        "number": "P-69",
+        "genre": "RAND Paper",
+        "numPages": 78,
+    }, None)
+    assert item == {
+        "itemType": "report",
+        "title": "Market Mechanisms and Maximization",
+        "creators": [{"creatorType": "author", "firstName": "Paul A.",
+                      "lastName": "Samuelson"}],
+        "date": "1949",
+        "institution": "The RAND Corporation",
+        "place": "Santa Monica, CA",
+        "reportNumber": "P-69",
+        "reportType": "RAND Paper",
+        "extra": "number-of-pages: 78",
+    }
+    # and every key is one `report` actually owns
+    assert [k for k in item if k not in ("itemType", "creators")
+            and k not in SCHEMA_42_FIELDS["report"]] == []
+
+
+# ── entry key validation ────────────────────────────────────────────────────
+
+
+def test_ris_path_drops_no_input_value_either():
+    """Adding entry keys must not create a silent loss on the RIS side.
+
+    `write` accepts the same entries as `inject`; a key only the API path
+    reads would vanish from the RIS artifact without a word.
+    """
+    losses = {}
+    for ris_code in sorted(zi.RIS_VALID_TYPES):
+        ris = zi.entry_to_ris({**MAXIMAL_ENTRY, "type": ris_code})
+        values = {line.split("  - ", 1)[1].split(":", 1)[-1].strip()
+                  for line in ris.splitlines() if "  - " in line}
+        values |= {line.split("  - ", 1)[1].strip()
+                   for line in ris.splitlines() if "  - " in line}
+        missing = sorted(
+            key for key, value in MAXIMAL_ENTRY.items()
+            # authors are reordered, abstract collapsed, a page range is
+            # split across SP/EP, numPages competes with it on monographs
+            if key not in ("authors", "abstract", "pages", "numPages")
+            and str(value) not in values
+        )
+        if missing:
+            losses[ris_code] = missing
+    assert losses == {}, f"values absent from the RIS artifact: {losses}"
+
+
+def test_unknown_entry_key_is_rejected_not_ignored():
+    """An input key nobody reads is a silent loss; refuse it loudly."""
+    with pytest.raises(SystemExit) as exc:
+        zi.validate_entry_keys([{"title": "T", "reportNmbr": "P-69"}])
+    assert "reportNmbr" in str(exc.value)
+
+
+def test_known_entry_keys_pass_validation():
+    zi.validate_entry_keys([dict(MAXIMAL_ENTRY, type="RPRT",
+                                 pdf="/tmp/x.pdf", attach_pdf=True)])
+
+
+@pytest.mark.slow
+def test_zotero_schema_snapshot_matches_live():
+    """Drift guard: the pinned tables against api.zotero.org/schema.
+
+    Network-only, so `inject` itself never needs it. A failure here means
+    Zotero changed a type's field set; re-derive both this snapshot and
+    `ZOTERO_SLOT_FIELD` from the live schema.
+    """
+    import json
+    import urllib.request
+
+    with urllib.request.urlopen("https://api.zotero.org/schema", timeout=30) as r:
+        schema = json.load(r)
+    live = {t["itemType"]: {f["field"] for f in t["fields"]}
+            for t in schema["itemTypes"]}
+
+    for zot_type, pinned in SCHEMA_42_FIELDS.items():
+        assert set(pinned) == live[zot_type], f"{zot_type} field set drifted"
+
+    for slot, prefs in zi.ZOTERO_SLOT_PREFERENCES.items():
+        derived = {t: field for t in SCHEMA_42_FIELDS
+                   for field in (next((p for p in prefs if p in live[t]), None),)
+                   if field}
+        assert zi.ZOTERO_SLOT_FIELD[slot] == derived, f"slot {slot} drifted"
 
 
 def test_load_env_file_parses_and_ignores_comments(tmp_path):
