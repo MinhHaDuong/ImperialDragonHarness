@@ -175,5 +175,5 @@ that project only (resolves to `<path>` from `projects.json` entry).
 ## Backward compatibility
 
 The old `nightbeat-risk-review` skill is preserved as `/scry --mode=nightbeat-history`.
-`/check-readiness` remains a permanent alias of `/scry` (ticket 0220): the
-alias stub delegates here, so older invocations keep working unchanged.
+The `/check-readiness` alias was removed in the 2026-08-14 name cull; `/scry`
+is the only name.
