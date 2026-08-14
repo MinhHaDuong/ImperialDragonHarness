@@ -9,6 +9,8 @@
 
 ## Entries
 
+- [/goal is a hidden Claude Code command](reference_claude_code_goal_command.md) — session-scoped Stop hook, 4000-char condition, absent from --help and the skills list; grep the binary
+- [Tests that pin prompt prose](feedback_tests_pinning_prompt_prose.md) — asserting a sentence exists in a SKILL.md blocks rewriting it; and a substring assertion passes on never-called code
 - [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md) — `git push && gh api -f x=y` trips the force-push guard; split the calls or use --field
 - [Verify sibling PRs jointly, not just individually](feedback_verify_sibling_prs_jointly.md) — two PRs each 9/9 green landed a claim and its refutation the same day (#680/#681); per-PR gates pass both by construction
 - [erg ready reads the current branch's tree](feedback_erg_ready_reads_current_branch_tree.md) — a stale branch lists tickets already merged and archived on main
