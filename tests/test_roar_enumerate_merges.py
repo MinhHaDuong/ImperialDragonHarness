@@ -263,6 +263,59 @@ def test_octopus_merge_skipped_not_undercounted(repo):
     assert octo_sha[:12] in res.stderr
 
 
+def test_leading_dash_project_name_accepted(repo):
+    """Ticket 0500: every ~/.claude/projects/ directory name begins with '-'.
+
+    argparse reads such a value as the start of another option and aborts with a
+    usage dump; roar's step 2 swallows that into `|| ROWS=""` and silently logs
+    one aggregate record for a whole session. The name must traverse the call.
+    """
+    base = head(repo)
+    merge_pr(
+        repo,
+        pr=31,
+        owner_branch="jo/dash-project",
+        feature_commits=[("p.txt", "work")],
+    )
+    records, res = enumerate_merges(repo, base, project="-home-haduong--claude")
+    assert res.returncode == 0, res.stderr
+    assert len(records) == 1, res.stderr
+    assert records[0]["project"] == "-home-haduong--claude", "leading dash lost"
+
+
+def test_until_reference_defaults_to_head(repo):
+    base = head(repo)
+    merge_pr(
+        repo, pr=32, owner_branch="jo/default-until", feature_commits=[("q.txt", "w")]
+    )
+    records, res = enumerate_merges(repo, base)
+    assert len(records) == 1, res.stderr
+
+
+def test_until_reference_can_target_another_ref(repo):
+    """/roar runs from the merged branch's worktree, which sits below the merge.
+
+    Enumerating to a hard-coded HEAD there misses the merge being celebrated, so
+    the terminal reference must be selectable (ticket 0500).
+    """
+    base = head(repo)
+    merge_pr(
+        repo, pr=33, owner_branch="jo/until-ref", feature_commits=[("r.txt", "w")]
+    )
+    main_sha = head(repo)
+    git(repo, "switch", "feat-33")  # branch tip: below the merge commit
+    res = run(
+        ["python3", str(ENUMERATE), base, "--until", main_sha, "--project", "proj"],
+        cwd=str(repo),
+    )
+    records = [json.loads(ln) for ln in res.stdout.splitlines() if ln.strip()]
+    assert len(records) == 1, res.stderr
+    assert records[0]["branch"] == "until-ref"
+    # Same command without --until sees nothing: proof the argument is load-bearing.
+    bare = run(["python3", str(ENUMERATE), base, "--project", "proj"], cwd=str(repo))
+    assert bare.stdout.strip() == "", "fixture does not discriminate the two refs"
+
+
 def test_commits_and_files_changed_counts(repo):
     base = head(repo)
     merge_pr(
