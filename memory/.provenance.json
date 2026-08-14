@@ -3971,6 +3971,126 @@
       "first_seen": "2026-08-10T20:01:41Z",
       "last_confirmed": "2026-08-10T20:01:41Z",
       "promoted": false
+    },
+    "feedback-ergprmerge-stale-worktree-after-api-push": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T09:56:50Z",
+      "promoted": false
+    },
+    "feedback-grep-context-audit": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T09:56:50Z",
+      "promoted": false
+    },
+    "feedback-ligne-sans-clause-disculpatoire": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T09:56:50Z",
+      "promoted": false
+    },
+    "feedback-merge-verifier-le-diff-pas-la-sortie": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T09:56:50Z",
+      "promoted": false
+    },
+    "feedback-no-inverted-centaur": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T09:56:51Z",
+      "promoted": false
+    },
+    "feedback-no-version-suffix-filenames": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T09:56:51Z",
+      "promoted": false
+    },
+    "feedback-piste-secondaire-lue-sur-piece": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T09:56:51Z",
+      "promoted": false
+    },
+    "feedback-purge-bib-partagee-casse-les-freres": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T09:56:51Z",
+      "promoted": false
+    },
+    "feedback-rejouer-ou-reconstruire-une-branche": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "feedback-typo-fine-a-la-finition": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "feedback-worktree-perime-sert-une-version-ancienne": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "project-boucle-dictee-arbitrage": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "project-het-hand-pagination": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "project-zotero-injection-auto": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T09:56:52Z",
+      "promoted": false
+    },
+    "user-professional-email": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T09:56:53Z",
+      "last_confirmed": "2026-08-14T09:56:53Z",
+      "promoted": false
     }
   }
 }
