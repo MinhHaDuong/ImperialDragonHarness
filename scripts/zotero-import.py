@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import os
 import re
 import sqlite3
@@ -342,6 +343,24 @@ def entry_to_ris(e: dict[str, Any]) -> str:
             lines.append(f"KW  - pages:{n}")
     if pub := e.get("publisher"):
         lines.append(f"PB  - {pub}")
+    # Tags below follow Zotero's RIS translator field map (translators/RIS.js).
+    # `CY` is its default for place, except conferencePaper, exported as `C1`.
+    if place := e.get("place"):
+        lines.append(f"{'C1' if ty in ('CONF', 'CPAPER') else 'CY'}  - {place}")
+    if ed := e.get("edition"):
+        lines.append(f"ET  - {ed}")
+    if genre := e.get("genre"):
+        lines.append(f"M3  - {genre}")
+    # No unambiguous tag exists for these. `SN` already carries the ISBN
+    # above, and Zotero reads a second `SN` as reportNumber/ISSN depending on
+    # type — emitting one would silently overwrite or be misread. `M1` and
+    # `SV` split seriesNumber by type, and conferenceName has no import tag at
+    # all. Keyword lines keep the value visible and searchable in Zotero
+    # instead, reusing the convention this function already applies to an
+    # orphaned page count.
+    for key in ("issn", "number", "seriesNumber", "conferenceName"):
+        if val := e.get(key):
+            lines.append(f"KW  - {key}:{val}")
     if lang := e.get("language"):
         lines.append(f"LA  - {lang}")
     if ab := e.get("abstract"):
@@ -360,16 +379,38 @@ def entry_to_ris(e: dict[str, Any]) -> str:
 ZOTERO_API_BASE = "https://api.zotero.org"
 ZOTERO_ENV_FILE = Path.home() / ".config/keys/zotero.env"
 
+# Every code in RIS_VALID_TYPES must appear here. A code `write` accepts but
+# `inject` cannot resolve used to collapse into `document` without a word —
+# no 400, no log line, just a generic item where a patent was meant, which is
+# harder to notice than the error it replaces. Six such codes existed
+# (CPAPER, GOVDOC, PAT, STAND, UNPB, WEB); `test_every_accepted_ris_code_maps
+# _to_a_zotero_type` now keeps the two sets in step.
+#
+# Correspondences follow Zotero's own RIS translator (translators/RIS.js,
+# `importTypeMap` + the inverted `exportTypeMap`) where it has an opinion, so
+# an item imported through this script and one imported through Zotero's
+# importer land on the same type. Two departures, both deliberate:
+#   STAND  the translator says `report`, but that line predates the `standard`
+#          item type; schema 42 has `standard`, and RIS STAND means Standard.
+#   UNPB   the translator has no entry, so it would fall through to its
+#          journalArticle default. Every neighbouring unpublished-work code it
+#          *does* map (INPR, UNPD, PAMP, UNBILL) goes to `manuscript`.
 RIS_TO_ZOTERO_TYPE = {
     "JOUR": "journalArticle",
     "BOOK": "book",
     "THES": "thesis",
     "RPRT": "report",
+    "GOVDOC": "report",
     "CHAP": "bookSection",
     "CONF": "conferencePaper",
+    "CPAPER": "conferencePaper",
     "MANSCPT": "manuscript",
+    "UNPB": "manuscript",
     "NEWS": "newspaperArticle",
     "MGZN": "magazineArticle",
+    "PAT": "patent",
+    "STAND": "standard",
+    "WEB": "webpage",
     "GEN": "document",
 }
 
@@ -392,8 +433,20 @@ RIS_TO_ZOTERO_TYPE = {
 # beside the resolved table so the derivation is documented and re-runnable.
 ZOTERO_SLOT_PREFERENCES: dict[str, tuple[str, ...]] = {
     "container": ("publicationTitle", "proceedingsTitle", "bookTitle",
-                  "seriesTitle", "series"),
-    "publisher": ("publisher", "university", "institution"),
+                  "websiteTitle", "seriesTitle", "series"),
+    # `assignee` is NOT in this chain. A patent's assignee is its owner, not
+    # its publisher, and a wrong field is worse than an honest `extra` line.
+    "publisher": ("publisher", "university", "institution", "organization"),
+    # `date` is not universal: `patent` has no such field, only filingDate /
+    # issueDate / priorityDate. An entry's year is its issue year.
+    "date": ("date", "issueDate"),
+    "place": ("place",),
+    "number": ("reportNumber", "patentNumber", "number"),
+    "genre": ("reportType", "thesisType", "manuscriptType", "websiteType",
+              "type"),
+    "conferenceName": ("conferenceName",),
+    "edition": ("edition",),
+    "seriesNumber": ("seriesNumber",),
     # A page *count* only ever goes in a real numPages field. `report` has a
     # `pages` field, but that is its page *range* (Zotero labels it "Pages",
     # not "# of Pages"), so borrowing it would conflate the two and clobber a
@@ -404,6 +457,7 @@ ZOTERO_SLOT_PREFERENCES: dict[str, tuple[str, ...]] = {
     "issue": ("issue",),
     "DOI": ("DOI",),
     "ISBN": ("ISBN",),
+    "ISSN": ("ISSN",),
 }
 
 # Resolved: slot → {item type: field name}. A type absent from a slot's map
@@ -418,6 +472,7 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
         "conferencePaper": "proceedingsTitle",
         "newspaperArticle": "publicationTitle",
         "magazineArticle": "publicationTitle",
+        "webpage": "websiteTitle",
     },
     "publisher": {
         "journalArticle": "publisher",
@@ -429,12 +484,75 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
         "manuscript": "institution",
         "newspaperArticle": "publisher",
         "magazineArticle": "publisher",
+        "standard": "publisher",
+        "webpage": "publisher",
         "document": "publisher",
+    },
+    "date": {
+        "journalArticle": "date",
+        "book": "date",
+        "thesis": "date",
+        "report": "date",
+        "bookSection": "date",
+        "conferencePaper": "date",
+        "manuscript": "date",
+        "newspaperArticle": "date",
+        "magazineArticle": "date",
+        "patent": "issueDate",
+        "standard": "date",
+        "webpage": "date",
+        "document": "date",
+    },
+    "place": {
+        "journalArticle": "place",
+        "book": "place",
+        "thesis": "place",
+        "report": "place",
+        "bookSection": "place",
+        "conferencePaper": "place",
+        "manuscript": "place",
+        "newspaperArticle": "place",
+        "magazineArticle": "place",
+        "patent": "place",
+        "standard": "place",
+        "webpage": "place",
+        "document": "place",
+    },
+    "number": {
+        "report": "reportNumber",
+        "manuscript": "number",
+        "patent": "patentNumber",
+        "standard": "number",
+    },
+    "genre": {
+        "thesis": "thesisType",
+        "report": "reportType",
+        "manuscript": "manuscriptType",
+        "standard": "type",
+        "webpage": "websiteType",
+        "document": "type",
+    },
+    "conferenceName": {
+        "conferencePaper": "conferenceName",
+    },
+    "edition": {
+        "book": "edition",
+        "bookSection": "edition",
+        "newspaperArticle": "edition",
+        "standard": "edition",
+    },
+    "seriesNumber": {
+        "book": "seriesNumber",
+        "thesis": "seriesNumber",
+        "report": "seriesNumber",
+        "bookSection": "seriesNumber",
+        "conferencePaper": "seriesNumber",
     },
     "numPages": {
         "book": "numPages",
         "thesis": "numPages",
         "manuscript": "numPages",
+        "standard": "numPages",
     },
     "pages": {
         "journalArticle": "pages",
@@ -443,6 +561,7 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
         "conferencePaper": "pages",
         "newspaperArticle": "pages",
         "magazineArticle": "pages",
+        "patent": "pages",
     },
     "volume": {
         "journalArticle": "volume",
@@ -468,6 +587,9 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
         "manuscript": "DOI",
         "newspaperArticle": "DOI",
         "magazineArticle": "DOI",
+        "patent": "DOI",
+        "standard": "DOI",
+        "webpage": "DOI",
         "document": "DOI",
     },
     "ISBN": {
@@ -476,6 +598,17 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
         "report": "ISBN",
         "bookSection": "ISBN",
         "conferencePaper": "ISBN",
+        "standard": "ISBN",
+    },
+    "ISSN": {
+        "journalArticle": "ISSN",
+        "book": "ISSN",
+        "thesis": "ISSN",
+        "report": "ISSN",
+        "bookSection": "ISSN",
+        "conferencePaper": "ISSN",
+        "newspaperArticle": "ISSN",
+        "magazineArticle": "ISSN",
     },
 }
 
@@ -485,13 +618,41 @@ ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
 ZOTERO_SLOT_EXTRA_LABEL: dict[str, str] = {
     "container": "container-title",
     "publisher": "publisher",
+    "date": "issued",
+    "place": "publisher-place",
+    "number": "number",
+    "genre": "genre",
+    "conferenceName": "event-title",
+    "edition": "edition",
+    "seriesNumber": "collection-number",
     "numPages": "number-of-pages",
     "pages": "page",
     "volume": "volume",
     "issue": "issue",
     "DOI": "DOI",
     "ISBN": "ISBN",
+    "ISSN": "ISSN",
 }
+
+# Every key an entry may carry, across both the RIS and the API path. An
+# unrecognised key is refused rather than ignored: a misspelt `reportNmbr`
+# that silently does nothing is the same defect class as a field the mapper
+# drops, and the caller has no way to notice it.
+ENTRY_KEYS = frozenset({
+    "type", "title", "shortTitle", "authors", "year", "doi", "isbn", "issn",
+    "url", "journal", "volume", "issue", "pages", "numPages", "publisher",
+    "place", "number", "genre", "conferenceName", "edition", "seriesNumber",
+    "language", "abstract", "pdf", "attach_pdf",
+})
+
+
+def validate_entry_keys(entries: list[dict[str, Any]]) -> None:
+    """Abort on any entry key the mapper does not read."""
+    unknown = sorted({k for e in entries for k in e} - ENTRY_KEYS)
+    if unknown:
+        raise SystemExit(
+            f"unknown entry key(s): {', '.join(unknown)}. "
+            f"Known keys: {', '.join(sorted(ENTRY_KEYS))}")
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -554,15 +715,21 @@ def entry_to_zotero_item(e: dict[str, Any],
     ty = RIS_TO_ZOTERO_TYPE.get(ris_ty, "document")
     item: dict[str, Any] = {"itemType": ty}
     extra: list[str] = []
+    if ris_ty not in RIS_TO_ZOTERO_TYPE:
+        # Degrading to `document` is a lossy guess; say so in the log and
+        # leave the original code on the item so the downgrade is auditable
+        # from the library rather than invisible.
+        logging.warning("RIS type %r has no Zotero equivalent; "
+                        "importing as `document`", ris_ty)
+        extra.append(f"Unmapped RIS type: {ris_ty}")
     # Universal fields — every type RIS_TO_ZOTERO_TYPE can produce owns these.
+    # `date` is NOT among them (patent has none); it goes through a slot.
     if t := e.get("title"):
         item["title"] = t
     if st := e.get("shortTitle"):
         item["shortTitle"] = st
     if authors := e.get("authors"):
         item["creators"] = [author_to_creator(a) for a in authors]
-    if y := e.get("year"):
-        item["date"] = str(y)
     if url := e.get("url"):
         item["url"] = url
     if lang := e.get("language"):
@@ -571,13 +738,21 @@ def entry_to_zotero_item(e: dict[str, Any],
         item["abstractNote"] = " ".join(ab.split())
     # Type-dependent slots. Order matters: `pages` claims a shared field
     # before `numPages` would, so an explicit range beats a derived count.
-    for slot, value in (("DOI", e.get("doi")),
+    for slot, value in (("date", e.get("year")),
+                        ("DOI", e.get("doi")),
                         ("ISBN", e.get("isbn")),
+                        ("ISSN", e.get("issn")),
                         ("container", e.get("journal")),
+                        ("conferenceName", e.get("conferenceName")),
                         ("volume", e.get("volume")),
                         ("issue", e.get("issue")),
+                        ("edition", e.get("edition")),
+                        ("seriesNumber", e.get("seriesNumber")),
                         ("pages", e.get("pages")),
                         ("numPages", e.get("numPages")),
+                        ("number", e.get("number")),
+                        ("genre", e.get("genre")),
+                        ("place", e.get("place")),
                         ("publisher", e.get("publisher"))):
         if value:
             place_slot(item, extra, slot, str(value))
@@ -668,6 +843,7 @@ def cmd_inject(args: argparse.Namespace) -> int:
         entries = json.loads(sys.stdin.read())
     if isinstance(entries, dict):
         entries = [entries]
+    validate_entry_keys(entries)
 
     items = [entry_to_zotero_item(e, args.collection) for e in entries]
     if args.dry_run:
@@ -771,6 +947,7 @@ def cmd_write(args: argparse.Namespace) -> int:
         entries = json.loads(sys.stdin.read())
     if isinstance(entries, dict):
         entries = [entries]
+    validate_entry_keys(entries)
     body = "".join(entry_to_ris(e) for e in entries)
     out = Path(args.out)
     out.write_text(body)

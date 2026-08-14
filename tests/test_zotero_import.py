@@ -341,6 +341,22 @@ SCHEMA_42_FIELDS = {
         "archiveLocation shortTitle language libraryCatalog callNumber "
         "rights extra"
     ).split(),
+    "patent": (
+        "title abstractNote place country assignee issuingAuthority "
+        "patentNumber filingDate pages applicationNumber priorityNumbers "
+        "issueDate priorityDate references legalStatus DOI citationKey url "
+        "accessDate shortTitle language rights extra"
+    ).split(),
+    "standard": (
+        "title abstractNote organization committee type number versionNumber "
+        "edition status date publisher place partNumber partTitle ISBN DOI "
+        "citationKey url accessDate archive archiveLocation shortTitle "
+        "numPages language libraryCatalog callNumber rights extra"
+    ).split(),
+    "webpage": (
+        "title abstractNote websiteTitle websiteType date publisher place DOI "
+        "citationKey url accessDate shortTitle language rights extra"
+    ).split(),
     "document": (
         "title abstractNote type date publisher place DOI citationKey url "
         "accessDate archive archiveLocation shortTitle language "
@@ -357,6 +373,7 @@ MAXIMAL_ENTRY = {
     "year": 1949,
     "doi": "10.1/xyz",
     "isbn": "978-0-13-468599-1",
+    "issn": "0012-9682",
     "url": "https://example.org/a",
     "journal": "Container Name",
     "volume": "12",
@@ -364,6 +381,12 @@ MAXIMAL_ENTRY = {
     "pages": "11-24",
     "numPages": 24,
     "publisher": "RAND Corporation",
+    "place": "Santa Monica, CA",
+    "number": "P-69",
+    "genre": "RAND Paper",
+    "conferenceName": "Annual Meeting",
+    "edition": "2nd",
+    "seriesNumber": "7",
     "language": "en",
     "abstract": "An   abstract.",
 }
@@ -400,16 +423,28 @@ def test_unknown_ris_type_fallback_emits_only_document_fields():
     assert bad == []
 
 
+def _placed_values(item: dict) -> set[str]:
+    """Every value the item carries, as whole values — never as substrings.
+
+    A substring sweep over the rendered item would let "7" pass because an
+    ISBN happens to contain a 7. Compare complete field values and complete
+    `label: value` lines from Extra instead.
+    """
+    placed = {str(v) for k, v in item.items()
+              if k not in ("creators", "extra", "collections")}
+    placed |= {line.split(": ", 1)[1]
+               for line in item.get("extra", "").splitlines() if ": " in line}
+    return placed
+
+
 def test_no_input_value_is_dropped_for_any_mapped_type():
     """A value with no home on the target type lands in `extra`, never gone."""
     losses = {}
     for ris_type, zot_type in zi.RIS_TO_ZOTERO_TYPE.items():
-        item = _render(ris_type)
-        rendered = "\n".join(str(v) for k, v in item.items() if k != "creators")
+        placed = _placed_values(_render(ris_type))
         missing = sorted(
             key for key, value in MAXIMAL_ENTRY.items()
-            if key not in ("authors", "abstract")
-            and str(value) not in rendered
+            if key not in ("authors", "abstract") and str(value) not in placed
         )
         if missing:
             losses[zot_type] = missing
@@ -473,6 +508,155 @@ def test_document_fallback_routes_pagination_and_container_to_extra():
                   "issue: 3", "page: 11-24", "number-of-pages: 24",
                   "ISBN: 978-0-13-468599-1"):
         assert label in item["extra"]
+
+
+# ── RIS code coverage (the silent-downgrade class) ──────────────────────────
+
+
+def test_every_accepted_ris_code_maps_to_a_zotero_type():
+    """A code `write` accepts must not collapse to `document` on `inject`.
+
+    The silent counterpart of the 400 class: no error, no trace, just a
+    generic item where a patent or a standard was meant.
+    """
+    unmapped = sorted(zi.RIS_VALID_TYPES - set(zi.RIS_TO_ZOTERO_TYPE))
+    assert unmapped == [], f"accepted RIS codes with no Zotero type: {unmapped}"
+
+
+def test_every_mapped_zotero_type_has_a_pinned_field_set():
+    """Guard the guard: a new type must arrive with its schema snapshot."""
+    types = set(zi.RIS_TO_ZOTERO_TYPE.values()) | {"document"}
+    assert types - set(SCHEMA_42_FIELDS) == set()
+
+
+@pytest.mark.parametrize(("ris_code", "zot_type"), [
+    ("CPAPER", "conferencePaper"),
+    ("GOVDOC", "report"),
+    ("PAT", "patent"),
+    ("STAND", "standard"),
+    ("UNPB", "manuscript"),
+    ("WEB", "webpage"),
+])
+def test_previously_unmapped_codes_reach_their_type(ris_code, zot_type):
+    assert _render(ris_code)["itemType"] == zot_type
+
+
+def test_unrecognised_ris_code_records_what_it_degraded_from():
+    """Degradation to `document` must leave a trace, not vanish."""
+    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"}, None)
+    assert item["itemType"] == "document"
+    assert "Unmapped RIS type: ZZZZ" in item["extra"]
+
+
+def test_patent_has_no_date_field_and_uses_issue_date():
+    """`date` is not universal: patent carries issueDate instead."""
+    item = _render("PAT")
+    assert "date" not in item
+    assert item["issueDate"] == "1949"
+    assert item["patentNumber"] == "P-69"
+    assert "publisher: RAND Corporation" in item["extra"]  # no home on patent
+
+
+def test_standard_maps_number_and_genre():
+    item = _render("STAND")
+    assert item["number"] == "P-69"
+    assert item["type"] == "RAND Paper"
+    assert item["publisher"] == "RAND Corporation"
+    assert item["numPages"] == "24"
+
+
+def test_webpage_container_is_website_title():
+    item = _render("WEB")
+    assert item["websiteTitle"] == "Container Name"
+    assert item["websiteType"] == "RAND Paper"
+    assert "ISBN: 978-0-13-468599-1" in item["extra"]
+
+
+def test_thesis_genre_is_thesis_type():
+    assert _render("THES")["thesisType"] == "RAND Paper"
+
+
+def test_conference_name_reaches_conference_paper_only():
+    assert _render("CONF")["conferenceName"] == "Annual Meeting"
+    assert "event-title: Annual Meeting" in _render("BOOK")["extra"]
+
+
+# ── acceptance: the memorandum that produced the original 400s ──────────────
+
+
+def test_rand_p69_memorandum_is_complete_in_one_pass():
+    """Samuelson, *Market Mechanisms and Maximization*, RAND P-69 (1949).
+
+    The import that took two 400s and then needed a hand-written PATCH for
+    institution / reportNumber / place / reportType. One `inject` must now
+    produce the whole item.
+    """
+    item = zi.entry_to_zotero_item({
+        "type": "RPRT",
+        "title": "Market Mechanisms and Maximization",
+        "authors": ["Paul A. Samuelson"],
+        "year": 1949,
+        "publisher": "The RAND Corporation",
+        "place": "Santa Monica, CA",
+        "number": "P-69",
+        "genre": "RAND Paper",
+        "numPages": 78,
+    }, None)
+    assert item == {
+        "itemType": "report",
+        "title": "Market Mechanisms and Maximization",
+        "creators": [{"creatorType": "author", "firstName": "Paul A.",
+                      "lastName": "Samuelson"}],
+        "date": "1949",
+        "institution": "The RAND Corporation",
+        "place": "Santa Monica, CA",
+        "reportNumber": "P-69",
+        "reportType": "RAND Paper",
+        "extra": "number-of-pages: 78",
+    }
+    # and every key is one `report` actually owns
+    assert [k for k in item if k not in ("itemType", "creators")
+            and k not in SCHEMA_42_FIELDS["report"]] == []
+
+
+# ── entry key validation ────────────────────────────────────────────────────
+
+
+def test_ris_path_drops_no_input_value_either():
+    """Adding entry keys must not create a silent loss on the RIS side.
+
+    `write` accepts the same entries as `inject`; a key only the API path
+    reads would vanish from the RIS artifact without a word.
+    """
+    losses = {}
+    for ris_code in sorted(zi.RIS_VALID_TYPES):
+        ris = zi.entry_to_ris({**MAXIMAL_ENTRY, "type": ris_code})
+        values = {line.split("  - ", 1)[1].split(":", 1)[-1].strip()
+                  for line in ris.splitlines() if "  - " in line}
+        values |= {line.split("  - ", 1)[1].strip()
+                   for line in ris.splitlines() if "  - " in line}
+        missing = sorted(
+            key for key, value in MAXIMAL_ENTRY.items()
+            # authors are reordered, abstract collapsed, a page range is
+            # split across SP/EP, numPages competes with it on monographs
+            if key not in ("authors", "abstract", "pages", "numPages")
+            and str(value) not in values
+        )
+        if missing:
+            losses[ris_code] = missing
+    assert losses == {}, f"values absent from the RIS artifact: {losses}"
+
+
+def test_unknown_entry_key_is_rejected_not_ignored():
+    """An input key nobody reads is a silent loss; refuse it loudly."""
+    with pytest.raises(SystemExit) as exc:
+        zi.validate_entry_keys([{"title": "T", "reportNmbr": "P-69"}])
+    assert "reportNmbr" in str(exc.value)
+
+
+def test_known_entry_keys_pass_validation():
+    zi.validate_entry_keys([dict(MAXIMAL_ENTRY, type="RPRT",
+                                 pdf="/tmp/x.pdf", attach_pdf=True)])
 
 
 @pytest.mark.slow
