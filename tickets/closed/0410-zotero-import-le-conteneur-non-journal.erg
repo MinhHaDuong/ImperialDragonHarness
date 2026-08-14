@@ -2,10 +2,12 @@
 Title: zotero-import: le conteneur non-journal part en seriesTitle, que Zotero refuse
 Created: 2026-08-14
 Author: Minh Ha-Duong
+Closed: conteneur place par type via ZOTERO_SLOT_FIELD (PR #730), couverture RIS complete (PR #733)
 
 --- log ---
 2026-08-14T09:00Z Minh Ha-Duong created
 
+2026-08-14T13:12Z Minh Ha-Duong closed — conteneur place par type via ZOTERO_SLOT_FIELD (PR #730), couverture RIS complete (PR #733)
 --- body ---
 ## Context
 `inject` échoue en 400 pour tout `conferencePaper` et tout `bookSection`
