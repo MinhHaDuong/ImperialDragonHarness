@@ -1,0 +1,109 @@
+%erg 0.1
+Title: Spawn bash test children hermetically (env -i) across the bash-env suites
+Created: 2026-07-27
+Author: HDMX-coding-agent
+
+--- log ---
+2026-07-27T12:37Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Two live credentials leaked into terminal output and a session transcript on
+2026-07-27. Neither was a scrubbing failure: both suites spawned bash children
+that inherited the ambient environment, so an assertion that failed printed the
+real key it found instead of the fixture it expected.
+
+PR #676 fixed the two suites that actually leaked (`test_seat_runner.sh`,
+`test_bash_env_keys_selection_explicit.sh`). The roar sweep afterwards found the
+same shape in four siblings:
+
+| suite | `bash -c` | `env -i` | dumps env | names keys |
+|---|---|---|---|---|
+| `test_bash_env_keys_protect_critical_names.sh` | 5 | 0 | yes | yes |
+| `test_bash_env_keys_selection.sh` | 3 | 0 | yes | no |
+| `test_bash_env_project_env_parse.sh` | 4 | 0 | yes | no |
+| `test_bash_env_robustness.sh` | 4 | 0 | no | no |
+
+`test_bash_env_keys_protect_critical_names.sh` is the one to do first: it both
+dumps the environment and references key names, exactly the combination that
+leaked.
+
+Two distinct hazards, and the second is why this is not cosmetic:
+
+1. **Disclosure.** A failing assertion prints what it found. If that is a live
+   credential, the failure message is the leak.
+2. **False confidence.** An inherited variable *masks the behaviour under test*.
+   `test_bash_env_keys_selection_explicit.sh` asserted "DST not set" against an
+   ambient value that had nothing to do with the code path — red for a reason
+   unrelated to any real defect, and had the ambient value happened to match the
+   expectation it would have been green while testing nothing.
+
+`rules/coding-bash.md` already prescribes `env -i` for BASH_ENV-loaded scripts.
+These suites predate that rule or were written against a narrower reading.
+Nothing mechanical enforces it, which is why the drift stayed invisible.
+
+## Relevant files
+
+- `tests/test_bash_env_keys_protect_critical_names.sh` — do first (dumps env + names keys)
+- `tests/test_bash_env_keys_selection.sh`
+- `tests/test_bash_env_project_env_parse.sh`
+- `tests/test_bash_env_robustness.sh`
+- `tests/test_bash_env_keys_selection_explicit.sh` — already converted (#676); reference form
+- `tests/test_seat_runner.sh` — already converted (#676) via `export BASH_ENV=`; the other valid shape
+- `rules/coding-bash.md` — the rule these implement
+- `tests/test_bash_env_tested_via_subprocess.sh` — existing meta-test; the new guard may belong beside it
+
+## Actions
+
+1. Write the guard first (see Test) and watch it fail on all four suites.
+2. Convert each suite's child spawns to
+   `env -i HOME="$home" PATH="$PATH" bash -c ...`, passing any extra variables
+   that suite genuinely needs **explicitly**, never by inheritance.
+3. Re-run each converted suite and confirm it still tests what it claims. A
+   suite that goes green *because* an inherited value disappeared was asserting
+   the wrong thing; fix the assertion rather than restore the inheritance.
+4. Leave `test_seat_runner.sh`'s single `bash -c` alone — it is the deliberate
+   hermetic probe added by #676, run after `export BASH_ENV=`.
+
+## Test
+
+Red first: an adherence guard asserting the class, not the four instances.
+
+    tests/test_bash_tests_are_hermetic.sh
+
+For every `tests/*.sh`, count `bash -c` spawns and `env -i` occurrences; fail
+when a suite spawns children without hermetic isolation, unless it clears
+`BASH_ENV` explicitly (the `test_seat_runner.sh` form). Auto-discover by glob —
+never a hardcoded file list, so a newly added suite is covered without editing
+the guard (memory `feedback_autodiscovery_class_guard`).
+
+The guard must report **file names only, never environment values**. A guard
+that echoes what it found would reproduce the defect it exists to prevent.
+
+It must fail on the four suites above before conversion, and pass after.
+
+## Verification
+
+- [ ] `tests/test_bash_tests_are_hermetic.sh` fails on the pre-conversion tree
+- [ ] All four suites converted; each still passes and still tests its subject
+- [ ] `make check-tests` shows no regression against the pre-change baseline
+      (2 failing shell suites: `test_reviewers_audition.sh`,
+      `test_guard_cd_primary_repo.sh` — both pre-existing, unrelated)
+- [ ] No credential value appears in any test output, passing or failing
+
+## Invariants
+
+- Assertions probe a **child**, never the suite's own shell. A parent-scope
+  check passes while the leak is alive — that blind spot made the first attempt
+  at #676 a silent no-op.
+- Verify with a fake sentinel loader, never a real key: point `BASH_ENV` at a
+  script exporting a recognisable dummy and grep the output for it.
+- Do not weaken an assertion to make a suite green. If isolation changes an
+  outcome, the old outcome was measuring inheritance.
+
+## Exit criteria
+
+Every `tests/*.sh` that spawns a bash child does so hermetically or with
+`BASH_ENV` explicitly cleared, and a glob-driven adherence guard enforces it —
+demonstrated red on the pre-conversion tree.
