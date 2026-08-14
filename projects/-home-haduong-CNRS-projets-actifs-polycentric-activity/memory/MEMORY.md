@@ -20,6 +20,9 @@
 - [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md) — le candidat « secondaire » d'un ticket peut être le support principal ; tirer tous les candidats avant de rédiger
 - [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, la ligne qui ne dit pas ce que ses sœurs disent est le défaut
 - [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md) — dater un changement avec `git log -S`, jamais conclure « c'est le nouveau » depuis le worktree d'une autre session
+- [Sortie git sous rtk non fiable](feedback-rtk-sortie-git-non-fiable.md) — `git log --oneline` a renvoyé des SHAs plausibles mais faux ; la portée dépasse git (texte piped corrompu) ; plomberie, codes de retour ou `rtk proxy`
+- [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md) — une page citée se lit sur la page, jamais interpolée depuis un `pdftotext` du document entier
+- [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md) — le check de fraîcheur alarmait sur les fichiers les mieux tenus et exemptait les dormants ; ne jamais tamponner « revu » sans lire
 - [Pas de centaure inversé](feedback-no-inverted-centaur.md) — ne jamais laisser à l'auteur une corvée de vérification résiduelle
 - [Boucle dictée-arbitrage prose](project-boucle-dictee-arbitrage.md) — circuit registre sur main pour les arbitrages de prose dictés
 - [Pagination manuelle HET §3](project-het-hand-pagination.md) — tout ajout déborde une page ; signaler avec options, arbitrage groupé après la dernière PR, repagination à la finition
