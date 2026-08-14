@@ -3993,7 +3993,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:50Z",
-      "last_confirmed": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-grep-context-audit": {
@@ -4001,7 +4001,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:50Z",
-      "last_confirmed": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-ligne-sans-clause-disculpatoire": {
@@ -4009,7 +4009,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:50Z",
-      "last_confirmed": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-merge-verifier-le-diff-pas-la-sortie": {
@@ -4017,7 +4017,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:50Z",
-      "last_confirmed": "2026-08-14T09:56:50Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-no-inverted-centaur": {
@@ -4025,7 +4025,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:51Z",
-      "last_confirmed": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-no-version-suffix-filenames": {
@@ -4033,7 +4033,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:51Z",
-      "last_confirmed": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-piste-secondaire-lue-sur-piece": {
@@ -4041,7 +4041,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:51Z",
-      "last_confirmed": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-purge-bib-partagee-casse-les-freres": {
@@ -4049,7 +4049,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:51Z",
-      "last_confirmed": "2026-08-14T09:56:51Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-rejouer-ou-reconstruire-une-branche": {
@@ -4057,7 +4057,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
       "promoted": false
     },
     "feedback-typo-fine-a-la-finition": {
@@ -4065,7 +4065,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     },
     "feedback-worktree-perime-sert-une-version-ancienne": {
@@ -4073,7 +4073,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     },
     "project-boucle-dictee-arbitrage": {
@@ -4081,7 +4081,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     },
     "project-het-hand-pagination": {
@@ -4089,7 +4089,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     },
     "project-zotero-injection-auto": {
@@ -4097,7 +4097,7 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:52Z",
-      "last_confirmed": "2026-08-14T09:56:52Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     },
     "user-professional-email": {
@@ -4105,7 +4105,63 @@
         "-home-haduong-CNRS-projets-actifs-polycentric-activity"
       ],
       "first_seen": "2026-08-14T09:56:53Z",
-      "last_confirmed": "2026-08-14T09:56:53Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
+      "promoted": false
+    },
+    "feedback-affirmation-negative-sur-source": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:12Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
+      "promoted": false
+    },
+    "feedback-checkout-ref-ecrase-l-index": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:12Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
+      "promoted": false
+    },
+    "feedback-chercher-le-contenu-pas-le-vocabulaire": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:12Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
+      "promoted": false
+    },
+    "feedback-controle-cadence-glob-etroit": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:12Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
+      "promoted": false
+    },
+    "feedback-folio-imprime-pas-offset-extraction": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:12Z",
+      "last_confirmed": "2026-08-14T18:41:12Z",
+      "promoted": false
+    },
+    "feedback-roar-enumerate-merges-head": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:13Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
+      "promoted": false
+    },
+    "feedback-rtk-sortie-git-non-fiable": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-14T18:41:13Z",
+      "last_confirmed": "2026-08-14T18:41:13Z",
       "promoted": false
     }
   }
