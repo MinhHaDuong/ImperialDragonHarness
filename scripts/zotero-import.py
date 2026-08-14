@@ -372,8 +372,126 @@ RIS_TO_ZOTERO_TYPE = {
     "MGZN": "magazineArticle",
     "GEN": "document",
 }
-# Zotero item types that carry a real numPages field.
-ZOTERO_NUMPAGES_TYPES = {"book", "thesis", "manuscript", "report"}
+
+# Field placement is per item type. Zotero gives each type its own field set,
+# and posting a field the type does not own is a hard 400 from the API
+# (`'numPages' is not a valid field for type 'report'`), so a mapper that
+# emits `publisher`/`volume`/`seriesTitle` unconditionally cannot import a
+# report, a thesis or a manuscript at all.
+#
+# The two tables below are a reduced snapshot of https://api.zotero.org/schema
+# (schema version 42, consulted 2026-08-14): the eight slots this mapper emits
+# across the ten types RIS_TO_ZOTERO_TYPE can produce. An explicit table
+# rather than a vendored copy of the schema — 40 readable lines a reviewer can
+# check against the diff, where the schema file is 385 KB of JSON that is 95%
+# irrelevant here and unreviewable in a merge request. Either way `inject`
+# stays offline; the drift check lives in the test suite's `slow` tier, which
+# re-derives both tables from the live schema.
+
+# Preference order per slot: the first field the target type owns wins. Kept
+# beside the resolved table so the derivation is documented and re-runnable.
+ZOTERO_SLOT_PREFERENCES: dict[str, tuple[str, ...]] = {
+    "container": ("publicationTitle", "proceedingsTitle", "bookTitle",
+                  "seriesTitle", "series"),
+    "publisher": ("publisher", "university", "institution"),
+    # A page *count* only ever goes in a real numPages field. `report` has a
+    # `pages` field, but that is its page *range* (Zotero labels it "Pages",
+    # not "# of Pages"), so borrowing it would conflate the two and clobber a
+    # genuine range. Reports send the count to `extra` instead.
+    "numPages": ("numPages",),
+    "pages": ("pages",),
+    "volume": ("volume",),
+    "issue": ("issue",),
+    "DOI": ("DOI",),
+    "ISBN": ("ISBN",),
+}
+
+# Resolved: slot → {item type: field name}. A type absent from a slot's map
+# has no home for it and falls through to `extra`.
+ZOTERO_SLOT_FIELD: dict[str, dict[str, str]] = {
+    "container": {
+        "journalArticle": "publicationTitle",
+        "book": "series",
+        "thesis": "series",
+        "report": "seriesTitle",
+        "bookSection": "bookTitle",
+        "conferencePaper": "proceedingsTitle",
+        "newspaperArticle": "publicationTitle",
+        "magazineArticle": "publicationTitle",
+    },
+    "publisher": {
+        "journalArticle": "publisher",
+        "book": "publisher",
+        "thesis": "university",
+        "report": "institution",
+        "bookSection": "publisher",
+        "conferencePaper": "publisher",
+        "manuscript": "institution",
+        "newspaperArticle": "publisher",
+        "magazineArticle": "publisher",
+        "document": "publisher",
+    },
+    "numPages": {
+        "book": "numPages",
+        "thesis": "numPages",
+        "manuscript": "numPages",
+    },
+    "pages": {
+        "journalArticle": "pages",
+        "report": "pages",
+        "bookSection": "pages",
+        "conferencePaper": "pages",
+        "newspaperArticle": "pages",
+        "magazineArticle": "pages",
+    },
+    "volume": {
+        "journalArticle": "volume",
+        "book": "volume",
+        "bookSection": "volume",
+        "conferencePaper": "volume",
+        "newspaperArticle": "volume",
+        "magazineArticle": "volume",
+    },
+    "issue": {
+        "journalArticle": "issue",
+        "conferencePaper": "issue",
+        "newspaperArticle": "issue",
+        "magazineArticle": "issue",
+    },
+    "DOI": {
+        "journalArticle": "DOI",
+        "book": "DOI",
+        "thesis": "DOI",
+        "report": "DOI",
+        "bookSection": "DOI",
+        "conferencePaper": "DOI",
+        "manuscript": "DOI",
+        "newspaperArticle": "DOI",
+        "magazineArticle": "DOI",
+        "document": "DOI",
+    },
+    "ISBN": {
+        "book": "ISBN",
+        "thesis": "ISBN",
+        "report": "ISBN",
+        "bookSection": "ISBN",
+        "conferencePaper": "ISBN",
+    },
+}
+
+# Labels used when a slot has no home on the target type. These are CSL
+# variable names, which Zotero parses back out of the Extra field and feeds to
+# citeproc — so a homeless value still cites correctly instead of being lost.
+ZOTERO_SLOT_EXTRA_LABEL: dict[str, str] = {
+    "container": "container-title",
+    "publisher": "publisher",
+    "numPages": "number-of-pages",
+    "pages": "page",
+    "volume": "volume",
+    "issue": "issue",
+    "DOI": "DOI",
+    "ISBN": "ISBN",
+}
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -415,12 +533,28 @@ def author_to_creator(a: str) -> dict[str, str]:
     return {"creatorType": "author", "name": last.strip()}
 
 
+def place_slot(item: dict[str, Any], extra: list[str],
+               slot: str, value: str) -> None:
+    """Store `value` in the slot's field for this item type, else in `extra`.
+
+    Nothing is dropped: a slot the target type has no field for (or whose
+    field is already taken) is appended to `extra` under its CSL variable
+    name, where Zotero still reads it.
+    """
+    field = ZOTERO_SLOT_FIELD[slot].get(item["itemType"])
+    if field and field not in item:
+        item[field] = value
+    else:
+        extra.append(f"{ZOTERO_SLOT_EXTRA_LABEL[slot]}: {value}")
+
+
 def entry_to_zotero_item(e: dict[str, Any],
                          collection: str | None) -> dict[str, Any]:
     ris_ty = (e.get("type") or RIS_TYPE_DEFAULT).upper()
     ty = RIS_TO_ZOTERO_TYPE.get(ris_ty, "document")
     item: dict[str, Any] = {"itemType": ty}
     extra: list[str] = []
+    # Universal fields — every type RIS_TO_ZOTERO_TYPE can produce owns these.
     if t := e.get("title"):
         item["title"] = t
     if st := e.get("shortTitle"):
@@ -429,37 +563,24 @@ def entry_to_zotero_item(e: dict[str, Any],
         item["creators"] = [author_to_creator(a) for a in authors]
     if y := e.get("year"):
         item["date"] = str(y)
-    if d := e.get("doi"):
-        if ty == "journalArticle":
-            item["DOI"] = d
-        else:
-            extra.append(f"DOI: {d}")
-    if isbn := e.get("isbn"):
-        if ty in ("book", "bookSection"):
-            item["ISBN"] = isbn
-        else:
-            extra.append(f"ISBN: {isbn}")
     if url := e.get("url"):
         item["url"] = url
-    if j := e.get("journal"):
-        item["publicationTitle" if ty == "journalArticle" else "seriesTitle"] = j
-    if v := e.get("volume"):
-        item["volume"] = v
-    if iss := e.get("issue"):
-        item["issue"] = iss
-    if pages := e.get("pages"):
-        item["pages"] = pages
-    if n := e.get("numPages"):
-        if ty in ZOTERO_NUMPAGES_TYPES:
-            item["numPages"] = str(n)
-        else:
-            extra.append(f"pages: {n}")
-    if pub := e.get("publisher"):
-        item["publisher"] = pub
     if lang := e.get("language"):
         item["language"] = lang
     if ab := e.get("abstract"):
         item["abstractNote"] = " ".join(ab.split())
+    # Type-dependent slots. Order matters: `pages` claims a shared field
+    # before `numPages` would, so an explicit range beats a derived count.
+    for slot, value in (("DOI", e.get("doi")),
+                        ("ISBN", e.get("isbn")),
+                        ("container", e.get("journal")),
+                        ("volume", e.get("volume")),
+                        ("issue", e.get("issue")),
+                        ("pages", e.get("pages")),
+                        ("numPages", e.get("numPages")),
+                        ("publisher", e.get("publisher"))):
+        if value:
+            place_slot(item, extra, slot, str(value))
     if extra:
         item["extra"] = "\n".join(extra)
     if collection:
