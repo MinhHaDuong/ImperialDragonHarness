@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 31e0f615-0318-44e3-867d-b6d3561e018f
-  modified: 2026-08-10T19:52:45.157Z
+  modified: 2026-08-11T07:31:27.396Z
 ---
 
 Dans les dépôts de papiers (discipline EDM : `docs/` = staging des sources,
@@ -26,8 +26,9 @@ web → payant → inaccessible » ; `docs/` n'est pas dans git, donc pas dans l
 greps du dépôt.
 
 **How to apply:** tout prompt d'agent de vérification de sources commence par
-« liste `docs/` (et les variantes du nom de l'auteur) avant toute recherche
-en ligne » ; et toute phrase « resté inaccessible » dans une note de
-conception se relit contre `ls docs/`. Un scan sans couche texte n'est pas
-inaccessible : `ocrmypdf` est installé. Voir [[edm-zotero-system-of-record]]
-si elle existe ; règle EDM dans `~/.claude/rules/edm.md`.
+« liste `docs/` (et les variantes du nom de l'auteur) **puis interroge
+Zotero** avant toute recherche en ligne » ; et toute phrase « resté
+inaccessible » dans une note de conception se relit contre `ls docs/` + une
+requête Zotero. Un scan sans couche texte n'est pas inaccessible :
+`ocrmypdf` est installé. **Règle promue dans `~/.claude/rules/edm.md`**
+(directive auteur 2026-08-11, PR harnais `edm-zotero-check`).

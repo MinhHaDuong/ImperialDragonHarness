@@ -1,10 +1,10 @@
 ## Key insights
 
 - Zotero est le système de référence ; tout le reste (`.bib` locaux, `docs/`) est du staging transitoire — la discipline vaut pour la bibliographie comme pour les sources.
-- Avant de déclarer une source « inaccessible », lister le staging local `docs/` (et océriser les scans : ocrmypdf est là) — huit fausses inaccessibilités en une seule session HET, dont un faux showstopper.
+- Avant de déclarer une source « inaccessible », lister le staging local `docs/` (et océriser les scans : ocrmypdf est là), puis tenter ISTEX — huit fausses inaccessibilités en une seule session HET.
 - Instructions minimales : skills et règles ne portent que les contraintes non évidentes, découpées par cause racine ; pour le reste, faire confiance au modèle.
 - L'auteur est allergique aux tics de prose LLM (métaphores filées, padding, quatrième mur) — nommer les choses par leur nom réel, une fois ; les rapporteurs simulant sa voix se calibrent en aveugle jusqu'à retrouver ses remarques.
-- Avant toute réorganisation ou suppression, chercher la décision antérieure (tickets voisins, règles serveur) ; en fan-out, épingler le modèle à chaque lancement — le frontmatter ne se propage pas.
+- Vérification par agents : épingler le modèle à chaque lancement de fan-out (le frontmatter ne se propage pas) ; tout théorème produit par agent passe par un referee adversarial à code indépendant avant d'entrer au manuscrit ; avant toute réorganisation, chercher la décision antérieure.
 
 ## Entries
 
@@ -20,4 +20,6 @@
 - [Beat agent SSH-to-padme blind spot](feedback_beat_padme_ssh.md) — beat agents incorrectly exclude tickets that say "SSH to padme"; beat always runs on padme
 - [Nightbeat deployment](project_nightbeat.md) — live nightbeat timer on padme: config values, monitoring commands, timeout chain
 - [padme GPU/CPU idle power](project_padme_gpu_power.md) — RESOLVED: GPU 3060 floor 11W (no D3cold), CPU 70→46W via balanced profile; main-logbook §I
-- [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md) — 8 fausses sources « inaccessibles » en une session HET ; ls docs/ + ocrmypdf avant toute recherche web
+- [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md) — 8 fausses sources « inaccessibles » en une session HET ; ls docs/ + Zotero + ocrmypdf avant toute recherche web (règle promue dans rules/edm.md)
+- [ISTEX token](reference_istex.md) — jeton plein-texte licences nationales dans ~/.config/keys/istex.env ; à essayer d'office pour tout article sous péage ; JRSS-B seulement 1997→
+- [Adversarial pair verification](feedback_adversarial_pair_verification.md) — théorème d'agent → referee adversarial à code indépendant avant insertion manuscrit ; a trouvé 2 vrais trous de preuve (session MIMO) ; jamais de fenêtre par échantillonnage de chambres
