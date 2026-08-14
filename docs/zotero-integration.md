@@ -80,7 +80,11 @@ Every mutating skill must:
 
 ## Existing skill
 
-`zotero-import` — PDF → metadata extraction → RIS → `xdg-open`. Entry point for new items.
+`zotero-import` — PDF → metadata extraction → dedup → `inject` via the Zotero Web API. Entry point for new items. The RIS file is still written as the durable artifact and remains the fallback when no read-write key resolves, but `xdg-open` is no longer the terminus (decided 2026-08-13).
+
+Its deduplication consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `inject` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart.
+
+`index-source` is its URL sibling.
 
 ---
 
@@ -95,7 +99,7 @@ Every mutating skill must:
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Ticket 0006 |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
 | **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
-| **Dedup** — candidate pairs + HITL merge; auto-apply DOI-exact matches only | archiveCIRED, publications list | When second project triggers it |
+| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the local DB; the **merge belongs to the desktop client** — the Web API has no merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). |
 
 Each capability: one script, one skill, no shared framework beyond the RIS contract.
 
