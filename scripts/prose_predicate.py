@@ -20,6 +20,12 @@ without a guard. A path that does not exist from the cwd is refused (exit 2,
 no verdict): the predicate reads the disk, so a parked cwd would otherwise
 return a plausible, wrong ``code`` — the exact failure mode ticket 0550
 closes. A refusal is a cwd error to fix, never an answer.
+
+``--axes`` prints the resolved doctype and language per file instead of the
+verdict. Routing picks *which panel* reviews a diff; the axes tell a reviewer
+*which rulebook* to hold it to. Agent B had neither, and guessed: it checked a
+manuscript against ``rules/doctype/book.md`` where the manifest declares
+``techreport`` (audit of 2026-08-17, MR 136).
 """
 
 import argparse
@@ -54,6 +60,16 @@ def diff_is_prose(paths: list[str]) -> bool:
     return any(is_manuscript(p) for p in paths)
 
 
+def axes_for(path: str) -> dict[str, str]:
+    """The file's resolved axes — which house rulebooks apply to it.
+
+    Same resolution as ``is_manuscript``, but returning the values rather than
+    the boolean, so a reviewer can be *told* the doctype and language instead
+    of inferring them from the path.
+    """
+    return _load_resolver().resolve_axes(path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Route a diff to the prose or code review panel: "
@@ -64,6 +80,13 @@ def main() -> int:
         nargs="+",
         help="changed file paths (absolute, or relative to the checkout cwd)",
     )
+    parser.add_argument(
+        "--axes",
+        action="store_true",
+        help="instead of the routing verdict, print one "
+        "'<path> doctype=<v> lang=<v>' line per file — what a reviewer must be "
+        "told so it reads the declared rulebooks rather than guessing them",
+    )
     args = parser.parse_args()
     missing = [f for f in args.files if not Path(f).exists()]
     if missing:
@@ -72,6 +95,17 @@ def main() -> int:
             "anchor the cwd in the checkout that holds the diff; answering "
             "'code' here would be a plausible, wrong verdict"
         )
+    if args.axes:
+        for path in args.files:
+            axes = axes_for(path)
+            # An unresolved axis prints "-", never an empty field: a blank
+            # reads the same as "not asked", and a reviewer told nothing is
+            # exactly the reviewer that guesses.
+            print(
+                f"{path} doctype={axes.get('doctype', '-')} "
+                f"lang={axes.get('lang', '-')}"
+            )
+        return 0
     print("prose" if diff_is_prose(args.files) else "code")
     return 0
 
