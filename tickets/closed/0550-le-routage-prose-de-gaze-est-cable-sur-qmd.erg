@@ -2,10 +2,12 @@
 Title: Le routage prose/code de /gaze est câblé sur *.qmd — un manuscrit LaTeX ne peut pas l'atteindre
 Created: 2026-08-17
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #755
 
 --- log ---
 2026-08-17T14:48Z claude created — audit du harnais sur les quatre runs /gaze du 2026-08-17 dans polycentric_activity (MR 136, 137, 138, 139)
 
+2026-08-17T15:18Z Minh Ha-Duong closed — autoclosed — PR #755
 --- body ---
 ## Context
 
