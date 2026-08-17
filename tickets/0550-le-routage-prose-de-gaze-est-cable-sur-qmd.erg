@@ -1,0 +1,199 @@
+%erg 0.1
+Title: Le routage prose/code de /gaze est câblé sur *.qmd — un manuscrit LaTeX ne peut pas l'atteindre
+Created: 2026-08-17
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-17T14:48Z claude created — audit du harnais sur les quatre runs /gaze du 2026-08-17 dans polycentric_activity (MR 136, 137, 138, 139)
+
+--- body ---
+## Context
+
+Audit demandé par l'auteur le 2026-08-17 : « le skill gaze sur les MR du jour
+a-t-il mis en œuvre des reviewers appropriés, ou bien a-t-il fait des revues de
+code sur la prose et vice versa ? »
+
+Réponse mesurée sur pièce : **le panel qui porte le verdict a été bien apparié
+dans les quatre cas — mais par jugement de l'agent, pas par la règle.** La règle
+écrite, elle, ne peut pas produire ce résultat dans ce dépôt.
+
+Roster réel des quatre runs, lu dans les `.meta.json` des sous-agents
+(`~/.claude/projects/*/subagents/`), pas dans les commentaires de MR :
+
+| MR | contenu | Agent C (le panel) | Agent B (`/review`) | `/simplify` |
+|---|---|---|---|---|
+| 136 | `article-het/manuscrit.tex` +42/-4 | **prose**, 3 perspectives | `/code-review` | sauté, motif prose |
+| 137 | `tickets/0220-*.erg` +207 | code, 4 perspectives | `/code-review` | non exécuté (bloquant) |
+| 138 | `tickets/0210-*.erg` +108 | code, correctness only | `/code-review` | report-only |
+| 139 | `manuscrit.tex` + `.md` | **prose** | `/code-review` | **exécuté**, 4 angles code |
+
+Quatre défauts, du plus structurel au plus contingent.
+
+**1. Le routage est câblé sur une extension absente du dépôt.**
+`skills/gaze/SKILL.md:308` : « Otherwise pick by file type: if any `*.qmd`
+changed → prose panel; else code panel ». Le dépôt polycentric_activity ne
+contient **aucun** `.qmd` — ses trois manuscrits sont des `.tex`. Par la lettre,
+aucune MR de ce dépôt ne peut sélectionner le panel prose. Les MR 136 et 139
+l'ont eu quand même : l'agent a regardé le fichier et tranché tout seul. C'est le
+bon résultat obtenu par un mécanisme qui ne le garantit pas — la famille de
+défauts que `rules/workflow.md` § Diagnosis discipline et `tickets/AGENTS.md`
+désignent déjà : un garde dont le « tout va bien » est indiscernable de « je n'ai
+pas regardé ».
+
+**2. Le même angle mort se répète à deux autres endroits.**
+- `skills/review-pr-prose/SKILL.md:50` identifie le texte par « which
+  `.qmd`/`.md` files changed? » — `.tex` absent, donc le skill prose lui-même ne
+  sait pas nommer un manuscrit LaTeX.
+- `skills/gaze/SKILL.md:528` (§ External reviewer panel) : « Skip on the **tiny**
+  tier and on prose panels (any `*.qmd` changed) ». Par la lettre, un manuscrit
+  LaTeX **qualifie pour les sièges de relecture de code externes**
+  (openrouter-frontier / openrouter-budget). Ils n'ont pas tiré le 2026-08-17,
+  mais parce que l'orchestrateur a improvisé (« seats externes : écartés — diff
+  d'un seul fichier, zéro code », commentaire de la MR 137), pas parce que la
+  règle l'interdisait.
+
+**3. Le signal faisant autorité existe déjà, et aucun des trois ne le lit.**
+`scripts/inject_rule_on_edit.py` résout tout fichier sur quatre axes et expose
+`resolve_axes(path) -> {format, doctype, lang, prose}`, avec
+`PROSE_FORMATS = {"tex", "qmd", "md", "txt"}` et la lecture du manifeste
+`<repo>/.claude/rules-map.toml`. Dans polycentric_activity ce manifeste déclare
+déjà `article-*/**/*.tex` → `doctype = "techreport"`. C'est exactement la carte
+prose/code du dépôt, écrite par l'auteur, et gaze ne la consulte pas.
+
+Symptôme visible du fait qu'il ne la lit pas : la revue de code de la MR 136 a
+contrôlé le style du manuscrit contre `rules/doctype/book.md`, alors que le
+manifeste dit `techreport`. Mauvais rulebook, choisi au jugé.
+
+**Le discriminant n'est pas le format, c'est le doctype.** Un test sur
+`PROSE_FORMATS` seul sur-déclencherait : une note `.md` de `conception/`
+partirait au panel prose avec référé adversarial et cadrage de revue, ce qui est
+faux. L'audit établit l'inverse sur pièce — les MR 137 et 138 (fichiers ticket,
+prose de processus) ont été **bien** servies par les lentilles code
+(correctness / consistency / scope / red team), et c'est ce panel-là qui a trouvé
+le vrai bloquant de la 137, une affirmation négative fausse. La ligne de partage
+utile est donc : *un fichier porte-t-il un `doctype` résolu ?*
+
+- `article-het/manuscrit.tex` → `doctype=techreport` (manifeste) → panel prose
+- `conception/p1-brique-*.tex` → `doctype=article` (sniff `\documentclass`) → panel prose, défendable : c'est un document rendu
+- `conception/*.md` → format prose, **pas** de doctype → panel code/analytique
+- `tickets/*.erg`, `scripts/*.py` → pas de doctype → panel code
+
+Politique de combinaison sur diff mixte : **any**, comme la règle actuelle (la
+MR 139 touche `manuscrit.tex` *et* un `.md` ; un seul manuscrit suffit à faire
+basculer la MR).
+
+**4. `/simplify` n'a aucune garde prose, et deux runs du même jour sur le même
+fichier ont tranché en sens opposés.** Sur la MR 136, gaze a sauté la phase 5 en
+citant `rules/git.md` § Prose workpackages (interdiction d'éditer un manuscrit en
+autonome). Sur la MR 139 — même fichier `article-het/manuscrit.tex`, même
+workpackage — il l'a **lancée** : quatre agents d'angles code (reuse,
+simplification, efficiency, altitude) sur un diff LaTeX. Sortie mesurée :
+`simplify: 0 findings, 0 fixes applied`, `files_modified: none` — donc **sans
+dégât ce coup-ci**. Mais la phase a autorité pour committer sur la branche de la
+MR, et rien dans le contrat ne l'en empêche sur un manuscrit. Deux décisions
+opposées le même jour = la règle n'existe pas, c'est du jugement.
+
+**Ce qui n'est PAS un défaut, et ne doit pas être « corrigé ».** Agent B
+(`/review` → `/code-review`) tourne inconditionnellement, y compris sur les deux
+manuscrits. Les agents ont compensé d'eux-mêmes — sur la 137 : « most of the 10
+angles don't apply to a document-only diff; I substituted fact-verification » —
+et chaque passe a rendu un mineur juste et vérifiable (la 136 : incohérence de la
+Table 4 ; la 137 : entrée de log manquante pour le commit `Blocked-by`). C'est un
+coût, pas un dégât. Le laisser tel quel est un choix défendable ; l'exempter sur
+diff sans code est une option, pas une exigence. **Hors périmètre de ce ticket**
+sauf arbitrage contraire de l'auteur.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — l. 308 (routage du panel Agent C), l. 528 (§ External
+  reviewer panel, clause de saut), § 5 Simplify (garde prose absente)
+- `skills/review-pr-prose/SKILL.md` — l. 50, identification du texte
+- `scripts/inject_rule_on_edit.py` — `resolve_axes()`, `PROSE_FORMATS`,
+  `find_manifest()`, `manifest_axes()` : le résolveur à réutiliser, **ne pas
+  réimplémenter** (le ticket 0531 documente déjà ce que coûte une extraction
+  triplée qui diverge)
+- `rules/git.md` § Prose workpackages — la norme que la garde `/simplify` doit
+  rendre mécanique
+- `rules/README.md` § Per-file rule injection — le modèle d'axes faisant autorité
+- `tests/test_gaze_fork_blocking.py`, `tests/test_gaze_review_worktree_doc.py` —
+  précédents de tests d'adhérence qui assertent le texte de `skills/gaze/SKILL.md`
+
+## Actions
+
+1. Extraire du résolveur d'axes un prédicat partagé et testé — nom suggéré
+   `is_manuscript(path) -> bool`, vrai ssi `resolve_axes(path)` rend un
+   `doctype` — et un `diff_is_prose(paths) -> bool` en **any**. Le poser là où
+   les skills et les tests peuvent tous deux l'appeler ; ne pas dupliquer la
+   logique dans `SKILL.md`.
+2. Remplacer les trois occurrences de la règle `*.qmd` par ce prédicat :
+   - `skills/gaze/SKILL.md:308` — sélection du panel Agent C
+   - `skills/gaze/SKILL.md:528` — clause de saut des sièges externes
+   - `skills/review-pr-prose/SKILL.md:50` — identification du texte
+   Le texte de skill doit **nommer le prédicat et le manifeste**, pas énumérer
+   des extensions : c'est ce qui a pourri la première fois. Prévoir le repli
+   explicite quand aucun manifeste n'existe (sniff `\documentclass` seul).
+3. Écrire dans `skills/gaze/SKILL.md` § 5 la garde `/simplify` que la MR 136 a
+   improvisée : sauter la phase 5 quand `diff_is_prose` est vrai, en citant
+   `rules/git.md` § Prose workpackages, et journaliser
+   `simplify: skipped (prose workpackage)` comme les autres sauts de tier.
+4. Ne rien changer à Agent B (voir « Ce qui n'est PAS un défaut »).
+
+## Test
+
+Rouge d'abord, avant tout correctif — un test d'adhérence `tests/test_gaze_prose_routing.py` qui échoue sur `main` :
+
+- `test_no_bare_qmd_routing_rule` — aucune des trois lignes ne contient une
+  règle de routage énumérant des extensions ; échoue aujourd'hui sur les trois.
+- `test_prose_predicate_covers_tex` — le prédicat rend vrai sur un fixture
+  `article-x/manuscrit.tex` avec un `rules-map.toml` déclarant
+  `doctype = "techreport"`, **et** sur un `.tex` nu portant `\documentclass`.
+- `test_prose_predicate_excludes_process_documents` — faux sur `conception/note.md`
+  (format prose, pas de doctype), sur `tickets/0001-x.erg`, sur `scripts/x.py`.
+  C'est l'assertion qui protège le résultat correct des MR 137/138 : sans elle,
+  un correctif naïf sur `PROSE_FORMATS` régresse.
+- `test_mixed_diff_is_prose_by_any` — le diff de la MR 139
+  (`manuscrit.tex` + `conception/checklist-venue-ejhet.md`) rend vrai.
+- `test_simplify_prose_guard_documented` — `skills/gaze/SKILL.md` § 5 porte la
+  garde prose et son motif.
+
+Marqueur `@pytest.mark.adherence` (ces tests lisent des fichiers, ne lancent
+rien), donc `make lint`.
+
+## Verification
+
+- [ ] Les cinq tests ci-dessus sont rouges sur `origin/main` avant correctif —
+      les faire tourner et le constater, pas le supposer.
+- [ ] `grep -rn 'qmd' skills/` ne rend plus aucune **règle de routage** (une
+      mention illustrative dans une liste d'extensions reste acceptable ; une
+      condition, non).
+- [ ] `make lint` et `make check` verts.
+- [ ] Rejeu sur pièce du cas réel : appliquer le prédicat aux quatre diffs des MR
+      136/137/138/139 de polycentric_activity et vérifier qu'il reproduit le
+      routage effectivement observé — prose, code, code, prose. C'est le contrôle
+      qui distingue un correctif d'une réécriture plausible.
+- [ ] Contrôle contre le faux positif : le prédicat lancé sur un cas connu
+      positif ET un cas connu négatif, pas seulement sur le silence.
+
+## Invariants
+
+- `scripts/inject_rule_on_edit.py` reste la source unique du modèle d'axes ; le
+  hook d'injection de règles ne change pas de comportement (ses tests existants
+  restent verts, à l'identique).
+- Aucun skill n'énumère d'extensions dans une condition de routage.
+- La batterie gaze conserve ses tiers, ses gardes de fork et sa phase 6
+  invariante — ce ticket ne touche qu'au **choix du panel** et à la garde
+  `/simplify`.
+- Le dépôt polycentric_activity n'est pas modifié : il est la pièce à conviction,
+  pas la cible.
+
+## Exit criteria
+
+- [ ] Un prédicat prose partagé, adossé à `resolve_axes()`, existe et est testé.
+- [ ] Les trois règles `*.qmd` de `skills/gaze/SKILL.md` et
+      `skills/review-pr-prose/SKILL.md` sont remplacées par ce prédicat.
+- [ ] `/simplify` porte une garde prose écrite, avec son motif et sa ligne de
+      journal.
+- [ ] `tests/test_gaze_prose_routing.py` couvre les cinq cas, était rouge avant,
+      est vert après.
+- [ ] Le rejeu sur les quatre MR du 2026-08-17 reproduit le routage observé.
+- [ ] `make lint` et `make check` verts.
