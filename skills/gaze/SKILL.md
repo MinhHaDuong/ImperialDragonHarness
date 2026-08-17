@@ -305,11 +305,16 @@ that count plus one), read the previous round's verdict roster, build the
 scoped perspective list from it, and record the reason for each inclusion.
 Spell that derivation out: the spawned agent does not read this file or
 `skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
-Otherwise route by the shared prose predicate: run
-`python3 ~/.claude/scripts/prose_predicate.py <changed files>` — it prints
-`prose` when any changed file resolves to a `doctype` (from the project's
-`.claude/rules-map.toml` manifest, else the `\documentclass` sniff; one
-manuscript flips a mixed diff), `code` otherwise. Process prose — notes,
+Otherwise route by the shared prose predicate, anchored in the review
+worktree — the predicate reads the disk (manifest walk-up, `\documentclass`
+sniff), so a parked cwd would return a plausible, wrong verdict, the failure
+mode this ticket exists to close. Run
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py <changed files>`
+— it prints `prose` when any changed file resolves to a `doctype` (from the
+project's `.claude/rules-map.toml` manifest, else the `\documentclass`
+sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
+path that does not exist under that cwd (exit 2, no verdict) — treat a
+refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
 the audit measured as correct for it (ticket 0550). Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
@@ -598,7 +603,7 @@ adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
 review-pr scope: full panel | scoped: <objecting perspectives> + regression (omit if round 1)
-simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking)
+simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
 ## /verify-gate verdict

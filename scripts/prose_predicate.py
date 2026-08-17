@@ -16,7 +16,10 @@ re-extraction costs).
 CLI: ``prose_predicate.py FILE [FILE ...]`` prints ``prose`` when any file is
 a manuscript (any-semantics: one manuscript flips a mixed diff), else
 ``code``. Exit code 0 either way, so ``set -e`` callers capture the word
-without a guard.
+without a guard. A path that does not exist from the cwd is refused (exit 2,
+no verdict): the predicate reads the disk, so a parked cwd would otherwise
+return a plausible, wrong ``code`` — the exact failure mode ticket 0550
+closes. A refusal is a cwd error to fix, never an answer.
 """
 
 import argparse
@@ -62,6 +65,13 @@ def main() -> int:
         help="changed file paths (absolute, or relative to the checkout cwd)",
     )
     args = parser.parse_args()
+    missing = [f for f in args.files if not Path(f).exists()]
+    if missing:
+        parser.error(
+            f"path(s) not found from cwd {Path.cwd()}: {', '.join(missing)} — "
+            "anchor the cwd in the checkout that holds the diff; answering "
+            "'code' here would be a plausible, wrong verdict"
+        )
     print("prose" if diff_is_prose(args.files) else "code")
     return 0
 

@@ -47,7 +47,7 @@ runs and no review is ever posted.
 
 ## Setup
 
-1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate (`python3 ~/.claude/scripts/prose_predicate.py <file>` — true on a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists)? What is the target venue?
+1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate? Run `python3 ~/.claude/scripts/prose_predicate.py <file>` from the merge request's checkout — the predicate reads the disk (manifest walk-up, `\documentclass` sniff), so the paths must exist under the cwd; it refuses a missing path (exit 2, no verdict) rather than guessing, and a refusal is a cwd error to fix, never an answer. It prints `prose` for a manuscript: a file with a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists. What is the target venue?
 2. Read the diff of the merge request.
 3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it.
 
