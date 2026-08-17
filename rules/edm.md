@@ -41,24 +41,14 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   previous one (chapter XX opening at p. 330 confirmed Gale–Kuhn–Tucker at
   pp. 317–329). A plausible wrong locator is the costly failure — a referee who
   opens the page and finds nothing stops trusting the whole apparatus.
-- **A text layer sometimes drops the mathematics, silently — probe before you
-  trust it.** The failure is real but not universal, so treat it as a warning
-  and not a law. Measured over four facsimiles of one corpus (2026-08-17): two
-  render the prose in full and **zero** displayed equations — Cournot 1838, a
-  BnF scan, and Walras 1900, recoded by LuraDocument — while Beckmann 1952
-  (`ocrmypdf`) and Afriat 1967 keep them. Nothing announces which kind you
-  hold: the extraction reads fluently, and the displays are simply absent or
-  scattered into fragments. The cause is not isolated at n = 4 and should not
-  be guessed. What is actionable is the probe: when a claim turns on the
-  **formal content** of a source, extract the pages at issue and count the
-  lines carrying `=`; abundant prose with no equations is the signature of the
-  failing case. Then render the page (`pdftoppm -png -scale-to 1500`) and read
-  it. A semantic reading of the page beats a hasty grep over the extraction,
-  and that holds even when the extraction looks healthy — a grep cannot find a
-  formula that was never extracted, so a nil result is not a negative finding.
-  Cost of skipping it: the OCR layer of Cournot 1838 ch. III carried neither
-  the band, nor the cycle condition, nor the potential, which were exactly the
-  statements the arbitration turned on.
+- **A text layer sometimes drops the mathematics, silently.** Two of four
+  facsimiles in one corpus rendered the prose in full and zero displayed
+  equations (2026-08-17), and the extraction reads fluently either way. So
+  when a claim turns on formal content, count the lines carrying `=` in the
+  pages at issue; prose without equations is the failing case, and then you
+  render the page (`pdftoppm -png -scale-to 1500`) and read it. A grep cannot
+  find a formula that was never extracted, so a nil result is not a negative
+  finding.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
