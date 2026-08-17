@@ -305,8 +305,13 @@ that count plus one), read the previous round's verdict roster, build the
 scoped perspective list from it, and record the reason for each inclusion.
 Spell that derivation out: the spawned agent does not read this file or
 `skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
-Otherwise pick by file type: if any `*.qmd` changed → prose
-panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
+Otherwise route by the shared prose predicate: run
+`python3 ~/.claude/scripts/prose_predicate.py <changed files>` — it prints
+`prose` when any changed file resolves to a `doctype` (from the project's
+`.claude/rules-map.toml` manifest, else the `\documentclass` sniff; one
+manuscript flips a mixed diff), `code` otherwise. Process prose — notes,
+tickets — carries no doctype and stays on the code panel, which is the panel
+the audit measured as correct for it (ticket 0550). Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —
 **code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
@@ -336,7 +341,17 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 **Tier-skip:** when the tier is **tiny**, skip this phase and log
 `simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
-**small** and **full** tiers. Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
+**small** and **full** tiers.
+
+**Prose-skip:** when the diff routed prose (the same
+`~/.claude/scripts/prose_predicate.py` verdict the phase 2–4 panel choice used), skip
+this phase and log `simplify: skipped (prose workpackage)` in the telemetry
+phase line. Motive: this phase may commit to the PR branch, and `rules/git.md`
+§ Prose workpackages forbids autonomous edits to a manuscript — an autonomous
+change to prose goes through its own branch + merge request for the author to
+arbitrate, never through a review-phase auto-fix (ticket 0550: two runs on the
+same file decided this in opposite directions the same day; the rule now
+exists). Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
@@ -525,7 +540,9 @@ This section is the panel-extension contract (ticket 0205).
 **When seats fire.** Automatically, on **small**- and **full**-tier CODE
 reviews — the decorrelation evidence concentrates ensemble value on
 substantive multi-file code changes. Skip on the **tiny** tier and on prose
-panels (any `*.qmd` changed). Empty roster or `/reviewers` unavailable →
+panels — the same `~/.claude/scripts/prose_predicate.py` verdict the phase
+2–4 panel choice used; a LaTeX manuscript never qualifies for external
+code-review seats. Empty roster or `/reviewers` unavailable →
 skip silently: the panel is fail-open and never blocks a gaze run.
 
 **How.** At the phase 2–4 reviewer-battery launch, also invoke
