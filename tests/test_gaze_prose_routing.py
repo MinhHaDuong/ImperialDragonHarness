@@ -152,3 +152,23 @@ def test_simplify_prose_guard_documented():
     assert "Prose workpackages" in section and "rules/git.md" in section, (
         "the guard must cite rules/git.md § Prose workpackages as its motive"
     )
+
+
+def test_agent_b_is_handed_the_resolved_axes():
+    """Agent B is told the doctype and language, never left to infer them.
+
+    Routing settles which *panel* reviews a diff; it does not settle which
+    *rulebook* the reviewer holds it to. Told nothing, `/review` picks one by
+    inference — it read `rules/doctype/book.md` on a manuscript whose manifest
+    declares `techreport` (audit of 2026-08-17, MR 136).
+    """
+    text = GAZE.read_text(encoding="utf-8")
+    marker = "**Agent B — built-in review**"
+    assert marker in text, "gaze Agent B clause moved — update this test"
+    clause = text.split(marker)[1].split("**Agent C — PR review**")[0]
+    assert "prose_predicate.py --axes" in clause, (
+        "Agent B must be handed the resolved axes, not left to infer them"
+    )
+    assert "review-<pr-number>" in clause, (
+        "the axes call reads the disk, so it must be cwd-anchored like routing"
+    )

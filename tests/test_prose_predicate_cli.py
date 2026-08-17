@@ -57,6 +57,29 @@ def test_cli_prints_prose_then_code(tmp_path):
     )
 
 
+def test_cli_axes_reports_the_declared_rulebooks(tmp_path):
+    """--axes hands the reviewer the doctype/lang instead of letting it infer."""
+    repo = tmp_path / "repo"
+    (repo / ".claude").mkdir(parents=True)
+    (repo / ".claude" / "rules-map.toml").write_text(MANIFEST, encoding="utf-8")
+    tex = repo / "article-x" / "manuscrit.tex"
+    tex.parent.mkdir()
+    tex.write_text("\\section{Introduction}\n", encoding="utf-8")
+    note = repo / "conception" / "note.md"
+    note.parent.mkdir()
+    note.write_text("# Note\n", encoding="utf-8")
+
+    result = _run("--axes", str(tex), str(note))
+    assert result.returncode == 0, result.stderr
+    lines = result.stdout.strip().splitlines()
+    assert lines == [
+        f"{tex} doctype=techreport lang=en",
+        # An unresolved axis prints "-", never an empty field: a blank reads the
+        # same as "not asked", which is the guess this flag exists to prevent.
+        f"{note} doctype=- lang=-",
+    ], result.stdout
+
+
 def test_cli_refuses_missing_path(tmp_path):
     """Wrong cwd → missing path → exit 2 and no verdict, never a silent code."""
     ghost = tmp_path / "no-such-checkout" / "manuscrit.tex"

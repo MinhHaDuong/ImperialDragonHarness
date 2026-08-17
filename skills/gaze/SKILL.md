@@ -276,7 +276,20 @@ summary; it runs on the **small** and **full** tiers. This is a built-in slash c
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
 embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
 same containment rails, whose prompt simply invokes `/review` on the PR and
-returns the review summary. (Phase 5 `/simplify` is the other built-in slash
+returns the review summary. **Hand it the resolved axes; it guesses without
+them.** `/review` checks prose against a house rulebook, and told nothing it
+picks one by inference — on a manuscript merge request it read
+`rules/doctype/book.md` where the project manifest declares `techreport`
+(audit of 2026-08-17, MR 136). Before spawning, run
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py --axes <changed files>`
+and carry its lines verbatim into the wrap prompt. Same cwd anchoring and same
+refusal semantics as the routing call below — this reads the disk too. Note
+what the two calls settle: routing picks *which panel* reviews the diff, the
+axes tell the reviewer *which rulebook* to hold it to. Agent B keeps running on
+prose either way; the audit found it earning its seat there — a rebuilt PDF
+with its link integrity checked on MR 136, and a catch the prose panel missed
+on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
+`/simplify` is the other built-in slash
 command; it stays as a direct invocation for now — out of this ticket's scope —
 and would be Agent-WRAPped the same way when converted. Until it is, `/simplify`
 runs in the fork's own cwd — a sibling worktree, not review-<pr> — so the
