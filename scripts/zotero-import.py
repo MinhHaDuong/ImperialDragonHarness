@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Helper for the zotero-import skill. Subcommands: probe, match, write."""
+"""Helper for the zotero-import skill.
+
+Subcommands: probe, match, write, inject, enrich.
+"""
 from __future__ import annotations
 
 import argparse
@@ -1022,6 +1025,55 @@ def entry_to_zotero_item(e: dict[str, Any],
     return item
 
 
+def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
+                    expect_title: str,
+                    overwrite: bool = False) -> tuple[dict[str, str], list[str]]:
+    """Decide what to write on an existing item. Pure: no network, no I/O.
+
+    Returns (fields to patch, refusals). A refusal is a reason NOT to write a
+    given field; the caller reports every one of them and writes the rest.
+
+    Three guards, in the order they catch real mistakes:
+
+    1. Wrong item. `expect_title` must appear in the item's title. Item keys
+       are opaque, so a transposed key silently enriches an unrelated work —
+       the one failure mode the API cannot catch for us. An empty title on
+       the target is a refusal, not a pass: "could not check" is not "clear".
+    2. Already correct. A field whose stored value equals the requested one is
+       dropped from the patch, not rewritten — a no-op write still bumps the
+       item version and shows up as an edit in every sync.
+    3. Conflicting value. A field that already holds something DIFFERENT is
+       refused unless `overwrite` is passed. Replacing a curated value is an
+       arbitration the caller must make explicitly; correcting an empty field
+       is not.
+    """
+    refusals: list[str] = []
+    title = (data.get("title") or "").strip()
+    if not title:
+        return {}, [f"item {data.get('key', '?')}: no title to check against "
+                    f"{expect_title!r} — refusing to write blind"]
+    if expect_title.lower() not in title.lower():
+        return {}, [f"item {data.get('key', '?')}: title {title!r} does not "
+                    f"contain {expect_title!r} — wrong item?"]
+
+    patch: dict[str, str] = {}
+    for field, value in sets.items():
+        if field not in data:
+            refusals.append(f"{field}: item type {data.get('itemType')!r} has "
+                            f"no such field (Zotero field names are "
+                            f"case-sensitive, e.g. DOI not doi)")
+            continue
+        current = (data.get(field) or "").strip()
+        if current == value:
+            continue
+        if current and not overwrite:
+            refusals.append(f"{field}: already holds {current!r}, not "
+                            f"{value!r} — pass --overwrite to arbitrate")
+            continue
+        patch[field] = value
+    return patch, refusals
+
+
 def api_request(method: str, path: str, key: str,
                 body: bytes | None = None,
                 content_type: str = "application/json",
@@ -1142,6 +1194,104 @@ def cmd_inject(args: argparse.Namespace) -> int:
               sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return status
+
+
+def parse_set(pairs: list[str]) -> dict[str, str]:
+    """`--set DOI=10.x/y` pairs into a dict. Splits on the FIRST `=` only."""
+    out: dict[str, str] = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"--set expects FIELD=VALUE, got {pair!r}")
+        field, value = pair.split("=", 1)
+        out[field.strip()] = value.strip()
+    return out
+
+
+def enrich_one(user: str, key: str, job: dict[str, Any],
+               overwrite: bool, dry_run: bool) -> dict[str, Any]:
+    """Fill fields on ONE existing item. See plan_enrichment for the guards."""
+    item_key = job["item_key"]
+    row: dict[str, Any] = {"itemKey": item_key}
+    path = f"/users/{user}/items/{item_key}"
+    data = api_request("GET", path, key)["data"]
+    row["title"] = data.get("title")
+
+    patch, refusals = plan_enrichment(data, job["set"], job["expect_title"],
+                                      overwrite)
+    if refusals:
+        row["refused"] = refusals
+    if not patch:
+        row["status"] = "nothing to write"
+        return row
+    row["patch"] = patch
+    if dry_run:
+        row["status"] = f"would patch at version {data['version']}"
+        return row
+
+    # If-Unmodified-Since-Version makes a concurrent edit fail with 412 rather
+    # than silently winning. Without it, two sessions enriching the same item
+    # both report success and one of the writes is gone.
+    try:
+        api_request("PATCH", path, key, json.dumps(patch).encode(),
+                    extra_headers={
+                        "If-Unmodified-Since-Version": str(data["version"])})
+    except urllib.error.HTTPError as exc:
+        row["status"] = "failed"
+        row["error"] = (f"HTTP {exc.code}: "
+                        f"{exc.read().decode('utf-8', 'replace')[:200]}")
+        return row
+
+    # Read back. A 204 says the request was accepted, not that the value is
+    # what we meant — the only proof is the stored item.
+    after = api_request("GET", path, key)["data"]
+    bad = {f: after.get(f) for f, v in patch.items() if (after.get(f) or "") != v}
+    row["status"] = "written" if not bad else "readback mismatch"
+    row["version"] = after["version"]
+    if bad:
+        row["stored"] = bad
+    return row
+
+
+def cmd_enrich(args: argparse.Namespace) -> int:
+    if args.jobs_file:
+        jobs = json.loads(Path(args.jobs_file).read_text())
+    else:
+        jobs = [{"item_key": args.item_key,
+                 "expect_title": args.expect_title,
+                 "set": parse_set(args.set or [])}]
+    if isinstance(jobs, dict):
+        jobs = [jobs]
+    for job in jobs:
+        missing = {"item_key", "expect_title", "set"} - set(job)
+        if missing:
+            raise SystemExit(f"job missing {sorted(missing)}: {job}")
+        if not job["set"]:
+            raise SystemExit(f"job for {job['item_key']} sets nothing")
+
+    user, key = resolve_credentials(args)
+    results = [enrich_one(user, key, j, args.overwrite, args.dry_run)
+               for j in jobs]
+    json.dump({"library": f"users/{user}", "results": results},
+              sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return enrich_status(results, args.dry_run)
+
+
+def enrich_status(results: list[dict[str, Any]], dry_run: bool) -> int:
+    """Exit code for an enrich run. Non-zero when anything asked for did not
+    happen — a refusal included. A run that refused every field and one that
+    wrote every field must not return the same code, or the caller cannot tell
+    "done" from "declined to act".
+    """
+    ok = {"written", "nothing to write"}
+    for row in results:
+        if row.get("refused"):
+            return 1
+        if dry_run:
+            continue
+        if row.get("status") not in ok:
+            return 1
+    return 0
 
 
 # --- CLI -------------------------------------------------------------------
@@ -1273,7 +1423,33 @@ def main() -> int:
                     help="print the Zotero item JSON, do not call the API")
     pi.set_defaults(func=cmd_inject)
 
+    pe = sub.add_parser("enrich",
+                        help="fill missing fields on EXISTING items "
+                             "(inject creates; this completes)")
+    ge = pe.add_mutually_exclusive_group(required=True)
+    ge.add_argument("--item-key", help="the item to enrich")
+    ge.add_argument("--jobs-file",
+                    help="path to JSON: array of {item_key, expect_title, "
+                         "set:{field: value}} — one API round per item")
+    pe.add_argument("--expect-title",
+                    help="fragment that MUST appear in the item's title; "
+                         "guards against a transposed item key")
+    pe.add_argument("--set", action="append", metavar="FIELD=VALUE",
+                    help="field to write, repeatable. Zotero field names are "
+                         "case-sensitive: DOI, url, publisher")
+    pe.add_argument("--overwrite", action="store_true",
+                    help="also replace fields that already hold a DIFFERENT "
+                         "value; without it those are refused, not written")
+    pe.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pe.add_argument("--api-key", help="RW key (else ZOTERO_RW_API_KEY; "
+                                      "prefer env/keys file over argv)")
+    pe.add_argument("--dry-run", action="store_true",
+                    help="report the planned patch, do not write")
+    pe.set_defaults(func=cmd_enrich)
+
     args = p.parse_args()
+    if args.cmd == "enrich" and args.item_key and not args.expect_title:
+        p.error("--expect-title is required with --item-key")
     return args.func(args)
 
 

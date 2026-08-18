@@ -32,12 +32,50 @@ Build the metadata for one or more PDFs, then `inject` items and attachments dir
 - `--dry-run` prints the item JSON without touching the API — use it to show the user what would be created when the metadata is uncertain.
 - The call returns non-zero if any entry failed; the JSON output carries the per-entry error.
 
+## Enrichment — completing an item that already exists
+
+`inject` creates; `enrich` completes. An item filed years ago under looser
+habits, or scraped from a translator that dropped a field, keeps its gap
+forever — `match` reports the item as present and the flow stops there. The
+result is a system of record less complete than the staging folder it
+supersedes, which is backwards. (Measured once: nine items in one library
+held no DOI while the project `.bib` carried one for each.)
+
+```bash
+zotero-import.py enrich --item-key XRWZU4DZ \
+  --expect-title "Optimum Utilization" --set DOI=10.2307/1907301
+```
+
+- **Verify the value before writing it, on the landing page, not the status
+  code.** Copying a DOI from a `.bib` propagates whatever error is already
+  there. Resolve it (CrossRef for the metadata, then follow the DOI and read
+  where it lands) and confirm it names the work in hand.
+- `--expect-title` is **required** and is the wrong-item guard: item keys are
+  opaque, so a transposed key otherwise enriches an unrelated work silently.
+  An item with no title is refused rather than written blind.
+- A field already holding a **different** value is refused; `--overwrite`
+  arbitrates. Correcting an empty field and replacing a curated one are not
+  the same act. A field already holding the requested value is skipped, not
+  rewritten — a no-op write bumps the version and shows as an edit in sync.
+- Zotero field names are **case-sensitive** (`DOI`, not `doi`), and a field
+  the item type does not own is refused with that reminder.
+- The write is a `PATCH` of the named fields only, guarded by
+  `If-Unmodified-Since-Version`: a concurrent edit fails with 412 instead of
+  being silently overwritten. The item is then **read back** — a 204 says the
+  request was accepted, not that the stored value is what you meant.
+- `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch.
+  `--dry-run` reports the planned patch without writing.
+- Exit code is non-zero when anything asked for did not happen, **a refusal
+  included** — "wrote everything" and "declined every field" must not share
+  an exit code.
+
 ## Helper script
 
 `~/.claude/scripts/zotero-import.py` exposes:
 
 - `probe <pdf>... [--zotero-db PATH] [--library L]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches` (same shape as `match` output, fed from the raw pdfinfo title).
 - `match [--title T] [--doi D] [--isbn I] [--arxiv A] [--handle H] [--author FIRST-AUTHOR] [--year Y] [--pdf P] [--library L] [--zotero-db PATH]` — deduplication lookup using the metadata *you* refined. Consults its keys strongest first — file content hash (`storageHash`, needs `--pdf` on disk) → persistent identifier (DOI, ISBN, arXiv, handle) → attachment filename → (first author, year, normalised title) → title Jaccard as last resort — and stops at the first key that fires. Output: `matches` (each hit carries `why` = which key fired, `certainty` = exact/strong/weak, attachment info, `pdf_basename_match`), a `verdict` (`match` / `ambiguous` / `none` / `unchecked`), and `consulted`/`skipped` so "found nothing" and "could not look" stay distinguishable. Scope defaults to the **user library** (the inject destination); a group-library copy does not count as already present — pass `--library all` or a numeric libraryID to widen deliberately.
+- `enrich (--item-key K --expect-title T --set FIELD=VALUE... | --jobs-file J) [--overwrite] [--dry-run]` — fills fields on **existing** items; see *Enrichment* above for the guards. Output: one row per item with `patch`, `refused`, `status` (`written` / `nothing to write` / `readback mismatch` / `failed`) and the post-write `version`.
 - `write --out <ris-path> --entries-json '<json>'` — writes the combined RIS. Each entry accepts: `type` (RIS code, default `JOUR`), `title`, `shortTitle`, `authors` (array; `"First Last"` is auto-converted to `"Last, First"`), `year`, `doi`, `isbn`, `issn`, `url`, `journal` (container title, whatever the type), `volume`, `issue`, `pages` (e.g. `"281-285"`), `numPages`, `publisher`, `place`, `number`, `genre`, `conferenceName`, `edition`, `seriesNumber`, `language`, `abstract`, `pdf`, `attach_pdf` (bool). Any other key is **refused**, not ignored — a misspelt key that silently does nothing is the defect this guard exists to prevent.
   - `number` is the type's identifying number: report number, patent number, standard number.
   - `genre` is the type's kind-of-thing label: `"RAND Paper"` on a report, `"PhD thesis"` on a thesis, `"Working paper"` on a manuscript.
