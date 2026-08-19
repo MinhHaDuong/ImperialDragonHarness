@@ -14,6 +14,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+# Every test here spawns the script as a real subprocess -- that is the point:
+# the catalog reaches the model through on-start.sh and the term channel through
+# a hook fed JSON on stdin, so in-process calls would not exercise the contract.
+# Subprocess cost puts the whole module in the integration tier.
+pytestmark = pytest.mark.integration
+
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "knowledge_hints.py"
 
 MANIFEST = """
