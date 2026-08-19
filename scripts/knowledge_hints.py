@@ -63,6 +63,8 @@ from pathlib import Path
 MANIFEST = ".knowledge.toml"
 MAX_SUMMARY = 200
 MAX_ID = 64
+MAX_HINTS = 24
+TRUNCATED = "(cap)"
 MAX_CAVEAT = 600
 
 
@@ -77,6 +79,27 @@ def find_manifest(start: Path) -> Path | None:
         if candidate.is_file():
             return candidate
     return None
+
+
+def _one_line(text: str, cap: int) -> str:
+    """Collapse to a single line and cap.
+
+    The catalog budget is stated per *line*; a summary containing newlines
+    renders as several, and the cap alone does not prevent it.
+    """
+    return re.sub(r"\s+", " ", text).strip()[:cap]
+
+
+def _str_list(value: object) -> list[str]:
+    """Non-blank strings from a TOML array, or nothing.
+
+    A scalar `terms = "Cournot"` is iterable: taken as a list it yields one
+    entry per character, and a lone "o" then fires the hint on almost any
+    prompt. Only a real array counts.
+    """
+    if not isinstance(value, list):
+        return []
+    return [v for v in value if isinstance(v, str) and v.strip()]
 
 
 def contained(root: Path, rel: str) -> Path | None:
@@ -135,17 +158,30 @@ def load_hints(manifest: Path) -> list[dict]:
         out.append({
             # Capped like `summary`: `id` is resident in the catalog line, so an
             # unbounded one defeats the very budget MAX_SUMMARY exists to hold.
-            "id": hid[:MAX_ID],
-            "summary": summary[:MAX_SUMMARY],
+            "id": _one_line(hid, MAX_ID),
+            "summary": _one_line(summary, MAX_SUMMARY),
             "pointer": pointer,
             "full": full,
-            "caveat": caveat[:MAX_CAVEAT] if isinstance(caveat, str) else None,
+            "caveat": _one_line(caveat, MAX_CAVEAT) if isinstance(caveat, str) else None,
             # An empty term compiles to `(?<!\w)(?!\w)`, which matches beside
             # almost any punctuation -- one stray "" turns "fires on a declared
             # term" into "fires on the first punctuated prompt of the session".
-            "terms": [t for t in raw.get("terms", []) if isinstance(t, str) and t.strip()],
-            "paths": [p for p in raw.get("paths", []) if isinstance(p, str)],
+            "terms": _str_list(raw.get("terms")),
+            "paths": _str_list(raw.get("paths")),
         })
+        if len(out) >= MAX_HINTS:
+            # Per-field caps bound each line; only this bounds the total. The
+            # catalog is resident at every session start, so an unbounded count
+            # defeats the budget as surely as an unbounded field.
+            dropped = len(data.get("hint", [])) - MAX_HINTS
+            if dropped > 0:
+                # Named, not swallowed: a cap that hides what it dropped reads
+                # as "this is everything" when it is not.
+                out.append({"id": TRUNCATED, "summary": f"{dropped} further "
+                            "hints declared but not shown (cap reached)",
+                            "pointer": None, "full": None, "caveat": None,
+                            "terms": [], "paths": []})
+            break
     return out
 
 
@@ -154,11 +190,12 @@ def render_catalog(hints: list[dict]) -> str:
     if not hints:
         return ""
     lines = [
-        "Project domain knowledge (pointers, not bodies — read the file when "
-        "the topic comes up; each carries its own caveat):"
+        "Project domain knowledge is recorded in the files below. They are "
+        "pointers, not bodies, and each carries its own caveat in its header:"
     ]
     for h in hints:
-        lines.append(f"- {h['id']} — {h['summary']} → `{h['pointer']}`")
+        tail = f" → `{h['pointer']}`" if h["pointer"] else ""
+        lines.append(f"- {h['id']} — {h['summary']}{tail}")
     return "\n".join(lines)
 
 
@@ -175,12 +212,14 @@ def match_terms(hints: list[dict], text: str) -> list[dict]:
 
 
 def render_hint(h: dict) -> str:
-    parts = [f"Project domain knowledge — {h['id']}: {h['summary']}",
-             f"Read `{h['pointer']}` before answering on this topic."]
+    parts = [
+        f"Project domain knowledge — {h['id']}: {h['summary']}",
+        f"This project records that knowledge in `{h['pointer']}`.",
+    ]
     if h["full"]:
-        parts.append(f"Fuller material, on demand: `{h['full']}`.")
+        parts.append(f"Fuller material is in `{h['full']}`.")
     if h["caveat"]:
-        parts.append(f"Caveat: {h['caveat']}")
+        parts.append(f"It carries this caveat: {h['caveat']}")
     return " ".join(parts)
 
 
