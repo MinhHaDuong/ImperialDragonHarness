@@ -240,3 +240,39 @@ def test_id_is_capped_so_the_catalog_stays_bounded(tmp_path):
     root = project(tmp_path, manifest=MANIFEST.replace(
         'id      = "het-field-map"', f'id      = "{"x" * 5000}"'))
     assert len(catalog(root)) < 1000
+
+
+# --- white-box, and deliberately so -------------------------------------------
+# The two guards below are invisible from outside: the `except (Exception,
+# SystemExit)` wrapper around main() turns any crash into exit 0 with empty
+# stdout, which is byte-identical to the guarded behaviour. Mutation-testing the
+# black-box suite proved it — both survived. So they are asserted directly, at
+# the function, or they would be defended by nothing a test can see.
+
+def _module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("kh", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_load_hints_survives_non_utf8_manifest(tmp_path):
+    m = tmp_path / ".knowledge.toml"
+    m.write_bytes(b'[[hint]]\nid = "\xff\xfe"\n')
+    assert _module().load_hints(m) == []
+
+
+def test_load_hints_survives_non_table_toplevel(tmp_path):
+    m = tmp_path / ".knowledge.toml"
+    m.write_text('hint = "not a list of tables"', encoding="utf-8")
+    assert _module().load_hints(m) == []
+
+
+def test_cmd_prompt_rejects_non_mapping_payload(monkeypatch, tmp_path):
+    import io
+    kh = _module()
+    for payload in ("[]", "42", "null", '"str"'):
+        monkeypatch.setattr(kh.sys, "stdin", io.StringIO(payload))
+        args = type("A", (), {"cwd": str(tmp_path)})()
+        assert kh.cmd_prompt(args) == 0
