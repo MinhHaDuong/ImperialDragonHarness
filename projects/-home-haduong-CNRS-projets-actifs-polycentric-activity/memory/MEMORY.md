@@ -60,3 +60,5 @@
 - [`\clearpage` fait sauter un flottant au-dessus du titre](feedback-clearpage-flottant-saute-le-titre.md) — `\FloatBarrier` corrige ; trouvé en lisant le PDF rendu, pas en compilant propre
 - [Iconographie du changeur : stéréotype antisémite](feedback-iconographie-changeur-stereotype.md) — van Reymerswale documenté, Matsys plus ambigu ; vérifier avant de recommander une toile de ce genre
 - [Un contrôle rouge accuse parfois le contrôle](feedback-un-controle-rouge-accuse-parfois-le-controle.md) — 5/5 d'échecs sur un seul sous-ensemble décrit une méthode aveugle, pas un artefact faux
+- [Identifiant scrapé = hypothèse](feedback-identifiant-scrape-est-une-hypothese.md) — 77 fiches sur 116 corrigées ; le DOI d'une page est souvent celui d'un ouvrage cité
+- [Auditer docs/ contre Zotero](reference-zotero-audit-staging.md) — `sync-index` + `audit` sans base locale ; « ambiguous » est une réponse, 4 œuvres distinctes sauvées
