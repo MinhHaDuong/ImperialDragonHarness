@@ -276,3 +276,43 @@ def test_cmd_prompt_rejects_non_mapping_payload(monkeypatch, tmp_path):
         monkeypatch.setattr(kh.sys, "stdin", io.StringIO(payload))
         args = type("A", (), {"cwd": str(tmp_path)})()
         assert kh.cmd_prompt(args) == 0
+
+
+def test_output_is_declarative_not_imperative(tmp_path):
+    """rules/workflow.md: the model reads imperative hook text as injection.
+
+    An imperative hint would be discounted — the channel then fails silently
+    while looking like it worked, which is the worst available failure.
+    """
+    got = catalog(project(tmp_path)) + prompt(project(tmp_path / "b"), "Cournot")
+    low = got.lower()
+    for bossy in ("read `", "you must", "before answering", "you should"):
+        assert bossy not in low, f"imperative framing in hook output: {bossy!r}"
+
+
+def test_scalar_terms_string_is_ignored_not_iterated(tmp_path):
+    """`terms = "Cournot"` is iterable: per-character, a lone `o` would fire."""
+    root = project(tmp_path, manifest=MANIFEST.replace(
+        'terms   = ["Cournot", "Handbook"]', 'terms   = "Cournot"'))
+    assert prompt(root, "something with an o in it") == ""
+
+
+def test_multiline_summary_stays_one_line(tmp_path):
+    root = project(tmp_path, manifest=MANIFEST.replace(
+        'summary = "History', 'summary = """line one\nline two\nline three"""\nunused = "History'))
+    body = [ln for ln in catalog(root).splitlines() if ln.startswith("- ")]
+    assert len(body) == 1, f"multi-line summary rendered {len(body)} lines"
+
+
+def test_hint_count_is_capped_and_says_so(tmp_path):
+    """Per-field caps bound a line; only a count cap bounds the catalog."""
+    many = "\n".join(f"""
+[[hint]]
+id      = "h{i}"
+summary = "summary number {i}"
+pointer = "conception/canon.md"
+""" for i in range(60))
+    got = catalog(project(tmp_path, manifest=many))
+    body = [ln for ln in got.splitlines() if ln.startswith("- ")]
+    assert len(body) <= 25, f"catalog emitted {len(body)} lines"
+    assert "not shown" in got, "a cap that hides what it dropped reads as complete"
