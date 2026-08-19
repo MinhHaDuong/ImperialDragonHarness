@@ -3,7 +3,7 @@ name: zotero-import
 description: "Import one or more PDFs into Zotero, or backfill a whole staging directory — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pdf>... | --audit <dir>"
+argument-hint: "<pdf>... | audit <dir>"
 ---
 
 # Zotero import
@@ -45,11 +45,11 @@ index first — then `match` has a key to consult, and a clean negative stays
 distinguishable from a lookup that could not run:
 
 ```bash
-zotero-import.py sync-index          # ~1 min per 10k items; cached 24 h
+zotero-import.py sync-index          # ~1 min per 10k items; re-pulls every time
 zotero-import.py audit docs/ --out /tmp/audit.json
 ```
 
-`audit` classifies every staged file into four verdicts, and the distinction
+`audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
 
 | verdict | meaning | action |
@@ -126,7 +126,7 @@ mismatch alone is not evidence of a wrong match.
 
 - `probe <pdf>... [--zotero-db PATH] [--library L]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches` (same shape as `match` output, fed from the raw pdfinfo title).
 - `match [--title T] [--doi D] [--isbn I] [--arxiv A] [--handle H] [--author FIRST-AUTHOR] [--year Y] [--pdf P] [--library L] [--zotero-db PATH]` — deduplication lookup using the metadata *you* refined. Consults its keys strongest first — file content hash (`storageHash`, needs `--pdf` on disk) → persistent identifier (DOI, ISBN, arXiv, handle) → attachment filename → (first author, year, normalised title) → title Jaccard as last resort — and stops at the first key that fires. Output: `matches` (each hit carries `why` = which key fired, `certainty` = exact/strong/weak, attachment info, `pdf_basename_match`), a `verdict` (`match` / `ambiguous` / `none` / `unchecked`), and `consulted`/`skipped` so "found nothing" and "could not look" stay distinguishable. Scope defaults to the **user library** (the inject destination); a group-library copy does not count as already present — pass `--library all` or a numeric libraryID to widen deliberately.
-- `sync-index [--reuse]` — pull the library (works + every attachment's md5) from the Web API into `~/.cache/zotero-import/index-<userid>.json`. Needs only a read key (`ZOTERO_API_KEY`, RW accepted). Re-pulls when the cache is older than 24 h; `--reuse` keeps a fresh one.
+- `sync-index [--reuse]` — pull the library (works + every attachment's md5) from the Web API into `~/.cache/zotero-import/index-<userid>.json`. Needs only a read key (`ZOTERO_API_KEY`, RW accepted). The bare command re-pulls unconditionally; `--reuse` is what enables the age check, reusing a cache younger than 24 h and re-pulling only past that.
 - `audit <dir> [--out PATH] [--ext ...] [--refresh]` — reconcile a staging directory against the index. Per file: `verdict` (`identical` / `work_present_with_file` / `work_present_no_file` / `ambiguous` / `absent`), the matched `zotero_key`/`zotero_title`, `why` (which key fired), `certainty`, and `consulted`/`skipped`. Summary counts plus the action each verdict calls for on stdout; the full per-file report to `--out`.
 - `attach --parent <itemKey> <file>...` — upload files onto an item that already exists. The repair for `work_present_no_file`; also how page-scan images or an HTML snapshot get filed under the work they belong to instead of becoming standalone items.
 - `match ... [--source auto|api]` — `auto` (default) prefers the desktop database and falls back to the Web API index; `api` forces the index. The cascade, output shape and verdicts are identical either way.
