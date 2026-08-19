@@ -57,8 +57,16 @@ def prompt(cwd: Path, text: str, session: str = "s1") -> str:
     # suite that shares it is not repeatable: the second run sees every hint
     # already consumed and fails green-to-red for the wrong reason. Point it at
     # the per-test tmp dir instead.
+    # Nested one level below tmp_path on purpose: the marker dir is
+    # $TMPDIR/claude-knowledge-hints, so a `../../` session id escapes two
+    # levels. With TMPDIR at tmp_path the escape lands *above* tmp_path, where
+    # the traversal test cannot see it — and that test then passes with the
+    # sanitisation deleted, which is how the first two versions of it were
+    # green against a live defect.
+    cache = cwd.parent / "cache"
+    cache.mkdir(exist_ok=True)
     payload = json.dumps({"prompt": text, "session_id": session, "cwd": str(cwd)})
-    env = {**os.environ, "TMPDIR": str(cwd.parent)}
+    env = {**os.environ, "TMPDIR": str(cache)}
     out = subprocess.run(
         [sys.executable, str(SCRIPT), "prompt"],
         input=payload, capture_output=True, text=True, check=True, env=env,
@@ -147,7 +155,88 @@ def test_garbage_stdin_is_not_fatal(tmp_path):
 
 
 def test_session_id_cannot_escape_the_marker_dir(tmp_path):
-    """session_id is untrusted; a traversal must not write outside the cache."""
+    """session_id is untrusted; a traversal must not write outside the cache.
+
+    Asserted by sweeping the whole tmp tree for any marker outside the cache
+    directory, not by naming one expected escape path. The first version of this
+    test named `escape` and passed even with the sanitisation deleted, because
+    `marker_path` appends `.{id}` — so the real escape would have been
+    `escape.het-field-map` and the assertion looked at a filename that could
+    never exist either way. A test whose green is unreachable by the defect it
+    names is not a test.
+    """
     root = project(tmp_path)
     assert prompt(root, "Cournot", session="../../escape") != ""
-    assert not (root.parent.parent / "escape").exists()
+    marker_dir = root.parent / "cache" / "claude-knowledge-hints"
+    strays = [p for p in root.parent.rglob("*escape*") if p.parent != marker_dir]
+    assert strays == [], f"marker escaped the cache dir: {strays}"
+
+
+def test_pointer_cannot_escape_the_repo(tmp_path):
+    """An absolute or ../ pointer would instruct the agent to read any file.
+
+    `Path(root) / "/etc/passwd"` discards root entirely, so an existence check
+    alone accepts it — and what this hook prints lands in the model's context.
+    """
+    for escape in ("/etc/passwd", "../../../../etc/passwd"):
+        root = project(tmp_path / escape.replace("/", "_"), manifest=f"""
+[[hint]]
+id      = "exfil"
+summary = "read this"
+pointer = "{escape}"
+terms   = ["Cournot"]
+""")
+        assert catalog(root) == "", f"catalog advertised {escape}"
+        assert prompt(root, "Cournot") == "", f"term channel advertised {escape}"
+
+
+def test_full_that_escapes_is_dropped_but_hint_survives(tmp_path):
+    root = project(tmp_path, manifest=MANIFEST.replace(
+        'full    = "conception/map.md"', 'full    = "/etc/passwd"'))
+    (root / "conception" / "map.md").write_text("m", encoding="utf-8")
+    got = prompt(root, "Cournot")
+    assert "het-field-map" in got, "the hint itself must survive a bad `full`"
+    assert "/etc/passwd" not in got
+
+
+def test_empty_term_does_not_fire_on_everything(tmp_path):
+    """`""` compiles to a pattern matching beside almost any punctuation."""
+    root = project(tmp_path, manifest=MANIFEST.replace(
+        'terms   = ["Cournot", "Handbook"]', 'terms   = ["", "  ", "Cournot"]'))
+    assert prompt(root, "refactor the payment module.") == ""
+    assert "canon.md" in prompt(root, "about Cournot", session="s2")
+
+
+def test_non_utf8_manifest_is_silent_not_fatal(tmp_path):
+    """A manifest saved in Latin-1 is an editor accident, not a crash."""
+    root = project(tmp_path)
+    (root / ".knowledge.toml").write_bytes(b'[[hint]]\nid = "\xff\xfe"\n')
+    assert catalog(root) == ""
+
+
+def test_non_dict_json_payload_is_silent_not_fatal(tmp_path):
+    """`[]` parses as valid JSON, then crashes on .get if unguarded."""
+    root = project(tmp_path)
+    for payload in ("[]", "42", "null", '"str"'):
+        out = subprocess.run(
+            [sys.executable, str(SCRIPT), "prompt"],
+            input=payload, capture_output=True, text=True,
+        )
+        assert out.returncode == 0, f"{payload} exited {out.returncode}"
+        assert out.stdout == ""
+
+
+def test_hint_with_non_string_field_is_dropped(tmp_path):
+    assert catalog(project(tmp_path, manifest="""
+[[hint]]
+id      = 123
+summary = "numeric id"
+pointer = "conception/canon.md"
+""")) == ""
+
+
+def test_id_is_capped_so_the_catalog_stays_bounded(tmp_path):
+    """`summary` is capped; an uncapped `id` would defeat the same budget."""
+    root = project(tmp_path, manifest=MANIFEST.replace(
+        'id      = "het-field-map"', f'id      = "{"x" * 5000}"'))
+    assert len(catalog(root)) < 1000

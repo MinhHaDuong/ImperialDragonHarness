@@ -42,11 +42,11 @@ paths   = ["article-het/**", "conception/*het*"]
 |---|---|---|
 | `id` | yes | Stable short name. Appears in both channels; keep it greppable. |
 | `summary` | yes | One line, **context-free** (see below). Truncated at 200 characters. |
-| `pointer` | yes | Repo-relative path to the *small* body, read on demand. A hint whose pointer does not resolve is dropped, not advertised. |
-| `full` | no | A larger body, named but never auto-read. |
+| `pointer` | yes | Repo-relative path to the *small* body, read on demand. Must resolve **inside the repo**: an absolute or `../`-escaping value is dropped, not advertised. |
+| `full` | no | A larger body, named but never auto-read. Contained like `pointer`; an escaping value is dropped while the hint survives. |
 | `caveat` | no | What the artifact does **not** establish. Emitted with the pointer in the term channel. |
-| `terms` | no | Words that, appearing in a user prompt, surface the hint once per session. |
-| `paths` | no | Reserved for the edit channel; parsed and validated, not yet wired. |
+| `terms` | no | Words that, appearing in a user prompt, surface the hint once per session. Empty or blank entries are discarded — `""` would otherwise match beside almost any punctuation. |
+| `paths` | no | Reserved for the edit channel; non-string entries are discarded, nothing else is checked, and nothing consumes it yet. |
 
 Repeat `[[hint]]` for each. Order is preserved in the catalog.
 
@@ -78,9 +78,19 @@ Every one of these produces no output and exit 0:
 - no `.knowledge.toml` between the working directory and the filesystem root;
 - malformed TOML;
 - a `[[hint]]` missing `id`, `summary`, or `pointer`, or with a non-string one;
-- a `pointer` that does not resolve to a file — advertising a dead path costs
-  the reader a turn to discover, so the hint is dropped instead;
-- for the term channel: unparseable stdin, or no term match.
+- a `pointer` that does not resolve to a file, or that resolves **outside the
+  repo** — advertising a dead path costs the reader a turn to discover, and
+  advertising an escaping one hands the model an instruction to read an
+  arbitrary file;
+- a manifest that is not valid UTF-8 (an ordinary editor accident) or whose
+  top level is not a table;
+- for the term channel: unparseable stdin, stdin that parses to something other
+  than an object, or no term match.
+
+The script additionally never exits non-zero. The catalog call in `on-start.sh`
+is wrapped, but the `UserPromptSubmit` entry is not, so an uncaught traceback
+there would print on *every prompt of the session* — worse than the hint never
+appearing. Same contract as `inject_rule_on_edit.py`.
 
 The manifest is authored by hand and read on every session start; a parse error
 that halted the session, or a hook that failed loudly on a typo, would be worse

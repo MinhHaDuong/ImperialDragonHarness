@@ -62,6 +62,8 @@ from pathlib import Path
 
 MANIFEST = ".knowledge.toml"
 MAX_SUMMARY = 200
+MAX_ID = 64
+MAX_CAVEAT = 600
 
 
 def find_manifest(start: Path) -> Path | None:
@@ -77,11 +79,35 @@ def find_manifest(start: Path) -> Path | None:
     return None
 
 
+def contained(root: Path, rel: str) -> Path | None:
+    """Resolve `rel` under `root`, or None when it escapes.
+
+    `Path("/repo") / "/etc/passwd"` is `/etc/passwd`: the left operand is
+    discarded the moment the right is absolute, and `../../..` walks out just as
+    easily. Existence alone is therefore not the check it looks like. What this
+    hook emits is injected into the model's context, so an uncontained path
+    turns a manifest -- merged once, perhaps without the traversal being noticed
+    in review -- into a durable instruction to read an arbitrary file, on every
+    session and every prompt thereafter.
+    """
+    try:
+        root_r = root.resolve()
+        target = (root_r / rel).resolve()
+    except (OSError, ValueError, RuntimeError):
+        return None
+    return target if target.is_relative_to(root_r) else None
+
+
 def load_hints(manifest: Path) -> list[dict]:
-    """Parsed hints, each with a resolvable pointer. Never raises."""
+    """Parsed hints, each with a resolvable contained pointer. Never raises."""
     try:
         data = tomllib.loads(manifest.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError):
+    except (OSError, ValueError):
+        # ValueError covers TOMLDecodeError and UnicodeDecodeError alike: a
+        # manifest saved in Latin-1 is an ordinary editor accident, and it must
+        # not be able to traceback on every prompt of the session.
+        return []
+    if not isinstance(data, dict):
         return []
     root = manifest.parent
     out = []
@@ -95,15 +121,29 @@ def load_hints(manifest: Path) -> list[dict]:
             continue
         # A catalog that advertises a missing file is worse than a silent one:
         # the agent spends a turn discovering the pointer is a dead end.
-        if not (root / pointer).is_file():
+        # ...and a pointer that escapes the repo is worse than either.
+        target = contained(root, pointer)
+        if target is None or not target.is_file():
             continue
+        full = raw.get("full")
+        if isinstance(full, str):
+            full_t = contained(root, full)
+            full = full if full_t is not None and full_t.is_file() else None
+        else:
+            full = None
+        caveat = raw.get("caveat")
         out.append({
-            "id": hid,
+            # Capped like `summary`: `id` is resident in the catalog line, so an
+            # unbounded one defeats the very budget MAX_SUMMARY exists to hold.
+            "id": hid[:MAX_ID],
             "summary": summary[:MAX_SUMMARY],
             "pointer": pointer,
-            "full": raw.get("full") if isinstance(raw.get("full"), str) else None,
-            "caveat": raw.get("caveat") if isinstance(raw.get("caveat"), str) else None,
-            "terms": [t for t in raw.get("terms", []) if isinstance(t, str)],
+            "full": full,
+            "caveat": caveat[:MAX_CAVEAT] if isinstance(caveat, str) else None,
+            # An empty term compiles to `(?<!\w)(?!\w)`, which matches beside
+            # almost any punctuation -- one stray "" turns "fires on a declared
+            # term" into "fires on the first punctuated prompt of the session".
+            "terms": [t for t in raw.get("terms", []) if isinstance(t, str) and t.strip()],
             "paths": [p for p in raw.get("paths", []) if isinstance(p, str)],
         })
     return out
@@ -168,6 +208,8 @@ def cmd_prompt(args: argparse.Namespace) -> int:
         payload = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
         return 0
+    if not isinstance(payload, dict):
+        return 0  # `[]`, `42`, `null` all parse, then crash on .get
     prompt = payload.get("prompt") or ""
     session_id = payload.get("session_id") or ""
     cwd = payload.get("cwd") or args.cwd
@@ -203,4 +245,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Advisory hook, and the prompt channel has no shell wrapper to absorb a
+    # failure: a traceback here would surface on every prompt of the session,
+    # which is worse than the hint never appearing. Same contract as the
+    # sibling inject_rule_on_edit.py.
+    try:
+        main()
+    except (Exception, SystemExit):
+        pass
+    sys.exit(0)
