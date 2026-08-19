@@ -1,0 +1,65 @@
+%erg 0.1
+Title: Le palier « exact » ne départage pas les ex aequo, et la bibliothèque en compte 269
+Created: 2026-08-19
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-19T11:30Z Minh Ha-Duong created Trouvé par /gaze sur la MR #760 ; portée élargie par le chemin md5 que cette MR introduit
+
+--- body ---
+## Context
+
+`classify_matches()` (`scripts/zotero-import.py`) départage les ex aequo au
+palier `strong` — `len(strong) == 1` sinon `ambiguous` — mais pas au palier
+`exact` : il rend `match` inconditionnellement à partir de `matches[0]`.
+
+Deux notices distinctes peuvent légitimement partager un même md5 de pièce
+jointe. `audit_one` rend alors `verdict: "identical"` en ne nommant que la
+première, et la seconde disparaît sans trace ni dans `why` ni dans `skipped`.
+C'est exactement la faute que le reste du module s'emploie à éviter : une
+réponse propre qui ne dit pas qu'elle a regardé ailleurs.
+
+Le défaut préexiste à la MR #760 et n'y est pas introduit. Ce qui change, c'est
+le rayon d'action : #760 ajoute `audit` et `match --source api`, tous deux
+indexés sur le md5, donc le palier `exact` devient un chemin de passage courant
+là où il était rare.
+
+**Ce n'est pas une hypothèse.** `docs/zotero-integration.md` (ligne « Dedup »)
+enregistre la mesure du 14/08 : **269 grappes où un même md5 de fichier est
+rattaché à des parents distincts** dans la bibliothèque utilisateur, dont
+aucune n'est visible depuis le volet « Doublons » de Zotero (qui apparie sur
+titre/DOI/ISBN + créateurs + année, jamais sur le hachage). Le cas est donc
+fréquent ici, pas théorique.
+
+## Relevant files
+
+- `scripts/zotero-import.py` — `classify_matches()`, palier `exact` ; `api_matches()` qui l'alimente ; `audit_one()` qui traduit le verdict
+- `tests/test_zotero_import.py` — les tests d'ex aequo existent pour `strong`, pas pour `exact`
+- `docs/zotero-integration.md` — la mesure des 269 grappes
+
+## Test
+
+D'abord le rouge : un index portant deux notices dont les pièces jointes ont le
+même md5, interrogé avec ce fichier, doit rendre un verdict qui **nomme les
+deux**. Aujourd'hui il en nomme une et se tait sur l'autre.
+
+## Actions
+
+1. Départager au palier `exact` comme au palier `strong` : plusieurs `exact`
+   concurrents rendent `ambiguous`, ou `match` accompagné de la liste complète
+   des candidats — trancher entre les deux est la décision de conception.
+2. Vérifier ce que `audit` doit rendre dans ce cas : `identical` reste juste
+   (le fichier *est* stocké), mais il doit nommer tous les parents.
+3. Étendre le test d'ex aequo au palier `exact`.
+
+## Invariants
+
+- Aucun changement de verdict quand un seul `exact` correspond — le cas courant.
+- `consulted` / `skipped` gardent leur contrat : « rien trouvé » reste
+  distinguable de « n'a pas pu regarder ».
+
+## Exit criteria
+
+- [ ] Deux notices partageant un md5 sont toutes deux nommées, aucune n'est perdue en silence
+- [ ] Test de régression sur le palier `exact`
+- [ ] `make check` passe
