@@ -39,6 +39,12 @@ fi
 # individual rule files on demand; verify-adherence checks ex post.
 cat "$_script_dir/../rules/README.md" 2>/dev/null || true
 
+# Inject the project's domain-knowledge catalog (pointers, not bodies), same
+# discipline as the rules index above. Declared in <repo>/.knowledge.toml;
+# silent when the project declares none. One line per hint, because this is
+# resident: the bodies are read on demand and can be orders of magnitude larger.
+python3 "$_script_dir/knowledge_hints.py" catalog 2>/dev/null || true
+
 # Inject harness-level memory (cross-project lessons promoted by /dream).
 # Kept tight — decay pass removes stale entries so injection cost stays bounded.
 cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true

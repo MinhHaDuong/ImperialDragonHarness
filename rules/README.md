@@ -9,6 +9,7 @@ files on demand when their scope signal applies to your task.
 | [git.md](./git.md) | always | Branch discipline, commit-message standards, worktree lifecycle, merge-request workflow; prose-in-place exception for paper repos. |
 | [state.md](./state.md) | skill-list: `/lair` | STATE.md format spec — sections, length cap, pruning rules. |
 | `tickets/AGENTS.md` (project-level) | skill-list: `ticket-*`, `hunt` | Ticket format rules injected via `@tickets/AGENTS.md` in project CLAUDE.md — no global rules file needed. |
+| [knowledge-hints.md](./knowledge-hints.md) | a project declares or maintains domain knowledge an agent cannot search for (canon, controlled vocabulary, map of a field) | `<repo>/.knowledge.toml` + `scripts/knowledge_hints.py`: one catalog line resident at session start, pointer + caveat on a declared term. Inject the pointer, never the payload; write the summary context-free. |
 | [edm.md](./edm.md) | skill-list: `zotero-import`, `index-source` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging, synced and purged on archival. |
 | [coding-python.md](./coding-python.md) | edit of `*.py` (alias: `format/python`) | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | edit of `*.sh` (alias: `format/bash`) | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
