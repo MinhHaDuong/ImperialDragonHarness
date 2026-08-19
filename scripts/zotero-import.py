@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Helper for the zotero-import skill. Subcommands: probe, match, write."""
+"""Helper for the zotero-import skill.
+
+Subcommands: probe, match, write, inject, enrich, sync-index, audit, attach.
+The last three work without the Zotero desktop database, against a cached
+pull of the library from the Web API.
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,6 +16,8 @@ import re
 import sqlite3
 import subprocess
 import sys
+import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -402,7 +409,7 @@ def zotero_matches(
     # 1. Attachment content hash — exact, immune to metadata quality.
     if pdf_path is not None and pdf_path.is_file():
         consulted.append("storageHash")
-        digest = hashlib.md5(pdf_path.read_bytes()).hexdigest()
+        digest = file_md5(pdf_path)
         settle("storageHash",
                _attachment_targets(cur, lib_id, storage_hash=digest),
                "exact", 100)
@@ -1022,6 +1029,55 @@ def entry_to_zotero_item(e: dict[str, Any],
     return item
 
 
+def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
+                    expect_title: str,
+                    overwrite: bool = False) -> tuple[dict[str, str], list[str]]:
+    """Decide what to write on an existing item. Pure: no network, no I/O.
+
+    Returns (fields to patch, refusals). A refusal is a reason NOT to write a
+    given field; the caller reports every one of them and writes the rest.
+
+    Three guards, in the order they catch real mistakes:
+
+    1. Wrong item. `expect_title` must appear in the item's title. Item keys
+       are opaque, so a transposed key silently enriches an unrelated work —
+       the one failure mode the API cannot catch for us. An empty title on
+       the target is a refusal, not a pass: "could not check" is not "clear".
+    2. Already correct. A field whose stored value equals the requested one is
+       dropped from the patch, not rewritten — a no-op write still bumps the
+       item version and shows up as an edit in every sync.
+    3. Conflicting value. A field that already holds something DIFFERENT is
+       refused unless `overwrite` is passed. Replacing a curated value is an
+       arbitration the caller must make explicitly; correcting an empty field
+       is not.
+    """
+    refusals: list[str] = []
+    title = (data.get("title") or "").strip()
+    if not title:
+        return {}, [f"item {data.get('key', '?')}: no title to check against "
+                    f"{expect_title!r} — refusing to write blind"]
+    if expect_title.lower() not in title.lower():
+        return {}, [f"item {data.get('key', '?')}: title {title!r} does not "
+                    f"contain {expect_title!r} — wrong item?"]
+
+    patch: dict[str, str] = {}
+    for field, value in sets.items():
+        if field not in data:
+            refusals.append(f"{field}: item type {data.get('itemType')!r} has "
+                            f"no such field (Zotero field names are "
+                            f"case-sensitive, e.g. DOI not doi)")
+            continue
+        current = (data.get(field) or "").strip()
+        if current == value:
+            continue
+        if current and not overwrite:
+            refusals.append(f"{field}: already holds {current!r}, not "
+                            f"{value!r} — pass --overwrite to arbitrate")
+            continue
+        patch[field] = value
+    return patch, refusals
+
+
 def api_request(method: str, path: str, key: str,
                 body: bytes | None = None,
                 content_type: str = "application/json",
@@ -1093,6 +1149,30 @@ def _external_upload(auth: dict[str, Any], body: bytes) -> None:
         resp.read()
 
 
+def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    """Check one inject entry's metadata against its own PDF's front matter.
+
+    This is where corroborate() has to bite. `inject` is the step that makes
+    metadata permanent, and the failure it guards is silent by construction: a
+    DOI scraped from page text usually belongs to a work the document *cites*,
+    so the resolver returns a well-formed record for the wrong paper and every
+    later reader inherits it. Measured on a 158-PDF backfill, 77 of 116
+    machine-built drafts needed correction once someone read the page.
+    """
+    pdf = entry.get("pdf")
+    if not pdf or not entry.get("title"):
+        return {"confidence": "unchecked", "reason": "no pdf or no title"}
+    path = Path(pdf)
+    if not path.exists() or path.suffix.lower() != ".pdf":
+        return {"confidence": "unchecked", "reason": "no readable PDF"}
+    try:
+        text = pdftotext_range(path, 1, FIRST_PAGES)
+    except Exception as exc:
+        return {"confidence": "unchecked", "reason": f"{type(exc).__name__}"}
+    return corroborate({"title": entry.get("title"),
+                        "authors": entry.get("authors") or []}, text)
+
+
 def cmd_inject(args: argparse.Namespace) -> int:
     if args.entries_json:
         entries = json.loads(args.entries_json)
@@ -1104,9 +1184,26 @@ def cmd_inject(args: argparse.Namespace) -> int:
         entries = [entries]
     validate_entry_keys(entries)
 
+    checks = [corroborate_entry(e) for e in entries]
+    if not args.skip_corroboration:
+        blocked = [(e, c) for e, c in zip(entries, checks)
+                   if c["confidence"] == "contradicted"]
+        if blocked:
+            json.dump({"error": "metadata contradicted by the document",
+                       "hint": "the identifier a resolver followed is probably "
+                               "a cited work's, not this document's; rebuild "
+                               "the metadata, or pass --skip-corroboration",
+                       "entries": [{"title": e.get("title"),
+                                    "pdf": e.get("pdf"), **c}
+                                   for e, c in blocked]},
+                      sys.stdout, indent=2, ensure_ascii=False)
+            sys.stdout.write("\n")
+            return 1
+
     items = [entry_to_zotero_item(e, args.collection) for e in entries]
     if args.dry_run:
-        json.dump(items, sys.stdout, indent=2, ensure_ascii=False)
+        json.dump({"items": items, "corroboration": checks},
+                  sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0
 
@@ -1116,7 +1213,8 @@ def cmd_inject(args: argparse.Namespace) -> int:
     created = api_request("POST", f"/users/{user}/items", key,
                           json.dumps(items).encode())
     for idx, entry in enumerate(entries):
-        row: dict[str, Any] = {"title": entry.get("title")}
+        row: dict[str, Any] = {"title": entry.get("title"),
+                               "corroboration": checks[idx]["confidence"]}
         ok = created.get("successful", {}).get(str(idx))
         if not ok:
             row["error"] = created.get("failed", {}).get(str(idx),
@@ -1142,6 +1240,104 @@ def cmd_inject(args: argparse.Namespace) -> int:
               sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return status
+
+
+def parse_set(pairs: list[str]) -> dict[str, str]:
+    """`--set DOI=10.x/y` pairs into a dict. Splits on the FIRST `=` only."""
+    out: dict[str, str] = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"--set expects FIELD=VALUE, got {pair!r}")
+        field, value = pair.split("=", 1)
+        out[field.strip()] = value.strip()
+    return out
+
+
+def enrich_one(user: str, key: str, job: dict[str, Any],
+               overwrite: bool, dry_run: bool) -> dict[str, Any]:
+    """Fill fields on ONE existing item. See plan_enrichment for the guards."""
+    item_key = job["item_key"]
+    row: dict[str, Any] = {"itemKey": item_key}
+    path = f"/users/{user}/items/{item_key}"
+    data = api_request("GET", path, key)["data"]
+    row["title"] = data.get("title")
+
+    patch, refusals = plan_enrichment(data, job["set"], job["expect_title"],
+                                      overwrite)
+    if refusals:
+        row["refused"] = refusals
+    if not patch:
+        row["status"] = "nothing to write"
+        return row
+    row["patch"] = patch
+    if dry_run:
+        row["status"] = f"would patch at version {data['version']}"
+        return row
+
+    # If-Unmodified-Since-Version makes a concurrent edit fail with 412 rather
+    # than silently winning. Without it, two sessions enriching the same item
+    # both report success and one of the writes is gone.
+    try:
+        api_request("PATCH", path, key, json.dumps(patch).encode(),
+                    extra_headers={
+                        "If-Unmodified-Since-Version": str(data["version"])})
+    except urllib.error.HTTPError as exc:
+        row["status"] = "failed"
+        row["error"] = (f"HTTP {exc.code}: "
+                        f"{exc.read().decode('utf-8', 'replace')[:200]}")
+        return row
+
+    # Read back. A 204 says the request was accepted, not that the value is
+    # what we meant — the only proof is the stored item.
+    after = api_request("GET", path, key)["data"]
+    bad = {f: after.get(f) for f, v in patch.items() if (after.get(f) or "") != v}
+    row["status"] = "written" if not bad else "readback mismatch"
+    row["version"] = after["version"]
+    if bad:
+        row["stored"] = bad
+    return row
+
+
+def cmd_enrich(args: argparse.Namespace) -> int:
+    if args.jobs_file:
+        jobs = json.loads(Path(args.jobs_file).read_text())
+    else:
+        jobs = [{"item_key": args.item_key,
+                 "expect_title": args.expect_title,
+                 "set": parse_set(args.set or [])}]
+    if isinstance(jobs, dict):
+        jobs = [jobs]
+    for job in jobs:
+        missing = {"item_key", "expect_title", "set"} - set(job)
+        if missing:
+            raise SystemExit(f"job missing {sorted(missing)}: {job}")
+        if not job["set"]:
+            raise SystemExit(f"job for {job['item_key']} sets nothing")
+
+    user, key = resolve_credentials(args)
+    results = [enrich_one(user, key, j, args.overwrite, args.dry_run)
+               for j in jobs]
+    json.dump({"library": f"users/{user}", "results": results},
+              sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return enrich_status(results, args.dry_run)
+
+
+def enrich_status(results: list[dict[str, Any]], dry_run: bool) -> int:
+    """Exit code for an enrich run. Non-zero when anything asked for did not
+    happen — a refusal included. A run that refused every field and one that
+    wrote every field must not return the same code, or the caller cannot tell
+    "done" from "declined to act".
+    """
+    ok = {"written", "nothing to write"}
+    for row in results:
+        if row.get("refused"):
+            return 1
+        if dry_run:
+            continue
+        if row.get("status") not in ok:
+            return 1
+    return 0
 
 
 # --- CLI -------------------------------------------------------------------
@@ -1176,12 +1372,512 @@ def cmd_probe(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Web-API library index — deduplication without the desktop database
+#
+# `probe` and `match` consult the desktop client's zotero.sqlite. On a machine
+# that has no desktop client the file is simply absent, every lookup returns
+# verdict "unchecked", and a bulk backfill runs with no dedup key at all —
+# which is how you re-import documents the library already holds. The index
+# below is the same library pulled from the Web API and cached on disk, so the
+# cascade always has something to consult.
+#
+# It also carries every attachment's md5. That is a *stronger* key than any the
+# sqlite path offers: content identity survives renaming, re-filing and
+# metadata drift, and it answers the only question a staging directory really
+# asks — is this exact file already stored in Zotero?
+# ---------------------------------------------------------------------------
+
+INDEX_CACHE_DIR = (
+    Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache"))
+    / "zotero-import"
+)
+INDEX_SCHEMA = 1
+INDEX_MAX_AGE_HOURS = 24
+# Titles shorter than this carry too few distinctive tokens to match on.
+TITLE_MIN_TOKENS = 3
+
+
+def resolve_read_credentials(args: argparse.Namespace) -> tuple[str, str]:
+    """(user_id, key) for read-only calls: RO key preferred, RW accepted.
+
+    Distinct from resolve_credentials(), which demands a read-write key. An
+    index sync needs no write scope, and requiring one would gate a read-only
+    audit behind a credential the operator may deliberately not have loaded.
+    """
+    env_file = load_env_file(ZOTERO_ENV_FILE)
+    key = (getattr(args, "api_key", None)
+           or os.environ.get("ZOTERO_API_KEY")
+           or env_file.get("ZOTERO_API_KEY")
+           or os.environ.get("ZOTERO_RW_API_KEY")
+           or env_file.get("ZOTERO_RW_API_KEY"))
+    user = (getattr(args, "user_id", None)
+            or os.environ.get("ZOTERO_USER_ID")
+            or env_file.get("ZOTERO_USER_ID"))
+    if not key:
+        raise SystemExit("no ZOTERO_API_KEY / ZOTERO_RW_API_KEY (flag, env, "
+                         f"or {ZOTERO_ENV_FILE})")
+    if not user:
+        raise SystemExit("no ZOTERO_USER_ID (flag, env, or "
+                         f"{ZOTERO_ENV_FILE})")
+    return user, key
+
+
+def _api_get_retry(path: str, key: str, attempts: int = 5) -> Any:
+    """GET with exponential backoff — a 17k-item sync is ~170 calls."""
+    for n in range(attempts):
+        try:
+            return api_request("GET", path, key)
+        except urllib.error.HTTPError as exc:
+            # 401/403/404 are answers, not outages. Retrying one turns a fast,
+            # legible misconfiguration into a 30-second backoff that ends in
+            # the same failure — and buries the cause. 429 and 5xx are the
+            # transient ones worth waiting on.
+            if exc.code not in (429,) and exc.code < 500:
+                raise
+            if n == attempts - 1:
+                raise
+            time.sleep(2 ** n)
+        except (urllib.error.URLError, OSError):
+            if n == attempts - 1:
+                raise
+            time.sleep(2 ** n)
+    return None
+
+
+def _api_paged(user: str, key: str, item_type: str,
+               progress: bool = False) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    start = 0
+    while True:
+        q = urllib.parse.urlencode(
+            {"itemType": item_type, "limit": "100", "start": str(start)})
+        page = _api_get_retry(f"/users/{user}/items?{q}", key)
+        if not page:
+            break
+        out.extend(page)
+        start += 100
+        if progress and start % 1000 == 0:
+            logging.info("  %s: %d fetched", item_type, start)
+    return out
+
+
+def file_md5(path: Path, chunk: int = 1 << 20) -> str:
+    """Content hash, read in chunks — an audit hashes every staged file, and
+    this corpus holds a 62 MB Internet Archive scan."""
+    h = hashlib.md5()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(chunk), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def index_path(user: str) -> Path:
+    return INDEX_CACHE_DIR / f"index-{user}.json"
+
+
+def build_index(user: str, key: str) -> dict[str, Any]:
+    """Pull works and attachments from the Web API into one cache document."""
+    works = []
+    for it in _api_paged(user, key, "-attachment || note", progress=True):
+        d = it["data"]
+        works.append({
+            "key": d.get("key"),
+            "itemType": d.get("itemType"),
+            "title": d.get("title", ""),
+            "date": d.get("date", ""),
+            "DOI": d.get("DOI", ""),
+            "ISBN": d.get("ISBN", ""),
+            "url": d.get("url", ""),
+            "extra": d.get("extra", ""),
+            "collections": d.get("collections", []),
+            "creators": [c.get("lastName") or c.get("name", "")
+                         for c in d.get("creators", [])],
+        })
+    atts = []
+    for it in _api_paged(user, key, "attachment", progress=True):
+        d = it["data"]
+        atts.append({
+            "key": d.get("key"),
+            "parent": d.get("parentItem"),
+            "filename": d.get("filename", ""),
+            "md5": d.get("md5"),
+            "contentType": d.get("contentType", ""),
+            "linkMode": d.get("linkMode", ""),
+        })
+    return {"schema": INDEX_SCHEMA, "user": user,
+            "fetched": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "works": works, "attachments": atts}
+
+
+def load_index(user: str, key: str, *, refresh: bool = False,
+               max_age_hours: float = INDEX_MAX_AGE_HOURS) -> dict[str, Any] | None:
+    """Cached index, rebuilt when missing, stale, or explicitly refreshed.
+
+    Returns None when no index exists and none could be built — the caller must
+    keep that distinguishable from an empty library.
+    """
+    p = index_path(user)
+    if not refresh and p.exists():
+        age_h = (time.time() - p.stat().st_mtime) / 3600
+        if age_h <= max_age_hours:
+            try:
+                idx = json.loads(p.read_text())
+                if idx.get("schema") == INDEX_SCHEMA:
+                    return idx
+            except json.JSONDecodeError:
+                pass
+    try:
+        idx = build_index(user, key)
+    except Exception as exc:  # network, auth, rate limit
+        logging.warning("index sync failed: %s", exc)
+        if p.exists():
+            try:
+                return json.loads(p.read_text())
+            except json.JSONDecodeError:
+                return None
+        return None
+    INDEX_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(idx))
+    return idx
+
+
+def _name_key(s: str) -> str:
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+    return re.sub(r"[^a-z]", "", s)
+
+
+_TITLE_STOP = {"the", "a", "an", "of", "and", "in", "on", "for", "to", "with",
+               "de", "la", "le", "les", "du", "des", "et", "un", "une"}
+
+
+def _title_tokens(s: str) -> set[str]:
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+    s = re.sub(r"[^a-z0-9]", " ", s)
+    return {w for w in s.split() if len(w) > 2 and w not in _TITLE_STOP}
+
+
+def _title_windows(text: str, span: int = 3) -> list[set[str]]:
+    """Token sets for every window of `span` consecutive lines.
+
+    A title occupies a few consecutive lines (OCR breaks them further). Scoring the whole document
+    bag instead lets scattered vocabulary satisfy a short generic title: the
+    five ordinary words of "Systems of inequalities involving convex functions"
+    all occur, far apart, in any paper about linear inequalities — which is how
+    a Hoffman 1960 paper matched a different Hoffman paper at "strong".
+    Requiring the words to co-occur in one window is what separates a title
+    from a vocabulary.
+    """
+    lines = [ln for ln in (text or "").splitlines() if ln.strip()]
+    out: list[set[str]] = []
+    for i in range(len(lines)):
+        for n in range(1, span + 1):
+            if i + n <= len(lines):
+                out.append(_title_tokens(" ".join(lines[i:i + n])))
+    return [w for w in out if w]
+
+
+# Both forms Zotero actually stores: "arXiv:2401.01234" in Extra, and an
+# arxiv.org/abs/ URL in the url field.
+ARXIV_ANY_RE = re.compile(
+    r"(?:arxiv\.org/(?:abs|pdf)/|arxiv[:\s]\s*)"
+    r"((?:\d{4}\.\d{4,5})|(?:[a-z-]+/\d{7}))",
+    re.IGNORECASE)
+HDL_ANY_RE = re.compile(r"hdl\.handle\.net/([^\s)\]]+)", re.IGNORECASE)
+
+
+def _isbn_key(raw: str) -> str:
+    return re.sub(r"[^0-9Xx]", "", raw or "").upper()
+
+
+def _index_views(idx: dict[str, Any]) -> dict[str, Any]:
+    works = {w["key"]: w for w in idx["works"]}
+    by_md5: dict[str, list[dict[str, Any]]] = {}
+    by_filename: dict[str, list[dict[str, Any]]] = {}
+    parents_with_file: set[str] = set()
+    parents_with_pdf: set[str] = set()
+    for a in idx["attachments"]:
+        if a.get("md5"):
+            by_md5.setdefault(a["md5"], []).append(a)
+        if a.get("filename"):
+            by_filename.setdefault(Path(a["filename"]).name, []).append(a)
+        if a.get("parent") and str(a.get("linkMode", "")).startswith("imported"):
+            parents_with_file.add(a["parent"])
+            if a.get("contentType") == "application/pdf":
+                parents_with_pdf.add(a["parent"])
+    by_doi: dict[str, list[dict[str, Any]]] = {}
+    by_isbn: dict[str, list[dict[str, Any]]] = {}
+    by_arxiv: dict[str, list[dict[str, Any]]] = {}
+    by_handle: dict[str, list[dict[str, Any]]] = {}
+    by_surname: dict[str, list[dict[str, Any]]] = {}
+    for w in idx["works"]:
+        if w.get("DOI"):
+            by_doi.setdefault(w["DOI"].lower().strip(), []).append(w)
+        for isbn in re.findall(r"[0-9Xx-]{10,17}", w.get("ISBN") or ""):
+            key = _isbn_key(isbn)
+            if len(key) in (10, 13):
+                by_isbn.setdefault(key, []).append(w)
+        # Zotero has no arXiv or handle field: both live in `extra` or `url`,
+        # which is where the desktop cascade finds them too.
+        hay = f"{w.get('extra', '')} {w.get('url', '')}"
+        for aid in ARXIV_ANY_RE.findall(hay):
+            by_arxiv.setdefault(aid.lower(), []).append(w)
+        for hdl in HDL_ANY_RE.findall(hay):
+            by_handle.setdefault(hdl.lower().rstrip("/"), []).append(w)
+        w["_year"] = (lambda m: m.group(0) if m else None)(
+            YEAR_RE.search(w.get("date") or ""))
+        w["_tokens"] = _title_tokens(w.get("title", ""))
+        for c in w.get("creators", []):
+            by_surname.setdefault(_name_key(c), []).append(w)
+    return {"works": works, "by_md5": by_md5, "by_filename": by_filename,
+            "by_doi": by_doi, "by_isbn": by_isbn, "by_arxiv": by_arxiv,
+            "by_handle": by_handle, "by_surname": by_surname,
+            "parents_with_file": parents_with_file,
+            "parents_with_pdf": parents_with_pdf}
+
+
+def api_matches(idx: dict[str, Any], *, doi: str | None = None,
+                isbn: str | None = None, arxiv: str | None = None,
+                handle: str | None = None,
+                title: str | None = None, year: str | None = None,
+                first_author: str | None = None,
+                authors: list[str] | None = None,
+                text: str | None = None,
+                pdf_path: Path | None = None) -> dict[str, Any]:
+    """Same cascade and same output contract as zotero_matches(), over the index.
+
+    Keys strongest first: file content hash, DOI, attachment filename, then
+    (creator, year, title). "consulted" and "skipped" are reported so a clean
+    negative stays distinguishable from a lookup that could not run.
+
+    `text` supplies extra evidence from the document itself (front-matter text,
+    a filename slug). It widens what the *document* is allowed to say, never
+    what counts as a hit: overlap is always scored against the library title's
+    own tokens, so a bigger bag of document words can only help a true match
+    surface — it cannot manufacture one. Passing a single guessed title instead
+    is what makes an audit over-report "absent", because the guess comes from
+    pdfinfo, which on scanned material reads "PII: 0014-2921(69)90001-4".
+    """
+    v = _index_views(idx)
+    consulted: list[str] = []
+    skipped: list[str] = []
+    matches: list[dict[str, Any]] = []
+
+    def emit(work_key: str, why: str, certainty: str,
+             att: dict[str, Any] | None = None) -> None:
+        w = v["works"].get(work_key)
+        if not w:
+            return
+        if any(m["key"] == work_key for m in matches):
+            return
+        matches.append({
+            "key": work_key, "why": [why], "certainty": certainty,
+            "title": w.get("title", ""), "date": w.get("date", ""),
+            "itemType": w.get("itemType", ""), "creators": w.get("creators", []),
+            "has_file": work_key in v["parents_with_file"],
+            "has_pdf": work_key in v["parents_with_pdf"],
+            "attachment": att,
+        })
+
+    if pdf_path and pdf_path.exists():
+        consulted.append("storageHash")
+        digest = hashlib.md5(pdf_path.read_bytes()).hexdigest()
+        for a in v["by_md5"].get(digest, []):
+            if a.get("parent"):
+                emit(a["parent"], "storageHash", "exact", a)
+            else:
+                matches.append({"key": None, "why": ["storageHash"],
+                                "certainty": "exact", "title": a.get("filename", ""),
+                                "orphan_attachment": a["key"], "has_file": True,
+                                "has_pdf": a.get("contentType") == "application/pdf"})
+    else:
+        skipped.append("storageHash (no file on disk)")
+
+    for label, supplied, bucket, norm in (
+            ("doi", doi, "by_doi", lambda x: x.lower().strip()),
+            ("isbn", isbn, "by_isbn", _isbn_key),
+            ("arxiv", arxiv, "by_arxiv", lambda x: x.lower().strip()),
+            ("handle", handle, "by_handle",
+             lambda x: (HDL_ANY_RE.search(x).group(1) if HDL_ANY_RE.search(x)
+                        else x).lower().rstrip("/")),
+    ):
+        if not supplied:
+            skipped.append(f"{label} (none supplied)")
+            continue
+        if matches:
+            continue
+        consulted.append(label)
+        for w in v[bucket].get(norm(supplied), []):
+            emit(w["key"], label, "exact")
+
+    if not matches and pdf_path and pdf_path.name:
+        consulted.append("filename")
+        for a in v["by_filename"].get(pdf_path.name, []):
+            if a.get("parent"):
+                emit(a["parent"], "filename", "strong", a)
+    elif not matches:
+        skipped.append("filename: no PDF name")
+
+    if not matches and (title or text):
+        toks = _title_tokens(title) | _title_tokens(text)
+        surnames = [_name_key(a.split(",")[0]) for a in (authors or [])]
+        if first_author:
+            surnames.append(_name_key(first_author.split(",")[0]))
+        surnames = [s for s in surnames if s]
+        if len(toks) < TITLE_MIN_TOKENS:
+            skipped.append("creator-year-title (title too short)")
+        elif not surnames:
+            skipped.append("creator-year-title (no author supplied)")
+        else:
+            consulted.append("creator-year-title")
+            # A hit is "strong" only when the library title's words co-occur in
+            # one place — the supplied title, or a window of consecutive lines
+            # in the document. Matching the scattered bag stays available, but
+            # only ever as "weak", which no verdict treats as a match on its own.
+            windows = ([_title_tokens(title)] if title else []) + \
+                      _title_windows(text or "")
+            cands: dict[str, dict[str, Any]] = {}
+            for s in surnames:
+                for w in v["by_surname"].get(s, []):
+                    cands[w["key"]] = w
+            for w in cands.values():
+                if not w["_tokens"]:
+                    continue
+                n = len(w["_tokens"])
+                overlap = len(toks & w["_tokens"]) / n
+                # Two questions, and a short title needs both answered. How
+                # much of the library title did this window carry (recall), and
+                # how much of the window was that title (precision)? Recall
+                # alone lets three body lines accumulate all five words of
+                # "Systems of inequalities involving convex functions" while
+                # being about something else; precision is what says a title
+                # line is nearly all title and a body window is not.
+                best_recall = best_prec = 0.0
+                for win in windows:
+                    shared = len(win & w["_tokens"])
+                    if not shared:
+                        continue
+                    recall, precision = shared / n, shared / len(win)
+                    if (recall, precision) > (best_recall, best_prec):
+                        best_recall, best_prec = recall, precision
+                focused = best_recall
+                same_year = bool(year and w["_year"] and year == w["_year"])
+                near_year = bool(year and w["_year"]
+                                 and abs(int(year) - int(w["_year"])) <= 3)
+                phrase = best_prec >= 0.6
+                if phrase and focused >= 0.8 and (same_year or not year
+                                                  or not w["_year"]):
+                    emit(w["key"], "creator-year-title", "strong")
+                elif phrase and focused >= 0.75 and near_year:
+                    emit(w["key"], "creator-year-title", "strong")
+                elif overlap >= 0.45 or focused >= 0.45:
+                    emit(w["key"], "title-overlap", "weak")
+    elif not (title or text):
+        skipped.append("creator-year-title (no title or text supplied)")
+
+    order = {"exact": 0, "strong": 1, "weak": 2}
+    matches.sort(key=lambda m: order.get(m["certainty"], 3))
+    verdict = classify_matches(matches) if consulted else "unchecked"
+    return {"matches": matches, "verdict": verdict,
+            "consulted": consulted, "skipped": skipped,
+            "source": "web-api-index", "index_fetched": idx.get("fetched")}
+
+
+def _surname_in_text(surname: str, text: str) -> bool:
+    """Is the surname present as a whole word (or run of whole words)?
+
+    A bare substring test against punctuation-stripped text matches "Li" inside
+    "published" and "Ng" inside "programming", so a document that contradicts
+    the resolved record reads as partial agreement — the one verdict this check
+    exists to prevent. Whole words are required; consecutive ones are re-joined
+    so a spaced name ("van Neumann"), whose key drops the spaces, still hits.
+    `text` is expected accent-stripped and lowercased, as _name_key leaves it.
+    """
+    if not surname:
+        return False
+    words = re.findall(r"[a-z]+", text)
+    for i in range(len(words)):
+        acc = ""
+        for w in words[i:i + 4]:
+            acc += w
+            if acc == surname:
+                return True
+            if len(acc) >= len(surname):
+                break
+    return False
+
+
+def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
+    """Does the metadata a resolver returned actually describe *this* document?
+
+    A DOI or arXiv id scraped from page text is often a *cited* work's, not the
+    document's own — resolving it yields clean, confident, wrong metadata that
+    nothing downstream questions. Cross-check the resolved record against the
+    document's own words: the first author's surname and a majority of the
+    title's distinctive tokens should appear in the front matter.
+
+    Returns {"confidence": corroborated|weak|contradicted|unchecked, ...}.
+    Never decides on its own — it hands the caller a reason to look.
+    """
+    text = unicodedata.normalize("NFKD", document_text or "")
+    text = "".join(c for c in text if not unicodedata.combining(c)).lower()
+    flat = re.sub(r"[^a-z0-9]", "", text)
+    title = resolved.get("title") or ""
+    authors = resolved.get("authors") or []
+    if not flat or not title:
+        return {"confidence": "unchecked",
+                "reason": "no document text or no resolved title"}
+    toks = _title_tokens(title)
+    if not toks:
+        # Nothing distinctive to compare, so nothing was checked. Returning the
+        # strongest negative here accuses the resolver on no evidence.
+        return {"confidence": "unchecked",
+                "reason": "resolved title carries no distinctive words to check"}
+    hits = sum(1 for t in toks if t in re.sub(r"[^a-z0-9 ]", " ", text).split())
+    title_ratio = hits / len(toks)
+    surname = _name_key(authors[0].split(",")[0]) if authors else ""
+    author_ok = _surname_in_text(surname, text)
+    if title_ratio >= 0.6 and (author_ok or not surname):
+        conf = "corroborated"
+    elif title_ratio >= 0.6 or author_ok:
+        conf = "weak"
+    else:
+        conf = "contradicted"
+    return {"confidence": conf, "title_token_ratio": round(title_ratio, 2),
+            "first_author_found": author_ok,
+            "reason": ("resolved metadata does not appear in the document — "
+                       "the identifier is probably a cited work's"
+                       if conf == "contradicted" else "")}
+
+
 def cmd_match(args: argparse.Namespace) -> int:
-    db_path = resolve_db_path(args.zotero_db)
+    db_path = None if args.source == "api" else resolve_db_path(args.zotero_db)
     if db_path is None:
-        # No database: "could not look", never a clean negative.
+        # No desktop database (or --source api). Before conceding "unchecked",
+        # try the Web API index: on a client-less machine that is the only key
+        # available, and conceding here is what lets a backfill re-import the
+        # whole library.
+        try:
+            user, key = resolve_read_credentials(args)
+            idx = load_index(user, key, refresh=False)
+        except SystemExit:
+            idx = None
+        if idx is not None:
+            result = api_matches(
+                idx, doi=args.doi, isbn=args.isbn, arxiv=args.arxiv,
+                handle=args.handle, title=args.title, year=args.year,
+                first_author=args.author,
+                pdf_path=Path(args.pdf) if args.pdf else None)
+            json.dump({"zotero_db": None, **result},
+                      sys.stdout, indent=2, ensure_ascii=False)
+            sys.stdout.write("\n")
+            return 0
         json.dump({"zotero_db": None, "matches": [], "verdict": "unchecked",
-                   "consulted": [], "skipped": ["no Zotero database found"]},
+                   "consulted": [],
+                   "skipped": ["no Zotero database found",
+                               "no Web API index (run sync-index)"]},
                   sys.stdout)
         sys.stdout.write("\n")
         return 0
@@ -1221,6 +1917,200 @@ def cmd_write(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync_index(args: argparse.Namespace) -> int:
+    user, key = resolve_read_credentials(args)
+    idx = load_index(user, key, refresh=not args.reuse)
+    if idx is None:
+        json.dump({"error": "index unavailable", "path": str(index_path(user))},
+                  sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    json.dump({"path": str(index_path(user)), "fetched": idx["fetched"],
+               "works": len(idx["works"]), "attachments": len(idx["attachments"]),
+               "attachments_with_md5":
+                   sum(1 for a in idx["attachments"] if a.get("md5"))},
+              sys.stdout, indent=2)
+    sys.stdout.write("\n")
+    return 0
+
+
+def _pdf_probe_text(pdf: Path) -> str:
+    try:
+        return pdftotext_range(pdf, 1, FIRST_PAGES)
+    except Exception:
+        return ""
+
+
+FRONT_MATTER_LINES = 25
+
+
+def _front_matter(text: str, lines: int = FRONT_MATTER_LINES) -> str:
+    """The title/author block at the head of page 1, not the body.
+
+    Matching against the whole body is what turns a title key into a false
+    positive: a library title like "Systems of inequalities involving convex
+    functions" is five ordinary words, every one of which appears in the body
+    of any paper about linear inequalities. A real Hoffman 1960 paper matched a
+    different Hoffman paper at "strong" that way. The title block is where a
+    title actually lives, so that is the only place worth looking for one.
+    """
+    out = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    return "\n".join(out[:lines])
+
+
+def _filename_hints(name: str) -> tuple[list[str], str | None]:
+    """Surnames and year encoded in a staging filename like 'Afriat1967-...'."""
+    prefix = name.split("-")[0]
+    m = re.match(r"^(.*?)((?:1[6-9]|20)\d\d)", prefix)
+    head = m.group(1) if m else prefix
+    year = m.group(2) if m else None
+    names = [_name_key(n) for n in re.findall(r"[A-Z][a-z]+|[A-Z]{2,}", head)]
+    return [n for n in names if len(n) > 2], year
+
+
+def _pdf_title(pdf: Path) -> str:
+    """The container's recorded Title, junk filtered out.
+
+    pdfinfo reads container metadata, pdftotext reads the text layer; they are
+    independent. Gating the first on the second throws the Title away on every
+    scanned or OCR-less file — routine material in a staging folder, and
+    precisely the case where the text layer has nothing else to offer.
+    """
+    try:
+        title = pdfinfo(pdf).get("Title", "") or ""
+    except Exception:
+        return ""
+    return "" if title.lower().endswith(".pdf") else title
+
+
+def audit_one(path: Path, idx: dict[str, Any]) -> dict[str, Any]:
+    """Reconcile one staged file against the library index."""
+    is_pdf = path.suffix.lower() == ".pdf"
+    body = _pdf_probe_text(path) if is_pdf else ""
+    title = _pdf_title(path) if is_pdf else ""
+    # The filename slug carries the author's own naming intent; split camelCase
+    # so "MethodOfLimitsIndexNumbers" becomes words a title can match.
+    slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
+                  "-".join(path.stem.split("-")[1:]) or path.stem)
+    surnames, year = _filename_hints(path.name)
+    res = api_matches(idx, title=title, text=f"{slug} {_front_matter(body)}",
+                      year=year, authors=list(surnames), pdf_path=path)
+    top = res["matches"][0] if res["matches"] else None
+    # Five answers, not four. Collapsing a weak hit into "absent" is the
+    # expensive mistake in both directions: called present, a document is
+    # skipped and its full text never lands; called absent, a duplicate item is
+    # minted. A weak hit is neither finding — it is a document to look at, and
+    # saying so is cheaper than any threshold tuned to hide it.
+    if top and "storageHash" in top["why"]:
+        verdict = "identical"
+    elif top and top["certainty"] in ("exact", "strong"):
+        verdict = ("work_present_with_file" if top.get("has_file")
+                   else "work_present_no_file")
+    elif top:
+        verdict = "ambiguous"
+    else:
+        verdict = "absent"
+    return {"file": path.name, "verdict": verdict,
+            "zotero_key": top.get("key") if top else None,
+            "zotero_title": top.get("title") if top else None,
+            "why": top.get("why") if top else None,
+            "certainty": top.get("certainty") if top else None,
+            "consulted": res["consulted"], "skipped": res["skipped"]}
+
+
+def cmd_audit(args: argparse.Namespace) -> int:
+    """Reconcile a staging directory against the library — the count check.
+
+    edm.md requires checking docs/ staging *and* Zotero before declaring a
+    source missing or present. Doing that by hand over a few hundred files is
+    where the miscounts come from; this is the mechanical form.
+    """
+    user, key = resolve_read_credentials(args)
+    idx = load_index(user, key, refresh=args.refresh)
+    if idx is None:
+        json.dump({"error": "no library index; run sync-index first",
+                   "verdict": "unchecked"}, sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    root = Path(args.directory)
+    if not root.is_dir():
+        # Every other subcommand degrades to structured JSON and rc 1; a
+        # mistyped path should not be the one that prints a traceback.
+        json.dump({"error": f"not a directory: {root}", "verdict": "unchecked"},
+                  sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    pats = args.ext or [".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"]
+    files = sorted(p for p in root.iterdir()
+                   if p.is_file() and p.suffix.lower() in pats)
+    rows: list[dict[str, Any]] = []
+    for p in files:
+        try:
+            rows.append(audit_one(p, idx))
+        except Exception as exc:
+            # pdfinfo and pdftotext run under a 30 s timeout and a corrupt file
+            # makes them fail; losing the other 288 rows, the JSON, and --out
+            # to that is the expensive outcome. A row saying so keeps the batch.
+            rows.append({"file": p.name, "verdict": "error", "error": str(exc),
+                         "zotero_key": None, "zotero_title": None,
+                         "why": None, "certainty": None,
+                         "consulted": [], "skipped": []})
+    summary: dict[str, int] = {}
+    for r in rows:
+        summary[r["verdict"]] = summary.get(r["verdict"], 0) + 1
+    actions = {"identical": "nothing",
+               "work_present_with_file": "nothing; report the second copy",
+               "work_present_no_file": "attach --parent <key> (never inject)",
+               "ambiguous": "look: weak hit, neither present nor absent",
+               "absent": "inject",
+               "error": "unreadable; look at it"}
+    out = {"directory": str(root.resolve()), "index_fetched": idx["fetched"],
+           "library_works": len(idx["works"]),
+           "library_attachments": len(idx["attachments"]),
+           "files": len(files), "summary": summary,
+           "actions": {k: actions[k] for k in summary if k in actions},
+           "rows": rows}
+    if args.out:
+        Path(args.out).write_text(json.dumps(out, indent=1, ensure_ascii=False))
+    json.dump({k: out[k] for k in
+               ("directory", "index_fetched", "library_works", "files",
+                "summary", "actions")},
+              sys.stdout, indent=2)
+    sys.stdout.write("\n")
+    if not args.out:
+        json.dump(rows, sys.stdout, indent=1, ensure_ascii=False)
+        sys.stdout.write("\n")
+    return 0
+
+
+def cmd_attach(args: argparse.Namespace) -> int:
+    """Upload a file onto an item that already exists — the C case of an audit.
+
+    A work can sit in the library with correct metadata and no file attached;
+    `inject` cannot fix that, because it only ever creates new items, and
+    creating a second item to carry the PDF is how duplicates are born.
+    """
+    user, key = resolve_credentials(args)
+    results = []
+    rc = 0
+    for f in args.file:
+        p = Path(f)
+        if not p.exists():
+            results.append({"file": f, "error": "not found"})
+            rc = 1
+            continue
+        try:
+            att = upload_attachment(user, key, args.parent, p)
+            results.append({"file": p.name, "parent": args.parent,
+                            "attachmentKey": att})
+        except Exception as exc:
+            results.append({"file": p.name, "error": str(exc)})
+            rc = 1
+    json.dump(results, sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return rc
+
+
 def main() -> int:
     p = argparse.ArgumentParser(prog="zotero-import.py")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -1253,6 +2143,46 @@ def main() -> int:
     pm.add_argument("--zotero-db", help="override Zotero sqlite path")
     pm.set_defaults(func=cmd_match)
 
+    pm.add_argument("--source", choices=["auto", "api"], default="auto",
+                    help="'auto' (default) prefers the desktop database and "
+                         "falls back to the Web API index; 'api' forces the "
+                         "index")
+    pm.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pm.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+
+    ps = sub.add_parser("sync-index",
+                        help="cache the library (works + attachment md5s) "
+                             "from the Web API, for dedup without the "
+                             "desktop database")
+    ps.add_argument("--reuse", action="store_true",
+                    help="keep a fresh cache instead of re-pulling")
+    ps.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    ps.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+    ps.set_defaults(func=cmd_sync_index)
+
+    pa = sub.add_parser("audit",
+                        help="reconcile a staging directory against the "
+                             "library: identical / present-with-file / "
+                             "present-no-file / ambiguous / absent")
+    pa.add_argument("directory")
+    pa.add_argument("--out", help="write the full per-file report to this path")
+    pa.add_argument("--ext", nargs="*", help="extensions to audit "
+                                             "(default: documents)")
+    pa.add_argument("--refresh", action="store_true",
+                    help="re-pull the library index first")
+    pa.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pa.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+    pa.set_defaults(func=cmd_audit)
+
+    pt = sub.add_parser("attach",
+                        help="upload files onto an EXISTING item "
+                             "(the present-no-file case)")
+    pt.add_argument("--parent", required=True, help="parent item key")
+    pt.add_argument("file", nargs="+")
+    pt.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pt.add_argument("--api-key", help="RW key (else ZOTERO_RW_API_KEY)")
+    pt.set_defaults(func=cmd_attach)
+
     pw = sub.add_parser("write", help="write combined RIS file from JSON entries")
     pw.add_argument("--out", required=True, help="output RIS path")
     g = pw.add_mutually_exclusive_group()
@@ -1271,9 +2201,38 @@ def main() -> int:
                                       "prefer env/keys file over argv)")
     pi.add_argument("--dry-run", action="store_true",
                     help="print the Zotero item JSON, do not call the API")
+    pi.add_argument("--skip-corroboration", action="store_true",
+                    help="create items even when the metadata is contradicted "
+                         "by the PDF's own front matter (default: refuse)")
     pi.set_defaults(func=cmd_inject)
 
+    pe = sub.add_parser("enrich",
+                        help="fill missing fields on EXISTING items "
+                             "(inject creates; this completes)")
+    ge = pe.add_mutually_exclusive_group(required=True)
+    ge.add_argument("--item-key", help="the item to enrich")
+    ge.add_argument("--jobs-file",
+                    help="path to JSON: array of {item_key, expect_title, "
+                         "set:{field: value}} — one API round per item")
+    pe.add_argument("--expect-title",
+                    help="fragment that MUST appear in the item's title; "
+                         "guards against a transposed item key")
+    pe.add_argument("--set", action="append", metavar="FIELD=VALUE",
+                    help="field to write, repeatable. Zotero field names are "
+                         "case-sensitive: DOI, url, publisher")
+    pe.add_argument("--overwrite", action="store_true",
+                    help="also replace fields that already hold a DIFFERENT "
+                         "value; without it those are refused, not written")
+    pe.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pe.add_argument("--api-key", help="RW key (else ZOTERO_RW_API_KEY; "
+                                      "prefer env/keys file over argv)")
+    pe.add_argument("--dry-run", action="store_true",
+                    help="report the planned patch, do not write")
+    pe.set_defaults(func=cmd_enrich)
+
     args = p.parse_args()
+    if args.cmd == "enrich" and args.item_key and not args.expect_title:
+        p.error("--expect-title is required with --item-key")
     return args.func(args)
 
 

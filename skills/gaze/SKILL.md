@@ -276,7 +276,20 @@ summary; it runs on the **small** and **full** tiers. This is a built-in slash c
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
 embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
 same containment rails, whose prompt simply invokes `/review` on the PR and
-returns the review summary. (Phase 5 `/simplify` is the other built-in slash
+returns the review summary. **Hand it the resolved axes; it guesses without
+them.** `/review` checks prose against a house rulebook, and told nothing it
+picks one by inference — on a manuscript merge request it read
+`rules/doctype/book.md` where the project manifest declares `techreport`
+(audit of 2026-08-17, MR 136). Before spawning, run
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py --axes <changed files>`
+and carry its lines verbatim into the wrap prompt. Same cwd anchoring and same
+refusal semantics as the routing call below — this reads the disk too. Note
+what the two calls settle: routing picks *which panel* reviews the diff, the
+axes tell the reviewer *which rulebook* to hold it to. Agent B keeps running on
+prose either way; the audit found it earning its seat there — a rebuilt PDF
+with its link integrity checked on MR 136, and a catch the prose panel missed
+on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
+`/simplify` is the other built-in slash
 command; it stays as a direct invocation for now — out of this ticket's scope —
 and would be Agent-WRAPped the same way when converted. Until it is, `/simplify`
 runs in the fork's own cwd — a sibling worktree, not review-<pr> — so the
@@ -305,8 +318,18 @@ that count plus one), read the previous round's verdict roster, build the
 scoped perspective list from it, and record the reason for each inclusion.
 Spell that derivation out: the spawned agent does not read this file or
 `skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
-Otherwise pick by file type: if any `*.qmd` changed → prose
-panel; else code panel. Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
+Otherwise route by the shared prose predicate, anchored in the review
+worktree — the predicate reads the disk (manifest walk-up, `\documentclass`
+sniff), so a parked cwd would return a plausible, wrong verdict, the failure
+mode this ticket exists to close. Run
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py <changed files>`
+— it prints `prose` when any changed file resolves to a `doctype` (from the
+project's `.claude/rules-map.toml` manifest, else the `\documentclass`
+sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
+path that does not exist under that cwd (exit 2, no verdict) — treat a
+refusal as a routing error to fix, never as `code`. Process prose — notes,
+tickets — carries no doctype and stays on the code panel, which is the panel
+the audit measured as correct for it (ticket 0550). Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, and run the proportional perspective set in parallel —
 **code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
@@ -336,7 +359,17 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 **Tier-skip:** when the tier is **tiny**, skip this phase and log
 `simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
-**small** and **full** tiers. Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
+**small** and **full** tiers.
+
+**Prose-skip:** when the diff routed prose (the same
+`~/.claude/scripts/prose_predicate.py` verdict the phase 2–4 panel choice used), skip
+this phase and log `simplify: skipped (prose workpackage)` in the telemetry
+phase line. Motive: this phase may commit to the PR branch, and `rules/git.md`
+§ Prose workpackages forbids autonomous edits to a manuscript — an autonomous
+change to prose goes through its own branch + merge request for the author to
+arbitrate, never through a review-phase auto-fix (ticket 0550: two runs on the
+same file decided this in opposite directions the same day; the rule now
+exists). Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
@@ -525,7 +558,9 @@ This section is the panel-extension contract (ticket 0205).
 **When seats fire.** Automatically, on **small**- and **full**-tier CODE
 reviews — the decorrelation evidence concentrates ensemble value on
 substantive multi-file code changes. Skip on the **tiny** tier and on prose
-panels (any `*.qmd` changed). Empty roster or `/reviewers` unavailable →
+panels — the same `~/.claude/scripts/prose_predicate.py` verdict the phase
+2–4 panel choice used; a LaTeX manuscript never qualifies for external
+code-review seats. Empty roster or `/reviewers` unavailable →
 skip silently: the panel is fail-open and never blocks a gaze run.
 
 **How.** At the phase 2–4 reviewer-battery launch, also invoke
@@ -581,7 +616,7 @@ adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
 review-pr scope: full panel | scoped: <objecting perspectives> + regression (omit if round 1)
-simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking)
+simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
 ## /verify-gate verdict

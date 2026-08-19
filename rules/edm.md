@@ -41,6 +41,13 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   previous one (chapter XX opening at p. 330 confirmed Gale–Kuhn–Tucker at
   pp. 317–329). A plausible wrong locator is the costly failure — a referee who
   opens the page and finds nothing stops trusting the whole apparatus.
+- **A text layer sometimes drops the mathematics, silently.** A facsimile can
+  render its prose in full and carry none of its displayed equations, and the
+  extraction reads fluently either way. So when a claim turns on formal
+  content, count the lines carrying `=` in the pages at issue; prose without
+  equations is the failing case, and then you render the page
+  (`pdftoppm -png -scale-to 1500`) and read it. A grep cannot find a formula
+  that was never extracted, so a nil result is not a negative finding.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
 - **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
