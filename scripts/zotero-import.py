@@ -1350,6 +1350,26 @@ def _title_tokens(s: str) -> set[str]:
     return {w for w in s.split() if len(w) > 2 and w not in _TITLE_STOP}
 
 
+def _title_windows(text: str, span: int = 3) -> list[set[str]]:
+    """Token sets for every window of `span` consecutive lines.
+
+    A title occupies a few consecutive lines (OCR breaks them further). Scoring the whole document
+    bag instead lets scattered vocabulary satisfy a short generic title: the
+    five ordinary words of "Systems of inequalities involving convex functions"
+    all occur, far apart, in any paper about linear inequalities — which is how
+    a Hoffman 1960 paper matched a different Hoffman paper at "strong".
+    Requiring the words to co-occur in one window is what separates a title
+    from a vocabulary.
+    """
+    lines = [ln for ln in (text or "").splitlines() if ln.strip()]
+    out: list[set[str]] = []
+    for i in range(len(lines)):
+        for n in range(1, span + 1):
+            if i + n <= len(lines):
+                out.append(_title_tokens(" ".join(lines[i:i + n])))
+    return [w for w in out if w]
+
+
 def _index_views(idx: dict[str, Any]) -> dict[str, Any]:
     works = {w["key"]: w for w in idx["works"]}
     by_md5: dict[str, list[dict[str, Any]]] = {}
@@ -1461,6 +1481,12 @@ def api_matches(idx: dict[str, Any], *, doi: str | None = None,
             skipped.append("creator-year-title (no author supplied)")
         else:
             consulted.append("creator-year-title")
+            # A hit is "strong" only when the library title's words co-occur in
+            # one place — the supplied title, or a window of consecutive lines
+            # in the document. Matching the scattered bag stays available, but
+            # only ever as "weak", which no verdict treats as a match on its own.
+            windows = ([_title_tokens(title)] if title else []) + \
+                      _title_windows(text or "")
             cands: dict[str, dict[str, Any]] = {}
             for s in surnames:
                 for w in v["by_surname"].get(s, []):
@@ -1468,15 +1494,34 @@ def api_matches(idx: dict[str, Any], *, doi: str | None = None,
             for w in cands.values():
                 if not w["_tokens"]:
                     continue
-                overlap = len(toks & w["_tokens"]) / len(w["_tokens"])
+                n = len(w["_tokens"])
+                overlap = len(toks & w["_tokens"]) / n
+                # Two questions, and a short title needs both answered. How
+                # much of the library title did this window carry (recall), and
+                # how much of the window was that title (precision)? Recall
+                # alone lets three body lines accumulate all five words of
+                # "Systems of inequalities involving convex functions" while
+                # being about something else; precision is what says a title
+                # line is nearly all title and a body window is not.
+                best_recall = best_prec = 0.0
+                for win in windows:
+                    shared = len(win & w["_tokens"])
+                    if not shared:
+                        continue
+                    recall, precision = shared / n, shared / len(win)
+                    if (recall, precision) > (best_recall, best_prec):
+                        best_recall, best_prec = recall, precision
+                focused = best_recall
                 same_year = bool(year and w["_year"] and year == w["_year"])
                 near_year = bool(year and w["_year"]
                                  and abs(int(year) - int(w["_year"])) <= 3)
-                if overlap >= 0.8 and (same_year or not year or not w["_year"]):
+                phrase = best_prec >= 0.6
+                if phrase and focused >= 0.8 and (same_year or not year
+                                                  or not w["_year"]):
                     emit(w["key"], "creator-year-title", "strong")
-                elif overlap >= 0.55 and near_year:
+                elif phrase and focused >= 0.75 and near_year:
                     emit(w["key"], "creator-year-title", "strong")
-                elif overlap >= 0.45:
+                elif overlap >= 0.45 or focused >= 0.45:
                     emit(w["key"], "title-overlap", "weak")
     elif not (title or text):
         skipped.append("creator-year-title (no title or text supplied)")
@@ -1615,6 +1660,23 @@ def _pdf_probe_text(pdf: Path) -> str:
         return ""
 
 
+FRONT_MATTER_LINES = 25
+
+
+def _front_matter(text: str, lines: int = FRONT_MATTER_LINES) -> str:
+    """The title/author block at the head of page 1, not the body.
+
+    Matching against the whole body is what turns a title key into a false
+    positive: a library title like "Systems of inequalities involving convex
+    functions" is five ordinary words, every one of which appears in the body
+    of any paper about linear inequalities. A real Hoffman 1960 paper matched a
+    different Hoffman paper at "strong" that way. The title block is where a
+    title actually lives, so that is the only place worth looking for one.
+    """
+    out = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    return "\n".join(out[:lines])
+
+
 def _filename_hints(name: str) -> tuple[list[str], str | None]:
     """Surnames and year encoded in a staging filename like 'Afriat1967-...'."""
     prefix = name.split("-")[0]
@@ -1636,13 +1698,21 @@ def audit_one(path: Path, idx: dict[str, Any]) -> dict[str, Any]:
     slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
                   "-".join(path.stem.split("-")[1:]) or path.stem)
     surnames, year = _filename_hints(path.name)
-    res = api_matches(idx, title=title, text=f"{slug} {body[:4000]}", year=year,
-                      authors=list(surnames), pdf_path=path)
+    res = api_matches(idx, title=title, text=f"{slug} {_front_matter(body)}",
+                      year=year, authors=list(surnames), pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
+    # Five answers, not four. Collapsing a weak hit into "absent" is the
+    # expensive mistake in both directions: called present, a document is
+    # skipped and its full text never lands; called absent, a duplicate item is
+    # minted. A weak hit is neither finding — it is a document to look at, and
+    # saying so is cheaper than any threshold tuned to hide it.
     if top and "storageHash" in top["why"]:
         verdict = "identical"
     elif top and top["certainty"] in ("exact", "strong"):
-        verdict = "work_present_with_file" if top.get("has_file") else "work_present_no_file"
+        verdict = ("work_present_with_file" if top.get("has_file")
+                   else "work_present_no_file")
+    elif top:
+        verdict = "ambiguous"
     else:
         verdict = "absent"
     return {"file": path.name, "verdict": verdict,
@@ -1675,14 +1745,22 @@ def cmd_audit(args: argparse.Namespace) -> int:
     summary: dict[str, int] = {}
     for r in rows:
         summary[r["verdict"]] = summary.get(r["verdict"], 0) + 1
+    actions = {"identical": "nothing",
+               "work_present_with_file": "nothing; report the second copy",
+               "work_present_no_file": "attach --parent <key> (never inject)",
+               "ambiguous": "look: weak hit, neither present nor absent",
+               "absent": "inject"}
     out = {"directory": str(root.resolve()), "index_fetched": idx["fetched"],
            "library_works": len(idx["works"]),
            "library_attachments": len(idx["attachments"]),
-           "files": len(files), "summary": summary, "rows": rows}
+           "files": len(files), "summary": summary,
+           "actions": {k: actions[k] for k in summary if k in actions},
+           "rows": rows}
     if args.out:
         Path(args.out).write_text(json.dumps(out, indent=1, ensure_ascii=False))
     json.dump({k: out[k] for k in
-               ("directory", "index_fetched", "library_works", "files", "summary")},
+               ("directory", "index_fetched", "library_works", "files",
+                "summary", "actions")},
               sys.stdout, indent=2)
     sys.stdout.write("\n")
     if not args.out:

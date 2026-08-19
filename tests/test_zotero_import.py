@@ -1220,3 +1220,102 @@ def test_api_matches_no_title_and_no_text_is_unchecked():
     res = zi.api_matches(idx, year="1969", authors=["Afriat"])
     assert res["verdict"] == "unchecked"
     assert any("no title or text" in s for s in res["skipped"])
+
+
+# --------------------------------------------------------------------------
+# A title is a phrase, not a vocabulary. Scoring the whole document bag let
+# five ordinary words ("Systems of inequalities involving convex functions")
+# match any paper about linear inequalities — a real Hoffman 1960 paper was
+# filed as a different Hoffman paper at "strong".
+# --------------------------------------------------------------------------
+
+
+def test_title_windows_group_consecutive_lines():
+    wins = zi._title_windows("Some Recent Applications\nof Linear Inequalities\nby Alan Hoffman")
+    joined = [w for w in wins if {"some", "recent", "applications"} <= w]
+    assert joined, "a single line must form a window"
+    assert any({"applications", "linear", "inequalities"} <= w for w in wins), \
+        "consecutive lines must form a window"
+
+
+def test_scattered_vocabulary_is_weak_not_strong():
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    scattered = ("Some recent applications of the theory of linear\n"
+                 "inequalities to extremal combinatorial analysis\n"
+                 "by Alan J. Hoffman\n"
+                 "we consider systems of constraints\n"
+                 "the objective functions are convex\n"
+                 "involving several parameters\n")
+    res = zi.api_matches(idx, title="", year="1960", authors=["Hoffman"],
+                         text=scattered)
+    assert res["matches"], "the candidate should still surface"
+    assert res["matches"][0]["certainty"] == "weak"
+    assert res["verdict"] == "ambiguous"
+
+
+def test_title_on_one_line_is_strong():
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    text = "Systems of inequalities involving convex functions\nby A. J. Hoffman"
+    res = zi.api_matches(idx, title="", year="1957", authors=["Hoffman"], text=text)
+    assert res["matches"][0]["certainty"] == "strong"
+    assert res["verdict"] == "match"
+
+
+def test_front_matter_keeps_only_the_title_block():
+    body = "\n".join(["TITLE LINE", "AUTHOR"] + [f"body line {i}" for i in range(80)])
+    fm = zi._front_matter(body, lines=3)
+    assert fm.splitlines() == ["TITLE LINE", "AUTHOR", "body line 0"]
+
+
+def test_front_matter_drops_blank_lines():
+    assert zi._front_matter("\n\nA\n\n\nB\n", lines=2).splitlines() == ["A", "B"]
+
+
+def test_window_precision_separates_a_title_line_from_a_body_window():
+    """Same recall, different precision — only the title line is strong."""
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    body = ("we consider systems of constraints\n"
+            "the objective functions are convex\n"
+            "involving several unrelated parameters\n")
+    title_line = "Systems of inequalities involving convex functions\n"
+    weak = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=body)
+    strong = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=title_line)
+    assert weak["matches"][0]["certainty"] == "weak"
+    assert strong["matches"][0]["certainty"] == "strong"
+
+
+def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
+    """A weak hit must surface as `ambiguous`, never silently as `absent`."""
+    pdf = tmp_path / "Hoffman1960-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    monkeypatch.setattr(zi, "_pdf_probe_text",
+                        lambda p: "we consider systems of constraints\n"
+                                  "the objective functions are convex\n"
+                                  "involving several unrelated parameters\n")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    assert zi.audit_one(pdf, idx)["verdict"] == "ambiguous"
+
+
+def test_audit_verdict_absent_when_nothing_fires(tmp_path, monkeypatch):
+    pdf = tmp_path / "Nobody1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "an unrelated document\n")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    row = zi.audit_one(pdf, _index([_work("W1", "Something Else Entirely Here")]))
+    assert row["verdict"] == "absent"
+    assert row["consulted"], "absent must mean 'looked and found nothing'"
+
+
+def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
+    pdf = tmp_path / "Any2020-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4 unique bytes")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    assert zi.audit_one(pdf, idx)["verdict"] == "identical"

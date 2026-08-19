@@ -57,7 +57,23 @@ between the middle two decides what you do next:
 | `identical` | this exact file is already stored (md5) | nothing |
 | `work_present_with_file` | the work is in Zotero with a different copy | nothing; report it |
 | `work_present_no_file` | the item exists, no file attached | `attach`, never `inject` |
+| `ambiguous` | a weak hit — neither present nor absent | look at it |
 | `absent` | not in the library | `inject` |
+
+**`ambiguous` is a real answer, not a tuning failure.** Collapsing a weak hit
+into one of its neighbours is expensive in both directions: called present, the
+document is skipped and its full text never lands; called absent, a duplicate
+item is minted. Over 289 files the strong verdicts agreed with a hand-built
+resolver exactly — 100/100 `identical`, 169/169 `absent` — and every case where
+the two differed came back `ambiguous`. That is the verdict earning its place:
+it is where the judgment is needed, and it is a dozen files, not three hundred.
+
+A title is matched as a **phrase, not a vocabulary**: the library title's words
+must co-occur within a few consecutive lines *and* make up most of what those
+lines contain. Scoring the whole document bag instead lets the five ordinary
+words of "Systems of inequalities involving convex functions" match any paper
+about linear inequalities — which filed a real Hoffman 1960 paper as a different
+Hoffman paper, at `strong`.
 
 **Content hash is the strongest key available**, and only the Web API index
 carries it: it survives renaming, re-filing and metadata drift, and it answers
@@ -111,7 +127,7 @@ mismatch alone is not evidence of a wrong match.
 - `probe <pdf>... [--zotero-db PATH] [--library L]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches` (same shape as `match` output, fed from the raw pdfinfo title).
 - `match [--title T] [--doi D] [--isbn I] [--arxiv A] [--handle H] [--author FIRST-AUTHOR] [--year Y] [--pdf P] [--library L] [--zotero-db PATH]` — deduplication lookup using the metadata *you* refined. Consults its keys strongest first — file content hash (`storageHash`, needs `--pdf` on disk) → persistent identifier (DOI, ISBN, arXiv, handle) → attachment filename → (first author, year, normalised title) → title Jaccard as last resort — and stops at the first key that fires. Output: `matches` (each hit carries `why` = which key fired, `certainty` = exact/strong/weak, attachment info, `pdf_basename_match`), a `verdict` (`match` / `ambiguous` / `none` / `unchecked`), and `consulted`/`skipped` so "found nothing" and "could not look" stay distinguishable. Scope defaults to the **user library** (the inject destination); a group-library copy does not count as already present — pass `--library all` or a numeric libraryID to widen deliberately.
 - `sync-index [--reuse]` — pull the library (works + every attachment's md5) from the Web API into `~/.cache/zotero-import/index-<userid>.json`. Needs only a read key (`ZOTERO_API_KEY`, RW accepted). Re-pulls when the cache is older than 24 h; `--reuse` keeps a fresh one.
-- `audit <dir> [--out PATH] [--ext ...] [--refresh]` — reconcile a staging directory against the index. Per file: `verdict`, the matched `zotero_key`/`zotero_title`, `why` (which key fired), and `consulted`/`skipped`. Summary counts on stdout, the full per-file report to `--out`.
+- `audit <dir> [--out PATH] [--ext ...] [--refresh]` — reconcile a staging directory against the index. Per file: `verdict` (`identical` / `work_present_with_file` / `work_present_no_file` / `ambiguous` / `absent`), the matched `zotero_key`/`zotero_title`, `why` (which key fired), `certainty`, and `consulted`/`skipped`. Summary counts plus the action each verdict calls for on stdout; the full per-file report to `--out`.
 - `attach --parent <itemKey> <file>...` — upload files onto an item that already exists. The repair for `work_present_no_file`; also how page-scan images or an HTML snapshot get filed under the work they belong to instead of becoming standalone items.
 - `match ... [--source auto|api]` — `auto` (default) prefers the desktop database and falls back to the Web API index; `api` forces the index. The cascade, output shape and verdicts are identical either way.
 - `write --out <ris-path> --entries-json '<json>'` — writes the combined RIS. Each entry accepts: `type` (RIS code, default `JOUR`), `title`, `shortTitle`, `authors` (array; `"First Last"` is auto-converted to `"Last, First"`), `year`, `doi`, `isbn`, `issn`, `url`, `journal` (container title, whatever the type), `volume`, `issue`, `pages` (e.g. `"281-285"`), `numPages`, `publisher`, `place`, `number`, `genre`, `conferenceName`, `edition`, `seriesNumber`, `language`, `abstract`, `pdf`, `attach_pdf` (bool). Any other key is **refused**, not ignored — a misspelt key that silently does nothing is the defect this guard exists to prevent.
