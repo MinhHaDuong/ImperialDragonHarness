@@ -1,9 +1,9 @@
 ---
 name: zotero-import
-description: "Import one or more PDFs into Zotero — extract metadata, resolve identifiers online, dedupe against the local library, and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
+description: "Import one or more PDFs into Zotero, or backfill a whole staging directory — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pdf>..."
+argument-hint: "<pdf>... | --audit <dir>"
 ---
 
 # Zotero import
@@ -32,12 +32,88 @@ Build the metadata for one or more PDFs, then `inject` items and attachments dir
 - `--dry-run` prints the item JSON without touching the API — use it to show the user what would be created when the metadata is uncertain.
 - The call returns non-zero if any entry failed; the JSON output carries the per-entry error.
 
+## Backfilling a staging directory
+
+A whole `docs/` folder is not the happy path repeated N times. Two things
+change, and both are failure modes rather than conveniences.
+
+**Dedup must be possible at all.** `probe` and `match` read the desktop
+client's `zotero.sqlite`. On a machine with no desktop client that file does
+not exist, every lookup returns `verdict: "unchecked"`, and a backfill that
+reads "unchecked" as "absent" re-imports the entire library. Sync the Web API
+index first — then `match` has a key to consult, and a clean negative stays
+distinguishable from a lookup that could not run:
+
+```bash
+zotero-import.py sync-index          # ~1 min per 10k items; cached 24 h
+zotero-import.py audit docs/ --out /tmp/audit.json
+```
+
+`audit` classifies every staged file into four verdicts, and the distinction
+between the middle two decides what you do next:
+
+| verdict | meaning | action |
+|---|---|---|
+| `identical` | this exact file is already stored (md5) | nothing |
+| `work_present_with_file` | the work is in Zotero with a different copy | nothing; report it |
+| `work_present_no_file` | the item exists, no file attached | `attach`, never `inject` |
+| `absent` | not in the library | `inject` |
+
+**Content hash is the strongest key available**, and only the Web API index
+carries it: it survives renaming, re-filing and metadata drift, and it answers
+the question a staging directory actually asks — *is this exact file already
+stored?* Prefer it over any title comparison.
+
+**`work_present_no_file` is repaired with `attach`, not `inject`.** `inject`
+only ever creates items, so using it here mints a duplicate of a work the
+library already holds:
+
+```bash
+zotero-import.py attach --parent <itemKey> docs/Walley1991.pdf
+```
+
+Before trusting an audit's negatives, run it against a case you know is
+positive — a guard whose "all clear" is indistinguishable from "I could not
+look" is not a guard. `consulted` / `skipped` in every result exist for that.
+
+## A scraped identifier is a hypothesis, not a finding
+
+`find_identifier` regexes DOIs and arXiv ids out of page text, and page text
+contains the reference list. The id it returns is frequently a **cited work's**,
+not the document's own — and resolving it through CrossRef returns clean,
+well-formed, confident, wrong metadata that nothing downstream questions. In a
+158-PDF backfill this produced a Cottle memoir filed as an Albers paper on
+Ronald Graham, a Parise–Ozdaglar item filed as Diaconis & Janson 2007, and a
+Le Cadre item filed as Foti 2018.
+
+So corroborate every resolved record against the document's own words before
+accepting it:
+
+```python
+corroborate(resolved, first_pages_text)
+# -> {"confidence": "corroborated" | "weak" | "contradicted" | "unchecked", ...}
+```
+
+`contradicted` means the resolved title and first author do not appear in the
+document — discard the resolution and rebuild the metadata from the text, the
+filename, and a web search. Cross-check against the project `.bib` where one
+exists: it is curated by the author, so it corroborates, though it can be terse
+or stale and does not replace reading the page.
+
+The same discipline applies to the year: a `date` on the Zotero item can be a
+reprint or translation date (Kantorovich 1942 recorded as 2004), so a year
+mismatch alone is not evidence of a wrong match.
+
 ## Helper script
 
 `~/.claude/scripts/zotero-import.py` exposes:
 
 - `probe <pdf>... [--zotero-db PATH] [--library L]` — JSON to stdout. Fields per PDF: `pdfinfo`, `page_count`, `first_pages_text`, `last_pages_text`, `identifiers` (doi/isbn/handle/arxiv), `year_hint`, naive `zotero_matches` (same shape as `match` output, fed from the raw pdfinfo title).
 - `match [--title T] [--doi D] [--isbn I] [--arxiv A] [--handle H] [--author FIRST-AUTHOR] [--year Y] [--pdf P] [--library L] [--zotero-db PATH]` — deduplication lookup using the metadata *you* refined. Consults its keys strongest first — file content hash (`storageHash`, needs `--pdf` on disk) → persistent identifier (DOI, ISBN, arXiv, handle) → attachment filename → (first author, year, normalised title) → title Jaccard as last resort — and stops at the first key that fires. Output: `matches` (each hit carries `why` = which key fired, `certainty` = exact/strong/weak, attachment info, `pdf_basename_match`), a `verdict` (`match` / `ambiguous` / `none` / `unchecked`), and `consulted`/`skipped` so "found nothing" and "could not look" stay distinguishable. Scope defaults to the **user library** (the inject destination); a group-library copy does not count as already present — pass `--library all` or a numeric libraryID to widen deliberately.
+- `sync-index [--reuse]` — pull the library (works + every attachment's md5) from the Web API into `~/.cache/zotero-import/index-<userid>.json`. Needs only a read key (`ZOTERO_API_KEY`, RW accepted). Re-pulls when the cache is older than 24 h; `--reuse` keeps a fresh one.
+- `audit <dir> [--out PATH] [--ext ...] [--refresh]` — reconcile a staging directory against the index. Per file: `verdict`, the matched `zotero_key`/`zotero_title`, `why` (which key fired), and `consulted`/`skipped`. Summary counts on stdout, the full per-file report to `--out`.
+- `attach --parent <itemKey> <file>...` — upload files onto an item that already exists. The repair for `work_present_no_file`; also how page-scan images or an HTML snapshot get filed under the work they belong to instead of becoming standalone items.
+- `match ... [--source auto|api]` — `auto` (default) prefers the desktop database and falls back to the Web API index; `api` forces the index. The cascade, output shape and verdicts are identical either way.
 - `write --out <ris-path> --entries-json '<json>'` — writes the combined RIS. Each entry accepts: `type` (RIS code, default `JOUR`), `title`, `shortTitle`, `authors` (array; `"First Last"` is auto-converted to `"Last, First"`), `year`, `doi`, `isbn`, `issn`, `url`, `journal` (container title, whatever the type), `volume`, `issue`, `pages` (e.g. `"281-285"`), `numPages`, `publisher`, `place`, `number`, `genre`, `conferenceName`, `edition`, `seriesNumber`, `language`, `abstract`, `pdf`, `attach_pdf` (bool). Any other key is **refused**, not ignored — a misspelt key that silently does nothing is the defect this guard exists to prevent.
   - `number` is the type's identifying number: report number, patent number, standard number.
   - `genre` is the type's kind-of-thing label: `"RAND Paper"` on a report, `"PhD thesis"` on a thesis, `"Working paper"` on a manuscript.

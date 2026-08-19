@@ -1006,3 +1006,217 @@ def test_load_env_file_parses_and_ignores_comments(tmp_path):
 
 def test_load_env_file_missing_returns_empty(tmp_path):
     assert zi.load_env_file(tmp_path / "absent.env") == {}
+
+
+# --------------------------------------------------------------------------
+# Web-API index: dedup on a machine with no Zotero desktop database.
+#
+# The defect these guard: on such a machine every match returned "unchecked",
+# and a backfill that treats "unchecked" as "absent" re-imports the library.
+# --------------------------------------------------------------------------
+
+
+def _index(works=None, attachments=None):
+    return {"schema": zi.INDEX_SCHEMA, "user": "1", "fetched": "2026-08-19T00:00:00Z",
+            "works": works or [], "attachments": attachments or []}
+
+
+def _work(key, title, date="1999", creators=("Artzner",), doi=""):
+    return {"key": key, "itemType": "journalArticle", "title": title,
+            "date": date, "DOI": doi, "ISBN": "", "url": "", "extra": "",
+            "collections": [], "creators": list(creators)}
+
+
+def _att(key, parent, filename="f.pdf", md5=None, ctype="application/pdf",
+         link="imported_file"):
+    return {"key": key, "parent": parent, "filename": filename, "md5": md5,
+            "contentType": ctype, "linkMode": link}
+
+
+def test_api_matches_content_hash_is_exact(tmp_path):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4 content")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Coherent Measures of Risk")],
+                 [_att("A1", "W1", "paper.pdf", digest)])
+    res = zi.api_matches(idx, pdf_path=pdf)
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["key"] == "W1"
+    assert res["matches"][0]["why"] == ["storageHash"]
+    assert res["matches"][0]["certainty"] == "exact"
+
+
+def test_api_matches_hash_beats_a_renamed_file(tmp_path):
+    """Content identity survives renaming — the key the sqlite path lacks."""
+    pdf = tmp_path / "MyOwnName-2024.pdf"
+    pdf.write_bytes(b"%PDF-1.4 body")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Totally Different Recorded Title")],
+                 [_att("A1", "W1", "original-publisher-name.pdf", digest)])
+    res = zi.api_matches(idx, title="Totally Different Recorded Title", pdf_path=pdf)
+    assert res["matches"][0]["key"] == "W1"
+
+
+def test_api_matches_doi_exact():
+    idx = _index([_work("W1", "T", doi="10.1111/1467-9965.00068")])
+    res = zi.api_matches(idx, doi="10.1111/1467-9965.00068")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["doi"]
+
+
+def test_api_matches_doi_is_case_insensitive():
+    idx = _index([_work("W1", "T", doi="10.1111/ABC")])
+    assert zi.api_matches(idx, doi="10.1111/abc")["verdict"] == "match"
+
+
+def test_api_matches_creator_year_title():
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+                         first_author="Artzner")
+    assert res["verdict"] == "match"
+
+
+def test_api_matches_wrong_author_does_not_match():
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+                         first_author="Delbaen")
+    assert res["verdict"] == "none"
+
+
+def test_api_matches_empty_library_is_none_not_unchecked():
+    """A clean negative and a lookup that could not run are different answers."""
+    res = zi.api_matches(_index(), title="Some Long Distinctive Title Here",
+                         first_author="Nobody")
+    assert res["verdict"] == "none"
+    assert "creator-year-title" in res["consulted"]
+
+
+def test_api_matches_no_usable_key_is_unchecked():
+    res = zi.api_matches(_index([_work("W1", "T")]))
+    assert res["verdict"] == "unchecked"
+    assert res["consulted"] == []
+    assert res["skipped"]
+
+
+def test_api_matches_short_title_is_skipped_not_matched():
+    idx = _index([_work("W1", "On Growth", "1950", ("Solow",))])
+    res = zi.api_matches(idx, title="On Growth", first_author="Solow")
+    assert res["verdict"] == "unchecked"
+    assert any("too short" in s for s in res["skipped"])
+
+
+def test_api_matches_reports_missing_file_on_the_work():
+    """The present-but-no-file case is what `attach` exists to repair."""
+    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
+    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+                         first_author="Kurz")
+    assert res["matches"][0]["has_file"] is False
+
+
+def test_api_matches_linked_url_does_not_count_as_a_stored_file():
+    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))],
+                 [_att("A1", "W1", "", None, "text/html", "linked_url")])
+    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+                         first_author="Kurz")
+    assert res["matches"][0]["has_file"] is False
+
+
+def test_filename_hints_parses_surnames_and_year():
+    assert zi._filename_hints("Afriat1967IER-Afriat1967.pdf") == (["afriat"], "1967")
+    names, year = zi._filename_hints("BeraudNuma2024-Cournot-ch4.pdf")
+    assert names == ["beraud", "numa"] and year == "2024"
+
+
+def test_filename_hints_without_a_year():
+    names, year = zi._filename_hints("Bewley-Bewley2002.pdf")
+    assert year is None and "bewley" in names
+
+
+# --------------------------------------------------------------------------
+# corroborate(): a scraped identifier often belongs to a work the document
+# CITES. Resolving it returns clean, confident, wrong metadata.
+# --------------------------------------------------------------------------
+
+
+def test_corroborate_accepts_metadata_present_in_the_document():
+    doc = ("Mathematical Finance, Vol. 9, No. 3\n"
+           "COHERENT MEASURES OF RISK\nPHILIPPE ARTZNER, FREDDY DELBAEN")
+    out = zi.corroborate({"title": "Coherent Measures of Risk",
+                          "authors": ["Artzner, Philippe"]}, doc)
+    assert out["confidence"] == "corroborated"
+    assert out["first_author_found"] is True
+
+
+def test_corroborate_rejects_a_cited_works_metadata():
+    """The real failure: a Cottle PDF whose scraped DOI resolved to Albers."""
+    doc = ("The Basic George B. Dantzig\nRichard W. Cottle\n"
+           "Stanford University, 2012\nA memoir of linear programming")
+    out = zi.corroborate({"title": "Ronald Graham: laying the foundations of "
+                                   "online optimization",
+                          "authors": ["Albers, Susanne"]}, doc)
+    assert out["confidence"] == "contradicted"
+    assert "cited work" in out["reason"]
+
+
+def test_corroborate_flags_partial_agreement_as_weak():
+    doc = "Richard W. Cottle\nStanford\nsome unrelated running text here"
+    out = zi.corroborate({"title": "A Completely Different Title Altogether",
+                          "authors": ["Cottle, Richard"]}, doc)
+    assert out["confidence"] == "weak"
+
+
+def test_corroborate_without_text_is_unchecked_not_a_pass():
+    out = zi.corroborate({"title": "Anything", "authors": ["X, Y"]}, "")
+    assert out["confidence"] == "unchecked"
+
+
+def test_corroborate_is_accent_insensitive():
+    doc = "Ghouila-Houri, Existence d'une solution\nCRAS 1960"
+    out = zi.corroborate({"title": "Existence d'une solution",
+                          "authors": ["Ghouila-Houri, Alain"]}, doc)
+    assert out["confidence"] in ("corroborated", "weak")
+
+
+def test_index_views_separates_pdf_from_other_stored_files():
+    idx = _index([_work("W1", "T"), _work("W2", "U")],
+                 [_att("A1", "W1", "a.pdf", "d1", "application/pdf"),
+                  _att("A2", "W2", "b.docx", "d2",
+                       "application/vnd.openxmlformats-officedocument"
+                       ".wordprocessingml.document")])
+    v = zi._index_views(idx)
+    assert v["parents_with_pdf"] == {"W1"}
+    assert v["parents_with_file"] == {"W1", "W2"}
+
+
+def test_api_matches_scores_overlap_against_the_library_title():
+    """Extra document text may surface a true match, never manufacture one.
+
+    The denominator is the library title's own tokens, so a bigger bag of
+    document words cannot drag an unrelated item over the threshold.
+    """
+    idx = _index([_work("W1", "Method of Limits in the Theory of Index Numbers",
+                        "1969", ("Afriat",)),
+                  _work("W2", "An Entirely Unrelated Study of Something Else",
+                        "1969", ("Afriat",))])
+    res = zi.api_matches(idx, title="", year="1969", authors=["Afriat"],
+                         text="MethodOfLimits Index Numbers method of limits "
+                              "in the theory of index numbers")
+    assert [m["key"] for m in res["matches"]] == ["W1"]
+
+
+def test_api_matches_text_alone_is_enough_when_pdfinfo_title_is_junk():
+    """The real audit defect: pdfinfo reads 'PII: 0014-2921(69)90001-4'."""
+    idx = _index([_work("W1", "Methods of choosing equipment at "
+                              "Electricite de France", "1969", ("Bessiere",))])
+    junk = "PII: 0014-2921(69)90001-4"
+    res = zi.api_matches(idx, title=junk, year="1969", authors=["Bessiere"],
+                         text="Methods of choosing equipment at Electricite "
+                              "de France")
+    assert res["verdict"] == "match"
+
+
+def test_api_matches_no_title_and_no_text_is_unchecked():
+    idx = _index([_work("W1", "Anything At All Here", "1969", ("Afriat",))])
+    res = zi.api_matches(idx, year="1969", authors=["Afriat"])
+    assert res["verdict"] == "unchecked"
+    assert any("no title or text" in s for s in res["skipped"])
