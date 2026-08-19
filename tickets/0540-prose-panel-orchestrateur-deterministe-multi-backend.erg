@@ -1,0 +1,121 @@
+%erg 0.1
+Title: prose-panel : orchestrateur déterministe du panel de relecture, multi-backend
+Created: 2026-08-18
+Author: minh
+
+--- log ---
+2026-08-18T16:30Z minh created
+
+--- body ---
+## Context
+
+Le 2026-08-18, sur la MR polycentric_activity#162, le fork `review-pr-prose`
+a lancé ses quatre relecteurs en arrière-plan puis a terminé son tour sur la
+promesse « je synthétise et poste dès leurs retours » — promesse morte à
+l'écriture : un fork clos ne se réveille pas. Les verdicts ont été routés vers
+la session mère qui a synthétisé par chance ; la MR a été fusionnée sans
+aucune revue postée sur la forge. C'est la panne exacte que le skill décrit
+en gras dans son propre texte (« a fork cannot wait on background agents…
+no synthesis runs and no review is ever posted »), déjà produite sous une
+autre forme quand Claude Code 2.1.218 a rendu les forks background par
+défaut (ticket 0250, corrigé par `background: false`). Deuxième occurrence
+de la classe : le flot de contrôle « lancer N relecteurs, attendre le
+dernier, synthétiser, poster » vit dans de la prose interprétée par un
+modèle, dans un runtime dont les défauts de backgrounding ont changé trois
+fois en trois versions.
+
+Décision d'architecture (auteur, 2026-08-18) : sortir le flot de contrôle du
+runtime. **Le script possède l'orchestration, le modèle possède le
+jugement.** Un `wait` POSIX / `concurrent.futures` ne change pas de
+sémantique entre deux releases. Bénéfice second : les sièges deviennent des
+processus headless interchangeables, donc le panel s'ouvre aux agents
+externes — `claude --print`, aider, pi, curl OpenRouter — tous déjà
+installés ou déjà utilisés ailleurs dans le harnais.
+
+**Construction À CÔTÉ, sans toucher à l'existant** (directive auteur) : le
+nouveau skill et son orchestrateur naissent dans leurs propres répertoires ;
+`review-pr-prose` reste intact et opérationnel pendant toute l'incubation.
+La bascule (adapter `review-pr-prose` en façade, ou repointer `/gaze`) est
+un ticket séparé, après validation sur MR réelle.
+
+## Déclaration de réutilisation (reuse gate, rules/workflow.md)
+
+- `skills/external-peer-review` : backend multi-fournisseur via OpenRouter
+  (OpenAI + Mistral, clés dans ~/.config/keys) — à réutiliser comme siège
+  externe, pas à réécrire.
+- Roster de sièges de `/gaze` (`reviewers.sh` : kind, endpoint, model) —
+  précédent du format de roster ; leçon incluse : délimiteur non-blanc pour
+  les champs vides (rules/coding-bash.md).
+- Gabarits de prompts et contrat de verdict (confidence + severity +
+  verdict) de `skills/review-pr-prose/SKILL.md` — repris tels quels.
+- L'outil Workflow interne offre des barrières déterministes mais reste
+  otage du même runtime et ne peut pas appeler aider/pi : écarté pour cela.
+
+## Relevant files
+
+- `skills/review-pr-prose/SKILL.md` — contrat actuel (panel, verdicts,
+  rounds, post) ; NE PAS MODIFIER dans ce ticket.
+- `skills/prose-panel/SKILL.md` — nouveau skill-façade (à créer) : composer
+  le roster, appeler l'orchestrateur, relayer la synthèse.
+- `scripts/prose_panel.py` — orchestrateur (à créer).
+- `skills/prose-panel/roster.toml` — sièges par défaut (à créer).
+- `skills/external-peer-review/` — recette OpenRouter à réutiliser.
+
+## Actions
+
+1. `scripts/prose_panel.py` (Python 3.10+, argparse, logging) :
+   résout la MR (`gh`), prépare un worktree jetable, instancie un prompt
+   par siège, lance tous les sièges en parallèle (subprocess +
+   `concurrent.futures`), **attend avec timeout par siège**, valide chaque
+   verdict (schéma JSON, un retry sur invalide), synthétise (un appel
+   headless de plus, ou remet le paquet à l'appelant), poste
+   (`gh pr comment --body-file`) sous drapeau `--post`.
+2. Roster TOML : nom, commande (gabarit), modèle, timeout par siège.
+   Backends initiaux : `claude --print --output-format json` (lecture
+   seule) ; faux backend de test ; OpenRouter (recette
+   external-peer-review). aider/pi : sièges déclarables, non requis pour
+   la v1.
+3. Politique de panel partiel : un siège en timeout ou invalide est NOMMÉ
+   dans la synthèse — jamais un « tout va bien » indiscernable de « je
+   n'ai pas regardé ».
+4. Comptage de rounds via la forge (nombre de revues déjà postées + 1),
+   comme le skill actuel.
+5. `skills/prose-panel/SKILL.md` : façade fine — composer le roster selon
+   la revue visée (jugement du modèle), appeler le script, relayer.
+   Description conforme (première phrase non thématisée) ; frontmatter
+   entièrement quoté.
+6. `make skills-catalog` après création du skill.
+
+## Test
+
+- Rouge d'abord : test d'intégration qui lance l'orchestrateur avec trois
+  faux backends — un qui rend un verdict JSON en boîte, un qui pend
+  (déclenche le timeout), un qui rend du bruit (déclenche le retry puis
+  l'invalidation) — par VRAI sous-processus (jamais source-in-shell,
+  rules/coding-bash.md § BASH_ENV) ; asserte : synthèse produite, siège
+  pendu nommé, siège invalide nommé, code retour correct.
+
+## Verification
+
+- [ ] `prose_panel.py --roster <test>` : les trois faux sièges produisent
+      la synthèse partielle attendue, échecs nommés.
+- [ ] Run réel sur une MR de test avec un siège `claude --print` : verdict
+      JSON valide collecté, synthèse postée par `gh` (puis dépubliée).
+- [ ] `review-pr-prose` inchangé au diff près de zéro ligne.
+- [ ] `make check` du harnais vert ; catalogue régénéré sans dérive.
+
+## Invariants
+
+- `skills/review-pr-prose/` : zéro modification dans ce ticket.
+- `/gaze` continue d'invoquer `review-pr-prose` ; aucune bascule ici.
+- Aucun secret en clair : clés lues depuis ~/.config/keys à l'exécution.
+- Le script ne dépend d'aucun comportement de backgrounding du runtime :
+  tout parallélisme est du parallélisme de processus.
+
+## Exit criteria
+
+- [ ] Orchestrateur + roster + skill-façade mergés, tests verts.
+- [ ] Une exécution réelle de bout en bout documentée dans le journal du
+      ticket (MR, sièges, durée, synthèse postée).
+- [ ] Ticket de bascule créé (façade ou repointage /gaze + retrait du
+      lancement de panel dans review-pr-prose), Blocked-by celui-ci.
