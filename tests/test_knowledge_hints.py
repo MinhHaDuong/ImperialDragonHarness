@@ -291,7 +291,16 @@ def test_output_is_declarative_not_imperative(tmp_path):
 
 
 def test_scalar_terms_string_is_ignored_not_iterated(tmp_path):
-    """`terms = "Cournot"` is iterable: per-character, a lone `o` would fire."""
+    """`terms = "Cournot"` is iterable: per-character, a lone `o` would fire.
+
+    Asserted at the function as well as end to end: the end-to-end form alone
+    passes for the wrong reason under the obvious mutation, because a build that
+    iterates strings also crashes on the `None` of an absent `paths`, and the
+    empty output of a crash is indistinguishable from the empty output of a
+    guard doing its job.
+    """
+    assert _module()._str_list("Cournot") == []
+    assert _module()._str_list(["a", "", "  ", 3]) == ["a"]
     root = project(tmp_path, manifest=MANIFEST.replace(
         'terms   = ["Cournot", "Handbook"]', 'terms   = "Cournot"'))
     assert prompt(root, "something with an o in it") == ""
@@ -300,8 +309,12 @@ def test_scalar_terms_string_is_ignored_not_iterated(tmp_path):
 def test_multiline_summary_stays_one_line(tmp_path):
     root = project(tmp_path, manifest=MANIFEST.replace(
         'summary = "History', 'summary = """line one\nline two\nline three"""\nunused = "History'))
-    body = [ln for ln in catalog(root).splitlines() if ln.startswith("- ")]
-    assert len(body) == 1, f"multi-line summary rendered {len(body)} lines"
+    # Counting only lines that start with "- " is what made the first version
+    # of this test vacuous: the second and third physical lines of a multi-line
+    # summary carry no prefix, so they were invisible to the very assertion
+    # meant to catch them. Count every line instead.
+    got = catalog(root).splitlines()
+    assert len(got) == 2, f"catalog rendered {len(got)} lines, want header + 1"
 
 
 def test_hint_count_is_capped_and_says_so(tmp_path):
