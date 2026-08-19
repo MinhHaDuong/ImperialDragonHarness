@@ -1463,11 +1463,13 @@ def api_matches(idx: dict[str, Any], *, doi: str | None = None,
     elif not doi:
         skipped.append("doi (none supplied)")
 
-    if not matches and pdf_path:
+    if not matches and pdf_path and pdf_path.name:
         consulted.append("filename")
         for a in v["by_filename"].get(pdf_path.name, []):
             if a.get("parent"):
                 emit(a["parent"], "filename", "strong", a)
+    elif not matches:
+        skipped.append("filename: no PDF name")
 
     if not matches and (title or text):
         toks = _title_tokens(title) | _title_tokens(text)
@@ -1534,6 +1536,30 @@ def api_matches(idx: dict[str, Any], *, doi: str | None = None,
             "source": "web-api-index", "index_fetched": idx.get("fetched")}
 
 
+def _surname_in_text(surname: str, text: str) -> bool:
+    """Is the surname present as a whole word (or run of whole words)?
+
+    A bare substring test against punctuation-stripped text matches "Li" inside
+    "published" and "Ng" inside "programming", so a document that contradicts
+    the resolved record reads as partial agreement — the one verdict this check
+    exists to prevent. Whole words are required; consecutive ones are re-joined
+    so a spaced name ("van Neumann"), whose key drops the spaces, still hits.
+    `text` is expected accent-stripped and lowercased, as _name_key leaves it.
+    """
+    if not surname:
+        return False
+    words = re.findall(r"[a-z]+", text)
+    for i in range(len(words)):
+        acc = ""
+        for w in words[i:i + 4]:
+            acc += w
+            if acc == surname:
+                return True
+            if len(acc) >= len(surname):
+                break
+    return False
+
+
 def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
     """Does the metadata a resolver returned actually describe *this* document?
 
@@ -1555,10 +1581,15 @@ def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
         return {"confidence": "unchecked",
                 "reason": "no document text or no resolved title"}
     toks = _title_tokens(title)
+    if not toks:
+        # Nothing distinctive to compare, so nothing was checked. Returning the
+        # strongest negative here accuses the resolver on no evidence.
+        return {"confidence": "unchecked",
+                "reason": "resolved title carries no distinctive words to check"}
     hits = sum(1 for t in toks if t in re.sub(r"[^a-z0-9 ]", " ", text).split())
-    title_ratio = hits / len(toks) if toks else 0.0
+    title_ratio = hits / len(toks)
     surname = _name_key(authors[0].split(",")[0]) if authors else ""
-    author_ok = bool(surname) and surname in flat
+    author_ok = _surname_in_text(surname, text)
     if title_ratio >= 0.6 and (author_ok or not surname):
         conf = "corroborated"
     elif title_ratio >= 0.6 or author_ok:
@@ -1687,12 +1718,26 @@ def _filename_hints(name: str) -> tuple[list[str], str | None]:
     return [n for n in names if len(n) > 2], year
 
 
+def _pdf_title(pdf: Path) -> str:
+    """The container's recorded Title, junk filtered out.
+
+    pdfinfo reads container metadata, pdftotext reads the text layer; they are
+    independent. Gating the first on the second throws the Title away on every
+    scanned or OCR-less file — routine material in a staging folder, and
+    precisely the case where the text layer has nothing else to offer.
+    """
+    try:
+        title = pdfinfo(pdf).get("Title", "") or ""
+    except Exception:
+        return ""
+    return "" if title.lower().endswith(".pdf") else title
+
+
 def audit_one(path: Path, idx: dict[str, Any]) -> dict[str, Any]:
     """Reconcile one staged file against the library index."""
-    body = _pdf_probe_text(path) if path.suffix.lower() == ".pdf" else ""
-    title = (pdfinfo(path).get("Title", "") or "") if body else ""
-    if title.lower().endswith(".pdf"):
-        title = ""
+    is_pdf = path.suffix.lower() == ".pdf"
+    body = _pdf_probe_text(path) if is_pdf else ""
+    title = _pdf_title(path) if is_pdf else ""
     # The filename slug carries the author's own naming intent; split camelCase
     # so "MethodOfLimitsIndexNumbers" becomes words a title can match.
     slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
@@ -1738,10 +1783,28 @@ def cmd_audit(args: argparse.Namespace) -> int:
         sys.stdout.write("\n")
         return 1
     root = Path(args.directory)
+    if not root.is_dir():
+        # Every other subcommand degrades to structured JSON and rc 1; a
+        # mistyped path should not be the one that prints a traceback.
+        json.dump({"error": f"not a directory: {root}", "verdict": "unchecked"},
+                  sys.stdout)
+        sys.stdout.write("\n")
+        return 1
     pats = args.ext or [".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"]
     files = sorted(p for p in root.iterdir()
                    if p.is_file() and p.suffix.lower() in pats)
-    rows = [audit_one(p, idx) for p in files]
+    rows: list[dict[str, Any]] = []
+    for p in files:
+        try:
+            rows.append(audit_one(p, idx))
+        except Exception as exc:
+            # pdfinfo and pdftotext run under a 30 s timeout and a corrupt file
+            # makes them fail; losing the other 288 rows, the JSON, and --out
+            # to that is the expensive outcome. A row saying so keeps the batch.
+            rows.append({"file": p.name, "verdict": "error", "error": str(exc),
+                         "zotero_key": None, "zotero_title": None,
+                         "why": None, "certainty": None,
+                         "consulted": [], "skipped": []})
     summary: dict[str, int] = {}
     for r in rows:
         summary[r["verdict"]] = summary.get(r["verdict"], 0) + 1
@@ -1749,7 +1812,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
                "work_present_with_file": "nothing; report the second copy",
                "work_present_no_file": "attach --parent <key> (never inject)",
                "ambiguous": "look: weak hit, neither present nor absent",
-               "absent": "inject"}
+               "absent": "inject",
+               "error": "unreadable; look at it"}
     out = {"directory": str(root.resolve()), "index_fetched": idx["fetched"],
            "library_works": len(idx["works"]),
            "library_attachments": len(idx["attachments"]),
@@ -1849,7 +1913,7 @@ def main() -> int:
     pa = sub.add_parser("audit",
                         help="reconcile a staging directory against the "
                              "library: identical / present-with-file / "
-                             "present-no-file / absent")
+                             "present-no-file / ambiguous / absent")
     pa.add_argument("directory")
     pa.add_argument("--out", help="write the full per-file report to this path")
     pa.add_argument("--ext", nargs="*", help="extensions to audit "

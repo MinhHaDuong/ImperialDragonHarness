@@ -7,6 +7,7 @@ built with the minimal slice of Zotero's schema the query touches.
 
 import hashlib
 import importlib.util
+import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -1319,3 +1320,126 @@ def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     assert zi.audit_one(pdf, idx)["verdict"] == "identical"
+
+
+# --------------------------------------------------------------------------
+# Round-1 review fixes: a batch must survive one bad file, a mistyped path
+# must not traceback, and the two match cascades must report the same split.
+# --------------------------------------------------------------------------
+
+
+def _audit_args(tmp_path, directory, **kw):
+    import argparse
+
+    return argparse.Namespace(
+        directory=str(directory), out=kw.get("out"), ext=None, refresh=False,
+        user_id="1", api_key="k")
+
+
+def test_cmd_audit_missing_directory_is_a_json_error_not_a_traceback(
+        tmp_path, monkeypatch, capsys):
+    """A mistyped path degrades like every other subcommand, rc 1 + JSON."""
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path / "nope"))
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "error" in out
+
+
+def test_cmd_audit_file_instead_of_directory_is_a_json_error(
+        tmp_path, monkeypatch, capsys):
+    f = tmp_path / "one.pdf"
+    f.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    assert zi.cmd_audit(_audit_args(tmp_path, f)) == 1
+    assert "error" in json.loads(capsys.readouterr().out)
+
+
+def test_cmd_audit_one_unreadable_file_does_not_abort_the_batch(
+        tmp_path, monkeypatch, capsys):
+    """Losing 288 rows because file 3 timed out is the expensive failure."""
+    for n in ("a.pdf", "boom.pdf", "c.pdf"):
+        (tmp_path / n).write_bytes(b"%PDF-1.4")
+    out = tmp_path / "report.json"
+
+    def flaky(path, idx):
+        if path.name == "boom.pdf":
+            raise RuntimeError("pdftotext timed out")
+        return {"file": path.name, "verdict": "absent", "zotero_key": None,
+                "zotero_title": None, "why": None, "certainty": None,
+                "consulted": ["creator-year-title"], "skipped": []}
+
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    monkeypatch.setattr(zi, "audit_one", flaky)
+    rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path, out=str(out)))
+    assert rc == 0
+    report = json.loads(out.read_text())
+    assert len(report["rows"]) == 3
+    bad = [r for r in report["rows"] if r["file"] == "boom.pdf"][0]
+    assert bad["verdict"] == "error"
+    assert "timed out" in bad["error"]
+    assert report["summary"]["absent"] == 2
+    assert "error" in report["actions"]
+
+
+def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
+        tmp_path, monkeypatch):
+    """pdfinfo reads container metadata; an empty text layer says nothing about it."""
+    pdf = tmp_path / "Artzner1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo",
+                        lambda p: {"Title": "Coherent Measures of Risk"})
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    row = zi.audit_one(pdf, idx)
+    assert row["verdict"] == "work_present_no_file"
+    assert row["zotero_key"] == "W1"
+
+
+def test_audit_one_survives_a_failing_pdfinfo(tmp_path, monkeypatch):
+    pdf = tmp_path / "Any1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+
+    def boom(p):
+        raise RuntimeError("pdfinfo timed out")
+
+    monkeypatch.setattr(zi, "pdfinfo", boom)
+    assert zi.audit_one(pdf, _index())["verdict"] == "absent"
+
+
+def test_corroborate_short_surname_does_not_match_inside_a_word():
+    """`Li` inside `linear`/`published` is not evidence the author is Li."""
+    text = ("Published in a linear programming volume, this article "
+            "concerns entirely unrelated matters of policy analysis.")
+    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
+                          "authors": ["Li, Wei"]}, text)
+    assert out["first_author_found"] is False
+    assert out["confidence"] == "contradicted"
+
+
+def test_corroborate_still_finds_a_surname_that_is_really_there():
+    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
+                          "authors": ["Li, Wei"]},
+                         "Quantum entanglement of distant photons\nby Wei Li\n")
+    assert out["first_author_found"] is True
+    assert out["confidence"] == "corroborated"
+
+
+def test_corroborate_title_with_no_usable_tokens_is_unchecked():
+    """Nothing was checked, so the strongest negative verdict is wrong."""
+    out = zi.corroborate({"title": "Is On At", "authors": ["Smith, J"]},
+                         "an entirely unrelated document about turbines")
+    assert out["confidence"] == "unchecked"
+    assert out["reason"]
+
+
+def test_api_matches_reports_the_filename_key_as_skipped_without_a_pdf():
+    """The sqlite cascade says so; the API cascade must report the same split."""
+    idx = _index([_work("W1", "Something Else Entirely Here")])
+    res = zi.api_matches(idx, title="A Totally Unrelated Long Title",
+                         first_author="Nobody")
+    assert any("filename" in s for s in res["skipped"])
