@@ -1,9 +1,9 @@
 ---
 name: verify-gate
-description: Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller.
+description: "Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <pr-number>
+argument-hint: "<pr-number>"
 context: fork
 # Foreground: /gaze phase 6 invokes this and must parse its verdict block before
 # branching. Claude Code 2.1.218 made `context: fork` skills background by

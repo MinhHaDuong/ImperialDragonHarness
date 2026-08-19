@@ -5,66 +5,56 @@
 
 set -euo pipefail
 
-SKILLS_DIR="${1:-.}/skills"
+# Exported, not passed as argv: the python below is a quoted heredoc on stdin,
+# so it has no $1. The previous version read sys.argv[1] and silently fell
+# back to ./skills, which made the directory argument dead code.
+export SKILLS_DIR="${1:-.}/skills"
 
-# Python script to extract YAML frontmatter
+# The frontmatter is parsed as YAML, not pattern-matched. A regex that pulls
+# `description:` out and strips the surrounding quotes accepts a document
+# PyYAML rejects, so its "all clear" is indistinguishable from "I could not
+# look" — that is how four unparseable SKILL.md files went unnoticed
+# (ticket 0515). A quoted value also has to come out *unquoted* here, and a
+# textual extraction gets that wrong in the other direction: it copies the
+# quotes straight into the README table.
 python3 << 'EOF'
-import sys
 import os
 import re
+import sys
 from pathlib import Path
 
-skills_dir = sys.argv[1] if len(sys.argv) > 1 else "./skills"
+import yaml
 
-# Find all SKILL.md files
-skill_files = sorted(Path(skills_dir).glob("*/SKILL.md"))
+skills_dir = os.environ["SKILLS_DIR"]
+
+FRONTMATTER = re.compile(r"\A---\n(.*?)\n---", re.DOTALL)
 
 catalog = []
 
-for skill_file in skill_files:
+for skill_file in sorted(Path(skills_dir).glob("*/SKILL.md")):
+    match = FRONTMATTER.match(skill_file.read_text())
+    if not match:
+        continue
+
     try:
-        content = skill_file.read_text()
+        meta = yaml.safe_load(match.group(1))
+    except yaml.YAMLError as exc:
+        print(f"Warning: {skill_file}: invalid YAML frontmatter: {exc}", file=sys.stderr)
+        continue
 
-        # Extract YAML frontmatter between --- markers
-        match = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
-        if not match:
-            continue
+    if not isinstance(meta, dict):
+        continue
 
-        frontmatter = match.group(1)
+    name, description = meta.get("name"), meta.get("description")
+    if not isinstance(name, str) or not isinstance(description, str):
+        continue
 
-        # Extract name field
-        name_match = re.search(r'^name:\s*(\S+)', frontmatter, re.MULTILINE)
-        if not name_match:
-            continue
-        name = name_match.group(1)
+    # Collapse the line breaks of a folded/multi-line description into one row.
+    catalog.append((name, " ".join(description.split())))
 
-        # Extract description field (multi-line safe)
-        # Matches: description: <text> until next field or end
-        desc_match = re.search(
-            r'^description:\s*(.+?)(?=\n\w+:|$)',
-            frontmatter,
-            re.MULTILINE | re.DOTALL
-        )
-        if not desc_match:
-            continue
+catalog.sort(key=lambda entry: entry[0])
 
-        description = desc_match.group(1).strip()
-        # Clean up line breaks and extra whitespace in multi-line descriptions
-        description = ' '.join(description.split())
-
-        catalog.append((name, description))
-
-    except Exception as e:
-        print(f"Warning: Failed to parse {skill_file}: {e}", file=sys.stderr)
-
-# Sort alphabetically by name
-catalog.sort(key=lambda x: x[0])
-
-# Emit markdown table rows
 for name, description in catalog:
-    # Escape pipes in description
-    description = description.replace('|', '\\|')
-    print(f"| `/{name}` | {description} |")
-
+    # Escape pipes so a description cannot open a new table column
+    print("| `/{}` | {} |".format(name, description.replace("|", "\\|")))
 EOF
-

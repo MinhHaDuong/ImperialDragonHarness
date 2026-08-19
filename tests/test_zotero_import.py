@@ -7,8 +7,10 @@ built with the minimal slice of Zotero's schema the query touches.
 
 import hashlib
 import importlib.util
+import json
 import sqlite3
 import sys
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -1006,3 +1008,718 @@ def test_load_env_file_parses_and_ignores_comments(tmp_path):
 
 def test_load_env_file_missing_returns_empty(tmp_path):
     assert zi.load_env_file(tmp_path / "absent.env") == {}
+
+
+# --- enrich: filling fields on an item that already exists ------------------
+#
+# The HTTP round-trip is thin and needs the network; the decision of WHAT to
+# write is where the mistakes live, so that is what these lock down. Each
+# guard gets a red case, because a guard nobody has seen refuse is a guard
+# nobody has tested.
+
+def _item(**over):
+    base = {"key": "AAAA1111", "itemType": "journalArticle", "version": 7,
+            "title": "Optimum Utilization of the Transportation System",
+            "DOI": "", "url": ""}
+    base.update(over)
+    return base
+
+
+def test_plan_enrichment_fills_an_empty_field():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"DOI": "10.2307/1907301"}, "Optimum Utilization")
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_when_title_does_not_match():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"DOI": "10.2307/1907301"}, "Theory of Games")
+    assert patch == {}
+    assert "wrong item" in refused[0]
+
+
+def test_plan_enrichment_refuses_when_target_has_no_title():
+    """'Could not check' must not read as 'checked and fine'."""
+    patch, refused = zi.plan_enrichment(_item(title=""), {"DOI": "10.1/x"}, "Any")
+    assert patch == {}
+    assert "refusing to write blind" in refused[0]
+
+
+def test_plan_enrichment_skips_a_field_already_correct():
+    """A no-op write still bumps the version and shows up as an edit."""
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.2307/1907301"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization")
+    assert patch == {}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_to_replace_a_different_value():
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.9999/wrong"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization")
+    assert patch == {}
+    assert "--overwrite" in refused[0]
+
+
+def test_plan_enrichment_replaces_a_different_value_when_arbitrated():
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.9999/wrong"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization", overwrite=True)
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_a_field_the_type_does_not_own():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"doi": "10.2307/1907301"}, "Optimum Utilization")
+    assert patch == {}
+    assert "case-sensitive" in refused[0]
+
+
+def test_plan_enrichment_writes_the_good_fields_and_refuses_the_rest():
+    """One bad field must not block the others, nor pass unreported."""
+    patch, refused = zi.plan_enrichment(
+        _item(url="https://kept.example"),
+        {"DOI": "10.2307/1907301", "url": "https://other.example"},
+        "Optimum Utilization")
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert len(refused) == 1 and "url" in refused[0]
+
+
+def test_parse_set_splits_on_first_equals_only():
+    assert zi.parse_set(["url=https://x.example/a=b"]) == {
+        "url": "https://x.example/a=b"}
+
+
+def test_parse_set_rejects_a_pair_without_equals():
+    with pytest.raises(SystemExit):
+        zi.parse_set(["DOI"])
+
+
+def test_enrich_status_zero_when_everything_landed():
+    assert zi.enrich_status([{"status": "written"},
+                             {"status": "nothing to write"}], False) == 0
+
+
+def test_enrich_status_nonzero_on_a_refusal():
+    """Declining to act and acting must not share an exit code."""
+    assert zi.enrich_status(
+        [{"status": "nothing to write", "refused": ["DOI: already holds ..."]}],
+        False) == 1
+
+
+def test_enrich_status_nonzero_on_readback_mismatch():
+    assert zi.enrich_status([{"status": "readback mismatch"}], False) == 1
+
+
+def test_enrich_status_dry_run_ignores_the_would_patch_status():
+    assert zi.enrich_status([{"status": "would patch at version 7"}], True) == 0
+# --------------------------------------------------------------------------
+# Web-API index: dedup on a machine with no Zotero desktop database.
+#
+# The defect these guard: on such a machine every match returned "unchecked",
+# and a backfill that treats "unchecked" as "absent" re-imports the library.
+# --------------------------------------------------------------------------
+
+
+def _index(works=None, attachments=None):
+    return {"schema": zi.INDEX_SCHEMA, "user": "1", "fetched": "2026-08-19T00:00:00Z",
+            "works": works or [], "attachments": attachments or []}
+
+
+def _work(key, title, date="1999", creators=("Artzner",), doi=""):
+    return {"key": key, "itemType": "journalArticle", "title": title,
+            "date": date, "DOI": doi, "ISBN": "", "url": "", "extra": "",
+            "collections": [], "creators": list(creators)}
+
+
+def _att(key, parent, filename="f.pdf", md5=None, ctype="application/pdf",
+         link="imported_file"):
+    return {"key": key, "parent": parent, "filename": filename, "md5": md5,
+            "contentType": ctype, "linkMode": link}
+
+
+def test_api_matches_content_hash_is_exact(tmp_path):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4 content")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Coherent Measures of Risk")],
+                 [_att("A1", "W1", "paper.pdf", digest)])
+    res = zi.api_matches(idx, pdf_path=pdf)
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["key"] == "W1"
+    assert res["matches"][0]["why"] == ["storageHash"]
+    assert res["matches"][0]["certainty"] == "exact"
+
+
+def test_api_matches_hash_beats_a_renamed_file(tmp_path):
+    """Content identity survives renaming — the key the sqlite path lacks."""
+    pdf = tmp_path / "MyOwnName-2024.pdf"
+    pdf.write_bytes(b"%PDF-1.4 body")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Totally Different Recorded Title")],
+                 [_att("A1", "W1", "original-publisher-name.pdf", digest)])
+    res = zi.api_matches(idx, title="Totally Different Recorded Title", pdf_path=pdf)
+    assert res["matches"][0]["key"] == "W1"
+
+
+def test_api_matches_doi_exact():
+    idx = _index([_work("W1", "T", doi="10.1111/1467-9965.00068")])
+    res = zi.api_matches(idx, doi="10.1111/1467-9965.00068")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["doi"]
+
+
+def test_api_matches_doi_is_case_insensitive():
+    idx = _index([_work("W1", "T", doi="10.1111/ABC")])
+    assert zi.api_matches(idx, doi="10.1111/abc")["verdict"] == "match"
+
+
+def test_api_matches_creator_year_title():
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+                         first_author="Artzner")
+    assert res["verdict"] == "match"
+
+
+def test_api_matches_wrong_author_does_not_match():
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+                         first_author="Delbaen")
+    assert res["verdict"] == "none"
+
+
+def test_api_matches_empty_library_is_none_not_unchecked():
+    """A clean negative and a lookup that could not run are different answers."""
+    res = zi.api_matches(_index(), title="Some Long Distinctive Title Here",
+                         first_author="Nobody")
+    assert res["verdict"] == "none"
+    assert "creator-year-title" in res["consulted"]
+
+
+def test_api_matches_no_usable_key_is_unchecked():
+    res = zi.api_matches(_index([_work("W1", "T")]))
+    assert res["verdict"] == "unchecked"
+    assert res["consulted"] == []
+    assert res["skipped"]
+
+
+def test_api_matches_short_title_is_skipped_not_matched():
+    idx = _index([_work("W1", "On Growth", "1950", ("Solow",))])
+    res = zi.api_matches(idx, title="On Growth", first_author="Solow")
+    assert res["verdict"] == "unchecked"
+    assert any("too short" in s for s in res["skipped"])
+
+
+def test_api_matches_reports_missing_file_on_the_work():
+    """The present-but-no-file case is what `attach` exists to repair."""
+    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
+    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+                         first_author="Kurz")
+    assert res["matches"][0]["has_file"] is False
+
+
+def test_api_matches_linked_url_does_not_count_as_a_stored_file():
+    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))],
+                 [_att("A1", "W1", "", None, "text/html", "linked_url")])
+    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+                         first_author="Kurz")
+    assert res["matches"][0]["has_file"] is False
+
+
+def test_filename_hints_parses_surnames_and_year():
+    assert zi._filename_hints("Afriat1967IER-Afriat1967.pdf") == (["afriat"], "1967")
+    names, year = zi._filename_hints("BeraudNuma2024-Cournot-ch4.pdf")
+    assert names == ["beraud", "numa"] and year == "2024"
+
+
+def test_filename_hints_without_a_year():
+    names, year = zi._filename_hints("Bewley-Bewley2002.pdf")
+    assert year is None and "bewley" in names
+
+
+# --------------------------------------------------------------------------
+# corroborate(): a scraped identifier often belongs to a work the document
+# CITES. Resolving it returns clean, confident, wrong metadata.
+# --------------------------------------------------------------------------
+
+
+def test_corroborate_accepts_metadata_present_in_the_document():
+    doc = ("Mathematical Finance, Vol. 9, No. 3\n"
+           "COHERENT MEASURES OF RISK\nPHILIPPE ARTZNER, FREDDY DELBAEN")
+    out = zi.corroborate({"title": "Coherent Measures of Risk",
+                          "authors": ["Artzner, Philippe"]}, doc)
+    assert out["confidence"] == "corroborated"
+    assert out["first_author_found"] is True
+
+
+def test_corroborate_rejects_a_cited_works_metadata():
+    """The real failure: a Cottle PDF whose scraped DOI resolved to Albers."""
+    doc = ("The Basic George B. Dantzig\nRichard W. Cottle\n"
+           "Stanford University, 2012\nA memoir of linear programming")
+    out = zi.corroborate({"title": "Ronald Graham: laying the foundations of "
+                                   "online optimization",
+                          "authors": ["Albers, Susanne"]}, doc)
+    assert out["confidence"] == "contradicted"
+    assert "cited work" in out["reason"]
+
+
+def test_corroborate_flags_partial_agreement_as_weak():
+    doc = "Richard W. Cottle\nStanford\nsome unrelated running text here"
+    out = zi.corroborate({"title": "A Completely Different Title Altogether",
+                          "authors": ["Cottle, Richard"]}, doc)
+    assert out["confidence"] == "weak"
+
+
+def test_corroborate_without_text_is_unchecked_not_a_pass():
+    out = zi.corroborate({"title": "Anything", "authors": ["X, Y"]}, "")
+    assert out["confidence"] == "unchecked"
+
+
+def test_corroborate_is_accent_insensitive():
+    doc = "Ghouila-Houri, Existence d'une solution\nCRAS 1960"
+    out = zi.corroborate({"title": "Existence d'une solution",
+                          "authors": ["Ghouila-Houri, Alain"]}, doc)
+    assert out["confidence"] in ("corroborated", "weak")
+
+
+def test_index_views_separates_pdf_from_other_stored_files():
+    idx = _index([_work("W1", "T"), _work("W2", "U")],
+                 [_att("A1", "W1", "a.pdf", "d1", "application/pdf"),
+                  _att("A2", "W2", "b.docx", "d2",
+                       "application/vnd.openxmlformats-officedocument"
+                       ".wordprocessingml.document")])
+    v = zi._index_views(idx)
+    assert v["parents_with_pdf"] == {"W1"}
+    assert v["parents_with_file"] == {"W1", "W2"}
+
+
+def test_api_matches_scores_overlap_against_the_library_title():
+    """Extra document text may surface a true match, never manufacture one.
+
+    The denominator is the library title's own tokens, so a bigger bag of
+    document words cannot drag an unrelated item over the threshold.
+    """
+    idx = _index([_work("W1", "Method of Limits in the Theory of Index Numbers",
+                        "1969", ("Afriat",)),
+                  _work("W2", "An Entirely Unrelated Study of Something Else",
+                        "1969", ("Afriat",))])
+    res = zi.api_matches(idx, title="", year="1969", authors=["Afriat"],
+                         text="MethodOfLimits Index Numbers method of limits "
+                              "in the theory of index numbers")
+    assert [m["key"] for m in res["matches"]] == ["W1"]
+
+
+def test_api_matches_text_alone_is_enough_when_pdfinfo_title_is_junk():
+    """The real audit defect: pdfinfo reads 'PII: 0014-2921(69)90001-4'."""
+    idx = _index([_work("W1", "Methods of choosing equipment at "
+                              "Electricite de France", "1969", ("Bessiere",))])
+    junk = "PII: 0014-2921(69)90001-4"
+    res = zi.api_matches(idx, title=junk, year="1969", authors=["Bessiere"],
+                         text="Methods of choosing equipment at Electricite "
+                              "de France")
+    assert res["verdict"] == "match"
+
+
+def test_api_matches_no_title_and_no_text_is_unchecked():
+    idx = _index([_work("W1", "Anything At All Here", "1969", ("Afriat",))])
+    res = zi.api_matches(idx, year="1969", authors=["Afriat"])
+    assert res["verdict"] == "unchecked"
+    assert any("no title or text" in s for s in res["skipped"])
+
+
+# --------------------------------------------------------------------------
+# A title is a phrase, not a vocabulary. Scoring the whole document bag let
+# five ordinary words ("Systems of inequalities involving convex functions")
+# match any paper about linear inequalities — a real Hoffman 1960 paper was
+# filed as a different Hoffman paper at "strong".
+# --------------------------------------------------------------------------
+
+
+def test_title_windows_group_consecutive_lines():
+    wins = zi._title_windows("Some Recent Applications\nof Linear Inequalities\nby Alan Hoffman")
+    joined = [w for w in wins if {"some", "recent", "applications"} <= w]
+    assert joined, "a single line must form a window"
+    assert any({"applications", "linear", "inequalities"} <= w for w in wins), \
+        "consecutive lines must form a window"
+
+
+def test_scattered_vocabulary_is_weak_not_strong():
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    scattered = ("Some recent applications of the theory of linear\n"
+                 "inequalities to extremal combinatorial analysis\n"
+                 "by Alan J. Hoffman\n"
+                 "we consider systems of constraints\n"
+                 "the objective functions are convex\n"
+                 "involving several parameters\n")
+    res = zi.api_matches(idx, title="", year="1960", authors=["Hoffman"],
+                         text=scattered)
+    assert res["matches"], "the candidate should still surface"
+    assert res["matches"][0]["certainty"] == "weak"
+    assert res["verdict"] == "ambiguous"
+
+
+def test_title_on_one_line_is_strong():
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    text = "Systems of inequalities involving convex functions\nby A. J. Hoffman"
+    res = zi.api_matches(idx, title="", year="1957", authors=["Hoffman"], text=text)
+    assert res["matches"][0]["certainty"] == "strong"
+    assert res["verdict"] == "match"
+
+
+def test_front_matter_keeps_only_the_title_block():
+    body = "\n".join(["TITLE LINE", "AUTHOR"] + [f"body line {i}" for i in range(80)])
+    fm = zi._front_matter(body, lines=3)
+    assert fm.splitlines() == ["TITLE LINE", "AUTHOR", "body line 0"]
+
+
+def test_front_matter_drops_blank_lines():
+    assert zi._front_matter("\n\nA\n\n\nB\n", lines=2).splitlines() == ["A", "B"]
+
+
+def test_window_precision_separates_a_title_line_from_a_body_window():
+    """Same recall, different precision — only the title line is strong."""
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    body = ("we consider systems of constraints\n"
+            "the objective functions are convex\n"
+            "involving several unrelated parameters\n")
+    title_line = "Systems of inequalities involving convex functions\n"
+    weak = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=body)
+    strong = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=title_line)
+    assert weak["matches"][0]["certainty"] == "weak"
+    assert strong["matches"][0]["certainty"] == "strong"
+
+
+def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
+    """A weak hit must surface as `ambiguous`, never silently as `absent`."""
+    pdf = tmp_path / "Hoffman1960-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+                        "1957", ("Hoffman",))])
+    monkeypatch.setattr(zi, "_pdf_probe_text",
+                        lambda p: "we consider systems of constraints\n"
+                                  "the objective functions are convex\n"
+                                  "involving several unrelated parameters\n")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    assert zi.audit_one(pdf, idx)["verdict"] == "ambiguous"
+
+
+def test_audit_verdict_absent_when_nothing_fires(tmp_path, monkeypatch):
+    pdf = tmp_path / "Nobody1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "an unrelated document\n")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    row = zi.audit_one(pdf, _index([_work("W1", "Something Else Entirely Here")]))
+    assert row["verdict"] == "absent"
+    assert row["consulted"], "absent must mean 'looked and found nothing'"
+
+
+def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
+    pdf = tmp_path / "Any2020-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4 unique bytes")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _index([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    assert zi.audit_one(pdf, idx)["verdict"] == "identical"
+
+
+# --------------------------------------------------------------------------
+# Round-1 review fixes: a batch must survive one bad file, a mistyped path
+# must not traceback, and the two match cascades must report the same split.
+# --------------------------------------------------------------------------
+
+
+def _audit_args(tmp_path, directory, **kw):
+    import argparse
+
+    return argparse.Namespace(
+        directory=str(directory), out=kw.get("out"), ext=None, refresh=False,
+        user_id="1", api_key="k")
+
+
+def test_cmd_audit_missing_directory_is_a_json_error_not_a_traceback(
+        tmp_path, monkeypatch, capsys):
+    """A mistyped path degrades like every other subcommand, rc 1 + JSON."""
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path / "nope"))
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "error" in out
+
+
+def test_cmd_audit_file_instead_of_directory_is_a_json_error(
+        tmp_path, monkeypatch, capsys):
+    f = tmp_path / "one.pdf"
+    f.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    assert zi.cmd_audit(_audit_args(tmp_path, f)) == 1
+    assert "error" in json.loads(capsys.readouterr().out)
+
+
+def test_cmd_audit_one_unreadable_file_does_not_abort_the_batch(
+        tmp_path, monkeypatch, capsys):
+    """Losing 288 rows because file 3 timed out is the expensive failure."""
+    for n in ("a.pdf", "boom.pdf", "c.pdf"):
+        (tmp_path / n).write_bytes(b"%PDF-1.4")
+    out = tmp_path / "report.json"
+
+    def flaky(path, idx):
+        if path.name == "boom.pdf":
+            raise RuntimeError("pdftotext timed out")
+        return {"file": path.name, "verdict": "absent", "zotero_key": None,
+                "zotero_title": None, "why": None, "certainty": None,
+                "consulted": ["creator-year-title"], "skipped": []}
+
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
+    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    monkeypatch.setattr(zi, "audit_one", flaky)
+    rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path, out=str(out)))
+    assert rc == 0
+    report = json.loads(out.read_text())
+    assert len(report["rows"]) == 3
+    bad = [r for r in report["rows"] if r["file"] == "boom.pdf"][0]
+    assert bad["verdict"] == "error"
+    assert "timed out" in bad["error"]
+    assert report["summary"]["absent"] == 2
+    assert "error" in report["actions"]
+
+
+def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
+        tmp_path, monkeypatch):
+    """pdfinfo reads container metadata; an empty text layer says nothing about it."""
+    pdf = tmp_path / "Artzner1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo",
+                        lambda p: {"Title": "Coherent Measures of Risk"})
+    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    row = zi.audit_one(pdf, idx)
+    assert row["verdict"] == "work_present_no_file"
+    assert row["zotero_key"] == "W1"
+
+
+def test_audit_one_survives_a_failing_pdfinfo(tmp_path, monkeypatch):
+    pdf = tmp_path / "Any1999-x.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+
+    def boom(p):
+        raise RuntimeError("pdfinfo timed out")
+
+    monkeypatch.setattr(zi, "pdfinfo", boom)
+    assert zi.audit_one(pdf, _index())["verdict"] == "absent"
+
+
+def test_corroborate_short_surname_does_not_match_inside_a_word():
+    """`Li` inside `linear`/`published` is not evidence the author is Li."""
+    text = ("Published in a linear programming volume, this article "
+            "concerns entirely unrelated matters of policy analysis.")
+    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
+                          "authors": ["Li, Wei"]}, text)
+    assert out["first_author_found"] is False
+    assert out["confidence"] == "contradicted"
+
+
+def test_corroborate_still_finds_a_surname_that_is_really_there():
+    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
+                          "authors": ["Li, Wei"]},
+                         "Quantum entanglement of distant photons\nby Wei Li\n")
+    assert out["first_author_found"] is True
+    assert out["confidence"] == "corroborated"
+
+
+def test_corroborate_title_with_no_usable_tokens_is_unchecked():
+    """Nothing was checked, so the strongest negative verdict is wrong."""
+    out = zi.corroborate({"title": "Is On At", "authors": ["Smith, J"]},
+                         "an entirely unrelated document about turbines")
+    assert out["confidence"] == "unchecked"
+    assert out["reason"]
+
+
+def test_api_matches_reports_the_filename_key_as_skipped_without_a_pdf():
+    """The sqlite cascade says so; the API cascade must report the same split."""
+    idx = _index([_work("W1", "Something Else Entirely Here")])
+    res = zi.api_matches(idx, title="A Totally Unrelated Long Title",
+                         first_author="Nobody")
+    assert any("filename" in s for s in res["skipped"])
+
+
+# --------------------------------------------------------------------------
+# The API cascade must consult the same identifier keys as the sqlite one.
+# It previously stopped at DOI, so an ISBN/arXiv/handle item on a machine with
+# no desktop client fell through to weaker keys — the silent negative the
+# fallback exists to prevent.
+# --------------------------------------------------------------------------
+
+
+def _work_extra(key, title, extra="", url="", isbn=""):
+    w = _work(key, title)
+    w["extra"], w["url"], w["ISBN"] = extra, url, isbn
+    return w
+
+
+def test_api_matches_isbn_ignores_hyphenation():
+    idx = _index([_work_extra("W1", "A Book", isbn="978-0-262-03384-8")])
+    res = zi.api_matches(idx, isbn="9780262033848")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["isbn"]
+
+
+def test_api_matches_arxiv_from_extra():
+    idx = _index([_work_extra("W1", "A Preprint", extra="arXiv:2401.01234")])
+    res = zi.api_matches(idx, arxiv="2401.01234")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["arxiv"]
+
+
+def test_api_matches_arxiv_from_url():
+    idx = _index([_work_extra("W1", "A Preprint",
+                              url="https://arxiv.org/abs/2401.01234")])
+    assert zi.api_matches(idx, arxiv="2401.01234")["verdict"] == "match"
+
+
+def test_api_matches_handle_accepts_bare_or_full_url():
+    idx = _index([_work_extra("W1", "A Report",
+                              url="https://hdl.handle.net/10419/12345")])
+    for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
+        assert zi.api_matches(idx, handle=supplied)["verdict"] == "match", supplied
+
+
+def test_api_matches_reports_every_identifier_key_it_could_not_use():
+    """`skipped` must name each key, so "found nothing" stays legible."""
+    res = zi.api_matches(_index([_work("W1", "T")]), doi="10.1/x")
+    for label in ("isbn", "arxiv", "handle"):
+        assert any(s.startswith(label) for s in res["skipped"]), label
+
+
+def test_file_md5_matches_a_whole_file_read(tmp_path):
+    p = tmp_path / "big.pdf"
+    p.write_bytes(b"x" * (3 * (1 << 20) + 17))  # spans several chunks
+    assert zi.file_md5(p) == hashlib.md5(p.read_bytes()).hexdigest()
+
+
+def test_api_get_retry_does_not_retry_a_permanent_client_error(monkeypatch):
+    """401/403/404 are answers. Retrying buries the cause in a backoff."""
+    calls = []
+
+    def boom(method, path, key, *a, **kw):
+        calls.append(path)
+        raise urllib.error.HTTPError(path, 403, "Forbidden", {}, None)
+
+    monkeypatch.setattr(zi, "api_request", boom)
+    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
+    with pytest.raises(urllib.error.HTTPError):
+        zi._api_get_retry("/users/1/items", "k")
+    assert len(calls) == 1
+
+
+def test_api_get_retry_does_retry_a_rate_limit(monkeypatch):
+    calls = []
+
+    def flaky(method, path, key, *a, **kw):
+        calls.append(path)
+        if len(calls) < 3:
+            raise urllib.error.HTTPError(path, 429, "Too Many", {}, None)
+        return [{"ok": True}]
+
+    monkeypatch.setattr(zi, "api_request", flaky)
+    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
+    assert zi._api_get_retry("/users/1/items", "k") == [{"ok": True}]
+    assert len(calls) == 3
+
+
+# --------------------------------------------------------------------------
+# corroborate() is now reachable: inject refuses metadata its own PDF denies.
+# --------------------------------------------------------------------------
+
+
+def _pdf_with_text(tmp_path, name, text, monkeypatch):
+    p = tmp_path / name
+    p.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "pdftotext_range", lambda path, a, b: text)
+    return p
+
+
+def test_corroborate_entry_flags_a_cited_works_metadata(tmp_path, monkeypatch):
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    out = zi.corroborate_entry({"title": "Ronald Graham: laying the foundations "
+                                         "of online optimization",
+                                "authors": ["Albers, Susanne"], "pdf": str(pdf)})
+    assert out["confidence"] == "contradicted"
+
+
+def test_corroborate_entry_without_a_pdf_is_unchecked():
+    out = zi.corroborate_entry({"title": "T", "authors": ["A, B"]})
+    assert out["confidence"] == "unchecked"
+
+
+def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
+                                 "online optimization",
+        "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
+    called = []
+    monkeypatch.setattr(zi, "api_request",
+                        lambda *a, **k: called.append(a) or {})
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=False, skip_corroboration=False)
+    rc = zi.cmd_inject(args)
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert not called, "nothing may be created when the document denies it"
+    assert out["error"] == "metadata contradicted by the document"
+
+
+def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
+                                 "online optimization",
+        "authors": ["Albers, Susanne"], "pdf": str(pdf)}]))
+    monkeypatch.setattr(zi, "api_request",
+                        lambda *a, **k: {"successful": {"0": {"key": "ZZZ"}}})
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=False, skip_corroboration=True)
+    assert zi.cmd_inject(args) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["results"][0]["itemKey"] == "ZZZ"
+    assert out["results"][0]["corroboration"] == "contradicted"
+
+
+def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "ok.pdf",
+                         "Coherent Measures of Risk\nPhilippe Artzner\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Coherent Measures of Risk",
+        "authors": ["Artzner, Philippe"], "pdf": str(pdf)}]))
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=True, skip_corroboration=False)
+    assert zi.cmd_inject(args) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["corroboration"][0]["confidence"] == "corroborated"
+    assert out["items"][0]["title"] == "Coherent Measures of Risk"

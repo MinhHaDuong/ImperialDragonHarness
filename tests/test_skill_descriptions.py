@@ -10,6 +10,8 @@ sentence is ratcheted here.
 import re
 from pathlib import Path
 
+import yaml
+
 REPO = Path(__file__).resolve().parents[1]
 
 # Themed lexicon banned from the FIRST sentence. Deliberately excludes words
@@ -24,10 +26,17 @@ THEME_LEXICON = re.compile(
 
 
 def iter_descriptions():
+    # Parsed as YAML, not regexed out and `.strip('"')`ed: the old textual
+    # extraction accepted frontmatter PyYAML rejects, which is how four
+    # unparseable SKILL.md files went unnoticed (ticket 0515). The structural
+    # invariant is ratcheted in tests/test_skill_frontmatter.py; here we just
+    # need the value the way a real consumer sees it.
     for md in sorted((REPO / "skills").glob("*/SKILL.md")):
-        m = re.search(r"^description:\s*(.+)$", md.read_text(), re.MULTILINE)
-        assert m, f"{md}: no description in frontmatter"
-        yield md.parent.name, m.group(1).strip().strip('"')
+        m = re.match(r"\A---\n(.*?)\n---\n", md.read_text(), re.DOTALL)
+        assert m, f"{md}: no `---` frontmatter block"
+        description = yaml.safe_load(m.group(1))["description"]
+        assert isinstance(description, str), f"{md}: description is not a string"
+        yield md.parent.name, description.strip()
 
 
 def first_sentence(desc: str) -> str:

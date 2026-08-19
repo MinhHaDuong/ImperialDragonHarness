@@ -1,9 +1,9 @@
 ---
 name: related-work-note-validate
-description: Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL).
+description: "Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL)."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: <note-file-path>
+argument-hint: "<note-file-path>"
 ---
 
 # Related-work-note validator

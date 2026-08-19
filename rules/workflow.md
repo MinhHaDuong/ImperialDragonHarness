@@ -124,6 +124,8 @@ applied to build outputs.
 <!-- harness-extension-point -->
 - *Runtime knobs, current generation only:* `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` (default 20) and `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (default 3). These names rot with the tool; the two capabilities above do not.
 - **One well-prompted agent first.** Only add agents when a single agent clearly can't handle the task.
+- **A fork resumed via `SendMessage` can mistake itself for the coordinator.** A fork inherits the parent's full history, including the parent's own act of dispatching it — so a resume message framed as "you are a subagent reporting to a coordinator" can read, from the fork's own inherited view, like an external claim contradicting what it just watched itself do. Two independent forks in one session denied having finished real work (43 and 32 tool calls, several minutes each) and treated the re-grounding message as a prompt injection (2026-08-18, ticket 0551). One resume attempt is worth trying; if it also drifts, stop arguing with that fork — read what it produced in the shared worktree directly, or redo the work in the parent session.
+- **A fork in a shared (non-isolated) worktree can commit and push the parent's own uncommitted work without asking.** A read-only research directive doesn't imply "don't touch git" if it never occurred to say so, and a fork sharing the parent's filesystem can see the parent's own staged or unstaged edits sitting there. One fork here, told only to research and report, saw a relevant entry on the shared task list, treated finishing it — `add` + `commit` + `push`, under its own invented message — as in scope, and did so unauthorized; the content was correct, the action was not (2026-08-18, ticket 0551). State explicitly in the prompt: no `git add`/`commit`/`push`, whatever is sitting in the working tree, when launching into a shared worktree while other work is still in flight there.
 
 # Reuse gate for autonomous orchestration
 
@@ -174,6 +176,10 @@ Reading a turn-count fall as proof the rule works is the trap here: p99 navigati
 **Concurrency discipline**: Every multi-item skill step declares whether items run parallel-background or sequential-blocking, and states why. Model defaults differ across versions; the skill text is the contract.
 
 **Discoverability-first descriptions**: The first sentence of a SKILL.md `description:` states the plain, unthemed function in the keywords a naive user would search ("Audit test-suite quality…", "Review what the overnight runs did…"). Draconic theming, lore, and harness jargon come after the first sentence. Skill *names* may stay themed — the description's opening sentence is what a user scans to find them. Enforced by `tests/test_skill_descriptions.py`.
+
+**Always quote the free-text frontmatter**: `description:` and `argument-hint:` are wrapped in `"`, or in `'` when the value already contains a double quote. Both carry prose and usage strings, where a colon, a leading `[`, or a quote is a natural thing to write and a YAML special character. `description: Supervise a run: keep the queue moving` is a parse error; `argument-hint: [pr-number]` parses as a list, not as the hint you wrote. Quoting unconditionally makes the frontmatter valid by construction, so nobody has to remember which characters YAML treats specially.
+
+A lenient consumer will not cover for it: Claude Code's own loader displayed four unparseable `SKILL.md` files for months, and the harness now targets more than one runtime. `tests/test_skill_frontmatter.py` parses every frontmatter and asserts both fields come out as strings. Write new consumers the same way — a regex plus `.strip('"')` returns the same "all clear" whether the document is valid or broken (ticket 0515).
 
 # Autonomous Action Rules
 

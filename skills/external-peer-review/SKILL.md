@@ -1,9 +1,9 @@
 ---
 name: external-peer-review
-description: Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict.
+description: "Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict."
 user-invocable: true
 disable-model-invocation: false
-argument-hint: <pdf-path> [--models openai/gpt-5.5,mistralai/mistral-large-2512] [--personas grinchy,student] [--text]
+argument-hint: "<pdf-path> [--models openai/gpt-5.5,mistralai/mistral-large-2512] [--personas grinchy,student] [--text]"
 ---
 
 # External peer review $ARGUMENTS
