@@ -1010,6 +1010,112 @@ def test_load_env_file_missing_returns_empty(tmp_path):
     assert zi.load_env_file(tmp_path / "absent.env") == {}
 
 
+# --- enrich: filling fields on an item that already exists ------------------
+#
+# The HTTP round-trip is thin and needs the network; the decision of WHAT to
+# write is where the mistakes live, so that is what these lock down. Each
+# guard gets a red case, because a guard nobody has seen refuse is a guard
+# nobody has tested.
+
+def _item(**over):
+    base = {"key": "AAAA1111", "itemType": "journalArticle", "version": 7,
+            "title": "Optimum Utilization of the Transportation System",
+            "DOI": "", "url": ""}
+    base.update(over)
+    return base
+
+
+def test_plan_enrichment_fills_an_empty_field():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"DOI": "10.2307/1907301"}, "Optimum Utilization")
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_when_title_does_not_match():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"DOI": "10.2307/1907301"}, "Theory of Games")
+    assert patch == {}
+    assert "wrong item" in refused[0]
+
+
+def test_plan_enrichment_refuses_when_target_has_no_title():
+    """'Could not check' must not read as 'checked and fine'."""
+    patch, refused = zi.plan_enrichment(_item(title=""), {"DOI": "10.1/x"}, "Any")
+    assert patch == {}
+    assert "refusing to write blind" in refused[0]
+
+
+def test_plan_enrichment_skips_a_field_already_correct():
+    """A no-op write still bumps the version and shows up as an edit."""
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.2307/1907301"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization")
+    assert patch == {}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_to_replace_a_different_value():
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.9999/wrong"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization")
+    assert patch == {}
+    assert "--overwrite" in refused[0]
+
+
+def test_plan_enrichment_replaces_a_different_value_when_arbitrated():
+    patch, refused = zi.plan_enrichment(
+        _item(DOI="10.9999/wrong"), {"DOI": "10.2307/1907301"},
+        "Optimum Utilization", overwrite=True)
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert refused == []
+
+
+def test_plan_enrichment_refuses_a_field_the_type_does_not_own():
+    patch, refused = zi.plan_enrichment(
+        _item(), {"doi": "10.2307/1907301"}, "Optimum Utilization")
+    assert patch == {}
+    assert "case-sensitive" in refused[0]
+
+
+def test_plan_enrichment_writes_the_good_fields_and_refuses_the_rest():
+    """One bad field must not block the others, nor pass unreported."""
+    patch, refused = zi.plan_enrichment(
+        _item(url="https://kept.example"),
+        {"DOI": "10.2307/1907301", "url": "https://other.example"},
+        "Optimum Utilization")
+    assert patch == {"DOI": "10.2307/1907301"}
+    assert len(refused) == 1 and "url" in refused[0]
+
+
+def test_parse_set_splits_on_first_equals_only():
+    assert zi.parse_set(["url=https://x.example/a=b"]) == {
+        "url": "https://x.example/a=b"}
+
+
+def test_parse_set_rejects_a_pair_without_equals():
+    with pytest.raises(SystemExit):
+        zi.parse_set(["DOI"])
+
+
+def test_enrich_status_zero_when_everything_landed():
+    assert zi.enrich_status([{"status": "written"},
+                             {"status": "nothing to write"}], False) == 0
+
+
+def test_enrich_status_nonzero_on_a_refusal():
+    """Declining to act and acting must not share an exit code."""
+    assert zi.enrich_status(
+        [{"status": "nothing to write", "refused": ["DOI: already holds ..."]}],
+        False) == 1
+
+
+def test_enrich_status_nonzero_on_readback_mismatch():
+    assert zi.enrich_status([{"status": "readback mismatch"}], False) == 1
+
+
+def test_enrich_status_dry_run_ignores_the_would_patch_status():
+    assert zi.enrich_status([{"status": "would patch at version 7"}], True) == 0
 # --------------------------------------------------------------------------
 # Web-API index: dedup on a machine with no Zotero desktop database.
 #
