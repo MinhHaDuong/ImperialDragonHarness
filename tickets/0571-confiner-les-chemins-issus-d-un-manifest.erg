@@ -1,0 +1,77 @@
+%erg 0.1
+Title: Confiner les chemins issus d'un manifeste de projet
+Created: 2026-08-19
+Author: haduong
+
+--- log ---
+2026-08-19T20:30Z haduong created
+
+--- body ---
+## Contexte
+
+La revue de la MR #764 a relevé, dans `scripts/knowledge_hints.py`, qu'un
+chemin déclaré par un projet n'était vérifié que par son existence :
+`Path("/repo") / "/etc/passwd"` vaut `/etc/passwd`, l'opérande de gauche
+disparaissant dès que celle de droite est absolue. Corrigé là par `contained()`.
+
+Le balayage de classe ouvre le même défaut chez le frère, et en pire.
+
+## Le défaut chez `inject_rule_on_edit.py`
+
+`candidate_rule_files()` construit `rules_dir / axis / f"{value}.md"` où `value`
+vient du manifeste de projet `.claude/rules-map.toml` (`doctype`, `lang`).
+Aucune vérification de confinement. Reproduit :
+
+```
+lang = "../../../../../tmp/XXX/evil/pwned"
+```
+
+et le corps de `/tmp/XXX/evil/pwned.md` est injecté dans le contexte du modèle
+à la première édition d'un fichier correspondant au glob.
+
+Deux raisons pour lesquelles c'est plus grave que le cas déjà corrigé :
+
+1. Ce hook injecte le **corps** du fichier, non un pointeur. La MR #764
+   n'exposait qu'une instruction de lire un chemin ; ici le contenu arrive
+   directement dans le contexte.
+2. `.claude/rules-map.toml` est un fichier de projet ordinaire, revu comme du
+   texte de configuration. Une traversée y passe plus facilement inaperçue
+   qu'un `pointer` dans un manifeste dont c'est le seul objet.
+
+Le suffixe `.md` ajouté par la convention limite la cible à un fichier `.md`
+existant, ce qui réduit la portée sans supprimer le défaut.
+
+## Fichiers concernés
+
+- `scripts/inject_rule_on_edit.py` — `candidate_rule_files()`, et l'endroit où
+  `manifest_axes()` accepte `doctype`/`lang`
+- `scripts/knowledge_hints.py` — `contained()`, déjà écrit, à mutualiser
+- `tests/test_inject_rule_on_edit*.py` — le chemin rouge
+
+## Test
+
+Chemin rouge d'abord : un `rules-map.toml` dont `lang` traverse hors de
+`rules/`, et l'assertion que rien du fichier visé n'atteint la sortie. Le
+vérifier par mutation — retirer le confinement doit rougir. C'est la leçon de
+la MR #764, où deux versions successives du test de traversée sont passées
+contre un défaut vivant.
+
+## Vérification
+
+- [ ] La reproduction ci-dessus ne produit plus rien
+- [ ] Une valeur d'axe légitime (`fr`, `techreport`) fonctionne toujours
+- [ ] La mutation retirant le confinement fait rougir le test
+- [ ] `contained()` est partagé, non recopié
+
+## Invariants
+
+- Le hook reste consultatif : il ne doit jamais bloquer une édition ni sortir
+  non nul, quel que soit le manifeste.
+- Les projets existants qui déclarent `doctype`/`lang` normalement ne changent
+  pas de comportement.
+
+## Critères de sortie
+
+Aucun chemin construit depuis un manifeste de projet ne peut désigner un
+fichier hors de l'arborescence attendue, dans les deux hooks, et un test le
+prouve par mutation.
