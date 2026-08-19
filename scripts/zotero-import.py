@@ -409,7 +409,7 @@ def zotero_matches(
     # 1. Attachment content hash — exact, immune to metadata quality.
     if pdf_path is not None and pdf_path.is_file():
         consulted.append("storageHash")
-        digest = hashlib.md5(pdf_path.read_bytes()).hexdigest()
+        digest = file_md5(pdf_path)
         settle("storageHash",
                _attachment_targets(cur, lib_id, storage_hash=digest),
                "exact", 100)
@@ -1100,6 +1100,30 @@ def _external_upload(auth: dict[str, Any], body: bytes) -> None:
         resp.read()
 
 
+def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    """Check one inject entry's metadata against its own PDF's front matter.
+
+    This is where corroborate() has to bite. `inject` is the step that makes
+    metadata permanent, and the failure it guards is silent by construction: a
+    DOI scraped from page text usually belongs to a work the document *cites*,
+    so the resolver returns a well-formed record for the wrong paper and every
+    later reader inherits it. Measured on a 158-PDF backfill, 77 of 116
+    machine-built drafts needed correction once someone read the page.
+    """
+    pdf = entry.get("pdf")
+    if not pdf or not entry.get("title"):
+        return {"confidence": "unchecked", "reason": "no pdf or no title"}
+    path = Path(pdf)
+    if not path.exists() or path.suffix.lower() != ".pdf":
+        return {"confidence": "unchecked", "reason": "no readable PDF"}
+    try:
+        text = pdftotext_range(path, 1, FIRST_PAGES)
+    except Exception as exc:
+        return {"confidence": "unchecked", "reason": f"{type(exc).__name__}"}
+    return corroborate({"title": entry.get("title"),
+                        "authors": entry.get("authors") or []}, text)
+
+
 def cmd_inject(args: argparse.Namespace) -> int:
     if args.entries_json:
         entries = json.loads(args.entries_json)
@@ -1111,9 +1135,26 @@ def cmd_inject(args: argparse.Namespace) -> int:
         entries = [entries]
     validate_entry_keys(entries)
 
+    checks = [corroborate_entry(e) for e in entries]
+    if not args.skip_corroboration:
+        blocked = [(e, c) for e, c in zip(entries, checks)
+                   if c["confidence"] == "contradicted"]
+        if blocked:
+            json.dump({"error": "metadata contradicted by the document",
+                       "hint": "the identifier a resolver followed is probably "
+                               "a cited work's, not this document's; rebuild "
+                               "the metadata, or pass --skip-corroboration",
+                       "entries": [{"title": e.get("title"),
+                                    "pdf": e.get("pdf"), **c}
+                                   for e, c in blocked]},
+                      sys.stdout, indent=2, ensure_ascii=False)
+            sys.stdout.write("\n")
+            return 1
+
     items = [entry_to_zotero_item(e, args.collection) for e in entries]
     if args.dry_run:
-        json.dump(items, sys.stdout, indent=2, ensure_ascii=False)
+        json.dump({"items": items, "corroboration": checks},
+                  sys.stdout, indent=2, ensure_ascii=False)
         sys.stdout.write("\n")
         return 0
 
@@ -1123,7 +1164,8 @@ def cmd_inject(args: argparse.Namespace) -> int:
     created = api_request("POST", f"/users/{user}/items", key,
                           json.dumps(items).encode())
     for idx, entry in enumerate(entries):
-        row: dict[str, Any] = {"title": entry.get("title")}
+        row: dict[str, Any] = {"title": entry.get("title"),
+                               "corroboration": checks[idx]["confidence"]}
         ok = created.get("successful", {}).get(str(idx))
         if not ok:
             row["error"] = created.get("failed", {}).get(str(idx),
@@ -1239,7 +1281,17 @@ def _api_get_retry(path: str, key: str, attempts: int = 5) -> Any:
     for n in range(attempts):
         try:
             return api_request("GET", path, key)
-        except (urllib.error.URLError, urllib.error.HTTPError, OSError):
+        except urllib.error.HTTPError as exc:
+            # 401/403/404 are answers, not outages. Retrying one turns a fast,
+            # legible misconfiguration into a 30-second backoff that ends in
+            # the same failure — and buries the cause. 429 and 5xx are the
+            # transient ones worth waiting on.
+            if exc.code not in (429,) and exc.code < 500:
+                raise
+            if n == attempts - 1:
+                raise
+            time.sleep(2 ** n)
+        except (urllib.error.URLError, OSError):
             if n == attempts - 1:
                 raise
             time.sleep(2 ** n)
@@ -1261,6 +1313,16 @@ def _api_paged(user: str, key: str, item_type: str,
         if progress and start % 1000 == 0:
             logging.info("  %s: %d fetched", item_type, start)
     return out
+
+
+def file_md5(path: Path, chunk: int = 1 << 20) -> str:
+    """Content hash, read in chunks — an audit hashes every staged file, and
+    this corpus holds a 62 MB Internet Archive scan."""
+    h = hashlib.md5()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(chunk), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 def index_path(user: str) -> Path:
@@ -1370,6 +1432,19 @@ def _title_windows(text: str, span: int = 3) -> list[set[str]]:
     return [w for w in out if w]
 
 
+# Both forms Zotero actually stores: "arXiv:2401.01234" in Extra, and an
+# arxiv.org/abs/ URL in the url field.
+ARXIV_ANY_RE = re.compile(
+    r"(?:arxiv\.org/(?:abs|pdf)/|arxiv[:\s]\s*)"
+    r"((?:\d{4}\.\d{4,5})|(?:[a-z-]+/\d{7}))",
+    re.IGNORECASE)
+HDL_ANY_RE = re.compile(r"hdl\.handle\.net/([^\s)\]]+)", re.IGNORECASE)
+
+
+def _isbn_key(raw: str) -> str:
+    return re.sub(r"[^0-9Xx]", "", raw or "").upper()
+
+
 def _index_views(idx: dict[str, Any]) -> dict[str, Any]:
     works = {w["key"]: w for w in idx["works"]}
     by_md5: dict[str, list[dict[str, Any]]] = {}
@@ -1386,22 +1461,39 @@ def _index_views(idx: dict[str, Any]) -> dict[str, Any]:
             if a.get("contentType") == "application/pdf":
                 parents_with_pdf.add(a["parent"])
     by_doi: dict[str, list[dict[str, Any]]] = {}
+    by_isbn: dict[str, list[dict[str, Any]]] = {}
+    by_arxiv: dict[str, list[dict[str, Any]]] = {}
+    by_handle: dict[str, list[dict[str, Any]]] = {}
     by_surname: dict[str, list[dict[str, Any]]] = {}
     for w in idx["works"]:
         if w.get("DOI"):
             by_doi.setdefault(w["DOI"].lower().strip(), []).append(w)
+        for isbn in re.findall(r"[0-9Xx-]{10,17}", w.get("ISBN") or ""):
+            key = _isbn_key(isbn)
+            if len(key) in (10, 13):
+                by_isbn.setdefault(key, []).append(w)
+        # Zotero has no arXiv or handle field: both live in `extra` or `url`,
+        # which is where the desktop cascade finds them too.
+        hay = f"{w.get('extra', '')} {w.get('url', '')}"
+        for aid in ARXIV_ANY_RE.findall(hay):
+            by_arxiv.setdefault(aid.lower(), []).append(w)
+        for hdl in HDL_ANY_RE.findall(hay):
+            by_handle.setdefault(hdl.lower().rstrip("/"), []).append(w)
         w["_year"] = (lambda m: m.group(0) if m else None)(
             YEAR_RE.search(w.get("date") or ""))
         w["_tokens"] = _title_tokens(w.get("title", ""))
         for c in w.get("creators", []):
             by_surname.setdefault(_name_key(c), []).append(w)
     return {"works": works, "by_md5": by_md5, "by_filename": by_filename,
-            "by_doi": by_doi, "by_surname": by_surname,
+            "by_doi": by_doi, "by_isbn": by_isbn, "by_arxiv": by_arxiv,
+            "by_handle": by_handle, "by_surname": by_surname,
             "parents_with_file": parents_with_file,
             "parents_with_pdf": parents_with_pdf}
 
 
 def api_matches(idx: dict[str, Any], *, doi: str | None = None,
+                isbn: str | None = None, arxiv: str | None = None,
+                handle: str | None = None,
                 title: str | None = None, year: str | None = None,
                 first_author: str | None = None,
                 authors: list[str] | None = None,
@@ -1456,12 +1548,22 @@ def api_matches(idx: dict[str, Any], *, doi: str | None = None,
     else:
         skipped.append("storageHash (no file on disk)")
 
-    if not matches and doi:
-        consulted.append("doi")
-        for w in v["by_doi"].get(doi.lower().strip(), []):
-            emit(w["key"], "doi", "exact")
-    elif not doi:
-        skipped.append("doi (none supplied)")
+    for label, supplied, bucket, norm in (
+            ("doi", doi, "by_doi", lambda x: x.lower().strip()),
+            ("isbn", isbn, "by_isbn", _isbn_key),
+            ("arxiv", arxiv, "by_arxiv", lambda x: x.lower().strip()),
+            ("handle", handle, "by_handle",
+             lambda x: (HDL_ANY_RE.search(x).group(1) if HDL_ANY_RE.search(x)
+                        else x).lower().rstrip("/")),
+    ):
+        if not supplied:
+            skipped.append(f"{label} (none supplied)")
+            continue
+        if matches:
+            continue
+        consulted.append(label)
+        for w in v[bucket].get(norm(supplied), []):
+            emit(w["key"], label, "exact")
 
     if not matches and pdf_path and pdf_path.name:
         consulted.append("filename")
@@ -1617,7 +1719,8 @@ def cmd_match(args: argparse.Namespace) -> int:
             idx = None
         if idx is not None:
             result = api_matches(
-                idx, doi=args.doi, title=args.title, year=args.year,
+                idx, doi=args.doi, isbn=args.isbn, arxiv=args.arxiv,
+                handle=args.handle, title=args.title, year=args.year,
                 first_author=args.author,
                 pdf_path=Path(args.pdf) if args.pdf else None)
             json.dump({"zotero_db": None, **result},
@@ -1951,6 +2054,9 @@ def main() -> int:
                                       "prefer env/keys file over argv)")
     pi.add_argument("--dry-run", action="store_true",
                     help="print the Zotero item JSON, do not call the API")
+    pi.add_argument("--skip-corroboration", action="store_true",
+                    help="create items even when the metadata is contradicted "
+                         "by the PDF's own front matter (default: refuse)")
     pi.set_defaults(func=cmd_inject)
 
     args = p.parse_args()

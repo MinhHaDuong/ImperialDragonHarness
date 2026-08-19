@@ -10,6 +10,7 @@ import importlib.util
 import json
 import sqlite3
 import sys
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -1443,3 +1444,176 @@ def test_api_matches_reports_the_filename_key_as_skipped_without_a_pdf():
     res = zi.api_matches(idx, title="A Totally Unrelated Long Title",
                          first_author="Nobody")
     assert any("filename" in s for s in res["skipped"])
+
+
+# --------------------------------------------------------------------------
+# The API cascade must consult the same identifier keys as the sqlite one.
+# It previously stopped at DOI, so an ISBN/arXiv/handle item on a machine with
+# no desktop client fell through to weaker keys — the silent negative the
+# fallback exists to prevent.
+# --------------------------------------------------------------------------
+
+
+def _work_extra(key, title, extra="", url="", isbn=""):
+    w = _work(key, title)
+    w["extra"], w["url"], w["ISBN"] = extra, url, isbn
+    return w
+
+
+def test_api_matches_isbn_ignores_hyphenation():
+    idx = _index([_work_extra("W1", "A Book", isbn="978-0-262-03384-8")])
+    res = zi.api_matches(idx, isbn="9780262033848")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["isbn"]
+
+
+def test_api_matches_arxiv_from_extra():
+    idx = _index([_work_extra("W1", "A Preprint", extra="arXiv:2401.01234")])
+    res = zi.api_matches(idx, arxiv="2401.01234")
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["why"] == ["arxiv"]
+
+
+def test_api_matches_arxiv_from_url():
+    idx = _index([_work_extra("W1", "A Preprint",
+                              url="https://arxiv.org/abs/2401.01234")])
+    assert zi.api_matches(idx, arxiv="2401.01234")["verdict"] == "match"
+
+
+def test_api_matches_handle_accepts_bare_or_full_url():
+    idx = _index([_work_extra("W1", "A Report",
+                              url="https://hdl.handle.net/10419/12345")])
+    for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
+        assert zi.api_matches(idx, handle=supplied)["verdict"] == "match", supplied
+
+
+def test_api_matches_reports_every_identifier_key_it_could_not_use():
+    """`skipped` must name each key, so "found nothing" stays legible."""
+    res = zi.api_matches(_index([_work("W1", "T")]), doi="10.1/x")
+    for label in ("isbn", "arxiv", "handle"):
+        assert any(s.startswith(label) for s in res["skipped"]), label
+
+
+def test_file_md5_matches_a_whole_file_read(tmp_path):
+    p = tmp_path / "big.pdf"
+    p.write_bytes(b"x" * (3 * (1 << 20) + 17))  # spans several chunks
+    assert zi.file_md5(p) == hashlib.md5(p.read_bytes()).hexdigest()
+
+
+def test_api_get_retry_does_not_retry_a_permanent_client_error(monkeypatch):
+    """401/403/404 are answers. Retrying buries the cause in a backoff."""
+    calls = []
+
+    def boom(method, path, key, *a, **kw):
+        calls.append(path)
+        raise urllib.error.HTTPError(path, 403, "Forbidden", {}, None)
+
+    monkeypatch.setattr(zi, "api_request", boom)
+    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
+    with pytest.raises(urllib.error.HTTPError):
+        zi._api_get_retry("/users/1/items", "k")
+    assert len(calls) == 1
+
+
+def test_api_get_retry_does_retry_a_rate_limit(monkeypatch):
+    calls = []
+
+    def flaky(method, path, key, *a, **kw):
+        calls.append(path)
+        if len(calls) < 3:
+            raise urllib.error.HTTPError(path, 429, "Too Many", {}, None)
+        return [{"ok": True}]
+
+    monkeypatch.setattr(zi, "api_request", flaky)
+    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
+    assert zi._api_get_retry("/users/1/items", "k") == [{"ok": True}]
+    assert len(calls) == 3
+
+
+# --------------------------------------------------------------------------
+# corroborate() is now reachable: inject refuses metadata its own PDF denies.
+# --------------------------------------------------------------------------
+
+
+def _pdf_with_text(tmp_path, name, text, monkeypatch):
+    p = tmp_path / name
+    p.write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr(zi, "pdftotext_range", lambda path, a, b: text)
+    return p
+
+
+def test_corroborate_entry_flags_a_cited_works_metadata(tmp_path, monkeypatch):
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    out = zi.corroborate_entry({"title": "Ronald Graham: laying the foundations "
+                                         "of online optimization",
+                                "authors": ["Albers, Susanne"], "pdf": str(pdf)})
+    assert out["confidence"] == "contradicted"
+
+
+def test_corroborate_entry_without_a_pdf_is_unchecked():
+    out = zi.corroborate_entry({"title": "T", "authors": ["A, B"]})
+    assert out["confidence"] == "unchecked"
+
+
+def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
+                                 "online optimization",
+        "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
+    called = []
+    monkeypatch.setattr(zi, "api_request",
+                        lambda *a, **k: called.append(a) or {})
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=False, skip_corroboration=False)
+    rc = zi.cmd_inject(args)
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert not called, "nothing may be created when the document denies it"
+    assert out["error"] == "metadata contradicted by the document"
+
+
+def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
+                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
+                                 "online optimization",
+        "authors": ["Albers, Susanne"], "pdf": str(pdf)}]))
+    monkeypatch.setattr(zi, "api_request",
+                        lambda *a, **k: {"successful": {"0": {"key": "ZZZ"}}})
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=False, skip_corroboration=True)
+    assert zi.cmd_inject(args) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["results"][0]["itemKey"] == "ZZZ"
+    assert out["results"][0]["corroboration"] == "contradicted"
+
+
+def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
+    import argparse
+    pdf = _pdf_with_text(tmp_path, "ok.pdf",
+                         "Coherent Measures of Risk\nPhilippe Artzner\n",
+                         monkeypatch)
+    entries = tmp_path / "e.json"
+    entries.write_text(json.dumps([{
+        "type": "JOUR", "title": "Coherent Measures of Risk",
+        "authors": ["Artzner, Philippe"], "pdf": str(pdf)}]))
+    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
+                              collection=None, user_id="1", api_key="k",
+                              dry_run=True, skip_corroboration=False)
+    assert zi.cmd_inject(args) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["corroboration"][0]["confidence"] == "corroborated"
+    assert out["items"][0]["title"] == "Coherent Measures of Risk"
