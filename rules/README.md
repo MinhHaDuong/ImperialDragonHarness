@@ -46,6 +46,39 @@ with the most commits since their stamps — and a recent one is worth exactly a
 much as the pass that set it. Stamping a file you have not read makes the
 marker lie, and nothing downstream can catch that.
 
+## Project domain-knowledge hints
+
+Rules are *how to work*; a project may also hold *what is known* — a canon, a
+controlled vocabulary, a map of a field — that a general agent lacks and cannot
+search for. Ownership inverts here: rules keep their text global and let the
+project supply only mappings, whereas domain knowledge is inherently
+project-specific, so the body lives in the repo and only the mechanism is
+shared. That inversion is why it is not another `rules/` file.
+
+A project declares hints in `<repo>/.knowledge.toml` (no vendor in the name —
+the repo outlives the tool). `scripts/knowledge_hints.py` serves two channels:
+`catalog` prints one line per hint at session start, and `prompt`, on the
+`UserPromptSubmit` hook, names a hint once per session when one of its declared
+terms appears. Missing manifest, malformed TOML, or a `pointer` that does not
+resolve: silent no-op.
+
+Three constraints, each earned (polycentric_activity field map, 2026-08-19):
+
+- **Inject the pointer, never the payload.** That map measured 14.5k tokens
+  against a 1.7k roster and a 157-token pointer. Cost must scale with use, not
+  with how much the project happens to know.
+- **The caveat travels with the pointer**, in every channel. Measured: a caveat
+  does *not* buy refusal of bad inferences — a model with no access refuses
+  those unaided. It buys provenance discipline, an agent distinguishing what it
+  read from what the artifact told it.
+- **Write the summary context-free.** It is read from outside the field.
+  "196 entries of Faccarello & Kurz 2016" identifies nothing to someone who does
+  not already know the names; lead with the domain and the object.
+
+Discovery cannot rest on term triggers alone: they need the user to say
+"Cournot", and an agent cannot grep for vocabulary it does not yet have. Hence
+the resident catalog line.
+
 ## Per-file rule injection (axis model)
 
 `scripts/inject_rule_on_edit.py` (PreToolUse `Edit|Write` hook) injects the full

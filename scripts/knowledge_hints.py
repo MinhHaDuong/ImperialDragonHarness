@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""Project-specific domain-knowledge hints: catalog at session start, body on demand.
+
+A project may hold knowledge a general agent does not have and cannot search
+for — a canon, a controlled vocabulary, a map of a field. That material is
+*project-specific*, which is what makes it different from everything else this
+harness injects: `rules/` keeps its text global and lets a project supply only
+mappings, deliberately, so the rulebook stays shared. Here the ownership
+inverts. The body lives in the repo; only the mechanism is shared.
+
+Three properties, each paid for by a defect seen in practice.
+
+**The pointer is injected, never the payload.** A field map measured 14.5k
+tokens against a 1.7k roster and a 157-token pointer; only the pointer can
+afford to be resident. Cost then scales with use rather than with the size of
+what the project happens to know.
+
+**The caveat travels with the pointer.** A caveat kept in a separate document is
+one nobody opens. Measured 2026-08-19: what a caveat buys is *not* refusal of
+bad inferences — a model with no access at all already refuses those, and argues
+them well. What it buys is provenance discipline: an agent holding the artifact
+flagged, unprompted, which of its answers rested on the artifact rather than on
+a page it had opened. That distinction is what disappears without it.
+
+**Discovery cannot depend on vocabulary.** Term triggers need the user to say
+"Cournot"; asked about "this paragraph on duopoly", nothing fires, and an agent
+cannot grep for words it does not yet have. So a one-line catalog entry is
+resident, and the term channel only sharpens it.
+
+**Write the summary context-free.** It is read by an agent that does not yet
+know the field, so it must name the domain and the object before any shorthand
+an insider would use. "196 entries of Faccarello & Kurz 2016" identifies nothing
+unless you already know who they are; "History of economic thought: the 196
+entries of the Elgar Handbook on the History of Economic Analysis" routes
+someone who does not. A summary that presumes membership in the field cannot do
+the one job it has, which is to reach a reader from outside it.
+
+Manifest: ``<repo>/.knowledge.toml`` — deliberately not named for any vendor,
+since the repo outlives the tool.
+
+    [[hint]]
+    id      = "het-field-map"
+    summary = "196 entries of Faccarello & Kurz 2016, folios, 1613 cross-references"
+    pointer = "conception/handbook-canon.md"
+    full    = "conception/handbook-map.md"     # optional, named not read
+    caveat  = "records the 2016 classification, not source content"
+    terms   = ["Cournot", "Handbook"]          # optional
+    paths   = ["article-het/**"]               # optional, reserved for the edit channel
+
+Absent manifest, absent file, malformed TOML: silent no-op. A hint whose
+``pointer`` does not resolve is dropped rather than advertised, so the catalog
+never names a file that is not there.
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+MANIFEST = ".knowledge.toml"
+MAX_SUMMARY = 200
+
+
+def find_manifest(start: Path) -> Path | None:
+    """Walk up from `start` for the project manifest."""
+    try:
+        here = start.resolve()
+    except OSError:
+        return None
+    for d in (here, *here.parents):
+        candidate = d / MANIFEST
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_hints(manifest: Path) -> list[dict]:
+    """Parsed hints, each with a resolvable pointer. Never raises."""
+    try:
+        data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return []
+    root = manifest.parent
+    out = []
+    for raw in data.get("hint", []):
+        if not isinstance(raw, dict):
+            continue
+        hid, summary = raw.get("id"), raw.get("summary")
+        pointer = raw.get("pointer")
+        if not (isinstance(hid, str) and isinstance(summary, str)
+                and isinstance(pointer, str)):
+            continue
+        # A catalog that advertises a missing file is worse than a silent one:
+        # the agent spends a turn discovering the pointer is a dead end.
+        if not (root / pointer).is_file():
+            continue
+        out.append({
+            "id": hid,
+            "summary": summary[:MAX_SUMMARY],
+            "pointer": pointer,
+            "full": raw.get("full") if isinstance(raw.get("full"), str) else None,
+            "caveat": raw.get("caveat") if isinstance(raw.get("caveat"), str) else None,
+            "terms": [t for t in raw.get("terms", []) if isinstance(t, str)],
+            "paths": [p for p in raw.get("paths", []) if isinstance(p, str)],
+        })
+    return out
+
+
+def render_catalog(hints: list[dict]) -> str:
+    """One line per hint. Resident at session start, so it stays terse."""
+    if not hints:
+        return ""
+    lines = [
+        "Project domain knowledge (pointers, not bodies — read the file when "
+        "the topic comes up; each carries its own caveat):"
+    ]
+    for h in hints:
+        lines.append(f"- {h['id']} — {h['summary']} → `{h['pointer']}`")
+    return "\n".join(lines)
+
+
+def match_terms(hints: list[dict], text: str) -> list[dict]:
+    """Hints whose declared terms appear in `text`, whole-word, case-folded."""
+    hay = text.casefold()
+    hit = []
+    for h in hints:
+        for term in h["terms"]:
+            if re.search(rf"(?<!\w){re.escape(term.casefold())}(?!\w)", hay):
+                hit.append(h)
+                break
+    return hit
+
+
+def render_hint(h: dict) -> str:
+    parts = [f"Project domain knowledge — {h['id']}: {h['summary']}",
+             f"Read `{h['pointer']}` before answering on this topic."]
+    if h["full"]:
+        parts.append(f"Fuller material, on demand: `{h['full']}`.")
+    if h["caveat"]:
+        parts.append(f"Caveat: {h['caveat']}")
+    return " ".join(parts)
+
+
+def marker_path(session_id: str, hid: str) -> Path:
+    base = Path(os.environ.get("TMPDIR", "/tmp")) / "claude-knowledge-hints"
+    # session_id and id are untrusted input — sanitize so neither escapes the dir.
+    sid = re.sub(r"[^A-Za-z0-9_-]", "_", session_id or "nosession")[:64]
+    safe = re.sub(r"[^A-Za-z0-9_-]", "_", hid)[:64]
+    return base / f"{sid}.{safe}"
+
+
+def cmd_catalog(args: argparse.Namespace) -> int:
+    manifest = find_manifest(Path(args.cwd))
+    if manifest is None:
+        return 0
+    text = render_catalog(load_hints(manifest))
+    if text:
+        print(text)
+    return 0
+
+
+def cmd_prompt(args: argparse.Namespace) -> int:
+    """UserPromptSubmit channel: name the hint once per session, on a term hit."""
+    try:
+        payload = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError):
+        return 0
+    prompt = payload.get("prompt") or ""
+    session_id = payload.get("session_id") or ""
+    cwd = payload.get("cwd") or args.cwd
+
+    manifest = find_manifest(Path(cwd))
+    if manifest is None:
+        return 0
+    fresh = []
+    for h in match_terms(load_hints(manifest), prompt):
+        marker = marker_path(session_id, h["id"])
+        if marker.exists():
+            continue
+        try:
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.touch()
+        except OSError:
+            pass  # cannot dedup; better to repeat than to stay silent
+        fresh.append(h)
+    if fresh:
+        print("\n".join(render_hint(h) for h in fresh))
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--cwd", default=os.getcwd(),
+                    help="directory to resolve the project manifest from")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("catalog", help="one line per hint, for session start")
+    sub.add_parser("prompt", help="UserPromptSubmit hook; reads JSON on stdin")
+    args = ap.parse_args()
+    return {"catalog": cmd_catalog, "prompt": cmd_prompt}[args.cmd](args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
