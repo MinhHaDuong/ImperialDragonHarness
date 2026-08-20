@@ -1,0 +1,99 @@
+%erg 0.1
+Title: Confiner les chemins issus d'un manifeste de projet
+Created: 2026-08-19
+Author: haduong
+
+--- log ---
+2026-08-19T20:30Z haduong created
+2026-08-20T00:00Z haduong note Revue PR 765 : ajout du second vecteur (doctype reniflé via \documentclass, sans manifeste) ; confiner dans candidate_rule_files()
+
+--- body ---
+## Contexte
+
+La revue de la MR #764 a relevé, dans `scripts/knowledge_hints.py`, qu'un
+chemin déclaré par un projet n'était vérifié que par son existence :
+`Path("/repo") / "/etc/passwd"` vaut `/etc/passwd`, l'opérande de gauche
+disparaissant dès que celle de droite est absolue. Corrigé là par `contained()`.
+
+Le balayage de classe ouvre le même défaut chez le frère, et en pire.
+
+## Le défaut chez `inject_rule_on_edit.py`
+
+`candidate_rule_files()` construit `rules_dir / axis / f"{value}.md"` où `value`
+vient du manifeste de projet `.claude/rules-map.toml` (`doctype`, `lang`).
+Aucune vérification de confinement. Reproduit :
+
+```
+lang = "../../../../../tmp/XXX/evil/pwned"
+```
+
+et le corps de `/tmp/XXX/evil/pwned.md` est injecté dans le contexte du modèle
+à la première édition d'un fichier correspondant au glob.
+
+Deux raisons pour lesquelles c'est plus grave que le cas déjà corrigé :
+
+1. Ce hook injecte le **corps** du fichier, non un pointeur. La MR #764
+   n'exposait qu'une instruction de lire un chemin ; ici le contenu arrive
+   directement dans le contexte.
+2. `.claude/rules-map.toml` est un fichier de projet ordinaire, revu comme du
+   texte de configuration. Une traversée y passe plus facilement inaperçue
+   qu'un `pointer` dans un manifeste dont c'est le seul objet.
+
+Le suffixe `.md` ajouté par la convention limite la cible à un fichier `.md`
+existant, ce qui réduit la portée sans supprimer le défaut.
+
+## Second vecteur : le `doctype` reniflé, sans manifeste
+
+Le même `value` empoisonné entre aussi par `sniff_doctype()`, sans aucun
+`rules-map.toml`. Ligne `return DOCUMENTCLASS_DOCTYPE.get(cls, cls)` : une classe
+inconnue est renvoyée telle quelle, et `cls` vient du `\documentclass{[^}]+}` du
+fichier édité, où `[^}]+` accepte `/` et `.`. Éditer un `.tex` contenant
+
+```
+\documentclass{../../../../tmp/XXX/evil/pwned}
+```
+
+pose `doctype = "../../../../tmp/XXX/evil/pwned"` et injecte `pwned.md` — plus
+facilement que par le manifeste, puisqu'aucun fichier de configuration n'est
+requis. Le titre et la reproduction manifeste ne doivent pas masquer ce
+vecteur : le confinement doit être posé **au point de construction du chemin
+dans `candidate_rule_files()`**, où il couvre d'un coup toutes les sources de
+`value` (manifeste `doctype`/`lang` ET `doctype` reniflé), plutôt que dans le
+seul `manifest_axes()`.
+
+## Fichiers concernés
+
+- `scripts/inject_rule_on_edit.py` — confiner dans `candidate_rule_files()` (le
+  point qui couvre manifeste ET `doctype` reniflé), pas seulement `manifest_axes()`
+- `scripts/knowledge_hints.py` — `contained()`, déjà écrit, à mutualiser
+- `tests/test_inject_rule_on_edit*.py` — le chemin rouge
+
+## Test
+
+Chemin rouge d'abord, et **deux** cas, un par vecteur : un `rules-map.toml` dont
+`lang` traverse hors de `rules/`, et un `.tex` dont le `\documentclass{}`
+traverse — l'assertion, dans les deux, que rien du fichier visé n'atteint la
+sortie. Le vérifier par mutation — retirer le confinement doit rougir chacun.
+C'est la leçon de la MR #764, où deux versions successives du test de traversée
+sont passées contre un défaut vivant.
+
+## Vérification
+
+- [ ] La reproduction manifeste ne produit plus rien
+- [ ] La reproduction `\documentclass{}` ne produit plus rien
+- [ ] Une valeur d'axe légitime (`fr`, `techreport`) fonctionne toujours
+- [ ] La mutation retirant le confinement fait rougir les deux cas
+- [ ] `contained()` est partagé, non recopié
+
+## Invariants
+
+- Le hook reste consultatif : il ne doit jamais bloquer une édition ni sortir
+  non nul, quel que soit le manifeste.
+- Les projets existants qui déclarent `doctype`/`lang` normalement ne changent
+  pas de comportement.
+
+## Critères de sortie
+
+Aucun chemin construit depuis une valeur d'axe — qu'elle vienne du manifeste de
+projet ou du `\documentclass{}` reniflé — ne peut désigner un fichier hors de
+l'arborescence attendue, dans les deux hooks, et un test le prouve par mutation.
