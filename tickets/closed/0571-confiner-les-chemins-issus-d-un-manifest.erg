@@ -2,12 +2,14 @@
 Title: Confiner les chemins issus d'un manifeste de projet
 Created: 2026-08-19
 Author: haduong
+Closed: confinement implémenté, testé par mutation, PR #767
 
 --- log ---
 2026-08-19T20:30Z haduong created
 2026-08-20T00:00Z haduong note Revue PR 765 : ajout du second vecteur (doctype reniflé via \documentclass, sans manifeste) ; confiner dans candidate_rule_files()
 2026-08-20T12:00Z haduong note Correctif : contained() extrait dans scripts/path_utils.py, importé par les deux hooks ; confinement dans candidate_rule_files() ; 3 tests rouges (unité + 2 vecteurs), rougissent à la mutation ; make check vert (1083)
 
+2026-08-20T12:06Z Minh Ha-Duong closed — confinement implémenté, testé par mutation, PR #767
 --- body ---
 ## Contexte
 
