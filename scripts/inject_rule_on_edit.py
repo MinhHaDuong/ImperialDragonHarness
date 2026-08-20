@@ -47,6 +47,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+from path_utils import contained
+
 # Extension -> format axis value. Project-agnostic by design: keyed on the
 # filename suffix, never on a directory like src/ or scripts/.
 EXT_FORMAT = {
@@ -214,17 +216,26 @@ def candidate_rule_files(axes: dict[str, str], rules_dir: Path) -> list[Path]:
 
     Convention: ``rules/<axis>/<value>.md``. Format has a legacy-alias fallback
     (``rules/coding-<value>.md``) so the flat code rules need no rename.
+
+    An axis value is not trusted: ``doctype`` is sniffed from the edited file's
+    ``\\documentclass{...}`` (which accepts ``/`` and ``..``), and ``doctype``/
+    ``lang`` can come from a project ``rules-map.toml``. A value like
+    ``../../../etc/whatever`` would otherwise resolve outside the rulebook and
+    inject an arbitrary ``.md`` body into the model context. Every candidate is
+    therefore resolved through ``contained()`` and dropped if it escapes
+    ``rules_dir``.
     """
     files: list[Path] = []
     for axis in ("format", "doctype", "lang", "prose"):
         value = axes.get(axis)
         if not value:
             continue
-        candidates = [rules_dir / axis / f"{value}.md"]
+        rels = [f"{axis}/{value}.md"]
         if axis == "format":
-            candidates.append(rules_dir / f"coding-{value}.md")
-        for c in candidates:
-            if c.is_file():
+            rels.append(f"coding-{value}.md")
+        for rel in rels:
+            c = contained(rules_dir, rel)
+            if c is not None and c.is_file():
                 files.append(c)
                 break
     return files

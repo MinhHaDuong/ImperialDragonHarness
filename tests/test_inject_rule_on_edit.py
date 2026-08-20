@@ -4,11 +4,15 @@ matching global rule bodies on the first edit of a file per session."""
 import importlib.util
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-_HOOK = Path(__file__).resolve().parent.parent / "scripts" / "inject_rule_on_edit.py"
+_SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))  # inject_rule_on_edit imports path_utils
+_HOOK = _SCRIPTS / "inject_rule_on_edit.py"
 
 
 def _load():
@@ -224,6 +228,99 @@ def test_candidate_prefers_convention_over_alias(tmp_path):
     (rules / "coding-python.md").write_text("legacy alias")  # both exist
     files = inj.candidate_rule_files({"format": "python"}, rules)
     assert [f.name for f in files] == ["python.md"]  # canonical wins, alias skipped
+
+
+# --- path confinement: an axis value must not escape rules_dir ---------------
+# Regression for ticket 0571. `candidate_rule_files` builds
+# `rules_dir/<axis>/<value>.md`; a value like "../../../evil/pwned" walks out of
+# rules_dir and the body of an arbitrary .md is injected into the model context.
+# The value reaches the builder from two sources — a project rules-map.toml
+# (doctype/lang) and the sniffed \documentclass{} of the edited .tex — so the
+# confinement is asserted at the builder (covers both) and end-to-end per source.
+
+
+def test_candidate_rule_files_rejects_traversal(tmp_path):
+    rules = tmp_path / "rules"
+    (rules / "format").mkdir(parents=True)
+    (rules / "lang").mkdir()  # must exist so the OS can resolve `..` *through* it
+    (rules / "format" / "python.md").write_text("legit python rules")
+    # An attacker-reachable .md sitting OUTSIDE the rules tree.
+    (tmp_path / "evil").mkdir()
+    (tmp_path / "evil" / "pwned.md").write_text("EVIL-MARKER body")
+
+    files = inj.candidate_rule_files(
+        {"format": "python", "lang": "../../evil/pwned"}, rules
+    )
+    names = [f.name for f in files]
+    assert "python.md" in names  # the legitimate axis still resolves
+    # The traversal must NOT resolve to the outside file.
+    assert all("evil" not in str(f) for f in files)
+
+
+def test_candidate_rule_files_allows_legitimate_value(tmp_path):
+    rules = tmp_path / "rules"
+    (rules / "lang").mkdir(parents=True)
+    (rules / "lang" / "fr.md").write_text("french norms")
+    files = inj.candidate_rule_files({"lang": "fr"}, rules)
+    assert [f.name for f in files] == ["fr.md"]
+
+
+@pytest.mark.integration
+def test_hook_no_inject_via_manifest_lang_traversal(tmp_path):
+    rules = tmp_path / "rules"
+    (rules / "format").mkdir(parents=True)
+    (rules / "lang").mkdir()  # exists so the OS resolves `..` through it
+    (rules / "format" / "python.md").write_text("PYLEGIT body")
+    (tmp_path / "evil").mkdir()
+    (tmp_path / "evil" / "pwned.md").write_text("EVIL-MARKER body")
+    repo = tmp_path / "repo"
+    (repo / ".claude").mkdir(parents=True)
+    # default_lang traverses from rules/lang/ back out to evil/pwned.md
+    (repo / ".claude" / "rules-map.toml").write_text(
+        'default_lang = "../../evil/pwned"\n'
+    )
+    edited = repo / "x.py"
+    edited.write_text("x = 1\n")
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    payload = json.dumps(
+        {"session_id": "trav1", "tool_input": {"file_path": str(edited)}}
+    )
+    res = subprocess.run(
+        ["python3", str(_HOOK), "--rules-dir", str(rules)],
+        input=payload, capture_output=True, text=True,
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+    )
+    assert res.returncode == 0
+    ctx = res.stdout  # legit python rule may inject; the evil body must not
+    assert "EVIL-MARKER" not in ctx
+
+
+@pytest.mark.integration
+def test_hook_no_inject_via_documentclass_traversal(tmp_path):
+    rules = tmp_path / "rules"
+    (rules / "format").mkdir(parents=True)
+    (rules / "doctype").mkdir()  # exists so the OS resolves `..` through it
+    (rules / "format" / "tex.md").write_text("TEXLEGIT body")
+    (rules / "prose").mkdir()
+    (rules / "prose" / "_all.md").write_text("PROSELEGIT body")
+    (tmp_path / "evil").mkdir()
+    (tmp_path / "evil" / "pwned.md").write_text("EVIL-MARKER body")
+    # No manifest: the poisoned doctype comes from the edited file's markup.
+    edited = tmp_path / "paper.tex"
+    edited.write_text("\\documentclass{../../evil/pwned}\n\\begin{document}\n")
+    tmpdir = tmp_path / "tmp"
+    tmpdir.mkdir()
+    payload = json.dumps(
+        {"session_id": "trav2", "tool_input": {"file_path": str(edited)}}
+    )
+    res = subprocess.run(
+        ["python3", str(_HOOK), "--rules-dir", str(rules)],
+        input=payload, capture_output=True, text=True,
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+    )
+    assert res.returncode == 0
+    assert "EVIL-MARKER" not in res.stdout
 
 
 @pytest.mark.integration

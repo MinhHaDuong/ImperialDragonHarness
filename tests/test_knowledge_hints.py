@@ -23,6 +23,8 @@ import pytest
 pytestmark = pytest.mark.integration
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "knowledge_hints.py"
+if str(SCRIPT.parent) not in sys.path:
+    sys.path.insert(0, str(SCRIPT.parent))  # knowledge_hints imports path_utils
 
 MANIFEST = """
 [[hint]]
