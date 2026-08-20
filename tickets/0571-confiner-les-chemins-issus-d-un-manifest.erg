@@ -6,6 +6,7 @@ Author: haduong
 --- log ---
 2026-08-19T20:30Z haduong created
 2026-08-20T00:00Z haduong note Revue PR 765 : ajout du second vecteur (doctype reniflé via \documentclass, sans manifeste) ; confiner dans candidate_rule_files()
+2026-08-20T12:00Z haduong note Correctif : contained() extrait dans scripts/path_utils.py, importé par les deux hooks ; confinement dans candidate_rule_files() ; 3 tests rouges (unité + 2 vecteurs), rougissent à la mutation ; make check vert (1083)
 
 --- body ---
 ## Contexte
@@ -79,11 +80,11 @@ sont passées contre un défaut vivant.
 
 ## Vérification
 
-- [ ] La reproduction manifeste ne produit plus rien
-- [ ] La reproduction `\documentclass{}` ne produit plus rien
-- [ ] Une valeur d'axe légitime (`fr`, `techreport`) fonctionne toujours
-- [ ] La mutation retirant le confinement fait rougir les deux cas
-- [ ] `contained()` est partagé, non recopié
+- [x] La reproduction manifeste ne produit plus rien
+- [x] La reproduction `\documentclass{}` ne produit plus rien
+- [x] Une valeur d'axe légitime (`fr`, `techreport`) fonctionne toujours
+- [x] La mutation retirant le confinement fait rougir les deux cas
+- [x] `contained()` est partagé, non recopié
 
 ## Invariants
 
