@@ -54,6 +54,43 @@ Records with possibly-empty middle fields need a non-whitespace delimiter
 (`|`, `;`) or a placeholder value. Tab-delimited `read` is safe only when
 every field is guaranteed non-empty or the empty field is last.
 
+## A boolean predicate over a state that has more than two values
+
+`systemctl is-active --quiet` looks like a yes/no question. It is not. A
+`Type=oneshot` service is `activating` for the whole duration of its run — it
+reaches `active` only once it has nothing left to do — and `is-active` exits **3**
+on `activating`. So the naive test reports "nothing is running" exactly while
+something is running, and it cannot report anything else:
+
+```bash
+# WRONG — false for a oneshot that is running, and for one that never ran
+if systemctl is-active --quiet "$svc"; then echo running; fi
+
+# CORRECT — read the state, then decide which values you meant
+state="$(systemctl show "$svc" -p ActiveState --value 2>/dev/null || true)"
+case "$state" in active|activating) echo running ;; esac
+```
+
+Cost, 2026-08-21 (padme): a freshly written deploy script announced "catch-up:
+none — nothing was due" while restic was scanning 115 GiB. The message was
+harmless in that direction; the danger was believing it and launching a second
+restic over the first, whose `restic unlock` preamble would have removed the
+running backup's lock.
+
+The shape generalises past systemd. Before writing `if <cmd> --quiet`, ask how
+many states the underlying thing has, and which of them the exit code folds
+together. Exit codes are a two-value channel; most real state is not.
+
+**A negative result is the default output of everything that fails silently** —
+wrong flag, wrong path, permission denied, wrong predicate. So a check whose
+"all clear" is indistinguishable from its "I could not look" is not a check;
+`tickets/AGENTS.md` states the general form for forge queries. The remedy is
+the same everywhere: run the check once against a case **known to be positive**
+— a deliberately broken fixture, the real state while the defect is live, or a
+mock that lies in the right direction — and only then trust its silence. In a
+test suite, the case that earns its place is the one that fails against the old
+code.
+
 ## General `set -euo pipefail` discipline
 
 - Every script starts with `set -euo pipefail` unless there is an explicit reason not to.
