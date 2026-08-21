@@ -72,6 +72,21 @@ default branch — there are no remote branches nor merge requests to inspect.
        echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
    fi
    ```
+   **First roar in a repo: prefer a session base over the aggregate.** The
+   sentinel is absent exactly once per repo, and the aggregate then collapses
+   the whole session into one record — which is the loss ticket 0331 exists to
+   prevent, at its worst in a batched session that merged many PRs. When the
+   session's base commit is known (`origin/main` as it stood before the first
+   merge, recoverable from the reflog or from the first PR's base), pass it to
+   `enumerate-merges.py` instead of falling through:
+   ```bash
+   ROWS="$(~/.claude/skills/roar/enumerate-merges.py <session-base-sha> --project "<name>")"
+   ```
+   Attribution is per-PR either way; the sentinel only answers *where to start*.
+   Fall back to the aggregate when no defensible base exists — rewritten
+   history, squash-merges, a no-forge repo with no merge commits. (Precedent:
+   padme 2026-08-21, first roar after ten merged PRs.)
+
    Then write the current HEAD SHA to the sentinel:
    ```bash
    git rev-parse HEAD > "$(git rev-parse --git-common-dir)/roar-last-sha"
