@@ -19,13 +19,13 @@ The timer never starts. That alone would be a loud failure. What makes this a
 class worth a rule is the second half: a later `daemon-reload` — run by an apt
 hook, or by hand, long after the filesystem mounted — finds the unit and marks
 it **loaded and enabled**. From then on `systemctl is-enabled` answers
-`enabled` while nothing runs, at every boot, and the panne silences its own
+`enabled` while nothing runs, at every boot, and the failure silences its own
 alarm.
 
-Cost, 2026-08-21 (padme): units deployed by symlink into `/home/haduong`, a
-separate btrfs subvolume. Seven timers dead since June, including the nightly
-off-site backup — **72 days with no backup**, discovered by accident during an
-unrelated pre-vacation review.
+Cost, 2026-08-21 (padme): units deployed by symlink into a repo checked out
+under the user's home, itself a separate btrfs subvolume. Seven timers dead
+since June, including the nightly off-site backup — **72 days with no backup**,
+discovered by accident during an unrelated pre-vacation review.
 
 ## The rules
 
