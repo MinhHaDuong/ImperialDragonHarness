@@ -86,6 +86,23 @@ for input Z; cause not yet established," not a verdict dressed as a finding.
 feature — intact binary, deterministic, reproduced by the stdlib — was
 misdiagnosed as a "broken toolchain" and nearly got a spurious reinstall ticket.)
 
+**A null result is not a finding until a positive control has fired.** A probe
+that returns nothing reports one of two things and cannot say which: the
+phenomenon is absent, or the probe cannot see it. So before a zero becomes a
+verdict, produce a case known to be positive — a deliberately broken fixture,
+the state while the phenomenon is live, a mock that lies in the right direction
+— and watch the probe react. Where the positive case needs an action the tooling
+cannot perform, that *is* the finding: report an open question naming the one
+experiment, not a null. And distinguish in the prose between "this path does not
+cause it" and "nothing causes it"; only the first is what a null supports.
+(Cost of skipping this, 2026-08-22: three probes over ten hours counted zero
+Zotero structure-extraction packs, and the conclusion drifted to a verdict on
+the feature. The artifact honestly recorded "NO POSITIVE CONTROL — nothing here
+shows the probe would find a pack if one existed", and the caveat changed
+nothing: three independent zeros feel like evidence, and they are one zero
+measured three times. A fourth probe, run after a human opened two PDFs, found
+two packs within a minute; the recorded finding had been wrong for a day.)
+
 # Refactor validation — byte-compare the artifact, not just green tests
 
 A **pure refactor** — a build/layout/rename change that must not alter output
