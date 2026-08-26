@@ -2,10 +2,13 @@
 Title: Le dépôt harness n'a pas de test d'adhérence ruff, que coding-python.md rend obligatoire
 Created: 2026-08-14
 Author: minh
+Closed: autoclosed — PR #772
 
 --- log ---
 2026-08-14T00:00Z minh created
+2026-08-26T09:55Z claude note livré (PR) : mesure = 9 violations préexistantes (6 E741, 3 F841, toutes dans tests/), grand-périmètre retenu via .ruff.toml per-file-ignores rule×fichier commentées plutôt qu'un nettoyage ; épinglage ruff>=0.15,<0.16 dans requirements-dev.txt (écart au chemin uv documenté dans le test) + assertion de série sur ruff --version ; tests/test_ruff.py (adherence+integration, shutil.which, pas de uv run) ; étape rouge vérifiée — violation plantée fait échouer make lint, retirée repasse vert
 
+2026-08-26T10:52Z Claude closed — autoclosed — PR #772
 --- body ---
 ## Context
 

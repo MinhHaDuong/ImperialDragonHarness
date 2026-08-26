@@ -4,6 +4,7 @@
 # Harness components
 !.gitignore
 !requirements-dev.txt
+!.ruff.toml
 !README.md
 !STATE.md
 !CLAUDE.md
