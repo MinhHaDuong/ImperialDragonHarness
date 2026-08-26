@@ -1,0 +1,137 @@
+%erg 0.1
+Title: Le catch-all des hooks rend la moitié de leurs tests incapables d'échouer
+Created: 2026-08-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-26T11:42Z claude created — trouvé en sabotant une garde pendant le ticket 0590 ; l'auteur a demandé le dépôt du ticket. ID alloué à 0610, dégagé de la frontière (0590) conformément à tickets/AGENTS.md
+
+--- body ---
+## Context
+
+Les deux scripts de hook avalent toute exception et sortent 0 :
+
+```python
+if __name__ == "__main__":
+    try:
+        main()
+    except (Exception, SystemExit):
+        pass
+    sys.exit(0)
+```
+
+C'est **correct en production** et délibéré : un hook consultatif ne doit
+jamais bloquer l'outil ni cracher une trace dans le contexte du modèle. Le
+problème est ailleurs : sur les deux seuls canaux que les tests observent —
+le code de retour et stdout — un plantage et un silence correct sont
+**octet pour octet identiques**. Tout test dont l'attente est « silencieux »
+est donc satisfait par le plantage.
+
+**Mesuré, pas supposé** (2026-08-26, sur `origin/main`). En faisant lever une
+`RuntimeError` inconditionnelle :
+
+| module | sabotage | tests qui passent quand même |
+|---|---|---|
+| `tests/test_knowledge_hints.py` | `cmd_catalog` **et** `cmd_prompt` lèvent | **16 / 29 (55 %)** |
+| `tests/test_inject_rule_on_edit.py` | `main` lève | **30 / 32 (94 %)** |
+
+Le script est intégralement mort dans les deux cas et la suite reste
+majoritairement verte.
+
+**Deux des survivants sont des gardes de sécurité**, et c'est ce qui fait
+passer ce ticket au-dessus du plancher de sévérité :
+
+- `test_pointer_cannot_escape_the_repo` — vérifie qu'un `pointer` valant
+  `/etc/passwd` ou `../../../../etc/passwd` n'est jamais annoncé. Son propre
+  docstring dit « what this hook prints lands in the model's context ». Il
+  affirme `catalog(root) == ""` et `prompt(root, "Cournot") == ""` : un script
+  qui plante rend `""` sur les deux. **La garde d'exfiltration ne peut pas
+  échouer.**
+- `test_catalog_omits_the_body` — vérifie que le corps pointé
+  (`SECRET-ROSTER-BODY`) n'est jamais injecté. Même forme, même verdict.
+
+Ce n'est pas une régression : vérifié à l'identique sur `origin/main`, et
+antérieur au ticket 0590, qui n'a fait que toucher l'un de ces tests.
+
+C'est la classe `feedback_gate_must_bite_before_trusted`, et la table
+ci-dessus est aussi une instance de
+`feedback_guard_one_instance_not_the_class` : le défaut a été trouvé sur un
+test d'un module, il porte sur deux modules entiers.
+
+## Ce que le module fait déjà bien
+
+`tests/test_knowledge_hints.py` pilote délibérément le vrai CLI plutôt que
+d'importer les fonctions, et son en-tête l'argumente : un test qui appelle
+les fonctions directement est aveugle au câblage des arguments, au contrat
+stdin, « and to the silent no-op paths that matter most here ». L'intention
+est juste. Le catch-all efface exactement cette dernière moitié — les
+chemins silencieux sont précisément ceux que ce dispositif ne sait pas
+distinguer d'un plantage.
+
+Le correctif ne doit donc **pas** consister à rapatrier ces tests en
+in-process : ce serait perdre le contrat que le module teste exprès.
+
+## Relevant files
+
+- `scripts/knowledge_hints.py` — le `__main__` avaleur (fin de fichier)
+- `scripts/inject_rule_on_edit.py` — le même, mot pour mot
+- `tests/test_knowledge_hints.py` — 16 tests incapables d'échouer
+- `tests/test_inject_rule_on_edit.py` — 30 tests incapables d'échouer
+- `rules/coding-python.md` — le tier des tests ; le mode strict ne doit pas
+  changer le tier de ces suites
+
+## Actions
+
+1. **Trancher le canal.** Le plus simple qui préserve la production : une
+   variable d'environnement de mode strict (p. ex. `IDH_HOOK_STRICT=1`) que
+   le `__main__` consulte pour **re-lever** au lieu d'avaler. Les tests la
+   posent ; rien en production ne la pose. Alternative à peser : écrire la
+   trace sur stderr et affirmer `stderr == ""` dans les tests — moins
+   invasif, mais il faut vérifier qu'un hook Claude Code ne remonte pas
+   stderr à l'utilisateur, sans quoi c'est la panne que le commentaire
+   interdit.
+2. Poser le mode strict dans les deux suites (fixture d'environnement
+   partagée, pas une ligne recopiée dans chaque test).
+3. Renforcer les assertions de silence : « silencieux » devient
+   « silencieux **et** n'a pas planté ». Les tests de sécurité d'abord —
+   `test_pointer_cannot_escape_the_repo` et `test_catalog_omits_the_body`.
+4. Balayer les autres scripts du dépôt pour la même forme
+   (`except (Exception, SystemExit)` suivi de `sys.exit(0)`) avant de
+   déclarer la classe couverte.
+
+## Test
+
+Le sabotage **est** le test, et il est mécanique :
+
+- faire lever `cmd_catalog`, `cmd_prompt`, puis `main` de chaque script,
+  et compter les tests qui passent encore. Aujourd'hui : 16/29 et 30/32.
+- Après correctif, ce compte doit tomber à **0** dans les deux modules :
+  un script intégralement mort ne doit laisser aucune suite verte.
+
+Envisager d'en faire une garde permanente (un test d'adhérence qui sabote
+un module et exige que sa suite rougisse) plutôt qu'une vérification
+ponctuelle — c'est la forme qui empêche la classe de revenir.
+
+## Verification
+
+- [ ] `cmd_catalog` levant → `tests/test_knowledge_hints.py` rougit
+- [ ] `cmd_prompt` levant → idem
+- [ ] `main` de `inject_rule_on_edit` levant → sa suite rougit
+- [ ] Les deux gardes de sécurité échouent bien sous sabotage
+- [ ] `make check` vert sans sabotage
+
+## Invariants
+
+- **Le comportement en production ne change pas** : les deux hooks
+  continuent de ne jamais bloquer et de ne jamais cracher de trace dans le
+  canal du modèle. Le mode strict est éteint par défaut et ne peut pas
+  s'activer par accident depuis un contexte de hook.
+- Les suites gardent leur pilotage par sous-processus : on ne rapatrie pas
+  les assertions en in-process pour contourner le problème.
+- Aucun test n'est affaibli ni supprimé pour faire tomber le compte.
+
+## Exit criteria
+
+Un script de hook rendu intégralement non fonctionnel fait rougir sa suite,
+et les deux gardes de sécurité (pointer hors dépôt, corps non injecté)
+échouent quand ce qu'elles gardent est cassé.
