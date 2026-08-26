@@ -2,10 +2,14 @@
 Title: Nettoyer les 9 violations ruff grand-périsées et vider le per-file-ignores
 Created: 2026-08-26
 Author: Minh Ha-Duong
+Closed: autoclosed — PR
 
 --- log ---
 2026-08-26T11:05Z claude created — directive de l'auteur à la clôture de la salve 0470/0530/0531/0570 : « the next step will be to ruff clean existing base ». ID alloué à 0590, dégagé de la frontière (0571) conformément à tickets/AGENTS.md
+2026-08-26T11:29Z claude note livré (PR) : 9 violations nettoyées fichier par fichier, chaque entrée retirée dans le même commit, per-file-ignores entièrement supprimé. Les deux F841 à effet de bord traités comme le ticket l'exigeait (liaison retirée, appel conservé) ; le troisième était une ligne morte. Aucun --unsafe-fixes, aucun --fix en masse : correction cas par cas. Piège trouvé en plus du ticket : project(tmp_path) dans test_knowledge_hints n'était PAS un effet de bord utile — le sous-processus n'a ni --cwd ni cwd, donc l'arbre n'est jamais consulté ; appel retiré plutôt qu'entretenu
+2026-08-26T11:29Z claude note action 1 revue et REMPLACÉE : la garde « cette entrée est-elle encore porteuse ? » oblige à re-implémenter le glob et la précédence de config de ruff, et fnmatch n'est pas globset (sur-apparie tests/*.py, sous-apparie **/conftest.py) — un second modèle non vérifié gardant une table vide. Remplacée par l'assertion de l'invariant réellement atteint : aucun per-file ignore, les trois orthographes de config couvertes, chaque ligne exécutée à chaque run. Plus fort que la version demandée (aucune entrée ne peut revenir, périmée ou non)
 
+2026-08-26T11:30Z Claude closed — autoclosed — PR
 --- body ---
 ## Context
 

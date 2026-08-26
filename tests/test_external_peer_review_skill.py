@@ -26,7 +26,6 @@ def test_bundled_script_exists():
 
 
 def test_documents_balance_gate_and_text_fallback():
-    text = skill_text().lower()
     assert "$0.50" in skill_text(), "must document the OpenRouter $0.50 files gate"
     assert "--text" in skill_text(), "must document the text-mode fallback flag"
     assert "402" in skill_text(), "must document the HTTP 402 automatic fallback"

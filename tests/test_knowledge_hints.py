@@ -218,7 +218,10 @@ def test_non_utf8_manifest_is_silent_not_fatal(tmp_path):
 
 def test_non_dict_json_payload_is_silent_not_fatal(tmp_path):
     """`[]` parses as valid JSON, then crashes on .get if unguarded."""
-    root = project(tmp_path)
+    # No project fixture: this probes the payload guard alone. The subprocess
+    # is launched with neither `--cwd` nor a cwd, so a tmp project tree would
+    # never be consulted — the old `root = project(tmp_path)` was dead setup,
+    # not a side effect worth keeping (ticket 0590).
     for payload in ("[]", "42", "null", '"str"'):
         out = subprocess.run(
             [sys.executable, str(SCRIPT), "prompt"],

@@ -1188,7 +1188,9 @@ class TestCleanupLockedWorktrees:
         git_dir.mkdir()
 
         dead_pid = 999999  # almost certainly not alive
-        worktree_path = self._make_locked_worktree(git_dir, "agent-deadbeef", dead_pid)
+        # Called for its side effect — it creates the locked worktree under
+        # test; the binding was unused (ticket 0590).
+        self._make_locked_worktree(git_dir, "agent-deadbeef", dead_pid)
 
         run_calls: list[list[str]] = []
 
@@ -1630,7 +1632,7 @@ class TestRaidDoneButOpenWarning:
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
         assert any(
-            "warning" in l and "0001" in l and "not closed" in l for l in log_lines
+            "warning" in line and "0001" in line and "not closed" in line for line in log_lines
         )
 
     def test_no_warning_when_ticket_closed(self, tmp_project, git_ok):
@@ -1659,7 +1661,7 @@ class TestRaidDoneButOpenWarning:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        assert not any("warning" in l and "not closed" in l for l in log_lines)
+        assert not any("warning" in line and "not closed" in line for line in log_lines)
 
     def test_no_warning_when_ticket_file_missing(self, tmp_project):
         log_lines: list[str] = []
@@ -1686,7 +1688,7 @@ class TestRaidDoneButOpenWarning:
         ):
             beat._raid(beat.ProjectConfig(path=tmp_project))
 
-        assert not any("warning" in l and "not closed" in l for l in log_lines)
+        assert not any("warning" in line and "not closed" in line for line in log_lines)
 
 
 # ── Cooldown-recent-pick guard (ticket 0051 Layer 0) ──────────────────────────
@@ -1757,7 +1759,7 @@ class TestRaidCooldownRecentPick:
         assert not any("pick-ticket" in c for c in calls), (
             "pick-ticket must not be invoked when a recent-pick cooldown applies"
         )
-        assert any("cooldown-recent-pick" in l for l in log_lines)
+        assert any("cooldown-recent-pick" in line for line in log_lines)
 
     def test_proceeds_when_no_recent_pick(self, tmp_project, git_ok):
         (tmp_project / "tickets").mkdir(exist_ok=True)
@@ -2115,7 +2117,7 @@ class TestIntervalSkip:
             beat.main()
 
         assert exc_info.value.code == 0
-        assert any("interval-skip" in l for l in log_lines)
+        assert any("interval-skip" in line for line in log_lines)
 
     def test_runs_when_interval_elapsed(self, tmp_project, tmp_path):
         old_ts = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime(

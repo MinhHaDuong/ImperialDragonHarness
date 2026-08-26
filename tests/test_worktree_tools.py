@@ -192,7 +192,7 @@ def _gc(primary):
 
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
-    return [l[len("worktree "):] for l in out.splitlines() if l.startswith("worktree ")]
+    return [line[len("worktree "):] for line in out.splitlines() if line.startswith("worktree ")]
 
 
 def test_gc_removes_gone_clean_agent_worktree(origin):
