@@ -82,53 +82,49 @@ def test_ruff():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-# Every spelling ruff honours for per-file suppressions. Reading only
-# `lint.per-file-ignores` would let an entry in either of the others sit
-# unexamined, and the guard would report all-clear without having looked.
-IGNORE_TABLES = ("per-file-ignores", "extend-per-file-ignores")
+# Every way .ruff.toml can suppress a finding. A per-file ignore is the one
+# that bit (ticket 0470 opened four, 0590 closed them), but `lint.ignore` or
+# `exclude` reopens the same hole repo-wide — so the guard names the class,
+# not the single spelling that happened to bite.
+SUPPRESSION_KEYS = ("per-file-ignores", "extend-per-file-ignores",
+                    "ignore", "extend-ignore", "exclude", "extend-exclude")
 
 
-def _grandfather_entries() -> dict[str, set[str]]:
-    """{glob-or-path: {rule selector}} across every per-file ignore table."""
-    cfg = tomllib.loads((REPO / ".ruff.toml").read_text(encoding="utf-8"))
-    entries: dict[str, set[str]] = {}
-    # `[lint.x]` is current; bare `[x]` is the legacy top-level spelling.
-    for scope in (cfg.get("lint") or {}, cfg):
-        for table in IGNORE_TABLES:
-            for pattern, rules in (scope.get(table) or {}).items():
-                entries.setdefault(pattern, set()).update(rules)
-    return entries
+def _suppressions() -> list[str]:
+    """Every suppression declared in .ruff.toml, each naming where it lives.
 
-
-def test_no_per_file_ignores():
-    """The repo carries no per-file suppression at all (ticket 0590).
-
-    A per-file ignore is a hole, not an exemption: while it stands, a NEW
-    violation of that rule in that file passes unseen. Ticket 0470 opened
-    four of them to land the gate without a cleanup; 0590 cleaned the nine
-    violations and closed all four.
-
-    This states the invariant that was actually reached, rather than
-    tolerating an entry and trying to notice later that it went stale. The
-    weaker "is this entry still load-bearing?" check was written first and
-    dropped on review: answering it means re-implementing ruff's own glob
-    matching and config precedence in Python, and `fnmatch` is not globset —
-    it matches `tests/*.py` against `tests/sub/deep.py` (a stale entry then
-    reads as live) and fails to match `**/conftest.py` against a root-level
-    `conftest.py` (a live entry then reads as stale). A second, unverified
-    model of ruff's semantics guarding an empty table is worse than no
-    machinery at all.
-
-    If a future change genuinely needs an ignore, this test is the place the
-    decision surfaces: opening a hole should be deliberate and argued, and
-    whoever opens one has a real entry to build a staleness check against.
+    Both scopes are read: `[lint.x]` is current, bare `[x]` the legacy
+    top-level spelling. Reporting the scope matters — an entry under
+    `lint.extend-per-file-ignores` and one at top level are different lines
+    to delete, and a message that merged them would send you to the wrong
+    place.
     """
-    entries = _grandfather_entries()
-    assert not entries, (
-        "per-file ignores are holes in the lint gate — a new violation of "
-        "that rule in that file would pass unseen. Ticket 0590 closed the "
-        "last one. If you need this, say why in the ticket and reintroduce "
-        "a staleness check with it:\n  "
-        + "\n  ".join(f"{pattern}: {sorted(rules)}"
-                      for pattern, rules in sorted(entries.items()))
+    cfg = tomllib.loads((REPO / ".ruff.toml").read_text(encoding="utf-8"))
+    return [f"{scope}{key} = {table[key]!r}"
+            for scope, table in (("", cfg), ("lint.", cfg.get("lint") or {}))
+            for key in SUPPRESSION_KEYS
+            # Truthiness on purpose: an empty table suppresses nothing.
+            if table.get(key)]
+
+
+def test_config_declares_no_suppressions():
+    """The lint gate has no holes in it (ticket 0590).
+
+    A suppression is a hole, not an exemption: while it stands, a NEW
+    violation passes unseen. That is true of a per-file ignore and equally
+    true of `lint.ignore` or `exclude`, so this asserts the class.
+
+    Do not answer "is this entry still load-bearing?" instead — that needs
+    ruff's own glob matching re-implemented, and `fnmatch` is not globset:
+    it matches `tests/*.py` against `tests/sub/deep.py` and misses
+    `**/conftest.py` against a root-level `conftest.py`, so it errs in both
+    directions. If an ignore is ever genuinely needed, delegate the matching
+    to ruff rather than modelling it. History in ticket 0590.
+    """
+    found = _suppressions()
+    assert not found, (
+        "the lint gate declares a suppression — a violation it covers would "
+        "pass unseen. Ticket 0590 closed the last one; reopening one should "
+        "be argued in a ticket, not slipped into config:\n  "
+        + "\n  ".join(found)
     )

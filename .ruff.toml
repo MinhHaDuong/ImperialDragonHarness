@@ -3,9 +3,11 @@
 # Default rule set on purpose — the ratchet's job is to keep the tree clean,
 # not to open a cleanup.
 #
-# No `per-file-ignores`: the 9 violations 0470 grandfathered were cleaned in
-# ticket 0590, so the whole section went with them. That matters beyond
-# tidiness — every entry was a hole in which a NEW violation of the same rule
-# in the same file passed unseen. `tests/test_ruff.py` carries a guard that
-# fails on a grandfather entry whose violation no longer fires, so a future
-# entry cannot outlive its reason the way these did.
+# No suppressions of any kind. Ticket 0470 grandfathered 9 pre-existing
+# violations in `per-file-ignores` to land the gate without a cleanup; 0590
+# fixed them and deleted the section. Every such entry was a hole: while one
+# stands, a new violation it covers passes unseen.
+# `tests/test_ruff.py::test_config_declares_no_suppressions` fails on ANY
+# suppression key here — `per-file-ignores`, `ignore`, `exclude` and their
+# `extend-` forms, at top level or under `[lint]` — so reopening a hole is a
+# deliberate, argued change rather than a quiet one.
