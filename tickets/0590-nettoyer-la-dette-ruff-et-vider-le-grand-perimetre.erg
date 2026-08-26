@@ -1,0 +1,107 @@
+%erg 0.1
+Title: Nettoyer les 9 violations ruff grand-périsées et vider le per-file-ignores
+Created: 2026-08-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-26T11:05Z claude created — directive de l'auteur à la clôture de la salve 0470/0530/0531/0570 : « the next step will be to ruff clean existing base ». ID alloué à 0590, dégagé de la frontière (0571) conformément à tickets/AGENTS.md
+
+--- body ---
+## Context
+
+Le ticket 0470 a posé le cliquet ruff et a **délibérément** laissé le code
+sale : « Aucun fichier existant n'est reformaté dans ce ticket. Poser la garde
+et nettoyer le code sont deux changements distincts. » Les 9 violations
+mesurées ont donc été grand-périsées dans `.ruff.toml` en `per-file-ignores`
+règle×fichier.
+
+Ce ticket est la seconde moitié. Il compte parce que le grand-périmètre a un
+trou que son propre commentaire reconnaît : une nouvelle violation d'une
+**autre** règle dans ces 4 fichiers échoue bien, mais une nouvelle violation de
+la **même** règle y passe en silence. `tests/test_beat.py` (2400 lignes,
+activement édité) peut donc accumuler des E741 et des F841 sans que rien ne
+bronche. Nettoyer les fichiers et retirer leurs entrées est ce qui ferme le
+trou — pas un embellissement.
+
+Constat de la revue d'altitude (PR #772) : **rien ne détecte qu'une entrée est
+devenue inutile.** Une fois les E741 de `test_beat.py` corrigés, l'entrée
+survit indéfiniment et le trou reste ouvert pour un fichier qui n'en a plus
+besoin. Le dépôt a déjà résolu ce problème une fois —
+`tests/test_worktree_predicate_ratchet.py::test_allowlist_has_no_stale_entries`
+(« every allowlisted line must still exist verbatim; remove it once gone »).
+
+## La dette exacte (mesurée sur main, 2026-08-26)
+
+| fichier | règle | occurrences |
+|---|---|---|
+| `tests/test_beat.py` | E741 (`l` ambigu) | 5 — l. 1633, 1662, 1689, 1760, 2118 |
+| `tests/test_beat.py` | F841 (`worktree_path`) | 1 — l. 1191 |
+| `tests/test_external_peer_review_skill.py` | F841 (`text`) | 1 — l. 29 |
+| `tests/test_knowledge_hints.py` | F841 (`root`) | 1 — l. 221 |
+| `tests/test_worktree_tools.py` | E741 (`l`) | 1 — l. 195 |
+
+## Piège à ne pas manquer
+
+**Un F841 dans un test n'est pas toujours une ligne à supprimer.** Plusieurs de
+ces liaisons existent pour l'**effet de bord** de l'appel, pas pour la valeur :
+`root = project(tmp_path)` (`test_knowledge_hints.py:221`) *crée* le projet que
+le test interroge ensuite. Supprimer la ligne casse le test ; supprimer la
+seule liaison (`project(tmp_path)`) est correct. Vérifier chaque cas avant de
+laisser `ruff --fix` décider — et **ne pas** utiliser `--unsafe-fixes` en
+masse (3 des 9 en dépendent).
+
+Les E741 se corrigent par renommage (`l` → `line`), sans changement de
+comportement.
+
+## Relevant files
+
+- `.ruff.toml` — les 4 entrées `per-file-ignores` à vider au fur et à mesure
+- `tests/test_beat.py`, `tests/test_external_peer_review_skill.py`,
+  `tests/test_knowledge_hints.py`, `tests/test_worktree_tools.py` — la dette
+- `tests/test_ruff.py` — où atterrit la garde anti-entrée-périmée
+- `tests/test_worktree_predicate_ratchet.py` — implémentation de référence de
+  cette garde dans ce dépôt
+
+## Actions
+
+1. Écrire d'abord la garde anti-entrée-périmée dans `tests/test_ruff.py` :
+   pour chaque paire `(fichier, règle)` de `.ruff.toml`, lancer
+   `ruff check --isolated --select <règle> <fichier>` et exiger un résultat
+   **non vide**. Une entrée dont la violation a disparu échoue avec « retirer
+   cette entrée ». Elle doit être VERTE avant nettoyage (les 9 existent) et
+   virer au rouge dès qu'un fichier est nettoyé sans retrait de son entrée —
+   c'est le contrôle positif de la garde elle-même.
+2. Nettoyer fichier par fichier, en retirant l'entrée correspondante dans le
+   même commit : le test de l'action 1 impose l'appariement.
+3. Chaque test touché doit toujours tester la même chose : relancer la suite
+   du fichier, pas seulement `make lint`. Un test qui passe *parce qu'*une
+   liaison a disparu affirmait autre chose que ce qu'on croit.
+4. À la fin, `.ruff.toml` ne porte plus de `per-file-ignores` — la section
+   entière disparaît, et le trou du grand-périmètre avec elle.
+
+## Test
+
+- Rouge d'abord sur la garde (action 1), en nettoyant un seul fichier sans
+  retirer son entrée : le test doit le dire.
+- `make lint` vert à chaque étape.
+- `make check-tests` sans régression contre la ligne de base.
+
+## Verification
+
+- [ ] La garde anti-entrée-périmée existe et a été vue rouge
+- [ ] Les 9 violations sont corrigées, aucun test affaibli pour y arriver
+- [ ] `ruff check .` passe **sans aucun `per-file-ignores`**
+- [ ] Aucun `--unsafe-fixes` appliqué en masse sans relecture cas par cas
+
+## Invariants
+
+- Aucun test n'est désarmé, sauté ou affaibli pour faire passer ruff.
+- `F841` sur une liaison dont l'appel a un effet de bord : on retire la
+  liaison, jamais l'appel.
+- Le jeu de règles reste celui par défaut ; élargir la sélection ruff est un
+  autre ticket.
+
+## Exit criteria
+
+`ruff check .` passe sur un `.ruff.toml` sans `per-file-ignores`, et un test
+d'adhérence empêche une entrée périmée d'y revenir en silence.
