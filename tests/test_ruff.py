@@ -16,6 +16,7 @@ grandfathered per file × rule.
 import re
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -76,3 +77,45 @@ def test_ruff():
     result = subprocess.run([_ruff(), "check", "."], capture_output=True,
                             text=True, cwd=REPO)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def _per_file_ignores() -> dict[str, list[str]]:
+    cfg = tomllib.loads((REPO / ".ruff.toml").read_text(encoding="utf-8"))
+    return cfg.get("lint", {}).get("per-file-ignores", {})
+
+
+def test_no_stale_grandfather_entries():
+    """Every per-file-ignores entry must still suppress a real violation.
+
+    Ticket 0590. A grandfather entry is a hole: while it stands, a NEW
+    violation of that same rule in that same file passes unseen. Nothing
+    otherwise notices when the file is cleaned, so the entry — and the hole —
+    outlive their reason. This makes the entry self-retiring: clean the file
+    and the guard tells you to remove it.
+
+    Same shape as test_worktree_predicate_ratchet's stale-allowlist check.
+    An empty per-file-ignores passes trivially, which is the intended end
+    state, not a blind spot: test_ruff above is what keeps the tree clean.
+    """
+    stale, broken = [], []
+    for rel, rules in sorted(_per_file_ignores().items()):
+        for rule in rules:
+            r = subprocess.run(
+                [_ruff(), "check", "--isolated", "--select", rule,
+                 "--output-format", "concise", rel],
+                capture_output=True, text=True, cwd=REPO)
+            if r.returncode == 0:
+                stale.append(f"{rel}: {rule} no longer fires")
+            elif r.returncode != 1:
+                # 2 = ruff could not look (missing file, bad rule code). That
+                # must not read as "still load-bearing".
+                broken.append(f"{rel}: {rule} → rc={r.returncode} {r.stderr.strip()}")
+    assert not broken, (
+        "could not evaluate a grandfather entry — a renamed or deleted file "
+        "leaves a stale entry invisible (ticket 0590):\n  " + "\n  ".join(broken)
+    )
+    assert not stale, (
+        "stale .ruff.toml grandfather entries — the file is clean, so the "
+        "entry only holds a hole open for future violations of that rule. "
+        "Remove it (ticket 0590):\n  " + "\n  ".join(stale)
+    )
