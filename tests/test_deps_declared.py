@@ -11,9 +11,9 @@ declaration file it checks — a test that reads the same list it verifies
 passes forever (the hollow-guard trap). Membership is decided by what a file
 *is*, not its suffix: ``.py`` files, extensionless python-shebang programs
 (``bin/usage-report``), and the quoted python heredocs embedded in shell
-scripts — the production consumer of PyYAML is the heredoc in
-``scripts/gen-skills-catalog.sh``, which a ``*.py``-only scan would leave
-pinned by test files that coincidentally import yaml.
+scripts (the last production one, in gen-skills-catalog.sh, became
+scripts/gen_skills_catalog.py under ticket 0531 — the path stays scanned,
+its extractor pinned by a direct unit test, so the next one cannot hide).
 
 Per the positive-control rule (a null result is not a finding until a
 positive control has fired): the scan must rediscover a known third-party
@@ -33,24 +33,22 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[1]
+from repo_sources import REPO, source_texts
+
 REQUIREMENTS = REPO / "requirements-dev.txt"
-SCAN_DIRS = ("scripts", "tests", "hooks", "bin")
-# Mutation-audit sample files, not code this repo runs — same policy as
-# pytest.ini's norecursedirs (ticket 0219), stated there for collection and
-# here for scanning.
-EXCLUDED_ROOT = REPO / "tests" / "fixtures"
 
 # Import name → PyPI distribution name, where they differ (PEP 503-normalized).
 IMPORT_TO_DIST = {
     "yaml": "pyyaml",
 }
 
-# One control per extraction path: a plain .py import and a shell-heredoc
-# import. If either ever fails, the corresponding scanner path is broken,
-# not the tree clean.
+# If a control ever fails, the scanner path is broken, not the tree clean.
+# The .py path is pinned end-to-end here; the shell-heredoc extraction has no
+# live third-party import left to pin since ticket 0531 converted
+# gen-skills-catalog.sh to a .py, so its mechanism is pinned by the direct
+# unit test below instead.
 POSITIVE_CONTROLS = {
-    "yaml": {"tests/test_skill_frontmatter.py", "scripts/gen-skills-catalog.sh"},
+    "yaml": {"scripts/skill_frontmatter.py"},
 }
 
 # Only a QUOTED delimiter (<<'EOF') guarantees the body is literal,
@@ -79,25 +77,20 @@ def _python_heredocs(text: str):
 
 @functools.lru_cache(maxsize=1)
 def python_sources() -> tuple[tuple[str, str], ...]:
-    """(repo-relative path, python source) pairs — both tests share one walk."""
+    """(repo-relative path, python source) pairs — a filter over the shared
+    walk in repo_sources, not a second traversal of the tree."""
     out = []
-    for dirname in SCAN_DIRS:
-        for path in sorted((REPO / dirname).rglob("*")):
-            if not path.is_file() or path.is_relative_to(EXCLUDED_ROOT):
-                continue
-            try:
-                text = path.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                continue  # binary, not a python source
-            rel = path.relative_to(REPO).as_posix()
-            if path.suffix == ".py" or text.startswith("#!") and "python" in text.splitlines()[0]:
-                out.append((rel, text))
-            else:
-                out.extend((rel, body) for body in _python_heredocs(text))
+    for rel, text in source_texts():
+        if rel.endswith(".py") or (text.startswith("#!")
+                                   and "python" in text.splitlines()[0]):
+            out.append((rel, text))
+        else:
+            out.extend((rel, body) for body in _python_heredocs(text))
     return tuple(out)
 
 
-def third_party_imports() -> dict[str, set[str]]:
+@functools.lru_cache(maxsize=1)
+def third_party_imports() -> dict[str, frozenset[str]]:
     """Map of top-level third-party module name → files importing it."""
     stdlib = set(sys.stdlib_module_names)
     # A sibling imported via sys.path manipulation (beat, git_utils, …) is
@@ -118,7 +111,8 @@ def third_party_imports() -> dict[str, set[str]]:
                 if top in stdlib or top in locals_:
                     continue
                 found.setdefault(top, set()).add(rel)
-    return found
+    # Frozen: the result is cached and shared by both tests below.
+    return {module: frozenset(files) for module, files in found.items()}
 
 
 def _normalize(name: str) -> str:
@@ -154,6 +148,17 @@ def test_scanner_finds_known_imports():
             f"scanner failed to find the known import {module!r} in "
             f"{sorted(missing)} — that extraction path is broken"
         )
+
+
+@pytest.mark.adherence
+def test_heredoc_extraction_mechanism():
+    # The heredoc path's positive control: no live shell heredoc imports a
+    # third-party module any more (ticket 0531), so the extractor is pinned
+    # on a literal — a quoted python heredoc is extracted, a fake-binary
+    # write (`cat > .../python3`) is not.
+    src = ("cat > \"$dir/python3\" <<'STUB'\nnot python\nSTUB\n"
+           "python3 - <<'EOF'\nimport yaml\nEOF\n")
+    assert list(_python_heredocs(src)) == ["import yaml"]
 
 
 @pytest.mark.adherence

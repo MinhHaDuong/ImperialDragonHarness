@@ -38,7 +38,7 @@ ImperialDragonHarness/
 │   ├── block-pr-merge-in-worktree.sh
 │   ├── lint-on-edit.sh
 │   ├── warn-stale-rules.sh
-│   └── gen-skills-catalog.sh   # Generate skills catalog from SKILL.md frontmatter
+│   └── gen_skills_catalog.py   # Generate skills catalog from SKILL.md frontmatter
 ├── commands/               # Guidance documents
 │   └── choose-journal.md
 ├── bin/                    # Utilities (added to PATH)

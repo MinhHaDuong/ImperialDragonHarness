@@ -2,18 +2,12 @@
 """Update skills catalog in README.md from generated catalog lines."""
 
 import re
-import subprocess
+
+import gen_skills_catalog
 
 
 def main():
-    # Generate catalog lines
-    result = subprocess.run(
-        ["./scripts/gen-skills-catalog.sh", "."],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    catalog_lines = result.stdout.rstrip()
+    catalog_lines = "\n".join(gen_skills_catalog.catalog_lines("."))
 
     # Read current README
     with open("README.md", "r") as f:

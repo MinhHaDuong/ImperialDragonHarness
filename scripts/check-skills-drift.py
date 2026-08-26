@@ -2,19 +2,14 @@
 """Check if skills catalog in README.md is in sync with SKILL.md files."""
 
 import re
-import subprocess
 import sys
+
+import gen_skills_catalog
 
 
 def main():
     # Generate expected catalog
-    result = subprocess.run(
-        ["./scripts/gen-skills-catalog.sh", "."],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    expected = set(result.stdout.strip().split("\n"))
+    expected = set(gen_skills_catalog.catalog_lines("."))
 
     # Extract actual catalog from README
     with open("README.md", "r") as f:

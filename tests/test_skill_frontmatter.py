@@ -20,12 +20,15 @@ Two layers, deliberately:
 """
 
 import re
-from pathlib import Path
+import sys
 
 import pytest
-import yaml
 
-REPO = Path(__file__).resolve().parents[1]
+from repo_sources import REPO, source_texts
+
+sys.path.insert(0, str(REPO / "scripts"))
+
+import skill_frontmatter as sf  # noqa: E402
 
 # Free-text fields: values authored as prose or usage strings, where a colon,
 # a leading bracket, or a quote is a natural thing to write and a YAML
@@ -33,7 +36,15 @@ REPO = Path(__file__).resolve().parents[1]
 # ratcheted — they cannot collide with YAML syntax.
 FREE_TEXT_FIELDS = ("description", "argument-hint")
 
-FRONTMATTER = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
+# A frontmatter extractor is a regex anchoring on the opening fence and
+# lazily capturing to the closing one. Spellings vary — a start-of-string or
+# start-of-line anchor, an optional carriage return, a named group — so this
+# matches the FAMILY, not one byte sequence. A re-spelled copy must not score
+# zero and let the guard report "exactly one definition" while two exist.
+# This pattern does not match its own source, so the guard needs no
+# self-concealment trick; the controls below pin both directions, and they
+# assemble their examples for the same reason.
+DEFINITION = re.compile(r"(?:\\A|\^)-{3}(?:\\r\??)?\\n\(")
 
 
 def skill_files():
@@ -42,10 +53,44 @@ def skill_files():
     return files
 
 
-def frontmatter_text(md: Path) -> str:
-    m = FRONTMATTER.match(md.read_text())
-    assert m, f"{md.parent.name}: no `---` frontmatter block at the top of the file"
-    return m.group(1)
+@pytest.mark.adherence
+def test_frontmatter_regex_has_single_definition():
+    """One extraction, one regex (ticket 0531): three copies had already
+    diverged (the shell one did not require the trailing newline), and the
+    guard and the thing guarded sharing duplicated logic is the failure mode
+    0515 closed. The single definition lives in scripts/skill_frontmatter.py."""
+    # One walk of the tree, shared with every other adherence guard — a
+    # diverging copy of "where code lives" is the shape this guard forbids.
+    hits = sorted(rel for rel, text in source_texts() if DEFINITION.search(text))
+    # Exactly one, in the helper — zero would mean the scan (or the helper)
+    # is broken, not the tree clean.
+    assert hits == ["scripts/skill_frontmatter.py"], (
+        "the frontmatter regex must have exactly one definition, in "
+        f"scripts/skill_frontmatter.py (ticket 0531); found: {hits}"
+    )
+
+
+@pytest.mark.adherence
+def test_definition_pattern_catches_variant_spellings():
+    """Positive control: the pattern matches the family, not one spelling.
+    Without this, a re-spelled copy scores zero and the guard's "exactly one"
+    is indistinguishable from "I could not look"."""
+    # Assembled, not written literally: a literal extractor regex in this
+    # file would itself be a second definition and trip the guard above.
+    fence = "-" * 3
+    for variant in (
+            "\\A" + fence + "\\n(.*?)\\n" + fence + "\\n",        # today's
+            "^" + fence + "\\n(.*?)\\n" + fence,                  # ^ anchor
+            "\\A" + fence + "\\r?\\n(?P<fm>.*?)\\n" + fence):     # CRLF+named
+        assert DEFINITION.search(variant), f"missed a real copy: {variant}"
+
+
+@pytest.mark.adherence
+def test_definition_pattern_ignores_safe_forms():
+    """Negative control: ordinary `---` text is not a second extractor."""
+    for safe in ("--- log ---", "--- body ---", 'sep = "---"',
+                 "yaml.safe_load(text)", "a---b\\n(x)"):
+        assert not DEFINITION.search(safe), f"false positive on: {safe}"
 
 
 @pytest.mark.adherence
@@ -53,13 +98,9 @@ def test_frontmatter_parses_as_yaml():
     offenders = []
     for md in skill_files():
         try:
-            parsed = yaml.safe_load(frontmatter_text(md))
-        except yaml.YAMLError as exc:
-            reason = str(exc).splitlines()[0]
-            offenders.append(f"{md.parent.name}: {reason}")
-            continue
-        if not isinstance(parsed, dict):
-            offenders.append(f"{md.parent.name}: parses as {type(parsed).__name__}, not a mapping")
+            sf.load(md)
+        except sf.FrontmatterError as exc:
+            offenders.append(str(exc))
     assert not offenders, (
         "SKILL.md frontmatter must be valid YAML — a lenient consumer is not a "
         "guarantee, and the pi/Claude Code split adds one whose parser we do "
@@ -72,11 +113,9 @@ def test_free_text_fields_are_strings():
     offenders = []
     for md in skill_files():
         try:
-            parsed = yaml.safe_load(frontmatter_text(md))
-        except yaml.YAMLError:
+            parsed = sf.load(md)
+        except sf.FrontmatterError:
             continue  # reported by test_frontmatter_parses_as_yaml
-        if not isinstance(parsed, dict):
-            continue
         for field in FREE_TEXT_FIELDS:
             if field not in parsed:
                 continue
@@ -100,7 +139,7 @@ def test_free_text_fields_are_strings():
 def test_free_text_fields_are_quoted():
     offenders = []
     for md in skill_files():
-        text = frontmatter_text(md)
+        text = sf.frontmatter_text(md)
         for field in FREE_TEXT_FIELDS:
             m = re.search(rf"^{re.escape(field)}:[ \t]*(.*)$", text, re.MULTILINE)
             if not m:
