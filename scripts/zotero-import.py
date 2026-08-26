@@ -359,18 +359,32 @@ def _title_jaccard_hits(cur: sqlite3.Cursor, lib_id: int | None,
     return hits
 
 
+SAFE_TIERS = ("exact", "strong")
+
+
+def top_tier_peers(matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """All candidates tied with matches[0] at its certainty tier — [] when
+    there are no matches or the top tier is not a safe one. The single
+    definition of "several candidates tie", shared by the verdict
+    (classify_matches) and the audit row (audit_one) so the two cannot
+    desync (ticket 0570)."""
+    if not matches or matches[0]["certainty"] not in SAFE_TIERS:
+        return []
+    return [m for m in matches if m["certainty"] == matches[0]["certainty"]]
+
+
 def classify_matches(matches: list[dict[str, Any]]) -> str:
     """'match' when a safe key fired unambiguously; 'ambiguous' when only a
-    guess-level key fired or several strong candidates tie; 'none' otherwise."""
+    guess-level key fired or several exact/strong candidates tie; 'none'
+    otherwise. The exact tier ties like the strong one (ticket 0570): two
+    records legitimately share one attachment md5 — 269 such clusters in the
+    user library — and answering from matches[0] alone made the second vanish
+    without a trace."""
     if not matches:
         return "none"
-    best = matches[0]["certainty"]
-    if best == "exact":
-        return "match"
-    if best == "strong":
-        strong = [m for m in matches if m["certainty"] == "strong"]
-        return "match" if len(strong) == 1 else "ambiguous"
-    return "ambiguous"
+    # No safe tier fired → top_tier_peers is empty → "ambiguous", the same
+    # answer a tie gives; only a lone safe peer is a "match".
+    return "match" if len(top_tier_peers(matches)) == 1 else "ambiguous"
 
 
 def zotero_matches(
@@ -389,8 +403,9 @@ def zotero_matches(
     """Deduplicate one prospective item against the Zotero library.
 
     Returns {"matches": [...], "verdict": ..., "consulted": [...],
-    "skipped": [...]}. The verdict is "match" (a safe key fired), "ambiguous"
-    (only a guess fired — neither a silent match nor a silent skip), "none"
+    "skipped": [...]}. The verdict is "match" (a safe key fired
+    unambiguously), "ambiguous" (only a guess fired, or several exact/strong
+    candidates tie — neither a silent match nor a silent skip), "none"
     (keys were consulted, nothing matched), or "unchecked" (no key could be
     consulted — distinguishable from a clean negative by design).
     """
@@ -2003,19 +2018,32 @@ def audit_one(path: Path, idx: dict[str, Any]) -> dict[str, Any]:
     # saying so is cheaper than any threshold tuned to hide it.
     if top and "storageHash" in top["why"]:
         verdict = "identical"
-    elif top and top["certainty"] in ("exact", "strong"):
+    elif top and top["certainty"] in SAFE_TIERS:
         verdict = ("work_present_with_file" if top.get("has_file")
                    else "work_present_no_file")
     elif top:
         verdict = "ambiguous"
     else:
         verdict = "absent"
-    return {"file": path.name, "verdict": verdict,
-            "zotero_key": top.get("key") if top else None,
-            "zotero_title": top.get("title") if top else None,
-            "why": top.get("why") if top else None,
-            "certainty": top.get("certainty") if top else None,
-            "consulted": res["consulted"], "skipped": res["skipped"]}
+    row = {"file": path.name, "verdict": verdict,
+           "zotero_key": top.get("key") if top else None,
+           "zotero_title": top.get("title") if top else None,
+           "why": top.get("why") if top else None,
+           "certainty": top.get("certainty") if top else None,
+           "consulted": res["consulted"], "skipped": res["skipped"]}
+    # Top-tier tie (ticket 0570): the verdict stays what the best candidate
+    # supports ("identical" is still true — the file IS stored), but every
+    # parent tied at that tier is named; a clean answer that does not say it
+    # looked elsewhere is the fault this module exists to avoid. Applies to
+    # strong ties too — two records with an equally-named attachment leave
+    # matches[0] arbitrary, and `attach --parent` aimed at the wrong one.
+    tied = top_tier_peers(res["matches"])
+    if len(tied) > 1:
+        row["also_matches"] = [
+            {"key": m["key"], "title": m.get("title"), "why": m["why"]}
+            for m in tied[1:]
+        ]
+    return row
 
 
 def cmd_audit(args: argparse.Namespace) -> int:
@@ -2058,12 +2086,20 @@ def cmd_audit(args: argparse.Namespace) -> int:
     summary: dict[str, int] = {}
     for r in rows:
         summary[r["verdict"]] = summary.get(r["verdict"], 0) + 1
+    # A tie must reach the summary a human reads, not only the rows behind
+    # --out — a tied file counted as plain "identical"/"nothing" is the
+    # silent clean answer this report exists to avoid (ticket 0570).
+    tied = sum(1 for r in rows if r.get("also_matches"))
+    if tied:
+        summary["tied_parents"] = tied
     actions = {"identical": "nothing",
                "work_present_with_file": "nothing; report the second copy",
                "work_present_no_file": "attach --parent <key> (never inject)",
                "ambiguous": "look: weak hit, neither present nor absent",
                "absent": "inject",
-               "error": "unreadable; look at it"}
+               "error": "unreadable; look at it",
+               "tied_parents": "several records tie at the top tier "
+                               "(also_matches); pick one before attach --parent"}
     out = {"directory": str(root.resolve()), "index_fetched": idx["fetched"],
            "library_works": len(idx["works"]),
            "library_attachments": len(idx["attachments"]),
