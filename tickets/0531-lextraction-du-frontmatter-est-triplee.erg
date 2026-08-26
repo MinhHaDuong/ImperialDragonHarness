@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-08-14T00:00Z Minh Ha-Duong created
+2026-08-26T10:50Z claude note livré (PR, empilée sur la PR 0530 qui touche les mêmes consommateurs) : helper unique scripts/skill_frontmatter.py (FrontmatterError nommant le fichier, jamais avalée), action 3 tranchée côté suppression — gen-skills-catalog.sh devient gen_skills_catalog.py appelé directement par update-skills-catalog.py et check-skills-drift.py ; garde adherence de définition unique RED à 3 avant, verte à 1 après ; catalogue octet-pour-octet identique avant/après ; garde 0515 vérifiée non désarmée (frontmatter corrompu → RED, restauré → vert)
 
 --- body ---
 ## Context
