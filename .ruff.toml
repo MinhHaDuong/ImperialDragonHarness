@@ -1,13 +1,11 @@
 # Lint ratchet of the harness repo (ticket 0470), enforced locally by
 # tests/test_ruff.py under `make lint` and in CI through the pytest-guard job.
-# Default rule set on purpose — the ratchet's job is to freeze today's state,
+# Default rule set on purpose — the ratchet's job is to keep the tree clean,
 # not to open a cleanup.
-
-[lint.per-file-ignores]
-# The 9 violations that predate the ratchet (6 E741, 3 F841), grandfathered
-# per rule and per file (ticket 0470: poser la garde et nettoyer le code sont
-# deux changements distincts). Honest limit of this knob: a NEW violation of
-# another rule in these files still fails, but a new violation of the SAME
-# rule in the same file does not — cleaning the file and removing its entry
-# is what closes that gap.
-"tests/test_beat.py" = ["E741", "F841"]
+#
+# No `per-file-ignores`: the 9 violations 0470 grandfathered were cleaned in
+# ticket 0590, so the whole section went with them. That matters beyond
+# tidiness — every entry was a hole in which a NEW violation of the same rule
+# in the same file passed unseen. `tests/test_ruff.py` carries a guard that
+# fails on a grandfather entry whose violation no longer fires, so a future
+# entry cannot outlive its reason the way these did.
