@@ -4312,7 +4312,7 @@
         "-home-haduong-aedist-technical-report"
       ],
       "first_seen": "2026-06-05T19:26:10Z",
-      "last_confirmed": "2026-08-19T10:18:49Z",
+      "last_confirmed": "2026-08-22T07:10:13Z",
       "promoted": true,
       "promoted_at": "2026-06-24T11:22:34Z"
     },
@@ -4386,6 +4386,78 @@
       ],
       "first_seen": "2026-06-08T11:08:32Z",
       "last_confirmed": "2026-07-22T19:40:50Z",
+      "promoted": false
+    },
+    "feedback_agent_reported_numbers_need_artifacts": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:08:59Z",
+      "last_confirmed": "2026-08-22T07:08:59Z",
+      "promoted": false
+    },
+    "feedback_a_null_result_needs_a_positive_control": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_cited_evidence_ages_out": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_gate_must_bite_before_trusted": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_guard_one_instance_not_the_class": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_invisible_bias_in_both_arms": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_ratio_from_one_operating_point": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "feedback_rerunning_the_measurement_restales_the_prose": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
+      "promoted": false
+    },
+    "project_zoteus_fork_git_isolation": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-zoteus-fts5"
+      ],
+      "first_seen": "2026-08-22T07:09:00Z",
+      "last_confirmed": "2026-08-22T07:09:00Z",
       "promoted": false
     }
   }
