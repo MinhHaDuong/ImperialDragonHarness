@@ -11,4 +11,3 @@
 # rule in the same file does not — cleaning the file and removing its entry
 # is what closes that gap.
 "tests/test_beat.py" = ["E741", "F841"]
-"tests/test_external_peer_review_skill.py" = ["F841"]
