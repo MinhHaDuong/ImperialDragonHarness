@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-08-19T11:30Z Minh Ha-Duong created Trouvé par /gaze sur la MR #760 ; portée élargie par le chemin md5 que cette MR introduit
+2026-08-26T10:20Z claude note livré (PR) : conception tranchée côté ambiguous — classify_matches départage le palier exact comme le palier strong (plusieurs exact concurrents → ambiguous) ; audit_one garde le verdict identical (le fichier est bien stocké) et nomme tous les parents ex aequo dans also_matches ; rouge d'abord (3 tests échouent avant correctif), invariants verts (un seul exact inchangé, forme de ligne inchangée)
 
 --- body ---
 ## Context

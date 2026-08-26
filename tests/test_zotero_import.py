@@ -1165,6 +1165,75 @@ def test_api_matches_hash_beats_a_renamed_file(tmp_path):
     assert res["matches"][0]["key"] == "W1"
 
 
+# --------------------------------------------------------------------------
+# Exact-tier ties (ticket 0570): two distinct records legitimately sharing one
+# attachment md5 — 269 such clusters measured in the user library
+# (docs/zotero-integration.md), none visible in Zotero's Duplicates pane.
+# The old classify_matches returned "match" from matches[0] unconditionally at
+# the exact tier, so the second record vanished without a trace.
+# --------------------------------------------------------------------------
+
+
+def test_classify_matches_exact_tie_is_ambiguous():
+    tie = [{"certainty": "exact"}, {"certainty": "exact"}]
+    assert zi.classify_matches(tie) == "ambiguous"
+
+
+def test_classify_matches_single_exact_still_matches():
+    """The common case must not change (ticket 0570 invariant)."""
+    assert zi.classify_matches([{"certainty": "exact"},
+                                {"certainty": "strong"}]) == "match"
+
+
+def _two_parent_index(pdf, md5s):
+    """Two records whose attachments carry the given md5 pair — the tie
+    fixture shared by the exact (same md5) and strong (same filename,
+    different md5) cases."""
+    return _index([_work("W1", "Working Paper Version"),
+                   _work("W2", "Journal Version")],
+                  [_att("A1", "W1", pdf.name, md5s[0]),
+                   _att("A2", "W2", pdf.name, md5s[1])])
+
+
+def test_api_matches_exact_md5_tie_names_both_parents(tmp_path):
+    pdf = tmp_path / "shared.pdf"
+    pdf.write_bytes(b"%PDF-1.4 same bytes")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _two_parent_index(pdf, (digest, digest))
+    res = zi.api_matches(idx, pdf_path=pdf)
+    assert res["verdict"] == "ambiguous"
+    assert {m["key"] for m in res["matches"]} == {"W1", "W2"}
+
+
+def test_audit_exact_md5_tie_names_every_parent(tmp_path, monkeypatch):
+    """`identical` stays true — the file IS stored — but no tied parent may
+    disappear without a trace (neither in why nor in skipped)."""
+    pdf = tmp_path / "shared.pdf"
+    pdf.write_bytes(b"%PDF-1.4 same bytes")
+    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+    idx = _two_parent_index(pdf, (digest, digest))
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    row = zi.audit_one(pdf, idx)
+    assert row["verdict"] == "identical"
+    named = {row["zotero_key"]} | {m["key"] for m in row.get("also_matches", [])}
+    assert named == {"W1", "W2"}
+
+
+def test_audit_strong_filename_tie_names_every_parent(tmp_path, monkeypatch):
+    """Same trap one tier down: two records with an equally-named attachment
+    leave matches[0] arbitrary — and `attach --parent` aimed at the wrong
+    one. Every tied parent is named."""
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF-1.4 local bytes")
+    idx = _two_parent_index(pdf, ("md5-one", "md5-two"))
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
+    row = zi.audit_one(pdf, idx)
+    named = {row["zotero_key"]} | {m["key"] for m in row.get("also_matches", [])}
+    assert named == {"W1", "W2"}
+
+
 def test_api_matches_doi_exact():
     idx = _index([_work("W1", "T", doi="10.1111/1467-9965.00068")])
     res = zi.api_matches(idx, doi="10.1111/1467-9965.00068")
@@ -1426,7 +1495,10 @@ def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
     idx = _index([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    assert zi.audit_one(pdf, idx)["verdict"] == "identical"
+    row = zi.audit_one(pdf, idx)
+    assert row["verdict"] == "identical"
+    # Ticket 0570 invariant: no also_matches key on the single-exact case.
+    assert "also_matches" not in row
 
 
 # --------------------------------------------------------------------------
