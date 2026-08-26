@@ -8,18 +8,19 @@ Pinning (documented deviation from the rule's uv-lock path, decided in the
 ticket): IDH has no pyproject.toml/uv by design, so the version is pinned as
 a range in ``requirements-dev.txt`` and the series is asserted here — an
 ambient ruff that drifts to another minor series silently changes rules,
-which is exactly what the rule forbids. The scope ratchet lives in
-``.ruff.toml``: default rules, with the pre-existing violations
-grandfathered per file × rule.
+which is exactly what the rule forbids.
+
+Scope lives in ``.ruff.toml``: ruff's default rule set, and **no per-file
+ignores** — 0470 grandfathered nine pre-existing violations to land the gate
+without opening a cleanup, and ticket 0590 cleaned them and removed the last
+entry. ``test_no_per_file_ignores`` below keeps it that way.
 """
 
-import json
 import re
 import shutil
 import subprocess
 import tomllib
-from fnmatch import fnmatch
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 import pytest
 
@@ -99,66 +100,35 @@ def _grandfather_entries() -> dict[str, set[str]]:
     return entries
 
 
-def _violations_ignoring_the_ignores() -> set[tuple[str, str]]:
-    """(repo-relative path, rule code) over the tree, with the per-file
-    suppressions cleared but every other repo ruff setting intact.
+def test_no_per_file_ignores():
+    """The repo carries no per-file suppression at all (ticket 0590).
 
-    Deliberately not `--isolated`: that would judge each entry under ruff's
-    defaults rather than this repo's configuration, so a rule that only fires
-    under a repo setting (preview, a tightened line-length) would read as
-    "no longer fires" and the guard would order a live entry removed.
-    """
-    r = subprocess.run(
-        [_ruff(), "check", ".", "--output-format", "json",
-         "--config", "lint.per-file-ignores={}",
-         "--config", "lint.extend-per-file-ignores={}"],
-        capture_output=True, text=True, cwd=REPO)
-    # 0 = clean, 1 = violations found; anything else means ruff could not look.
-    assert r.returncode in (0, 1), (
-        f"ruff could not evaluate the tree (rc={r.returncode}): {r.stderr.strip()}"
-    )
-    out = set()
-    for v in json.loads(r.stdout or "[]"):
-        path = Path(v["filename"])
-        rel = path.relative_to(REPO).as_posix() if path.is_absolute() else v["filename"]
-        out.add((rel, v["code"]))
-    return out
+    A per-file ignore is a hole, not an exemption: while it stands, a NEW
+    violation of that rule in that file passes unseen. Ticket 0470 opened
+    four of them to land the gate without a cleanup; 0590 cleaned the nine
+    violations and closed all four.
 
+    This states the invariant that was actually reached, rather than
+    tolerating an entry and trying to notice later that it went stale. The
+    weaker "is this entry still load-bearing?" check was written first and
+    dropped on review: answering it means re-implementing ruff's own glob
+    matching and config precedence in Python, and `fnmatch` is not globset —
+    it matches `tests/*.py` against `tests/sub/deep.py` (a stale entry then
+    reads as live) and fails to match `**/conftest.py` against a root-level
+    `conftest.py` (a live entry then reads as stale). A second, unverified
+    model of ruff's semantics guarding an empty table is worse than no
+    machinery at all.
 
-def _covers(pattern: str, rel: str) -> bool:
-    # ruff matches a per-file-ignores key against the path and, for a bare
-    # name, against the basename — so a glob key like `**/conftest.py` is the
-    # normal form and must not be mistaken for a literal path.
-    return fnmatch(rel, pattern) or fnmatch(PurePosixPath(rel).name, pattern)
-
-
-def test_no_stale_grandfather_entries():
-    """Every per-file ignore must still suppress a real violation.
-
-    Ticket 0590. A grandfather entry is a hole: while it stands, a NEW
-    violation of that same rule in that same file passes unseen. Nothing
-    otherwise notices when the file is cleaned, so the entry — and the hole —
-    outlive their reason. This makes an entry self-retiring: clean the file
-    and the guard tells you to remove it.
-
-    Same shape as test_worktree_predicate_ratchet's
-    ``test_allowlist_has_no_stale_entries``. An empty table passes trivially,
-    which is the intended end state rather than a blind spot: ``test_ruff``
-    above is what keeps the tree clean.
+    If a future change genuinely needs an ignore, this test is the place the
+    decision surfaces: opening a hole should be deliberate and argued, and
+    whoever opens one has a real entry to build a staleness check against.
     """
     entries = _grandfather_entries()
-    if not entries:
-        return  # nothing grandfathered — the end state ticket 0590 reached
-    violations = _violations_ignoring_the_ignores()
-    stale = []
-    for pattern, rules in sorted(entries.items()):
-        for rule in sorted(rules):
-            # A selector may be a prefix ("E", "E7") as well as a full code.
-            if not any(code.startswith(rule) and _covers(pattern, rel)
-                       for rel, code in violations):
-                stale.append(f"{pattern}: {rule} no longer fires")
-    assert not stale, (
-        "stale .ruff.toml grandfather entries — nothing there violates that "
-        "rule any more, so the entry only holds a hole open for the next "
-        "violation of it. Remove it (ticket 0590):\n  " + "\n  ".join(stale)
+    assert not entries, (
+        "per-file ignores are holes in the lint gate — a new violation of "
+        "that rule in that file would pass unseen. Ticket 0590 closed the "
+        "last one. If you need this, say why in the ticket and reintroduce "
+        "a staleness check with it:\n  "
+        + "\n  ".join(f"{pattern}: {sorted(rules)}"
+                      for pattern, rules in sorted(entries.items()))
     )
