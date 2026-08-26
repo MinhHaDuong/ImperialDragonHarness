@@ -62,7 +62,13 @@ ImperialDragonHarness/
    OPENAI_API_KEY=sk-...
    ```
 
-3. Add one line to your `~/.bashrc` (or `~/.zshrc`) to source the harness shell init:
+3. Install the dev dependencies (PyYAML is needed by `make skills-catalog` and the pre-commit hook, pytest by every `make` test gate):
+   ```bash
+   pip install --user -r ~/.claude/requirements-dev.txt
+   ```
+   On a PEP 668 externally-managed Python (Debian 12+, Ubuntu 23.04+), install into a venv or via `pipx` instead.
+
+4. Add one line to your `~/.bashrc` (or `~/.zshrc`) to source the harness shell init:
    ```bash
    [ -f "$HOME/.claude/scripts/shell-init.sh" ] && source "$HOME/.claude/scripts/shell-init.sh"
    ```

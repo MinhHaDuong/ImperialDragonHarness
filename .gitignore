@@ -3,6 +3,7 @@
 
 # Harness components
 !.gitignore
+!requirements-dev.txt
 !README.md
 !STATE.md
 !CLAUDE.md

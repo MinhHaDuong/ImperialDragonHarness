@@ -232,8 +232,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install pytest
-        run: pip install pytest pytest-cov
+      - name: Install dev dependencies
+        # Declared in one place so CI and a fresh machine read the same
+        # contract; tests/test_deps_declared.py guards the list (ticket 0530).
+        run: pip install -r requirements-dev.txt
       # The shell-based regression suites in tests/*.sh are run under pytest via
       # tests/test_bash_suites.py; jq is needed by the guard-destructive suite.
       - name: Ensure jq is available

@@ -1,0 +1,12 @@
+# Dev dependencies of the harness repo (ticket 0530). CI's pytest-guard
+# installs from this file, and a fresh machine reads it at setup — the two
+# consumers that "the ubuntu image happens to ship PyYAML" was silently
+# standing in for. tests/test_deps_declared.py derives the third-party
+# imports from source and fails when one is missing here.
+#
+# No pyproject.toml / uv on purpose: introducing packaging tooling to IDH is
+# an architecture decision reserved to the author (ticket 0530, invariant).
+pytest>=8,<10
+pytest-cov>=5,<8
+PyYAML>=6,<7
+requests>=2.28,<3
