@@ -1,0 +1,174 @@
+%erg 0.1
+Title: Le catch-all des hooks rend la moitié de leurs tests incapables d'échouer
+Created: 2026-08-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-26T11:42Z claude created — trouvé en sabotant une garde pendant le ticket 0590 ; l'auteur a demandé le dépôt du ticket. ID alloué à 0610, dégagé de la frontière (0590) conformément à tickets/AGENTS.md
+
+2026-08-26T13:30Z claude note chiffres corrigés après /code-review de l'auteur : la table comptait des tests en cours de processus, qui ne traversent jamais __main__ et ne sont donc ni masqués ni concernés. Mesure honnête = 14/26 et 3/5 (au lieu de 16/29 et 30/32) ; la thèse et la sévérité tiennent, les deux gardes de sécurité restent dans les masqués. Critère de sortie « tomber à 0 » rendu atteignable (compté sur les seuls tests CLI). Action 2 corrigée : quatre appels d'inject_rule_on_edit passent un env fermé qu'une fixture monkeypatch n'atteindrait pas, avec faux vert à la clé
+
+--- body ---
+## Context
+
+Les deux scripts de hook avalent toute exception et sortent 0 :
+
+```python
+if __name__ == "__main__":
+    try:
+        main()
+    except (Exception, SystemExit):
+        pass
+    sys.exit(0)
+```
+
+C'est **correct en production** et délibéré : un hook consultatif ne doit
+jamais bloquer l'outil ni cracher une trace dans le contexte du modèle. Le
+problème est ailleurs : sur les deux seuls canaux que les tests observent —
+le code de retour et stdout — un plantage et un silence correct sont
+**octet pour octet identiques**. Tout test dont l'attente est « silencieux »
+est donc satisfait par le plantage.
+
+**Mesuré, pas supposé** (2026-08-26, sur `origin/main`). En faisant lever une
+`RuntimeError` inconditionnelle :
+
+Seuls les tests qui passent par le CLI sont dans le rayon du catch-all :
+un test qui appelle un helper en cours de processus ne traverse jamais
+`__main__` et n'est donc ni masqué ni concerné. Compter les deux ensemble
+gonfle le constat — c'est la première version de ce ticket qui s'y est
+laissée prendre (« 30/32 »).
+
+| module | tests par le CLI | **masqués** | en cours de processus (hors sujet) |
+|---|---|---|---|
+| `tests/test_knowledge_hints.py` | 26 | **14 (54 %)** | 3 |
+| `tests/test_inject_rule_on_edit.py` | 5 | **3** | 27 |
+
+Sabotage : `cmd_catalog` et `cmd_prompt` lèvent pour le premier, `main` pour
+le second. Les 27 tests en cours de processus d'`inject_rule_on_edit`
+passent parce qu'ils éprouvent du code vivant, pas parce qu'on les masque :
+les compter comme survivants était l'erreur.
+
+**Contre-épreuve utile** : `test_cmd_prompt_rejects_non_mapping_payload`
+appelle `cmd_prompt` directement et **échoue** sous sabotage. Le garde
+`isinstance` n'est donc pas sans filet — ce sont les tests passant par le
+CLI qui ne peuvent pas le voir. C'est le canal qui est aveugle, pas le
+dépôt qui serait sans test.
+
+**Deux des survivants sont des gardes de sécurité**, et c'est ce qui fait
+passer ce ticket au-dessus du plancher de sévérité :
+
+- `test_pointer_cannot_escape_the_repo` — vérifie qu'un `pointer` valant
+  `/etc/passwd` ou `../../../../etc/passwd` n'est jamais annoncé. Son propre
+  docstring dit « what this hook prints lands in the model's context ». Il
+  affirme `catalog(root) == ""` et `prompt(root, "Cournot") == ""` : un script
+  qui plante rend `""` sur les deux. **La garde d'exfiltration ne peut pas
+  échouer.**
+- `test_catalog_omits_the_body` — vérifie que le corps pointé
+  (`SECRET-ROSTER-BODY`) n'est jamais injecté. Même forme, même verdict.
+
+Ce n'est pas une régression : vérifié à l'identique sur `origin/main`, et
+antérieur au ticket 0590, qui n'a fait que toucher l'un de ces tests.
+
+C'est la classe `feedback_gate_must_bite_before_trusted`, et la table
+ci-dessus est aussi une instance de
+`feedback_guard_one_instance_not_the_class` : le défaut a été trouvé sur un
+test d'un module, il porte sur deux modules entiers.
+
+## Ce que le module fait déjà bien
+
+`tests/test_knowledge_hints.py` pilote délibérément le vrai CLI plutôt que
+d'importer les fonctions, et son en-tête l'argumente : un test qui appelle
+les fonctions directement est aveugle au câblage des arguments, au contrat
+stdin, « and to the silent no-op paths that matter most here ». L'intention
+est juste. Le catch-all efface exactement cette dernière moitié — les
+chemins silencieux sont précisément ceux que ce dispositif ne sait pas
+distinguer d'un plantage.
+
+Le correctif ne doit donc **pas** consister à rapatrier ces tests en
+in-process : ce serait perdre le contrat que le module teste exprès.
+
+## Relevant files
+
+- `scripts/knowledge_hints.py` — le `__main__` avaleur (fin de fichier)
+- `scripts/inject_rule_on_edit.py` — le même, mot pour mot
+- `tests/test_knowledge_hints.py` — 16 tests incapables d'échouer
+- `tests/test_inject_rule_on_edit.py` — 30 tests incapables d'échouer
+- `rules/coding-python.md` — le tier des tests ; le mode strict ne doit pas
+  changer le tier de ces suites
+
+## Actions
+
+1. **Trancher le canal.** Le plus simple qui préserve la production : une
+   variable d'environnement de mode strict (p. ex. `IDH_HOOK_STRICT=1`) que
+   le `__main__` consulte pour **re-lever** au lieu d'avaler. Les tests la
+   posent ; rien en production ne la pose. Alternative à peser : écrire la
+   trace sur stderr et affirmer `stderr == ""` dans les tests — moins
+   invasif, mais il faut vérifier qu'un hook Claude Code ne remonte pas
+   stderr à l'utilisateur, sans quoi c'est la panne que le commentaire
+   interdit.
+2. Poser le mode strict dans les deux suites. **Attention : une fixture
+   `monkeypatch.setenv` ne suffit pas.** `test_knowledge_hints` construit
+   son env en `{**os.environ, ...}` et hériterait bien, mais
+   `test_inject_rule_on_edit` passe un dictionnaire **fermé**
+   `{"TMPDIR": ..., "PATH": ...}` à quatre de ses cinq appels (l. 159, 292,
+   320, 339) : la variable n'atteindrait jamais ces enfants-là, et deux des
+   gardes visées sont dedans. Il faut modifier ces quatre dictionnaires
+   explicitement.
+   Le mode de panne à éviter est le pire possible : la suite rougirait
+   quand même via le seul appel qui hérite, donc le critère aurait l'air
+   atteint pendant que les quatre gardes resteraient inertes — le faux vert
+   que ce ticket existe pour supprimer.
+3. Renforcer les assertions de silence : « silencieux » devient
+   « silencieux **et** n'a pas planté ». Les tests de sécurité d'abord —
+   `test_pointer_cannot_escape_the_repo` et `test_catalog_omits_the_body`.
+4. Balayer les autres scripts du dépôt pour la même forme
+   (`except (Exception, SystemExit)` suivi de `sys.exit(0)`) avant de
+   déclarer la classe couverte.
+
+## Test
+
+Le sabotage **est** le test, et il est mécanique :
+
+- faire lever `cmd_catalog`, `cmd_prompt`, puis `main` de chaque script,
+  et compter **parmi les seuls tests passant par le CLI** ceux qui passent
+  encore. Aujourd'hui : 14 sur 26, et 3 sur 5.
+- Après correctif, ce compte doit tomber à **0**. Le compter sur la suite
+  entière ne marcherait pas : les tests en cours de processus ne traversent
+  pas `__main__`, aucun mode strict ne peut les faire rougir, et exiger
+  zéro sur l'ensemble reviendrait à demander la suppression de tests
+  valides — ce que l'invariant plus bas interdit.
+
+Envisager d'en faire une garde permanente (un test d'adhérence qui sabote
+un module et exige que sa suite rougisse) plutôt qu'une vérification
+ponctuelle — c'est la forme qui empêche la classe de revenir.
+
+## Verification
+
+- [ ] `cmd_catalog` levant → **les 26 tests CLI** de
+      `tests/test_knowledge_hints.py` rougissent (les 3 en cours de
+      processus sont hors sujet et restent verts)
+- [ ] `cmd_prompt` levant → idem
+- [ ] `main` de `inject_rule_on_edit` levant → **ses 5 tests CLI**
+      rougissent
+- [ ] Les deux gardes de sécurité échouent bien sous sabotage
+- [ ] Les quatre appels à dictionnaire d'environnement fermé
+      (`test_inject_rule_on_edit` l. 159, 292, 320, 339) reçoivent
+      réellement le mode strict — vérifié en sabotant **avec ces
+      quatre-là seuls**, pas via la suite entière
+- [ ] `make check` vert sans sabotage
+
+## Invariants
+
+- **Le comportement en production ne change pas** : les deux hooks
+  continuent de ne jamais bloquer et de ne jamais cracher de trace dans le
+  canal du modèle. Le mode strict est éteint par défaut et ne peut pas
+  s'activer par accident depuis un contexte de hook.
+- Les suites gardent leur pilotage par sous-processus : on ne rapatrie pas
+  les assertions en in-process pour contourner le problème.
+- Aucun test n'est affaibli ni supprimé pour faire tomber le compte.
+
+## Exit criteria
+
+Un script de hook rendu intégralement non fonctionnel fait rougir sa suite,
+et les deux gardes de sécurité (pointer hors dépôt, corps non injecté)
+échouent quand ce qu'elles gardent est cassé.
