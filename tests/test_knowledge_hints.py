@@ -218,7 +218,9 @@ def test_non_utf8_manifest_is_silent_not_fatal(tmp_path):
 
 def test_non_dict_json_payload_is_silent_not_fatal(tmp_path):
     """`[]` parses as valid JSON, then crashes on .get if unguarded."""
-    root = project(tmp_path)
+    # Called for its side effect — it lays down the project tree; the binding
+    # was unused (ticket 0590).
+    project(tmp_path)
     for payload in ("[]", "42", "null", '"str"'):
         out = subprocess.run(
             [sys.executable, str(SCRIPT), "prompt"],
