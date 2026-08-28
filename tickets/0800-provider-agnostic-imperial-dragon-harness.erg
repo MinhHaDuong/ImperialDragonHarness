@@ -7,6 +7,7 @@ Blocked-by: 0810
 --- log ---
 2026-08-28T12:57Z Codex created family after author directive to make IDH more agnostic and have Codex plus Claude reimagine the work
 2026-08-28T12:57Z Codex note Imagine review PASS WITH REFRAME — keep ten children; make tracker non-runnable; require an installable Codex plugin; keep Markdown canonical and reject a new workflow DSL; preserve systemd and other local-only features as explicit capabilities rather than pretending hosted parity
+2026-08-28T13:34Z Claude note Imagine review PASS WITH RESTRUCTURE — keep all ten children but invert 0802: the canonical tree stays the live Claude-native surface (no generated Claude output), only the Codex projection is generated, and the generator is built after a hand-ported Codex thin slice proves what needs automating; add live-tree, enforced single-writer, untracked-to-tracked and stop-anywhere invariants; fix 0805/0802 circularity, free 0807 from 0802, add 0808 before 0809
 
 --- body ---
 ## Context
@@ -80,6 +81,128 @@ Corrections applied from this review:
 Residual risk for Claude's review: the family assumes generation is cheaper to maintain
 than thin provider overlays. Claude should attack that assumption and look for a smaller
 "portable metadata + native bodies" design before the author ratifies `0802`.
+
+### Claude Imagine review — 2026-08-28
+
+**Verdict: PASS WITH RESTRUCTURE.** The ten concerns are real and honestly separated.
+But the family industrializes before it experiments: it builds five pieces of
+infrastructure (adapter generator, path API, role resolver, lifecycle replay runner,
+conformance suite) ahead of the first ported behavior. Everything below preserves the
+children; it changes what `0802` builds and re-gates the expensive machinery on evidence.
+
+#### The attacked assumption: generation vs thin native overlays
+
+The premise "one canonical core compiled to N provider surfaces" prices in a symmetry
+that does not exist here.
+
+1. **One of the two adapters is the identity function.** This repository is not
+   *installed into* Claude — it **is** the live `~/.claude`. An edit to a skill is
+   effective in the next session with no build step; that edit-run-refine loop is how
+   all 37 skills were grown and is the harness's actual development engine. A
+   `generated/claude/` surface inserts a compiler between author and behavior and
+   kills that loop. No current invariant protects it (see missing invariants below).
+2. **The measured coupling does not need a compiler.** Vendor model names appear in
+   about eight prose files (raid and maw-audit carry most of them); Claude invocation
+   syntax in 16 of 37 skills; the dense hard coupling sits in `settings.shared.json`
+   (hooks, permissions) and in path literals across ~63 files. Skill *prose* is
+   already portable Markdown. A generator over prose either copies bodies verbatim —
+   which is "portable metadata + native bodies" wearing a compiler costume — or grows
+   semantics until it becomes the workflow DSL this tracker rightly rejects. `0802`'s
+   "deterministic compiler from canonical sources" and `0805`'s no-DSL invariant pull
+   in opposite directions; only a narrow scope (frontmatter, semantic references,
+   config plane) keeps both.
+3. **Generate the config plane, not the prose plane.** Hooks, permissions, capability
+   matrices and role mappings are structured data: per-provider renderers there are
+   cheap, testable, and genuinely drift-prone when maintained by hand (`0807`–`0809`
+   outputs). Prose stays single-source naturally because Claude reads Markdown in
+   place; only Codex needs a projection.
+
+**Counter-proposal — asymmetric adapters.** The canonical tree remains the
+Claude-native surface: zero generation, loop preserved. The Codex adapter is the only
+*projection*: generated plugin manifest, invocation glue, rendered settings, capability
+report. Drift collapses from "N surfaces vs core" to "one projection vs canonical",
+which is exactly what `0810`'s gate then checks. Note the second-provider user already
+exists — Codex authored this family — so the experiment has a consumer today; that is
+an argument for a thin slice now, not for a generator now.
+
+#### Sequencing: gate industrialization on evidence
+
+Test each child with: *does it leave the Claude-only harness better even if the
+programme stops right after it?* `0803` and `0804` pass (decoupling hygiene, valuable
+regardless); `0802` fails (a generator has zero Claude-only value). Hence:
+
+- **Phase 1, unconditional:** `0801` (boundary), `0803`, `0804`.
+- **Phase 2, experiment:** hand-port one instruction-only skill, one enforcing guard
+  and a capability report into an installable Codex plugin — by hand, before any
+  generator. `0807`'s vocabulary belongs here; it needs no generator.
+- **Phase 3, contingent on phase-2 evidence:** the duplication the hand port actually
+  exhibited becomes `0802`'s scope; then `0805` waves, `0806`, `0808`, `0809`, `0810`.
+
+#### Bad dependencies
+
+- `0805` ← `0802` is circular in substance: the generator must "render one skill", so
+  `0802` invents a provisional skill format that `0805` (blocked on `0802`) then
+  supersedes. Move format definition (`0805` actions 1–2) ahead of the generator;
+  leave the migration waves in `0805`.
+- `0807` is blocked by `0802`, but a capability vocabulary needs no generator. Drop
+  that edge so `0807` can inform `0802`, `0805`, `0806`, `0808` and `0809` instead of
+  trailing them.
+- `0809` maps policies onto guards but does not depend on `0808`, which owns
+  delivering normalized events to those guards; "refuse adapter activation when a
+  mandatory policy lacks an enforcement path" is untestable before `0808`'s mappings
+  exist. Add the edge or co-design the pair.
+- `0806` consumes profile manifests from `0804` (its own Relevant files say so) but is
+  not blocked by `0804`.
+
+#### Monster tickets
+
+- `0801` is one in disguise: boundary doc + token inventory + canonical vocabulary +
+  an *executable* five-behavior baseline. An executable baseline for session start or
+  an orchestrating skill is an LLM-behavior test harness — a project of its own. Split
+  the baseline out (or downscope it to recorded transcripts/checklists for
+  LLM-mediated behaviors). And extend `scripts/check-agnostic.sh` rather than adding a
+  twin architecture checker: it already exists, already has the extension-point escape
+  hatch, and already encodes the vendor-token doctrine.
+- `0810` is the union of everyone's test debt: fresh-HOME installs for two providers,
+  golden rendering, reference validation, capability resolution, lifecycle replay,
+  safety mutation, secret scans, positive controls, a generated matrix. Most children
+  already promise their gate lands with them in CI — hold them to that, and shrink
+  `0810` to fresh-install smoke + positive controls + the derived support matrix.
+- `0806` is over-machined for the measured problem (model names in ~8 prose files;
+  `skills/reviewers/panel.yml` is *already* provider-neutral infrastructure with
+  OpenAI-compatible endpoints — and a decorrelation roster should name concrete
+  external models: that is data, not coupling). A roles table plus a profile mapping
+  file may be the whole ticket; build the resolver when a second consumer exists.
+
+#### Missing invariants (proposed additions to this tracker)
+
+1. **Live-tree:** an edit to canonical prose is effective in the author's next Claude
+   session with no build step.
+2. **Enforced single-writer:** agents — not just humans — are blocked from editing
+   `generated/` (a guard hook, not documentation): this harness's editors are LLMs,
+   so "never edited by hand" needs enforcement to be true.
+3. **No untracked-to-tracked promotion without allowlist:** `0804` moves personal
+   policy into `profiles/`; "non-secret" is a judgment call, so anything moving from
+   gitignored or untracked into git requires an explicit reviewed allowlist.
+4. **Stop-anywhere:** every child leaves the Claude-only harness no worse than today;
+   abandoning the programme at any phase strands no half-migrated surface.
+
+#### Keep / merge / split / drop
+
+- `0801` **keep, split** the executable baseline; extend `check-agnostic.sh`, do not twin it.
+- `0802` **rescope**: asymmetric adapters — no generated Claude surface; split into a
+  hand-built Codex thin slice (phase 2), then automation of observed duplication (phase 3).
+- `0803` **keep, promote first** — highest standalone value in the family.
+- `0804` **keep separate** from `0803` (concur with Codex), plus invariant 3 above.
+- `0805` **keep**; its format-definition half moves ahead of the generator; the DSL
+  rejection stands.
+- `0806` **shrink** to data + docs; defer the resolver.
+- `0807` **keep, promote** (drop the `0802` edge) — the load-bearing novel idea here.
+- `0808` **keep**.
+- `0809` **keep**, add the `0808` dependency.
+- `0810` **split**: per-child gates stay with their children; the residue is install
+  smoke, positive controls, and the derived matrix.
+- **Drop: nothing.**
 
 ## Invariants
 
