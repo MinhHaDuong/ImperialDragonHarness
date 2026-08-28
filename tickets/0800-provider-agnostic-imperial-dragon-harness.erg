@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Provider-agnostic Imperial Dragon Harness — core, adapters and parity
+Title: Make IDH harness-agnostic through core, config and adapters
 Created: 2026-08-28
 Author: Codex
 Blocked-by: 0810
@@ -8,6 +8,9 @@ Blocked-by: 0810
 2026-08-28T12:57Z Codex created family after author directive to make IDH more agnostic and have Codex plus Claude reimagine the work
 2026-08-28T12:57Z Codex note Imagine review PASS WITH REFRAME — keep ten children; make tracker non-runnable; require an installable Codex plugin; keep Markdown canonical and reject a new workflow DSL; preserve systemd and other local-only features as explicit capabilities rather than pretending hosted parity
 2026-08-28T13:34Z Claude note Imagine review PASS WITH RESTRUCTURE — keep all ten children but invert 0802: the canonical tree stays the live Claude-native surface (no generated Claude output), only the Codex projection is generated, and the generator is built after a hand-ported Codex thin slice proves what needs automating; add live-tree, enforced single-writer, untracked-to-tracked and stop-anywhere invariants; fix 0805/0802 circularity, free 0807 from 0802, add 0808 before 0809
+2026-08-28T13:57Z Minh ratified core plus config plus adapters, with Claude Code, Codex and Pi as early targets
+2026-08-28T13:57Z Codex reconciled reviews by reducing ten speculative children to four evidence-producing vertical slices and removing generator-first work
+2026-08-28T14:22Z panel approved revised family 5/5 after dependency, guard, evidence, versioning and deployment corrections
 
 --- body ---
 ## Context
@@ -18,44 +21,45 @@ slash-command references, environment variables and absolute paths all assume th
 host. The Five Claws, ticket discipline, safety invariants and verification gates are
 more general than that implementation.
 
-This tracker makes the doctrine portable without reducing it to the least capable
-provider. The intended architecture is one canonical core, explicit provider adapters,
-and capability-aware degradation. Generated provider surfaces are never edited by hand.
+This tracker tests a smaller architecture: a harness-neutral **core**, explicit user and
+machine **config**, and thin **adapters** for the Claude Code CLI, Codex CLI, and the Pi
+coding-agent CLI distributed at `pi.dev` (the `~/.pi/agent` product). The three adapters are
+early targets so that the core cannot merely encode assumptions shared by two similar
+harnesses. Claude Code remains the live reference installation while the experiment runs.
 
-This is an architectural programme, not a request to bulk-rewrite 37 skills in one PR.
-Each child must preserve observable Claude behaviour before a Codex surface is promoted.
+This is an evidence-gathering programme, not a request for a generator, a workflow DSL or
+a bulk rewrite of 37 skills. Each child ports one observable vertical slice by hand. Only
+repeated, measured duplication may justify later automation.
 
 ## Children
 
-- `0801` — define the neutral core and its ownership boundary
-- `0802` — build the adapter generator and Claude/Codex skeletons
-- `0803` — replace `~/.claude` coupling with an IDH path API
-- `0804` — separate Minh's personal profile and mutable state from the engine
-- `0805` — define portable skill sources and semantic cross-skill references
-- `0806` — replace vendor model names with functional execution roles
-- `0807` — declare capabilities and fail-loud degradation policy
-- `0808` — define portable lifecycle events and provider hook mappings
-- `0809` — separate safety intent from provider permission syntax
-- `0810` — enforce adapter parity and drift in CI
+- `0802` — port one skill through Claude Code, Codex and Pi adapters
+- `0803` — port one script through explicit config and a minimal path seam
+- `0809` — port one enforcing safety guard without weakening it
+- `0810` — prove fresh install, rollback and coverage, then decide whether to expand
+
+The former `0801` and `0804`–`0808` were removed before implementation. Their useful
+concerns are either folded into the four slices or deferred behind `0810`'s evidence gate:
+there is no standalone IR, profile product, role resolver, capability algebra, lifecycle
+schema or adapter generator in the ratified first phase.
 
 ## Sequence
 
-1. `0801` establishes the boundary and a behavioral baseline.
-2. `0802`, `0803`, and `0804` establish generation, paths, and profiles.
-3. `0805`–`0809` move one concern at a time behind the boundary.
-4. `0810` turns the collected contracts into a release gate.
-5. Claude Code remains the reference adapter until its parity gate passes; Codex stays
-   experimental until its capability report and smoke suite pass.
+1. `0802` establishes only the minimum core/adapter contract demonstrated by `perch`.
+2. `0803` adds only the config and path concepts demonstrated by `healthcheck`.
+3. `0809` tests whether one enforcing guard can remain effective across all three targets.
+4. `0810` tests clean installation, upgrade, rollback, coverage and stop-anywhere safety.
+5. Only then may a follow-up propose broader abstractions, backed by duplication observed
+   in these slices.
 
 `0800` is blocked by the final integration child so `erg ready` never offers the tracker
 itself as executable work.
 
 ## Review protocol
 
-Before implementation, append two independent Imagine reviews to this tracker: one by
-Codex and one by Claude. Each review must challenge the decomposition, identify missing
-invariants and monster tickets, and recommend merge/split/drop decisions. Reconcile the
-two reviews into a short author decision; do not silently treat either review as approval.
+The original family received independent Codex, Claude and five-perspective panel reviews.
+The ratified reconciliation follows those reviews below. The revised family requires a
+second panel review before any child moves to implementation.
 
 ### Codex Imagine review — 2026-08-28
 
@@ -204,19 +208,55 @@ regardless); `0802` fails (a generator has zero Claude-only value). Hence:
   smoke, positive controls, and the derived matrix.
 - **Drop: nothing.**
 
+## Author decision — ratified 2026-08-28
+
+Use **core, config and adapters** as the architecture vocabulary. Do not create a generic
+generator in this phase. Target Claude Code, Codex and Pi from the first skill slice. Keep
+Markdown prose canonical where it already works; adapters contain harness syntax and may
+be hand-written. Extract a core concept or config field only when a slice demonstrates that
+at least two adapters need it.
+
+The panel's experiment-first sequencing is accepted. Claude's live-tree and stop-anywhere
+invariants are accepted. Claude's proposal to preserve all ten children is rejected because
+it retains speculative machinery before the experiments. Copilot's approval is noted but
+is not decision-grade because it did not test the architectural assumptions.
+
+## Panel review — round 2 — 2026-08-28
+
+**Verdict: APPROVE (5/5).** Correctness, consistency, scope/YAGNI, red team and
+documentation/rollout all approve the revised four-child family. Findings resolved during
+the review:
+
+1. `0810` now depends on all three experimental slices.
+2. Pi means the `pi.dev` coding-agent CLI; exact supported versions and authoritative docs
+   are captured and tested for all three harnesses.
+3. `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` have explicit
+   creation, extension and validation ownership.
+4. The safety slice closes cwd-less, `git -C`, wrapper and compound-command fail-open paths;
+   a profile with Git mutation cannot activate without effective pre-action enforcement.
+5. Deployment checks are limited to pilot-created files and mutations, with managed hashes,
+   conflict refusal, canary scans and a command-tested operator runbook.
+6. Manual LLM evidence and deterministic CI assertions are distinguished explicitly.
+
+No panel blocker remains.
+
 ## Invariants
 
 - Claude users do not lose hooks, skills, safeguards or invocation names during migration.
 - Provider-specific features remain available through adapters; agnosticism does not mean
   lowest-common-denominator behavior.
-- Secrets, personal paths, telemetry and mutable memory never enter generated portable core.
+- Secrets, personal paths, telemetry and mutable memory never enter the portable core.
 - One semantic rule or workflow has one canonical source.
 - Unsupported capabilities are reported explicitly, never silently skipped.
+- Editing canonical Claude prose remains effective in the next Claude session without a build.
+- Each child can stop safely without leaving a half-migrated or degraded Claude installation.
+- Tracked config is allowlisted; untracked or ignored material is never promoted implicitly.
+- An enforcing guard cannot become advisory merely because an adapter lacks a hook.
 
 ## Exit criteria
 
-- [ ] Both Imagine reviews and the author's reconciliation are recorded
-- [ ] Children `0801`–`0810` are closed or explicitly rejected with reasons
-- [ ] Claude adapter passes its parity suite
-- [ ] Codex adapter installs and exposes the supported IDH surface in a fresh session
-- [ ] Documentation names the remaining provider-specific exclusions
+- [x] Original Imagine reviews and the author's reconciliation are recorded
+- [x] Revised panel review finds no blocking design or safety defect
+- [ ] Children `0802`, `0803`, `0809` and `0810` are closed or explicitly rejected
+- [ ] Claude Code, Codex and Pi pass the declared slice-level checks
+- [ ] Documentation names exclusions and avoids claiming whole-harness parity

@@ -1,64 +1,90 @@
 %erg 0.1
-Title: Add adapter conformance, parity and generated-drift gates
+Title: Evaluate the three-slice pilot and prove safe deployment
 Created: 2026-08-28
 Author: Codex
 Blocked-by: 0802
 Blocked-by: 0803
-Blocked-by: 0804
-Blocked-by: 0805
-Blocked-by: 0806
-Blocked-by: 0807
-Blocked-by: 0808
 Blocked-by: 0809
 
 --- log ---
 2026-08-28T12:57Z Codex created final integration child of 0800
+2026-08-28T14:08Z Codex reduced final integration to pilot evaluation, deployment safety and a go/no-go decision
 
 --- body ---
 ## Context
 
-Provider agnosticism is credible only if observable contracts are tested. Schema validation
-alone cannot show that a skill still invokes the right children, a guard still blocks, or a
-missing hook is reported. This ticket assembles the earlier child contracts into one release
-gate and fresh-install smoke suite.
+The first phase covers exactly three behaviors: `perch`, `healthcheck`, and the
+commit-on-main guard. This ticket decides what those experiments justify. It also owns safe
+installation and removal because the repository is the live Claude harness: a clean-profile
+smoke test alone does not prove that upgrade, interruption or rollback is safe.
 
 ## Relevant files
 
 - `.github/workflows/CI.yml` — current CI
 - `tests/static-baseline.json` and `scripts/test-quality.py` — existing quality gates
-- outputs and tests introduced by `0801`–`0809`
-- `README.md` and `STATE.md` — installation and support claims
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — schema/inventory
+  created by `0802`, extended by `0803`/`0809`, validated by this ticket
+- `README.md`, `CLAUDE.md` and `STATE.md` — installation, contributor and support claims
+- README's current `Why not a plugin?` discussion — reconcile with adapter packaging
+- `docs/adapter-operations.md` — operator runbook created and command-tested here
 
 ## Actions
 
-1. Define conformance levels: schema-valid, discoverable, behaviorally equivalent, and
-   safely degraded.
-2. Run fresh-build tests for Claude and Codex adapters from a clean temporary HOME.
-3. Combine golden rendering, semantic-reference validation, capability resolution, lifecycle
-   replay, safety mutation tests and secret/path scans into CI.
-4. Add a generated-drift gate and a positive control proving it actually fails.
-5. Publish a provider matrix that derives from test results rather than hand-maintained prose.
+1. Validate the machine-readable pilot inventory. For each harness/version and assertion,
+   require `equivalent`, `degraded`, `unsupported`, or `manual`, with supporting evidence.
+   Zero pilot assertions may be uncovered; nondeterministic behavior stays `manual` unless
+   a stronger repeatable test exists.
+2. Test fresh install and uninstall for Claude Code, Codex and Pi in clean temporary homes.
+3. For each adapter, verify exact removal of files created by the pilot. For the live Claude
+   setup, failure-inject only mutations introduced by `0802`, `0803` and `0809`; prove atomic
+   activation or backup/restore and rollback for those mutations. Do not build a general
+   deployment platform before the go/no-go decision.
+4. Track pilot-managed paths and pre-change hashes; refuse conflicting local/concurrent
+   changes, preserve unmanaged files, journal the transaction, restrict backup/temp modes,
+   and scan backup, journal, temporary and recovery artifacts with the canary secret.
+5. Write `docs/adapter-operations.md` with exact version probe, install, upgrade, uninstall,
+   backup/restore, rollback and interrupted-run recovery commands for each applicable adapter,
+   expected state/backup paths and limitations. Exercise its commands in clean-profile CI.
+6. Run the positive controls and canary scans owned by each child; do not centralize their
+   test debt here.
+7. Propagate verified instructions and deliberately narrow support claims through README,
+   CLAUDE.md and STATE.md, including the plugin rationale.
+8. Compare the evidence tables and record a go/no-go decision for broader portability.
+   Propose automation or a shared abstraction only where two or more slices show the same
+   transformation, the maintenance benefit is demonstrated, and the abstraction introduces
+   no new harness-semantic coupling; otherwise keep thin native adapters.
 
 ## Test
 
-- The first test deliberately corrupts one generated skill, removes one mandatory capability
-  mapping and weakens one safety guard; each defect must fail a distinct gate.
+- Interrupt each pilot-introduced live-Claude mutation and prove the previous setup remains
+  usable or is restored by the documented recovery command.
+- Flip one verified inventory entry to unsupported without changing the support claim and
+  prove CI rejects the inconsistency.
 
 ## Verification
 
-- [ ] Clean temporary-HOME installs succeed without access to the developer's machine state
-- [ ] Claude reference behaviors pass at the agreed parity level
-- [ ] Codex unsupported features appear in the generated matrix
-- [ ] Positive controls prove every major gate can fail
+- [ ] Fresh install/uninstall succeeds for all three adapters without developer machine state
+- [ ] Pilot-created files uninstall exactly; pilot-introduced Claude mutations recover/rollback
+- [ ] Managed hashes detect conflicts; unmanaged files and restrictive backup modes are tested
+- [ ] Deployment canary scans cover backups, journals, temporary and recovery artifacts
+- [ ] Every pilot assertion has supporting evidence; deterministic assertions have repeatable
+      tests, and no full-harness parity is claimed
+- [ ] Support documentation is derived from or checked against the pilot inventory
+- [ ] CI exercises the applicable commands in `docs/adapter-operations.md`
+- [ ] Positive controls prove every safety and deployment gate can fail
 - [ ] `make check` passes
 
 ## Invariants
 
 - No test depends on live credentials, paid models or mutable external services.
-- The matrix never claims support from schema presence alone.
+- Schema presence or installation success is not behavioral support.
+- Activation never overwrites the only recoverable copy of live configuration.
+- Abandoning the programme after this ticket leaves a supported Claude-only harness.
 
 ## Exit criteria
 
-- [ ] Conformance suite runs in CI for both adapters
-- [ ] Generated drift and safety regressions block merge
-- [ ] README installation claims are generated from verified support levels
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] Pilot inventory and deployment/recovery suite run in CI
+- [ ] Operator runbook covers supported version lifecycle and tested recovery commands
+- [ ] README, CLAUDE.md and STATE.md match the verified narrow support level
+- [ ] A recorded decision chooses stop, another manual slice, or a justified abstraction

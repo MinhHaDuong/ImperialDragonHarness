@@ -1,56 +1,66 @@
 %erg 0.1
-Title: Introduce an IDH path API and remove direct ~/.claude coupling
+Title: Port healthcheck through config and a minimal path seam
 Created: 2026-08-28
 Author: Codex
-Blocked-by: 0801
+Blocked-by: 0802
 
 --- log ---
 2026-08-28T12:57Z Codex created child of 0800
+2026-08-28T14:08Z Codex narrowed a repository-wide path API to the seam demonstrated by healthcheck
 
 --- body ---
 ## Context
 
-<!-- harness-extension-point: inventory of the concrete personal path being removed -->
-Scripts and skills directly name `$HOME/.claude` and `/home/haduong`. A textual replacement
-would still leave path semantics scattered. Define one resolver for installation, project,
-profile, cache, logs and mutable state, then migrate callers in bounded waves.
+`skills/healthcheck/SKILL.md` invokes `~/.claude/scripts/project-state.py`. Porting it is a
+concrete test of **config**: where the harness is installed and how a skill locates a bundled
+script. This ticket introduces only the path/config seam the three adapters actually need.
+It does not inventory or migrate every path in the repository.
 
 ## Relevant files
 
-- `scripts/path_utils.py` and `scripts/bash-env.sh` — existing path/env utilities
-- `scripts/on-start.sh`, `scripts/beat.py`, `skills/*/SKILL.md` — representative callers
-- `settings.shared.json` — absolute user paths
+- `skills/healthcheck/SKILL.md` — canonical script-backed workflow
+- `scripts/project-state.py` — bundled probe invoked by the skill
+- `scripts/path_utils.py` and `scripts/bash-env.sh` — existing utilities to reuse if needed
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — schema owned by
+  `0802`; this ticket extends it with the healthcheck assertions
 
 ## Actions
 
-1. Specify `IDH_HOME`, `IDH_PROJECT_ROOT`, `IDH_PROFILE_HOME` and `IDH_STATE_HOME`, including
-   defaults, precedence and canonicalization.
-2. Implement equivalent shell and Python resolver entry points backed by one contract.
-3. Inventory direct path literals and classify each as engine, profile, state or fixture.
-4. Migrate representative shell, Python and skill callers; file bounded follow-ups for
-   remaining clusters rather than making this a whole-repository rewrite.
-5. Make missing or unsafe roots fail before mutation.
+1. Record the existing Claude behavior and the exact path assumption that blocks Codex or Pi.
+2. Define the smallest configuration contract that resolves the bundled probe. Prefer a
+   native adapter base-directory facility; add `IDH_HOME` only if at least two adapters need it.
+3. Hand-port `healthcheck` to Claude Code, Codex and Pi using the contract from step 2.
+4. Classify only values introduced or consumed by this slice: versioned portable defaults,
+   explicit user/machine values, secrets, and ephemeral state. Do not relocate unrelated
+   config, secrets or state. Curated `memory/` remains tracked.
+5. Test missing, malformed, symlinked and space-containing roots before any mutation.
+6. Extend `adapters/pilot-support.json` with observed commonality and one-off adapter behavior.
 
 ## Test
 
-- Run resolver tests under a temporary HOME, paths containing spaces, symlinked installs,
-  absent variables and deliberately malformed roots.
+- First add only the native discovery glue to clean Codex and Pi profiles while retaining the
+  old hard-coded script path; capture the expected path failure, then make it pass with the
+  minimal seam.
+- Use a canary secret to prove it does not appear in argv, stdout, stderr, logs or adapter files.
 
 ## Verification
 
-- [ ] One documented precedence order is shared by shell and Python
-- [ ] No migrated caller reconstructs IDH paths independently
-<!-- harness-extension-point: acceptance test for removing the concrete personal path -->
-- [ ] Inventory accounts for every `~/.claude` and `/home/haduong` occurrence
+- [ ] All three adapters locate and run the same `project-state.py`
+- [ ] Any new config field has documented ownership, default and precedence
+- [ ] The slice works under temporary HOME, spaces and symlinked installation paths
+- [ ] Canary scans cover argv, stdout, stderr, logs and tracked outputs
 - [ ] `make check` passes
 
 ## Invariants
 
-- The default Claude installation remains `~/.claude`.
-- Path changes never expose `.env` or widen write permissions.
+- The live Claude default remains `~/.claude` and needs no build step.
+- Path/config changes never expose `.env`, widen permissions or promote ignored files.
+- Curated tracked memory and ephemeral runtime state remain distinct.
+- Stopping after this ticket leaves the Claude-only harness no worse than before.
 
 ## Exit criteria
 
-- [ ] Path API exists with parity tests
-- [ ] Representative callers use it
-- [ ] Remaining literals are adapter/profile data or tracked follow-ups
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] `healthcheck` works through Claude Code, Codex and Pi adapters
+- [ ] The minimal config/path seam is tested and documented
+- [ ] No repository-wide path API or synthetic profile product was added speculatively
