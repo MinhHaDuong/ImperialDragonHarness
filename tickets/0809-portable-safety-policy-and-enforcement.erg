@@ -1,0 +1,71 @@
+%erg 0.1
+Title: Port the commit-on-main guard through three adapters
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0802
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+2026-08-28T14:08Z Codex folded lifecycle and capability questions into one enforcing safety experiment
+
+--- body ---
+## Context
+
+`scripts/guard-commit-on-main.sh` is deterministic enforcing behavior, not advice. Porting
+this one guard tests the hardest boundary: whether Claude Code, Codex and Pi adapters can
+intercept an action, normalize enough input and preserve a blocking decision. This ticket
+does not create a general lifecycle schema, capability resolver or full policy catalog.
+
+## Relevant files
+
+- `scripts/guard-commit-on-main.sh` — canonical deterministic guard
+- `settings.shared.json` — existing Claude wiring
+- `rules/git.md` — normative commit/worktree policy
+- tests for `guard-commit-on-main.sh` — current behavior contract
+
+## Actions
+
+1. Record the current allowed/blocked cases, payload fields, exit semantics and cwd-less gap.
+2. Close fail-open parsing before using the guard as a reference: missing or untrusted `cwd`,
+   `git -C`, global Git options, `env git`, aliases/wrappers, nested shells and compound
+   commands must resolve the actual target repository or fail closed before mutation.
+3. Keep the shell guard canonical; add only thin input normalization in each adapter.
+4. Wire it through native pre-action enforcement in Claude Code, Codex and Pi where the
+   harness provides a blocking mechanism.
+5. Define refusal at the adapter-profile boundary: if Git-mutating shell access is enabled
+   without reliable pre-action blocking, the enforcing profile cannot activate. Read-only
+   slices may remain available only in an explicitly named reduced profile that makes no IDH
+   safety claim; instructions or post-hoc warnings are not enforcement.
+6. Add adversarial adapter tests that remove or weaken the guard wiring and must fail.
+7. Add a canary value and prove neither normalization nor diagnostics leak it.
+8. Extend `adapters/pilot-support.json` with tested enforcement and refusal assertions.
+
+## Test
+
+- Replay allowed, main-branch, primary-checkout, malformed and cwd-less fixtures through all
+  three adapters, including `git -C`, Git options, wrappers and compound commands. Mutation-
+  test removal of the event mapping, block result and exit semantics independently.
+
+## Verification
+
+- [ ] Existing safe Claude cases remain unchanged; recorded bypass, malformed and cwd-less
+      cases now fail closed
+- [ ] Codex and Pi either block the same forbidden cases or refuse activation explicitly
+- [ ] No Git-mutating adapter profile activates without the required enforcing boundary
+- [ ] Adapter weakening and missing-hook positive controls fail distinctly
+- [ ] Canary scans cover arguments, diagnostics and logs
+- [ ] `make check` passes
+
+## Invariants
+
+- Portability cannot turn enforcement into advice.
+- The guard owns the decision; adapters only normalize input and carry the decision.
+- An unsupported adapter is safer than a silently weakened one.
+- Stopping after this ticket leaves existing Claude enforcement intact.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] One canonical guard is exercised through Claude Code, Codex and Pi
+- [ ] Unsupported enforcement paths fail closed and appear in the slice inventory
+- [ ] No generalized policy catalog, lifecycle IR or capability resolver was introduced

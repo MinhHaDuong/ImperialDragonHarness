@@ -1,0 +1,83 @@
+%erg 0.1
+Title: Port perch through Claude Code, Codex and Pi adapters
+Created: 2026-08-28
+Author: Codex
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800 as a provider adapter generator
+2026-08-28T13:57Z Minh ratified core plus config plus adapters and added Pi as an early target
+2026-08-28T14:08Z Codex replaced generator-first scope with one hand-ported skill slice pending round-2 panel review
+
+--- body ---
+## Context
+
+`skills/perch/SKILL.md` is already mostly portable Markdown. It is the smallest useful
+experiment for discovering what Claude Code, Codex and Pi actually require around a shared
+skill body. This ticket hand-ports that one behavior. It does not design a general skill IR,
+copy all skills, or build an adapter generator.
+
+The architecture vocabulary is **core, config and adapters**:
+
+- core: the canonical `perch` behavior and prose;
+- config: only user or installation choices the experiment proves necessary;
+- adapters: minimal native discovery, metadata and invocation glue for each harness.
+
+## Relevant files
+
+- `skills/perch/SKILL.md` — canonical behavior and prose
+- `scripts/check-agnostic.sh` — existing provider-token boundary check
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — machine-readable
+  schema and evidence inventory created by this ticket
+- official docs for Claude Code CLI, Codex CLI, and the Pi coding-agent CLI from `pi.dev`
+  (the product using `~/.pi/agent`) — authoritative native targets, not similarly named tools
+
+## Actions
+
+1. Before coding, record exact CLI versions, authoritative documentation URLs/commits and
+   native resource locations. Define a version-probing policy and test the declared minimum
+   plus current supported version for each harness; do not silently accept an unknown version.
+2. Record the current Claude `perch` contract: discovery, invocation name, read-only
+   behavior, output headings and clear-readiness decision.
+3. Keep the Markdown body canonical and live for Claude Code with no build step.
+4. Hand-build the smallest installable Codex adapter and smallest installable Pi adapter.
+   Adapter files contain native metadata and wiring, not a second workflow body.
+5. Create `adapters/pilot-support.schema.json` and `adapters/pilot-support.json`. Stable keys
+   identify slice, harness, harness version, assertion, disposition, evidence kind and test;
+   this ticket owns the schema and first entries, later slices extend them, and `0810` validates.
+6. Record every translation in that inventory: source concept, each native expression, and
+   whether it is shared or harness-specific.
+7. Add only core identifiers or config fields required by at least two adapters. Leave a
+   one-off difference in its adapter.
+8. Document unsupported or manually verified behavior without claiming whole-IDH parity.
+
+## Test
+
+- Before adapter work, add checks that fail because clean Codex and Pi test profiles cannot
+  discover `perch`. Make both pass using native installation mechanisms.
+- Run a scripted/static contract check for metadata and output shape. Treat one live smoke
+  invocation per harness as manual evidence; record prompt, harness/version, date and result
+  so CI never depends on a paid model or mutable service.
+
+## Verification
+
+- [ ] Claude reads the canonical skill directly; editing its prose needs no build
+- [ ] Clean Codex and Pi profiles discover an installable `perch`
+- [ ] All three expose the same read-only workflow and stable output headings
+- [ ] Exact supported versions and unknown-version behavior are tested and recorded
+- [ ] No generic generator, workflow DSL, capability algebra or copied prose was introduced
+- [ ] The schema-valid pilot inventory identifies actual, not anticipated, duplication
+- [ ] `./scripts/check-agnostic.sh` and `make check` pass
+
+## Invariants
+
+- Existing Claude invocation and behavior do not change.
+- Adapter metadata cannot override the canonical safety or behavior contract.
+- No adapter activation reads secrets or promotes ignored files into git.
+- Removing either experimental adapter restores the exact pre-experiment Claude state.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] One canonical `perch` works through Claude Code, Codex and Pi adapters
+- [ ] `adapters/pilot-support.json` is committed and names any manual-only assertions
+- [ ] Follow-up abstractions are proposed only for duplication observed in this slice

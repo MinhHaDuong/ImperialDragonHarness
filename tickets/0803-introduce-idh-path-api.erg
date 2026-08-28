@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Port healthcheck through config and a minimal path seam
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0802
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+2026-08-28T14:08Z Codex narrowed a repository-wide path API to the seam demonstrated by healthcheck
+
+--- body ---
+## Context
+
+`skills/healthcheck/SKILL.md` invokes `~/.claude/scripts/project-state.py`. Porting it is a
+concrete test of **config**: where the harness is installed and how a skill locates a bundled
+script. This ticket introduces only the path/config seam the three adapters actually need.
+It does not inventory or migrate every path in the repository.
+
+## Relevant files
+
+- `skills/healthcheck/SKILL.md` — canonical script-backed workflow
+- `scripts/project-state.py` — bundled probe invoked by the skill
+- `scripts/path_utils.py` and `scripts/bash-env.sh` — existing utilities to reuse if needed
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — schema owned by
+  `0802`; this ticket extends it with the healthcheck assertions
+
+## Actions
+
+1. Record the existing Claude behavior and the exact path assumption that blocks Codex or Pi.
+2. Define the smallest configuration contract that resolves the bundled probe. Prefer a
+   native adapter base-directory facility; add `IDH_HOME` only if at least two adapters need it.
+3. Hand-port `healthcheck` to Claude Code, Codex and Pi using the contract from step 2.
+4. Classify only values introduced or consumed by this slice: versioned portable defaults,
+   explicit user/machine values, secrets, and ephemeral state. Do not relocate unrelated
+   config, secrets or state. Curated `memory/` remains tracked.
+5. Test missing, malformed, symlinked and space-containing roots before any mutation.
+6. Extend `adapters/pilot-support.json` with observed commonality and one-off adapter behavior.
+
+## Test
+
+- First add only the native discovery glue to clean Codex and Pi profiles while retaining the
+  old hard-coded script path; capture the expected path failure, then make it pass with the
+  minimal seam.
+- Use a canary secret to prove it does not appear in argv, stdout, stderr, logs or adapter files.
+
+## Verification
+
+- [ ] All three adapters locate and run the same `project-state.py`
+- [ ] Any new config field has documented ownership, default and precedence
+- [ ] The slice works under temporary HOME, spaces and symlinked installation paths
+- [ ] Canary scans cover argv, stdout, stderr, logs and tracked outputs
+- [ ] `make check` passes
+
+## Invariants
+
+- The live Claude default remains `~/.claude` and needs no build step.
+- Path/config changes never expose `.env`, widen permissions or promote ignored files.
+- Curated tracked memory and ephemeral runtime state remain distinct.
+- Stopping after this ticket leaves the Claude-only harness no worse than before.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] `healthcheck` works through Claude Code, Codex and Pi adapters
+- [ ] The minimal config/path seam is tested and documented
+- [ ] No repository-wide path API or synthetic profile product was added speculatively

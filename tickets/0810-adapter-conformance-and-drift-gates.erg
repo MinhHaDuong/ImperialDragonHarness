@@ -1,0 +1,90 @@
+%erg 0.1
+Title: Evaluate the three-slice pilot and prove safe deployment
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0802
+Blocked-by: 0803
+Blocked-by: 0809
+
+--- log ---
+2026-08-28T12:57Z Codex created final integration child of 0800
+2026-08-28T14:08Z Codex reduced final integration to pilot evaluation, deployment safety and a go/no-go decision
+
+--- body ---
+## Context
+
+The first phase covers exactly three behaviors: `perch`, `healthcheck`, and the
+commit-on-main guard. This ticket decides what those experiments justify. It also owns safe
+installation and removal because the repository is the live Claude harness: a clean-profile
+smoke test alone does not prove that upgrade, interruption or rollback is safe.
+
+## Relevant files
+
+- `.github/workflows/CI.yml` — current CI
+- `tests/static-baseline.json` and `scripts/test-quality.py` — existing quality gates
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — schema/inventory
+  created by `0802`, extended by `0803`/`0809`, validated by this ticket
+- `README.md`, `CLAUDE.md` and `STATE.md` — installation, contributor and support claims
+- README's current `Why not a plugin?` discussion — reconcile with adapter packaging
+- `docs/adapter-operations.md` — operator runbook created and command-tested here
+
+## Actions
+
+1. Validate the machine-readable pilot inventory. For each harness/version and assertion,
+   require `equivalent`, `degraded`, `unsupported`, or `manual`, with supporting evidence.
+   Zero pilot assertions may be uncovered; nondeterministic behavior stays `manual` unless
+   a stronger repeatable test exists.
+2. Test fresh install and uninstall for Claude Code, Codex and Pi in clean temporary homes.
+3. For each adapter, verify exact removal of files created by the pilot. For the live Claude
+   setup, failure-inject only mutations introduced by `0802`, `0803` and `0809`; prove atomic
+   activation or backup/restore and rollback for those mutations. Do not build a general
+   deployment platform before the go/no-go decision.
+4. Track pilot-managed paths and pre-change hashes; refuse conflicting local/concurrent
+   changes, preserve unmanaged files, journal the transaction, restrict backup/temp modes,
+   and scan backup, journal, temporary and recovery artifacts with the canary secret.
+5. Write `docs/adapter-operations.md` with exact version probe, install, upgrade, uninstall,
+   backup/restore, rollback and interrupted-run recovery commands for each applicable adapter,
+   expected state/backup paths and limitations. Exercise its commands in clean-profile CI.
+6. Run the positive controls and canary scans owned by each child; do not centralize their
+   test debt here.
+7. Propagate verified instructions and deliberately narrow support claims through README,
+   CLAUDE.md and STATE.md, including the plugin rationale.
+8. Compare the evidence tables and record a go/no-go decision for broader portability.
+   Propose automation or a shared abstraction only where two or more slices show the same
+   transformation, the maintenance benefit is demonstrated, and the abstraction introduces
+   no new harness-semantic coupling; otherwise keep thin native adapters.
+
+## Test
+
+- Interrupt each pilot-introduced live-Claude mutation and prove the previous setup remains
+  usable or is restored by the documented recovery command.
+- Flip one verified inventory entry to unsupported without changing the support claim and
+  prove CI rejects the inconsistency.
+
+## Verification
+
+- [ ] Fresh install/uninstall succeeds for all three adapters without developer machine state
+- [ ] Pilot-created files uninstall exactly; pilot-introduced Claude mutations recover/rollback
+- [ ] Managed hashes detect conflicts; unmanaged files and restrictive backup modes are tested
+- [ ] Deployment canary scans cover backups, journals, temporary and recovery artifacts
+- [ ] Every pilot assertion has supporting evidence; deterministic assertions have repeatable
+      tests, and no full-harness parity is claimed
+- [ ] Support documentation is derived from or checked against the pilot inventory
+- [ ] CI exercises the applicable commands in `docs/adapter-operations.md`
+- [ ] Positive controls prove every safety and deployment gate can fail
+- [ ] `make check` passes
+
+## Invariants
+
+- No test depends on live credentials, paid models or mutable external services.
+- Schema presence or installation success is not behavioral support.
+- Activation never overwrites the only recoverable copy of live configuration.
+- Abandoning the programme after this ticket leaves a supported Claude-only harness.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [ ] Pilot inventory and deployment/recovery suite run in CI
+- [ ] Operator runbook covers supported version lifecycle and tested recovery commands
+- [ ] README, CLAUDE.md and STATE.md match the verified narrow support level
+- [ ] A recorded decision chooses stop, another manual slice, or a justified abstraction
