@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Introduce an IDH path API and remove direct ~/.claude coupling
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0801
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+
+--- body ---
+## Context
+
+<!-- harness-extension-point: inventory of the concrete personal path being removed -->
+Scripts and skills directly name `$HOME/.claude` and `/home/haduong`. A textual replacement
+would still leave path semantics scattered. Define one resolver for installation, project,
+profile, cache, logs and mutable state, then migrate callers in bounded waves.
+
+## Relevant files
+
+- `scripts/path_utils.py` and `scripts/bash-env.sh` — existing path/env utilities
+- `scripts/on-start.sh`, `scripts/beat.py`, `skills/*/SKILL.md` — representative callers
+- `settings.shared.json` — absolute user paths
+
+## Actions
+
+1. Specify `IDH_HOME`, `IDH_PROJECT_ROOT`, `IDH_PROFILE_HOME` and `IDH_STATE_HOME`, including
+   defaults, precedence and canonicalization.
+2. Implement equivalent shell and Python resolver entry points backed by one contract.
+3. Inventory direct path literals and classify each as engine, profile, state or fixture.
+4. Migrate representative shell, Python and skill callers; file bounded follow-ups for
+   remaining clusters rather than making this a whole-repository rewrite.
+5. Make missing or unsafe roots fail before mutation.
+
+## Test
+
+- Run resolver tests under a temporary HOME, paths containing spaces, symlinked installs,
+  absent variables and deliberately malformed roots.
+
+## Verification
+
+- [ ] One documented precedence order is shared by shell and Python
+- [ ] No migrated caller reconstructs IDH paths independently
+<!-- harness-extension-point: acceptance test for removing the concrete personal path -->
+- [ ] Inventory accounts for every `~/.claude` and `/home/haduong` occurrence
+- [ ] `make check` passes
+
+## Invariants
+
+- The default Claude installation remains `~/.claude`.
+- Path changes never expose `.env` or widen write permissions.
+
+## Exit criteria
+
+- [ ] Path API exists with parity tests
+- [ ] Representative callers use it
+- [ ] Remaining literals are adapter/profile data or tracked follow-ups

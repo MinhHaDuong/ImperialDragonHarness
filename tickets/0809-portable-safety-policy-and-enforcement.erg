@@ -1,0 +1,58 @@
+%erg 0.1
+Title: Separate portable safety policy from provider permission enforcement
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0801
+Blocked-by: 0807
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+
+--- body ---
+## Context
+
+IDH's safety intent is durable — no destructive broad deletion, no commit on main, no merge
+from the wrong worktree, no credential disclosure — while Claude permission matchers and
+Codex rules are implementation details. Today those levels are mixed in prose, JSON and
+shell scripts.
+
+## Relevant files
+
+- `settings.shared.json` — Claude permission syntax
+- `rules/git.md` and `rules/workflow.md` — normative safety intent
+- `scripts/guard-destructive-bash.sh`, `scripts/guard-commit-on-main.sh`
+- `scripts/guard-worktree-identity.sh` and related tests
+
+## Actions
+
+1. Create a portable policy catalog with stable IDs, rationale, severity and required
+   enforcement level.
+2. Map each policy to deterministic shell guard, provider-native permission rule, agent
+   instruction, or a documented combination.
+3. Distinguish preventive enforcement from advisory guidance and post-hoc verification.
+4. Generate provider configuration without embedding personal paths or credentials.
+5. Refuse adapter activation when a mandatory policy lacks an effective enforcement path.
+
+## Test
+
+- Run a table of allowed and forbidden command fixtures through the portable policy runner
+  and both provider renderers; mutation-test at least the main-commit and destructive-path
+  guards.
+
+## Verification
+
+- [ ] Every existing guard and permission entry maps to a policy or is removed with reason
+- [ ] Most-restrictive resolution wins when policies overlap
+- [ ] Generated configs contain no secret values
+- [ ] `make check` passes
+
+## Invariants
+
+- Portability cannot weaken a destructive-action or credential boundary.
+- Provider permission syntax supplements deterministic guards; it is not evidence by itself.
+
+## Exit criteria
+
+- [ ] Portable policy catalog and mappings implemented
+- [ ] Claude behavior preserved for representative safety cases
+- [ ] Codex gaps are explicit and block unsafe workflows

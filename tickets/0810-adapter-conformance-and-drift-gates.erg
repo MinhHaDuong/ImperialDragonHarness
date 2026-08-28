@@ -1,0 +1,64 @@
+%erg 0.1
+Title: Add adapter conformance, parity and generated-drift gates
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0802
+Blocked-by: 0803
+Blocked-by: 0804
+Blocked-by: 0805
+Blocked-by: 0806
+Blocked-by: 0807
+Blocked-by: 0808
+Blocked-by: 0809
+
+--- log ---
+2026-08-28T12:57Z Codex created final integration child of 0800
+
+--- body ---
+## Context
+
+Provider agnosticism is credible only if observable contracts are tested. Schema validation
+alone cannot show that a skill still invokes the right children, a guard still blocks, or a
+missing hook is reported. This ticket assembles the earlier child contracts into one release
+gate and fresh-install smoke suite.
+
+## Relevant files
+
+- `.github/workflows/CI.yml` — current CI
+- `tests/static-baseline.json` and `scripts/test-quality.py` — existing quality gates
+- outputs and tests introduced by `0801`–`0809`
+- `README.md` and `STATE.md` — installation and support claims
+
+## Actions
+
+1. Define conformance levels: schema-valid, discoverable, behaviorally equivalent, and
+   safely degraded.
+2. Run fresh-build tests for Claude and Codex adapters from a clean temporary HOME.
+3. Combine golden rendering, semantic-reference validation, capability resolution, lifecycle
+   replay, safety mutation tests and secret/path scans into CI.
+4. Add a generated-drift gate and a positive control proving it actually fails.
+5. Publish a provider matrix that derives from test results rather than hand-maintained prose.
+
+## Test
+
+- The first test deliberately corrupts one generated skill, removes one mandatory capability
+  mapping and weakens one safety guard; each defect must fail a distinct gate.
+
+## Verification
+
+- [ ] Clean temporary-HOME installs succeed without access to the developer's machine state
+- [ ] Claude reference behaviors pass at the agreed parity level
+- [ ] Codex unsupported features appear in the generated matrix
+- [ ] Positive controls prove every major gate can fail
+- [ ] `make check` passes
+
+## Invariants
+
+- No test depends on live credentials, paid models or mutable external services.
+- The matrix never claims support from schema presence alone.
+
+## Exit criteria
+
+- [ ] Conformance suite runs in CI for both adapters
+- [ ] Generated drift and safety regressions block merge
+- [ ] README installation claims are generated from verified support levels

@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Define portable lifecycle events and provider hook adapters
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0802
+Blocked-by: 0807
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+
+--- body ---
+## Context
+
+Claude's `SessionStart`, `UserPromptSubmit`, `PreToolUse` and `PostToolUse` events currently
+carry IDH startup context, guards and linting. Other providers expose different or fewer
+events. The portable unit should be the intent and payload contract, not Claude's matcher
+syntax.
+
+## Relevant files
+
+- `settings.shared.json` — current event wiring
+- `scripts/on-start.sh` — startup context and background work
+- `scripts/inject_rule_on_edit.py` and `scripts/lint-on-edit.sh` — edit events
+- `scripts/guard-*.sh` — pre-action guards
+
+## Actions
+
+1. Define lifecycle events such as `session.start`, `prompt.submit`, `action.before`,
+   `file.before-write`, `file.after-write` and `session.stop` with stable payloads.
+2. Classify current hooks as context injection, advisory observation or enforcing guard.
+3. Map events into Claude and Codex adapters; declare unavailable mappings through 0807.
+4. Separate hook logic from provider input parsing so the same core guard can receive
+   normalized events.
+5. Preserve timeouts, exit semantics and stdout/context behavior explicitly.
+
+## Test
+
+- Replay normalized event fixtures through both adapters and assert equal core decisions;
+  include malformed payload, timeout and absent-event cases.
+
+## Verification
+
+- [ ] Every current hook has a mapped, fallback or unsupported disposition
+- [ ] Enforcing guards cannot be downgraded to advisory without refusal
+- [ ] Startup output remains bounded and deterministic
+- [ ] `make check` passes
+
+## Invariants
+
+- Provider adapters parse and render; core hook logic decides.
+- Background maintenance never races the session's first mutation.
+
+## Exit criteria
+
+- [ ] Lifecycle schema and normalized runner implemented
+- [ ] Representative Claude and Codex mappings pass replay tests
+- [ ] Hook coverage matrix documents remaining gaps

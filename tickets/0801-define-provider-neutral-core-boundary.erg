@@ -1,0 +1,58 @@
+%erg 0.1
+Title: Define the provider-neutral core boundary and behavioral baseline
+Created: 2026-08-28
+Author: Codex
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+
+--- body ---
+## Context
+
+The current tree interleaves durable doctrine with Claude syntax and host policy. Moving
+files before naming the boundary would merely relocate coupling. This ticket defines what
+is canonical, what is an adapter concern, and which current Claude behaviors must survive.
+
+## Relevant files
+
+- `README.md` — current product model and Five Claws
+- `CLAUDE.md` — current always-loaded entry point
+- `rules/` — mostly portable doctrine with provider references
+- `skills/` — workflows plus Claude frontmatter and invocation syntax
+- `settings.shared.json` — hooks, permissions and host-specific settings
+- `scripts/on-start.sh` — current session-start behavior
+
+## Actions
+
+1. Inventory provider tokens, absolute paths, lifecycle events and runtime assumptions.
+2. Write `core/ARCHITECTURE.md` defining core, adapter, profile, runtime-state and generated
+   ownership; include a rule for every ambiguous existing directory.
+3. Record a behavioral baseline for session start, one simple skill, one orchestrating
+   skill, one safety hook and one verification gate.
+4. Define canonical identifiers for rules, skills, roles, capabilities and lifecycle events.
+5. Mark non-goals: no lowest-common-denominator core, no cloud control of local systemd,
+   and no manual duplicate workflow bodies.
+
+## Test
+
+- First add a failing architecture check that detects forbidden provider names in a small
+  neutral-core fixture; make it pass with the documented boundary and allowlisted adapter
+  references.
+
+## Verification
+
+- [ ] Every current top-level directory has exactly one ownership class
+- [ ] Baseline covers both instructions and executable enforcement
+- [ ] The core vocabulary contains no Claude- or Codex-specific invocation syntax
+- [ ] `make check` passes
+
+## Invariants
+
+- This ticket documents and tests the boundary; it does not migrate the complete harness.
+- Existing Claude installation paths and behavior remain unchanged.
+
+## Exit criteria
+
+- [ ] Neutral-core architecture and canonical identifier rules are committed
+- [ ] Behavioral baseline is executable or machine-checkable
+- [ ] Follow-on tickets can identify their source and generated outputs unambiguously

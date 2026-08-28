@@ -1,0 +1,99 @@
+%erg 0.1
+Title: Provider-agnostic Imperial Dragon Harness — core, adapters and parity
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0810
+
+--- log ---
+2026-08-28T12:57Z Codex created family after author directive to make IDH more agnostic and have Codex plus Claude reimagine the work
+2026-08-28T12:57Z Codex note Imagine review PASS WITH REFRAME — keep ten children; make tracker non-runnable; require an installable Codex plugin; keep Markdown canonical and reject a new workflow DSL; preserve systemd and other local-only features as explicit capabilities rather than pretending hosted parity
+
+--- body ---
+## Context
+
+IDH is presently both its doctrine and one Claude Code installation: the repository is
+cloned to `~/.claude`; `CLAUDE.md`, `settings.shared.json`, hook matchers, model names,
+slash-command references, environment variables and absolute paths all assume that
+host. The Five Claws, ticket discipline, safety invariants and verification gates are
+more general than that implementation.
+
+This tracker makes the doctrine portable without reducing it to the least capable
+provider. The intended architecture is one canonical core, explicit provider adapters,
+and capability-aware degradation. Generated provider surfaces are never edited by hand.
+
+This is an architectural programme, not a request to bulk-rewrite 37 skills in one PR.
+Each child must preserve observable Claude behaviour before a Codex surface is promoted.
+
+## Children
+
+- `0801` — define the neutral core and its ownership boundary
+- `0802` — build the adapter generator and Claude/Codex skeletons
+- `0803` — replace `~/.claude` coupling with an IDH path API
+- `0804` — separate Minh's personal profile and mutable state from the engine
+- `0805` — define portable skill sources and semantic cross-skill references
+- `0806` — replace vendor model names with functional execution roles
+- `0807` — declare capabilities and fail-loud degradation policy
+- `0808` — define portable lifecycle events and provider hook mappings
+- `0809` — separate safety intent from provider permission syntax
+- `0810` — enforce adapter parity and drift in CI
+
+## Sequence
+
+1. `0801` establishes the boundary and a behavioral baseline.
+2. `0802`, `0803`, and `0804` establish generation, paths, and profiles.
+3. `0805`–`0809` move one concern at a time behind the boundary.
+4. `0810` turns the collected contracts into a release gate.
+5. Claude Code remains the reference adapter until its parity gate passes; Codex stays
+   experimental until its capability report and smoke suite pass.
+
+`0800` is blocked by the final integration child so `erg ready` never offers the tracker
+itself as executable work.
+
+## Review protocol
+
+Before implementation, append two independent Imagine reviews to this tracker: one by
+Codex and one by Claude. Each review must challenge the decomposition, identify missing
+invariants and monster tickets, and recommend merge/split/drop decisions. Reconcile the
+two reviews into a short author decision; do not silently treat either review as approval.
+
+### Codex Imagine review — 2026-08-28
+
+**Verdict: PASS WITH REFRAME.** The core-plus-adapters direction is sound and the ten
+concerns are independently testable. Keep `0803` and `0804` separate: path resolution is
+mechanical infrastructure, while deciding what belongs to a personal profile is a semantic
+and security boundary. Keep capabilities (`0807`), lifecycle (`0808`) and safety (`0809`)
+separate because an available event does not prove that it can enforce a policy.
+
+Corrections applied from this review:
+
+1. `0800` now blocks on `0810`, so the tracker cannot be selected as executable work.
+2. `0802` must produce an installable Codex personal-plugin skeleton, not merely files that
+   happen to resemble one.
+3. `0805` is a monster if read as "convert all 37 skills". Its boundary remains four
+   archetypes plus sized migration waves; bulk conversion is explicitly outside that PR.
+4. Portable Markdown remains canonical. A new workflow DSL would replace vendor coupling
+   with home-grown compiler coupling and is rejected unless the four-archetype experiment
+   proves Markdown plus semantic references insufficient.
+5. Local-only capabilities such as systemd supervision remain first-class IDH features.
+   Hosted adapters must report them unsupported rather than emulate or erase them.
+
+Residual risk for Claude's review: the family assumes generation is cheaper to maintain
+than thin provider overlays. Claude should attack that assumption and look for a smaller
+"portable metadata + native bodies" design before the author ratifies `0802`.
+
+## Invariants
+
+- Claude users do not lose hooks, skills, safeguards or invocation names during migration.
+- Provider-specific features remain available through adapters; agnosticism does not mean
+  lowest-common-denominator behavior.
+- Secrets, personal paths, telemetry and mutable memory never enter generated portable core.
+- One semantic rule or workflow has one canonical source.
+- Unsupported capabilities are reported explicitly, never silently skipped.
+
+## Exit criteria
+
+- [ ] Both Imagine reviews and the author's reconciliation are recorded
+- [ ] Children `0801`–`0810` are closed or explicitly rejected with reasons
+- [ ] Claude adapter passes its parity suite
+- [ ] Codex adapter installs and exposes the supported IDH surface in a fresh session
+- [ ] Documentation names the remaining provider-specific exclusions

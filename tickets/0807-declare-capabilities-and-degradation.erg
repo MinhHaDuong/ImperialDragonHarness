@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Declare provider capabilities and fail-loud degradation policy
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0801
+Blocked-by: 0802
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+
+--- body ---
+## Context
+
+Providers differ in hooks, subagents, worktree isolation, scheduled execution, connectors,
+local filesystem access and approval enforcement. A portable harness cannot assume all
+features exist, but silently omitting one would defeat IDH's safety claims.
+
+## Relevant files
+
+- `settings.shared.json` — current capability assumptions
+- `rules/workflow.md` — orchestration and isolation requirements
+- `skills/raid/SKILL.md`, `skills/beat/SKILL.md` — high-capability workflows
+- `systemd/` — local scheduling surface
+
+## Actions
+
+1. Define a capability vocabulary and provider declaration format.
+2. Let every portable workflow mark capabilities as required, optional or substitutable.
+3. Define three outcomes: native, explicit safe fallback, or unsupported refusal.
+4. Generate a capability matrix for users and a machine-readable resolution for skills.
+5. Cover hosted-vs-local distinctions explicitly; never imply hosted Work can operate local
+   systemd or private filesystem state.
+
+## Test
+
+- Resolve `perch`, `raid`, `beat` and a safety hook against full, partial and minimal mock
+  providers; assert that missing required capabilities cannot yield a runnable workflow.
+
+## Verification
+
+- [ ] Capability names are provider-neutral and documented
+- [ ] Every migrated skill declares its requirements
+- [ ] Fallbacks cite the invariant they preserve
+- [ ] `make check` passes
+
+## Invariants
+
+- Degradation is visible in the session and logs.
+- A convenience fallback may never weaken a destructive-action guard.
+
+## Exit criteria
+
+- [ ] Capability schema, resolver and matrix generator implemented
+- [ ] Representative workflows cover all three resolution outcomes
+- [ ] Hosted/local boundary is tested and documented

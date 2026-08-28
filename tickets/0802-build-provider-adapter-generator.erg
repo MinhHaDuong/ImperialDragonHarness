@@ -1,0 +1,60 @@
+%erg 0.1
+Title: Build the provider adapter generator with Claude and Codex skeletons
+Created: 2026-08-28
+Author: Codex
+Blocked-by: 0801
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800 blocked on the core boundary
+
+--- body ---
+## Context
+
+Maintaining separate hand-edited Claude and Codex harnesses would create immediate drift.
+IDH needs a deterministic compiler from canonical sources to provider-native surfaces.
+This ticket establishes the generator and proves the seam on representative content; it
+does not port every skill or hook.
+
+## Relevant files
+
+- `scripts/gen_skills_catalog.py` — precedent for deterministic generation
+- `scripts/check-skills-drift.py` — precedent for generated-output drift checks
+- `CLAUDE.md` and `settings.shared.json` — Claude output targets
+- `core/ARCHITECTURE.md` — ownership contract from 0801
+
+## Actions
+
+1. Define adapter input and output manifests with deterministic ordering.
+2. Implement `scripts/build-adapters.py` with `--provider`, `--check`, and output-directory
+   options; it must never overwrite canonical sources.
+3. Add Claude and Codex adapter skeletons that render one instruction, one skill and one
+   capability report each. The Codex skeleton must include an installable personal-plugin
+   manifest rather than existing only as loose generated files.
+4. Put generated artifacts under `generated/<provider>/` until their parity gates justify
+   installation.
+5. Document how adapters extend rather than fork canonical material.
+
+## Test
+
+- Add golden tests before implementation: two identical runs are byte-identical; changing
+  one canonical identifier changes only its declared outputs; `--check` fails on drift.
+
+## Verification
+
+- [ ] Generator is deterministic and idempotent
+- [ ] Unknown providers and unknown canonical identifiers fail loudly
+- [ ] Claude and Codex skeletons validate in their native formats
+- [ ] The generated Codex skeleton installs as a personal plugin in a clean test profile
+- [ ] `make check` passes
+
+## Invariants
+
+- Generated files are disposable and never canonical.
+- Provider adapters may add capabilities but may not redefine core semantics.
+
+## Exit criteria
+
+- [ ] Adapter generator and two representative adapters are working
+- [ ] Codex adapter skeleton is installable as a personal plugin
+- [ ] Drift check is wired into the fast test gate
+- [ ] Ownership of every generated path is documented
