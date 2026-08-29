@@ -1,0 +1,3 @@
+- [Author voice corpus](reference_author_voice_corpus.md) — 48 311 words he curated himself at chemin-de-voix/corpus/clean/voix-auteur-en; tic-removal reaches neutral, not his voice
+- [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md) — once he says yes, do it; never hand him a URL to click or text to paste
+- [Benchmark harness traps](feedback_benchmark_harness_traps.md) — one call site with two callees kills inlining for both; single runs swing ±15%

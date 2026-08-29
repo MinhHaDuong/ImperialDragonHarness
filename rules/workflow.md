@@ -103,6 +103,32 @@ nothing: three independent zeros feel like evidence, and they are one zero
 measured three times. A fourth probe, run after a human opened two PDFs, found
 two packs within a minute; the recorded finding had been wrong for a day.)
 
+**A number you divided out is not a number you measured.** Dividing someone
+else's aggregate by a count yields a per-unit figure that reads like data,
+carries no error bars, and inherits every assumption hidden in the aggregate —
+chiefly that the total is made of the thing you are dividing by. Label a
+derived quantity as derived, show the arithmetic that produced it, and where a
+direct measurement is cheap, take it *before* recommending on the inference.
+
+The tell is a recommendation whose load-bearing quantity was never measured on
+any machine. (Cost of skipping this, 2026-08-29: an upstream issue reported
+~95 s per query over 255 703 rows. Dividing gave ~390 µs per row, which made
+the arithmetic look like 6% of the runtime and the proposed fix therefore
+pointless — "it will disappoint" was written to the author on that basis. A
+real scan of that shape measures 38 µs per row: the division was 10x off,
+because most of the reported time was not in the loop at all. Arithmetic was
+73%, the fix was worth 2,19x, and the conclusion had been exactly inverted.
+The direct measurement took one script and eleven minutes.)
+
+Two corollaries, both cheap:
+
+- **State which machine a number came from.** "8,6 s here versus ~95 s there"
+  is a finding; silently mixing the two into one budget is how the inversion
+  above survived three messages.
+- **An unexplained gap is an open question, not a residual.** Attributing it
+  to a plausible cause (I/O, Windows, an old runtime) converts ignorance into
+  a claim. Name the one experiment that would settle it instead.
+
 # Refactor validation — byte-compare the artifact, not just green tests
 
 A **pure refactor** — a build/layout/rename change that must not alter output
