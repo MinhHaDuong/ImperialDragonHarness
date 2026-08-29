@@ -1,0 +1,124 @@
+%erg 0.1
+Title: A close claim is silently skipped when erg-pr-merge cannot reach the branch
+Created: 2026-08-29
+Author: claude
+
+--- log ---
+2026-08-29T19:10Z claude created
+
+--- body ---
+## Context
+
+`erg-pr-merge` must run from the PR's head branch. In a repo with several
+concurrent sessions, that branch is often checked out in **another session's
+worktree**, and the worktree isolation guard correctly refuses to redirect git
+there — `git -C <other worktree>` is denied, which is the guard doing its job.
+
+The script therefore never starts. This is not a bounce, and that distinction
+matters: `rules/git.md`'s "Merge-bounce recovery" bullet enumerates the ways
+`erg-pr-merge` fails *after* starting and warns against a blanket fallback to
+`gh pr merge`. Here `gh pr merge` is the only available route, and it merges
+the code while **silently skipping every `**Ticket:**` close claim in the PR
+body**.
+
+Nothing anywhere notices. The PR reads MERGED, the ticket stays open in
+`tickets/`, `erg check` passes (a stale open ticket is well-formed), and the
+project's own gates are green. The queue is simply wrong, and stays wrong until
+somebody audits by hand.
+
+Observed 2026-08-29 in `search-works-for-zotero` during a seven-PR merge wave:
+PR #43 claimed ticket 0017 and PR #44 claimed 0051. Both merged; neither closed.
+Found only because the merging agent thought to check afterwards, and repaired
+in a follow-up PR (#50). A sweep over the 40 most recent merged PRs then read
+3 close claims parsed / 0 unhonoured — clean, but only after the repair.
+
+## The gap in the rules, precisely
+
+`rules/git.md` already carries both halves and connects neither to this trigger:
+
+- Line 12 establishes that a `**Ticket:**` line is the close claim
+  `erg-pr-merge` acts on.
+- Line 22, "Manual chore-close recipe", gives the repair — including its real
+  ordering trap, `git add -u tickets/` **before** the `git mv` to `closed/`.
+
+But line 22 is framed as recovery for a PR that "already merged without
+erg-pr-merge", as though that were an accident. It is not an accident: in a
+parallel-session repo it is the *expected* path, with a specific and
+predictable cause. And neither bullet says to **verify** the close landed, so
+the failure has no detection step at all — only a repair step for someone who
+already suspects.
+
+## Relevant files
+
+- `rules/git.md` — lines 12, 19, 22; where the amendment lands
+- `skills/merge/erg-pr-merge` — the script whose precondition is at issue
+- `tickets/AGENTS.md` — carries the general "a check whose all-clear is
+  indistinguishable from 'I could not look' is not a check" principle this
+  instance illustrates
+
+## Actions
+
+1. Amend `rules/git.md`'s manual chore-close bullet (line 22) to name the
+   trigger rather than treating it as an accident: `erg-pr-merge` runs only
+   from the PR head branch, and a branch checked out in another session's
+   worktree is unreachable by design, so `gh pr merge` becomes the only route
+   and the close claim is skipped.
+2. State the verification, not just the repair: after any `gh pr merge` on a PR
+   whose body carries a `**Ticket:**` (not `Ticket-ref:`) line, confirm the
+   ticket moved to `closed/`.
+3. Give the wave-scale sweep, and require it to report **three** counts — PRs
+   seen, close claims parsed, claims unhonoured — because a sweep reporting
+   only "0 unhonoured" cannot distinguish a clean repo from a broken parser.
+   Working version, from the session that found this:
+
+   ```bash
+   for n in $(gh pr list --state merged --limit 40 --json number --jq '.[].number'); do
+     body="$(gh pr view "$n" --json body --jq .body)" || continue
+     ids="$(printf '%s\n' "$body" \
+           | grep -oE '^\*{0,2}Ticket:?\*{0,2}[[:space:]]+tickets/[0-9]{4}' \
+           | grep -oE '[0-9]{4}' | sort -u)"
+     for id in $ids; do
+       ls "tickets/${id}-"*.erg >/dev/null 2>&1 \
+         && echo "UNHONOURED: PR #$n claims $id, still open"
+     done
+   done
+   ```
+
+   Note it must enumerate then `gh pr view` each PR: `gh pr list --json files`
+   does not populate `files`, the trap `tickets/AGENTS.md` already records.
+4. Decide whether `erg-pr-merge` should gain a `-C`-free mode that operates on
+   a PR number alone (closing the ticket in the caller's own checkout, then
+   merging via the forge). Weigh it rather than assume it — it moves the close
+   off the branch, which is where the current design deliberately puts it so
+   the close commit rides the PR.
+
+## Test
+
+Red first, and the honest red case is a *sweep* case rather than a unit test:
+run the step-3 sweep against a repo state where a merged PR's claimed ticket is
+still open, and confirm it names that PR. Without that, the sweep's silence is
+untested and means nothing — this is exactly the class the harness already
+names in `tickets/AGENTS.md` and `rules/coding-bash.md`.
+
+## Verification
+
+- [ ] The sweep names a PR when a claimed ticket is still open
+- [ ] The sweep reports claims-parsed, so a zero there reads as a broken parser
+      rather than an all-clear
+- [ ] `rules/git.md` names the trigger, the detection and the repair, in that
+      order
+
+## Invariants
+
+- The worktree isolation guard is not weakened. It behaved correctly; the rule
+  is what needs to account for it.
+- `erg-pr-merge`'s existing happy path and its bounce-recovery ladder are
+  unchanged.
+
+## Exit criteria
+
+- [ ] `rules/git.md` amended so an agent merging a wave learns the failure mode
+      before hitting it, not after
+- [ ] The verification sweep is written down where a merging agent will find it
+- [ ] The `erg-pr-merge` question in action 4 is answered either way, with the
+      reason recorded
