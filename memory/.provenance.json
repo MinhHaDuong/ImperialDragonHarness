@@ -4459,6 +4459,198 @@
       "first_seen": "2026-08-22T07:09:00Z",
       "last_confirmed": "2026-08-22T07:09:00Z",
       "promoted": false
+    },
+    "reference_author_voice_corpus": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:17Z",
+      "last_confirmed": "2026-08-30T13:56:17Z",
+      "promoted": false
+    },
+    "feedback_execute_authorized_outward_actions": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_repo_prepares_upstream_it_ships_nothing": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_benchmark_harness_traps": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_decision_briefs": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_preserve_agent_output": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_verify_the_load_bearing_claim": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_metric_decides_the_verdict": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_adopted_constants_carry_mechanisms": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_probe_needs_discriminating_control": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_guard_the_silent_failure_first": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_a_move_can_leave_the_gate": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_append_only_merge_union": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_close_claim_needs_a_manual_check": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_no_optional_offers": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:18Z",
+      "last_confirmed": "2026-08-30T13:56:18Z",
+      "promoted": false
+    },
+    "feedback_warm_runs_and_single_point_fits": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_the_tickets_own_test_needs_a_control": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_judgement_must_not_outlive_its_subject": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_green_prs_red_union": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_executor_gate_loop_stall": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "project_registry_not_knobs": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_room_for_multilingual_embedders": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_negative_result_names_its_mechanism": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
+    },
+    "feedback_leads_park_on_untracked_background": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-08-30T13:56:19Z",
+      "last_confirmed": "2026-08-30T13:56:19Z",
+      "promoted": false
     }
   }
 }
