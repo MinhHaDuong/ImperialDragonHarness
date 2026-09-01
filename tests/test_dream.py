@@ -7,6 +7,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -434,6 +435,11 @@ def test_provenance_decay_empty(provenance_env):
     assert json.loads(result.stdout) == []
 
 
+def _iso_days_ago(days):
+    dt = datetime.now(timezone.utc) - timedelta(days=days)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def test_provenance_decay_flags_old_entries(provenance_env):
     """Directly write provenance with an old last_confirmed date."""
     prov_path = provenance_env / ".claude" / "memory" / ".provenance.json"
@@ -441,14 +447,14 @@ def test_provenance_decay_flags_old_entries(provenance_env):
         "entries": {
             "old_entry": {
                 "projects": ["project-alpha", "project-beta"],
-                "first_seen": "2025-01-01T00:00:00Z",
-                "last_confirmed": "2025-01-01T00:00:00Z",
+                "first_seen": _iso_days_ago(400),
+                "last_confirmed": _iso_days_ago(400),
                 "promoted": True,
             },
             "fresh_entry": {
                 "projects": ["project-alpha"],
-                "first_seen": "2026-06-01T00:00:00Z",
-                "last_confirmed": "2026-06-01T00:00:00Z",
+                "first_seen": _iso_days_ago(10),
+                "last_confirmed": _iso_days_ago(10),
                 "promoted": True,
             },
         }
