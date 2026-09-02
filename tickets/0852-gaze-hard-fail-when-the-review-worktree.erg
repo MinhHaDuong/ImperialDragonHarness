@@ -1,0 +1,168 @@
+%erg 0.1
+Title: gaze: hard-fail when the review worktree cannot be created; one gate per PR at a time
+Created: 2026-09-02
+Author: claude-fable
+
+--- log ---
+2026-09-02T11:53Z claude-fable created
+
+2026-09-02T11:55Z handoff sections written: worktree-fallback silent continuation + missing per-PR gate lock, per search-works-for-zotero PR #184 incident
+--- body ---
+## Context
+
+Observed 2026-09-02 in `search-works-for-zotero`, PR #184, ticket 0489. A
+team lead ran `/gaze` on its own PR. The skill's worktree-creation step
+(`skills/gaze/SKILL.md`, Phase 1 "Isolation setup", around lines 89-135 —
+`git worktree add "$primary_root/.claude/worktrees/review-<pr-number>"
+origin/"$PR_BRANCH"`) could not create the review worktree under the
+session's isolation guard, and the run fell back into the lead's own
+worktree instead of failing. A second `/gaze` fork on the same PR did the
+same thing independently.
+
+Consequences within 13 minutes, entirely from that one silent fallback:
+
+- 11:27:42Z — a genuine APPROVED gate comment posted.
+- 11:36:41Z — a second fork, running in the same non-isolated tree and with
+  no way to know a prior gate existed, read the APPROVED comment as
+  fabricated, pushed a "correction" commit, and posted a REROLL comment.
+- A third comment from the branch owner, disputing the REROLL.
+- A round-2 panel that escalated for human arbitration.
+- One reviewer observed another actor's uncommitted log line appear
+  mid-check in the shared tree — direct evidence the isolation boundary was
+  gone, not merely bypassed once.
+
+Every seat agreed the underlying code was correct; only the review *record*
+was broken. Cost: roughly two hours of agent time plus one human
+arbitration, for a defect whose root cause is one un-checked shell command.
+
+Two distinct mechanisms are in play, and the fix needs both:
+
+1. **The worktree-creation step has no failure path.** `git worktree add`
+   at SKILL.md's Phase 1 is invoked bare — no `|| die`, no check that the
+   directory exists afterward. When creation fails, execution continues
+   into whatever tree the process happens to be standing in, silently
+   discarding the isolation the skill's own prose calls "the isolation
+   boundary" (SKILL.md, Phase 1 preamble: "The worktree is the isolation
+   boundary; no main-repo checkout is ever needed").
+2. **A gate's identity is illegible to a later gate on the same PR.**
+   Nothing records, in a place a second `/gaze` invocation would check
+   before starting, that a gate is already live or already ruled on that PR.
+   A second fork has no way to distinguish "a legitimate prior verdict
+   exists" from "a comment was fabricated" — both look identical from
+   inside a shared, non-isolated tree.
+
+Same family, one layer up: harness ticket 0551 documents a fork mistaking
+itself for the coordinator after a `SendMessage` resume — a different
+symptom of an agent losing track of its own identity/authority relative to
+a peer process. This ticket is the /gaze-specific, worktree-isolation
+instance of that broader class.
+
+Relevant memory already saved by the orchestrating session:
+`projects/-home-haduong-CNRS-code-search-works-for-zotero/memory/feedback_one_gate_per_pr_at_a_time.md`.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — Phase 1 "Isolation setup" (the bare `git
+  worktree add` with no failure check, ~lines 89-135); Phase 6 verdict
+  comment template (search "verify-gate verdict", ~line 86 references the
+  `## /verify-gate verdict` block format); § Fork liveness / window-expiry
+  recovery logic (~lines 92-107), which already reasons about competing
+  markers on a PR and is the natural home for a gate-lock check.
+- `rules/workflow.md` § Subagents — orchestration guidance for fan-out and
+  fork behavior; needs one line establishing "one gate per PR at a time."
+- `skills/verify-gate/` (phase 6 invocation target) — the verdict producer;
+  its comment template is what would carry the proposed identity fields.
+- `~/.claude/scripts/pretooluse-worktree-path-guard.sh` — the isolation
+  guard whose denial is what triggered the silent fallback in the observed
+  incident; understanding exactly when it denies `git worktree add` is
+  prerequisite to writing the red-first test for Action (a).
+- `projects/-home-haduong-CNRS-code-search-works-for-zotero/memory/feedback_one_gate_per_pr_at_a_time.md`
+  — the orchestrator's own record of this incident (search-works-for-zotero
+  side; read for the full timeline, not duplicated here beyond the facts
+  above).
+- Harness ticket 0551 — the general "fork mistakes itself for the
+  coordinator" defect this ticket specializes.
+
+## Actions
+
+This ticket proposes; it does not implement. A follow-on ticket (or this one
+reopened for implementation) does the actual SKILL.md edit.
+
+1. **Hard-fail on worktree-creation failure.** In `skills/gaze/SKILL.md`
+   Phase 1, change the bare `git worktree add …` line to check its exit
+   status and the resulting directory's existence; on failure, `/gaze`
+   reports a named error (e.g. "gaze: cannot create isolated review
+   worktree for PR <n>; refusing to fall back into the invoking tree") and
+   stops. Never silently continue in the invoking tree.
+2. **Per-PR gate lock.** Before Phase 6 (and ideally before Phase 1, to
+   fail fast), `/gaze` checks for a live gate marker on the PR — a comment
+   header carrying the gate's session id and start time, or a lock file
+   under the primary repo's `.claude/worktrees/` namespace. If a live gate
+   is found, refuse to start a second gate and report the holder (session
+   id, start time) instead of proceeding.
+3. **Legible gate identity in the verdict comment.** The Phase 6
+   `## /verify-gate verdict` comment template gains identity fields: gate
+   session id, review worktree path, and the tip SHA the verdict was ruled
+   on. A later gate (or a human) can then tell a legitimate prior verdict
+   from a suspected fabrication by checking these against the PR's actual
+   state, instead of having no way to check at all.
+4. **One-line orchestration rule.** `rules/workflow.md` § Subagents gains:
+   "One gate per PR at a time: an orchestrator never launches its own
+   `/gaze` on a branch while the lead that owns it is still live." This is
+   the same standing as the existing subagent bullets in that section
+   (fork/coordinator confusion, uncommitted shared-tree writes) — process
+   discipline stated once, for every future orchestrator to read.
+
+## Test
+
+Red-first, per `coding-python.md`'s testing conventions (source inspection,
+not subprocess `--help`, since this is prose/shell-script content rather
+than a Python module):
+
+1. A test that simulates a denied `git worktree add` (or, at minimum,
+   inspects `skills/gaze/SKILL.md`'s Phase 1 block via source read) and
+   asserts the block contains an explicit failure check — not a bare
+   `git worktree add` line with no exit-status handling immediately after
+   it. Confirm this test is RED against the current SKILL.md before any fix
+   lands (the whole point: today's text has no such check).
+2. A test asserting the Phase 6 verdict-comment template (wherever it is
+   defined — SKILL.md prose or a template file under `skills/gaze/` or
+   `skills/verify-gate/`) names the three identity fields: gate session id,
+   review worktree path, tip SHA. Confirm RED against the current template
+   before any fix lands.
+
+## Verification
+
+- [ ] Test 1 is red against current `skills/gaze/SKILL.md`, green after
+      Action (a) lands.
+- [ ] Test 2 is red against the current verdict-comment template, green
+      after Action (c) lands.
+- [ ] `rules/workflow.md` § Subagents contains the new one-line rule after
+      Action (d) lands, and `make check` (or this repo's equivalent lint
+      gate) still passes.
+- [ ] A manual or scripted trace confirms: with the isolation guard denying
+      worktree creation, `/gaze` now stops with the named error instead of
+      continuing in the invoking tree.
+
+## Invariants
+
+- `/gaze`'s existing two-round REROLL cap, circuit-breaker abort paths, and
+  window-expiry recovery logic (SKILL.md § Fork liveness) must keep working
+  unchanged — this ticket adds a new failure path, it does not touch the
+  existing ones.
+- No change here should require every gate to serialize globally across
+  unrelated PRs — the lock is per-PR, not a global mutex.
+- Existing SKILL.md tests (adherence, structure) stay green.
+
+## Exit criteria
+
+- `skills/gaze/SKILL.md` Phase 1 hard-fails (named error, no fallback) when
+  the review worktree cannot be created.
+- A per-PR gate lock exists and is checked before a second `/gaze` gate
+  starts on a PR that already has a live one.
+- The Phase 6 verdict comment carries gate session id, review worktree
+  path, and ruled tip SHA.
+- `rules/workflow.md` § Subagents states the one-gate-per-PR-at-a-time rule.
+- Both red-first tests above exist, were confirmed red pre-fix, and are
+  green post-fix.
+- `erg check` passes; the repo's fast check gate passes.
