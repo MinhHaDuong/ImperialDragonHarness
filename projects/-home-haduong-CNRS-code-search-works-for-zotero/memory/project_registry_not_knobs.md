@@ -13,12 +13,7 @@ curated registry entry whose knob is its id. Ruled again in requirement form
 2026-08-30: R30 (GPU acceleration is a requirement), C3 re-pinned at ~750 MB
 p95 from the measured multilingual residency.
 
-State as of 2026-08-30: the measurement train (tickets 0261–0266, 0481–0482)
-is closed and merged. The recommendation (ticket 0267, PR #110) selects
-multilingual-e5-base under a six-clause rule; the author is reading it. The
-0440 upstream issue is drafted at `verification/ISSUE-DRAFT-0440.md`, ticket
-closed on a recorded deferral — filing awaits his approval after #110, and it
-is a fresh authorized outward action when it comes.
+**State moves faster than this file.** The rulings above are durable; the queue position is not. As of 2026-09-02 twelve further rulings landed in one day, several of them on this axis (device selection needs positive usability evidence, X1 waits for its 650k substrate, stored attributes get their own filter path). Read `DECISIONS.md` for what is settled and `erg ready` for what is next; do not quote a ticket state from here.
 
 Two measured facts that shape any future entry design: the optimal rung is
 per-device (no CUDA int8 matmul kernel, so fp32 is the fast GPU rung while

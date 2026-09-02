@@ -1,13 +1,15 @@
 ## Key insights
 
-- This repo's recurring defect class is a per-model axis silently dropped or hardcoded between registry and driver (pooling, then device, then normalize); guards must chase declared-but-unconsumed data, not only hardcoded literals.
-- Proxies mislead and the task metric decides: fidelity-to-fp32, the X8 cosine bar, and self-referential recall each priced the same defect differently from task recall, sometimes reversing the verdict.
-- A check earns trust only through a demonstrated red state — red-first tests, discriminating contrast arms, positive controls on probes; an all-clear indistinguishable from could-not-look is not a check.
-- Measurement campaigns are ledger-shaped: registry-driven, resumable, one atomic file per cell with distinct terminal states — that shape let three interrupted campaigns finish in one day without losing or double-counting a cell.
-- Delegation runs on explicit process constraints: leads park on untracked background work, skip close claims, and over-claim standing rows — the orchestrator's claims-versus-tree review is load-bearing, not ceremony.
+- The recurring defect is a claim nobody executed: a spec rule measurement has voided, a status page read rather than recomputed, a guard proposed for a hazard something already watched. The fix is always to run the thing, never to re-read it.
+- A check earns trust only from a demonstrated red state, and this repo now has five separate lessons saying so — discriminating controls, the ticket's own test against the unfixed tree, control arms on a committed tree, a small instance of a silent long job, and grepping the guards before calling anything unguarded.
+- Duplication is safe only when it is exact: a verbatim quotation can be held to its source by a guard, where two paraphrases of one rule cannot be compared by anything and drift into contradiction.
+- Ownership beats instrumentation. Where one fact sat in two documents, deleting the copy that nothing reads has consistently beaten adding a check to watch both — and the guard budget is net-negative by ruling.
+- The checkout is shared with other agents, Codex included: stage by explicit path, expect append-only files to conflict at the tail, and never read a clean tree or an idle peer as proof that a session has finished.
 
 ## Entries
 
+- [Code under ~/CNRS/code, data under ~/data](feedback_code_under_cnrs_code_data_under_data.md) — a fork clone is code even when it serves a bench campaign; keep data paths identical across machines
+- [Stay on Max plan billing](feedback_stay_on_max_plan_billing.md) — expired OAuth means asking for one claude login, never substituting the API key or copying credentials between machines
 - [Author voice corpus](reference_author_voice_corpus.md) — 48 311 words he curated himself at chemin-de-voix/corpus/clean/voix-auteur-en; tic-removal reaches neutral, not his voice
 - [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md) — once he says yes, do it; never hand him a URL to click or text to paste — but show him the document before publishing it in his name
 - [Repo prepares upstream, ships nothing](feedback_repo_prepares_upstream_it_ships_nothing.md) — repo PRs are spec/measurement records; upstream-code actions bundle into the upstream PR being prepared, not standalone filings
@@ -20,7 +22,7 @@
 - [Probes need a discriminating control](feedback_probe_needs_discriminating_control.md) — a control must be able to come out the other way; three vacuous probes in one session
 - [Guard the silent failure first](feedback_guard_the_silent_failure_first.md) — the loud guard is the one you think of; enumerate the no-exception failures and mirror the upstream validator
 - [A move can leave the gate](feedback_a_move_can_leave_the_gate.md) — a hand-listed gate scope fails asymmetrically: guarding removal is easy and feels done; a file *arriving* stays unguarded
-- [Append-only merges keep both](feedback_append_only_merge_union.md) — DECISIONS.md conflicts by construction; assert the union in a script, because deleting a whole ratified entry leaves every gate green
+- [Append-only merges keep both](feedback_append_only_merge_union.md) — DECISIONS.md conflicts by construction; assert the union in a script, on main, against both parents; a sibling's rewrite reads as a missing line, check its diff first; guard ruled Won't do (0320)
 - [A close claim needs a manual check](feedback_close_claim_needs_a_manual_check.md) — erg-pr-merge can't reach a branch in another session's worktree; gh pr merge skips the close silently
 - [No optional offers](feedback_no_optional_offers.md) — decide yourself; an offered extra is work you already judged not worth doing
 - [Warm runs and single-point fits](feedback_warm_runs_and_single_point_fits.md) — a cold run measures the download; a predictor fitted on one point matched it exactly and missed the next by 106 MB
@@ -32,3 +34,24 @@
 - [Room for multilingual embedders](feedback_room_for_multilingual_embedders.md) — C3 ratified at 750 from the measured floor; the lesson survives: never argue headroom under a ceiling a ruling has displaced
 - [Negative results name their mechanism](feedback_negative_result_names_its_mechanism.md) — X4 killed json_each scoping, not scoping; the author was right to reject "no", and a year predicate measured 43x cheaper
 - [Leads park on untracked background](feedback_leads_park_on_untracked_background.md) — three sonnet leads in one day deadlocked waiting on nohup runs; prompt chunked-foreground up front, one resume recovers
+- [Spec edit mechanics](project_spec_edit_mechanics.md) — post-restructure layout: one SPEC.md (DRAFT header, date-is-version, system-only prose), standing in README; quote coupling, windowed digit rule, roster-line trap
+- [Reconcile seats against synthesis](feedback_reconcile_seats_against_synthesis.md) — a synthesizer posted "no blocker" after a relay superseded the seat that had one; diff the seat set against the synthesis before acting
+- [Re-run the gate after your own fix](feedback_rerun_gate_after_own_fix.md) — the commit closing the erg-check ratchet gap carried a .PHONY silent no-op; verify the new check appears in the transcript, then prove it red once
+- [Takeover handoff pattern](feedback_takeover_handoff_pattern.md) — state check with SHAs, durable record in the PR discussion, explicit ack, then full lane discipline; peer requests honored read-only in their checkout
+- [Atomic PRs, short branches](feedback_atomic_prs_short_branches.md) — author verbatim: "not folded here"; one concern per PR, small deliverables never ride a larger one, upstream filings included
+- [Review catches only what it checks](feedback_review_catches_only_what_it_checks.md) — two review passes verified citations/numbers; the author's own orthogonal question found the real defect
+- [Stacked PR on a live sibling's branch](feedback_stacked_pr_on_live_sibling_branch.md) — find the owner via ListAgents, message it, poll the PR state; one DECISIONS.md tail collision per sibling merge, union every time
+- [Read the schema before asking for state](feedback_read_the_schema_before_asking_for_state.md) — #48: "a set or a flag" became one query on a column he already had; an ask reduced to existing state plus a test is the handoff his pattern ships
+- [Control arms need a committed tree](feedback_control_arms_need_a_committed_tree.md) — the helper's `git checkout --` reverts the fix it was testing; commit first, then break on purpose
+- [Deferral must name a measurer](feedback_deferral_must_name_a_measurer.md) — a policy without a number named a bound that doesn't exist and deferred to an experiment that can't look; two questions before writing "left to X"
+- [Hold out the answer key](feedback_hold_out_the_answer_key.md) — X5 scored against the contents list seg/1 consumes; ground truth the system reads is circular, and "mechanical" scoring may need the system's own hard step
+- [Archive bot walls](reference_archive_bot_walls.md) — IA/Commons/Wikisource/FAOLEX-pdf serve scripts; HAL (Anubis), Gallica (ALTCHA), UKGWA (WAF) do not: pin by browser fetch; length-check rtk-echoed hashes
+- [Reading blocked sources](reference_reading_blocked_sources.md) — Reddit answers on `.rss` when JSON/HTML/mirrors are walled; a closed plugin's design is readable from its shipped .xpi bundle
+- [gh resolves repo from cwd](feedback_gh_resolves_repo_from_cwd.md) — a bare `gh pr edit` from a scratch dir under ~/.claude edited the harness repo`s PR; pass -R on every gh mutation outside the project checkout
+- [Fork cwd and the worktree guard](feedback_fork_cwd_and_worktree_guard.md) — cd into fork/ persists and blocks bare git; use git -C per tree, fork work on its own branch pushed to the author fork
+- [One gate per PR at a time](feedback_one_gate_per_pr_at_a_time.md) — two review forks on one branch wrote a four-comment contradiction and an ESCALATE; settle by timeline log line + PR-body pointer + one fresh gate
+- [Guard budget is net-negative](feedback_guard_budget_is_net_negative.md) — a new guard costs two retirements; one that never fired beyond its own original bug can go
+- [Stage by path in shared checkouts](feedback_stage_by_path_in_shared_checkouts.md) — git commit -am steals a parallel session's uncommitted work; the tell is a conflict in a file your PR never touched
+- [Check for the guard before proposing one](feedback_check_for_the_guard_before_proposing_one.md) — 24/24 verbatim was a working guard read backwards; grep the guards, then prove it red in a throwaway worktree
+- [Zotero 10 plugin and reindex](reference_zotero_10_plugin_and_reindex.md) — manifest needs update_url; group libraries load lazily (async getter); no bulk reindex button; 60–80 pages/s; group items reindex to version 0
+- [Positive control before waiting](feedback_positive_control_before_waiting.md) — a silent long job looks the same working or stuck; queue the smallest comparable job and time it instead of extending the watch
