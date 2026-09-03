@@ -57,5 +57,21 @@ before. When touching a status table, grep it for every live-state claim
 ("open", "unanswered", "in flight") and re-verify each against the forge —
 the stale rows are never the ones you came for.
 
+**Instance, 2026-09-02 (PR #212): the decay window was eleven minutes.** The PR
+argued a REJECT on reusing Zotero core's #6012 inference runtime, and supported it
+with a currency claim about that PR's state. The upstream head **force-pushed
+eleven minutes after our PR opened**, falsifying the claim before any reviewer
+read it. The verdict survived — `ml.js` is byte-identical across both heads, so
+the REJECT rests on content, not on currency — but the supporting sentence was
+false as written.
+
+A forge reading (a head SHA, an open/closed state, a CI status) is an
+*instantaneous measurement*, and prose has no expiry field. Two habits, both
+cheap: **pin the SHA in the sentence** so the claim is scoped to what was actually
+observed ("at <sha>, ml.js is …") rather than to a moving ref, and **separate the
+load-bearing evidence from the currency note**, so that when currency decays the
+verdict does not have to be re-argued. Here the separation existed by luck; had
+the REJECT rested on "#6012 is still open", eleven minutes would have voided it.
+
 Related: [[feedback-a-move-can-leave-the-gate]],
 [[feedback-verify-the-load-bearing-claim]].

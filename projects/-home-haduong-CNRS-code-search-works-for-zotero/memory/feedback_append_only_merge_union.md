@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 43bfbf20-0cb6-46b3-bcbd-d03a2e7e6911
-  modified: 2026-09-02T08:10:00.000Z
+  modified: 2026-09-03T05:43:39.455Z
 ---
 
 `DECISIONS.md` conflicts every time two branches ratify in parallel: every
@@ -46,3 +46,21 @@ morning):
   that landed is not the tree `make check` and the union script had seen.
   Detach a worktree onto `origin/main`, rerun the gate, and assert the union
   against *both* merged parents ([[feedback_green_prs_red_union]]).
+
+**"Union" means union of intents, not always "keep both lines" — and the case
+that inverts it is a header, not a log.** 2026-09-03, PR #212: ticket 0491
+carried `Blocked-by: 0490` and `Blocked-by: 0496`. Main (PR #249) closed 0490
+and deleted its line; my branch closed 0496 and deleted its line; git conflicted
+on the two adjacent deletions. Reading "keep both, never take theirs"
+mechanically would have **kept both `Blocked-by` lines** — resurrecting two
+blockers that two merged commits had just retired, and re-parking the ticket.
+The correct union was to apply **both deletions and keep neither line**.
+
+The discriminator is what each side's change *asserts*, not what it looks like
+in the hunk. Both sides asserted "this blocker is gone", so the union asserts
+both are gone. And the assertion is checkable rather than a matter of taste:
+`tickets/closed/0490-….erg` and `tickets/closed/0496-….erg` both exist in the
+merged tree, so each deletion has its event on disk. Where an append-only *log*
+conflicts, the events are additions and the union keeps both lines; where a
+*header* conflicts, the events may be deletions and the union removes both.
+Verify the event, then take the union of events.

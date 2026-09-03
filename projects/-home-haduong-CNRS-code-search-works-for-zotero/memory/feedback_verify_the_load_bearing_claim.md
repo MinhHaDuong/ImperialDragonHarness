@@ -6,7 +6,7 @@ metadata:
   metadata_type: feedback
   type: feedback
   originSessionId: 7a9efc3f-7c9c-49b1-b574-07d7404e6a7a
-  modified: 2026-08-29T17:40:22.283Z
+  modified: 2026-09-03T05:43:49.354Z
 ---
 
 A drafted upstream PR opened its case with "`to be or not to be` tokenizes to
@@ -83,6 +83,24 @@ day: before recommending any filing, one search for the existing issue —
 transformers.js#1642 had reported the device bug four months earlier
 (one `gh search issues` command, run only after the author pushed back).
 
+A fifth instance, the cheapest of all and mine: **`command -v X` answers "is X
+on `PATH`", never "is X available".** At the 2026-09-03 dawn close I ran it for
+`erg-pr-merge`, got nothing, and wrote *"not available in this environment"*
+into a merge comment as the justification for closing a ticket by hand. It ships
+at `~/.claude/skills/merge/erg-pr-merge`; one `find` would have said so. The
+outcome was unharmed — the manual close was verified end to end — but the
+*reason* on the record was false, which is the part an outside reader checks.
+
+The shape generalises past this command: a probe that answers a narrower
+question than the sentence you write from it. `command -v` scopes to `PATH`,
+`grep` scopes to the files you named, `git log` scopes to the range you gave.
+Each returns a truthful narrow answer and a plausible wrong wide one, and the
+widening happens in prose where nothing checks it. When a negative probe is
+about to become a justification, run the second command that widens the scope —
+and if you have already published the wide claim, **post the correction rather
+than editing it away**.
+
 Related: [[feedback-benchmark-harness-traps]],
 [[feedback-execute-authorized-outward-actions]],
-[[feedback-probe-needs-discriminating-control]].
+[[feedback-probe-needs-discriminating-control]],
+[[feedback_a_denial_that_matches_a_rule]].
