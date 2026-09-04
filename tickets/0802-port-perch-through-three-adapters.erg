@@ -7,14 +7,19 @@ Author: Codex
 2026-08-28T12:57Z Codex created child of 0800 as a provider adapter generator
 2026-08-28T13:57Z Minh ratified core plus config plus adapters and added Pi as an early target
 2026-08-28T14:08Z Codex replaced generator-first scope with one hand-ported skill slice pending round-2 panel review
+2026-08-28T16:32Z Codex note Implemented the static pilot: one live Claude body, native Codex/Pi discovery links, closed version allowlists, schema-backed evidence inventory and red-first tests; three paid live smokes remain pending on the author's CLIs
+2026-09-04T22:45Z Minh directed IDH to declare provider independence under the de facto ~/.agents convention; Codex inverted the pilot so Codex and Pi consume the canonical tree directly and Claude alone receives a projection
 
 --- body ---
 ## Context
 
 `skills/perch/SKILL.md` is already mostly portable Markdown. It is the smallest useful
 experiment for discovering what Claude Code, Codex and Pi actually require around a shared
-skill body. This ticket hand-ports that one behavior. It does not design a general skill IR,
-copy all skills, or build an adapter generator.
+skill body. The provider-neutral installation target is `~/.agents`, whose `skills/`
+directory is a de facto cross-client discovery convention. Codex and Pi consume that
+canonical tree directly; Claude receives a native discovery projection. This ticket does
+not move the full live harness, design a general skill IR, copy all skills, or build an
+adapter generator.
 
 The architecture vocabulary is **core, config and adapters**:
 
@@ -35,12 +40,13 @@ The architecture vocabulary is **core, config and adapters**:
 
 1. Before coding, record exact CLI versions, authoritative documentation URLs/commits and
    native resource locations. Define a version-probing policy and test the declared minimum
-   plus current supported version for each harness; do not silently accept an unknown version.
+   plus current supported version for each harness; do not silently claim an unknown version.
 2. Record the current Claude `perch` contract: discovery, invocation name, read-only
    behavior, output headings and clear-readiness decision.
-3. Keep the Markdown body canonical and live for Claude Code with no build step.
-4. Hand-build the smallest installable Codex adapter and smallest installable Pi adapter.
-   Adapter files contain native metadata and wiring, not a second workflow body.
+3. Keep the Markdown body canonical and live under the target `~/.agents` installation
+   with no build step.
+4. Prove Codex and Pi discover that shared location directly. Hand-build only the Claude
+   discovery projection; adapter files contain native wiring, not a second workflow body.
 5. Create `adapters/pilot-support.schema.json` and `adapters/pilot-support.json`. Stable keys
    identify slice, harness, harness version, assertion, disposition, evidence kind and test;
    this ticket owns the schema and first entries, later slices extend them, and `0810` validates.
@@ -52,32 +58,34 @@ The architecture vocabulary is **core, config and adapters**:
 
 ## Test
 
-- Before adapter work, add checks that fail because clean Codex and Pi test profiles cannot
-  discover `perch`. Make both pass using native installation mechanisms.
+- Before adapter work, add checks that fail because the shared `~/.agents/skills/perch`
+  source and Claude projection are absent. Make direct Codex/Pi discovery and the single
+  Claude projection pass without duplicating the workflow body.
 - Run a scripted/static contract check for metadata and output shape. Treat one live smoke
   invocation per harness as manual evidence; record prompt, harness/version, date and result
   so CI never depends on a paid model or mutable service.
 
 ## Verification
 
-- [ ] Claude reads the canonical skill directly; editing its prose needs no build
-- [ ] Clean Codex and Pi profiles discover an installable `perch`
-- [ ] All three expose the same read-only workflow and stable output headings
-- [ ] Exact supported versions and unknown-version behavior are tested and recorded
-- [ ] No generic generator, workflow DSL, capability algebra or copied prose was introduced
-- [ ] The schema-valid pilot inventory identifies actual, not anticipated, duplication
+- [x] Claude reads the canonical skill through a native projection; editing its prose needs no build
+- [x] Clean Codex and Pi profiles discover canonical `perch` directly under `~/.agents`
+- [x] All three expose the same read-only workflow and stable output headings
+- [x] Exact supported versions and unknown-version behavior are tested and recorded
+- [x] No generic generator, workflow DSL, capability algebra or copied prose was introduced
+- [x] The schema-valid pilot inventory identifies actual, not anticipated, duplication
 - [ ] `./scripts/check-agnostic.sh` and `make check` pass
 
 ## Invariants
 
 - Existing Claude invocation and behavior do not change.
+- `~/.agents` is the target provider-neutral home; `.claude`, `.codex` and `.pi` remain adapter surfaces.
 - Adapter metadata cannot override the canonical safety or behavior contract.
 - No adapter activation reads secrets or promotes ignored files into git.
-- Removing either experimental adapter restores the exact pre-experiment Claude state.
+- Removing the experimental Claude projection restores the exact pre-experiment Claude state.
 
 ## Exit criteria
 
 - [x] Round-2 panel cleared the `needs-human` gate
 - [ ] One canonical `perch` works through Claude Code, Codex and Pi adapters
-- [ ] `adapters/pilot-support.json` is committed and names any manual-only assertions
-- [ ] Follow-up abstractions are proposed only for duplication observed in this slice
+- [x] `adapters/pilot-support.json` is committed and names any manual-only assertions
+- [x] Follow-up abstractions are proposed only for duplication observed in this slice

@@ -4,7 +4,9 @@ Casual people get shit done. Real humans ride the Imperial Dragon Harness.
 They `/raid` tickets to bring back PR, they `/beat` their wings autonomously,
 they `/perch` to orient midchat.
 
-A Claude Code harness for Minh Ha-Duong's research workflow. Lives as `~/.claude`.
+A personal agent harness for Minh Ha-Duong's research workflow. The supported
+installation currently lives at `~/.claude`; the provider-independence pilot
+targets the de facto shared home `~/.agents` without yet claiming full parity.
 
 ## The Five Claws
 

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "slice": "perch",
+  "canonical_source": "skills/perch/SKILL.md",
+  "versions": [
+    {
+      "harness": "claude",
+      "supported_versions": ["2.1.232", "2.1.250"],
+      "probe_command": "claude --version",
+      "unknown_version_behavior": "refuse-support-check",
+      "documentation_url": "https://code.claude.com/docs/en/skills",
+      "release_url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.250",
+      "evidence_note": "2.1.232 is the earliest CLI binary recorded in this repository during the pilot baseline; 2.1.250 was the current stable release on 2026-08-28."
+    },
+    {
+      "harness": "codex",
+      "supported_versions": ["0.150.0", "0.150.1"],
+      "probe_command": "codex --version",
+      "unknown_version_behavior": "refuse-support-check",
+      "documentation_url": "https://developers.openai.com/codex/build-skills",
+      "release_url": "https://github.com/openai/codex/releases/tag/rust-v0.150.1",
+      "evidence_note": "0.150.0 is the pilot minimum and 0.150.1 was the current stable release on 2026-08-28; both postdate upstream symlink-discovery coverage."
+    },
+    {
+      "harness": "pi",
+      "supported_versions": ["0.84.2", "0.84.3"],
+      "probe_command": "pi --version",
+      "unknown_version_behavior": "refuse-support-check",
+      "documentation_url": "https://pi.dev/docs/latest/skills",
+      "release_url": "https://pi.dev/news/releases/0.84.3",
+      "evidence_note": "0.84.2 is the pilot minimum and 0.84.3 was the current stable release on 2026-08-28."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "claude-live-source",
+      "harness": "claude",
+      "harness_version": "2.1.232, 2.1.250",
+      "assertion": "Claude discovers the provider-neutral canonical perch directory through its native skills root.",
+      "disposition": "harness-specific",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_adapters.py::test_clean_profile_gains_only_claude_projection",
+      "source_concept": "skill discovery and /perch invocation",
+      "native_expression": "$HOME/.claude/skills/perch -> $HOME/.agents/skills/perch; /perch",
+      "result": "pass"
+    },
+    {
+      "id": "codex-native-discovery",
+      "harness": "codex",
+      "harness_version": "0.150.0, 0.150.1",
+      "assertion": "Codex discovers the canonical perch directory directly from the shared user Agent Skills root.",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_adapters.py::test_agents_home_is_native_source_for_codex_and_pi",
+      "source_concept": "skill discovery and explicit invocation",
+      "native_expression": "$HOME/.agents/skills/perch; $perch",
+      "result": "pass"
+    },
+    {
+      "id": "pi-native-discovery",
+      "harness": "pi",
+      "harness_version": "0.84.2, 0.84.3",
+      "assertion": "Pi discovers the canonical perch directory directly from the shared user Agent Skills root.",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_adapters.py::test_agents_home_is_native_source_for_codex_and_pi",
+      "source_concept": "skill discovery and explicit invocation",
+      "native_expression": "$HOME/.agents/skills/perch; /skill:perch",
+      "result": "pass"
+    },
+    {
+      "id": "shared-read-only-contract",
+      "harness": "all",
+      "harness_version": "all declared",
+      "assertion": "The one canonical body defines the read-only workflow and stable Done, Open, optional Drift and Stance output shape for every harness.",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_adapters.py::test_canonical_contract_has_stable_shape_and_is_read_only",
+      "source_concept": "workflow behavior and output headings",
+      "native_expression": "shared Agent Skills Markdown body",
+      "result": "pass"
+    },
+    {
+      "id": "claude-live-smoke",
+      "harness": "claude",
+      "harness_version": "2.1.250",
+      "assertion": "Invoke /perch mid-session and observe the canonical headings and no mutations.",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "Pending local run after adapters/perch.py install claude: invoke /perch after one completed and one open item; inspect git status before and after.",
+      "source_concept": "live model execution",
+      "native_expression": "/perch",
+      "result": "pending"
+    },
+    {
+      "id": "codex-live-smoke",
+      "harness": "codex",
+      "harness_version": "0.150.1",
+      "assertion": "Invoke $perch mid-session and observe the canonical headings and no mutations.",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "Pending local run from an independent ~/.agents checkout; inspect git status before and after.",
+      "source_concept": "live model execution",
+      "native_expression": "$perch",
+      "result": "pending"
+    },
+    {
+      "id": "pi-live-smoke",
+      "harness": "pi",
+      "harness_version": "0.84.3",
+      "assertion": "Invoke /skill:perch mid-session and observe the canonical headings and no mutations.",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "Pending local run from an independent ~/.agents checkout; inspect git status before and after.",
+      "source_concept": "live model execution",
+      "native_expression": "/skill:perch",
+      "result": "pending"
+    }
+  ]
+}
