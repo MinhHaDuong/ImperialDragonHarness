@@ -5115,6 +5115,30 @@
       "first_seen": "2026-09-06T21:55:57Z",
       "last_confirmed": "2026-09-06T21:55:57Z",
       "promoted": false
+    },
+    "feedback_a_stale_artifact_reads_as_live": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T22:23:27Z",
+      "last_confirmed": "2026-09-06T22:23:27Z",
+      "promoted": false
+    },
+    "feedback_measure_the_recommendation_you_wrote": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T22:23:27Z",
+      "last_confirmed": "2026-09-06T22:23:27Z",
+      "promoted": false
+    },
+    "feedback_ticket_log_stamps_are_utc": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T22:23:27Z",
+      "last_confirmed": "2026-09-06T22:23:27Z",
+      "promoted": false
     }
   }
 }
