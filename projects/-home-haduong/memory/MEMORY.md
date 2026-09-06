@@ -23,3 +23,6 @@
 - [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md) — 8 fausses sources « inaccessibles » en une session HET ; ls docs/ + Zotero + ocrmypdf avant toute recherche web (règle promue dans rules/edm.md)
 - [ISTEX token](reference_istex.md) — jeton plein-texte licences nationales dans ~/.config/keys/istex.env ; à essayer d'office pour tout article sous péage ; JRSS-B seulement 1997→
 - [Adversarial pair verification](feedback_adversarial_pair_verification.md) — théorème d'agent → referee adversarial à code indépendant avant insertion manuscrit ; a trouvé 2 vrais trous de preuve (session MIMO) ; jamais de fenêtre par échantillonnage de chambres
+- [LinkedIn posts: always a personal note](feedback_linkedin_personal_note.md) — open with personal framing (why sharing, connection, audience) before the factual summary; ask rather than invent the angle
+- [Aider les rapporteurs](feedback_aider_les_rapporteurs.md) — écrire soi-même l'argument que le rapporteur portera en séance (trajectoire, profil, faits datés) ; revue simulée avant dépôt
+- [Avancement DR1 2027](project_avancement_dr1_2027.md) — 2026 = prise de date déposée le 2 sept. ; 2027 = tir sérieux ; objectifs datés et REX dans le README du dossier 2026
