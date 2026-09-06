@@ -52,6 +52,8 @@
 - [DOI manquants dans Zotero](project-zotero-dois-manquants.md) — 9 fiches sans le DOI de refs.bib, écart refermé ; l'enrichissement d'un item existant (PR #758) reste ouvert, non mergé au 19/08
 - [Zotero injection auto (implémentée)](project-zotero-injection-auto.md) — le skill zotero-import injecte via l'API (PR harness #718) ; RIS en repli
 - [zotero-import force le rôle « auteur »](feedback-zotero-import-force-le-role-auteur.md) — un ouvrage dirigé demande un PATCH `creatorType: editor` après l'inject
+- [Scripts de découpe non publiables](feedback-scripts-de-decoupe-non-publiables.md) — inséparables d'ouvrages non redistribuables ; un découpeur générique, pas une copie
+- [Feuille de route : manuscrits seulement](feedback-feuille-de-route-manuscrits-seulement.md) — un dépôt de données n'y a pas de ligne ; la page perso accueille les deux
 - [Email professionnel de l'auteur](user-professional-email.md) — adresse pour manuscrits et correspondance
 - [Collection Zotero du projet](reference-zotero-collection-polycentric.md) — polycentric-import (7D7EAHBM) ; T4X7ZNQL = ASEAN, ne pas y verser
 - [DOIfetch](reference-doifetch.md) — ~/CNRS/code/DOIfetch : chaîne DOI→PDF complète (`uv run fetch.py --source …`) ; l'utiliser au lieu du curl ad hoc, canaux licites explicités ; limite connue sur BibCNRS, voir l'entrée voisine
@@ -61,5 +63,14 @@
 - [`\clearpage` fait sauter un flottant au-dessus du titre](feedback-clearpage-flottant-saute-le-titre.md) — `\FloatBarrier` corrige ; trouvé en lisant le PDF rendu, pas en compilant propre
 - [Iconographie du changeur : stéréotype antisémite](feedback-iconographie-changeur-stereotype.md) — van Reymerswale documenté, Matsys plus ambigu ; vérifier avant de recommander une toile de ce genre
 - [Un contrôle rouge accuse parfois le contrôle](feedback-un-controle-rouge-accuse-parfois-le-controle.md) — 5/5 d'échecs sur un seul sous-ensemble décrit une méthode aveugle, pas un artefact faux
+- [pkill : vérifier la mort par PID](feedback-pkill-verifier-la-mort-par-pid.md) — un fantôme survivant fait accuser un flag innocent ; chercher le détenteur de la ressource avant le paramètre
+- [Carte du champ (Handbook)](project-carte-du-champ-handbook.md) — verdict v2 : le corpus élève la note, la carte non ; Palgrave non cartographié ; note technique dans conception/
+- [Benchmark contre concurrent maladroit](feedback-benchmark-concurrent-maladroit.md) — l'économie v1 de la carte appartenait à la baseline sans grep ; lire comment le rival a travaillé
+- [Copie salée étalonne le jury](feedback-copie-salee-etalonne-le-jury.md) — « aucune fabrication » infalsifiable sans étalon positif ; 6/6 deux fois, critère union ≥5/6
+- [La carte ne dit pas le contenu](feedback-la-carte-ne-dit-pas-le-contenu.md) — la mise en garde sert à distinguer lu de rapporté, pas à refuser les inférences que le modèle refuse déjà
 - [Identifiant scrapé = hypothèse](feedback-identifiant-scrape-est-une-hypothese.md) — 77 fiches sur 116 corrigées ; le DOI d'une page est souvent celui d'un ouvrage cité
 - [Auditer docs/ contre Zotero](reference-zotero-audit-staging.md) — `sync-index` + `audit` sans base locale ; « ambiguous » est une réponse, 4 œuvres distinctes sauvées
+- [Un test vert peut être inatteignable](feedback-un-test-vert-peut-etre-inatteignable.md) — passé deux fois contre un défaut vivant ; muter le garde et exiger le rouge, après avoir commité
+- [Revue croisée dépôt : cwd épinglé](feedback-revue-cross-repo-cwd-epingle.md) — /gaze sur un autre dépôt depuis un worktree isolé bloque tout Bash du panel ; sortir du worktree avant
+- [Pas de garde pour la carte du champ](project-carte-pas-de-garde-de-coherence.md) — 0301 fermé wontfix (arbitrage 20/08) ; ne pas re-proposer, régénérer corrige
+- [refs.bib suivi par git ici](project-refsbib-suivi-par-git-ici.md) — exception à l'EDM ; vérifier ce qu'est un fichier avant de supprimer ce qu'on croit avoir créé
