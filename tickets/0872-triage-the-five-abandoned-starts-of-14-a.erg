@@ -3,6 +3,11 @@ Title: Triage the five abandoned starts of 14 August before re-attacking their t
 Created: 2026-09-06
 Author: claude
 
+2026-09-07T02:25Z claude note Triage execute. Verdicts, chacun verifie contre origin/main d'aujourd'hui et non contre la base commune bc79854 de la branche : t0359 REVIVE tel quel (main n'en porte rien, aucun des cinq fichiers touche depuis la base, controle negatif du garde execute) ; t0500 REVIVE avec un conflit resolu dans skills/roar/SKILL.md ; t393 REVIVE avec reconciliation 0870/0393 ; t0425 REVIVE mais DIFFERE, branche conservee, empechement de lane et non de fond ; memory-rtk-mechanism-correction DROP, supersede. Detail par branche dans le log de son propre ticket ; celui de la branche memoire, qui n'a pas de ticket, est l'entree suivante
+2026-09-07T02:25Z claude note memory-rtk-mechanism-correction : verdict DROP, supersede par main. Ses trois commits (7342c71, 79ac5a3, e9a9175, 14 aout 14h50 a 15h00) affirment que rtk `git.rs` injecte --no-merges par defaut. Main porte, depuis le commit 2bdf86b du meme jour a 15h44, litteralement intitule « synthetiser les deux versions concurrentes de l'entree rtk », un texte posterieur qui nomme cette cause et la retracte : « les deux causes proposees, fabrication puis filtrage par --no-merges, sont donc egalement non etablies ». rules/git.md porte le meme recit prudent, plus le seul apport methodologique genuin de la branche — le garde est la forme de sortie ecrite dans la commande et non un test isatty a l'execution, donc la sonde qui marche est une commande nue comparee a `rtk proxy`. La seule autre correction que la branche transportait, hors rtk, sur feedback-ligne-sans-clause-disculpatoire.md, est deja sur main mot pour mot (« Correction du meme jour »). Fusionner la branche reintroduirait donc une cause inventee que main a explicitement retiree : c'est la raison du drop, pas l'age de la branche
+2026-09-07T02:25Z claude note Le constat du corps de ce ticket sur t393 est a corriger. « Main a --credential-env (8 occurrences) mais rien de la resolution keystore de la branche » est vrai mais trompeur : ces 8 occurrences etaient DEJA a la base commune bc79854, main n'en a ajoute aucune. Rien de la branche n'est donc redondant avec main. Et contre le main d'aujourd'hui la fusion a trois voies ne rend PLUS « clean » — elle conflit dans skills/reviewers/reviewers.sh — donc le piege annonce ne s'est pas presente sous la forme predite ; la forme etait juste, le fait a change sous elle en un jour. Le seul recouvrement reel est le silence « aucun siege n'a revu », traite par 0870 sur le code de retour et par 0393 sur la sortie standard de harvest : canaux complementaires, gardes tous les deux
+2026-09-07T02:25Z claude note Suppressions et conservations. Tags d'archive pousses sur origin AVANT toute suppression, verifies par git ls-remote : archive/t0359-hermetic-bash-test-children (e7253ce), archive/t0425-typo-fine-finition (46e8a22), archive/t0500-leading-dash-project-name (0162cca), archive/t393-openrouter-seat-credential (f280207), archive/memory-rtk-mechanism-correction (e9a9175). Aucune suppression n'est donc irreversible. Branches distantes supprimees : t0359, t0500, t393 (leur travail vit dans les branches de reprise et leurs demandes de fusion) et memory-rtk-mechanism-correction (drop). Branche CONSERVEE : t0425-typo-fine-finition, dont la triage n'a pas pu s'achever cette nuit
+2026-09-07T02:25Z claude note RESTE A LA MAIN, hors perimetre de ce run qui n'avait pas le droit de toucher aux worktrees. Cinq enregistrements de worktree du 14 aout sont a elaguer, et cinq branches locales a supprimer avec eux (une branche locale ne peut pas etre supprimee tant qu'un worktree la tient) : .claude/worktrees/agent-acb24c39f94523736 (t0359), agent-a45d137e93534fd90 (t0425, a garder si la reprise de 0425 est relancee depuis la), agent-aafc5891c9ca4c5a7 (t0500), agent-afd83aa4529d1f611 (t393), mem-rtk-fix (memory-rtk-mechanism-correction). Verifier qu'aucune session n'y est vivante avant de les retirer : trois autres worktrees etaient actifs pendant ce run
 --- body ---
 ## Context
 
@@ -89,10 +94,20 @@ Per branch, in this order, cheapest first:
 
 ## Verification
 
-- [ ] Each of the five branches has a recorded outcome: revived, harvested, or dropped
-- [ ] Every dropped branch's reasoning is in its ticket's log before the branch is deleted
-- [ ] `t393`'s result preserves the 0870 behaviour, proven by the test file and not by a clean merge exit
+- [x] Each of the five branches has a recorded outcome: revived, harvested, or dropped
+- [x] Every dropped branch's reasoning is in its ticket's log before the branch is deleted
+      — `memory-rtk-mechanism-correction` has no ticket, so its reasoning is in this
+      ticket's log below, written before the deletion
+- [x] `t393`'s result preserves the 0870 behaviour, proven by the test file and not by a clean merge exit
+      — `tests/test_reviewers.sh` 72 passed / 0 failed on the merged result, containing all
+      three 0870 cases; the three markers also grep present. Against today's main the
+      three-way merge does NOT report clean, so the trap this ticket named did not fire the
+      way it was predicted — the test is what settled it either way
 - [ ] No worktree remains for a branch that was dropped
+      — NOT done, and deliberately. The unattended run of 2026-09-07 was forbidden to remove
+      or prune any worktree: other sessions were live under `.claude/worktrees/` and removing
+      the wrong one orphans a running session. The five 14-August worktrees are still
+      registered and are listed in this ticket's log as a manual step
 
 ## Invariants
 
@@ -104,9 +119,9 @@ Per branch, in this order, cheapest first:
 
 ## Exit criteria
 
-- [ ] All five branches triaged and their outcomes recorded
-- [ ] The stale-branch bullet in `STATE.md` removed or rewritten to match reality
-- [ ] `make check` passes on anything revived
+- [x] All five branches triaged and their outcomes recorded
+- [x] The stale-branch bullet in `STATE.md` removed or rewritten to match reality
+- [x] `make check` passes on anything revived — 1098 (0359), 1110 (0500), 1097 (0393)
 
 --- log ---
 2026-09-06T22:30Z claude created

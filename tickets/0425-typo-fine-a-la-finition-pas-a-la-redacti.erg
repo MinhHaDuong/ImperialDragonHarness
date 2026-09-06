@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-08-14T00:00Z claude created arbitrage auteur du 2026-08-14 dans polycentric_activity ; regle generale actuellement captive d'une memoire projet
 
+2026-09-07T02:20Z claude note triage 0872 : verdict REVIVE, mais DIFFERE — non execute cette nuit, branche CONSERVEE. Le travail de la branche t0425-typo-fine-finition (commit 46e8a22, 14 aout, 275 lignes) est coherent et main n'en porte rien : ni rules/typo/, ni l'axe typo dans l'index, ni le conditionnement des clauses typographiques de lang/fr.md et lang/en.md. Deux empechements propres a ce run de nuit, aucun tenant au fond : la branche modifie scripts/inject_rule_on_edit.py, appartenant a un executeur parallele cette nuit, et elle cree deux fichiers sous rules/ portant un tampon last-reviewed, que la consigne de l'auteur interdit d'ajouter ou de modifier dans ce run. Un conflit reel attend le repreneur : main a ajoute 19 lignes a inject_rule_on_edit.py et 99 a son test depuis la base commune bc79854, ainsi que quatre nouveaux corps de regles (coding-bash, knowledge-hints, systemd-units, workflow) que rules/README.md indexe deja. Commits preserves sous le tag archive/t0425-typo-fine-finition
 --- body ---
 ## Context
 

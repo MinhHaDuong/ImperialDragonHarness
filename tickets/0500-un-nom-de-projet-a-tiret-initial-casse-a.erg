@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-08-14T16:05Z claude created — constaté à l'étape 2 d'un /roar : la télémétrie par PR se dégradait en agrégat sans rien dire
 
+2026-09-07T02:20Z claude note triage 0872 : verdict REVIVE. Les deux commits abandonnes (4151173, 0162cca, 14 aout) sont repris sur origin/main d'aujourd'hui ; main ne porte aucun des deux defauts — l'etape 2 de roar y avale encore l'echec par `|| ROWS=""` et enumere jusqu'a un HEAD en dur. Un conflit reel, dans skills/roar/SKILL.md : main a ajoute depuis le 2026-08-21 un paragraphe voisin « first roar in a repo: prefer a session base ». Resolution en gardant les deux, avec deux ajustements expliques dans le commit — le paragraphe de main devient de la prose au lieu d'un second bloc ```bash, parce que le test de regression de la branche EXECUTE « l'unique bloc bash citant enumerate-merges.py » et qu'un second bloc rend cette extraction ambigue ; et le `git rev-parse HEAD > SENTINEL` final de main est retire, la sentinelle etant desormais ecrite depuis $UNTIL, ce qui EST le correctif. make check au vert, 1110 passed, dont le controle positif exige par ce ticket (un intervalle contenant des fusions connues rend une ligne par fusion). Demande de fusion ouverte. Ticket laisse OUVERT, et pas seulement par convention : skills/dream/provenance.py garde ses positionnels `project` nus (lignes 337 et 344), soit le cinquieme des cinq points d'appel, et le balayage de l'action 3 n'a pas ete fait. Commits preserves sous le tag archive/t0500-leading-dash-project-name
 --- body ---
 ## Context
 
