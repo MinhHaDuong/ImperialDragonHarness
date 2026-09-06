@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Rules drift by accumulation: trim workflow.md, split Claude Code idiosyncrasies from the core, fix the review cadence
+Created: 2026-08-22
+Author: Minh Ha-Duong
+
+--- log ---
+2026-08-22T09:27Z Minh Ha-Duong created
+2026-09-06T17:40Z claude note Rewritten in erg format from the author's free-form note left untracked in the primary checkout; the note's text is kept verbatim under Context
+
+--- body ---
+## Context
+
+Author's note, 2026-08-22, verbatim:
+
+> File rules/workflow.md is dirty after being auto-added to for a few weeks.
+> - Too many detailed explanations
+> - Some rules probably contradict others in IDH (e.g. the do not delegate simple tasks).
+> - It ends on a cosmetic
+> - Claude Code idiosyncrasies should be separated, so that the harness loader can have the common core on pi.
+>
+> Other files are probably suffering from the same accumulation.
+>
+> The periodic rules review and cleaning mechanism designed to prevent this drift needs fixing too.
+
+The review-cadence marker (`last-reviewed:` on each rule body, warned on by
+`scripts/warn-stale-rules.sh` after 30 days) records passes, not edits, so a
+file that grows by one bullet per incident keeps a fresh stamp while it bloats.
+`rules/README.md` § Review cadence already states this weakness.
+
+## Relevant files
+
+- `rules/workflow.md` — the file the note names; every section has grown by incident bullets
+- `rules/git.md` — same shape, the longest rule body
+- `rules/README.md` — index and the review-cadence policy
+- `scripts/warn-stale-rules.sh` — the advisory that was meant to prevent the drift
+- `tickets/0802-port-perch-through-three-adapters.erg` — the adapter work that needs a provider-neutral core
+
+## Actions
+
+1. Read `rules/workflow.md` whole and rank each bullet: keep, condense, move to a memory or a ticket, delete.
+2. Separate the Claude Code specifics (tool names, EnterWorktree, hook mechanics) from the provider-neutral core so the Pi and Codex adapters can load the core alone.
+3. Resolve the contradictions found in step 1 (the note names "do not delegate simple tasks" against the delegation doctrine).
+4. Repeat the pass on `rules/git.md`; survey the other rule bodies for the same shape.
+5. Make the review mechanism catch growth, not only age: for instance warn when a body has gained more than N lines since its stamp, or require the stamp to be bumped by a pass that names what it removed.
+
+## Verification
+
+- [ ] `rules/workflow.md` shorter than before, with a closing point that is not cosmetic
+- [ ] No bullet in `rules/workflow.md` contradicts another rule file
+- [ ] Claude Code idiosyncrasies live in a clearly separated file or section
+- [ ] The review mechanism fires on a fixture that grew without a review pass
+
+## Invariants
+
+- `make check` passes; the agnostic guards on `rules/` still pass
+- No rule is dropped without its lesson recorded in memory or in a ticket
+
+## Exit criteria
+
+- [ ] Steps 1 to 5 done and verified as above
+- [ ] The author has read the trimmed `workflow.md` and accepted the cuts
