@@ -47,7 +47,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-from path_utils import contained
+from path_utils import contained, hook_strict
 
 # Extension -> format axis value. Project-agnostic by design: keyed on the
 # filename suffix, never on a directory like src/ or scripts/.
@@ -314,8 +314,16 @@ if __name__ == "__main__":
     # Advisory hook: never block the edit. Catch SystemExit too (argparse on a
     # bad invocation raises it) so the hook can never exit non-zero, which a
     # PreToolUse hook signals as "block the tool".
+    #
+    # The cost of that contract is that a crash and a correct silence leave the
+    # same trace on exit code and stdout, which is the only pair of channels the
+    # suite can read — so the suite cannot tell them apart, and every "silent"
+    # assertion in it passes against a script that does nothing at all. The
+    # strict switch is off in production and set only by the tests; see
+    # path_utils.hook_strict.
     try:
         main()
     except (Exception, SystemExit):
-        pass
+        if hook_strict():
+            raise
     sys.exit(0)
