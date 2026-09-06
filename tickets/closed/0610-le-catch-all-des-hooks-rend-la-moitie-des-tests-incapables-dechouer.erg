@@ -2,6 +2,7 @@
 Title: Le catch-all des hooks rend la moitié de leurs tests incapables d'échouer
 Created: 2026-08-26
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #814
 
 --- log ---
 2026-08-26T11:42Z claude created — trouvé en sabotant une garde pendant le ticket 0590 ; l'auteur a demandé le dépôt du ticket. ID alloué à 0610, dégagé de la frontière (0590) conformément à tickets/AGENTS.md
@@ -10,6 +11,7 @@ Author: Minh Ha-Duong
 
 2026-09-07T00:00Z claude note mesure de base reproduite a l'identique sur origin/main (058532c) : 14/26 et 3/5, les deux gardes de securite dans les survivants. Correctif : IDH_HOOK_STRICT=1, predicat partage path_utils.hook_strict, consulte par les deux __main__ pour re-lever ; pose explicitement dans les 8 appels de sous-processus des deux suites, dont les quatre dictionnaires fermes. Apres correctif : 0/26 et 0/5. Contre-epreuve du piege annonce : en retirant le strict des quatre seuls dictionnaires fermes, ces quatre lances seuls laissent passer test_hook_no_inject_via_documentclass_traversal et test_hook_no_inject_via_manifest_lang_traversal — les deux gardes — tandis que la suite entiere rougit quand meme ; le faux vert est donc reel et mesure. Garde permanente ajoutee (tests/test_hook_failures_are_visible.py, palier adherence) : elle sabote une copie jetable, apparie par test « a-t-il lance le hook » et « a-t-il passe », sans liste ecrite a la main ; verifiee contre cette regression, elle nomme les deux gardes et le correctif. Nuance sur la Verification : « cmd_catalog levant -> les 26 tests CLI rougissent » ne peut pas tenir litteralement, un test qui n'exerce que le canal prompt ne voit pas un cmd_catalog casse ; mesure par canal, la partition est propre — cmd_catalog seul : 15 survivants, tous du canal prompt ou en cours de processus, aucun test catalog ; cmd_prompt seul : 14 survivants, tous du canal catalog ou en cours de processus, aucun test prompt ; les deux ensemble : 0/26, ce que demande la section Test et le critere de sortie. Les deux premieres cases de Verification restent donc NON cochees : leur enonce litteral a ete mesure faux, pas seulement non etabli
 
+2026-09-06T23:57Z Minh Ha-Duong closed — autoclosed — PR #814
 --- body ---
 ## Context
 
