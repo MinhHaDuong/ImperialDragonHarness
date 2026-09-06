@@ -9,8 +9,13 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from git_utils import _default_branch
+from session_scratch import scan as _scratch_scan
 
 THRESHOLD_HOURS = 12.0
+# Orphan session directories reported per run. The count and the total are
+# always exact; the list is a sample for the human-readable line, and the sweep
+# recomputes its own list anyway.
+SCRATCH_ORPHAN_SAMPLE = 20
 
 
 def run(args, cwd):
@@ -343,6 +348,25 @@ def hooks_state(project):
     }
 
 
+def session_scratch_state(project):
+    """Host-level session scratch usage and orphan directories (ticket 0854).
+
+    The only collector that is not about the repo: session scratch directories
+    live under the user's temp root and are shared by every project, but they
+    are what kills the Bash tool when the temp filesystem fills, so the
+    healthcheck reads them here rather than growing a second probe. `project` is
+    accepted for the collector signature and deliberately unused.
+    """
+    del project
+    state = _scratch_scan()
+    sample = state["orphans"][:SCRATCH_ORPHAN_SAMPLE]
+    return {
+        **state,
+        "orphans": sample,
+        "orphans_truncated": len(state["orphans"]) > len(sample),
+    }
+
+
 def pr_state(project):
     r = run(
         ["gh", "pr", "list", "--json", "number,title,headRefName", "--limit", "50"],
@@ -389,6 +413,7 @@ def main():
         "worktrees": worktree_state,
         "hooks": hooks_state,
         "prs": pr_state,
+        "session_scratch": session_scratch_state,
     }
 
     with ThreadPoolExecutor(max_workers=len(collectors)) as pool:

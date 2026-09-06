@@ -96,6 +96,32 @@ Run full repo housekeeping and act on every finding.
    uncommitted after PR #1111 closed it with only the data fix). If so,
    preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
+1.7. **Sweep orphan session scratch directories.** Every session gets a scratch
+   directory under the user's temp root and nothing but the `SessionEnd` hook
+   removes one, so a crash, a kill, or a session that predates the hook leaves
+   it behind — charged to the user's temp quota until the next fill kills the
+   Bash tool in every session at once (2026-09-06: three sessions, then a
+   reboot; ticket 0854).
+
+   ```bash
+   python3 ~/.claude/scripts/session_scratch.py --sweep
+   ```
+
+   The script owns the liveness rails and never removes a directory whose
+   session has a live process: a live process holding an open descriptor inside
+   it (the CLI keeps one on the session's `tasks/` directory for the session's
+   whole life), a live process cwd'd inside it — the rail `worktree-gc.sh` uses
+   — or the session id named by anything running. A directory touched in the
+   last few minutes is skipped too, so a session that has just created its
+   directory cannot be caught in the gap. It computes its own list rather than
+   trusting the healthcheck's: a session can start between the two. Silent when
+   there is nothing to remove; one line per directory otherwise, and it never
+   exits non-zero. Nothing to commit — this is host state, not repo state.
+
+   Add `--dry-run` to list without removing. The temp root itself is never
+   relocated here: that is an operator decision (check 12 of the healthcheck
+   names the knob).
+
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from

@@ -22,7 +22,7 @@ First, run the mechanical probe to collect structured state:
 python3 ~/.claude/scripts/project-state.py "$(git rev-parse --show-toplevel)" --tests
 ```
 
-Parse the JSON output. Use its fields to populate checks 1–11 below without re-running git commands — the probe covers everything through check 10; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
+Parse the JSON output. Use its fields to populate checks 1–12 below without re-running git commands — the probe covers everything through check 10 and check 12; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
 
 ## Checks
 
@@ -63,6 +63,28 @@ Parse the JSON output. Use its fields to populate checks 1–11 below without re
    - **PR cross-check** — PRs described as pending but already merged/closed.
      Use `prs.items` from the probe. Skip if `prs.error`.
    - **Count consistency** — "N open tickets" claims vs `tickets.open` from probe
+12. **Session scratch (host-level)** — from `session_scratch`. The one check
+    that is not about this repo: every session gets a scratch directory under
+    the user's temp root, one per distinct cwd it visits, and nothing but the
+    `SessionEnd` hook removes one. `skip` (silent) if `session_scratch.exists`
+    is false. `warn` when `session_scratch.status` is `warn`, quoting
+    `session_scratch.reasons`:
+    - **Usage** — `root_bytes` against `cap_bytes`. Read `cap_source` before
+      quoting the percentage: where the temp root is a quota-enabled tmpfs the
+      cap is *inferred* from the init system's default per-user share, because
+      the quota tools cannot read a tmpfs quota. Say "inferred cap", never
+      "quota reads". A fill here is not cosmetic — it kills the Bash tool with
+      EDQUOT in every session of that user at once (2026-09-06, three sessions
+      and a reboot; ticket 0854).
+    - **Orphans** — `orphan_count` / `orphan_bytes`, session directories no live
+      process owns (no open descriptor inside them, no process cwd'd there, and
+      the id named by nothing running). Classify as **fix-now**: `Sweep N orphan
+      session scratch directories (X reclaimable)`. /molt applies it.
+    - In the warning, name the relocation knob but do not set it: moving the
+      temp root is an operator decision, since the root must also stay short —
+      sandbox socket paths are built under it. The runtime knob is
+      <!-- harness-extension-point -->
+      `CLAUDE_CODE_TMPDIR`, which takes precedence over `TMPDIR`.
 
 ## Output format
 
@@ -82,6 +104,7 @@ Parse the JSON output. Use its fields to populate checks 1–11 below without re
 | Ticket archival  | ...    | N closed-but-unarchived      |
 | Hook freshness   | ...    | in sync / N stale / skip     |
 | Docs freshness   | ...    | N docs scanned, K stale refs |
+| Session scratch  | ...    | N orphan dirs, X of cap      |
 ```
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).

@@ -5,7 +5,7 @@ Author: sim
 
 --- log ---
 2026-09-06T16:40Z sim created
-
+2026-09-06T23:12Z claude note implemented: SessionEnd hook scripts/on-end.sh (wired in settings.shared.json), probe scripts/session_scratch.py behind project-state.py field session_scratch, healthcheck item 12, molt step 1.7 sweep. Liveness = open fd inside the dir (the CLI holds one on tasks/ for the session's life) OR process cwd inside it OR the id named by a live process, plus a 15-minute age rail. make check green (1131).
 --- body ---
 ## Context
 Every Claude Code session gets a scratch directory,
@@ -64,10 +64,25 @@ can see the fill coming.
   by a dead pid; assert the probe lists exactly the dead one.
 
 ## Verification
-- [ ] Positive control: the hook test fails on the unfixed tree
-- [ ] After a normal session exit on doudou, `ls /tmp/claude-1001/*/` no longer lists that session
-- [ ] Healthcheck on doudou reports the temp line; molt removes a planted orphan and nothing else
-- [ ] `tests/` pass; the SessionEnd script never exits non-zero
+- [x] Positive control: the hook test fails on the unfixed tree — measured
+  2026-09-07 twice: against the tree with no `scripts/on-end.sh`, and against a
+  no-op stub hook that exits 0 (the sharper control), where exactly the three
+  behaviour-bearing assertions go red with the fixture directory still on disk
+- [ ] After a normal session exit on doudou, the temp root no longer lists that
+  session — NOT established in this run: the hook is wired in the tracked
+  `settings.shared.json`, and the live per-machine `settings.json` is the
+  operator's file (`check-settings-drift.sh` will report the drift). No session
+  has exited under the new wiring yet
+- [x] Healthcheck reports the temp line — probe run against the real root on
+  doudou 2026-09-07: 25 session dirs, 5 live, 20 orphan, usage against the
+  inferred per-user cap
+- [ ] Molt removes a planted orphan and nothing else — established only on a
+  hermetic fixture root (`test_sweep_removes_the_orphan_and_prunes_its_cwd_key`
+  plus the live-vs-dead-pid test against the real `/proc`). No sweep was run
+  against the live temp root: three sessions were working on this host and
+  their scratch directories were in use
+- [x] `tests/` pass; the SessionEnd script never exits non-zero (asserted on
+  empty stdin, garbage, a blank id, a traversal id, and a missing temp root)
 
 ## Invariants
 - No script ever deletes a directory whose session has a live process
@@ -75,7 +90,7 @@ can see the fill coming.
 - Guard budget: this adds one hook and one probe field; retire nothing, since neither is a guard
 
 ## Exit criteria
-- [ ] `SessionEnd` hook wired and tested
-- [ ] Healthcheck item 12 and its probe field in place
-- [ ] Molt fix-now sweep in place, gated on liveness
-- [ ] `make check` passes
+- [x] `SessionEnd` hook wired and tested
+- [x] Healthcheck item 12 and its probe field in place
+- [x] Molt fix-now sweep in place, gated on liveness
+- [x] `make check` passes
