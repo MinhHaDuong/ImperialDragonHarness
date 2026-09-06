@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-08-30T09:08Z Minh Ha-Duong created
+2026-09-07T02:40Z claude note La prémisse mécanique du ticket ne se reproduit pas : le script n'a jamais testé la propreté du checkout, il tentait déjà le merge --ff-only dans tous les cas, et un checkout untracked-only se synchronise donc depuis toujours. Fixture untracked-sans-collision montée en premier : verte avant correctif, gardée comme garde de non-regression et non comme rouge-vers-vert. Les deux vraies fixtures rouges sont la collision untracked/entrant et les modifications suivies, toutes deux avalées par « dirty or busy ». Le défaut est donc le diagnostic, pas la décision : la sortie de git était jetée (2>&1 >/dev/null) et le message nommait une cause qu'il n'avait pas établie. Cause probable du refus du 2026-08-30, non isolée : soit une collision de chemin, soit un index.lock concurrent — le nouveau message aurait distingué les deux
 
 --- body ---
 ## Context
@@ -40,8 +41,13 @@ grossier.
   script rapporte le refus de git, ne force rien, n'écrase rien.
 
 ## Verification
-- [ ] Les deux fixtures ci-dessus passent
-- [ ] Le cas « modifications suivies » refuse toujours
+- [x] Les deux fixtures ci-dessus passent (cas 12 et 13 de
+      `tests/test_sync_local_main.sh`) — avec la réserve que le cas
+      untracked-sans-collision était **déjà vert** avant correctif : il garde
+      un acquis, il ne prouve pas le correctif. Ce sont les cas 13 (collision)
+      et 14 (modifications suivies) qui rougissent sur l'ancien script.
+- [x] Le cas « modifications suivies » refuse toujours (cas 14), et nomme
+      désormais jusqu'à trois chemins
 
 ## Invariants
 - Jamais de `-f`, de stash ni d'écrasement d'un fichier non suivi ; en doute,
@@ -50,6 +56,11 @@ grossier.
   inchangées.
 
 ## Exit criteria
-- [ ] Un checkout untracked-only se synchronise sans intervention
-- [ ] Message de refus nomme la cause exacte
-- [ ] `make check` passe
+- [x] Un checkout untracked-only se synchronise sans intervention — vrai
+      avant comme après ; désormais sous garde (cas 12)
+- [x] Message de refus nomme la cause exacte : « tracked modifications in the
+      checkout: <chemins> », « an untracked file collides with the incoming
+      main: <chemin> », ou la ligne de git citée telle quelle. Chaque cause
+      porte son propre remède ; l'ancien conseil unique (« sauvegarder le
+      fichier sale ») était faux pour un checkout seulement occupé.
+- [x] `make check` passe

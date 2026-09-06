@@ -51,6 +51,48 @@ if ! git merge-base --is-ancestor "refs/heads/$default" "refs/remotes/origin/$de
     exit 0
 fi
 
+# Name the state that actually refused the fast-forward, instead of the old
+# "dirty or busy checkout" catch-all (ticket 0851). Three outcomes, in the
+# order a reader needs them:
+#   - tracked modifications: the only local state that genuinely blocks a
+#     merge, and the one the operator must deal with by hand;
+#   - untracked/incoming path collision: git's own refusal, reported with the
+#     colliding paths. Untracked files do NOT block a fast-forward in general —
+#     the sync is attempted regardless and succeeds when nothing collides — so
+#     folding this case into "dirty" told the operator to clean a checkout that
+#     did not need cleaning;
+#   - anything else (a concurrent session's index.lock, a hook, a permission
+#     error): git's own first line, verbatim. A guess here is worse than a
+#     quotation, since the whole defect was a message that named a cause it had
+#     not established.
+# The merge runs under LC_ALL=C so this classification reads git's English
+# messages on a French desktop as well as in CI.
+# Each cause carries its own remedy: the old single tail ("back up the dirty
+# file") is wrong advice for a checkout that is merely busy.
+refusal_cause() {
+    local dir="$1" err="$2" paths line
+    if ! git -C "$dir" diff --quiet HEAD 2>/dev/null; then
+        # Name the files. An isolated session cannot run `git -C <primary>
+        # status` itself (the worktree path guard refuses reads too), so this
+        # line is the only diagnostic it gets; "dirty" without a path is what
+        # sent one session inferring the set from a stale snapshot.
+        paths=$(git -C "$dir" diff --name-only HEAD 2>/dev/null | head -3 | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+        printf '%s' "tracked modifications in the checkout: ${paths:-paths unavailable} — back them up, sync, re-apply (rules/git.md)"
+        return 0
+    fi
+    case "$err" in
+        *"untracked working tree file"*)
+            paths=$(printf '%s\n' "$err" \
+                | sed -n 's/^[[:space:]][[:space:]]*//p' | head -3 \
+                | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+            printf '%s' "an untracked file collides with the incoming $default: ${paths:-path not reported by git} — move it aside, then re-run"
+            return 0
+            ;;
+    esac
+    line=$(printf '%s\n' "$err" | grep -v '^[[:space:]]*$' | head -1)
+    printf '%s' "git refused: ${line:-no message} — nothing to clean here, re-run once the checkout is free"
+}
+
 # Where (if anywhere) is the default branch checked out? Refs are shared
 # across worktrees, so one sync covers them all.
 #
@@ -80,9 +122,9 @@ if [ -z "$co_path" ]; then
     else
         echo "sync-local-main: ref update of $default refused — left untouched"
     fi
-elif git -C "$co_path" merge --ff-only --quiet "origin/$default" >/dev/null 2>&1; then
+elif ff_err=$(LC_ALL=C git -C "$co_path" merge --ff-only --quiet "origin/$default" 2>&1 >/dev/null); then
     echo "sync-local-main: $default fast-forwarded at $co_path ($local_sha -> $remote_sha)"
 else
-    echo "sync-local-main: could not fast-forward $default at $co_path (dirty or busy checkout) — left untouched (back up the dirty file, sync, re-apply; rules/git.md)"
+    echo "sync-local-main: could not fast-forward $default at $co_path, left untouched — $(refusal_cause "$co_path" "$ff_err")"
 fi
 exit 0

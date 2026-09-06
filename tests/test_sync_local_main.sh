@@ -193,6 +193,51 @@ else
     _fail "framed worktree-list output corrupted the parse; main not fast-forwarded (RED = pre-fix)"
 fi
 
+# --- case 12: untracked-only checkout, no path collision → main fast-forwards
+# (ticket 0851). Untracked files do not block a fast-forward, so a checkout
+# carrying only untracked cruft must sync exactly like a clean one.
+_setup untracked
+echo cruft > "$CLONE/untracked-nocollide.txt"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ "$(cat "$CLONE/untracked-nocollide.txt")" = "cruft" ]; then
+    _pass "untracked-only checkout fast-forwards; the untracked file survives"
+else
+    _fail "untracked-only checkout must fast-forward (got: $out)"
+fi
+
+# --- case 13: an untracked file collides with an incoming path → refuse, name
+# the collision, overwrite nothing (ticket 0851) -----------------------------
+_setup collide
+( cd "$SANDBOX/collide-seed" &&
+  echo incoming > new.txt && git add new.txt && git commit --quiet -m c3 &&
+  git push --quiet origin main )
+NEW=$(git -C "$SANDBOX/collide-seed" rev-parse main)
+echo mine > "$CLONE/new.txt"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine" ] \
+   && echo "$out" | grep -q "untracked file"; then
+    _pass "untracked/incoming collision refuses, names the collision, overwrites nothing"
+else
+    _fail "collision must refuse and name itself, preserving the untracked file (got: $out)"
+fi
+
+# --- case 14: tracked modifications → still refused, and named as the cause
+# (ticket 0851) --------------------------------------------------------------
+_setup tracked
+echo local-edit > "$CLONE/f.txt"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && echo "$out" | grep -q "tracked modifications" \
+   && echo "$out" | grep -q "f\.txt"; then
+    _pass "tracked modifications refuse the sync, named as the cause and by path"
+else
+    _fail "tracked modifications must be refused, named and the path listed (got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi
