@@ -110,8 +110,8 @@ Run full repo housekeeping and act on every finding.
    The script owns the liveness rails and never removes a directory whose
    session has a live process: a live process holding an open descriptor inside
    it (the CLI keeps one on the session's `tasks/` directory for the session's
-   whole life), a live process cwd'd inside it — the rail `worktree-gc.sh` uses
-   — or the session id named by anything running. A directory touched in the
+   whole life), a live process cwd'd inside it (the rail `worktree-gc.sh` uses),
+   or the session id named by anything running. A directory touched in the
    last few minutes is skipped too, so a session that has just created its
    directory cannot be caught in the gap. It computes its own list rather than
    trusting the healthcheck's: a session can start between the two. Silent when

@@ -73,9 +73,13 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
       quoting the percentage: where the temp root is a quota-enabled tmpfs the
       cap is *inferred* from the init system's default per-user share, because
       the quota tools cannot read a tmpfs quota. Say "inferred cap", never
-      "quota reads". A fill here is not cosmetic — it kills the Bash tool with
+      "quota reads". A fill here is not cosmetic. It kills the Bash tool with
       EDQUOT in every session of that user at once (2026-09-06, three sessions
       and a reboot; ticket 0854).
+    - **Truncation** — read `session_scratch.truncated` before quoting any byte
+      figure. When it is true the directory walk stopped at its entry ceiling,
+      so `root_bytes` and `orphan_bytes` are a floor rather than a total; the
+      probe says so in `reasons` and its status is `warn`, never `ok`.
     - **Orphans** — `orphan_count` / `orphan_bytes`, session directories no live
       process owns (no open descriptor inside them, no process cwd'd there, and
       the id named by nothing running). Classify as **fix-now**: `Sweep N orphan

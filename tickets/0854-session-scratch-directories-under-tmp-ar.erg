@@ -6,6 +6,8 @@ Author: sim
 --- log ---
 2026-09-06T16:40Z sim created
 2026-09-06T23:12Z claude note implemented: SessionEnd hook scripts/on-end.sh (wired in settings.shared.json), probe scripts/session_scratch.py behind project-state.py field session_scratch, healthcheck item 12, molt step 1.7 sweep. Liveness = open fd inside the dir (the CLI holds one on tasks/ for the session's life) OR process cwd inside it OR the id named by a live process, plus a 15-minute age rail. make check green (1131).
+2026-09-06T23:49Z claude note gaze round 1 REROLL: fixed symlink escapes (cwd-key dir and scratch root, both scripts), guarded scan()'s directory reads so "never raises" holds, truncation now warns, prose em-dash chains in healthcheck/molt.
+
 --- body ---
 ## Context
 Every Claude Code session gets a scratch directory,
@@ -47,9 +49,10 @@ can see the fill coming.
    whose session has no live process. `warn` when usage crosses a
    threshold or orphans exist; report-only.
 3. Molt fix-now: delete the orphans the probe listed, gated on the same
-   liveness test, one bullet per directory. Roar and lair inherit both
-   through the healthcheck and molt they already call; add nothing to
-   those two skills.
+   liveness test, one bullet per directory. Lair inherits both through
+   the /molt it already calls (whose step 2 calls /healthcheck); roar
+   does not, its own text disclaiming that scope. Add nothing to either
+   skill.
 4. Do not relocate the temp root from the harness. `CLAUDE_CODE_TMPDIR`
    is an operator decision (it also needs to stay short for sandbox
    socket paths), so document it in the healthcheck warning text rather
