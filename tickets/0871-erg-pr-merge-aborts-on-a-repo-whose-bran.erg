@@ -1,0 +1,80 @@
+%erg 0.1
+Title: erg-pr-merge aborts on a repo whose branches register no CI checks
+Created: 2026-09-06
+Author: sim
+
+--- log ---
+2026-09-06T17:20Z sim created
+
+--- body ---
+## Context
+Observed on search-works-for-zotero PR #398, 2026-09-06. The script closed
+and archived ticket 0720, pushed the close commit, then:
+
+```
+Queueing merge for PR #398...
+GraphQL: Pull request Protected branch rules not configured for this branch (enablePullRequestAutoMerge)
+Auto-merge unavailable — falling back to watch-then-merge...
+no checks reported on the 't0720-arena-retention' branch
+No checks registered yet (attempt 1/3) — waiting for CI to register...
+(twice more)
+erg-pr-merge: CI checks never registered after 3 attempts (no checks reported) — aborting merge
+```
+
+Exit 1, PR open, ticket already closed on the branch. The script is not
+idempotent past the close step, so the documented recovery applied: a
+direct `gh pr merge --merge`, which landed at once. Two other PRs in the
+same repo the same evening (#390, #401, neither carrying a close commit)
+took the auto-merge path and landed without a fallback.
+
+Every PR in that repo reports an empty `statusCheckRollup`: no check ever
+registers on its branches. The watch-then-merge fallback assumes a CI
+that will eventually register, so on such a repo it can only die. The
+"no checks reported" retry (ticket 0200) was written for the post-push
+registration race, a different situation with the same message.
+
+Why `--auto` failed on #398 and not on the other two is not isolated. The
+one visible difference is the close-commit push just before the queue
+attempt, which the script's own comment (around line 332) already
+describes as leaving the forge's auto-merge failing briefly; the single
+retry did not outlast it. Report the observation; do not build on the
+guess.
+
+## Relevant files
+- `skills/merge/erg-pr-merge` — `watch_checks_or_die()` (about line 360) and the fallback branch after "Auto-merge unavailable" (about line 435)
+- `tests/test_erg_pr_merge.sh` — where the mocked-forge case belongs
+- `skills/merge/SKILL.md` — the bounce table; add the row for this bounce until the fix lands
+
+## Actions
+1. In the fallback, distinguish "checks not registered yet" from "this
+   repo registers no checks": after the bounded retries, or before them,
+   ask the forge whether the base branch has required checks and whether
+   the PR's rollup is empty. When there is nothing to wait for and the PR
+   is MERGEABLE, merge directly instead of dying. Keep dying when a check
+   exists and is red or timed out.
+2. Make the outcome legible: print which of the two cases was taken.
+3. Add the bounce row to the merge skill's table meanwhile: "CI checks
+   never registered" on a repo with no checks means finish with
+   `gh pr merge --merge`; the close commit is already pushed.
+
+## Test
+- Mocked `gh` in `tests/test_erg_pr_merge.sh`: `pr checks --watch` answers
+  "no checks reported" every time, `pr view` reports MERGEABLE with an
+  empty rollup and no required checks. Red on the unfixed script (dies
+  after the retries), green after (merges). A second case with one red
+  check must still die.
+
+## Verification
+- [ ] Positive control recorded: the new test fails on the unfixed script
+- [ ] A rerun against a no-checks repo lands the PR without manual `gh pr merge`
+- [ ] The red-check case still aborts with the existing message
+
+## Invariants
+- Close-then-merge stays atomic from the caller's view; no new manual step
+- The post-push registration race (ticket 0200) keeps its retries
+- `make check` passes
+
+## Exit criteria
+- [ ] Fallback merges when the repo registers no checks and the PR is mergeable
+- [ ] Test with a positive control in `tests/test_erg_pr_merge.sh`
+- [ ] Bounce row in `skills/merge/SKILL.md`
