@@ -8,6 +8,8 @@ Author: Minh Ha-Duong
 
 2026-08-26T13:30Z claude note chiffres corrigés après /code-review de l'auteur : la table comptait des tests en cours de processus, qui ne traversent jamais __main__ et ne sont donc ni masqués ni concernés. Mesure honnête = 14/26 et 3/5 (au lieu de 16/29 et 30/32) ; la thèse et la sévérité tiennent, les deux gardes de sécurité restent dans les masqués. Critère de sortie « tomber à 0 » rendu atteignable (compté sur les seuls tests CLI). Action 2 corrigée : quatre appels d'inject_rule_on_edit passent un env fermé qu'une fixture monkeypatch n'atteindrait pas, avec faux vert à la clé
 
+2026-09-07T00:00Z claude note mesure de base reproduite a l'identique sur origin/main (058532c) : 14/26 et 3/5, les deux gardes de securite dans les survivants. Correctif : IDH_HOOK_STRICT=1, predicat partage path_utils.hook_strict, consulte par les deux __main__ pour re-lever ; pose explicitement dans les 8 appels de sous-processus des deux suites, dont les quatre dictionnaires fermes. Apres correctif : 0/26 et 0/5. Contre-epreuve du piege annonce : en retirant le strict des quatre seuls dictionnaires fermes, ces quatre lances seuls laissent passer test_hook_no_inject_via_documentclass_traversal et test_hook_no_inject_via_manifest_lang_traversal — les deux gardes — tandis que la suite entiere rougit quand meme ; le faux vert est donc reel et mesure. Garde permanente ajoutee (tests/test_hook_failures_are_visible.py, palier adherence) : elle sabote une copie jetable, apparie par test « a-t-il lance le hook » et « a-t-il passe », sans liste ecrite a la main ; verifiee contre cette regression, elle nomme les deux gardes et le correctif. Nuance sur la Verification : « cmd_catalog levant -> les 26 tests CLI rougissent » ne peut pas tenir litteralement, un test qui n'exerce que le canal prompt ne voit pas un cmd_catalog casse ; mesure par canal, la partition est propre — cmd_catalog seul : 15 survivants, tous du canal prompt ou en cours de processus, aucun test catalog ; cmd_prompt seul : 14 survivants, tous du canal catalog ou en cours de processus, aucun test prompt ; les deux ensemble : 0/26, ce que demande la section Test et le critere de sortie. Les deux premieres cases de Verification restent donc NON cochees : leur enonce litteral a ete mesure faux, pas seulement non etabli
+
 --- body ---
 ## Context
 
@@ -148,14 +150,14 @@ ponctuelle — c'est la forme qui empêche la classe de revenir.
       `tests/test_knowledge_hints.py` rougissent (les 3 en cours de
       processus sont hors sujet et restent verts)
 - [ ] `cmd_prompt` levant → idem
-- [ ] `main` de `inject_rule_on_edit` levant → **ses 5 tests CLI**
+- [x] `main` de `inject_rule_on_edit` levant → **ses 5 tests CLI**
       rougissent
-- [ ] Les deux gardes de sécurité échouent bien sous sabotage
-- [ ] Les quatre appels à dictionnaire d'environnement fermé
+- [x] Les deux gardes de sécurité échouent bien sous sabotage
+- [x] Les quatre appels à dictionnaire d'environnement fermé
       (`test_inject_rule_on_edit` l. 159, 292, 320, 339) reçoivent
       réellement le mode strict — vérifié en sabotant **avec ces
       quatre-là seuls**, pas via la suite entière
-- [ ] `make check` vert sans sabotage
+- [x] `make check` vert sans sabotage
 
 ## Invariants
 
