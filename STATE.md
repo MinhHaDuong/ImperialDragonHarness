@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-06T16:46Z
+Last updated: 2026-09-06T22:18Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-06T16:46Z · as of de54908 -->
+<!-- generated 2026-09-06T22:18Z · as of c0c42fc -->
 
-**Tickets:** 16 ready · 8 blocked — `erg ready tickets/` for full list
+**Tickets:** 17 ready · 8 blocked — `erg ready tickets/` for full list
   next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0359 Spawn bash test children hermetically (env -i) …
-**In flight:** 5 open PRs (1 draft), oldest #780 8d · CI main: success
+**In flight:** 4 open PRs (1 draft), oldest #780 9d · CI main: success
 **Recent (first-parent):**
-  de54908 memory(home): 3 notes from 1-2 September left uncommitted in the primary checkout
-  6a31411 memory: two new project folders (corpus-access-bench, secretariat rapports d'activité), 3 notes each
-  99ade18 memory(polycentric-activity): 11 notes from 19-30 August left uncommitted in the primary checkout
+  c0c42fc Merge pull request #802 from MinhHaDuong/hk-ask-the-live-peer
+  d352851 Merge pull request #801 from MinhHaDuong/hk-promote-worktree-git-guard
+  3354552 Merge pull request #800 from MinhHaDuong/hk-consolidate-worktree-guard-notes
 
 ## Blockers
 
@@ -28,8 +28,9 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **Lint gate has no holes** (2026-08-26, 0470 + 0590): `.ruff.toml` carries no suppression; reopening one is argued in a ticket, not slipped into config.
 - **0610 open**: hook scripts swallow every exception and exit 0, so 17 of 31 hook tests pass with the script fully broken. Fix is a test-only strict mode; see the ticket for the closed-`env` trap.
 - **0572 filed** (2026-09-06, from the author's 2026-08-22 note): rule files drift by accumulation; trim `workflow.md`, split Claude Code idiosyncrasies from the core, make the review cadence catch growth.
-- **Catch-up 2026-09-06**: 5 queued PRs merged, 11 stale worktrees and 15 merged branches removed. Still open: #780 (0802 perch adapters, draft, author's call), #791 (dream 09-04, conflicts with #788, needs a rebase).
-- **0872 filed — five abandoned starts of 14 August**: branches `t0359-…`, `t0425-…`, `t0500-…`, `t393-…` and `memory-rtk-mechanism-correction`, 81 to 560 lines each, every one the only copy of its commits and four naming still-open ready tickets. Triage before re-attacking any of them. `t393` overlaps the 0870 fix to `reviewers.sh` and merges clean while doing so, so grep the result for the 0870 markers. The two long-diverged branches are gone: `t-idh-mergeeffect` and `tickets/raid-0537-harness-findings` each held one commit whose tickets (0272, 0248, 0249) are closed on main and whose code landed by another route, verified line by line before deletion on 2026-09-06.
+- **Catch-up 2026-09-06 closed**: the whole queue merged (#786–#802), the primary checkout went from 30 dirty paths to clean, and 11 worktrees, 19 local and 6 remote branches were removed. Ticket 0870 landed the reviewers fix that had sat uncommitted since 3 September; 0572 is now valid erg and wants the author's amendment. Still open and both the author's call: #780 (0802 perch adapters, draft, 18 tests green) and #794 (0871, another session's).
+- **0872 filed — five abandoned starts of 14 August**: branches `t0359-…`, `t0425-…`, `t0500-…`, `t393-…` and `memory-rtk-mechanism-correction`, 81 to 560 lines each, every one the only copy of its commits and four naming still-open ready tickets. Triage before re-attacking any of them. `t393` overlaps the 0870 fix to `reviewers.sh` and merges clean while doing so, so grep the result for the 0870 markers.
+- **Worktree git, settled 2026-09-06** (harness memory, promoted): two guards refuse git in a worktree session, not one. `\git` beats the rtk rewrite and is cheaper than `/usr/bin/git`; neither beats the containment refusal on `-C`, which only a script file reaches. The guard reads command text, not intent, and a refusal takes the whole compound with it.
 
 ## Backlog
 
