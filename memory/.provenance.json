@@ -4932,14 +4932,6 @@
       "last_confirmed": "2026-09-03T16:07:45Z",
       "promoted": false
     },
-    "feedback_worktree_git_guard_script_bypass": {
-      "projects": [
-        "-home-haduong-CNRS-code-search-works-for-zotero"
-      ],
-      "first_seen": "2026-09-03T16:07:45Z",
-      "last_confirmed": "2026-09-03T16:07:45Z",
-      "promoted": false
-    },
     "feedback_procedure_without_narration": {
       "projects": [
         "-home-haduong-CNRS-code-search-works-for-zotero"
@@ -5005,14 +4997,6 @@
       "promoted": false
     },
     "feedback_gh_pr_edit_broken_use_api_patch": {
-      "projects": [
-        "-home-haduong-CNRS-code-search-works-for-zotero"
-      ],
-      "first_seen": "2026-09-04T09:08:53Z",
-      "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
-    },
-    "feedback_git_bare_command_blocked_in_worktree": {
       "projects": [
         "-home-haduong-CNRS-code-search-works-for-zotero"
       ],
@@ -5106,6 +5090,14 @@
       ],
       "first_seen": "2026-09-04T09:08:54Z",
       "last_confirmed": "2026-09-04T09:08:54Z",
+      "promoted": false
+    },
+    "reference_git_in_a_worktree_session": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T21:44:32Z",
+      "last_confirmed": "2026-09-06T21:44:32Z",
       "promoted": false
     }
   }

@@ -29,11 +29,9 @@ See [[preserve-agent-output]] for why the push matters before the worktree
 goes.
 
 **The same guard also refuses ordinary staging, and the tell is that it names
-rtk.** In a worktree session the rtk hook rewrites `git add tickets/` into
-`rtk git add tickets/`, and the guard then refuses because it cannot prove what
-rtk runs — so even a plain single-path `git add` inside the correct worktree is
-blocked, as are compound commands (`a && b`), heredocs piped to `bash`, `awk`
-programs, and shell redirection of `git show`. Calling the binary by absolute
-path, `/usr/bin/git add tickets/`, bypasses the rewrite and is accepted
-(2026-09-03, filing three tickets). For reads that would otherwise want a
-redirect, `git diff <ref> HEAD -- <path>` prints to stdout and needs none.
+rtk** — even a plain single-path `git add` inside the correct worktree. The
+mechanism and the remedies live in
+[[reference_git_in_a_worktree_session]]; the short form is `\git add tickets/`.
+One tip specific to this situation: for a read that would otherwise want a
+shell redirect, `git diff <ref> HEAD -- <path>` prints to stdout and needs
+none.
