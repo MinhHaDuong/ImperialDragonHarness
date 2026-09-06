@@ -81,15 +81,12 @@
 - [Rebase can overwrite a sibling fix](feedback_rebase_can_overwrite_a_sibling_fix.md) — a clean, conflict-free rebase silently reintroduced content main had already fixed; a partial-coverage test missed it
 - [Search the fork before claiming absence](feedback_search_the_fork_before_claiming_absence.md) — code lives in the untracked fork/ checkout; a repo grep returns nothing for work that ships, and an extension allowlist hides .mjs
 - [Union append-only logs by timestamp](feedback_union_append_only_by_timestamp.md) — resolve erg log conflicts by union sorted on each line's stamp, never by side; and don't verify with a grep class that can't match a hyphenated author name
-- [Worktree git guard: script bypass](feedback_worktree_git_guard_script_bypass.md) — status/add/push blocked from the Bash tool even at the right cwd; wrap the git call in a script file and `bash` it
 - [tmp quota kills the shell silently](feedback_tmp_quota_kills_the_shell_silently.md) — every Bash exit 1 with no output while Read works: probe with a one-line scratchpad Write, EDQUOT means another session's arena filled the quota'd /tmp; ask the author to purge, commit as soon as the shell returns
 - [Crash recovery under the worktree guard](feedback_crash_recovery_under_worktree_guard.md) — audit sibling worktrees read-only (find -newermt, git show origin:path | diff), then hand the commit to the owning session via claude --resume
 - [Review dispatch invisible to lane](feedback_review_dispatch_invisible_to_lane.md) — a coordinator-dispatched panel is invisible to an Execute agent's own hunt-contract loop; bit twice, once causing a merge with no verdict posted on the PR page
 - [One-liner, no ticket](feedback_one_liner_no_ticket.md) — author ruling 2026-09-06: a one-line probe fix is a hotfix PR with Ticket: none; tickets are for handoffs
 - [Matching a stale number is not confirmation](feedback_matching_a_stale_number_is_not_confirmation.md) — 0,87 agreed with the ledger's 0,91 because both ran the same non-recursive reader; needle one document before trusting a ratio
-- [Worktree guard refuses rewritten git](feedback_worktree_guard_refuses_rewritten_git.md) — plain `git`, `&&`, `$(…)` and pipes into harness scripts are refused; `/usr/bin/git` and a python file pass
 - [Not offered is not nothing to see](feedback_not_offered_is_not_nothing_to_see.md) — a not-offered cell says the harness could not look, never that there was nothing to see; read the requirement's body before calling a gap instrument-only
-- [git under rtk and the worktree guard](reference_git_under_rtk_and_the_worktree_guard.md) — in a worktree session the rtk rewrite makes plain git unrunnable; call /usr/bin/git, keep compounds trivial, put loops in a script file
 - [Challenged premise gets a default](feedback_challenged_premise_gets_a_default_not_a_relitigation.md) — late doubt on a measured winner's why → flag with the default on the side the measurement protects; append, don't amend, under a stacked sibling
 - [Check ticket status against main](feedback_check_ticket_status_against_main.md) — a stale primary-checkout branch read a closed ticket (0504) as open; confirm against origin/main before investing real work
 - [Live smoke recipe](project_live_smoke_recipe.md) — how to run bench/smoke_upstream.py with no desktop Zotero: cloud key, transformers.js standalone install, a 1-item build for the schema fixture
@@ -98,7 +95,6 @@
 - [Review rounds don't fix code](feedback_review_rounds_dont_fix_code.md) — round 3 launched before round 2 synthesized; real bugs found twice means stop and fix, not trust the round cap
 - [Conductor implementation state](project_conductor_implementation_state.md) — 0551/0552/0556 merged, 0553 parked (real concurrency bugs), 0565/0566/0567 filed, 2026-09-01
 - [Execute agent self-review summary can misreport](feedback_execute_agent_self_review_summary_can_misreport.md) — "all five approve" was wrong; doc-propagation had actually returned request-changes, still unfixed in the live diff
-- [git bare command blocked in worktree](feedback_git_bare_command_blocked_in_worktree.md) — rtk rewrites git before the worktree guard sees it; use `\git ...` or `/usr/bin/git`
 - [sudo incompatible with rootless isolation](project_sudo_incompatible_with_rootless_isolation.md) — podman-unshare, strace/ptrace, and bwrap each refuse sudo separately; the identity switch must wrap tracer+mechanism from outside, never inside
 - [Acceptance arena permission model](project_acceptance_arena_permission_model.md) — arena must be operator-owned with a default ACL for tester, not tester-owned; check the full parent-path chain, not just the arena dir
 - [gh pr edit is broken here](feedback_gh_pr_edit_broken_use_api_patch.md) — fails on a GraphQL Projects-classic error that looks non-fatal but silently no-ops the body edit; use gh api -X PATCH instead, confirmed twice
@@ -109,3 +105,4 @@
 - [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed, sent upstream (#54, #55); gap C now a real decided FAIL (#56), waiting on the maintainer
 - [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time before writing a ticket-log timestamp; a guessed stamp drifts ahead and fails the ticket-logs gate
 - [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — four PRs merged, build lead paused mid-injection on branch t0029-menagerie-build; resume from pushed branches and 0029 log tail, never relaunch
+- [git in a worktree session](reference_git_in_a_worktree_session.md) — two guards, two messages, two remedies: `\git` beats the rtk rewrite, only a script file reaches another checkout; consolidates four notes and corrects the `\git -C` advice
