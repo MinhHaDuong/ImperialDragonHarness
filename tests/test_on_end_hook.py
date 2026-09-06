@@ -207,6 +207,50 @@ def test_a_removal_that_fails_still_exits_zero(tmp_path):
 
 
 @pytest.mark.integration
+def test_a_symlinked_cwd_key_is_not_followed_out_of_the_root(tmp_path):
+    """A symlink at the CWD-KEY level must not carry the deletion outside.
+
+    The `-L` guard sat on `$target` only, so `<root>/-key-sym -> <outside>`
+    made `$target` a real directory living entirely outside the scratch root,
+    and the hook removed it. The sibling assertion is load-bearing: the run
+    must still remove a normal in-root target, so the test cannot pass by the
+    hook simply doing nothing.
+    """
+    root, dirs = _fixture(tmp_path)
+    outside = tmp_path / "outside"
+    victim = outside / TARGET_SID
+    (victim / "scratchpad").mkdir(parents=True)
+    canary = victim / "scratchpad" / "canary.txt"
+    canary.write_text("do not delete")
+    (root / "-key-sym").symlink_to(outside, target_is_directory=True)
+
+    result = _run_hook(root, tmp_path, {"session_id": TARGET_SID})
+
+    assert result.returncode == 0, result.stderr
+    assert victim.is_dir(), "a symlinked cwd key carried the deletion out of the root"
+    assert canary.read_text() == "do not delete"
+    # The run really did work: the in-root target is gone.
+    assert not dirs["target_a"].exists(), "fixture is void — nothing was removed"
+
+
+@pytest.mark.integration
+def test_a_symlinked_root_is_refused(tmp_path):
+    """`[ -d "$root" ]` follows a symlink; the root itself must be a real dir."""
+    real = tmp_path / "victim-real"
+    victim = real / "-key-a" / TARGET_SID
+    (victim / "scratchpad").mkdir(parents=True)
+    (victim / "scratchpad" / "canary.txt").write_text("do not delete")
+    link = tmp_path / "claude-symlinked-root"
+    link.symlink_to(real, target_is_directory=True)
+
+    result = _run_hook(link, tmp_path, {"session_id": TARGET_SID})
+
+    assert result.returncode == 0, result.stderr
+    assert victim.is_dir(), "the hook deleted through a symlinked scratch root"
+    assert (victim / "scratchpad" / "canary.txt").read_text() == "do not delete"
+
+
+@pytest.mark.integration
 def test_hook_is_wired_as_a_session_end_hook():
     """The canonical settings file runs this script on SessionEnd."""
     settings = json.loads((REPO_ROOT / "settings.shared.json").read_text())

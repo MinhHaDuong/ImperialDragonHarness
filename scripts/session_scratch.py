@@ -246,6 +246,14 @@ def _filesystem_state(path):
     return state
 
 
+def _listdirs(path):
+    """Immediate subdirectories of `path`, or [] if it cannot be read."""
+    try:
+        return [p for p in path.iterdir() if p.is_dir()]
+    except OSError:
+        return []
+
+
 def scan(root=None, proc_root="/proc", min_age_minutes=MIN_ORPHAN_AGE_MINUTES):
     """Temp-root usage and the orphan session directories. Never raises."""
     root = Path(root) if root is not None else scratch_root()
@@ -259,6 +267,7 @@ def scan(root=None, proc_root="/proc", min_age_minutes=MIN_ORPHAN_AGE_MINUTES):
         "orphan_bytes": 0,
         "root_bytes": 0,
         "truncated": False,
+        "root_is_symlink": False,
         "usage_fraction": None,
         "orphans": [],
         "status": "ok",
@@ -267,6 +276,19 @@ def scan(root=None, proc_root="/proc", min_age_minutes=MIN_ORPHAN_AGE_MINUTES):
     out.update({k: v for k, v in _filesystem_state(root).items()})
     if not out["exists"]:
         return out
+    if root.is_symlink():
+        # A symlinked root is REPORTED and never operated on. `is_dir()` reports
+        # through the link, and `sweep()`'s containment re-derivation cannot
+        # catch it either: it resolves symlinks on both sides, so a symlinked
+        # root always passes. Refusing here is what makes `--sweep` safe, since
+        # the sweep only ever removes what this function listed.
+        out["root_is_symlink"] = True
+        out["status"] = "warn"
+        out["reasons"].append(
+            f"scratch root {root} is a symlink — refusing to scan or sweep "
+            "through it; point --root at a real directory"
+        )
+        return out
 
     live = live_session_ids(root, proc_root=proc_root)
     root_bytes, truncated = _dir_bytes(root)
@@ -274,10 +296,14 @@ def scan(root=None, proc_root="/proc", min_age_minutes=MIN_ORPHAN_AGE_MINUTES):
     out["truncated"] = truncated
 
     age_floor = now - min_age_minutes * 60
-    for key_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+    # Every directory read is best effort, as in the `/proc` scan above: a
+    # cwd-key directory can be unreadable (another mode, another user), and it
+    # can vanish mid-scan — `on-end.sh` rmdirs an emptied one on every session
+    # exit. Neither is fatal; the docstring's "Never raises" depends on it.
+    for key_dir in sorted(_listdirs(root)):
         if key_dir.is_symlink():
             continue
-        for session_dir in sorted(p for p in key_dir.iterdir() if p.is_dir()):
+        for session_dir in sorted(_listdirs(key_dir)):
             if session_dir.is_symlink():
                 continue
             session_id = session_dir.name
@@ -317,6 +343,15 @@ def scan(root=None, proc_root="/proc", min_age_minutes=MIN_ORPHAN_AGE_MINUTES):
                 f"{int(out['usage_fraction'] * 100)}% of the inferred per-user cap "
                 f"({_human(cap)})"
             )
+    if out["truncated"]:
+        # Without this the probe's all-clear is indistinguishable from "I could
+        # not look": the walk stopped early, so every byte total below is a
+        # floor and a `status` of ok would be read as a measurement.
+        out["status"] = "warn"
+        out["reasons"].append(
+            "the directory walk hit its entry ceiling (truncated): root_bytes "
+            "and orphan_bytes are a floor, not a total"
+        )
     if out["orphan_count"] >= WARN_ORPHAN_COUNT or out["orphan_bytes"] >= 1 << 30:
         out["status"] = "warn"
         out["reasons"].append(

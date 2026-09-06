@@ -354,6 +354,102 @@ def test_cli_reports_the_machines_own_root_without_touching_it():
     assert "orphans" in state and "status" in state
 
 
+@pytest.mark.integration
+def test_sweep_refuses_a_symlinked_root(tmp_path):
+    """A symlinked root must not be operated on, by scan() or by --sweep.
+
+    `sweep()`'s containment re-derivation cannot catch this: it resolves
+    symlinks on BOTH sides, so a symlinked root always passes it. The refusal
+    has to happen before anything is listed.
+    """
+    real = tmp_path / "victim-real"
+    victim = _plant(real, "-key-a", str(uuid.uuid4()), payload_bytes=64)
+    _age(victim, OLD)
+    link = tmp_path / "symlinked-root"
+    link.symlink_to(real, target_is_directory=True)
+
+    state = ss.scan(root=link, proc_root=_empty_proc(tmp_path), min_age_minutes=0)
+    assert state["orphans"] == [], "a symlinked root was scanned through"
+    assert state["status"] == "warn"
+    assert any("symlink" in r for r in state["reasons"])
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "session_scratch.py"),
+            "--root",
+            str(link),
+            "--sweep",
+            "--min-age-minutes",
+            "0",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert victim.is_dir(), "--sweep deleted through a symlinked root"
+
+
+@pytest.mark.integration
+def test_scan_survives_an_unreadable_cwd_key_directory(tmp_path):
+    """`scan()` documents "Never raises." — an unreadable dir must be skipped.
+
+    The same unguarded `iterdir()` is racy against this ticket's own hook,
+    which `rmdir`s an emptied cwd-key directory on every session exit.
+    """
+    if os.getuid() == 0:
+        pytest.skip("root bypasses the mode bits, so the fixture cannot be built")
+    root = tmp_path / "root"
+    orphan_id = str(uuid.uuid4())
+    orphan = _plant(root, "-key-readable", orphan_id, payload_bytes=64)
+    _age(orphan, OLD)
+    blocked = root / "-key-blocked"
+    (blocked / str(uuid.uuid4())).mkdir(parents=True)
+    blocked.chmod(0o000)
+    try:
+        state = ss.scan(root=root, proc_root=_empty_proc(tmp_path), min_age_minutes=0)
+
+        assert [o["session_id"] for o in state["orphans"]] == [orphan_id], (
+            "the readable orphan must still be found"
+        )
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS / "session_scratch.py"),
+                "--root",
+                str(root),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, result.stderr
+    finally:
+        blocked.chmod(0o700)
+
+
+def test_a_truncated_walk_warns_that_the_totals_are_a_floor(tmp_path, monkeypatch):
+    """Truncation must not read as an all-clear.
+
+    With the ceiling hit, `root_bytes`/`orphan_bytes` are a floor. A `status`
+    of `ok` there is the "all-clear indistinguishable from could-not-look"
+    shape `rules/coding-bash.md` names.
+    """
+    root = tmp_path / "root"
+    _age(_plant(root, "-key", str(uuid.uuid4()), payload_bytes=64), OLD)
+    monkeypatch.setattr(ss, "MAX_ENTRIES", 1)
+
+    state = ss.scan(root=root, proc_root=_empty_proc(tmp_path), min_age_minutes=0)
+
+    assert state["truncated"] is True
+    assert state["status"] == "warn"
+    assert any("truncated" in r or "floor" in r for r in state["reasons"])
+
+
 # ── documentation coupling ───────────────────────────────────────────────────
 
 

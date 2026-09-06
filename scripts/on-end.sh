@@ -75,10 +75,18 @@ if [ -z "$root" ]; then
     base="${CLAUDE_CODE_TMPDIR:-${TMPDIR:-/tmp}}"
     root="${base%/}/claude-$(id -u 2>/dev/null || echo "${UID:-0}")"
 fi
-if [ ! -d "$root" ]; then exit 0; fi
+# A symlinked root is refused outright: `-d` reports through the link, so
+# `<root> -> <victim>` would make every removal below land in the victim's real
+# tree. The root has to be a real directory of ours or there is nothing to do.
+if [ -L "$root" ] || [ ! -d "$root" ]; then exit 0; fi
 
 shopt -s nullglob
 for key_dir in "$root"/*/; do
+    # The glob's trailing slash makes a symlinked cwd key match too, and its
+    # target is a real directory that can live anywhere: check the key itself
+    # before building a path under it, or the deletion escapes the root
+    # entirely. Same guard as the Python sibling's `key_dir.is_symlink()`.
+    if [ -L "${key_dir%/}" ]; then continue; fi
     target="${key_dir}${session_id}"
     # A symlink reports -d through its target: refuse to follow one out of the
     # root. Only a real directory is ever removed.
