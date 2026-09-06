@@ -5098,7 +5098,7 @@
       ],
       "first_seen": "2026-09-06T21:44:32Z",
       "last_confirmed": "2026-09-06T21:44:32Z",
-      "promoted": false
+      "promoted": true
     },
     "feedback_mock_that_invents_the_platform": {
       "projects": [

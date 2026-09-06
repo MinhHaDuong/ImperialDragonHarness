@@ -105,6 +105,5 @@
 - [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed, sent upstream (#54, #55); gap C now a real decided FAIL (#56), waiting on the maintainer
 - [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time before writing a ticket-log timestamp; a guessed stamp drifts ahead and fails the ticket-logs gate
 - [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — four PRs merged, build lead paused mid-injection on branch t0029-menagerie-build; resume from pushed branches and 0029 log tail, never relaunch
-- [git in a worktree session](reference_git_in_a_worktree_session.md) — two guards, two messages, two remedies: `\git` beats the rtk rewrite, only a script file reaches another checkout; consolidates four notes and corrects the `\git -C` advice
 - [A red gate on main is contended](feedback_red_gate_on_main_is_a_contended_repair.md) — every session sees the same failure; re-run the check right before pushing the repair, and don't file its ticket until you know the fix is yours
 - [A mock that invents the platform](feedback_mock_that_invents_the_platform.md) — Fluent imported from a module Zotero has never had; 40 green tests over a locale layer dead since its first commit
