@@ -1,0 +1,89 @@
+%erg 0.1
+Title: A reviewer panel that runs zero seats reports success
+Created: 2026-09-03
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #793
+
+--- log ---
+2026-09-03T13:06Z Minh Ha-Duong created
+2026-09-06T17:10Z claude note Renumbered from 0853, which MR #790 had filed for another ticket; jumped clear of the 0854 frontier
+
+2026-09-06T16:48Z Minh Ha-Duong closed — autoclosed — PR #793
+--- body ---
+
+## Context
+
+Reviewing a contribution prepared for a third-party project on 2026-09-03, the
+panel was asked for on the fork's own merge request and reported:
+
+```
+request: WARN forge-bot seat 'copilot' request failed (fail-open)
+request: WARN seat 'openrouter-frontier' failed (fail-open; ...)
+request: WARN seat 'openrouter-budget' failed (fail-open; ...)
+request: 0 cli/model seat(s) ran for MR #10
+```
+
+and exited **0**. Every seat had failed, no finding existed anywhere, and the
+command said so only on stderr, in a line a caller does not read. A caller that
+gates on the exit status — which is what an exit status is for — cannot tell that
+run apart from one where three seats reviewed the diff and were content.
+
+That is the shape `coding-bash.md` already names: a check whose all-clear is
+indistinguishable from its "I could not look" is not a check. It is worth more
+here than in most places, because the panel exists precisely to be the
+independent eye, and a silent absence of review is the failure it cannot afford.
+
+Per-seat fail-open is correct and stays (0205 rule 2): one seat must never block
+a verdict. What is wrong is the aggregate. No seat running is not a lenient
+verdict, it is no verdict.
+
+## The second half, which is a documentation defect and not a code one
+
+The same run first failed with `pathspec 'pooling-per-model' did not match any
+file(s)`, because `REPO_ROOT` defaults to the harness checkout and the branch
+under review lived in another repository. The lever for that already exists —
+`REVIEWERS_REPO`, and `REVIEWERS_PR_BRANCH` for the branch — and neither appears
+in `usage_text`, so the operator's visible options are a merge-request number and
+a branch, both of which resolve against the wrong tree. The fix is to document
+them where the operator looks, not to add an argument that is already there.
+
+Noted because the first draft of this ticket proposed adding a `--repo` option
+that duplicates `REVIEWERS_REPO`. Reading the script settled it; grepping for the
+lever before proposing one is the standing rule.
+
+## Relevant files
+
+- `skills/reviewers/reviewers.sh` — `request`, the `ran` counter, `usage_text`
+- `tests/test_reviewers.sh` — where the case belongs
+
+## Actions
+
+1. Count cli/model seats attempted beside the ones that ran.
+2. When at least one was attempted and none ran, say so on stderr and exit
+   non-zero. Keep per-seat fail-open exactly as it is.
+3. A roster of forge-bot seats alone still exits 0: nothing local was attempted,
+   so there is nothing to report as absent.
+4. Document `REVIEWERS_REPO` and `REVIEWERS_PR_BRANCH` in `usage_text`.
+
+## Test
+
+- Red first: a roster whose only cli seat fails must make `request` exit
+  non-zero. Run it against the current script and watch it pass, which is the
+  defect.
+- A roster where one of two seats fails still exits 0 — per-seat fail-open is not
+  what is changing, and a test that cannot tell the two apart would licence
+  breaking it.
+- A forge-bot-only roster exits 0.
+
+## Invariants
+
+- Per-seat fail-open (0205 rule 2) is untouched.
+- `harvest`, `scorecard`, `scores` and `audition` keep their exit semantics.
+- No seat's credential is read, logged or named by value anywhere.
+
+## Exit criteria
+
+- [ ] `request` exits non-zero when every attempted cli/model seat failed
+- [ ] The three cases above are tested, and the first was seen red
+- [ ] `usage_text` names the two repository levers
+- [ ] `make check` passes

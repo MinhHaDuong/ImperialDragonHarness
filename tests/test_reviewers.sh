@@ -27,6 +27,7 @@ assert_contains() {
     else echo "FAIL: $label (missing: $needle)"; echo "  in: $hay"; FAIL=$((FAIL+1)); fi
 }
 assert_exit_0() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then echo "PASS: $label"; PASS=$((PASS+1)); else echo "FAIL: $label (exit $?)"; FAIL=$((FAIL+1)); fi; }
+assert_exit_nonzero() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then echo "FAIL: $label (exited 0)"; FAIL=$((FAIL+1)); else echo "PASS: $label"; PASS=$((PASS+1)); fi; }
 
 # ── empty-roster roster (default behaviour) ──────────────────────────────────
 EMPTY="$WORK/empty.yml"; printf 'reviewers: []\n' > "$EMPTY"
@@ -81,6 +82,33 @@ req_err=$(REVIEWERS_PANEL="$ROSTER" SEAT_RUNNER="$STUB" REVIEWERS_FINDINGS_DIR="
 assert_contains "request: good seat ran" "seat 'stub-good' ok" "$req_err"
 assert_contains "request: bad seat fail-open WARN" "WARN seat 'stub-bad' failed" "$req_err"
 assert_eq "request: good seat wrote findings" "yes" "$([ -s "$FDIR/42/stub-good.findings" ] && echo yes || echo no)"
+
+# One seat failing beside one that ran is fail-open working, and must stay exit 0:
+# the point of the aggregate check below is the absence of a verdict, never a
+# minority of failures. This assertion is what stops that change going too far.
+assert_exit_0 "request: a failing seat beside a good one still exits 0" \
+    env REVIEWERS_PANEL="$ROSTER" SEAT_RUNNER="$STUB" REVIEWERS_FINDINGS_DIR="$FDIR" \
+    REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 42
+
+# Every attempted seat failing is not a lenient verdict, it is no verdict. A caller
+# gating on the exit status must be able to tell it from a clean review (0870).
+ALLBAD="$WORK/allbad.yml"
+cat > "$ALLBAD" <<'YAML'
+reviewers:
+  - name: stub-bad
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:9/v1
+    model: openai/nothing
+YAML
+allbad_err=$(REVIEWERS_PANEL="$ALLBAD" SEAT_RUNNER="$STUB" REVIEWERS_FINDINGS_DIR="$FDIR" \
+             REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 43 2>&1 >/dev/null || true)
+assert_contains "request: no seat reviewed says so" "no seat reviewed MR #43" "$allbad_err"
+assert_contains "request: and refuses to read as approval" "This is not an approval" "$allbad_err"
+assert_exit_nonzero "request: every attempted seat failing exits non-zero" \
+    env REVIEWERS_PANEL="$ALLBAD" SEAT_RUNNER="$STUB" REVIEWERS_FINDINGS_DIR="$FDIR" \
+    REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 43
 
 harv_out=$(REVIEWERS_PANEL="$ROSTER" REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 42 2>/dev/null)
 assert_contains "harvest: normalized to contract shape" "verifiable: foo.sh:10 — off-by-one" "$harv_out"
