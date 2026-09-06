@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: b7159928-959f-4103-8860-e2c11cdefc7a
-  modified: 2026-09-02T15:47:09.869Z
+  modified: 2026-09-03T10:27:30.610Z
 ---
 
 Zotero 10.0.1, the author's build, 2026-09-02:
@@ -29,8 +29,24 @@ Zotero 10.0.1, the author's build, 2026-09-02:
 - **The local API's fulltext endpoint** returns `indexedPages`/`totalPages`
   beside the text, and accepts PUT (428 without `If-Unmodified-Since-Version`).
   Group items answer under `/api/groups/<id>/…`, not `/api/users/0/…` (404).
-- **Extraction speed**: 60–80 pages/s end to end; 2 913 pages in 46 s. A run
-  showing hours with no cache written is stuck, not slow — restart Zotero.
+- **Extraction speed, flat path**: 60–80 pages/s end to end; 2 913 pages in 46 s.
+  Re-measured 2026-09-03 on the **same** document, two reps: **62,6 s and 64,9 s**
+  (45,7 pages/s). Same tool, same key, 37 % apart from the 46 s reading — cause
+  not isolated (machine load, poll quantum, and a build change are all live
+  candidates; the 2026-09-03 reps ran with several sessions active). Quote the
+  range, not either endpoint, and re-measure on an idle machine before treating
+  it as pinned. Measure with `reindex … --wait --poll 0.25`, and read the **outer
+  wall**: `complete()` is ledger-state based, so on an already-complete item it
+  reports "1 of 1 complete" at 0 s while the parse runs on — only `busy` tracks
+  the job. A run showing hours with no cache written is stuck, not slow — restart.
+- **Extraction speed, SDT path** (`.zotero-sdt-cache`, the ONNX document-worker):
+  **5,26 pages/s** on the 2 913-page volume, and 5–9 pages/s across a hundredfold
+  size range — roughly **9x slower than the flat parse** and 42x `pdftotext`
+  (219 pages/s on the same file). ~24,6 h to pack a 464 599-page library. Packs
+  are produced only for attachments opened in the reader, and the worker is
+  **uncapped** where the flat path honours `pdfMaxPages`. Timings come from each
+  pack's `dateCreated` → mtime, so they are upper bounds. See
+  `verification/EXTRACTION-ROUTES.md`.
 - **Reindexed group attachments come back at full-text version 0**; user
   library ones take fresh versions (X6's class, ticket 0025).
 - Tool: `bench/zotero-fulltext-plugin/` + `bench/zotero_fulltext.py`
