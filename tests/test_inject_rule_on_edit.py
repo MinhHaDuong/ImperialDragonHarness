@@ -3,6 +3,7 @@ matching global rule bodies on the first edit of a file per session."""
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +14,16 @@ _SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))  # inject_rule_on_edit imports path_utils
 _HOOK = _SCRIPTS / "inject_rule_on_edit.py"
+
+# The hook's `__main__` swallows every exception and exits 0 -- correct in
+# production, and it also makes a total crash byte-identical to a correct silent
+# no-op on the two channels the subprocess tests below read. Without this, three
+# of the five end-to-end tests pass against a hook that does nothing, including
+# both traversal guards. Merged into every child env by hand: four of these five
+# calls pass a CLOSED env dict, so nothing a fixture exports would reach them --
+# and the suite would still go red through the fifth, which inherits, making the
+# criterion look met while the four guards stayed inert (ticket 0610).
+_STRICT = {"IDH_HOOK_STRICT": "1"}
 
 
 def _load():
@@ -156,7 +167,7 @@ def test_hook_injects_then_dedups(tmp_path):
     payload = json.dumps(
         {"session_id": "sess1", "tool_input": {"file_path": str(tmp_path / "x.py")}}
     )
-    env = {"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"}
+    env = {"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin", **_STRICT}
 
     def run():
         return subprocess.run(
@@ -179,9 +190,12 @@ def test_hook_injects_then_dedups(tmp_path):
 def test_hook_silent_for_unstyled_file(tmp_path):
     payload = json.dumps({"session_id": "s", "tool_input": {"file_path": "/x/data.json"}})
     res = subprocess.run(
-        ["python3", str(_HOOK)], input=payload, capture_output=True, text=True
+        ["python3", str(_HOOK)], input=payload, capture_output=True, text=True,
+        env={**os.environ, **_STRICT},
     )
-    assert res.returncode == 0
+    # Under _STRICT the exit code separates "resolved no axis, so silent" from
+    # "crashed, so silent"; without it this pair of assertions holds for both.
+    assert res.returncode == 0, res.stderr
     assert res.stdout.strip() == ""
 
 
@@ -289,9 +303,12 @@ def test_hook_no_inject_via_manifest_lang_traversal(tmp_path):
     res = subprocess.run(
         ["python3", str(_HOOK), "--rules-dir", str(rules)],
         input=payload, capture_output=True, text=True,
-        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin", **_STRICT},
     )
-    assert res.returncode == 0
+    # `returncode == 0` is the half that makes the next line evidence: a hook
+    # that crashed prints no EVIL-MARKER either. Only _STRICT makes the two
+    # distinguishable here (ticket 0610).
+    assert res.returncode == 0, res.stderr
     ctx = res.stdout  # legit python rule may inject; the evil body must not
     assert "EVIL-MARKER" not in ctx
 
@@ -317,9 +334,11 @@ def test_hook_no_inject_via_documentclass_traversal(tmp_path):
     res = subprocess.run(
         ["python3", str(_HOOK), "--rules-dir", str(rules)],
         input=payload, capture_output=True, text=True,
-        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin", **_STRICT},
     )
-    assert res.returncode == 0
+    # See the sibling above: the exit code is what turns an absent marker from a
+    # coincidence into a verdict.
+    assert res.returncode == 0, res.stderr
     assert "EVIL-MARKER" not in res.stdout
 
 
@@ -336,7 +355,7 @@ def test_hook_truncates_oversized_context(tmp_path):
     res = subprocess.run(
         ["python3", str(_HOOK), "--rules-dir", str(rules)],
         input=payload, capture_output=True, text=True,
-        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin"},
+        env={"TMPDIR": str(tmpdir), "PATH": "/usr/bin:/bin", **_STRICT},
     )
     ctx = json.loads(res.stdout)["hookSpecificOutput"]["additionalContext"]
     assert len(ctx) < 10000
