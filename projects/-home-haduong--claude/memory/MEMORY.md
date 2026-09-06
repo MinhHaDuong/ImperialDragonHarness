@@ -91,3 +91,4 @@
 - [CLI verb belongs in the sub-command](feedback_cli_verb_in_subcommand.md) — the script name is the noun; avoid `install-deps.sh uninstall`
 - [Paper idea — harnesses vs. human psychology](project_paper_harnesses_psychology.md) — AI coding harnesses evaluated against what psychology says about how humans work
 - [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md) — awk/printf emit `70,0` under fr_FR; export LC_ALL=C after set -euo pipefail in any test-guarded script
+- [Enumerate untracked with status -uall](feedback_enumerate_untracked_with_status_uall.md) — `git clean -n` prints "Would remove <path>" and collapses untracked dirs; a check that returns *everything* hides a broken probe as surely as one that returns nothing
