@@ -5099,6 +5099,22 @@
       "first_seen": "2026-09-06T21:44:32Z",
       "last_confirmed": "2026-09-06T21:44:32Z",
       "promoted": false
+    },
+    "feedback_mock_that_invents_the_platform": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T21:55:57Z",
+      "last_confirmed": "2026-09-06T21:55:57Z",
+      "promoted": false
+    },
+    "feedback_red_gate_on_main_is_a_contended_repair": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T21:55:57Z",
+      "last_confirmed": "2026-09-06T21:55:57Z",
+      "promoted": false
     }
   }
 }

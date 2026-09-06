@@ -51,6 +51,20 @@ that works proves nothing about the next verb, and a bare git that fails proves
 nothing about git being blocked. Write `\git` unconditionally and stop tracking
 the list.
 
+## It reads the text, not what the text would do
+
+The guard matches on the command's characters, so a word is enough to trip it
+even when nothing would execute git: a `grep -rl "…not to be git"` over the
+scripts directory was refused, and so was a `python3 - <<EOF` heredoc whose
+prose body merely mentioned git. Reword the string, or use the file-editing
+tool instead of a shell rewrite. Filenames count too, so a loop over notes
+whose names contain `git` trips it on its own.
+
+**A refusal takes the whole compound with it.** `rtk --version && git status`
+runs neither half, so a compound that trips the guard reports nothing at all
+rather than partial results. Do not read that silence as a finding.
+(Both observed 2026-09-06 during the ticket 0714 raid, in another session.)
+
 ## Anything non-trivial goes in a file
 
 The guard also refuses what it cannot parse, whatever the binary: `for … done`
