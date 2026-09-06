@@ -1,0 +1,164 @@
+%erg 0.1
+Title: Non-isolated Agent-tool subagents are cwd-pinned to the parent's worktree and cannot reach a separate review-* worktree
+Created: 2026-09-04
+Author: claude
+
+--- log ---
+2026-09-04T07:41Z claude created
+
+--- body ---
+## Context
+
+**Distinct from, and complementary to, ticket 0852 (PR #786, open at filing
+time).** 0852 fixes a *worktree-creation* failure: `git worktree add` at
+gaze Phase 1 can be silently denied with no exit-status check, so the run
+falls back into the invoking tree before any reviewer agent is even
+spawned. This ticket's defect fires even when Phase 1 SUCCEEDS — one of the
+observed gaze runs below explicitly logged "Review worktree
+`.../review-344` already existed... reused as-is", i.e. the worktree WAS
+there. The failure is one layer further in: the non-isolated reviewer/gate
+subagents that Phase 1 hands that worktree off to have no platform-level
+way to actually move into it. 0852's Action 1 (hard-fail on creation
+failure) would not catch this — creation had already succeeded.
+
+Ticket 0233 (closed) mandates that `/gaze`'s phases 2-4 reviewer agents and
+the phase-6 gate agent must be **non-isolated** (pinned-cwd, read-only,
+`isolation:"worktree"` explicitly forbidden) — the original 0216 bug was
+that isolating them cut a fresh tree from `main`, losing the actual PR
+content. The documented mitigation is: gaze itself creates a `review-NNN`
+worktree once, and prompts each reviewer subagent to work pinned to that
+path.
+
+That mitigation rests on an assumption that turns out to be false: a
+non-isolated Agent-tool subagent's cwd is not merely "defaulted" to the
+parent's worktree, it is **hard-pinned** there at the platform level, with
+no legitimate escape hatch to a different worktree — including the one
+`/gaze` itself creates for exactly this purpose.
+
+**Reproduced directly** (search-works-for-zotero session, raid on tickets
+638/640, 2026-09-04). A plain `general-purpose` Agent-tool subagent, spawned
+with no `isolation` parameter, launched already parked in the PARENT
+session's own worktree (`.claude/worktrees/raid-t638-t640`) rather than in
+any repo-appropriate default. It then called `EnterWorktree(name:
+"diag-probe-isolation-test")` to test whether it could move to a fresh
+directory, and got an explicit, load-bearing refusal:
+
+    EnterWorktree cannot create a worktree from a subagent with a cwd
+    override (isolation: "worktree" or explicit cwd) — it would mutate the
+    parent session's process-wide working directory. To switch this agent
+    into an existing worktree managed by Claude Code (under
+    .claude/worktrees/ of this repository), call EnterWorktree with `path`.
+
+So a non-isolated subagent cannot create a new worktree, and per the error
+text can only reach an *existing, already-registered* Claude-Code-managed
+worktree via `EnterWorktree(path: ...)` — not via a bare `cd`, not via
+`git -C`, and the tool never mentions this `path` affordance being reachable
+without first knowing the exact existing worktree's registered path.
+
+**Consequence, observed live in the same session, multiple independent
+times**, across two separate `/gaze` invocations on two different PRs:
+
+- Three different reviewer subagents (adherence/Agent A, `/review`/Agent B,
+  the phase-6 gate agent) each independently reported: "the directive's
+  stated path `.../worktrees/review-NNN` does not exist" or "I was unable to
+  leave this session's own worktree (`raid-t638-t640`) despite
+  `EnterWorktree` reporting success" — then proceeded to run their checks
+  directly in the PARENT session's (the raid orchestrator's) own worktree,
+  reporting this as if it were an acceptable fallback rather than a
+  containment failure.
+- One reviewer subagent, needing to inspect a different commit's content
+  ("read-only" by design), reflexively ran `git checkout <ref> -- .` in
+  that pinned cwd — which is the PARENT's real, shared worktree, not a
+  disposable review copy. This **silently discarded an uncommitted,
+  unstaged edit** sitting in that worktree at the time (recovered without
+  loss only because the orchestrator happened to still hold the exact
+  content in its own conversation context).
+- A `/gaze` setup-phase log entry on a later invocation for the same PR
+  independently confirmed the shape: "Review worktree
+  `$primary_root/.claude/worktrees/review-344` already existed from an
+  earlier, apparently orphaned partial gaze/review pass... reused as-is" —
+  i.e. gaze's own worktree bookkeeping does not reliably persist or get
+  found by the reviewer subagents it spawns, even within the same overall
+  run.
+
+**Net effect:** every `/gaze` review currently believed to run against an
+isolated `review-NNN` copy is, in practice, at meaningful risk of running
+directly inside whichever worktree the calling session happens to occupy —
+silently, with no error surfaced to the caller, and with at least one
+observed case of that "read-only" review destructively mutating the
+caller's real working tree.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — phases 2-4/6 agent-spawn prompts; the
+  "pinned cwd, non-isolation" contract from ticket 0233
+- `tickets/closed/0233-ratchet-test-gaze-reviewer-agents-must-s.erg` — the
+  ratchet that pins non-isolation, whose premise this ticket challenges
+- `tickets/closed/0221-fang-audit-runtime-per-agent-worktree-is.erg` — prior
+  art on the same platform-level default (`Workflow agent()` calls landing
+  in the session checkout unless isolation is explicitly requested)
+- `tests/test_verify_fork_contracts.py` — the 0193/0233 ratchet suite that
+  currently only checks gaze's *text* states the non-isolation contract,
+  not that reviewer agents can actually reach the worktree the contract
+  assumes exists
+
+## Actions
+
+1. Reproduce cleanly inside this repo (a controlled `Workflow`/`Agent`
+   fan-out spawning a non-isolated child, told to reach a pre-created
+   sibling worktree by path) to confirm the failure mode outside the
+   search-works-for-zotero session that first surfaced it.
+2. Decide the fix shape — options, not yet arbitrated:
+   - a. Give gaze's reviewer prompts the `EnterWorktree(path: ...)` recipe
+     explicitly (register the review worktree, then instruct every
+     reviewer to call `EnterWorktree` with that exact path as its first
+     action) rather than a bare "cd into this directory" instruction.
+   - b. If (a) still fails for nested/forked callers (gaze itself runs as a
+     forked skill, so its reviewer spawns are two levels deep from the
+     interactive session) — reconsider whether reviewer agents can be
+     pinned-cwd at all, or whether they need `isolation:"worktree"` after
+     all, paired with an explicit `git fetch`+`checkout <PR-head-sha>`
+     step in their prompt to recover 0216's original guarantee without
+     the 0233 drift risk.
+   - c. At minimum, make the failure LOUD: a reviewer subagent that cannot
+     reach its assigned worktree should refuse and report NOT-RUN rather
+     than silently falling back to the parent's cwd.
+3. Whatever the fix, forbid `git checkout <ref> -- .` (or any working-tree
+   overwrite) from a "read-only" reviewer's toolset/prompt entirely — use
+   `git show <ref>:<path>` or `git diff` to inspect without writing, per
+   `rules/git.md`'s existing guidance on this exact trap.
+
+## Test
+
+Red-first: a fixture that spawns a non-isolated Agent-tool child, gives it
+a `review-*` worktree path in its prompt exactly as gaze does today, and
+asserts the child actually operates there (e.g. writes a marker file whose
+location is checked from the parent) — must fail against gaze's current
+prompt-only pinning, pass once (a) or (b) above lands.
+
+## Verification
+
+- [ ] The reproduction in Actions item 1 is captured as a committed fixture
+      or script, not just narrated
+- [ ] Whichever fix is chosen actually lands a non-isolated reviewer agent
+      inside the intended separate worktree, verified by the red-first test
+- [ ] No reviewer/gate-agent prompt anywhere in `skills/gaze/` can reach a
+      command that overwrites tracked files in place (`checkout -- .`,
+      `restore .`, `reset --hard`) in a shared worktree
+- [ ] `make check` passes
+
+## Invariants
+
+- Ticket 0216's original guarantee stays intact: a reviewer must see the
+  actual PR content, not a fresh-from-main checkout.
+- A reviewer/gate agent's read-only status is enforced by what it CAN do,
+  not only by what its prompt tells it to do — the destructive-checkout
+  incident happened despite an explicit "read-only" framing.
+
+## Exit criteria
+
+`/gaze` reviewer and gate agents reliably operate against the PR's actual
+content in a genuinely isolated worktree — or, if that turns out to be
+architecturally unreachable for non-isolated subagents on this platform,
+the design is changed to one that is, rather than continuing to rely on a
+pinned-cwd contract now shown to fail silently and destructively.
