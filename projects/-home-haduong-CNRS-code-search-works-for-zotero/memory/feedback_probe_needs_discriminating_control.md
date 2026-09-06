@@ -78,4 +78,22 @@ attested somewhere independent of the probe (here, a pooling mode recorded in
 Zotero core's own registry), because a control the probe itself defines can only
 confirm the probe is self-consistent.
 
+**Instance, 2026-09-02 (PR #211): the controls table is itself code.** A PR whose
+own thesis was that a nil result without a control is worthless shipped a
+*controls table* — probes written down in prose, never re-run. Three of its rows
+were wrong. Its positive control miscounted the thing it counted (three
+`startIndexBuild` call sites, not two, and the missed one silently converts an
+update into a full rebuild — the very case the probe existed to catch). One probe
+regex returned 1340 lines where the table claimed nil. Another was a **regex
+syntax error**, so its nil meant "could not look", which is the exact failure the
+table was written to prevent, committed in the table's own hand.
+
+The lesson is narrower than "have a control" and worth separating from it: a
+control is a control **while it executes**. Transcribed into a document it becomes
+a claim, decays with the code it points at, and is read by every later reviewer as
+evidence. So a table of probes ships as a script that runs them and prints its own
+rows, or the reviewer re-runs every row before quoting any of it — starting with
+the positive control, whose whole job is to come out non-nil and which is
+therefore the only row whose failure is visible for free.
+
 Related: [[feedback-adopted-constants-carry-mechanisms]].

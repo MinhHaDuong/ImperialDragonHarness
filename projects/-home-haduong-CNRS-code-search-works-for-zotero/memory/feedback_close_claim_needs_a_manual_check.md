@@ -32,3 +32,28 @@ carry **several** `Blocked-by:` lines, so `grep -m1` under-reports the blocked
 graph; and closing a ticket with an unmet criterion is allowed (a `**Ticket:**`
 line closes unconditionally) but the residue belongs in the close reason, not
 quietly ticked. See [[feedback_guard_the_silent_failure_first]].
+
+**Better recipe, 2026-09-02 (PR #227, ticket 0597): close it *before* merging,
+by pushing to the head ref.** The manual after-the-fact close above is a repair;
+this avoids the hole entirely. The blocker is only that `erg-pr-merge` needs the
+branch *checked out*, and a second `git worktree add` refuses a branch another
+worktree holds. But nothing needs the branch **name** — build the close commit in
+a detached worktree at the PR head and push it to the ref:
+
+```bash
+git worktree add --detach /tmp/scratch origin/<pr-branch>   # from an allowed cwd
+cd /tmp/scratch
+./tickets/erg close <ID> "<reason>" tickets/
+git add -u tickets/          # BEFORE the archive move — the ordering trap above
+./tickets/erg archive <ID> tickets/
+git add tickets/             # stages the rename
+git commit …                 # verify: the staged diff shows +Closed:, not a bare rename
+git push origin HEAD:<pr-branch>
+gh pr merge <N> --merge
+```
+
+The close then rides the PR as a normal commit, the merge is ordinary, and there
+is nothing left to sweep for afterwards. The abandoned lane worktree that holds
+the branch name goes stale, which is harmless. Verify before pushing: a
+100%-rename / 0-insertion commit is the tell that the `Closed:` header was
+dropped.
