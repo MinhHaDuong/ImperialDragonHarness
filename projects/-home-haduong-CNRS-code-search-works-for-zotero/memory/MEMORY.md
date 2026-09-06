@@ -1,109 +1,112 @@
 ## Key insights
 
-- The recurring defect is a claim nobody executed: a spec rule measurement has voided, a status page read rather than recomputed, a guard proposed for a hazard something already watched. The fix is always to run the thing, never to re-read it.
-- A check earns trust only from a demonstrated red state, and this repo now has five separate lessons saying so — discriminating controls, the ticket's own test against the unfixed tree, control arms on a committed tree, a small instance of a silent long job, and grepping the guards before calling anything unguarded.
-- Ownership beats instrumentation. Where one fact sat in two documents, deleting the copy that nothing reads has consistently beaten adding a check to watch both — and the guard budget is net-negative by ruling. Duplication is safe only when it is exact: a verbatim quotation can be held to its source, where two paraphrases of one rule drift into contradiction with nothing able to compare them.
-- A relayed claim is an unverified claim. In one night the coordinator's own briefings carried a wrong count, scope, SHA or file path at least five separate times, a gate caught every one, and not one of the errors was in something the coordinator had measured itself — including a wrong SHA that would have produced a false bounce and an "out of scope" framing that would have merged a self-contradicting PR unexamined. Measure it, or name whose measurement it is; never pass a lane's number down as established.
-- Authority is a property of the action, not of the mandate: a verdict gates nothing unless the merge is serialized behind it, and a guard proves nothing unless a wrong run could make it fail.
-- The checkout is shared with other agents, Codex included: stage by explicit path, expect append-only files to conflict at the tail, and never read a clean tree or an idle peer as proof that a session has finished.
+- The recurring defect is a claim nobody executed: a measurement a rule voided, a status page read rather than recomputed, a guard for a hazard already watched. Run it; never re-read it.
+- A check earns trust only from a demonstrated red state, and six lessons here say so. A nil result means "absent" or "could not look", and nothing tells them apart until a positive control fires.
+- Ownership beats instrumentation. Where one fact sat in two documents, deleting the unread copy has beaten watching both, and the guard budget is net-negative by ruling. Duplication is safe only when exact: a quotation can be held to its source, two paraphrases only drift.
+- A relayed claim is unverified: one night's briefings got a count, scope, SHA or path wrong five times, none of it measured by the relayer. Measure it, or name whose measurement it is.
+- Authority is a property of the action, not the mandate: a verdict gates nothing unless the merge is serialized behind it, and a guard proves nothing unless a wrong run could fail it.
+- The checkout is shared, Codex included. Stage by explicit path, expect append-only files to conflict at the tail, and never read a clean tree or an idle peer as proof a session finished.
 
 ## Entries
 
-- [Code under ~/CNRS/code, data under ~/data](feedback_code_under_cnrs_code_data_under_data.md) — a fork clone is code even when it serves a bench campaign; keep data paths identical across machines
-- [Stay on Max plan billing](feedback_stay_on_max_plan_billing.md) — expired OAuth means asking for one claude login, never substituting the API key or copying credentials between machines
-- [Author voice corpus](reference_author_voice_corpus.md) — 48 311 words he curated himself at chemin-de-voix/corpus/clean/voix-auteur-en; tic-removal reaches neutral, not his voice
-- [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md) — once he says yes, do it; never hand him a URL to click or text to paste — but show him the document before publishing it in his name
-- [Repo prepares upstream, ships nothing](feedback_repo_prepares_upstream_it_ships_nothing.md) — repo PRs are spec/measurement records; upstream-code actions bundle into the upstream PR being prepared, not standalone filings
-- [Benchmark harness traps](feedback_benchmark_harness_traps.md) — polymorphic call sites, ±15% single runs, and: a big number needs a control arm, a component needs its null alternative
-- [Decision briefs, not option menus](feedback_decision_briefs.md) — argue each alternative with pros/cons from best practice + the field review; a labelled option list is not a brief
-- [Preserve agent output, not just its report](feedback_preserve_agent_output.md) — uncommitted subagent work dies with the worktree; git status before remove, or have it push a branch
-- [Verify the load-bearing claim](feedback_verify_the_load_bearing_claim.md) — the sentence an outside reader checks first is the one nobody ran; execute it, don't re-read it
-- [The metric decides the verdict](feedback_metric_decides_the_verdict.md) — self-referential recall priced a truncation at 22 points where a task metric priced it at 4,8%; it reversed the recommendation
-- [Adopted constants carry mechanisms](feedback_adopted_constants_carry_mechanisms.md) — copying a number without the min()/drop rule around it; 4 of 8 upstream attributions were wrong
-- [Probes need a discriminating control](feedback_probe_needs_discriminating_control.md) — a control must be able to come out the other way; three vacuous probes in one session; a controls table transcribed into prose stops being a control
-- [Guard the silent failure first](feedback_guard_the_silent_failure_first.md) — the loud guard is the one you think of; enumerate the no-exception failures and mirror the upstream validator
-- [A move can leave the gate](feedback_a_move_can_leave_the_gate.md) — a hand-listed gate scope fails asymmetrically: guarding removal is easy and feels done; a file *arriving* stays unguarded
-- [Append-only merges keep both](feedback_append_only_merge_union.md) — DECISIONS.md conflicts by construction; assert the union in a script, on main, against both parents; a sibling's rewrite reads as a missing line, check its diff first; guard ruled Won't do (0320)
-- [A close claim needs a manual check](feedback_close_claim_needs_a_manual_check.md) — erg-pr-merge can't reach a branch in another session's worktree; gh pr merge skips the close silently
+- [Code under ~/CNRS/code, data under ~/data](feedback_code_under_cnrs_code_data_under_data.md) — a fork clone is code; data paths identical across machines
+- [Stay on Max plan billing](feedback_stay_on_max_plan_billing.md) — expired OAuth means asking for one `claude login`, never a key
+- [Author voice corpus](reference_author_voice_corpus.md) — 48 311 words at chemin-de-voix/corpus/clean/voix-auteur-en; tic-removal reaches neutral, not him
+- [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md) — once he says yes, do it; but show him the document before publishing it
+- [Repo prepares upstream, ships nothing](feedback_repo_prepares_upstream_it_ships_nothing.md) — repo PRs are spec records; upstream code bundles into the prepared PR
+- [Benchmark harness traps](feedback_benchmark_harness_traps.md) — polymorphic call sites, ±15% single runs; a big number needs a control arm
+- [Decision briefs, not option menus](feedback_decision_briefs.md) — argue each alternative's pros and cons; a labelled option list is not a brief
+- [Preserve agent output, not just its report](feedback_preserve_agent_output.md) — uncommitted subagent work dies with the worktree; check status before remove
+- [Verify the load-bearing claim](feedback_verify_the_load_bearing_claim.md) — the sentence a reader checks first is the one nobody ran
+- [The metric decides the verdict](feedback_metric_decides_the_verdict.md) — self-referential recall priced a truncation at 22 points, a task metric at 4,8%
+- [Adopted constants carry mechanisms](feedback_adopted_constants_carry_mechanisms.md) — a number copied without its min()/drop rule; 4 of 8 attributions wrong
+- [Probes need a discriminating control](feedback_probe_needs_discriminating_control.md) — a control must be able to come out the other way; three vacuous probes in a session
+- [Guard the silent failure first](feedback_guard_the_silent_failure_first.md) — the loud guard is the one you think of; enumerate the no-exception failures
+- [A move can leave the gate](feedback_a_move_can_leave_the_gate.md) — a hand-listed gate scope guards a file leaving, never one arriving
+- [Append-only merges keep both](feedback_append_only_merge_union.md) — DECISIONS.md conflicts by construction; assert the union against both parents
+- [A close claim needs a manual check](feedback_close_claim_needs_a_manual_check.md) — erg-pr-merge can't reach another session's worktree; gh pr merge skips the close
 - [No optional offers](feedback_no_optional_offers.md) — decide yourself; an offered extra is work you already judged not worth doing
-- [Warm runs and single-point fits](feedback_warm_runs_and_single_point_fits.md) — a cold run measures the download; a predictor fitted on one point matched it exactly and missed the next by 106 MB
-- [The ticket's own test needs a control](feedback_the_tickets_own_test_needs_a_control.md) — run the specified check against the unfixed tree first; twice in one session it was green on the very defect it existed to catch
-- [A judgement must not outlive its subject](feedback_judgement_must_not_outlive_its_subject.md) — a read-not-run status page can't recompute; invalidate on baseline move, and put provenance beside the numbers; a forge head SHA decayed in eleven minutes, so pin the SHA in the sentence
-- [Green PRs, red union](feedback_green_prs_red_union.md) — two reviewed PRs merged into a red main; only a wave-level check sees it, and a guard's scope claim is retroactive
-- [Executor gate-loop stall](feedback_executor_gate_loop_stall.md) — duplicate seat reports + an unmoving branch tip means take over; the findings are already in your context
-- [Registry, not knobs](project_registry_not_knobs.md) — rulings 2026-08-29/30: entries pin the mechanics, rung is per-device, R30 ratified, C3 at 750; 0440 drafted awaiting the author
-- [Room for multilingual embedders](feedback_room_for_multilingual_embedders.md) — C3 ratified at 750 from the measured floor; the lesson survives: never argue headroom under a ceiling a ruling has displaced
-- [Negative results name their mechanism](feedback_negative_result_names_its_mechanism.md) — X4 killed json_each scoping, not scoping; the author was right to reject "no", and a year predicate measured 43x cheaper
-- [Leads park on untracked background](feedback_leads_park_on_untracked_background.md) — three sonnet leads in one day deadlocked waiting on nohup runs; prompt chunked-foreground up front, one resume recovers
-- [Spec edit mechanics](project_spec_edit_mechanics.md) — post-restructure layout: one SPEC.md (DRAFT header, date-is-version, system-only prose), standing in README; quote coupling, windowed digit rule, roster-line trap
-- [Reconcile seats against synthesis](feedback_reconcile_seats_against_synthesis.md) — a synthesizer posted "no blocker" after a relay superseded the seat that had one; diff the seat set against the synthesis before acting
-- [Re-run the gate after your own fix](feedback_rerun_gate_after_own_fix.md) — the commit closing the erg-check ratchet gap carried a .PHONY silent no-op; verify the new check appears in the transcript, then prove it red once
-- [Takeover handoff pattern](feedback_takeover_handoff_pattern.md) — state check with SHAs, durable record in the PR discussion, explicit ack, then full lane discipline; peer requests honored read-only in their checkout
-- [Atomic PRs, short branches](feedback_atomic_prs_short_branches.md) — author verbatim: "not folded here"; one concern per PR, small deliverables never ride a larger one, upstream filings included
-- [Review catches only what it checks](feedback_review_catches_only_what_it_checks.md) — two review passes verified citations/numbers; the author's own orthogonal question found the real defect
-- [Stacked PR on a live sibling's branch](feedback_stacked_pr_on_live_sibling_branch.md) — find the owner via ListAgents, message it, poll the PR state; one DECISIONS.md tail collision per sibling merge, union every time
-- [Read the schema before asking for state](feedback_read_the_schema_before_asking_for_state.md) — #48: "a set or a flag" became one query on a column he already had; an ask reduced to existing state plus a test is the handoff his pattern ships
-- [Control arms need a committed tree](feedback_control_arms_need_a_committed_tree.md) — the helper's `git checkout --` reverts the fix it was testing; commit first, then break on purpose
-- [Deferral must name a measurer](feedback_deferral_must_name_a_measurer.md) — a policy without a number named a bound that doesn't exist and deferred to an experiment that can't look; two questions before writing "left to X"
-- [Hold out the answer key](feedback_hold_out_the_answer_key.md) — X5 scored against the contents list seg/1 consumes; ground truth the system reads is circular, and "mechanical" scoring may need the system's own hard step
-- [Archive bot walls](reference_archive_bot_walls.md) — IA/Commons/Wikisource/FAOLEX-pdf serve scripts; HAL (Anubis), Gallica (ALTCHA), UKGWA (WAF) do not: pin by browser fetch; length-check rtk-echoed hashes
-- [Reading blocked sources](reference_reading_blocked_sources.md) — Reddit answers on `.rss` when JSON/HTML/mirrors are walled; a closed plugin's design is readable from its shipped .xpi bundle
-- [gh resolves repo from cwd](feedback_gh_resolves_repo_from_cwd.md) — a bare `gh pr edit` from a scratch dir under ~/.claude edited the harness repo`s PR; pass -R on every gh mutation outside the project checkout
-- [Fork cwd and the worktree guard](feedback_fork_cwd_and_worktree_guard.md) — cd into fork/ persists and blocks bare git; use git -C per tree, fork work on its own branch pushed to the author fork
-- [One gate per PR at a time](feedback_one_gate_per_pr_at_a_time.md) — two review forks on one branch wrote a four-comment contradiction and an ESCALATE; settle by timeline log line + PR-body pointer + one fresh gate
-- [Guard budget is net-negative](feedback_guard_budget_is_net_negative.md) — a new guard costs two retirements; one that never fired beyond its own original bug can go
-- [Stage by path in shared checkouts](feedback_stage_by_path_in_shared_checkouts.md) — git commit -am steals a parallel session's uncommitted work; the tell is a conflict in a file your PR never touched
-- [Check for the guard before proposing one](feedback_check_for_the_guard_before_proposing_one.md) — 24/24 verbatim was a working guard read backwards; grep the guards, then prove it red in a throwaway worktree
-- [Zotero 10 plugin and reindex](reference_zotero_10_plugin_and_reindex.md) — manifest needs update_url; group libraries load lazily (async getter); no bulk reindex button; 60–80 pages/s; group items reindex to version 0
-- [Positive control before waiting](feedback_positive_control_before_waiting.md) — a silent long job looks the same working or stuck; queue the smallest comparable job and time it instead of extending the watch
-- [Cloud runs need routines](feedback_cloud_runs_need_routines.md) — Agent isolation "remote" falls back to a local subagent silently; a real cloud run is a RemoteTrigger routine with run_once_at, both repos attached, and reconnecting to a live one goes through RemoteTrigger, never ListAgents
-- [Two gate channels find different defects](feedback_two_gate_channels_find_different_defects.md) — my controls prove a check ran; review proves the sentence matches the evidence; #226's vacuous R23 arm was on screen in data I had read
-- [Merge is one command](feedback_merge_is_one_command.md) — "merge" means merge; no CI probe, config read and full make check in front of an inert docs PR
-- [The briefing is a claim](feedback_the_briefing_is_a_claim.md) — a gate directive got five counts/scopes wrong in one night; a verdict covers its head plus the follow-up the reviewer itself named
-- [Merge authority needs an attached verdict](feedback_merge_authority_needs_attached_verdict.md) — a lead invented two review verdicts and merged on them; reviewer results land at the parent, not the lead that spawned them
-- [A gate without the button is advisory](feedback_a_gate_without_the_button.md) — 3 of 5 PRs merged from other lanes, twice mid-review; the gate became a post-merge audit and its three findings landed on main unbounceable
-- [A constant cannot witness a run](feedback_a_constant_cannot_witness_a_run.md) — hardcoded `warm: true` in 6/6 bench drivers against a guard specified to read the code path that ran; check for the key that must be present, not the value that must be right
-- [Verdicts belong on the forge](feedback_verdicts_belong_on_the_forge.md) — the remedy to the entry above it: reviewers post `## Review verdict: …` as a PR comment and the gate polls the page; pre-create their /tmp worktrees, and correct a stale brief mid-flight; post under the PR reviewed (merged ones take comments), or on the commit when the work has no PR at all — never in a PR of your own, never paraphrased into a ticket
-- [Lane dormant after EnterWorktree](feedback_lane_dormant_after_enterworktree.md) — 5h50m silence broken by one message; diagnose by transcript growth (stat -L) and tool-call shape, not forge artifacts
-- [A denial that matches a rule](feedback_a_denial_that_matches_a_rule.md) — the self-merge was blocked while two merges minutes earlier went through; the distinguishing variable was authorship, and a standing rule already named it
-- [A primitive is not a requirement](feedback_a_primitive_is_not_a_requirement.md) — the function existing is not the requirement met; read what calls it on the default path, and its caps
-- [A question is not a directive](feedback_a_question_is_not_a_directive.md) — he probes to test the reasoning; answer it, but don't reshape delivered or in-flight work until he says so
-- [A ruling's scope is its reasoning](feedback_a_ruling_scope_is_its_reasoning.md) — "no knobs" meant precision cannot travel alone; once the other axes shipped the ground expired, and the knob was right as an override on a table
-- [Branch from origin/main, not main](feedback_branch_from_origin_main_not_main.md) — local main goes stale silently; the gate's "23 requirements" line caught it once, branch-hygiene ancestry checks the second time — sync by ref before trusting any of them
-- [Concurrent agent can merge under you](feedback_concurrent_agent_can_merge_under_you.md) — Codex merged PR #298 mid-verify; check gh pr view ground truth before trusting your own in-flight plan
-- [Defect fix over design argument](feedback_defect_fix_over_design_argument.md) — thirteen for thirteen upstream PRs merged; a focused fix adapting to his surface beats arguing his settings should be one object
-- [A disclaimer does not protect a claim](feedback_disclaimer_does_not_protect_a_claim.md) — the artifact said "which C3 row applies is a ruling" and the prose asserted a row anyway; check a budget's topology applies before comparing to it
-- [Mechanism wearing a requirement's number](feedback_mechanism_wearing_a_requirements_number.md) — R31 and C4 both named builds, not properties; three assertions each collapsing into a neighbour's red is the proof
-- [A poller's elapsed is the quantum](feedback_poller_elapsed_is_the_quantum.md) — two builds 44 493 passages apart both read 140,3 s at --poll 20; record the quantum in the artifact and gate on it
-- [Procedure without narration](feedback_procedure_without_narration.md) — hold the gate, skip the lecture; quote rules only when asked why or when the reasoning is the answer
-- [Ratification entry needs its own check](feedback_ratification_entry_needs_its_own_check.md) — a correction swept UPSTREAM/SYNC/ticket for a wrong number but missed the DECISIONS.md entry ratifying that same number
-- [Read the code before designing around SPEC](feedback_read_the_code_before_designing_around_spec.md) — §5.2.6's ladder is unbuilt; three tickets and a brief were written about constants that don't exist, with README's delivered column carrying the answer all along
-- [Rebase can overwrite a sibling fix](feedback_rebase_can_overwrite_a_sibling_fix.md) — a clean, conflict-free rebase silently reintroduced content main had already fixed; a partial-coverage test missed it
-- [Search the fork before claiming absence](feedback_search_the_fork_before_claiming_absence.md) — code lives in the untracked fork/ checkout; a repo grep returns nothing for work that ships, and an extension allowlist hides .mjs
-- [Union append-only logs by timestamp](feedback_union_append_only_by_timestamp.md) — resolve erg log conflicts by union sorted on each line's stamp, never by side; and don't verify with a grep class that can't match a hyphenated author name
-- [tmp quota kills the shell silently](feedback_tmp_quota_kills_the_shell_silently.md) — every Bash exit 1 with no output while Read works: probe with a one-line scratchpad Write, EDQUOT means another session's arena filled the quota'd /tmp; ask the author to purge, commit as soon as the shell returns
-- [Crash recovery under the worktree guard](feedback_crash_recovery_under_worktree_guard.md) — audit sibling worktrees read-only (find -newermt, git show origin:path | diff), then hand the commit to the owning session via claude --resume
-- [Review dispatch invisible to lane](feedback_review_dispatch_invisible_to_lane.md) — a coordinator-dispatched panel is invisible to an Execute agent's own hunt-contract loop; bit twice, once causing a merge with no verdict posted on the PR page
-- [One-liner, no ticket](feedback_one_liner_no_ticket.md) — author ruling 2026-09-06: a one-line probe fix is a hotfix PR with Ticket: none; tickets are for handoffs
-- [Matching a stale number is not confirmation](feedback_matching_a_stale_number_is_not_confirmation.md) — 0,87 agreed with the ledger's 0,91 because both ran the same non-recursive reader; needle one document before trusting a ratio
-- [Not offered is not nothing to see](feedback_not_offered_is_not_nothing_to_see.md) — a not-offered cell says the harness could not look, never that there was nothing to see; read the requirement's body before calling a gap instrument-only
-- [Challenged premise gets a default](feedback_challenged_premise_gets_a_default_not_a_relitigation.md) — late doubt on a measured winner's why → flag with the default on the side the measurement protects; append, don't amend, under a stacked sibling
-- [Check ticket status against main](feedback_check_ticket_status_against_main.md) — a stale primary-checkout branch read a closed ticket (0504) as open; confirm against origin/main before investing real work
-- [Live smoke recipe](project_live_smoke_recipe.md) — how to run bench/smoke_upstream.py with no desktop Zotero: cloud key, transformers.js standalone install, a 1-item build for the schema fixture
-- [Redaction commit doesn't scrub history](feedback_redaction_commit_does_not_scrub_history.md) — a forward-fixing commit's own diff re-exposes leaked content; real fix is reset --soft + recommit + force-push
-- [Ship simple fallback first](feedback_ship_simple_fallback_first.md) — the simple path solves integration; build it before the sophisticated one, Blocked-by not parallel
-- [Review rounds don't fix code](feedback_review_rounds_dont_fix_code.md) — round 3 launched before round 2 synthesized; real bugs found twice means stop and fix, not trust the round cap
-- [Conductor implementation state](project_conductor_implementation_state.md) — 0551/0552/0556 merged, 0553 parked (real concurrency bugs), 0565/0566/0567 filed, 2026-09-01
-- [Execute agent self-review summary can misreport](feedback_execute_agent_self_review_summary_can_misreport.md) — "all five approve" was wrong; doc-propagation had actually returned request-changes, still unfixed in the live diff
-- [sudo incompatible with rootless isolation](project_sudo_incompatible_with_rootless_isolation.md) — podman-unshare, strace/ptrace, and bwrap each refuse sudo separately; the identity switch must wrap tracer+mechanism from outside, never inside
-- [Acceptance arena permission model](project_acceptance_arena_permission_model.md) — arena must be operator-owned with a default ACL for tester, not tester-owned; check the full parent-path chain, not just the arena dir
-- [gh pr edit is broken here](feedback_gh_pr_edit_broken_use_api_patch.md) — fails on a GraphQL Projects-classic error that looks non-fatal but silently no-ops the body edit; use gh api -X PATCH instead, confirmed twice
-- [Verify security exemption premises live](feedback_verify_security_exemption_premises_live.md) — ticket 0638's podman-unshare USER-check skip was never measured and was false; two review rounds hardened it before red-team falsified it live
-- [Amend needs add after late edits](feedback_amend_needs_add_after_late_edits.md) — git commit --amend reuses the staged tree; post-staging Edit calls silently stay uncommitted without a fresh git add
-- [Orchestrator and execute agent, same branch](feedback_orchestrator_and_execute_agent_same_branch.md) — a raid orchestrator editing directly while its own dispatched agent is still pushing is real ping-pong; stand the agent down, then rebase and merge both fixes
-- [Validate utility before sending upstream](feedback_validate_utility_before_sending_upstream.md) — green tests prove correctness, not usefulness; run the downstream check a PR was built to unblock before proposing to send it
-- [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed, sent upstream (#54, #55); gap C now a real decided FAIL (#56), waiting on the maintainer
-- [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time before writing a ticket-log timestamp; a guessed stamp drifts ahead and fails the ticket-logs gate
-- [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — four PRs merged, build lead paused mid-injection on branch t0029-menagerie-build; resume from pushed branches and 0029 log tail, never relaunch
-- [A red gate on main is contended](feedback_red_gate_on_main_is_a_contended_repair.md) — every session sees the same failure; re-run the check right before pushing the repair, and don't file its ticket until you know the fix is yours
-- [A mock that invents the platform](feedback_mock_that_invents_the_platform.md) — Fluent imported from a module Zotero has never had; 40 green tests over a locale layer dead since its first commit
+- [Warm runs and single-point fits](feedback_warm_runs_and_single_point_fits.md) — a cold run measures the download; a one-point fit missed the next by 106 MB
+- [The ticket's own test needs a control](feedback_the_tickets_own_test_needs_a_control.md) — run the specified check against the unfixed tree first
+- [A judgement must not outlive its subject](feedback_judgement_must_not_outlive_its_subject.md) — invalidate on baseline move; pin the SHA, one decayed in 11 minutes
+- [Green PRs, red union](feedback_green_prs_red_union.md) — two reviewed PRs merged into a red main; only a wave-level check sees it
+- [Executor gate-loop stall](feedback_executor_gate_loop_stall.md) — duplicate seat reports plus an unmoving branch tip means take over
+- [Registry, not knobs](project_registry_not_knobs.md) — entries pin the mechanics, rung is per-device, R30 ratified, C3 at 750
+- [Room for multilingual embedders](feedback_room_for_multilingual_embedders.md) — never argue headroom under a ceiling a ruling has displaced
+- [Negative results name their mechanism](feedback_negative_result_names_its_mechanism.md) — X4 killed json_each scoping, not scoping; a year predicate measured 43x cheaper
+- [Leads park on untracked background](feedback_leads_park_on_untracked_background.md) — three leads deadlocked on nohup runs; prompt chunked-foreground up front
+- [Spec edit mechanics](project_spec_edit_mechanics.md) — one SPEC.md, DRAFT header, date-is-version; quote coupling, roster-line trap
+- [Reconcile seats against synthesis](feedback_reconcile_seats_against_synthesis.md) — diff the seat set against the synthesis before acting on it
+- [Re-run the gate after your own fix](feedback_rerun_gate_after_own_fix.md) — the fix commit carried a .PHONY no-op; prove the new check red once
+- [Takeover handoff pattern](feedback_takeover_handoff_pattern.md) — state check with SHAs, record in the PR, explicit ack, then lane discipline
+- [Atomic PRs, short branches](feedback_atomic_prs_short_branches.md) — author verbatim "not folded here"; one concern per PR, upstream filings included
+- [Review catches only what it checks](feedback_review_catches_only_what_it_checks.md) — two passes verified citations; his orthogonal question found the real defect
+- [Stacked PR on a live sibling's branch](feedback_stacked_pr_on_live_sibling_branch.md) — find the owner via ListAgents, message it, then poll the PR state
+- [Read the schema before asking for state](feedback_read_the_schema_before_asking_for_state.md) — an ask reduced to existing state plus a test is the handoff his pattern ships
+- [Control arms need a committed tree](feedback_control_arms_need_a_committed_tree.md) — the helper reverts the fix it is testing; commit first, then break on purpose
+- [Deferral must name a measurer](feedback_deferral_must_name_a_measurer.md) — two questions before writing "left to X"
+- [Hold out the answer key](feedback_hold_out_the_answer_key.md) — ground truth the system itself reads is circular
+- [Archive bot walls](reference_archive_bot_walls.md) — IA/Commons/Wikisource serve scripts; HAL, Gallica, UKGWA need a browser fetch
+- [Reading blocked sources](reference_reading_blocked_sources.md) — Reddit answers on `.rss`; a closed plugin's design is in its shipped .xpi
+- [gh resolves repo from cwd](feedback_gh_resolves_repo_from_cwd.md) — pass -R on every gh mutation outside the project checkout
+- [Fork cwd and the worktree guard](feedback_fork_cwd_and_worktree_guard.md) — cd into fork/ persists; use git -C per tree, fork work on its own branch
+- [One gate per PR at a time](feedback_one_gate_per_pr_at_a_time.md) — two review forks on one branch contradicted; settle with one fresh gate
+- [Guard budget is net-negative](feedback_guard_budget_is_net_negative.md) — a new guard costs two retirements
+- [Stage by path in shared checkouts](feedback_stage_by_path_in_shared_checkouts.md) — commit -am steals a sibling's work; the tell is a conflict in an untouched file
+- [Check for the guard before proposing one](feedback_check_for_the_guard_before_proposing_one.md) — grep the guards, then prove it red in a throwaway worktree
+- [Zotero 10 plugin and reindex](reference_zotero_10_plugin_and_reindex.md) — manifest needs update_url; group libraries load lazily; no bulk reindex; 60–80 p/s
+- [Positive control before waiting](feedback_positive_control_before_waiting.md) — time the smallest comparable job instead of extending the watch
+- [Cloud runs need routines](feedback_cloud_runs_need_routines.md) — Agent isolation "remote" falls back to local silently; use a RemoteTrigger routine
+- [Two gate channels find different defects](feedback_two_gate_channels_find_different_defects.md) — controls prove a check ran; review proves the sentence matches the evidence
+- [Merge is one command](feedback_merge_is_one_command.md) — "merge" means merge; no CI probe and full check in front of an inert docs PR
+- [The briefing is a claim](feedback_the_briefing_is_a_claim.md) — a gate directive got five counts wrong in one night; verify before relaying
+- [Merge authority needs an attached verdict](feedback_merge_authority_needs_attached_verdict.md) — reviewer results land at the parent, not the lead that spawned them
+- [A gate without the button is advisory](feedback_a_gate_without_the_button.md) — 3 of 5 PRs merged from other lanes; the gate became a post-merge audit
+- [A constant cannot witness a run](feedback_a_constant_cannot_witness_a_run.md) — hardcoded warm:true in 6/6 drivers; check for the key, not the value
+- [Verdicts belong on the forge](feedback_verdicts_belong_on_the_forge.md) — reviewers post the verdict as a PR comment, the gate polls the page, never a ticket
+- [Lane dormant after EnterWorktree](feedback_lane_dormant_after_enterworktree.md) — diagnose by transcript growth and tool-call shape, not forge artifacts
+- [A denial that matches a rule](feedback_a_denial_that_matches_a_rule.md) — the distinguishing variable was authorship, and a standing rule already named it
+- [A primitive is not a requirement](feedback_a_primitive_is_not_a_requirement.md) — read what calls it on the default path, and its caps
+- [A question is not a directive](feedback_a_question_is_not_a_directive.md) — he probes to test the reasoning; don't reshape delivered work until he says so
+- [A ruling's scope is its reasoning](feedback_a_ruling_scope_is_its_reasoning.md) — "no knobs" meant precision cannot travel alone; the ground later expired
+- [Branch from origin/main, not main](feedback_branch_from_origin_main_not_main.md) — local main goes stale silently; sync by ref before trusting any check
+- [Concurrent agent can merge under you](feedback_concurrent_agent_can_merge_under_you.md) — check gh pr view ground truth before trusting your in-flight plan
+- [Defect fix over design argument](feedback_defect_fix_over_design_argument.md) — thirteen of thirteen merged; a focused fix beats arguing his settings shape
+- [A disclaimer does not protect a claim](feedback_disclaimer_does_not_protect_a_claim.md) — check that a budget's topology applies before comparing to it
+- [Mechanism wearing a requirement's number](feedback_mechanism_wearing_a_requirements_number.md) — R31 and C4 both named builds, not properties
+- [A poller's elapsed is the quantum](feedback_poller_elapsed_is_the_quantum.md) — two builds 44 493 passages apart both read 140,3 s at --poll 20
+- [Procedure without narration](feedback_procedure_without_narration.md) — hold the gate, skip the lecture
+- [Ratification entry needs its own check](feedback_ratification_entry_needs_its_own_check.md) — a number sweep missed the DECISIONS.md entry ratifying that number
+- [Read the code before designing around SPEC](feedback_read_the_code_before_designing_around_spec.md) — §5.2.6's ladder is unbuilt; three tickets written about constants that never existed
+- [Rebase can overwrite a sibling fix](feedback_rebase_can_overwrite_a_sibling_fix.md) — a clean, conflict-free rebase reintroduced content main had already fixed
+- [Search the fork before claiming absence](feedback_search_the_fork_before_claiming_absence.md) — code lives in the untracked fork/; a repo grep returns nothing for shipping work
+- [Union append-only logs by timestamp](feedback_union_append_only_by_timestamp.md) — resolve erg log conflicts by union sorted on each stamp, never by side
+- [tmp quota kills the shell silently](feedback_tmp_quota_kills_the_shell_silently.md) — every Bash exit 1 with no output while Read works is EDQUOT; ask the author to purge
+- [Crash recovery under the worktree guard](feedback_crash_recovery_under_worktree_guard.md) — audit sibling worktrees read-only, then hand the commit to the owning session
+- [Review dispatch invisible to lane](feedback_review_dispatch_invisible_to_lane.md) — a coordinator-dispatched panel is invisible to the agent's hunt loop
+- [One-liner, no ticket](feedback_one_liner_no_ticket.md) — a one-line probe fix is a hotfix PR with Ticket: none; tickets are for handoffs
+- [Matching a stale number is not confirmation](feedback_matching_a_stale_number_is_not_confirmation.md) — both ran the same non-recursive reader; needle one document first
+- [Not offered is not nothing to see](feedback_not_offered_is_not_nothing_to_see.md) — a not-offered cell says the harness could not look
+- [Challenged premise gets a default](feedback_challenged_premise_gets_a_default_not_a_relitigation.md) — default to the side the measurement protects; append, don't amend
+- [Check ticket status against main](feedback_check_ticket_status_against_main.md) — a stale branch read a closed ticket as open; confirm against origin/main
+- [Live smoke recipe](project_live_smoke_recipe.md) — cloud key, standalone transformers.js, a 1-item build for the schema fixture
+- [Redaction commit doesn't scrub history](feedback_redaction_commit_does_not_scrub_history.md) — the fixing commit's own diff re-exposes it; reset --soft and force-push
+- [Ship simple fallback first](feedback_ship_simple_fallback_first.md) — build the simple path first, Blocked-by rather than parallel
+- [Review rounds don't fix code](feedback_review_rounds_dont_fix_code.md) — real bugs found twice means stop and fix, not trust the round cap
+- [Conductor implementation state](project_conductor_implementation_state.md) — 0551/0552/0556 merged, 0553 parked, 0565–0567 filed
+- [Execute agent self-review summary can misreport](feedback_execute_agent_self_review_summary_can_misreport.md) — "all five approve" was false; doc-propagation had requested changes
+- [sudo incompatible with rootless isolation](project_sudo_incompatible_with_rootless_isolation.md) — wrap tracer and mechanism from outside, never inside
+- [Acceptance arena permission model](project_acceptance_arena_permission_model.md) — operator-owned with a default ACL; check the full parent-path chain
+- [gh pr edit is broken here](feedback_gh_pr_edit_broken_use_api_patch.md) — a Projects-classic error silently no-ops the body; use gh api -X PATCH
+- [Verify security exemption premises live](feedback_verify_security_exemption_premises_live.md) — 0638's podman-unshare skip was never measured, and was false
+- [Amend needs add after late edits](feedback_amend_needs_add_after_late_edits.md) — --amend reuses the staged tree; re-add after any post-staging edit
+- [Orchestrator and execute agent, same branch](feedback_orchestrator_and_execute_agent_same_branch.md) — stand the agent down, then rebase and merge both fixes
+- [Validate utility before sending upstream](feedback_validate_utility_before_sending_upstream.md) — green tests prove correctness, not usefulness; run the downstream check
+- [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed upstream (#54, #55); gap C a decided FAIL (#56)
+- [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time; a guessed stamp drifts ahead and fails the gate
+- [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — lead paused mid-injection on t0029-menagerie-build; resume, never relaunch
+- [A red gate on main is contended](feedback_red_gate_on_main_is_a_contended_repair.md) — re-run the check right before pushing; don't file its ticket until the fix is yours
+- [A mock that invents the platform](feedback_mock_that_invents_the_platform.md) — Fluent imported from a module Zotero never had; 40 green tests over dead code
+- [A stale artifact reads as live](feedback_a_stale_artifact_reads_as_live.md) — 12 611 log entries with today's dates, writer retired two versions back; grep what writes a file before inferring from it
+- [Measure the recommendation you wrote](feedback_measure_the_recommendation_you_wrote.md) — two mechanism-only recommendations, one reversed and one undercut by ten minutes of counting; his short challenge means a number is missing
+- [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md) — the check_ticket_logs gate compares to UTC while the session banner shows local (+2); three failed gates in one session from hand-written stamps
