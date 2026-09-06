@@ -1,0 +1,113 @@
+%erg 0.1
+Title: Triage the five abandoned starts of 14 August before re-attacking their tickets
+Created: 2026-09-06
+Author: claude
+
+--- body ---
+## Context
+
+Five branches carry unmerged commits from 2026-08-14, each with a worktree
+still registered. They are abandoned starts, not merged work: nothing on main
+contains them, and each branch is the only copy of its commits. Four of them
+name tickets that are still open and still listed as ready, so the next
+session to pick one of those tickets will redo work that already exists.
+
+The state file has flagged this since 2026-08-26 as a note to check the
+branches. This ticket is that check, made actionable, because the risk grew:
+main advanced by roughly 300 files in the three weeks since, and one of the
+five now overlaps a change merged on 2026-09-06.
+
+Measured 2026-09-06, after the catch-up that merged nine merge requests:
+
+| branch | commits | ticket | size | merges into main today |
+|---|---|---|---|---|
+| `t0359-hermetic-bash-test-children` | 1 | 0359, open | 212 lines, 5 test files | clean |
+| `t0425-typo-fine-finition` | 1 | 0425, open | 275 lines, 12 files, adds `rules/typo/` | 1 conflict hunk |
+| `t0500-leading-dash-project-name` | 2 | 0500, open | 560 lines, 7 files | clean |
+| `t393-openrouter-seat-credential` | 4 | 0393, open | 439 lines, 6 files | clean |
+| `memory-rtk-mechanism-correction` | 3 | none | 81 lines, 3 memory files | 3 conflict hunks |
+
+## The two findings that make this more than a branch list
+
+**Main already carries part of 0393, and the branch predates today's fix to
+the same file.** `skills/reviewers/reviewers.sh` was 614 lines at the common
+base, is 796 on the branch, and is 636 on main. Main has `--credential-env`
+(8 occurrences) but none of the branch's keystore resolution (12
+occurrences). Main also has the `attempted` counter from ticket 0870, merged
+2026-09-06, which the branch does not have. So the branch is partly redundant
+and partly ahead, against a file that has moved underneath it.
+
+A three-way merge reports this branch as **clean**, and that is exactly the
+trap `rules/git.md` names under the multi-PR wave: large edits in disjoint
+regions auto-merge with no conflict and silently drop nothing here, but a
+careless conflict resolution or a rebase that takes the branch's whole file
+would revert 0870. Whoever picks this up must grep the merged result for the
+0870 markers (`attempted`, `no seat reviewed`, `This is not an approval`)
+before committing, not trust the clean exit.
+
+**The rtk memory branch has no ticket and conflicts.** Its three commits
+correct the recorded mechanism of the rtk output defect, and one of its two
+conflicting files (`feedback-worktree-perime-sert-une-version-ancienne.md`)
+has since changed on main. The harness rule body in `rules/git.md` already
+carries a long, hedged account of the same defect that states the cause is
+not isolated. Reconcile the branch against that text rather than merging it
+blind: the branch may be the correction the rule needs, or it may be
+superseded by it.
+
+## Relevant files
+
+- the five branches above, on `origin`, each with a worktree under `.claude/worktrees/`
+- `skills/reviewers/reviewers.sh` — the contended file, changed on main on 2026-09-06 by ticket 0870
+- `rules/git.md` — holds the current account of the rtk defect the memory branch corrects
+- `tickets/0359-*.erg`, `0425-*.erg`, `0500-*.erg`, `0393-*.erg` — the open tickets involved
+
+## Actions
+
+Per branch, in this order, cheapest first:
+
+1. Read the branch's diff against its merge base and decide one of three
+   outcomes: **revive** (rebase, finish, open a merge request), **harvest**
+   (take the part that is still right, discard the rest), or **drop**
+   (delete the branch, recording in the ticket why the approach was
+   abandoned).
+2. For a revive or harvest, verify against current main rather than against
+   the branch's base. State explicitly what main already carries.
+3. For `t393`, additionally grep the result for the three 0870 markers above
+   and run `tests/test_reviewers.sh` before opening anything.
+4. For the rtk memory branch, compare its text against the current
+   `rules/git.md` account and decide whether it corrects or duplicates it.
+5. Record the outcome in the named ticket's log, then delete the branch and
+   prune its worktree.
+
+## Test
+
+- No new test. This is a triage of existing work; each revived branch carries
+  its own tests, which must pass on the rebased result rather than on the
+  three-week-old base.
+- For `t393`, `tests/test_reviewers.sh` is the gate, and it must still show
+  the three 0870 cases passing after any merge of that branch.
+
+## Verification
+
+- [ ] Each of the five branches has a recorded outcome: revived, harvested, or dropped
+- [ ] Every dropped branch's reasoning is in its ticket's log before the branch is deleted
+- [ ] `t393`'s result preserves the 0870 behaviour, proven by the test file and not by a clean merge exit
+- [ ] No worktree remains for a branch that was dropped
+
+## Invariants
+
+- No branch is deleted before its work is either merged or explicitly judged
+  not worth keeping. Each is currently the only copy of its commits.
+- The 0870 fix on `skills/reviewers/reviewers.sh` survives any 0393 work.
+- Tickets 0359, 0425, 0500 and 0393 stay open until their own exit criteria
+  are met. This ticket closes when the triage is done, not when they are.
+
+## Exit criteria
+
+- [ ] All five branches triaged and their outcomes recorded
+- [ ] The stale-branch bullet in `STATE.md` removed or rewritten to match reality
+- [ ] `make check` passes on anything revived
+
+--- log ---
+2026-09-06T22:30Z claude created
+2026-09-06T22:30Z claude note Measured after the 2026-09-06 catch-up: sizes, ticket status, and three-way merge outcome per branch; found the 0393/0870 overlap on reviewers.sh

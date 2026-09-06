@@ -29,7 +29,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 - **0610 open**: hook scripts swallow every exception and exit 0, so 17 of 31 hook tests pass with the script fully broken. Fix is a test-only strict mode; see the ticket for the closed-`env` trap.
 - **0572 filed** (2026-09-06, from the author's 2026-08-22 note): rule files drift by accumulation; trim `workflow.md`, split Claude Code idiosyncrasies from the core, make the review cadence catch growth.
 - **Catch-up 2026-09-06**: 5 queued PRs merged, 11 stale worktrees and 15 merged branches removed. Still open: #780 (0802 perch adapters, draft, author's call), #791 (dream 09-04, conflicts with #788, needs a rebase).
-- **Abandoned starts on origin, all on still-open ready tickets**: `t0359-…`, `t0425-…`, `t0500-…`, `t393-…`, `memory-rtk-mechanism-correction`, 1–4 commits each from 2026-08-14, with a worktree each. Check them before re-attacking those tickets. `t-idh-mergeeffect` and `tickets/raid-0537-harness-findings` are long-diverged.
+- **0872 filed — five abandoned starts of 14 August**: branches `t0359-…`, `t0425-…`, `t0500-…`, `t393-…` and `memory-rtk-mechanism-correction`, 81 to 560 lines each, every one the only copy of its commits and four naming still-open ready tickets. Triage before re-attacking any of them. `t393` overlaps the 0870 fix to `reviewers.sh` and merges clean while doing so, so grep the result for the 0870 markers. `t-idh-mergeeffect` and `tickets/raid-0537-harness-findings` stay long-diverged.
 
 ## Backlog
 
