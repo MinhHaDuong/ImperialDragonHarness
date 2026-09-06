@@ -108,3 +108,4 @@
 - [Validate utility before sending upstream](feedback_validate_utility_before_sending_upstream.md) — green tests prove correctness, not usefulness; run the downstream check a PR was built to unblock before proposing to send it
 - [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed, sent upstream (#54, #55); gap C now a real decided FAIL (#56), waiting on the maintainer
 - [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time before writing a ticket-log timestamp; a guessed stamp drifts ahead and fails the ticket-logs gate
+- [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — four PRs merged, build lead paused mid-injection on branch t0029-menagerie-build; resume from pushed branches and 0029 log tail, never relaunch
