@@ -1,0 +1,81 @@
+%erg 0.1
+Title: Session scratch directories under /tmp are never removed: SessionEnd hook, healthcheck line, molt sweep
+Created: 2026-09-06
+Author: sim
+
+--- log ---
+2026-09-06T16:40Z sim created
+
+--- body ---
+## Context
+Every Claude Code session gets a scratch directory,
+`/tmp/claude-<uid>/<cwd-key>/<session-id>/{scratchpad,tasks}`, and one
+more per distinct cwd the session visits (an `EnterWorktree` mid-session
+adds a second key). Verified on 2026-09-06 against the installed CLI
+(2.1.263): the code only ever `mkdir`s that directory. There is no
+delete-on-exit, no startup or periodic sweep, and no settings key. The
+only relocation knob is the `CLAUDE_CODE_TMPDIR` environment variable,
+which takes precedence over `TMPDIR`. On doudou, an hour after a reboot,
+13 session directories existed and 3 of their sessions were alive.
+
+On doudou `/tmp` is a 12 GB tmpfs in RAM, mounted `usrquota`, and systemd
+259 caps each user at 80 % of it at login. When agents point an arena or a
+smoke run at their scratchpad (`smoke1130`, `matrix-hosted`, 1.9 GB on
+2026-09-06), those directories outlive the session and count against every
+later session of the same user. The 2026-09-06 fill (search-works-for-zotero
+ticket 0714 names the main filler, an upstream test-suite leak) killed the
+Bash tool in three sessions at once with EDQUOT and ended in a reboot. The
+harness cannot fix third-party leaks; it can stop adding its own, and it
+can see the fill coming.
+
+## Relevant files
+- `settings.json` — hook wiring; `SessionStart` runs `scripts/on-start.sh`, no `SessionEnd` entry exists
+- `scripts/on-start.sh` — the pattern a `scripts/on-end.sh` would follow (declarative output, never non-zero)
+- `skills/healthcheck/SKILL.md` — the numbered check list; a host-level temp check would be item 12
+- `scripts/project-state.py` — the probe healthcheck reads; the new data (temp usage, orphan session dirs) belongs there so the skill stays a reader
+- `skills/molt/SKILL.md` — the fix-now step; the orphan sweep is a repair, not a report
+- `scripts/worktree-gc.sh` — existing liveness test for lock pids, the same test the sweep needs
+
+## Actions
+1. `SessionEnd` hook: a script that removes this session's own scratch
+   directories (every `<cwd-key>/<session-id>` that matches the session id
+   in the hook's JSON), never anything else. Ownership is clean by
+   construction: no liveness test, no cross-session deletion. It covers
+   every normal exit.
+2. Healthcheck item 12, read from the probe: temp-root usage against the
+   per-user cap where one applies, and the list of session directories
+   whose session has no live process. `warn` when usage crosses a
+   threshold or orphans exist; report-only.
+3. Molt fix-now: delete the orphans the probe listed, gated on the same
+   liveness test, one bullet per directory. Roar and lair inherit both
+   through the healthcheck and molt they already call; add nothing to
+   those two skills.
+4. Do not relocate the temp root from the harness. `CLAUDE_CODE_TMPDIR`
+   is an operator decision (it also needs to stay short for sandbox
+   socket paths), so document it in the healthcheck warning text rather
+   than set it.
+
+## Test
+- Hook: spawn it via a real subprocess with a crafted `/tmp` fixture and a
+  fake session id in the JSON; assert only that session's directories go,
+  and a sibling session's survive. Red first: run against the tree before
+  the hook exists and show the directory remains.
+- Probe: a fixture temp root with one directory owned by a live pid and one
+  by a dead pid; assert the probe lists exactly the dead one.
+
+## Verification
+- [ ] Positive control: the hook test fails on the unfixed tree
+- [ ] After a normal session exit on doudou, `ls /tmp/claude-1001/*/` no longer lists that session
+- [ ] Healthcheck on doudou reports the temp line; molt removes a planted orphan and nothing else
+- [ ] `tests/` pass; the SessionEnd script never exits non-zero
+
+## Invariants
+- No script ever deletes a directory whose session has a live process
+- Hook output stays declarative; a hook failure prints nothing on every prompt
+- Guard budget: this adds one hook and one probe field; retire nothing, since neither is a guard
+
+## Exit criteria
+- [ ] `SessionEnd` hook wired and tested
+- [ ] Healthcheck item 12 and its probe field in place
+- [ ] Molt fix-now sweep in place, gated on liveness
+- [ ] `make check` passes
