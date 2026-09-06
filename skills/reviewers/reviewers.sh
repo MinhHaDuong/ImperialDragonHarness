@@ -40,6 +40,14 @@ Subcommands:
                                 Opts: --endpoint URL --board FILE
                                 --trial-ticket T --credential-env NAME --name L
   help                          Print this usage block and exit 0
+
+Reviewing a branch in another repository (a fork of an upstream project, say):
+  REVIEWERS_REPO=<path>         the checkout the seats read (default: this harness)
+  REVIEWERS_PR_BRANCH=<branch>  skip the forge lookup for the head branch
+Without the first, a branch that lives elsewhere fails as an unknown pathspec.
+
+`request` exits non-zero when cli/model seats were attempted and none of them ran.
+Per-seat fail-open is unchanged: one seat failing never blocks the others.
 EOF
 }
 
@@ -266,6 +274,10 @@ case "$subcmd" in
         [ -n "$branch" ] || { echo "error: could not resolve branch for MR #${pr}" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"; mkdir -p "$dest"
         ran=0
+        # Counted beside `ran` so the two silences can be told apart: a roster of
+        # forge-bot seats alone attempts nothing locally and is not a failure, while
+        # every attempted seat failing is no verdict at all.
+        attempted=0
         while IFS='|' read -r name kind st ep mo lg tt ce; do
             case "$kind" in
                 forge-bot)
@@ -295,6 +307,7 @@ case "$subcmd" in
                     # it into the seat's trial line (ticket 0353). forge-bot
                     # seats run async server-side and get no sidecar — there is
                     # nothing local to time.
+                    attempted=$((attempted+1))
                     t0=$(date +%s.%N)
                     "$SEAT_RUNNER" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
@@ -315,6 +328,15 @@ case "$subcmd" in
             esac
         done < <(roster_records)
         echo "request: ${ran} cli/model seat(s) ran for MR #${pr}" >&2
+        # A panel that reviewed nothing must not report success. Per-seat fail-open is
+        # right and stays: one seat must never block a verdict. No seat running is not a
+        # lenient verdict, it is the absence of one, and a caller that gates on the exit
+        # status cannot otherwise tell it from three seats finding nothing to say.
+        if [ "$attempted" -gt 0 ] && [ "$ran" -eq 0 ]; then
+            echo "request: no seat reviewed MR #${pr} — all ${attempted} attempted seat(s) failed;" \
+                 "see ${dest}/*.err. This is not an approval." >&2
+            exit 1
+        fi
         ;;
 
     harvest)
