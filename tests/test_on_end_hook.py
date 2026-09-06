@@ -187,6 +187,26 @@ def test_subagent_session_leaves_the_shared_dir_alone(tmp_path):
 
 
 @pytest.mark.integration
+def test_a_removal_that_fails_still_exits_zero(tmp_path):
+    """The invariant holds when the filesystem says no, not only on bad input.
+
+    `set -e` plus the EXIT trap is what makes this pass: a read-only cwd-key
+    directory makes the removal fail, and the hook must still finish quietly.
+    """
+    root, dirs = _fixture(tmp_path)
+    key = root / "-key-b"
+    key.chmod(0o500)  # readable, not writable: the removal cannot succeed
+    try:
+        result = _run_hook(root, tmp_path, {"session_id": TARGET_SID})
+
+        assert result.returncode == 0, result.stderr
+        assert dirs["target_b"].exists(), "fixture is void — the removal succeeded"
+        assert not dirs["target_a"].exists(), "the removable one was not removed"
+    finally:
+        key.chmod(0o700)
+
+
+@pytest.mark.integration
 def test_hook_is_wired_as_a_session_end_hook():
     """The canonical settings file runs this script on SessionEnd."""
     settings = json.loads((REPO_ROOT / "settings.shared.json").read_text())

@@ -22,11 +22,16 @@
 # built under it — so the harness reports usage and cleans up after itself
 # rather than moving the root.
 #
-# Deliberately NOT `set -e` (the one documented exception in
-# rules/coding-bash.md): the invariant is that this hook never exits non-zero,
-# and under `-e` any failing probe would abort before the final `exit 0`. Every
-# command below is either guarded or harmless on failure.
-set -uo pipefail
+# The invariant is that this hook NEVER exits non-zero: a failing SessionEnd
+# hook is noise on every session teardown, and there is nothing a caller could
+# do with the status. `set -e` alone would break that — any failing probe aborts
+# before the final `exit 0` — so the EXIT trap pins the status while `-e` still
+# stops the script the moment something unexpected happens. Every command below
+# is additionally guarded (`|| true`, or an `if`), and no bare
+# `[ … ] && …` is used at top level: under `-e` a false test there would abort
+# the script, which with this trap would look exactly like a clean no-op.
+set -euo pipefail
+trap 'exit 0' EXIT
 
 # Read the payload first, whatever we do with it: exiting before draining stdin
 # would hand the runtime an EPIPE on a hook that is supposed to be invisible.
@@ -43,16 +48,17 @@ fi
 
 session_id=""
 if command -v jq >/dev/null 2>&1; then
-    session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null)
+    session_id=$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null) \
+        || session_id=""
 fi
 if [ -z "$session_id" ]; then
     # jq is not guaranteed on a fresh machine; the payload is one flat object,
     # so a literal-field extraction is enough for the fallback.
     session_id=$(printf '%s' "$payload" | tr -d '\n' \
         | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-        | head -1)
+        | head -1) || session_id=""
 fi
-[ -z "$session_id" ] && exit 0
+if [ -z "$session_id" ]; then exit 0; fi
 
 # The id becomes a path component, so it must be a plain name: no separator, no
 # `.`, no glob metacharacter. `*` or `..` here would widen the deletion from one
@@ -60,7 +66,7 @@ fi
 case "$session_id" in
     *[!A-Za-z0-9_-]*) exit 0 ;;
 esac
-[ "${#session_id}" -ge 8 ] || exit 0
+if [ "${#session_id}" -lt 8 ]; then exit 0; fi
 
 # Test seam, and the operator's relocation knob if one is set. The uid suffix is
 # the runtime's own layout: one root per user under the temp base.
@@ -69,19 +75,18 @@ if [ -z "$root" ]; then
     base="${CLAUDE_CODE_TMPDIR:-${TMPDIR:-/tmp}}"
     root="${base%/}/claude-$(id -u 2>/dev/null || echo "${UID:-0}")"
 fi
-[ -d "$root" ] || exit 0
+if [ ! -d "$root" ]; then exit 0; fi
 
 shopt -s nullglob
 for key_dir in "$root"/*/; do
     target="${key_dir}${session_id}"
     # A symlink reports -d through its target: refuse to follow one out of the
     # root. Only a real directory is ever removed.
-    [ -L "${target}" ] && continue
-    [ -d "$target" ] || continue
-    rm -rf -- "$target" 2>/dev/null
+    if [ -L "$target" ] || [ ! -d "$target" ]; then continue; fi
+    rm -rf -- "$target" 2>/dev/null || true
     # Prune the cwd-key directory once its last session is gone; a key still
     # holding another session's directory is left alone (rmdir refuses).
-    rmdir -- "${key_dir%/}" 2>/dev/null
+    rmdir -- "${key_dir%/}" 2>/dev/null || true
 done
 
 exit 0
