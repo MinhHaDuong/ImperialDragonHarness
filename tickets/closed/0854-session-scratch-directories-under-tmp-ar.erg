@@ -2,12 +2,14 @@
 Title: Session scratch directories under /tmp are never removed: SessionEnd hook, healthcheck line, molt sweep
 Created: 2026-09-06
 Author: sim
+Closed: autoclosed — PR #812
 
 --- log ---
 2026-09-06T16:40Z sim created
 2026-09-06T23:12Z claude note implemented: SessionEnd hook scripts/on-end.sh (wired in settings.shared.json), probe scripts/session_scratch.py behind project-state.py field session_scratch, healthcheck item 12, molt step 1.7 sweep. Liveness = open fd inside the dir (the CLI holds one on tasks/ for the session's life) OR process cwd inside it OR the id named by a live process, plus a 15-minute age rail. make check green (1131).
 2026-09-06T23:49Z claude note gaze round 1 REROLL: fixed symlink escapes (cwd-key dir and scratch root, both scripts), guarded scan()'s directory reads so "never raises" holds, truncation now warns, prose em-dash chains in healthcheck/molt.
 
+2026-09-06T23:58Z Minh Ha-Duong closed — autoclosed — PR #812
 --- body ---
 ## Context
 Every Claude Code session gets a scratch directory,
