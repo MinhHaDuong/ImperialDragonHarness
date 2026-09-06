@@ -325,7 +325,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
       "promoted": false
     },
     "feedback_adversarial_pair_verification": {
@@ -349,7 +349,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:16Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
       "promoted": false
     },
     "feedback_agent_timeout_refactor": {
@@ -365,7 +365,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
       "promoted": false
     },
     "feedback_aitells_scope_manuscript_vs_crossdoc": {
@@ -381,7 +381,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
       "promoted": false
     },
     "feedback_analytical_null_overlay": {
@@ -469,7 +469,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
       "promoted": false
     },
     "feedback_avoid_costume_metaphor_het": {
@@ -509,7 +509,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:41Z",
       "promoted": false
     },
     "feedback_batch_decisions_run_to_end": {
@@ -517,7 +517,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:41Z",
       "promoted": false
     },
     "feedback_beamer_plain_frame_sizing": {
@@ -533,7 +533,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:42Z",
       "promoted": false
     },
     "feedback_beat_padme_ssh": {
@@ -645,7 +645,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:14Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:42Z",
       "promoted": false
     },
     "feedback_claude_md_is_thin_loader_idh": {
@@ -653,7 +653,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:42Z",
       "promoted": false
     },
     "feedback_cleanroom_force_rebuild_test": {
@@ -669,7 +669,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:43Z",
       "promoted": false
     },
     "feedback_compute_before_figure": {
@@ -725,7 +725,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:43Z",
       "promoted": false
     },
     "feedback_cross_repo_ticket_in_owning_repo": {
@@ -741,7 +741,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:44Z",
       "promoted": false
     },
     "feedback_csv_writer_fieldnames": {
@@ -813,7 +813,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:44Z",
       "promoted": false
     },
     "feedback_dont_pre_close_ticket_in_execution": {
@@ -821,7 +821,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:44Z",
       "promoted": false
     },
     "feedback_draft_pr_blocks_merge": {
@@ -829,7 +829,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_drain_stalled_green_prs": {
@@ -933,7 +933,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_erg_pr_merge_needs_close_claim": {
@@ -941,7 +941,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_erg_pr_merge_partial_success": {
@@ -965,7 +965,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_erg_spec_headers_immutable": {
@@ -973,7 +973,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:08Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_erg_verb_drift": {
@@ -981,7 +981,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
       "promoted": false
     },
     "feedback_escalate_check_merge_after_note": {
@@ -1117,7 +1117,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_fp_unrecognized_not_hallucinated": {
@@ -1173,7 +1173,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_gh_merge_worktree": {
@@ -1205,7 +1205,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_gh_pr_list_files_empty": {
@@ -1269,7 +1269,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_guard_the_class_not_the_stale_value": {
@@ -1325,7 +1325,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_harness_is_the_deliverable": {
@@ -1333,7 +1333,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:55Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_harness_not_here": {
@@ -1349,7 +1349,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
       "promoted": false
     },
     "feedback_het_register": {
@@ -1373,7 +1373,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_host_file_writes": {
@@ -1405,7 +1405,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_inspect_ref_readonly": {
@@ -1453,7 +1453,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_lean_methods": {
@@ -1493,7 +1493,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_local_vs_cloud": {
@@ -1565,7 +1565,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_merge_conflict_all_hunks": {
@@ -1653,7 +1653,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
       "promoted": false
     },
     "feedback_moving_files_narrows_guard_globs": {
@@ -1805,7 +1805,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_no_shared_env_sync_during_sibling_agent": {
@@ -1949,7 +1949,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_parallel_push_during_investigation": {
@@ -2029,7 +2029,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_pin_known_defect_not_xfail": {
@@ -2061,7 +2061,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_pipeline_ux": {
@@ -2125,7 +2125,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:55Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_propagate_notes_to_tickets": {
@@ -2221,7 +2221,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_ratchet_stale_after_rebuild": {
@@ -2389,7 +2389,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:09Z",
+      "last_confirmed": "2026-09-06T22:39:48Z",
       "promoted": false
     },
     "feedback_rr_intake_is_laborious": {
@@ -2397,7 +2397,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_rtk_git_log_stale": {
@@ -2421,7 +2421,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_rtk_rewrites_grep_output": {
@@ -2493,7 +2493,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_semantic_completeness_resolvers": {
@@ -2533,7 +2533,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_shell_timeout_no_loops": {
@@ -2581,7 +2581,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_skill_commit_discipline": {
@@ -2589,7 +2589,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_skill_invocation_flag_gates_mandates": {
@@ -2597,7 +2597,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_skill_lifecycle_edit_whole_run": {
@@ -2605,7 +2605,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:49Z",
       "promoted": false
     },
     "feedback_skill_topic_boundaries": {
@@ -2621,7 +2621,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-06T12:21:11Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_smoke_one_then_blast_parallel": {
@@ -2629,7 +2629,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_smoke_promote_production": {
@@ -2726,7 +2726,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-04T09:09:09Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": true,
       "promoted_at": "2026-08-10T20:02:34Z"
     },
@@ -2743,7 +2743,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:14Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_sweep_beats_guard_for_prose": {
@@ -2759,7 +2759,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_task_notification_exit_code": {
@@ -2863,7 +2863,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_trust_the_llm": {
@@ -2895,7 +2895,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
       "promoted": false
     },
     "feedback_untrusted_env_export_is_code_execution": {
@@ -2903,7 +2903,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_use_auto_merge": {
@@ -2943,7 +2943,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_vars_file_provenance": {
@@ -3039,7 +3039,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:56Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_verify_fork_under_execution": {
@@ -3047,7 +3047,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_verify_makefile_pathrefactor_with_make_n": {
@@ -3111,7 +3111,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_worktree_deleted_midrun_orphans_cwd": {
@@ -3119,7 +3119,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
       "promoted": false
     },
     "feedback_worktree_deletion": {
@@ -3167,7 +3167,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-07-24T20:24:10Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "feedback_worktree_search": {
@@ -3367,7 +3367,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_book_idees_recues_finance_climat": {
@@ -3407,7 +3407,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_datapaper_release_actions": {
@@ -3463,7 +3463,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_erg_closed_dir": {
@@ -3567,7 +3567,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_gide_conference": {
@@ -3607,7 +3607,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_het_submission_branches_protected": {
@@ -3631,7 +3631,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_imperial_dragon": {
@@ -3799,7 +3799,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_paper_instrument_circulation": {
@@ -3975,7 +3975,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:52Z",
       "promoted": false
     },
     "project_structured_dirs_registry": {
@@ -4183,7 +4183,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:56Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": false
     },
     "reference_hal_sword_update_recipe": {
@@ -4207,7 +4207,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": false
     },
     "reference_keystore_keys_selection": {
@@ -4345,7 +4345,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": false
     },
     "user_moa_moe_contract": {
@@ -4369,7 +4369,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-07-24T20:24:11Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": false
     },
     "user_platform": {
@@ -5138,6 +5138,78 @@
       ],
       "first_seen": "2026-09-06T22:23:27Z",
       "last_confirmed": "2026-09-06T22:23:27Z",
+      "promoted": false
+    },
+    "feedback_ask_the_live_peer_before_committing_its_work": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-06T22:39:40Z",
+      "promoted": false
+    },
+    "feedback_child_agent_notifications_bubble": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:42Z",
+      "last_confirmed": "2026-09-06T22:39:42Z",
+      "promoted": false
+    },
+    "feedback_enumerate_untracked_with_status_uall": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-06T22:39:45Z",
+      "promoted": false
+    },
+    "feedback_guard_flags_match_across_compound": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-06T22:39:46Z",
+      "promoted": false
+    },
+    "feedback_isolated_session_cannot_read_shared_checkout": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
+      "promoted": false
+    },
+    "feedback_locale_fr_floats_in_guarded_scripts": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-06T22:39:47Z",
+      "promoted": false
+    },
+    "feedback_tests_pinning_prompt_prose": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-06T22:39:50Z",
+      "promoted": false
+    },
+    "feedback_verify_sibling_prs_jointly": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-06T22:39:51Z",
+      "promoted": false
+    },
+    "reference_claude_code_goal_command": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": false
     }
   }

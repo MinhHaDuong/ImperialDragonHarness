@@ -1,11 +1,10 @@
 ## Key insights
 
-- Agent scope drift and shared-state contention are the dominant failure modes: verify agents spiral, parallel agents contaminate branches, forks start bare, and a live session can switch a shared worktree's branch between a background job's commands. Defense: assert branch+commit in one compound, isolate mutating call sites, recover misplaced commits by cherry-pick — never by resetting the other branch.
-- Write-commit atomicity is a hard constraint: beat's dirty-tree gate blocks on it, and the gitignore whitelist hides new files from plain status/add (need `add -f`). Commit with every write — the 2026-07-24 sweep found 111 uncommitted memory files across 9 projects. Scope the `-f` with an explicit pathspec; `add -f -A` sweeps in hundreds of gitignored session transcripts.
-- Stored state describes the moment it was written, and the tool reading it describes the branch it stands on: `erg ready` lists the current tree's tickets, a note's "RESOLVED" claim ages, rtk rewrites git's output. Re-verify live before acting.
-- Fidelity checks pass what runtime breaks: extraction, adherence tests, and gaze verify that code matches its spec, not that it works — and the permission classifier manufactures prohibitions by paraphrase from scope statements it can see. Probe runtime cheaply; make every ratchet prove RED on the pre-fix state.
-- Security architecture is first-class and needs an explicit path BEFORE implementation: the credential path (BASH_ENV, never argv-inlined env) and containment (OS-level isolation, never a cooperative protocol grant).
-- This memory is the harness's operational runbook: invisible invariants and failure modes discovered at cost — not what the code does (git) nor architecture decisions (tickets/docs). Ground decisions in fleet audits of real state; a rule or a guard earns its place only against a defect class that demonstrably exists.
+- Shared state has owners, and the owner is findable. Uncommitted work in the primary checkout, a branch switched under a background job, a worktree another session is standing in: the frontmatter's originSessionId leads to a transcript, and a peer answers in a minute. Asking beat every inference a file scan could make.
+- A check whose all-clear cannot be told from "I could not look" is not a check, and the failure runs both ways: a probe returning everything hides a broken parse as surely as one returning nothing. Run it once against a case known to be positive before trusting it.
+- Merge by union, never by copying a file wholesale. An index, a provenance store, or an append-only log taken from a stale checkout silently reverts whatever landed meanwhile, and the merge reports clean while doing it.
+- Stored state describes the moment it was written, and the tool reading it describes the branch it stands on: a restore takes from HEAD and not from the ref you just compared against, `erg ready` lists the current tree, rtk rewrites git's output. Re-verify live before acting.
+- This memory is the harness's operational runbook: invisible invariants and failure modes discovered at cost, not what the code does (git) nor architecture decisions (tickets and docs). A rule or a guard earns its place only against a defect class that demonstrably exists.
 
 ## Entries
 
@@ -49,7 +48,6 @@
 - [Paper release/ subdir layout](user_paper_release_subdir_layout.md) — one dir per paper under `~/CNRS/papiers/{actif,sent,published}`; immutable append-only `release/<date desc>/` per
 - [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'
 - [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md) — a delegate's own background children complete-notify the top session; don't act, wait for the delegate
-- [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — skill frontmatter model: does NOT propagate to spawned children; per-invocation `model` enum is the only
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
 - [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
 - [git-erg adopter canonical shape](reference_git_erg_adopter_canonical_shape.md) — canonical adopter = CLAUDE.md is `@tickets/AGENTS.md`; detect stale pre-0013 footprints via orphan
