@@ -2,11 +2,13 @@
 Title: A reviewer panel that runs zero seats reports success
 Created: 2026-09-03
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #793
 
 --- log ---
 2026-09-03T13:06Z Minh Ha-Duong created
 2026-09-06T17:10Z claude note Renumbered from 0853, which MR #790 had filed for another ticket; jumped clear of the 0854 frontier
 
+2026-09-06T16:48Z Minh Ha-Duong closed — autoclosed — PR #793
 --- body ---
 
 ## Context
