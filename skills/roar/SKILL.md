@@ -103,11 +103,16 @@ default branch — there are no remote branches nor merge requests to inspect.
    the whole session into one record — which is the loss ticket 0331 exists to
    prevent, at its worst in a batched session that merged many PRs. When the
    session's base commit is known (`origin/main` as it stood before the first
-   merge, recoverable from the reflog or from the first PR's base), pass it to
-   `enumerate-merges.py` instead of falling through:
-   ```bash
-   ROWS="$(~/.claude/skills/roar/enumerate-merges.py <session-base-sha> --until "$UNTIL" --project "<name>")"
-   ```
+   merge, recoverable from the reflog or from the first PR's base), run the
+   block above with that sha substituted for `$(cat "$SENTINEL")` in the
+   `enumerate-merges.py` call, instead of falling through. Written out, that
+   call is `enumerate-merges.py <session-base-sha> --until "$UNTIL" --project
+   "<name>"`. It stays prose rather than a second `bash` fence on purpose:
+   step 2 must offer the agent exactly ONE runnable snippet, and
+   `tests/test_roar_step2_attribution.py` executes that snippet to prove the
+   per-merge-request attribution invariant. A second fenced block would make
+   the test's extraction ambiguous, and a test that cannot say which block it
+   ran proves nothing about the one the agent runs.
    Attribution is per-PR either way; the sentinel only answers *where to start*.
    Fall back to the aggregate when no defensible base exists — rewritten
    history, squash-merges, a no-forge repo with no merge commits. (Precedent:
