@@ -212,7 +212,6 @@ _setup collide
 ( cd "$SANDBOX/collide-seed" &&
   echo incoming > new.txt && git add new.txt && git commit --quiet -m c3 &&
   git push --quiet origin main )
-NEW=$(git -C "$SANDBOX/collide-seed" rev-parse main)
 echo mine > "$CLONE/new.txt"
 before=$(_main_sha "$CLONE")
 out=$(bash "$SYNC" "$CLONE")
@@ -236,6 +235,33 @@ if [ "$(_main_sha "$CLONE")" = "$before" ] \
     _pass "tracked modifications refuse the sync, named as the cause and by path"
 else
     _fail "tracked modifications must be refused, named and the path listed (got: $out)"
+fi
+
+# --- case 15: an unrelated tracked modification alongside a genuinely blocking
+# untracked/incoming collision → git's own reason wins (ticket 0851, reroll 1).
+# Cases 13 and 14 never combine the two, and that gap hid an ordering defect:
+# the classifier probed the checkout for dirt BEFORE reading git's refusal, so
+# any unrelated tracked edit displaced the real cause and sent the operator to
+# back up a file that was never in the way. The clone is first brought to c2 so
+# f.txt is current and the incoming c3 touches only new.txt — the tracked edit
+# here provably does not block the fast-forward on its own.
+_setup combo
+bash "$SYNC" "$CLONE" >/dev/null
+( cd "$SANDBOX/combo-seed" &&
+  echo incoming > new.txt && git add new.txt && git commit --quiet -m c3 &&
+  git push --quiet origin main )
+echo mine > "$CLONE/new.txt"        # untracked, collides with the incoming c3
+echo unrelated > "$CLONE/f.txt"     # tracked, and c3 does not touch it
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine" ] \
+   && [ "$(cat "$CLONE/f.txt")" = "unrelated" ] \
+   && echo "$out" | grep -q "untracked file" \
+   && ! echo "$out" | grep -q "tracked modifications"; then
+    _pass "an unrelated tracked edit does not displace git's own stated refusal"
+else
+    _fail "the collision, not the unrelated tracked edit, must be named (got: $out)"
 fi
 
 if (( fail )); then
