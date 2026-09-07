@@ -2,6 +2,7 @@
 Title: Triage the five abandoned starts of 14 August before re-attacking their tickets
 Created: 2026-09-06
 Author: claude
+Closed: autoclosed — PR #815
 
 --- log ---
 2026-09-06T22:30Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-09-07T02:25Z claude note Suppressions et conservations. Tags d'archive pousses sur origin AVANT toute suppression, verifies par git ls-remote : archive/t0359-hermetic-bash-test-children (e7253ce), archive/t0425-typo-fine-finition (46e8a22), archive/t0500-leading-dash-project-name (0162cca), archive/t393-openrouter-seat-credential (f280207), archive/memory-rtk-mechanism-correction (e9a9175). Aucune suppression n'est donc irreversible. Branches distantes supprimees : t0359, t0500, t393 (leur travail vit dans les branches de reprise et leurs demandes de fusion) et memory-rtk-mechanism-correction (drop). Branche CONSERVEE : t0425-typo-fine-finition, dont la triage n'a pas pu s'achever cette nuit
 2026-09-07T02:25Z claude note RESTE A LA MAIN, hors perimetre de ce run qui n'avait pas le droit de toucher aux worktrees. Cinq enregistrements de worktree du 14 aout sont a elaguer, et cinq branches locales a supprimer avec eux (une branche locale ne peut pas etre supprimee tant qu'un worktree la tient) : .claude/worktrees/agent-acb24c39f94523736 (t0359), agent-a45d137e93534fd90 (t0425, a garder si la reprise de 0425 est relancee depuis la), agent-aafc5891c9ca4c5a7 (t0500), agent-afd83aa4529d1f611 (t393), mem-rtk-fix (memory-rtk-mechanism-correction). Verifier qu'aucune session n'y est vivante avant de les retirer : trois autres worktrees etaient actifs pendant ce run
 
+2026-09-07T00:18Z Minh Ha-Duong closed — autoclosed — PR #815
 --- body ---
 ## Context
 
