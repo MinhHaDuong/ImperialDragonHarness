@@ -44,9 +44,18 @@ printf 'HF_TOKEN=hfval\n' > "$FHOME/.config/keys/huggingface.env"
 
 # Load bash-env.sh in a subprocess with $HOME=<home> and PWD=<projdir>, then print
 # the value of environment variable <var> ("" if unset). stderr silenced.
+#
+# `env -i` is load-bearing, not tidiness (ticket 0359). The fake HOME isolates the
+# keystore, but a plain `HOME=… bash -c` still inherits the caller's environment —
+# including the BASH_ENV that re-runs the real loader at child startup. This suite
+# both dumps the environment (`export -p`) and names credential variables, so an
+# inherited value would be printed by any failing assertion; that combination
+# spilled two live keys on 2026-07-27. It also masks the behaviour under test: an
+# ambient PATH or BASH_ENV is exactly what checks (2), (4) and (6) below measure.
+# Only a known-empty base env can rule both out (rules/coding-bash.md).
 _load_var() {
     local home="$1" projdir="$2" var="$3"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         n="$3"
@@ -59,7 +68,7 @@ _load_var() {
 # one overwrites it.
 _load_var_preseed() {
     local home="$1" projdir="$2" var="$3" realval="$4"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         export "$3=$4"
         source "$2"
@@ -71,7 +80,7 @@ _load_var_preseed() {
 # Load bash-env.sh and return only the exit code (0 = no shell error).
 _load_rc() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" >/dev/null 2>&1
@@ -81,7 +90,7 @@ _load_rc() {
 # Load bash-env.sh and print only its STDERR (diagnostic warnings).
 _load_stderr() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
@@ -90,7 +99,7 @@ _load_stderr() {
 # Load bash-env.sh and print `export -p` (the exported environment).
 _load_exports() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         export -p

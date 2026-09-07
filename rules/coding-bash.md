@@ -161,3 +161,9 @@ Two consequences, and the second is the one that bites quietly:
 Verify with a **fake sentinel** loader, never the real key: point `BASH_ENV` at
 a script exporting a recognisable dummy, run the suite, and grep the output for
 the dummy. Verifying with the real key is how you leak it a second time.
+
+Reference implementation: `tests/test_bash_tests_are_hermetic.sh` enforces this
+section mechanically across every `tests/test_*.sh` — each `bash -c` child must
+be spawned under `env -i`, or the suite must clear `BASH_ENV` for all of them.
+It is a textual scanner, so its header names the shapes it cannot see; read
+that list before treating a PASS as proof.
