@@ -1,0 +1,91 @@
+%erg 0.1
+Title: La garde d'hermeticite ne voit pas les spawns par chemin de script, et annonce quand meme 29 suites sur 29
+Created: 2026-09-07
+Author: claude
+
+--- log ---
+2026-09-07T04:05Z claude created balayage roar apres 0874 ; trouve independamment par la phase 5 de la porte sur PR 818, qui l'a etabli en retirant -i d'une copie et en observant SKIP plutot que BAD
+
+--- body ---
+## Context
+
+`tests/test_bash_tests_are_hermetic.sh`, ajoute par 0359 et fusionne cette nuit
+(PR #810), affirme a chaque execution :
+
+```
+OK: all 29 shell suite(s) spawn bash children hermetically (7 spawner(s))
+```
+
+Son `_SPAWN_RE` (l. 248) exige un `-c` :
+
+```
+...((/[^[:space:]]*/)?bash|\$\{?(BASH|SHELL)\}?)([[:space:]]+-[^[:space:]]+)*[[:space:]]+-[a-zA-Z]*c([[:space:]]|$)
+```
+
+La forme `bash "$HOOK"` — un chemin de script, sans `-c` — ne correspond donc a
+rien et le fichier est classe « pas un spawner ». Elle est pourtant le mode
+d'invocation normal d'un hook, et le depot en compte une dizaine :
+
+| fichier | lignes |
+|---|---|
+| `tests/test_guard_destructive_bash.sh` | 19, 70 |
+| `tests/test_guard_commit_on_main.sh` | 39, 89 |
+| `tests/test_erg_pr_merge.sh` | 234, 696 |
+| `tests/test_check_cross_pr_ticket_collision.sh` | 129 |
+| `tests/test_block_pr_merge_in_worktree.sh` | 19 |
+| `tests/test_guard_cd_primary_repo.sh` | 42, 144 (deja hermetiques depuis 0874) |
+
+Ces enfants heritent `BASH_ENV`, donc rejouent `scripts/bash-env.sh`. C'est
+exactement ce qui a rendu `test_guard_cd_primary_repo.sh` rouge des qu'une
+selection `KEYS=` correcte a ete posee (0874, 0873) — un cas reel, deja
+survenu, dans un fichier que cette garde declarait couvert.
+
+Le defaut n'est donc pas « la garde est incomplete ». Il est plus precis et
+plus grave : **son tout-va-bien ne se distingue pas de son je-n-ai-pas-pu-
+regarder**, et c'est la classe que cette garde a ete ecrite pour eliminer.
+« 29 suites sur 29 » se lit comme une couverture, alors que le denominateur
+est le nombre de fichiers qu'elle a su lire.
+
+## Relevant files
+
+- `tests/test_bash_tests_are_hermetic.sh` — `_SPAWN_RE` l. 248, boucles l. 262 et 306
+- les six fichiers du tableau ci-dessus
+- `tickets/closed/0874-...erg` — l'instance qui a coute une passe rouge
+- `tickets/closed/0359-...erg` — le ticket qui a apporte la garde
+
+## Actions
+
+1. Elargir `_SPAWN_RE` a la forme chemin-de-script : `bash <path>` sans `-c`,
+   en gardant l'exigence que le chemin ne soit pas une option.
+2. Reclasser les fichiers ainsi decouverts : chacun doit etre hermetique ou
+   declarer explicitement pourquoi il ne peut pas l'etre.
+3. Faire dire au message de succes ce qu'il a reellement examine — nombre de
+   spawns vus, et non seulement nombre de fichiers lus.
+
+## Test
+
+Controle positif d'abord, et il est deja ecrit : retirer `-i` d'un spawn
+chemin-de-script existant et exiger que la garde reponde **BAD**, non SKIP.
+C'est la manipulation qui a revele le defaut ; aujourd'hui elle rend SKIP.
+
+Controle negatif : un fichier sans aucun spawn doit rester SKIP, sans quoi
+l'elargissement transforme le silence en bruit.
+
+## Verification
+
+- [ ] Le controle positif rougit avant correctif et passe apres
+- [ ] Les six fichiers du tableau sont classes spawners
+- [ ] Le compte annonce distingue fichiers lus et spawns examines
+- [ ] `make check` passe, avec une selection `KEYS=` posee au niveau harness
+
+## Invariants
+
+- Aucun test existant n'est affaibli ni supprime pour faire tomber un compte.
+- Le cas « jq absent » de `test_guard_cd_primary_repo.sh` garde son `PATH`
+  restreint : ce n'est pas un relachement d'hermeticite mais son sujet.
+
+## Exit criteria
+
+- [ ] La garde voit la forme chemin-de-script
+- [ ] Un spawn non hermetique de cette forme fait rougir la garde, prouve par
+      le controle positif et non par relecture du motif
