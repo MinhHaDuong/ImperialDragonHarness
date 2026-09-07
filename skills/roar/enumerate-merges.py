@@ -152,6 +152,7 @@ def build_records(since_sha: str, until: str, project: str, root: str) -> list[d
 # Options whose VALUE may legitimately begin with a dash. Only these are glued;
 # an unknown option keeps argparse's own error handling.
 VALUE_OPTIONS = ("--project", "--until")
+KNOWN_OPTIONS = VALUE_OPTIONS + ("-h", "--help")
 
 
 def normalize_argv(argv: list[str]) -> list[str]:
@@ -164,6 +165,11 @@ def normalize_argv(argv: list[str]) -> list[str]:
     normalization lives here rather than in each call site's memory: the
     ``--opt=value`` spelling is the only form argparse accepts for a
     leading-dash value.
+
+    A token the parser already knows is never a value: ``--project --until``
+    means the value was omitted, and gluing it hides that behind a satisfied
+    option and a stray positional. Leaving the pair alone lets argparse report
+    the missing value itself.
     """
     out: list[str] = []
     i = 0
@@ -176,6 +182,7 @@ def normalize_argv(argv: list[str]) -> list[str]:
             token in VALUE_OPTIONS
             and i + 1 < len(argv)
             and argv[i + 1].startswith("-")
+            and argv[i + 1] not in KNOWN_OPTIONS
         ):
             out.append(f"{token}={argv[i + 1]}")
             i += 2

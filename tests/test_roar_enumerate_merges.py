@@ -328,3 +328,31 @@ def test_commits_and_files_changed_counts(repo):
     assert len(records) == 1, res.stderr
     assert records[0]["commits"] == 2
     assert records[0]["files_changed"] == 2
+
+
+def test_value_option_followed_by_another_option_is_not_glued(repo):
+    """A value-option whose value was omitted must not swallow the next option.
+
+    ``normalize_argv`` glues ``--opt <-value>`` so a leading-dash project slug
+    survives argparse (ticket 0500). The dash test is what a *missing* value
+    looks like too: ``--project --until HEAD`` glued to ``--project=--until``,
+    argparse then saw a satisfied option plus a stray positional, and the real
+    fault — no value for ``--project`` — was never reported. Skip the glue when
+    the next token is itself an option the parser knows, and argparse raises
+    the error it already knows how to raise.
+    """
+    res = run(
+        ["python3", str(ENUMERATE), head(repo), "--project", "--until", "HEAD"],
+        cwd=str(repo),
+        check=False,
+    )
+    assert res.returncode != 0
+    assert "expected one argument" in res.stderr, res.stderr
+    # The genuine leading-dash value it exists for still traverses the call.
+    base = head(repo)
+    merge_pr(
+        repo, pr=34, owner_branch="jo/still-glues", feature_commits=[("s.txt", "w")]
+    )
+    records, ok = enumerate_merges(repo, base, project="-home-haduong--claude")
+    assert ok.returncode == 0, ok.stderr
+    assert records[0]["project"] == "-home-haduong--claude", "leading dash lost"
