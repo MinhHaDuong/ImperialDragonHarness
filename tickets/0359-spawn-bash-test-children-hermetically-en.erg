@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-07-27T12:37Z HDMX-coding-agent created
+2026-09-07T00:27Z claude note gaze reroll round 1 — guard false-negatived on whole-line `env -i` scoping and raw-text BASH_ENV exemption; detection rescoped per-spawn, negative controls added
 
 --- body ---
 ## Context
