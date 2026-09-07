@@ -193,6 +193,140 @@ else
     _fail "framed worktree-list output corrupted the parse; main not fast-forwarded (RED = pre-fix)"
 fi
 
+# --- case 12: untracked-only checkout, no path collision → main fast-forwards
+# (ticket 0851). Untracked files do not block a fast-forward, so a checkout
+# carrying only untracked cruft must sync exactly like a clean one.
+_setup untracked
+echo cruft > "$CLONE/untracked-nocollide.txt"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ "$(cat "$CLONE/untracked-nocollide.txt")" = "cruft" ]; then
+    _pass "untracked-only checkout fast-forwards; the untracked file survives"
+else
+    _fail "untracked-only checkout must fast-forward (got: $out)"
+fi
+
+# --- case 13: an untracked file collides with an incoming path → refuse, name
+# the collision, overwrite nothing (ticket 0851) -----------------------------
+_setup collide
+( cd "$SANDBOX/collide-seed" &&
+  echo incoming > new.txt && git add new.txt && git commit --quiet -m c3 &&
+  git push --quiet origin main )
+echo mine > "$CLONE/new.txt"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine" ] \
+   && echo "$out" | grep -q "untracked file"; then
+    _pass "untracked/incoming collision refuses, names the collision, overwrites nothing"
+else
+    _fail "collision must refuse and name itself, preserving the untracked file (got: $out)"
+fi
+
+# --- case 14: tracked modifications → still refused, and named as the cause
+# (ticket 0851) --------------------------------------------------------------
+_setup tracked
+echo local-edit > "$CLONE/f.txt"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && echo "$out" | grep -q "tracked modifications" \
+   && echo "$out" | grep -q "f\.txt"; then
+    _pass "tracked modifications refuse the sync, named as the cause and by path"
+else
+    _fail "tracked modifications must be refused, named and the path listed (got: $out)"
+fi
+
+# --- case 15: an unrelated tracked modification alongside a genuinely blocking
+# untracked/incoming collision → git's own reason wins (ticket 0851, reroll 1).
+# Cases 13 and 14 never combine the two, and that gap hid an ordering defect:
+# the classifier probed the checkout for dirt BEFORE reading git's refusal, so
+# any unrelated tracked edit displaced the real cause and sent the operator to
+# back up a file that was never in the way. The clone is first brought to c2 so
+# f.txt is current and the incoming c3 touches only new.txt — the tracked edit
+# here provably does not block the fast-forward on its own.
+_setup combo
+bash "$SYNC" "$CLONE" >/dev/null
+( cd "$SANDBOX/combo-seed" &&
+  echo incoming > new.txt && git add new.txt && git commit --quiet -m c3 &&
+  git push --quiet origin main )
+echo mine > "$CLONE/new.txt"        # untracked, collides with the incoming c3
+echo unrelated > "$CLONE/f.txt"     # tracked, and c3 does not touch it
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine" ] \
+   && [ "$(cat "$CLONE/f.txt")" = "unrelated" ] \
+   && echo "$out" | grep -q "untracked file" \
+   && ! echo "$out" | grep -q "tracked modifications"; then
+    _pass "an unrelated tracked edit does not displace git's own stated refusal"
+else
+    _fail "the collision, not the unrelated tracked edit, must be named (got: $out)"
+fi
+
+# --- case 16: a busy checkout (concurrent index.lock) alongside an unrelated
+# tracked modification → git's own line wins (ticket 0851, escalation 2).
+# Case 15 fixed the ordering only for the two substrings the classifier
+# recognises; an index.lock refusal matches neither, so it still fell through to
+# the local dirt probe and was reported as "tracked modifications" — the exact
+# wrong remedy, and the very distinction the 2026-08-30 incident turned on. The
+# probe is now a last resort, reached only when git said nothing at all.
+_setup busy
+bash "$SYNC" "$CLONE" >/dev/null
+( cd "$SANDBOX/busy-seed" &&
+  echo three > f.txt && git commit --quiet -am c3 && git push --quiet origin main )
+echo unrelated > "$CLONE/g.txt"
+git -C "$CLONE" add g.txt
+git -C "$CLONE" commit --quiet -m tracked-base
+git -C "$CLONE" reset --quiet --soft HEAD^
+echo edited > "$CLONE/g.txt"        # tracked modification, unrelated to c3
+: > "$CLONE/.git/index.lock"        # a concurrent git process holds the index
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+rm -f "$CLONE/.git/index.lock"
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && echo "$out" | grep -q "index\.lock" \
+   && ! echo "$out" | grep -q "tracked modifications"; then
+    _pass "a busy index.lock is quoted verbatim, not misreported as tracked modifications"
+else
+    _fail "index.lock refusal must be quoted, not displaced by unrelated dirt (got: $out)"
+fi
+
+# --- case 17: git states BOTH cause blocks at once — a blocking tracked
+# modification and an untracked/incoming collision (ticket 0851, escalation 3).
+# Cases 13-16 each produce a single block, and that gap hid a path-harvest
+# defect: the untracked branch matched its substring against the whole stderr
+# blob and then collected every indented line in it, so the tracked file
+# appeared in the untracked list. The operator was told a file carrying
+# uncommitted work was untracked and to move it aside — a false statement
+# attached to the one remedy that loses the work. Both causes must be named,
+# each with only its own paths.
+_setup both
+bash "$SYNC" "$CLONE" >/dev/null            # bring the clone to c2
+( cd "$SANDBOX/both-seed" &&
+  echo three > f.txt &&                     # c3 touches f.txt (tracked) ...
+  echo incoming > new.txt && git add new.txt &&   # ... and adds new.txt
+  git commit --quiet -am c3 && git push --quiet origin main )
+echo mine-tracked > "$CLONE/f.txt"          # tracked, modified, and IN THE WAY
+echo mine-untracked > "$CLONE/new.txt"      # untracked, and also in the way
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+tracked_part=${out%%; and separately,*}
+untracked_part=${out#*; and separately,}
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/f.txt")" = "mine-tracked" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine-untracked" ] \
+   && echo "$out" | grep -q "tracked modifications" \
+   && echo "$out" | grep -q "untracked file" \
+   && echo "$tracked_part" | grep -q "f\.txt" \
+   && ! echo "$tracked_part" | grep -q "new\.txt" \
+   && echo "$untracked_part" | grep -q "new\.txt" \
+   && ! echo "$untracked_part" | grep -q "f\.txt"; then
+    _pass "two concurrent cause blocks are both named, each with only its own paths"
+else
+    _fail "concurrent blocks must not merge their path lists (got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi

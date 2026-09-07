@@ -1,0 +1,79 @@
+%erg 0.1
+Title: sync-local-main : distinguer untracked-only de dirty avant de refuser le fast-forward
+Created: 2026-08-30
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #809
+
+--- log ---
+2026-08-30T09:08Z Minh Ha-Duong created
+2026-09-06T22:50Z claude note La prémisse mécanique du ticket ne se reproduit pas : le script n'a jamais testé la propreté du checkout, il tentait déjà le merge --ff-only dans tous les cas, et un checkout untracked-only se synchronise donc depuis toujours. Fixture untracked-sans-collision montée en premier : verte avant correctif, gardée comme garde de non-regression et non comme rouge-vers-vert. Les deux vraies fixtures rouges sont la collision untracked/entrant et les modifications suivies, toutes deux avalées par « dirty or busy ». Le défaut est donc le diagnostic, pas la décision : la sortie de git était jetée (2>&1 >/dev/null) et le message nommait une cause qu'il n'avait pas établie. Cause probable du refus du 2026-08-30, non isolée : soit une collision de chemin, soit un index.lock concurrent — le nouveau message aurait distingué les deux
+2026-09-06T23:20Z claude note Verify-gate reroll round 1 : défaut d'ordonnancement non résolu, le test de modifications suivies masque la vraie cause
+2026-09-06T23:25Z claude note Reroll round 1 corrigé. refusal_cause classe désormais à partir de $err (la raison établie par git) avant toute sonde locale : collision untracked/entrant, puis modifications suivies (quand git les nomme, ou en repli si son message n'identifie rien et que le checkout est sale), puis la ligne de git citée telle quelle. Cas 15 ajouté — édition suivie sans rapport + collision réelle — rouge avant correctif (« tracked modifications in the checkout: f.txt »), vert après. Les trois branches sont un seul if/elif/else. tracked_dirty() ne vaut vrai que sur le code 1 de git diff --quiet : un code > 1 (index corrompu, permission) n'est plus replié dans « sale ». Commentaire d'en-tête réécrit : il affirmait que les modifications suivies sont le seul état bloquant, ce que la puce suivante contredisait
+2026-09-07T00:15Z claude note Escalation gate round 2 : le reroll 1 n'avait corrigé l'ordre que pour les deux sous-chaînes reconnues. Un refus index.lock n'en contient aucune, retombait donc sur la sonde locale et sortait « tracked modifications » — le mauvais remède, et précisément la distinction sur laquelle porte l'incident du 2026-08-30. Corrigé : tracked_dirty n'est plus un départage mais un dernier recours, atteint seulement quand git n'a rien dit du tout ; sinon la ligne de git est citée. Cas 16 ajouté (index.lock concurrent + édition suivie sans rapport) : contrôle positif fait contre e135525, l'ancien script répond « tracked modifications in the checkout: g.txt », le nouveau cite « Unable to create ... index.lock ». Le critère de sortie 2, coché prématurément aux deux tours précédents, est maintenant gagné
+2026-09-07T00:36Z claude note Verify-gate reroll round 2 : critère de sortie 2 non gagné. Quand git énonce deux blocs de cause à la fois, refusal_cause fusionne les listes de chemins et annonce un fichier suivi comme collision untracked, avec le mauvais remède
+2026-09-07T00:50Z claude note Reroll round 2 corrigé. block_paths() récolte les chemins par bloc — ancrage sur l'en-tête, arrêt à la première ligne non indentée — au lieu de ratisser toutes les lignes indentées du blob ; les deux causes sont désormais annoncées ensemble, chacune avec ses seuls chemins. Cas 17 ajouté, contrôle positif fait contre 3a47ff1 : l'ancien script répond « an untracked file collides with the incoming main: f.txt new.txt » (f.txt est suivi et modifié, et « move it aside » perdait le travail non commité), le nouveau sépare les deux. Troncature à trois chemins désormais marquée « (+N more) » : une liste coupée sans marque se lit comme complète. Horodatages des entrées ci-dessus corrigés — ils portaient l'heure locale (+02:00) étiquetée Z, dont une dans le futur ; le journal est de nouveau monotone en UTC réel
+2026-09-07T02:25Z Minh Ha-Duong closed — autoclosed — PR #809
+--- body ---
+## Context
+Le 2026-08-30 (session polycentric_activity), `sync-local-main.sh` a refusé
+deux fois d'avancer `main` du checkout principal avec le verdict « dirty or
+busy checkout », alors que le checkout n'avait que des fichiers **non
+suivis** — qui ne bloquent pas un `merge --ff-only`. Le fast-forward manuel,
+exécuté depuis le même checkout une fois la session sortie de son worktree,
+est passé sans friction. Coût : deux refus trompeurs, une question de
+l'auteur (« le git pull est-il fait ? ») restée deux tours sans bonne
+réponse. Le conservatisme est le bon défaut ; le diagnostic est trop
+grossier.
+
+## Relevant files
+- `scripts/sync-local-main.sh` — le test de propreté à affiner
+
+## Actions
+1. Dans la branche « le checkout a main extrait », séparer trois états :
+   modifications suivies (index ou arbre) → refuser comme aujourd'hui ;
+   fichiers non suivis seulement → tenter le `merge --ff-only` (un ff ne
+   touche pas les fichiers non suivis, sauf collision de chemin que git
+   refuse alors de lui-même — laisser ce refus s'exprimer et le rapporter) ;
+   propre → comportement actuel.
+2. Ajuster le message de refus pour nommer l'état constaté (« modifications
+   suivies » vs « collision untracked/entrant ») au lieu du fourre-tout
+   « dirty or busy ».
+
+## Test
+- Fixture rouge d'abord : dépôt jouet où main est extrait, un fichier non
+  suivi sans collision, origin/main en avance → le script actuel refuse
+  (rouge), le script corrigé avance main (vert).
+- Cas collision : fichier non suivi homonyme d'un fichier entrant → le
+  script rapporte le refus de git, ne force rien, n'écrase rien.
+
+## Verification
+- [x] Les deux fixtures ci-dessus passent (cas 12 et 13 de
+      `tests/test_sync_local_main.sh`) — avec la réserve que le cas
+      untracked-sans-collision était **déjà vert** avant correctif : il garde
+      un acquis, il ne prouve pas le correctif. Ce sont les cas 13 (collision)
+      et 14 (modifications suivies) qui rougissent sur l'ancien script.
+- [x] Le cas « modifications suivies » refuse toujours (cas 14), et nomme
+      désormais jusqu'à trois chemins
+
+## Invariants
+- Jamais de `-f`, de stash ni d'écrasement d'un fichier non suivi ; en doute,
+  refuser reste le comportement.
+- Les autres branches du script (rien n'a main extrait, état divergé)
+  inchangées.
+
+## Exit criteria
+- [x] Un checkout untracked-only se synchronise sans intervention — vrai
+      avant comme après ; désormais sous garde (cas 12)
+- [x] Message de refus nomme la cause exacte : « tracked modifications in the
+      checkout: <chemins> », « an untracked file collides with the incoming
+      main: <chemin> », ou la ligne de git citée telle quelle. Chaque cause
+      porte son propre remède ; l'ancien conseil unique (« sauvegarder le
+      fichier sale ») était faux pour un checkout seulement occupé. La
+      classification lit d'abord le refus de git, la sonde locale n'étant
+      qu'une inférence et n'intervenant qu'en dernier recours, lorsque git
+      n'a rien dit ; et chaque liste de chemins est récoltée dans le seul bloc
+      qui l'a nommée. Cas 13 (collision), 14 (modifications suivies), 15 (les
+      deux à la fois, la cause réelle l'emportant), 16 (index.lock concurrent
+      + édition suivie sans rapport, la ligne de git citée) et 17 (git énonce
+      les deux blocs, chacun avec ses seuls chemins).
+- [x] `make check` passe
