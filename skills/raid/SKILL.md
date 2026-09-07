@@ -312,8 +312,8 @@ checks) and hand-merging around the guard.
    finding sends the PR back through Phase 6 rather than to merge.
    `harvest` also emits `SEAT-FAILED:` / `SEAT-MISSING:` lines and a
    `PANEL-INTEGRITY:` headline for every seat that did not review (ticket
-   0393). These are **not** findings — do not disposition them — but they
-   MUST be carried verbatim into the external-verdict record of step 3.
+   0393). These are **not** findings: do not disposition them. They MUST be
+   carried verbatim into the external-verdict record of step 3.
    A panel reported as run while its seats silently never authenticated is
    no answer to the self-review objection at all.
 3. On a clean disposition, record the external verdict on the merge

@@ -578,8 +578,8 @@ proceeds — per-seat fail-open; one seat never blocks the verdict.
 
 **Panel integrity** (ticket 0393). `harvest` also emits `SEAT-FAILED:` /
 `SEAT-MISSING:` lines and a `PANEL-INTEGRITY:` headline for every seat that did
-not review. These are **not** findings — do not disposition them — but they
-MUST be carried verbatim into the `/gaze` comment, under the panel section.
+not review. These are **not** findings: do not disposition them. They MUST be
+carried verbatim into the `/gaze` comment, under the panel section.
 A panel reported as run while its external seats silently never authenticated
 is the failure this exists to prevent: it happened, and the run read as clean.
 

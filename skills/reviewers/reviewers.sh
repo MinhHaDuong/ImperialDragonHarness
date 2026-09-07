@@ -574,6 +574,16 @@ case "$subcmd" in
             # No run record at all. A forge-bot seat leaves no local findings by
             # design (its review lands server-side), so only the seats that were
             # supposed to write findings here can be judged missing.
+            #
+            # The `.findings` test is the fallback for a directory `request`
+            # never wrote: a pre-0393 artefacts tree, or one populated by hand.
+            # Every branch of `request` now writes a `.status`, so for a run of
+            # this version the record is authoritative and the fallback is not
+            # reached. Its blind spot is therefore bounded and worth naming: a
+            # findings file with no record reads as a seat that reviewed, so a
+            # tree assembled from two runs, or by hand, can still show a result
+            # for a seat that did not review here. `request` clears the per-run
+            # sidecars precisely so that state cannot arise from this tool.
             case "$skind" in
                 cli-agent|local-model)
                     if [ ! -s "${dest}/${sname}.findings" ]; then
