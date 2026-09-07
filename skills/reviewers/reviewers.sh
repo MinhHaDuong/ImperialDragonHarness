@@ -289,9 +289,16 @@ _keystore_file_for() {  # $1 validated variable name
 # BASH_ENV (so this `bash -c` cannot re-source the harness env script and
 # fork-bomb) and clears the environment (so the lookup can only resolve a name
 # the provider file itself defines — no ambient variable is smuggled in). `set
-# -a` is what makes an export-less assignment visible at all. The value is
-# captured as a string and assigned literally, never eval'd; the file's other
-# variables die with the subshell. Exit 3 = unreadable file, 4 = name absent.
+# -a` is what makes an export-less assignment visible at all. The EXTRACTED
+# VALUE is captured as a string and printed literally, never eval'd; the file's
+# other variables die with the subshell. Sourcing the provider file, on the
+# other hand, executes its entire content — `.` is not a parser, it is the
+# shell — so a provider file is trusted code, exactly as ~/.claude/scripts/
+# bash-env.sh trusts the same files for the same reason. Reaching that
+# execution requires prior write access to the keystore, which is the trust
+# boundary this design already assumes; the isolation above bounds what such
+# code can reach, it does not stop it running. Exit 3 = unreadable file,
+# 4 = name absent.
 _keystore_value() {  # $1 provider file, $2 validated variable name
     env -i bash -c '
         set -a
@@ -444,13 +451,14 @@ case "$subcmd" in
                     #
                     # `attempted` counts the seats actually handed to the
                     # seat-runner, so it is incremented HERE and not before the
-                    # credential gate above. That boundary is a live arbitration
-                    # between two open tickets, recorded rather than decided:
-                    # 0870 says a panel that produced no verdict must exit
-                    # non-zero, and a seat skipped for an unresolved credential
-                    # produced none either; 0393 says an unresolved credential
-                    # stays fail-open (0205) and is reported on `harvest`'s
-                    # STDOUT as SEAT-FAILED / PANEL-INTEGRITY, which is the
+                    # credential gate above. That boundary is an arbitration
+                    # between two tickets' contracts, recorded rather than
+                    # decided: 0870 (settled by PR #793) says a panel that
+                    # produced no verdict must exit non-zero, and a seat skipped
+                    # for an unresolved credential produced none either; 0393
+                    # (open) says an unresolved credential stays fail-open
+                    # (0205) and is reported on `harvest`'s STDOUT as
+                    # SEAT-FAILED / PANEL-INTEGRITY, which is the
                     # channel the panel's reader actually sees. Counting it here
                     # keeps both tickets' own tests true. The residual case —
                     # a roster whose EVERY seat is credential-skipped exits 0,
