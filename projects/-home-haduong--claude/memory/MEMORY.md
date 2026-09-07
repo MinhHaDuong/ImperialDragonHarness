@@ -8,6 +8,9 @@
 
 ## Entries
 
+- [A boolean secret probe must not expand the value](feedback_boolean_probe_must_not_expand_the_value.md) — `${VAR:-unset}` prints the KEY when VAR is set; test, then print a literal — this leaked a live key from a probe written to avoid exactly that
+- [Switching worktrees strands a running gate](feedback_switching_worktrees_breaks_running_gates.md) — the guard tracks the SESSION's worktree, so a mid-gate EnterWorktree kills that fork's Bash entirely; park until the verdict lands
+- [A test green for an accidental reason](feedback_a_test_green_for_an_accidental_reason.md) — repairing a config gap turned make check red; the all-clear had meant "nothing to look at". Three-arm control, or you cannot tell a fix from a changed subject
 - [/goal is a hidden Claude Code command](reference_claude_code_goal_command.md) — session-scoped Stop hook, 4000-char condition, absent from --help and the skills list; grep the binary
 - [Tests that pin prompt prose](feedback_tests_pinning_prompt_prose.md) — asserting a sentence exists in a SKILL.md blocks rewriting it; and a substring assertion passes on never-called code
 - [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md) — `git push && gh api -f x=y` trips the force-push guard; split the calls or use --field
