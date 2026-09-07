@@ -5,7 +5,7 @@ Author: claude
 
 --- log ---
 2026-09-07T04:05Z claude created balayage roar apres 0874 ; trouve independamment par la phase 5 de la porte sur PR 818, qui l'a etabli en retirant -i d'une copie et en observant SKIP plutot que BAD
-
+2026-09-07T04:05Z claude note bump verify-reroll — round 1: la table sous-estimait la classe (six fichiers annonces, seize reels)
 --- body ---
 ## Context
 
@@ -24,16 +24,34 @@ Son `_SPAWN_RE` (l. 248) exige un `-c` :
 
 La forme `bash "$HOOK"` — un chemin de script, sans `-c` — ne correspond donc a
 rien et le fichier est classe « pas un spawner ». Elle est pourtant le mode
-d'invocation normal d'un hook, et le depot en compte une dizaine :
+d'invocation normal d'un hook. Le balayage qui en donne le denominateur :
 
-| fichier | lignes |
+```
+grep -nE '(^|[^[:alnum:]_./-])bash[[:space:]]+("?\$|"?[./~])' tests/*.sh \
+  | grep -vE '[[:space:]]-[a-zA-Z]*c([[:space:]]|$)' \
+  | cut -d: -f1 | sort -u
+```
+
+Il renvoie **78 spawns dans 16 fichiers**, sur les 30 suites de `tests/` :
+
+| fichier | spawns |
 |---|---|
-| `tests/test_guard_destructive_bash.sh` | 19, 70 |
-| `tests/test_guard_commit_on_main.sh` | 39, 89 |
-| `tests/test_erg_pr_merge.sh` | 234, 696 |
-| `tests/test_check_cross_pr_ticket_collision.sh` | 129 |
-| `tests/test_block_pr_merge_in_worktree.sh` | 19 |
-| `tests/test_guard_cd_primary_repo.sh` | 42, 144 (deja hermetiques depuis 0874) |
+| `tests/test_sync_local_main.sh` | 21 |
+| `tests/test_seat_runner.sh` | 14 |
+| `tests/test_pretooluse_worktree_path_guard.sh` | 12 |
+| `tests/test_setup_claude_agent_projects.sh` | 5 |
+| `tests/test_guard_enterworktree_parked_cwd.sh` | 4 |
+| `tests/test_release_rewrite_url.sh` | 4 |
+| `tests/test_guard_no_push.sh` | 3 |
+| `tests/test_guard_commit_on_main.sh` | 2 |
+| `tests/test_guard_destructive_bash.sh` | 2 |
+| `tests/test_guard_worktree_identity.sh` | 2 |
+| `tests/test_lint_on_edit.sh` | 2 |
+| `tests/test_erg_pr_merge.sh` | 2 |
+| `tests/test_guard_cd_primary_repo.sh` | 2 (deja hermetiques depuis 0874) |
+| `tests/test_block_pr_merge_in_worktree.sh` | 1 |
+| `tests/test_check_cross_pr_ticket_collision.sh` | 1 |
+| `tests/test_reviewers.sh` | 1 |
 
 Ces enfants heritent `BASH_ENV`, donc rejouent `scripts/bash-env.sh`. C'est
 exactement ce qui a rendu `test_guard_cd_primary_repo.sh` rouge des qu'une
@@ -46,10 +64,18 @@ regarder**, et c'est la classe que cette garde a ete ecrite pour eliminer.
 « 29 suites sur 29 » se lit comme une couverture, alors que le denominateur
 est le nombre de fichiers qu'elle a su lire.
 
+La limite est deja ecrite dans la garde elle-meme : son en-tete la nomme sous
+`BLIND SPOTS` (l. 77-79, « `bash FILE` takes a script path... but such a child
+does still inherit BASH_ENV »), et le commentaire au-dessus de `_SPAWN_RE`
+(l. 247) la repete. Le delta que ce ticket ouvre est donc etroit et net :
+documentee dans la source, muette dans le verdict. Qui lit le fichier la
+trouve ; qui lit la ligne `OK:` lit une couverture. L'action 3 ne demande rien
+d'autre que de la faire remonter a l'execution.
+
 ## Relevant files
 
 - `tests/test_bash_tests_are_hermetic.sh` — `_SPAWN_RE` l. 248, boucles l. 262 et 306
-- les six fichiers du tableau ci-dessus
+- les seize fichiers du tableau ci-dessus
 - `tickets/closed/0874-...erg` — l'instance qui a coute une passe rouge
 - `tickets/closed/0359-...erg` — le ticket qui a apporte la garde
 
@@ -74,7 +100,9 @@ l'elargissement transforme le silence en bruit.
 ## Verification
 
 - [ ] Le controle positif rougit avant correctif et passe apres
-- [ ] Les six fichiers du tableau sont classes spawners
+- [ ] Chaque fichier que le balayage ci-dessus renvoie est classe spawner ;
+      le compte de la garde et celui du balayage concordent, et le balayage
+      est rejoue plutot que le tableau relu
 - [ ] Le compte annonce distingue fichiers lus et spawns examines
 - [ ] `make check` passe, avec une selection `KEYS=` posee au niveau harness
 
