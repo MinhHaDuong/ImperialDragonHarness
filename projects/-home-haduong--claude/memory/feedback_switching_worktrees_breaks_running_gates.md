@@ -40,5 +40,4 @@ and held the cause; the cause was upstream and it had no way to reach it.
   is session-level, not that agent's state.
 
 Related: [[feedback_shared_worktree_live_session_contention]],
-[[feedback_worktree_deleted_midrun_orphans_cwd]],
-[[reference_git_in_a_worktree_session]].
+[[feedback_worktree_deleted_midrun_orphans_cwd]].
