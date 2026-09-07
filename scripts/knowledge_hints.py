@@ -60,7 +60,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-from path_utils import contained
+from path_utils import contained, hook_strict
 
 MANIFEST = ".knowledge.toml"
 MAX_SUMMARY = 200
@@ -271,8 +271,16 @@ if __name__ == "__main__":
     # failure: a traceback here would surface on every prompt of the session,
     # which is worse than the hint never appearing. Same contract as the
     # sibling inject_rule_on_edit.py.
+    #
+    # The cost of that contract is that a crash and a correct silence leave the
+    # same trace on exit code and stdout, which is the only pair of channels the
+    # suite can read — so the suite cannot tell them apart, and every "silent"
+    # assertion in it passes against a script that does nothing at all. The
+    # strict switch is off in production and set only by the tests; see
+    # path_utils.hook_strict.
     try:
         main()
     except (Exception, SystemExit):
-        pass
+        if hook_strict():
+            raise
     sys.exit(0)

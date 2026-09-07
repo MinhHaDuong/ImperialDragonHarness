@@ -7,6 +7,7 @@ Author: Codex
 2026-08-28T12:57Z Codex created child of 0800 as a provider adapter generator
 2026-08-28T13:57Z Minh ratified core plus config plus adapters and added Pi as an early target
 2026-08-28T14:08Z Codex replaced generator-first scope with one hand-ported skill slice pending round-2 panel review
+2026-09-07T02:10Z claude note PR 780 closed unmerged, not merged: the ~/.agents destination it declares is never created by any code path; the exact-match version allowlist already refuses claude 2.1.263 and codex 0.153.4 (installed tonight); and _target() collides with the canonical skill because ~/.claude is this harness's own repo, so install claude refuses as an unmanaged entry. The three manual-smoke entries are therefore unreachable rather than merely undone. Branch t0802-perch-adapters kept as the only copy of its commits; see the closing comment on PR 780 for what a successor must change
 
 --- body ---
 ## Context
