@@ -374,6 +374,18 @@ case "$subcmd" in
         branch="${2:-$(pr_branch "$pr")}"
         [ -n "$branch" ] || { echo "error: could not resolve branch for MR #${pr}" >&2; exit 1; }
         dest="${FINDINGS_DIR}/${pr}"; mkdir -p "$dest"
+        # Start this merge request from a clean slate. The directory is reused
+        # across runs, so without this an earlier run's `.findings` survive a
+        # run in which the same seat could not authenticate — and `harvest`
+        # then prints that stale finding under the seat's name BESIDE its own
+        # SEAT-FAILED line: one report asserting the seat both reviewed and did
+        # not, which is exactly the confusion 0393 exists to prevent. Same clear
+        # retires the orphan case, a seat dropped from the roster whose findings
+        # harvest's roster-independent glob would otherwise report forever.
+        # Targeted `rm -f` of the per-run sidecars only, never `rm -rf` of the
+        # tree: an unmatched glob passes through as a literal path that `rm -f`
+        # ignores, so no nullglob is needed and `set -e` sees exit 0 either way.
+        rm -f "$dest"/*.status "$dest"/*.findings "$dest"/*.err "$dest"/*.latency
         ran=0; unrun=0
         # Counted beside `ran` so the two silences can be told apart: a roster of
         # forge-bot seats alone attempts nothing locally and is not a failure, while

@@ -433,6 +433,69 @@ assert_eq "harvest: a seat that ran and found nothing stays silent" "" "$quiet_r
 assert_exit_0 "harvest: clean panel still exits 0" hermetic_reviewers harvest 600
 unset H_ENV
 
+# ── stale per-run artefacts: `request` starts each run from a clean slate ────
+# A per-PR findings directory is reused across runs. Without a clear, run 1's
+# `.findings` outlive a run 2 in which the same seat could not authenticate, and
+# `harvest` then prints run 1's finding attributed to the seat AND SEAT-FAILED
+# for it — one report asserting the seat both reviewed and did not. Same root
+# cause: a seat dropped from the roster between runs leaves an orphaned
+# `.findings` that harvest's roster-independent glob reports forever.
+STALE_STUB="$WORK/seat-runner-stale-stub.sh"
+cat > "$STALE_STUB" <<'STUBEOF'
+#!/usr/bin/env bash
+set -euo pipefail
+out=""; while [ $# -gt 0 ]; do [ "$1" = "--out" ] && { out="$2"; shift 2; continue; }; shift; done
+{ echo "FINDING|severity=verifiable|file=foo.sh:10|rationale=stale-run-1-finding"
+  echo "SUMMARY|findings=1|verdict=revise"; } > "$out"
+STUBEOF
+chmod +x "$STALE_STUB"
+
+STALEROSTER="$WORK/stale.yml"
+cat > "$STALEROSTER" <<'YAML'
+reviewers:
+  - name: stale-seat
+    kind: cli-agent
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: https://example.invalid/v1
+    model: openai/stub
+    credential-env: T393_FIXTURE_KEY
+YAML
+
+SDIR="$WORK/stale-findings"
+# RUN 1 — the credential resolves from the keystore; the seat reviews.
+H_ENV=(REVIEWERS_PANEL="$STALEROSTER" SEAT_RUNNER="$STALE_STUB" REVIEWERS_FINDINGS_DIR="$SDIR"
+       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 700 >/dev/null 2>&1
+assert_contains "request: run 1 wrote the seat's findings" "stale-run-1-finding" \
+    "$(cat "$SDIR/700/stale-seat.findings" 2>/dev/null || echo missing)"
+
+# Leave an orphan behind too: a seat that will not be on run 2's roster.
+printf 'FINDING|severity=verifiable|file=old.sh:1|rationale=orphan-seat-finding\n' \
+    > "$SDIR/700/departed-seat.findings"
+
+# RUN 2 — same merge request, empty keystore: the credential is now unresolvable
+# and the seat does NOT review.
+EMPTYSTORE="$WORK/empty-keystore"; mkdir -p "$EMPTYSTORE"
+H_ENV=(REVIEWERS_PANEL="$STALEROSTER" SEAT_RUNNER="$STALE_STUB" REVIEWERS_FINDINGS_DIR="$SDIR"
+       REVIEWERS_KEYSTORE="$EMPTYSTORE" REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 700 >/dev/null 2>&1
+H_ENV=(REVIEWERS_PANEL="$STALEROSTER" REVIEWERS_FINDINGS_DIR="$SDIR")
+stale_report=$(hermetic_reviewers harvest 700 2>/dev/null)
+if [[ "$stale_report" == *"stale-run-1-finding"* ]]; then
+    echo "FAIL: harvest: run 1's finding survived into run 2's report"; FAIL=$((FAIL+1))
+else
+    echo "PASS: harvest: a stale run's finding is not attributed to a seat that did not review"; PASS=$((PASS+1))
+fi
+assert_contains "harvest: the seat that could not authenticate is reported as failed" \
+    "SEAT-FAILED: stale-seat" "$stale_report"
+if [[ "$stale_report" == *"orphan-seat-finding"* ]]; then
+    echo "FAIL: harvest: an off-roster seat's orphaned findings still reported"; FAIL=$((FAIL+1))
+else
+    echo "PASS: harvest: an off-roster seat leaves no orphaned findings behind"; PASS=$((PASS+1))
+fi
+unset H_ENV
+
 # ── forge-bot seat: on-demand request via the forge review API (0206) ────────
 # A forge-bot seat has no seat-runner; `request` asks the forge to run its
 # server-side reviewer on the PR. Stub `gh` to capture the call.
