@@ -1,0 +1,11 @@
+[Unit]
+Description=Monthly Imperial Dragon Harness stale-skill audit
+
+[Timer]
+OnCalendar=*-*-01 08:00:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=idh-mammoth-audit.service
+
+[Install]
+WantedBy=timers.target
