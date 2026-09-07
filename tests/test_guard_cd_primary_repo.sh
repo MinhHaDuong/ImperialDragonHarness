@@ -17,13 +17,29 @@ WORKTREE="/home/testuser/repo/.claude/worktrees/t001"
 
 # Feed a Bash tool-input payload (with cwd) to the hook; print "<rc>\t<stderr>".
 # HOME pinned so `cd ~/repo` expands to /home/testuser/repo inside the guard.
+#
+# `env -i` is load-bearing, not tidiness. The silent-allow cases below assert
+# stderr is EMPTY, and this child inherited the caller's whole environment —
+# including BASH_ENV, which makes a fresh bash re-run scripts/bash-env.sh here.
+# With HOME pinned at /home/testuser, that loader finds no keystore under the
+# synthetic home and writes to stderr, so any operator-level `KEYS=` line in
+# ~/.claude/.env turns those assertions red on a correctly configured machine
+# (measured 2026-09-07, ticket 0873: `bash-env: KEYS provider not found:
+# openrouter` on two cases). Nothing here tests credential loading; the guard
+# under test reads a JSON payload and nothing else.
+#
+# The test was green only because no one had that line — an all-clear that
+# meant "the ambient environment happened to be quiet", not "the guard is
+# silent". rules/coding-bash.md names this class: a hermetic base env, so an
+# inherited variable cannot mask or manufacture a result. PATH is passed
+# through because the hook needs jq, cat and grep.
 _run() {
     local cmd="$1" cwd="$2"
     local err rc
     err=$(printf '{"tool_name":"Bash","tool_input":{"command":%s},"cwd":%s}' \
             "$(printf '%s' "$cmd" | jq -Rs .)" \
             "$(printf '%s' "$cwd" | jq -Rs .)" \
-            | env HOME=/home/testuser bash "$HOOK" 2>&1 1>/dev/null) && rc=0 || rc=$?
+            | env -i HOME=/home/testuser PATH="$PATH" bash "$HOOK" 2>&1 1>/dev/null) && rc=0 || rc=$?
     printf '%s\t%s' "$rc" "$err"
 }
 
@@ -124,7 +140,7 @@ _assert_allowed_silent "cd PRIMARY && git log"    "cd $PRIMARY && git log -1"  "
 
 # --- Payload without .cwd → fail-safe allow -------------------------------
 rc=$(printf '{"tool_name":"Bash","tool_input":{"command":"cd /home/testuser/repo && git commit -m x"}}' \
-        | env HOME=/home/testuser bash "$HOOK" >/dev/null 2>&1; echo $?)
+        | env -i HOME=/home/testuser PATH="$PATH" bash "$HOOK" >/dev/null 2>&1; echo $?)
 if [[ "$rc" == "0" ]]; then
     echo "PASS: allows payload with no .cwd (fail-safe)"
 else
@@ -138,7 +154,7 @@ ln -s "$(type -P cat)" "$_tmpbin/cat"
 ln -s "$(type -P grep)" "$_tmpbin/grep"
 _real_bash="$(type -P bash)"
 rc=$(printf '{"tool_name":"Bash","tool_input":{"command":"cd /home/testuser/repo && git commit -m x"},"cwd":"/home/testuser/repo/.claude/worktrees/t001"}' \
-        | env PATH="$_tmpbin" HOME=/home/testuser "$_real_bash" "$HOOK" >/dev/null 2>&1; echo $?)
+        | env -i PATH="$_tmpbin" HOME=/home/testuser "$_real_bash" "$HOOK" >/dev/null 2>&1; echo $?)
 rm -rf "$_tmpbin"
 if [[ "$rc" == "0" ]]; then
     echo "PASS: fails open (exit 0) when jq is missing"

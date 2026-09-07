@@ -1,0 +1,93 @@
+%erg 0.1
+Title: Le test de la garde cd-primary n'etait vert que parce que personne n'avait de ligne KEYS
+Created: 2026-09-07
+Author: claude
+
+--- log ---
+2026-09-07T01:55Z claude created decouvert en reparant 0873 : poser la selection KEYS correcte rend make check rouge. Le defaut est dans le test, pas dans la configuration
+
+--- body ---
+## Context
+
+`tests/test_guard_cd_primary_repo.sh` epingle HOME a un home synthetique pour ses
+enfants, mais herite tout le reste de l'environnement appelant — `BASH_ENV`
+compris. Un bash frais rejoue donc `scripts/bash-env.sh` dans l'enfant, qui ne
+trouve aucun keystore sous ce HOME synthetique et ecrit sur stderr. Deux cas du
+fichier affirment que stderr est **vide** :
+
+```
+FAIL: expected allow (exit 0) + empty stderr for cd PRIMARY && git status;
+      got exit 0, stderr: 'bash-env: KEYS provider not found: openrouter'
+```
+
+Rien ici n'eprouve le chargement de credentials : la garde sous test lit une
+charge utile JSON et rien d'autre.
+
+Mesure du 2026-09-07, controle a trois bras :
+
+| bras | FAIL |
+|---|---|
+| avant correctif, ligne `KEYS=` presente | 2 |
+| avant correctif, `KEYS`/`BASH_ENV` retires de l'enfant | 0 |
+| apres correctif, ligne `KEYS=` presente | 0 |
+
+Le deuxieme bras est celui qui etablit la cause : ce n'est pas le contenu du
+depot qui a change, c'est l'environnement herite.
+
+Le test etait donc vert pour une raison accidentelle — personne n'avait de
+selection `KEYS=` au niveau harness. Le tout-va-bien signifiait « l'environnement
+ambiant se trouvait etre silencieux », pas « la garde est silencieuse ». C'est
+la classe nommee dans `rules/coding-bash.md` sous « ambient-env leakage across
+the env -i boundary », et la forme generale de `tickets/AGENTS.md` : une
+verification dont le tout-va-bien ne se distingue pas du je-n-ai-pas-pu-regarder
+n'est pas une verification. Ici la variante est plus vicieuse que d'habitude —
+le tout-va-bien ne se distingue pas d'un je-n-ai-rien-a-regarder.
+
+Cout : `make check` devient rouge sur `main` pour tout operateur correctement
+configure, donc au moment precis ou 0873 est repare. Un defaut qui ne se
+declenche qu'apres la reparation d'un autre est le pire ordre possible pour un
+successeur qui n'aurait pas les deux tickets sous les yeux.
+
+## Relevant files
+
+- `tests/test_guard_cd_primary_repo.sh` — les trois sites de spawn (l. 26, 127, 141)
+- `scripts/bash-env.sh` — le chargeur rejoue par `BASH_ENV` dans chaque enfant
+- `rules/coding-bash.md` — l'idiome hermetique de reference
+- `tickets/0873-...erg` — le ticket dont la reparation revele celui-ci
+
+## Actions
+
+1. Passer les trois spawns d'enfant a `env -i HOME=... PATH=...`, base
+   hermetique connue. `PATH` reste transmis parce que la garde a besoin de jq,
+   cat et grep ; le site du cas « jq absent » garde son `PATH` restreint.
+2. Documenter au point de spawn pourquoi `env -i` porte le test, afin qu'un
+   futur allegement ne le retire pas comme du rangement.
+
+## Test
+
+Le controle a trois bras ci-dessus **est** le test, et il est mecanique :
+rejouer la version d'avant correctif avec puis sans la variable heritee, et la
+version d'apres correctif. Un controle dont les deux bras donnent le meme
+resultat ne mesure rien — la premiere tentative l'a fait (20 FAIL partout,
+le script copie dans un repertoire temporaire ne resolvant plus `$HOOK`).
+
+## Verification
+
+- [x] Le bras « avant correctif, KEYS presente » rougit (2 FAIL)
+- [x] Le bras « avant correctif, environnement nettoye » est vert — c'est lui
+      qui etablit que la cause est l'heritage et non le depot
+- [x] Le bras « apres correctif » est vert malgre la ligne KEYS
+- [x] `shellcheck` propre sur le fichier de test
+
+## Invariants
+
+- La garde elle-meme n'est pas modifiee : seul le test change.
+- Le cas « jq absent » garde son `PATH` restreint, sans quoi il cesserait
+  d'eprouver ce qu'il eprouve.
+- Aucune assertion n'est affaiblie ni supprimee pour faire tomber le compte.
+
+## Exit criteria
+
+- [x] Les trois spawns sont hermetiques
+- [x] `make check` passe avec une selection `KEYS=` au niveau harness
+- [x] Le controle a trois bras est consigne ici
