@@ -2,12 +2,14 @@
 Title: Spawn bash test children hermetically (env -i) across the bash-env suites
 Created: 2026-07-27
 Author: HDMX-coding-agent
+Closed: exit criteria met — hermetic bash-child guard merged in PR #810, verified red against main's pre-conversion suites and green after
 
 --- log ---
 2026-07-27T12:37Z HDMX-coding-agent created
 2026-09-07T00:27Z claude note gaze reroll round 1 — guard false-negatived on whole-line `env -i` scoping and raw-text BASH_ENV exemption; detection rescoped per-spawn, negative controls added
 
 2026-09-07T02:20Z claude note triage 0872 : verdict REVIVE. La branche abandonnee t0359-hermetic-bash-test-children (commit e7253ce, 14 aout) est reprise telle quelle sur origin/main d'aujourd'hui, sans conflit ni retouche : main n'en portait RIEN — les quatre suites y lancent encore un `HOME=... bash -c` nu et tests/test_bash_tests_are_hermetic.sh n'y existait pas — et aucun des cinq fichiers n'avait bouge sur main depuis la base commune bc79854. Controle negatif execute, exigence de ce ticket : le garde tourne dans un repertoire temporaire contenant les copies PRE-conversion tirees de main et echoue sur les deux (GUARD FAILED: 2 of 2, sortie 1), en ne nommant que des numeros de ligne. Sur l'arbre rebase il passe sur les 29 suites shell d'aujourd'hui, decouvertes par glob. make check au vert, 1098 passed. Demande de fusion ouverte. Ticket laisse OUVERT : ses criteres de sortie paraissent atteints mais la decision de fermeture revient au coordinateur ; noter que sa ligne de base de verification est perimee en faveur du merge, elle attendait deux suites shell en echec (test_reviewers_audition.sh, test_guard_cd_primary_repo.sh) qui passent toutes deux aujourd'hui. Commits preserves aussi sous le tag archive/t0359-hermetic-bash-test-children avant suppression de la branche
+2026-09-07T02:40Z Minh Ha-Duong closed — exit criteria met — hermetic bash-child guard merged in PR #810, verified red against main's pre-conversion suites and green after
 --- body ---
 ## Context
 
