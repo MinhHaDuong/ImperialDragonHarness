@@ -392,6 +392,22 @@ assert_eq "request: an environment credential takes precedence over the keystore
 
 # No credential value may appear in any output or sidecar the run produces.
 leak_hay="$k_err$(cat "$KDIR"/393/* 2>/dev/null || true)"
+# Positive controls first: a non-disclosure check reports "absent" both when
+# the sentinel is genuinely absent and when there was nothing to look at, and
+# those two are not the same answer (rules/coding-bash.md — a check whose
+# all-clear cannot be told from "I could not look" is not a check). So assert
+# the haystack was actually collected, and that the matcher fires on a
+# deliberately planted copy of the very string it is asked to rule out.
+if [ -n "$leak_hay" ]; then
+    echo "PASS: request: the leak haystack is non-empty (the check had something to look at)"; PASS=$((PASS+1))
+else
+    echo "FAIL: request: leak haystack empty — the no-leak check below would pass vacuously"; FAIL=$((FAIL+1))
+fi
+if [[ "${leak_hay}keystore-sentinel-000000" == *"keystore-sentinel-000000"* ]]; then
+    echo "PASS: request: the leak matcher detects a planted sentinel"; PASS=$((PASS+1))
+else
+    echo "FAIL: request: the leak matcher missed a planted sentinel — it cannot detect a real leak"; FAIL=$((FAIL+1))
+fi
 if [[ "$leak_hay" == *"keystore-sentinel-000000"* ]]; then
     echo "FAIL: request: credential value leaked into output or a sidecar"; FAIL=$((FAIL+1))
 else
