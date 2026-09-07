@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-06T22:18Z
+Last updated: 2026-09-07T04:27Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-06T22:18Z · as of c0c42fc -->
+<!-- generated 2026-09-07T04:27Z · as of 222f1ea -->
 
-**Tickets:** 17 ready · 8 blocked — `erg ready tickets/` for full list
-  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0359 Spawn bash test children hermetically (env -i) …
-**In flight:** 4 open PRs (1 draft), oldest #780 9d · CI main: success
+**Tickets:** 13 ready · 8 blocked — `erg ready tickets/` for full list
+  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
+**In flight:** 1 open PR, oldest #794 0d · CI main: success
 **Recent (first-parent):**
-  c0c42fc Merge pull request #802 from MinhHaDuong/hk-ask-the-live-peer
-  d352851 Merge pull request #801 from MinhHaDuong/hk-promote-worktree-git-guard
-  3354552 Merge pull request #800 from MinhHaDuong/hk-consolidate-worktree-guard-notes
+  222f1ea Merge pull request #819 from MinhHaDuong/t0875-spawn-re-script-path
+  eb5a70e Merge pull request #820 from MinhHaDuong/chore-memory-2026-09-07
+  9ada03d Merge pull request #816 from MinhHaDuong/t0873-align-live-settings
 
 ## Blockers
 
@@ -23,14 +23,15 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 - **Cool-down doctrine in force** (2026-07-14): file a tooling ticket only if the defect blocks a merge, corrupts state, or bites a science project; throughput points at the science repos.
-- **External-reviewer advisory trial LIVE, hands-free**: openrouter-frontier and openrouter-budget seats in `skills/reviewers/panel.yml`; /gaze requests, harvests, scorecards them (PR #638). Data accrues on ticket 0207 (≥5 MRs across ≥3 projects per config, then the author's promote/drop call). 0205 tracker and 0356 wait on that verdict.
+- **External-reviewer trial: the seats now actually run.** 0207 accrues again after the 0873 credential fix; before it, five gates in one night lost both CLI seats to fail-open and nobody noticed. Two caveats measured 2026-09-07: `openrouter-budget` returns garbage (its model's cutoff predates the repo clock, so it flagged today's date as a future date) and `copilot` is quota-limited, and harvest counts a quota notice as a response. Scorecards could not be written from any worktree — `erg log` refuses a foreign branch — so the trial has no entries from these runs.
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects.
 - **Lint gate has no holes** (2026-08-26, 0470 + 0590): `.ruff.toml` carries no suppression; reopening one is argued in a ticket, not slipped into config.
-- **0610 open**: hook scripts swallow every exception and exit 0, so 17 of 31 hook tests pass with the script fully broken. Fix is a test-only strict mode; see the ticket for the closed-`env` trap.
-- **0572 filed** (2026-09-06, from the author's 2026-08-22 note): rule files drift by accumulation; trim `workflow.md`, split Claude Code idiosyncrasies from the core, make the review cadence catch growth.
-- **Catch-up 2026-09-06 closed**: the whole queue merged (#786–#802), the primary checkout went from 30 dirty paths to clean, and 11 worktrees, 19 local and 6 remote branches were removed. Ticket 0870 landed the reviewers fix that had sat uncommitted since 3 September; 0572 is now valid erg and wants the author's amendment. Still open and both the author's call: #780 (0802 perch adapters, draft, 18 tests green) and #794 (0871, another session's).
-- **0872 triaged 2026-09-07 — the five abandoned starts of 14 August are no longer the only copy of anything**: every one is preserved under an `archive/<branch>` tag on origin, so nothing below is irreversible. Three revived onto today's main with merge requests open — #810 (0359, clean cherry-pick, negative control fired), #811 (0500, one real conflict against main's "first roar" paragraph), #813 (0393, reconciled with 0870 rather than merged over it). `memory-rtk-mechanism-correction` dropped: main's 2026-08-14 15:44 synthesis commit already retracts the `--no-merges` cause the branch asserts. `t0425` (typo axis) is the one left standing — the work is good and main has none of it, but it edits `scripts/inject_rule_on_edit.py`, which a parallel executor owned that night, and it adds `last-reviewed:` stamps the run was told not to touch. Tickets 0359, 0425, 0500 and 0393 all stay OPEN. **Manual step left:** five 14-August worktree registrations and their local branches still need pruning (`agent-acb24c39f94523736`, `agent-a45d137e93534fd90`, `agent-aafc5891c9ca4c5a7`, `agent-afd83aa4529d1f611`, `mem-rtk-fix`) — the run was forbidden to remove worktrees with other sessions live.
-- **A three-week-old branch is measured against today's main, never against its own base**: 0872 recorded `t393` as merging *clean* into `reviewers.sh` on 2026-09-06 and warned that the clean exit was the trap. One day later it conflicts instead — main moved again. The warning was right about the shape and wrong about the fact, which is the general lesson: a merge verdict recorded in a ticket expires, and the marker grep plus the suite are what settle it either way.
+- **ROTATE THE OPENROUTER KEY** (author, 2026-09-08): `OPENROUTER_API_KEY_IDH` was printed into a session transcript on 2026-09-07 by a presence probe using `${VAR:-unset}`, which substitutes the value when set. Revoke at openrouter.ai, reissue, rename the old entry `EXPIRED_*` per the file's convention. The `KEYS=` line names the variable, not the value, so no repo change follows. Transcript redaction is requested and is not a substitute for rotation.
+- **0873 open, half done**: `~/.claude/.env` now carries `KEYS=openrouter:OPENROUTER_API_KEY_IDH` (narrow form; the seven sibling keysets stay unset), and both CLI reviewer seats authenticated on three gates the same night after five runs of silent fail-open. Still open: 0854's `SessionEnd` hook is wired in tracked `settings.shared.json` only, so scratch cleanup is inert until the live `settings.json` is aligned — an operator act, both files git-ignored by design.
+- **0872 closed 2026-09-07**: three revives merged (#810 0359, #811 0500, #813 0393), `memory-rtk` dropped as superseded, `t0425` deliberately kept. 0359 and 0500 closed on the author's ruling (#817); 0393 stays open holding the 0870 arbitration — whether a seat skipped for an unresolved credential counts as `attempted`, which decides if an all-seats-skipped panel may exit 0. Every triaged branch survives under an `archive/<branch>` tag on origin.
+- **A merge verdict recorded in a ticket expires**: 0872 measured `t393` as merging *clean* into `reviewers.sh` and warned the clean exit was the trap. One day later it conflicted — main had moved again. Right about the shape, wrong about the fact. The marker grep and the suite settle it; the recorded verdict does not.
+- **0572 filed** (2026-09-06): rule files drift by accumulation; trim `workflow.md`, split Claude Code idiosyncrasies from the core, make the review cadence catch growth.
+- **0875 filed 2026-09-07**: `tests/test_bash_tests_are_hermetic.sh` reports "29 of 29 hermetic" while its `_SPAWN_RE` requires a `-c`, so 78 script-path spawns across 16 files are invisible to it. Its all-clear cannot be told from "I could not look" — in the guard written to eliminate that class.
 - **Worktree git, settled 2026-09-06** (harness memory, promoted): two guards refuse git in a worktree session, not one. `\git` beats the rtk rewrite and is cheaper than `/usr/bin/git`; neither beats the containment refusal on `-C`, which only a script file reaches. The guard reads command text, not intent, and a refusal takes the whole compound with it.
 
 ## Backlog
