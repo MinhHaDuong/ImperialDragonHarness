@@ -91,26 +91,64 @@ tracked_dirty() {
     [ "$rc" -eq 1 ]
 }
 
+# The paths git listed under one named error header. git prints a block as a
+# header line followed by indented paths and terminated by the next unindented
+# line, so anchoring on the header and stopping at that line keeps two blocks
+# apart. Harvesting every indented line in the blob instead merges them — which
+# is how a tracked, modified file was announced as untracked and the operator
+# told to move it aside, advice that would have discarded uncommitted work
+# (escalation 3). git can and does emit both blocks in one refusal.
+# Truncation is announced rather than silent: a list capped at three with no
+# marker reads as the complete set.
+block_paths() {
+    printf '%s\n' "$2" | awk -v hdr="$1" '
+        index($0, hdr)             { inblock = 1; next }
+        inblock && /^[[:space:]]/  { sub(/^[[:space:]]+/, ""); n++
+                                     if (n <= 3) list = list (n > 1 ? " " : "") $0
+                                     next }
+        inblock                    { inblock = 0 }
+        END { if (n > 3) list = list " (+" n - 3 " more)"; printf "%s", list }'
+}
+
+# The checkout's own dirty paths. Used only where git named no files itself: an
+# isolated session cannot run `git -C <primary> status` (the worktree path guard
+# refuses reads too), so this line is the only diagnostic it gets, and "dirty"
+# without a path is what sent one session inferring the set from a stale
+# snapshot.
+local_dirty_paths() {
+    git -C "$1" diff --name-only HEAD 2>/dev/null | awk '
+        { n++; if (n <= 3) list = list (n > 1 ? " " : "") $0 }
+        END { if (n > 3) list = list " (+" n - 3 " more)"; printf "%s", list }'
+}
+
 refusal_cause() {
-    local dir="$1" err="$2" paths line
-    if [[ "$err" == *"untracked working tree file"* ]]; then
-        paths=$(printf '%s\n' "$err" \
-            | sed -n 's/^[[:space:]][[:space:]]*//p' | head -3 \
-            | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-        printf '%s' "an untracked file collides with the incoming $default: ${paths:-path not reported by git} — move it aside, then re-run"
-    elif [[ "$err" == *"local changes to the following files would be overwritten"* ]] \
-         || [[ "$err" == *"Please commit your changes or stash them"* ]] \
+    local dir="$1" err="$2" tracked untracked out line
+    tracked=$(block_paths "local changes to the following files would be overwritten" "$err")
+    untracked=$(block_paths "untracked working tree file" "$err")
+    out=""
+
+    if [ -n "$tracked" ]; then
+        out="tracked modifications in the checkout: $tracked — back them up, sync, re-apply (rules/git.md)"
+    elif [[ "$err" == *"Please commit your changes or stash them"* ]] \
          || { [ -z "${err//[[:space:]]/}" ] && tracked_dirty "$dir"; }; then
-        # Name the files. An isolated session cannot run `git -C <primary>
-        # status` itself (the worktree path guard refuses reads too), so this
-        # line is the only diagnostic it gets; "dirty" without a path is what
-        # sent one session inferring the set from a stale snapshot.
-        paths=$(git -C "$dir" diff --name-only HEAD 2>/dev/null | head -3 | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-        printf '%s' "tracked modifications in the checkout: ${paths:-paths unavailable} — back them up, sync, re-apply (rules/git.md)"
-    else
-        line=$(printf '%s\n' "$err" | grep -v '^[[:space:]]*$' | head -1)
-        printf '%s' "git refused: ${line:-no message} — nothing to clean here, re-run once the checkout is free"
+        out="tracked modifications in the checkout: $(local_dirty_paths "$dir") — back them up, sync, re-apply (rules/git.md)"
     fi
+
+    if [ -n "$untracked" ]; then
+        # Both blocks can be live at once. Report both: naming only one leaves
+        # the operator to hit the other on the retry, and picking which to hide
+        # is the guess this whole function exists to stop making.
+        [ -n "$out" ] && out="$out; and separately, "
+        out="${out}untracked files collide with the incoming $default: $untracked — move them aside, then re-run"
+    fi
+
+    if [ -n "$out" ]; then
+        printf '%s' "$out"
+        return 0
+    fi
+
+    line=$(printf '%s\n' "$err" | grep -v '^[[:space:]]*$' | head -1)
+    printf '%s' "git refused: ${line:-no message} — nothing to clean here, re-run once the checkout is free"
 }
 
 # Where (if anywhere) is the default branch checked out? Refs are shared

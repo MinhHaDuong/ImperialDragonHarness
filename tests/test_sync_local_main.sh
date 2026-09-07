@@ -292,6 +292,41 @@ else
     _fail "index.lock refusal must be quoted, not displaced by unrelated dirt (got: $out)"
 fi
 
+# --- case 17: git states BOTH cause blocks at once — a blocking tracked
+# modification and an untracked/incoming collision (ticket 0851, escalation 3).
+# Cases 13-16 each produce a single block, and that gap hid a path-harvest
+# defect: the untracked branch matched its substring against the whole stderr
+# blob and then collected every indented line in it, so the tracked file
+# appeared in the untracked list. The operator was told a file carrying
+# uncommitted work was untracked and to move it aside — a false statement
+# attached to the one remedy that loses the work. Both causes must be named,
+# each with only its own paths.
+_setup both
+bash "$SYNC" "$CLONE" >/dev/null            # bring the clone to c2
+( cd "$SANDBOX/both-seed" &&
+  echo three > f.txt &&                     # c3 touches f.txt (tracked) ...
+  echo incoming > new.txt && git add new.txt &&   # ... and adds new.txt
+  git commit --quiet -am c3 && git push --quiet origin main )
+echo mine-tracked > "$CLONE/f.txt"          # tracked, modified, and IN THE WAY
+echo mine-untracked > "$CLONE/new.txt"      # untracked, and also in the way
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+tracked_part=${out%%; and separately,*}
+untracked_part=${out#*; and separately,}
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/f.txt")" = "mine-tracked" ] \
+   && [ "$(cat "$CLONE/new.txt")" = "mine-untracked" ] \
+   && echo "$out" | grep -q "tracked modifications" \
+   && echo "$out" | grep -q "untracked file" \
+   && echo "$tracked_part" | grep -q "f\.txt" \
+   && ! echo "$tracked_part" | grep -q "new\.txt" \
+   && echo "$untracked_part" | grep -q "new\.txt" \
+   && ! echo "$untracked_part" | grep -q "f\.txt"; then
+    _pass "two concurrent cause blocks are both named, each with only its own paths"
+else
+    _fail "concurrent blocks must not merge their path lists (got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi
