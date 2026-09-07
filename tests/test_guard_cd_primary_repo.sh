@@ -139,6 +139,7 @@ _assert_allowed_silent "cd PRIMARY && git status" "cd $PRIMARY && git status" "$
 _assert_allowed_silent "cd PRIMARY && git log"    "cd $PRIMARY && git log -1"  "$WORKTREE"
 
 # --- Payload without .cwd → fail-safe allow -------------------------------
+# env -i is load-bearing here too — see the rationale above _run() (line ~21).
 rc=$(printf '{"tool_name":"Bash","tool_input":{"command":"cd /home/testuser/repo && git commit -m x"}}' \
         | env -i HOME=/home/testuser PATH="$PATH" bash "$HOOK" >/dev/null 2>&1; echo $?)
 if [[ "$rc" == "0" ]]; then
@@ -149,6 +150,9 @@ else
 fi
 
 # --- jq missing → fail-open (narrow-scope guard) --------------------------
+# env -i is load-bearing here too — see the rationale above _run() (line ~21).
+# PATH stays restricted to $_tmpbin (not the full $PATH): that is what makes
+# this case exercise "jq missing", not a hermeticity relaxation.
 _tmpbin=$(mktemp -d)
 ln -s "$(type -P cat)" "$_tmpbin/cat"
 ln -s "$(type -P grep)" "$_tmpbin/grep"
