@@ -2,9 +2,10 @@
 """Enumerate merged PRs since a sentinel SHA as celebration records (ticket 0331).
 
 Roar's telemetry step logs one celebration per merged PR instead of a single
-aggregate blob. This script enumerates the merge commits in ``<since-sha>..HEAD``
-on the current branch and emits, per merge, one JSON object per line carrying the
-fields roar's ``log-celebration`` expects (that helper stamps ``ts``/``date``):
+aggregate blob. This script enumerates the merge commits in
+``<since-sha>..<until>`` (``--until`` defaults to ``HEAD``) and emits, per merge,
+one JSON object per line carrying the fields roar's ``log-celebration`` expects
+(that helper stamps ``ts``/``date``):
 
     {"project": str, "branch": str|null, "commits": int,
      "files_changed": int, "ticket": int|null}
@@ -16,6 +17,11 @@ commit, NOT from the branch name (real branch names such as
 
 An empty range prints nothing and exits 0. The sentinel-missing / non-ancestor
 guards live in roar's SKILL.md prose, not here.
+
+``--until`` exists because /roar normally runs from the worktree of the branch
+just merged, and that worktree sits on the branch tip — BELOW the merge commit.
+Enumerating to a hard-coded ``HEAD`` there misses the very merge being
+celebrated, silently (ticket 0500).
 
 Octopus merges (3+ parents) are skipped with a stderr note: the per-PR fields
 are defined for a two-sided PR merge, so an N-way merge is reported rather than
@@ -57,7 +63,7 @@ def repo_root() -> str:
     return git(["rev-parse", "--show-toplevel"]).strip()
 
 
-def merge_commits(since_sha: str, root: str) -> list[str]:
+def merge_commits(since_sha: str, until: str, root: str) -> list[str]:
     out = git(
         [
             "log",
@@ -65,7 +71,7 @@ def merge_commits(since_sha: str, root: str) -> list[str]:
             "--first-parent",
             "--reverse",
             "--format=%H",
-            f"{since_sha}..HEAD",
+            f"{since_sha}..{until}",
         ],
         cwd=root,
     )
@@ -114,9 +120,9 @@ def files_changed(parent1: str, parent2: str, root: str) -> int:
     return sum(1 for ln in out.splitlines() if ln.strip())
 
 
-def build_records(since_sha: str, project: str, root: str) -> list[dict]:
+def build_records(since_sha: str, until: str, project: str, root: str) -> list[dict]:
     records = []
-    for sha in merge_commits(since_sha, root):
+    for sha in merge_commits(since_sha, until, root):
         parents, subject = merge_meta(sha, root)
         if len(parents) < 2:
             # --merges guarantees >= 2 parents; skip defensively otherwise.
@@ -143,24 +149,76 @@ def build_records(since_sha: str, project: str, root: str) -> list[dict]:
     return records
 
 
+# Options whose VALUE may legitimately begin with a dash. Only these are glued;
+# an unknown option keeps argparse's own error handling.
+VALUE_OPTIONS = ("--project", "--until")
+KNOWN_OPTIONS = VALUE_OPTIONS + ("-h", "--help")
+
+
+def normalize_argv(argv: list[str]) -> list[str]:
+    """Rewrite ``--opt <-value>`` as ``--opt=<-value>`` (ticket 0500).
+
+    Every directory under ``~/.claude/projects/`` begins with a dash
+    (``-home-haduong--claude``, …), and argparse reads such a value as the start
+    of another option, aborting with a usage dump. Roar's step 2 swallows that
+    exit and degrades to one aggregate record for a whole session, so the
+    normalization lives here rather than in each call site's memory: the
+    ``--opt=value`` spelling is the only form argparse accepts for a
+    leading-dash value.
+
+    A token the parser already knows is never a value: ``--project --until``
+    means the value was omitted, and gluing it hides that behind a satisfied
+    option and a stray positional. Leaving the pair alone lets argparse report
+    the missing value itself.
+    """
+    out: list[str] = []
+    i = 0
+    while i < len(argv):
+        token = argv[i]
+        if token == "--":  # everything after the separator is a value already
+            out.extend(argv[i:])
+            break
+        if (
+            token in VALUE_OPTIONS
+            and i + 1 < len(argv)
+            and argv[i + 1].startswith("-")
+            and argv[i + 1] not in KNOWN_OPTIONS
+        ):
+            out.append(f"{token}={argv[i + 1]}")
+            i += 2
+            continue
+        out.append(token)
+        i += 1
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Emit one celebration JSON record per merged PR since a SHA."
     )
     parser.add_argument(
         "since_sha",
-        help="sentinel SHA; merges in <since_sha>..HEAD are enumerated",
+        help="sentinel SHA; merges in <since_sha>..<until> are enumerated",
     )
     parser.add_argument(
         "--project",
         default=None,
         help="project name for the record (default: repo directory name)",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--until",
+        default="HEAD",
+        help=(
+            "terminal reference (default: HEAD). A roar run from the merged "
+            "branch's worktree must pass origin/main: the worktree sits below "
+            "the merge commit and HEAD would enumerate short"
+        ),
+    )
+    args = parser.parse_args(normalize_argv(sys.argv[1:]))
 
     root = repo_root()
     project = args.project or os.path.basename(root)
-    for record in build_records(args.since_sha, project, root):
+    for record in build_records(args.since_sha, args.until, project, root):
         print(json.dumps(record))
     return 0
 

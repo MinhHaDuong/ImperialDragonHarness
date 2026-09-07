@@ -53,13 +53,35 @@ default branch — there are no remote branches nor merge requests to inspect.
    falling back to a single aggregate entry when no merge commits are found.
    A batched interactive session merges several PRs then roars once, so a single
    aggregate blob loses per-ticket attribution (ticket 0331). Enumerate the merge
-   commits in `roar-last-sha..HEAD` and log each as its own record when the
-   sentinel exists, is an ancestor of HEAD, and the enumeration is non-empty:
+   commits in `roar-last-sha..$UNTIL` and log each as its own record when the
+   sentinel exists, is an ancestor of `$UNTIL`, and the enumeration is non-empty.
+   Substitute `<name>` with the project's own directory name — the leading dash
+   of a `~/.claude/projects/` slug is part of it and stays in the record:
    ```bash
    SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
+   # Which reference to enumerate up to. /roar normally runs from the worktree
+   # of the branch just merged, and that worktree sits on the branch tip —
+   # BELOW the merge commit — so HEAD would miss the very merge being
+   # celebrated, silently (ticket 0500). Target origin/main whenever HEAD is
+   # already contained in it; HEAD is the fallback wherever no origin/main
+   # exists (no-forge repo, or a differently-named default branch).
+   UNTIL=HEAD
+   if git rev-parse --verify --quiet origin/main >/dev/null &&
+      git merge-base --is-ancestor HEAD origin/main; then
+       UNTIL=origin/main
+   fi
+   echo "roar telemetry: enumerating up to $UNTIL ($(git rev-parse --short "$UNTIL"))"
    ROWS=""
-   if [ -f "$SENTINEL" ] && git merge-base --is-ancestor "$(cat "$SENTINEL")" HEAD; then
-       ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --project "<name>")" || ROWS=""
+   REASON=""
+   if [ ! -f "$SENTINEL" ]; then
+       REASON="no sentinel yet — first roar in this checkout"
+   elif ! git merge-base --is-ancestor "$(cat "$SENTINEL")" "$UNTIL"; then
+       REASON="sentinel is not an ancestor of $UNTIL — history rewritten"
+   elif ! ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
+       ROWS=""
+       REASON="enumeration FAILED — per-merge-request attribution lost, investigate"
+   elif [ -z "$ROWS" ]; then
+       REASON="no merge commits in range — squash merge, or nothing merged"
    fi
    if [ -n "$ROWS" ]; then
        # Per-PR path: one telemetry-equivalent record per merged PR.
@@ -67,30 +89,41 @@ default branch — there are no remote branches nor merge requests to inspect.
            printf '%s\n' "$row" | ~/.claude/skills/roar/log-celebration
        done
    else
-       # Aggregate fallback: first roar, rewritten history, squash-merge, or
-       # a no-forge repo where no merge commits exist.
+       # Aggregate fallback — always says WHY, so a swallowed failure cannot
+       # pass for a legitimate degradation (they produce the same one record).
+       echo "roar telemetry: aggregate fallback — $REASON" >&2
        echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
    fi
+   # Sentinel = the reference just enumerated, not HEAD: a branch worktree's
+   # HEAD is below it, and the next roar would re-enumerate the same merges.
+   git rev-parse "$UNTIL" > "$SENTINEL"
    ```
    **First roar in a repo: prefer a session base over the aggregate.** The
    sentinel is absent exactly once per repo, and the aggregate then collapses
    the whole session into one record — which is the loss ticket 0331 exists to
    prevent, at its worst in a batched session that merged many PRs. When the
    session's base commit is known (`origin/main` as it stood before the first
-   merge, recoverable from the reflog or from the first PR's base), pass it to
-   `enumerate-merges.py` instead of falling through:
-   ```bash
-   ROWS="$(~/.claude/skills/roar/enumerate-merges.py <session-base-sha> --project "<name>")"
-   ```
+   merge, recoverable from the reflog or from the first PR's base), run the
+   block above with that sha substituted for `$(cat "$SENTINEL")` in the
+   `enumerate-merges.py` call, instead of falling through. Written out, that
+   call is `enumerate-merges.py <session-base-sha> --until "$UNTIL" --project
+   "<name>"`. It stays prose rather than a second `bash` fence on purpose:
+   step 2 must offer the agent exactly ONE runnable snippet, and
+   `tests/test_roar_step2_attribution.py` executes that snippet to prove the
+   per-merge-request attribution invariant. A second fenced block would make
+   the test's extraction ambiguous, and a test that cannot say which block it
+   ran proves nothing about the one the agent runs.
    Attribution is per-PR either way; the sentinel only answers *where to start*.
    Fall back to the aggregate when no defensible base exists — rewritten
    history, squash-merges, a no-forge repo with no merge commits. (Precedent:
    padme 2026-08-21, first roar after ten merged PRs.)
 
-   Then write the current HEAD SHA to the sentinel:
-   ```bash
-   git rev-parse HEAD > "$(git rev-parse --git-common-dir)/roar-last-sha"
-   ```
+   The sentinel is written from `$UNTIL` inside the block above, never from
+   `HEAD`: a branch worktree's `HEAD` sits below the merge just celebrated, so
+   a `HEAD` sentinel would leave that merge to be re-enumerated next time.
+
+   A fallback line naming `FAILED` is a defect report, not a note: per-merge-request
+   attribution was lost for that interval. Say so in the roar summary.
 3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files. File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (rules/workflow.md § Autonomous Action Rules), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
 5. **Update project docs** if pipeline, data contract, or methodology changed.

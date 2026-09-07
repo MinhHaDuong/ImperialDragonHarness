@@ -18,7 +18,17 @@ def main():
         description="Read project memory index and return entries as JSON."
     )
     parser.add_argument("project", help="Directory name under ~/.claude/projects/")
-    args = parser.parse_args()
+
+    # Production project keys are directory slugs that begin with '-'
+    # (e.g. -home-haduong--claude). Without a '--' separator argparse reads the
+    # value as an option and exits 2 with a usage dump (ticket 0500). Insert the
+    # separator unless the caller already did, or is asking for help.
+    tokens = sys.argv[1:]
+    if tokens and "--" not in tokens and not any(
+        t in ("-h", "--help") for t in tokens
+    ):
+        tokens.insert(0, "--")
+    args = parser.parse_args(tokens)
 
     memory_dir = MEMORY_BASE / args.project / "memory"
 
