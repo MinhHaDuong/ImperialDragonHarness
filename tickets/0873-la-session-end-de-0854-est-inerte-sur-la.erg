@@ -1,0 +1,115 @@
+%erg 0.1
+Title: Le SessionEnd de 0854 est inerte sur la machine, et la selection KEYS vide prive tous les sieges de leur credential
+Created: 2026-09-07
+Author: claude
+
+--- log ---
+2026-09-07T01:20Z claude created successeur de 0854 : les deux cases de verification laissees vides a la fermeture n'etaient portees par aucun ticket. Cause KEYS isolee dans la meme passe, mesuree et non supposee
+
+--- body ---
+## Context
+
+Deux defauts distincts, meme forme : une configuration *par machine* qu'aucun
+depot ne porte, et dont l'absence ne produit aucune erreur — seulement une
+fonctionnalite silencieusement inerte.
+
+**(a) Le hook `SessionEnd` de 0854 ne s'execute jamais ici.** Le ticket 0854 a
+ete ferme et archive le 2026-09-07 avec deux cases de `## Verification`
+volontairement non cochees, toutes deux etant les etapes machine vive. Le hook
+est cable dans `settings.shared.json`, suivi par git ; le `settings.json` vif,
+qui est le fichier de l'operateur, n'a pas ete touche. Le nettoyage des
+repertoires de travail que 0854 existe pour livrer est donc inerte sur doudou.
+`check-settings-drift.sh` signale la derive (sortie 0, informatif). Aucun
+ticket ouvert ne portait l'etape restante : c'est ce trou que ce ticket comble.
+
+Rappel de l'enjeu, mesure dans 0854 : `/tmp` est un tmpfs de 12 Go en RAM avec
+quota par utilisateur ; le remplissage du 2026-09-06 a tue l'outil Bash dans
+trois sessions a la fois et s'est termine par un redemarrage. Sonde reelle le
+2026-09-07 : 25 repertoires de session, 5 vivants, 20 orphelins.
+
+**(b) `OPENROUTER_API_KEY_IDH` n'atteint aucun shell.** Mesure boolenne le
+2026-09-07 (valeur jamais lue ni affichee) :
+
+| contexte | variable |
+|---|---|
+| `~/.config/keys/openrouter.env` | presente, longueur plausible |
+| enfant hermetique, cwd = worktree | UNSET |
+| enfant hermetique, cwd = `~/.claude` | UNSET |
+| shell courant | UNSET |
+
+Cause isolee, pas devinee : `~/.claude/.env` fait **0 octet** et ne porte
+aucune ligne `KEYS=`. `scripts/bash-env.sh` est en refus par defaut — « no KEYS
+line loads no provider secrets » — donc la variable n'est exportee nulle part,
+quel que soit le repertoire courant. Ce n'est ni un caprice des shells
+d'arriere-plan ni un phenomene intermittent.
+
+Cout constate : les cinq passes de `/gaze` de la nuit du 2026-09-06 au 07 ont
+toutes perdu leurs sieges CLI externes en echec ouvert (`--credential-env
+OPENROUTER_API_KEY_IDH names an empty or unset variable`). Cinq verdicts rendus
+sans aucune decorrelation externe, chacun signalant l'echec sans que personne
+ne remonte a la cause. La regle « une verification dont le tout-va-bien ne se
+distingue pas du je-n-ai-pas-pu-regarder n'est pas une verification »
+s'applique au panel lui-meme.
+
+## Relevant files
+
+- `settings.json` — le fichier vif, par machine, non suivi
+- `settings.shared.json` — la version suivie ou 0854 a cable `SessionEnd`
+- `scripts/check-settings-drift.sh` — signale la derive, sortie 0
+- `~/.claude/.env` — vide ; git-ignore (`.gitignore:2`), donc jamais livre par un depot
+- `scripts/bash-env.sh` — la selection `KEYS=` en refus par defaut
+- `skills/reviewers/reviewers.sh` — le consommateur des sieges
+- `tickets/closed/0854-...erg` — les deux cases laissees vides
+- `tickets/0393-...erg` — la resolution keystore, correctif structurel de (b)
+
+## Actions
+
+1. Aligner le `settings.json` vif sur `settings.shared.json` pour l'entree
+   `SessionEnd`, puis verifier sur une vraie sortie de session que le
+   repertoire de la session disparait.
+2. Passer un balayage molt reel contre `/tmp/claude-1001` une fois qu'aucune
+   session concurrente n'y travaille, et confirmer qu'il retire un orphelin
+   plante et rien d'autre.
+3. Ecrire la ligne `KEYS=` de `~/.claude/.env` couvrant le fournisseur
+   openrouter. Fichier de la machine, decision de l'operateur : ce ticket
+   demande l'acte, il ne le prescrit pas dans le depot.
+4. Verifier ensuite qu'un siege CLI repond vraiment sur une passe de `/gaze`,
+   plutot que de conclure sur l'absence de l'avertissement.
+5. Decider si l'echec ouvert d'un siege doit rester silencieux pour l'appelant.
+   Question de contrat entre 0870 et 0393, remontee a l'auteur ; ce ticket la
+   porte comme observation, il ne la tranche pas.
+
+## Test
+
+- Derive : une garde qui compare l'ensemble des entrees de hook de
+  `settings.shared.json` a celles du `settings.json` vif et nomme les manquantes.
+  Controle positif obligatoire : la faire tourner sur l'etat actuel, ou elle
+  doit nommer `SessionEnd`, avant de la croire silencieuse ailleurs.
+- Credential : une sonde boolenne, jamais la valeur, qui affirme qu'un enfant
+  hermetique voit la variable. Rouge aujourd'hui — c'est le controle positif,
+  disponible gratuitement tant que (b) n'est pas repare.
+
+## Verification
+
+- [ ] La sonde boolenne passe au vert dans un enfant hermetique
+- [ ] Un siege CLI rend un verdict non vide sur une passe de `/gaze` reelle
+- [ ] Apres une sortie de session normale, le repertoire de cette session a disparu
+- [ ] Un orphelin plante est retire par molt sur la racine vive, et rien d'autre
+- [ ] La garde de derive nomme `SessionEnd` avant correction, et se tait apres
+
+## Invariants
+
+- Aucune valeur de credential n'est affichee, journalisee, ni passee en argv —
+  y compris dans un message d'echec de test.
+- Rien ne supprime un repertoire dont la session a un processus vivant.
+- `~/.claude/.env` et `settings.json` restent hors du depot : ce ticket ne
+  cherche pas a les y faire entrer.
+
+## Exit criteria
+
+- [ ] Le hook `SessionEnd` s'execute reellement sur cette machine, prouve par
+      une sortie de session et non par la lecture d'un fichier de configuration
+- [ ] Les sieges externes du panel repondent, prouve par un verdict rendu
+- [ ] Les deux cases laissees vides a la fermeture de 0854 sont soit satisfaites
+      soit reportees ici avec leur raison
+- [ ] `make check` passe
