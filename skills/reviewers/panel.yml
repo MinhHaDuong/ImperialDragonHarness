@@ -56,8 +56,10 @@ reviewers:
   # Primary OpenRouter seat — gpt-5.6-luna chosen over gpt-5.6-terra on cost
   # (author directive 2026-07-14: ~40% of terra's price; matched terra's
   # specificity in the round-2 same-diff audit — 0 findings on clean code;
-  # sensitivity untested, the 0207 trial arbitrates). Key loads via BASH_ENV,
-  # never here.
+  # sensitivity untested, the 0207 trial arbitrates). The key is never written
+  # here: only the variable's NAME is, and its value comes from the environment
+  # when the BASH_ENV path exported it, else from the keystore at run time
+  # (0393) — the fallback the header above documents.
   - name: openrouter-frontier
     kind: cli-agent
     status: advisory
