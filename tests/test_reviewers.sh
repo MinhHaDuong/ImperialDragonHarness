@@ -115,8 +115,23 @@ assert_contains "harvest: normalized to contract shape" "verifiable: foo.sh:10 �
 assert_contains "harvest: tags the seat" "[stub-good]" "$harv_out"
 
 # Unparseable input → WARN, not silently dropped.
+# Every `harvest` call pins REVIEWERS_PANEL: harvest's panel-integrity pass
+# walks the roster, so an unpinned call reads the real production panel.yml and
+# judges these fixtures against the live seats. The assertions here are
+# substring-only and would stay green through that, which is exactly why the
+# coupling has to be closed rather than tolerated.
 mkdir -p "$FDIR/99"; printf 'garbage line not a finding\n' > "$FDIR/99/x.findings"
-harv_warn=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 99 2>&1 >/dev/null)
+XROSTER="$WORK/x.yml"
+cat > "$XROSTER" <<'YAML'
+reviewers:
+  - name: x
+    kind: local-model
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:9/v1
+    model: openai/stub
+YAML
+harv_warn=$(REVIEWERS_PANEL="$XROSTER" REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 99 2>&1 >/dev/null)
 assert_contains "harvest: WARN on non-contract line" "WARN non-contract line" "$harv_warn"
 
 # ── template-echo detection ─────────────────────────────────────────────────
@@ -128,8 +143,18 @@ FINDING|severity=verifiable|file=foo.sh:10|rationale=off-by-one
 FINDING|severity=consider|file=bar.py:5|rationale=unused import
 SUMMARY|findings=1|verdict=approve-or-revise
 NOISY
-harv_out=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>/dev/null)
-harv_err=$(REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>&1 >/dev/null)
+NROSTER="$WORK/noisy.yml"
+cat > "$NROSTER" <<'YAML'
+reviewers:
+  - name: noisy-seat
+    kind: local-model
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:9/v1
+    model: openai/stub
+YAML
+harv_out=$(REVIEWERS_PANEL="$NROSTER" REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>/dev/null)
+harv_err=$(REVIEWERS_PANEL="$NROSTER" REVIEWERS_FINDINGS_DIR="$FDIR" "$REVIEWERS" harvest 200 2>&1 >/dev/null)
 # Template-echo line must be dropped, not emitted as a finding.
 if [[ "$harv_out" == *'verifiable-or-consider'* ]]; then
     echo "FAIL: harvest: template-echo leaked through"; FAIL=$((FAIL+1))
