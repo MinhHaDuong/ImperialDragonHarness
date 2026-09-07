@@ -65,14 +65,18 @@ fi
 #     the sync is attempted regardless and succeeds when nothing collides — so
 #     folding this case into "dirty" told the operator to clean a checkout that
 #     did not need cleaning;
-#   - tracked modifications: taken when git's refusal names local changes, and
-#     as the fallback reading when git's message identifies nothing and the
-#     checkout is in fact dirty. This is the one state the operator must deal
-#     with by hand;
+#   - tracked modifications: taken when git's refusal names local changes, or
+#     when git said nothing at all and the checkout is in fact dirty. The local
+#     probe is a last resort, never a tie-breaker: a checkout can be dirty in a
+#     file the fast-forward never touches, so `tracked_dirty` alone establishes
+#     nothing about why git refused (escalation 2: an index.lock refusal beside
+#     an unrelated tracked edit was reported as "tracked modifications", sending
+#     the operator to back up a file and hiding a message that named the real
+#     cause outright);
 #   - anything else (a concurrent session's index.lock, a hook, a permission
-#     error): git's own first line, verbatim. A guess here is worse than a
-#     quotation, since the whole defect was a message that named a cause it had
-#     not established.
+#     error): git's own first line, verbatim. Whenever git said something these
+#     tests do not recognise, quoting it beats guessing — the whole defect was a
+#     message that named a cause it had not established.
 # The merge runs under LC_ALL=C so this classification reads git's English
 # messages on a French desktop as well as in CI.
 # Each cause carries its own remedy: the old single tail ("back up the dirty
@@ -96,7 +100,7 @@ refusal_cause() {
         printf '%s' "an untracked file collides with the incoming $default: ${paths:-path not reported by git} — move it aside, then re-run"
     elif [[ "$err" == *"local changes to the following files would be overwritten"* ]] \
          || [[ "$err" == *"Please commit your changes or stash them"* ]] \
-         || tracked_dirty "$dir"; then
+         || { [ -z "${err//[[:space:]]/}" ] && tracked_dirty "$dir"; }; then
         # Name the files. An isolated session cannot run `git -C <primary>
         # status` itself (the worktree path guard refuses reads too), so this
         # line is the only diagnostic it gets; "dirty" without a path is what

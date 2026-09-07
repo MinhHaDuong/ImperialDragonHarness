@@ -264,6 +264,34 @@ else
     _fail "the collision, not the unrelated tracked edit, must be named (got: $out)"
 fi
 
+# --- case 16: a busy checkout (concurrent index.lock) alongside an unrelated
+# tracked modification → git's own line wins (ticket 0851, escalation 2).
+# Case 15 fixed the ordering only for the two substrings the classifier
+# recognises; an index.lock refusal matches neither, so it still fell through to
+# the local dirt probe and was reported as "tracked modifications" — the exact
+# wrong remedy, and the very distinction the 2026-08-30 incident turned on. The
+# probe is now a last resort, reached only when git said nothing at all.
+_setup busy
+bash "$SYNC" "$CLONE" >/dev/null
+( cd "$SANDBOX/busy-seed" &&
+  echo three > f.txt && git commit --quiet -am c3 && git push --quiet origin main )
+echo unrelated > "$CLONE/g.txt"
+git -C "$CLONE" add g.txt
+git -C "$CLONE" commit --quiet -m tracked-base
+git -C "$CLONE" reset --quiet --soft HEAD^
+echo edited > "$CLONE/g.txt"        # tracked modification, unrelated to c3
+: > "$CLONE/.git/index.lock"        # a concurrent git process holds the index
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+rm -f "$CLONE/.git/index.lock"
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && echo "$out" | grep -q "index\.lock" \
+   && ! echo "$out" | grep -q "tracked modifications"; then
+    _pass "a busy index.lock is quoted verbatim, not misreported as tracked modifications"
+else
+    _fail "index.lock refusal must be quoted, not displaced by unrelated dirt (got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi
