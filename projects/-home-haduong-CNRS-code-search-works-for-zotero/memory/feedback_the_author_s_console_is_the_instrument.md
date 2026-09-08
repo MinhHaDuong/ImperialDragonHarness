@@ -36,7 +36,7 @@ What the console settled, in order, each in seconds:
 
 **Why:** this repository contains no statement of what the host provides that
 is checked against a host. Its tests supply the host themselves, so they agree
-with whatever the code assumes (see [[mock-that-invents-the-platform]]). The
+with whatever the code assumes (see [[feedback_mock_that_invents_the_platform]]). The
 application is right there on the machine, and the author is sitting in front
 of it.
 
