@@ -4,9 +4,10 @@ Created: 2026-09-08
 Author: claude
 
 --- log ---
-2026-09-08T07:05Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
-2026-09-08T08:10Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
-2026-09-08T08:45Z claude note Reroll round 1 corrige, quatre points, tous introduits par ma propre edition : le compte « deux reproducteurs » demeure alors que le bloc en portait quatre, et « une troisieme forme » etait numerotee contre l'ancien bloc ; `## Relevant files` demandait encore l'audit que deux autres sections donnaient pour fait ; le message du garde etait paraphrase en perdant « git », dans un ticket dont l'objet est justement la citation exacte de ce message — il est desormais reproduit en entier avec sa ligne source. Le quatrieme point est dans 0207
+2026-09-08T04:52Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+2026-09-08T05:51Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
+2026-09-08T06:09Z claude note Reroll round 1 corrige, quatre points, tous introduits par ma propre edition : le compte « deux reproducteurs » demeure alors que le bloc en portait quatre, et « une troisieme forme » etait numerotee contre l'ancien bloc ; `## Relevant files` demandait encore l'audit que deux autres sections donnaient pour fait ; le message du garde etait paraphrase en perdant « git », dans un ticket dont l'objet est justement la citation exacte de ce message — il est desormais reproduit en entier avec sa ligne source. Le quatrieme point est dans 0207
+2026-09-08T06:29Z claude note Escalade round 2 traitee : la phrase « aucune des formes bloquees ne contient gh, pr, merge » etait contredite cinq lignes plus bas par ce ticket meme, et redondante avec la version correctement portee au-dessus ; supprimee. Classe elargie sur deux observations de la porte : un heredoc en quotes simples mentionnant seulement une substitution, et ${PIPESTATUS[0]}, expansion de parametre nue — ce dernier contredit le temoin negatif echo "$HOME". Horodatages des trois lignes ci-dessus corriges : ils portaient l'heure locale (+02:00) etiquetee Z, donc dans le futur. Meme erreur que sur 0851 hier, corrigee hier, refaite aujourd'hui sur un ticket neuf : la lecon a ete ecrite dans un message de commit et pas dans une garde, et une lecon sans garde ne tient pas
 
 --- body ---
 ## Context
@@ -47,16 +48,23 @@ echo "word merge alone"                 -> passe
 
 Le message rendu est, mot pour mot (`scripts/block-pr-merge-in-worktree.sh`,
 l. 33) : `Blocked: gh pr merge fails in git worktrees (main is locked by
-parent).` — point final compris. Il est cite en entier parce qu'un ticket sur la
-caracterisation
-exacte du message d'un garde ne peut pas se permettre de le paraphraser — la
-premiere version de ce ticket avait laisse tomber « git ».
+parent).` — point final compris. Il est cite en entier parce qu'un ticket sur
+la caracterisation exacte du message d'un garde ne peut pas se permettre de le
+paraphraser : la premiere version de ce ticket avait laisse tomber « git ».
 
-Aucune des formes bloquees ne contient `gh`, `pr`, `merge` ni le nom de l'outil
-de version. La paire qui porte le plus d'information est
+La paire qui porte le plus d'information est
 `for x in a b; do echo "loop-$x"; done` bloquee contre
 `for x in a b; do echo hi; done` qui passe : meme construction, seule differe
 l'expansion d'une variable dans la commande.
+
+**La frontiere de la classe n'est pas etablie, et deux observations de la porte
+sur PR 826 l'elargissent au-dela de ce que les temoins ci-dessus suggerent :**
+un `cat > fichier` avec un corps de heredoc en quotes simples mentionnant
+seulement une substitution de commande a ete bloque, et `${PIPESTATUS[0]}` —
+une expansion de parametre nue, sans aucune substitution — l'a ete aussi. Ce
+dernier cas contredit le temoin negatif `echo "home is $HOME"` qui, lui, passe.
+Ne pas resumer la classe par « les substitutions » : les donnees ne le
+soutiennent pas.
 
 La forme d'origine du signalement — une boucle `for` sur `$(gh pr list ...)`
 — ne contient pas non plus `merge`. En revanche `echo "word merge alone"`
@@ -85,10 +93,12 @@ aux autres machines.
 
 ## Cause non isolee
 
-Hypothese la plus economique, non etablie : l'evaluation de `if` echoue a
-analyser certaines constructions shell (`<(...)`, une boucle avec `$(...)`) et
-echoue **en fermeture** — le hook tourne au lieu d'etre saute. Je tiens les
-reproducteurs, pas la raison de l'analyseur. Ne pas ecrire la cause dans le
+Hypothese la plus economique, non etablie : l'evaluation de `if` echoue sur
+certaines commandes et echoue **en fermeture** — le hook tourne au lieu d'etre
+saute. Elle ne dit deliberement pas *lesquelles* : une premiere redaction
+disait « les substitutions », ce que `${PIPESTATUS[0]}` refute, et le temoin
+negatif `echo "home is $HOME"` interdit de dire « les expansions ». Je tiens
+les reproducteurs, pas la raison de l'analyseur. Ne pas ecrire la cause dans le
 correctif avant de l'avoir montree.
 
 Precedent a charge, deja au dossier : la memoire
