@@ -1,0 +1,84 @@
+%erg 0.1
+Title: gaze ne s'arrete pas quand son sujet fusionne, et continue de porter sur une merge request morte
+Created: 2026-09-08
+Author: claude
+
+--- log ---
+2026-09-08T07:38Z claude created constate en tuant deux agents orphelins : leur derniere ligne disait avoir vu la fusion et poursuivait quand meme
+
+--- body ---
+## Context
+
+Le 2026-09-08, deux agents `/gaze` tournaient encore sur la merge request 826
+trente minutes apres sa fusion. Tues a la main. La derniere ligne de la fourche
+etait explicite :
+
+```
+PR 826 was merged mid-run. Harvesting the external panel before the gate.
+```
+
+Le constat n'est donc pas que la porte ignore l'evenement — elle le voit, le
+nomme, et poursuit. Elle a ensuite lance la recolte du panel externe et
+alimente un verdict pour une merge request qui ne peut plus rien en faire.
+
+Cout, mesure sur ce seul cas : deux agents vivants pendant 30 et 11 minutes,
+plus les sieges externes qu'ils ont sollicites. Sur la sequence 0877 de cette
+nuit, les tours de porte tournaient autour de 200 000 jetons chacun ; un tour
+rendu sur un sujet fusionne est ce montant integralement perdu, et il n'apparait
+dans aucun budget puisque personne ne l'attend.
+
+Il y a un second effet, moins visible et plus genant : un verdict poste apres
+la fusion se lit ensuite comme s'il avait porte sur ce qui a fusionne. Un
+lecteur qui ouvre la merge request y trouve un APPROVED ou un REROLL date
+d'apres l'evenement, sans moyen de savoir qu'il n'a gate personne.
+
+## Ce que le defaut n'est pas
+
+Ce n'est pas la course elle-meme. Qu'une merge request fusionne pendant qu'une
+porte tourne est normal et attendu — l'appelant decide de fusionner, la porte
+ne le sait pas d'avance. Le defaut est l'absence de verification apres coup :
+rien ne relit l'etat du sujet avant d'engager la phase suivante.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — l'enchainement des phases
+- `skills/verify-gate/SKILL.md` — la phase qui rend le verdict
+- `skills/reviewers/reviewers.sh` — `request` et `harvest`, qui sollicitent les
+  sieges payants
+
+## Actions
+
+1. Avant chaque transition de phase couteuse — lancement du panel, `request`
+   des sieges externes, phase de verdict — relire l'etat de la merge request et
+   s'arreter net si elle n'est plus `OPEN`.
+2. Quand l'arret survient, le dire : une ligne qui nomme la phase atteinte et
+   l'etat constate, plutot qu'un silence qui ressemble a une fin normale.
+3. Ne pas poster de verdict sur une merge request fusionnee ou fermee. Si le
+   travail a de la valeur, il va dans le journal du ticket, pas dans un
+   commentaire qui se lira comme une porte.
+
+## Test
+
+Controle positif : lancer une porte, fusionner le sujet pendant qu'elle tourne,
+et exiger qu'elle s'arrete a la transition suivante en le disant. Le controle
+negatif est aussi necessaire — une merge request qui reste ouverte doit
+traverser les memes transitions sans s'arreter — sans quoi le correctif devient
+un arret intempestif indistinguable d'une porte qui marche.
+
+## Verification
+
+- [ ] Une porte dont le sujet fusionne s'arrete a la transition suivante
+- [ ] Elle nomme la phase et l'etat en s'arretant
+- [ ] Aucun verdict n'est poste sur une merge request non ouverte
+- [ ] Une porte dont le sujet reste ouvert n'est pas affectee
+
+## Invariants
+
+- L'appelant garde la decision de fusionner : la porte ne cherche pas a la
+  retarder ni a la reprendre, elle constate.
+- Aucun siege externe n'est sollicite apres l'arret.
+
+## Exit criteria
+
+- [ ] Le controle positif et le controle negatif passent tous les deux
+- [ ] Aucun agent `/gaze` ne survit a la fusion de son sujet
