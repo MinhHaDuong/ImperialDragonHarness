@@ -9,6 +9,7 @@ Author: claude
 2026-09-07T03:45Z claude note Effet de bord decouvert en posant cette ligne KEYS : make check devient rouge sur tests/test_guard_cd_primary_repo.sh, dont les enfants epinglaient HOME mais heritaient BASH_ENV. Le test etait vert parce que personne n'avait de selection KEYS. Traite a part, ticket 0874, ferme par PR #818 — pas un defaut de ce ticket-ci, mais son successeur immediat dans l'ordre des causes
 2026-09-07T03:45Z claude note Divulgation : la sonde de non-fuite ecrite pour verifier le retrecissement utilisait ${VAR:+SET}${VAR:-unset}, dont la seconde substitution rend la VALEUR quand la variable est posee. La cle OpenRouter est donc apparue en clair dans la transcription de session. C'est exactement le mode d'echec que rules/coding-bash.md decrit — le message d'echec EST la fuite — ecrit dans une sonde dont le seul role etait de ne rien afficher. Sonde corrigee (tester, puis afficher un litteral). L'auteur, prevenu immediatement, a choisi de continuer et de faire tourner la cle le 2026-09-08 ; caviardage de la transcription demande. La correction de la sonde n'annule pas la divulgation : seule la rotation la clot
 2026-09-07T07:15Z claude note Cle OpenRouter tournee par l'auteur : EXPIRED_OPENROUTER_API_KEY_IDH archivee selon la convention du fichier, nouvelle cle en place et chargee (verifie en boolean, valeur jamais lue). La valeur divulguee dans la transcription du 2026-09-07 est donc morte, et l'incident est clos ; le caviardage de la transcription reste demande mais n'est plus la mesure qui protege. La lecon est en memoire (feedback_boolean_probe_must_not_expand_the_value), pas ici
+2026-09-08T06:35Z claude note settings.json vif corrige par l'auteur : SessionEnd -> $HOME/.claude/scripts/on-end.sh, present et identique dans les deux fichiers. Balayage molt passe sur la vraie racine, ce que la nuit precedente ne permettait pas (trois sessions y travaillaient) : quatre orphelins reels retires, huit sessions vivantes epargnees, repertoires non-session intacts. La seule case encore ouverte attend un evenement et non un correctif : aucune session n'est sortie proprement depuis le cablage. Correction d'une erreur de mesure au passage : j'ai d'abord annonce le repertoire de la session precedente comme disparu, artefact d'un head -12 sur un listing trie ; le controle a montre qu'il etait la
 
 --- body ---
 ## Context
@@ -95,11 +96,26 @@ s'applique au panel lui-meme.
 
 ## Verification
 
-- [ ] La sonde boolenne passe au vert dans un enfant hermetique
-- [ ] Un siege CLI rend un verdict non vide sur une passe de `/gaze` reelle
-- [ ] Apres une sortie de session normale, le repertoire de cette session a disparu
-- [ ] Un orphelin plante est retire par molt sur la racine vive, et rien d'autre
-- [ ] La garde de derive nomme `SessionEnd` avant correction, et se tait apres
+- [x] La sonde boolenne passe au vert dans un enfant hermetique (2026-09-07)
+- [x] Un siege CLI rend un verdict non vide sur une passe de `/gaze` reelle —
+      trois portes consecutives (813, 816, 818) apres cinq passes en echec ouvert
+- [ ] Apres une sortie de session normale, le repertoire de cette session a
+      disparu — **toujours pas etabli** le 2026-09-08 : le cablage est en place
+      dans le `settings.json` vif depuis la veille 11:18, mais aucune session
+      n'est sortie proprement depuis. Les huit repertoires presents sont vivants
+      ou dans la fenetre de grace ; les quatre orphelins balayes ce matin
+      dataient tous d'avant le correctif. Fait de calendrier, pas fait sur le
+      hook : rien ne lui a encore donne l'occasion de tirer
+- [x] Un orphelin plante est retire par molt sur la racine vive, et rien
+      d'autre — verifie le 2026-09-08 sur la vraie racine, et sur des orphelins
+      **reels** plutot que plantes, ce qui est plus fort : les quatre sont
+      partis, les huit sessions vivantes ont survecu (dont celle qui lancait le
+      balayage), et les repertoires non-session du meme parent
+      (`gittest_probe*`, `verify817/`) sont intacts
+- [ ] La garde de derive nomme `SessionEnd` avant correction, et se tait apres —
+      non construite ; `check-settings-drift.sh` signale aujourd'hui d'autres
+      cles (agentPushNotifEnabled, feedbackDrafts, modelSettings, permissions),
+      derive preexistante et consultative (sortie 0)
 
 ## Invariants
 
