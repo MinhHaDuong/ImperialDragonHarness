@@ -1,0 +1,103 @@
+%erg 0.1
+Title: /roar saves memory at step 6 but cannot write it until step 9
+Created: 2026-09-08
+Author: sim
+
+--- log ---
+2026-09-08T08:04Z sim created
+2026-09-08T08:04Z sim note observed live at the end of a long session in search-works-for-zotero. Step 6 was reached inside the worktree, every write to `projects/*/memory/**` was refused, and the lessons only landed because step 9 came a few minutes later and I retried afterwards. A session that ended at step 6, or an agent that read the refusal as "memory is not available here", would have lost them silently
+
+--- body ---
+
+## Context
+
+`skills/roar/SKILL.md` orders its steps: **6. Save persistent memory**, then
+**9. Exit worktree**. During a worktree session, step 6 cannot write.
+
+`rules/workflow.md` § Worktree paths already records why, and records it
+correctly:
+
+> Memory files (`projects/*/memory/**`) are documented as a carve-out — [the
+> hook] exempts that path explicitly — but that custom hook is not the only gate
+> in front of a primary-checkout write. Once a session has called
+> `EnterWorktree`, a separate platform-native Edit/Write guard tied to the
+> session's tracked worktree path also fires, has no memory exemption, and
+> denies the write. **Treat the carve-out as inert during an active worktree
+> session.**
+
+So the rule knows. What nothing states is the consequence for `/roar`, whose
+own step order walks straight into it: the step that saves the lessons runs
+three steps before the step that makes saving possible.
+
+## Why this loses work rather than merely annoying
+
+The failure is silent in the direction that matters. A denied write returns a
+refusal an agent can easily read as "memory is unavailable in this context",
+and the natural response is to summarise the lesson in the final message
+instead — where it is read once and never again. Nothing downstream notices: the
+worktree is removed at step 9, the session ends, and the absence of a memory
+file is indistinguishable from a session that had no lesson worth saving.
+
+Observed 2026-09-08 (search-works-for-zotero, a session that merged five PRs and
+filed five upstream issues, two pull requests and a private security report).
+Two durable lessons and one reference entry were written **only** because step 9
+happened to follow within a few minutes and the write was retried from the
+primary checkout afterwards. Neither the skill nor the rule told me to do that;
+the retry was luck.
+
+## Options considered
+
+1. **Reorder the skill** so memory is saved after the worktree exit. Cheapest,
+   and correct for the common case. It does move a "reflect" step away from the
+   reflection block, which is a small loss of readability.
+2. **Keep step 6 where it is and add one sentence** naming the constraint and
+   telling the agent to defer the write until after step 9. Preserves the
+   narrative order; costs a line.
+3. **Make the platform guard honour the carve-out.** The right fix in principle
+   and not ours to make — the deny comes from a platform-native gate, not from
+   `scripts/pretooluse-worktree-path-guard.sh`, which already exempts the path.
+
+Option 3 is out of reach, so the choice is between 1 and 2. Recommend **2**:
+the ordering constraint is a fact about the environment rather than about the
+wrap-up, and a skill that explains *why* a step is deferred survives a future
+runtime that lifts the restriction, where a silently reordered list would just
+look arbitrary.
+
+## Actions
+
+1. Amend `skills/roar/SKILL.md` step 6 to state the constraint and to require
+   the write after step 9 when the session is in a worktree.
+2. Amend `rules/workflow.md` § Worktree paths with the one-line corollary: a
+   wrap-up that saves memory must do so after leaving the worktree.
+3. Check the sibling wrap-up skills — `/lair` runs a memory sweep, `/dream`
+   consolidates memory — for the same ordering hazard, and fix whichever has it.
+
+## Test
+
+`tests/test_roar_step2_attribution.py` extracts and runs a fenced block from
+step 2; whatever is added here must not introduce a second fenced block in that
+step. A text assertion that step 6 names the constraint is the cheap guard, on
+the model of the existing skill-text tests.
+
+## Verification
+
+- [x] Step 6 names the constraint and the deferral
+- [x] `rules/workflow.md` carries the corollary
+- [x] `/lair` and `/dream` checked for the same hazard: `/dream` is immune by an
+      earlier decision (0247 — it deliberately runs outside a worktree, since a
+      worktree run would commit onto the primary checkout's branch anyway), and
+      `/lair` reaches memory only by delegating to it at step 11. So the defect
+      is `/roar`-specific, though a worktree-isolated session invoking that
+      chain meets the same platform gate; noted in the rule rather than
+      duplicated into two more skills
+
+## Invariants
+
+- Step 2's single-fenced-block invariant holds
+- No change to the worktree guards themselves; this is a documentation and
+  ordering fix
+
+## Exit criteria
+
+- A session running `/roar` from inside a worktree is told, before it tries,
+  that the memory write must wait for step 9

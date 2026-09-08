@@ -112,3 +112,5 @@
 - [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md) — the check_ticket_logs gate compares to UTC while the session banner shows local (+2); three failed gates in one session from hand-written stamps
 - [The author's console is the instrument](feedback_the_author_s_console_is_the_instrument.md) — three host-contract defects, each settled by one pasted line; every theory I reasoned out instead was wrong
 - [Sitter install paths on doudou](project_sitter_install_paths_on_doudou.md) — bare XPI drops never register; every prior 0688/0727 measurement was a replacement, not a first install
+- [No past tense without a run](feedback_no_past_tense_without_a_run.md) — three of six seats wrote test results they could not have observed; ask which command produced it
+- [Zoteus security notes](reference_zoteus_security_notes.md) — confidential findings live in ~/.local/state, outside the tree; a repo-rooted search cannot find them
