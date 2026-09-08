@@ -2,11 +2,13 @@
 Title: /roar saves memory at step 6 but cannot write it until step 9
 Created: 2026-09-08
 Author: sim
+Closed: step 6 states the constraint, rules carry the corollary, siblings checked; PR #833
 
 --- log ---
 2026-09-08T08:04Z sim created
 2026-09-08T08:04Z sim note observed live at the end of a long session in search-works-for-zotero. Step 6 was reached inside the worktree, every write to `projects/*/memory/**` was refused, and the lessons only landed because step 9 came a few minutes later and I retried afterwards. A session that ended at step 6, or an agent that read the refusal as "memory is not available here", would have lost them silently
 
+2026-09-08T08:26Z Minh Ha-Duong closed — step 6 states the constraint, rules carry the corollary, siblings checked; PR #833
 --- body ---
 
 ## Context
