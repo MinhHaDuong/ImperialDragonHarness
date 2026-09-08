@@ -1,0 +1,116 @@
+%erg 0.1
+Title: Le filtre "if" des hooks echoue en fermeture, et block-pr-merge-in-worktree refuse des commandes sans rapport
+Created: 2026-09-08
+Author: claude
+
+--- log ---
+2026-09-08T07:05Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+
+--- body ---
+## Context
+
+Trois gardes ont ete re-enregistrees a la main : le filtrage est passe du champ
+`matcher` au champ `if` du handler.
+
+```json
+-  "matcher": "Bash(git worktree remove*)",
++  "matcher": "Bash",
+   "hooks": [ { "type": "command",
++               "if": "Bash(git worktree remove *)",
+                "command": "$HOME/.claude/scripts/guard-worktree-remove-wip.sh" } ]
+```
+
+Consequence mesuree le 2026-09-08 : dans un worktree, des commandes **sans
+aucun rapport** sont refusees par `block-pr-merge-in-worktree.sh`, sous un
+message qui nomme une cause qui n'est pas la leur.
+
+Deux reproducteurs minimaux, ni `gh`, ni `pr`, ni `merge` dans le texte :
+
+```
+cat <(echo hi)                      -> BLOCKED: gh pr merge fails in git worktrees
+diff <(echo a) <(echo b) | head     -> BLOCKED: idem
+```
+
+Et une troisieme forme, une boucle `for` sur `$(gh pr list ...)` — qui ne
+contient pas non plus `merge`. En revanche `echo "word merge alone"` passe,
+donc **le declencheur n'est pas le texte `merge`**.
+
+## Ce qui rend le defaut dur plutot que genant
+
+`block-pr-merge-in-worktree.sh` **ne filtre pas lui-meme**. Il fait
+`cat > /dev/null` sur son stdin et refuse inconditionnellement des qu'il tourne
+dans un worktree ; son propre en-tete le dit : « Matcher in settings.json
+ensures this only runs for `gh pr merge` commands ». Le re-enregistrement a
+donc deplace le filtrage vers un champ qui, sur ces formes, ne filtre pas — et
+un garde sans filtre propre transforme cet echec en refus dur.
+
+`guard-commit-on-main.sh`, lui, se filtre (l. 17,
+`grep -qP '\bgit\s+commit\b' || exit 0`). Il est donc benin sous le meme
+enregistrement — au prix d'un processus par appel Bash. C'est aussi ce qui rend
+le defaut invisible par ce garde-la : son comportement correct et son
+comportement « je tourne sur tout et je sors » sont indiscernables.
+
+L'ancien `"matcher": "Bash(gh pr merge*)"` ne pouvait pas matcher
+`cat <(echo hi)`. C'est donc une **regression**, et elle est **deja vive** dans
+le `settings.json` de la machine : les deux fichiers portent des hooks
+identiques (verifie). Le fichier partage non commite ne fait que la propager
+aux autres machines.
+
+## Cause non isolee
+
+Hypothese la plus economique, non etablie : l'evaluation de `if` echoue a
+analyser certaines constructions shell (`<(...)`, une boucle avec `$(...)`) et
+echoue **en fermeture** — le hook tourne au lieu d'etre saute. Je tiens les
+reproducteurs, pas la raison de l'analyseur. Ne pas ecrire la cause dans le
+correctif avant de l'avoir montree.
+
+Precedent a charge, deja au dossier : la memoire
+`projects/-home-haduong-Climate-finance/memory/feedback_merge_gate_blocks_ticket_fast_path.md`
+etablit que `if` matche le texte de la commande **en sous-chaine**, pas comme
+une regle de permission, et avait deja produit un faux positif le 2026-07-28.
+
+## Relevant files
+
+- `settings.json` et `settings.shared.json` — les trois hooks re-enregistres
+- `scripts/block-pr-merge-in-worktree.sh` — le garde sans filtre propre
+- `scripts/guard-commit-on-main.sh` — celui qui se filtre, l. 17
+- `scripts/guard-worktree-remove-wip.sh` — a auditer : se filtre-t-il ?
+- la memoire Climate-finance citee ci-dessus
+
+## Actions
+
+1. Revenir a un `matcher` qui porte le filtrage pour les trois gardes, dans les
+   deux fichiers. Le `settings.json` vif est celui de l'operateur : proposer,
+   ne pas l'editer sans accord.
+2. Auditer `guard-worktree-remove-wip.sh` : s'il ne se filtre pas non plus, il
+   porte le meme risque que `block-pr-merge-in-worktree.sh`.
+3. Rendre `block-pr-merge-in-worktree.sh` autonome — qu'il lise la commande et
+   sorte 0 si ce n'est pas un `gh pr merge`. Un garde qui refuse tout des qu'il
+   tourne ne doit pas dependre d'un filtre externe pour sa correction.
+
+## Test
+
+Controle positif d'abord, il existe deja : `cat <(echo hi)` depuis un worktree
+doit passer apres correctif, et un vrai `gh pr merge <N>` doit toujours etre
+refuse. Les deux assertions sont necessaires — ne garder que la premiere
+transformerait le correctif en suppression du garde.
+
+## Verification
+
+- [ ] `cat <(echo hi)` passe depuis un worktree
+- [ ] `diff <(echo a) <(echo b)` passe depuis un worktree
+- [ ] un `gh pr merge <N>` reel est toujours refuse depuis un worktree
+- [ ] `guard-worktree-remove-wip.sh` audite, et son verdict ecrit ici
+- [ ] `make check` passe
+
+## Invariants
+
+- Aucun des trois gardes n'est supprime pour faire passer un test.
+- Le `settings.json` vif reste la propriete de l'operateur : ce ticket propose.
+
+## Exit criteria
+
+- [ ] Les gardes ne refusent que ce qu'ils visent, prouve par les deux
+      assertions du controle positif et non par relecture de l'enregistrement
+- [ ] `block-pr-merge-in-worktree.sh` est correct meme si son filtre externe
+      disparait
