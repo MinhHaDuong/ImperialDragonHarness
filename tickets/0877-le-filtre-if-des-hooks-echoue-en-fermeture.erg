@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-08T07:05Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
 2026-09-08T08:10Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
+2026-09-08T08:45Z claude note Reroll round 1 corrige, quatre points, tous introduits par ma propre edition : le compte « deux reproducteurs » demeure alors que le bloc en portait quatre, et « une troisieme forme » etait numerotee contre l'ancien bloc ; `## Relevant files` demandait encore l'audit que deux autres sections donnaient pour fait ; le message du garde etait paraphrase en perdant « git », dans un ticket dont l'objet est justement la citation exacte de ce message — il est desormais reproduit en entier avec sa ligne source. Le quatrieme point est dans 0207
 
 --- body ---
 ## Context
@@ -25,13 +26,13 @@ Consequence mesuree le 2026-09-08 : dans un worktree, des commandes **sans
 aucun rapport** sont refusees par `block-pr-merge-in-worktree.sh`, sous un
 message qui nomme une cause qui n'est pas la leur.
 
-Deux reproducteurs minimaux, ni `gh`, ni `pr`, ni `merge` dans le texte :
+Quatre reproducteurs, aucun ne contenant `gh`, `pr` ni `merge` dans le texte :
 
 ```
-for x in a b; do echo "loop-$x"; done   -> BLOCKED: gh pr merge fails in worktrees
-v=$(echo hi); echo "$v"                 -> BLOCKED: idem
-cat <(echo hi)                          -> BLOCKED: idem
-diff <(echo a) <(echo b) | head         -> BLOCKED: idem
+for x in a b; do echo "loop-$x"; done   -> BLOCKED (voir la citation exacte plus bas)
+v=$(echo hi); echo "$v"                 -> BLOCKED, idem
+cat <(echo hi)                          -> BLOCKED, idem
+diff <(echo a) <(echo b) | head         -> BLOCKED, idem
 ```
 
 Et les temoins negatifs, qui sont ce qui rend le reproducteur utile :
@@ -44,15 +45,22 @@ echo "home is $HOME"                    -> passe
 echo "word merge alone"                 -> passe
 ```
 
+Le message rendu est, mot pour mot (`scripts/block-pr-merge-in-worktree.sh`,
+l. 33) : `Blocked: gh pr merge fails in git worktrees (main is locked by
+parent).` — point final compris. Il est cite en entier parce qu'un ticket sur la
+caracterisation
+exacte du message d'un garde ne peut pas se permettre de le paraphraser — la
+premiere version de ce ticket avait laisse tomber « git ».
+
 Aucune des formes bloquees ne contient `gh`, `pr`, `merge` ni le nom de l'outil
 de version. La paire qui porte le plus d'information est
 `for x in a b; do echo "loop-$x"; done` bloquee contre
 `for x in a b; do echo hi; done` qui passe : meme construction, seule differe
 l'expansion d'une variable dans la commande.
 
-Et une troisieme forme, une boucle `for` sur `$(gh pr list ...)` — qui ne
-contient pas non plus `merge`. En revanche `echo "word merge alone"` passe,
-donc **le declencheur n'est pas le texte `merge`**.
+La forme d'origine du signalement — une boucle `for` sur `$(gh pr list ...)`
+— ne contient pas non plus `merge`. En revanche `echo "word merge alone"`
+passe, donc **le declencheur n'est pas le texte `merge`**.
 
 ## Ce qui rend le defaut dur plutot que genant
 
@@ -93,7 +101,7 @@ une regle de permission, et avait deja produit un faux positif le 2026-07-28.
 - `settings.json` et `settings.shared.json` — les trois hooks re-enregistres
 - `scripts/block-pr-merge-in-worktree.sh` — le garde sans filtre propre
 - `scripts/guard-commit-on-main.sh` — celui qui se filtre, l. 17
-- `scripts/guard-worktree-remove-wip.sh` — a auditer : se filtre-t-il ?
+- `scripts/guard-worktree-remove-wip.sh` — audite : se filtre l. 17, hors risque
 - la memoire Climate-finance citee ci-dessus
 
 ## Actions
