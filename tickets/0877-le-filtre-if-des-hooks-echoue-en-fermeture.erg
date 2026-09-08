@@ -4,7 +4,10 @@ Created: 2026-09-08
 Author: claude
 
 --- log ---
-2026-09-08T07:05Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+2026-09-08T04:52Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+2026-09-08T05:51Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
+2026-09-08T06:09Z claude note Reroll round 1 corrige, quatre points, tous introduits par ma propre edition : le compte « deux reproducteurs » demeure alors que le bloc en portait quatre, et « une troisieme forme » etait numerotee contre l'ancien bloc ; `## Relevant files` demandait encore l'audit que deux autres sections donnaient pour fait ; le message du garde etait paraphrase en perdant « git », dans un ticket dont l'objet est justement la citation exacte de ce message — il est desormais reproduit en entier avec sa ligne source. Le quatrieme point est dans 0207
+2026-09-08T06:29Z claude note Escalade round 2 traitee : la phrase « aucune des formes bloquees ne contient gh, pr, merge » etait contredite cinq lignes plus bas par ce ticket meme, et redondante avec la version correctement portee au-dessus ; supprimee. Classe elargie sur deux observations de la porte : un heredoc en quotes simples mentionnant seulement une substitution, et ${PIPESTATUS[0]}, expansion de parametre nue — ce dernier contredit le temoin negatif echo "$HOME". Horodatages des trois lignes ci-dessus corriges : ils portaient l'heure locale (+02:00) etiquetee Z, donc dans le futur. Meme erreur que sur 0851 hier, corrigee hier, refaite aujourd'hui sur un ticket neuf : la lecon a ete ecrite dans un message de commit et pas dans une garde, et une lecon sans garde ne tient pas
 
 --- body ---
 ## Context
@@ -24,16 +27,48 @@ Consequence mesuree le 2026-09-08 : dans un worktree, des commandes **sans
 aucun rapport** sont refusees par `block-pr-merge-in-worktree.sh`, sous un
 message qui nomme une cause qui n'est pas la leur.
 
-Deux reproducteurs minimaux, ni `gh`, ni `pr`, ni `merge` dans le texte :
+Quatre reproducteurs, aucun ne contenant `gh`, `pr` ni `merge` dans le texte :
 
 ```
-cat <(echo hi)                      -> BLOCKED: gh pr merge fails in git worktrees
-diff <(echo a) <(echo b) | head     -> BLOCKED: idem
+for x in a b; do echo "loop-$x"; done   -> BLOCKED (voir la citation exacte plus bas)
+v=$(echo hi); echo "$v"                 -> BLOCKED, idem
+cat <(echo hi)                          -> BLOCKED, idem
+diff <(echo a) <(echo b) | head         -> BLOCKED, idem
 ```
 
-Et une troisieme forme, une boucle `for` sur `$(gh pr list ...)` — qui ne
-contient pas non plus `merge`. En revanche `echo "word merge alone"` passe,
-donc **le declencheur n'est pas le texte `merge`**.
+Et les temoins negatifs, qui sont ce qui rend le reproducteur utile :
+
+```
+for x in a b; do echo hi; done          -> passe   (meme boucle, sans "$x")
+v=hi; echo "$v"                         -> passe   (meme "$v", sans substitution)
+if true; then echo yes; fi              -> passe
+echo "home is $HOME"                    -> passe
+echo "word merge alone"                 -> passe
+```
+
+Le message rendu est, mot pour mot (`scripts/block-pr-merge-in-worktree.sh`,
+l. 33) : `Blocked: gh pr merge fails in git worktrees (main is locked by
+parent).` — point final compris. Il est cite en entier parce qu'un ticket sur
+la caracterisation exacte du message d'un garde ne peut pas se permettre de le
+paraphraser : la premiere version de ce ticket avait laisse tomber « git ».
+
+La paire qui porte le plus d'information est
+`for x in a b; do echo "loop-$x"; done` bloquee contre
+`for x in a b; do echo hi; done` qui passe : meme construction, seule differe
+l'expansion d'une variable dans la commande.
+
+**La frontiere de la classe n'est pas etablie, et deux observations de la porte
+sur PR 826 l'elargissent au-dela de ce que les temoins ci-dessus suggerent :**
+un `cat > fichier` avec un corps de heredoc en quotes simples mentionnant
+seulement une substitution de commande a ete bloque, et `${PIPESTATUS[0]}` —
+une expansion de parametre nue, sans aucune substitution — l'a ete aussi. Ce
+dernier cas contredit le temoin negatif `echo "home is $HOME"` qui, lui, passe.
+Ne pas resumer la classe par « les substitutions » : les donnees ne le
+soutiennent pas.
+
+La forme d'origine du signalement — une boucle `for` sur `$(gh pr list ...)`
+— ne contient pas non plus `merge`. En revanche `echo "word merge alone"`
+passe, donc **le declencheur n'est pas le texte `merge`**.
 
 ## Ce qui rend le defaut dur plutot que genant
 
@@ -58,10 +93,12 @@ aux autres machines.
 
 ## Cause non isolee
 
-Hypothese la plus economique, non etablie : l'evaluation de `if` echoue a
-analyser certaines constructions shell (`<(...)`, une boucle avec `$(...)`) et
-echoue **en fermeture** — le hook tourne au lieu d'etre saute. Je tiens les
-reproducteurs, pas la raison de l'analyseur. Ne pas ecrire la cause dans le
+Hypothese la plus economique, non etablie : l'evaluation de `if` echoue sur
+certaines commandes et echoue **en fermeture** — le hook tourne au lieu d'etre
+saute. Elle ne dit deliberement pas *lesquelles* : une premiere redaction
+disait « les substitutions », ce que `${PIPESTATUS[0]}` refute, et le temoin
+negatif `echo "home is $HOME"` interdit de dire « les expansions ». Je tiens
+les reproducteurs, pas la raison de l'analyseur. Ne pas ecrire la cause dans le
 correctif avant de l'avoir montree.
 
 Precedent a charge, deja au dossier : la memoire
@@ -74,7 +111,7 @@ une regle de permission, et avait deja produit un faux positif le 2026-07-28.
 - `settings.json` et `settings.shared.json` — les trois hooks re-enregistres
 - `scripts/block-pr-merge-in-worktree.sh` — le garde sans filtre propre
 - `scripts/guard-commit-on-main.sh` — celui qui se filtre, l. 17
-- `scripts/guard-worktree-remove-wip.sh` — a auditer : se filtre-t-il ?
+- `scripts/guard-worktree-remove-wip.sh` — audite : se filtre l. 17, hors risque
 - la memoire Climate-finance citee ci-dessus
 
 ## Actions
@@ -82,8 +119,12 @@ une regle de permission, et avait deja produit un faux positif le 2026-07-28.
 1. Revenir a un `matcher` qui porte le filtrage pour les trois gardes, dans les
    deux fichiers. Le `settings.json` vif est celui de l'operateur : proposer,
    ne pas l'editer sans accord.
-2. Auditer `guard-worktree-remove-wip.sh` : s'il ne se filtre pas non plus, il
-   porte le meme risque que `block-pr-merge-in-worktree.sh`.
+2. ~~Auditer `guard-worktree-remove-wip.sh`~~ — **fait** (porte sur PR 825,
+   2026-09-08) : il se filtre a la ligne 17, meme motif que
+   `guard-commit-on-main.sh`, et ne porte donc pas le risque.
+   `block-pr-merge-in-worktree.sh` reste le seul sans filtre propre : sa ligne 6
+   est `cat > /dev/null`, qui jette le texte meme sur lequel il faudrait
+   filtrer.
 3. Rendre `block-pr-merge-in-worktree.sh` autonome — qu'il lise la commande et
    sorte 0 si ce n'est pas un `gh pr merge`. Un garde qui refuse tout des qu'il
    tourne ne doit pas dependre d'un filtre externe pour sa correction.
@@ -97,10 +138,11 @@ transformerait le correctif en suppression du garde.
 
 ## Verification
 
+- [ ] `for x in a b; do echo "loop-$x"; done` passe depuis un worktree
+- [ ] `v=$(echo hi); echo "$v"` passe depuis un worktree
 - [ ] `cat <(echo hi)` passe depuis un worktree
-- [ ] `diff <(echo a) <(echo b)` passe depuis un worktree
 - [ ] un `gh pr merge <N>` reel est toujours refuse depuis un worktree
-- [ ] `guard-worktree-remove-wip.sh` audite, et son verdict ecrit ici
+- [x] `guard-worktree-remove-wip.sh` audite : se filtre l. 17, hors risque
 - [ ] `make check` passe
 
 ## Invariants
