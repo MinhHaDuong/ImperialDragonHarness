@@ -1,9 +1,40 @@
 #!/bin/bash
 set -euo pipefail
 # Block "gh pr merge" inside a git worktree.
-# Matcher in settings.json ensures this only runs for "gh pr merge" commands.
+#
+# The `if: Bash(gh pr merge *)` gate in settings.json is NOT the filter its old
+# comment here claimed. That matcher decomposes a compound command to test each
+# part, and a command it cannot decompose — command substitution, a heredoc, a
+# `for` loop, a subshell — it hands over anyway. So this guard receives ordinary
+# work and, discarding stdin, refused it on worktree-ness alone: `erg log 0029
+# "$(cat note.txt)"` was blocked with a message about `gh pr merge`, while the
+# plain `erg list tickets/` beside it passed (2026-09-08). Read the command.
+#
+# Absent command → still fail-closed. "I could not read it" is not "it is safe";
+# that is the same posture the worktree predicate below takes.
 
-cat > /dev/null  # consume stdin
+payload=$(cat)
+command=$(printf '%s' "$payload" | python3 -c '
+import json, sys
+try:
+    doc = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+if isinstance(doc, dict):
+    ti = doc.get("tool_input")
+    if isinstance(ti, dict) and isinstance(ti.get("command"), str):
+        print(ti["command"])
+' 2>/dev/null) || command=""
+
+# A command that was read and carries no gh-pr-merge shape is none of this
+# guard's business. The glob stays loose (flags and `-R owner/repo` sit between
+# the words): erring toward firing is the safe direction for the real hazard.
+if [ -n "$payload" ] && [ -n "$command" ]; then
+    case "$command" in
+        *gh*pr*merge*) ;;
+        *) exit 0 ;;
+    esac
+fi
 
 # Linked-worktree predicate (ticket 0308): fire in ANY linked git worktree,
 # not only harness `.claude/worktrees/<name>` ones. This guard is fail-closed

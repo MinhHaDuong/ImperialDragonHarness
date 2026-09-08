@@ -14,9 +14,13 @@ cd "$(dirname "$0")/.."
 HOOK="$PWD/scripts/block-pr-merge-in-worktree.sh"
 fail=0
 
-_rc() { # <dir> → runs the hook from <dir>, echoes its exit code
-    local dir="$1"
-    ( cd "$dir" && echo '{}' | bash "$HOOK" >/dev/null 2>&1; echo $? )
+_rc() { # <dir> [payload] → runs the hook from <dir>, echoes its exit code
+    local dir="$1" payload="${2:-{\}}"
+    ( cd "$dir" && printf '%s' "$payload" | bash "$HOOK" >/dev/null 2>&1; echo $? )
+}
+
+_payload() { # <command> → a PreToolUse payload carrying that command
+    python3 -c 'import json,sys; print(json.dumps({"tool_input": {"command": sys.argv[1]}}))' "$1"
 }
 
 # Fixture: primary repo, a harness worktree, and an ad-hoc worktree that lives
@@ -88,6 +92,39 @@ else
     fail=1
 fi
 rm -rf "$super" "$sub"
+
+# 6. A real `gh pr merge` in a harness worktree → block (exit 2). The positive
+# control: cases 1-5 pass an empty payload, so on their own they cannot tell a
+# guard that reads the command from one that never looks.
+rc=$(_rc "$primary/.claude/worktrees/t001" "$(_payload 'gh pr merge 449 --merge')")
+if [ "$rc" = "2" ]; then
+    echo "PASS: blocks a real gh pr merge in a worktree"
+else
+    echo "FAIL: expected block (2) for gh pr merge, got $rc"
+    fail=1
+fi
+
+# 7. Ordinary work in a harness worktree → allow (exit 0). The `if:` matcher in
+# settings.json hands this guard any command it cannot decompose, so a command
+# substitution reaches here and must pass (2026-09-08: `erg log` was refused
+# with a message about `gh pr merge`).
+rc=$(_rc "$primary/.claude/worktrees/t001" "$(_payload 'erg log 0029 "$(cat note.txt)" tickets/')")
+if [ "$rc" = "0" ]; then
+    echo "PASS: allows an unrelated command in a worktree"
+else
+    echo "FAIL: expected allow (0) for an unrelated command, got $rc"
+    fail=1
+fi
+
+# 8. A command naming a merge that is not gh's → allow. `git merge` is not the
+# hazard: it is the documented recovery when force-push is denied.
+rc=$(_rc "$primary/.claude/worktrees/t001" "$(_payload 'git merge origin/main')")
+if [ "$rc" = "0" ]; then
+    echo "PASS: allows git merge in a worktree"
+else
+    echo "FAIL: expected allow (0) for git merge, got $rc"
+    fail=1
+fi
 
 git -C "$primary" worktree remove --force "$primary/.claude/worktrees/t001" 2>/dev/null || true
 git -C "$primary" worktree remove --force "$primary/adhoc" 2>/dev/null || true
