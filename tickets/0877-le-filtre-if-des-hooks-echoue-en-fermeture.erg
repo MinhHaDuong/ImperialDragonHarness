@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-09-08T07:05Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+2026-09-08T08:10Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
 
 --- body ---
 ## Context
@@ -27,9 +28,27 @@ message qui nomme une cause qui n'est pas la leur.
 Deux reproducteurs minimaux, ni `gh`, ni `pr`, ni `merge` dans le texte :
 
 ```
-cat <(echo hi)                      -> BLOCKED: gh pr merge fails in git worktrees
-diff <(echo a) <(echo b) | head     -> BLOCKED: idem
+for x in a b; do echo "loop-$x"; done   -> BLOCKED: gh pr merge fails in worktrees
+v=$(echo hi); echo "$v"                 -> BLOCKED: idem
+cat <(echo hi)                          -> BLOCKED: idem
+diff <(echo a) <(echo b) | head         -> BLOCKED: idem
 ```
+
+Et les temoins negatifs, qui sont ce qui rend le reproducteur utile :
+
+```
+for x in a b; do echo hi; done          -> passe   (meme boucle, sans "$x")
+v=hi; echo "$v"                         -> passe   (meme "$v", sans substitution)
+if true; then echo yes; fi              -> passe
+echo "home is $HOME"                    -> passe
+echo "word merge alone"                 -> passe
+```
+
+Aucune des formes bloquees ne contient `gh`, `pr`, `merge` ni le nom de l'outil
+de version. La paire qui porte le plus d'information est
+`for x in a b; do echo "loop-$x"; done` bloquee contre
+`for x in a b; do echo hi; done` qui passe : meme construction, seule differe
+l'expansion d'une variable dans la commande.
 
 Et une troisieme forme, une boucle `for` sur `$(gh pr list ...)` — qui ne
 contient pas non plus `merge`. En revanche `echo "word merge alone"` passe,
@@ -82,8 +101,12 @@ une regle de permission, et avait deja produit un faux positif le 2026-07-28.
 1. Revenir a un `matcher` qui porte le filtrage pour les trois gardes, dans les
    deux fichiers. Le `settings.json` vif est celui de l'operateur : proposer,
    ne pas l'editer sans accord.
-2. Auditer `guard-worktree-remove-wip.sh` : s'il ne se filtre pas non plus, il
-   porte le meme risque que `block-pr-merge-in-worktree.sh`.
+2. ~~Auditer `guard-worktree-remove-wip.sh`~~ — **fait** (porte sur PR 825,
+   2026-09-08) : il se filtre a la ligne 17, meme motif que
+   `guard-commit-on-main.sh`, et ne porte donc pas le risque.
+   `block-pr-merge-in-worktree.sh` reste le seul sans filtre propre : sa ligne 6
+   est `cat > /dev/null`, qui jette le texte meme sur lequel il faudrait
+   filtrer.
 3. Rendre `block-pr-merge-in-worktree.sh` autonome — qu'il lise la commande et
    sorte 0 si ce n'est pas un `gh pr merge`. Un garde qui refuse tout des qu'il
    tourne ne doit pas dependre d'un filtre externe pour sa correction.
@@ -97,10 +120,11 @@ transformerait le correctif en suppression du garde.
 
 ## Verification
 
+- [ ] `for x in a b; do echo "loop-$x"; done` passe depuis un worktree
+- [ ] `v=$(echo hi); echo "$v"` passe depuis un worktree
 - [ ] `cat <(echo hi)` passe depuis un worktree
-- [ ] `diff <(echo a) <(echo b)` passe depuis un worktree
 - [ ] un `gh pr merge <N>` reel est toujours refuse depuis un worktree
-- [ ] `guard-worktree-remove-wip.sh` audite, et son verdict ecrit ici
+- [x] `guard-worktree-remove-wip.sh` audite : se filtre l. 17, hors risque
 - [ ] `make check` passe
 
 ## Invariants
