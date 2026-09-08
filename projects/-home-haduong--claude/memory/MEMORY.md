@@ -8,6 +8,8 @@
 
 ## Entries
 
+- [Editing a ticket body is not appending to it](feedback_editing_a_ticket_body_is_not_appending.md) — counts, ordinals and universals in the section are part of the diff; eight self-introduced inconsistencies in one ticket, five caught by gate rounds that cost more than they saved
+- [Measure whether a guard ever fired](feedback_measure_whether_a_guard_ever_fired.md) — the sanctioned merge path is a script, so the hook never saw `gh pr merge`; the guard's premise was contradicted thirteen times in one night
 - [A boolean secret probe must not expand the value](feedback_boolean_probe_must_not_expand_the_value.md) — `${VAR:-unset}` prints the KEY when VAR is set; test, then print a literal — this leaked a live key from a probe written to avoid exactly that
 - [Switching worktrees strands a running gate](feedback_switching_worktrees_breaks_running_gates.md) — the guard tracks the SESSION's worktree, so a mid-gate EnterWorktree kills that fork's Bash entirely; park until the verdict lands
 - [A test green for an accidental reason](feedback_a_test_green_for_an_accidental_reason.md) — repairing a config gap turned make check red; the all-clear had meant "nothing to look at". Three-arm control, or you cannot tell a fix from a changed subject
