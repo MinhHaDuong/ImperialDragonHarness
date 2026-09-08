@@ -110,3 +110,5 @@
 - [A stale artifact reads as live](feedback_a_stale_artifact_reads_as_live.md) — 12 611 log entries with today's dates, writer retired two versions back; grep what writes a file before inferring from it
 - [Measure the recommendation you wrote](feedback_measure_the_recommendation_you_wrote.md) — two mechanism-only recommendations, one reversed and one undercut by ten minutes of counting; his short challenge means a number is missing
 - [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md) — the check_ticket_logs gate compares to UTC while the session banner shows local (+2); three failed gates in one session from hand-written stamps
+- [The author's console is the instrument](feedback_the_author_s_console_is_the_instrument.md) — three host-contract defects, each settled by one pasted line; every theory I reasoned out instead was wrong
+- [Sitter install paths on doudou](project_sitter_install_paths_on_doudou.md) — bare XPI drops never register; every prior 0688/0727 measurement was a replacement, not a first install
