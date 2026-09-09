@@ -20,10 +20,19 @@ def test_edm_rule_file_exists():
 
 
 def test_readme_indexes_edm_rule():
+    """edm.md must stay discoverable from the index.
+
+    Until 2026-09-09 this asserted an index-table *row*. The table now names
+    only the conditional rules — the ones an agent does not already have —
+    because the runtime loads every unscoped body in full, and describing a
+    body it ships is paying for it twice. edm.md is unscoped, so the index
+    declares it in the resident list instead; discoverability is unchanged,
+    the duplicate description is gone.
+    """
     readme = (RULES / "README.md").read_text(encoding="utf-8")
-    assert re.search(r"^\|\s*\[edm\.md\]", readme, re.M), (
-        "rules/README.md must carry an index-table row for edm.md — the index "
-        "is the single source of truth on when each rule file applies"
+    assert re.search(r"^\|\s*\[edm\.md\]", readme, re.M) or "`edm.md`" in readme, (
+        "rules/README.md must name edm.md — as a conditional-table row if it "
+        "gains `paths:` frontmatter, else in the resident list"
     )
 
 

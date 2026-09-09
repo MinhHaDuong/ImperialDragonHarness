@@ -21,33 +21,43 @@ Every task passes through five phases:
 ## Structure
 
 ```
-ImperialDragonHarness/
-├── rules/                  # Rule index (README.md) injected at SessionStart; bodies read on demand
-│   ├── README.md           # One-screen index: filename, scope, summary
-│   ├── workflow.md         # Session start, escalation, worktree
-│   ├── git.md              # Branch, commit, PR discipline
-│   ├── coding-python.md    # Python style, testing, Make (load when Python project)
-│   ├── state.md            # STATE.md format spec
-│   └── tickets.md          # Ticket log verbs including bump categories
+ImperialDragonHarness/          # cloned as ~/.claude
+├── rules/                  # Doctrine — loaded by the runtime itself, see below
 ├── skills/                 # Slash commands — auto-generated catalog below
-├── scripts/                # Hook implementations + shell init
-│   ├── shell-init.sh           # Source from ~/.bashrc — claude wrapper
-│   ├── on-start.sh             # Session start: env loading, worktree gate
-│   ├── guard-destructive-bash.sh
-│   ├── guard-commit-on-main.sh
-│   ├── block-pr-merge-in-worktree.sh
-│   ├── lint-on-edit.sh
-│   ├── warn-stale-rules.sh
-│   └── gen_skills_catalog.py   # Generate skills catalog from SKILL.md frontmatter
-├── commands/               # Guidance documents
-│   └── choose-journal.md
-├── bin/                    # Utilities (added to PATH)
-│   ├── usage-report
-│   ├── snapshot
-│   └── install-cron
-├── settings.json           # Hooks, permissions, env vars
+├── scripts/                # Hook implementations, guards, shell init
+├── tests/                  # The gates; `make check` runs them
+├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
+├── memory/                 # Cross-project lessons, injected at session start
+├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory
+├── commands/ bin/ hooks/   # Guidance docs, PATH utilities, git hooks
+├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
 ```
+
+Directory contents are not enumerated here: `ls` answers that, and a hand-kept
+listing drifts — this one claimed five rule files when there were nineteen, and
+named one that no longer exists.
+
+## Rules
+
+`~/.claude/rules/**.md` is read by the runtime, not by a hook, and the
+frontmatter decides how:
+
+| Frontmatter | Loading | What it costs |
+|---|---|---|
+| no `paths:` | in the system prompt of **every session, every project** | paid on every conversation |
+| `paths: ["**/*.py"]` | only when the session touches a matching file | paid on use |
+
+So a rule needs no description anywhere: an unscoped one is already in front of
+the reader, and a scoped one is named in [`rules/README.md`](rules/README.md)
+precisely because it is not. That index is one screen, and it is the single
+source of truth on when each conditional rule applies.
+
+The resident set costs ~21 600 tokens per session (measured 2026-09-09;
+`workflow.md` and `git.md` are two thirds of it). `tests/test_rules_resident_budget.py`
+caps it: trimming a body lowers the cap, growing one has to argue for a raise.
+A runtime without this auto-load — the Pi and Codex adapters — must inject that
+set itself; that is the real work behind tickets 0800 and 0572.
 
 ## Installation
 

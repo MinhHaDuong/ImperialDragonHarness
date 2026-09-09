@@ -9,7 +9,7 @@
 ## Entries
 
 - [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md) — a reference manifest and the set of things that break are different sets; six tests red where three were predicted, and a guard that loses its subject goes with it
-- [The whole rules/ tree is resident](reference_rules_tree_is_resident.md) — 28 590 tokens in every system prompt, 73% of the budget; the pointer-table design is void and `inject_rule_on_edit.py` re-serves what is already there
+- [The whole rules/ tree is resident](reference_rules_tree_is_resident.md) — the runtime loads `~/.claude/rules/**.md` itself; `paths:` frontmatter is what makes a body conditional. Mechanism isolated 2026-09-09, 28 400 → 21 600 resident tokens after scoping; the guard that should have caught it was watching the hook, not the runtime
 - [A pgrep waiter matches its own command line](feedback_pgrep_waiter_matches_itself.md) — `until pgrep -f 'make check'` waits for itself forever, and a stuck waiter looks exactly like a slow job
 - [Editing a ticket body is not appending to it](feedback_editing_a_ticket_body_is_not_appending.md) — counts, ordinals and universals in the section are part of the diff; eight self-introduced inconsistencies in one ticket, five caught by gate rounds that cost more than they saved
 - [Measure whether a guard ever fired](feedback_measure_whether_a_guard_ever_fired.md) — the sanctioned merge path is a script, so the hook never saw `gh pr merge`; the guard's premise was contradicted thirteen times in one night
