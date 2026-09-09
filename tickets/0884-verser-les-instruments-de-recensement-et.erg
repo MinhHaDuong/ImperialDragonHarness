@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Verser les instruments de recensement et le handoff de la passe de degraissage
+Created: 2026-09-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-09T16:30Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+The 2026-09-09 usage census drove three merged cuts (0881, 0882, 0883). Its
+instruments lived in a session scratch directory, which does not survive the
+session: the report would have outlived the machine that produced it, and every
+one of its claims would have become unverifiable at the moment it mattered most
+— the next session, deciding what else to remove.
+
+This vendors them, and writes the handoff the pass owes to whoever picks it up.
+
+## The tension, stated
+
+Nine files is real surface, added by a pass whose subject was removing surface.
+They are grouped under `scripts/census/` rather than scattered through
+`scripts/` so the whole instrument deletes in one move when it stops earning
+its keep — the test it should be held to, like everything it measures.
+
+## Relevant files
+
+- `scripts/census/` — nine instruments plus a README carrying the pipeline and,
+  more useful, how to read the outputs without fooling yourself
+- `HANDOFF-2026-09-09.md` — what merged, what the numbers were, which decisions
+  were taken and why, what is left open, and two method lessons the pass paid for
+- `settings.shared.json` — two further rules the vendored classifier caught
+
+## Actions
+
+1. Copy the instruments in, rewriting only the absolute home paths the agnostic
+   guard forbids. The code that produced the numbers lands, not a rewrite of it.
+2. Fix the one defect the vendored classifier revealed about itself: a trailing
+   `:*` is the permission grammar's prefix-match syntax, not part of a path, and
+   reading it as one reported the live `erg-pr-merge` script as dead.
+3. Remove the two rules the corrected classifier then found: a `Read` on an
+   `AEDIST-technical-report/slides/manuscript` directory that does not exist,
+   and a `Read` on `chemin-de-voix/tickets/**` already covered by the broader
+   rule on `chemin-de-voix/**`.
+
+## Test
+
+Running the vendored scripts against the live repository is the check: a copy
+that lints clean but no longer runs would pass every mechanical gate here.
+`permissions.py` is the sharpest of them — it must report zero dead paths and
+zero subsumed rules after step 3, having reported two of each before.
+
+## Verification
+
+- [x] `bash scripts/check-agnostic.sh scripts` passes — no absolute home path
+- [x] `ruff check scripts/census/` clean
+- [x] `deps.py` and `permissions.py` run against the live repository
+- [x] `permissions.py` reports 0 dead and 0 subsumed after the two removals
+- [ ] `make check` passes
+
+## Invariants
+
+- No behaviour anywhere else changes; this adds a directory and a document.
+- The census reads local traces and emits aggregates only.
+
+## Exit criteria
+
+- The measurement is reproducible from the repository alone, and the open
+  threads are written down where a cold session will find them.
