@@ -1,0 +1,76 @@
+%erg 0.1
+Title: Simplifier settings.shared.json: 29 regles de permission sans objet
+Created: 2026-09-09
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #842
+
+--- log ---
+2026-09-09T16:10Z Minh Ha-Duong created
+
+2026-09-09T16:11Z Minh Ha-Duong closed — autoclosed — PR #842
+--- body ---
+## Context
+
+The permission allow-list had grown to 76 rules by accretion: every session that
+hit a prompt left a rule behind, and nothing ever took one away. A permission
+rule is not free. It is matched on every tool call, it is one more line the
+model weighs, and a stale one grants nothing while reading like policy.
+
+Third cut of the pre-port slimming, after 0881 and 0882.
+
+## What was removed, and on what evidence
+
+Nothing was removed for looking unused. Each of the 29 rules failed a checked
+test:
+
+**Named target no longer exists (9).** `Tracing Kieu` as a project directory,
+`perso/Life manual/Heroes` and its three hero folders, and the
+`chemin-de-voix/.claude/worktrees/harvest-corpus` worktree — all verified
+absent on disk, not inferred.
+
+**Literal from a completed operation (20).** No wildcard, so the rule can only
+ever match that exact string again: the chemin-de-voix corpus harvest and its
+clean-up, two import probes (`fpdf2`, `reportlab`), a `pkill` of one named
+process, a `df` over an ssh host, three output-shaping filters, `fc-list`.
+
+One `additionalDirectories` entry pointed at a directory that no longer exists
+(`AEDIST-technical-report/tickets`).
+
+## What was deliberately not done
+
+**No rule was widened.** Several removed literals would be covered by one broad
+rule over the chemin-de-voix checkout. Widening a permission is the author's
+call, not a consequence of tidying, so this pass only narrows the file and never
+the policy. Of the 29 removed, five carry a wildcard and every one of those five
+names a directory that is gone.
+
+**Same-matcher hook blocks were left unfolded.** `PreToolUse` holds four
+separate blocks matching `Bash`, which could be one block with four hooks. On
+paper that is a spelling change; in practice nothing here establishes whether a
+deny from one hook short-circuits its block-mates the way it short-circuits
+later blocks. The gain is three fewer lines in a file nobody reads by hand and
+the risk is the guard layer, so it wants a fixture first. Filed as an
+observation, not done.
+
+## Relevant files
+
+- `settings.shared.json` — the canonical copy; the live `settings.json` is
+  git-ignored and re-aligned by hand
+- `scripts/check-settings-drift.sh` — reports the gap until the live file is
+  aligned
+
+## Verification
+
+- [x] JSON parses; 76 -> 47 rules, 4 -> 3 additional directories
+- [x] No rule was added, and no removed wildcard rule names a live path
+- [x] `make check` passes
+- [ ] Live `settings.json` re-aligned (operator act, git-ignored file)
+
+## Invariants
+
+- No hook changes; no rule is widened; only rules whose subject is gone leave.
+
+## Exit criteria
+
+- The allow-list contains only rules that can still match something, and the
+  drift check is clean once the live file is aligned.

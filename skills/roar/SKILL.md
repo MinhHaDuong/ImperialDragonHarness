@@ -129,6 +129,8 @@ default branch — there are no remote branches nor merge requests to inspect.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
 
+   **In a worktree session, this write is refused — defer it until after step 9.** The `projects/*/memory/**` carve-out is documented, and the harness's own path guard does exempt it, but a separate platform-native Edit/Write guard tied to the session's tracked worktree also fires and has no memory exemption (`rules/workflow.md` § Worktree paths). Reflect and decide *what* to save here; perform the write once step 9 has returned the session to the primary checkout. The failure is silent in the losing direction: a denied write reads like "memory is unavailable in this context", the natural response is to put the lesson in the final message instead, and after step 9 removes the worktree nothing distinguishes a lost lesson from a session that had none (ticket 0880, observed 2026-09-08 — three entries survived only because the write was retried after the exit, which nothing had asked for).
+
 ## Close and clean up
 
 7. **Close** the ticket if still open.

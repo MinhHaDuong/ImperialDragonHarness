@@ -41,9 +41,9 @@ argument-hint: "<ticket-id> [inline]"
    Each skip is total, the needs-human branch included: an executor spawned by an
    interactive hunt was triaged by that hunt before it was spawned, so re-reading
    the tells buys nothing. A raid, though, picks its own targets and no
-   interactive hunt precedes them. `erg ready` already skip-lists the label out
-   of pick-ticket's queue (`tickets/.ergrc`), and raid Phase 1 now screens its
-   own targets ([[0390]]); neither is a second triage here.
+   interactive hunt precedes them. `erg ready` already skip-lists the label
+   (`tickets/.ergrc`), and raid Phase 1 screens its own targets ([[0390]]);
+   neither is a second triage here.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
      `Label: needs-human` header; exit criteria carrying decision verbs (decide,
      arbitrate, sign-off, choose among); manuscript prose as the deliverable, which
@@ -97,8 +97,8 @@ argument-hint: "<ticket-id> [inline]"
    Confirm with `basename "$(git rev-parse --show-toplevel)"`: it must be `t$ARGUMENTS`,
    begin with `t$ARGUMENTS-`, or be the `agent-*` worktree of this session (rules/git.md § anchor branch-mutating git
    across a forked-skill boundary). Ad hoc orchestrators should not hand-type this
-   ownership contract: spawn the hunt headlessly as `~/.claude/scripts/beat.py` does, with
-   `claude -p "/hunt <id>"`, so the live SKILL.md text supplies the rule.
+   ownership contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`,
+   so the live SKILL.md text supplies the rule instead of a copy that drifts.
 4. Create or checkout the ticket branch:
    ```bash
    git switch -c t$ARGUMENTS-short-description

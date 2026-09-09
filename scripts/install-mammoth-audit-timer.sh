@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 HARNESS_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
-USER_BIN=${XDG_BIN_HOME:-$HOME/.local/bin}
+# Keep this in sync with the service's fixed %h/.local/bin ExecStart.
+USER_BIN=$HOME/.local/bin
 USER_UNITS=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user
 
 mkdir -p "$USER_BIN" "$USER_UNITS"

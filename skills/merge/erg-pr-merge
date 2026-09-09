@@ -10,8 +10,7 @@
 # branch checked out) either with `-C PATH` (preferred — keeps the invocation
 # bare so it matches the standing allow rule from any cwd) or by cd-ing there
 # first. Prefer `-C PATH` over a `cd PATH && …` prefix: the prefix defeats the
-# allow rule (see SKILL.md). See raid Phase 7 and nightbeat-supervisor Phase 2
-# for the caller contracts.
+# allow rule (see SKILL.md). See raid Phase 7 for the caller contract.
 #
 # Happy path:
 #   0. Verify: on PR head branch, CI green, no conflicts

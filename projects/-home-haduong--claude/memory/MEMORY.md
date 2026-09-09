@@ -8,6 +8,11 @@
 
 ## Entries
 
+- [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md) — a reference manifest and the set of things that break are different sets; six tests red where three were predicted, and a guard that loses its subject goes with it
+- [The whole rules/ tree is resident](reference_rules_tree_is_resident.md) — the runtime loads `~/.claude/rules/**.md` itself; `paths:` frontmatter is what makes a body conditional. Mechanism isolated 2026-09-09, 28 400 → 21 600 resident tokens after scoping; the guard that should have caught it was watching the hook, not the runtime
+- [A pgrep waiter matches its own command line](feedback_pgrep_waiter_matches_itself.md) — `until pgrep -f 'make check'` waits for itself forever, and a stuck waiter looks exactly like a slow job
+- [Editing a ticket body is not appending to it](feedback_editing_a_ticket_body_is_not_appending.md) — counts, ordinals and universals in the section are part of the diff; eight self-introduced inconsistencies in one ticket, five caught by gate rounds that cost more than they saved
+- [Measure whether a guard ever fired](feedback_measure_whether_a_guard_ever_fired.md) — the sanctioned merge path is a script, so the hook never saw `gh pr merge`; the guard's premise was contradicted thirteen times in one night
 - [A boolean secret probe must not expand the value](feedback_boolean_probe_must_not_expand_the_value.md) — `${VAR:-unset}` prints the KEY when VAR is set; test, then print a literal — this leaked a live key from a probe written to avoid exactly that
 - [Switching worktrees strands a running gate](feedback_switching_worktrees_breaks_running_gates.md) — the guard tracks the SESSION's worktree, so a mid-gate EnterWorktree kills that fork's Bash entirely; park until the verdict lands
 - [A test green for an accidental reason](feedback_a_test_green_for_an_accidental_reason.md) — repairing a config gap turned make check red; the all-clear had meant "nothing to look at". Three-arm control, or you cannot tell a fix from a changed subject
@@ -94,3 +99,4 @@
 - [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md) — awk/printf emit `70,0` under fr_FR; export LC_ALL=C after set -euo pipefail in any test-guarded script
 - [Enumerate untracked with status -uall](feedback_enumerate_untracked_with_status_uall.md) — `git clean -n` prints "Would remove <path>" and collapses untracked dirs; a check that returns *everything* hides a broken probe as surely as one that returns nothing
 - [Ask the live peer before committing its work](feedback_ask_the_live_peer_before_committing_its_work.md) — uncommitted files in a shared checkout have a findable owner: originSessionId → transcript → ListAgents → SendMessage; asking caught a stale index that would have reverted a merge, and surfaced two artifacts the scan never saw
+- [An orphan branch may already be archived as a tag](feedback_orphan_branch_may_be_archived_as_a_tag.md) — gone upstream plus unmerged commits is not proof it is the only copy; `refs/tags/archive/<branch>` decides, and four branches kept as "the only copy" were pure local debt

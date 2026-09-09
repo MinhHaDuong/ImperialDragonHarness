@@ -178,9 +178,9 @@ def build_report(repo: Path, projects_dir: Path, days: int, now: datetime) -> di
             disposition = "keep-dependency"
         elif coverage["trace_files_in_window"] == 0:
             disposition = "indeterminate-no-traces"
-        elif changed is not None and changed >= cutoff:
-            disposition = "indeterminate-recent"
         else:
+            # Modification time is context, not usage: a housekeeping edit
+            # must not restart a grace period for an unused skill.
             disposition = "candidate-remove"
         rows.append(
             {
@@ -239,8 +239,15 @@ def main() -> None:
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     candidates = report["summary"].get("candidate-remove", 0)
+    indeterminate = sum(
+        count
+        for name, count in report["summary"].items()
+        if name.startswith("indeterminate")
+    )
     print(
-        f"mammoth-audit: {report['summary']['skills']} skills, {candidates} removal candidates; {args.output}"
+        f"mammoth-audit: {report['summary']['skills']} skills, {candidates} removal candidates, "
+        f"{indeterminate} indeterminate; "
+        f"{report['coverage']['trace_files_in_window']} trace files in window; {args.output}"
     )
 
 

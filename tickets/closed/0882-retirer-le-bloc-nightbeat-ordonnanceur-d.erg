@@ -1,0 +1,103 @@
+%erg 0.1
+Title: Retirer le bloc nightbeat: ordonnanceur desinstalle, quatre skills et molt en mode unique
+Created: 2026-09-09
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #841
+
+--- log ---
+2026-09-09T15:55Z Minh Ha-Duong created
+2026-09-09T15:58Z Minh Ha-Duong note red step turned six tests red, not the three predicted; test_fewer_permission_prompts_helper.py had lost its subject
+2026-09-09T15:59Z Minh Ha-Duong note Blocked-by 0881 removed: 0881 merged in PR #840
+2026-09-09T16:02Z Minh Ha-Duong closed — autoclosed — PR #841
+--- body ---
+## Context
+
+The autonomous night pipeline has no scheduler. `systemctl --user list-timers
+--all` knows three timers on this host and none of them is the nightbeat; the
+two units sit in `systemd/` in this repository, uninstalled, without a commit
+since 2026-05-13. The usage census over every local session trace explains four
+zeros at once: `beat` 0 invocations, `nightbeat-report` 0, `nightbeat-supervisor`
+2 (last 2026-07-11), `pick-ticket` 8 (last 2026-07-10). The block stopped being
+exercised in mid-July and stopped being scheduled before that.
+
+Keeping it in this state is the worst of both: it is ported, tested and
+maintained while nothing triggers it. `tests/test_beat.py` is the largest test
+file in the repository, 97 858 bytes, for the least used skill. The author's
+decision (2026-09-09) is removal, not redeployment.
+
+Tracked by 0876. Was blocked by 0881, which removes a different set of skills
+and touches the same generated catalog; it merged first (PR #840) and this
+branch integrated it.
+
+## Relevant files
+
+Removed:
+
+- `skills/beat/`, `skills/nightbeat-report/`, `skills/nightbeat-supervisor/`,
+  `skills/pick-ticket/` — 17 975 B
+- `scripts/beat.py`, `nightbeat-report.py`, `nightbeat-supervisor-survey.py`,
+  `supervisor-budget.py`, `migrate-supervisor-journal.py`, `beat-settings.json`
+- `scripts/fewer-permission-prompts-helper.py` — zero executions in the window;
+  its docstring names `beat.py` as its only caller
+- `scripts/guard-no-push.sh` — never wired into any settings file, and its
+  predicate is `BEAT_HOUSEKEEPING_PR`; it guards a mode that will not exist
+- `systemd/claude-nightbeat-supervisor.{service,timer}`
+- nine tests whose subject disappears, including `test_needs_human_screen.py`
+  (exercises `pick-ticket` alone) and `test_housekeeping_git.py` (exercises the
+  `beat-skip` expiry alone)
+
+Edited, live:
+
+- `skills/molt/SKILL.md` — loses its dual mode (see below)
+- `scripts/housekeeping-git.sh` — `beat-skip` expiry has no producer left
+- `scripts/skill-doctor-survey.py` — nightbeat log scan, supervisor journal and
+  six entries of its failure catalogue
+- `skills/raid`, `skills/hunt`, `skills/dream`, `skills/merge/erg-pr-merge`,
+  `skills/skill-doctor`, `skills/reviewers/benchmark-board.yml`,
+  `scripts/setup-claude-agent.sh`, `rules/workflow.md`, `README.md`,
+  `settings.json`, `settings.shared.json` — references and permission entries
+
+## The one behaviour change
+
+`molt` (39 invocations, third most used housekeeping skill) branches on
+`BEAT_HOUSEKEEPING_BRANCH` in five places — steps 1, 6.5, 68-69, 208 and
+214-222 — to skip its git phase when `beat.py` has already run it. With
+`beat.py` gone the variable is never set, so molt reduces to its interactive
+mode. The author chose to make that explicit in this change rather than leave
+the branches inert.
+
+## Test
+
+Remove the block first, run the suite, and let the failures name the live
+callers. Predicted three:
+
+- `tests/test_hunt_worktree_ownership.py` asserts `"beat.py" in step3`
+- `tests/test_dream.py:118` resolves `scripts/nightbeat-supervisor-survey.py`
+- `tests/test_rename_orchestrator_to_raid.sh` greps `scripts/nightbeat-report.py`
+
+The run turned **six** red. The fourth was `test_fewer_permission_prompts_helper.py`,
+whose subject had been deleted without it — a file the textual manifest could
+not see, because nothing in the repository referenced it by the name the sweep
+searched for. That is the whole argument for running the suite before the
+edits rather than after: a manifest lists what points at a file, the suite
+lists what breaks without it, and those are different sets.
+
+## Verification
+
+- [x] The suite was run before any live edit; six tests failed, each driving one edit
+- [x] No reference to the removed names survives outside `docs/`, `tickets/` and
+      the deliberate historical notes that explain each removal
+- [x] `make check-skills-drift` passes after `make skills-catalog`
+- [x] `make check` passes — 852 passed
+- [x] `tickets/erg check tickets/` passes
+
+## Invariants
+
+- `molt` keeps working interactively; only its beat-driven path goes.
+- No other live skill changes behaviour.
+- `docs/` keeps its historical record of the nightbeat era untouched.
+
+## Exit criteria
+
+- The block is gone, the three broken tests are green, the suite is green, and
+  no settings file still grants a permission for a script that no longer exists.

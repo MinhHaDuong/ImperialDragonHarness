@@ -110,3 +110,10 @@
 - [A stale artifact reads as live](feedback_a_stale_artifact_reads_as_live.md) — 12 611 log entries with today's dates, writer retired two versions back; grep what writes a file before inferring from it
 - [Measure the recommendation you wrote](feedback_measure_the_recommendation_you_wrote.md) — two mechanism-only recommendations, one reversed and one undercut by ten minutes of counting; his short challenge means a number is missing
 - [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md) — the check_ticket_logs gate compares to UTC while the session banner shows local (+2); three failed gates in one session from hand-written stamps
+- [The author's console is the instrument](feedback_the_author_s_console_is_the_instrument.md) — three host-contract defects, each settled by one pasted line; every theory I reasoned out instead was wrong
+- [Sitter install paths on doudou](project_sitter_install_paths_on_doudou.md) — only the GUI menu registers; the three arms of 2026-09-08 refuted both standing 0727 hypotheses
+- [Squash merge loses roar attribution](feedback_squash_merge_loses_roar_attribution.md) — the enumerator matches merge-commit subjects only; five PRs went unlogged
+- [No past tense without a run](feedback_no_past_tense_without_a_run.md) — three of six seats wrote test results they could not have observed; ask which command produced it
+- [Zoteus security notes](reference_zoteus_security_notes.md) — confidential findings live in ~/.local/state, outside the tree; a repo-rooted search cannot find them
+- [Assent is not a trigger](feedback_assent_is_not_a_trigger.md) — "qu'ils partent" named the destination, not the moment; irreversible acts need the moment
+- [`if:`-gated hooks get unparsed commands](reference_if_gated_hooks_get_unparsed_commands.md) — a settings matcher hands over what it cannot decompose; the hook must read the command
