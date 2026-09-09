@@ -54,5 +54,8 @@ target exits 1 — loud, and never 2, which is Claude Code's "deny the call".
     scripts/adapter-claude-code-activate.sh            # after clearing the live hooks
     scripts/adapter-claude-code-activate.sh --revert
 
-Reverting is removing one symlink. Confirm a guard actually fires in a new
-session; reading a configuration file is not evidence that it does.
+Reverting removes the symlink only after the live file once again covers every
+hook in `settings.shared.json`; extra local hooks are allowed. The switch
+refuses to remove the plugin while doing so would leave no hook source. Confirm
+a guard actually fires in a new session; reading a configuration file is not
+evidence that it does.

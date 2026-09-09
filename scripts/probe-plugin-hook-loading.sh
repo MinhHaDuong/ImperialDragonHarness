@@ -74,3 +74,14 @@ if [ "$A" != FIRED ]; then
     echo "       headlessly here before reading anything into them." >&2
     exit 1
 fi
+
+FAIL=0
+if [ "$B" != FIRED ]; then
+    echo "probe: case B failed — a personal-scope symlink did not load its hook." >&2
+    FAIL=1
+fi
+if [ "$C" != "did not fire" ]; then
+    echo "probe: case C failed — a project-scope plugin fired under headless -p." >&2
+    FAIL=1
+fi
+exit "$FAIL"

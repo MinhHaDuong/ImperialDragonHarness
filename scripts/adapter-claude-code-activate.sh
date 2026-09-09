@@ -24,33 +24,111 @@ LINK="$HARNESS_DIR/skills/claude-code"
 TARGET_REL="../adapters/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
 LIVE="$HARNESS_DIR/settings.json"
+CANONICAL="$HARNESS_DIR/settings.shared.json"
 
-live_has_hooks() {
-    [ -f "$LIVE" ] || return 1
-    python3 - "$LIVE" <<'PY'
+inspect_live_hooks() {
+    mode=$1
+    if [ ! -e "$LIVE" ]; then
+        [ -L "$LIVE" ] && return 2
+        return 1
+    fi
+    [ -f "$LIVE" ] || return 2
+    python3 - "$LIVE" "$CANONICAL" "$mode" <<'PY'
 import json, sys
-try:
-    live = json.load(open(sys.argv[1]))
-except (OSError, ValueError):
-    sys.exit(2)                      # unreadable: treat as "cannot rule it out"
-sys.exit(0 if live.get("hooks") else 1)
+
+def load_object(path):
+    try:
+        with open(path) as stream:
+            value = json.load(stream)
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+live = load_object(sys.argv[1])
+if live is None:
+    sys.exit(2)
+hooks = live.get("hooks")
+if hooks is None or hooks == {}:
+    sys.exit(1)
+if not isinstance(hooks, dict):
+    sys.exit(2)
+
+if sys.argv[3] == "any":
+    sys.exit(0)
+
+canonical = load_object(sys.argv[2])
+if canonical is None or not isinstance(canonical.get("hooks"), dict):
+    sys.exit(2)
+for event, wanted_blocks in canonical["hooks"].items():
+    actual_blocks = hooks.get(event)
+    if not isinstance(wanted_blocks, list) or not isinstance(actual_blocks, list):
+        sys.exit(1)
+    remaining = list(actual_blocks)
+    for wanted in wanted_blocks:
+        try:
+            remaining.remove(wanted)
+        except ValueError:
+            sys.exit(1)
+sys.exit(0)
 PY
 }
 
-status() {
+load_live_hooks_state() {
+    if inspect_live_hooks "$1"; then
+        LIVE_HOOKS_STATE=present
+    else
+        case $? in
+          1) LIVE_HOOKS_STATE=absent ;;
+          *) LIVE_HOOKS_STATE=unknown ;;
+        esac
+    fi
+}
+
+adapter_payload_ready() {
+    [ -d "$TARGET_ABS" ] &&
+        [ -f "$TARGET_ABS/.claude-plugin/plugin.json" ] &&
+        [ -f "$TARGET_ABS/hooks/hooks.json" ] &&
+        [ -f "$TARGET_ABS/bin/idh-hook" ] &&
+        [ -x "$TARGET_ABS/bin/idh-hook" ]
+}
+
+load_link_state() {
     if [ -L "$LINK" ]; then
-        echo "adapter: ACTIVE ($LINK -> $(readlink "$LINK"))"
+        resolved_link=$(readlink -f "$LINK" 2>/dev/null || true)
+        resolved_target=$(readlink -f "$TARGET_ABS" 2>/dev/null || true)
+        if [ -n "$resolved_link" ] &&
+           [ "$resolved_link" = "$resolved_target" ] &&
+           adapter_payload_ready; then
+            LINK_STATE=managed
+        else
+            LINK_STATE=unmanaged
+        fi
     elif [ -e "$LINK" ]; then
-        echo "adapter: $LINK exists and is not a symlink — refusing to touch it"
+        LINK_STATE=unmanaged
+    else
+        LINK_STATE=absent
+    fi
+}
+
+status() {
+    load_link_state
+    if [ "$LINK_STATE" = managed ]; then
+        echo "adapter: ACTIVE ($LINK -> $(readlink "$LINK"))"
+    elif [ "$LINK_STATE" = unmanaged ]; then
+        echo "adapter: UNKNOWN — $LINK is not the managed adapter link; refusing to touch it"
         return 1
     else
         echo "adapter: inert (no $LINK)"
     fi
-    if live_has_hooks; then
-        echo "live settings.json: carries a hooks block"
-    else
-        echo "live settings.json: no hooks block"
-    fi
+    load_live_hooks_state any
+    case "$LIVE_HOOKS_STATE" in
+      present) echo "live settings.json: carries a hooks block" ;;
+      absent)  echo "live settings.json: no hooks block" ;;
+      unknown)
+        echo "live settings.json: UNKNOWN — unreadable, invalid JSON, or not an object"
+        return 1
+        ;;
+    esac
 }
 
 case "${1:-activate}" in
@@ -58,17 +136,44 @@ case "${1:-activate}" in
     status
     ;;
   --revert)
-    if [ -L "$LINK" ]; then
-        rm "$LINK"
-        echo "adapter: reverted — $LINK removed; the live settings.json hooks are your only source again"
+    load_link_state
+    if [ "$LINK_STATE" = managed ]; then
+        load_live_hooks_state canonical
+        case "$LIVE_HOOKS_STATE" in
+          present)
+            rm "$LINK"
+            echo "adapter: reverted — $LINK removed; the live hooks block is restored"
+            ;;
+          absent)
+            echo "adapter: refusing to revert — restore the canonical hooks in $LIVE first" >&2
+            exit 1
+            ;;
+          unknown)
+            echo "adapter: refusing to revert — cannot verify the canonical hooks in $LIVE" >&2
+            echo "Make $LIVE and $CANONICAL readable JSON objects, then run this again." >&2
+            exit 1
+            ;;
+        esac
+    elif [ "$LINK_STATE" = unmanaged ]; then
+        echo "adapter: $LINK is not the managed adapter link — refusing to touch it" >&2
+        exit 1
     else
         echo "adapter: already inert, nothing to remove"
     fi
     ;;
   activate)
-    [ -d "$TARGET_ABS" ] || { echo "adapter: $TARGET_ABS not found" >&2; exit 1; }
-    [ -e "$LINK" ] && { echo "adapter: $LINK already exists — run --status" >&2; exit 1; }
-    if live_has_hooks; then
+    adapter_payload_ready || {
+        echo "adapter: adapter payload is incomplete under $TARGET_ABS — refusing" >&2
+        exit 1
+    }
+    load_link_state
+    [ "$LINK_STATE" = absent ] || {
+        echo "adapter: $LINK already exists and is not available — refusing; run --status" >&2
+        exit 1
+    }
+    load_live_hooks_state any
+    case "$LIVE_HOOKS_STATE" in
+      present)
         cat >&2 <<MSG
 adapter: refusing to activate — $LIVE still carries a hooks block.
 
@@ -78,7 +183,14 @@ design; this script will not edit it), then run this again. Ticket 0886 is what
 turns that hand edit into one command.
 MSG
         exit 1
-    fi
+        ;;
+      unknown)
+        echo "adapter: refusing to activate — cannot determine whether $LIVE carries hooks" >&2
+        echo "Make it a readable JSON object, then run this again." >&2
+        exit 1
+        ;;
+      absent) ;;
+    esac
     ln -s "$TARGET_REL" "$LINK"
     echo "adapter: ACTIVE — $LINK -> $TARGET_REL"
     echo "The hooks now come from the plugin. Start a new session and confirm a guard fires;"

@@ -86,6 +86,25 @@ set itself; that is the real work behind tickets 0800 and 0572.
 
 Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 
+### Optional: monthly unused-skill audit
+
+Run `scripts/install-mammoth-audit-timer.sh` from the installed checkout to
+enable the user timer (first day of each month, 08:00 local time, with up to
+five minutes of jitter). Rerun the installer after changing its service or
+timer files: systemd uses installed copies. The launcher is installed at
+`~/.local/bin/idh-mammoth-audit`, matching the service's fixed executable path.
+
+Run `bin/mammoth-audit` for an immediate census. The aggregate report is
+`${XDG_STATE_HOME:-~/.local/state}/imperial-dragon-harness/mammoth-audit.json`;
+`--output` selects another file. Only local Claude traces are observed. An
+unused, unreferenced skill is a review candidate even after a recent edit;
+missing traces produce an indeterminate result. References from unused skills
+also protect their dependencies, conservatively. Nothing is removed by the audit.
+
+Inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
+and failures with `journalctl --user -u idh-mammoth-audit.service`. Disable the
+schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
+
 ## Skills Catalog
 
 <!-- skills:begin -->
