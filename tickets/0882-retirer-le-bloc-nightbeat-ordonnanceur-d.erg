@@ -2,11 +2,11 @@
 Title: Retirer le bloc nightbeat: ordonnanceur desinstalle, quatre skills et molt en mode unique
 Created: 2026-09-09
 Author: Minh Ha-Duong
-Blocked-by: 0881
 
 --- log ---
 2026-09-09T15:55Z Minh Ha-Duong created
-
+2026-09-09T15:58Z Minh Ha-Duong note red step turned six tests red, not the three predicted; test_fewer_permission_prompts_helper.py had lost its subject
+2026-09-09T15:59Z Minh Ha-Duong note Blocked-by 0881 removed: 0881 merged in PR #840
 --- body ---
 ## Context
 
@@ -23,8 +23,9 @@ maintained while nothing triggers it. `tests/test_beat.py` is the largest test
 file in the repository, 97 858 bytes, for the least used skill. The author's
 decision (2026-09-09) is removal, not redeployment.
 
-Tracked by 0876. Blocked by 0881, which removes a different set of skills and
-touches the same generated catalog; parallel branches would conflict there.
+Tracked by 0876. Was blocked by 0881, which removes a different set of skills
+and touches the same generated catalog; it merged first (PR #840) and this
+branch integrated it.
 
 ## Relevant files
 
@@ -65,23 +66,28 @@ the branches inert.
 
 ## Test
 
-Three tests fail the moment the block is removed, and each failure is the
-red step for one edit:
+Remove the block first, run the suite, and let the failures name the live
+callers. Predicted three:
 
 - `tests/test_hunt_worktree_ownership.py` asserts `"beat.py" in step3`
 - `tests/test_dream.py:118` resolves `scripts/nightbeat-supervisor-survey.py`
 - `tests/test_rename_orchestrator_to_raid.sh` greps `scripts/nightbeat-report.py`
 
-Run the suite before editing them: the three failures prove the sweep reached
-the live callers rather than only the dead files.
+The run turned **six** red. The fourth was `test_fewer_permission_prompts_helper.py`,
+whose subject had been deleted without it — a file the textual manifest could
+not see, because nothing in the repository referenced it by the name the sweep
+searched for. That is the whole argument for running the suite before the
+edits rather than after: a manifest lists what points at a file, the suite
+lists what breaks without it, and those are different sets.
 
 ## Verification
 
-- [ ] The three tests above fail before their edits and pass after
-- [ ] No reference to the removed names survives outside `docs/` and `tickets/`
-- [ ] `make check-skills-drift` passes after `make skills-catalog`
-- [ ] `make check` passes
-- [ ] `tickets/erg check tickets/` passes
+- [x] The suite was run before any live edit; six tests failed, each driving one edit
+- [x] No reference to the removed names survives outside `docs/`, `tickets/` and
+      the deliberate historical notes that explain each removal
+- [x] `make check-skills-drift` passes after `make skills-catalog`
+- [x] `make check` passes — 852 passed
+- [x] `tickets/erg check tickets/` passes
 
 ## Invariants
 
