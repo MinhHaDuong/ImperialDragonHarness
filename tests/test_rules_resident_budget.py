@@ -35,11 +35,12 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
 
-# 60 715 chars measured 2026-09-09 after the 0572 trimming pass (workflow.md and
-# git.md cut by half, skill authoring made conditional, runtime specifics split
-# into claude-code.md, the branch sweep returned to /roar). Headroom is
+# 59840 chars measured 2026-09-09, after the 0572 trimming pass and the
+# no-shell-recipe rule below: workflow.md and git.md cut by half, skill
+# authoring made conditional, runtime specifics split into claude-code.md, and
+# every procedure returned to the skill or script that runs it. Headroom is
 # deliberately thin: it fits a clarifying sentence, not a section.
-RESIDENT_BUDGET = 62_000
+RESIDENT_BUDGET = 60000
 
 def is_resident(path: Path) -> bool:
     """True when the runtime loads this body unconditionally.
@@ -81,4 +82,32 @@ def test_every_resident_file_is_declared_in_the_index():
             f"rules/{rel} is loaded into every session but the index does not "
             "list it under '## Resident rules' — the adapter port reads that "
             "list as its inventory"
+        )
+
+
+SHELL_FENCE = re.compile(r"^```(bash|sh|shell)\b", re.MULTILINE)
+
+
+def test_resident_rules_ship_no_shell_recipes():
+    """A resident rule states the discipline; the procedure lives with its runner.
+
+    Author's call, 2026-09-09: a shell block in a file loaded into every session
+    of every project is paid by every conversation that will never run it, and
+    it belongs to whoever executes it — the branch sweep to `/roar`, the
+    merge-bounce recovery to `/merge`, the hint probe to its own script.
+
+    The ban is on *procedures*, which is why it keys on the shell tag: a fenced
+    log excerpt (the systemd unit-not-found signature) is a symptom to
+    recognise, and a schema example (`.knowledge.toml`) is the format the rule
+    governs. Both stay. Conditional rule bodies are exempt by construction —
+    they are not in this list — which is why `coding-bash.md` may teach with
+    code.
+    """
+    for path in resident_files():
+        text = path.read_text(encoding="utf-8")
+        hits = [m.group(0) for m in SHELL_FENCE.finditer(text)]
+        assert not hits, (
+            f"rules/{path.relative_to(RULES)} inlines a shell recipe "
+            f"({len(hits)} block(s)): name the commands in prose, or move the "
+            "procedure to the skill or script that runs it"
         )

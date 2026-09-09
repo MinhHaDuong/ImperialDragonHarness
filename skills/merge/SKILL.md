@@ -51,6 +51,38 @@ appear to re-open closed tickets and revert prose. That is not WIP — run
 
 Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
+## When the script bounces
+
+`erg-pr-merge` bounces in sequence, and each bounce has its own retry — never
+blanket-fall back to a plain forge merge. (Moved here from `rules/git.md`,
+which is resident in every session: a recovery procedure belongs with the
+command it recovers.)
+
+- **"close: no ticket found" on a retry.** The FIRST run already closed,
+  archived and pushed the close commit — the script is *not* idempotent past
+  that step. Do not re-run it and do not hand-close the ticket: the close
+  commit is already on the branch, so finish with a direct forge merge once CI
+  is green.
+- **"must run from PR branch" after a fast-forward.** HEAD is detached after
+  `merge --ff-only`: `git checkout <branch>`, then retry.
+- **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
+  SHAs, local diverges from the remote, and the script's own ticket-close
+  commit then lands on the local rewrite with its push rejected — leaving the
+  ticket closed and archived locally but the close commit unpushed; a re-run
+  fails "close: no ticket found". Recovery: check out the origin branch tip
+  detached, `git cherry-pick <close-commit>`, fast-forward push, then merge
+  directly (raid 234/235, PR #998).
+
+## Manual chore-close — only when a PR merged without this script
+
+First confirm no close commit rode the PR; if one did, the ticket is already
+closed and there is nothing to do. `erg close <ID> <reason>` edits the ticket
+file but does **not** stage its own edit, so `git add -u tickets/` BEFORE the
+`git mv` to `closed/` and the commit — otherwise the commit carries the rename
+with the pre-edit blob and silently drops the `Closed:` header (aedist PR #1008;
+a 100%-rename, 0-insertion commit is the tell). A later "no ticket found"
+bounce here means a review round already closed it — harmless, skip it.
+
 ## After the merge lands
 
 The script itself polls for the merge to land and then runs

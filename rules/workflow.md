@@ -20,14 +20,10 @@ leads; toward the author (MOA) you filter, verify, surface and advise.
 
 # Sync before starting work
 
-Before substantial work — **not just before branching** — fetch and scan for
-parallel or already-merged work:
-
-```bash
-git fetch origin
-git log --oneline HEAD..origin/main         # what landed upstream since your base
-git diff --name-only origin/main...HEAD     # files you'd touch that upstream also changed
-```
+Before substantial work — **not just before branching** — `git fetch origin`,
+then scan two things: `git log --oneline HEAD..origin/main` for what landed
+upstream since your base, and `git diff --name-only origin/main...HEAD` for the
+files you would touch that upstream also changed.
 
 If `origin/main` is ahead and overlaps your area, reconcile before writing code.
 The fetch is cheap; rediscovering what a sibling already merged is not. (To test
