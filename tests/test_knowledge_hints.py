@@ -312,7 +312,7 @@ def test_cmd_prompt_rejects_non_mapping_payload(monkeypatch, tmp_path):
 
 
 def test_output_is_declarative_not_imperative(tmp_path):
-    """rules/workflow.md: the model reads imperative hook text as injection.
+    """rules/claude-code.md: the model reads imperative hook text as injection.
 
     An imperative hint would be discounted — the channel then fails silently
     while looking like it worked, which is the worst available failure.

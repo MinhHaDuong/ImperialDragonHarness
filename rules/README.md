@@ -29,6 +29,11 @@ it was 942 words while shipping full copies of what it summarised.
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
 | [lang/fr.md](./lang/fr.md) | prose files | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
+| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
+| [edm.md](./edm.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
+| [knowledge-hints.md](./knowledge-hints.md) | `**/.knowledge.toml`, `**/knowledge_hints.py` | `<repo>/.knowledge.toml` + `scripts/knowledge_hints.py`: one catalog line resident at session start, pointer + caveat on a declared term. Inject the pointer, never the payload. |
+| [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
+| [systemd-units.md](./systemd-units.md) | `**/*.service`, `**/*.timer`, `**/systemd/**` | What PID 1 reads at boot lives on the root filesystem: install units as real copies, never symlinks into a late-mounted volume; `is-enabled` lies after a `daemon-reload`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
 Not a rules file, and not loaded by this mechanism: `tickets/AGENTS.md` reaches
@@ -55,18 +60,26 @@ code change. Doc-type and language are not derivable from a filename: they come
 from an optional per-project manifest `<repo>/.claude/rules-map.toml`, which
 holds path→axis *mappings* only, never rule text. Format, precedence and a
 worked manifest live in the hook's own docstring; the same resolver is the
-single source for prose/code review routing (`scripts/prose_predicate.py`,
-ticket 0550).
+single source for prose/code review routing (`scripts/prose_predicate.py`).
 
 ## Resident rules
 
-`workflow.md` `git.md` `knowledge-hints.md` `edm.md` `manuscript-build.md`
-`pdf-finishing.md` `prose/cutting.md` `submission-events.md` `systemd-units.md`
-— bodies in context already, listed here only so an adapter knows what to ship.
+`workflow.md` `git.md` `claude-code.md` — the whole resident set, plus this
+index. Bodies in context already, listed here only so an adapter knows what to
+ship, and `claude-code.md` is the one an adapter on another runtime skips.
+
+Three former rule bodies left in 2026-09-09 because their trigger is a *task*,
+which no `paths:` glob reaches: they are the skills `/pdf-finish`,
+`/cut-prose` and `/submission-event`. A skill's description stays resident in
+the catalog and its body loads on invocation — the same pointer-and-payload
+split as `paths:`, for triggers a filename cannot express.
+
+`claude-code.md` is the runtime-specific one: an adapter on another runtime
+loads every other resident file and skips it.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
-adapters (tickets 0800, 0802) the resident set must be injected by the adapter
-or made genuinely on-demand; `~22 000 tokens` is what that decision moves.
+adapters, the resident set must be injected by the adapter
+or made genuinely on-demand; `~8 800 tokens` is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 

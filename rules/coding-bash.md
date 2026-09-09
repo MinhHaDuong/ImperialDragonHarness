@@ -5,6 +5,12 @@ last-reviewed: 2026-08-14
 ---
 # Coding Rules — Bash
 
+**Systemd deployment scripts.** When a shell script creates, installs, enables
+or changes `.service` or `.timer` units, also read
+[`systemd-units.md`](./systemd-units.md). Editing the deployment script alone
+does not trigger that rule's unit-file glob, but the deployment method is part
+of the same systemd change.
+
 ## Arithmetic under `set -e`
 
 `((expr))` exits 1 when the expression evaluates to 0 (arithmetic false). Under

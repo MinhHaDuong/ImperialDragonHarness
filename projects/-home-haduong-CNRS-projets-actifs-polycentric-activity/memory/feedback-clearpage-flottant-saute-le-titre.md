@@ -39,7 +39,8 @@ nouvellement introduit.
 
 Contexte plus large : le script `article-het/releases/hal_variant.py`
 implémente pour la première fois dans ce dépôt le patron « Variants are
-transform layers » de `rules/pdf-finishing.md` (jusque-là documenté
+transform layers » de `skills/pdf-finish/SKILL.md` (alors documenté dans
+`rules/pdf-finishing.md`,
 uniquement par référence à climate-finance-het) — transformation de chaînes
 sur `manuscrit.tex`, rendu, puis `git checkout --` pour annuler. Réutilisable
 tel quel si MIMO ou no-arbitrage veulent un jour leur propre frontispice de

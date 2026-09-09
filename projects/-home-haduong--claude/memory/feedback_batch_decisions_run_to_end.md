@@ -6,7 +6,7 @@ metadata:
 ---
 
 Author doctrine (2026-07-11, stated twice in one session and promoted to
-rules/workflow.md § Autonomous Action Rules "Batch the decisions, then run to
+`rules/workflow.md` § Autonomous action, "Batch the decisions, then run to
 the end"): with long-run-capable agents, the preferred interaction mode is to
 collect as much feasible work as possible up front — one dense
 question round with recommended defaults — then work autonomously to

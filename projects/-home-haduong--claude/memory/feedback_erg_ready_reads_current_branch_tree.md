@@ -17,7 +17,8 @@ skim past.
 
 **Why:** on 2026-07-24 a session sat on `t0357-cut-before-condense`,
 `erg ready` listed 0357, and the session began re-implementing the rule from
-scratch. PR #667 had already landed the identical work (`rules/prose/cutting.md`
+scratch. PR #667 had already landed the identical work (then
+`rules/prose/cutting.md`, now `skills/cut-prose/SKILL.md`
 + a one-line pointer in `_all.md` + a README row + an adherence ratchet). The
 duplicate edit collided with leftover conflict markers in `_all.md` and wasted
 the turn. This is the same class as [[feedback_pipeline_presentation_overlays_raids]]

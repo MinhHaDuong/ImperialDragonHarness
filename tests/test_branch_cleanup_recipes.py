@@ -2,8 +2,9 @@
 
 Two documented recipes lost branches on 2026-06-10:
 
-1. The stale-branch cleanup loop in ``rules/git.md`` ("Delete branches
-   after merge") deletes any local branch that is an ancestor of
+1. The stale-branch cleanup loop — in ``rules/git.md`` until 2026-09-09,
+   now in ``skills/roar/SKILL.md`` step 10, which is whose job it is —
+   deletes any local branch that is an ancestor of
    origin/main — local ``main`` always is, and so is the branch you are
    standing on right after a merge. The recipe must skip ``main`` and the
    current branch explicitly, and use ``git branch -D`` (safe: the
@@ -29,15 +30,37 @@ ROAR_SKILL = (REPO / "skills" / "roar" / "SKILL.md").read_text()
 
 
 def cleanup_recipe() -> str:
-    """The fenced bash block of the 'Delete branches after merge' bullet."""
-    bullet = GIT_RULES.split("**Delete branches after merge.**", 1)[1]
-    return bullet.split("```bash", 1)[1].split("```", 1)[0]
+    """The local-branch sweep: the first fenced bash block of roar step 10."""
+    step = ROAR_SKILL.split("**Verify hygiene**", 1)[1]
+    return step.split("```bash", 1)[1].split("```", 1)[0]
+
+
+def remote_recipe() -> str:
+    """The remote-branch sweep: the second fenced block of the same step."""
+    step = ROAR_SKILL.split("**Verify hygiene**", 1)[1]
+    return step.split("```bash", 2)[2].split("```", 1)[0]
+
+
+def test_git_md_delegates_the_sweep_and_inlines_no_loop():
+    """The rule states the discipline; the procedure lives in the skill.
+
+    A resident rule file is read in every session of every project, so 25 lines
+    of shell there are paid by every conversation that will never run them
+    (ticket 0572).
+    """
+    assert "```bash" not in GIT_RULES, (
+        "rules/git.md must not inline shell recipes — the branch sweep is "
+        "/roar step 10"
+    )
+    assert "/roar` step 10" in GIT_RULES, (
+        "rules/git.md must point at the skill that owns the sweep"
+    )
 
 
 def test_git_md_recipe_skips_main():
     recipe = cleanup_recipe()
     assert '[ "$b" = main ] && continue' in recipe, (
-        "rules/git.md cleanup loop must skip local main — it is always an "
+        "roar step 10 cleanup loop must skip local main — it is always an "
         "ancestor of origin/main and the loop would delete it"
     )
 
@@ -45,7 +68,7 @@ def test_git_md_recipe_skips_main():
 def test_git_md_recipe_skips_current_branch():
     recipe = cleanup_recipe()
     assert "--show-current" in recipe, (
-        "rules/git.md cleanup loop must skip the current branch "
+        "roar step 10 cleanup loop must skip the current branch "
         "(guard via git branch --show-current)"
     )
 
@@ -53,7 +76,7 @@ def test_git_md_recipe_skips_current_branch():
 def test_git_md_recipe_uses_force_delete_after_ancestor_probe():
     recipe = cleanup_recipe()
     assert 'git branch -D "$b"' in recipe, (
-        "rules/git.md cleanup loop must use -D: -d checks merged-into-HEAD "
+        "roar step 10 cleanup loop must use -D: -d checks merged-into-HEAD "
         "and silently skips branches whose upstream is gone; the "
         "merge-base --is-ancestor probe already proved the branch merged"
     )
@@ -81,3 +104,17 @@ def test_roar_9b_documents_reflog_recovery():
         "roar step 9b must document the recovery path (reflog + "
         "git switch -c) for a branch deleted by discard_changes"
     )
+
+
+def test_remote_sweep_guards_the_bare_origin_symref():
+    """Without the `case` guard the loop deletes the bare `origin` symref.
+
+    That fails, and under ``set -e`` it aborts the sweep on its first
+    iteration — leaving every stale branch in place while the run looks like it
+    did something (2026-08-14).
+    """
+    recipe = remote_recipe()
+    assert "case \"$ref\" in origin/*)" in recipe, (
+        "roar step 10 remote sweep must skip the bare `origin` symref"
+    )
+    assert '[ "$b" = main ] && continue' in recipe

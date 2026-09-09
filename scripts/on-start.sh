@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Worktree instruction — skip in automated night-sweep runs
 if [[ -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
-    echo "Worktree isolation is enabled for this project. Every new conversation must start in its own worktree. Use EnterWorktree as your first action before responding to the user."
+    echo "Worktree isolation is enabled for this project: every conversation works in its own worktree, entered before anything else. The exception is a session opening on /hunt, which triages the ticket first (skills/hunt/SKILL.md)."
 fi
 
 echo "Running on host: $(hostname -s)"

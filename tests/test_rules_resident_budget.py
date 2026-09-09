@@ -35,9 +35,14 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
 
-# 86 598 chars measured 2026-09-09 after scoping the path-expressible bodies.
-# Headroom is deliberately thin: it fits a clarifying sentence, not a section.
-RESIDENT_BUDGET = 88_000
+# 35292 chars measured 2026-09-09, after the last task-triggered bodies became
+# skills (/pdf-finish, /cut-prose, /submission-event), edm.md was scoped, the three file-triggered
+# bodies (systemd units, knowledge hints, manuscript builds), the 0572 pass and the
+# no-shell-recipe rule below: workflow.md and git.md cut by half, skill
+# authoring made conditional, runtime specifics split into claude-code.md, and
+# every procedure returned to the skill or script that runs it. Headroom is
+# deliberately thin: it fits a clarifying sentence, not a section.
+RESIDENT_BUDGET = 36000
 
 def is_resident(path: Path) -> bool:
     """True when the runtime loads this body unconditionally.
@@ -79,4 +84,55 @@ def test_every_resident_file_is_declared_in_the_index():
             f"rules/{rel} is loaded into every session but the index does not "
             "list it under '## Resident rules' — the adapter port reads that "
             "list as its inventory"
+        )
+
+
+SHELL_FENCE = re.compile(r"^```(bash|sh|shell)\b", re.MULTILINE)
+
+
+def test_resident_rules_ship_no_shell_recipes():
+    """A resident rule states the discipline; the procedure lives with its runner.
+
+    Author's call, 2026-09-09: a shell block in a file loaded into every session
+    of every project is paid by every conversation that will never run it, and
+    it belongs to whoever executes it — the branch sweep to `/roar`, the
+    merge-bounce recovery to `/merge`, the hint probe to its own script.
+
+    The ban is on *procedures*, which is why it keys on the shell tag: a fenced
+    log excerpt (the systemd unit-not-found signature) is a symptom to
+    recognise, and a schema example (`.knowledge.toml`) is the format the rule
+    governs. Both stay. Conditional rule bodies are exempt by construction —
+    they are not in this list — which is why `coding-bash.md` may teach with
+    code.
+    """
+    for path in resident_files():
+        text = path.read_text(encoding="utf-8")
+        hits = [m.group(0) for m in SHELL_FENCE.finditer(text)]
+        assert not hits, (
+            f"rules/{path.relative_to(RULES)} inlines a shell recipe "
+            f"({len(hits)} block(s)): name the commands in prose, or move the "
+            "procedure to the skill or script that runs it"
+        )
+
+
+TICKET_REF = re.compile(r"\btickets?\s+\d{4}\b", re.IGNORECASE)
+
+
+def test_resident_rules_carry_no_ticket_numbers():
+    """A four-digit number is provenance, not a rule.
+
+    Author's call, 2026-09-09, reading the trimmed workflow.md: a resident file
+    is read by every session in every project, and "(ticket 0880)" costs each of
+    them a reference they cannot act on and would have to open a ticket store to
+    resolve. Provenance belongs where it can be followed — the ticket itself,
+    a memory note, `git log`, `git blame`.
+
+    Named pointers stay: `reference_branch_cleanup_incidents` resolves to a file
+    and says what it holds. It is the bare number this bans.
+    """
+    for path in resident_files():
+        hits = TICKET_REF.findall(path.read_text(encoding="utf-8"))
+        assert not hits, (
+            f"rules/{path.relative_to(RULES)} cites {hits}: drop the number, or "
+            "point at a named memory note if the provenance is load-bearing"
         )

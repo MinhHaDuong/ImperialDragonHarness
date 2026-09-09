@@ -68,8 +68,9 @@ Relevant memory already saved by the orchestrating session:
   `## /verify-gate verdict` block format); § Fork liveness / window-expiry
   recovery logic (~lines 92-107), which already reasons about competing
   markers on a PR and is the natural home for a gate-lock check.
-- `rules/workflow.md` § Subagents — orchestration guidance for fan-out and
-  fork behavior; needs one line establishing "one gate per PR at a time."
+- `rules/workflow.md` § Delegation — orchestration guidance; needs one line
+  establishing "one gate per PR at a time." Runtime-specific fan-out and fork
+  mechanics live in `rules/claude-code.md` § Subagent levers.
 - `skills/verify-gate/` (phase 6 invocation target) — the verdict producer;
   its comment template is what would carry the proposed identity fields.
 - `~/.claude/scripts/pretooluse-worktree-path-guard.sh` — the isolation
@@ -106,7 +107,7 @@ reopened for implementation) does the actual SKILL.md edit.
    on. A later gate (or a human) can then tell a legitimate prior verdict
    from a suspected fabrication by checking these against the PR's actual
    state, instead of having no way to check at all.
-4. **One-line orchestration rule.** `rules/workflow.md` § Subagents gains:
+4. **One-line orchestration rule.** `rules/workflow.md` § Delegation gains:
    "One gate per PR at a time: an orchestrator never launches its own
    `/gaze` on a branch while the lead that owns it is still live." This is
    the same standing as the existing subagent bullets in that section
@@ -137,7 +138,7 @@ than a Python module):
       Action (a) lands.
 - [ ] Test 2 is red against the current verdict-comment template, green
       after Action (c) lands.
-- [ ] `rules/workflow.md` § Subagents contains the new one-line rule after
+- [ ] `rules/workflow.md` § Delegation contains the new one-line rule after
       Action (d) lands, and `make check` (or this repo's equivalent lint
       gate) still passes.
 - [ ] A manual or scripted trace confirms: with the isolation guard denying
@@ -162,7 +163,7 @@ than a Python module):
   starts on a PR that already has a live one.
 - The Phase 6 verdict comment carries gate session id, review worktree
   path, and ruled tip SHA.
-- `rules/workflow.md` § Subagents states the one-gate-per-PR-at-a-time rule.
+- `rules/workflow.md` § Delegation states the one-gate-per-PR-at-a-time rule.
 - Both red-first tests above exist, were confirmed red pre-fix, and are
   green post-fix.
 - `erg check` passes; the repo's fast check gate passes.

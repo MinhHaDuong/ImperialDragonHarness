@@ -1,6 +1,6 @@
 """Skill descriptions lead with the plain function, not the theme.
 
-Discoverability rule (rules/workflow.md § Writing Skills and Hooks): the
+Discoverability rule (rules/authoring-skills.md): the
 FIRST sentence of every SKILL.md ``description:`` states what the skill does
 in the keywords a naive user would search; draconic theming and harness lore
 come after. Skill *names* may stay themed — only the description's opening
@@ -60,5 +60,5 @@ def test_description_first_sentence_is_unthemed():
             offenders.append(f"{name}: {hit.group(0)!r} in first sentence: {sentence!r}")
     assert not offenders, (
         "themed first sentence(s) — lead with the plain function, theme after "
-        "(rules/workflow.md § Writing Skills and Hooks):\n" + "\n".join(offenders)
+        "(rules/authoring-skills.md):\n" + "\n".join(offenders)
     )

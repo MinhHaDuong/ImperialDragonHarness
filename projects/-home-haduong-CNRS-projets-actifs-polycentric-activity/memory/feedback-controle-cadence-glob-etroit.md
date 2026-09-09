@@ -12,7 +12,8 @@ metadata:
 fichier sans marqueur. Mesure (harness, 2026-08-14) : les deux alarmes les plus
 bruyantes visaient `workflow.md` et `git.md`, soit 50 et 21 commits depuis leur
 dernier tampon — les deux fichiers les mieux entretenus du dépôt — pendant que
-`edm.md` et `pdf-finishing.md`, sans marqueur, étaient exemptés à vie et que
+`edm.md` et ce qui était alors `rules/pdf-finishing.md` (maintenant
+`skills/pdf-finish/SKILL.md`), sans marqueur, étaient exemptés à vie et que
 sept règles en sous-répertoire dépassaient le seuil depuis 38 jours sans un mot.
 
 **Why:** le marqueur mesure les passes de revue délibérées, pas les éditions, et

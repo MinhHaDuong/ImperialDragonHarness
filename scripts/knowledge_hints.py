@@ -50,6 +50,16 @@ since the repo outlives the tool.
 Absent manifest, absent file, malformed TOML: silent no-op. A hint whose
 ``pointer`` does not resolve is dropped rather than advertised, so the catalog
 never names a file that is not there.
+
+Probing it by hand (moved here from rules/knowledge-hints.md, which is resident
+in every session and should not carry recipes)::
+
+    python3 ~/.claude/scripts/knowledge_hints.py --cwd <repo> catalog
+    printf '{"prompt":"...","session_id":"probe","cwd":"<repo>"}' \\
+      | python3 ~/.claude/scripts/knowledge_hints.py prompt
+
+The second is not idempotent -- the session marker persists. Use a fresh
+``session_id`` per probe, or point ``TMPDIR`` at a scratch directory.
 """
 
 import argparse

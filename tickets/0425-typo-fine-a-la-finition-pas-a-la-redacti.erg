@@ -23,9 +23,10 @@ et en tête d'un manifeste de projet. Aucun autre projet ne la verra.
 
 Ce que l'arbitrage corrige dans le rulebook actuel : `rules/lang/fr.md` demande
 l'espace insécable « en Markdown » sans condition de rendu ni de phase, ce qui
-se lit comme une obligation de rédaction. `rules/pdf-finishing.md` porte déjà
-la doctrine « la finition presuppose un contenu gelé » mais ne couvre que le
-PDF, donc ne s'applique pas au Markdown ni au HTML.
+se lit comme une obligation de rédaction. `skills/pdf-finish/SKILL.md` (alors
+`rules/pdf-finishing.md`) porte déjà la doctrine « la finition presuppose un
+contenu gelé » mais ne couvre que le PDF, donc ne s'applique pas au Markdown ni
+au HTML.
 
 Le coût mesuré de l'ambiguïté (polycentric_activity, 2026-08-14) : 41 notes
 `conception/*.md`, 3 633 sites candidats, **un seul** fichier conforme. Le
@@ -43,8 +44,9 @@ quatre faux positifs du fichier conforme étaient tous du math
   conditionner par phase et par balisage
 - `rules/lang/en.md` — même traitement pour ses clauses typographiques
   (guillemets, espaces fines, séparateurs de milliers)
-- `rules/pdf-finishing.md` — porte déjà « la finition presuppose un contenu
-  gelé » ; vérifier qu'on ne duplique pas, généraliser au-delà du PDF
+- `skills/pdf-finish/SKILL.md` — porte déjà « la finition presuppose un contenu
+  gelé » ; vérifier qu'on ne duplique pas, généraliser au-delà du PDF. Ce corps
+  vivait dans `rules/pdf-finishing.md` lors de la création du ticket.
 - `rules/README.md` — index du modèle par axes, à mettre à jour si un fichier
   naît ou grossit
 - `tickets/0375-consolidate-project-writing-rules-into-harness.erg` — balayage
@@ -63,8 +65,8 @@ quatre faux positifs du fichier conforme étaient tous du math
 3. Poser le corollaire anti-rétro-port : quand un brouillon alimente un
    livrable, la passe se fait sur le livrable, jamais rétroactivement sur le
    brouillon source.
-4. Vérifier que `pdf-finishing.md` ne dit pas déjà la même chose sous une
-   autre forme ; fusionner plutôt que juxtaposer si c'est le cas.
+4. Vérifier que `skills/pdf-finish/SKILL.md` ne dit pas déjà la même chose sous
+   une autre forme ; fusionner plutôt que juxtaposer si c'est le cas.
 5. Une fois la règle harness-level, retirer la mémoire projet devenue
    redondante dans `polycentric_activity` et remplacer le préambule de son
    `.claude/rules-map.toml` par un renvoi.

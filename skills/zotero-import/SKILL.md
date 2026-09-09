@@ -6,6 +6,8 @@ user-invocable: true
 argument-hint: "<pdf>... | audit <dir>"
 ---
 
+
+Discipline: `rules/edm.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. It is no longer resident in every session (ticket 0572); read it before working outside the steps below.
 # Zotero import
 
 Build the metadata for one or more PDFs, then `inject` items and attachments directly through the Zotero Web API (decided 2026-08-13; previously the flow ended at `xdg-open` on a RIS file and a human confirmation click). The RIS path remains the fallback when no read-write key is available or the user asks for a manual import.

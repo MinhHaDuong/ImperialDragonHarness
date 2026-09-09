@@ -1,4 +1,9 @@
-<!-- last-reviewed: 2026-08-19 -->
+---
+paths:
+  - "**/.knowledge.toml"
+  - "**/knowledge_hints.py"
+last-reviewed: 2026-08-19
+---
 # Project domain-knowledge hints
 
 Loaded when a project declares or maintains domain knowledge an agent cannot
@@ -126,14 +131,9 @@ to skim the hint.
 
 ## Verifying locally
 
-```bash
-python3 ~/.claude/scripts/knowledge_hints.py --cwd <repo> catalog
-printf '{"prompt":"...","session_id":"probe","cwd":"<repo>"}' \
-  | python3 ~/.claude/scripts/knowledge_hints.py prompt
-```
-
-The second is not idempotent — the session marker persists. Use a fresh
-`session_id` per probe, or point `TMPDIR` at a scratch directory.
+Both channels can be probed by hand; the recipe is in the header of
+`scripts/knowledge_hints.py`, with the one trap that matters — the prompt probe
+is not idempotent, since the session marker persists.
 
 `tests/test_knowledge_hints.py` drives both channels through the real CLI and
 the real stdin protocol rather than importing the helpers, because the catalog
