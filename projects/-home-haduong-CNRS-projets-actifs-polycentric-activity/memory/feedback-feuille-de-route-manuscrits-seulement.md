@@ -20,7 +20,8 @@ deux. Arbitrage de l'auteur, 2026-08-21, à la question posée lors du dépôt d
 `corpus-access-bench`.
 
 **How to apply :** à un événement de publication, appliquer
-`rules/submission-events.md` en distinguant les deux registres — page perso
+ce qui était alors `rules/submission-events.md` (maintenant
+`skills/submission-event/SKILL.md`) en distinguant les deux registres — page perso
 toujours, feuille de route seulement si l'objet est un manuscrit. Ne pas
 reposer la question. Voir [[project-carte-du-champ-handbook]] pour le projet
 concerné et [[feedback-rapports-trop-detailles]] pour la forme du compte rendu.

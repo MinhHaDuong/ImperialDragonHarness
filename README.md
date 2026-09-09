@@ -53,8 +53,8 @@ the reader, and a scoped one is named in [`rules/README.md`](rules/README.md)
 precisely because it is not. That index is one screen, and it is the single
 source of truth on when each conditional rule applies.
 
-The resident set costs ~21 600 tokens per session (measured 2026-09-09;
-`workflow.md` and `git.md` are two thirds of it). `tests/test_rules_resident_budget.py`
+The resident set costs ~8 800 tokens per session (measured 2026-09-09).
+`tests/test_rules_resident_budget.py`
 caps it: trimming a body lowers the cap, growing one has to argue for a raise.
 A runtime without this auto-load — the Pi and Codex adapters — must inject that
 set itself; that is the real work behind tickets 0800 and 0572.
@@ -86,6 +86,25 @@ set itself; that is the real work behind tickets 0800 and 0572.
 
 Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 
+### Optional: monthly unused-skill audit
+
+Run `scripts/install-mammoth-audit-timer.sh` from the installed checkout to
+enable the user timer (first day of each month, 08:00 local time, with up to
+five minutes of jitter). Rerun the installer after changing its service or
+timer files: systemd uses installed copies. The launcher is installed at
+`~/.local/bin/idh-mammoth-audit`, matching the service's fixed executable path.
+
+Run `bin/mammoth-audit` for an immediate census. The aggregate report is
+`${XDG_STATE_HOME:-~/.local/state}/imperial-dragon-harness/mammoth-audit.json`;
+`--output` selects another file. Only local Claude traces are observed. An
+unused, unreferenced skill is a review candidate even after a recent edit;
+missing traces produce an indeterminate result. References from unused skills
+also protect their dependencies, conservatively. Nothing is removed by the audit.
+
+Inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
+and failures with `journalctl --user -u idh-mammoth-audit.service`. Disable the
+schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
+
 ## Skills Catalog
 
 <!-- skills:begin -->
@@ -116,7 +135,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
 | `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
-| `/submission-event` | Propagate a manuscript submission event — submitted, resubmitted, accepted, published — to the two registers that live outside git: the homepage publications list and the CNRS secretariat roadmap. Both go silently stale otherwise, and both are author-visible deliverables rather than chores to defer. |
+| `/submission-event` | Classify a manuscript submission event — submitted, resubmitted, accepted, published — by which external register its object belongs in, then propagate it to the homepage publications list and/or the CNRS secretariat roadmap. The roadmap tracks work in progress; the publications list tracks works, so never update both automatically. |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings. |
 | `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, highlighting insertions and deletions via latexdiff. Closes the annotate-reply-apply loop for journal revise-and-resubmit rounds. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |

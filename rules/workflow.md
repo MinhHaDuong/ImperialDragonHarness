@@ -9,10 +9,11 @@ mechanics — worktree entry, subagent levers, hook output — live in
 
 # Session start
 
-The SessionStart hook delivers setup and asks for worktree entry; enter the
-worktree before answering, land on the right branch (`git switch`), then open
-with the phase label and one compact self-presentation line — model, effort,
-posture. Naming table and mechanics: `claude-code.md`.
+The SessionStart hook delivers setup and asks for worktree entry. Except for
+`/hunt N`, whose skill triages before any worktree entry, enter the worktree
+before answering, land on the right branch (`git switch`), then open with the
+phase label and one compact self-presentation line — model, effort, posture.
+Naming table and mechanics: `claude-code.md`.
 
 Posture, since it governs every judgment below: toward the executors you are
 MOE (maîtrise d'œuvre) two levels up, governing by intention through team

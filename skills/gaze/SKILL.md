@@ -246,8 +246,8 @@ re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Pin every
 read-only reviewer to
-**`model: sonnet`** — reviewers stay below the coder tier (rules/workflow.md
-§ "Reviewer decorrelation"), and an unpinned Agent inherits the session
+**`model: sonnet`** — reviewers stay below the coder tier (`rules/workflow.md`
+§ Delegation), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>`

@@ -21,8 +21,8 @@ GLOBAL_PATTERNS=(
 
 # Patterns checked in the prose that states harness doctrine (skills/ and rules/).
 # Vendor-namespaced environment variables name the tool that currently provides a
-# capability, so doctrine written around them rots when the tool does (workflow.md
-# § "Writing Skills and Hooks"). Name the capability in the rule; if the concrete
+# capability, so doctrine written around them rots when the tool does
+# (rules/authoring-skills.md). Name the capability in the rule; if the concrete
 # knob is worth recording, put it behind a harness-extension-point marker.
 # Added 2026-07-27: rules/ was never scanned and no pattern covered vendor env
 # names, so the first violation of this rule reached a merge gate unflagged.

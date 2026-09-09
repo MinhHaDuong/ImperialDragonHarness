@@ -36,7 +36,7 @@ Spin disciplinary agents in parallel, each in a fresh context, each pinned to
 an unpinned Agent inherits the session model and silently runs the fan-out at
 top tier). Prose review reads **full text**, not just diff.
 
-**Concurrency contract (rules/workflow.md § "Concurrency discipline"):
+**Concurrency contract (`rules/authoring-skills.md`):
 parallel-FOREGROUND.** This skill runs as a `context: fork` (see frontmatter),
 and a fork's turn ends the instant it stops calling tools. Launch the panel in
 **one message** as **foreground** Agent calls (`run_in_background: false`) so

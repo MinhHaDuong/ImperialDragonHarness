@@ -34,4 +34,5 @@ prediction. Agents adding *body* text to §3 report the spill with options and
 leave pagination to the author; when several manuscript PRs are in flight,
 propose ONE pagination arbitrage after the last one merges (the author did
 exactly this for #88+#89). Final repagination belongs to the « finition »
-pass (rules/pdf-finishing.md), once content freezes.
+pass (now `skills/pdf-finish/SKILL.md`, formerly
+`rules/pdf-finishing.md`), once content freezes.

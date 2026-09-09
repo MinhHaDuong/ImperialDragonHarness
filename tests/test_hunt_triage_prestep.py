@@ -82,7 +82,7 @@ def test_needs_human_branch_writes_no_code():
     )
     assert "batched decision" in step2b, (
         "step 2b must return a *batched* decision list (rules/workflow.md "
-        "§ Autonomous Action Rules), not a sequential question round"
+        "§ Autonomous action), not a sequential question round"
     )
     assert "success outcome" in step2b, (
         "step 2b must state that a return to the author is a success outcome, "

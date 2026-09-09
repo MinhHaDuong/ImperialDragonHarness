@@ -195,7 +195,7 @@ Run full repo housekeeping and act on every finding.
      using a specific title. For test failures, the slug must contain `fix-tests`
      (e.g. `0042-fix-tests-module-not-found`).
    - If a ticket already exists, skip.
-   - Apply the severity floor (rules/workflow.md § Autonomous Action Rules), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+   - Apply the severity floor (rules/workflow.md § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 
 5. **Log `skip` items.** One line each, no action.
 

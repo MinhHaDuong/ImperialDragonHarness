@@ -100,7 +100,7 @@ locally and mirror into forge CI — no forge round-trip required.
    promote only seats whose verifiable-class findings prove stable across
    re-runs; advisory is the safe default.)
 3. **Decorrelation rule rewording** (this ticket's own change), replacing
-   the "Sonnet reviews Opus" instance in rules/workflow.md § Subagents:
+   the "Sonnet reviews Opus" instance in `rules/workflow.md` § Delegation:
    "Reviewer decorrelation. The verify panel never shares the coding
    agent's model. Minimum: the sibling tier of the same family.
    Stronger: a different vendor or harness entirely (forge review bot,

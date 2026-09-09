@@ -1,0 +1,8 @@
+[Unit]
+Description=Imperial Dragon Harness aggregate stale-skill audit
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/idh-mammoth-audit
+Nice=10
+IOSchedulingClass=idle

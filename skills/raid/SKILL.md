@@ -32,7 +32,7 @@ launch below pins `model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
-  below the coder tier (rules/workflow.md § "Reviewer decorrelation").
+  below the coder tier (rules/workflow.md § Delegation).
 - **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
   checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
   conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
@@ -114,7 +114,7 @@ If EVERY discovered ticket is skip-labelled, the run returns those batched
 decision lists rather than an empty-run report. One question round the author
 can answer in a single pass is the deliverable (decided 2026-07-28, ticket 0390).
 
-Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous Action Rules) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
+Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
 
@@ -230,7 +230,7 @@ Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence 
 **Per-ticket:** launch per-ticket `/gaze` runs in parallel (background agents,
 one per merge request) when the PR branches touch disjoint files. Verify
 file-sharing PRs sequentially to avoid concurrent-fix collisions. Respect the
-max-concurrent-agents cap (see Subagents in rules/workflow.md). Phase 7 merges
+max-concurrent-agents cap (see `rules/claude-code.md` § Subagent levers). Phase 7 merges
 stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review

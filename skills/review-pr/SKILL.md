@@ -33,11 +33,11 @@ background: false
 
 Spin multiple agents in parallel, each with a distinct perspective. Run all
 agents in fresh contexts, each pinned to **`model: sonnet`** — reviewers stay
-below the coder tier (rules/workflow.md § "Reviewer decorrelation"), and an
+below the coder tier (`rules/workflow.md` § Delegation), and an
 unpinned Agent inherits the session model, so on a top-tier session this fan-out
 silently becomes a top-model wave.
 
-**Concurrency contract (rules/workflow.md § "Concurrency discipline"):
+**Concurrency contract (`rules/authoring-skills.md`):
 parallel-FOREGROUND.** This skill runs as a `context: fork` (see frontmatter),
 and a fork's turn ends the instant it stops calling tools. Launch the panel in
 **one message** as **foreground** Agent calls (`run_in_background: false`) so
@@ -104,8 +104,8 @@ derived round number itself is untouched: the count of posted reviews cannot
 be rolled back, and the review this round posts still increments it.
 
 Model pins are unaffected: scoping changes *which* perspectives run, never
-which model runs them (`rules/workflow.md` § Subagents, reviewer
-decorrelation).
+which model runs them (`rules/claude-code.md` § Subagent levers and
+`rules/workflow.md` § Delegation).
 
 This is not gaze's **Convergence mode** (ticket 0315, default off) under
 another name. Round scoping works *within* one review invocation, across its

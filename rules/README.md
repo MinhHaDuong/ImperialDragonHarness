@@ -79,7 +79,7 @@ loads every other resident file and skips it.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters, the resident set must be injected by the adapter
-or made genuinely on-demand; `~22 000 tokens` is what that decision moves.
+or made genuinely on-demand; `~8 800 tokens` is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 

@@ -125,7 +125,7 @@ Classify every finding into exactly one of three categories:
 - `fix-now` — trivial, no branch needed, reversible, no design decision: do it in the
   current session immediately after the user says "do it"
 - `open-ticket` — multi-file, needs a branch, requires a design decision, or worth
-  tracking across sessions: create a ticket. Apply the severity floor (rules/workflow.md § Autonomous Action Rules), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+  tracking across sessions: create a ticket. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 - `skip` — cosmetic, already tracked elsewhere, or not worth acting on now: note why
 
 Format:

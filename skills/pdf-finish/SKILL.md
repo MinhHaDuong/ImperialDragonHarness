@@ -40,7 +40,7 @@ Sweep the rendered PDF with a text extractor and check mechanically:
 1. No table or figure split across pages; caption on the same page as its float.
 2. No heading as the last line of a page; no one- or two-line widow above a
    heading at a page top.
-3. No missing glyphs (grep the extraction for `<?>` replacement characters,
+3. No missing glyphs (grep the extraction for `�` replacement characters,
    check the embedded font list) — math-mode symbols, not text-mode Unicode,
    for ≈/≤/… in Latin Modern.
 4. Page size intentional (A4 unless the venue says otherwise); page count and

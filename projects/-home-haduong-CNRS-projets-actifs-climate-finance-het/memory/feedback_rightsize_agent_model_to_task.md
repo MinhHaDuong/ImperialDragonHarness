@@ -21,6 +21,6 @@ model would have done it as well. Author flagged it live.
 actually demands — mechanical lookups and factual research fit `haiku`/`fable`;
 synthesis, judgment calls, and adversarial verification warrant `sonnet`;
 reserve `opus` for the hardest reasoning/verification passes. See also the
-harness rule in `~/.claude/rules/workflow.md` § Subagents on pinning `model`
+harness rule in `~/.claude/rules/claude-code.md` § Subagent levers on pinning `model`
 per-invocation (that rule covers *that* frontmatter doesn't propagate — this
 memory covers *which tier* to pick).
