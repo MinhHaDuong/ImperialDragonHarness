@@ -1,6 +1,6 @@
 ---
 name: skill-doctor
-description: "Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes."
+description: "Weekly failure-pattern analysis over git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes."
 user-invocable: true
 argument-hint: "[--days N]"
 model: sonnet
@@ -13,8 +13,8 @@ Analyze recurring failure patterns across the harness automation and propose
 hardening patches via tickets. Run weekly or on-demand.
 
 **Authority boundary**: propose only — open tickets with diffs, never
-auto-apply patches. Same boundary as nightbeat-supervisor's "anything else →
-open a ticket."
+auto-apply patches. Anything the survey cannot fix within that boundary becomes
+a ticket, not an edit.
 
 ## 1. Survey
 
@@ -51,7 +51,7 @@ Present the ranked patterns as a table:
 |------|-----------|------|-----|-------|--------|----------------|------------|
 
 For each `uncovered` pattern, show:
-- **Evidence**: the `evidence` array from the survey (verbatim log/journal excerpts)
+- **Evidence**: the `evidence` array from the survey (verbatim commit excerpts)
 - **Candidate patch**: the proposed fix from the survey
 - **Expected impact**: estimated failure-rate reduction
 

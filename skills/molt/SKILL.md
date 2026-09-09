@@ -35,8 +35,6 @@ Run full repo housekeeping and act on every finding.
 
    Do not proceed past step 0. The fix-now deletions and STATE timestamp commit would race with the other session's uncommitted work.
 
-   Exception: `BEAT_HOUSEKEEPING_BRANCH` is set — beat.py manages concurrency itself; skip this guard.
-
 0.7. **Freshen the erg binary (before any erg check).** Refresh the installed
    `erg` *before* step 1's git phase, because both erg-driven surfaces a sweep
    acts on run against whatever binary is on `PATH`: the corpus check
@@ -64,9 +62,7 @@ Run full repo housekeeping and act on every finding.
    the fresh binary: a violation that survives the refresh is real and may be
    ticketed; one that does not was a stale-binary artifact and is dropped.
 
-1. **Git phase.**
-   - If `BEAT_HOUSEKEEPING_BRANCH` is **not** set (interactive run): `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
-   - If `BEAT_HOUSEKEEPING_BRANCH` **is** set (beat.py run): skip — beat.py already ran the git phase before invoking this skill.
+1. **Git phase.** `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
 
 1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of
    dead trees, never an active session's. Remove any registered worktree on an
@@ -128,9 +124,9 @@ Run full repo housekeeping and act on every finding.
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
    are the contract interface consumed by steps 3–5 below.
 
-2.5. **Audit open-ticket exit criteria.** For each open ticket, apply the
-   same lightweight grep-able checks used by /pick-ticket step 4. Only
-   check exit criteria that reduce to one of three crisp shapes:
+2.5. **Audit open-ticket exit criteria.** For each open ticket, apply
+   lightweight grep-able checks. Only check exit criteria that reduce to one of
+   three crisp shapes:
 
    1. **String absence**: `! grep -qF "<literal>" <file>`
    2. **File absence**: `test ! -f <path>`
@@ -205,21 +201,17 @@ Run full repo housekeeping and act on every finding.
 
 6. **Timestamp.** Update STATE.md to note the housekeeping run UTC date and time, commit it.
 
-6.5. **Open merge request (interactive run only).** If `BEAT_HOUSEKEEPING_BRANCH` is unset and any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+6.5. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
 
 7. **Report.** Summarize what you did.
 
-## Beat mode
+## Branch discipline
 
-When `BEAT_HOUSEKEEPING_BRANCH` is set in the environment, you are running
-under `beat.py` on a dedicated `claude/housekeeping-*` branch already cut
-from the remote default branch. Behaviour stays the same — commit fix-now
-items and the timestamp as usual. Do NOT push or open a PR yourself.
-`beat.py` checks for commits after you exit: if there are none it deletes
-the branch; if there are commits it leaves the branch locally as a
-"deferred" candidate for human review.
+Step 1 cuts a `housekeeping-<date>` branch from origin/main before any commits,
+and step 6.5 pushes it and opens a merge request. All fixes — including the
+STATE timestamp — land via that merge, never directly on main.
 
-If `BEAT_HOUSEKEEPING_BRANCH` is unset (interactive `/molt`), step 1
-cuts a `housekeeping-<date>` branch from origin/main before any commits, and
-step 6.5 pushes it and opens a merge request. All fixes — including the STATE
-timestamp — land via that merge, never directly on main.
+The skill once had a second mode, driven by `BEAT_HOUSEKEEPING_BRANCH`, in which
+`beat.py` cut the branch and decided what to do with it afterwards. Ticket 0882
+removed the nightbeat block, so that variable is never set and the branch above
+is the only path.

@@ -100,45 +100,11 @@ def test_skill_md_has_push_or_restore_contract():
     assert restore < probe, "exit must switch back to main BEFORE running the probe"
 
 
-def test_supervisor_probes_primary_checkout():
-    """Ticket 0247: a stranded checkout must be detected within one cycle.
-
-    Asserted against the survey helper rather than the skill prose. The probe
-    used to be a step an executor was told to run, which held only for as long
-    as the executor followed the procedure; in the helper it runs whatever the
-    executor decides to do.
-
-    Asserts main() actually *calls* the probe. A substring check on the file
-    passes on a defined-but-never-called helper, which is the "all clear" that
-    is indistinguishable from "I could not look".
-    """
-    import ast
-
-    source = (
-        DREAM_DIR.parent.parent / "scripts" / "nightbeat-supervisor-survey.py"
-    ).read_text()
-    assert "check-primary-checkout" in source, (
-        "survey helper does not reference the checkout probe"
-    )
-
-    tree = ast.parse(source)
-    main = next(
-        (
-            n
-            for n in tree.body
-            if isinstance(n, ast.FunctionDef) and n.name == "main"
-        ),
-        None,
-    )
-    assert main is not None, "survey helper has no main()"
-    called = {
-        n.func.id
-        for n in ast.walk(main)
-        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
-    }
-    assert "_check_primary_checkout" in called, (
-        "main() never calls the checkout probe"
-    )
+# Ticket 0247's second guard, test_supervisor_probes_primary_checkout, asserted
+# that the nightbeat supervisor's survey helper actually called the
+# primary-checkout probe. Ticket 0882 removed that helper with the rest of the
+# nightbeat block, so the guard lost its subject and went with it. The exit
+# contract it complemented is still covered above, against dream's own SKILL.md.
 
 
 def test_skill_md_pr_body_sourced_from_decision_table():

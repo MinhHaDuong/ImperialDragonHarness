@@ -1,7 +1,7 @@
 # Imperial Dragon Harness
 
 Casual people get shit done. Real humans ride the Imperial Dragon Harness.
-They `/raid` tickets to bring back PR, they `/beat` their wings autonomously,
+They `/raid` tickets to bring back PR, they `/hunt` one down to the branch,
 they `/perch` to orient midchat.
 
 A Claude Code harness for Minh Ha-Duong's research workflow. Lives as `~/.claude`.
@@ -82,7 +82,6 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 
 | Command | Description |
 |---------|-------------|
-| `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturation bibliographic search by independent web-search subagents — adjudicate factual register lines and adversarially stress a novelty claim until every search angle runs dry. Fleets of finders on disjoint angles (fields, languages, gray literature, citation graph, lateral vocabularies), adversarial judging of every candidate, completeness critic before declaring saturation. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
@@ -96,10 +95,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
-| `/nightbeat-report` | Review what the overnight autonomous pipeline (nightbeat) did each morning: parse logs, narrate work done, surface harness improvement opportunities. |
-| `/nightbeat-supervisor` | Supervise an overnight autonomous work run: advance the authorized ticket queue, verify before integrating, and deliver a self-contained morning report. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
-| `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous run. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
 | `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
@@ -108,7 +104,7 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
 | `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
-| `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
+| `/skill-doctor` | Weekly failure-pattern analysis over git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings. |
 | `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, highlighting insertions and deletions via latexdiff. Closes the annotate-reply-apply loop for journal revise-and-resubmit rounds. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
@@ -158,7 +154,7 @@ systemctl --user enable --now claude-harness-pull.timer
 
 ## Permissions
 
-The nightbeat folds in a weekly run of `/fewer-permission-prompts` (Sundays) that proposes an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/` — `nightbeat-report` surfaces unreviewed entries each morning.
+Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/`. A weekly run and a morning report used to drive this from the nightbeat, removed in ticket 0882 — the proposal is now something you ask for.
 
 ## Why not a plugin?
 
