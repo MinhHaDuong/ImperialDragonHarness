@@ -1,0 +1,103 @@
+%erg 0.1
+Title: Retirer skill-doctor: sa base de preuves etait le nightbeat
+Created: 2026-09-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-09T17:00Z Minh Ha-Duong created
+2026-09-09T17:12Z Minh Ha-Duong note red step predicted three failures and found exactly three; the guard narrowed to verify-gate
+
+--- body ---
+## Context
+
+`skill-doctor` mined recurring failure patterns out of the harness's own
+automation and proposed hardening tickets, never applying them. Good design,
+and it is not being removed for going unused — it is being removed because
+ticket 0882 deleted its evidence.
+
+Six of its seven clusterers read the nightbeat supervisor's journal or the
+nightbeat run logs: budget raises, dirty trees blocking a checkout, watermark
+redetection, unclosed umbrella tickets, max-turns exhaustion, crash recovery.
+Nothing writes either source any more. 0882 removed those six rather than
+leave them reporting "no pattern" forever.
+
+The seventh reads git history, and it is not blind: over a 180-day window it
+has **645 commits** to examine — 4 matching `repair:` and 641 matching
+`ticket(` — and reports zero. That is an honest negative, not a broken probe.
+The defect it detects, an inconsistent `Ticket:` line format, was fixed long
+ago and has not recurred.
+
+Usage matches: 3 invocations in the measured window, the last on 2026-06-23.
+
+## What survives the removal, deliberately
+
+The five-way root-cause taxonomy (Agent Error, Extractor Error, Original
+Error, Missing Data, Other) was a convention **shared** between this skill and
+`verify-gate`. `verify-gate` is live — 56 invocations across 14 projects — so
+the vocabulary keeps a holder. `tests/test_root_cause_taxonomy.py` narrows to
+that holder rather than being deleted: a taxonomy that silently loses a
+category is still a real defect, and one file is enough to guard it. What the
+test can no longer prove is cross-file agreement, and its docstring must say
+so instead of implying a check it no longer performs.
+
+## The alternative, considered and declined
+
+The harness gained a durable evidence base this morning: `scripts/census/`
+reads session traces, which exist for every session whether or not a night
+pipeline runs. Repointing `skill-doctor` at them would give it a corpus again.
+That is rebuilding, not repairing — second-order work of exactly the kind the
+2026-07-14 cool-down targets, proposed on a day spent removing surface. If the
+self-diagnosis loop is wanted back, it is a design decision to take
+deliberately, on the traces, not a debt to carry meanwhile.
+
+## Observed while doing this, not acted on
+
+`trace-doctor` looked like the same case and is not. Its evidence base is the
+session traces, which exist for every session and are alive; the micro-turn
+rule in `workflow.md` names it for future re-measures, so removing it would
+leave a rule pointing at nothing. Its whole family ran over five days in
+mid-July (`trace_ab_harvest` 17 runs, `trace-stats` 15, down to `trace-digest`
+at zero) with one return on 2026-08-14 — under-used, not dead.
+
+What it does raise is a duplication this pass created: `scripts/trace-*.py`
+and `scripts/census/` now read the same corpus. Which absorbs which is a
+design question, filed here as an observation.
+
+## Relevant files
+
+- `skills/skill-doctor/` — 3 645 B
+- `scripts/skill-doctor-survey.py` — 13 414 B, one clusterer left of seven
+- `tests/test_skill_doctor_survey.py` — 10 tests left of 44
+- `tests/test_root_cause_taxonomy.py` — narrows to verify-gate
+- `skills/trace-doctor/SKILL.md` — one passing mention
+- `README.md` — generated catalog
+
+## Test
+
+`tests/test_root_cause_taxonomy.py` is the red step: three of its five
+assertions read `skills/skill-doctor/SKILL.md` — two directly, and the
+cross-file token check through both holders — and fail the moment it is gone.
+Run the suite before editing it, so the failures name the couplings rather
+than a manifest guessing them (the lesson 0882 paid for).
+
+## Verification
+
+- [x] The suite went red on `test_root_cause_taxonomy.py` before that file was
+      edited — three failures, exactly the three predicted
+- [x] The narrowed guard passes, and gained a corpus check of its own: every
+      assertion now reads a single file, so that file's absence would turn the
+      rest green over nothing
+- [x] No reference to `skill-doctor` survives outside `docs/`, `tickets/` and the
+      one line of the guard that records why it lost a holder
+- [x] `make check-skills-drift` passes after `make skills-catalog`
+- [ ] `make check` passes
+
+## Invariants
+
+- `verify-gate` keeps its taxonomy, its field and its guard.
+- No other skill changes behaviour.
+
+## Exit criteria
+
+- The skill, its survey and its tests are gone; the shared vocabulary keeps
+  its live holder and its guard.
