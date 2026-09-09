@@ -31,15 +31,32 @@ it was 942 words while shipping full copies of what it summarised.
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
-The path glob is coarse where the axis is not a path: any `.tex` edit brings
-all three doctypes and both languages. `scripts/inject_rule_on_edit.py` is the
-precise channel — it resolves doctype from `\documentclass` and lang from the
-project manifest, and injects the one body that applies. Before 2026-09-09 it
-re-served bodies that were already resident (1 069 injections in 101 days);
-scoping is what gives it back a job.
-
 Not a rules file, and not loaded by this mechanism: `tickets/AGENTS.md` reaches
 a session through `@tickets/AGENTS.md` in the project's own `CLAUDE.md`.
+
+## Per-file rule injection (axis model)
+
+`paths:` is coarse where the axis is not a path: any `.tex` edit brings all
+three doctypes and both languages. `scripts/inject_rule_on_edit.py` (PreToolUse
+`Edit|Write`) is the precise channel — on the first edit of a file along each
+axis it injects the one body that applies, then stays silent (deduped per
+`session_id` + rule). Before the bodies were scoped it re-served what was
+already resident, 1 069 times in 101 days; scoping is what gives it back a job.
+
+| Axis | Resolved from | Rule path |
+|------|---------------|-----------|
+| **format** | filename extension (project-agnostic) | `format/<value>.md` (legacy alias: `coding-<value>.md`) |
+| **doctype** | `\documentclass` sniff for `.tex`; else project manifest | `doctype/<value>.md` |
+| **lang** | project manifest (`lang` per glob, else `default_lang`) | `lang/<value>.md` |
+| **prose** | implied for prose formats | `prose/_all.md` |
+
+Missing rule files are skipped silently, so content grows by adding files — no
+code change. Doc-type and language are not derivable from a filename: they come
+from an optional per-project manifest `<repo>/.claude/rules-map.toml`, which
+holds path→axis *mappings* only, never rule text. Format, precedence and a
+worked manifest live in the hook's own docstring; the same resolver is the
+single source for prose/code review routing (`scripts/prose_predicate.py`,
+ticket 0550).
 
 ## Resident rules
 

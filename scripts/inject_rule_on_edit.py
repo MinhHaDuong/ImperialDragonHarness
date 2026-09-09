@@ -2,12 +2,20 @@
 """PreToolUse(Edit|Write) hook: inject matching GLOBAL rule bodies on the first
 edit of a file along each axis, once per session.
 
-The rulebook in ``rules/`` is shared across every project. The session-start
-hook injects only the rules INDEX (pointers); bodies are read on demand. This
-hook tightens that for files with style rules: it resolves the edited file along
-four orthogonal axes and injects the body of every matching global rule that
-exists, then stays silent for the rest of the session (deduped per
+The rulebook in ``rules/`` is shared across every project. The runtime loads it
+itself: a body whose frontmatter declares ``paths:`` arrives only when a
+matching file is touched, one without ``paths:`` is resident in every session
+(mechanism isolated 2026-09-09, ``rules/README.md``). The ``paths:`` glob is
+coarse where the axis is not a path — any ``.tex`` brings all three doctypes and
+both languages — so this hook is the precise channel: it resolves the edited
+file along four orthogonal axes and injects the body of every matching global
+rule that exists, then stays silent for the rest of the session (deduped per
 ``session_id`` + rule file).
+
+Until the bodies were scoped, that made it a re-server of already-resident text
+(1 069 injections in 101 days, all duplicates). Keep the axes and the ``paths:``
+frontmatter in step: a body this hook can inject precisely should carry the
+coarsest glob that still reaches it, not none at all.
 
 Axes (composed per file):
   format  — from the filename extension (project-agnostic). py/sh/tex/qmd/md/txt.
