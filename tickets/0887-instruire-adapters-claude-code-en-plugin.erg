@@ -1,0 +1,214 @@
+%erg 0.1
+Title: Instruire adapters/claude-code en plugin skills-dir: ce qu'il peut porter, mesure
+Created: 2026-09-09
+Author: claude
+
+--- log ---
+2026-09-09T18:20Z claude created instruction demandee par l'auteur : le plugin peut-il etre l'adaptateur CLI Claude, le reste restant generique pour Codex, Pi et l'environnement Claude Code web ? Trois experiences faites sur Claude Code 2.1.266, resultats dans le corps. Depose sur demande de l'auteur, qui leve la doctrine de refroidissement du 2026-07-14 pour ce point
+2026-09-09T18:20Z claude note Correction d'une affirmation posee plus tot dans la meme session : j'avais annonce que hooks *et* permissions pouvaient passer dans un plugin. Faux sur les permissions, et c'est le point qui decide la reponse
+
+2026-09-09T18:50Z note Rattachement a 0800 tranche par l'auteur le 2026-09-09 : ne pas toucher a 0800, garder la question comme case ouverte ici. La liste des enfants de 0800 est la sortie d'un arbitrage ratifie (trois revues, six tickets retires avant implementation), pas un annuaire ; son protocole exige une seconde revue de panel avant qu'un enfant passe en implementation ; et aucune arete n'y est neutre, une arete erg deplacant ce que erg ready propose et ce que 0810 attend. Le voisinage reste porte par les renvois croises, pas par une arete
+2026-09-09T19:02Z note Go donne par l'auteur le 2026-09-09 sur l'action 4. Adaptateur verse INERTE : sur cette machine le depot EST ~/.claude, donc un dossier plugin atteignable sous skills/ est auto-decouvert a la session suivante pendant que le settings.json vif porte encore ses propres hooks — chaque garde tirerait deux fois, et le git sync de on-start.sh aussi. Le lien symbolique est donc le commutateur, et scripts/adapter-claude-code-activate.sh refuse de le poser tant que le fichier vif porte un bloc hooks. Il n'edite pas ce fichier : c'est celui de l'operateur
+2026-09-09T19:02Z note Disposition tranchee par consequence : adapters/claude-code/ plus lien, la variante que l'experience B rendait possible. Mesure decisive ajoutee au passage : CLAUDE_PLUGIN_ROOT vaut le chemin de DECOUVERTE, pas la cible resolue — un plugin atteint par lien recoit le chemin du lien. Un nombre fixe de .. n'est donc juste que tant que lien et cible sont a la meme profondeur, et sur la couche de garde une resolution muette qui rate echoue en ouverture. Remplace par bin/idh-hook, qui resout sa propre localisation reelle et sort 1 — jamais 2, qui refuserait chaque appel d'outil, jamais 0, qui rendrait un lanceur casse indiscernable d'un hook silencieux correct
+2026-09-09T19:02Z note Deux controles positifs joues, pas supposes : profondeur de resolution sabotee (../../.. -> ../..) fait tomber le cas symlink et deux autres ; hook ajoute a settings.shared.json sans regeneration fait tomber les deux gardes de derive. Le guard de derive tourne en processus plutot qu'en sous-processus, sinon le crible de test-quality le classait integration et l'excluait de make check-fast — un stale adapter doit etre pris avant le push, pas au gate lent
+--- body ---
+## Context
+
+Question de l'auteur : le plugin peut-il etre l'adaptateur CLI Claude, tout le
+reste restant generique et interoperable avec Codex, Pi et l'environnement
+Claude Code web ? Ce ticket instruit la question ; il n'implemente rien.
+
+Vocabulaire deja ratifie par 0800 : coeur, config, adaptateurs, trois cibles
+(Claude Code CLI, Codex CLI, Pi CLI de `pi.dev`). Ce ticket est un voisin de
+0809 et 0810 par son sujet.
+
+**Rattachement a 0800 : tranche le 2026-09-09, ne pas rattacher.** Choix
+delibere de l'auteur, pas un fil laisse pendant. Trois raisons :
+
+1. La section `## Children` de 0800 est la sortie d'un arbitrage ratifie —
+   trois revues independantes, puis une reconciliation qui a *retire* 0801 et
+   0804-0808 avant implementation. Ce n'est pas un annuaire ; l'amender en
+   silence amenderait un verdict sans arbitrage.
+2. Le protocole de revue de 0800 exige une seconde revue de panel avant qu'un
+   enfant passe en implementation. Elle n'a pas eu lieu.
+3. Aucune arete n'y serait neutre. `Blocked-by` n'est pas de la documentation
+   dans `erg` : elle deplace ce que `erg ready` propose et ce que 0810 attend.
+   `0887 Blocked-by: 0802` serait faux — cacher un resultat mesure derriere un
+   portage non commence et sans rapport ; `0810 Blocked-by: 0887` est
+   defendable mais deplace la condition de sortie de la famille, ce que le
+   protocole reserve.
+
+Cout assume, nomme : qui lit 0800 seul ne verra pas ce ticket. Le voisinage
+n'est porte que par les renvois croises des fichiers pertinents. **Ce qui
+rouvrirait la question** : si l'auteur decide que `## Children` est une carte
+et non un verdict, ou si la seconde revue de panel a lieu — l'arete a poser
+serait alors `0810 Blocked-by: 0887`, et elle seule.
+
+## Reponse courte
+
+**Oui, avec deux reserves nommees.** Le plugin est l'adaptateur Claude pour les
+hooks, les skills et les agents. Il ne peut pas porter les permissions, l'`env`
+ni le `statusLine`. Et il ne rend generique que ce que le normaliseur rend
+generique.
+
+## Ce que le plugin peut porter — mesure sur Claude Code 2.1.266
+
+| Surface de `settings.shared.json` | Plugin ? |
+|---|---|
+| `hooks` — 7 blocs, guards compris | **oui**, `hooks/hooks.json`, format identique |
+| `permissions` — 45 `allow`, 3 `additionalDirectories`, `defaultMode: auto` | **non** |
+| `env` — `BASH_ENV`, `UV_ENV_FILE` | **non** |
+| `statusLine` | **non** |
+| skills, agents, commands | oui (deja natifs) |
+
+Le `settings.json` a la racine d'un plugin n'accepte que `agent` et
+`subagentStatusLine`. Un fragment de settings reste donc irreductible dans
+l'adaptateur Claude : le plugin n'en est pas la totalite.
+
+## Trois experiences, faites, pas supposees
+
+`scripts/probe-plugin-hook-loading.sh` les rejoue. Bac a sable, `HOME` neuf,
+`claude -p`, plugin sonde dont le seul composant est un hook `SessionStart`.
+Resultats du 2026-09-09 :
+
+| Cas | Resultat |
+|---|---|
+| A — portee personnelle, `$HOME/.claude/skills/<nom>/` | **le hook tire** |
+| B — portee personnelle, atteinte par un lien symbolique | **le hook tire** |
+| C — portee projet (`<repo>/.claude/skills/`), sous `-p` | **ne tire pas** |
+
+A : aucun marketplace, aucune installation, aucun drapeau `--plugin-dir`,
+aucune boite de dialogue de confiance. `${CLAUDE_PLUGIN_ROOT}` resout vers le
+dossier du plugin. `claude plugin validate` passe.
+
+B est le resultat qui libere la disposition : **le dossier plugin n'a pas a
+vivre sous `skills/`**. Il peut etre `adapters/claude-code/`, atteint par un
+lien. La collision avec `make skills-catalog` et l'oddite semantique tombent.
+
+C est conforme a la doc (la confiance d'espace de travail n'est jamais accordee
+en headless) et porte une consequence directe : `hunt`, qui se lance en
+`claude -p` (`skills/hunt/SKILL.md:38,100`), ne verrait rien d'un plugin en
+portee projet.
+
+**A est le controle positif de la sonde** : s'il ne tire pas, la sonde n'a pas
+su regarder et B et C ne sont pas des resultats. Le script le dit et sort 1.
+
+## Ce que ca reglerait
+
+L'asymetrie est le vrai argument, plus que la derive :
+
+- les **hooks echouent en ouverture** — absents, les guards ne tournent pas,
+  silencieusement. Ils passeraient dans une couche que git possede, qui se
+  charge sans drapeau, et que le CLI n'ecrit jamais. La classe 0873 disparait.
+- les **permissions echouent en fermeture** — absentes, on obtient plus
+  d'invites, pas moins ; il n'y a aucun `deny` dans le fichier. Elles peuvent
+  tolerer la couche faible, celle que 0886 reconcilie.
+
+Benefice collateral non negligeable : `${CLAUDE_PLUGIN_ROOT}` remplace
+`$HOME/.claude/scripts/...` et tue une classe de litteraux de chemin — sujet de
+0803.
+
+## Ce que ca ne reglerait pas
+
+**La derive residuelle.** `permissions`, `env`, `statusLine` et les cles d'UI
+restent dans le fichier vif. **0887 n'est pas un substitut de 0886, c'en est le
+complement qui en retire la moitie dangereuse.**
+
+**Le couplage, par opposition au cablage.** La revue Claude de 0800 avait deja
+mesure ou il est dense : `settings.shared.json`, ~63 fichiers a litteraux de
+chemin, 16 skills sur 37 a syntaxe d'invocation Claude, ~8 fichiers de prose a
+noms de modeles. Le plugin traite le premier item seulement. Les `guard-*.sh`
+lisent le schema JSON stdin de Claude Code, sa grammaire de matcher
+(`Bash(git commit*)`), sa semantique `exit 2 = deny` : un adaptateur Codex ou Pi
+ne peut pas simplement pointer dessus. Ce qui achete la genericite, c'est le
+**normaliseur** — action 3 de 0809, « garder le guard shell canonique ; n'ajouter
+qu'une normalisation d'entree mince dans chaque adaptateur ». Faire le plugin
+sans le normaliseur **reetiquette** le couplage, il ne le retire pas.
+
+## Claude Code web : une quatrieme forme, non couverte aujourd'hui
+
+En session web le depot est un clone dans un repertoire de travail quelconque,
+pas `~/.claude`, et il ne contient pas de `.claude/`. **Aucun hook, aucune
+permission, aucun statusLine du harnais ne s'y applique.** Le plugin ne le donne
+pas gratuitement : il faut un acte d'installation explicite (un lien vers
+`~/.claude/skills/`), que l'experience B valide. C'est le role d'un hook
+`SessionStart` de depot — un amorcage, pas une auto-configuration.
+
+## Deux decisions inscrites a reconcilier
+
+- **`README.md:158`, « Why not a plugin? »** — « Because it's **my** harness.
+  [...] The plugin system exists for shareable, redistributable tooling — that's
+  not this. » Cet argument porte sur la **distribution** ; la question posee ici
+  porte sur le **packaging comme frontiere d'adaptateur**. Ce n'est pas le meme
+  debat, et l'action 7 de 0810 programme deja cette reconciliation. A reecrire
+  deliberement, pas a contredire en silence.
+- **« Un des adaptateurs est la fonction identite »** (revue Claude de 0800) :
+  la boucle editer/executer sans build. Le plugin la preserve pour les skills
+  (rechargement a chaud) mais **pas pour les hooks** : un changement de
+  `hooks/hooks.json` exige `/reload-plugins` ou un redemarrage, alors que Claude
+  Code recharge a chaud les hooks d'un `settings.json`. Regression reelle,
+  petite, et precisement sur le composant qu'on itere en deboguant un guard.
+  A peser, pas a passer sous silence.
+
+## Relevant files
+
+- `scripts/probe-plugin-hook-loading.sh` — les trois experiences, rejouables
+- `settings.shared.json` — la surface a decouper
+- `skills/hunt/SKILL.md:38,100` — le consommateur de `claude -p`
+- `README.md:158` — la decision « Why not a plugin? » a reecrire
+- `tickets/0800-...erg` — coeur/config/adaptateurs, et la revue qui mesure le couplage
+- `tickets/0809-...erg` — le normaliseur, ou est le travail reel
+- `tickets/0810-...erg` — action 7, reconciliation du discours plugin
+- `tickets/0886-...erg` — le reconciliateur de settings, complementaire
+
+## Actions
+
+1. Rejouer la sonde et enregistrer la version exacte de Claude Code avec les
+   resultats. Un resultat sans version ne vaut rien : le comportement mesure
+   ici est celui de 2.1.266.
+2. (tranchee 2026-09-09 : pas de rattachement a 0800 ; voir le Context pour
+   ce qui rouvrirait la question)
+3. (tranchee 2026-09-09 : `adapters/claude-code/` plus lien)
+4. (fait 2026-09-09, go de l'auteur) Hooks seuls dans le plugin, aucun guard
+   ni aucune permission touches. Verse **inerte** : le lien symbolique est le
+   commutateur, et il refuse de se poser tant que le fichier vif double-tirerait.
+   Reste a faire par l'operateur, et seulement quand 0886 rend l'alignement
+   scriptable : retirer le bloc `hooks` du `settings.json` vif, activer, puis
+   **confirmer qu'une garde tire vraiment dans une nouvelle session** — lire un
+   fichier de configuration n'en est pas la preuve. Le bloc `hooks` du
+   `settings.shared.json` canonique ne part qu'apres cette confirmation.
+5. Reecrire `README.md:158` dans le meme mouvement, ou renvoyer explicitement
+   la reecriture a l'action 7 de 0810. Ne pas laisser le README affirmer le
+   contraire de ce que fait le depot.
+6. Laisser le normaliseur a 0809. Ne pas l'ouvrir ici.
+
+## Test
+
+- La sonde est le test : trois cas, dont un controle positif interne.
+- Pour l'etape 4, un test qui casse le lien symbolique et exige que le hook
+  cesse de tirer — la version negative du controle positif.
+
+## Verification
+
+- [x] Le plugin ne peut pas porter de regles de permission — verifie sur la
+      documentation officielle et coherent avec le `settings.json` de plugin
+      limite a `agent` et `subagentStatusLine`
+- [x] Cas A, B, C mesures sur Claude Code 2.1.266, sonde versee
+- [x] Rattachement a 0800 tranche par l'auteur (2026-09-09, ne pas rattacher)
+- [x] Disposition tranchee (2026-09-09 : `adapters/claude-code/` plus lien)
+- [x] Hooks portes dans le plugin, adaptateur inerte, commutateur qui refuse le double-tir
+- [x] Controles positifs joues : profondeur sabotee, derive sabotee
+- [ ] Une garde confirmee tirante depuis le plugin sur une vraie session — attend 0886 et un acte operateur
+- [ ] `README.md:158` reecrit ou explicitement renvoye a 0810
+
+## Invariants
+
+- Aucun guard n'est modifie par ce ticket ; il instruit, il ne porte pas.
+- Aucune permission n'est elargie.
+- La sonde n'ecrit que dans un `mktemp -d` et ne lit jamais le harnais reel.
+
+## Exit criteria
+
+- La question « le plugin peut-il etre l'adaptateur Claude » a une reponse
+  mesuree, versionnee et rejouable, et l'auteur a tranche le go/no-go sur le
+  deplacement des hooks.

@@ -1,0 +1,8 @@
+{
+  "name": "claude-code",
+  "description": "Imperial Dragon Harness — Claude Code adapter: the hook wiring, as a skills-directory plugin",
+  "version": "0.1.0",
+  "author": {
+    "name": "Minh Ha-Duong"
+  }
+}

@@ -63,3 +63,11 @@ tickets/tools/go/*.test
 # Python build artefacts inside whitelisted dirs
 **/__pycache__/
 *.pyc
+
+# Adapters (ticket 0800 family). The Claude Code adapter ships inert; its
+# activation symlink is created at runtime by scripts/adapter-claude-code-activate.sh
+# and must not be committed -- committing it would auto-load the plugin on merge,
+# double-firing every hook against the live settings.json copy (ticket 0887).
+!adapters/
+!adapters/**
+skills/claude-code

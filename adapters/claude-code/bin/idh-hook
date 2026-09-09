@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Run a harness hook script from inside the Claude Code adapter plugin.
+#
+# Ticket 0887. The plugin's hooks.json cannot name $HOME/.claude -- that path
+# literal is what the adapter exists to remove -- and it cannot walk up from
+# ${CLAUDE_PLUGIN_ROOT} either: measured on Claude Code 2.1.266, that variable
+# holds the path the plugin was *discovered* at, so a symlinked plugin gets the
+# symlink's path. A fixed number of `..` is then only correct while the link and
+# the real directory sit at the same depth, and a wrong resolution on the guard
+# layer fails open in silence. This resolves its own real location instead.
+#
+# Usage: idh-hook <script-name> [args...]   -- script-name is relative to the
+# harness scripts/ directory. A .py target is run with python3, since not every
+# hook script carries the execute bit.
+#
+# Exit codes matter here. A missing target exits 1: loud on stderr, and NOT 2 --
+# 2 is Claude Code's "deny the tool call", so a broken launcher must never
+# silently start blocking every Bash command. Exit 0 is equally wrong: it makes
+# a broken hook byte-identical to a correct silent no-op, the failure mode
+# tests/test_hook_failures_are_visible.py exists to keep closed.
+set -euo pipefail
+
+SELF=$(readlink -f "$0")
+# bin/ -> claude-code/ -> adapters/ -> harness root
+HARNESS=$(cd "$(dirname "$SELF")/../../.." && pwd)
+
+[ $# -ge 1 ] || { echo "idh-hook: no script named" >&2; exit 1; }
+name=$1; shift
+target="$HARNESS/scripts/$name"
+
+if [ ! -f "$target" ]; then
+    echo "idh-hook: $target does not exist (harness root resolved to $HARNESS)" >&2
+    exit 1
+fi
+
+case "$name" in
+    *.py) exec python3 "$target" "$@" ;;
+    *)    [ -x "$target" ] || { echo "idh-hook: $target is not executable" >&2; exit 1; }
+          exec "$target" "$@" ;;
+esac
