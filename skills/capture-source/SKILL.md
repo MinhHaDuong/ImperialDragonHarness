@@ -34,8 +34,8 @@ absence. Lis le corps de la réponse avant de conclure.
    complète » — son répertoire d'accompagnement ne sert à rien (règle 1).
 2. **Lire les métadonnées de la page sauvegardée** : `rel="canonical"`,
    `og:url`, `article:published_time`, `og:title`. Voir règle 2.
-3. **Reconstituer** avec `scripts/reconstitute.py build`.
-4. **Vérifier** avec `scripts/reconstitute.py verify`, puis regarder le rendu.
+3. **Reconstituer** avec `~/.claude/skills/capture-source/scripts/reconstitute.py build`.
+4. **Vérifier** avec `~/.claude/skills/capture-source/scripts/reconstitute.py verify`, puis regarder le rendu.
 5. **Classer** dans Zotero : les deux PDF en pièces jointes du même item, plus
    `accessDate`. Voir règle 5.
 
