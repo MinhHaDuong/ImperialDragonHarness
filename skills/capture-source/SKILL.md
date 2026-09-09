@@ -27,10 +27,11 @@ absence. Lis le corps de la réponse avant de conclure.
 
 ## La chaîne
 
-1. **L'auteur ouvre la page dans son navigateur et l'imprime en PDF.** C'est la
-   seule étape humaine, et elle dure dix secondes. Une sauvegarde « page
-   complète » avec son répertoire d'accompagnement ne coûte rien de plus, mais
-   voir la règle 1 ci-dessous avant de s'en servir.
+1. **L'auteur bascule la page en mode lecture, désactive les en-têtes et pieds
+   de page d'impression, et imprime en PDF.** Seule étape humaine, dix
+   secondes. Le mode lecture n'est pas un confort : c'est lui qui fait la
+   qualité de tout ce qui suit (règle 1). Ne pas sauvegarder la « page
+   complète » — son répertoire d'accompagnement ne sert à rien (règle 1).
 2. **Lire les métadonnées de la page sauvegardée** : `rel="canonical"`,
    `og:url`, `article:published_time`, `og:title`. Voir règle 2.
 3. **Reconstituer** avec `scripts/reconstitute.py build`.
@@ -40,21 +41,33 @@ absence. Lis le corps de la réponse avant de conclure.
 
 ## Cinq règles, toutes payées
 
-### 1. La capture imprimée est le filtre à images
+### 1. C'est le mode lecture qui fait le tri, pas l'impression
 
-Le répertoire d'une sauvegarde « page complète » contient tout l'habillage du
-site : visuel d'en-tête, vignettes de la banque de liens, logos, le même
-fichier en avif et en webp et en quatre tailles. Trier à la main, c'est se
-tromper.
+**Imprimer depuis le mode lecture du navigateur, jamais depuis la page telle
+qu'elle s'affiche.** Le mode lecture jette la navigation, les bandeaux, les
+encarts, les vignettes de recommandation, et ne garde que le titre, le texte
+et les figures de l'article.
 
-**La vue imprimée a déjà fait le tri.** Elle contient les figures de l'article
-et rien d'autre. Donc les images se prennent avec `pdfimages` sur la capture,
-jamais dans le répertoire d'accompagnement.
+Mesuré sur un article du World Economic Forum : **9 120 mots dans le HTML
+complet, 763 dans la capture en mode lecture.** 92 % de la page écartés, et ce
+92 % est exactement ce qu'un nettoyage écrit à la main tenterait de retirer.
+Côté images, le répertoire de la sauvegarde « page complète » contenait six
+fichiers, tous décoratifs, chacun en avif et en webp et en quatre tailles ; la
+capture en mode lecture en contenait un, le graphique de données que l'article
+commente.
 
-Mesuré : sur un article du World Economic Forum, six images dans le répertoire,
-toutes décoratives ; une seule dans la page imprimée, et c'était le graphique
-de données que l'article commente. Le premier passage avait embarqué les six
-mauvaises et manqué la bonne — 8 pages et 9,8 Mo au lieu de 3 pages et 184 Ko.
+D'où la règle opératoire : **les figures se prennent avec `pdfimages` sur la
+capture**, jamais dans un répertoire d'accompagnement — qu'il vaut mieux ne pas
+sauvegarder du tout. Un premier passage qui trie les images à la main embarque
+les six mauvaises et manque la bonne : 8 pages et 9,8 Mo au lieu de 3 et 184 Ko.
+
+**Corollaire de scope, honnête.** Si la capture est bonne, `build` n'a presque
+plus rien à nettoyer, et la valeur du skill se déplace : elle est dans le bloc
+de provenance, le contrôle du `rel=canonical`, la date de consultation et le
+classement, pas dans le reflux de paragraphes. Une capture prise sans mode
+lecture, elle, demande tout le nettoyage — c'est le cas dégradé, pas la norme.
+Des extensions de lecture apaisée impriment peut-être plus proprement encore
+que le mode lecture natif ; non vérifié.
 
 ### 2. Le `rel=canonical` corrige les attributions
 
@@ -135,6 +148,12 @@ S=~/.claude/skills/capture-source/scripts/reconstitute.py
 recoud les phrases coupées entre deux pages, rétablit les puces, et place
 chaque figure là où le texte l'annonce. `--min-px` écarte les vignettes
 résiduelles (400 px par défaut).
+
+Sur une capture en mode lecture avec en-têtes d'impression désactivés, la
+plupart de ces traitements ne trouvent rien à faire, et c'est le signe que la
+capture est bonne. Les motifs `drop` et `drop_blocks` restent utiles pour ce
+que le mode lecture garde et que l'on ne veut pas — une banque de liens
+« Have you read? » au milieu de l'article, par exemple.
 
 `verify` sort en code 1 s'il manque une phrase.
 
