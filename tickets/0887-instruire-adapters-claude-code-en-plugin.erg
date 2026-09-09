@@ -8,6 +8,9 @@ Author: claude
 2026-09-09T18:20Z claude note Correction d'une affirmation posee plus tot dans la meme session : j'avais annonce que hooks *et* permissions pouvaient passer dans un plugin. Faux sur les permissions, et c'est le point qui decide la reponse
 
 2026-09-09T18:50Z note Rattachement a 0800 tranche par l'auteur le 2026-09-09 : ne pas toucher a 0800, garder la question comme case ouverte ici. La liste des enfants de 0800 est la sortie d'un arbitrage ratifie (trois revues, six tickets retires avant implementation), pas un annuaire ; son protocole exige une seconde revue de panel avant qu'un enfant passe en implementation ; et aucune arete n'y est neutre, une arete erg deplacant ce que erg ready propose et ce que 0810 attend. Le voisinage reste porte par les renvois croises, pas par une arete
+2026-09-09T19:02Z note Go donne par l'auteur le 2026-09-09 sur l'action 4. Adaptateur verse INERTE : sur cette machine le depot EST ~/.claude, donc un dossier plugin atteignable sous skills/ est auto-decouvert a la session suivante pendant que le settings.json vif porte encore ses propres hooks — chaque garde tirerait deux fois, et le git sync de on-start.sh aussi. Le lien symbolique est donc le commutateur, et scripts/adapter-claude-code-activate.sh refuse de le poser tant que le fichier vif porte un bloc hooks. Il n'edite pas ce fichier : c'est celui de l'operateur
+2026-09-09T19:02Z note Disposition tranchee par consequence : adapters/claude-code/ plus lien, la variante que l'experience B rendait possible. Mesure decisive ajoutee au passage : CLAUDE_PLUGIN_ROOT vaut le chemin de DECOUVERTE, pas la cible resolue — un plugin atteint par lien recoit le chemin du lien. Un nombre fixe de .. n'est donc juste que tant que lien et cible sont a la meme profondeur, et sur la couche de garde une resolution muette qui rate echoue en ouverture. Remplace par bin/idh-hook, qui resout sa propre localisation reelle et sort 1 — jamais 2, qui refuserait chaque appel d'outil, jamais 0, qui rendrait un lanceur casse indiscernable d'un hook silencieux correct
+2026-09-09T19:02Z note Deux controles positifs joues, pas supposes : profondeur de resolution sabotee (../../.. -> ../..) fait tomber le cas symlink et deux autres ; hook ajoute a settings.shared.json sans regeneration fait tomber les deux gardes de derive. Le guard de derive tourne en processus plutot qu'en sous-processus, sinon le crible de test-quality le classait integration et l'excluait de make check-fast — un stale adapter doit etre pris avant le push, pas au gate lent
 --- body ---
 ## Context
 
@@ -165,13 +168,15 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
    ici est celui de 2.1.266.
 2. (tranchee 2026-09-09 : pas de rattachement a 0800 ; voir le Context pour
    ce qui rouvrirait la question)
-3. Trancher la disposition : `adapters/claude-code/` plus lien, ou dossier
-   directement sous `skills/`. B rend le premier possible ; le second collisionne
-   avec `make skills-catalog`.
-4. Si le go est donne : deplacer **les hooks seuls** dans le plugin, sans
-   toucher aux guards ni aux permissions. Controle positif obligatoire : casser
-   le lien doit faire echouer un test, sinon on ne saura pas distinguer
-   « charge » de « pas regarde ».
+3. (tranchee 2026-09-09 : `adapters/claude-code/` plus lien)
+4. (fait 2026-09-09, go de l'auteur) Hooks seuls dans le plugin, aucun guard
+   ni aucune permission touches. Verse **inerte** : le lien symbolique est le
+   commutateur, et il refuse de se poser tant que le fichier vif double-tirerait.
+   Reste a faire par l'operateur, et seulement quand 0886 rend l'alignement
+   scriptable : retirer le bloc `hooks` du `settings.json` vif, activer, puis
+   **confirmer qu'une garde tire vraiment dans une nouvelle session** — lire un
+   fichier de configuration n'en est pas la preuve. Le bloc `hooks` du
+   `settings.shared.json` canonique ne part qu'apres cette confirmation.
 5. Reecrire `README.md:158` dans le meme mouvement, ou renvoyer explicitement
    la reecriture a l'action 7 de 0810. Ne pas laisser le README affirmer le
    contraire de ce que fait le depot.
@@ -190,7 +195,10 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
       limite a `agent` et `subagentStatusLine`
 - [x] Cas A, B, C mesures sur Claude Code 2.1.266, sonde versee
 - [x] Rattachement a 0800 tranche par l'auteur (2026-09-09, ne pas rattacher)
-- [ ] Disposition tranchee
+- [x] Disposition tranchee (2026-09-09 : `adapters/claude-code/` plus lien)
+- [x] Hooks portes dans le plugin, adaptateur inerte, commutateur qui refuse le double-tir
+- [x] Controles positifs joues : profondeur sabotee, derive sabotee
+- [ ] Une garde confirmee tirante depuis le plugin sur une vraie session — attend 0886 et un acte operateur
 - [ ] `README.md:158` reecrit ou explicitement renvoye a 0810
 
 ## Invariants
