@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-09T16:43Z
+Last updated: 2026-09-09T17:45Z
 
 ## North star
 
@@ -23,7 +23,7 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
 
 ## Next actions
 - **Slimming pass done, portage next** (2026-09-09, tickets 0881-0884, ~11 600 lines removed). A usage census over 3,42 GB of local session traces — all repositories — drove four merged cuts: eleven never-invoked skills reduced to seven, the nightbeat block removed entire (its scheduler had been uninstalled for months), 31 dead permission rules dropped. **`HANDOFF-2026-09-09.md` carries the full state**: numbers behind each decision, three arbitrations that remain the author's, five identified-but-unstarted threads. `scripts/census/` holds the instruments; re-running them a month out is how the cut gets verified.
-- **The real portage prerequisite is measured**: 39 200 tokens are resident per session before the first question, **73 % of it the rules tree** (`workflow.md` 7 937 + `git.md` 6 091 = 14 028 alone). 18 of the 19 rule bodies arrive in the system prompt — observed, mechanism not isolated — which voids the pointer-table design and makes `inject_rule_on_edit.py` re-serve 1 069 already-resident bodies. **That is what 0572 is actually about.**
+- **Rules-tree residency: mechanism isolated, first cut landed** (2026-09-09, 0572). The runtime loads `~/.claude/rules/**.md` itself — a `paths:` frontmatter makes a body conditional, its absence makes it resident in every session of every project. Not a hook, not `CLAUDE.md`: `state.md` was the one body absent from the prompt and the one file carrying `paths:`. **The pointer-table design was never in force**, so the index described in full what the runtime already shipped in full. Scoping the eight path-expressible bodies took the resident set 28 400 → 21 600 tokens; `tests/test_rules_resident_budget.py` now caps it. Left, in order: trim `workflow.md` (7 918) + `git.md` (6 053), then move the seven situation-scoped bodies (~6 500) out of the auto-loaded directory. **What an adapter must inject is exactly the resident set.**
 - **Cool-down doctrine in force** (2026-07-14): file a tooling ticket only if the defect blocks a merge, corrupts state, or bites a science project; throughput points at the science repos.
 - **External-reviewer trial: the seats now actually run.** 0207 accrues again after the 0873 credential fix; before it, five gates in one night lost both CLI seats to fail-open and nobody noticed. Two caveats measured 2026-09-07: `openrouter-budget` returns garbage (its model's cutoff predates the repo clock, so it flagged today's date as a future date) and `copilot` is quota-limited, and harvest counts a quota notice as a response. Scorecards could not be written from any worktree — `erg log` refuses a foreign branch — so the trial has no entries from these runs.
 - **0062 trigger**: re-open Firecracker isolation when IDH agents run against secret-bearing projects.
