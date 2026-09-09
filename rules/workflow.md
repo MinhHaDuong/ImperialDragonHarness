@@ -47,7 +47,7 @@ git log --oneline HEAD..origin/main         # what landed upstream since your ba
 git diff --name-only origin/main...HEAD      # files you'd touch that upstream also changed
 ```
 
-If `origin/main` is ahead and overlaps your area, reconcile first (rebase onto it, or cut a fresh branch from `origin/main`) **before writing code**. Skipping this risks reinventing work that parallel raid/nightbeat agents already merged — it bit once (2026-05-26): an entire ticket's fixes were duplicated, less completely, from a base ~15 commits stale, caught only at PR time. The fetch is cheap; the rework is not. (To test whether a path exists at a ref, use `git cat-file -e <ref>:<path>` — `git ls-tree <ref> <path> && …` exits 0 even when the path is absent.)
+If `origin/main` is ahead and overlaps your area, reconcile first (rebase onto it, or cut a fresh branch from `origin/main`) **before writing code**. Skipping this risks reinventing work that parallel raid agents already merged — it bit once (2026-05-26): an entire ticket's fixes were duplicated, less completely, from a base ~15 commits stale, caught only at PR time. The fetch is cheap; the rework is not. (To test whether a path exists at a ref, use `git cat-file -e <ref>:<path>` — `git ls-tree <ref> <path> && …` exits 0 even when the path is absent.)
 
 **Scan again immediately before you push, because a scan is a snapshot.** The window is the whole life of the branch, not its first minute: a sibling's PR opened *after* your scan can merge before your push, and then the scan was right when you ran it and wrong when you relied on it. Re-run the specific check your work answers — the failing gate, the grep, the ancestry probe — against a freshly fetched `origin/main` just before pushing. Green means someone beat you: delete the branch and say so.
 
@@ -184,9 +184,11 @@ runbooks catalog and declare, as part of the run plan, either which existing
 piece is reused or why none fits. The declaration is the compliance artifact —
 it makes the reuse decision verifiable ex post, where a silent improvisation
 is not. (Cost of skipping this, 2026-07-10: an hourly autonomous loop was
-improvised from scratch while `nightbeat-supervisor` sat undiscovered in the
-catalog, and its static itinerary missed a mid-run child ticket a live queue
-would have picked up.)
+improvised from scratch while a supervisor skill built for exactly that sat
+undiscovered in the catalog, and its static itinerary missed a mid-run child
+ticket a live queue would have picked up. That skill was itself removed in
+ticket 0882, having gone unused — which does not soften the lesson: the
+improviser never looked.)
 
 # Ticket discipline for multi-PR work
 

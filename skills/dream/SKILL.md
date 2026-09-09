@@ -170,9 +170,8 @@ during a routine dream.
 and the promotion pass hardcode `~/.claude` (`git -C ~/.claude add/commit`, and
 promotions write to `~/.claude/memory/`), so a worktree run would still commit
 onto the *primary* checkout's current branch — worktree isolation would not
-apply. The push-or-restore contract (step 14) plus the nightbeat-supervisor probe address
-the stranding without that refactor. Revisit if `commit.py` is parameterized by
-repo dir.
+apply. The push-or-restore contract (step 14) addresses the stranding without
+that refactor. Revisit if `commit.py` is parameterized by repo dir.
 
 ### Promotion pass
 

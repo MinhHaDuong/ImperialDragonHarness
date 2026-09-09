@@ -4,8 +4,8 @@
 set -euo pipefail
 
 HARNESS="$HOME/.claude"
-# Canonical project registry — the single source of truth also read by
-# beat.py, the nightbeat survey, and scry. Override for tests.
+# Canonical project registry — the single source of truth for the set of
+# projects this harness manages. Override for tests.
 REGISTRY="${PROJECTS_JSON:-$HARNESS/scripts/projects.json}"
 
 # Derive the project directories that get dev-projects group ownership.

@@ -93,10 +93,15 @@ def test_pid_discriminator_obtainable():
 
 
 def test_headless_pattern_pointer_present():
-    """One sentence points ad hoc orchestrators at the beat.py headless pattern."""
+    """One sentence points ad hoc orchestrators at the headless spawn pattern.
+
+    It named `beat.py` as the precedent until ticket 0882 removed it. The
+    assertion on the precedent went with it; the one that matters -- that step 3
+    still hands orchestrators the invocation instead of a hand-typed contract --
+    is what remains, and is the reason this test exists.
+    """
     step3 = step3_text()
     assert 'claude -p "/hunt' in step3, (
         "step 3 must point ad hoc orchestrators at the `claude -p \"/hunt <id>\"` "
-        "headless pattern that beat.py uses, instead of hand-typed contracts"
+        "headless pattern, instead of hand-typed ownership contracts"
     )
-    assert "beat.py" in step3, "step 3 should name beat.py as the headless precedent"
