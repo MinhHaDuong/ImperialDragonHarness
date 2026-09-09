@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-07-29 -->
+<!-- last-reviewed: 2026-09-09 -->
 # Submission events — propagate to the external registers
 
 When a manuscript's submission state changes — initial submission, revision
@@ -15,10 +15,18 @@ git and go silently stale unless updated in the same session:
    the style of the neighbouring rows, then regenerate the companion PDF
    (`libreoffice --headless --convert-to pdf`).
 
-Propose both as part of the submission-event wrap-up; they are author-visible
+Propose them as part of the submission-event wrap-up; they are author-visible
 deliverables, not chores to defer. (Author directive, 2026-07-29, at the
 RDJ-26561 revision-1 resubmission — the homepage and roadmap updates had to
 be asked for after the fact.)
+
+## Which register — and/or, never automatically both
+
+The roadmap tracks work in progress; the publications list tracks works that
+exist. A book proposal sent for consideration belongs on the roadmap only:
+create its bibliography entry when a contract is signed or the piece accepted.
+Record the applicable register(s) in the commit or event record, so the next
+event does not reopen the decision.
 
 **Check every link you write, on the landing page, not the status code.**
 `curl -sIL` each DOI/URL entering a register and confirm it lands on the
