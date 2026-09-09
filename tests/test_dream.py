@@ -100,45 +100,11 @@ def test_skill_md_has_push_or_restore_contract():
     assert restore < probe, "exit must switch back to main BEFORE running the probe"
 
 
-def test_supervisor_probes_primary_checkout():
-    """Ticket 0247: a stranded checkout must be detected within one cycle.
-
-    Asserted against the survey helper rather than the skill prose. The probe
-    used to be a step an executor was told to run, which held only for as long
-    as the executor followed the procedure; in the helper it runs whatever the
-    executor decides to do.
-
-    Asserts main() actually *calls* the probe. A substring check on the file
-    passes on a defined-but-never-called helper, which is the "all clear" that
-    is indistinguishable from "I could not look".
-    """
-    import ast
-
-    source = (
-        DREAM_DIR.parent.parent / "scripts" / "nightbeat-supervisor-survey.py"
-    ).read_text()
-    assert "check-primary-checkout" in source, (
-        "survey helper does not reference the checkout probe"
-    )
-
-    tree = ast.parse(source)
-    main = next(
-        (
-            n
-            for n in tree.body
-            if isinstance(n, ast.FunctionDef) and n.name == "main"
-        ),
-        None,
-    )
-    assert main is not None, "survey helper has no main()"
-    called = {
-        n.func.id
-        for n in ast.walk(main)
-        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
-    }
-    assert "_check_primary_checkout" in called, (
-        "main() never calls the checkout probe"
-    )
+# Ticket 0247's second guard, test_supervisor_probes_primary_checkout, asserted
+# that the nightbeat supervisor's survey helper actually called the
+# primary-checkout probe. Ticket 0882 removed that helper with the rest of the
+# nightbeat block, so the guard lost its subject and went with it. The exit
+# contract it complemented is still covered above, against dream's own SKILL.md.
 
 
 def test_skill_md_pr_body_sourced_from_decision_table():
@@ -178,6 +144,63 @@ def test_skill_md_delete_removes_provenance():
 
 def test_commit_py_has_rollback_subcommand():
     assert "rollback" in COMMIT_PY.read_text()
+
+
+# ── Leading-dash project names (ticket 0500) ──────────────────────────────────
+#
+# Every directory under ~/.claude/projects/ begins with '-' (-home-haduong--claude,
+# …). argparse reads such a value as the start of an option, so an unprotected
+# positional aborts with a usage dump before the script runs.
+
+
+@pytest.mark.integration
+def test_read_index_leading_dash_project(tmp_path):
+    project = "-home-haduong--claude"
+    memory = tmp_path / ".claude" / "projects" / project / "memory"
+    memory.mkdir(parents=True)
+    (memory / "MEMORY.md").write_text(
+        "## Entries\n\n- [feedback_vim](feedback_vim.md) — vim\n"
+    )
+    (memory / "feedback_vim.md").write_text("User prefers vim.\n")
+    result = _run(READ_INDEX, project, home=tmp_path)
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["project"] == project, "leading dash lost"
+    assert len(data["entries"]) == 1
+
+
+@pytest.mark.integration
+def test_read_index_help_still_works(tmp_path):
+    """The separator auto-insert must not eat -h."""
+    result = _run(READ_INDEX, "--help", home=tmp_path)
+    assert result.returncode == 0
+    assert "project" in result.stdout
+
+
+@pytest.mark.integration
+def test_commit_leading_dash_project(tmp_path):
+    """commit.py's `commit` verb takes the project as its first positional."""
+    home = tmp_path
+    idh = home / ".claude"
+    project = "-home-haduong--claude"
+    memory = idh / "projects" / project / "memory"
+    memory.mkdir(parents=True)
+    (memory / "MEMORY.md").write_text("## Entries\n")
+    subprocess.run(["git", "init", "-b", "main", str(idh)], capture_output=True)
+    for k, v in (
+        ("user.email", "t@example.com"),
+        ("user.name", "T"),
+        ("commit.gpgsign", "false"),
+    ):
+        subprocess.run(["git", "-C", str(idh), "config", k, v], capture_output=True)
+    result = _run(COMMIT_PY, "commit", project, "5", "3", home=home)
+    assert result.returncode == 0, result.stderr
+    log = subprocess.run(
+        ["git", "-C", str(idh), "log", "--format=%s", "-1"],
+        capture_output=True,
+        text=True,
+    )
+    assert project in log.stdout, "commit message lost the project name"
 
 
 def test_no_anthropic_import_in_scripts():

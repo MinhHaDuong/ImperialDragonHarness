@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e3539725-9ee4-4662-bd11-94fde1db9112
-  modified: 2026-08-30T13:47:11.693Z
+  modified: 2026-09-06T19:08:29.325Z
 ---
 
 Three independent sonnet team-leads in one session (2026-08-30, the embedder
@@ -26,3 +26,9 @@ under the tool timeout), relying on the harness's resumability to skip
 completed cells. When a lead parks anyway, one resume message with those
 literal instructions recovers it; on the second drift, take the work over
 directly ([[feedback-executor-gate-loop-stall]]).
+
+Recurred 2026-09-06 with a fable team-lead whose Zotero injection ran on a
+remote host over ssh: it left "a background waiter" and stopped. Model tier
+does not protect against it, and a remote process is exactly as untracked
+as a local nohup. The prompt that launched it said nothing about waits; the
+rule above has to be in the launch prompt, not only in the recovery message.

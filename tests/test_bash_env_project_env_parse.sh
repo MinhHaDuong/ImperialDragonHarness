@@ -25,9 +25,18 @@ trap 'rm -rf "$WORK"' EXIT
 
 # Load bash-env.sh in a subprocess with $HOME=<home> and PWD=<projdir>, then
 # print the value of environment variable <var> ("" if unset). stderr silenced.
+#
+# `env -i` is load-bearing, not tidiness (ticket 0359). The controlled HOME keeps
+# the real ~/.claude/.env out, but a plain `HOME=… bash -c` still inherits the
+# caller's environment — including the BASH_ENV that re-runs the real loader at
+# child startup. Every refusal assertion here ((1), (6a), (6c), (6e)) measures
+# ABSENCE, and an inherited value both masks the code path and gets printed by the
+# failing assertion. A known-empty base env rules that out (rules/coding-bash.md).
+# The one variable the child genuinely needs is PATH, so it is passed explicitly —
+# and (6b) still asserts that a project .env cannot overwrite it.
 _load_var() {
     local home="$1" projdir="$2" var="$3"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         n="$3"
@@ -38,7 +47,7 @@ _load_var() {
 # Load bash-env.sh as above but return only the exit code (0 = no shell error).
 _load_rc() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" >/dev/null 2>&1
@@ -48,7 +57,7 @@ _load_rc() {
 # Load bash-env.sh and print only its STDERR (diagnostic warnings).
 _load_stderr() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
     ' _ "$projdir" "$SCRIPT" 2>&1 >/dev/null
@@ -57,7 +66,7 @@ _load_stderr() {
 # Load bash-env.sh and print `export -p` (the exported environment).
 _load_exports() {
     local home="$1" projdir="$2"
-    HOME="$home" bash -c '
+    env -i HOME="$home" PATH="$PATH" bash -c '
         cd "$1" || exit 1
         source "$2"
         export -p

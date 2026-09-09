@@ -1,0 +1,2 @@
+- [Carnet realf.hypotheses.org](reference_carnet_realf.md) — carnet de recherche ouvert 2026, outlet déclaré pour l'activité code/IA (IDH, git-erg)
+- [Avancement DR1 2026](project_avancement_2026.md) — saisie Quartz faite le 1er sept., dépôt avant le 2 sept. 12h ; checklist du matin dans plan-dossier-2026.md

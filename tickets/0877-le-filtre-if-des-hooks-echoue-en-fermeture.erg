@@ -1,0 +1,214 @@
+%erg 0.1
+Title: Le filtre "if" des hooks echoue en fermeture, et block-pr-merge-in-worktree refuse des commandes sans rapport
+Created: 2026-09-08
+Author: claude
+
+--- log ---
+2026-09-08T04:52Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
+2026-09-08T05:51Z claude note Porte sur PR 825 : le defaut s'est declenche six fois de lui-meme pendant la revue, et les deux autres relecteurs l'ont rencontre aussi. Reproducteur reduit, sans substitution de processus : `for x in a b; do echo "loop-$x"; done` bloque, `for x in a b; do echo hi; done` passe — meme boucle, seule differe l'expansion d'une variable. Temoins negatifs ajoutes au corps ; ce sont eux qui bornent la classe. Action 2 repondue : guard-worktree-remove-wip.sh se filtre l. 17, hors risque. La cause reste non isolee et le ticket continue de ne pas en affirmer une
+2026-09-08T06:09Z claude note Reroll round 1 corrige, quatre points, tous introduits par ma propre edition : le compte « deux reproducteurs » demeure alors que le bloc en portait quatre, et « une troisieme forme » etait numerotee contre l'ancien bloc ; `## Relevant files` demandait encore l'audit que deux autres sections donnaient pour fait ; le message du garde etait paraphrase en perdant « git », dans un ticket dont l'objet est justement la citation exacte de ce message — il est desormais reproduit en entier avec sa ligne source. Le quatrieme point est dans 0207
+2026-09-08T06:29Z claude note Escalade round 2 traitee : la phrase « aucune des formes bloquees ne contient gh, pr, merge » etait contredite cinq lignes plus bas par ce ticket meme, et redondante avec la version correctement portee au-dessus ; supprimee. Classe elargie sur deux observations de la porte : un heredoc en quotes simples mentionnant seulement une substitution, et ${PIPESTATUS[0]}, expansion de parametre nue — ce dernier contredit le temoin negatif echo "$HOME". Horodatages des trois lignes ci-dessus corriges : ils portaient l'heure locale (+02:00) etiquetee Z, donc dans le futur. Meme erreur que sur 0851 hier, corrigee hier, refaite aujourd'hui sur un ticket neuf : la lecon a ete ecrite dans un message de commit et pas dans une garde, et une lecon sans garde ne tient pas
+2026-09-08T06:41Z claude note L'auteur demande si ces incoherences sont des gardes sur des gardes qui n'ont jamais servi. Pour celui-ci la reponse est oui, et elle est mesurable : erg-pr-merge appelle gh pr merge et a tourne depuis des worktrees treize fois cette nuit sans echec, la 808 par un gh pr merge tape a la main depuis un worktree ; la premisse de block-pr-merge-in-worktree.sh est donc contredite treize fois, et le garde ne s'est jamais declenche sur le chemin sanctionne puisque c'est un script. Action 1 reecrite : etablir d'abord si le garde a encore une classe de defaut, supprimer ou reduire a --delete-branch plutot que restaurer un matcher. Nuance conservee : --merge seul est un appel d'API, --delete-branch fait un checkout local et pourrait echouer. Actions renumerotees et critere de sortie rendu conditionnel — l'insertion avait immediatement produit un « 2. » en double, huitieme instance du meme motif dans ce ticket
+2026-09-08T08:14Z claude note PR 831, fusionnee a la main par l'auteur, isole la cause et execute l'action 4. Le mecanisme n'est pas un echec d'evaluation mais un passage par defaut : le matcher decompose une commande composee pour tester chaque partie, et transmet quand meme celles qu'il ne sait pas decomposer — substitution, heredoc, boucle for, sous-shell. Les quatre reproducteurs sont exactement quatre formes indecomposables, et ${PIPESTATUS[0]} cesse d'etre l'anomalie que je ne savais pas placer. La section « Cause non isolee » est remplacee et non nuancee : annoncer une cause inconnue apres qu'elle est trouvee envoie le lecteur chercher ce qui existe deja. Action 4 cochee — le garde lit desormais la commande et sort 0 hors forme gh pr merge, fait avant l'action 1 et c'etait le bon ordre. L'action 1 reste seule ouverte et est desormais la seule question du ticket : le garde est sur mais laisse inerte dans le settings.json vif, parce que le reactiver refuserait une operation mesuree comme fonctionnelle treize fois
+
+--- body ---
+## Context
+
+Trois gardes ont ete re-enregistrees a la main : le filtrage est passe du champ
+`matcher` au champ `if` du handler.
+
+```json
+-  "matcher": "Bash(git worktree remove*)",
++  "matcher": "Bash",
+   "hooks": [ { "type": "command",
++               "if": "Bash(git worktree remove *)",
+                "command": "$HOME/.claude/scripts/guard-worktree-remove-wip.sh" } ]
+```
+
+Consequence mesuree le 2026-09-08 : dans un worktree, des commandes **sans
+aucun rapport** sont refusees par `block-pr-merge-in-worktree.sh`, sous un
+message qui nomme une cause qui n'est pas la leur.
+
+Quatre reproducteurs, aucun ne contenant `gh`, `pr` ni `merge` dans le texte :
+
+```
+for x in a b; do echo "loop-$x"; done   -> BLOCKED (voir la citation exacte plus bas)
+v=$(echo hi); echo "$v"                 -> BLOCKED, idem
+cat <(echo hi)                          -> BLOCKED, idem
+diff <(echo a) <(echo b) | head         -> BLOCKED, idem
+```
+
+Et les temoins negatifs, qui sont ce qui rend le reproducteur utile :
+
+```
+for x in a b; do echo hi; done          -> passe   (meme boucle, sans "$x")
+v=hi; echo "$v"                         -> passe   (meme "$v", sans substitution)
+if true; then echo yes; fi              -> passe
+echo "home is $HOME"                    -> passe
+echo "word merge alone"                 -> passe
+```
+
+Le message rendu est, mot pour mot (`scripts/block-pr-merge-in-worktree.sh`,
+l. 33) : `Blocked: gh pr merge fails in git worktrees (main is locked by
+parent).` — point final compris. Il est cite en entier parce qu'un ticket sur
+la caracterisation exacte du message d'un garde ne peut pas se permettre de le
+paraphraser : la premiere version de ce ticket avait laisse tomber « git ».
+
+La paire qui porte le plus d'information est
+`for x in a b; do echo "loop-$x"; done` bloquee contre
+`for x in a b; do echo hi; done` qui passe : meme construction, seule differe
+l'expansion d'une variable dans la commande.
+
+Deux observations de la porte sur PR 826 elargissent la classe au-dela de ce que
+les temoins ci-dessus suggerent : un `cat > fichier` avec un corps de heredoc en
+quotes simples mentionnant seulement une substitution de commande a ete bloque,
+et `${PIPESTATUS[0]}` — une expansion de parametre nue — l'a ete aussi, alors
+que le temoin negatif `echo "home is $HOME"` passe.
+
+**La frontiere est desormais etablie** (voir « Cause isolee » plus bas) : ce
+n'est ni « les substitutions » ni « les expansions », c'est *ce que le matcher
+ne sait pas decomposer*. Les quatre formes bloquees sont indecomposables ; les
+cinq temoins negatifs se decomposent en parties simples. Les deux resumes que
+la redaction precedente avait essayes et rejetes echouaient parce qu'ils
+decrivaient la syntaxe des exemples plutot que le traitement qu'ils subissent.
+
+La forme d'origine du signalement — une boucle `for` sur `$(gh pr list ...)`
+— ne contient pas non plus `merge`. En revanche `echo "word merge alone"`
+passe, donc **le declencheur n'est pas le texte `merge`**.
+
+## Ce qui rend le defaut dur plutot que genant
+
+**Au moment du signalement**, `block-pr-merge-in-worktree.sh` ne filtrait pas
+lui-meme : il faisait `cat > /dev/null` sur son stdin et refusait
+inconditionnellement des qu'il tournait dans un worktree, son propre en-tete
+l'assumant — « Matcher in settings.json ensures this only runs for `gh pr merge`
+commands ». Le re-enregistrement avait deplace le filtrage vers un champ qui,
+sur ces formes, ne filtre pas, et un garde sans filtre propre transformait cette
+transmission en refus dur.
+
+**Corrige depuis** par la PR 831 : le garde lit desormais la commande et sort 0
+hors forme `gh pr merge`. Le paragraphe ci-dessus est conserve parce qu'il
+explique pourquoi ce garde-la, et non ses deux voisins, transformait le defaut
+du matcher en panne — c'est le raisonnement qui a dicte l'ordre des actions, pas
+un etat courant.
+
+`guard-commit-on-main.sh`, lui, se filtre (l. 17,
+`grep -qP '\bgit\s+commit\b' || exit 0`). Il est donc benin sous le meme
+enregistrement — au prix d'un processus par appel Bash. C'est aussi ce qui rend
+le defaut invisible par ce garde-la : son comportement correct et son
+comportement « je tourne sur tout et je sors » sont indiscernables.
+
+L'ancien `"matcher": "Bash(gh pr merge*)"` ne pouvait pas matcher
+`cat <(echo hi)`. C'est donc une **regression**, et elle est **deja vive** dans
+le `settings.json` de la machine : les deux fichiers portent des hooks
+identiques (verifie). Le fichier partage non commite ne fait que la propager
+aux autres machines.
+
+## Cause isolee (PR 831, 2026-09-08)
+
+**Le mecanisme est etabli, et ce n'est pas moi qui l'ai trouve.** L'en-tete
+reecrit par la PR 831 le nomme :
+
+> le matcher decompose une commande composee pour en tester chaque partie, et
+> une commande qu'il ne sait pas decomposer — substitution de commande,
+> heredoc, boucle `for`, sous-shell — il la transmet quand meme.
+
+Ce n'est donc pas « l'evaluation echoue en fermeture » au sens d'une erreur :
+c'est un passage par defaut, delibere du cote du matcher, et devenu un refus
+parce que le garde qui le recevait n'avait pas de filtre propre. Les quatre
+reproducteurs du bloc plus haut sont exactement quatre formes indecomposables.
+`${PIPESTATUS[0]}` entre dans la meme famille et cesse d'etre l'anomalie que la
+redaction precedente ne savait pas placer.
+
+Ce que la version precedente de cette section disait — « je tiens les
+reproducteurs, pas la raison de l'analyseur » — etait vrai au moment ou elle a
+ete ecrite et ne l'est plus. Elle est remplacee plutot que nuancee : une section
+qui annonce une cause inconnue apres qu'elle a ete etablie envoie le lecteur
+chercher ce qui est deja trouve.
+
+Precedent a charge, deja au dossier : la memoire
+`projects/-home-haduong-Climate-finance/memory/feedback_merge_gate_blocks_ticket_fast_path.md`
+etablit que `if` matche le texte de la commande **en sous-chaine**, pas comme
+une regle de permission, et avait deja produit un faux positif le 2026-07-28.
+
+## Relevant files
+
+- `settings.json` et `settings.shared.json` — les trois hooks re-enregistres
+- `scripts/block-pr-merge-in-worktree.sh` — le garde sans filtre propre
+- `scripts/guard-commit-on-main.sh` — celui qui se filtre, l. 17
+- `scripts/guard-worktree-remove-wip.sh` — audite : se filtre l. 17, hors risque
+- la memoire Climate-finance citee ci-dessus
+
+## Actions
+
+1. **D'abord etablir si `block-pr-merge-in-worktree.sh` garde encore quelque
+   chose.** Son en-tete affirme que `gh pr merge` echoue « in EVERY linked
+   worktree ». Mesure du 2026-09-08 : `skills/merge/erg-pr-merge` appelle
+   `gh pr merge` (l. 340, 347, 438, 441) et a tourne depuis des worktrees
+   **treize fois cette nuit** — 808 a 826 — sans un seul echec ; et la 808 a
+   ete fusionnee par un `gh pr merge 808 --merge` tape a la main depuis un
+   worktree, qui a reussi. La premisse du garde est donc contredite treize
+   fois. Il ne s'est par ailleurs jamais declenche sur le chemin sanctionne,
+   qui est un script : le hook y lit `erg-pr-merge ...`, jamais la chaine
+   `gh pr merge`.
+   Nuance a preserver : `--merge` seul est un appel d'API qui ne touche a
+   aucun git local, tandis que `--delete-branch` (l. 441) fait bien un
+   checkout local et pourrait, lui, echouer dans un worktree. Le garde avait
+   peut-etre raison sur un drapeau et trop large sur la commande.
+   Donc : supprimer le garde et son test, ou le reduire a `--delete-branch` —
+   `rules/workflow.md` demande de preferer la suppression a l'agrandissement
+   quand la classe de defaut ne s'est pas manifestee recemment. Ne restaurer
+   un `matcher` que si la mesure ci-dessus est infirmee.
+2. Pour les deux autres gardes, revenir a un `matcher` qui porte le filtrage,
+   dans les deux fichiers. Le `settings.json` vif est celui de l'operateur :
+   proposer, ne pas l'editer sans accord.
+3. ~~Auditer `guard-worktree-remove-wip.sh`~~ — **fait** (porte sur PR 825,
+   2026-09-08) : il se filtre a la ligne 17, meme motif que
+   `guard-commit-on-main.sh`, et ne porte donc pas le risque.
+   `block-pr-merge-in-worktree.sh` reste le seul sans filtre propre : sa ligne 6
+   est `cat > /dev/null`, qui jette le texte meme sur lequel il faudrait
+   filtrer.
+4. ~~Rendre `block-pr-merge-in-worktree.sh` autonome~~ — **fait** (PR 831,
+   2026-09-08, fusionnee a la main par l'auteur) : il lit desormais la commande
+   depuis la charge utile et sort 0 si elle ne porte pas la forme
+   `*gh*pr*merge*`. Fait sans attendre l'action 1, et c'etait le bon ordre : un
+   garde qui refuse tout des qu'il tourne est dangereux qu'il soit utile ou non,
+   alors que la question de son utilite peut attendre.
+
+   **Consequence pour le `settings.json` vif, a trancher avec l'action 1 :** le
+   garde est maintenant sur, donc `"matcher": "Bash"` ne bloquerait plus de
+   commandes etrangeres. Mais le reactiver le ferait refuser un `gh pr merge`
+   tape a la main dans un worktree — precisement l'operation mesuree comme
+   fonctionnelle treize fois. Il reste donc volontairement inerte : sur, et
+   desarme, en attendant que l'action 1 dise s'il a une raison d'exister.
+
+## Test
+
+Controle positif d'abord, il existe deja : `cat <(echo hi)` depuis un worktree
+doit passer apres correctif, et un vrai `gh pr merge <N>` doit toujours etre
+refuse. Les deux assertions sont necessaires — ne garder que la premiere
+transformerait le correctif en suppression du garde.
+
+## Verification
+
+- [ ] `for x in a b; do echo "loop-$x"; done` passe depuis un worktree
+- [ ] `v=$(echo hi); echo "$v"` passe depuis un worktree
+- [ ] `cat <(echo hi)` passe depuis un worktree
+- [ ] un `gh pr merge <N>` reel est toujours refuse depuis un worktree
+- [x] `guard-worktree-remove-wip.sh` audite : se filtre l. 17, hors risque
+- [ ] `make check` passe
+
+## Invariants
+
+- Aucun des trois gardes n'est supprime pour faire passer un test.
+- Le `settings.json` vif reste la propriete de l'operateur : ce ticket propose.
+
+## Exit criteria
+
+- [ ] Les gardes ne refusent que ce qu'ils visent, prouve par les deux
+      assertions du controle positif et non par relecture de l'enregistrement
+- [ ] Le sort de `block-pr-merge-in-worktree.sh` est tranche par la mesure de
+      l'action 1 : soit supprime avec son test, soit reduit a
+      `--delete-branch`, soit — si la mesure est infirmee — rendu correct meme
+      quand son filtre externe disparait. Les trois issues sont acceptables ;
+      le laisser tel quel ne l'est pas

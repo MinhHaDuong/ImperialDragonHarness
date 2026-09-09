@@ -4,7 +4,8 @@ description: "A gate directive stated five facts about the batch it was gating; 
 metadata: 
   node_type: memory
   type: feedback
-  modified: 2026-09-03T01:20:00.000Z
+  modified: 2026-09-08T07:53:15.476Z
+  originSessionId: a0465653-bed4-450c-a2b2-a9fe384d1532
 ---
 
 # The briefing is a claim, not a fact
@@ -39,6 +40,32 @@ State the correction in the merge comment, on the record where the next reader
 is, not only in the report back to whoever briefed you. Two of the five above
 were repeated by an independent reviewer as well, which is how a second-hand
 number becomes a fact nobody measured.
+
+## It applies to a reviewer's premise too, and there it is sharper
+
+A reviewer is a briefer. On 2026-09-08 two adversarial seats reviewing sibling
+patches contradicted each other on a checkable fact: whether any commit merged
+upstream from this fork carries `Co-Authored-By` / `Claude-Session` trailers.
+One said none does and called their presence a defect; the other measured and
+found six of ours plus four of the maintainer's own. I had already relayed the
+first as an instruction to strip them.
+
+Two things make this worse than the count errors above. The instruction would
+have **changed something that was already correct** — the conforming commit
+would have become the odd one out. And a review's whole value is that it is
+adversarial, which makes its assertions feel pre-verified when they are exactly
+as second-hand as any brief.
+
+`git log --all --grep='Claude-Session'` settled it in one command. What survived
+the check was the *other half* of the same finding, and it was real: across 331
+upstream commits not one is authored by a non-human identity, and the patch's
+was. So the seat was half right, which is the normal case and the reason to
+check rather than to pick a side.
+
+**The rule:** before acting on a reviewer's factual premise, run the command
+that would falsify it — most sharply when the premise asks you to change
+something that currently works, and when two reviewers disagree. Neither seat's
+word is evidence, in either direction.
 
 ## The corollary that settled a merge
 

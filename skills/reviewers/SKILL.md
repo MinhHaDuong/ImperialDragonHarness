@@ -41,7 +41,24 @@ diff (the branch is resolved from the PR, or passed explicitly):
 
 **Per-seat fail-open**: a seat that errors or hangs WARNs and the others
 proceed — one seat never blocks the verdict (0205). Empty roster → no-op,
-exits 0. No secrets in config; seat credentials load via the BASH_ENV path.
+exits 0. Fail-open is not fail-silent: every seat that did not review is
+recorded in a `<seat>.status` sidecar and named by `harvest` in the report
+(see **Panel integrity** below). No secrets in config.
+
+**Seat credentials** (ticket 0393). A seat's `credential-env: NAME` is read
+from the environment when the BASH_ENV path (0207) exported it — which happens
+only where the cwd's `.env` `KEYS=` line selects that provider, a **default-deny**
+selection. From a project selecting a different key, or any cwd declaring none,
+`NAME` is simply absent. `request` then resolves it from the keystore
+(`~/.config/keys/*.env`, override `REVIEWERS_KEYSTORE`): the single file
+defining `NAME` is sourced under `set -a` in an `env -i` subshell, only that one
+variable is extracted, and it is exported solely inside the subshell that execs
+the seat-runner. The author's key files are never edited — they hold bare
+assignments with no `export`, and enabling allexport at source time is what
+makes such an assignment reach a child process. A value never touches argv, a
+log line, or a sidecar; warnings name variables and provider files only. A seat
+whose credential resolves nowhere is skipped, WARNed, and reported by `harvest`
+— it is not quietly dropped from the panel.
 
 **Per-seat latency** (ticket 0353): each `cli-agent`/`local-model` seat is timed
 and its wall-clock seconds written to a `<seat>.latency` sidecar beside the
@@ -60,8 +77,32 @@ consider: <file>:<line> — <rationale>  [seat]
 ```
 
 A line that does not parse is surfaced as a `WARN` on stderr, never
-silently dropped. No findings (empty panel / no seats ran) → empty output,
-exit 0.
+silently dropped.
+
+**Panel integrity** (ticket 0393). Findings are only half the report. `harvest`
+also cross-checks the roster against the run records `request` left, and names
+every seat that did not review — on **stdout**, the report stream:
+
+```
+SEAT-FAILED: openrouter-frontier — credential OPENROUTER_API_KEY_IDH unresolved  [this seat did NOT review]
+SEAT-MISSING: local-qwen — no findings and no run record  [this seat did NOT review]
+PANEL-INTEGRITY: 2 seat(s) did not review this merge request — the findings above are NOT a full panel
+```
+
+`SEAT-FAILED` comes from the seat's `.status` record; `SEAT-MISSING` is a
+roster seat that left neither findings nor a record (`request` never reached
+it). A seat that ran and found nothing is not flagged — that silence is a
+result. `forge-bot` seats write no local findings by design, so only their
+recorded failures surface. Exit stays 0: these are visible lines, not a block,
+so one dead seat still never stops a verdict.
+
+This exists because the failure it reports is the one that hid. During a live
+`/gaze` the OpenRouter seat failed **open** on a missing credential: the WARN
+went to stderr, `harvest` printed nothing, exited 0, and the panel read as
+complete. An empty harvest that cannot distinguish "clean" from "nothing ran"
+is not a check — the same shape as the merge-request-listing trap recorded in
+`tickets/AGENTS.md`, where a scan that could not look returned the same empty
+result as a scan that found nothing.
 
 ### `/reviewers scorecard <pr> <seat> <verdict-summary>`
 
@@ -208,8 +249,10 @@ judgment call; this section documents only how to enumerate the options.
 
 **Endpoint inventory.** The authenticated providers are the `*.env` files in
 `~/.config/keys/` — one file per provider (e.g. `openrouter.env`), each holding
-that endpoint's API key. Keys load via the BASH_ENV path (0207); never inline a
-key into config or argv. The commented seat examples in `panel.yml` show the
+that endpoint's API key. Keys load via the BASH_ENV path (0207) where the cwd's
+`KEYS=` selection covers the provider, and are resolved from the keystore
+otherwise (see **Seat credentials** above); never inline a key into config or
+argv. The commented seat examples in `panel.yml` show the
 two endpoint shapes: a local llama-server (`http://127.0.0.1:8012/v1`, no
 credential) and OpenRouter (`https://openrouter.ai/api/v1`, key via
 `credential-env`). Probe a local `llama-server` by hitting its base URL.
@@ -232,7 +275,13 @@ accordingly before promoting a candidate from audition to a live seat.
 ## Configuration
 
 `skills/reviewers/panel.yml` is the single roster file (schema in its
-header). No secrets in config — credentials load via BASH_ENV (0207).
+header). No secrets in config — a seat names its credential *variable*, and
+the value is resolved at run time (see **Seat credentials** above).
+
+Environment: `REVIEWERS_KEYSTORE` overrides the credential keystore directory
+(default `~/.config/keys`); `REVIEWERS_PANEL`, `REVIEWERS_FINDINGS_DIR`,
+`REVIEWERS_REPO`, `SEAT_RUNNER`, and `ERG` override the roster, the findings
+directory, the repo under review, the seat mechanism, and the ticket binary.
 
 `skills/reviewers/benchmark-board.yml` is the frozen audition board: ~10
 already-merged multi-file code PRs of this repo, each with `base`/`head` commit

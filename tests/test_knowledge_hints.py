@@ -26,6 +26,16 @@ SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "knowledge_hints.p
 if str(SCRIPT.parent) not in sys.path:
     sys.path.insert(0, str(SCRIPT.parent))  # knowledge_hints imports path_utils
 
+# The script's `__main__` swallows every exception and exits 0 -- correct in
+# production, and it also makes a total crash byte-identical to a correct silent
+# no-op on exit code and stdout, the only two channels these subprocess-driven
+# tests can read. Without this every "== ''" assertion below passes against a
+# script that does nothing, including the two exfiltration guards. Merged into
+# EVERY child env explicitly rather than set once by a fixture: the sibling
+# suite's closed env dicts proved that inheritance is a promise the call site
+# can silently break (ticket 0610).
+STRICT = {"IDH_HOOK_STRICT": "1"}
+
 MANIFEST = """
 [[hint]]
 id      = "het-field-map"
@@ -47,9 +57,11 @@ def project(tmp_path: Path, manifest: str = MANIFEST, pointer: bool = True) -> P
 
 
 def catalog(cwd: Path) -> str:
+    # `check=True` is load-bearing under STRICT: it is what turns a crash into a
+    # red test instead of an empty string that every "silent" assertion accepts.
     out = subprocess.run(
         [sys.executable, str(SCRIPT), "--cwd", str(cwd), "catalog"],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, check=True, env={**os.environ, **STRICT},
     )
     return out.stdout
 
@@ -68,7 +80,8 @@ def prompt(cwd: Path, text: str, session: str = "s1") -> str:
     cache = cwd.parent / "cache"
     cache.mkdir(exist_ok=True)
     payload = json.dumps({"prompt": text, "session_id": session, "cwd": str(cwd)})
-    env = {**os.environ, "TMPDIR": str(cache)}
+    env = {**os.environ, "TMPDIR": str(cache), **STRICT}
+    # `check=True` is load-bearing under STRICT -- see catalog() above.
     out = subprocess.run(
         [sys.executable, str(SCRIPT), "prompt"],
         input=payload, capture_output=True, text=True, check=True, env=env,
@@ -89,7 +102,12 @@ def test_catalog_stays_one_line_per_hint(tmp_path):
 
 
 def test_catalog_omits_the_body(tmp_path):
-    """The pointer is injected, never the payload."""
+    """The pointer is injected, never the payload.
+
+    "Absent from the output" is only evidence of a working guard once the run is
+    known to have happened: a crashed script omits the body too. STRICT +
+    `check=True` inside catalog() supply that second half (ticket 0610).
+    """
     root = project(tmp_path)
     (root / "conception" / "canon.md").write_text("SECRET-ROSTER-BODY", encoding="utf-8")
     assert "SECRET-ROSTER-BODY" not in catalog(root)
@@ -151,8 +169,11 @@ def test_garbage_stdin_is_not_fatal(tmp_path):
     out = subprocess.run(
         [sys.executable, str(SCRIPT), "prompt"],
         input="not json", capture_output=True, text=True,
+        env={**os.environ, **STRICT},
     )
-    assert out.returncode == 0
+    # Under STRICT the exit code separates "guarded, so silent" from "crashed,
+    # so silent"; without it this assertion holds for both.
+    assert out.returncode == 0, out.stderr
     assert out.stdout == ""
 
 
@@ -179,6 +200,12 @@ def test_pointer_cannot_escape_the_repo(tmp_path):
 
     `Path(root) / "/etc/passwd"` discards root entirely, so an existence check
     alone accepts it — and what this hook prints lands in the model's context.
+
+    Asserting `== ""` alone was not enough to defend that: a script that crashes
+    prints nothing either, so this guard passed with the hook's entry points
+    made to raise unconditionally. STRICT + `check=True` inside the two helpers
+    is what turns an empty stdout into evidence rather than a coincidence
+    (ticket 0610).
     """
     for escape in ("/etc/passwd", "../../../../etc/passwd"):
         root = project(tmp_path / escape.replace("/", "_"), manifest=f"""
@@ -226,8 +253,9 @@ def test_non_dict_json_payload_is_silent_not_fatal(tmp_path):
         out = subprocess.run(
             [sys.executable, str(SCRIPT), "prompt"],
             input=payload, capture_output=True, text=True,
+            env={**os.environ, **STRICT},
         )
-        assert out.returncode == 0, f"{payload} exited {out.returncode}"
+        assert out.returncode == 0, f"{payload} exited {out.returncode}: {out.stderr}"
         assert out.stdout == ""
 
 

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: b7159928-959f-4103-8860-e2c11cdefc7a
-  modified: 2026-09-02T10:51:07.760Z
+  modified: 2026-09-03T10:29:50.222Z
 ---
 
 The fork checkout (`make upstream-checkout`) sits at `<worktree>/fork/`, a
@@ -27,3 +27,11 @@ fork's work on its own branch and push to the author's fork (`origin` there);
 the outer repo ignores `fork/` entirely, so nothing in it rides a repo PR.
 See [[preserve-agent-output]] for why the push matters before the worktree
 goes.
+
+**The same guard also refuses ordinary staging, and the tell is that it names
+rtk** — even a plain single-path `git add` inside the correct worktree. The
+mechanism and the remedies live in
+[[reference_git_in_a_worktree_session]]; the short form is `\git add tickets/`.
+One tip specific to this situation: for a read that would otherwise want a
+shell redirect, `git diff <ref> HEAD -- <path>` prints to stdout and needs
+none.

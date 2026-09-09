@@ -1,0 +1,82 @@
+%erg 0.1
+Title: La porte ecrit des lignes de journal malformees dans le checkout partage, et erg validate ne les voit pas
+Created: 2026-09-08
+Author: claude
+
+--- log ---
+2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
+
+--- body ---
+## Context
+
+La recette de « bump » de `/gaze` ecrit une ligne dans le journal d'un ticket
+quand elle rend un REROLL. Sur la merge request 826, deux tours successifs ont
+produit une ligne malformee sur trois points a la fois :
+
+- **verbe hors specification.** La ligne porte `bump`, alors que
+  `tickets/spec-erg-v1.md` n'admet que `created`, `note` et `closed`.
+- **horodatage regressif.** La ligne se place apres une entree plus recente,
+  cassant la monotonie du journal — la seule propriete qui rend un journal
+  lisible.
+- **position hors section.** Elle atterrit apres la ligne vide terminale du
+  bloc `--- log ---`, donc en dehors de la section que le format definit.
+
+Et `erg validate` **rend PASS** sur le resultat. C'est le point qui fait de ceci
+plus qu'une coquille : le validateur ne regarde pas cette position, donc son
+tout-va-bien ne distingue pas une ligne bien formee d'une ligne posee la ou il
+ne lit pas.
+
+Les deux occurrences ont ete reverties a la main par les portes elles-memes.
+L'une d'elles est tombee dans un worktree ou une session voisine etait en train
+de commiter — un quasi-accident, pas une gene.
+
+## Precedent
+
+Le meme defaut avait deja produit une ligne malformee sur le ticket 0851 la
+nuit precedente (« verify-reroll » comme verbe, horodatage anterieur a l'entree
+au-dessus). Il ne s'agit donc pas d'un incident isole mais d'une recette qui
+produit systematiquement une entree invalide.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — la recette de bump
+- `skills/verify-gate/SKILL.md` — le point ou le REROLL est rendu
+- `tickets/spec-erg-v1.md` — les verbes admis, l. ~172 pour l'horodatage
+- `tickets/erg` — `erg log`, qui produit une ligne correcte quand on l'emploie
+
+## Actions
+
+1. Faire ecrire la ligne par `erg log` plutot qu'a la main. Un controle positif
+   fait pendant l'incident montre qu'`erg log` horodate correctement en UTC et
+   place l'entree dans la section — la recette contourne un outil qui fait deja
+   le travail.
+2. Employer `note`, qui est le verbe prevu pour ceci.
+3. Ne pas ecrire dans un checkout partage depuis une porte isolee. Si la ligne
+   ne peut pas etre ecrite proprement depuis la ou tourne la porte, la rendre
+   dans le verdict et laisser l'appelant la poser.
+
+## Test
+
+Controle positif d'abord, et il doit exister avant le correctif : un ticket
+dont le journal recoit une ligne apres la ligne vide terminale doit faire
+**echouer** `erg check`. Aujourd'hui il passe. Sans cette assertion, un
+correctif de la recette laisserait le validateur aussi aveugle qu'avant, et la
+prochaine recette qui derape ne serait pas plus visible que celle-ci.
+
+## Verification
+
+- [ ] `erg check` rejette une entree de journal placee hors de la section
+- [ ] `erg check` rejette un verbe hors specification
+- [ ] La recette de bump passe par `erg log` et emploie `note`
+- [ ] Un REROLL sur une porte isolee ne salit aucun checkout partage
+
+## Invariants
+
+- Le journal reste append-only : le correctif ne reecrit pas d'entrees
+  existantes.
+- La trace du REROLL ne disparait pas — elle change de main, pas d'existence.
+
+## Exit criteria
+
+- [ ] Le controle positif rougit avant correctif et passe apres
+- [ ] Deux tours de porte consecutifs ne laissent aucune ligne a reverter

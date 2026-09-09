@@ -2,7 +2,8 @@
 #
 # Each seat is a sandboxed CI-style reviewer job (see ticket 0205, "review
 # is CI"). A seat is run by the 0217 seat-runner inside an OS sandbox; this
-# file holds NO secrets — credentials load via the BASH_ENV path (0207).
+# file holds NO secrets — a seat names the VARIABLE holding its key, whose
+# value is resolved at run time (0207 BASH_ENV path, else the keystore; 0393).
 #
 # Seat schema:
 #   - name:         unique identifier
@@ -13,9 +14,11 @@
 #     endpoint:     OpenAI-compatible base URL (e.g. http://127.0.0.1:8012/v1)
 #     model:        model id passed to the seat-runner
 #     credential-env: (optional) name of the env var holding the endpoint's API
-#                   key — passed to the seat-runner as --credential-env and read
-#                   from the BASH_ENV-loaded env, NEVER written here. Omit for a
-#                   local, unauthenticated endpoint.
+#                   key — passed to the seat-runner as --credential-env, NEVER
+#                   written here. Read from the environment when the BASH_ENV
+#                   path (0207) exported it, else resolved from the keystore
+#                   ~/.config/keys/*.env at run time (0393). Omit for a local,
+#                   unauthenticated endpoint.
 #     # forge-bot seats also carry:
 #     login:        the bot's forge login, passed to the reviewer-request API
 #
@@ -53,8 +56,10 @@ reviewers:
   # Primary OpenRouter seat — gpt-5.6-luna chosen over gpt-5.6-terra on cost
   # (author directive 2026-07-14: ~40% of terra's price; matched terra's
   # specificity in the round-2 same-diff audit — 0 findings on clean code;
-  # sensitivity untested, the 0207 trial arbitrates). Key loads via BASH_ENV,
-  # never here.
+  # sensitivity untested, the 0207 trial arbitrates). The key is never written
+  # here: only the variable's NAME is, and its value comes from the environment
+  # when the BASH_ENV path exported it, else from the keystore at run time
+  # (0393) — the fallback the header above documents.
   - name: openrouter-frontier
     kind: cli-agent
     status: advisory

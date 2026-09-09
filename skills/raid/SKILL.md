@@ -82,9 +82,8 @@ Read each ticket + STATE.md. Group by milestone. Identify dependency order and w
 
 **A skip-labelled ticket is never a raid target.** `tickets/.ergrc` lists the
 labels that hold a ticket back (`needs-human` and `deferred` at present) and
-`erg ready` suppresses every one of them, which is why `pick-ticket` never
-offers such a ticket. Phase 1 reads `tickets/` directly and bypasses that
-filter, so the exclusion is this skill's own job: a ticket carrying
+`erg ready` suppresses every one of them. Phase 1 reads `tickets/` directly and
+bypasses that filter, so the exclusion is this skill's own job: a ticket carrying
 `Label: needs-human`, or any other header listed in `.ergrc`, is dropped before
 wave grouping, with no Imagine agent, no plan, no Phase 5 executor. Read the
 label set from `.ergrc` rather than hardcoding it here — and if that file has
@@ -102,13 +101,14 @@ step 2b gives a returned batched decision list.
 is a caller's deliberate choice, so it executes; note the override in the
 briefing so the choice is visible.
 
-Do not read that carve-out as "explicit means the author asked." `beat.py`
-builds `/raid <id>` unattended and is today the only programmatic caller, so
-the explicit-ID shape covers both an author typing it and an autonomous sweep.
-The autonomous path stays screened upstream: beat picks through `pick-ticket`,
-whose candidates came from `erg ready`, so the carve-out does not
-reopen the hole this phase closes. That safety lives in beat's pick step, not
-here; a future caller that synthesizes IDs some other way needs its own screen.
+Do not read that carve-out as "explicit means the author asked." The
+explicit-ID shape covers an author typing it and a program building it alike,
+and this skill cannot tell them apart. The autonomous caller that used to exist
+was safe for a reason that lived upstream of here, not in this phase: its
+candidates came from `erg ready`, which already applies the skip filter. That
+caller was removed with the nightbeat block (ticket 0882), so there is none
+today — and any future one that synthesizes IDs some other way needs its own
+screen before it reaches this carve-out.
 
 If EVERY discovered ticket is skip-labelled, the run returns those batched
 decision lists rather than an empty-run report. One question round the author
@@ -310,6 +310,12 @@ checks) and hand-merging around the guard.
    diff on a different provider. Disposition every harvested finding
    through the verify-gate contract like any panel comment; a blocking
    finding sends the PR back through Phase 6 rather than to merge.
+   `harvest` also emits `SEAT-FAILED:` / `SEAT-MISSING:` lines and a
+   `PANEL-INTEGRITY:` headline for every seat that did not review (ticket
+   0393). These are **not** findings: do not disposition them. They MUST be
+   carried verbatim into the external-verdict record of step 3.
+   A panel reported as run while its seats silently never authenticated is
+   no answer to the self-review objection at all.
 3. On a clean disposition, record the external verdict on the merge
    request (a comment naming the seats and their disposition), quote that
    verdict and this section's grant in the transcript, and retry the merge

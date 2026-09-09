@@ -15,8 +15,16 @@ it does not distinguish read from write.
 
 Consequence: **an isolated session cannot answer "what is dirty in the primary
 checkout".** That matters because `sync-local-main.sh` refuses to fast-forward a
-dirty checkout and reports only "dirty or busy" — it names no file. So the one
-diagnostic you need is exactly the one the guard withholds.
+dirty checkout, and the one diagnostic you need is exactly the one the guard
+withholds.
+
+*Partly repaired since (ticket 0851, 2026-09-07):* the refusal used to read
+"dirty or busy checkout" and name nothing. It now names the state and up to
+three paths — tracked modifications with their files, an untracked/incoming
+collision with the colliding path, anything else quoting git's own line. Read
+that message before reaching for a workaround; it answers the common case. It
+still caps at three paths and still cannot tell you what is *in* them, so the
+rest of this entry stands unchanged.
 
 **Why:** the workaround I reached for silently narrows the question. Without
 `git status` you fall back to whatever partial evidence is at hand — the

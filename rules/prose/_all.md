@@ -1,4 +1,11 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/*.tex"
+  - "**/*.qmd"
+  - "**/*.md"
+  - "**/*.txt"
+last-reviewed: 2026-08-14
+---
 # Prose rules — every prose file
 
 Applies to all prose formats (tex, qmd, md, txt) regardless of document type or

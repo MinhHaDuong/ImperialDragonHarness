@@ -1,7 +1,7 @@
 # Imperial Dragon Harness
 
 Casual people get shit done. Real humans ride the Imperial Dragon Harness.
-They `/raid` tickets to bring back PR, they `/beat` their wings autonomously,
+They `/raid` tickets to bring back PR, they `/hunt` one down to the branch,
 they `/perch` to orient midchat.
 
 A Claude Code harness for Minh Ha-Duong's research workflow. Lives as `~/.claude`.
@@ -21,33 +21,43 @@ Every task passes through five phases:
 ## Structure
 
 ```
-ImperialDragonHarness/
-├── rules/                  # Rule index (README.md) injected at SessionStart; bodies read on demand
-│   ├── README.md           # One-screen index: filename, scope, summary
-│   ├── workflow.md         # Session start, escalation, worktree
-│   ├── git.md              # Branch, commit, PR discipline
-│   ├── coding-python.md    # Python style, testing, Make (load when Python project)
-│   ├── state.md            # STATE.md format spec
-│   └── tickets.md          # Ticket log verbs including bump categories
+ImperialDragonHarness/          # cloned as ~/.claude
+├── rules/                  # Doctrine — loaded by the runtime itself, see below
 ├── skills/                 # Slash commands — auto-generated catalog below
-├── scripts/                # Hook implementations + shell init
-│   ├── shell-init.sh           # Source from ~/.bashrc — claude wrapper
-│   ├── on-start.sh             # Session start: env loading, worktree gate
-│   ├── guard-destructive-bash.sh
-│   ├── guard-commit-on-main.sh
-│   ├── block-pr-merge-in-worktree.sh
-│   ├── lint-on-edit.sh
-│   ├── warn-stale-rules.sh
-│   └── gen_skills_catalog.py   # Generate skills catalog from SKILL.md frontmatter
-├── commands/               # Guidance documents
-│   └── choose-journal.md
-├── bin/                    # Utilities (added to PATH)
-│   ├── usage-report
-│   ├── snapshot
-│   └── install-cron
-├── settings.json           # Hooks, permissions, env vars
+├── scripts/                # Hook implementations, guards, shell init
+├── tests/                  # The gates; `make check` runs them
+├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
+├── memory/                 # Cross-project lessons, injected at session start
+├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory
+├── commands/ bin/ hooks/   # Guidance docs, PATH utilities, git hooks
+├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
 ```
+
+Directory contents are not enumerated here: `ls` answers that, and a hand-kept
+listing drifts — this one claimed five rule files when there were nineteen, and
+named one that no longer exists.
+
+## Rules
+
+`~/.claude/rules/**.md` is read by the runtime, not by a hook, and the
+frontmatter decides how:
+
+| Frontmatter | Loading | What it costs |
+|---|---|---|
+| no `paths:` | in the system prompt of **every session, every project** | paid on every conversation |
+| `paths: ["**/*.py"]` | only when the session touches a matching file | paid on use |
+
+So a rule needs no description anywhere: an unscoped one is already in front of
+the reader, and a scoped one is named in [`rules/README.md`](rules/README.md)
+precisely because it is not. That index is one screen, and it is the single
+source of truth on when each conditional rule applies.
+
+The resident set costs ~21 600 tokens per session (measured 2026-09-09;
+`workflow.md` and `git.md` are two thirds of it). `tests/test_rules_resident_budget.py`
+caps it: trimming a body lowers the cap, growing one has to argue for a raise.
+A runtime without this auto-load — the Pi and Codex adapters — must inject that
+set itself; that is the real work behind tickets 0800 and 0572.
 
 ## Installation
 
@@ -82,7 +92,6 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 
 | Command | Description |
 |---------|-------------|
-| `/beat` | Run one autonomous work cycle on the current project — housekeeping, then pick a ticket, then execute it (housekeeping → pick-ticket → raid). |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturation bibliographic search by independent web-search subagents — adjudicate factual register lines and adversarially stress a novelty claim until every search angle runs dry. Fleets of finders on disjoint angles (fields, languages, gray literature, citation graph, lateral vocabularies), adversarial judging of every candidate, completeness critic before declaring saturation. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
@@ -93,14 +102,10 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/index-source` | Index/catalogue a document from a URL into Zotero with the right item type and clean metadata. Fetches the page, stages it locally, scrapes author/date/title/identifiers/pagination from meta tags (JSON-LD, citation_*, Dublin Core, OpenGraph) and DOI/arXiv APIs, classifies the Zotero type with judgment, dedupes, and hands a RIS + attachment to Zotero. URL sibling of zotero-import; implements the EDM workflow (docs/ staging → Zotero). |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
-| `/maw-audit` | Mutation-testing audit of test-suite quality — verifies each test detects defects, tolerates safe refactors, and guards the whole defect class. EXPENSIVE — invoke deliberately. Auto-discovers config. |
 | `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
-| `/nightbeat-report` | Review what the overnight autonomous pipeline (nightbeat) did each morning: parse logs, narrate work done, surface harness improvement opportunities. |
-| `/nightbeat-supervisor` | Supervise an overnight autonomous work run: advance the authorized ticket queue, verify before integrating, and deliver a self-contained morning report. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
-| `/pick-ticket` | Pick the lowest-risk available ticket for an autonomous run. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
 | `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
@@ -109,10 +114,6 @@ Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
 | `/reviewers` | Reviewer-panel management for /gaze — list, request, harvest, scorecard, scores, audition, and help reviewer seats. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
-| `/scry` | Multi-repo pre-flight readiness check and interactive triage. Surfaces git hygiene, ticket health, configuration drift, and nightbeat risk signals. |
-| `/skill-doctor` | Weekly failure-pattern analysis across journals, logs, and git history. Clusters recurring failures and opens tickets with proposed patches. Never auto-applies fixes. |
-| `/smoke` | Agent environment smoke test — reports runtime identity, auth method, and harness context. |
-| `/test-audit-llm` | Read-and-judge audit of test quality across four lenses: faithfulness, intent legibility, negative-space coverage, change-detector smell. Runs nothing — advisory only; findings feed ticket creation. |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings. |
 | `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, highlighting insertions and deletions via latexdiff. Closes the annotate-reply-apply loop for journal revise-and-resubmit rounds. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
@@ -162,7 +163,7 @@ systemctl --user enable --now claude-harness-pull.timer
 
 ## Permissions
 
-The nightbeat folds in a weekly run of `/fewer-permission-prompts` (Sundays) that proposes an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/` — `nightbeat-report` surfaces unreviewed entries each morning.
+Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/`. A weekly run and a morning report used to drive this from the nightbeat, removed in ticket 0882 — the proposal is now something you ask for.
 
 ## Why not a plugin?
 

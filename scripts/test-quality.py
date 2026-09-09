@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """Empirical test-quality utility — flakiness / independence / speed.
 
-The CHEAP, DETERMINISTIC tier of the test-quality family (siblings: 0182
-mutation oracles, 0183 LLM judge). Every signal here is produced by *re-running
-the existing suite* — no mutation, no LLM, zero tokens — so these are the only
-test-quality checks fast enough to gate a single PR.
+The CHEAP, DETERMINISTIC tier of the test-quality family. Every signal here is
+produced by *re-running the existing suite* — no mutation, no LLM, zero tokens —
+so these are the only test-quality checks fast enough to gate a single PR.
+
+Its two expensive siblings, the mutation oracle (`maw-audit`, ticket 0182) and
+the LLM judge (`test-audit-llm`, ticket 0183), were removed in ticket 0881:
+neither was invoked once in the measured window. This script therefore has no
+caller left besides its own tests, and stands on its own merits — deciding
+whether to keep it is a separate question from that removal.
 
 Three lenses, one entry point:
 
   * flakiness    run the unchanged suite N times; a test whose verdict varies
                  across runs is flaky. Flaky tests train teams to ignore red,
-                 and you cannot mutation-test a flaky suite — so this lens is
-                 also the PRECONDITION gate that 0182's maw-audit (formerly fang-audit) calls before
-                 it spends a token. Exposed as the `flakiness` subcommand with a
-                 hard exit-code contract (see below).
+                 and you cannot mutation-test a flaky suite — which is why this
+                 lens was the precondition gate any mutation run had to clear
+                 first. Exposed as the `flakiness` subcommand with a hard
+                 exit-code contract (see below).
   * independence run the suite shuffled; a test whose verdict depends on order
                  is not isolated. The reference Go runner randomizes order via
                  `-shuffle`. Parallel execution (`go test -p`, or another

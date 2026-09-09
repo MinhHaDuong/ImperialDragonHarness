@@ -27,7 +27,17 @@ def main():
     rollback_p = sub.add_parser("rollback")
     rollback_p.add_argument("commit_hash")
 
-    args = parser.parse_args()
+    # Production project keys are directory slugs that begin with '-'
+    # (e.g. -home-haduong--claude), which argparse reads as an option — a usage
+    # dump instead of a commit (ticket 0500). No subcommand takes options, so
+    # insert the separator after the subcommand unless the caller already did,
+    # or is asking for help at either level.
+    tokens = sys.argv[1:]
+    if len(tokens) > 1 and "--" not in tokens and not any(
+        t in ("-h", "--help") for t in tokens
+    ):
+        tokens.insert(1, "--")
+    args = parser.parse_args(tokens)
 
     if args.cmd == "commit":
         memory_dir = MEMORY_BASE / args.project / "memory"

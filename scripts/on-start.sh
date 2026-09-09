@@ -35,12 +35,16 @@ if ! grep -qlF "shell-init.sh" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
     echo "  [ -f \"$_shell_init\" ] && source \"$_shell_init\""
 fi
 
-# Inject the harness-rules index (pointers, not bodies). Agents read
-# individual rule files on demand; verify-adherence checks ex post.
-cat "$_script_dir/../rules/README.md" 2>/dev/null || true
+# The harness-rules index is NOT cat-ed here: the runtime already loads every
+# `~/.claude/rules/**.md` into the system prompt (mechanism isolated
+# 2026-09-09, see rules/README.md), so cat-ing the index served a second copy
+# of a file that was already resident. An adapter on a runtime without that
+# auto-load is what must inject it — that is the adapter's job, not this
+# hook's (tickets 0800, 0802).
 
-# Inject the project's domain-knowledge catalog (pointers, not bodies), same
-# discipline as the rules index above. Declared in <repo>/.knowledge.toml;
+# Inject the project's domain-knowledge catalog (pointers, not bodies) — the
+# discipline the rules tree only appeared to follow until 2026-09-09, and the
+# one this catalog does follow. Declared in <repo>/.knowledge.toml;
 # silent when the project declares none. One line per hint, because this is
 # resident: the bodies are read on demand and can be orders of magnitude larger.
 python3 "$_script_dir/knowledge_hints.py" catalog 2>/dev/null || true
