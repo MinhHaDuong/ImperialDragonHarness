@@ -1,0 +1,106 @@
+%erg 0.1
+Title: Le fichier settings.json vif n'a qu'un detecteur de derive, pas de reconciliateur
+Created: 2026-09-09
+Author: claude
+
+--- log ---
+2026-09-09T18:05Z claude created successeur mecanique de 0873 : la case « la garde de derive nomme SessionEnd avant correction, et se tait apres » y etait laissee non construite, et 0883/0884 ont ajoute une seconde dette d'alignement pendant qu'elle l'etait. Depose sur demande de l'auteur, qui leve la doctrine de refroidissement du 2026-07-14 pour ce point
+
+--- body ---
+## Context
+
+La scission est justifiee et n'est pas en cause. Le depot **est** `~/.claude` ;
+le CLI **ecrit** dans `settings.json` (`model`, `effortLevel`, `feedbackDrafts`,
+`agentPushNotifEnabled`, `modelSettings`). Le suivre en git donnerait un fichier
+suivi reecrit a chaque session — `scripts/check-primary-checkout.sh:40` tolere
+deja explicitement un `settings.json` sale, preuve que le cout a ete paye — et
+ferait voyager des valeurs par-machine entre machines, mode d'echec deja mesure
+ailleurs (memoire Cadens : `CADENS_RAW_DIR` de padme commite, `load_raw_df()`
+silencieusement vide sur doudou).
+
+Ce qui manque n'est pas la scission mais **l'applicateur**. Quatre causes,
+observees, pas supposees :
+
+1. **Detecteur sans applicateur.** `check-settings-drift.sh` compare, imprime,
+   sort 0. Aucune cible `make settings-align`. L'alignement est une edition JSON
+   a la main.
+2. **Le detecteur ne peut structurellement pas passer au vert.** Il ne connait
+   que deux cles volatiles (`model`, `effortLevel`). La derive constatee le
+   2026-09-08 (journal de 0873) portait sur `agentPushNotifEnabled`,
+   `feedbackDrafts`, `modelSettings`, `permissions` : **trois des quatre sont
+   propriete du CLI** et non declarees. Une alarme allumee en permanence porte
+   zero bit. C'est la regle maison « une verification dont le tout-va-bien ne se
+   distingue pas du je-n-ai-pas-pu-regarder » dans sa variante inverse.
+3. **Grain inutilisable.** Le rapport nomme la cle (`permissions`), jamais la
+   regle. Il ne dit pas quoi faire.
+4. **La propriete des cles n'est ecrite nulle part**, donc aucun reconciliateur
+   n'est ecrivable sans la deviner.
+
+## Le cout, dans les deux sens
+
+| Sens | Cas | Effet |
+|---|---|---|
+| Ajout partage non porte | 0873, hook `SessionEnd` de 0854 | fusionne, teste, ferme — et inerte |
+| Retrait partage non porte | 0882-0884, 76 -> 45 regles | le vif **continue d'accorder** |
+
+Les six survivantes du vif sont exactement celles retirees par 0882 :
+`Bash(python3 *nightbeat-supervisor-survey.py*)`, `Bash(bash *check-pr-diff *)`,
+les trois `systemctl --user {start,stop,restart} claude-nightbeat*`, et
+`Edit(**/beat.py)`. Cinq portent un joker ; un joker dont la cible est supprimee
+peut apparier un *nouveau* fichier au meme chemin. Risque faible, mais c'est la
+direction qui echoue en ouverture, et c'est celle qui n'est jamais appliquee.
+
+## Relevant files
+
+- `settings.shared.json` — canonique, suivi
+- `settings.json` — vif, par machine, git-ignore par conception (`.gitignore`)
+- `scripts/check-settings-drift.sh` — le detecteur a corriger
+- `scripts/on-start.sh:92` — ou il est appele, en rapport seul
+- `scripts/census/permissions.py` — sait deja classer une regle morte
+
+## Actions
+
+1. Declarer la propriete des cles dans un `settings.ownership.json` suivi :
+   les cles propriete-CLI (au moins `model`, `effortLevel`, `feedbackDrafts`,
+   `agentPushNotifEnabled`, `modelSettings`) d'un cote, tout le reste
+   propriete-depot. Deriver `VOLATILE` de la, plutot que de la coder en dur.
+2. Ecrire `scripts/settings-align.sh` : `vif <- partage U {cles CLI preservees
+   du vif}`, ecriture atomique, idempotent. `--check` pour le mode rapport.
+3. Rendre le rapport actionnable : nommer les **regles** ajoutees et retirees,
+   pas la cle qui les contient.
+4. Router les ajouts par machine vers `settings.local.json` (deja git-ignore,
+   couche native du CLI), jamais a la main dans `settings.json`. C'est ce qui
+   rend le fichier vif entierement derive, donc son remplacement integral sur.
+5. Cible `make settings-align`, et `--check` conserve dans `on-start.sh`.
+6. Aligner le fichier vif une fois — acte operateur, fichier hors depot ;
+   ce ticket demande l'acte, il ne le prescrit pas dans le depot.
+
+## Test
+
+- **Controle positif obligatoire** (exigence heritee de 0873, jamais construite) :
+  faire tourner `--check` sur l'etat actuel du fichier vif, **ou il doit nommer
+  les six regles nightbeat**, avant de le croire silencieux ailleurs.
+- Un test d'idempotence : deux passages consecutifs de `settings-align.sh`
+  laissent le meme octet.
+- Un test qui prouve qu'une cle propriete-CLI presente dans le vif **survit** a
+  l'alignement, et qu'une cle propriete-depot absente du vif y est restauree.
+
+## Verification
+
+- [ ] `--check` nomme les six regles avant alignement, et se tait apres
+- [ ] Une cle propriete-CLI du vif survit a un alignement
+- [ ] Deux alignements consecutifs sont identiques
+- [ ] `make check` passe
+
+## Invariants
+
+- `settings.json` et `settings.local.json` restent hors du depot.
+- Aucune regle n'est **elargie** par l'alignement : il porte le fichier
+  canonique tel quel, il n'arbitre pas la politique (invariant de 0883).
+- Le detecteur reste non bloquant tant que l'applicateur n'existe pas ; il ne
+  doit jamais faire echouer une session.
+
+## Exit criteria
+
+- Le fichier vif est derive, pas maintenu a la main : une commande le
+  reconstruit, et le rapport de derive distingue « aligne » de « pas regarde ».
