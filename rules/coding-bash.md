@@ -1,4 +1,8 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/*.sh"
+last-reviewed: 2026-08-14
+---
 # Coding Rules — Bash
 
 ## Arithmetic under `set -e`

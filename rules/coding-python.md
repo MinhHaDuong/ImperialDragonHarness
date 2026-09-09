@@ -1,4 +1,8 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/*.py"
+last-reviewed: 2026-08-14
+---
 # Coding Rules
 
 ## Python (3.10+)

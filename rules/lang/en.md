@@ -1,4 +1,11 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/*.tex"
+  - "**/*.qmd"
+  - "**/*.md"
+  - "**/*.txt"
+last-reviewed: 2026-08-14
+---
 # English
 
 Language norms only — document-type conventions live in `doctype/`, universal

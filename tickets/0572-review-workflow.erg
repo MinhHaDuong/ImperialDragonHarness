@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-08-22T09:27Z Minh Ha-Duong created
 2026-09-06T17:40Z claude note Rewritten in erg format from the author's free-form note left untracked in the primary checkout; the note's text is kept verbatim under Context
 
+2026-09-09T17:31Z claude note Mechanism isolated: the runtime auto-loads ~/.claude/rules/**.md; a paths: frontmatter makes a body conditional. Path-expressible bodies scoped, index and README rewritten, resident-budget gate added
 --- body ---
 ## Context
 
@@ -26,6 +27,65 @@ The review-cadence marker (`last-reviewed:` on each rule body, warned on by
 `scripts/warn-stale-rules.sh` after 30 days) records passes, not edits, so a
 file that grows by one bullet per incident keeps a fresh stamp while it bloats.
 `rules/README.md` § Review cadence already states this weakness.
+
+## Mechanism, isolated 2026-09-09
+
+The tree was never lazily loaded. Claude Code (2.1.266) walks
+`~/.claude/rules/` at session start and sorts each `.md` on one question:
+
+- frontmatter declares `paths:` → **conditional**, the body arrives only when
+  the session touches a matching file;
+- no `paths:` → **resident**, the body is in the system prompt of every
+  session, in every project, labelled "user's private global instructions".
+
+Evidence: the loader in the CLI bundle filters the directory walk on the
+presence of frontmatter globs, `claudeMdExcludes` documents
+`**/some-dir/.claude/rules/**` as an exclusion target, and the `/init` prompt
+tells users that `.claude/rules/` files "are loaded automatically alongside
+CLAUDE.md and can be scoped to specific file paths using `paths` frontmatter".
+It matches the observation exactly: `state.md` was the one body absent from the
+prompt, and it is the one file that carried `paths:`.
+
+Consequences for this ticket:
+
+- The pointer-table design was not under-used, it was never in force. The index
+  described in full what the runtime had already shipped in full — 942 words of
+  duplicate, itself resident, and cat-ed a second time by `on-start.sh`.
+- `inject_rule_on_edit.py` was re-serving resident bodies (1 069 in 101 days).
+  Scoping is what gives it a job: `paths:` is coarse (any `.tex` brings all
+  three doctypes and both langs), the hook resolves the exact one.
+- Trimming `workflow.md` and `git.md` is no longer housekeeping. They are 14 000
+  of the ~21 600 resident tokens, on every conversation, in every project.
+
+**Verify on the author's machine before trusting this** (it could not be run
+from the container that isolated it): drop two files in `~/.claude/rules/`, one
+with a `paths: ["*.py"]` frontmatter and one without, each carrying a distinct
+canary sentence, then ask a fresh session in a non-Python directory which
+canaries it can see. Expected: the unscoped one only.
+
+## Done 2026-09-09 (branch claude/organisation-harnais-v2zvy8)
+
+- `paths:` frontmatter on the eight path-expressible bodies (coding-python,
+  coding-bash, prose/_all, doctype/×3, lang/×2): resident 28 400 → 21 600 tokens.
+- `rules/README.md` rewritten: the conditional table is the index; resident
+  files are listed, not described. `on-start.sh` no longer cats it.
+- `tests/test_rules_resident_budget.py` caps the resident set and requires every
+  resident file to be declared. `tests/test_harness_rules_injection.sh` rewritten:
+  it asserted the hook did not leak bodies and passed for months while the
+  runtime loaded them — an all-clear indistinguishable from "I could not look".
+
+## Still open, ranked
+
+1. Trim `workflow.md` (7 918 tk) and `git.md` (6 053 tk) — steps 1, 3, 4 below.
+   Highest yield, needs the author's judgment on every cut.
+2. Move the situation-scoped bodies that no path glob can express
+   (`knowledge-hints` 2 030 tk, `edm` 1 146, `manuscript-build` 946,
+   `systemd-units` 846, `pdf-finishing` 686, `prose/cutting` 473,
+   `submission-events` 370) out of `rules/` into a directory the runtime does
+   not auto-load, leaving pointers in the index. ~6 500 tk, mechanical, but it
+   is a layout decision: it splits "doctrine" from "reference the agent fetches".
+3. Step 2 below (provider-neutral core vs Claude Code idiosyncrasies) now has a
+   mechanical lever: what an adapter must inject is exactly the resident set.
 
 ## Relevant files
 

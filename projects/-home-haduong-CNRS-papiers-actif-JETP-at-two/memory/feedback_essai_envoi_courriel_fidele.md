@@ -13,16 +13,19 @@ l'en-tête `To:`** :
 msmtp moi@exemple.org < message.eml   # en-têtes du .eml intacts
 ```
 
-En donnant le destinataire en argument, `msmtp` ne lit pas les en-têtes
-(contrairement à `-t`). Le message reçu est donc identique, octet pour octet,
-à celui que verra le vrai destinataire — même `To:`, même `Subject`, même
-pièce jointe.
+En donnant le destinataire en argument, `msmtp` ne prend pas les destinataires
+dans les en-têtes (contrairement à `-t`). On conserve ainsi les mêmes données
+rédigées : `To:`, `Subject`, corps MIME et pièce jointe. Les serveurs ajoutent
+des en-têtes de transport et peuvent normaliser le message ; les exemplaires
+reçus ne sont donc pas nécessairement identiques octet pour octet. Vérifier
+les champs et le contenu de la pièce jointe, plutôt que les octets du courriel
+reçu entier. Cet essai montre le rendu dans la boîte de l'auteur ; il ne
+garantit ni le rendu ni la délivrabilité chez un autre destinataire.
 
 **Pourquoi.** Modifier le sujet ou le destinataire pour marquer l'essai revient
-à tester autre chose que ce qu'on enverra. Et c'est la seule classe d'erreur
-qu'aucune vérification locale ne couvre : rendu des accents et des guillemets
-français chez le destinataire, pièce jointe qui s'ouvre vraiment,
-délivrabilité, `Reply-To` effectif.
+à tester autre chose que ce qu'on enverra. L'essai complète les vérifications
+locales par une réception réelle : rendu des accents et des guillemets
+français, pièce jointe qui s'ouvre vraiment et `Reply-To` effectif.
 
 **Vérifier aussi l'expéditeur avant d'envoyer.** Le 2026-09-09, msmtp était
 configuré sur `minh@haduong.com` alors que la signature des courriels annonçait

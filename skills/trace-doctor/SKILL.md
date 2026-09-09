@@ -27,9 +27,8 @@ counterfactuals note does.
 
 Run the four committed scripts. All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
-straight through to each script's own `--days` argparse flag (default 28),
-the same passthrough `skill-doctor` uses — there is no shell-side day
-parsing to keep in sync.
+straight through to each script's own `--days` argparse flag (default 28) —
+there is no shell-side day parsing to keep in sync.
 
 ```bash
 HARNESS_DIR="${HARNESS_DIR:-$HOME/.claude}"

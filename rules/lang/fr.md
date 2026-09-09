@@ -1,4 +1,11 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/*.tex"
+  - "**/*.qmd"
+  - "**/*.md"
+  - "**/*.txt"
+last-reviewed: 2026-08-14
+---
 # Français
 
 Normes de langue uniquement — les conventions de type de document vivent dans
