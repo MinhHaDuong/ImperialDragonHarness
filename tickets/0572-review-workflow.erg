@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-09-06T17:40Z claude note Rewritten in erg format from the author's free-form note left untracked in the primary checkout; the note's text is kept verbatim under Context
 
 2026-09-09T17:31Z claude note Mechanism isolated: the runtime auto-loads ~/.claude/rules/**.md; a paths: frontmatter makes a body conditional. Path-expressible bodies scoped, index and README rewritten, resident-budget gate added
+2026-09-09T18:04Z claude note Trimming pass done: workflow.md and git.md cut by ~55%, skill authoring made conditional, runtime specifics split into claude-code.md; resident 21 649 to 15 469 tk. Author acceptance of the cuts still pending
 --- body ---
 ## Context
 
@@ -86,6 +87,71 @@ canaries it can see. Expected: the unscoped one only.
    is a layout decision: it splits "doctrine" from "reference the agent fetches".
 3. Step 2 below (provider-neutral core vs Claude Code idiosyncrasies) now has a
    mechanical lever: what an adapter must inject is exactly the resident set.
+
+## Trimming pass, 2026-09-09 (second PR)
+
+`workflow.md` 31 672 → 13 766 chars, `git.md` 24 212 → 11 988. New
+`rules/claude-code.md` (4 055, resident but skippable by a non-Claude-Code
+adapter) and `rules/authoring-skills.md` (conditional on `**/SKILL.md`, so
+0 resident). Resident total 86 598 → 61 876 chars, 21 649 → 15 469 tokens;
+`RESIDENT_BUDGET` lowered 88 000 → 63 000.
+
+An independent editorial pass (Fable 5.1, read-only) ranked every block in
+parallel and found eight contradictions. Four are fixed here:
+
+- **Escalation asked for a memory write the same file says is denied.** "Save a
+  feedback memory at each escalation" against § Worktree paths, where the
+  platform gate refuses memory writes for the whole life of a worktree session.
+  Now: note it at each escalation, save it at the wrap-up.
+- **The memory carve-out gave two answers** (land it via PR / write it directly
+  after leaving). One answer now, and the stale claim that `skills/memory/`
+  instructs a direct mid-worktree write is gone — it does not.
+- **The severity floor did not govern the loophole rule**, which offered a
+  ticket for any gap. Folded: above the floor a ticket, below it fix or record.
+- **`on-start.sh` contradicted the `/hunt` carve-out and was imperative** —
+  "Use EnterWorktree as your first action" — which the harness's own rule says
+  the model classifies as prompt injection. Rewritten declaratively, with the
+  hunt exception named.
+
+Two are recorded, not fixed: the local-fast-forward clause for chores (deleted
+here as obsolete against the closed gate) and the tool-agnostic-language rule
+being violated by the files that state it (`gh`, `/gaze`, `EnterWorktree`) —
+that one is the adapter question, ticket 0800, not a defect in these files.
+
+## Evidence evicted from the resident set, kept here
+
+The invariant is "no rule dropped without its lesson recorded". No rule was
+dropped; four incident narratives were, and this is their record.
+
+- **Red main is a broadcast** (2026-09-06). One stale ticket-log stamp was
+  corrected in two sessions at once, whose different but equally defensible
+  values (`15:30Z`, `15:33Z`) conflicted at the merge gate and burned a `/gaze`
+  round. Hours later a whole branch, ticket and PR for four more stale stamps
+  was built and closed unmerged, a sibling having landed byte-identical
+  corrections while it was in flight.
+- **Three zeros are one zero measured three times** (2026-08-22). Three probes
+  over ten hours counted zero Zotero structure-extraction packs and the
+  conclusion drifted to a verdict on the feature. The artifact honestly recorded
+  "NO POSITIVE CONTROL"; the caveat changed nothing. A fourth probe, after a
+  human opened two PDFs, found two packs within a minute.
+- **The division that inverted a conclusion** (2026-08-29). An upstream issue
+  reported ~95 s per query over 255 703 rows; dividing gave ~390 µs per row,
+  making the arithmetic look like 6% of runtime and the proposed fix pointless
+  — written to the author on that basis. A real scan of that shape measures
+  38 µs per row: arithmetic was 73%, the fix was worth 2,19x. One script,
+  eleven minutes.
+- **What set the ticket arrival rate** (2026-07-27). climate-finance filed 70
+  tickets in one day against 30 closed, leaving 97 open, while its PR pipeline
+  drained cleanly at 94 merged — thirteen sessions each sweeping, not a repo
+  type.
+
+## Not done — what the exit criteria still need
+
+Step 5 (a review mechanism that catches growth, not only age) is met by
+`tests/test_rules_resident_budget.py`. The remaining exit criterion is the
+author's: read the trimmed `workflow.md` and accept or reverse the cuts. Also
+still open: the seven situation-scoped bodies (~6 300 tk) that no path glob can
+express, which need a directory the runtime does not auto-load.
 
 ## Relevant files
 

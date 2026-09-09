@@ -29,6 +29,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
 | [lang/fr.md](./lang/fr.md) | prose files | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
+| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
 Not a rules file, and not loaded by this mechanism: `tickets/AGENTS.md` reaches
@@ -60,9 +61,13 @@ ticket 0550).
 
 ## Resident rules
 
-`workflow.md` `git.md` `knowledge-hints.md` `edm.md` `manuscript-build.md`
-`pdf-finishing.md` `prose/cutting.md` `submission-events.md` `systemd-units.md`
-— bodies in context already, listed here only so an adapter knows what to ship.
+`workflow.md` `git.md` `claude-code.md` `knowledge-hints.md` `edm.md`
+`manuscript-build.md` `pdf-finishing.md` `prose/cutting.md`
+`submission-events.md` `systemd-units.md` — bodies in context already, listed
+here only so an adapter knows what to ship.
+
+`claude-code.md` is the runtime-specific one: an adapter on another runtime
+loads every other resident file and skips it.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters (tickets 0800, 0802) the resident set must be injected by the adapter

@@ -35,9 +35,11 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
 
-# 86 598 chars measured 2026-09-09 after scoping the path-expressible bodies.
-# Headroom is deliberately thin: it fits a clarifying sentence, not a section.
-RESIDENT_BUDGET = 88_000
+# 61 876 chars measured 2026-09-09 after the 0572 trimming pass (workflow.md and
+# git.md cut by half, skill authoring made conditional, runtime specifics split
+# into claude-code.md). Headroom is deliberately thin: it fits a clarifying
+# sentence, not a section.
+RESIDENT_BUDGET = 63_000
 
 def is_resident(path: Path) -> bool:
     """True when the runtime loads this body unconditionally.

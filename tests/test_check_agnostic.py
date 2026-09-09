@@ -230,7 +230,7 @@ VENDOR_LINE = "Set `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` to bound the fan-out.\
 
 def test_fails_on_vendor_env_var_in_rules(tmp_path):
     """Doctrine naming a vendor runtime knob rots with the tool — name the
-    capability instead (workflow.md § Writing Skills and Hooks)."""
+    capability instead (rules/authoring-skills.md)."""
     d = _rules_dir(tmp_path)
     (d / "workflow.md").write_text(f"# Rules\n\n{VENDOR_LINE}")
     result = _run(d)
