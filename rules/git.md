@@ -34,30 +34,13 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Branch cleanup
 
-**Delete branches after merge.** `deleteBranchOnMerge` is per-repo — check it, don't assume; where it is false the remote side accumulates the same debt and needs its own sweep. Delete only after the ancestry probe: `git push --delete` has no merged-check of its own, and a remote branch can be the only copy of an unmerged colleague's work.
-
-```bash
-git fetch --prune
-cur=$(git branch --show-current)
-for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-  [ "$b" = main ] && continue     # main is always an ancestor; nothing protects it when HEAD is detached
-  [ "$b" = "$cur" ] && continue   # never delete the branch you are standing on
-  git merge-base --is-ancestor "$b" origin/main && git branch -D "$b"
-done
-```
-
-```bash
-git fetch --prune
-for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/); do
-  case "$ref" in origin/*) ;; *) continue ;; esac  # skips the bare `origin` symref
-  b="${ref#origin/}"
-  [ "$b" = main ] && continue
-  [ "$b" = HEAD ] && continue
-  git merge-base --is-ancestor "$ref" origin/main && git push origin --delete "$b"
-done
-```
-
-Three lines are load-bearing, each for a branch someone lost: the `case` guard (without it the loop deletes the bare `origin` symref, fails, and `set -e` aborts the sweep on its first iteration while looking like it worked), the `main` and current-branch guards (a detached primary checkout lets `git branch -d main` succeed), and `-D` over `-d` (`-d` checks merged-into-HEAD, not into `origin/main`, so it silently refuses branches the probe has just proven contained). Outside this probe-guarded loop, never `git branch -D` a branch whose PR you have not verified merged. Ticket 0242; incident detail in memory `reference_branch_cleanup_incidents`.
+- **Delete branches after merge, and only after an ancestry probe.** Whether the
+  forge deletes the remote branch itself is a per-repo setting: check it, don't
+  assume, and sweep the remote side too where it is off. The sweep — local and
+  remote, probe-guarded — is `/roar` step 10; run it there rather than
+  improvising a loop, since each of its guards exists for a branch someone lost
+  (ticket 0242, memory `reference_branch_cleanup_incidents`). Outside that
+  probe, never `git branch -D` a branch whose merge you have not verified.
 
 ## Reading state you will act on
 

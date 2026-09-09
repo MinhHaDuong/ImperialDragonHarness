@@ -170,11 +170,51 @@ default branch — there are no remote branches nor merge requests to inspect.
     subagent, `ExitWorktree` is unavailable — skip this step; the harness
     auto-cleans the agent's worktree once its branch is merged and the tree
     is clean.
-10. **Verify hygiene**:
-    - `git branch -a` → no stale remote branches
-    - Check for stale merge requests
+10. **Verify hygiene** — and run the branch sweep, which is this step's job.
+    Delete only after the ancestry probe: a plain delete has no merged-check
+    of its own, and a remote branch can be the only copy of an unmerged
+    colleague's work.
+
+    ```bash
+    git fetch --prune
+    cur=$(git branch --show-current)
+    for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
+      [ "$b" = main ] && continue     # main is always an ancestor; nothing protects it when HEAD is detached
+      [ "$b" = "$cur" ] && continue   # never delete the branch you are standing on
+      git merge-base --is-ancestor "$b" origin/main && git branch -D "$b"
+    done
+    ```
+
+    Where the forge does not delete merged branches itself (per-repo setting —
+    check it, don't assume), the remote side accumulates the same debt:
+
+    ```bash
+    git fetch --prune
+    for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/); do
+      case "$ref" in origin/*) ;; *) continue ;; esac  # skips the bare `origin` symref
+      b="${ref#origin/}"
+      [ "$b" = main ] && continue
+      [ "$b" = HEAD ] && continue
+      git merge-base --is-ancestor "$ref" origin/main && git push origin --delete "$b"
+    done
+    ```
+
+    Four lines are load-bearing, each for a branch someone lost: the `case`
+    guard (without it the loop deletes the bare `origin` symref, fails, and
+    `set -e` aborts the sweep on its first iteration while looking like it
+    worked), the `main` and current-branch guards (a detached primary checkout
+    lets a plain `git branch -d main` succeed), and `-D` over `-d` (`-d` checks
+    merged-into-HEAD, not merged-into-`origin/main`, so it silently refuses
+    branches the probe has just proven contained). The loops key on exit codes,
+    not parsed output, which is what keeps them correct under an output-framing
+    hook. Incident detail: memory `reference_branch_cleanup_incidents`,
+    ticket 0242.
+
+    - Then: `git branch -a` → no stale remote branches; check for stale merge
+      requests.
     - No-forge repo: only check that local branches are merged into the
-      default branch; there are no remote branches nor merge requests.
+      default branch; there are no remote branches nor merge requests, and
+      every ancestry probe compares against the local default branch.
 11. **Offer** to improve workflow rules if lessons were learned.
 
 Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
