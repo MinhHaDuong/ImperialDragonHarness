@@ -25,8 +25,8 @@ be asked for after the fact.)
 The roadmap tracks work in progress; the publications list tracks works that
 exist. A book proposal sent for consideration belongs on the roadmap only:
 create its bibliography entry when a contract is signed or the piece accepted.
-For each event, choose the applicable register(s) and record the decision in
-the commit message or event record, so the next event does not reopen it.
+Record the applicable register(s) in the commit or event record, so the next
+event does not reopen the decision.
 
 **Check every link you write, on the landing page, not the status code.**
 `curl -sIL` each DOI/URL entering a register and confirm it lands on the
