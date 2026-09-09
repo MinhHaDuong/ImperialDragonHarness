@@ -7,6 +7,7 @@ Author: claude
 2026-09-09T18:20Z claude created instruction demandee par l'auteur : le plugin peut-il etre l'adaptateur CLI Claude, le reste restant generique pour Codex, Pi et l'environnement Claude Code web ? Trois experiences faites sur Claude Code 2.1.266, resultats dans le corps. Depose sur demande de l'auteur, qui leve la doctrine de refroidissement du 2026-07-14 pour ce point
 2026-09-09T18:20Z claude note Correction d'une affirmation posee plus tot dans la meme session : j'avais annonce que hooks *et* permissions pouvaient passer dans un plugin. Faux sur les permissions, et c'est le point qui decide la reponse
 
+2026-09-09T18:50Z note Rattachement a 0800 tranche par l'auteur le 2026-09-09 : ne pas toucher a 0800, garder la question comme case ouverte ici. La liste des enfants de 0800 est la sortie d'un arbitrage ratifie (trois revues, six tickets retires avant implementation), pas un annuaire ; son protocole exige une seconde revue de panel avant qu'un enfant passe en implementation ; et aucune arete n'y est neutre, une arete erg deplacant ce que erg ready propose et ce que 0810 attend. Le voisinage reste porte par les renvois croises, pas par une arete
 --- body ---
 ## Context
 
@@ -15,10 +16,30 @@ reste restant generique et interoperable avec Codex, Pi et l'environnement
 Claude Code web ? Ce ticket instruit la question ; il n'implemente rien.
 
 Vocabulaire deja ratifie par 0800 : coeur, config, adaptateurs, trois cibles
-(Claude Code CLI, Codex CLI, Pi CLI de `pi.dev`). Ce ticket est un enfant
-naturel de ce tracker et un voisin de 0809 et 0810. **Le rattachement formel
-a la famille 0800 reste une decision de l'auteur** : la liste des enfants de
-0800 est un artefact revu, elle n'est pas modifiee ici.
+(Claude Code CLI, Codex CLI, Pi CLI de `pi.dev`). Ce ticket est un voisin de
+0809 et 0810 par son sujet.
+
+**Rattachement a 0800 : tranche le 2026-09-09, ne pas rattacher.** Choix
+delibere de l'auteur, pas un fil laisse pendant. Trois raisons :
+
+1. La section `## Children` de 0800 est la sortie d'un arbitrage ratifie —
+   trois revues independantes, puis une reconciliation qui a *retire* 0801 et
+   0804-0808 avant implementation. Ce n'est pas un annuaire ; l'amender en
+   silence amenderait un verdict sans arbitrage.
+2. Le protocole de revue de 0800 exige une seconde revue de panel avant qu'un
+   enfant passe en implementation. Elle n'a pas eu lieu.
+3. Aucune arete n'y serait neutre. `Blocked-by` n'est pas de la documentation
+   dans `erg` : elle deplace ce que `erg ready` propose et ce que 0810 attend.
+   `0887 Blocked-by: 0802` serait faux — cacher un resultat mesure derriere un
+   portage non commence et sans rapport ; `0810 Blocked-by: 0887` est
+   defendable mais deplace la condition de sortie de la famille, ce que le
+   protocole reserve.
+
+Cout assume, nomme : qui lit 0800 seul ne verra pas ce ticket. Le voisinage
+n'est porte que par les renvois croises des fichiers pertinents. **Ce qui
+rouvrirait la question** : si l'auteur decide que `## Children` est une carte
+et non un verdict, ou si la seconde revue de panel a lieu — l'arete a poser
+serait alors `0810 Blocked-by: 0887`, et elle seule.
 
 ## Reponse courte
 
@@ -142,7 +163,8 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
 1. Rejouer la sonde et enregistrer la version exacte de Claude Code avec les
    resultats. Un resultat sans version ne vaut rien : le comportement mesure
    ici est celui de 2.1.266.
-2. Trancher le rattachement a la famille 0800 (enfant, ou voisin independant).
+2. (tranchee 2026-09-09 : pas de rattachement a 0800 ; voir le Context pour
+   ce qui rouvrirait la question)
 3. Trancher la disposition : `adapters/claude-code/` plus lien, ou dossier
    directement sous `skills/`. B rend le premier possible ; le second collisionne
    avec `make skills-catalog`.
@@ -167,7 +189,7 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
       documentation officielle et coherent avec le `settings.json` de plugin
       limite a `agent` et `subagentStatusLine`
 - [x] Cas A, B, C mesures sur Claude Code 2.1.266, sonde versee
-- [ ] Rattachement a 0800 tranche par l'auteur
+- [x] Rattachement a 0800 tranche par l'auteur (2026-09-09, ne pas rattacher)
 - [ ] Disposition tranchee
 - [ ] `README.md:158` reecrit ou explicitement renvoye a 0810
 
