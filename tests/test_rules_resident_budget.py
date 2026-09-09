@@ -35,12 +35,13 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
 
-# 59840 chars measured 2026-09-09, after the 0572 trimming pass and the
+# 45714 chars measured 2026-09-09, after scoping the three file-triggered
+# bodies (systemd units, knowledge hints, manuscript builds), the 0572 pass and the
 # no-shell-recipe rule below: workflow.md and git.md cut by half, skill
 # authoring made conditional, runtime specifics split into claude-code.md, and
 # every procedure returned to the skill or script that runs it. Headroom is
 # deliberately thin: it fits a clarifying sentence, not a section.
-RESIDENT_BUDGET = 60000
+RESIDENT_BUDGET = 46000
 
 def is_resident(path: Path) -> bool:
     """True when the runtime loads this body unconditionally.

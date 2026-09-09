@@ -11,6 +11,7 @@ Author: Minh Ha-Duong
 2026-09-09T18:04Z claude note Trimming pass done: workflow.md and git.md cut by ~55%, skill authoring made conditional, runtime specifics split into claude-code.md; resident 21 649 to 15 469 tk. Author acceptance of the cuts still pending
 2026-09-09T18:07Z claude note Branch sweep moved from git.md to roar step 10 on the author's call: a resident rule file must not inline 25 lines of shell every session pays for. Ratchet repointed at the skill, remote-symref guard added
 2026-09-09T18:12Z claude note No shell recipe in a resident rule: sync block to prose, hint probe to its script docstring, merge-bounce and chore-close to the merge skill; guard added and positive-controlled
+2026-09-09T18:55Z claude note Three of the seven situational bodies were file-triggered, not task-triggered: systemd units, knowledge hints and manuscript builds now carry paths globs. Resident 14 960 to 11 428 tk
 --- body ---
 ## Context
 

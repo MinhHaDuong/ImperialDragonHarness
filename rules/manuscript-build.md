@@ -1,8 +1,15 @@
-<!-- last-reviewed: 2026-08-14 -->
+---
+paths:
+  - "**/Makefile"
+  - "**/_quarto.yml"
+  - "**/_quarto.yaml"
+  - "**/*.latexmkrc"
+last-reviewed: 2026-08-14
+---
 # Manuscript builds — assert the product, not the exit code
 
 Loaded when a manuscript build (LaTeX/tectonic, Quarto/pandoc) is set up or
-changed. The Make rule in `coding-python.md` says that `make` checks the
+changed — the `paths:` globs are coarse on `Makefile`, which any project may have, so read past this line only if the build in front of you produces a document. The Make rule in `coding-python.md` says that `make` checks the
 recipe's exit code, not what the recipe produced. Here that takes a sharper
 form: the recipe succeeds **and the product is wrong**.
 

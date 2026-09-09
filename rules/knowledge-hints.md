@@ -1,4 +1,9 @@
-<!-- last-reviewed: 2026-08-19 -->
+---
+paths:
+  - "**/.knowledge.toml"
+  - "**/knowledge_hints.py"
+last-reviewed: 2026-08-19
+---
 # Project domain-knowledge hints
 
 Loaded when a project declares or maintains domain knowledge an agent cannot

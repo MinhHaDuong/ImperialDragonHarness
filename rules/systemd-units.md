@@ -1,4 +1,10 @@
-<!-- last-reviewed: 2026-08-21 -->
+---
+paths:
+  - "**/*.service"
+  - "**/*.timer"
+  - "**/systemd/**"
+last-reviewed: 2026-08-21
+---
 # systemd units — what PID 1 reads at boot lives on the root filesystem
 
 Loaded when a systemd unit is deployed, or its deployment method changes.

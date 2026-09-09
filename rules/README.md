@@ -30,6 +30,9 @@ it was 942 words while shipping full copies of what it summarised.
 | [lang/fr.md](./lang/fr.md) | prose files | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
+| [knowledge-hints.md](./knowledge-hints.md) | `**/.knowledge.toml`, `**/knowledge_hints.py` | `<repo>/.knowledge.toml` + `scripts/knowledge_hints.py`: one catalog line resident at session start, pointer + caveat on a declared term. Inject the pointer, never the payload. |
+| [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
+| [systemd-units.md](./systemd-units.md) | `**/*.service`, `**/*.timer`, `**/systemd/**` | What PID 1 reads at boot lives on the root filesystem: install units as real copies, never symlinks into a late-mounted volume; `is-enabled` lies after a `daemon-reload`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
 Not a rules file, and not loaded by this mechanism: `tickets/AGENTS.md` reaches
@@ -61,10 +64,15 @@ ticket 0550).
 
 ## Resident rules
 
-`workflow.md` `git.md` `claude-code.md` `knowledge-hints.md` `edm.md`
-`manuscript-build.md` `pdf-finishing.md` `prose/cutting.md`
-`submission-events.md` `systemd-units.md` — bodies in context already, listed
+`workflow.md` `git.md` `claude-code.md` `edm.md` `pdf-finishing.md`
+`prose/cutting.md` `submission-events.md` — bodies in context already, listed
 here only so an adapter knows what to ship.
+
+The last four are resident for want of a home, not by right: their trigger is a
+*task*, not a file, so no `paths:` glob reaches them. `edm.md` belongs beside
+the two Zotero skills it serves; the other three are skill-shaped (a submission
+event, a PDF finishing pass, a cut to a word budget). ~2 700 tokens wait on that
+call.
 
 `claude-code.md` is the runtime-specific one: an adapter on another runtime
 loads every other resident file and skips it.
