@@ -2,11 +2,13 @@
 Title: Retirer quatre skills sans usage: maw-audit, test-audit-llm, scry, smoke
 Created: 2026-09-09
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #840
 
 --- log ---
 2026-09-09T15:10Z Minh Ha-Duong created
 2026-09-09T15:32Z Minh Ha-Duong note make check went red on the test_model_rightsizing corpus guard; the js lens was removed with its subjects
 
+2026-09-09T15:57Z Minh Ha-Duong closed — autoclosed — PR #840
 --- body ---
 ## Context
 
