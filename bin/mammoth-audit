@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SELF=$(readlink -f "$0")
+HARNESS_DIR=$(cd "$(dirname "$SELF")/.." && pwd)
+exec python3 "$HARNESS_DIR/scripts/mammoth-audit.py" \
+  --repo "$HARNESS_DIR" \
+  --projects-dir "${CLAUDE_PROJECTS_DIR:-$HOME/.claude/projects}" \
+  --days "${MAMMOTH_AUDIT_DAYS:-180}" "$@"
