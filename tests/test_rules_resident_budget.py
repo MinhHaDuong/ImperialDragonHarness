@@ -113,3 +113,26 @@ def test_resident_rules_ship_no_shell_recipes():
             f"({len(hits)} block(s)): name the commands in prose, or move the "
             "procedure to the skill or script that runs it"
         )
+
+
+TICKET_REF = re.compile(r"\btickets?\s+\d{4}\b", re.IGNORECASE)
+
+
+def test_resident_rules_carry_no_ticket_numbers():
+    """A four-digit number is provenance, not a rule.
+
+    Author's call, 2026-09-09, reading the trimmed workflow.md: a resident file
+    is read by every session in every project, and "(ticket 0880)" costs each of
+    them a reference they cannot act on and would have to open a ticket store to
+    resolve. Provenance belongs where it can be followed — the ticket itself,
+    a memory note, `git log`, `git blame`.
+
+    Named pointers stay: `reference_branch_cleanup_incidents` resolves to a file
+    and says what it holds. It is the bare number this bans.
+    """
+    for path in resident_files():
+        hits = TICKET_REF.findall(path.read_text(encoding="utf-8"))
+        assert not hits, (
+            f"rules/{path.relative_to(RULES)} cites {hits}: drop the number, or "
+            "point at a named memory note if the provenance is load-bearing"
+        )

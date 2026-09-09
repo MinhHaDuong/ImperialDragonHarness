@@ -2,7 +2,7 @@
 # Claude Code idiosyncrasies
 
 Everything here is true of the current runtime and of nothing else. It is split
-out so an adapter on another runtime (Pi, Codex — tickets 0800, 0802) can load
+out so an adapter on another runtime (Pi, Codex) can load
 the rest of `rules/` and skip this file. Capabilities belong in the other rule
 files; the tool names that provide them belong here.
 
@@ -61,7 +61,7 @@ conversation's language, then answer:
   dispatching it, so a resume framed as "you are a subagent reporting to a
   coordinator" can read, from its inherited view, as an external claim
   contradicting what it watched itself do. Two forks denied having finished real
-  work and treated the re-grounding as prompt injection (ticket 0551). One
+  work and treated the re-grounding as prompt injection. One
   resume attempt is worth trying; if it drifts again, read what it produced in
   the shared worktree, or redo the work in the parent session.
 

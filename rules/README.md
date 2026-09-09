@@ -60,8 +60,7 @@ code change. Doc-type and language are not derivable from a filename: they come
 from an optional per-project manifest `<repo>/.claude/rules-map.toml`, which
 holds path→axis *mappings* only, never rule text. Format, precedence and a
 worked manifest live in the hook's own docstring; the same resolver is the
-single source for prose/code review routing (`scripts/prose_predicate.py`,
-ticket 0550).
+single source for prose/code review routing (`scripts/prose_predicate.py`).
 
 ## Resident rules
 
@@ -79,7 +78,7 @@ split as `paths:`, for triggers a filename cannot express.
 loads every other resident file and skips it.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
-adapters (tickets 0800, 0802) the resident set must be injected by the adapter
+adapters, the resident set must be injected by the adapter
 or made genuinely on-demand; `~22 000 tokens` is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.

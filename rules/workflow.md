@@ -62,7 +62,7 @@ directly, which is what the wrap-up does.
 that writes memory before removing the worktree loses it silently — a denied
 write reads like "memory is unavailable here", the lesson goes into the final
 message, and once the worktree is gone nothing distinguishes a lost lesson from
-a session that had none (ticket 0880).
+a session that had none.
 
 For source and data: if `git branch --show-current` is `main`, stop and switch
 to a branch. Exception: manuscript prose in paper repos, see `git.md`
@@ -83,7 +83,7 @@ directory inside a repo. After entering, check ownership:
 `basename "$(git rev-parse --show-toplevel)"` must be the expected project. If
 it is wrong, fall back to manual isolation in the right repo —
 `git -C <project> worktree add <project>/.claude/worktrees/<name> -b <branch>` —
-and drive everything with absolute paths and `git -C` (tickets 0267, 0306, 0317).
+and drive everything with absolute paths and `git -C`.
 
 # Escalation protocol
 
@@ -159,7 +159,7 @@ build" is a preference, not a licence to skip validation.
 - **A delegate in a shared worktree can act on what it sees there.** A
   read-only research brief does not imply "don't touch git" unless it says so:
   state explicitly that the delegate must not `add`/`commit`/`push` whatever is
-  sitting in the tree (ticket 0551).
+  sitting in the tree.
 
 Model and effort levers, nesting depth, and the fork-resume trap: `claude-code.md`.
 

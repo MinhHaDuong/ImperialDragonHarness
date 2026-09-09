@@ -15,7 +15,7 @@ the incidents that established them live in memory notes, cited inline.
 
 Family rule: **a git command that printed nothing has not necessarily done nothing.** Before reaching for one of these, ask what it writes that you did not name.
 
-- **Never round-trip through `git stash` in a shared checkout.** The stash stack is repo-global, shared by every worktree and session: on a clean tree `stash` saves nothing, so the `pop` grabs someone else's (ticket 0193). Need a clean baseline? A throwaway `git worktree add`, or a WIP commit. If you must: `git stash push -m <name>`, pop only after `git stash list` shows your entry on top, `drop` it on conflict after resolving.
+- **Never round-trip through `git stash` in a shared checkout.** The stash stack is repo-global, shared by every worktree and session: on a clean tree `stash` saves nothing, so the `pop` grabs someone else's. Need a clean baseline? A throwaway `git worktree add`, or a WIP commit. If you must: `git stash push -m <name>`, pop only after `git stash list` shows your entry on top, `drop` it on conflict after resolving.
 - **`git checkout <ref> -- <path>` overwrites the index, not just the working tree.** It is a write, not a read, and it destroys staged work at that path with no reflog to recover it. It arrives disguised as measurement — "let me restore the file just to compare" — which is exactly when uncommitted work is in flight. To *read* another version: `git show <ref>:<path>`. To *build* one: a throwaway worktree. To compare in place: commit first (`reset --soft` undoes it).
 
 ## Merging
@@ -37,7 +37,7 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
   assume, and sweep the remote side too where it is off. The sweep — local and
   remote, probe-guarded — is `/roar` step 10; run it there rather than
   improvising a loop, since each of its guards exists for a branch someone lost
-  (ticket 0242, memory `reference_branch_cleanup_incidents`). Outside that
+  (memory `reference_branch_cleanup_incidents`). Outside that
   probe, never `git branch -D` a branch whose merge you have not verified.
 
 ## Reading state you will act on
