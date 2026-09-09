@@ -1,6 +1,6 @@
 ---
 name: feedback-essai-envoi-courriel-fidele
-description: Tester un courriel avant un envoi irréversible — destinataire d'enveloppe distinct de l'en-tête To:, pour voir exactement ce que le vrai destinataire verra
+description: Tester un courriel avant un envoi irréversible — destinataire d'enveloppe distinct de l'en-tête To:, pour prévisualiser le message avec ses vrais en-têtes et sa vraie pièce jointe
 metadata:
   type: feedback
 ---
