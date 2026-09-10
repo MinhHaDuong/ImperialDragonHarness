@@ -33,7 +33,7 @@ RULES = REPO / "rules"
 
 sys.path.insert(0, str(REPO / "scripts"))
 
-import skill_frontmatter as sf  # noqa: E402
+import resident_census as rc  # noqa: E402
 
 # 35292 chars measured 2026-09-09, after the last task-triggered bodies became
 # skills (/pdf-finish, /cut-prose, /submission-event), edm.md was scoped, the three file-triggered
@@ -44,18 +44,15 @@ import skill_frontmatter as sf  # noqa: E402
 # deliberately thin: it fits a clarifying sentence, not a section.
 RESIDENT_BUDGET = 36000
 
-def is_resident(path: Path) -> bool:
-    """True when the runtime loads this body unconditionally.
-
-    The rule is the frontmatter's ``paths:`` key: with it the body arrives only
-    when a matching file is touched, without it the body is always in context.
-    """
-    m = sf.FRONTMATTER.match(path.read_text(encoding="utf-8"))
-    return not (m and re.search(r"^paths:", m.group(1), re.MULTILINE))
-
-
 def resident_files() -> list[Path]:
-    return sorted(p for p in RULES.rglob("*.md") if is_resident(p))
+    """The auto-loaded rule bodies, from the one definition of resident.
+
+    Delegated to scripts/resident_census.py, which measures this channel
+    alongside the four the budget above never saw. A guard and the census
+    that reports it disagreeing about what counts is the same divergence
+    ticket 0531 closed for frontmatter extraction — one definition, imported.
+    """
+    return [REPO / entry.path for entry in rc.rules_entries(REPO)]
 
 
 def test_resident_rules_stay_within_budget():
