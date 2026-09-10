@@ -387,6 +387,92 @@ reports success over the entries it can see. Three instances were found while
 writing this document, twice in the author's own new code, and a fourth in its
 own central claim — see §9.
 
+### Why flat files, and not a database
+
+The store is one file per memory in a directory tracked by git. A database
+belongs here as a view over that, never as a replacement for it. Five reasons,
+one of which decides.
+
+**Merge granularity decides it.** One file per memory is the grain concurrent
+sessions need: two sessions adding two memories never conflict. A SQLite file
+under git is a binary blob — no diff, no merge, no review, and a conflict on
+every concurrent write. This harness runs parallel sessions as a matter of
+course, and worktree isolation exists for that reason. A single absorbing store
+would put the contention back at the centre of the thing the rest of the
+architecture is built to avoid.
+
+**There is no performance problem to solve.** 1 001 files, 1.73 MB, a full grep
+over the corpus in 49 ms. At the observed growth — +110 entries across 13
+consolidation runs — a corpus ten times this size is 17 MB and the grep stays
+under a second. A database would answer a scale that does not exist and is not
+arriving.
+
+**git is already the audit log.** Provenance, dates, diffs, blame, and the
+pull-request gate the out-of-family review called the only serious defence
+against memory poisoning. A database has to rebuild every part of that.
+
+**Portability is architectural**, the firmest result in the calibration note:
+retention logic must live outside the model to transfer between runtimes. Plain
+files are readable by any adapter — Pi, Codex — without a line of code.
+
+**The runtime already reads flat files.** A database would need a translation
+layer whose output is precisely what would otherwise have been written
+directly.
+
+What a database genuinely buys — full-text search, and structured queries over
+the score — is available as a *derived* index: built from the files, rebuilt on
+demand, never committed. That is exactly the status this design gives
+`MEMORY.md`, so it costs no new principle.
+
+One more thing absorbing the project tiers into a single store would dissolve:
+the partition that keeps the resident index small. Only one project index is
+loaded per session, and a single store would have to reconstruct that partition
+anyway. Tiering is a context-budget constraint, not an artefact of the file
+layout.
+
+What would change this: a corpus large enough that regeneration costs real
+time, or a synchronisation need beyond what git resolves. Neither holds today,
+and the second would be a synchronisation problem rather than a storage one.
+
+**The corollary is a database that is thrown away.** The consolidation pass may
+load the whole corpus into whatever structure it likes — a vector store, an
+embedding index, a scratch table — compute duplicates and scores there,
+regenerate the indexes, and then **delete it**. Nothing about that violates a
+principle, and it removes the last failure mode a derived index can have: an
+index that persists can drift from its source, and one rebuilt from source on
+every run cannot. It is the same reasoning that makes `MEMORY.md` generated
+rather than authored, applied one level down.
+
+This is also how the duplicate detection gets better. Lexical slug matching
+finds roughly 43 candidate pairs of which 17–21 are genuine, so about half of
+what it proposes is noise a human has to reject. Embeddings raise precision on
+exactly that task, and the pass is periodic and offline, so it can afford to be
+slow. Two conditions keep it honest: the embedding model runs locally, or the
+consolidation pass acquires a network dependency the rest of the design does
+not have; and the model's identity is recorded in the run's provenance, because
+a ranking that silently changes when a model is upgraded fails P6.
+
+At this scale the database is optional and the *pattern* is the point. A
+thousand entries is a thousand vectors — a few megabytes, and a brute-force
+comparison in microseconds. What matters is the shape: compute in memory, emit
+files, discard everything else. The durable record is the bodies and their
+provenance; the vectors never earn a place in git.
+
+**One thing may survive the pass: an embedding cache keyed by content hash.**
+A thousand bodies is a thousand embeddings, and recomputing all of them every
+run is the one real cost of throwing the database away. Keying the cache by the
+hash of the body removes the reason the database had to go: a changed body has
+a different hash, so it misses and is re-embedded, and a stale entry is not
+reachable by construction. Only new and modified bodies cost anything, which
+makes a run proportional to what changed rather than to the corpus.
+
+The cache is not in git — it is regenerable, binary, and belongs in a local
+ignored directory, at roughly three megabytes for the current corpus. Deleting
+it must cost time and nothing else, and a run that finds no cache must produce
+the same indexes as a run that finds a full one. That equivalence is the test
+this ticket ships with, in the spirit of P6: a cache nobody has proved
+disposable is a store wearing a cache's name.
+
 ### Contradiction between ranked entries
 
 Keeping everything means an entry and its correction coexist, and both can rank.
