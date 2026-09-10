@@ -117,3 +117,5 @@
 - [Zoteus security notes](reference_zoteus_security_notes.md)
 - [Assent is not a trigger](feedback_assent_is_not_a_trigger.md)
 - [`if:`-gated hooks get unparsed commands](reference_if_gated_hooks_get_unparsed_commands.md)
+- [This repo runs no CI](project_search_works_has_no_ci.md)
+- [He rules the class, delegates the wording](feedback_he_rules_the_class_delegates_the_wording.md)

@@ -1,32 +1,43 @@
 ---
 name: feedback-erg-log-stamp-must-match-wall-clock
-description: "A ticket log entry's timestamp must match the real wall clock at write time, not an estimate — bench/check_ticket_logs.py fails on a stamp that postdates the commit that wrote it"
+description: "A ticket log entry's timestamp must be read in the SAME tool call that writes it — bench/check_ticket_logs.py fails a stamp postdating the commit, and reading the clock at the top of a work block is not close enough"
 metadata: 
   node_type: memory
   type: feedback
   originSessionId: dc5e15a4-edc1-4528-b6bf-d9afd95441c1
-  modified: 2026-09-04T09:07:31.883Z
+  modified: 2026-09-10T10:35:47.606Z
 ---
 
-When appending a ticket log entry by hand (writing the `YYYY-MM-DDTHH:MMZ`
-prefix directly, or trusting `erg close`'s auto-generated one), check the
-actual current time first (`date -u +"%Y-%m-%dT%H:%MZ"`) rather than
-estimating or reusing a nearby timestamp from earlier in the session.
+Read the clock **in the same tool call that writes the log line**
+(`date -u +"%Y-%m-%dT%H:%MZ"` and the write, one call). Not once per work
+block, not "shortly before" — the same call.
 
-**Why:** `bench/check_ticket_logs.py` (this repo's ticket-log gate, part of
-`make check`/`make lint`) fails any entry whose stamp is *after* the commit
-that actually wrote it — the check reads the entry's own claimed time
-against `git log` on the commit carrying that line. A guessed or
-copy-pasted-from-earlier stamp drifts ahead of real time easily in a long
-session with many parallel tool calls between "I know what to write" and
-"I actually commit it."
+**Why:** `bench/check_ticket_logs.py` (part of `make check`) fails any entry
+whose stamp is *after* the commit that wrote it, reading the claimed time
+against `git log` on the carrying commit. Minutes pass between "I know what to
+write" and "I commit it", and a stamp typed to read plausibly drifts ahead.
 
-**How to apply:** run the date command immediately before writing the log
-line, not once at the start of a work block. Caught three instances of this
-exact defect in one session (2026-09-04): one pre-existing on `main`
-(ticket 0640, someone else's entry, ~9 minutes off) and two of this
-session's own (also ~9 minutes off, from writing the timestamp before
-finishing the surrounding work rather than at actual commit time). The fix
-is mechanical — correct the stamp to the commit's own time — but only if
-caught; nothing else in the normal workflow surfaces this until the gate
-runs.
+**How to apply:** the clock read and the write are one call. And on **any**
+branch touching `tickets/`, run `python3 bench/check_ticket_logs.py` before
+pushing — it is seconds, and it is the only thing that surfaces this.
+
+**Recurrence, 2026-09-10, worse than the 2026-09-04 original.** Three stamps
+invented in one session, in two separate rounds:
+
+1. Two on the branch filing tickets 0763/0764 — 09:52Z and 09:56Z on a commit
+   written at 09:47:08Z. `erg check` passed (it does not read stamps) and I
+   never ran `make check` on that branch, so it reached an open PR. A Sonnet
+   reviewer ran the gate and found it.
+2. Then, **while correcting them**, a third: 10:34Z written when the clock said
+   10:23Z. The gate caught that one immediately.
+
+Two things this adds to the 2026-09-04 entry. First, the failure is not "forgot
+to check the time" — I had run `date -u` earlier in both rounds and reused the
+value after the work drifted past it; that is why the rule is now same-call, not
+check-first. Second, the branch I skipped the gate on was the **filing PR for
+0763, the ticket about gates nothing runs.** See [[project-search-works-has-no-ci]]:
+in this repo a hand-run `make check` is the only backstop, so skipping it on a
+ticket branch has no second line of defence.
+
+Related: [[feedback-ticket-log-stamps-are-utc]] (the banner shows local +2),
+[[feedback-rerun-gate-after-own-fix]].

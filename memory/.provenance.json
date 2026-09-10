@@ -8562,6 +8562,51 @@
       "last_confirmed": "2026-09-10T13:43:31Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback-bare-gh-pr-merge-drops-close-claim": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-10T14:31:18Z",
+      "last_confirmed": "2026-09-10T14:31:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-sweep-for-cli-callers-must-cover-variable-invocations": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-10T14:31:18Z",
+      "last_confirmed": "2026-09-10T14:31:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference-erg-update-fetches-from-the-repos-own-origin": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-10T14:31:18Z",
+      "last_confirmed": "2026-09-10T14:31:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_he_rules_the_class_delegates_the_wording": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-10T14:31:18Z",
+      "last_confirmed": "2026-09-10T14:31:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_search_works_has_no_ci": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-10T14:31:18Z",
+      "last_confirmed": "2026-09-10T14:31:18Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }

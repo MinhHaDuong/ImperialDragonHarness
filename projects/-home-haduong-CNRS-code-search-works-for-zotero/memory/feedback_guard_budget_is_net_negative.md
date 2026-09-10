@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: ee1959c2-1d77-4da5-b7f5-45540c034f1b
-  modified: 2026-09-02T15:22:49.595Z
+  modified: 2026-09-10T08:29:21.946Z
 ---
 
 The author, 2026-09-02, interrupting a proposal to add a seventh guard to
@@ -32,6 +32,12 @@ mechanical enforcement.
 Establishing a catch record is the work, not an aside: a guard's own
 introduction commit and its immediate fixups do not count as catches. Look
 for later commits that the guard forced.
+
+Facing a duplicate specifically, the choice is delete it or hold it exactly with
+a test, and the second costs a guard forever — see
+[[feedback_he_rules_the_class_delegates_the_wording]] for the case where delete
+won, and for the sharper reason: the duplicated layer was one the author had
+deliberately delegated.
 
 Related: [[feedback_guard_the_silent_failure_first]],
 [[feedback_the_tickets_own_test_needs_a_control]].
