@@ -209,8 +209,9 @@ files, 4.2 GB.
 ### Design
 
 The measurable event is a **working** session opening a memory body — the only
-thing residency buys, since recall relevance is decided by each body's own
-`description:`. Four arms, so that a number in the one under test can be read:
+thing residency buys, since recall relevance is supposed to be decided by each
+body's own `description:` — a premise §9 then tested and refuted. Four arms, so
+that a number in the one under test can be read:
 
 | arm | what it is | role |
 |---|---|---|
@@ -286,8 +287,8 @@ Neither of the two shapes proposed before the measurement is right.
   has it in embryo: `## Key insights` above `## Entries`, with `/dream`'s
   promotion pass to fill it. The measurement names what belongs in the resident
   layer — the entries that actually get opened — and that set is small enough
-  to fit an index a fraction of today's size. The rest stays reachable by
-  recall, at zero resident cost.
+  to fit an index a fraction of today's size. The rest would have to stay
+  reachable — and §9 shows that is a thing to build, not a thing to assume.
 
 Item 1 of §6 therefore stands but is no longer the binding constraint: the
 ceiling matters less than *which* entries sit under it, and that is now
@@ -348,3 +349,64 @@ Two findings worth keeping from the measurement even so:
 - **The type prefix is not fat.** It is what makes the path reconstructible from
   the index line, and it is the key for the per-type byte partitioning §2
   recommends. Dropping it saves 11% and costs the ability to find the file.
+
+## 9. Correction: there is no recall channel here, so the index is the only door
+
+Everything above §8 rests on a premise taken from the platform's own memory
+instructions — that a body's `description:` frontmatter is what decides recall
+relevance, and that an entry dropped from the index therefore stays reachable.
+That premise was never measured. It is false on this runtime.
+
+**Test.** Two probes over all 5 753 traces. The first took a distinctive
+mid-body sentence from each of 25 bodies; the second took the `description:`
+line itself from 40 bodies, since a channel injecting only the summary would be
+invisible to the first. Each hit was classified by where it sat in the record.
+
+**Positive control fires**: 32 of the 40 description lines appear somewhere in
+the traces, so the probe can see the text it is looking for.
+
+**Result**, description probe:
+
+```
+found somewhere                    32 / 40      <- the probe works
+  in a tool_result (a file read)      113
+  anywhere else                        24
+     20  assistant [Write]   the agent writing the body
+      2  attachment          the file re-attached after a write
+      2  assistant [Bash]    the text inside a command
+```
+
+The mid-body probe gives the same shape: 51 reads, 11 writes, 2 incidental.
+**Not one injection, in either probe, across 5 753 sessions.** No memory body,
+and no `description:` line, has ever arrived in a session without the session
+opening the file itself.
+
+### What this changes
+
+- **Demotion is not deletion of a file, but here it is deletion of reach.** The
+  body survives on disk with its frontmatter intact; nothing would ever surface
+  it again. §7's closing sentence assumed otherwise and has been corrected.
+- **The wiki shape is worse than §1 allowed.** Traversal needs an entry point,
+  and entry points were to come from recall. With no recall, a linked graph of
+  900 bodies has exactly one door — the resident index — and removing the index
+  closes it.
+- **The two-level shape still works, but the second level must be an explicit
+  file, not a hope.** One resident line naming the full index —
+  `full index: memory/INDEX.md — open it when you half-remember a lesson` —
+  costs about 60 bytes and keeps all 900 reachable by a deterministic act. That
+  is the difference between demoting an entry and losing it.
+- **`description:` is currently dead weight in every body.** It is written by
+  `/dream` and by every memory write, and nothing reads it. It costs nothing
+  resident, so this is not urgent; but any design that leans on it — including
+  the MaRS-style ranking in §6, which uses frequency of *retrieval* — has no
+  input signal on this runtime.
+
+### Why this was not caught earlier
+
+The claim came from the runtime's own instructions, which describe recall in the
+present tense, and it was repeated in the census instrument's docstring and in
+this document without anyone asking whether the mechanism fires here. It is the
+failure this repo's own key insight names — a check whose all-clear cannot be
+told from "I could not look" — applied to a premise rather than to a probe. The
+discriminator cost two greps and should have run before §6 was written, not
+after §8.

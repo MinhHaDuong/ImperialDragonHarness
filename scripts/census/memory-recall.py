@@ -2,7 +2,8 @@
 """Does the resident memory index earn its bytes?
 
 The index sits in the system prompt of every session of its project. Recall
-relevance is decided by each body's own `description:`, so the one thing
+relevance is *supposed* to be decided by each body's own `description:` (measured
+false on this runtime, 2026-09-10: no injection in 5 753 traces), so the one thing
 residency buys is *unprompted awareness* — a session opening a memory body
 because the index told it the body exists, when nothing in the conversation
 would have surfaced it.
