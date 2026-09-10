@@ -58,16 +58,10 @@ branch + PR — STATE, tickets, config, memory included.
 
 **The memory carve-out is inert during a worktree session.** The path guard
 exempts `projects/*/memory/**`, but a second, platform-native write guard fires
-on the same path with no exemption and its own message. So there is one answer,
-not two: inside the worktree, memory goes to the worktree copy and lands via the
-branch's PR; once the session has left the worktree, it writes the primary path
-directly, which is what the wrap-up does.
-
-**Corollary: save memory after leaving the worktree, not before.** A wrap-up
-that writes memory before removing the worktree loses it silently — a denied
-write reads like "memory is unavailable here", the lesson goes into the final
-message, and once the worktree is gone nothing distinguishes a lost lesson from
-a session that had none.
+on the same path with no exemption. Write memory only after leaving the
+worktree — a denied write reads like "memory is unavailable here", not "wrong
+moment," so the lesson can silently end up in the final message instead. Full
+recovery procedure, including the background-session case, is `/roar` step 6.
 
 For source and data: if `git branch --show-current` is `main`, stop and switch
 to a branch. Exception: manuscript prose in paper repos, see `git.md`

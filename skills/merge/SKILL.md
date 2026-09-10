@@ -51,6 +51,46 @@ appear to re-open closed tickets and revert prose. That is not WIP — run
 
 Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
+## Before merging
+
+Two prerequisites the caller checks before invoking this script. (Moved here
+from `rules/git.md`, which is resident in every session: a recovery procedure
+belongs with the command it recovers.)
+
+- **Merge method drifts per repo.** This harness repo disables squash;
+  `MERGE_FLAGS` above hardcodes `--merge`. A repo whose branch protection is
+  squash-only rejects that flag — a method recorded in a note goes stale, so
+  read the repo's actual merge settings rather than trusting a cached one.
+  Trust the merge attempt over the flag: branch protection can bounce a method
+  the forge API still advertises. On a squash-merged branch, `git cherry`
+  shows `-` for every commit but `is-ancestor` is false — that ancestry check
+  is `/roar`'s pre-check, and it is what confirms a squash-merge through the
+  forge before a branch gets deleted.
+- **After an APPROVED `/gaze`, sync before merging.** `/gaze` may have pushed
+  fixes from its own review worktree since the caller last fetched:
+  `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
+  rebase silently drops the verify fix.
+
+## Merge conflict recovery
+
+- **Multi-PR wave on one file: verify the union survived, don't trust a clean
+  exit.** Fetch before each sibling merge. A stale `origin/main` ref produces
+  a clean-looking auto-merge that silently drops a sibling's non-conflicting
+  addition — no conflict, exit 0, wrong content. "Auto-merging `<file>`" plus
+  a clean exit is not proof the union survived: grep the merged file for
+  every sibling's marker before committing. On a drop, don't hand-patch —
+  restore the known-good base by writing `git show origin/main:<file>` to the
+  path (never `git checkout <ref> -- <path>`, which overwrites the index),
+  re-layer only this PR's change, re-verify.
+- **Conflict inside a *generated* file: regenerate, don't hand-merge.**
+  Hand-merging rows mixes one side's text with the other's measurements, so
+  resolve the *source*. The subtler trap is the reverse: regenerating from a
+  stale input reverts the other branch's data fix while producing a clean
+  merge and a green suite, because a generated file carries no marker of
+  which input produced it. Take `origin/main`'s copy as the base, regenerate
+  to a scratch path, and grep the one value the other branch changed.
+  Reproduces → commit. Reverts → your input is stale.
+
 ## When the script bounces
 
 `erg-pr-merge` bounces in sequence, and each bounce has its own retry — never
