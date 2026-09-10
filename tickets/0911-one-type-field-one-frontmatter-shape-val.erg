@@ -1,0 +1,73 @@
+%erg 0.1
+Title: One type field, one frontmatter shape, valid_while and supersedes
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T15:50Z claude created
+
+--- body ---
+
+## Context
+
+Ranking reads frontmatter, and the frontmatter is not uniform enough to rank
+on: 47 bodies carry no type field, and two shapes are in use (`type:` at top
+level versus `metadata.type`). Separately, nothing declares when a memory stops
+being true — the TTL table meant to handle it gives `feedback`, 74% of the
+corpus, no threshold at all.
+
+The replacement is a declared, executable condition. A memory says what it is
+true *while*: a path exists, a pattern is still present in a named file, a tool
+is below a version. Expiry only unranks, so it is **reversible** — a tool that
+regresses revives its memory at the next pass with no human action.
+
+Design reference: defects 3 and 4, principle P3, ticket T3 in `docs/2026-09-10-dragon-memory-design.md`.
+
+## Relevant files
+
+- `skills/memory/SKILL.md` — the write path and the TTL table this replaces
+- `skills/dream/provenance.py` — where the scorer will call the resolver
+- `projects/*/memory/*.md` — the 47 untyped bodies and the two shapes
+
+## Actions
+
+1. Normalise: one type field, one frontmatter shape, every body typed.
+2. Define `valid_while` as a **closed** grammar — path exists, pattern present
+   in a named file, tool below a version — and reject anything else. Prose in
+   this field degrades into a comment nothing can check.
+3. Check it at both ends, failing differently:
+   - **At writing, fail closed.** The predicate must parse, evaluate, and
+     evaluate *true*. A memory born expired can never rank, so it is an error,
+     not a record. The author is present and can fix it.
+   - **At scoring, fail open and report.** An unevaluable predicate leaves the
+     entry valid and raises a lint. Nobody is present, and a silent expiry
+     loses a lesson for a reason no one will ever see.
+4. Add `supersedes`, naming a slug; the generator refuses to rank both.
+
+Do not harmonise the two failure modes. Fail closed where a human can fix it,
+fail open where none can.
+
+## Test
+
+Red first, one per rule: a malformed predicate rejected at write; a
+false-at-write predicate rejected; an unevaluable predicate at scoring leaving
+the entry ranked *and* producing a lint line; a false predicate unranking; the
+same predicate becoming true again and the entry returning.
+
+## Verification
+
+- [ ] No body lacks a type; one shape survives
+- [ ] The grammar rejects a prose condition
+- [ ] A revived entry reappears with no human action
+
+## Invariants
+
+- Expiry never deletes. It unranks.
+- The scorer stays deterministic: no model judges validity.
+
+## Exit criteria
+
+- [ ] 47 untyped bodies typed; one frontmatter shape
+- [ ] `valid_while` accepts the closed grammar and nothing else
+- [ ] Write-time rejection and scoring-time valid-and-report, both tested
+- [ ] `supersedes` prevents both entries ranking

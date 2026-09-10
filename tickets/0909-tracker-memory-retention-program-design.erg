@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Tracker: memory retention program (design v3)
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T15:50Z claude created
+
+--- body ---
+
+## Context
+
+The memory design reached v3 after three external reviews and a working session
+with the author. `docs/2026-09-10-dragon-memory-design.md` is the settled architecture; this ticket tracks
+turning it into code. It stays open until every child is merged and the
+integration review in `/roar` step 8 has run.
+
+The architecture in one paragraph: the store is the bodies, one file per memory
+under git; `MEMORY.md` is generated as the top N by score and never
+hand-edited; nothing is ever deleted, and the only removal from a project
+directory is promotion into the harness tier; a memory declares what it is true
+*while*, and expiry only unranks, so it is reversible.
+
+## Children
+
+- `0908` — promotion marks the project copy dead in the form the walker reads
+- `0910` — generate the memory index as the top N of its directory
+- `0911` — one type field, one frontmatter shape, `valid_while` and `supersedes`
+- `0912` — consolidation pass: pool, dedupe, promote, tombstone
+
+Only `0912` has a real prerequisite (`0908`). The other three are independent.
+
+## Deliberately not children
+
+A decay pass, a corpus cap, an orphan collector, and a full-catalogue file. §5
+of the design removes the need for all four; they are listed here so a later
+reader does not re-derive them as gaps.
+
+## Exit criteria
+
+- [ ] All four children merged
+- [ ] Child diffs re-read together, not only individually
+- [ ] `make check` passes on the union
+- [ ] The design's §6 matches what shipped, or the design is amended to match

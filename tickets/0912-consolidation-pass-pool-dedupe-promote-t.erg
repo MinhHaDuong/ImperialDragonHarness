@@ -1,0 +1,81 @@
+%erg 0.1
+Title: Consolidation pass: pool, dedupe, promote, tombstone
+Created: 2026-09-10
+Author: claude
+Blocked-by: 0908
+
+--- log ---
+2026-09-10T15:50Z claude created
+
+--- body ---
+
+## Context
+
+Promotion currently identifies entries by filename equality, which yields one
+candidate. A lexical pass over slug words finds roughly 43 candidate pairs of
+which 17–21 are genuine — so the mechanism is not short of material, it is
+short of a way to recognise it. About half of any lexical pass is noise, which
+is why confirmation is part of this ticket rather than an afterthought.
+
+Design reference: defect 2, "What the model decides, and what it must not", and
+ticket T4 in `docs/2026-09-10-dragon-memory-design.md`.
+
+## Relevant files
+
+- `skills/dream/SKILL.md` — the consolidation pass
+- `skills/dream/provenance.py` — promotion candidacy and the live-body walker
+
+## Actions
+
+1. Pool the project directories **and the harness tier**. The harness is a
+   project like any other here: it has direct writes, it is compared against,
+   and it takes part in the pairs the pass finds. The one asymmetry is a
+   direction — promotion moves up into it and never back out — which settles in
+   advance what happens when a pair straddles the tiers: the harness copy
+   survives, the project copy is tombstoned, nothing new is created.
+2. Group candidates mechanically. Grouping is not the judgment step.
+3. Let a model decide whether a group is one lesson and write the merged body,
+   naming what it supersedes. **It decides nothing about retention** — not what
+   ranks, not what expires, not what is still true. Those stay deterministic,
+   which is what keeps the index reproducible from the store alone.
+4. Route merges into the harness tier through review. It is the only operation
+   that replaces text with different text, it reaches every session, and it is
+   where both silent loss and poisoning would enter.
+5. Record the model's identity and its prompt in the run's provenance, beside
+   the embedding model's, so a later reader can tell why a merge looks as it
+   does.
+6. Report near-miss pairs — similar enough to suspect, different enough not to
+   merge — as contradiction candidates. The similarity is already computed.
+7. Record the body count and the pass's own wall-clock duration. Growth gets an
+   **alarm, not a cap**: a file-count ceiling would be a deletion mechanism, and
+   what actually degrades is this pass, not the corpus.
+8. Trigger `0910`'s regeneration when the pass changes a directory.
+
+## Test
+
+Red first: a known-genuine pair is surfaced; a known lexical false positive
+(`dropna_before_merge` / `rebase_before_merge` is one) is not merged; a pair
+straddling project and harness tiers resolves by tombstoning the project copy.
+
+## Verification
+
+- [ ] Candidates rise from 1 to the 17–21 genuine pairs
+- [ ] No merge applies without confirmation
+- [ ] Promoted slugs leave no body counted live (depends on `0908`)
+- [ ] The run's provenance carries model identity, prompt, body count, duration
+
+## Invariants
+
+- Nothing is deleted. Merged originals are tombstoned and remain readable, which
+  is what makes a wrong merge recoverable rather than fatal.
+- The harness tier is never a promotion *destination for removal*: entries move
+  up into it and stop.
+
+## Exit criteria
+
+- [ ] Genuine cross-project pairs surfaced, lexical false positives rejected
+      before any merge
+- [ ] The harness tier participates on the same footing, promotion one-way
+- [ ] Promotion tombstones the project copies
+- [ ] Near-miss pairs reported as contradiction candidates
+- [ ] Corpus size and pass duration recorded; no file-count cap introduced

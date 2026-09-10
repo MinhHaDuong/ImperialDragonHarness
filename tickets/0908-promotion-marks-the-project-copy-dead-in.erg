@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Promotion marks the project copy dead in the form the walker reads
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T15:50Z claude created
+
+--- body ---
+
+## Context
+
+Promotion is meant to leave a dead marker behind in the project directory. The
+skill writes a stub headed `# PROMOTED`; the walker that decides what is live
+recognises only `# DELETED`. Five stubs are therefore still counted as live
+bodies, and they inflate the per-slug frequency count that decides the next
+promotion — so the defect feeds itself.
+
+Design reference: defect 1 in `docs/2026-09-10-dragon-memory-design.md`.
+
+## Relevant files
+
+- `skills/dream/provenance.py` — the `live_bodies` walker; the head check is at
+  the `startswith("# DELETED")` line
+- `skills/dream/SKILL.md` — the promotion step that writes the `# PROMOTED` stub
+
+## Actions
+
+1. Choose one marker vocabulary. Two spellings for one state is the defect;
+   picking either and applying it everywhere is the fix.
+2. Make writer and reader agree, in the same commit.
+3. Migrate the five existing `# PROMOTED` stubs to the surviving form.
+
+## Test
+
+Red first: assert that a body whose head carries the promotion marker is not
+counted live. It fails today for all five.
+
+## Verification
+
+- [ ] `grep -rl '^# PROMOTED' projects/*/memory/*.md` returns nothing, or the
+      walker counts what it returns as dead
+- [ ] The live-body count drops by exactly five
+- [ ] A promotion run leaves no body counted live for the promoted slug
+
+## Invariants
+
+- No body is deleted. A stub is a marker, not a removal.
+- The provenance coverage gate stays shut.
+
+## Exit criteria
+
+- [ ] One marker value, not two, across writer and reader
+- [ ] The five stubs are counted dead
+- [ ] A test asserts a promoted entry has no body counted live
