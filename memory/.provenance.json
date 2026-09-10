@@ -8607,6 +8607,24 @@
       "last_confirmed": "2026-09-10T14:31:18Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_blocked_compound_command_skips_every_line": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T15:48:11Z",
+      "last_confirmed": "2026-09-10T15:48:11Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_content_match_recovery_needs_diff_verification": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T15:48:11Z",
+      "last_confirmed": "2026-09-10T15:48:11Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
