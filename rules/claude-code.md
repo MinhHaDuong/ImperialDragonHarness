@@ -49,8 +49,9 @@ conversation's language, then answer:
   the session's. Rightsize by defining the agent rather than by moving session
   effort. `Workflow`'s `agent()` takes `opts.effort`
   (`low|medium|high|xhigh|max`) per call, the only per-call lever. On models
-  with a pinned default effort (Opus 4.7, 4.8, Fable 5) the frontmatter key was
-  ignored before 2.1.267. Mechanics and the measurement: memory
+  with a pinned default effort (Opus 4.7, 4.8, Fable 5) the 2.1.267 changelog
+  reports the key ignored before that release; untested here, so treat it as
+  unreliable there. Mechanics and the measurement: memory
   `feedback_subagent_model_effort_levers`.
 - **`team-lead` delegation needs a nesting depth of at least 2.** A team lead
   mobilizes its own executors, so a runtime that forbids nested spawning
