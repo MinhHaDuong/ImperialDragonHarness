@@ -132,7 +132,10 @@ default branch — there are no remote branches nor merge requests to inspect.
    **In a worktree session, this write is refused — defer it until after step 9.** The `projects/*/memory/**` carve-out is documented, and the harness's own path guard does exempt it, but a separate platform-native Edit/Write guard tied to the session's tracked worktree also fires and has no memory exemption (`rules/workflow.md` § Worktree paths). Reflect and decide *what* to save here; perform the write once step 9 has returned the session to the primary checkout. The failure is silent in the losing direction: a denied write reads like "memory is unavailable in this context", the natural response is to put the lesson in the final message instead, and after step 9 removes the worktree nothing distinguishes a lost lesson from a session that had none (ticket 0880, observed 2026-09-08 — three entries survived only because the write was retried after the exit, which nothing had asked for).
 
    **In a BACKGROUND session, step 9 does not unblock it either — use a fresh
-   worktree and its own PR.** Leaving the worktree returns the session to the
+   worktree and its own PR.** You do not need to know your own mode to apply
+   this: the discriminator is the refusal itself. If the post-step-9 write into
+   the primary checkout is denied for *isolation* rather than for the worktree
+   path, you are in this case. Leaving the worktree returns the session to the
    shared checkout, where a second guard (background-job isolation) refuses the
    very write this step just deferred, with its own unrelated message: "this
    background session hasn't isolated its changes yet". Following the paragraph
@@ -190,14 +193,13 @@ default branch — there are no remote branches nor merge requests to inspect.
     git fetch --prune
     cur=$(git branch --show-current)
     # every branch checked out in ANY worktree — a parallel session may be standing on one
-    git worktree list --porcelain | awk '/^branch /{sub("refs/heads/","",$2); print $2}' > /tmp/roar-checked-out.$$
+    checked=$(git worktree list --porcelain | awk '/^branch /{sub("refs/heads/","",$2); print $2}')
     for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
       [ "$b" = main ] && continue     # main is always an ancestor; nothing protects it when HEAD is detached
       [ "$b" = "$cur" ] && continue   # never delete the branch you are standing on
-      grep -qx "$b" /tmp/roar-checked-out.$$ && continue   # checked out elsewhere; not yours to delete
+      printf '%s\n' "$checked" | grep -qx "$b" && continue   # checked out elsewhere; not yours to delete
       git merge-base --is-ancestor "$b" origin/main && git branch -D "$b"
     done
-    rm -f /tmp/roar-checked-out.$$
     ```
 
     Where the forge does not delete merged branches itself (per-repo setting —
@@ -222,11 +224,13 @@ default branch — there are no remote branches nor merge requests to inspect.
     merged-into-HEAD, not merged-into-`origin/main`, so it silently refuses
     branches the probe has just proven contained), and the `grep -qx` worktree
     guard (a branch another session has checked out is an ancestor of
-    `origin/main` like any other, and only git's own refusal stands between the
-    sweep and a peer's branch — match on whole LINES, since `git worktree list`
-    emits one branch per line and a space-delimited membership test silently
-    never fires; that bug was written here on 2026-09-10 and caught only by
-    reading the output). The loops key on exit codes,
+    `origin/main` like any other; without the guard the `git branch -D` fails as
+    the FINAL command of its `&&` chain, so under `set -e` it aborts the whole
+    sweep and every branch after it in iteration order is never swept — git's
+    refusal is a backstop, not a guard. Match on whole LINES: `git worktree
+    list` emits one branch per line, and a space-delimited membership test
+    silently never fires — that bug was written here on 2026-09-10 and caught
+    only by reading the output, not the exit code). The loops key on exit codes,
     not parsed output, which is what keeps them correct under an output-framing
     hook. Incident detail: memory `reference_branch_cleanup_incidents`,
     ticket 0242.
