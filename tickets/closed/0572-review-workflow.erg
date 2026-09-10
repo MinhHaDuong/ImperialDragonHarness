@@ -2,6 +2,7 @@
 Title: Rules drift by accumulation: trim workflow.md, split Claude Code idiosyncrasies from the core, fix the review cadence
 Created: 2026-08-22
 Author: Minh Ha-Duong
+Closed: Author accepted cuts with three targeted restorations; authorized merge and closure
 
 --- log ---
 2026-08-22T09:27Z Minh Ha-Duong created
@@ -14,6 +15,8 @@ Author: Minh Ha-Duong
 2026-09-09T18:55Z claude note Three of the seven situational bodies were file-triggered, not task-triggered: systemd units, knowledge hints and manuscript builds now carry paths globs. Resident 14 960 to 11 428 tk
 2026-09-09T18:59Z claude note The four task-triggered bodies left the resident set: pdf-finishing, prose/cutting and submission-events became skills, edm.md got file globs plus pointers from the two Zotero skills. Resident 11 428 to 8 823 tk
 2026-09-09T19:07Z claude note Author reading the trimmed workflow.md: ticket numbers are provenance, not rule. Nine bare references removed from the resident set and a ratchet added
+2026-09-10T05:44Z codex note Author accepted all cuts except three targeted restorations: conditional author-input questions, tested-scope limit on null results, and global resident no-avian identity. Explicitly authorized application, merge and ticket closure.
+2026-09-10T05:44Z Codex closed — Author accepted cuts with three targeted restorations; authorized merge and closure
 --- body ---
 ## Context
 
@@ -80,7 +83,7 @@ canaries it can see. Expected: the unscoped one only.
   it asserted the hook did not leak bodies and passed for months while the
   runtime loaded them — an all-clear indistinguishable from "I could not look".
 
-## Still open, ranked
+## Historical remaining work after the first pass
 
 1. Trim `workflow.md` (7 918 tk) and `git.md` (6 053 tk) — steps 1, 3, 4 below.
    Highest yield, needs the author's judgment on every cut.
@@ -150,13 +153,21 @@ dropped; four incident narratives were, and this is their record.
   drained cleanly at 94 merged — thirteen sessions each sweeping, not a repo
   type.
 
-## Not done — what the exit criteria still need
+## Author acceptance, 2026-09-10
 
-Step 5 (a review mechanism that catches growth, not only age) is met by
-`tests/test_rules_resident_budget.py`. The remaining exit criterion is the
-author's: read the trimmed `workflow.md` and accept or reverse the cuts. Also
-still open: the seven situation-scoped bodies (~6 300 tk) that no path glob can
-express, which need a directory the runtime does not auto-load.
+The author accepted the slimming pass with exactly three targeted restorations,
+now applied in resident `rules/workflow.md`:
+
+- Ask the grouped questions only when work needs author input.
+- A null result excludes only the tested path/scope, not every possible cause.
+- The Dragon is not a bird: no avian analogies globally, conversations included.
+
+All other cuts are accepted. The situation-scoped bodies were already scoped or
+moved to skills in the merged pass; the earlier open-work lists above are history.
+The resident-budget gate implements step 5 without raising its 36,000-character
+cap. The real-machine loading canary remains unverified; author acceptance does
+not constitute evidence that it was run. Remaining adapter generalization belongs
+to 0800, as recorded in the trimming pass.
 
 ## Relevant files
 
@@ -176,10 +187,10 @@ express, which need a directory the runtime does not auto-load.
 
 ## Verification
 
-- [ ] `rules/workflow.md` shorter than before, with a closing point that is not cosmetic
-- [ ] No bullet in `rules/workflow.md` contradicts another rule file
-- [ ] Claude Code idiosyncrasies live in a clearly separated file or section
-- [ ] The review mechanism fires on a fixture that grew without a review pass
+- [x] `rules/workflow.md` shorter than before, with a closing point that is not cosmetic
+- [x] No bullet in `rules/workflow.md` contradicts another rule file
+- [x] Claude Code idiosyncrasies live in a clearly separated file or section
+- [x] The review mechanism fires on a fixture that grew without a review pass
 
 ## Invariants
 
@@ -188,5 +199,5 @@ express, which need a directory the runtime does not auto-load.
 
 ## Exit criteria
 
-- [ ] Steps 1 to 5 done and verified as above
-- [ ] The author has read the trimmed `workflow.md` and accepted the cuts
+- [x] Steps 1 to 5 done and verified as above
+- [x] The author has read the trimmed `workflow.md` and accepted the cuts
