@@ -35,6 +35,26 @@ sujet. Elle portait une relecture, ce qui a suffi pour autoriser la fusion.
 Le verdict était correct. La mesure ne l'était pas : le hook a laissé passer
 une fusion qu'il n'avait pas contrôlée, en croyant l'avoir contrôlée.
 
+## Le contrôle positif, tiré par accident une heure plus tard
+
+En tentant de fusionner la PR qui fiche ce ticket — numéro 861, sur le dépôt du
+harnais — le même hook a **refusé**, avec « 0 relecture trouvée, 2 requises ».
+Il avait jugé la PR 861 du projet consommateur : « housekeeping sweep »,
+fusionnée en juillet, zéro relecture.
+
+La paire est donc complète, et c'est l'expérience même que la section Test
+réclame plus bas :
+
+| Numéro visé sur le harnais | PR réellement jugée (projet consommateur) | Relectures | Verdict |
+|---|---|---|---|
+| 859 | « Vannes debrief », fusionnée en juin | 1 | AUTORISÉ |
+| 861 | « housekeeping sweep », fusionnée en juillet | 0 | REFUSÉ |
+
+Même défaut, deux verdicts opposés, aucun des deux prononcé sur l'objet visé.
+Le premier a laissé passer sans rien contrôler ; le second bloque une PR
+légitime — celle qui fiche ce ticket. Le bug empêche donc son propre
+signalement d'être fusionné par l'agent qui l'a trouvé.
+
 ## Pourquoi ça mérite un ticket ici plutôt qu'un correctif d'une ligne
 
 Le fichier défectueux vit aujourd'hui dans le projet consommateur, pas dans le
