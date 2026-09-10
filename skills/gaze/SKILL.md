@@ -54,8 +54,6 @@ merge** — the merge decision belongs to the caller (the human or the raid).
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
-- Convergence mode (`convergence.enabled`, default off) may shorten a *repeat* invocation
-  to the gate phase only — see § Convergence mode; it never relaxes the gate itself.
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
   invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
@@ -188,12 +186,6 @@ the word "round", and they never interact: the REROLL round-1/round-2 cap
 counts gaze's own internal fix-and-regate attempts *within* one invocation,
 while the round scoped here counts the Agent C reviews posted on the merge
 request *across* invocations.
-
-**Relation to Convergence mode.** Convergence mode (ticket 0315,
-§ Convergence mode, default off) decides at the caller layer whether a repeat
-`/gaze` re-runs its panel at all; round scoping decides what that re-run panel
-runs when convergence is **off** — with convergence on, the repeat is skipped
-entirely and scoping never applies. Its flag is unaffected here.
 
 **gaze does not compute the round.** It reads only whether a prior Agent C
 review exists — a boolean from the merge request's review history, enough to
@@ -517,21 +509,6 @@ On warn: post `/gaze: slow run` comment, continue. On escalate: stop, post
 `/gaze stopped:` with measured value. Escalate > warn. Check at phase boundaries
 only — except fork liveness, which a silent fork cannot self-check, so the
 caller monitors it (§ Fork execution contract).
-
-## Convergence mode (ticket 0315, measure-B pre-registration)
-
-An **opt-in** experimental flag for the phase-5 measure-B A/B (see
-`docs/trace-ab-2026-06.md`). It governs **caller-level** re-invocation of
-`/gaze` on a PR that already carries a completed full gaze round — not the
-internal round-1 REROLL re-entry branch (§ Branch on verdict), which is already
-gate-only and stays unchanged.
-
-When `convergence.enabled` is true (`skills/gaze/telemetry.yml`, env override
-`GAZE_CONVERGENCE_ENABLED`) **and** the PR already carries a completed full
-gaze round (a prior `/verify-gate verdict` comment from an earlier invocation),
-a repeat `/gaze` invocation runs **phase 6 (verify-gate) only** — no phases 2–5
-panel re-run. Default **off** = current practice, so live behaviour is
-unchanged until the B-arm week flips it on.
 
 ## `--force-approve`
 

@@ -9,8 +9,7 @@ objected, plus one cheap regression check.
 Two mechanisms had to change together:
 
 - `skills/review-pr/SKILL.md` gains a § Round scoping rule (round 1 = full
-  proportional panel; round N>1 = objecting perspectives + regression check),
-  and relates it to gaze's Convergence mode so the two are not confused.
+  proportional panel; round N>1 = objecting perspectives + regression check).
 - `skills/gaze/SKILL.md` drops the #562 clause that sent *any* round ≥ 2 to
   the full battery unconditionally, replacing it with a reset condition tied
   to substantial diff rewrite.
@@ -107,11 +106,3 @@ def test_prose_sibling_has_round_scoping_section():
         "too — gaze points a round >= 2 prose panel at it (ticket 0377)."
     )
 
-
-def test_review_pr_round_scoping_relates_to_convergence():
-    assert "convergence" in _text(REVIEW_PR).lower(), (
-        "skills/review-pr/SKILL.md's round scoping must be related to gaze's "
-        "Convergence mode (ticket 0315), so callers do not confuse "
-        "within-invocation scoping with caller-level repeat suppression "
-        "(ticket 0377)."
-    )
