@@ -14,7 +14,9 @@
       ],
       "first_seen": "2026-08-14T18:41:12Z",
       "last_confirmed": "2026-08-19T10:18:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-08-18"
     },
     "feedback-arbre-partage-pendant-une-revue": {
       "projects": [
@@ -30,7 +32,9 @@
       ],
       "first_seen": "2026-08-19T10:18:26Z",
       "last_confirmed": "2026-08-19T10:18:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-18"
     },
     "feedback-bibcnrs-ezticket-pas-de-cookies-txt": {
       "projects": [
@@ -54,7 +58,9 @@
       ],
       "first_seen": "2026-08-14T18:41:12Z",
       "last_confirmed": "2026-08-19T10:18:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-18"
     },
     "feedback-clearpage-flottant-saute-le-titre": {
       "projects": [
@@ -70,7 +76,9 @@
       ],
       "first_seen": "2026-08-14T18:41:12Z",
       "last_confirmed": "2026-08-19T10:18:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
     },
     "feedback-couper-deplace-le-domicile-de-l-obscurite": {
       "projects": [
@@ -126,7 +134,9 @@
       ],
       "first_seen": "2026-08-14T09:56:50Z",
       "last_confirmed": "2026-08-19T10:18:27Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-13"
     },
     "feedback-iconographie-changeur-stereotype": {
       "projects": [
@@ -150,7 +160,9 @@
       ],
       "first_seen": "2026-08-19T10:18:27Z",
       "last_confirmed": "2026-08-19T10:18:27Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-18"
     },
     "feedback-ligne-sans-clause-disculpatoire": {
       "projects": [
@@ -158,7 +170,9 @@
       ],
       "first_seen": "2026-08-14T09:56:50Z",
       "last_confirmed": "2026-08-19T10:18:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 7,
+      "last_accessed": "2026-09-06"
     },
     "feedback-merge-verifier-le-diff-pas-la-sortie": {
       "projects": [
@@ -174,7 +188,9 @@
       ],
       "first_seen": "2026-08-14T09:56:51Z",
       "last_confirmed": "2026-08-19T10:18:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-13"
     },
     "feedback-no-version-suffix-filenames": {
       "projects": [
@@ -198,7 +214,9 @@
       ],
       "first_seen": "2026-08-19T10:18:28Z",
       "last_confirmed": "2026-08-19T10:18:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-18"
     },
     "feedback-piste-secondaire-lue-sur-piece": {
       "projects": [
@@ -206,7 +224,9 @@
       ],
       "first_seen": "2026-08-14T09:56:51Z",
       "last_confirmed": "2026-08-19T10:18:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
     },
     "feedback-purge-bib-partagee-casse-les-freres": {
       "projects": [
@@ -238,7 +258,9 @@
       ],
       "first_seen": "2026-08-14T18:41:13Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-08-18"
     },
     "feedback-rtk-sortie-git-non-fiable": {
       "projects": [
@@ -246,7 +268,9 @@
       ],
       "first_seen": "2026-08-14T18:41:13Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 13,
+      "last_accessed": "2026-09-06"
     },
     "feedback-sentinelle-roar-partagee": {
       "projects": [
@@ -254,7 +278,9 @@
       ],
       "first_seen": "2026-08-19T10:18:29Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-18"
     },
     "feedback-sync-ignore-les-mr-ouvertes": {
       "projects": [
@@ -278,7 +304,9 @@
       ],
       "first_seen": "2026-08-19T10:18:29Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-19"
     },
     "feedback-worktree-partage-reattribue-en-cours": {
       "projects": [
@@ -294,7 +322,9 @@
       ],
       "first_seen": "2026-08-14T09:56:52Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-17"
     },
     "feedback-zotero-import-force-le-role-auteur": {
       "projects": [
@@ -302,7 +332,9 @@
       ],
       "first_seen": "2026-08-19T10:18:29Z",
       "last_confirmed": "2026-08-19T10:18:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
     },
     "feedback_a4_paper": {
       "projects": [
@@ -326,7 +358,9 @@
       ],
       "first_seen": "2026-07-24T20:24:08Z",
       "last_confirmed": "2026-09-06T22:39:40Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-14"
     },
     "feedback_adversarial_pair_verification": {
       "projects": [
@@ -334,7 +368,9 @@
       ],
       "first_seen": "2026-08-11T09:38:17Z",
       "last_confirmed": "2026-08-11T09:38:17Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-11"
     },
     "feedback_agent_prompt_worktree_rooted_paths": {
       "projects": [
@@ -350,7 +386,9 @@
       ],
       "first_seen": "2026-07-13T10:47:16Z",
       "last_confirmed": "2026-09-06T22:39:40Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 39,
+      "last_accessed": "2026-07-14"
     },
     "feedback_agent_timeout_refactor": {
       "projects": [
@@ -366,7 +404,9 @@
       ],
       "first_seen": "2026-06-05T19:24:53Z",
       "last_confirmed": "2026-09-06T22:39:40Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-14"
     },
     "feedback_aitells_scope_manuscript_vs_crossdoc": {
       "projects": [
@@ -382,7 +422,9 @@
       ],
       "first_seen": "2026-07-24T20:24:08Z",
       "last_confirmed": "2026-09-06T22:39:40Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-14"
     },
     "feedback_analytical_null_overlay": {
       "projects": [
@@ -438,7 +480,9 @@
       ],
       "first_seen": "2026-07-10T21:05:24Z",
       "last_confirmed": "2026-07-29T16:46:14Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
     },
     "feedback_autodiscovery_class_guard": {
       "projects": [
@@ -510,7 +554,9 @@
       ],
       "first_seen": "2026-07-24T20:24:08Z",
       "last_confirmed": "2026-09-06T22:39:41Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-15"
     },
     "feedback_batch_decisions_run_to_end": {
       "projects": [
@@ -518,7 +564,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:41Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "feedback_beamer_plain_frame_sizing": {
       "projects": [
@@ -550,7 +598,9 @@
       ],
       "first_seen": "2026-06-16T10:22:31Z",
       "last_confirmed": "2026-06-16T10:22:31Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 8,
+      "last_accessed": "2026-07-14"
     },
     "feedback_branch_before_edit": {
       "projects": [
@@ -582,7 +632,9 @@
       ],
       "first_seen": "2026-07-10T21:05:24Z",
       "last_confirmed": "2026-07-29T16:46:14Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_caps_force_pruning_not_compression": {
       "projects": [
@@ -646,7 +698,9 @@
       ],
       "first_seen": "2026-07-13T10:47:14Z",
       "last_confirmed": "2026-09-06T22:39:42Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-07-14"
     },
     "feedback_claude_md_is_thin_loader_idh": {
       "projects": [
@@ -654,7 +708,9 @@
       ],
       "first_seen": "2026-07-24T20:24:08Z",
       "last_confirmed": "2026-09-06T22:39:42Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 8,
+      "last_accessed": "2026-07-21"
     },
     "feedback_cleanroom_force_rebuild_test": {
       "projects": [
@@ -726,7 +782,9 @@
       ],
       "first_seen": "2026-07-13T10:47:17Z",
       "last_confirmed": "2026-09-06T22:39:43Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-07-14"
     },
     "feedback_cross_repo_ticket_in_owning_repo": {
       "projects": [
@@ -742,7 +800,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
     },
     "feedback_csv_writer_fieldnames": {
       "projects": [
@@ -814,7 +874,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-10"
     },
     "feedback_dont_pre_close_ticket_in_execution": {
       "projects": [
@@ -822,7 +884,9 @@
       ],
       "first_seen": "2026-07-13T10:47:17Z",
       "last_confirmed": "2026-09-06T22:39:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 10,
+      "last_accessed": "2026-07-11"
     },
     "feedback_draft_pr_blocks_merge": {
       "projects": [
@@ -830,7 +894,9 @@
       ],
       "first_seen": "2026-07-13T10:47:17Z",
       "last_confirmed": "2026-09-06T22:39:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-10"
     },
     "feedback_drain_stalled_green_prs": {
       "projects": [
@@ -902,7 +968,9 @@
       ],
       "first_seen": "2026-07-10T21:05:25Z",
       "last_confirmed": "2026-07-29T16:46:16Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 9,
+      "last_accessed": "2026-07-10"
     },
     "feedback_erg_close_archive_staging_order": {
       "projects": [
@@ -926,7 +994,9 @@
       ],
       "first_seen": "2026-06-16T10:22:30Z",
       "last_confirmed": "2026-06-16T10:22:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-12"
     },
     "feedback_erg_pr_merge_delete_branch_race": {
       "projects": [
@@ -934,7 +1004,9 @@
       ],
       "first_seen": "2026-06-05T19:24:53Z",
       "last_confirmed": "2026-09-06T22:39:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-07"
     },
     "feedback_erg_pr_merge_needs_close_claim": {
       "projects": [
@@ -942,7 +1014,9 @@
       ],
       "first_seen": "2026-07-13T10:47:17Z",
       "last_confirmed": "2026-09-06T22:39:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-18"
     },
     "feedback_erg_pr_merge_partial_success": {
       "projects": [
@@ -966,7 +1040,9 @@
       ],
       "first_seen": "2026-07-24T20:24:08Z",
       "last_confirmed": "2026-09-06T22:39:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
     },
     "feedback_erg_spec_headers_immutable": {
       "projects": [
@@ -982,7 +1058,9 @@
       ],
       "first_seen": "2026-06-05T19:24:53Z",
       "last_confirmed": "2026-09-06T22:39:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
     },
     "feedback_escalate_check_merge_after_note": {
       "projects": [
@@ -1038,7 +1116,9 @@
       ],
       "first_seen": "2026-07-28T21:03:25Z",
       "last_confirmed": "2026-07-28T21:03:25Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
     },
     "feedback_fable_second_opinion_prose_structure": {
       "projects": [
@@ -1078,7 +1158,9 @@
       ],
       "first_seen": "2026-07-10T21:05:25Z",
       "last_confirmed": "2026-07-29T16:46:18Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-18"
     },
     "feedback_filename_keyed_guards_collide_at_merge": {
       "projects": [
@@ -1102,7 +1184,9 @@
       ],
       "first_seen": "2026-07-29T16:46:18Z",
       "last_confirmed": "2026-07-29T16:46:18Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-22"
     },
     "feedback_fork_identity_confusion_and_unauthorized_commit": {
       "projects": [
@@ -1118,7 +1202,9 @@
       ],
       "first_seen": "2026-06-05T19:24:53Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-15"
     },
     "feedback_fp_unrecognized_not_hallucinated": {
       "projects": [
@@ -1142,7 +1228,9 @@
       ],
       "first_seen": "2026-07-10T21:05:25Z",
       "last_confirmed": "2026-07-29T16:46:18Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-09"
     },
     "feedback_gate_execute_on_all_scopers": {
       "projects": [
@@ -1150,7 +1238,9 @@
       ],
       "first_seen": "2026-07-10T21:05:25Z",
       "last_confirmed": "2026-07-29T16:46:18Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_gate_verify_branch_not_pr_body": {
       "projects": [
@@ -1158,7 +1248,9 @@
       ],
       "first_seen": "2026-07-22T08:57:56Z",
       "last_confirmed": "2026-07-29T16:46:18Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
     },
     "feedback_gaze_fork_dies_in_background_jobs": {
       "projects": [
@@ -1166,7 +1258,9 @@
       ],
       "first_seen": "2026-06-16T10:22:28Z",
       "last_confirmed": "2026-06-16T10:22:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-11"
     },
     "feedback_gaze_resolve_pr_number_before_invoking": {
       "projects": [
@@ -1174,7 +1268,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-15"
     },
     "feedback_gh_merge_worktree": {
       "projects": [
@@ -1270,7 +1366,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-14"
     },
     "feedback_guard_the_class_not_the_stale_value": {
       "projects": [
@@ -1294,7 +1392,9 @@
       ],
       "first_seen": "2026-06-16T10:22:29Z",
       "last_confirmed": "2026-06-16T10:22:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-12"
     },
     "feedback_hand_copied_pairs_need_bidirectional_guards": {
       "projects": [
@@ -1326,7 +1426,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-09-10"
     },
     "feedback_harness_is_the_deliverable": {
       "projects": [
@@ -1334,7 +1436,9 @@
       ],
       "first_seen": "2026-06-08T10:21:55Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-15"
     },
     "feedback_harness_not_here": {
       "projects": [
@@ -1342,7 +1446,9 @@
       ],
       "first_seen": "2026-07-29T16:46:19Z",
       "last_confirmed": "2026-07-29T16:46:19Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "feedback_hermetic_test_rebase_home_prefix": {
       "projects": [
@@ -1350,7 +1456,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:46Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
     },
     "feedback_het_register": {
       "projects": [
@@ -1358,7 +1466,9 @@
       ],
       "first_seen": "2026-07-10T21:05:26Z",
       "last_confirmed": "2026-07-29T16:46:19Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-08"
     },
     "feedback_hitl_decision_cite_evidence": {
       "projects": [
@@ -1374,7 +1484,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:47Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 18,
+      "last_accessed": "2026-07-15"
     },
     "feedback_host_file_writes": {
       "projects": [
@@ -1438,7 +1550,9 @@
       ],
       "first_seen": "2026-06-05T19:26:07Z",
       "last_confirmed": "2026-06-06T12:24:08Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-14"
     },
     "feedback_languages": {
       "projects": [
@@ -1486,7 +1600,9 @@
       ],
       "first_seen": "2026-07-22T08:57:57Z",
       "last_confirmed": "2026-07-29T16:46:21Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
     },
     "feedback_local_evidence_gate_for_pillaged_techniques": {
       "projects": [
@@ -1494,7 +1610,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:47Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-15"
     },
     "feedback_local_vs_cloud": {
       "projects": [
@@ -1566,7 +1684,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:47Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 10,
+      "last_accessed": "2026-09-10"
     },
     "feedback_merge_conflict_all_hunks": {
       "projects": [
@@ -1582,7 +1702,9 @@
       ],
       "first_seen": "2026-07-28T21:03:25Z",
       "last_confirmed": "2026-07-28T21:03:25Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-08"
     },
     "feedback_merge_gate_cannot_count_self_reviews": {
       "projects": [
@@ -1606,7 +1728,9 @@
       ],
       "first_seen": "2026-06-16T10:22:30Z",
       "last_confirmed": "2026-06-16T10:22:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
     },
     "feedback_merge_skill_main_lock": {
       "projects": [
@@ -1622,7 +1746,9 @@
       ],
       "first_seen": "2026-06-23T10:01:53Z",
       "last_confirmed": "2026-06-23T10:01:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-06-23"
     },
     "feedback_minimiser_la_demande_humaine_inevitable": {
       "projects": [
@@ -1758,7 +1884,9 @@
       ],
       "first_seen": "2026-07-10T21:05:26Z",
       "last_confirmed": "2026-07-29T16:46:22Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-15"
     },
     "feedback_no_md_in_md": {
       "projects": [
@@ -1798,7 +1926,9 @@
       ],
       "first_seen": "2026-07-29T16:46:22Z",
       "last_confirmed": "2026-07-29T16:46:22Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-22"
     },
     "feedback_no_ruff_ping_pong": {
       "projects": [
@@ -1886,7 +2016,9 @@
       ],
       "first_seen": "2026-07-29T16:46:23Z",
       "last_confirmed": "2026-07-29T16:46:23Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
     },
     "feedback_optimistic_concurrency_ticket_ids": {
       "projects": [
@@ -2030,7 +2162,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:48Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-07-14"
     },
     "feedback_pin_known_defect_not_xfail": {
       "projects": [
@@ -2062,7 +2196,9 @@
       ],
       "first_seen": "2026-07-24T20:24:09Z",
       "last_confirmed": "2026-09-06T22:39:48Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-14"
     },
     "feedback_pipeline_ux": {
       "projects": [
@@ -2126,7 +2262,9 @@
       ],
       "first_seen": "2026-06-08T10:21:55Z",
       "last_confirmed": "2026-09-06T22:39:48Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_propagate_notes_to_tickets": {
       "projects": [
@@ -2214,7 +2352,9 @@
       ],
       "first_seen": "2026-07-22T08:58:00Z",
       "last_confirmed": "2026-07-29T16:46:25Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_raid_worktree_rebase": {
       "projects": [
@@ -2238,7 +2378,9 @@
       ],
       "first_seen": "2026-07-10T21:05:28Z",
       "last_confirmed": "2026-07-29T16:46:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-10"
     },
     "feedback_read_which_target_the_error_names": {
       "projects": [
@@ -2270,7 +2412,9 @@
       ],
       "first_seen": "2026-06-05T19:26:08Z",
       "last_confirmed": "2026-06-06T12:24:09Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-14"
     },
     "feedback_red_test_the_guard_you_wrote": {
       "projects": [
@@ -2326,7 +2470,9 @@
       ],
       "first_seen": "2026-07-10T21:05:28Z",
       "last_confirmed": "2026-07-29T16:46:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "feedback_render_oracle_for_generated_markup": {
       "projects": [
@@ -2374,7 +2520,9 @@
       ],
       "first_seen": "2026-06-16T10:22:26Z",
       "last_confirmed": "2026-06-16T10:22:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-13"
     },
     "feedback_rightsize_agent_model_to_task": {
       "projects": [
@@ -2390,7 +2538,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:48Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-14"
     },
     "feedback_rr_intake_is_laborious": {
       "projects": [
@@ -2398,7 +2548,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-18"
     },
     "feedback_rtk_git_log_stale": {
       "projects": [
@@ -2406,7 +2558,9 @@
       ],
       "first_seen": "2026-06-16T10:22:29Z",
       "last_confirmed": "2026-06-16T10:22:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-11"
     },
     "feedback_rtk_log_hides_merge_commits": {
       "projects": [
@@ -2422,7 +2576,9 @@
       ],
       "first_seen": "2026-07-13T10:47:17Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 8,
+      "last_accessed": "2026-09-10"
     },
     "feedback_rtk_rewrites_grep_output": {
       "projects": [
@@ -2454,7 +2610,9 @@
       ],
       "first_seen": "2026-07-10T21:05:28Z",
       "last_confirmed": "2026-07-29T16:46:27Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-22"
     },
     "feedback_run_adherence_locally_before_push": {
       "projects": [
@@ -2494,7 +2652,9 @@
       ],
       "first_seen": "2026-07-24T20:24:10Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-14"
     },
     "feedback_semantic_completeness_resolvers": {
       "projects": [
@@ -2534,7 +2694,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-09-06"
     },
     "feedback_shell_timeout_no_loops": {
       "projects": [
@@ -2542,7 +2704,9 @@
       ],
       "first_seen": "2026-06-16T10:22:29Z",
       "last_confirmed": "2026-06-16T10:22:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-14"
     },
     "feedback_sibling_close_collides_on_shared_blocker": {
       "projects": [
@@ -2598,7 +2762,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
     },
     "feedback_skill_lifecycle_edit_whole_run": {
       "projects": [
@@ -2606,7 +2772,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-10"
     },
     "feedback_skill_topic_boundaries": {
       "projects": [
@@ -2654,7 +2822,9 @@
       ],
       "first_seen": "2026-07-10T21:05:28Z",
       "last_confirmed": "2026-07-29T16:46:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "feedback_ssh_padme_path": {
       "projects": [
@@ -2662,7 +2832,9 @@
       ],
       "first_seen": "2026-07-29T16:46:28Z",
       "last_confirmed": "2026-07-29T16:46:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-07-11"
     },
     "feedback_stacked_pr_waves": {
       "projects": [
@@ -2728,7 +2900,9 @@
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:53Z",
       "promoted": true,
-      "promoted_at": "2026-08-10T20:02:34Z"
+      "promoted_at": "2026-08-10T20:02:34Z",
+      "access_count": 6,
+      "last_accessed": "2026-09-10"
     },
     "feedback_supervised_runs_no_standing_guards": {
       "projects": [
@@ -2744,7 +2918,9 @@
       ],
       "first_seen": "2026-07-13T10:47:14Z",
       "last_confirmed": "2026-09-06T22:39:50Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
     },
     "feedback_sweep_beats_guard_for_prose": {
       "projects": [
@@ -2760,7 +2936,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:50Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 16,
+      "last_accessed": "2026-09-07"
     },
     "feedback_task_notification_exit_code": {
       "projects": [
@@ -2824,7 +3002,9 @@
       ],
       "first_seen": "2026-06-16T10:22:28Z",
       "last_confirmed": "2026-06-16T10:22:28Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-12"
     },
     "feedback_ticket_id_collision_check": {
       "projects": [
@@ -2904,7 +3084,9 @@
       ],
       "first_seen": "2026-07-24T20:24:10Z",
       "last_confirmed": "2026-09-06T22:39:51Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-07"
     },
     "feedback_use_auto_merge": {
       "projects": [
@@ -2920,7 +3102,9 @@
       ],
       "first_seen": "2026-06-16T10:22:30Z",
       "last_confirmed": "2026-06-16T10:22:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-13"
     },
     "feedback_user_pulls_land_in_downloads": {
       "projects": [
@@ -2944,7 +3128,9 @@
       ],
       "first_seen": "2026-07-24T20:24:10Z",
       "last_confirmed": "2026-09-06T22:39:51Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_vars_file_provenance": {
       "projects": [
@@ -2992,7 +3178,9 @@
       ],
       "first_seen": "2026-07-10T21:05:29Z",
       "last_confirmed": "2026-07-29T16:46:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
     },
     "feedback_verify_artifacts_after_fix": {
       "projects": [
@@ -3024,7 +3212,9 @@
       ],
       "first_seen": "2026-07-10T21:05:29Z",
       "last_confirmed": "2026-07-29T16:46:29Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-22"
     },
     "feedback_verify_deferral_tracker": {
       "projects": [
@@ -3040,7 +3230,9 @@
       ],
       "first_seen": "2026-06-08T10:21:56Z",
       "last_confirmed": "2026-09-06T22:39:51Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
     },
     "feedback_verify_fork_under_execution": {
       "projects": [
@@ -3048,7 +3240,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:51Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-09-10"
     },
     "feedback_verify_makefile_pathrefactor_with_make_n": {
       "projects": [
@@ -3120,7 +3314,9 @@
       ],
       "first_seen": "2026-07-24T20:24:10Z",
       "last_confirmed": "2026-09-06T22:39:51Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 38,
+      "last_accessed": "2026-09-07"
     },
     "feedback_worktree_deletion": {
       "projects": [
@@ -3168,7 +3364,9 @@
       ],
       "first_seen": "2026-07-24T20:24:10Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-07-13"
     },
     "feedback_worktree_search": {
       "projects": [
@@ -3208,7 +3406,9 @@
       ],
       "first_seen": "2026-07-07T15:06:49Z",
       "last_confirmed": "2026-07-07T15:06:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-07-07"
     },
     "odt-edit-via-unzip": {
       "projects": [
@@ -3216,7 +3416,9 @@
       ],
       "first_seen": "2026-07-07T15:06:49Z",
       "last_confirmed": "2026-07-07T15:06:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-07"
     },
     "oeconomia-paper-status": {
       "projects": [
@@ -3224,7 +3426,9 @@
       ],
       "first_seen": "2026-07-07T15:06:49Z",
       "last_confirmed": "2026-07-07T15:06:49Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-07"
     },
     "padme-llm-backend-llama-server": {
       "projects": [
@@ -3240,7 +3444,9 @@
       ],
       "first_seen": "2026-08-14T09:56:52Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-08-18"
     },
     "project-cible-accessibilite-non-specialistes": {
       "projects": [
@@ -3264,7 +3470,9 @@
       ],
       "first_seen": "2026-08-14T09:56:52Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-17"
     },
     "project-nvidia-580-hold-posture": {
       "projects": [
@@ -3304,7 +3512,9 @@
       ],
       "first_seen": "2026-08-19T10:18:30Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-17"
     },
     "project-zotero-dois-manquants": {
       "projects": [
@@ -3312,7 +3522,9 @@
       ],
       "first_seen": "2026-08-19T10:18:30Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
     },
     "project-zotero-injection-auto": {
       "projects": [
@@ -3320,7 +3532,9 @@
       ],
       "first_seen": "2026-08-14T09:56:52Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-08-14"
     },
     "project_0171_conclusion_rebuild": {
       "projects": [
@@ -3368,7 +3582,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 68,
+      "last_accessed": "2026-09-07"
     },
     "project_book_idees_recues_finance_climat": {
       "projects": [
@@ -3392,7 +3608,9 @@
       ],
       "first_seen": "2026-06-16T10:22:25Z",
       "last_confirmed": "2026-06-16T10:22:25Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-10"
     },
     "project_companion_paper_design": {
       "projects": [
@@ -3408,7 +3626,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-15"
     },
     "project_datapaper_release_actions": {
       "projects": [
@@ -3424,7 +3644,9 @@
       ],
       "first_seen": "2026-07-10T21:05:29Z",
       "last_confirmed": "2026-07-29T16:46:31Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "project_doifetch_sync": {
       "projects": [
@@ -3432,7 +3654,9 @@
       ],
       "first_seen": "2026-07-10T21:05:30Z",
       "last_confirmed": "2026-07-29T16:46:31Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 14,
+      "last_accessed": "2026-07-29"
     },
     "project_dvc_integration": {
       "projects": [
@@ -3456,7 +3680,9 @@
       ],
       "first_seen": "2026-06-16T10:22:25Z",
       "last_confirmed": "2026-06-16T10:22:25Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-06-16"
     },
     "project_erg_binary": {
       "projects": [
@@ -3464,7 +3690,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
     },
     "project_erg_closed_dir": {
       "projects": [
@@ -3552,7 +3780,9 @@
       ],
       "first_seen": "2026-07-22T08:58:04Z",
       "last_confirmed": "2026-07-29T16:46:31Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "project_frozen_manuscript_vs_live_companions": {
       "projects": [
@@ -3568,7 +3798,9 @@
       ],
       "first_seen": "2026-07-24T20:24:11Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-15"
     },
     "project_gide_conference": {
       "projects": [
@@ -3576,7 +3808,9 @@
       ],
       "first_seen": "2026-07-10T21:05:30Z",
       "last_confirmed": "2026-07-29T16:46:32Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-07-15"
     },
     "project_gpt_oss_family": {
       "projects": [
@@ -3632,7 +3866,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-14"
     },
     "project_imperial_dragon": {
       "projects": [
@@ -3664,7 +3900,9 @@
       ],
       "first_seen": "2026-08-10T16:51:51Z",
       "last_confirmed": "2026-08-11T09:38:17Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-08-10"
     },
     "project_journal_strategy": {
       "projects": [
@@ -3680,7 +3918,9 @@
       ],
       "first_seen": "2026-06-05T19:24:54Z",
       "last_confirmed": "2026-06-08T10:21:56Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
     },
     "project_local_9b_near_ceiling": {
       "projects": [
@@ -3752,7 +3992,9 @@
       ],
       "first_seen": "2026-07-10T21:05:30Z",
       "last_confirmed": "2026-07-29T16:46:32Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-21"
     },
     "project_ollama_experiment": {
       "projects": [
@@ -3872,7 +4114,9 @@
       ],
       "first_seen": "2026-07-22T08:58:05Z",
       "last_confirmed": "2026-07-29T16:46:33Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 7,
+      "last_accessed": "2026-07-29"
     },
     "project_recueil_merge": {
       "projects": [
@@ -3880,7 +4124,9 @@
       ],
       "first_seen": "2026-06-23T10:01:53Z",
       "last_confirmed": "2026-06-23T10:01:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-06-24"
     },
     "project_reference_fix1": {
       "projects": [
@@ -3912,7 +4158,9 @@
       ],
       "first_seen": "2026-07-10T21:05:30Z",
       "last_confirmed": "2026-07-29T16:46:34Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-20"
     },
     "project_repo_layout_decision": {
       "projects": [
@@ -3928,7 +4176,9 @@
       ],
       "first_seen": "2026-08-10T16:51:51Z",
       "last_confirmed": "2026-08-11T09:38:16Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-08-10"
     },
     "project_rr_traceability_ledger": {
       "projects": [
@@ -3936,7 +4186,9 @@
       ],
       "first_seen": "2026-07-10T21:05:30Z",
       "last_confirmed": "2026-07-29T16:46:34Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-08"
     },
     "project_seed_silentdrop_bug": {
       "projects": [
@@ -3976,7 +4228,9 @@
       ],
       "first_seen": "2026-07-24T20:24:11Z",
       "last_confirmed": "2026-09-06T22:39:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-08"
     },
     "project_structured_dirs_registry": {
       "projects": [
@@ -4032,7 +4286,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:35Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "project_worktree_env_data": {
       "projects": [
@@ -4040,7 +4296,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:35Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-06-18"
     },
     "project_writing_build_phase_separation": {
       "projects": [
@@ -4056,7 +4314,9 @@
       ],
       "first_seen": "2026-06-23T10:01:53Z",
       "last_confirmed": "2026-06-23T10:01:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 7,
+      "last_accessed": "2026-06-24"
     },
     "reference-doifetch": {
       "projects": [
@@ -4064,7 +4324,9 @@
       ],
       "first_seen": "2026-08-19T10:18:30Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-19"
     },
     "reference-zotero-collection-polycentric": {
       "projects": [
@@ -4072,7 +4334,9 @@
       ],
       "first_seen": "2026-08-19T10:18:30Z",
       "last_confirmed": "2026-08-19T10:18:30Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-18"
     },
     "reference_agent_identity": {
       "projects": [
@@ -4112,7 +4376,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:35Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-09"
     },
     "reference_cited_works_local_docs_articles": {
       "projects": [
@@ -4120,7 +4386,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:36Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-22"
     },
     "reference_claude_cli_route": {
       "projects": [
@@ -4184,7 +4452,9 @@
       ],
       "first_seen": "2026-06-08T10:21:56Z",
       "last_confirmed": "2026-09-06T22:39:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
     },
     "reference_hal_sword_update_recipe": {
       "projects": [
@@ -4200,7 +4470,9 @@
       ],
       "first_seen": "2026-08-11T09:38:17Z",
       "last_confirmed": "2026-08-11T09:38:17Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-11"
     },
     "reference_keys_config_dir": {
       "projects": [
@@ -4208,7 +4480,9 @@
       ],
       "first_seen": "2026-07-24T20:24:11Z",
       "last_confirmed": "2026-09-06T22:39:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 13,
+      "last_accessed": "2026-09-07"
     },
     "reference_keystore_keys_selection": {
       "projects": [
@@ -4232,7 +4506,9 @@
       ],
       "first_seen": "2026-08-10T16:51:51Z",
       "last_confirmed": "2026-08-11T09:38:17Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-10"
     },
     "reference_padme_downloads_dir": {
       "projects": [
@@ -4256,7 +4532,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:36Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-29"
     },
     "reference_rdj4hss": {
       "projects": [
@@ -4264,7 +4542,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:36Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-07-29"
     },
     "reference_repo_no_ci": {
       "projects": [
@@ -4272,7 +4552,9 @@
       ],
       "first_seen": "2026-07-10T21:05:31Z",
       "last_confirmed": "2026-07-29T16:46:36Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-07-17"
     },
     "reference_riomarkers_dataset_book": {
       "projects": [
@@ -4296,7 +4578,9 @@
       ],
       "first_seen": "2026-06-16T10:22:26Z",
       "last_confirmed": "2026-06-16T10:22:26Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
     },
     "reference_trackchange_review_workflow": {
       "projects": [
@@ -4314,7 +4598,9 @@
       "first_seen": "2026-06-05T19:26:10Z",
       "last_confirmed": "2026-08-22T07:10:13Z",
       "promoted": true,
-      "promoted_at": "2026-06-24T11:22:34Z"
+      "promoted_at": "2026-06-24T11:22:34Z",
+      "access_count": 27,
+      "last_accessed": "2026-09-08"
     },
     "user-professional-email": {
       "projects": [
@@ -4322,7 +4608,9 @@
       ],
       "first_seen": "2026-08-14T09:56:53Z",
       "last_confirmed": "2026-08-19T10:18:31Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-13"
     },
     "user_bibliography_toolchain": {
       "projects": [
@@ -4354,7 +4642,9 @@
       ],
       "first_seen": "2026-07-10T21:05:32Z",
       "last_confirmed": "2026-07-29T16:46:37Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-10"
     },
     "user_orcid": {
       "projects": [
@@ -4370,7 +4660,9 @@
       ],
       "first_seen": "2026-07-13T10:47:15Z",
       "last_confirmed": "2026-09-06T22:39:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-07-10"
     },
     "user_platform": {
       "projects": [
@@ -4382,7 +4674,8 @@
     },
     "user_profile": {
       "projects": [
-        "-home-haduong-padme"
+        "-home-haduong-padme",
+        "-home-haduong-cadens"
       ],
       "first_seen": "2026-06-08T11:08:32Z",
       "last_confirmed": "2026-07-22T19:40:50Z",
@@ -4418,7 +4711,9 @@
       ],
       "first_seen": "2026-08-22T07:09:00Z",
       "last_confirmed": "2026-08-22T07:09:00Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-22"
     },
     "feedback_guard_one_instance_not_the_class": {
       "projects": [
@@ -4458,7 +4753,9 @@
       ],
       "first_seen": "2026-08-22T07:09:00Z",
       "last_confirmed": "2026-08-22T07:09:00Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-21"
     },
     "reference_author_voice_corpus": {
       "projects": [
@@ -4466,7 +4763,9 @@
       ],
       "first_seen": "2026-08-30T13:56:17Z",
       "last_confirmed": "2026-09-04T09:08:54Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "feedback_execute_authorized_outward_actions": {
       "projects": [
@@ -4474,7 +4773,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-09-06"
     },
     "feedback_repo_prepares_upstream_it_ships_nothing": {
       "projects": [
@@ -4482,7 +4783,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-10"
     },
     "feedback_benchmark_harness_traps": {
       "projects": [
@@ -4490,7 +4793,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-08-30"
     },
     "feedback_decision_briefs": {
       "projects": [
@@ -4498,7 +4803,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-02"
     },
     "feedback_preserve_agent_output": {
       "projects": [
@@ -4506,7 +4813,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "feedback_verify_the_load_bearing_claim": {
       "projects": [
@@ -4514,7 +4823,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 5,
+      "last_accessed": "2026-08-29"
     },
     "feedback_metric_decides_the_verdict": {
       "projects": [
@@ -4530,7 +4841,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "feedback_probe_needs_discriminating_control": {
       "projects": [
@@ -4538,7 +4851,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 8,
+      "last_accessed": "2026-09-02"
     },
     "feedback_guard_the_silent_failure_first": {
       "projects": [
@@ -4546,7 +4861,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "feedback_a_move_can_leave_the_gate": {
       "projects": [
@@ -4554,7 +4871,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-08-29"
     },
     "feedback_append_only_merge_union": {
       "projects": [
@@ -4562,7 +4881,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
     },
     "feedback_close_claim_needs_a_manual_check": {
       "projects": [
@@ -4570,7 +4891,9 @@
       ],
       "first_seen": "2026-08-30T13:56:18Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-08"
     },
     "feedback_no_optional_offers": {
       "projects": [
@@ -4602,7 +4925,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 3,
+      "last_accessed": "2026-09-02"
     },
     "feedback_green_prs_red_union": {
       "projects": [
@@ -4610,7 +4935,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "feedback_executor_gate_loop_stall": {
       "projects": [
@@ -4618,7 +4945,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-29"
     },
     "project_registry_not_knobs": {
       "projects": [
@@ -4626,7 +4955,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:54Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-03"
     },
     "feedback_room_for_multilingual_embedders": {
       "projects": [
@@ -4634,7 +4965,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-30"
     },
     "feedback_negative_result_names_its_mechanism": {
       "projects": [
@@ -4650,7 +4983,9 @@
       ],
       "first_seen": "2026-08-30T13:56:19Z",
       "last_confirmed": "2026-09-04T09:08:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
     },
     "feedback_atomic_prs_short_branches": {
       "projects": [
@@ -4698,7 +5033,9 @@
       ],
       "first_seen": "2026-09-02T16:14:45Z",
       "last_confirmed": "2026-09-03T16:07:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-03"
     },
     "feedback_gh_resolves_repo_from_cwd": {
       "projects": [
@@ -4730,7 +5067,9 @@
       ],
       "first_seen": "2026-09-02T16:14:46Z",
       "last_confirmed": "2026-09-03T16:07:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-03"
     },
     "feedback_positive_control_before_waiting": {
       "projects": [
@@ -4778,7 +5117,9 @@
       ],
       "first_seen": "2026-09-02T16:14:47Z",
       "last_confirmed": "2026-09-03T16:07:43Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
     },
     "feedback_stage_by_path_in_shared_checkouts": {
       "projects": [
@@ -4802,7 +5143,9 @@
       ],
       "first_seen": "2026-09-02T16:14:47Z",
       "last_confirmed": "2026-09-03T16:07:43Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
     },
     "project_spec_edit_mechanics": {
       "projects": [
@@ -4810,7 +5153,9 @@
       ],
       "first_seen": "2026-09-02T16:14:47Z",
       "last_confirmed": "2026-09-03T16:07:43Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 6,
+      "last_accessed": "2026-09-06"
     },
     "reference_archive_bot_walls": {
       "projects": [
@@ -4858,7 +5203,9 @@
       ],
       "first_seen": "2026-09-03T16:07:44Z",
       "last_confirmed": "2026-09-03T16:07:44Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-03"
     },
     "feedback_a_primitive_is_not_a_requirement": {
       "projects": [
@@ -4882,7 +5229,9 @@
       ],
       "first_seen": "2026-09-03T16:07:45Z",
       "last_confirmed": "2026-09-03T16:07:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 4,
+      "last_accessed": "2026-09-07"
     },
     "feedback_poller_elapsed_is_the_quantum": {
       "projects": [
@@ -4938,7 +5287,9 @@
       ],
       "first_seen": "2026-09-03T16:07:45Z",
       "last_confirmed": "2026-09-03T16:07:45Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-03"
     },
     "feedback_rebase_can_overwrite_a_sibling_fix": {
       "projects": [
@@ -4986,7 +5337,9 @@
       ],
       "first_seen": "2026-09-04T09:08:52Z",
       "last_confirmed": "2026-09-04T09:08:52Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
     },
     "feedback_execute_agent_self_review_summary_can_misreport": {
       "projects": [
@@ -5098,7 +5451,9 @@
       ],
       "first_seen": "2026-09-06T21:44:32Z",
       "last_confirmed": "2026-09-06T21:44:32Z",
-      "promoted": true
+      "promoted": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-06"
     },
     "feedback_mock_that_invents_the_platform": {
       "projects": [
@@ -5106,7 +5461,9 @@
       ],
       "first_seen": "2026-09-06T21:55:57Z",
       "last_confirmed": "2026-09-06T21:55:57Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
     },
     "feedback_red_gate_on_main_is_a_contended_repair": {
       "projects": [
@@ -5114,7 +5471,9 @@
       ],
       "first_seen": "2026-09-06T21:55:57Z",
       "last_confirmed": "2026-09-06T21:55:57Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
     },
     "feedback_a_stale_artifact_reads_as_live": {
       "projects": [
@@ -5138,7 +5497,9 @@
       ],
       "first_seen": "2026-09-06T22:23:27Z",
       "last_confirmed": "2026-09-06T22:23:27Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 2,
+      "last_accessed": "2026-09-06"
     },
     "feedback_ask_the_live_peer_before_committing_its_work": {
       "projects": [
@@ -5178,7 +5539,9 @@
       ],
       "first_seen": "2026-09-06T22:39:47Z",
       "last_confirmed": "2026-09-06T22:39:47Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 13,
+      "last_accessed": "2026-09-07"
     },
     "feedback_locale_fr_floats_in_guarded_scripts": {
       "projects": [
@@ -5194,7 +5557,9 @@
       ],
       "first_seen": "2026-09-06T22:39:50Z",
       "last_confirmed": "2026-09-06T22:39:50Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
     },
     "feedback_verify_sibling_prs_jointly": {
       "projects": [
@@ -5210,7 +5575,2948 @@
       ],
       "first_seen": "2026-09-06T22:39:53Z",
       "last_confirmed": "2026-09-06T22:39:53Z",
-      "promoted": false
+      "promoted": false,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
+    },
+    "feedback_aider_les_rapporteurs": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_linkedin_personal_note": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_avancement_dr1_2027": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_a_test_green_for_an_accidental_reason": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-07T03:49:11Z",
+      "last_confirmed": "2026-09-07T03:49:11Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 7,
+      "last_accessed": "2026-09-07"
+    },
+    "feedback_ancestor_of_main_is_not_current_with_main": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T10:51:21Z",
+      "last_confirmed": "2026-09-10T10:51:21Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_background_session_isolation_blocks_primary_writes": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T10:10:36Z",
+      "last_confirmed": "2026-09-10T10:10:36Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_boolean_probe_must_not_expand_the_value": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-07T03:49:11Z",
+      "last_confirmed": "2026-09-07T03:49:11Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 8,
+      "last_accessed": "2026-09-07"
+    },
+    "feedback_editing_a_ticket_body_is_not_appending": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-08T06:48:54Z",
+      "last_confirmed": "2026-09-08T06:48:54Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-08"
+    },
+    "feedback_erg_log_actor_is_a_flag_now": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T10:29:04Z",
+      "last_confirmed": "2026-09-10T10:41:00Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_grep_tests_for_the_recipe_before_extending_it": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T10:26:05Z",
+      "last_confirmed": "2026-09-10T10:26:05Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_guard_exemption_must_be_anchored": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T09:11:12Z",
+      "last_confirmed": "2026-09-10T09:11:12Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_guard_wired_to_one_spelling": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T11:44:31Z",
+      "last_confirmed": "2026-09-10T11:44:31Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_hook_rename_is_a_two_phase_deploy": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T10:46:00Z",
+      "last_confirmed": "2026-09-10T10:46:00Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_measure_whether_a_guard_ever_fired": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-08T06:48:54Z",
+      "last_confirmed": "2026-09-08T06:48:54Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 5,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_orphan_branch_may_be_archived_as_a_tag": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-08T09:01:10Z",
+      "last_confirmed": "2026-09-08T09:01:10Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 4,
+      "last_accessed": "2026-09-08"
+    },
+    "feedback_pgrep_waiter_matches_itself": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-09T16:41:41Z",
+      "last_confirmed": "2026-09-10T08:43:18Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 17,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_positive_control_validates_the_detector_not_the_enumerator": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T09:05:41Z",
+      "last_confirmed": "2026-09-10T09:05:41Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_red_step_before_editing_callers": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-09T16:41:41Z",
+      "last_confirmed": "2026-09-09T16:41:41Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_stale_forward_promises_in_skills": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T08:51:20Z",
+      "last_confirmed": "2026-09-10T08:51:20Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_switching_worktrees_breaks_running_gates": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-07T03:49:11Z",
+      "last_confirmed": "2026-09-07T04:18:05Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 13,
+      "last_accessed": "2026-09-10"
+    },
+    "reference_agents_md_is_a_tool_owned_asset": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T11:50:51Z",
+      "last_confirmed": "2026-09-10T12:07:43Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-10"
+    },
+    "reference_rules_tree_is_resident": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-09T16:41:41Z",
+      "last_confirmed": "2026-09-09T17:39:48Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 7,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback-authentic-artifacts-not-reconstructions": {
+      "projects": [
+        "-home-haduong-CNRS"
+      ],
+      "first_seen": "2026-08-10T16:53:52Z",
+      "last_confirmed": "2026-08-10T16:53:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project-cnrs-filing-convention": {
+      "projects": [
+        "-home-haduong-CNRS"
+      ],
+      "first_seen": "2026-08-10T16:53:52Z",
+      "last_confirmed": "2026-08-10T16:53:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference-mail-archive": {
+      "projects": [
+        "-home-haduong-CNRS"
+      ],
+      "first_seen": "2026-08-10T16:53:52Z",
+      "last_confirmed": "2026-08-10T16:53:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "remote-topology": {
+      "projects": [
+        "-home-haduong-CNRS-code-DOIfetch"
+      ],
+      "first_seen": "2026-07-11T13:07:04Z",
+      "last_confirmed": "2026-07-11T13:07:04Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "asset-edit-ci-gates": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-07-11T13:07:04Z",
+      "last_confirmed": "2026-07-11T13:07:04Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_formatter_strips_imports": {
+      "projects": [
+        "-home-haduong-CNRS-code-maiba"
+      ],
+      "first_seen": "2026-07-11T13:04:45Z",
+      "last_confirmed": "2026-07-11T13:04:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_orchestrator_sequential": {
+      "projects": [
+        "-home-haduong-CNRS-code-maiba"
+      ],
+      "first_seen": "2026-07-11T13:04:45Z",
+      "last_confirmed": "2026-07-11T13:04:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_spike_before_implement": {
+      "projects": [
+        "-home-haduong-CNRS-code-maiba"
+      ],
+      "first_seen": "2026-07-11T13:04:45Z",
+      "last_confirmed": "2026-07-11T13:04:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_state_opt_in": {
+      "projects": [
+        "-home-haduong-CNRS-code-maiba"
+      ],
+      "first_seen": "2026-07-11T13:04:45Z",
+      "last_confirmed": "2026-07-11T13:04:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_use_rispy": {
+      "projects": [
+        "-home-haduong-CNRS-code-maiba"
+      ],
+      "first_seen": "2026-07-11T13:04:45Z",
+      "last_confirmed": "2026-07-11T13:04:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_a_constant_cannot_witness_a_run": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_a_denial_that_matches_a_rule": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_a_gate_without_the_button": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_assent_is_not_a_trigger": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T08:49:14Z",
+      "last_confirmed": "2026-09-08T08:49:14Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_cloud_runs_need_routines": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_crash_recovery_under_worktree_guard": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-06"
+    },
+    "feedback_lane_dormant_after_enterworktree": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_matching_a_stale_number_is_not_confirmation": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_authority_needs_attached_verdict": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_merge_is_one_command": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_no_past_tense_without_a_run": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T08:09:06Z",
+      "last_confirmed": "2026-09-08T08:09:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_not_offered_is_not_nothing_to_see": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-06"
+    },
+    "feedback_one_liner_no_ticket": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_review_dispatch_invisible_to_lane": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_squash_merge_loses_roar_attribution": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T08:49:14Z",
+      "last_confirmed": "2026-09-08T08:49:14Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-08"
+    },
+    "feedback_the_author_s_console_is_the_instrument": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T07:24:53Z",
+      "last_confirmed": "2026-09-08T08:04:17Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 6,
+      "last_accessed": "2026-09-08"
+    },
+    "feedback_the_briefing_is_a_claim": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-08T08:09:06Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-08"
+    },
+    "feedback_tmp_quota_kills_the_shell_silently": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-06"
+    },
+    "feedback_two_gate_channels_find_different_defects": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-02"
+    },
+    "feedback_verdicts_belong_on_the_forge": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-03T06:05:42Z",
+      "last_confirmed": "2026-09-03T06:05:42Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 5,
+      "last_accessed": "2026-09-03"
+    },
+    "project_menagerie_build_state_2026-09-06": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-06T21:22:31Z",
+      "last_confirmed": "2026-09-08T07:24:53Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 5,
+      "last_accessed": "2026-09-08"
+    },
+    "project_sitter_install_paths_on_doudou": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T07:24:53Z",
+      "last_confirmed": "2026-09-08T08:49:14Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-09-08"
+    },
+    "reference_if_gated_hooks_get_unparsed_commands": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T08:49:14Z",
+      "last_confirmed": "2026-09-08T08:49:14Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_zoteus_security_notes": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-08T08:09:06Z",
+      "last_confirmed": "2026-09-08T08:09:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "deploy-root-content-retirement": {
+      "projects": [
+        "-home-haduong-CNRS-html"
+      ],
+      "first_seen": "2026-07-11T13:06:18Z",
+      "last_confirmed": "2026-07-11T13:06:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "homepage-backup-push": {
+      "projects": [
+        "-home-haduong-CNRS-html"
+      ],
+      "first_seen": "2026-07-11T13:06:18Z",
+      "last_confirmed": "2026-07-11T13:06:18Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "publication-embargo-stance": {
+      "projects": [
+        "-home-haduong-CNRS-html"
+      ],
+      "first_seen": "2026-07-11T13:06:18Z",
+      "last_confirmed": "2026-07-11T13:06:18Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "hal-anubis-bypass": {
+      "projects": [
+        "-home-haduong-CNRS-html-src"
+      ],
+      "first_seen": "2026-07-11T13:06:18Z",
+      "last_confirmed": "2026-07-11T13:06:18Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
+    },
+    "show-rendered-page-for-visuals": {
+      "projects": [
+        "-home-haduong-CNRS-html-src"
+      ],
+      "first_seen": "2026-07-11T13:06:18Z",
+      "last_confirmed": "2026-07-11T13:06:18Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "cfhet-handoff-figures": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-07-02-Vannes-Colloque-Charles-Gides"
+      ],
+      "first_seen": "2026-07-11T13:06:47Z",
+      "last_confirmed": "2026-07-11T13:06:47Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "gide-slides": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-07-02-Vannes-Colloque-Charles-Gides"
+      ],
+      "first_seen": "2026-07-11T13:06:47Z",
+      "last_confirmed": "2026-07-11T13:06:47Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_group_codes": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-cours-Jussieu"
+      ],
+      "first_seen": "2026-07-11T13:05:33Z",
+      "last_confirmed": "2026-07-11T13:05:33Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_moodle_grade_csv_format": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-cours-Jussieu"
+      ],
+      "first_seen": "2026-07-11T13:05:33Z",
+      "last_confirmed": "2026-07-11T13:05:33Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "project_bareme_fiches_acteur": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-cours-Jussieu"
+      ],
+      "first_seen": "2026-07-11T13:05:33Z",
+      "last_confirmed": "2026-07-11T13:05:33Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_machine_roles": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-cours-Jussieu"
+      ],
+      "first_seen": "2026-07-11T13:05:33Z",
+      "last_confirmed": "2026-07-11T13:05:33Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "dossier-vacations-jussieu": {
+      "projects": [
+        "-home-haduong-CNRS-missions-actif-2026-cours-Jussieu-Payment"
+      ],
+      "first_seen": "2026-07-11T13:05:33Z",
+      "last_confirmed": "2026-07-11T13:05:33Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 4,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_one_script_one_table": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-12T19:14:06Z",
+      "last_confirmed": "2026-06-12T19:14:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_homepage_publication_list": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report"
+      ],
+      "first_seen": "2026-06-18T09:38:11Z",
+      "last_confirmed": "2026-06-18T09:38:11Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-06-18"
+    },
+    "feedback_ccr_mobile_dominance": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_env_settings_json": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_rebase_deleted_worktree": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "project_last_prompt_record": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_slash_data_sparse": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_gh_pr_merge_worktree": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Cadens"
+      ],
+      "first_seen": "2026-07-11T13:04:02Z",
+      "last_confirmed": "2026-07-11T13:04:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_compute_on_padme": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_lemma_dependency_check": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_worktree_preflight": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_formal_model_general": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_merge_policy": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_target_journal": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_workpackage_layout": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_couperin": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "user_cnrs": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus"
+      ],
+      "first_seen": "2026-07-11T13:03:00Z",
+      "last_confirmed": "2026-07-11T13:03:00Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_essai_envoi_courriel_fidele": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-JETP-at-two"
+      ],
+      "first_seen": "2026-09-09T16:10:31Z",
+      "last_confirmed": "2026-09-09T20:03:16Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_grep_documents_faux_negatifs": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-JETP-at-two"
+      ],
+      "first_seen": "2026-09-09T16:10:31Z",
+      "last_confirmed": "2026-09-09T16:10:31Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_verifier_liens_pdf": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-JETP-at-two"
+      ],
+      "first_seen": "2026-09-09T16:10:31Z",
+      "last_confirmed": "2026-09-09T16:10:31Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_gide_dosquet_discussion": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet-"
+      ],
+      "first_seen": "2026-07-11T16:14:14Z",
+      "last_confirmed": "2026-07-11T16:14:14Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 5,
+      "last_accessed": "2026-07-11"
+    },
+    "bibcnrs-harvest-workflow": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:06:30Z",
+      "last_confirmed": "2026-07-11T13:06:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_git_erg_scaffold": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-Polycentric-activity-conception"
+      ],
+      "first_seen": "2026-07-11T13:06:30Z",
+      "last_confirmed": "2026-07-11T13:06:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
+    },
+    "edm-workflow": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-livre-milliards-climat"
+      ],
+      "first_seen": "2026-07-11T13:07:04Z",
+      "last_confirmed": "2026-07-11T13:07:04Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 4,
+      "last_accessed": "2026-07-13"
+    },
+    "git-commit-pathspec-bypasses-index": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-livre-milliards-climat"
+      ],
+      "first_seen": "2026-07-11T13:07:04Z",
+      "last_confirmed": "2026-07-11T13:07:04Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "verifier-dans-le-vrai-lieu": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-livre-milliards-climat"
+      ],
+      "first_seen": "2026-07-11T13:07:04Z",
+      "last_confirmed": "2026-07-11T13:07:04Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_sequential_instructions_order_matters": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:05:06Z",
+      "last_confirmed": "2026-07-11T13:05:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_openalex_pre1970_citations": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:05:06Z",
+      "last_confirmed": "2026-07-11T13:05:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "user_musical_terms_precision": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:05:06Z",
+      "last_confirmed": "2026-07-11T13:05:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "user_no_irony": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:05:06Z",
+      "last_confirmed": "2026-07-11T13:05:06Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "user_single_bib_database_preference": {
+      "projects": [
+        "-home-haduong-CNRS-papiers-actif-polycentric-activity"
+      ],
+      "first_seen": "2026-07-11T13:05:06Z",
+      "last_confirmed": "2026-07-11T13:05:06Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback-verify-real-codepath": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "outer-repo-local-only-secrets": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
+    },
+    "r2r-embeddings-openai-billing": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-07-11"
+    },
+    "r2r-upstream-dormant": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "cired-digital-dependabot-uvlock-drift": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital-cired-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "cired-digital-merge-and-tracker": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital-cired-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-09"
+    },
+    "cired-digital-messh26-slides": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-CIRED-digital-cired-digital"
+      ],
+      "first_seen": "2026-07-11T13:05:52Z",
+      "last_confirmed": "2026-07-11T13:05:52Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_coda_intro_style": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-Tracing-Kieu"
+      ],
+      "first_seen": "2026-07-11T13:04:54Z",
+      "last_confirmed": "2026-07-11T13:04:54Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_pipeline_ia": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-Tracing-Kieu"
+      ],
+      "first_seen": "2026-07-11T13:04:54Z",
+      "last_confirmed": "2026-07-11T13:04:54Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_style_voix": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-Tracing-Kieu"
+      ],
+      "first_seen": "2026-07-11T13:04:54Z",
+      "last_confirmed": "2026-07-11T13:04:54Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_kieu_decisions": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-Tracing-Kieu"
+      ],
+      "first_seen": "2026-07-11T13:04:54Z",
+      "last_confirmed": "2026-07-11T13:04:54Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_corpus_exclusions": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_format_preference": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_real_billing_not_estimates": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_uv_not_pip": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "infra_padme": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_data_path": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_openrouter_billing": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-11T13:03:45Z",
+      "last_confirmed": "2026-07-11T13:03:45Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_check_ignore_needs_no_index": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-10T09:37:40Z",
+      "last_confirmed": "2026-09-10T09:37:40Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_gitignore_class_rule_depth": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-10T09:37:40Z",
+      "last_confirmed": "2026-09-10T09:37:40Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "project_erg_update_self_reference": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-10T09:37:40Z",
+      "last_confirmed": "2026-09-10T09:37:40Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_silent_ceiling_class": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-corpus-access-bench"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_zoteus_fts5": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-corpus-access-bench"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_zotero_fulltext_cache": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-corpus-access-bench"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verifier_le_predicat_pas_seulement_le_resultat": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-padme"
+      ],
+      "first_seen": "2026-08-21T11:27:02Z",
+      "last_confirmed": "2026-08-21T11:27:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_padme_privileged_ops": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-padme"
+      ],
+      "first_seen": "2026-08-21T11:27:02Z",
+      "last_confirmed": "2026-08-21T11:27:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_padme_remote_access_netbird": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-padme"
+      ],
+      "first_seen": "2026-08-21T11:27:02Z",
+      "last_confirmed": "2026-08-21T11:27:02Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-benchmark-concurrent-maladroit": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-copie-salee-etalonne-le-jury": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-feuille-de-route-manuscrits-seulement": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-identifiant-scrape-est-une-hypothese": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-19T11:18:02Z",
+      "last_confirmed": "2026-08-19T11:18:02Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
+    },
+    "feedback-la-carte-ne-dit-pas-le-contenu": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
+    },
+    "feedback-pkill-verifier-la-mort-par-pid": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-revue-cross-repo-cwd-epingle": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-scripts-de-decoupe-non-publiables": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback-un-test-vert-peut-etre-inatteignable": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project-carte-du-champ-handbook": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
+    },
+    "project-carte-pas-de-garde-de-coherence": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project-refsbib-suivi-par-git-ici": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference-zotero-audit-staging": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-polycentric-activity"
+      ],
+      "first_seen": "2026-08-19T11:18:02Z",
+      "last_confirmed": "2026-08-19T11:18:02Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-08-19"
+    },
+    "project_avancement_2026": {
+      "projects": [
+        "-home-haduong-CNRS-secretariat-rapports-d-activite"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_carnet_realf": {
+      "projects": [
+        "-home-haduong-CNRS-secretariat-rapports-d-activite"
+      ],
+      "first_seen": "2026-09-06T16:43:30Z",
+      "last_confirmed": "2026-09-06T16:43:30Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_letters_get_claim_verification": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-08-14T13:22:37Z",
+      "last_confirmed": "2026-08-14T13:22:37Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-08-14"
+    },
+    "feedback_pipe_masks_exit_code": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-08-14T13:22:37Z",
+      "last_confirmed": "2026-08-14T13:22:37Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-08-14"
+    },
+    "feedback_prefer_latex_over_qmd": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-08-14T13:22:37Z",
+      "last_confirmed": "2026-08-14T13:22:37Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-08-14"
+    },
+    "feedback_quarto_pipe_tables_cannot_float": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-08-14T13:22:37Z",
+      "last_confirmed": "2026-08-14T13:22:37Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-08-14"
+    },
+    "reference_realf_release_rules": {
+      "projects": [
+        "-home-haduong-Climate-finance"
+      ],
+      "first_seen": "2026-08-14T13:22:37Z",
+      "last_confirmed": "2026-08-14T13:22:37Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 3,
+      "last_accessed": "2026-08-14"
+    },
+    "feedback_1fig1script": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_agent_runbooks": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_agent_specs_detail": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_arch_not_linecount": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_cache_is_data": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_chunk_size_tradeoff": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_circuit_breaker_shared": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_doc_propagation": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_dvc_commit_after_repro": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_dvc_locks": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_fix_not_hide": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_fix_root_cause": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_fuzzy_title_matching": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_gh_merge_502": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gh_pr_edit_classic_projects": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gh_rest_only": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_io_migration_pattern": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_kmeans_instability": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_longrunning_jobs": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_multispace_comparison": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_purpose_built_over_llm": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rereview_regressions": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_review_all_comments": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_review_every_pr": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_review_stale_branches": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_s2_api_limits": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_s2_disconnect": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_singleton_test_isolation": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_sweep_after_fix": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_table_as_contract": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_teaching_scraper": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-09-10"
+    },
+    "feedback_worktree_isolation": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_agent_harness_architecture": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_bibcnrs_news": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_lms_bias": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_multilingual_corpus": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_rally_loop_20260324": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_s2_harvest": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_teaching_methodology_lessons": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_teaching_paper_idea": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_grobid_padme": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_repec": {
+      "projects": [
+        "-home-haduong-Oeconomia-Climate-finance"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_auto_merge_bypasses_ticket_close": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_autonomous_raid_doudou_pickup": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_chore_close_staging_and_late_close": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_concurrent_pipelines_shared_tickets": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
+    },
+    "feedback_conversation_not_manuscript": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_erg_close_no_auto_archive": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gaze_fork_async_reviewers_automerge_race": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gaze_fork_orphans_reviewers": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_human_signoff_criterion_not_waivable": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_light_review_for_mechanical_diffs": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_make_stamp_discipline": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-08T10:12:29Z",
+      "last_confirmed": "2026-06-08T10:12:29Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_classifier_blocks_autonomous_raid": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
+    },
+    "feedback_plan_agent_test_inversion": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_preserve_hedges_not_absolutes": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_pytest_addopts_env_breaks_uv_pytest": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_raid_wave_stale_base": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ratchet_ceiling_race_and_dropped_close": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ticket_premises_are_hypotheses": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_worktree_agent_env_leak": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_greedy_glob_class": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 2,
+      "last_accessed": "2026-07-11"
+    },
+    "project_tactical_editorial_round_0522": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "reference_peek_kill_sibling_sessions": {
+      "projects": [
+        "-home-haduong-aedist-technical-report"
+      ],
+      "first_seen": "2026-06-10T22:17:39Z",
+      "last_confirmed": "2026-06-10T22:17:39Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_cadens_state": {
+      "projects": [
+        "-home-haduong-cadens"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_agent_worktree_locked": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_archive_org_ocr_rot": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_bash_background_sigterm": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_build_prompt_d_variant": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_celebrate_squash_precheck": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_cjk_word_count": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-23T08:47:29Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_claudemd_at_include": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_clean_corpus_backends_argparse": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_coauthored_rejection": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-11"
+    },
+    "feedback_d_seed42_collapse": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_d_token_budget": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_empty_threshold_false_negatives": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_erg_closed_header": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_erg_pr_merge_no_ci": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gemini_flash_lite_truncation": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gh_pr_edit_graphql_fallback": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_judge_lineup": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_la_wikisource_heloise": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_libreoffice_pdf_path": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_lora_use_rights": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ls_vs_git_log_diagnosis": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_max_tokens_runaway": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_skill_bold_ticket": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_skill_multi_ticket": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_model_storage": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_n_advisors_for_register_variants": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_pandoc_docx_span_styles": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_parallel_agent_id_collision": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_parse_chunk_headers_blank_lines": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_per_backend_queue_scheduler": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rename_sweep_test_files": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_soft_cap_aggregation": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_sota_parser_quirks_per_model": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_squash_merge_sync": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_unreviewed_not_clean": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_simplify_isolation": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_worktree_edit_paths": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_9b_cleaning_quality": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_corpus_ada_weighting": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_d4_gap_refuted": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_lora_negative_result": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_multilingual_corpus_strategy": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-05-15T09:21:45Z",
+      "last_confirmed": "2026-05-15T09:21:45Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "user_bio": {
+      "projects": [
+        "-home-haduong-chemin-de-voix"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_latex_notation": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_module_boundaries": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_orchestrator": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_squash_merge_ticket_closure": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_torch_sparse_degrees": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "methodology_swot": {
+      "projects": [
+        "-home-haduong-fuzzy-corpus"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ascii_only_src_go": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_blockedby_parent_breaks_merge": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_branch_as_claim": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_bundle_followup_tickets": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-14"
+    },
+    "feedback_bundle_related_pr_changes": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_complexity_guard_defense_in_depth": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_cross_session_worktree_hijack": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_doc_writing_conventions": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_edit_canonical_asset_not_live_copy": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_full_violation_list_before_pass_claim": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gh_pr_edit_graphql_broken": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_gofmt_smartquotes_vs_ascii": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_idempotency_byte_not_count": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_auto_boundary_races": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_meta_test_owner_pays": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_morning_healthcheck_readonly": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_no_ci_callback_wait": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_no_direct_push_main": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_one_worktree_per_ticket": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 1,
+      "last_accessed": "2026-07-13"
+    },
+    "feedback_post_rebase_domain_revalidate": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_process_doc_ticket_id_rot": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_raid_branch_annotation_carrier": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rebase_before_merge": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rebase_check_status_first": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rebase_contaminates_from_local_main": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rebase_large_rename": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_redcontrol_no_cooperating_instrumentation": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-06T12:16:25Z",
+      "last_confirmed": "2026-06-06T12:16:25Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_remote_sandbox_test_claims": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_rename_hard_not_aliased": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_scope_audit_git_range": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_simplify_commit_not_pushed": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_stale_duplicate_tickets": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_sweep_emitted_vs_gated_surface": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-07-24T20:16:44Z",
+      "last_confirmed": "2026-07-24T20:16:44Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ticket_file_commit_immediately": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_ux_dryrun_pattern": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_values_excellence_integrity_bienveillance": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_delivery_gate_runs_check": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-08T13:33:23Z",
+      "last_confirmed": "2026-06-08T13:33:23Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_fork_misfire": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_gate_ticket_ref": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_premises_before_code": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_verify_pushes_fixes": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_workflow_sandbox_contract": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-06T12:16:25Z",
+      "last_confirmed": "2026-06-06T12:16:25Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_yubikey_gpg_setup": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_erg_offline_contract": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_llama_server_workload": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_release_signing_model": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_rtk_0421_status": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-05T08:43:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_ticket_store_map": {
+      "projects": [
+        "-home-haduong-git-erg"
+      ],
+      "first_seen": "2026-06-05T08:43:43Z",
+      "last_confirmed": "2026-06-08T13:33:23Z",
+      "promoted": false,
+      "backfilled": true,
+      "access_count": 4,
+      "last_accessed": "2026-07-11"
+    },
+    "reference_branch_cleanup_incidents": {
+      "projects": [],
+      "first_seen": "2026-09-09T18:04:51Z",
+      "last_confirmed": "2026-09-09T18:04:51Z",
+      "promoted": true,
+      "backfilled": true
     }
   }
 }

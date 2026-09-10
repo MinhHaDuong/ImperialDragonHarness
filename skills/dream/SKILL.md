@@ -318,6 +318,40 @@ To inspect consolidation history:
 git log --grep='^dream: consolidate' --oneline
 ```
 
+## Store maintenance
+
+Two corpus-wide commands. Neither belongs in a per-project run — both read the
+whole tree, so calling them once per project would do the same work forty times.
+
+**Coverage.** Promotion, decay and dedup all iterate `.provenance.json`. An
+entry the store never saw is invisible to all three at once, and invisible in
+the way that reads as health: each pass reports success over the entries it can
+see. 308 of 949 live bodies were in that state on 2026-09-10 — everything
+written before v2 introduced the store. To repair:
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py backfill --root ~/.claude
+```
+
+It is idempotent, and it takes each entry's dates from git history rather than
+from the clock. Stamping `now` would reset every decay clock at the moment the
+clock is first wired up, which is the one outcome that leaves the store worse
+than the gap it closes. `tests/test_provenance_coverage.py` keeps the gap shut.
+
+**Observed use.** Session traces are already an append-only access log, so read
+counts need no new writes to the bodies — which is what an in-file access log
+would cost, on the very files parallel sessions read.
+
+```bash
+python3 ~/.claude/skills/dream/provenance.py usage --root ~/.claude
+```
+
+It writes `access_count` and `last_accessed` per entry. Treat both as a
+**secondary** signal, for two reasons that do not go away: the count is
+machine-local and traces are prunable, so it is a floor; and it counts *opens*,
+while an entry whose index title carried the lesson is never opened. A ranking
+that evicts on this number evicts the entries that worked best.
+
 ## v2 features (ticket 0165)
 
 - Harness-level memory tier (`~/.claude/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
