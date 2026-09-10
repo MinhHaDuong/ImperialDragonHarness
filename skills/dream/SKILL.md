@@ -112,11 +112,27 @@ Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
 
 ## Entries
 
-- [<title>](<filename>) — <desc>
+- [<title>](<filename>)
 ...
 ```
 
 Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
+
+**The index line is a title and a link — no trailing description.** The index is
+resident in every session of its project; the body is not, and the body's
+`description:` frontmatter is what the runtime already uses to decide recall.
+A trailing hook is therefore a third copy of the same sentence, and the only
+copy that is paid for unconditionally. Dropping it took the 46 indexes from
+198 636 to 111 021 chars (2026-09-10).
+
+What survives has to do the whole job, so **the title states the lesson**:
+`Fetch before each sibling merge, then grep-verify the union`, not
+`feedback_fetch_before_sibling_merge.md` and not `Sibling merges`. A title that
+is the filename, or a bare slug, leaves the entry unreadable once the hook is
+gone — 139 entries were in exactly that state. Take the title from the body's
+`name:` when it is already a sentence; write one from its `description:` when
+it is not. Reference and pointer entries may keep a noun label, since knowing
+the pointer exists is their whole job.
 
 **7. Record provenance.**
 

@@ -53,10 +53,13 @@ REPO = Path(__file__).resolve().parents[1]
 # it is for the rules tree: it fits a clarifying sentence, not a section.
 PREAMBLE_BUDGET = 9800
 
-# 26531 chars measured 2026-09-10, the aedist-technical-report index at 121
-# entries. Every other project sits below it; this is a ceiling on the worst,
-# not a baseline per file — see the module docstring.
-MEMORY_INDEX_BUDGET = 27000
+# 14061 chars measured 2026-09-10 after the title-only pass, the
+# climate-finance-het index at 92 entries. It opened at 26531 (aedist, 121
+# entries): dropping the trailing hook took the 46 indexes from 198 636 to
+# 111 021 chars, and the ceiling came down with them. That is what lowering a
+# number here means — the pass is the deliverable, this line is its receipt.
+# A ceiling on the worst index, not a baseline per file; see the docstring.
+MEMORY_INDEX_BUDGET = 14500
 
 # The runtime pulls a body into CLAUDE.md for each `@relative/path` on a line of
 # its own. Following the chain is the point: a gate that hardcoded the current
