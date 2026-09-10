@@ -9,10 +9,11 @@
 Figures and claims are the reviewer's and were not re-verified at recording
 time.
 
-Reviews the design draft
-[`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md)
-(landing in PR #887), answering its §8 questions. Distinct in kind from the
-three study reports
+Reviews [v0](./2026-09-10-dragon-memory-design-v0.md) of the design draft,
+answering its §8 questions — cite that frozen copy, not the current
+[v2](./2026-09-10-dragon-memory-design.md), whose numbering has moved on.
+
+Distinct in kind from the three study reports
 ([Fable](./2026-09-10-memoire-agent-fable.md),
 [Perplexity](./2026-09-10-memoire-agent-perplexity.md),
 [ChatGPT](./2026-09-10-memoire-agent-chatgpt.md)), which were solicited
