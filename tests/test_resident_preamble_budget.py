@@ -51,6 +51,15 @@ REPO = Path(__file__).resolve().parents[1]
 # 9646 chars measured 2026-09-10: CLAUDE.md (719) plus the two bodies it pulls
 # in, tickets/AGENTS.md (7969) and RTK.md (958). Headroom is thin on purpose, as
 # it is for the rules tree: it fits a clarifying sentence, not a section.
+#
+# 83% of that is tickets/AGENTS.md, which is not a harness file at all: it is an
+# asset embedded in the erg binary, and the local copy has forked to 3.7× the
+# 2141 bytes erg ships. A trim back to the shipped text is in flight from
+# another direction (IDH 0906, git-erg 0277), and would drop the chain to about
+# 3818. **When that lands, lower this number with it** — left at 9800 the gate
+# would still pass while the block it guards more than halved, which is a
+# ratchet that has quietly stopped ratcheting. Flagged by the session doing that
+# trim, 2026-09-10, before either side had pinned anything.
 PREAMBLE_BUDGET = 9800
 
 # 14061 chars measured 2026-09-10 after the title-only pass, the
