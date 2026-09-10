@@ -21,14 +21,15 @@ A raid fans out N concurrent agents — the cost lever is the **per-invocation
 NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
 the subagent inheritance chain, so an unpinned launch silently runs at whatever
 the session model is; left unpinned on a top-tier session that is the runaway
-"top-model × N-wide" wave. **Effort is not an Agent launch parameter** — a
-spawned agent runs at the *session* effort, which neither this prose nor the
-frontmatter can pin per-child; so set the session effort (`high` is the sweet
-spot) before running a raid, and never rely on `max`. The frontmatter pins the
-orchestrator itself to Sonnet: the 2026-07 trace census (H7) measured top-tier
-raid mains at ≈4.7× the cost curve while Sonnet mains sit on it, and the
-orchestrator only sequences waves — the coders keep their own pins below. Every
-launch below pins `model` explicitly:
+"top-model × N-wide" wave. **Effort is not an Agent launch parameter**, and
+these coders are spawned from definitions that pin none, so they run at the
+*session* effort; set it (`high` is the sweet spot) before running a raid, and
+never rely on `max`. An agent *definition* can carry `effort:` to pin one child
+tier (`rules/claude-code.md`), which is the lever if a wave ever needs its own.
+The frontmatter pins the orchestrator itself to Sonnet: the 2026-07 trace
+census (H7) measured top-tier raid mains at ≈4.7× the cost curve while Sonnet
+mains sit on it, and the orchestrator only sequences waves — the coders keep
+their own pins below. Every launch below pins `model` explicitly:
 
 - **Imagine / Plan / integration-review** agents (read-only judgement — scope
   reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay

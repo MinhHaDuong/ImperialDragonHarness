@@ -423,8 +423,8 @@ round: 1 | 2
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
   `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
-  reviewer's sonnet; effort is not an Agent launch param, so it tracks the
-  session effort), launched **foreground** (`run_in_background: false`, so the
+  reviewer's sonnet; effort is not an Agent launch param and this
+  definition pins none, so it tracks the session effort), launched **foreground** (`run_in_background: false`, so the
   fork blocks until it pushes — see **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
