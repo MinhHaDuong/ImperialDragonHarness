@@ -147,7 +147,30 @@ default branch — there are no remote branches nor merge requests to inspect.
 
 ## Close and clean up
 
-7. **Close** the ticket if still open.
+7. **Close** the ticket if still open, then **check that the close claims of
+   every recently merged PR actually ran** — not only this session's:
+
+   ```bash
+   ~/.claude/skills/roar/check-close-claims.sh --days 7 || true
+   ```
+
+   A PR body's `**Ticket:**` line is executed by `erg-pr-merge`, not by the
+   forge. Any other route — a bare forge-CLI merge, the forge's web UI, another
+   machine, another session — lands the code and drops the claim with no
+   output, and `erg check` passes either way (git-erg PR #334, 2026-09-10:
+   ticket 0276's fix sat on main while 0276 stayed open, found by luck in a
+   `/perch` pass and repaired by a second PR).
+
+   `/healthcheck` step 9 does not cover this. It reports tickets carrying a
+   `Closed:` header that were never archived, so it indexes on the header being
+   *present* — blind by construction to a ticket that was never closed at all.
+   This script joins from the other side, merged PRs that claimed a close.
+
+   Findings are `DROPPED` (ticket exists, no `Closed:` header) or `UNRESOLVED`
+   (no such ticket here — renumbered, or this checkout is behind). Repair a
+   `DROPPED` with `tickets/erg close <id>` plus `tickets/erg archive`, committed
+   like any other change. Exit 2 means the forge could not be read, which is
+   not an all-clear; the trailing count line says what was actually examined.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
     - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR. (2026-07-11, 0240 reorg: a merged `.mk` prerequisite kept a moved script's old flat path; per-move greps and green `make check-fast` all passed — only the integration union grep found it.)
     - Any open → do nothing, tracker stays open.
