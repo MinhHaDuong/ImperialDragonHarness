@@ -8510,6 +8510,13 @@
       "backfilled": true,
       "access_count": 4,
       "last_accessed": "2026-07-11"
+    },
+    "reference_branch_cleanup_incidents": {
+      "projects": [],
+      "first_seen": "2026-09-09T18:04:51Z",
+      "last_confirmed": "2026-09-09T18:04:51Z",
+      "promoted": true,
+      "backfilled": true
     }
   }
 }

@@ -340,22 +340,38 @@ def _retarget(root: Path) -> None:
     PROJECTS_BASE = root / "projects"
 
 
-def live_bodies(projects_base: Path):
-    """Yield (project, slug, path) for every memory body that is not a tombstone.
+def _bodies_in(memdir: Path, project: str | None):
+    """Yield (project, slug, path) for the non-tombstone bodies of one directory."""
+    for body in sorted(memdir.glob("*.md")):
+        if body.name == "MEMORY.md":
+            continue
+        head = body.read_text(encoding="utf-8", errors="replace")[:200].lstrip()
+        if head.startswith("# DELETED"):
+            continue
+        yield project, body.stem, body
 
-    The live corpus is the set the provenance store is supposed to cover. A
-    tombstone is excluded because `remove` has already dropped it, and
+
+def live_bodies(root: Path):
+    """Yield (project, slug, path) for every live memory body, both tiers.
+
+    The live corpus is the set the provenance store is supposed to cover, and it
+    has two tiers: the per-project bodies, and the promoted ones in the harness
+    ``memory/`` directory. ``project`` is None for the harness tier, which has
+    no originating project of its own.
+
+    Walking only ``projects/`` is the blind spot this whole file exists to
+    close, and the first version of it had exactly that shape: it left
+    `reference_branch_cleanup_incidents` — a promoted, harness-level entry —
+    with no record at all, invisible to the gate meant to catch invisibility.
+
+    A tombstone is excluded because `remove` has already dropped it, and
     ``MEMORY.md`` is the index rather than an entry.
     """
-    for memdir in sorted(projects_base.glob("*/memory")):
-        project = memdir.parent.name
-        for body in sorted(memdir.glob("*.md")):
-            if body.name == "MEMORY.md":
-                continue
-            head = body.read_text(encoding="utf-8", errors="replace")[:200].lstrip()
-            if head.startswith("# DELETED"):
-                continue
-            yield project, body.stem, body
+    for memdir in sorted((root / "projects").glob("*/memory")):
+        yield from _bodies_in(memdir, memdir.parent.name)
+    harness = root / "memory"
+    if harness.is_dir():
+        yield from _bodies_in(harness, None)
 
 
 def _to_z(iso: str) -> str:
@@ -408,25 +424,30 @@ def backfill(args):
     """
     root = Path(args.root).expanduser()
     _retarget(root)
-    dates = _git_dates(root, "projects")
+    dates = _git_dates(root, ".")
     created = linked = untouched = 0
     with _provenance_lock():
         data = _load_provenance()
         entries = data["entries"]
-        for project, slug, path in live_bodies(PROJECTS_BASE):
+        for project, slug, path in live_bodies(root):
             rel = str(path.relative_to(root))
             first, last = dates.get(rel, (_now_iso(), _now_iso()))
             entry = entries.get(slug)
             if entry is None:
+                # A body living in the harness tier *is* a promoted entry, and
+                # it has no originating project — the same shape `remove`
+                # already documents for a promoted entry whose projects have all
+                # dropped away. Inventing a project for it would corrupt the
+                # >=2-project frequency gate promotion runs on.
                 entries[slug] = {
-                    "projects": [project],
+                    "projects": [] if project is None else [project],
                     "first_seen": first,
                     "last_confirmed": last,
-                    "promoted": False,
+                    "promoted": project is None,
                     "backfilled": True,
                 }
                 created += 1
-            elif project not in entry["projects"]:
+            elif project is not None and project not in entry["projects"]:
                 entry["projects"].append(project)
                 linked += 1
             else:

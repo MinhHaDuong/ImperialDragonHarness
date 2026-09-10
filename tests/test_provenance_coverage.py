@@ -48,7 +48,7 @@ def tracked_slugs() -> set[str]:
 
 
 def test_every_live_memory_body_is_tracked():
-    live = {slug for _project, slug, _path in provenance.live_bodies(REPO / "projects")}
+    live = {slug for _project, slug, _path in provenance.live_bodies(REPO)}
     missing = sorted(live - tracked_slugs())
     assert not missing, (
         f"{len(missing)} live memory bodies have no provenance record, so promotion, "
@@ -65,7 +65,7 @@ def test_tombstones_are_not_counted_as_live():
     above for the wrong reason, and a walker that returned tombstones would
     demand records for entries `remove` has deliberately dropped.
     """
-    bodies = list(provenance.live_bodies(REPO / "projects"))
+    bodies = list(provenance.live_bodies(REPO))
     assert len(bodies) > 500, f"the walker found only {len(bodies)} bodies — it is not looking"
     for _project, slug, path in bodies:
         head = path.read_text(encoding="utf-8", errors="replace").lstrip()[:20]
