@@ -305,3 +305,46 @@ whose titles were doing silent work.
 
 Instrument: `scripts/census/memory-recall.py`. Re-running it after a promotion
 pass is how the demotion would be validated.
+
+## 8. The next redundancy, and why it is not the next job
+
+With the hook gone, the largest remaining line in the index is the filename.
+Across the 902 entries in all 47 indexes:
+
+| | chars | share |
+|---|---|---|
+| titles | 31 170 | 44.1% |
+| **filenames** | **33 242** | **47.0%** |
+| markdown syntax | 6 314 | 8.9% |
+
+**38.4% of filenames are exactly the slug of their title**, and 51.7% are
+contained in it: `[A guard's exemption must be anchored]` links to
+`feedback_guard_exemption_must_be_anchored.md`. The lesson is written twice,
+once for a reader and once for a filesystem.
+
+| scheme | saves | costs |
+|---|---|---|
+| drop `.md` | 2 706 (3.8%) | nothing, beyond the link ceasing to be one |
+| drop the type prefix | 7 760 (11.0%) | the path stops being reconstructible |
+| both | 10 466 (14.8%) | same |
+| derive the link from the title | 36 850 (52.1%) | 556 renames, 900 `[[wiki-links]]` rewritten, 1 duplicate title |
+
+**None of these is the next job.** §7 measured that 94% of the index is never
+followed. Demoting that share returns about 66 000 chars — 1.8× the most
+aggressive filename scheme — without renaming a file or breaking a link. Even a
+cautious demotion keeping 150 resident entries returns ~59 000.
+
+The ordering matters more than either number: encoding a list of which 94% should
+not be resident optimises the wrong axis. After a demotion the filename
+redundancy on the survivors is ~5 500 chars, and scheme D shrinks to a 2 800-char
+saving for 556 renames.
+
+Two findings worth keeping from the measurement even so:
+
+- **The naming convention is already inconsistent.** Only 38% of files carry
+  their title's slug; the rest are named by topic (`[Zotero library]` →
+  `reference_zotero.md`). Aligning names is a contained job *if scoped to the
+  resident layer* — tens of files rather than 556.
+- **The type prefix is not fat.** It is what makes the path reconstructible from
+  the index line, and it is the key for the per-type byte partitioning §2
+  recommends. Dropping it saves 11% and costs the ability to find the file.
