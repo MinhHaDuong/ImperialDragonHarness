@@ -9,8 +9,8 @@ context: fork
 # at once — backgrounding the orchestrator is what lets those run concurrently.
 # This matches the Claude Code 2.1.218 default; pinned explicitly so a future
 # default flip cannot serialize a wave silently. Its own sub-skills and reviewer
-# agents run FOREGROUND (see "Fork execution contract" below) — the two are
-# different axes: parallelism comes from concurrent tool calls inside one
+# agents are waited for by polling (see "Fork execution contract" below) — the
+# two are different axes: parallelism comes from concurrent tool calls inside one
 # message, never from backgrounding a phase this skill must wait on.
 background: true
 ---
@@ -61,22 +61,42 @@ merge** — the merge decision belongs to the caller (the human or the raid).
 ## Fork execution contract
 
 `/gaze` runs as a `context: fork` (see frontmatter). A fork's turn ends the
-instant it stops calling tools. Every agent this skill spawns — the phase 2–4
-reviewers, the phase 6 gate, the REROLL fix agent — must therefore be launched
-**foreground** (`run_in_background: false`), so the fork blocks on the result
-and continues to the next phase when the agent returns. Launching them
-`run_in_background: true` and then "waiting" does not wait: the fork stops
-calling tools, its turn ends, and the background completions re-invoke the
-**MAIN loop**, not the fork. The fork's last message is then a fan-out
-narration ("reviewers are running in parallel…") instead of a verdict, and
-phases 5–6 never run. This orphaned two real gate runs (aedist `/gaze 977`
-and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a duplicate
-reviewer battery.
+instant it stops calling tools, and **delegated subagents always run in the
+background and notify the session, not this fork.** There is no foreground
+launch parameter to pass; earlier revisions of this contract named one, and a
+lever that does not exist cannot be the thing holding a phase together.
+
+What is true is the first sentence: the fork survives only while it keeps
+calling tools. So every agent this skill spawns — the phase 2–4 reviewers, the
+phase 6 gate, the REROLL fix agent — is launched in the background and then
+**waited for by polling an artifact it writes**, in one bounded loop. The wait
+itself is the tool call that keeps the fork alive.
+
+Each spawned agent is therefore told, in its prompt, to write its result to a
+named path under `<worktree>/.panel/<pr-number>/` — writing to `<name>.md.part`
+and renaming to `<name>.md`, so a half-written file never carries the final
+name — and the roster of expected names is written down *before* launching. A
+waiter that just gathers whatever files appear cannot tell an agent that
+finished silently from one that never started; comparing against a roster
+written in advance can.
+
+Without this, the failure is silent and total: the fork ends its turn at the
+launch, the completions re-invoke the **MAIN loop**, and the fork's last message
+is a fan-out narration ("reviewers are running in parallel…") instead of a
+verdict, with phases 5–6 never running. This orphaned two real gate runs (aedist
+`/gaze 977` and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a
+duplicate reviewer battery, and did it again on two consecutive `/review-pr`
+rounds (`/gaze`-less, ticket 0900, 2026-09-10) where ten reviewers returned real
+verdicts and the merge request carried none of them.
+
+**Bound every wait, and record what did not arrive.** An agent missing at the
+deadline is missing, not clear: name it in the verdict and treat its phase as
+unresolved. Never extend a deadline to avoid recording a gap.
 
 **The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
 behalf — a reviewer Agent (e.g. Agent C) that itself spins a panel of
-perspective agents — inherits this same rule: the inner launch must be
-foreground too, or the orphan failure simply moves one layer down. A launch
+perspective agents — inherits this same rule: the inner launch must be waited for by
+polling an artifact too, or the orphan failure simply moves one layer down. A launch
 site is bound by the fork contract whether it is this skill's own or a
 sub-agent's.
 
@@ -208,9 +228,9 @@ invocations** (ticket 0216). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
-deterministically: each reviewer is a **read-only, foreground** Agent whose
+deterministically: each reviewer is a **read-only** Agent whose
 cwd is **pinned to the existing review worktree** `$primary_root/.claude/worktrees/review-<pr-number>`
-(created in phase 1). Foreground (`run_in_background: false`) is
+(created in phase 1). Waiting on a written artifact, not on a return value, is
 load-bearing, not incidental — see **Fork execution contract** below: this
 skill runs as a `context: fork`, and a fork cannot wait on background
 agents. Do **not** give these agents `isolation: "worktree"` —
@@ -229,9 +249,9 @@ Every reviewer agent's prompt:
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
-Spawn the applicable agents **in a single message, as parallel foreground
-Agent calls** (`run_in_background: false`) — the single message runs them
-concurrently, and foreground makes the fork block until every one returns
+Spawn the applicable agents **in a single message, as parallel background
+Agent calls**, each writing its result to the phase artifact path — the single message runs them
+concurrently, and the bounded poll on those artifacts is what makes this fork wait
 before it proceeds. Do **not** launch them as background agents: a fork's
 turn ends the moment it stops calling tools, and a background completion
 re-invokes the MAIN loop, not the fork, so a background fan-out returns at
@@ -338,8 +358,8 @@ hedged "might break X" phrasing is forbidden — produce the assertion or
 downgrade to `consider:`. Blockers (request-changes / major) are untagged.
 Post the single review on the PR and return the synthesized findings (blockers
 + tagged minors) as the structured block. This inner panel is itself a fan-out:
-Agent C must launch its perspective agents **foreground**
-(`run_in_background: false`), all in one message, and block until every one
+Agent C must launch its perspective agents in one message, each writing its
+own artifact, and poll those artifacts until every one has landed
 returns before it synthesizes — the fork contract applies recursively (see
 **Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11).
 
@@ -367,8 +387,8 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 ### 6. Gate (the non-rubber-stamp step)
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
-(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only, foreground**
-Agent (`run_in_background: false`, so the fork blocks on the verdict),
+(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
+Agent (waited for by polling its written verdict artifact),
 **`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`); never
@@ -416,8 +436,8 @@ round: 1 | 2
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
   `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
   reviewer's sonnet; effort is not an Agent launch param and this definition
-  pins none, so it tracks the session effort), launched **foreground**
-  (`run_in_background: false`, so the fork blocks until it pushes — see
+  pins none, so it tracks the session effort), waited for by polling
+  the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.

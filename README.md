@@ -53,11 +53,22 @@ the reader, and a scoped one is named in [`rules/README.md`](rules/README.md)
 precisely because it is not. That index is one screen, and it is the single
 source of truth on when each conditional rule applies.
 
-The resident set costs ~8 800 tokens per session (measured 2026-09-09).
-`tests/test_rules_resident_budget.py`
-caps it: trimming a body lowers the cap, growing one has to argue for a raise.
+The auto-loaded rules cost ~12 800 tokens per session, and they are one of five
+resident channels: `CLAUDE.md` and its `@` imports, what the SessionStart hook
+prints, the project memory index, and the frontmatter card of every skill and
+subagent are all in front of the model before the first question too — about
+28 000 tokens in all. `make resident-budget` reports the census;
+`tests/test_resident_census.py` caps each channel and
+`tests/test_rules_resident_budget.py` keeps the rules-specific rules. Trimming
+a body lowers a cap, growing one has to argue for a raise.
+
 A runtime without this auto-load — the Pi and Codex adapters — must inject that
 set itself; that is the real work behind tickets 0800 and 0572.
+
+The figures above are characters divided by 2.8, a ratio derived from
+`/context`, not a token measurement: the arithmetic and its provenance are in
+`scripts/resident_census.py`. The earlier ~8 800 recorded here came from
+dividing by 4, which understated every channel by about 45%.
 
 ## Installation
 

@@ -1,24 +1,34 @@
-"""The gaze fork must block on its reviewers, never orphan them (ticket 0250).
+"""A forked skill must not orphan the agents it spawns (ticket 0250).
 
-The lesson 0250 paid for, twice: `/gaze` runs as a `context: fork`. A fork's
-turn ends the instant it stops calling tools. If it launches its reviewer
-battery as **background** agents (`run_in_background: true`) and then "waits
-for all to return", it does not wait — background completions re-invoke the
-MAIN loop, not the fork, so the fork ends immediately, returning a fan-out
-narration ("reviewers are running in parallel…") as its final message.
-Phases 5 (simplify) and 6 (gate) never run in the fork and no verdict is
-produced (aedist 0538 `/gaze 977`, aedist 0540 `/gaze 978` — twice).
+The invariant, unchanged and still the whole point: `/gaze` and the review
+skills run as `context: fork`. A fork's turn ends the instant it stops calling
+tools. A fan-out it cannot wait on is orphaned — the completions re-invoke the
+MAIN loop, the fork's final message is a narration ("reviewers are running in
+parallel…"), later phases never run, and no verdict is produced (aedist 0538
+`/gaze 977`, aedist 0540 `/gaze 978`).
 
-The fix (approach a in the ticket): the reviewer and gate fan-out launches
-must be **foreground / synchronous** so the fork blocks until they return.
-This test makes that enforceable instead of conventional:
+**What changed, 2026-09-10 (ticket 0900).** The remedy this file used to
+enforce was "launch foreground, `run_in_background: false`". The delegation
+tool has no such parameter: subagents always run in the background and notify
+the session. So the enforced remedy named a lever that does not exist, and the
+skills satisfied it by *saying the words*. The proof is this file's own record
+— it was green while `/review-pr` orphaned its panel on two consecutive rounds,
+ten reviewers returning real verdicts and the merge request carrying none of
+them. A guard that passes while the defect it exists to prevent is happening is
+measuring the wrong thing.
 
-1. No launch in the gaze body describes its reviewer/gate agents as
-   "background" or uses `run_in_background: true` — a fork cannot wait on
-   those.
-2. The body states the fan-out is foreground / blocking / synchronous
-   (`run_in_background: false`).
-3. The failure mode and caller-side recovery are documented in the skill.
+The remedy that can actually hold is a wait that survives the fork: launch in
+the background, have each agent write its result to a named artifact, and poll
+for those artifacts in one bounded loop. The poll is a tool call, so the fork
+stays alive; the artifacts outlive it either way.
+
+What this file enforces now:
+
+1. No launch site cites `run_in_background` as a live directive — the parameter
+   does not exist, and a contract resting on it cannot hold a phase together.
+2. Every parallel-agent launch site carries, locally, evidence of a wait that
+   survives the fork: polling, an artifact, a manifest, a bounded deadline.
+3. The failure mode and caller-side recovery stay documented in the skill.
 """
 
 import re
@@ -30,7 +40,7 @@ from test_verify_fork_contracts import fork_skill_files
 REPO = Path(__file__).resolve().parents[1]
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 
-# Every `context: fork` skill must carry the foreground contract *locally*, at
+# Every `context: fork` skill must carry the wait contract *locally*, at
 # each parallel-agent launch site, not merely somewhere in the file (ticket
 # 0263). Auto-discovered from frontmatter via fork_skill_files() so a new fork
 # skill is covered without editing a hand-maintained list — a blind all-skills
@@ -45,14 +55,13 @@ def _body(md_text: str) -> str:
     return parts[2] if len(parts) >= 3 else md_text
 
 
-# A background-launch signal: "background agent(s)" (any whitespace, incl. a
-# line wrap) or an explicit `run_in_background: true`. Naming the anti-pattern
-# to forbid it is fine; issuing it as a launch directive is the defect. We
-# separate the two by negation context, not by the token alone — the skill
-# documents the trap verbatim so future readers recognise it.
-BACKGROUND_SIGNAL = re.compile(
-    r"background\s+agents?\b|run_in_background\s*[:=]\s*true", re.IGNORECASE
-)
+# Citing `run_in_background` as a live directive is the defect now: the
+# delegation tool has no such parameter, either value, so a launch site resting
+# on it describes a lever that does not exist. Naming it to forbid it, or to
+# record that it never existed, is fine — separated by negation context, as
+# before. Background launch itself is no longer an offence; it is the only mode
+# available, and what matters is whether a surviving wait accompanies it.
+NONEXISTENT_PARAM = re.compile(r"run_in_background", re.IGNORECASE)
 
 # Words that turn a background mention into a prohibition or an explanation of
 # the failure, not a launch directive.
@@ -62,10 +71,15 @@ NEGATION = re.compile(
     re.IGNORECASE,
 )
 
-# Foreground/blocking phrasing that proves the fork waits synchronously.
-FOREGROUND = re.compile(
-    r"foreground|synchronous(?:ly)?|blocking\s+(?:launch|call|agent|on)"
-    r"|run_in_background\s*[:=]\s*false",
+# Phrasing that proves the wait survives the fork. Polling an artifact is the
+# mechanism; a manifest is what makes the poll a real check rather than a
+# gather; a bounded deadline is what stops it hanging. Any of these, stated
+# locally, is evidence the launch site knows how it will wait. "Blocking" and
+# "synchronous" remain accepted: they describe the wait correctly, and a skill
+# may reasonably say the fork blocks on the poll.
+SURVIVING_WAIT = re.compile(
+    r"poll(?:s|ing|ed)?\b|artifact|manifest|bounded|deadline"
+    r"|synchronous(?:ly)?|blocking\s+(?:launch|call|agent|on)",
     re.IGNORECASE,
 )
 
@@ -75,7 +89,7 @@ def _sentences(text: str) -> list[str]:
     # mention to its clause for the negation check. Deliberately NOT on ":": the
     # colon lives inside the very tokens we test (`run_in_background: true/false`),
     # so splitting there would tear `run_in_background:` from its value and hide
-    # the directive from BACKGROUND_SIGNAL/FOREGROUND (ticket 0263 B2). Dropping
+    # the directive from NONEXISTENT_PARAM/SURVIVING_WAIT (ticket 0263 B2). Dropping
     # ":" only merges adjacent clauses, which makes negation scoping strictly
     # safer (a merged clause is more likely to carry a negation word, never less).
     return re.split(r"(?<=[.;])\s+|\n+", text)
@@ -90,7 +104,7 @@ def _paragraphs(text: str) -> list[str]:
 # in parallel. The three conjuncts together are what makes it a *launch site*
 # (as opposed to prose that merely mentions parallelism). The parallel signal is
 # the bare word "parallel", not only the "in parallel" bigram: gaze's primary
-# fan-out paragraph reads "as parallel foreground Agent calls" / "parallel Agent
+# fan-out paragraph reads "as parallel background Agent calls" / "parallel Agent
 # calls", which the tighter bigram missed, letting the ratchet skip the very
 # launch site it exists to guard (ticket 0263 B1). The AGENTS + SPAWN_VERB
 # conjuncts keep bare parallelism prose (e.g. "builds compile in parallel") out.
@@ -113,42 +127,44 @@ def _has_nonnegated(pattern: re.Pattern, window: str) -> bool:
 
 
 def _window_offends(window: str) -> bool:
-    """Whether a launch-paragraph window violates the local foreground contract.
+    """Whether a launch-paragraph window violates the local wait contract.
 
-    Two ways to offend (ticket 0263 B2):
-    - a live (non-negated) background directive sits in the window — a fork
-      cannot wait on background agents, so this orphans the children regardless
-      of any foreground token elsewhere; and
-    - no *non-negated* foreground/blocking evidence is present — a historical or
-      forbidden "foreground" mention ("previously ran foreground", "does not run
-      foreground") does not prove the fork waits.
+    Two ways to offend (ticket 0263 B2, remedy corrected by ticket 0900):
+    - a live (non-negated) `run_in_background` citation sits in the window — the
+      parameter does not exist, so the window is describing a wait it cannot
+      perform, whatever else it says; and
+    - no *non-negated* surviving-wait evidence is present — a historical or
+      forbidden mention ("previously polled", "does not poll") does not prove
+      this launch site waits.
     """
-    if _has_nonnegated(BACKGROUND_SIGNAL, window):
+    if _has_nonnegated(NONEXISTENT_PARAM, window):
         return True
-    return not _has_nonnegated(FOREGROUND, window)
+    return not _has_nonnegated(SURVIVING_WAIT, window)
 
 
-def test_no_affirmative_background_launch():
+def test_no_citation_of_nonexistent_launch_parameter():
     body = _body(GAZE.read_text())
     offenders = [
         s.strip()
         for s in _sentences(body)
-        if BACKGROUND_SIGNAL.search(s) and not NEGATION.search(s)
+        if NONEXISTENT_PARAM.search(s) and not NEGATION.search(s)
     ]
     assert not offenders, (
-        "gaze SKILL.md issues a background launch directive for its "
-        "reviewer/gate fan-out — a fork cannot wait on background agents; it "
-        "returns at fan-out start and orphans them (ticket 0250). Offending "
-        f"clauses: {offenders}"
+        "gaze SKILL.md cites `run_in_background` as a live launch directive. "
+        "The delegation tool has no such parameter, either value — a contract "
+        "resting on it is satisfied by saying the words while the fan-out is "
+        "orphaned exactly as before (ticket 0900). Say how the fork waits "
+        f"instead. Offending clauses: {offenders}"
     )
 
 
-def test_fanout_is_foreground_blocking():
+def test_fanout_wait_survives_the_fork():
     body = _body(GAZE.read_text())
-    assert FOREGROUND.search(body), (
-        "gaze SKILL.md must state its reviewer/gate fan-out is "
-        "foreground/synchronous (run_in_background: false) so the fork blocks "
-        "until every agent returns (ticket 0250, approach a)."
+    assert SURVIVING_WAIT.search(body), (
+        "gaze SKILL.md must say how its reviewer/gate fan-out is waited for in "
+        "a way that survives the fork — polling a written artifact, against a "
+        "manifest, under a bounded deadline (ticket 0250 invariant, ticket "
+        "0900 remedy)."
     )
 
 
@@ -175,7 +191,7 @@ def test_failure_mode_documented():
 
 
 @pytest.mark.parametrize("name", sorted(FORK_LAUNCH_SKILLS))
-def test_launch_paragraph_carries_local_foreground_contract(name):
+def test_launch_paragraph_carries_local_wait_contract(name):
     paras = _paragraphs(_body(FORK_LAUNCH_SKILLS[name].read_text()))
     offenders = []
     for i, p in enumerate(paras):
@@ -186,10 +202,11 @@ def test_launch_paragraph_carries_local_foreground_contract(name):
             offenders.append(p.strip()[:220])
     assert not offenders, (
         f"{name} SKILL.md has a parallel-agent launch paragraph with no local "
-        "foreground/blocking contract (run_in_background: false) in that same "
-        "paragraph or the next — a forked skill that ends its turn with its "
-        "fan-out in background orphans the children one layer down (ticket "
-        f"0263, /gaze 479). Offending paragraph(s): {offenders}"
+        "account of how the fork waits — polling a written artifact, against a "
+        "manifest, under a bounded deadline — in that same paragraph or the "
+        "next. A forked skill that ends its turn at the fan-out orphans the "
+        f"children one layer down (ticket 0263, /gaze 479; remedy corrected by "
+        f"ticket 0900). Offending paragraph(s): {offenders}"
     )
 
 
@@ -224,55 +241,58 @@ def test_is_launch_paragraph_ignores_non_launch_parallel_prose():
 def test_real_gaze_primary_launch_paragraph_in_scope():
     paras = _paragraphs(_body(GAZE.read_text()))
     launch = [p for p in paras if _is_launch_paragraph(p)]
-    assert any("parallel foreground" in p.lower() for p in launch), (
+    assert any("parallel background" in p.lower() for p in launch), (
         "gaze's primary review fan-out paragraph is not classified as a launch "
         "site, so the locality ratchet never inspects it — stripping its local "
-        "foreground contract would go unnoticed (ticket 0263 B1)."
+        "wait contract would go unnoticed (ticket 0263 B1)."
     )
     assert len(launch) >= 2
 
 
-# --- B2: foreground evidence must survive negation, background must not slip ---
+# --- B2: wait evidence must survive negation, a dead lever must not slip in ---
 #
-# The window check had no negation awareness: a live `run_in_background: true`
-# directive, or a negated/historical "foreground" mention, still satisfied the
-# contract because FOREGROUND matched the token regardless of context.
+# The window check had no negation awareness: a live directive, or a
+# negated/historical mention of the wait, still satisfied the contract because
+# the pattern matched the token regardless of context. The vocabulary changed
+# with ticket 0900; the negation machinery it guards did not.
 
 
-def test_window_offends_live_background_directive_despite_foreground_token():
+def test_window_offends_dead_parameter_despite_wait_token():
     window = (
         "Spawn the panel as parallel Agent calls with "
-        "run_in_background: true and wait. They run foreground-ish."
+        "run_in_background: false and wait. Results are polled."
     )
     assert _window_offends(window), (
-        "a live background launch directive must offend even with a stray "
-        "foreground token nearby (ticket 0263 B2a)"
+        "citing a parameter the delegation tool does not have must offend even "
+        "with a stray wait token nearby — that pairing is exactly what stayed "
+        "green while the panel was orphaned (ticket 0900)"
     )
 
 
-def test_window_offends_negated_historical_foreground():
+def test_window_offends_dead_parameter_beside_historical_wait():
     window = (
-        "Launch the reviewers as parallel background agents "
-        "(run_in_background: true). This skill previously ran its panel "
-        "foreground before the 2026-05 redesign."
+        "Launch the reviewers as parallel Agent calls with "
+        "run_in_background: true. This skill previously polled a manifest of "
+        "artifacts before the 2026-05 redesign."
     )
     assert _window_offends(window), (
-        "a live background directive alongside a historical foreground mention "
-        "must offend (ticket 0263 B2b)"
+        "a live citation of the dead parameter must offend even beside a "
+        "historical mention of a real wait (ticket 0263 B2b)"
     )
 
 
-def test_window_offends_when_foreground_only_negated():
-    window = "Spawn parallel agents. This skill does not run foreground."
+def test_window_offends_when_wait_only_negated():
+    window = "Spawn parallel agents. This skill does not poll for artifacts."
     assert _window_offends(window), (
-        "foreground evidence in a negation clause does not prove the fork "
-        "waits (ticket 0263 B2b)"
+        "wait evidence in a negation clause does not prove the fork waits "
+        "(ticket 0263 B2b)"
     )
 
 
-def test_window_accepts_local_foreground_contract():
+def test_window_accepts_local_wait_contract():
     window = (
-        "Spawn the agents as parallel foreground Agent calls "
-        "(run_in_background: false), blocking until every one returns."
+        "Spawn the agents as parallel background Agent calls, each writing its "
+        "report to the panel directory, then poll those artifacts against the "
+        "manifest under a bounded deadline."
     )
     assert not _window_offends(window)

@@ -1,7 +1,15 @@
-.PHONY: skills-catalog adapter-hooks check-adapter-hooks check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check check-fast check-tests lint
+.PHONY: resident-budget skills-catalog adapter-hooks check-adapter-hooks check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check check-fast check-tests lint
 
 skills-catalog:
 	./scripts/update-skills-catalog.py
+
+# What a session pays before its first question, across every resident
+# channel — auto-loaded rules, CLAUDE.md's imports, what the SessionStart
+# hook prints, the project memory index, and the frontmatter of every
+# skill and subagent. Reporting only; the ratchet is
+# tests/test_resident_census.py under `make lint`.
+resident-budget:
+	./scripts/resident_census.py --detail
 
 # The Claude Code adapter's hooks.json is derived from settings.shared.json,
 # never hand-edited: while both files carry the hooks, a hook added to one and

@@ -36,14 +36,30 @@ Spin disciplinary agents in parallel, each in a fresh context, each pinned to
 an unpinned Agent inherits the session model and silently runs the fan-out at
 top tier). Prose review reads **full text**, not just diff.
 
-**Concurrency contract (`rules/authoring-skills.md`):
-parallel-FOREGROUND.** This skill runs as a `context: fork` (see frontmatter),
-and a fork's turn ends the instant it stops calling tools. Launch the panel in
-**one message** as **foreground** Agent calls (`run_in_background: false`) so
-the fork blocks until every reviewer returns, then synthesizes. Never launch
-them in the background: a fork cannot wait on background agents — it ends its
-turn at the launch, the completions re-invoke the MAIN loop, and no synthesis
-runs and no review is ever posted.
+**Concurrency contract (`rules/authoring-skills.md`): parallel-background,
+collected by polling.** This skill runs as a `context: fork` (see frontmatter),
+and a fork's turn ends the instant it stops calling tools. Delegated subagents
+always run in the background and notify the **session**, not this fork; no
+launch parameter changes that. The fork stays alive only by continuing to call
+tools, so the panel is collected from **artifacts**, never from return values:
+
+1. Before launching, write the roster to `<panel>/manifest.txt`, one reviewer
+   per line — the set collection checks against. Without it, "no more reports
+   are arriving" cannot be told from "none were ever launched".
+2. Each reviewer writes its report to `<panel>/<reviewer>.md.part`, then renames
+   it to `<panel>/<reviewer>.md`. The rename is the completion signal: a
+   half-written file never carries the final name.
+3. The fork waits in one bounded loop until every manifest entry has its report
+   or the deadline passes — roughly ten minutes. That wait is what keeps the
+   fork's turn alive.
+
+`<panel>` is `<worktree>/.panel/<pr-number>/`, inside the worktree and never a
+temporary directory: collection assumes launcher and reviewers share a
+filesystem, and a container's temporary directory may be neither shared nor
+durable.
+
+A reviewer still missing at the deadline is **missing, not accepting**. Name it
+in the posted review and leave it unresolved for the next round.
 
 ## Setup
 
@@ -88,11 +104,19 @@ Violations must cite the line. This agent has no other role — its table goes v
 2. Group findings: major (blocks acceptance), minor (should fix), suggestion.
 3. Deduplicate convergent findings.
 4. Build the manuscript. Check consistency between prose and data.
-5. Post a single review on the merge request.
-6. Close with a verdict roster: one line per reviewer that ran, giving its
+5. Write the synthesis to `<panel>/review.md` before posting it — findings then
+   survive a forge outage, a fork that dies mid-step, and a failed post.
+6. Post a single review on the merge request.
+7. Verify it landed: count the reviews before posting and again after, and the
+   count must increase. If it did not, the round did not happen — say so, name
+   `<panel>/review.md`, and return failure rather than a summary that reads like
+   success.
+8. Close with a verdict roster: one line per reviewer in the manifest, giving its
    verdict (accept / minor / major), including reviewers that accepted with
-   nothing to say. The next round scopes itself from this roster
-   (§ Round scoping), so a reviewer missing from it reads as accepting.
+   nothing to say, and **no report** for any that did not land. The next round
+   scopes itself from this roster (§ Round scoping): a `no report` reviewer is
+   unresolved and runs again. A reviewer that crashed and a reviewer that
+   accepted are opposite outcomes and must not share a spelling.
 
 ## Minor/suggestion tags (mandatory)
 
