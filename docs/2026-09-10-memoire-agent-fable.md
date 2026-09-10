@@ -17,6 +17,14 @@ Premier des trois rapports sollicités indépendamment sur la même question :
 Voir aussi [`dream-research.md`](./dream-research.md) (note de recherche
 `/dream`, 2026-05-13) et [`VISION-original.md`](./VISION-original.md).
 
+Les trois rapports ont été sollicités **avant** la rédaction du document de
+conception
+[`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md)
+(arrivé par la PR #887) : ce sont des entrées amont, pas des relectures de ce
+document. C'est lui qui porte la proposition du harness, pas ceux-ci ; la
+calibration des seuils est dans
+[`2026-09-10-portable-agent-memory-calibration.md`](./2026-09-10-portable-agent-memory-calibration.md).
+
 ---
 
 ## Cadre stabilisé (2025-2026)
