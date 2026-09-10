@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-09-10T09:45Z HDMX-coding-agent created
+2026-09-10T12:30Z HDMX-coding-agent note Decision recorded: per-project barrier. Fix landed in the consumer repo, ticket 0706.
 
 --- body ---
 ## Contexte
@@ -97,10 +98,76 @@ Le contrôle positif est obligatoire ici, parce que le défaut se cache derrièr
 un verdict plausible : construire le cas où le mauvais dépôt donne la réponse
 *inverse* de la bonne. Un test où les deux dépôts s'accordent ne prouve rien.
 
+## Décision, 2026-09-10 : barrière par projet
+
+La question posée plus haut — capacité du harnais, ou barrière par projet — est
+tranchée en faveur de la seconde, sur inventaire et non sur goût.
+
+**Ce que dit l'inventaire.** Il n'existe qu'une seule copie de cette barrière
+dans tout l'arbre de travail : celle du projet consommateur. Le harnais n'en a
+pas, l'autre projet consommateur non plus. L'argument de ce ticket pour la
+remontée reposait sur « chaque copie héritera du même angle mort » ; il n'y a
+pas d'autre copie pour en hériter. Le harnais ne monte une capacité que contre
+une classe de défauts qui existe démontrablement, et un exemplaire n'est pas
+une classe.
+
+**Ce que dit le contenu.** La barrière est saturée de politique locale : sa
+liste d'identités dont la relecture compte, sa voie rapide pour les PR de
+fiches qui cite les règles du projet, ses deux seuils. Remonter le mécanisme
+laisserait la substance sur place et ferait passer par un point d'extension une
+décision qui n'a qu'un seul décideur. Le rapport coût/bénéfice est celui d'un
+outillage de second ordre, précisément ce que la période de refroidissement du
+harnais écarte.
+
+**Le contrat, qui est l'autre moitié de la décision.** Une barrière par projet
+n'est tenable que si quelque chose l'empêche de redériver. Ce garde est local
+et mécanique : deux tests de source dans la suite du projet consommateur
+refusent toute réapparition d'un littéral d'identité de dépôt dans la logique
+de décision — l'affectation `OWNER=`/`REPO=` d'une part, le nom du dépôt dans
+une ligne exécutable d'autre part. C'est le défaut exact que ce ticket
+signale, et il ne peut plus revenir en silence.
+
+**Ce qui ferait basculer la décision.** Un second projet consommateur qui se
+dote d'une barrière de fusion. À ce moment-là la classe existe, la capacité se
+nomme dans le harnais, et la partie propre à la forge passe derrière un point
+d'extension — comme le fait déjà le garde de collision d'identifiants entre PR
+ouvertes. Tant qu'il n'y a qu'un porteur, la capacité vit chez lui.
+
+**L'alternative, pour mémoire.** Remonter maintenant aurait un mérite : le
+défaut de forme corrigé ici — un verdict rendu sur un objet que le contrôle n'a
+pas identifié — est générique, et le harnais aurait pu le porter une fois pour
+toutes. C'est un pari sur des porteurs futurs, contre une abstraction à
+maintenir aujourd'hui pour un seul appelant. La décision est peu coûteuse à
+renverser : le correctif est un fichier, et le contrat ci-dessus dit quand.
+
+## Réalisation
+
+Le correctif lui-même est du travail de dépôt consommateur et y vit, sous sa
+propre fiche : `tickets/0706-la-barriere-de-fusion-juge-le-mauvais-depot.erg`
+du projet consommateur. Résumé des mesures qui y sont vérifiées :
+
+- Le dépôt visé est résolu par ordre de force de preuve — champs `owner`/`repo`
+  de l'outil MCP, sélecteur `--repo`/`-R`, dépôt nommé dans une URL de PR, puis
+  le dépôt distant `origin` du répertoire où la commande s'exécute, que la
+  charge utile du hook fournit dans son champ `cwd`. Ce dernier est une mesure
+  de ce que la forge résoudrait elle-même, pas une conjecture à son sujet.
+- Cible non déterminable → `ask`. Ni blanc-seing ni blocage d'un travail
+  légitime : la main est rendue. La même règle couvre désormais la fusion dont
+  le *numéro* est indéterminable, qui renvoyait « autorisé ».
+- Chaque motif de verdict nomme l'objet jugé, `<propriétaire>/<dépôt>#<numéro>`,
+  pour qu'une lecture du mauvais dépôt soit visible au lieu d'être muette.
+- Douze tests rouges d'abord, dans les deux sens : chaque cas garnit le mauvais
+  dépôt de l'état de relecture **inverse**, de sorte qu'un hook qui lit le
+  mauvais rend le verdict opposé et non un verdict juste par accident.
+- Contrôle en conditions réelles : les deux verdicts erronés observés le
+  2026-09-10 sont inversés sur les PR réelles, et les titres relevés
+  confirment que le hook interrogeait bien les PR sans rapport décrites plus
+  haut.
+
 ## Exit criteria
 
-- [ ] Décision prise et écrite : capacité du harnais, ou barrière par projet
-- [ ] Le hook statue sur le dépôt réellement visé par la commande
-- [ ] Dépôt non déterminable → abstention explicite, jamais une supposition
-- [ ] Un test rouge d'abord, avec les deux dépôts en désaccord
-- [ ] Aucun littéral d'identité de dépôt ne subsiste dans la logique de décision
+- [x] Décision prise et écrite : capacité du harnais, ou barrière par projet
+- [x] Le hook statue sur le dépôt réellement visé par la commande
+- [x] Dépôt non déterminable → abstention explicite, jamais une supposition
+- [x] Un test rouge d'abord, avec les deux dépôts en désaccord
+- [x] Aucun littéral d'identité de dépôt ne subsiste dans la logique de décision
