@@ -1,8 +1,15 @@
-# Mémoire des agents — cadre stabilisé et proposition pour ImperialDragonHarness
+# Mémoire des agents — rapport d'étude (Fable, 2026-09-10)
 
-**Document de conception.** Auteur : Fable. Date : 2026-09-10.
-Enregistré verbatim ; les affirmations chiffrées et les références sont celles
-de l'auteur et n'ont pas été revérifiées à l'enregistrement.
+> **NON NORMATIF.** Rapport d'étude, enregistré pour information. Rien ici
+> n'est décidé, adopté ni applicable au harness. Aucune règle, aucun agent et
+> aucun outil ne doit s'y référer comme à une prescription : la section
+> « Proposition pour ImperialDragonHarness » est une suggestion de l'auteur du
+> rapport, pas une architecture retenue. Les normes du harness vivent dans
+> `rules/`, `CLAUDE.md` et les tickets — pas dans `docs/`.
+
+**Auteur :** Fable. **Enregistré le :** 2026-09-10, verbatim.
+Les affirmations chiffrées et les références sont celles de l'auteur et n'ont
+pas été revérifiées à l'enregistrement.
 
 Documents voisins : [`dream-research.md`](./dream-research.md) (note de
 recherche `/dream`, 2026-05-13), [`VISION-original.md`](./VISION-original.md).
@@ -38,6 +45,10 @@ Les benchmarks sont passés du rappel statique à des tests agentiques couplant 
 5. Bitemporalité (valid_time / transaction_time) et provenance par ligne (stated / observed / inferred) — indispensables pour l'audit et contre l'empoisonnement. Corollaire : la mémoire est une donnée, jamais une instruction.
 
 ## Proposition pour ImperialDragonHarness
+
+*[Note d'enregistrement — non de l'auteur du rapport : ce qui suit est
+une proposition soumise à l'étude, non un état des lieux du harness ni
+un plan approuvé.]*
 
 Substrat : markdown + frontmatter YAML, versionné dans git (le diff devient le journal de consolidation gratuit). Un index (chemin + description d'une ligne) toujours chargé ; contenu à la demande.
 

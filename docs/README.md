@@ -11,7 +11,7 @@ Reference materials and review records for the Imperial Dragon Harness.
 | `VISION-original.md` | Original harness vision document |
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
-| `2026-09-10-memoire-agent-fable.md` | Design document by Fable: agent memory state of the art (2025-2026) and a proposal for IDH (French) |
+| `2026-09-10-memoire-agent-fable.md` | **Non-normative study report** by Fable: agent memory state of the art (2025-2026), with a proposal for IDH that is suggested, not adopted (French) |
 
 ## Reviews
 
