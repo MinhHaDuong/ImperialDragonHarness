@@ -98,8 +98,9 @@ ticket_state() {
     echo absent
 }
 
-while IFS=$'\t' read -r num title body_b64; do
+while IFS='|' read -r num title_b64 body_b64; do
     [ -n "$num" ] || continue
+    title=$(printf '%s' "$title_b64" | base64 -d 2>/dev/null || true)
     body=$(printf '%s' "$body_b64" | base64 -d 2>/dev/null || true)
 
     # Same acceptance as erg-pr-merge: **Ticket:** / **Ticket**: / Ticket:,
@@ -133,9 +134,13 @@ while IFS=$'\t' read -r num title body_b64; do
                 ;;
         esac
     done
-# Tab-joined with base64 for the body: a PR body is multi-line and would
-# otherwise break the record. Title is last-but-one and cannot contain a tab.
-done < <(printf '%s' "$PRS" | jq -r '.[] | [(.number|tostring), .title, (.body // "" | @base64)] | @tsv')
+# Pipe-joined, with title and body base64-encoded. Two reasons, both real:
+# a PR body is multi-line and would otherwise break the record, and tab is IFS
+# *whitespace*, so an empty middle field (a PR with an empty title) would
+# collapse and shift every later field left — see rules/coding-bash.md, and the
+# tab-ifs-guard CI job that catches exactly this. `|` is not in the base64
+# alphabet, so it cannot appear inside a field.
+done < <(printf '%s' "$PRS" | jq -r '.[] | [(.number|tostring), (.title // "" | @base64), (.body // "" | @base64)] | join("|")')
 
 # The counts are the positive control: they say what was looked at, so a silent
 # run cannot pass for an all-clear when nothing was examined. They also add up,
