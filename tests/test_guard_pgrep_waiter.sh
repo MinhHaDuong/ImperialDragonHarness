@@ -17,6 +17,13 @@ export LC_ALL=C
 cd "$(dirname "$0")/.."
 HOOK="$PWD/scripts/guard-pgrep-waiter.sh"
 fail=0
+# Cases actually executed, asserted against EXPECTED at the end. A mangled case
+# — a backtick in a description firing command substitution, say — otherwise
+# skips silently and the suite still prints PASS. That happened while this file
+# was being written, which is the same all-clear-indistinguishable-from-could-
+# not-look defect the guard itself exists to prevent.
+ran=0
+EXPECTED=18
 
 # Feed a command through the hook, return its exit code.
 probe() {
@@ -26,6 +33,7 @@ probe() {
 }
 
 deny() {  # $1 = description, $2 = command
+    ran=$((ran + 1))
     local rc=0
     probe "$2" || rc=$?
     if [ "$rc" -ne 2 ]; then
@@ -36,6 +44,7 @@ deny() {  # $1 = description, $2 = command
 }
 
 allow() {  # $1 = description, $2 = command
+    ran=$((ran + 1))
     local rc=0
     probe "$2" || rc=$?
     if [ "$rc" -ne 0 ]; then
@@ -64,6 +73,12 @@ deny "loop split across lines" \
 do
   sleep 30
 done'
+deny "bounded for-loop poll — the reviewer's find, one token to close" \
+    'for i in $(seq 1 100); do pgrep -f make || break; sleep 5; done'
+# Not a misfire: a backgrounded monitor strands exactly like a waiter, by
+# design, and reparents the same way. Blocking it is the intended behaviour.
+deny "backgrounded monitor loop" \
+    'while true; do pgrep -c nginx; sleep 30; done &'
 
 # --- must ALLOW: everything a person or agent legitimately needs -------------
 allow "enumeration, not polling" \
@@ -80,6 +95,16 @@ allow "loop with sleep, no process predicate at all" \
     'until [ -f /tmp/ready ]; do sleep 5; done'
 allow "pgrep and sleep, but no loop" \
     'pgrep -f make; sleep 2; echo done'
+allow "enumeration survives for becoming a loop keyword: sleep is what saves it" \
+    'for pid in $(pgrep -f x); do readlink /proc/$pid/cwd; done'
+# Writing text ABOUT this defect is indistinguishable, to a grep, from running
+# it — and the text most often written about it is this repo's own memory note,
+# which quotes the banned shape verbatim. A heredoc edit to that note must not
+# trip the guard that the note documents.
+allow "heredoc that documents the banned shape" \
+    'cat >> note.md <<EOF
+until [ -z "$(pgrep -f make)" ]; do sleep 25; done
+EOF'
 allow "empty command" ''
 
 # --- must DENY: the probe cannot parse its input ----------------------------
@@ -102,6 +127,11 @@ fi
 # jq check, or the case above proves nothing about jq.
 if [ ! -x "$NOJQ/cat" ] || command -v jq >/dev/null && [ -e "$NOJQ/jq" ]; then
     echo "FAIL: the no-jq fixture is malformed"
+    fail=$((fail + 1))
+fi
+
+if [ "$ran" -ne "$EXPECTED" ]; then
+    echo "FAIL: ran $ran cases, expected $EXPECTED — a case was mangled or lost"
     fail=$((fail + 1))
 fi
 

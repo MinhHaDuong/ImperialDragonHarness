@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-09-10T07:57Z Minh Ha-Duong created
 2026-09-10T08:20Z Minh Ha-Duong note Pivoted after review of PR #855: a PreToolUse guard replaces the resident rule, so the budget raise is withdrawn
+2026-09-10T08:45Z Minh Ha-Duong note Second review round: for-loop gap closed, heredocs skipped, write-then-exec conceded in writing
 
 --- body ---
 ## Context
@@ -58,6 +59,38 @@ tracking it.
 **A `paths:` scope does not apply** and this stays true: it fires on the file
 being edited, and this defect happens when a Bash command is written.
 
+## What it does not catch — conceded, not overlooked
+
+A second review round found two gaps and one of them is architectural. Written
+here rather than left for the next reader to rediscover:
+
+- **Write-then-execute defeats it entirely.** The hook is `PreToolUse(Bash)`, so
+  a waiter written into a file by the Write tool and run as `./helper.sh` is
+  never scanned. Nothing here reads file contents. This is the honest limit of
+  the instrument: coverage is structural only for commands whose offending text
+  passes through one Bash call — which all 105 measured instances did, but
+  nothing guarantees the next one will. Closing it needs a second hook matching
+  file bodies on Write, worth building only if the class appears.
+- **A different predicate.** `ps aux | grep`, or a busy-wait with no `sleep`,
+  polls just as badly. The deny message therefore leads with the general shape
+  and mentions `pgrep` second, so it does not advertise the substitution — the
+  first draft named `pgrep` first, which put the escape hatch one paraphrase
+  from the block.
+- **A heredoc**, skipped wholesale, so `bash <<EOF … EOF` would slip through.
+  The trade is deliberate: writing text *about* this defect is indistinguishable
+  to a grep from running it, and the text most often written about it is this
+  repo's own memory note, which quotes the banned shape verbatim. A heredoc edit
+  to that note tripped the guard the note documents. Documentation authoring is
+  frequent; `bash <<EOF` waiters have never been seen.
+
+Two residual false positives are accepted rather than fixed, because narrowing
+further costs more complexity than the misfire costs a caller: a command whose
+*search patterns* contain all three words (`grep -RIn pgrep . | grep -E
+"sleep|until"`) is blocked — split it, or use the Grep tool. A backgrounded
+monitor (`while true; do pgrep -c nginx; sleep 30; done &`) is also blocked, and
+that one is not a misfire: it strands exactly like a waiter, by design. Both are
+test cases, so the behaviour is pinned rather than incidental.
+
 ## The guard's own cost, measured rather than assumed
 
 A guard reads text, not intent. An earlier draft of this one fired against a
@@ -91,8 +124,10 @@ strandings is that evidence.
 
 - [ ] The guard denies the six measured waiter shapes, including both
       agent-invented workarounds
-- [ ] The guard allows enumeration, investigation, file polling and the
-      `kill -0` form
+- [ ] The guard allows enumeration, investigation, file polling, the `kill -0`
+      form, and a heredoc documenting the banned shape
+- [ ] Every gap and residual misfire above is named in the guard's own comments
+      and pinned by a test, so none is rediscovered by accident
 - [ ] Wired in `settings.shared.json` with the adapter regenerated and in sync
 - [ ] The memory note records the guard as the instrument, and keeps the
       reparentation signal for whoever builds a sweep later
