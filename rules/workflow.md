@@ -1,4 +1,4 @@
-<!-- last-reviewed: 2026-09-09 -->
+<!-- last-reviewed: 2026-09-10 -->
 # Workflow
 
 Resident in every session (`rules/README.md`), so this file carries rules, not
@@ -6,6 +6,9 @@ their history: incidents live in memory notes and tickets, cited inline. Runtime
 mechanics — worktree entry, subagent levers, hook output — live in
 [claude-code.md](./claude-code.md); skill and hook authoring in
 [authoring-skills.md](./authoring-skills.md), loaded when you edit one.
+
+**The Imperial Dragon is not a bird.** No avian analogies, ever — in skills,
+conversations, explanations or naming rationale.
 
 # Session start
 
@@ -121,6 +124,8 @@ live, a mock that lies in the right direction — and watch the probe react. Whe
 the positive case needs an action your tooling cannot perform, *that is the
 finding*: report the one experiment that would settle it, not a null. Three
 independent zeros feel like evidence and are one zero measured three times.
+Distinguish "this path does not cause it" from "nothing causes it"; a null
+result supports only the tested scope.
 
 **A number you divided out is not a number you measured.** A per-unit figure
 obtained by dividing someone else's aggregate reads like data, carries no error
@@ -204,8 +209,9 @@ move the rate with activity and leave the share where it is (`/trace-doctor`).
 # Autonomous action
 
 **Batch the decisions, then run to the end.** The author's attention is the
-scarcest resource in the loop and a spinner is not a deliverable. Collect every
-foreseeable decision into ONE question round, each with a recommended default,
+scarcest resource in the loop and a spinner is not a deliverable. When work
+needs author input, collect every foreseeable decision into ONE question round,
+each with a recommended default,
 then execute through verification, merge and cleanup without returning between
 steps, delegating waits to background agents, and deliver one report. Mid-run
 returns are for genuinely new scope or irreversible actions the batched round
