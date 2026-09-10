@@ -119,11 +119,17 @@ Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
 Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
 
 **The index line is a title and a link — no trailing description.** The index is
-resident in every session of its project; the body is not, and the body's
-`description:` frontmatter is what the runtime already uses to decide recall.
-A trailing hook is therefore a third copy of the same sentence, and the only
-copy that is paid for unconditionally. Dropping it took the 46 indexes from
-198 636 to 111 021 chars (2026-09-10).
+resident in every session of its project; the body is not. The hook was a third
+copy of a sentence the body already carries twice, as `name:` and as
+`description:`, and the only copy paid for unconditionally. Dropping it took the
+46 indexes from 198 636 to 111 021 chars (2026-09-10).
+
+**The index is the only door.** No recall channel fires on this runtime —
+measured over 5 753 traces, with a positive control: every appearance of a body
+or of its `description:` is a session opening the file itself, never an
+injection. So an entry dropped from an index is not demoted, it is unreachable.
+Never shorten this index by unlisting an entry: shorten it by moving the entry
+to a second-level index that a resident line names.
 
 What survives has to do the whole job, so **the title states the lesson**:
 `Fetch before each sibling merge, then grep-verify the union`, not
