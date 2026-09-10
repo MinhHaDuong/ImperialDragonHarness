@@ -84,7 +84,14 @@ def preamble_files() -> list[Path]:
 
 
 def memory_indexes() -> list[Path]:
-    return sorted((REPO / "projects").glob("*/memory/MEMORY.md"))
+    """Both levels the runtime injects: the harness-wide index and the project's.
+
+    A session gets `memory/MEMORY.md` — the promoted, cross-project entries —
+    *and* the index of whichever project it opens in. Globbing only `projects/`
+    would have left the harness level ungated, which is how this file's subject
+    came to exist in the first place.
+    """
+    return sorted([REPO / "memory" / "MEMORY.md", *(REPO / "projects").glob("*/memory/MEMORY.md")])
 
 
 def test_the_preamble_chain_is_followed():
