@@ -10,6 +10,12 @@ Two documented recipes lost branches on 2026-06-10:
    current branch explicitly, and use ``git branch -D`` (safe: the
    merge-base probe has just proven the branch is an ancestor of
    origin/main; ``-d`` checks merged-into-HEAD and spuriously refuses).
+   A third way to lose one, added 2026-09-10: a branch a PARALLEL session
+   has checked out in its own worktree is an ancestor of origin/main like
+   any other, and the sweep reached one. Git's refusal to delete a
+   checked-out branch is a backstop, not a guard — and because that
+   refusal is the final command of its ``&&`` chain, under ``set -e`` it
+   aborts the sweep for every branch after it.
 
 2. ``skills/roar/SKILL.md`` step 9b blanket-authorized ExitWorktree's
    ``discard_changes``, which also deletes the ORIGINAL branch the
@@ -81,6 +87,28 @@ def test_git_md_recipe_uses_force_delete_after_ancestor_probe():
         "merge-base --is-ancestor probe already proved the branch merged"
     )
     assert 'git branch -d "$b"' not in recipe
+
+
+def test_roar_10_sweep_skips_branches_checked_out_elsewhere():
+    """A peer session's branch is an ancestor of origin/main like any other.
+
+    Without the guard the sweep reaches it and `git branch -D` fails as the
+    final command of its `&&` chain — under `set -e` that aborts the whole
+    loop, so every branch after it in iteration order is silently never
+    swept. The membership test must match whole LINES: `git worktree list`
+    emits one branch per line, and a space-delimited test never fires.
+    """
+    recipe = cleanup_recipe()
+    assert "worktree list --porcelain" in recipe, (
+        "roar step 10 cleanup loop must build its protected set from "
+        "git worktree list --porcelain — a branch checked out by a parallel "
+        "session is an ancestor of origin/main and the loop would reach it"
+    )
+    assert "grep -qx" in recipe, (
+        "the protected-set membership test must be whole-line (grep -qx): "
+        "git worktree list emits one branch per line, and a space-delimited "
+        "test silently never fires (bug written and caught 2026-09-10)"
+    )
 
 
 def test_roar_9b_checks_original_branch_before_discard():
