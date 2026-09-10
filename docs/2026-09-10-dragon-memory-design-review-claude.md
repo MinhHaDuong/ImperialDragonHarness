@@ -18,9 +18,11 @@ three study reports
 [ChatGPT](./2026-09-10-memoire-agent-chatgpt.md)), which were solicited
 *before* the design and fed it. This one comes after and judges it.
 
-**The reviewer's own caveat stands unresolved:** the design asked for a read
-from a different model family, and this is an in-family review. An outside
-read is still owed.
+**The reviewer opens by disqualifying itself in part:** the design asked for a
+read from a different model family, and this is an in-family review. That
+outside read has since arrived —
+[`2026-09-10-dragon-memory-design-review-chatgpt.md`](./2026-09-10-dragon-memory-design-review-chatgpt.md)
+— so read the two together rather than either alone.
 
 ---
 

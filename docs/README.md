@@ -16,7 +16,8 @@ Reference materials and review records for the Imperial Dragon Harness.
 | `2026-09-10-memoire-agent-fable.md` | **Non-normative study report** by Fable — agent memory: state of the art and a proposal for IDH, suggested and not adopted (French) |
 | `2026-09-10-memoire-agent-perplexity.md` | **Non-normative study report** by Perplexity on the same question, solicited independently (French) |
 | `2026-09-10-memoire-agent-chatgpt.md` | **Non-normative study report** by ChatGPT on the same question, solicited independently (French) |
-| `2026-09-10-dragon-memory-design-review-claude.md` | **Non-normative review** by Claude of the memory design draft — answers its section 8, flags that an out-of-family read is still owed |
+| `2026-09-10-dragon-memory-design-review-claude.md` | **Non-normative review** by Claude of the memory design draft — answers its section 8; in-family, read alongside the ChatGPT review |
+| `2026-09-10-dragon-memory-design-review-chatgpt.md` | **Non-normative review** by ChatGPT of the same draft — the out-of-family read it asked for; substantial revisions before sign-off (French) |
 
 ## Reviews
 
