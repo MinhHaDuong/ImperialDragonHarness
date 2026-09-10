@@ -5,7 +5,8 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-09-10T09:45Z HDMX-coding-agent created
-2026-09-10T12:30Z HDMX-coding-agent note Decision recorded: per-project barrier. Fix landed in the consumer repo, ticket 0706.
+2026-09-10T12:30Z HDMX-coding-agent note Decision recorded: per-project barrier.
+2026-09-10T14:10Z HDMX-coding-agent note Fix merged in the consumer repo (PR 1317, ticket 0706 closed); repo literals gone from its main.
 
 --- body ---
 ## Contexte
@@ -103,48 +104,67 @@ un verdict plausible : construire le cas où le mauvais dépôt donne la répons
 La question posée plus haut — capacité du harnais, ou barrière par projet — est
 tranchée en faveur de la seconde, sur inventaire et non sur goût.
 
-**Ce que dit l'inventaire.** Il n'existe qu'une seule copie de cette barrière
+L'inventaire d'abord. Il n'existe qu'une seule copie de ce *mécanisme de hook*
 dans tout l'arbre de travail : celle du projet consommateur. Le harnais n'en a
-pas, l'autre projet consommateur non plus. L'argument de ce ticket pour la
-remontée reposait sur « chaque copie héritera du même angle mort » ; il n'y a
-pas d'autre copie pour en hériter. Le harnais ne monte une capacité que contre
-une classe de défauts qui existe démontrablement, et un exemplaire n'est pas
-une classe.
+pas — son propre hook sur la commande de fusion bloque les fusions lancées
+depuis un worktree, ce qui est un autre sujet, et il est déjà agnostique, avec
+des marques `{owner}/{repo}` et aucun littéral. L'autre projet consommateur n'en
+a pas non plus. L'argument de ce ticket pour la remontée reposait sur « chaque
+copie héritera du même angle mort » ; il n'y a pas d'autre copie pour en
+hériter, et le harnais ne monte une capacité que contre une classe de défauts
+qui existe démontrablement.
 
-**Ce que dit le contenu.** La barrière est saturée de politique locale : sa
-liste d'identités dont la relecture compte, sa voie rapide pour les PR de
-fiches qui cite les règles du projet, ses deux seuils. Remonter le mécanisme
-laisserait la substance sur place et ferait passer par un point d'extension une
-décision qui n'a qu'un seul décideur. Le rapport coût/bénéfice est celui d'un
-outillage de second ordre, précisément ce que la période de refroidissement du
-harnais écarte.
+Cette formulation demande une précision, relevée en relecture et méritée. Au
+niveau du *mécanisme* — un hook qui intercepte la commande et compte les
+relectures — l'inventaire est bien de un. Au niveau de la *capacité de
+gouvernance*, « ne fusionne pas ce qui n'a pas été relu », le harnais n'est pas
+démuni : `verify-gate` et `/gaze` la portent déjà, comme étape de flux invoquée
+avant la fusion plutôt que comme blocage automatique de la commande. La
+décision porte donc sur le mécanisme de blocage, pas sur la capacité : celle-ci
+existe et vit dans le harnais depuis longtemps.
 
-**Le contrat, qui est l'autre moitié de la décision.** Une barrière par projet
-n'est tenable que si quelque chose l'empêche de redériver. Ce garde est local
-et mécanique : deux tests de source dans la suite du projet consommateur
-refusent toute réapparition d'un littéral d'identité de dépôt dans la logique
-de décision — l'affectation `OWNER=`/`REPO=` d'une part, le nom du dépôt dans
-une ligne exécutable d'autre part. C'est le défaut exact que ce ticket
-signale, et il ne peut plus revenir en silence.
+Le contenu conduit à la même réponse. La barrière est saturée de politique
+locale : sa liste d'identités dont la relecture compte, sa voie rapide pour les
+PR de fiches qui cite les règles du projet, ses deux seuils. Remonter le
+mécanisme laisserait la substance sur place et ferait passer par un point
+d'extension une décision qui n'a qu'un seul décideur — de l'outillage de second
+ordre, précisément ce que la période de refroidissement du harnais écarte.
 
-**Ce qui ferait basculer la décision.** Un second projet consommateur qui se
-dote d'une barrière de fusion. À ce moment-là la classe existe, la capacité se
-nomme dans le harnais, et la partie propre à la forge passe derrière un point
-d'extension — comme le fait déjà le garde de collision d'identifiants entre PR
-ouvertes. Tant qu'il n'y a qu'un porteur, la capacité vit chez lui.
+Reste le contrat, qui est l'autre moitié de la décision : une barrière par
+projet n'est tenable que si quelque chose l'empêche de redériver. Ce garde est
+local et mécanique, et la relecture a corrigé la façon de le décrire. Deux
+tests de source refusent la réapparition d'un littéral d'identité de dépôt ;
+une passe adverse a construit une variante à littéral scindé
+(`_proj = 'climate' + '-finance' + '-het'`) qui les passe au vert tous les
+deux. Ce ne sont donc pas eux le rempart : ce sont les tests de comportement,
+qui vérifient l'abstention directement et passent au rouge sur cette variante —
+trois d'entre eux, après qu'un chemin non couvert, celui de l'outil MCP, a été
+fermé. Les gardes de source restent comme cliquet de lisibilité. C'est cette
+description-là qui est vraie, et elle vaut mieux qu'une plus flatteuse.
 
-**L'alternative, pour mémoire.** Remonter maintenant aurait un mérite : le
-défaut de forme corrigé ici — un verdict rendu sur un objet que le contrôle n'a
-pas identifié — est générique, et le harnais aurait pu le porter une fois pour
-toutes. C'est un pari sur des porteurs futurs, contre une abstraction à
-maintenir aujourd'hui pour un seul appelant. La décision est peu coûteuse à
-renverser : le correctif est un fichier, et le contrat ci-dessus dit quand.
+Ce qui ferait basculer la décision est écrit pour être retrouvé : un second
+projet consommateur qui se dote d'une barrière de fusion. À ce moment-là la
+classe existe, le mécanisme se nomme dans le harnais, et la partie propre à la
+forge passe derrière un point d'extension — comme le fait déjà le garde de
+collision d'identifiants entre PR ouvertes. Tant qu'il n'y a qu'un porteur, le
+mécanisme vit chez lui. Rien ne surveille cette condition automatiquement ; une
+ligne de déclencheur dans `STATE.md` la rend au moins retrouvable, sur le
+modèle du déclencheur 0062 qui y figure déjà.
+
+Pour mémoire, l'alternative avait un mérite : le défaut de forme corrigé ici —
+un verdict rendu sur un objet que le contrôle n'a pas identifié — est
+générique, et le harnais aurait pu le porter une fois pour toutes. C'était un
+pari sur des porteurs futurs, contre une abstraction à maintenir aujourd'hui
+pour un seul appelant. La décision est peu coûteuse à renverser, et le
+paragraphe précédent dit quand.
 
 ## Réalisation
 
-Le correctif lui-même est du travail de dépôt consommateur et y vit, sous sa
-propre fiche : `tickets/0706-la-barriere-de-fusion-juge-le-mauvais-depot.erg`
-du projet consommateur. Résumé des mesures qui y sont vérifiées :
+Le correctif est du travail de dépôt consommateur et y vit, sous sa propre
+fiche `0706`, fermée et archivée. Il a été fusionné par la PR 1317 du projet
+consommateur : les littéraux d'identité de dépôt ont disparu de son `main`, où
+trois chemins d'abstention sont désormais présents. Les critères 2 à 5
+ci-dessous sont donc vrais au moment où ce ticket se ferme, et non promis.
 
 - Le dépôt visé est résolu par ordre de force de preuve — champs `owner`/`repo`
   de l'outil MCP, sélecteur `--repo`/`-R`, dépôt nommé dans une URL de PR, puis
@@ -152,17 +172,18 @@ du projet consommateur. Résumé des mesures qui y sont vérifiées :
   charge utile du hook fournit dans son champ `cwd`. Ce dernier est une mesure
   de ce que la forge résoudrait elle-même, pas une conjecture à son sujet.
 - Cible non déterminable → `ask`. Ni blanc-seing ni blocage d'un travail
-  légitime : la main est rendue. La même règle couvre désormais la fusion dont
-  le *numéro* est indéterminable, qui renvoyait « autorisé ».
+  légitime : la main est rendue. La même règle couvre la fusion dont le
+  *numéro* est indéterminable, qui renvoyait « autorisé ».
 - Chaque motif de verdict nomme l'objet jugé, `<propriétaire>/<dépôt>#<numéro>`,
   pour qu'une lecture du mauvais dépôt soit visible au lieu d'être muette.
-- Douze tests rouges d'abord, dans les deux sens : chaque cas garnit le mauvais
-  dépôt de l'état de relecture **inverse**, de sorte qu'un hook qui lit le
-  mauvais rend le verdict opposé et non un verdict juste par accident.
+- Treize tests, rouges d'abord, en trois familles : six garnissent le mauvais
+  dépôt de l'état de relecture **inverse**, cinq vérifient l'abstention, deux
+  gardent la source. La première rédaction décrivait les douze d'alors comme
+  employant tous la technique des dépôts en désaccord ; c'était faux, et c'est
+  corrigé ici comme dans la fiche 0706.
 - Contrôle en conditions réelles : les deux verdicts erronés observés le
-  2026-09-10 sont inversés sur les PR réelles, et les titres relevés
-  confirment que le hook interrogeait bien les PR sans rapport décrites plus
-  haut.
+  2026-09-10 sont inversés sur les PR réelles, et les titres relevés confirment
+  que le hook interrogeait bien les PR sans rapport décrites plus haut.
 
 ## Exit criteria
 
