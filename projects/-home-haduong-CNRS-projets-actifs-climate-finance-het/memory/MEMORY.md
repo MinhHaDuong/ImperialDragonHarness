@@ -42,8 +42,11 @@
 
 ## Harness & telemetry
 - [project_imperial_dragon.md](project_imperial_dragon.md), [reference_stats_cache.md](reference_stats_cache.md), [reference_agentic_harness.md](reference_agentic_harness.md), [reference_repo_no_ci.md](reference_repo_no_ci.md).
+- [project_erg_update_self_reference.md](project_erg_update_self_reference.md) — `erg update` pulls from THIS repo's origin, so it compared to itself and never advanced; `[update] url` fixes it, `erg init` exits 2 forever after
 
 ## Feedback
+- [feedback_check_ignore_needs_no_index.md](feedback_check_ignore_needs_no_index.md) — `check-ignore` skips index paths; on a tracked file "not ignored" proves nothing, use `--no-index` + a positive control
+- [feedback_gitignore_class_rule_depth.md](feedback_gitignore_class_rule_depth.md) — a `.gitignore` class rule stays one level deep; a `.gitignore` holding `*` or `!` is load-bearing by construction
 - [feedback_erg_close_archive.md](feedback_erg_close_archive.md) — `erg close`/`erg archive` are separate; run both pre-PR
 - [feedback_prclose_onbranch_ticket_none.md](feedback_prclose_onbranch_ticket_none.md) — ticket closed on-branch → PR needs `Ticket: none`, not the archived path
 - [feedback_het_register.md](feedback_het_register.md) — manuscript prose = HET academic register, not motivational cadence
