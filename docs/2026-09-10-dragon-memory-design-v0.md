@@ -2,8 +2,7 @@
 > kept so their section and ticket references resolve. Do not amend it and do
 > not act on it: the current version is
 > [`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),
-> which corrects two arithmetic errors, narrows the §2.4 claim, adds the door
-> as ticket T8 and states the decision requested. Git holds the history; this
+> which has since been rewritten twice. Git holds the history; this
 > copy exists for the citations, not for recovery.
 
 # The Dragon's memory: measured assessment and design proposal
