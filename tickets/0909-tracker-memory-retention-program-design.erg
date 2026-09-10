@@ -26,10 +26,19 @@ awareness, not merely reachability.
 
 ## Children, in wave order
 
+**Wave 0 — expires. Do this first or it becomes impossible.**
+
+- `0917` — rescue the history dates before the frontmatter sweep destroys them.
+  `0911` rewrites 954 files, and the moment it merges the last-commit dates are
+  reset corpus-wide. No body carries a date in frontmatter and the provenance
+  stamps are batched, so version history is the only stable recency the corpus
+  has.
+
 **Wave 1 — independent of everything.**
 
 - `0908` — promotion marks the project copy dead in the form the walker reads
 - `0911` — frontmatter migration: one type field, one shape, across the corpus
+  *(needs 0917 first, for the reason above)*
 - `0913` — retire the dead retention machinery and ship the resident search line
 
 **Wave 2.**
@@ -54,6 +63,16 @@ awareness, not merely reachability.
 
 - `0916` — model-judged merge, reviewed promotion, tombstoning *(needs 0912)*
 
+**Alongside, once the index exists.**
+
+- `0918` — ranking miss-rate instrument *(needs 0910)*. `0910` proves the index
+  reproducible; nothing proves it good. A read of a body absent from that day's
+  index is a ranking miss, and that is measurable without an A/B.
+- `0919` — backfill the quality dimensions across the corpus with a model pass
+  *(needs 0911's uniform frontmatter and 0917's dates)*. New memories declare
+  their dimensions at writing; the 950 that already exist declare nothing, so
+  without this the scorer ranks a corpus of blanks.
+
 An earlier version of this tracker said only `0912` had a real prerequisite and
 named `0908`. That was wrong in both directions: `0912` depends on three
 siblings, and `0910` depends on `0913`.
@@ -72,12 +91,14 @@ them.
 ## Open decision carried by a child
 
 `0910` records it: **what "recency" means as a score input.** Provenance dates
-are batch-stamped and filesystem mtimes reset on clone, so neither is a usable
-signal as it stands. Either settle it in `0910` or score without recency.
+are batch-stamped and filesystem mtimes reset on clone, so neither is usable.
+`0917` preserves the only stable source before it is destroyed; choosing
+between creation and last-touch, or scoring without recency at all, stays open
+and is `0910`'s to settle.
 
 ## Exit criteria
 
-- [ ] All eight children merged
+- [ ] All eleven children merged
 - [ ] Child diffs re-read together, not only individually
 - [ ] `make check` passes on the union
 - [ ] The design's §6 and Annex A match what shipped, or the design is amended

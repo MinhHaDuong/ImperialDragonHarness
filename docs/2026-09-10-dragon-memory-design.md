@@ -803,20 +803,23 @@ and where an answer changed the design it is in §5 rather than in a reply.
 
 ## Annex A — The plan as filed
 
-Eight tickets, in `tickets/`. The tracker is `0909`; it carries the wave order
+Eleven tickets, in `tickets/`. The tracker is `0909`; it carries the wave order
 and the reasoning, and this table is the summary.
 
 | id | title | wave | depends on |
 |---|---|---|---|
 | 0909 | Tracker: memory retention program | — | — |
+| 0917 | Rescue the history dates before the frontmatter sweep | 0 | — |
 | 0908 | Promotion marks the project copy dead in the form the walker reads | 1 | — |
-| 0911 | Frontmatter migration: one type field, one shape | 1 | — |
+| 0911 | Frontmatter migration: one type field, one shape | 1 | 0917 |
 | 0913 | Retire the dead machinery, ship the resident search line | 1 | — |
 | 0910 | Generate the index as the top N of its directory | 2 | 0913 |
 | 0914 | `valid_while` grammar, resolver, scorer, `supersedes` | 3 | 0910, 0911 |
 | 0915 | Enforce the validity predicate on the write path | 3 | 0914 |
 | 0912 | Consolidation: deterministic pooling, grouping, reports | 4 | 0908, 0910, 0914 |
 | 0916 | Model-judged merge, reviewed promotion, tombstoning | 5 | 0912 |
+| 0918 | Ranking miss-rate instrument | — | 0910 |
+| 0919 | Backfill quality dimensions with a model pass | — | 0911, 0917 |
 
 The seams follow one rule: **everything a program can decide ships before
 anything a model decides.** 0912 proposes and 0916 judges; splitting them is

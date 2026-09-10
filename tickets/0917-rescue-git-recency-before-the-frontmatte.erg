@@ -1,0 +1,65 @@
+%erg 0.1
+Title: Rescue git recency before the frontmatter sweep destroys it
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T16:34Z claude created
+
+--- body ---
+## Context
+
+**This ticket expires.** It is free today and impossible after `0911` lands.
+
+The score needs a recency signal and the corpus has none that survives. No body
+carries a date in frontmatter — zero of roughly 950. `.provenance.json` is
+batch-stamped: 972 entries share 168 distinct `first_seen` values, one of them
+across 78 entries, so ordering on it is run order followed by slug alphabet.
+File mtime is destroyed by every clone and by the daily pull. That leaves git
+history as the only stable source.
+
+And `0911` rewrites 954 files. The moment it merges, git last-commit recency is
+reset corpus-wide and cannot be recovered from the repository. So the snapshot
+has to be taken first, whatever is later decided about how to use it.
+
+Design reference: P4 in `docs/2026-09-10-dragon-memory-design.md`. Review: F6 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+
+## Relevant files
+
+- `memory/.provenance.json` — the durable place a date can live
+- `projects/*/memory/*.md` and `memory/*.md` — the corpus being dated
+
+## Actions
+
+1. For every live body, extract from git history both the **first-commit** and
+   the **last-commit** date. First-commit is creation; last-commit is the
+   recency that `0911` is about to destroy.
+2. Write both into the durable store, distinct from the batch-stamped
+   `first_seen` / `last_confirmed` already there — those record when a dream run
+   noticed an entry, which is a different fact and should not be overwritten.
+3. Record how many bodies got each date, and how many could not be dated.
+
+## Test
+
+Red first: a body whose git history is known has both dates recorded and they
+match `git log` for that path. Then a guard against the trap itself — a test
+that fails if a body has no recorded creation date, so the coverage cannot
+silently regress.
+
+## Verification
+
+- [ ] Every live body carries both dates, or is listed as undatable with a reason
+- [ ] The recorded dates match `git log` for a spot-check sample
+- [ ] Existing `first_seen` / `last_confirmed` are unmodified
+
+## Invariants
+
+- This ticket adds fields. It changes no body content and deletes nothing.
+- It must merge **before** `0911`. That ordering is the whole point.
+
+## Exit criteria
+
+- [ ] First-commit and last-commit dates recorded for every live body
+- [ ] Coverage stated as a count, with the undatable listed
+- [ ] A test prevents silent regression of the coverage
+- [ ] Merged before `0911`

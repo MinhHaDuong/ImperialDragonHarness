@@ -1,0 +1,59 @@
+%erg 0.1
+Title: Ranking miss-rate instrument
+Created: 2026-09-10
+Author: claude
+Blocked-by: 0910
+
+--- log ---
+2026-09-10T16:34Z claude created
+
+--- body ---
+## Context
+
+`0910` ships an index and proves it **reproducible**. Nothing proves it
+**good**. Idempotence passes on a constant order, and no other ticket carries a
+quality criterion — so a ranking could be worthless and every gate would stay
+green.
+
+There is a cheap measure, and it needs no A/B: **any read of a body that was
+not in that day's index is a ranking miss.** The agent went looking for
+something the index should have surfaced. The slug extraction in the usage pass
+plus a snapshot of each day's index is enough to compute it.
+
+Design reference: P4 and P6 in `docs/2026-09-10-dragon-memory-design.md`. Review: F6 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+
+## Relevant files
+
+- `skills/dream/provenance.py` — the usage pass and its slug extraction
+- whatever `0910` writes as the index, plus a snapshot of it per run
+
+## Actions
+
+1. Snapshot each generated index at generation time, so a later read can be
+   judged against what was actually resident that day.
+2. Compute the miss rate: reads of bodies absent from the index in force.
+3. Report it per run, next to the body count and duration `0912` records.
+
+## Test
+
+The positive control is the point, and it is what makes this a check rather
+than a number: **deliberately unrank a body that is known to be read, and watch
+the miss rate move.** A miss-rate instrument that cannot be made to fire is
+indistinguishable from one that is not running.
+
+## Verification
+
+- [ ] The instrument fires on the deliberately unranked body
+- [ ] The rate is reported per run, not only computable on demand
+- [ ] A run with no reads reports no rate rather than a misleading zero
+
+## Invariants
+
+- This measures; it changes no ranking and deletes nothing.
+
+## Exit criteria
+
+- [ ] Index snapshots exist per run
+- [ ] Miss rate computed and reported
+- [ ] The positive control fires, proven by a test
+- [ ] A zero rate is distinguishable from an absent measurement
