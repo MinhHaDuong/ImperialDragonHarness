@@ -2,6 +2,7 @@
 Title: Guard against shell loops that poll for a process
 Created: 2026-09-10
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #855
 
 --- log ---
 2026-09-10T07:57Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-09-10T08:45Z Minh Ha-Duong note Second review round: for-loop gap closed, heredocs skipped, write-then-exec conceded in writing
 2026-09-10T09:05Z Minh Ha-Duong note Third review round: heredoc exemption anchored and interpreter-aware; the for keyword reverted on the termination argument
 
+2026-09-10T09:07Z Minh Ha-Duong closed — autoclosed — PR #855
 --- body ---
 ## Context
 
