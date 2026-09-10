@@ -1,15 +1,24 @@
-> **FROZEN — v0, superseded.** This is the draft as the two reviews read it,
-> kept so their section and ticket references resolve. Do not amend it and do
-> not act on it: the current version is
-> [`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),
-> which has since been rewritten twice. Git holds the history; this
-> copy exists for the citations, not for recovery.
+> **FROZEN — v2, superseded.** Kept so the three reviews' section and ticket
+> references resolve against wording they judged. Do not act on it: the current
+> version is [v3](./2026-09-10-dragon-memory-design.md), which drops v2's
+> retention policy (decay, corpus cap, eviction score) and its two-regime
+> framing for one architecture — keep everything, delete nothing, promote on
+> duplication, generate the index as a top-N view. See also
+> [v0](./2026-09-10-dragon-memory-design-v0.md) and
+> [v1](./2026-09-10-dragon-memory-design-v1.md).
 
 # The Dragon's memory: measured assessment and design proposal
 
-**Status:** draft for external review · 2026-09-10
-**Reviewers sought:** an independent read from a different model family
-**Baseline:** `origin/main` at `b79c2ad`, plus open PRs #875 and #885 where noted
+**Status:** draft · 2026-09-10 · v2 · three reviews received, see §9
+**Baseline:** figures reproduce at `6187ad8` (main just after #885), not at
+`b79c2ad` as v0 and v1 said
+**Runtime:** Claude Code 2.1.267, memory-store flags `tengu_moth_copse` and
+`CLAUDE_MEMORY_STORES` both **closed** — §2.4 explains why this line belongs in
+the header rather than in a footnote
+**Superseded versions:**
+[v0](./2026-09-10-dragon-memory-design-v0.md) (what the first two reviews read)
+and [v1](./2026-09-10-dragon-memory-design-v1.md) (what the third read), both
+frozen with their section numbering intact so the reviews' citations resolve
 
 This document exists to be attacked. It reports what the harness's memory
 system does, what it was measured to do, where those two differ, and what is
@@ -71,9 +80,24 @@ Instruments and commands are in Annex B. Everything here was measured on
 | agents (name + description only) | 350 | 125 |
 | **total** | **66 611** | **23 790** |
 
-Memory is **21.7%** of what a session carries before its first question. Only
+Memory is **21.1%** of what a session carries before its first question. Only
 one project index is resident in a given session, so the largest is the upper
 bound rather than the sum.
+
+**Read that share for what it is.** The denominator is the preamble, which is
+the session's smallest input; every tool result, file read and turn of
+conversation that follows dilutes it. 21.1% is the share at its maximum, not
+the share over a session, and the two numbers support opposite conclusions
+about urgency.
+
+**And read what the resident cost prices.** The index sits in the system
+prompt, so after the first turn it is a cache read, not a fresh input. Cost per
+turn is therefore an order below what a chars-to-tokens conversion suggests,
+which is why the "28× the payload it delivers" figure below invites the wrong
+optimisation. Two costs survive that correction and neither is measured here:
+attention dilution, and what an adapter without auto-load must inject to stand
+the harness up on another runtime. The second is the one that makes the
+resident tier's size an architectural quantity rather than a billing one.
 
 ### 2.2 The corpus
 
@@ -112,13 +136,21 @@ subagent runs                   185 / 5189   3.57%
 **94% of the index has never been followed** in the window. The cost is paid on
 the whole list; the traffic lands on a twentieth of it.
 
+Two limits on that figure. The window is **2026-06-01 to 2026-09-10, 101
+days**, and the instrument has no date filter — so an entry written in August
+had a third of the exposure of one written in June, and the rate needs a
+per-entry exposure denominator rather than one corpus-wide count. And a body
+opened by a subagent serves its root session without that session opening
+anything, so the 3.57% subagent row and the 11.01% working row overlap by an
+amount nobody has attributed.
+
 Cost against use, summing each project's index over the sessions it served:
 4 784 923 chars served for 86 body opens — **55 638 chars (~19 900 tokens) per
 body actually opened**, against a body averaging ~2 000 chars. The index costs
 roughly 28× the payload it delivers. The title-only pass in #875 brings this to
 33 773 (~12 100 tokens), about 17×.
 
-### 2.4 There is no recall channel
+### 2.4 The recall channel exists, and is switched off
 
 The platform's memory instructions say a body's `description:` decides recall
 relevance. **On this runtime, nothing fires.**
@@ -136,11 +168,40 @@ found somewhere            32 / 40      <- probe works
       2  the text inside a shell command
 ```
 
-**Zero injections.** Every appearance of a memory body, in 5 753 sessions, is a
-session opening the file itself.
+**Zero injections.** Every appearance of a memory body, in 5 753 sessions, is
+a session opening the file itself.
 
-This is the load-bearing finding of the document, because it inverts the
-obvious remedy: **an entry dropped from an index is not demoted, it is
+Earlier versions of this document read that as an absence. It is not. The
+channel is in the runtime, and reading the binary rather than the traces says
+what the traces cannot:
+
+- **Per-turn recall exists.** A selector picks up to five bodies matching the
+  last user prompt and appends them as a `relevant_memories` attachment,
+  truncated to 200 lines or 4 096 bytes each. `description:` is its retrieval
+  key, exactly as the platform documentation says.
+- **It is gated, and the gate is observable.** It opens on a remote flag or on
+  `CLAUDE_MEMORY_STORES`. Both are closed here — this session's own system
+  prompt carries the raw `MEMORY.md`, which is reachable only with both closed,
+  and the corpus holds no BM25 index and no pinned entries.
+- **The gate is a switch between two regimes, not a feature toggle.** The same
+  condition that opens recall **hides the `MEMORY.md` index.** Index-resident
+  and recall are mutually exclusive.
+
+**So the cost model this document is built on is a flag setting.** "Bodies are
+free, the index is the tax" holds in the closed regime and inverts in the open
+one: bodies become the per-turn tax at up to five times four kilobytes,
+`description:` becomes the thing worth writing well, and a bounded resident
+index buys nothing because it is not loaded. A design that does not say which
+regime it assumes is not portable across a flag flip, let alone across
+runtimes.
+
+This document assumes the **closed** regime, which is the one in force, and
+§5's principles are stated for it. The open regime is not hypothetical — it is
+compiled into the binary this harness runs today — so each principle below says
+what it becomes if the gate opens.
+
+Within the closed regime the load-bearing consequence stands, and it is what
+makes demotion hard: **an entry dropped from an index is not demoted, it is
 unreachable.** Any plan to shorten the resident index by unlisting entries
 silently deletes them.
 
@@ -174,9 +235,44 @@ would take candidates from 3 to ~38 — a twelvefold increase. Examples:
 lexical matching suffices**; the "semantic slug matching" deferred to a future
 version looks over-engineered.
 
-**Writes exceed reads.** 726 body writes against 974 body reads across all
-arms. The memory system spends nearly as much effort maintaining itself as
-every session spends consulting it.
+**What the duplicates record is not a retrieval failure.** v1 read them as
+sessions that failed to find entries already there, and made that the argument
+for the door. On the ref it does not hold: **zero** of the pairs are
+same-project, so no writer's resident index could have surfaced the entry being
+duplicated — a session sees its own project's index and the harness tier,
+nothing else. The multiplicity is what per-project tiering produces, not what
+retrieval failure produces. Of the pairs reproduced, roughly half are lexical
+false positives; the real yield for deduplication is 17–21 pairs, not ~38.
+
+**The `gh_pr_edit` family says something the design does not.** Seven bodies in
+seven project directories, 2026-05-11 to 2026-09-04, none promoted. The
+workaround entered `rules/git.md` on 2026-09-04 — the same day as the seventh
+copy — and no eighth has appeared. The mechanism that ended the repetition was
+the resident **rules** channel, not the memory tier that exists to carry
+cross-project lessons.
+
+That is the uncomfortable finding of this section. The harness already has a
+working way to make one lesson visible in every session, and it is a rule edit
+through a pull request. The promotion tier built for the same purpose has
+promoted four entries in four months and has one candidate waiting. Before
+repairing promotion, the program should ask whether it is repairing a road
+nobody drives — and, if it is kept, what it does that a `rules/` line does not.
+The honest answer may be scope: a rule is resident everywhere and therefore
+costs everywhere, while a promoted memory is resident everywhere at 100
+characters. That is an argument, and this document has not made it.
+
+**Maintenance is the same order as consultation.** 726 body writes against 974
+body reads across all arms — writes do not exceed reads, as an earlier draft of
+this line said, but they come within a quarter of them. The memory system
+spends nearly as much effort maintaining itself as every session spends
+consulting it.
+
+The provenance populations reconcile once the dead records are separated out:
+651 records before the repair include 12 whose body no longer exists, so 639
+live bodies were covered; 308 uncovered project-tier bodies plus one in the
+harness tier is 309 backfilled; 651 + 309 = 960, and 960 − 12 = **948 live
+bodies covered**, against 954 files carrying 948 distinct slugs. The corpus
+count of 949 in §2.2 is that population off by the alias collapse.
 
 ## 3. What the literature calibrates
 
@@ -231,14 +327,24 @@ eviction with extra steps.
 6. **No composite retention signal.** Age, observed use and a durability
    annotation are all needed; #885 supplies the first two, the third does not
    exist.
-7. **The type vocabulary has drifted.** 28 prefixes where the design has 4, 24
-   of them singletons. Any per-type policy is meaningless until this is
-   normalised.
+7. **Filename prefixes have drifted; the type field has not.** 28 filename
+   prefixes where the design has 4 — but `metadata.type` itself holds exactly
+   the four designed values across the corpus. The drift is in 22 stray
+   filenames out of ~980, and the real gaps for a per-type policy are elsewhere:
+   47 bodies carry no type field at all, and two frontmatter shapes are in use
+   (`type:` at top level versus `metadata.type`). A per-type policy is not
+   blocked by the prefixes.
 
 ## 5. Design principles proposed
 
+These principles are stated for the **closed** regime of §2.4. Where the gate
+would invert one, the inversion is named, because the adapter that carries this
+harness to another runtime is the reader who needs it.
+
 **P1 — Tier, do not evict.** Bodies are free; the index is the tax. The
 primitive is movement between tiers, not deletion. Nothing is deleted for size.
+*Open regime:* bodies are the tax and the index is not loaded, so the tiering
+axis becomes which bodies are eligible for selection, not which are listed.
 
 **P2 — Every tier has a door.** Because no recall channel fires, a demoted
 entry must remain reachable by a deterministic act. The resident index carries
@@ -270,6 +376,16 @@ found and fixed while writing this document, twice in the author's own new code.
 ## 6. Proposed changes
 
 Grouped into waves by dependency. Tickets in Annex A.
+
+**Wave 0 — the door (T8).** Everything that demotes depends on it, and nothing
+in the original wave list built it. All three reviews raised the gap
+independently. The urgency is not an argument but a gate that is already
+closing: `tests/test_resident_census.py` caps each project index at 14 500
+characters, the largest sits at 14 061, and index lines average about 100 — so
+roughly four more `/dream` additions in that project turn CI red. The only
+moves that gate permits today are shortening titles and deleting lines, and
+§2.4 says a deleted line is an unreachable entry. **The budget forces the one
+operation the design forbids, and the door is what makes that operation safe.**
 
 **Wave 1 — repairs, independent of each other.**
 - Promotion tombstones the project copy (defect 1).
@@ -335,6 +451,47 @@ Ordered by how much a wrong answer would cost.
 
 ---
 
+## 9. Decision requested, and the review record
+
+**Approve T8 in wave 0 and the wave order below; approve T1, T2 and T3 now;
+hold T4 and T5 until their premises are resolved in Annex A; defer T6 and T7.**
+T1, T2 and T3 stand on the defects they fix and need no retention policy above
+them, so they are the fallback if the program as a whole is not approved. T8
+does not belong in that fallback and did not in v1's, which was an error: the
+budget gate closes whether or not the program is approved.
+
+**The open question stays open.** §8 asked how to measure the silent-title
+effect. v1 closed it by reporting that the harness owner treats context
+pressure as established; that is not a citable position and it is withdrawn.
+Two cheap measurements remain on the table — a replay comparison over a frozen
+corpus, and the natural control of the projects with no index at all — and this
+document proposes neither, because the wave-0 argument no longer needs one: the
+character budget in `tests/test_resident_census.py` binds in about four more
+entries regardless of what the hit rate means.
+
+**Review record.** Three study reports commissioned before this draft
+([Fable](./2026-09-10-memoire-agent-fable.md),
+[Perplexity](./2026-09-10-memoire-agent-perplexity.md),
+[ChatGPT](./2026-09-10-memoire-agent-chatgpt.md)) fed it. Three reviews answer
+it: [Claude](./2026-09-10-dragon-memory-design-review-claude.md) on v0,
+in-family; [ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md) on
+v0, out-of-family; and
+[Fable](./2026-09-10-dragon-memory-design-review-fable.md) on v1, the first
+with repository access and the only one able to check a figure against a ref.
+All are non-normative.
+
+**What v2 changed, and why the third review was worth its cost.** v1's one
+substantive addition — duplicate slugs as retrieval failures, hence the door —
+is gone: it was refuted on the ref (§2.5), and the door keeps wave 0 on the
+budget gate instead (§6). §2.4 changed shape, from a probe result to a
+statement about a channel that exists and is switched off. The premises of T4
+and T5 turned out to be contradicted by the skill files and the corpus, and
+both tickets are held rather than scheduled. The first two reviews had no
+repository and took every figure on trust; that is the reason to keep a
+reviewer with access in the loop, not a criticism of the reading they gave.
+
+---
+
 ## Annex A — Proposed tickets
 
 Each is sized to one review unit. Dependencies are on the real prerequisite,
@@ -345,11 +502,12 @@ never on the tracker.
 | T0 | Tracker: memory retention program | — | — | all children merged, integration review |
 | T1 | Promotion tombstones the project-level copy | 1 | — | the 4 live orphan copies become tombstones; a test asserts a promoted entry has no live project body |
 | T2 | Orphan collector for unlisted memory bodies | 1 | — | a command reports the 13 + 5; each resolved to tombstone or relist; a gate keeps the set empty |
-| T3 | Lexical slug matching for promotion candidates | 1 | — | candidates rise from 3 to the measured ~38; each merge confirmed inline before it applies |
-| T4 | Extend decay to project entries, thresholds per type | 2 | #885 | the 191 aged entries are flagged; per-type thresholds read from the memory skill's TTL table |
-| T5 | Durability annotation at write time; normalise the type vocabulary | 2 | #885 | 28 prefixes → 4; new memories carry a declared durability; a gate rejects an unknown type |
+| T3 | Lexical slug matching for promotion candidates | 1 | — | the 17–21 genuine pairs are surfaced and the ~50% lexical false positives rejected; each merge confirmed inline before it applies; the matcher lives in the repo, since no figure here regenerates without it |
+| T4 | Extend decay to project entries, thresholds per type | 2 | #885 | resolve first: the TTL table gives `feedback` — 74% of the corpus — **no TTL**, so a pass following that table cannot flag the 191, and the decay pass is designed for the harness tier only. Either the table gains a feedback threshold or this ticket is about admission, not decay |
+| T5 | Durability annotation at write time; normalise filenames and the frontmatter shape | 2 | #885 | 47 untyped bodies gain a type; the two frontmatter shapes converge on one; 22 stray filename prefixes normalised; new memories carry a declared durability; a gate rejects an unknown type. The type *field* is already the designed four values — that is not this ticket's problem |
 | T6 | Composite retention score, normalised per token | 3 | T4, T5 | score computed from age, use and durability; ranking reproducible from the store alone |
 | T7 | Corpus cap per project, enforced at write time | 3 | T4, T6 | a cap exists and bites; exceeding it requires a consolidation before the write |
+| T8 | The door: bounded resident index, full catalogue, targeted lookup | 0 | — | an index over budget is brought under it with **no entry becoming unreachable**, and a test proves that; every live body resolves from the full catalogue; a demoted entry is retrieved by a tested operation; an interrupted move is recoverable. States which budget it targets — the live 14 500, or lower — and whether it uses the runtime's own four-body pinned tier |
 
 Not tickets, deliberately: the 12 tracked entries with no live body (fold into
 T2), and the filename redundancy that is 47% of the trimmed index — measured,

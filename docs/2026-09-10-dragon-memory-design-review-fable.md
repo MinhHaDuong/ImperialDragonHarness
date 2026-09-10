@@ -6,9 +6,10 @@
 **Panel:** Fable, three executors, led by Fable. **Recorded:** 2026-09-10,
 verbatim from the panel's own file.
 
-Reviews [v1](./2026-09-10-dragon-memory-design-v1.md), frozen; the current
-version is [v2](./2026-09-10-dragon-memory-design.md), which acts on this
-review. Third of three reviews and the first with repository access — the
+Reviews [v1](./2026-09-10-dragon-memory-design-v1.md), frozen. v2 acted on this
+review; the current version is
+[v3](./2026-09-10-dragon-memory-design.md), which then replaced v2's retention
+policy with a settled architecture. Third of three reviews and the first with repository access — the
 earlier two ([Claude](./2026-09-10-dragon-memory-design-review-claude.md),
 [ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md)) read v0 without
 a checkout and took its figures on trust.

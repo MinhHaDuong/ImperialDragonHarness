@@ -1,15 +1,13 @@
 # The Dragon's memory: measured assessment and design proposal
 
-**Status:** draft · 2026-09-10 · v2 · three reviews received, see §9
-**Baseline:** figures reproduce at `6187ad8` (main just after #885), not at
-`b79c2ad` as v0 and v1 said
-**Runtime:** Claude Code 2.1.267, memory-store flags `tengu_moth_copse` and
-`CLAUDE_MEMORY_STORES` both **closed** — §2.4 explains why this line belongs in
-the header rather than in a footnote
-**Superseded versions:**
-[v0](./2026-09-10-dragon-memory-design-v0.md) (what the first two reviews read)
-and [v1](./2026-09-10-dragon-memory-design-v1.md) (what the third read), both
-frozen with their section numbering intact so the reviews' citations resolve
+**Status:** draft · 2026-09-10 · v3 · architecture settled with the owner
+**Baseline:** figures reproduce at `6187ad8` (main just after #885)
+**Runtime:** Claude Code 2.1.267 — §2.4 records what it does; the architecture
+below does not branch on it
+**Superseded versions:** [v0](./2026-09-10-dragon-memory-design-v0.md),
+[v1](./2026-09-10-dragon-memory-design-v1.md) and
+[v2](./2026-09-10-dragon-memory-design-v2.md), frozen with their section
+numbering intact so the three reviews' citations resolve
 
 This document exists to be attacked. It reports what the harness's memory
 system does, what it was measured to do, where those two differ, and what is
@@ -178,23 +176,21 @@ what the traces cannot:
   condition that opens recall **hides the `MEMORY.md` index.** Index-resident
   and recall are mutually exclusive.
 
-**So the cost model this document is built on is a flag setting.** "Bodies are
-free, the index is the tax" holds in the closed regime and inverts in the open
-one: bodies become the per-turn tax at up to five times four kilobytes,
-`description:` becomes the thing worth writing well, and a bounded resident
-index buys nothing because it is not loaded. A design that does not say which
-regime it assumes is not portable across a flag flip, let alone across
-runtimes.
+**The design does not branch on this.** An earlier version made the flag an
+axis and described two regimes; that was a mistake, and it is the reason this
+section was unreadable. The architecture in §5 has one shape, and it survives
+the flag in either position for one reason: **the index is generated from the
+bodies.** If the gate opens and the index stops being loaded, what is lost is a
+regenerable view, not a store. The directories, the files and their frontmatter
+are untouched, and they are what the harness owns.
 
-This document assumes the **closed** regime, which is the one in force, and
-§5's principles are stated for it. The open regime is not hypothetical — it is
-compiled into the binary this harness runs today — so each principle below says
-what it becomes if the gate opens.
-
-Within the closed regime the load-bearing consequence stands, and it is what
-makes demotion hard: **an entry dropped from an index is not demoted, it is
-unreachable.** Any plan to shorten the resident index by unlisting entries
-silently deletes them.
+Two facts from this section do carry into the design. The runtime already
+builds a derived index — it sorts bodies by modification time, takes the 200
+most recent, and renders each as `- [name](path): description` with an overflow
+line saying how many it did not list. That is the mechanism §5 adopts, with a
+better score than recency. And `description:` is the runtime's retrieval key
+whenever any selection happens, which is a reason to write it well that does
+not depend on any flag.
 
 ### 2.5 The maintenance machinery is mostly not connected
 
@@ -301,103 +297,296 @@ this corpus.** 852 of 902 entries are tied at zero in working sessions. A
 least-frequently-used policy over a corpus that is 94% zeroes is random
 eviction with extra steps.
 
-## 4. The seven defects
+## 4. What is actually broken
 
-1. **Promotion leaves the project copy live.** The spec says it becomes a
-   tombstone; the implementation does not do it. Four live orphans, and the
-   frequency count that drives the next promotion is inflated by them.
-2. **Decay does not reach project entries.** Coverage 3/960, yield 0 against
-   191 eligible.
-3. **The cap bounds the index, not the corpus.** Bodies accumulate unindexed —
-   and with no recall channel, an unindexed body is unreachable, so the leak is
-   silent loss rather than silent growth. Currently 18 bodies.
-4. **Duplicate detection is filename equality.** 3 promotion candidates where a
-   lexical pass finds ~38.
-5. **No orphan collector.** Nothing sweeps bodies no index lists, or bodies in
-   directories with no index at all.
-6. **No composite retention signal.** Age, observed use and a durability
-   annotation are all needed; #885 supplies the first two, the third does not
-   exist.
-7. **Filename prefixes have drifted; the type field has not.** 28 filename
-   prefixes where the design has 4 — but `metadata.type` itself holds exactly
-   the four designed values across the corpus. The drift is in 22 stray
-   filenames out of ~980, and the real gaps for a per-type policy are elsewhere:
-   47 bodies carry no type field at all, and two frontmatter shapes are in use
-   (`type:` at top level versus `metadata.type`). A per-type policy is not
-   blocked by the prefixes.
+The list is shorter than earlier versions claimed, because most of what they
+called defects were consequences of a retention policy this document no longer
+proposes.
 
-## 5. Design principles proposed
+1. **Promotion leaves the project copy live.** The skill writes a `# PROMOTED`
+   stub; `skills/dream/provenance.py:349` counts a body dead only when its head
+   starts `# DELETED`. Five stubs are therefore still counted live, and they
+   inflate the frequency count that drives the next promotion. A one-line
+   marker fix, not a design ticket.
+2. **Duplicate detection is filename equality.** A lexical pass over slug words
+   finds 17–21 genuine pairs against the 1 candidate the current rule yields.
+   About half of any lexical pass is false positives, so a confirmation step is
+   part of the ticket, not an afterthought.
+3. **The frontmatter is not uniform enough to rank on.** 47 bodies carry no
+   type field, and two shapes are in use (`type:` at top level versus
+   `metadata.type`). Ranking reads frontmatter, so this blocks §5's index
+   generation. The 28 filename prefixes are cosmetic by comparison —
+   `metadata.type` already holds exactly the four designed values.
+4. **Nothing declares when a memory stops being true.** Every entry is
+   currently treated as valid forever, and the TTL table meant to handle this
+   gives `feedback` — 74% of the corpus — no threshold at all.
 
-These principles are stated for the **closed** regime of §2.4. Where the gate
-would invert one, the inversion is named, because the adapter that carries this
-harness to another runtime is the reader who needs it.
+What is *not* on this list, and was: unindexed bodies, orphan collection, the
+absence of a corpus cap, and the decay pass's zero yield. §5 dissolves all four
+rather than repairing them.
 
-**P1 — Tier, do not evict.** Bodies are free; the index is the tax. The
-primitive is movement between tiers, not deletion. Nothing is deleted for size.
-*Open regime:* bodies are the tax and the index is not loaded, so the tiering
-axis becomes which bodies are eligible for selection, not which are listed.
+## 5. The architecture
 
-**P2 — Every tier has a door.** Because no recall channel fires, a demoted
-entry must remain reachable by a deterministic act. The resident index carries
-one line naming the full index — about 60 characters — and the full index lists
-everything. Demotion moves an entry from the resident layer to that file, never
-to nowhere.
+**The store is the bodies. The index is a view.** One directory per project,
+one file per memory, tracked in git. `MEMORY.md` is not a store and is not
+edited by hand: it is regenerated from the directory, and it lists the top N by
+score, with N chosen to hit a size. Everything below N is still there, still
+tracked, still findable.
 
-**P3 — Freshness is deterministic.** Age comes from timestamps, not from a
-model's judgment of whether a memory has become false. A criterion that fires
-only on demonstrated falsehood, in a corpus where almost nothing becomes false,
-deletes twice in thirteen runs — which is what it did.
+That single move settles most of what earlier versions argued about. An entry
+is never "dropped from the index" — it ranks below the cut and comes back when
+its score changes. Demotion stops being an operation with a failure mode.
+Orphan bodies stop being a class, since being unlisted is the normal state of
+most of the corpus. And a budget stops being a wall to crash into: it *defines*
+N.
 
-**P4 — Rank by utility per token.** Composite score over age, observed use and
-declared durability, divided by the entry's size. Observed use is a
-**secondary** signal, for two reasons that do not go away: it is machine-local
-and traces are prunable, so it is a floor; and it counts *opens*, while an
-entry whose index title carried the lesson is never opened. A ranking that
-evicts on it evicts the entries that worked best.
+**P1 — Nothing is deleted.** Not by age, not by size, not by score. The only
+removal from a project directory is promotion, which moves a lesson up rather
+than out. The harness tier, being the top of that movement, has no removal at
+all. Disk and consolidation time are the costs of keeping a body; context is
+not, because context is paid by the view.
 
-**P5 — Control admission, and annotate at the point of writing.** Durability is
-known when a memory is written and guessed at forever after. The writer
-declares it; the retention policy reads it.
+**P2 — The door is a search, not a second file.** A full catalogue kept as a
+file is a materialised view that can go stale and needs its own collector. The
+bodies already carry `name:` and `description:` in frontmatter, so the
+catalogue is a grep — 49 ms over the whole corpus, and never out of date
+because it is derived from the source. What is resident is one line saying the
+store can be searched and how.
 
-**P6 — Measure the mechanism, not the intention.** Every gate proposed here
-ships with a positive control, because this system's characteristic failure is
-a pass that reports success over the entries it can see. Three instances were
-found and fixed while writing this document, twice in the author's own new code.
+**P3 — Validity is declared at writing and checked by a program.** A memory
+says what it is true *while*: a path exists, a pattern is still present in a
+named file, a tool is below a version. At scoring time the condition is
+evaluated. It must be an executable predicate from a small closed grammar, not
+a sentence — prose degrades into a comment nothing can check. A condition that
+cannot be evaluated leaves the entry valid **and reports**: a silent pass and a
+silent expiry are both worse than a lint error.
+
+Because expiry only unranks, it is **reversible**. A tool that regresses
+revives its memory at the next scoring pass with no human action. That is the
+argument for keeping everything, and it is the one earlier versions never made:
+deletion cannot be undone, and unranking can.
+
+**P4 — Rank to fill N, not to evict.** The score decides display order over a
+store that keeps everything, so a mis-ranked entry costs a place in a list, not
+its existence. This is what makes a composite score safe here when two reviews
+judged it unsafe: with eviction on the other side of it, a bad weight destroys
+work; with a grep on the other side, it hides a line.
+
+**P5 — Annotate at the point of writing.** Durability, the validity condition
+and what the entry supersedes are known when a memory is written and guessed at
+forever after. The writer declares them; the scorer reads them. Alongside them
+the store keeps what it already keeps and what #885 backfilled: provenance —
+which projects an entry came from, and whether the claim was stated by the
+owner, observed by an agent or inferred by one — the creation date, and the
+inputs the score reads. None of that is display material; it is what lets a
+reader arbitrate between two entries without a program having to.
+
+**P6 — Measure the mechanism, not the intention.** Every gate ships with a
+positive control, because this system's characteristic failure is a pass that
+reports success over the entries it can see. Three instances were found while
+writing this document, twice in the author's own new code, and a fourth in its
+own central claim — see §9.
+
+### Why flat files, and not a database
+
+The store is one file per memory in a directory tracked by git. A database
+belongs here as a view over that, never as a replacement for it. Five reasons,
+one of which decides.
+
+**Merge granularity decides it.** One file per memory is the grain concurrent
+sessions need: two sessions adding two memories never conflict. A SQLite file
+under git is a binary blob — no diff, no merge, no review, and a conflict on
+every concurrent write. This harness runs parallel sessions as a matter of
+course, and worktree isolation exists for that reason. A single absorbing store
+would put the contention back at the centre of the thing the rest of the
+architecture is built to avoid.
+
+**There is no performance problem to solve.** 1 001 files, 1.73 MB, a full grep
+over the corpus in 49 ms. At the observed growth — +110 entries across 13
+consolidation runs — a corpus ten times this size is 17 MB and the grep stays
+under a second. A database would answer a scale that does not exist and is not
+arriving.
+
+**git is already the audit log.** Provenance, dates, diffs, blame, and the
+pull-request gate the out-of-family review called the only serious defence
+against memory poisoning. A database has to rebuild every part of that.
+
+**Portability is architectural**, the firmest result in the calibration note:
+retention logic must live outside the model to transfer between runtimes. Plain
+files are readable by any adapter — Pi, Codex — without a line of code.
+
+**The runtime already reads flat files.** A database would need a translation
+layer whose output is precisely what would otherwise have been written
+directly.
+
+What a database genuinely buys — full-text search, and structured queries over
+the score — is available as a *derived* index: built from the files, rebuilt on
+demand, never committed. That is exactly the status this design gives
+`MEMORY.md`, so it costs no new principle.
+
+One more thing absorbing the project tiers into a single store would dissolve:
+the partition that keeps the resident index small. Only one project index is
+loaded per session, and a single store would have to reconstruct that partition
+anyway. Tiering is a context-budget constraint, not an artefact of the file
+layout.
+
+What would change this: a corpus large enough that regeneration costs real
+time, or a synchronisation need beyond what git resolves. Neither holds today,
+and the second would be a synchronisation problem rather than a storage one.
+
+**The corollary is a database that is thrown away.** The consolidation pass may
+load the whole corpus into whatever structure it likes — a vector store, an
+embedding index, a scratch table — compute duplicates and scores there,
+regenerate the indexes, and then **delete it**. Nothing about that violates a
+principle, and it removes the last failure mode a derived index can have: an
+index that persists can drift from its source, and one rebuilt from source on
+every run cannot. It is the same reasoning that makes `MEMORY.md` generated
+rather than authored, applied one level down.
+
+This is also how the duplicate detection gets better. Lexical slug matching
+finds roughly 43 candidate pairs of which 17–21 are genuine, so about half of
+what it proposes is noise a human has to reject. Embeddings raise precision on
+exactly that task, and the pass is periodic and offline, so it can afford to be
+slow. Two conditions keep it honest: the embedding model runs locally, or the
+consolidation pass acquires a network dependency the rest of the design does
+not have; and the model's identity is recorded in the run's provenance, because
+a ranking that silently changes when a model is upgraded fails P6.
+
+At this scale the database is optional and the *pattern* is the point. A
+thousand entries is a thousand vectors — a few megabytes, and a brute-force
+comparison in microseconds. What matters is the shape: compute in memory, emit
+files, discard everything else. The durable record is the bodies and their
+provenance; the vectors never earn a place in git.
+
+**One thing may survive the pass: an embedding cache keyed by content hash.**
+A thousand bodies is a thousand embeddings, and recomputing all of them every
+run is the one real cost of throwing the database away. Keying the cache by the
+hash of the body removes the reason the database had to go: a changed body has
+a different hash, so it misses and is re-embedded, and a stale entry is not
+reachable by construction. Only new and modified bodies cost anything, which
+makes a run proportional to what changed rather than to the corpus.
+
+The cache is not in git — it is regenerable, binary, and belongs in a local
+ignored directory, at roughly three megabytes for the current corpus. Deleting
+it must cost time and nothing else, and a run that finds no cache must produce
+the same indexes as a run that finds a full one. That equivalence is the test
+this ticket ships with, in the spirit of P6: a cache nobody has proved
+disposable is a store wearing a cache's name.
+
+### What the model decides, and what it must not
+
+Finding candidate groups is mechanical: embeddings cluster, lexical matching
+proposes, predicates evaluate, scores compute. Deciding whether a group is one
+lesson, and writing the merged text, is judgment, and no amount of similarity
+settles it — two entries can be near-identical in wording and record different
+conditions, which is why roughly half of what lexical matching proposes is
+noise. So the consolidation pass needs a model, and the design is better for
+saying exactly where.
+
+**The model proposes a merge and writes the merged body.** It names the group,
+argues that it is one lesson, produces the text that replaces it, and declares
+what the result supersedes. That is authorship, and it is the one thing in this
+pipeline no predicate can do.
+
+**The model decides nothing about retention.** Not what ranks, not what
+expires, not what is still true. Ranking is a score over declared fields;
+expiry is a predicate a program evaluates. Keeping judgment out of those two is
+what makes an index reproducible from the store alone — regenerate twice, get
+the same file — and reproducibility is the property that lets anything else be
+tested.
+
+**A merge is reviewed before it lands.** It is the only operation here that
+replaces text with different text, so it is where both silent loss and
+poisoning would enter. Merges into the harness tier reach every session, and
+they go through a pull request like any other harness change; the
+out-of-family review was blunt that human review of the shared tier is the only
+serious defence, and this is the operation that needs it.
+
+**And a bad merge is recoverable, which is the point of keeping everything.**
+The originals are tombstoned, not deleted, so a group wrongly conflated can be
+read back and split. A design that deleted its inputs would have to be right
+the first time; this one only has to be reviewable. Two things go into the
+run's provenance so a later reader can tell why a merge looks the way it does:
+the model's identity, and the prompt it ran under.
+
+### Contradiction between ranked entries
+
+Keeping everything means an entry and its correction coexist, and both can rank.
+Asked directly — can the index be checked for contradiction? — the literal
+answer is no: the index carries titles and links, and a contradiction lives in
+the claims. Any check has to read the bodies of the entries that ranked. That
+is at least tractable, because only N of them ranked.
+
+Three mechanisms, in the order they should be reached for:
+
+1. **Declared supersession.** An entry may name what it replaces. The generator
+   then refuses to rank both, and the newer one carries a line saying what it
+   corrects. This is not detection but declaration, and it is exact, because the
+   case that matters most — an entry written *because* the old one turned out
+   wrong — is precisely the case where the writer knows.
+2. **The near-miss set is free.** The consolidation pass already computes
+   lexical similarity to find duplicates. Pairs that are similar enough to
+   suspect and different enough not to merge are, by construction, the
+   candidate set for contradiction. It costs nothing beyond a report.
+3. **A semantic pass over the ranked set, as a report and never as a gate.**
+   Reading N bodies for conflicting advice is a judgment, so it fails P3: it is
+   not reproducible and it cannot be trusted to block anything. It can surface
+   pairs for a human.
+
+Most contradictions should not survive to need any of this. `valid_while`
+retires the entry that became false, so the usual shape — advice correct until a
+tool was fixed — expires rather than competing. And every entry carries its date
+and its provenance, so where two do compete a reader can arbitrate: memory is
+data, not instruction, and dated data with a source is arbitrable. The check is
+only needed where both entries look equally current, which is the narrow case
+declared supersession already covers.
+
+### What the consolidation pass does
+
+Periodically, and not per session: pool the project directories, detect
+duplicates across them, and promote what recurs into the harness tier,
+tombstoning the project copies as it goes. Then re-score and regenerate the
+affected indexes.
+
+**The harness tier is a project directory like any other.** It has its own
+memories, written directly by sessions working on the harness; its index is
+generated, ranked and capped by the same rule; and it is pooled for duplicate
+detection on the same footing as the rest — compared against, and a full
+participant in the pairs the pass finds.
+
+**One asymmetry, and it is a direction, not a status.** Promotion moves a
+lesson *up* into the harness tier and never back down. So when a pair straddles
+the two tiers, the resolution is settled in advance: the harness copy survives,
+the project copy is tombstoned, and nothing new is created because the lesson is
+already where it belongs. That single case covers the class defect 1 belongs
+to — a project copy left alive beside an entry already promoted.
+
+The consequence easiest to miss: **the harness index is capped like the others,
+and it matters more there.** It is resident in *every* session, nothing in it is
+ever removed, and if deduplication starts working its membership only grows. It
+is 369 characters for five entries today, which is exactly why this is easy to
+forget and expensive to have forgotten.
 
 ## 6. Proposed changes
 
-Grouped into waves by dependency. Tickets in Annex A.
+Four tickets, no waves. They are ordered by dependency, and only the third
+depends on anything.
 
-**Wave 0 — the door (T8).** Everything that demotes depends on it, and nothing
-in the original wave list built it. All three reviews raised the gap
-independently. The urgency is not an argument but a gate that is already
-closing: `tests/test_resident_census.py` caps each project index at 14 500
-characters, the largest sits at 14 061, and index lines average about 100 — so
-roughly four more `/dream` additions in that project turn CI red. The only
-moves that gate permits today are shortening titles and deleting lines, and
-§2.4 says a deleted line is an unreachable entry. **The budget forces the one
-operation the design forbids, and the door is what makes that operation safe.**
+1. **Marker fix** — `# PROMOTED` counted live (defect 1). One line, plus the
+   test that would have caught it.
+2. **Index generation** — regenerate `MEMORY.md` from its directory as the top
+   N by score, with the overflow line, for project tiers and the harness tier
+   alike. Idempotent: regenerating twice changes nothing.
+3. **Frontmatter normalisation and the validity predicate** (defects 3, 4) —
+   one type field, one shape, an optional `valid_while` from a closed grammar,
+   and a resolver the scorer calls. Ticket 2 can ship with recency as its score
+   and gain this one later.
+4. **Consolidation pass** — pool, detect duplicates, promote, tombstone
+   (defect 2), then trigger ticket 2's regeneration.
 
-**Wave 1 — repairs, independent of each other.**
-- Promotion tombstones the project copy (defect 1).
-- Orphan collector: report bodies no index lists, then tombstone or relist
-  (defects 3, 5). Report first: the decision is per-file.
-- Lexical slug matching for promotion candidates (defect 4).
-
-**Wave 2 — needs the provenance repair (#885) merged.**
-- Extend decay to all entries, thresholds per type, following the TTL table
-  that already exists in the memory skill and is currently wired to nothing
-  (defect 2).
-- Durability annotation at write time, and normalise the 28 prefixes to 4
-  (defects 6, 7).
-
-**Wave 3 — needs both.**
-- Composite retention score, normalised per token (defect 6).
-- Corpus cap per project, biting at write time.
-
-**Ordering constraint:** the corpus cap comes after decay. Otherwise the cap
-forces deleting what decay would have demoted, and bodies are lost for a
-counting reason.
+Dead, and worth naming so nobody revives them: the decay pass and its TTL
+table, the corpus cap, the orphan collector, and the full-catalogue file. The
+first two are replaced by P1 and P3, the last two by P2.
 
 ## 7. What is already done
 
@@ -444,65 +633,50 @@ Ordered by how much a wrong answer would cost.
 
 ## 9. Decision requested, and the review record
 
-**Approve T8 in wave 0 and the wave order below; approve T1, T2 and T3 now;
-hold T4 and T5 until their premises are resolved in Annex A; defer T6 and T7.**
-T1, T2 and T3 stand on the defects they fix and need no retention policy above
-them, so they are the fallback if the program as a whole is not approved. T8
-does not belong in that fallback and did not in v1's, which was an error: the
-budget gate closes whether or not the program is approved.
-
-**The open question stays open.** §8 asked how to measure the silent-title
-effect. v1 closed it by reporting that the harness owner treats context
-pressure as established; that is not a citable position and it is withdrawn.
-Two cheap measurements remain on the table — a replay comparison over a frozen
-corpus, and the natural control of the projects with no index at all — and this
-document proposes neither, because the wave-0 argument no longer needs one: the
-character budget in `tests/test_resident_census.py` binds in about four more
-entries regardless of what the hit rate means.
+**Approve the four tickets in §6.** T1 and T2 stand alone; T3 upgrades T2's
+score; T4 needs T1's marker fix under it. One decision is open and belongs to
+the owner: whether an unevaluable `valid_while` leaves an entry valid (this
+document's default, on the grounds that a silent expiry is worse than a stale
+line) or expired.
 
 **Review record.** Three study reports commissioned before this draft
 ([Fable](./2026-09-10-memoire-agent-fable.md),
 [Perplexity](./2026-09-10-memoire-agent-perplexity.md),
 [ChatGPT](./2026-09-10-memoire-agent-chatgpt.md)) fed it. Three reviews answer
-it: [Claude](./2026-09-10-dragon-memory-design-review-claude.md) on v0,
-in-family; [ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md) on
-v0, out-of-family; and
-[Fable](./2026-09-10-dragon-memory-design-review-fable.md) on v1, the first
-with repository access and the only one able to check a figure against a ref.
-All are non-normative.
+it: [Claude](./2026-09-10-dragon-memory-design-review-claude.md) and
+[ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md) on v0, neither
+with repository access; and
+[Fable](./2026-09-10-dragon-memory-design-review-fable.md) on v1, with access,
+which is how it caught that v1's central claim was false. All are
+non-normative.
 
-**What v2 changed, and why the third review was worth its cost.** v1's one
-substantive addition — duplicate slugs as retrieval failures, hence the door —
-is gone: it was refuted on the ref (§2.5), and the door keeps wave 0 on the
-budget gate instead (§6). §2.4 changed shape, from a probe result to a
-statement about a channel that exists and is switched off. The premises of T4
-and T5 turned out to be contradicted by the skill files and the corpus, and
-both tickets are held rather than scheduled. The first two reviews had no
-repository and took every figure on trust; that is the reason to keep a
-reviewer with access in the loop, not a criticism of the reading they gave.
+**How v3 differs, and why.** v2 argued for a retention policy — decay, a corpus
+cap, an eviction score — and spent §2.4 on two runtime regimes. The owner
+settled the architecture instead: keep everything, delete nothing, promote on
+duplication, and treat the index as a generated top-N view. That dissolves four
+of the seven defects v2 listed rather than repairing them, removes half the
+ticket plan, and makes the composite score safe by putting a search rather than
+an eviction on the other side of it. The validity predicate replaces the TTL
+table, which the third review showed was wired to nothing for 74% of the
+corpus.
+
+The document no longer asks the questions of §8; three reviews answered them,
+and where an answer changed the design it is in §5 rather than in a reply.
 
 ---
 
 ## Annex A — Proposed tickets
 
-Each is sized to one review unit. Dependencies are on the real prerequisite,
-never on the tracker.
+| id | title | depends on | exit criterion |
+|---|---|---|---|
+| T0 | Tracker: memory retention program | — | all children merged, integration review |
+| T1 | Promotion marks the project copy dead in the form the walker reads | — | the 5 live `# PROMOTED` stubs are counted dead; a test asserts a promoted entry has no body counted live; the marker vocabulary is one value, not two |
+| T2 | Generate the index as the top N of its directory | — | `MEMORY.md` is regenerated, never hand-edited, for project and harness tiers alike; N is set from a character budget; an overflow line states how many are not listed; regenerating twice is a no-op; no entry becomes unreachable by falling out |
+| T3 | One type field, one frontmatter shape, `valid_while` and `supersedes` | — | the 47 untyped bodies carry a type; one shape survives; `valid_while` accepts a closed grammar (path exists, pattern present in a named file, tool below a version) and nothing else; an unevaluable predicate leaves the entry valid and is reported; a body whose predicate is false is not ranked and revives when it becomes true again; `supersedes` names a slug and the generator refuses to rank both |
+| T4 | Consolidation pass: pool, dedupe, promote, tombstone | T1 | the 17–21 genuine cross-project pairs are surfaced and the false positives rejected before any merge; the harness tier participates on the same footing, with promotion moving up into it and never out; promotion tombstones the project copies; near-miss pairs — similar enough to suspect, different enough not to merge — are reported as contradiction candidates; the pass triggers regeneration |
 
-| id | title | wave | depends on | exit criterion |
-|---|---|---|---|---|
-| T0 | Tracker: memory retention program | — | — | all children merged, integration review |
-| T1 | Promotion tombstones the project-level copy | 1 | — | the 4 live orphan copies become tombstones; a test asserts a promoted entry has no live project body |
-| T2 | Orphan collector for unlisted memory bodies | 1 | — | a command reports the 13 + 5; each resolved to tombstone or relist; a gate keeps the set empty |
-| T3 | Lexical slug matching for promotion candidates | 1 | — | the 17–21 genuine pairs are surfaced and the ~50% lexical false positives rejected; each merge confirmed inline before it applies; the matcher lives in the repo, since no figure here regenerates without it |
-| T4 | Extend decay to project entries, thresholds per type | 2 | #885 | resolve first: the TTL table gives `feedback` — 74% of the corpus — **no TTL**, so a pass following that table cannot flag the 191, and the decay pass is designed for the harness tier only. Either the table gains a feedback threshold or this ticket is about admission, not decay |
-| T5 | Durability annotation at write time; normalise filenames and the frontmatter shape | 2 | #885 | 47 untyped bodies gain a type; the two frontmatter shapes converge on one; 22 stray filename prefixes normalised; new memories carry a declared durability; a gate rejects an unknown type. The type *field* is already the designed four values — that is not this ticket's problem |
-| T6 | Composite retention score, normalised per token | 3 | T4, T5 | score computed from age, use and durability; ranking reproducible from the store alone |
-| T7 | Corpus cap per project, enforced at write time | 3 | T4, T6 | a cap exists and bites; exceeding it requires a consolidation before the write |
-| T8 | The door: bounded resident index, full catalogue, targeted lookup | 0 | — | an index over budget is brought under it with **no entry becoming unreachable**, and a test proves that; every live body resolves from the full catalogue; a demoted entry is retrieved by a tested operation; an interrupted move is recoverable. States which budget it targets — the live 14 500, or lower — and whether it uses the runtime's own four-body pinned tier |
-
-Not tickets, deliberately: the 12 tracked entries with no live body (fold into
-T2), and the filename redundancy that is 47% of the trimmed index — measured,
-and dominated by demotion, which returns 1.8× as much with no renames.
+Not tickets, deliberately: a corpus cap, a decay pass, an orphan collector and a
+full-catalogue file. §5 removes the need for all four.
 
 ## Annex B — Reproducibility
 
