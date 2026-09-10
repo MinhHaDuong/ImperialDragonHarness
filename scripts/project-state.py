@@ -2,6 +2,7 @@
 """Per-project state probe. JSON on stdout, exit 0 always."""
 
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -16,6 +17,12 @@ THRESHOLD_HOURS = 12.0
 # always exact; the list is a sample for the human-readable line, and the sweep
 # recomputes its own list anyway.
 SCRATCH_ORPHAN_SAMPLE = 20
+
+# A process stranded in a deleted worktree is reported once it is older than
+# this. A worktree removed under a still-draining process is normal for a few
+# seconds; one that outlives its session by half an hour is the defect.
+ORPHAN_PROC_MIN_AGE_MINUTES = 30
+ORPHAN_PROC_SAMPLE = 20
 
 
 def run(args, cwd):
@@ -367,6 +374,87 @@ def session_scratch_state(project):
     }
 
 
+def orphan_process_state(project, proc_root="/proc"):
+    """Live processes whose cwd is a worktree this repo has already deleted.
+
+    Such a process outlives the session that spawned it: the runtime removed the
+    worktree, the session ended, and the process was reparented to init, where
+    nothing sweeps it. No existing rail sees it — `worktree-gc.sh` reads live
+    cwds only to *protect* a worktree that still exists, and the scratch sweep
+    keys on session directories, not on processes. It is found by accident or
+    not at all (a `pgrep` waiter matching its own command line ran 14 h 57 this
+    way, 2026-09-10).
+
+    The signal is deliberately narrow. "The session that owns this process is
+    dead" is not decidable; "this process sits in a directory that no longer
+    exists" is one `readlink`, and it was true of every specimen. Reporting a
+    *deleted* cwd keeps the check honest at the cost of missing a stranded
+    process whose worktree is still on disk.
+
+    Reports the pid, the age, and `comm` — the kernel's short executable name.
+    Never argv: a stranded command line can carry a credential, and this output
+    is quoted back to the user. The operator reads argv with `ps` if they need
+    it.
+    """
+    proc = Path(proc_root)
+    if not proc.is_dir():
+        return {"status": "skip", "reason": f"no {proc_root} on this platform"}
+
+    common = run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], project
+    )
+    if common.returncode != 0:
+        return {"status": "skip", "reason": "cannot resolve the main checkout"}
+    container = Path(common.stdout.strip()).parent / ".claude" / "worktrees"
+
+    now = time.time()
+    stranded: list[dict] = []
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        # Every read is best effort: another user's entry, a kernel thread and a
+        # process exiting mid-scan all raise, and all mean "not our orphan".
+        try:
+            cwd = os.readlink(entry / "cwd")
+        except OSError:
+            continue
+        if not cwd.endswith(" (deleted)"):
+            continue
+        path = cwd[: -len(" (deleted)")]
+        if not path.startswith(f"{container}/"):
+            continue
+        try:
+            # Clamped: `now` is read once, before a walk of every process, and a
+            # `/proc/<pid>` mtime can land after it — a freshly spawned process
+            # then measures as *negative* age and is dropped by the floor below.
+            # Rare (4 in 500 spawn-and-scan trials) and invisible: the orphan
+            # simply does not appear. At the 30-minute default the clamp changes
+            # nothing; it is what makes a floor of 0 mean "any age".
+            age_minutes = max(0.0, (now - entry.stat().st_mtime) / 60)
+            comm = (entry / "comm").read_text(errors="replace").strip()
+        except OSError:
+            continue
+        if age_minutes < ORPHAN_PROC_MIN_AGE_MINUTES:
+            continue
+        stranded.append(
+            {
+                "pid": int(entry.name),
+                "comm": comm,
+                "worktree": path,
+                "age_minutes": round(age_minutes),
+            }
+        )
+
+    stranded.sort(key=lambda p: -p["age_minutes"])
+    sample = stranded[:ORPHAN_PROC_SAMPLE]
+    return {
+        "status": "warn" if stranded else "ok",
+        "count": len(stranded),
+        "processes": sample,
+        "truncated": len(stranded) > len(sample),
+    }
+
+
 def pr_state(project):
     r = run(
         ["gh", "pr", "list", "--json", "number,title,headRefName", "--limit", "50"],
@@ -414,6 +502,7 @@ def main():
         "hooks": hooks_state,
         "prs": pr_state,
         "session_scratch": session_scratch_state,
+        "orphan_processes": orphan_process_state,
     }
 
     with ThreadPoolExecutor(max_workers=len(collectors)) as pool:

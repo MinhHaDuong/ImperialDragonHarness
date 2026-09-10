@@ -5,10 +5,15 @@ fake that returns canned CompletedProcess objects, so these tests pin the
 parsing of git/gh porcelain output without touching a real repo.
 """
 
+import contextlib
 import importlib.util
+import json
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 if str(SCRIPTS) not in sys.path:
@@ -274,3 +279,166 @@ def test_hooks_state_wired_into_collectors():
     assert '"hooks": hooks_state' in source, (
         "hooks_state must be a collector so the healthcheck skill sees it"
     )
+
+
+# ── orphan_process_state ─────────────────────────────────────────────────────
+#
+# The positive control is the point of this block. A detector that reports
+# nothing tells you either "no orphan" or "I could not look", and the two are
+# the same output — so one test spawns a real process, deletes the directory
+# under it, and asserts the collector reacts. The rest of the block is only
+# meaningful because that one exists.
+
+
+def _worktrees_responder(main_root):
+    def responder(args):
+        if "--git-common-dir" in args:
+            return _cp(f"{main_root}/.git\n")
+        return _cp("", returncode=1)
+
+    return responder
+
+
+@contextlib.contextmanager
+def _process_in(directory):
+    """A live process whose cwd is `directory`, killed on exit."""
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "import sys; sys.stdin.read()"],
+        cwd=directory,
+        stdin=subprocess.PIPE,
+    )
+    try:
+        yield proc
+    finally:
+        proc.kill()
+        proc.wait(timeout=10)
+
+
+@pytest.mark.integration
+def test_orphan_process_positive_control(tmp_path, monkeypatch):
+    """A real process, a really deleted worktree: the collector must fire."""
+    worktree = tmp_path / ".claude" / "worktrees" / "agent-dead"
+    worktree.mkdir(parents=True)
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    monkeypatch.setattr(ps, "ORPHAN_PROC_MIN_AGE_MINUTES", 0)
+
+    with _process_in(worktree) as proc:
+        before = ps.orphan_process_state(tmp_path)
+        assert before["status"] == "ok", "not stranded yet — the worktree exists"
+        assert before["count"] == 0
+
+        worktree.rmdir()  # the runtime removes the worktree under the process
+
+        after = ps.orphan_process_state(tmp_path)
+
+    assert after["status"] == "warn"
+    assert after["count"] == 1
+    found = after["processes"][0]
+    assert found["pid"] == proc.pid
+    assert found["worktree"] == str(worktree)
+
+
+@pytest.mark.integration
+def test_orphan_process_ignores_a_deleted_dir_outside_the_container(
+    tmp_path, monkeypatch
+):
+    """The negative arm: same deletion, a path the check does not own."""
+    elsewhere = tmp_path / "build"
+    elsewhere.mkdir()
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    monkeypatch.setattr(ps, "ORPHAN_PROC_MIN_AGE_MINUTES", 0)
+
+    with _process_in(elsewhere):
+        elsewhere.rmdir()
+        state = ps.orphan_process_state(tmp_path)
+
+    assert state["status"] == "ok"
+    assert state["count"] == 0
+
+
+@pytest.mark.integration
+def test_orphan_process_respects_the_age_floor(tmp_path, monkeypatch):
+    """A worktree removed under a still-draining process is not yet a defect."""
+    worktree = tmp_path / ".claude" / "worktrees" / "agent-fresh"
+    worktree.mkdir(parents=True)
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    monkeypatch.setattr(ps, "ORPHAN_PROC_MIN_AGE_MINUTES", 30)
+
+    with _process_in(worktree):
+        worktree.rmdir()
+        state = ps.orphan_process_state(tmp_path)
+
+    assert state["status"] == "ok", "a seconds-old process must not be reported"
+
+
+@pytest.mark.integration
+def test_orphan_process_never_reports_argv(tmp_path, monkeypatch):
+    """A stranded command line can carry a credential; only `comm` is reported."""
+    worktree = tmp_path / ".claude" / "worktrees" / "agent-secretive"
+    worktree.mkdir(parents=True)
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    monkeypatch.setattr(ps, "ORPHAN_PROC_MIN_AGE_MINUTES", 0)
+
+    marker = "sk-do-not-report-this"
+    proc = subprocess.Popen(
+        [sys.executable, "-c", f"import sys; sys.stdin.read()  # {marker}"],
+        cwd=worktree,
+        stdin=subprocess.PIPE,
+    )
+    try:
+        worktree.rmdir()
+        state = ps.orphan_process_state(tmp_path)
+    finally:
+        proc.kill()
+        proc.wait(timeout=10)
+
+    assert state["count"] == 1
+    assert marker not in json.dumps(state)
+    assert state["processes"][0]["comm"]
+
+
+def test_orphan_process_skips_without_proc(tmp_path, monkeypatch):
+    """No /proc is 'I cannot look', which must never read as 'all clear'."""
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    state = ps.orphan_process_state(tmp_path, proc_root=str(tmp_path / "absent"))
+    assert state["status"] == "skip"
+    assert "count" not in state
+
+
+def test_orphan_process_skips_when_checkout_unresolvable(tmp_path, monkeypatch):
+    _patch_run(monkeypatch, lambda args: _cp("", returncode=128))
+    state = ps.orphan_process_state(tmp_path)
+    assert state["status"] == "skip"
+    assert "count" not in state
+
+
+def test_orphan_process_wired_into_collectors():
+    source = (SCRIPTS / "project-state.py").read_text()
+    assert '"orphan_processes": orphan_process_state,' in source
+
+
+@pytest.mark.integration
+def test_orphan_process_survives_a_future_proc_mtime(tmp_path, monkeypatch):
+    """`now` is read once, before the walk; a /proc mtime can land after it.
+
+    The raw age then goes negative and the floor drops the orphan silently. It
+    cost 4 misses in 500 spawn-and-scan trials before the clamp, and it is
+    exactly the failure this whole check exists to prevent: the orphan is there
+    and the probe reports nothing.
+    """
+    worktree = tmp_path / ".claude" / "worktrees" / "agent-skewed"
+    worktree.mkdir(parents=True)
+    _patch_run(monkeypatch, _worktrees_responder(tmp_path))
+    monkeypatch.setattr(ps, "ORPHAN_PROC_MIN_AGE_MINUTES", 0)
+    # `now` a full minute before every process on the box started. `ps.time` is
+    # the stdlib module itself, so capture the real clock before replacing it —
+    # a lambda calling `time.time()` would be calling itself.
+    skewed = time.time() - 60
+    monkeypatch.setattr(ps.time, "time", lambda: skewed)
+
+    with _process_in(worktree):
+        worktree.rmdir()
+        state = ps.orphan_process_state(tmp_path)
+
+    assert state["count"] == 1, "a negative raw age must not hide an orphan"
+    assert state["processes"][0]["age_minutes"] == 0

@@ -89,6 +89,21 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
       sandbox socket paths are built under it. The runtime knob is
       <!-- harness-extension-point -->
       `CLAUDE_CODE_TMPDIR`, which takes precedence over `TMPDIR`.
+13. **Stranded processes** — from `orphan_processes`. Live processes whose cwd
+    is a worktree this repo has already deleted. `skip` (silent) when
+    `status` is `skip`, quoting `reason` — no `/proc` on the platform, or the
+    main checkout could not be resolved. A skip is not an all-clear; say which
+    it was. `ok` when `count` is 0. `warn` otherwise, listing each entry as
+    `pid <N> (<comm>), stranded <age_minutes> min in <worktree>`.
+    Such a process outlived its session: the runtime removed the worktree, the
+    session ended, and it was reparented to init, where nothing sweeps it. No
+    other rail sees it — `worktree-gc.sh` reads live cwds only to *protect* a
+    worktree that still exists, and check 12 keys on session directories, not
+    on processes. Classify as **fix-now**: `Kill N stranded process(es)`.
+    Report `comm` and the pid, never the command line — a stranded argv can
+    carry a credential, and this table is quoted back to the user. Say that the
+    operator can read argv with `ps -o args= -p <pid>` if they want it, and
+    kill the children too: a waiter's `sleep` survives its parent.
 
 ## Output format
 
@@ -109,6 +124,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 | Hook freshness   | ...    | in sync / N stale / skip     |
 | Docs freshness   | ...    | N docs scanned, K stale refs |
 | Session scratch  | ...    | N orphan dirs, X of cap      |
+| Stranded procs   | ...    | N in deleted worktrees       |
 ```
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
