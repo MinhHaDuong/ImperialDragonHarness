@@ -10,7 +10,7 @@ reports; the decisions were, and stay, the author's.
 
 ## Why this is one directory
 
-Nine files is real surface, added by a pass whose whole subject was removing
+Ten files is real surface, added by a pass whose whole subject was removing
 surface. They are grouped here rather than scattered through `scripts/` so the
 whole instrument can be deleted in one move when it stops earning its keep —
 which is the test it should be held to, like everything else it measures.
@@ -23,6 +23,7 @@ OUT=/tmp/census
 
 python3 $C/traces.py          --out $OUT/census.json         # the main pass
 python3 $C/deps.py            --root ~/.claude --out $OUT/deps.json
+python3 $C/memory-recall.py   --out $OUT/memory.json         # does the resident index get followed?
 python3 $C/report.py --census $OUT/census.json --gitmeta $OUT/gitmeta.json \
                      --start 2026-06-01 --end 2026-09-09 --out $OUT/report.json
 ```

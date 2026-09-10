@@ -112,11 +112,33 @@ Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
 
 ## Entries
 
-- [<title>](<filename>) — <desc>
+- [<title>](<filename>)
 ...
 ```
 
 Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
+
+**The index line is a title and a link — no trailing description.** The index is
+resident in every session of its project; the body is not. The hook was a third
+copy of a sentence the body already carries twice, as `name:` and as
+`description:`, and the only copy paid for unconditionally. Dropping it took the
+46 indexes from 198 636 to 111 021 chars (2026-09-10).
+
+**The index is the only door.** No recall channel fires on this runtime —
+measured over 5 753 traces, with a positive control: every appearance of a body
+or of its `description:` is a session opening the file itself, never an
+injection. So an entry dropped from an index is not demoted, it is unreachable.
+Never shorten this index by unlisting an entry: shorten it by moving the entry
+to a second-level index that a resident line names.
+
+What survives has to do the whole job, so **the title states the lesson**:
+`Fetch before each sibling merge, then grep-verify the union`, not
+`feedback_fetch_before_sibling_merge.md` and not `Sibling merges`. A title that
+is the filename, or a bare slug, leaves the entry unreadable once the hook is
+gone — 139 entries were in exactly that state. Take the title from the body's
+`name:` when it is already a sentence; write one from its `description:` when
+it is not. Reference and pointer entries may keep a noun label, since knowing
+the pointer exists is their whole job.
 
 **7. Record provenance.**
 

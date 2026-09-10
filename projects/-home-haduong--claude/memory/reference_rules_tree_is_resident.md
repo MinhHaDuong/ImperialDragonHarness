@@ -58,3 +58,22 @@ adapters, tickets 0800/0802) the resident set must be injected by the adapter or
 made genuinely on-demand. **What an adapter must ship is exactly the resident
 set** — a mechanical definition where there was a judgment call. Numbers and
 method: `scripts/census/`, `HANDOFF-2026-09-09.md`, ticket 0572.
+
+**Correction, 2026-09-10: the resident set is three blocks, not one.** The
+sentence above — *what an adapter must ship is exactly the resident set* — was
+read for a day as *ship `rules/`*. The runtime also injects `CLAUDE.md` with
+every body reachable through its `@` chain (`tickets/AGENTS.md`, `RTK.md` —
+9 646 chars), and the current project's `projects/<slug>/memory/MEMORY.md` (46
+of them, the largest 26 531 chars at 121 entries). Neither was gated while the
+rules tree was cut in half, and both had been accreting one bullet and one entry
+at a time: the preamble ×4.3 and the harness index ×3.6 over the same three
+months. Real floor per session: **~65 900 chars**, of which `rules/` is 54%.
+`tests/test_resident_preamble_budget.py` ratchets the other two — the preamble
+in aggregate, each memory index against a shared ceiling, since a per-file
+baseline would make every legitimate memory write edit the test.
+
+The trap is the one this note already names, one level up: a gate is trusted for
+the question it *appears* to answer. `test_rules_resident_budget.py` is titled
+for the cost of a session's preamble and measures a subdirectory, so the two
+blocks outside that directory were invisible to it and to everyone reading its
+green. Ask what a passing gate does **not** look at, and measure that once.
