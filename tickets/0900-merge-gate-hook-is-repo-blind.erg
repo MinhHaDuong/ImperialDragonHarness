@@ -8,6 +8,7 @@ Author: HDMX-coding-agent
 2026-09-10T10:11Z HDMX-coding-agent note Decision recorded: per-project barrier. Fix landed in the consumer repo, ticket 0706.
 2026-09-10T11:03Z HDMX-coding-agent note Correction to the note above: the fix had not landed when it was written. PR 1317 was open with no reviews; it merged at 10:57Z.
 2026-09-10T11:25Z HDMX-coding-agent note Red-team pass found two more blind spots in the same gate — the REST merge form, and gh's recorded default repo. Filed and fixed in the consumer repo, ticket 0707.
+2026-09-10T11:33Z HDMX-coding-agent note Ticket 0707 merged (PR 1318); the REST merge form is now judged on the repo its path names, verified against the consumer main.
 
 --- body ---
 ## Contexte
