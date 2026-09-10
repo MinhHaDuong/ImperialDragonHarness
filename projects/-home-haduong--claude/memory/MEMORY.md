@@ -86,6 +86,7 @@
 - [Unpushed main contaminates parallel worktrees](feedback_unpushed_main_contaminates_worktrees.md) — push local main before launching parallel execute agents
 - [Big artifacts go to /data/models](project_data_disk_model_store.md) — LLM weights/GGUFs never in homedir; /data/models/gguf/<family>/ is the store
 - [Primary-checkout staleness gates skills](feedback_primary_checkout_staleness_gates_skills.md) — skills resolve from ~/.claude; merged skill changes are inert until that checkout pulls
+- [A hook rename is a two-phase deploy](feedback_hook_rename_is_a_two_phase_deploy.md) — the live settings.json is not derived from the tracked one, and re-aligning it at merge time breaks the hook when the primary checkout sits on another branch
 - [Harness is the deliverable](feedback_harness_is_the_deliverable.md) — IDH/git-erg: the harness IS the product, no tooling-balance debt — qualified 2026-07-14 by the harness cool-down
 - [Cross-PR ticket-ID collision](feedback_cross_pr_ticket_id_collision.md) — per-branch erg check can't see a duplicate ID across two open PRs; scan open PRs' added ticket files before
 - [rtk rewrites git output](feedback_rtk_rewrites_git_output.md) — the rtk hook injects `--- Changes ---` into git diff/porcelain output; use `rtk proxy git ...` when parsing machine output
