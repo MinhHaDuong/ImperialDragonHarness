@@ -11,8 +11,10 @@
 Les chiffres et les références sont ceux du relecteur et n'ont pas été
 revérifiés à l'enregistrement.
 
-Revoit le brouillon de conception
-[`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md).
+Revoit la [v0](./2026-09-10-dragon-memory-design-v0.md) du brouillon de
+conception — c'est cette copie gelée qu'il faut ouvrir pour suivre les renvois,
+et non la [v2](./2026-09-10-dragon-memory-design.md) courante, dont la
+numérotation a bougé.
 C'est la lecture **hors famille** que ce brouillon demandait et que la revue
 [`2026-09-10-dragon-memory-design-review-claude.md`](./2026-09-10-dragon-memory-design-review-claude.md)
 déclarait encore due. Les trois rapports d'étude
