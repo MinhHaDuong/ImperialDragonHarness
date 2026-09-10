@@ -8,6 +8,7 @@
 
 ## Entries
 
+- [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md) — the merge gate saw `gh pr merge` and not `gh api .../pulls/N/merge`, the form the harness's own worktree guard prescribes; check the wiring separately from the logic, and say what the tests actually promise
 - [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md) — an unanchored `allow if X appears` waives every other check in that input; three real waiters rode in on a bitshift, a string, a herestring
 - [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md) — a reference manifest and the set of things that break are different sets; six tests red where three were predicted, and a guard that loses its subject goes with it
 - [The whole rules/ tree is resident](reference_rules_tree_is_resident.md) — the runtime loads `~/.claude/rules/**.md` itself; `paths:` frontmatter is what makes a body conditional. Mechanism isolated 2026-09-09, 28 400 → 21 600 resident tokens after scoping; the guard that should have caught it was watching the hook, not the runtime

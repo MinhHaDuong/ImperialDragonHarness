@@ -31,3 +31,15 @@ fallback: the orchestrator collects the reviewer agents' results (they
 arrive as task notifications) and runs `/verify-gate` directly with the
 findings summarized in args — the gate completed and posted the verdict
 comment first try.
+
+Re-confirmed again 2026-09-10 (ticket 0900, PR #863), now for `/review-pr`:
+both invocations returned "waiting on the panel" and never posted. The panel
+itself ran fine — ten reviewers across the two calls, all returning real
+verdicts including two `request-changes` that found a live gate bypass — but
+the synthesis step never happened, so the verdicts existed only in task
+notifications. The PR carried one review where it should have carried two.
+Same fallback works and is now the expected path, not a rescue: collect the
+reviewers' results from the notifications, synthesize, and post the review
+yourself with `gh pr review --comment --body-file`. Check the PR's review
+count before treating a round as done — a review that ran and never landed is
+indistinguishable, from the PR page, from one that never ran.
