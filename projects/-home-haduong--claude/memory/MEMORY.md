@@ -8,6 +8,8 @@
 
 ## Entries
 
+- [Reachable is not resident](feedback_reachable_is_not_resident.md)
+- [The worktree guard reads what you write](feedback_worktree_guard_reads_written_content.md)
 - [The resident index is the only door](reference_no_recall_channel_fires.md)
 - [Subagent traces dilute every per-session rate](feedback_subagent_traces_dilute_every_rate.md)
 - [A glob for projects/*/memory is half a walker](feedback_walker_covers_one_tier_of_two.md)
