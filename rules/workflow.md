@@ -36,9 +36,10 @@ exits 0 even when the path is absent.)
 
 **Scan again immediately before you push, because a scan is a snapshot.** The
 window is the whole life of the branch: a sibling's PR opened *after* your scan
-can merge before your push, and then the scan was right when you ran it and
-wrong when you relied on it. Re-run the specific check your work answers against
-a freshly fetched `origin/main`. Someone beat you → delete the branch and say so.
+can merge before your push. Re-run **both** scans against a freshly fetched
+`origin/main`, not just the one your work answers: the path scan comes back
+clean when a sibling solved your problem in another file, and only the log
+catches that. Someone beat you → delete the branch and say so.
 
 **A red gate on `main` is a broadcast**: every parallel session sees the same
 failure and the severity floor tells each of them to fix it, so the urgency that
