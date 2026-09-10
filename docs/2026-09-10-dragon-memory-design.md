@@ -462,7 +462,25 @@ deletion cannot be undone, and unranking can.
 store that keeps everything, so a mis-ranked entry costs a place in a list, not
 its existence. This is what makes a composite score safe here when two reviews
 judged it unsafe: with eviction on the other side of it, a bad weight destroys
-work; with a grep on the other side, it hides a line.
+work; with a grep on the other side, it hides a line. That safety is bounded by
+the awareness limit above — for a declared-resident entry the cut is not a
+display decision — which is why the declaration overrides the score rather than
+feeding into it.
+
+**Validity is not importance, and the score needs both.** `valid_while` answers
+*is this still true*. It says nothing about *does this matter*, and the two come
+apart in both directions: a memory can be impeccably true and worth nothing, or
+shaky at the edges and the only thing standing between an agent and an
+expensive mistake. A design that ranks on validity alone would surface a wall of
+correct trivia and bury the lesson that matters.
+
+So importance is its own axis, declared like validity and read like it. What
+feeds it, at least: the cost of rediscovering the thing if it is forgotten;
+whether the memory *prevents* an action or merely *answers* a question, since
+only the first fails silently when it is not resident; and how wide its scope
+is. Observed use belongs here too and stays secondary for the reason P4 already
+gives — it counts opens, and an entry whose title carried the lesson is never
+opened.
 
 **P5 — Annotate at the point of writing.** Durability, the validity condition
 and what the entry supersedes are known when a memory is written and guessed at
@@ -664,15 +682,27 @@ The consequence easiest to miss: **the harness index is capped like the others,
 and it matters more there.** It is resident in *every* session, nothing in it is
 ever removed, and if deduplication starts working its membership only grows.
 
-Its width is not a rounding error. `tests/test_resident_census.py` budgets the
-hook at 500 characters and `memory/MEMORY.md` uses 369 for four entries —
-roughly one slot spare. Consolidation is expected to surface 17 to 21 genuine
-cross-project pairs. **Past about the fifth slot, promotion stops increasing a
-lesson's reach and starts decreasing it**: the entry leaves a project index
-where it was visible to that project and joins a queue below the harness cut,
-visible to nobody. So raising that budget is a prerequisite of promotion, not a
-follow-up to it, and the ordering belongs in the plan rather than in a reader's
-head.
+**Each tier has its own budget, because a session loads both.** §2.1 counts
+them as separate resident channels and they are: the harness index and the
+project index are both in the prompt, so neither constrains the other and each
+gets its own N. Nothing here trades one against the other.
+
+That makes the current figure a trap worth naming. `tests/test_resident_census.py`
+budgets the hook at 500 characters, and `memory/MEMORY.md` uses 369 of it for
+four entries. **500 is not a design decision.** It is a ratchet stamped on a
+tier that happens to be nearly empty — it records where the harness tier is,
+not what it should carry — and a tier meant to hold every lesson that proved
+itself across projects, sized at four or five entries, is a category error
+rather than a tight budget. Consolidation is expected to surface 17 to 21
+genuine cross-project pairs, which is the first real evidence of what the tier
+is for.
+
+So the number to set is what the harness tier must carry, and the ratchet
+follows it. Read the other way round — the ratchet as a constraint promotion
+must fit inside — promotion would start *reducing* a lesson's reach past the
+fifth slot, moving it out of a project index where it was visible into a queue
+below a cut where it is not. That inversion is the thing to avoid, and it is
+avoided by sizing the budget rather than by rationing promotions.
 
 ## 6. Proposed changes
 
