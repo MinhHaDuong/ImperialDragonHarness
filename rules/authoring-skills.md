@@ -33,5 +33,14 @@ tests are the gate, this is why.
 - **Every multi-item step declares its concurrency** — parallel-background or
   sequential-blocking — and why. Model defaults differ across versions; the
   skill text is the contract.
+- **Split a body only where a run uses one branch of many.** A skill whose
+  subcommands or modes are mutually exclusive becomes a router plus
+  `references/<branch>.md`, named from the router as `` `references/x.md` ``
+  so `tests/test_skill_reference_pointers.py` can see it. The criterion is
+  exclusivity, not length: a body whose sections are all traversed on every
+  run stays whole, and splitting it only buys extra reads. Two things never
+  move — a branch of two or three lines, whose pointer would cost more than
+  its text, and a reference several branches share, which is one file rather
+  than a copy per branch.
 - **The Imperial Dragon is not a bird.** No avian analogies, in names,
   explanations or rationale. Scale, power, taxonomy.

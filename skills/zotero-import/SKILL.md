@@ -24,8 +24,8 @@ writes to items that already exist. **Read the mode's file before acting.**
 | enrichment | the item exists; fields are missing | `references/enrichment.md` |
 | backfill | reconcile a whole staging directory | `references/backfill.md` |
 
-`references/helper-script.md` documents every `zotero-import.py` subcommand and
-the guarantees of its output (`why` / `certainty` / `consulted` / `skipped`).
+`references/helper-script.md` documents the `zotero-import.py` lookup and write
+subcommands and the guarantees of their output (`why` / `certainty` / `consulted` / `skipped`).
 Read it alongside the mode file: `match` serves import and backfill both, which
 is why it is one shared reference rather than copied into each mode.
 
