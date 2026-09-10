@@ -8,6 +8,8 @@
 
 ## Entries
 
+- [A divided-out token figure must be swept, not just corrected](feedback_derived_token_figures_must_be_swept.md) — chars÷4 understates this corpus by 45%; the real ratio is ~2.8, and the correction pass left the stale figure in `rules/README.md`, resident in every session, and in the guard's own failure message
+- [Built-in skill bodies live in the binary as zstd frames](reference_builtin_skill_bodies_in_the_binary.md) — extractable with `compression.zstd`; descriptions are concatenated JS string fragments, and the pointer-to-payload ratio is about 1:100
 - [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md) — the merge gate saw `gh pr merge` and not `gh api .../pulls/N/merge`, the form the harness's own worktree guard prescribes; check the wiring separately from the logic, and say what the tests actually promise
 - [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md) — an unanchored `allow if X appears` waives every other check in that input; three real waiters rode in on a bitshift, a string, a herestring
 - [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md) — a reference manifest and the set of things that break are different sets; six tests red where three were predicted, and a guard that loses its subject goes with it
