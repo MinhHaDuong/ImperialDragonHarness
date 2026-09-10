@@ -1,0 +1,152 @@
+%erg 0.1
+Title: Guard against shell loops that poll for a process
+Created: 2026-09-10
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #855
+
+--- log ---
+2026-09-10T07:57Z Minh Ha-Duong created
+2026-09-10T08:20Z Minh Ha-Duong note Pivoted after review of PR #855: a PreToolUse guard replaces the resident rule, so the budget raise is withdrawn
+2026-09-10T08:45Z Minh Ha-Duong note Second review round: for-loop gap closed, heredocs skipped, write-then-exec conceded in writing
+2026-09-10T09:05Z Minh Ha-Duong note Third review round: heredoc exemption anchored and interpreter-aware; the for keyword reverted on the termination argument
+
+2026-09-10T09:07Z Minh Ha-Duong closed — autoclosed — PR #855
+--- body ---
+## Context
+
+An agent that must wait for a background job has no "wait" primitive — the Bash
+tool ends when its command ends — so it improvises a shell loop polling `pgrep`
+until the job is gone. The loop never ends: the waiting shell's own command line
+contains the pattern, so `pgrep` matches it and the loop waits for itself. It
+then outlives the session, reparented to init, polling forever.
+
+Measured over 551 session transcripts, 2026-06-01 to 2026-09-10:
+
+- **105 waiters written, every one by an agent.** An independent re-derivation
+  during review found 103-122 depending on match strictness, so treat 105 as an
+  order of magnitude, not a count. The methodology was never shipped; that is
+  itself a defect this ticket does not repeat — the guard's test file carries
+  the shapes verbatim instead.
+- Several show an agent that had already met the self-match and was working
+  around it (`pgrep -c … -le 1`, a double negation). That is the tell that the
+  defect is the *shape*, not the predicate.
+- **Two stranded processes were alive in 43 h of uptime**, at 14 h 57 and
+  16 h 49, both found by accident during an unrelated cleanup.
+
+## Decision
+
+A `PreToolUse(Bash)` guard, `scripts/guard-pgrep-waiter.sh`, in the idiom this
+repo already uses for `guard-destructive-bash.sh`: match a dangerous shape in
+the command string, deny with a message that names the remedy.
+
+## Why this instrument and not the two that were tried first
+
+**Not a memory note.** One existed from 2026-09-09, with the correct recipe, and
+reached none of the 105 — memory is recalled by relevance.
+
+**Not a resident rule.** That was the first attempt (PR #855, first revision).
+It cost 474 characters in the system prompt of every session of every project,
+which required raising `RESIDENT_BUDGET` from 36 000, which required this ticket
+to argue a permanent tax. Review found the argument incomplete: it never weighed
+a guard, the cheapest and strongest option, already established in this
+codebase. A script costs **zero** resident budget — the cap counts `rules/*.md`
+only — and blocks the mistake structurally rather than hoping 474 characters
+buried in a 14 kB file are read and recalled.
+
+The same review found the raise's "loan against a trimming pass" framing
+unenforceable: nothing in the repo referenced the repayment, and `erg-pr-merge`
+closes a ticket unconditionally at merge, so the exit criterion would have
+auto-closed unchecked. Withdrawing the raise dissolves that debt rather than
+tracking it.
+
+**A `paths:` scope does not apply** and this stays true: it fires on the file
+being edited, and this defect happens when a Bash command is written.
+
+## What it does not catch — conceded, not overlooked
+
+A second review round found two gaps and one of them is architectural. Written
+here rather than left for the next reader to rediscover:
+
+- **Write-then-execute defeats it entirely.** The hook is `PreToolUse(Bash)`, so
+  a waiter written into a file by the Write tool and run as `./helper.sh` is
+  never scanned. Nothing here reads file contents. This is the honest limit of
+  the instrument: coverage is structural only for commands whose offending text
+  passes through one Bash call — which all 105 measured instances did, but
+  nothing guarantees the next one will. Closing it needs a second hook matching
+  file bodies on Write, worth building only if the class appears.
+- **A different predicate.** `ps aux | grep`, or a busy-wait with no `sleep`,
+  polls just as badly. The deny message therefore leads with the general shape
+  and mentions `pgrep` second, so it does not advertise the substitution — the
+  first draft named `pgrep` first, which put the escape hatch one paraphrase
+  from the block.
+- **A heredoc that is not fed to an interpreter.** Writing text *about* this
+  defect is indistinguishable to a grep from running it, and the text most often
+  written about it is this repo's own memory note, which quotes the banned shape
+  verbatim — a heredoc edit to that note tripped the guard the note documents.
+  The exemption is anchored at end of line and refuses interpreters. A first
+  version was neither, and that was worse than having none: a single `<<`
+  anywhere waived every other check, so a genuine waiter rode in beside a
+  bitshift `$((1<<3))`, beside a string mentioning `<<END`, or beside a
+  herestring — and `bash <<EOF … EOF` executed what it carried. All four are now
+  deny cases, so the boundary between documenting the shape and running it is
+  pinned rather than asserted.
+
+One residual false positive is accepted rather than fixed: a command whose
+*search patterns* contain all three words (`grep -RIn pgrep . | grep -E
+"sleep|until"`) is blocked — split it, or use the Grep tool. A backgrounded
+monitor (`while true; do pgrep -c nginx; sleep 30; done &`) is also blocked, and
+that one is not a misfire: it strands exactly like a waiter, by design. Both are
+test cases, so the behaviour is pinned rather than incidental.
+
+**A review finding was accepted, then reversed on argument.** Round two asked
+for `for` in the loop-keyword set, since `for i in $(seq 1 100); do pgrep …;
+sleep …; done` polls like the rest. It was added. Round three showed the price:
+ordinary finite work — a `for host in a b c` ssh sweep with a diagnostic
+`pgrep`, a bulk `systemctl restart` with a post-check — started being denied.
+Reverted, because **unboundedness is the defect**. A `for` loop runs a finite
+list and terminates, so it cannot strand; a bounded poll wastes a tool call and
+then exits, which is a different and much smaller harm than a process still
+looping the next morning. `until` and `while` are the forms that never end.
+Both ops shapes are allow cases now, so the reversal is pinned too.
+
+## The guard's own cost, measured rather than assumed
+
+A guard reads text, not intent. An earlier draft of this one fired against a
+command written to *investigate* these very waiters, in the session that wrote
+it. The match is therefore a three-way conjunction — loop keyword, `pgrep`,
+`sleep` — chosen so that enumeration (`for pid in $(pgrep …)`), bare
+investigation, file polling, and the recommended `kill -0 "$PID"` form all pass.
+Every one of those is an explicit allow case in the test.
+
+This is the trade the harness's severity floor asks for: a guard earns its place
+against a defect class that demonstrably exists, and 105 instances with two live
+strandings is that evidence.
+
+## Relevant files
+
+- `scripts/guard-pgrep-waiter.sh` — the guard
+- `tests/test_guard_pgrep_waiter.sh` — six deny cases from real transcripts,
+  eight allow cases, and a no-jq case
+- `settings.shared.json` + `adapters/claude-code/hooks/hooks.json` — wiring; the
+  adapter file is generated, never hand-edited
+- `projects/-home-haduong--claude/memory/feedback_pgrep_waiter_matches_itself.md`
+
+## Invariants
+
+- `RESIDENT_BUDGET` is untouched at 36 000, and `rules/workflow.md` is unchanged.
+- The adapter hooks stay in sync (`make check-adapter-hooks`).
+- No legitimate `pgrep` usage is blocked — the allow arm of the test is the half
+  that matters, since a guard is trivially correct if it denies everything.
+
+## Exit criteria
+
+- [ ] The guard denies the six measured waiter shapes, including both
+      agent-invented workarounds
+- [ ] The guard allows enumeration, investigation, file polling, the `kill -0`
+      form, and a heredoc documenting the banned shape
+- [ ] Every gap and residual misfire above is named in the guard's own comments
+      and pinned by a test, so none is rediscovered by accident
+- [ ] Wired in `settings.shared.json` with the adapter regenerated and in sync
+- [ ] The memory note records the guard as the instrument, and keeps the
+      reparentation signal for whoever builds a sweep later
+- [ ] `make check` passes

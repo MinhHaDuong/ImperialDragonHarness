@@ -52,6 +52,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" guard-pgrep-waiter.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" guard-cd-primary-repo.sh",
             "timeout": 5
           }
