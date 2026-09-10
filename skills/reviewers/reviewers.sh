@@ -613,7 +613,7 @@ case "$subcmd" in
         # absent sidecar → byte-identical to the pre-0353 line.
         latfile="${FINDINGS_DIR}/${pr}/${seat}.latency"
         [ -f "$latfile" ] && line="${line} latency=$(cat "$latfile")s"
-        "$ERG" log "$tid" "claude note ${line}"
+        "$ERG" log "$tid" "note ${line}" --author claude
         ;;
 
     audition)
@@ -773,7 +773,7 @@ case "$subcmd" in
         # created/note/closed only — audition uses note). Promotion stays manual.
         tid=$(_ticket_id_from_path "$trial")
         [ -n "$tid" ] || { echo "error: audition: could not derive a ticket id from '${trial}' — scorecard not logged" >&2; exit 1; }
-        if ! "$ERG" log "$tid" "claude note ${card}" >/dev/null; then
+        if ! "$ERG" log "$tid" "note ${card}" --author claude >/dev/null; then
             echo "error: audition: failed to log scorecard to trial ticket ${trial} (id ${tid})" >&2
             exit 1
         fi
