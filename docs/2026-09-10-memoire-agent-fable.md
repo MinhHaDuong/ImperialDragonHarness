@@ -11,8 +11,11 @@
 Les affirmations chiffrées et les références sont celles de l'auteur et n'ont
 pas été revérifiées à l'enregistrement.
 
-Documents voisins : [`dream-research.md`](./dream-research.md) (note de
-recherche `/dream`, 2026-05-13), [`VISION-original.md`](./VISION-original.md).
+Premier des trois rapports sollicités indépendamment sur la même question :
+[`2026-09-10-memoire-agent-perplexity.md`](./2026-09-10-memoire-agent-perplexity.md),
+[`2026-09-10-memoire-agent-chatgpt.md`](./2026-09-10-memoire-agent-chatgpt.md).
+Voir aussi [`dream-research.md`](./dream-research.md) (note de recherche
+`/dream`, 2026-05-13) et [`VISION-original.md`](./VISION-original.md).
 
 ---
 
