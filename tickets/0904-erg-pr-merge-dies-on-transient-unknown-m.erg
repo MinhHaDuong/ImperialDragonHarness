@@ -1,0 +1,93 @@
+%erg 0.1
+Title: erg-pr-merge dies on transient UNKNOWN mergeability at pre-flight though it already owns the settle poll
+Created: 2026-09-10
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-10T10:30Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Observed 2026-09-10 on PR #866. `erg-pr-merge` bounced with
+
+    erg-pr-merge: mergeability is UNKNOWN — resolve conflicts or try again in a moment
+
+and the PR did not merge. A re-run seconds later merged it cleanly, with not one
+byte of the PR changed in between. The UNKNOWN was transient.
+
+The script already knows this class of transient and already owns the cure.
+`settle_mergeable()` polls until GitHub finishes recomputing, bounded by
+`ERG_PR_MERGE_POLL_TRIES` (default 5), and its own comment says the value
+"flips to UNKNOWN transiently" (ticket 0200). It is called **once**, on the
+post-push recompute path.
+
+The pre-flight check does not use it. It reads `.mergeable` out of the single
+`gh pr view` snapshot taken at startup and dies on anything but `MERGEABLE`:
+
+- read at `skills/merge/erg-pr-merge:109`
+- `die` at `skills/merge/erg-pr-merge:111`
+- `settle_mergeable()` defined at `:305`, called only at `:344`
+
+GitHub computes mergeability asynchronously, so a PR opened or pushed moments
+earlier legitimately reports UNKNOWN. That is exactly the situation an automated
+caller creates: open a PR, wait for checks, merge. The faster the caller, the
+more likely the bounce.
+
+Why it stayed unnoticed is worth recording, because it is not part of this bug:
+the calling session had piped the script into `tail -6`, and without `pipefail`
+a pipeline reports the exit status of its last element, so `die`'s `exit 1`
+surfaced as 0. The script's exit code is correct. Do not "fix" that here.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — `:109-111` the un-settled pre-flight check;
+  `:294` the poll knobs; `:302-330` `settle_mergeable()`; `:344` its only call.
+- `tests/` — no test currently exercises the pre-flight mergeability branch;
+  grep for a literal from the die string rather than for the script name.
+
+## Actions
+
+1. Route the pre-flight check through `settle_mergeable()` instead of reading
+   the startup snapshot: on a non-`MERGEABLE` first read, settle, then decide on
+   the settled value.
+2. Keep the failure loud and bounded. A genuinely stuck `UNKNOWN`, and a real
+   `CONFLICTING`, must still `die` with the same message and exit 1. The bug is
+   the absence of a retry, not the presence of a refusal — do not convert the
+   check into a warning, and do not let the poll run unbounded.
+3. `CONFLICTING` should not be polled at all: it is a settled answer, and
+   polling it wastes the bounded budget. Only `UNKNOWN` deserves the settle.
+
+## Test
+
+Red first. `tests/test_erg_pr_merge_preflight_settles.sh`: stub `gh` so that
+`pr view --json ...mergeable` returns `UNKNOWN` on the first call and
+`MERGEABLE` on the second, then assert the script proceeds past the pre-flight
+rather than exiting 1. Prove it red against the current script before fixing.
+A second case must stay red-to-green in the other direction: a stub returning
+`CONFLICTING` on every call must still exit 1, and must not consume the poll
+budget.
+
+## Verification
+
+- [ ] First-read `UNKNOWN` followed by `MERGEABLE` proceeds to merge.
+- [ ] Persistent `UNKNOWN` still exits 1, after at most
+      `ERG_PR_MERGE_POLL_TRIES` polls.
+- [ ] `CONFLICTING` exits 1 immediately, with no polling.
+- [ ] The die message is unchanged, so callers matching on it keep working.
+- [ ] `make check` passes.
+
+## Invariants
+
+- The script must never merge a PR whose settled mergeability is not
+  `MERGEABLE`. This ticket removes a false negative; it must not create a false
+  positive.
+- Exit codes unchanged: 1 on refusal.
+- No change to the post-push settle path, which works.
+
+## Exit criteria
+
+- [ ] A PR opened seconds before the merge call no longer bounces on a
+      transient `UNKNOWN`.
+- [ ] Both test cases above present and proved red against the pre-fix script.
+- [ ] `settle_mergeable()` has two call sites and the pre-flight is one of them.
