@@ -263,8 +263,15 @@ Summing each project's index size over the main sessions it served:
 
 | | index bytes served | per body actually opened |
 |---|---|---|
-| before the title-only pass | 4 784 923 | 55 638 B (~13 900 tokens) |
-| after | 2 904 530 | 33 773 B (~8 400 tokens) |
+| before the title-only pass | 4 784 923 | 55 638 B (~19 900 tokens) |
+| after | 2 904 530 | 33 773 B (~12 100 tokens) |
+
+Tokens at 2.8 chars/token, the ratio `scripts/resident_census.py` derived
+against `/context` on 2026-09-10. An earlier draft of this section used the
+chars/4 rule of thumb and understated every token figure by about 45%:
+backticked identifiers and paths tokenize badly, and memory indexes are made of
+little else. The character counts are the contract; the token column is an
+order of magnitude.
 
 A body is ~2 000 characters. Each one actually consulted therefore costs about
 **seventeen times its own length** in standing index tax, down from
