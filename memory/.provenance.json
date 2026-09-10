@@ -8535,6 +8535,33 @@
       "last_confirmed": "2026-09-10T13:30:09Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_subagent_traces_dilute_every_rate": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-10T13:43:31Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_walker_covers_one_tier_of_two": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-10T13:43:31Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_no_recall_channel_fires": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-10T13:43:31Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }

@@ -8,6 +8,9 @@
 
 ## Entries
 
+- [The resident index is the only door](reference_no_recall_channel_fires.md)
+- [Subagent traces dilute every per-session rate](feedback_subagent_traces_dilute_every_rate.md)
+- [A glob for projects/*/memory is half a walker](feedback_walker_covers_one_tier_of_two.md)
 - [A divided-out token figure must be swept, not just corrected](feedback_derived_token_figures_must_be_swept.md)
 - [Built-in skill bodies live in the binary as zstd frames](reference_builtin_skill_bodies_in_the_binary.md)
 - [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md)
