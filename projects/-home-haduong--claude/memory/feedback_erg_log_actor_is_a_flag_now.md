@@ -30,7 +30,25 @@ the build date and revision. Bump by taking git-erg `main`'s committed
 `tickets/erg` and proving provenance against the remote rather than trusting a
 local build: `git hash-object tickets/erg` must equal
 `gh api repos/<owner>/git-erg/contents/tickets/erg?ref=main --jq .sha`. After a
-bump, `erg check tickets/` warns that `AGENTS.md` predates the embedded assets;
-leave it where the repo's copy carries local edits — `erg init` preserves those
-and exits 2, it does not clobber them. Related:
-[[erg-verb-drift-in-skill-examples]].
+bump, refresh the provenance stamp with `erg init`: it writes only
+`tickets/.erg-assets`, preserves a locally-edited `AGENTS.md`, and exits 2 for
+that skip — the 2 is the design, not a failure. The hash it records is the
+*embedded* asset's, so the local edits stay preserved on every later init;
+confirm with a dry-run that still says `would preserve (local edits)`.
+
+**A binary bump is a sweep, not a swap.** Enumerate what else changed by
+diffing the two binaries' full help — `erg --help --all` old vs new — before
+trusting that only the command you came for moved. On the 2026-06-08 →
+2026-09-10 jump that diff named two more contract changes the fix had not
+looked at: `erg close` now files the ticket into `closed/` itself (which orphans
+`/molt`'s archive-staging idiom, ticket 0905), and `Blocked-by` accepts a
+URI-reference where an unresolved ref warns instead of blocking. Recover the old
+binary with `git show <pre-bump-sha>:tickets/erg`.
+
+The trap inside that probe: **the primary checkout's `./tickets/erg` is
+whatever branch that checkout sits on**, which is often not `main`. Comparing it
+against the old binary silently compares a file to itself and returns an empty
+diff that reads as "nothing else changed". Extract both sides by ref
+(`git show origin/main:tickets/erg`) and check `erg version` on each before
+believing the diff. Related: [[erg-verb-drift-in-skill-examples]],
+[[primary-checkout-staleness-gates-skills]].
