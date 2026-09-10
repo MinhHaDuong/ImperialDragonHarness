@@ -346,6 +346,28 @@ than out. The harness tier, being the top of that movement, has no removal at
 all. Disk and consolidation time are the costs of keeping a body; context is
 not, because context is paid by the view.
 
+*On growth, and why there is no file-count cap.* A cap on the number of files
+is a deletion mechanism wearing a budget's clothes, and it would delete for a
+counting reason — the failure earlier versions of this document warned about
+and then proposed anyway. What actually degrades as the corpus grows is the
+consolidation pass, whose duplicate detection is quadratic: a thousand bodies
+is half a million pairs and milliseconds, ten thousand is fifty million and
+seconds, and somewhere past that the pass needs blocking rather than the corpus
+needing pruning. Search does not degrade meaningfully in that range — 49 ms
+today, well under a second at ten times the size — and neither does version
+control.
+
+So the corpus gets an **alarm, not a cap**: the run records the body count and
+its own wall-clock duration in its provenance, and the trend is visible long
+before it is a problem. The right threshold is on the pass's duration, which is
+the thing that hurts, rather than on a file count, which is a proxy for it.
+
+Waiting is the correct choice here precisely because this failure is visible
+and costs nothing when it arrives: the pass gets slow, and the fix is
+algorithmic. Contrast the resident index, which could not wait — its budget
+gate's only legal move was to delete index lines, and that destroyed
+reachability. **Cap what fails destructively; alarm on what fails visibly.**
+
 **P2 — The door is a search, not a second file.** A full catalogue kept as a
 file is a materialised view that can go stale and needs its own collector. The
 bodies already carry `name:` and `description:` in frontmatter, so the
