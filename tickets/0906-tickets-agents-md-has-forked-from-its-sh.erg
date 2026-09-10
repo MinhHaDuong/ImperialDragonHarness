@@ -7,148 +7,194 @@ Label: needs-human
 --- log ---
 2026-09-10T11:43Z claude created
 2026-09-10T12:05Z claude note Measured the fork: harness copy 7969 chars vs shipped asset 2141; nine adopters byte-identical to the asset; erg migrate force-overwrites a diverged copy by charter
+2026-09-10T12:40Z claude note Body rewritten. Found git-erg 0277/0278/0279, filed by a sibling session 06:53-09:40 the same day, which own the upstream half and correct three claims made above: the migrate overwrite is unit-asserted but not reproduced end to end, byte-identical adopters are current rather than frozen, and neither shipped claim is false. Author verdict recorded; one conflict with 0277's recorded destination left open for arbitration.
 
 --- body ---
+## Status
+
+The upstream half of this finding is already owned by **git-erg 0277, 0278 and
+0279**, filed by a sibling session on 2026-09-10 between 06:53 and 09:40 and
+merged the same morning. No fourth ticket was filed. This ticket keeps the
+harness half and the four observations 0277 does not carry.
+
+Author verdict, 2026-09-10: **equality here, size budget upstream.** The
+harness copy is to be gated by a checksum test against the asset embedded in
+the vendored `tickets/erg`, not by a size budget of its own; harness-local
+practice moves into `rules/`, where the existing gate reaches it.
+`chemin-de-voix` is deferred.
+
 ## Context
 
 `tickets/AGENTS.md` is not a harness file. It is an asset embedded in the `erg`
-binary (`git-erg/src/go/assets/AGENTS.md`), written by `erg init`, and — this is
-the part that makes the drift load-bearing — **force-overwritten by
-`erg migrate`**, deliberately: `git-erg/src/go/migrate_test.go:448` asserts
-"a diverged AGENTS.md IS force-overwritten by migrateLayout (charter
-behaviour)". The harness has been editing it as if it owned it.
+binary (`git-erg/src/go/assets/AGENTS.md`, mapped by `bootstrap_assets.go`) and
+written by `erg init`. This repo has been editing it as if it owned it: 7 969
+chars against a shipped 2 141, five additive edits between 2026-07-11 and
+2026-09-01, none propagated upstream.
 
-Measured 2026-09-10, on `origin/main`:
+**How exposed that fork is, stated at the evidence level actually reached.**
+`migrate.go:261` calls `installAssets(root, migrateAssetPaths, false, false)`
+with `refuseDiverged=false`, and `migrate_test.go:448` asserts at unit level
+that "a diverged AGENTS.md IS force-overwritten by migrateLayout (charter
+behaviour)". End to end the path is **not** demonstrated: git-erg 0278 records
+a fixture carrying a local edit that survived `erg migrate`, because the run
+reported `already clean` and never reached the asset step. So the hazard is
+real in the code and open in practice — whether it fires on a store that
+genuinely needs migrating is git-erg 0278's first action, not a settled fact.
+An earlier revision of this ticket asserted the overwrite as established; that
+overstated it.
 
-| copy | chars | md5 |
-|------|-------|-----|
-| shipped asset `git-erg/src/go/assets/AGENTS.md` | 2 141 | `b622d4f0…` |
-| nine adopter repos (DOIfetch, git-erg, search-works-for-zotero, aedist, archiveCIRED, climate-finance-het, padme, polycentric_activity, zoteus-fts5) | 2 141 | `b622d4f0…` |
-| `chemin-de-voix` | 1 388 | `5383a736…` |
-| **this repo** | **7 969** | `3ea9ab0b…` |
+**The adopters are current, not frozen.** Nine adopter copies are byte-identical
+to the shipped asset (md5 `b622d4f0…`, 2 141 chars), and this ticket first read
+that as staleness. Measured properly — git-erg 0278 ran `erg init --dry-run`
+across eleven repos rather than inferring from hashes — six are `unchanged`,
+four `would refresh` and have since been refreshed, and one (`chemin-de-voix`)
+has no provenance stamp at all. Byte-identical to the shipped asset means
+current. The problem is what the shipped asset *says*, not how old it is; 0278
+reaches the same conclusion independently.
 
-The asset was last changed 2026-06-18. The harness copy has been changed five
-times since (2026-07-11 → 2026-09-01), every one of them additive, and none of
-them propagated. Three consequences, in increasing order of cost.
+## Four observations 0277 does not carry
 
-**1. The harness's local rules are unbacked.** The 5.8 KB the harness added —
-the optimistic-ID discipline, the renumber-clear-of-the-frontier rule, the
-`gh pr view` scan, the decision-records-vs-artifacts split — is exactly the
-material `erg migrate` is chartered to delete. Nothing warns, and the deletion
-would look like a routine tool run.
+**1. The `erg-github` sentence is a mood error, not a fiction.** The shipped
+asset states, in the indicative, that `tickets/erg-github` "adds a `verify`
+check that fails a PR referencing a still-open ticket". The helper is real — a
+5 471-byte POSIX script with `install` and `verify` verbs — and does exactly
+that. It is installed in **zero** repos on this machine: the script exists only
+in git-erg's own `tickets/`, and `erg-verify.yml` is in no workflows directory
+anywhere, git-erg's included. Every adopter therefore reads that a required
+check exists when none does. The harness dropped the sentence in `9703af3`
+under the label "erg-github fiction"; that label is imprecise and this ticket
+repeated it. The repair is the mood — describe an optional facility as
+optional — not deletion.
 
-**2. Nine repos are resident-loading two claims the harness has disproved.**
-The shipped template still says `tickets/erg-github` adds a `verify` check that
-fails a PR referencing a still-open ticket — the harness deleted that as
-fiction on 2026-07-12 (`9703af3`). It also still says "on ID collision,
-renumber to the next free ID" — reversed here on 2026-07-27 after one filing
-collided three times in one session, refined 2026-09-01. `climate-finance-het`
-and `search-works-for-zotero`, the two repos whose incidents produced the
-correction, are among the nine still being told the wrong thing. And
-`chemin-de-voix` is a pre-0175 fossil below even that: `Tag:` for `Label:`, and
-a U+FFFD where `≤` was — the corruption git-erg fixed on 2026-05-29.
+**2. The other shipped claim is under-generalized, not wrong.** "On ID
+collision, renumber to the next free ID" works, and in a single-session repo it
+is correct. It races only under parallel sessions. The frontier rule is its
+generalization; the shipped line is the common special case.
 
-**3. It is a resident body outside the resident-body gate.** `AGENTS.md`
-reaches every session through `@tickets/AGENTS.md` in `CLAUDE.md`, a fact
-`rules/README.md` states explicitly. At 7 969 chars it is ~2 000 tokens per
-session, +22% on top of the 35 926-char gated set whose remaining headroom is
-74 chars. `tests/test_rules_resident_budget.py` scopes to `RULES = REPO /
-"rules"`, so none of its three invariants reach it. Applying them by hand:
+**3. This repo lost a rule the asset still carries.** The fork dropped the
+anti-suffix bullet — "Ticket IDs are atomic 4-digit numbers -- never suffix
+them (`0134a`, `0134b`)" — when it rewrote that bullet into the optimistic-ID
+one. Nine adopters have it; this repo does not. The drift is not one-way.
+
+**4. Removing the forge scan breaks a live cross-reference.**
+`rules/coding-bash.md` cites `tickets/AGENTS.md` as the file stating the general
+form of "a check whose all-clear is indistinguishable from 'I could not look'".
+Moving that material must repoint the citation.
+
+## Resident cost, and the gate that does not reach it
+
+`AGENTS.md` is resident in every session via `@tickets/AGENTS.md` in
+`CLAUDE.md`, a fact `rules/README.md` states explicitly. At 7 969 chars that is
+~2 000 tokens (chars/4) on top of the 35 926-char gated set whose remaining
+headroom is 74 chars. `tests/test_rules_resident_budget.py` scopes to
+`RULES = REPO / "rules"`, so none of its three invariants reach it. Applied by
+hand:
 
 - `test_resident_rules_carry_no_ticket_numbers` — **would fail**, 2 hits
   (`ticket 0321`, `ticket 0243`).
 - `test_resident_rules_ship_no_shell_recipes` — **would pass while the file
   carries a shell recipe.** `SHELL_FENCE` anchors the opening fence at column
   zero; the block at `AGENTS.md:41-45` is indented two spaces under a list item.
-  Measured against that known-positive: anchored 0 hits, `^\s*`-relaxed 1 hit.
-  That blind spot is independent of this ticket and applies to `rules/**` too.
+  Measured against that known-positive: anchored 0 hits, whitespace-tolerant
+  1 hit. This blind spot is independent of this ticket and applies to `rules/**`.
+
+## The candidate, measured
+
+A merged version was drafted to price the question rather than argue it: every
+durable local idea upstreamed, all incident narrative stripped, the anti-suffix
+rule restored, the `erg-github` sentence put in the conditional.
+
+| | chars | ~tokens (chars/4) |
+|---|-------|-------------------|
+| shipped asset | 2 141 | 535 |
+| candidate | 3 873 | 968 |
+| this repo today | 7 969 | 1 992 |
+
+Tool-invariant, worth upstreaming: optimistic allocation with no reservation;
+renumber clear of the frontier while allocating dense; re-check the seat at the
+merge gate; `erg check` against the default branch rather than the branch;
+decisions are not artifacts; the handoff-document sections. Harness-local,
+staying here: the `gh pr view` scan (a shell recipe, and `erg` core is offline
+and forge-blind by design) and the CI paragraph naming this repo's jobs and
+scripts.
+
+## The open conflict
+
+0277 records an author decision of the same day that the displaced content goes
+to the **on-demand channel** (`erg spec` / `erg integration`) and explicitly
+**not** into `assets/AGENTS.md`: "folding 5 900 bytes into the shipped asset
+makes every adopter pay ~1 500 resident tokens for war stories most of them
+will never hit." The verdict recorded above points the other way, at a size
+budget on the asset.
+
+They may reconcile: 0277 refuses 5 900 bytes of narrative, while the candidate
+adds 1 730 bytes of rules with the narrative removed, ~430 tokens. The middle
+is compact rules in the asset, long-form recovery on demand. That is an
+arbitration for the author, and no upstream work should start before it.
 
 ## Relevant files
 
 - `tickets/AGENTS.md` — the forked copy, 7 969 chars
-- `rules/README.md` — names AGENTS.md as resident-by-another-path; the exclusion is stated, never defended
-- `tests/test_rules_resident_budget.py` — the three 0572 invariants, scoped to `rules/`; `SHELL_FENCE` carries the anchoring blind spot
-- `~/CNRS/code/git-erg/src/go/assets/AGENTS.md` — upstream source of truth (cross-repo)
-- `~/CNRS/code/git-erg/src/go/migrate_test.go:448` — the force-overwrite charter
-
-## Decision the author owns
-
-Where does each rule live? The partition is architectural, not editorial, and
-the work cannot start without it:
-
-- **(a) Upstream everything durable.** Push the collision discipline, the scan
-  and the artifacts/decision-records split into the git-erg asset, cut the
-  harness copy back to the shipped text, let `erg update` redistribute. One
-  source of truth; the incident narrative has to survive the trip or be
-  demoted to memory notes first.
-- **(b) Split by layer.** Tool-invariant rules (`%erg 0.1` format, log verbs,
-  atomic IDs, artifacts by reference) upstream; harness-local practice
-  (`gh pr view` scans, the frontier rule, CI job names) moves out of
-  `AGENTS.md` into `rules/` where the gate already reaches it. This is what
-  `feedback_layer_correctness` and the 0572 precedent both point at, and it is
-  the recommended default.
-- **(c) Keep the fork, defend it.** Declare the harness copy authoritative,
-  teach `erg migrate` to leave it alone, and extend the budget gate to cover
-  it. Costs a git-erg change either way, and leaves nine adopters stale.
-
-Under (a) or (b) the git-erg half is a separate ticket **filed in git-erg's own
-store**, per `feedback_cross_repo_tickets_live_at_destination`; this ticket
-stays open as its tracker until both halves land.
+- `rules/README.md` — names AGENTS.md as resident-by-another-path
+- `rules/coding-bash.md` — cites AGENTS.md for the all-clear form; see observation 4
+- `tests/test_rules_resident_budget.py` — the three invariants, scoped to `rules/`
+- git-erg `0277` (ban and destination), `0278` (asset machinery, blocks 0277), `0279` (direction-blind downgrade)
 
 ## Actions
 
-1. Get the author's verdict on (a)/(b)/(c). Everything below assumes (b).
-2. File the git-erg child: correct the two disproved claims in
-   `src/go/assets/AGENTS.md` (drop the `erg-github` verify sentence; replace
-   "renumber to the next free ID" with the frontier rule), bump the asset, and
-   say how the nine adopters pick it up (`erg update`, or a per-repo `erg init`
-   refresh) — including `chemin-de-voix`, which needs the 0175 `Label:` rename
-   and the U+FFFD repair it never received.
-3. In this repo, move harness-local practice out of `tickets/AGENTS.md` into
-   the rules tree, respecting the resident budget: the shell recipe goes to the
-   script or skill that runs it, the two ticket numbers become named memory
-   pointers, the dated incident narrative goes to memory notes cited by name.
-4. Cut `tickets/AGENTS.md` back to the shipped asset plus only what genuinely
-   belongs to the ticket store's format.
-5. Extend the gate: cover `tickets/AGENTS.md` in
-   `tests/test_rules_resident_budget.py` (or a sibling), and let `SHELL_FENCE`
-   tolerate leading whitespace so an indented recipe is visible.
+1. Get the arbitration on the open conflict above. Nothing upstream starts first.
+2. Wait on git-erg 0278, then 0277: the harness copy cannot return to pristine
+   until the asset carries whatever the arbitration puts there.
+3. Move harness-local practice out of `tickets/AGENTS.md` into `rules/`: the
+   `gh pr view` recipe to the script or skill that runs it, the CI paragraph to
+   a rules body, the two ticket numbers to named memory pointers. Repoint the
+   `rules/coding-bash.md` citation in the same commit.
+4. Return `tickets/AGENTS.md` to the shipped asset, byte for byte.
+5. Add the equality gate: a test asserting `tickets/AGENTS.md` matches the asset
+   embedded in the vendored `tickets/erg`. Prefer it over a size budget — it
+   makes drift impossible rather than expensive, and it self-heals after any
+   path that reinstalls the asset.
+6. Fix `SHELL_FENCE` to tolerate leading whitespace (observation, independent).
+7. `chemin-de-voix`, deferred: it is a tool upgrade, not a doc fix. Its `erg` is
+   the 2026-05-18 build and its four tickets use `Tag:`, so its AGENTS.md is
+   consistent with the binary it runs. Update the binary, migrate the headers,
+   and the asset is rewritten by the tool. Blocked in practice by two unpushed
+   commits on its `master` (2 ahead, 1 behind `origin/master`) that belong to
+   someone else.
 
 ## Test
 
-Red step, before any prose moves: extend
-`tests/test_rules_resident_budget.py` so `tickets/AGENTS.md` is in the measured
-set and the `SHELL_FENCE` regex tolerates leading whitespace. Both new
-assertions must fail against the current tree — the ticket-number one on
-`ticket 0321`/`ticket 0243`, the shell one on the indented block at line 41 —
-and the shell one must also still pass on today's `rules/**`, so the relaxation
-is proved to change only what it should.
+Red step, before any prose moves: the equality assertion. Extract the embedded
+asset from the vendored `tickets/erg` and compare it to `tickets/AGENTS.md`.
+Against today's tree it must fail on a 5 828-char difference; against a
+pristine copy it must pass. Run both arms — an equality test that cannot fail
+is indistinguishable from one that never read either file.
+
+Second, independent: relax `SHELL_FENCE` to tolerate leading whitespace and
+watch it go red on `AGENTS.md:41`, while staying green on today's `rules/**`,
+so the relaxation is proved to change only what it should.
 
 ## Verification
 
-- [ ] `md5sum` of `tickets/AGENTS.md` matches the shipped asset, or the diff
-      is a reviewed list of format rules the asset does not carry
-- [ ] a grep for the `erg-github` verify sentence and for "next free ID"
-      returns nothing across all ten adopter copies and the asset
-- [ ] `chemin-de-voix` copy carries `Label:` and no U+FFFD byte (`EF BF BD`)
-- [ ] the extended budget test is red before the trim and green after
-- [ ] `uv run pytest -m adherence` green
+- [ ] the equality test is red against today's tree and green after the trim
+- [ ] `rules/coding-bash.md`'s citation resolves to wherever the all-clear form ended up
+- [ ] the anti-suffix rule is present in whatever this repo ends up reading
+- [ ] no rule listed under "the candidate, measured" is lost — each is
+      upstreamed, relocated to `rules/`, or in a memory note something cites
+- [ ] `uv run pytest -m adherence` green, `erg check tickets/` PASS
 
 ## Invariants
 
-- No rule currently in `tickets/AGENTS.md` is lost — each is either upstreamed,
-  relocated to `rules/`, or demoted to a memory note that something cites
+- No rule currently in `tickets/AGENTS.md` is lost
 - The gated resident total stays under `RESIDENT_BUDGET`; relocating prose into
-  `rules/` without trimming it just moves the cost inside the gate
-- `erg check tickets/` stays green; no adopter repo is edited from this repo's
-  worktree
+  `rules/` without trimming it moves the cost inside the gate rather than removing it
+- No adopter repo is edited from this repo's worktree
+- No upstream change is made before the arbitration; 0277 is Blocked-by 0278
 
 ## Exit criteria
 
-- Author's verdict recorded in this ticket's log
-- git-erg child filed at the destination and referenced here
-- `tickets/AGENTS.md` in this repo no longer forks silently: either it matches
-  the asset, or a test fails when it stops matching
-- Both disproved claims gone from every copy on this machine
-- This tracker closes only after the git-erg child merges and the ten copies
-  are re-checksummed
+- Arbitration recorded in this log
+- `tickets/AGENTS.md` matches the shipped asset, and a test fails when it stops
+- Harness-local practice lives in `rules/`, under the existing gate
+- The four observations above are landed upstream or recorded as declined
+- Closes only after git-erg 0277 merges and this repo's copy is re-checked

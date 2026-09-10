@@ -60,7 +60,7 @@
 - [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md) — a delegate's own background children complete-notify the top session; don't act, wait for the delegate
 - [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
 - [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
-- [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md) — embedded in the erg binary and force-overwritten by `erg migrate` by charter; the harness copy has forked to 3.7× the shipped text and nine adopters still teach two disproved claims
+- [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md) — embedded in the erg binary, not a project file; the harness copy forked to 3.7× the shipped text, and byte-identical adopters are current rather than frozen — infer neither freshness nor staleness from a checksum
 - [git-erg adopter canonical shape](reference_git_erg_adopter_canonical_shape.md) — canonical adopter = CLAUDE.md is `@tickets/AGENTS.md`; detect stale pre-0013 footprints via orphan
 - [Verify each item before a batch action](feedback_verify_each_before_batch_action.md) — a sweep's "these are all the same" is a hypothesis; inspect each item before batch — and a batch of apparent size 1 is the worst case
 - [Isolated session can't read the shared checkout](feedback_isolated_session_cannot_read_shared_checkout.md) — the path guard blocks `git -C <primary>` for reads too, so "what's dirty there" is unknowable; ExitWorktree before any discard
