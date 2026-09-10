@@ -31,6 +31,14 @@ would flatter whichever conclusion one wanted.
 Residual blind spot, stated rather than papered over: `Grep` carries a pattern
 rather than a path, so a body found by content search is invisible here. It
 measured 0 occurrences naming a body slug, so the residue is small.
+
+**Subagent runs are counted apart from main sessions.** They live nested at
+``<slug>/<session>/subagents/agent-*.jsonl`` and outnumber main sessions about
+nine to one, so folding them in divides the rate by ten while measuring
+something else: a subagent is launched with a task, not with a morning's
+uncertainty about what the project already knows. Diluting the arm under test
+with runs that were never candidates for the behaviour is how a real effect is
+made to look like noise.
 """
 
 import argparse
@@ -102,15 +110,16 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
+    def arm() -> dict:
+        return {
+            "sessions": 0, "sessions_with_read": 0, "reads": Counter(),
+            "sessions_with_shell": 0, "shell": Counter(), "sessions_touching": 0,
+        }
+
     arms = {
-        "maintenance": {
-            "sessions": 0, "sessions_with_read": 0, "reads": Counter(),
-            "sessions_with_shell": 0, "shell": Counter(),
-        },
-        "working": {
-            "sessions": 0, "sessions_with_read": 0, "reads": Counter(),
-            "sessions_with_shell": 0, "shell": Counter(),
-        },
+        "maintenance": arm(),
+        "working": arm(),
+        "subagent": arm(),
     }
     writes = Counter()
     index_read_sessions = 0
@@ -130,14 +139,23 @@ def main() -> None:
             if not r:
                 continue
             total += 1
-            slug = os.path.basename(dirpath)
-            bucket = harness if slug.startswith("-home-haduong--claude") else consumer
-            bucket["sessions"] += 1
-            if (r["reads"] or r["shell"]) and not r["maintenance"]:
-                bucket["touched"] += 1
-            arm = arms["maintenance" if r["maintenance"] else "working"]
+            rel = os.path.relpath(dirpath, a.projects)
+            slug = rel.split(os.sep)[0]
+            is_sub = os.sep in rel  # <slug>/<session>/subagents/…
+            if is_sub:
+                key = "subagent"
+            else:
+                key = "maintenance" if r["maintenance"] else "working"
+                bucket = harness if slug.startswith("-home-haduong--claude") else consumer
+                bucket["sessions"] += 1 if not r["maintenance"] else 0
+                if (r["reads"] or r["shell"]) and not r["maintenance"]:
+                    bucket["touched"] += 1
+            arm = arms[key]
             arm["sessions"] += 1
-            key = "maintenance" if r["maintenance"] else "working"
+            # One session that both Read and cat'd a body is one session, not
+            # two: summing the two channels inflates exactly the arm under test.
+            if r["reads"] or r["shell"]:
+                arm["sessions_touching"] += 1
             if r["reads"]:
                 arm["sessions_with_read"] += 1
                 arm["reads"].update(r["reads"])
@@ -159,7 +177,7 @@ def main() -> None:
                 "body_reads": sum(v["reads"].values()),
                 "sessions_with_shell_read": v["sessions_with_shell"],
                 "shell_reads": sum(v["shell"].values()),
-                "sessions_touching_a_body": v["sessions_with_read"] + v["sessions_with_shell"],
+                "sessions_touching_a_body": v["sessions_touching"],
                 "distinct_bodies": len(set(v["reads"]) | set(v["shell"])),
                 "active_days": len(days[k]),
                 "top": (v["reads"] + v["shell"]).most_common(15),
@@ -168,13 +186,14 @@ def main() -> None:
         },
         "body_writes": sum(writes.values()),
         "sessions_reading_the_index_itself": index_read_sessions,
+        "by_repo": {"harness": harness, "consumer": consumer},
     }
     with open(a.out, "w") as fh:
         json.dump(out, fh, indent=1)
 
     w, m = out["arms"]["working"], out["arms"]["maintenance"]
     print(f"sessions scanned: {total}")
-    for label, arm in (("maintenance (positive control)", m), ("working (the measurement)", w)):
+    for label, arm in (("maintenance (positive control)", m), ("working (the measurement)", w), ("subagent runs", out["arms"]["subagent"])):
         pct = 100 * arm["sessions_touching_a_body"] / arm["sessions"] if arm["sessions"] else 0
         print(f"  {label}")
         print(f"    sessions                 : {arm['sessions']}")
@@ -184,6 +203,10 @@ def main() -> None:
         print(f"    distinct bodies touched  : {arm['distinct_bodies']}")
     print(f"  body writes (housekeeping)  : {out['body_writes']}")
     print(f"  sessions reading MEMORY.md as a file: {index_read_sessions}")
+    print("  working sessions touching a body, by repo:")
+    for name, b in (("harness (memory IS the work)", harness), ("consumer projects", consumer)):
+        pct = 100 * b["touched"] / b["sessions"] if b["sessions"] else 0
+        print(f"    {name:30s} {b['touched']:5d} / {b['sessions']:5d}  ({pct:.2f}%)")
 
 
 main()

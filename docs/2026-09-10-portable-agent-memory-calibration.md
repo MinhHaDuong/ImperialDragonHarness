@@ -197,3 +197,111 @@ transplanted from this literature.
 - [Context Rot (Chroma)](https://www.trychroma.com/research/context-rot) — 18 models degrade with input length
 - [A-MEM: Agentic Memory for LLM Agents](https://arxiv.org/abs/2502.12110) — Zettelkasten links and memory evolution, already on `/dream`'s v3 roadmap
 - [Memory Atlas — filesystem/markdown family](https://www.memoryatlas.dev/families/filesystem-markdown) — portability comes from being plain text
+
+---
+
+## 7. The experiment, run (2026-09-10)
+
+Section 6 ended on the local measurement that would settle item 1. It has been
+run, over the whole trace corpus: `scripts/census/memory-recall.py`, 5 753 trace
+files, 4.2 GB.
+
+### Design
+
+The measurable event is a **working** session opening a memory body — the only
+thing residency buys, since recall relevance is decided by each body's own
+`description:`. Four arms, so that a number in the one under test can be read:
+
+| arm | what it is | role |
+|---|---|---|
+| maintenance | main session invoking `/dream`, `/roar`, `/lair`, `/memory` | positive control |
+| working | every other main session | **the measurement** |
+| subagent | nested `…/subagents/agent-*.jsonl` runs | counted apart, see below |
+| writes | `Edit`/`Write` on a body | housekeeping volume |
+
+Two counting decisions changed the answer by an order of magnitude each, and
+both were errors caught before the result was believed:
+
+- **Subagent runs outnumber main sessions nine to one** (5 189 vs 564). Folding
+  them in put the working rate at 3.83%. They are launched with a task, not
+  with uncertainty about what the project knows, so they were never candidates
+  for the behaviour; diluting the arm with them is how a real effect is made to
+  look like noise.
+- **A session that both `Read` and `cat`'d a body is one session.** Summing the
+  two channels inflated the arm under test by a quarter.
+
+Shell reads (`cat`, `sed`) carry no `file_path` and are scanned separately from
+the Bash command strings; `Grep` carries a pattern, not a path, and measured 0
+occurrences naming a body, so that residue is small.
+
+### Result
+
+```
+maintenance (positive control)  132 / 246   53.66%     <- the probe sees the event
+working (the measurement)        35 / 318   11.01%
+  consumer projects only         23 / 273    8.42%     <- memory used as memory
+  harness repo                   12 /  45   26.67%     <- memory IS the work there
+subagent runs                   185 / 5189   3.57%
+```
+
+**About one working session in nine opens a memory body; one in twelve outside
+the harness repo.** The index is therefore not orientation nobody uses, and the
+pure-wiki shape — zero resident bytes — would give up a real function.
+
+But the second number is the one that decides the shape:
+
+> **50 distinct bodies were opened by working sessions, out of roughly 900
+> index entries.**
+
+Around 94% of the index has never been followed in the trace window. The
+resident cost is paid on the whole list; the traffic lands on a twentieth of it.
+
+### Economics
+
+Summing each project's index size over the main sessions it served:
+
+| | index bytes served | per body actually opened |
+|---|---|---|
+| before the title-only pass | 4 784 923 | 55 638 B (~13 900 tokens) |
+| after | 2 904 530 | 33 773 B (~8 400 tokens) |
+
+A body is ~2 000 characters. Each one actually consulted therefore costs about
+**seventeen times its own length** in standing index tax, down from
+twenty-eight before the pass. This omits the benefit nothing here can measure —
+a lesson *not* re-derived leaves no trace — so it bounds the cost, not the
+value.
+
+For contrast: **726 writes against 974 body reads across all arms.** The memory
+system spends nearly as much effort maintaining itself as every session spends
+consulting it.
+
+### What this changes
+
+Neither of the two shapes proposed before the measurement is right.
+
+- **Not the flat index.** 94% inert is not a list to keep resident whole.
+- **Not the wiki.** 11% is a real hit rate; zero resident bytes gives up a
+  function that fires once every nine sessions.
+- **The two-level shape is what the data supports**, and the harness already
+  has it in embryo: `## Key insights` above `## Entries`, with `/dream`'s
+  promotion pass to fill it. The measurement names what belongs in the resident
+  layer — the entries that actually get opened — and that set is small enough
+  to fit an index a fraction of today's size. The rest stays reachable by
+  recall, at zero resident cost.
+
+Item 1 of §6 therefore stands but is no longer the binding constraint: the
+ceiling matters less than *which* entries sit under it, and that is now
+measurable rather than argued.
+
+### Caveat
+
+This measures follow-through, not need. A session that recalled a lesson from
+the index line alone, and never opened the body, is indistinguishable here from
+one that ignored the entry — and that is precisely the case where a
+lesson-stating title does its job without any read. So 11% is a floor on the
+index's usefulness, and the 94%-inert figure is an upper bound on what could be
+demoted. Deciding the promotion set on this evidence alone would evict entries
+whose titles were doing silent work.
+
+Instrument: `scripts/census/memory-recall.py`. Re-running it after a promotion
+pass is how the demotion would be validated.
