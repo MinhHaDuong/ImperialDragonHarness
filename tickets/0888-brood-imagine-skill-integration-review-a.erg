@@ -60,7 +60,9 @@ This is a paraphrased decision record, not a verbatim transcript.
   census methodology where applicable, including execution-versus-mention limits.
 - `scripts/mammoth-audit.py` — existing usage audit; invocation counts alone
   cannot measure opportunities for a skill that does not exist yet.
-- `HANDOFF-2026-09-09.md`, `STATE.md` — slimming rationale and remaining limits.
+- `tickets/closed/0884-verser-les-instruments-de-recensement-et.erg`, `STATE.md`
+  — census handoff, slimming rationale and remaining limits. STATE mentions a
+  local handoff document absent from this checkout; do not assume it is available.
 
 ## Actions
 
