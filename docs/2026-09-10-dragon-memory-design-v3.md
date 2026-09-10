@@ -1,14 +1,22 @@
+> **FROZEN — v3, superseded.** The text the fourth review (Fable, design-focused)
+> read. Kept so its findings resolve against the wording they judged. Do not act
+> on it: v3 claimed demotion has no failure mode, which is false for memories
+> whose function is to prevent an action — see the current
+> [v4](./2026-09-10-dragon-memory-design.md). Earlier frozen versions:
+> [v0](./2026-09-10-dragon-memory-design-v0.md),
+> [v1](./2026-09-10-dragon-memory-design-v1.md),
+> [v2](./2026-09-10-dragon-memory-design-v2.md).
+
 # The Dragon's memory: measured assessment and design proposal
 
-**Status:** draft · 2026-09-10 · v4 · four reviews received, see §9
+**Status:** draft · 2026-09-10 · v3 · architecture settled with the owner
 **Baseline:** figures reproduce at `6187ad8` (main just after #885)
 **Runtime:** Claude Code 2.1.267 — §2.4 records what it does; the architecture
 below does not branch on it
 **Superseded versions:** [v0](./2026-09-10-dragon-memory-design-v0.md),
-[v1](./2026-09-10-dragon-memory-design-v1.md),
-[v2](./2026-09-10-dragon-memory-design-v2.md) and
-[v3](./2026-09-10-dragon-memory-design-v3.md), frozen with their section
-numbering intact so the four reviews' citations resolve
+[v1](./2026-09-10-dragon-memory-design-v1.md) and
+[v2](./2026-09-10-dragon-memory-design-v2.md), frozen with their section
+numbering intact so the three reviews' citations resolve
 
 This document exists to be attacked. It reports what the harness's memory
 system does, what it was measured to do, where those two differ, and what is
@@ -336,28 +344,10 @@ tracked, still findable.
 
 That single move settles most of what earlier versions argued about. An entry
 is never "dropped from the index" — it ranks below the cut and comes back when
-its score changes. Orphan bodies stop being a class, since being unlisted is
-the normal state of most of the corpus. And a budget stops being a wall to
-crash into: it *defines* N.
-
-**But it does not make demotion harmless, and v3 claimed it did.** §2.3 says
-what residency buys is *unprompted awareness* — knowing a lesson exists when
-nothing in the conversation would surface it. The cut protects **reachability**,
-which is a different property. For a memory whose whole function is to stop an
-action before it is taken, falling below the cut is functionally deletion: the
-agent never forms the hypothesis that would send it to the search, because not
-forming it is exactly the failure the memory existed to prevent. You do not
-search for what you do not know to look for.
-
-So the cut needs a floor that ranking cannot cross. **A body may declare that
-it must stay resident**, and the generator honours that declaration before it
-honours any score. The claim "demotion has no failure mode" is withdrawn; the
-honest claim is that demotion has no failure mode *for entries whose value is
-retrieval*, and a declared class exists because not all of them are.
-
-This also disposes of a test that would have passed while the defect ran: "no
-entry becomes unreachable" is true of a guard memory the moment after it stops
-working. The test that means something is that no declared entry falls below N.
+its score changes. Demotion stops being an operation with a failure mode.
+Orphan bodies stop being a class, since being unlisted is the normal state of
+most of the corpus. And a budget stops being a wall to crash into: it *defines*
+N.
 
 **P1 — Nothing is deleted.** Not by age, not by size, not by score. The only
 removal from a project directory is promotion, which moves a lesson up rather
@@ -386,28 +376,6 @@ and costs nothing when it arrives: the pass gets slow, and the fix is
 algorithmic. Contrast the resident index, which could not wait — its budget
 gate's only legal move was to delete index lines, and that destroyed
 reachability. **Cap what fails destructively; alarm on what fails visibly.**
-
-*Who writes what, and why the generated index conflicts with nothing.* Two
-write sets, disjoint by construction, one writer each. Sessions create **bodies**
-— one file per memory, so two sessions adding two memories never touch the same
-file. Only the consolidation pass writes **`MEMORY.md`**. A regenerated,
-score-ordered index would collide with concurrent work if anything else wrote
-it; nothing does, so the objection that generating it reintroduces the merge
-conflict the file grain exists to avoid does not apply here. It would apply
-immediately if a second writer appeared, which is the rule to defend.
-
-Two consequences follow, and both are load-bearing:
-
-- **A new memory is invisible until it is scored.** The lesson exists on disk
-  the moment it is written and does nothing until the next pass. The session
-  that wrote it already knows it, so the interval costs only other sessions —
-  and its length is set by how often the pass runs, which makes the cadence a
-  design parameter rather than an operational detail.
-- **Scoring is therefore the admission gate**, and it is free. Nothing reaches
-  residency without passing through it, so a bad write has a window in which it
-  can be caught before it costs anyone context. Every earlier version of this
-  document wanted admission control and proposed a mechanism for it; the
-  single-writer rule supplies one as a side effect.
 
 **P2 — The door is a search, not a second file.** A full catalogue kept as a
 file is a materialised view that can go stale and needs its own collector. The
@@ -438,20 +406,6 @@ a list. Between two silent failures, prefer the visible one.
 
 These two rules are not in tension and should not be harmonised by a later
 reader. Fail closed where a human can fix it, fail open where none can.
-
-*What this covers, measured rather than assumed.* On a sample of 54 real
-bodies, the grammar could **express** a condition for about a quarter, could
-**evaluate** what it expressed for rather fewer, and was the exact truth
-condition for fewer still. The dominant way a memory in this corpus dies is not
-a file changing but an event happening — a decision reversed, a tool replaced,
-a practice abandoned — and no predicate over the working tree sees an event.
-
-So `valid_while` is an instrument for the minority of the store it can describe,
-and this document should not claim more. For everything else the default is
-"valid until something says otherwise", which is where the corpus already was.
-Naming that plainly matters, because a mechanism that covers a quarter and is
-described as the retention policy leaves three quarters unmanaged behind a
-sentence that says they are handled.
 
 Because expiry only unranks, it is **reversible**. A tool that regresses
 revives its memory at the next scoring pass with no human action. That is the
@@ -587,13 +541,6 @@ what makes an index reproducible from the store alone — regenerate twice, get
 the same file — and reproducibility is the property that lets anything else be
 tested.
 
-**The pass writes bodies too, and must not race or clobber.** It merges, it
-tombstones, it regenerates: a run has to hold a lock, so two passes cannot
-interleave, and it has to refuse a checkout with uncommitted bodies rather than
-overwrite work whose author it cannot see. Both failures are cheap to prevent
-and expensive to notice — an overwritten uncommitted body has no ancestor to
-recover from.
-
 **A merge is reviewed before it lands.** It is the only operation here that
 replaces text with different text, so it is where both silent loss and
 poisoning would enter. Merges into the harness tier reach every session, and
@@ -662,17 +609,9 @@ to — a project copy left alive beside an entry already promoted.
 
 The consequence easiest to miss: **the harness index is capped like the others,
 and it matters more there.** It is resident in *every* session, nothing in it is
-ever removed, and if deduplication starts working its membership only grows.
-
-Its width is not a rounding error. `tests/test_resident_census.py` budgets the
-hook at 500 characters and `memory/MEMORY.md` uses 369 for four entries —
-roughly one slot spare. Consolidation is expected to surface 17 to 21 genuine
-cross-project pairs. **Past about the fifth slot, promotion stops increasing a
-lesson's reach and starts decreasing it**: the entry leaves a project index
-where it was visible to that project and joins a queue below the harness cut,
-visible to nobody. So raising that budget is a prerequisite of promotion, not a
-follow-up to it, and the ordering belongs in the plan rather than in a reader's
-head.
+ever removed, and if deduplication starts working its membership only grows. It
+is 369 characters for five entries today, which is exactly why this is easy to
+forget and expensive to have forgotten.
 
 ## 6. Proposed changes
 
