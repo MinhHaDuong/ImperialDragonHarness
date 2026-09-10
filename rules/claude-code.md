@@ -43,10 +43,16 @@ conversation's language, then answer:
   valid only in frontmatter. Reviewers below the coder tier, mechanical lookups
   at `haiku`, coders at the top tier. Enforced by
   `tests/test_model_rightsizing.py`.
-- **Effort is not settable on the `Agent` tool.** A spawned child inherits the
-  *session* effort, so pin it by setting session effort before the fan-out.
-  `Workflow`'s `agent()` takes `opts.effort` (`low|medium|high|xhigh|max`) per
-  call. Mechanics: memory `feedback_subagent_model_effort_levers`.
+- **Effort is set per agent *definition*, not per `Agent` call.** The `Agent`
+  tool has no `effort` parameter, but `effort:` in a subagent's frontmatter (or
+  in `--agents` JSON) pins that child; a definition without the field inherits
+  the session's. Rightsize by defining the agent rather than by moving session
+  effort. `Workflow`'s `agent()` takes `opts.effort`
+  (`low|medium|high|xhigh|max`) per call, the only per-call lever. On models
+  with a pinned default effort (Opus 4.7, 4.8, Fable 5) the 2.1.267 changelog
+  reports the key ignored before that release; untested here, so treat it as
+  unreliable there. Mechanics and the measurement: memory
+  `feedback_subagent_model_effort_levers`.
 - **`team-lead` delegation needs a nesting depth of at least 2.** A team lead
   mobilizes its own executors, so a runtime that forbids nested spawning
   silently degrades every delegation into a flat agent doing the work itself —
