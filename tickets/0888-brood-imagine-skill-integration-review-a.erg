@@ -1,0 +1,129 @@
+%erg 0.1
+Title: Brood: Imagine skill integration review and retrospective opportunity audit
+Created: 2026-09-10
+Author: Codex
+
+--- log ---
+2026-09-10T05:51Z Codex created
+
+--- body ---
+## Context
+
+The author requests a ticket for `/brood`, including our exchanges, a harness
+integration review and an audit of past opportunities to use it, then review
+and merge of this filing. This PR files the work; it does not claim that the
+skill, integration review or retrospective audit has been executed.
+
+After the harness slimming pass (0572 and the 0881-0884 census/cuts), a new
+Imagine skill must demonstrate useful behavior rather than fill a diagram slot.
+The question is whether a small, optional idea-incubation step adds value before
+planning, without duplicating the existing Imagine phase in `/raid`.
+
+## Conversation and decisions
+
+This is a paraphrased decision record, not a verbatim transcript.
+
+- The author asked whether Imagine needs a skill. The proposed answer was:
+  only if it tests the problem and options before planning work, with a distinct
+  purpose and little overhead. A dedicated skill is not yet validated.
+- Proposed prompts: what outcome and why now; what can be removed, reused or
+  left alone; two or three plausible approaches; which uncertainty merits a
+  small experiment. These are a proposed contract to evaluate, not new resident
+  rules or a required questionnaire for every request.
+- Proposed output: reformulated problem, options, recommendation, remaining
+  uncertainty. Valid outcomes include no action, a bounded experiment, or a
+  handoff to Plan. Preserve the author's goal and flag any proposed intent change.
+- Proposed triggers: open-ended requests and consequential design choices.
+  Avoid automatic ticket creation, a systematic review panel, and mandatory
+  invocation before an obvious correction. Stop once a useful decision is ready.
+- The author requested 16 short draconic names, with mind, brain, eye, chew and
+  tune as cues. The brainstorm was Brood, Hatch, Ember, Spark, Dream, Muse, Scent,
+  Sniff, Chew, Gnaw, Taste, Coil, Glimpse, Wyrm, Mind and Tune. Brood/Hatch/Ember
+  were shortlisted; Dream already names a different skill in this repository.
+- The author then asked for the English meaning of brood: a group of young
+  animals; to incubate eggs; figuratively, to dwell persistently on something,
+  often with worry or resentment. The last sense has a darker connotation than
+  neutral reflection. This lexical explanation is not a persona instruction.
+- The author selected **brood** by requesting this ticket. Use draconic idea
+  incubation as the intended metaphor; obey the resident no-avian-analogy rule.
+  Avoid encouraging rumination or endless exploration. Do not reopen naming as
+  a prerequisite to the requested integration review and audit.
+
+## Relevant files
+
+- `skills/raid/SKILL.md` — existing Imagine and Plan phases, intent drift guard.
+- `skills/hunt/SKILL.md` — inspect actual orchestration boundaries and callers.
+- `skills/dream/SKILL.md` — memory consolidation, distinct from this proposal.
+- `rules/workflow.md`, `rules/authoring-skills.md` — autonomy, identity and skill conventions.
+- `README.md` — generated skill catalog; regenerate only if a skill is added.
+- `scripts/census/README.md`, `scripts/census/traces.py` — reuse trace access and
+  census methodology where applicable, including execution-versus-mention limits.
+- `scripts/mammoth-audit.py` — existing usage audit; invocation counts alone
+  cannot measure opportunities for a skill that does not exist yet.
+- `tickets/closed/0884-verser-les-instruments-de-recensement-et.erg`, `STATE.md`
+  — census handoff, slimming rationale and remaining limits. STATE mentions a
+  local handoff document absent from this checkout; do not assume it is available.
+
+## Actions
+
+1. Review integration against the current tree: map existing Imagine/Plan
+   behavior, callers and overlapping skills. Compare a standalone `/brood`,
+   reuse of current guidance, and no addition. Specify triggers, inputs, concise
+   output, stop condition, model/context cost and handoff. Do not assume a
+   standalone `/plan` command exists or add mandatory orchestration by default.
+2. Define a bounded retrospective sample before classifying results: time window,
+   projects, accessible trace sources, sampling method, inclusion/exclusion rules
+   and the decision-time evidence available in each case. Include open design
+   requests, ordinary corrections and cases existing guidance handled adequately.
+3. Audit past opportunities, not mentions of the new name. For each sanitized
+   example, explain the decision point, what `/brood` could have contributed,
+   the existing alternative and added cost. Separate observed behavior from
+   counterfactual benefit; avoid claiming an improved outcome was demonstrated.
+   Report sample counts/denominators, coverage, negative cases and uncertainty.
+4. Keep raw traces and identifying/private content local. Publish a sanitized
+   report in `docs/brood-evaluation.md`, with source categories, dates, method and
+   reproducible local retrieval instructions; never commit raw prompts, session
+   identifiers, private trace paths or credentials. Reuse existing instruments;
+   add a small script only if required for reproducibility, not an audit framework.
+   If traces are unavailable, record the access limitation and local execution
+   handoff. Missing data is not evidence of no opportunity; leave audit pending.
+5. Obtain an independent review of the integration proposal and audit evidence.
+   Record disagreements and a justified go/no-go recommendation in the report.
+   A no-go with adequate evidence is a valid outcome. If go, implement the minimal
+   `skills/brood/SKILL.md` under the authoring rules, update its actual callers
+   only as justified, regenerate the catalog, and review the implementation.
+
+## Test
+
+- This filing changes no executable behavior and needs no new automated test.
+- For implementation, exercise a genuinely ambiguous request, an obvious fix,
+  and an explicit no-action outcome; inspect whether the output improves a
+  decision without inventing goals, tickets or mandatory steps.
+- If an audit script is changed, test classification/counting with synthetic
+  positive and negative fixtures, including unavailable/incomplete input.
+
+## Verification
+
+- [ ] Integration comparison references actual current skill behavior and callers.
+- [ ] Audit method, denominators, positive/negative cases and limitations are reviewable.
+- [ ] Public report is sanitized and counterfactual claims are labelled as such.
+- [ ] Independent reviewer assesses both integration and retrospective evidence.
+- [ ] If implemented, skill behavior and catalog are checked; `make check` passes.
+- [ ] `tickets/erg check tickets/` passes, including on origin/main after merge.
+
+## Invariants
+
+- Preserve author intent, optional exploration, and prompt/context economy.
+- No avian persona; no forced panel or new resident procedure for ordinary work.
+- No fabricated historical evidence or unqualified null conclusion from a limited sample.
+- Keep reusable reports in their natural location, referenced by this ticket.
+- Merging this filing leaves the ticket open; it is not completion of the work.
+
+## Exit criteria
+
+- [ ] Integration review and actual retrospective audit completed, with report linked here.
+- [ ] Independent review resolved and go/no-go rationale recorded.
+- [ ] On go: minimal `/brood` implemented, catalog/callers consistent and gates pass.
+      On no-go: evidence-based decision recorded without adding an unused skill.
+- [ ] Close only after the applicable outcome is complete; unavailable traces
+      remain an explicit blocker to claiming the retrospective audit is done.
