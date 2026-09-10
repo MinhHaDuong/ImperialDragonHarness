@@ -32,6 +32,12 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
     b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
     c. Prune: delete items checked off before this session.
-    d. Commit, `git push -u origin housekeeping-state-YYYY-MM-DD`, open a PR (`Ticket: none`) and enable auto-merge so it lands through the gate.
+    d. Commit, push the branch, open a merge request (`Ticket: none`), then **land it yourself** — a STATE refresh is the agent's own output with no blast radius, and handing the author a merge to perform is what this step exists to avoid. Which mechanism lands it is a per-repo fact: **read it from the forge, never assume it.**
+       - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.
+       - Otherwise → fall back to the repo's own proportionality path (a "trivial review" label where one exists, plus a single review), then merge directly.
+
+       Both halves are load-bearing. This step named auto-merge alone for months; in a consumer repo where that setting was off, a session following it literally stopped at the open merge request and handed the author the merge (2026-09-10). Whatever had landed the earlier STATE refreshes there, it was never auto-merge — and nothing in the step said to check. A step that names one mechanism without a probe assumes every repo shares one configuration, and fails silently in the direction of extra author work.
+       <!-- harness-extension-point -->
+       Current-generation spelling: `gh api repos/<owner>/<repo> --jq .allow_auto_merge` to read it, `gh pr merge <N> --auto --merge` to arm it.
     e. After the PR merges, delete the throwaway branch (local and remote).
 11. **Memory consolidation** — run `/dream <project>` where `<project>` is the current project directory name. This delegates to the autonomous consolidation skill (includes staleness check, dedup, and Park reflection).
