@@ -3,7 +3,7 @@ name: review-pr-prose
 description: "Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "[pr-number] (defaults to the current branch's open merge request)"
+argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
 # Foreground: the prose sibling of review-pr, invoked the same way by /gaze on
 # manuscript PRs. Claude Code 2.1.218 made `context: fork` skills background by

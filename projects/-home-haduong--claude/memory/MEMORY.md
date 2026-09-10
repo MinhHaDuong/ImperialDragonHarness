@@ -8,6 +8,8 @@
 
 ## Entries
 
+- [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md)
+- [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md)
 - [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md)
 - [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md)
 - [The whole rules/ tree is resident](reference_rules_tree_is_resident.md)
