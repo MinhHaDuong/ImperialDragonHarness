@@ -10,7 +10,7 @@
 
 ## Entries
 
-- [Zotero pivot (2026-05-16)](project_zotero_pivot.md) — HAL deferred; private Zotero group; catalogue deduplicated 1378→686 (PR #7); match by id never title; 0015 unblocked (mirrored)
-- [Merge workflow lessons (2026-05-16)](feedback_merge_workflow.md) — squash-merge divergence; guard hook blocks reset --hard on clean tree (ask via `!`); a missing erg subcommand/header usually means a stale committed bootstrap binary (0027)
-- [Index architecture (2026-05-16)](project_index_architecture.md) — file_index.json (1991 files) + doc_index.json (1112 docs); replaces index.json
-- [Recueil merge (2026-06-23)](project_recueil_merge.md) — Antonin's group mirrored into collection VPDB49CK (131 items); group deletion FROZEN until ticket 0025 audit confirms zero info loss
+- [Zotero pivot (2026-05-16)](project_zotero_pivot.md)
+- [Merge workflow lessons (2026-05-16)](feedback_merge_workflow.md)
+- [Index architecture (2026-05-16)](project_index_architecture.md)
+- [Recueil merge (2026-06-23)](project_recueil_merge.md)

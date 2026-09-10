@@ -37,8 +37,13 @@ import resident_census as rc  # noqa: E402
 BUDGETS = {
     "rules": 36000,  # owned by test_rules_resident_budget.py, mirrored here
     "import": 10500,  # CLAUDE.md + tickets/AGENTS.md + RTK.md
-    "hook": 1500,  # memory/MEMORY.md, printed by scripts/on-start.sh
-    "memory": 27500,  # the largest per-project index; only one is resident
+    # Both lowered 2026-09-10 by the title-only index pass: the index line is a
+    # title and a link, the trailing hook having been a third copy of a sentence
+    # the body already carries as `name:` and `description:`. 47 indexes went
+    # 198 636 -> 111 021 chars; the largest 26 531 -> 14 061, and the harness
+    # index 950 -> 367. Lowering these is the deliverable of that pass.
+    "hook": 500,  # memory/MEMORY.md, printed by scripts/on-start.sh
+    "memory": 14500,  # the largest per-project index; only one is resident
     "skills": 7000,  # name + description of every SKILL.md
     "agents": 800,  # name + description of every agents/*.md
 }

@@ -8,107 +8,107 @@
 
 ## Entries
 
-- [A divided-out token figure must be swept, not just corrected](feedback_derived_token_figures_must_be_swept.md) — chars÷4 understates this corpus by 45%; the real ratio is ~2.8, and the correction pass left the stale figure in `rules/README.md`, resident in every session, and in the guard's own failure message
-- [Built-in skill bodies live in the binary as zstd frames](reference_builtin_skill_bodies_in_the_binary.md) — extractable with `compression.zstd`; descriptions are concatenated JS string fragments, and the pointer-to-payload ratio is about 1:100
-- [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md) — the merge gate saw `gh pr merge` and not `gh api .../pulls/N/merge`, the form the harness's own worktree guard prescribes; check the wiring separately from the logic, and say what the tests actually promise
-- [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md) — an unanchored `allow if X appears` waives every other check in that input; three real waiters rode in on a bitshift, a string, a herestring
-- [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md) — a reference manifest and the set of things that break are different sets; six tests red where three were predicted, and a guard that loses its subject goes with it
-- [The whole rules/ tree is resident](reference_rules_tree_is_resident.md) — the runtime loads `~/.claude/rules/**.md` itself; `paths:` frontmatter is what makes a body conditional. Mechanism isolated 2026-09-09, 28 400 → 21 600 resident tokens after scoping; the guard that should have caught it was watching the hook, not the runtime
-- [A pgrep waiter matches its own command line](feedback_pgrep_waiter_matches_itself.md) — it waits for itself forever and outlives the session — 105 written by agents, two stranded in 43 h; guard before rule before note
-- [Editing a ticket body is not appending to it](feedback_editing_a_ticket_body_is_not_appending.md) — counts, ordinals and universals in the section are part of the diff; eight self-introduced inconsistencies in one ticket, five caught by gate rounds that cost more than they saved
-- [Measure whether a guard ever fired](feedback_measure_whether_a_guard_ever_fired.md) — the sanctioned merge path is a script, so the hook never saw `gh pr merge`; the guard's premise was contradicted thirteen times in one night
-- [A boolean secret probe must not expand the value](feedback_boolean_probe_must_not_expand_the_value.md) — `${VAR:-unset}` prints the KEY when VAR is set; test, then print a literal — this leaked a live key from a probe written to avoid exactly that
-- [Switching worktrees strands a running gate](feedback_switching_worktrees_breaks_running_gates.md) — the guard tracks the SESSION's worktree, so a mid-gate EnterWorktree kills that fork's Bash entirely; park until the verdict lands
-- [A test green for an accidental reason](feedback_a_test_green_for_an_accidental_reason.md) — repairing a config gap turned make check red; the all-clear had meant "nothing to look at". Three-arm control, or you cannot tell a fix from a changed subject
-- [/goal is a hidden Claude Code command](reference_claude_code_goal_command.md) — session-scoped Stop hook, 4000-char condition, absent from --help and the skills list; grep the binary
-- [Tests that pin prompt prose](feedback_tests_pinning_prompt_prose.md) — asserting a sentence exists in a SKILL.md blocks rewriting it; and a substring assertion passes on never-called code
-- [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md) — `git push && gh api -f x=y` trips the force-push guard; split the calls or use --field
-- [Verify sibling PRs jointly, not just individually](feedback_verify_sibling_prs_jointly.md) — two PRs each 9/9 green landed a claim and its refutation the same day (#680/#681); per-PR gates pass both by construction
-- [erg ready reads the current branch's tree](feedback_erg_ready_reads_current_branch_tree.md) — a stale branch lists tickets already merged and archived on main
-- [CLAUDE.md is a thin loader in IDH](feedback_claude_md_is_thin_loader_idh.md) — proposing to add doctrine/posture prose to CLAUDE.md is a red flag
-- [Gaze caller-fix sweep found sibling gaps](project_gaze_caller_fix_sweep_siblings.md) — verify-gate and verify-adherence share the same hard-refuse-without-arg pattern gaze fixed in #649
-- [Gaze resolves PR numbers in the caller, not the fork](feedback_gaze_resolve_pr_number_before_invoking.md) — /gaze's hard refusal without a PR number is intentional (post-ticket-0193
-- [statusLine command needs $HOME not ~](project_statusline_command_no_tilde_expansion.md) — settings.json command entries must not rely on tilde expansion
-- [Memory-write worktree exemption contradicted by live guard](feedback_memory_writes_bypass_worktree_gate.md) — a primary-checkout memory write was blocked despite the documented
-- [Harness cool-down: stop second-order tooling](feedback_harness_cooldown_stop_second_order_tooling.md) — author is done with nitpick tickets and fixes-to-fixes (2026-07-14)
-- [BASH_ENV/hook tests must exercise the real invocation path](feedback_bash_env_tests_real_invocation_path.md) — sourcing a BASH_ENV script in the test's own shell misses re-entry
-- [Untrusted .env export is a code-execution class](feedback_untrusted_env_export_is_code_execution.md) — the RCE surface is the interpreter-critical namespace (GCONV_PATH
-- [A secret migration is a credential audit](feedback_secret_migration_is_credential_audit.md) — validate each secret end-to-end against its issuer (boolean-only, never printing it)
-- [Allow rules beat the classifier — but only bare invocations match](feedback_allow_rule_bare_invocation.md) — settings.json allow rules are deterministic and pre-classifier but
-- [Smoke one, then blast the rest in parallel](feedback_smoke_one_then_blast_parallel.md) — fan-outs of independent external calls serialize only the first run (transport smoke)
-- [A/B designs void under regime drift](feedback_ab_design_regime_drift.md) — define arms as full launch-config manifests from the live surface, compare live head-to-head
-- [grep -E is line-oriented; bash [[ =~ ]] matches the whole string](feedback_grep_line_vs_bash_wholestring.md) — a pure-bash conversion of a guard regex silently over-matches across newlines; convert only the broken construct (the `grep -qF <<<` boolean), keep `grep -Eq` for regexes (ticket 0329, 2026-07-14)
-- [Hermetic test: rebase the $HOME prefix onto the checkout root](feedback_hermetic_test_rebase_home_prefix.md) — a test resolving a `$HOME/.claude/...` path against the filesystem must
-- [API keys live in ~/.config/keys/](reference_keys_config_dir.md) — one .env file per provider; load via BASH_ENV pattern, never inline into argv or chat (author, 2026-07-14)
-- [Pipeline presentation overlays parallel raids](feedback_pipeline_presentation_overlays_raids.md) — a "ready" ticket may already be claimed by a raid worktree, branch, or open MR
-- [Worktree deleted mid-run orphans the session base cwd](feedback_worktree_deleted_midrun_orphans_cwd.md) — blocks EnterWorktree/cwd-dependent Skill calls permanently
-- [Pin intervention surface to the measured window](feedback_pin_intervention_surface_to_measured_window.md) — git-log the surface before pinning an A/B intervention
-- [Worktree-path trap needs a guard](feedback_worktree_path_trap_needs_guard.md) — prompt warnings failed 7/11 execute agents; RESOLVED by the 0318 deny guard (PR #562, 2026-07-13)
-- [Supervisor checkpoint pattern](feedback_supervisor_checkpoint_pattern.md) — the supervisor chat orchestrates, never executes; clean checkpoint = worker quiescence (open-PR set + heads
-- [Classifier prohibition paraphrase](feedback_classifier_prohibition_paraphrase.md) — the auto-mode classifier inflates any transcript-visible "Never X" into a blanket ban while STATE.md
-- [Shared-worktree live-session contention](feedback_shared_worktree_live_session_contention.md) — a live session can switch branches under a background job between Bash calls
-- [Imagine plans can absorb the Plan phase](feedback_imagine_plans_can_absorb_plan_phase.md) — raid Phase 3 is redundant when Imagine prompts demand file:line-precise plans
-- [Skill invocation flag gates Skill(X) mandates](feedback_skill_invocation_flag_gates_mandates.md) — a mandated Skill(X) call fails when X has disable-model-invocation: true
-- [Local-evidence gate for pillaged techniques](feedback_local_evidence_gate_for_pillaged_techniques.md) — inventory the local codebase for the target defect class before implementing a
-- [Batch decisions, then run to the end](feedback_batch_decisions_run_to_end.md) — one frontloaded question round with defaults, then autonomous through verify/merge/cleanup to a single
-- [Sync main: check the primary checkout's branch first](feedback_sync_main_check_primary_branch_first.md) — ff-merging origin/main in the primary checkout advances whatever branch sits
-- [R&R intake is laborious](feedback_rr_intake_is_laborious.md) — decision-letter ingestion by hand burns turns; check `release/` not Gmail, archive to a known path, verify coverage once
-- [No ruff ping-pong](feedback_no_ruff_ping_pong.md) — the PostToolUse ruff hook fires after EVERY Edit; batch related edits so no intermediate state has unused imports
-- [Skill-lifecycle edits need whole-run reasoning](feedback_skill_lifecycle_edit_whole_run.md) — place an exit/cleanup step at the true run-end and trace every side-effect between
-- [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md) — skills auto-discover repo specifics at run start; explicit inputs are optional overrides
-- [Don't codify hard rules for judgment calls](feedback_dont_codify_hard_rules.md) — hard rules for "do the sensible thing" conventions make agents lazy
-- [Paper release/ subdir layout](user_paper_release_subdir_layout.md) — one dir per paper under `~/CNRS/papiers/{actif,sent,published}`; immutable append-only `release/<date desc>/` per
-- [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md) — Workflow agent() runs in the SESSION checkout unless isolation:'worktree'
-- [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md) — a delegate's own background children complete-notify the top session; don't act, wait for the delegate
-- [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md) — session-trace JSONL repeats message.usage on every content-block row
-- [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md) — a ticket for work in repo X goes in X's own store; trackers reference cross-repo work
-- [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md) — embedded in the erg binary, not a project file; the harness copy forked to 3.7× the shipped text, and byte-identical adopters are current rather than frozen — infer neither freshness nor staleness from a checksum
-- [git-erg adopter canonical shape](reference_git_erg_adopter_canonical_shape.md) — canonical adopter = CLAUDE.md is `@tickets/AGENTS.md`; detect stale pre-0013 footprints via orphan
-- [Verify each item before a batch action](feedback_verify_each_before_batch_action.md) — a sweep's "these are all the same" is a hypothesis; inspect each item before batch — and a batch of apparent size 1 is the worst case
-- [Isolated session can't read the shared checkout](feedback_isolated_session_cannot_read_shared_checkout.md) — the path guard blocks `git -C <primary>` for reads too, so "what's dirty there" is unknowable; ExitWorktree before any discard
-- [gh pr edit broken — use REST](feedback_gh_pr_edit_broken_use_rest.md) — gh pr edit hits a Projects-classic GraphQL deprecation; PATCH via gh api repos/.../pulls/N instead
-- [Harness repo setup](project_harness_repo.md) — ~/.claude tracks ImperialDragonHarness, daily pull via systemd timer; each machine needs a source line in ~/.bashrc
-- [erg binary installation](project_erg_binary.md) — erg committed at tickets/erg in all repos; git pull to update; build from git-erg source if missing
-- [BASH_ENV secret loading pattern](project_bash_env_secret_loading.md) — secrets go via BASH_ENV→bash-env.sh; CLAUDE_ENV_FILE inlines KEY=VALUE into argv, leaking to ps -ef
-- [erg verb drift recurs in skill examples](feedback_erg_verb_drift.md) — correct log verbs are `created`, `note`, `closed`; cross-check against spec-erg-v1.md, not other skills
-- [erg log's actor is a flag now](feedback_erg_log_actor_is_a_flag_now.md) — LINE carries `VERB [detail]` only, actor via `--author`; a committed binary months behind git-erg keeps the old form looking correct until the bump doubles it
-- [Rogue agent pattern — verify agents spiral](feedback_rogue_agent_pattern.md) — re-verify agents can spiral into unscoped harness work; add explicit "task complete after verdict" to the
-- [Verify forks can under-execute](feedback_verify_fork_under_execution.md) — a /verify fork can return a plausible partial result; check 3 completion markers after every run
-- [Agent stall: watchdog kill + silent fork death](feedback_agent_stall_watchdog_recovery.md) — 600s-watchdog stalls hit a coder AND a gaze fork in one night (2026-07-11)
-- [Parallel execute agents contaminate branches](feedback_parallel_execute_branch_contamination.md) — parallel isolation:worktree agents share the git branch namespace
-- [Fork skills start bare](feedback_fork_skills_bare_context.md) — context:fork gets only SKILL.md+args, no cwd, no conversation; open with TASK DIRECTIVE, prefer Agent(isolation:worktree)
-- [IDH gitignore whitelist needs add -f](project_idh_gitignore_whitelist_add_f.md) — tracked files under non-whitelisted dirs refuse plain git add; use git add -f
-- [erg spec headers are immutable](feedback_erg_spec_headers_immutable.md) — new erg headers require explicit user approval; prefer inverse lookups; the erg binary must also accept them
-- [beat uses git checkout -B not worktrees](feedback_beat_checkout_model.md) — dirty main checkout carries into the housekeeping branch; fix belongs in beat pre-flight
-- [Skill commit discipline](feedback_skill_commit_discipline.md) — skills writing tracked files must git add/commit; uncommitted writes block the next beat cycle via the dirty-tree
-- [Skill architecture — no direct Anthropic API](feedback_skill_architecture.md) — skills are SKILL.md + pure I/O helpers; never call anthropic.Anthropic() in helpers
-- [Agnostic-guard catches ticket body paths](feedback_agnostic_guard_ticket_bodies.md) — use ~/path not /home/user/path in ticket bodies; check-agnostic.sh scans tickets/ too
-- [erg-pr-merge delete-branch race](feedback_erg_pr_merge_delete_branch_race.md) — exit 1 after a successful merge when deleteBranchOnMerge races local cleanup
-- [erg-pr-merge needs a close-claim line](feedback_erg_pr_merge_needs_close_claim.md) — exits 1 without a Ticket:/Ticket-ref:/Ticket: none line; even doc/config PRs need explicit `Ticket:
-- [Don't pre-close the ticket in the execution commit](feedback_dont_pre_close_ticket_in_execution.md) — leave the ticket open; erg-pr-merge closes it at merge
-- [Module-level git paths break in worktrees](feedback_module_level_git_paths.md) — git rev-parse at import time resolves to the worktree root; use an argparse path arg with rev-parse as
-- [Unpushed main contaminates parallel worktrees](feedback_unpushed_main_contaminates_worktrees.md) — push local main before launching parallel execute agents
-- [Big artifacts go to /data/models](project_data_disk_model_store.md) — LLM weights/GGUFs never in homedir; /data/models/gguf/<family>/ is the store
-- [Primary-checkout staleness gates skills](feedback_primary_checkout_staleness_gates_skills.md) — skills resolve from ~/.claude; merged skill changes are inert until that checkout pulls
-- [Ancestor of main is not current with main](feedback_ancestor_of_main_is_not_current_with_main.md) — roar's merged pre-check exits 0 for "behind main" too, so a sweep in that checkout reads a stale tree; sweep the ref with `git ls-tree`/`git show`, not the working directory
-- [A hook rename is a two-phase deploy](feedback_hook_rename_is_a_two_phase_deploy.md) — the live settings.json is not derived from the tracked one, and re-aligning it at merge time breaks the hook when the primary checkout sits on another branch
-- [Harness is the deliverable](feedback_harness_is_the_deliverable.md) — IDH/git-erg: the harness IS the product, no tooling-balance debt — qualified 2026-07-14 by the harness cool-down
-- [Cross-PR ticket-ID collision](feedback_cross_pr_ticket_id_collision.md) — per-branch erg check can't see a duplicate ID across two open PRs; scan open PRs' added ticket files before
-- [rtk rewrites git output](feedback_rtk_rewrites_git_output.md) — the rtk hook injects `--- Changes ---` into git diff/porcelain output; use `rtk proxy git ...` when parsing machine output
-- [Draft PR blocks merge](feedback_draft_pr_blocks_merge.md) — a draft PR fails every merge path with cryptic GraphQL errors; check `isDraft` and `gh pr ready` first
-- [Home directory: no new top-level dirs](feedback_home_dir_no_new_top_level.md) — never propose a new top-level dir directly under `~`; reuse an existing one (`~/data`, `~/CNRS`
-- [User language convention](user_language.md) — the author writes to Claude in French, often formal; work artifacts stay in English
-- [Autonomous merge for trivial ticket housework](feedback_autonomous_merge.md) — renames, decollisions and log fixes may be merged without asking first
-- [Layer correctness — harness vs consumer project](feedback_layer_correctness.md) — keep IDH skills generic; project-specific pain belongs in the consumer repo
-- [Repair before strengthening a validator](feedback_validator_strengthen_order.md) — sequence repair commits BEFORE the stricter-rule commit
-- [Raid worktrees miss same-session main commits](feedback_raid_worktree_rebase.md) — rebase the PR branch onto main before merging
-- [CLI verb belongs in the sub-command](feedback_cli_verb_in_subcommand.md) — the script name is the noun; avoid `install-deps.sh uninstall`
-- [Paper idea — harnesses vs. human psychology](project_paper_harnesses_psychology.md) — AI coding harnesses evaluated against what psychology says about how humans work
-- [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md) — awk/printf emit `70,0` under fr_FR; export LC_ALL=C after set -euo pipefail in any test-guarded script
-- [Enumerate untracked with status -uall](feedback_enumerate_untracked_with_status_uall.md) — `git clean -n` prints "Would remove <path>" and collapses untracked dirs; a check that returns *everything* hides a broken probe as surely as one that returns nothing
-- [Ask the live peer before committing its work](feedback_ask_the_live_peer_before_committing_its_work.md) — uncommitted files in a shared checkout have a findable owner: originSessionId → transcript → ListAgents → SendMessage; asking caught a stale index that would have reverted a merge, and surfaced two artifacts the scan never saw
-- [An orphan branch may already be archived as a tag](feedback_orphan_branch_may_be_archived_as_a_tag.md) — gone upstream plus unmerged commits is not proof it is the only copy; `refs/tags/archive/<branch>` decides, and four branches kept as "the only copy" were pure local debt
-- [Stale forward promises in skill bodies](feedback_stale_forward_promises_in_skills.md) — `until the…` / `not yet drafted` / `when converted` outlive the decision behind them; three at once in gaze, one of which got a cancelled A/B flag recommended as a live cost lever
-- [A positive control validates the detector, not the enumerator](feedback_positive_control_validates_the_detector_not_the_enumerator.md) — it proves you can recognize a hit, never that you looked at every candidate; a `last:100` page read 4 days of a 30-day window and inverted the finding
-- [Background isolation blocks primary-checkout writes](feedback_background_session_isolation_blocks_primary_writes.md) — two guards, two messages: leaving the worktree does not unblock a memory write in a background session; read which refusal you got
-- [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md) — a ratchet file named for the defect, not the skill, already pinned roar's sweep; the fifth guard shipped uncovered until a reviewer found it
+- [A divided-out token figure must be swept, not just corrected](feedback_derived_token_figures_must_be_swept.md)
+- [Built-in skill bodies live in the binary as zstd frames](reference_builtin_skill_bodies_in_the_binary.md)
+- [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md)
+- [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md)
+- [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md)
+- [Delete first, then let the suite name the callers](feedback_red_step_before_editing_callers.md)
+- [The whole rules/ tree is resident](reference_rules_tree_is_resident.md)
+- [A pgrep waiter matches its own command line](feedback_pgrep_waiter_matches_itself.md)
+- [Editing a ticket body is not appending to it](feedback_editing_a_ticket_body_is_not_appending.md)
+- [Measure whether a guard ever fired](feedback_measure_whether_a_guard_ever_fired.md)
+- [A boolean secret probe must not expand the value](feedback_boolean_probe_must_not_expand_the_value.md)
+- [Switching worktrees strands a running gate](feedback_switching_worktrees_breaks_running_gates.md)
+- [A test green for an accidental reason](feedback_a_test_green_for_an_accidental_reason.md)
+- [/goal is a hidden Claude Code command](reference_claude_code_goal_command.md)
+- [Tests that pin prompt prose](feedback_tests_pinning_prompt_prose.md)
+- [Guard flags match across compounds](feedback_guard_flags_match_across_compound.md)
+- [Verify sibling PRs jointly, not just individually](feedback_verify_sibling_prs_jointly.md)
+- [erg ready reads the current branch's tree](feedback_erg_ready_reads_current_branch_tree.md)
+- [CLAUDE.md is a thin loader in IDH](feedback_claude_md_is_thin_loader_idh.md)
+- [Gaze caller-fix sweep found sibling gaps](project_gaze_caller_fix_sweep_siblings.md)
+- [Gaze resolves PR numbers in the caller, not the fork](feedback_gaze_resolve_pr_number_before_invoking.md)
+- [statusLine command needs $HOME not ~](project_statusline_command_no_tilde_expansion.md)
+- [Memory-write worktree exemption contradicted by live guard](feedback_memory_writes_bypass_worktree_gate.md)
+- [Harness cool-down: stop second-order tooling](feedback_harness_cooldown_stop_second_order_tooling.md)
+- [BASH_ENV/hook tests must exercise the real invocation path](feedback_bash_env_tests_real_invocation_path.md)
+- [Untrusted .env export is a code-execution class](feedback_untrusted_env_export_is_code_execution.md)
+- [A secret migration is a credential audit](feedback_secret_migration_is_credential_audit.md)
+- [Allow rules beat the classifier — but only bare invocations match](feedback_allow_rule_bare_invocation.md)
+- [Smoke one, then blast the rest in parallel](feedback_smoke_one_then_blast_parallel.md)
+- [A/B designs void under regime drift](feedback_ab_design_regime_drift.md)
+- [grep -E is line-oriented; bash [[ =~ ]] matches the whole string](feedback_grep_line_vs_bash_wholestring.md)
+- [Hermetic test: rebase the $HOME prefix onto the checkout root](feedback_hermetic_test_rebase_home_prefix.md)
+- [API keys live in ~/.config/keys/](reference_keys_config_dir.md)
+- [Pipeline presentation overlays parallel raids](feedback_pipeline_presentation_overlays_raids.md)
+- [Worktree deleted mid-run orphans the session base cwd](feedback_worktree_deleted_midrun_orphans_cwd.md)
+- [Pin intervention surface to the measured window](feedback_pin_intervention_surface_to_measured_window.md)
+- [Worktree-path trap needs a guard](feedback_worktree_path_trap_needs_guard.md)
+- [Supervisor checkpoint pattern](feedback_supervisor_checkpoint_pattern.md)
+- [Classifier prohibition paraphrase](feedback_classifier_prohibition_paraphrase.md)
+- [Shared-worktree live-session contention](feedback_shared_worktree_live_session_contention.md)
+- [Imagine plans can absorb the Plan phase](feedback_imagine_plans_can_absorb_plan_phase.md)
+- [Skill invocation flag gates Skill(X) mandates](feedback_skill_invocation_flag_gates_mandates.md)
+- [Local-evidence gate for pillaged techniques](feedback_local_evidence_gate_for_pillaged_techniques.md)
+- [Batch decisions, then run to the end](feedback_batch_decisions_run_to_end.md)
+- [Sync main: check the primary checkout's branch first](feedback_sync_main_check_primary_branch_first.md)
+- [R&R intake is laborious](feedback_rr_intake_is_laborious.md)
+- [No ruff ping-pong](feedback_no_ruff_ping_pong.md)
+- [Skill-lifecycle edits need whole-run reasoning](feedback_skill_lifecycle_edit_whole_run.md)
+- [Skills Just Work — no per-repo CONFIG blocks](feedback_skills_just_work_no_config_blocks.md)
+- [Don't codify hard rules for judgment calls](feedback_dont_codify_hard_rules.md)
+- [Paper release/ subdir layout](user_paper_release_subdir_layout.md)
+- [Workflow agents are session-bound](feedback_workflow_agents_session_bound.md)
+- [Child-agent notifications bubble to the session](feedback_child_agent_notifications_bubble.md)
+- [Trace usage dedupe by message.id](feedback_trace_usage_dedupe_by_message_id.md)
+- [Cross-repo tickets live at the destination](feedback_cross_repo_tickets_live_at_destination.md)
+- [git-erg adopter canonical shape](reference_git_erg_adopter_canonical_shape.md)
+- [Verify each item before a batch action](feedback_verify_each_before_batch_action.md)
+- [Isolated session can't read the shared checkout](feedback_isolated_session_cannot_read_shared_checkout.md)
+- [gh pr edit broken — use REST](feedback_gh_pr_edit_broken_use_rest.md)
+- [Harness repo setup](project_harness_repo.md)
+- [erg binary installation](project_erg_binary.md)
+- [BASH_ENV secret loading pattern](project_bash_env_secret_loading.md)
+- [erg verb drift recurs in skill examples](feedback_erg_verb_drift.md)
+- [erg log's actor is a flag now](feedback_erg_log_actor_is_a_flag_now.md)
+- [Rogue agent pattern — verify agents spiral](feedback_rogue_agent_pattern.md)
+- [Verify forks can under-execute](feedback_verify_fork_under_execution.md)
+- [Agent stall: watchdog kill + silent fork death](feedback_agent_stall_watchdog_recovery.md)
+- [Parallel execute agents contaminate branches](feedback_parallel_execute_branch_contamination.md)
+- [Fork skills start bare](feedback_fork_skills_bare_context.md)
+- [IDH gitignore whitelist needs add -f](project_idh_gitignore_whitelist_add_f.md)
+- [erg spec headers are immutable](feedback_erg_spec_headers_immutable.md)
+- [beat uses git checkout -B not worktrees](feedback_beat_checkout_model.md)
+- [Skill commit discipline](feedback_skill_commit_discipline.md)
+- [Skill architecture — no direct Anthropic API](feedback_skill_architecture.md)
+- [Agnostic-guard catches ticket body paths](feedback_agnostic_guard_ticket_bodies.md)
+- [erg-pr-merge delete-branch race](feedback_erg_pr_merge_delete_branch_race.md)
+- [erg-pr-merge needs a close-claim line](feedback_erg_pr_merge_needs_close_claim.md)
+- [Don't pre-close the ticket in the execution commit](feedback_dont_pre_close_ticket_in_execution.md)
+- [Module-level git paths break in worktrees](feedback_module_level_git_paths.md)
+- [Unpushed main contaminates parallel worktrees](feedback_unpushed_main_contaminates_worktrees.md)
+- [Big artifacts go to /data/models](project_data_disk_model_store.md)
+- [Primary-checkout staleness gates skills](feedback_primary_checkout_staleness_gates_skills.md)
+- [Ancestor of main is not current with main](feedback_ancestor_of_main_is_not_current_with_main.md)
+- [A hook rename is a two-phase deploy](feedback_hook_rename_is_a_two_phase_deploy.md)
+- [Harness is the deliverable](feedback_harness_is_the_deliverable.md)
+- [Cross-PR ticket-ID collision](feedback_cross_pr_ticket_id_collision.md)
+- [rtk rewrites git output](feedback_rtk_rewrites_git_output.md)
+- [Draft PR blocks merge](feedback_draft_pr_blocks_merge.md)
+- [Home directory: no new top-level dirs](feedback_home_dir_no_new_top_level.md)
+- [User language convention](user_language.md)
+- [Autonomous merge for trivial ticket housework](feedback_autonomous_merge.md)
+- [Layer correctness — harness vs consumer project](feedback_layer_correctness.md)
+- [Repair before strengthening a validator](feedback_validator_strengthen_order.md)
+- [Raid worktrees miss same-session main commits](feedback_raid_worktree_rebase.md)
+- [CLI verb belongs in the sub-command](feedback_cli_verb_in_subcommand.md)
+- [Paper idea — harnesses vs. human psychology](project_paper_harnesses_psychology.md)
+- [fr_FR locale breaks float guards](feedback_locale_fr_floats_in_guarded_scripts.md)
+- [Enumerate untracked with status -uall](feedback_enumerate_untracked_with_status_uall.md)
+- [Ask the live peer before committing its work](feedback_ask_the_live_peer_before_committing_its_work.md)
+- [An orphan branch may already be archived as a tag](feedback_orphan_branch_may_be_archived_as_a_tag.md)
+- [Stale forward promises in skill bodies](feedback_stale_forward_promises_in_skills.md)
+- [A positive control validates the detector, not the enumerator](feedback_positive_control_validates_the_detector_not_the_enumerator.md)
+- [Background isolation blocks primary-checkout writes](feedback_background_session_isolation_blocks_primary_writes.md)
+- [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md)
