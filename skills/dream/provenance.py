@@ -13,6 +13,8 @@ import argparse
 import fcntl
 import json
 import os
+import re
+import subprocess
 import sys
 import tempfile
 import time
@@ -319,6 +321,214 @@ def decay(args):
     print()
 
 
+def _retarget(root: Path) -> None:
+    """Point the module at another checkout.
+
+    Every path here is a module global resolved from ``Path.home()``, which is
+    why `/dream` cannot run in a worktree (SKILL.md step 8): its writes would
+    land on the primary checkout's current branch. `backfill` and `usage` both
+    read the whole corpus and write one file, so they take ``--root`` and
+    retarget instead — a worktree session can then run them against its own
+    copy and land the result through its branch.
+    """
+    global HARNESS_MEMORY, PROVENANCE_PATH, PROVENANCE_LOCK
+    global PROJECT_ALIASES_PATH, PROJECTS_BASE
+    HARNESS_MEMORY = root / "memory"
+    PROVENANCE_PATH = HARNESS_MEMORY / ".provenance.json"
+    PROVENANCE_LOCK = HARNESS_MEMORY / ".provenance.lock"
+    PROJECT_ALIASES_PATH = HARNESS_MEMORY / ".project-aliases.json"
+    PROJECTS_BASE = root / "projects"
+
+
+def live_bodies(projects_base: Path):
+    """Yield (project, slug, path) for every memory body that is not a tombstone.
+
+    The live corpus is the set the provenance store is supposed to cover. A
+    tombstone is excluded because `remove` has already dropped it, and
+    ``MEMORY.md`` is the index rather than an entry.
+    """
+    for memdir in sorted(projects_base.glob("*/memory")):
+        project = memdir.parent.name
+        for body in sorted(memdir.glob("*.md")):
+            if body.name == "MEMORY.md":
+                continue
+            head = body.read_text(encoding="utf-8", errors="replace")[:200].lstrip()
+            if head.startswith("# DELETED"):
+                continue
+            yield project, body.stem, body
+
+
+def _to_z(iso: str) -> str:
+    """Normalise a git ISO timestamp to the store's trailing-Z UTC form."""
+    dt = datetime.fromisoformat(iso).astimezone(timezone.utc)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _git_dates(root: Path, prefix: str) -> dict[str, tuple[str, str]]:
+    """repo-relative path -> (first commit, last commit), both ISO-Z.
+
+    One `git log` pass rather than a call per file: the corpus is ~950 bodies
+    and a call each is minutes of subprocess churn for data one traversal
+    already carries.
+
+    A backfilled entry must not claim it was confirmed today. Stamping ``now``
+    would reset every decay clock at the moment the clock is first wired up,
+    which is the one thing that would make the backfill worse than the gap it
+    closes. Git holds the honest dates, so they come from there.
+    """
+    proc = subprocess.run(
+        ["git", "-C", str(root), "log", "--format=%x00%cI", "--name-only",
+         "--diff-filter=AMR", "--", prefix],
+        capture_output=True, text=True, check=False,
+    )
+    first: dict[str, str] = {}
+    last: dict[str, str] = {}
+    stamp = ""
+    for line in proc.stdout.splitlines():
+        if line.startswith("\x00"):
+            stamp = line[1:]
+        elif line and stamp:
+            last.setdefault(line, stamp)  # log is newest-first
+            first[line] = stamp
+    return {p: (_to_z(first[p]), _to_z(last[p])) for p in first}
+
+
+def backfill(args):
+    """Record every live body the provenance store never saw.
+
+    v2 introduced the store; the bodies written before it were never recorded,
+    and nothing since has swept for them. An unrecorded entry is invisible to
+    promotion, to decay and to dedup at once — and invisible in the way that
+    reads as healthy, since every one of those passes reports success over the
+    entries it can see.
+
+    Idempotent, and deliberately conservative on the one field that matters:
+    an already-tracked entry gaining a project has the project appended and its
+    ``last_confirmed`` left alone.
+    """
+    root = Path(args.root).expanduser()
+    _retarget(root)
+    dates = _git_dates(root, "projects")
+    created = linked = untouched = 0
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        for project, slug, path in live_bodies(PROJECTS_BASE):
+            rel = str(path.relative_to(root))
+            first, last = dates.get(rel, (_now_iso(), _now_iso()))
+            entry = entries.get(slug)
+            if entry is None:
+                entries[slug] = {
+                    "projects": [project],
+                    "first_seen": first,
+                    "last_confirmed": last,
+                    "promoted": False,
+                    "backfilled": True,
+                }
+                created += 1
+            elif project not in entry["projects"]:
+                entry["projects"].append(project)
+                linked += 1
+            else:
+                untouched += 1
+        if not args.dry_run:
+            _save_provenance(data)
+    print(json.dumps({
+        "created": created,
+        "linked": linked,
+        "already_recorded": untouched,
+        "tracked_total": len(entries),
+        "dry_run": bool(args.dry_run),
+    }, indent=2))
+
+
+# A slug reached through a shell call carries no file_path, so both channels are
+# scanned. Shape matches scripts/census/memory-recall.py, which reports the same
+# events rather than storing them; if a third consumer appears, factor this out.
+_TU_READ = re.compile(
+    rb'"name":\s*"Read"\s*,\s*"input":\s*\{(?:[^{}]|\{[^{}]*\}){0,600}?'
+    rb'"file_path":\s*"([^"]{0,300})"'
+)
+_BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
+# Anchored on the two directories that actually hold memory bodies. A bare
+# `memory/<name>.md` also matches `skills/memory/SKILL.md`, which put the memory
+# *skill* into the counts at 19 reads on the first run — a slug that does not
+# exist, so nothing was corrupted, but a count that is wrong is wrong whether or
+# not it lands anywhere.
+_MEM_PATH = re.compile(r"(?:projects/[^/\s\"]+|\.claude)/memory/([A-Za-z0-9_.-]+)\.md")
+
+
+def usage(args):
+    """Fold observed read counts into the store, as a floor and never a truth.
+
+    Session traces are already an append-only access log, so counting reads
+    needs no new writes to the bodies themselves — which is what an in-file
+    access log would cost, on the very files parallel sessions read.
+
+    Two properties to keep in view wherever this number is used:
+
+    - It is machine-local and traces are prunable, so it is a floor.
+    - It counts *opens*. An entry whose index title carried the lesson is never
+      opened, so a ranking that evicts on this number evicts the entries that
+      worked best. Secondary signal only.
+    """
+    root = Path(args.root).expanduser()
+    _retarget(root)
+    traces = Path(args.traces).expanduser()
+    counts: dict[str, int] = {}
+    seen_days: dict[str, str] = {}
+    ts = re.compile(rb'"timestamp":"(\d{4}-\d\d-\d\d)T')
+    for dirpath, _dirs, fnames in os.walk(traces):
+        for fn in fnames:
+            if not fn.endswith(".jsonl"):
+                continue
+            try:
+                fh = open(os.path.join(dirpath, fn), "rb")
+            except OSError:
+                continue
+            with fh:
+                day = ""
+                for line in fh:
+                    m = ts.search(line)
+                    if m:
+                        day = m.group(1).decode()
+                    if b"memory/" not in line:
+                        continue
+                    hits = set()
+                    for tm in _TU_READ.finditer(line):
+                        hits.update(_MEM_PATH.findall(tm.group(1).decode("unicode_escape", "replace")))
+                    for bm in _BASH.finditer(line):
+                        hits.update(_MEM_PATH.findall(bm.group(1).decode("unicode_escape", "replace")))
+                    for slug in hits - {"MEMORY"}:
+                        counts[slug] = counts.get(slug, 0) + 1
+                        if day > seen_days.get(slug, ""):
+                            seen_days[slug] = day
+
+    matched = unknown = 0
+    with _provenance_lock():
+        data = _load_provenance()
+        entries = data["entries"]
+        for slug, n in counts.items():
+            entry = entries.get(slug)
+            if entry is None:
+                unknown += 1
+                continue
+            entry["access_count"] = n
+            entry["last_accessed"] = seen_days.get(slug, "")
+            matched += 1
+        if not args.dry_run:
+            _save_provenance(data)
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])[:10]
+    print(json.dumps({
+        "slugs_with_reads": len(counts),
+        "recorded": matched,
+        "read_but_untracked": unknown,
+        "tracked_total": len(entries),
+        "top": ranked,
+        "dry_run": bool(args.dry_run),
+    }, indent=2))
+
+
 def show(args):
     """Show full provenance data."""
     data = _load_provenance()
@@ -367,15 +577,44 @@ def main():
     show_p = sub.add_parser("show", help="Show full provenance data.")
     show_p.set_defaults(func=show)
 
+    default_root = str(Path.home() / ".claude")
+    backfill_p = sub.add_parser(
+        "backfill", help="Record every live memory body the store never saw."
+    )
+    backfill_p.add_argument("--root", default=default_root, help="Harness checkout to act on")
+    backfill_p.add_argument("--dry-run", action="store_true", help="Report without writing")
+    backfill_p.set_defaults(func=backfill)
+
+    usage_p = sub.add_parser(
+        "usage", help="Fold observed read counts from session traces into the store."
+    )
+    usage_p.add_argument("--root", default=default_root, help="Harness checkout to act on")
+    usage_p.add_argument(
+        "--traces", default=str(Path.home() / ".claude" / "projects"),
+        help="Directory of session trace .jsonl files",
+    )
+    usage_p.add_argument("--dry-run", action="store_true", help="Report without writing")
+    usage_p.set_defaults(func=usage)
+
     # Production project keys are directory slugs that begin with '-'
     # (e.g. -home-haduong-CNRS-...). Without a '--' separator argparse
     # clusters '-home-…' into '-h' and help-exits 0 — a silent no-op on a
-    # mutating call (ticket 0282). No subcommand takes options, so insert
-    # the separator after the subcommand unless the caller already did, or
-    # is asking for help at either level.
+    # mutating call (ticket 0282). Insert the separator after the subcommand
+    # unless the caller already did, or is asking for help at either level.
+    #
+    # Only for the subcommands whose arguments are bare positionals. `backfill`
+    # and `usage` take options, and a blanket separator would push `--counts`
+    # past it and make argparse read the flag as a positional — the same silent
+    # no-op the separator exists to prevent, arriving from the other side.
+    POSITIONAL_CMDS = {"record", "remove", "promote", "confirm"}
     tokens = sys.argv[1:]
     wants_help = any(t in ("-h", "--help") for t in tokens)
-    if len(tokens) > 1 and "--" not in tokens and not wants_help:
+    if (
+        len(tokens) > 1
+        and tokens[0] in POSITIONAL_CMDS
+        and "--" not in tokens
+        and not wants_help
+    ):
         tokens.insert(1, "--")
 
     args = parser.parse_args(tokens)
