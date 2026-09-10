@@ -1,12 +1,16 @@
+> **FROZEN — v0, superseded.** This is the draft as the two reviews read it,
+> kept so their section and ticket references resolve. Do not amend it and do
+> not act on it: the current version is
+> [`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),
+> which corrects two arithmetic errors, narrows the §2.4 claim, adds the door
+> as ticket T8 and states the decision requested. Git holds the history; this
+> copy exists for the citations, not for recovery.
+
 # The Dragon's memory: measured assessment and design proposal
 
-**Status:** reviewed and amended · 2026-09-10 · v1
-**Reviews received:** in-family and out-of-family — see §9
+**Status:** draft for external review · 2026-09-10
+**Reviewers sought:** an independent read from a different model family
 **Baseline:** `origin/main` at `b79c2ad`, plus open PRs #875 and #885 where noted
-**Superseded version:**
-[`2026-09-10-dragon-memory-design-v0.md`](./2026-09-10-dragon-memory-design-v0.md)
-— the text the two reviews read, frozen with its section numbering intact so
-their citations resolve
 
 This document exists to be attacked. It reports what the harness's memory
 system does, what it was measured to do, where those two differ, and what is
@@ -72,14 +76,6 @@ Memory is **21.7%** of what a session carries before its first question. Only
 one project index is resident in a given session, so the largest is the upper
 bound rather than the sum.
 
-**Read that share for what it is.** The denominator is the preamble, which is
-the session's smallest input; every tool result, file read and turn of
-conversation that follows dilutes it. 21.7% is therefore the share at its
-maximum, not the share over a session, and the two numbers support opposite
-conclusions about urgency. The traces can supply the second one. Reported here
-because the resident cost is what an adapter without auto-load must inject, and
-that cost is paid at the maximum.
-
 ### 2.2 The corpus
 
 | | |
@@ -117,21 +113,13 @@ subagent runs                   185 / 5189   3.57%
 **94% of the index has never been followed** in the window. The cost is paid on
 the whole list; the traffic lands on a twentieth of it.
 
-Two limits on that figure. The window's length is not stated anywhere in this
-document and must be, because an entry written last week cannot have been
-followed for as long as one written in March: the rate needs an exposure
-denominator per entry, not a single corpus-wide count. And a body opened by a
-subagent serves its root session without that session opening anything, so the
-3.57% subagent row and the 11.01% working row overlap by an unmeasured
-amount.
-
 Cost against use, summing each project's index over the sessions it served:
 4 784 923 chars served for 86 body opens — **55 638 chars (~19 900 tokens) per
 body actually opened**, against a body averaging ~2 000 chars. The index costs
 roughly 28× the payload it delivers. The title-only pass in #875 brings this to
 33 773 (~12 100 tokens), about 17×.
 
-### 2.4 No recall channel was detected
+### 2.4 There is no recall channel
 
 The platform's memory instructions say a body's `description:` decides recall
 relevance. **On this runtime, nothing fires.**
@@ -149,16 +137,8 @@ found somewhere            32 / 40      <- probe works
       2  the text inside a shell command
 ```
 
-**Zero injections detected.** Every appearance of a memory body, in 5 753
-sessions, is a session opening the file itself.
-
-Stated precisely: no verbatim injection of the probes was detected in the
-channels these traces expose. That is weaker than "no channel exists" — a probe
-reads what the traces record, and anything placed in the system prompt, or
-paraphrased through a compaction summary, would be invisible to it. The
-distinction does not change the design. Depending on no automatic recall is
-robust whether or not one exists, and it is the only assumption that survives a
-runtime upgrade. It changes what may be claimed from the measurement.
+**Zero injections.** Every appearance of a memory body, in 5 753 sessions, is a
+session opening the file itself.
 
 This is the load-bearing finding of the document, because it inverts the
 obvious remedy: **an entry dropped from an index is not demoted, it is
@@ -195,33 +175,9 @@ would take candidates from 3 to ~38 — a twelvefold increase. Examples:
 lexical matching suffices**; the "semantic slug matching" deferred to a future
 version looks over-engineered.
 
-**But read the duplicates as a symptom before reading them as a supply of
-candidates.** One lesson written three times under three names is three
-sessions that failed to find the two entries already there. That is a retrieval
-failure, and it is the strongest local evidence for P2's door — stronger than
-anything in §2.3, because it is a positive observation rather than an absence.
-The rise from 3 to ~38 promotion candidates is therefore a count of past
-retrieval failures, not a benefit being unlocked. Deduplication cleans the
-record; only the door stops the next one being written. This is why the door
-precedes T3 in the wave order below.
-
-A second consequence for the promotion criterion itself: "seen in ≥2 projects"
-measures how often the author repeats a mistake, not how general the lesson is.
-A maximally general lesson learned once and never violated again scores zero.
-The criterion is a usable heuristic for candidacy and should be labelled as
-one, not as a measure of transferability.
-
-**Maintenance is the same order as consultation.** 726 body writes against 974
-body reads across all arms — writes do not exceed reads, as an earlier draft of
-this line said, but they come within a quarter of them. The memory system
-spends nearly as much effort maintaining itself as every session spends
-consulting it.
-
-The provenance populations need the same care: 949 live bodies less 651 covered
-is 298, where §7 reports 308 without a record, and 960 covered after the repair
-exceeds the 949 live bodies it covers. Different snapshots or different
-populations can explain both; the document must say which, with a date against
-each count.
+**Writes exceed reads.** 726 body writes against 974 body reads across all
+arms. The memory system spends nearly as much effort maintaining itself as
+every session spends consulting it.
 
 ## 3. What the literature calibrates
 
@@ -316,10 +272,6 @@ found and fixed while writing this document, twice in the author's own new code.
 
 Grouped into waves by dependency. Tickets in Annex A.
 
-**Wave 0 — the door (T8).** Everything that demotes depends on it, and nothing
-in the original wave list built it. Both external reviews raised this
-independently, and §2.5's duplicate pairs are the local evidence for it.
-
 **Wave 1 — repairs, independent of each other.**
 - Promotion tombstones the project copy (defect 1).
 - Orphan collector: report bodies no index lists, then tombstone or relist
@@ -384,34 +336,6 @@ Ordered by how much a wrong answer would cost.
 
 ---
 
-## 9. Decision requested, and what these amendments changed
-
-The draft asked six questions and proposed seven tickets, but never said what
-it was asking the reader to decide. Stated now: **approve the wave order below
-and the door as its prerequisite; defer T6 and T7 until T8 and T4 have run.**
-If the program is not approved, the fallback is T1, T2 and T3 alone — the three
-repairs are independently justified by the defects they fix and need no
-retention policy above them.
-
-One question is closed rather than answered. §8 asked how to measure the
-silent-title effect without an ablation nobody would notice. The harness owner
-treats context pressure as established, not as a hypothesis, so no ablation is
-proposed and no benefit experiment gates the work. The argument for reducing
-the resident tier is the context budget; it does not rest on §2.3's hit rate.
-
-**Review record.** Three study reports commissioned before this draft
-([Fable](./2026-09-10-memoire-agent-fable.md),
-[Perplexity](./2026-09-10-memoire-agent-perplexity.md),
-[ChatGPT](./2026-09-10-memoire-agent-chatgpt.md)) fed it. Two reviews answer
-it: [Claude](./2026-09-10-dragon-memory-design-review-claude.md), in-family,
-and [ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md), the
-out-of-family read this draft asked for. Both are non-normative. The amendments
-above take the points on which they converge — the missing door, deferring the
-composite score, separating durability from type — plus the arithmetic and
-scoping corrections each found alone.
-
----
-
 ## Annex A — Proposed tickets
 
 Each is sized to one review unit. Dependencies are on the real prerequisite,
@@ -427,7 +351,6 @@ never on the tracker.
 | T5 | Durability annotation at write time; normalise the type vocabulary | 2 | #885 | 28 prefixes → 4; new memories carry a declared durability; a gate rejects an unknown type |
 | T6 | Composite retention score, normalised per token | 3 | T4, T5 | score computed from age, use and durability; ranking reproducible from the store alone |
 | T7 | Corpus cap per project, enforced at write time | 3 | T4, T6 | a cap exists and bites; exceeding it requires a consolidation before the write |
-| T8 | The door: bounded resident index, full catalogue, targeted lookup | 0 | — | every live body resolves from the full catalogue; a demoted entry is retrieved by a tested operation; the resident index respects a character budget; an interrupted move is recoverable |
 
 Not tickets, deliberately: the 12 tracked entries with no live body (fold into
 T2), and the filename redundancy that is 47% of the trimmed index — measured,
