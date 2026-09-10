@@ -8,21 +8,21 @@
 
 ## Entries
 
-- [Bibliography toolchain](user_bibliography_toolchain.md) — biblatex+biber, Zotero canonical, local .bib is staging, import at submission
-- [Trust the LLM](feedback_trust_the_llm.md) — skills contain only non-obvious constraints; don't re-teach domain knowledge or invent fake thresholds
-- [Skill topic boundaries](feedback_skill_topic_boundaries.md) — split rules across git/coding/state/workflow by root cause, not by consequence; one short bullet per file
-- [Avoid costume metaphor (HET)](feedback_avoid_costume_metaphor_het.md) — don't repeat/explain the "costume" framing on the HET paper; reads as LLM padding
-- [HET submission branches protected](project_het_submission_branches_protected.md) — climate-finance-het rejects deletion of submission/* branches (server-side rule)
-- [Check sibling tickets before reorg](feedback_check_sibling_tickets_before_reorg.md) — before a cross-repo move, check the other repo's tickets for a prior decision on the same question
-- [Feuille de route → workpackages](project_roadmap_to_workpackage_map.md) — les noms de lignes CNRS diffèrent des répertoires ; les 3 drafts polycentric_activity sont solo
-- [Nextcloud tasks](reference_nextcloud_tasks.md) — CalDAV nx11797.your-storageshare.de, compte Admin, secret dans le trousseau, liste « Personnel » (personal/)
-- [Relance JETP 2026](project_jetp_relance_2026.md) — roadmap Cassen envoyée 10 août, saturation OK, pilote ledger run 1 fait ; run 2 verrouillé sur ratification vérité terrain + RMP
-- [Beat agent SSH-to-padme blind spot](feedback_beat_padme_ssh.md) — beat agents incorrectly exclude tickets that say "SSH to padme"; beat always runs on padme
-- [Nightbeat deployment](project_nightbeat.md) — live nightbeat timer on padme: config values, monitoring commands, timeout chain
-- [padme GPU/CPU idle power](project_padme_gpu_power.md) — RESOLVED: GPU 3060 floor 11W (no D3cold), CPU 70→46W via balanced profile; main-logbook §I
-- [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md) — 8 fausses sources « inaccessibles » en une session HET ; ls docs/ + Zotero + ocrmypdf avant toute recherche web (règle promue dans rules/edm.md)
-- [ISTEX token](reference_istex.md) — jeton plein-texte licences nationales dans ~/.config/keys/istex.env ; à essayer d'office pour tout article sous péage ; JRSS-B seulement 1997→
-- [Adversarial pair verification](feedback_adversarial_pair_verification.md) — théorème d'agent → referee adversarial à code indépendant avant insertion manuscrit ; a trouvé 2 vrais trous de preuve (session MIMO) ; jamais de fenêtre par échantillonnage de chambres
-- [LinkedIn posts: always a personal note](feedback_linkedin_personal_note.md) — open with personal framing (why sharing, connection, audience) before the factual summary; ask rather than invent the angle
-- [Aider les rapporteurs](feedback_aider_les_rapporteurs.md) — écrire soi-même l'argument que le rapporteur portera en séance (trajectoire, profil, faits datés) ; revue simulée avant dépôt
-- [Avancement DR1 2027](project_avancement_dr1_2027.md) — 2026 = prise de date déposée le 2 sept. ; 2027 = tir sérieux ; objectifs datés et REX dans le README du dossier 2026
+- [Bibliography toolchain](user_bibliography_toolchain.md)
+- [Trust the LLM](feedback_trust_the_llm.md)
+- [Skill topic boundaries](feedback_skill_topic_boundaries.md)
+- [Avoid costume metaphor (HET)](feedback_avoid_costume_metaphor_het.md)
+- [HET submission branches protected](project_het_submission_branches_protected.md)
+- [Check sibling tickets before reorg](feedback_check_sibling_tickets_before_reorg.md)
+- [Feuille de route → workpackages](project_roadmap_to_workpackage_map.md)
+- [Nextcloud tasks](reference_nextcloud_tasks.md)
+- [Relance JETP 2026](project_jetp_relance_2026.md)
+- [Beat agent SSH-to-padme blind spot](feedback_beat_padme_ssh.md)
+- [Nightbeat deployment](project_nightbeat.md)
+- [padme GPU/CPU idle power](project_padme_gpu_power.md)
+- [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md)
+- [ISTEX token](reference_istex.md)
+- [Adversarial pair verification](feedback_adversarial_pair_verification.md)
+- [LinkedIn posts: always a personal note](feedback_linkedin_personal_note.md)
+- [Aider les rapporteurs](feedback_aider_les_rapporteurs.md)
+- [Avancement DR1 2027](project_avancement_dr1_2027.md)

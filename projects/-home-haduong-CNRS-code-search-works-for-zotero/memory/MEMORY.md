@@ -9,111 +9,111 @@
 
 ## Entries
 
-- [Code under ~/CNRS/code, data under ~/data](feedback_code_under_cnrs_code_data_under_data.md) — a fork clone is code; data paths identical across machines
-- [Stay on Max plan billing](feedback_stay_on_max_plan_billing.md) — expired OAuth means asking for one `claude login`, never a key
-- [Author voice corpus](reference_author_voice_corpus.md) — 48 311 words at chemin-de-voix/corpus/clean/voix-auteur-en; tic-removal reaches neutral, not him
-- [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md) — once he says yes, do it; but show him the document before publishing it
-- [Repo prepares upstream, ships nothing](feedback_repo_prepares_upstream_it_ships_nothing.md) — repo PRs are spec records; upstream code bundles into the prepared PR
-- [Benchmark harness traps](feedback_benchmark_harness_traps.md) — polymorphic call sites, ±15% single runs; a big number needs a control arm
-- [Decision briefs, not option menus](feedback_decision_briefs.md) — argue each alternative's pros and cons; a labelled option list is not a brief
-- [Preserve agent output, not just its report](feedback_preserve_agent_output.md) — uncommitted subagent work dies with the worktree; check status before remove
-- [Verify the load-bearing claim](feedback_verify_the_load_bearing_claim.md) — the sentence a reader checks first is the one nobody ran
-- [The metric decides the verdict](feedback_metric_decides_the_verdict.md) — self-referential recall priced a truncation at 22 points, a task metric at 4,8%
-- [Adopted constants carry mechanisms](feedback_adopted_constants_carry_mechanisms.md) — a number copied without its min()/drop rule; 4 of 8 attributions wrong
-- [Probes need a discriminating control](feedback_probe_needs_discriminating_control.md) — a control must be able to come out the other way; three vacuous probes in a session
-- [Guard the silent failure first](feedback_guard_the_silent_failure_first.md) — the loud guard is the one you think of; enumerate the no-exception failures
-- [A move can leave the gate](feedback_a_move_can_leave_the_gate.md) — a hand-listed gate scope guards a file leaving, never one arriving
-- [Append-only merges keep both](feedback_append_only_merge_union.md) — DECISIONS.md conflicts by construction; assert the union against both parents
-- [A close claim needs a manual check](feedback_close_claim_needs_a_manual_check.md) — erg-pr-merge can't reach another session's worktree; gh pr merge skips the close
-- [No optional offers](feedback_no_optional_offers.md) — decide yourself; an offered extra is work you already judged not worth doing
-- [Warm runs and single-point fits](feedback_warm_runs_and_single_point_fits.md) — a cold run measures the download; a one-point fit missed the next by 106 MB
-- [The ticket's own test needs a control](feedback_the_tickets_own_test_needs_a_control.md) — run the specified check against the unfixed tree first
-- [A judgement must not outlive its subject](feedback_judgement_must_not_outlive_its_subject.md) — invalidate on baseline move; pin the SHA, one decayed in 11 minutes
-- [Green PRs, red union](feedback_green_prs_red_union.md) — two reviewed PRs merged into a red main; only a wave-level check sees it
-- [Executor gate-loop stall](feedback_executor_gate_loop_stall.md) — duplicate seat reports plus an unmoving branch tip means take over
-- [Registry, not knobs](project_registry_not_knobs.md) — entries pin the mechanics, rung is per-device, R30 ratified, C3 at 750
-- [Room for multilingual embedders](feedback_room_for_multilingual_embedders.md) — never argue headroom under a ceiling a ruling has displaced
-- [Negative results name their mechanism](feedback_negative_result_names_its_mechanism.md) — X4 killed json_each scoping, not scoping; a year predicate measured 43x cheaper
-- [Leads park on untracked background](feedback_leads_park_on_untracked_background.md) — three leads deadlocked on nohup runs; prompt chunked-foreground up front
-- [Spec edit mechanics](project_spec_edit_mechanics.md) — one SPEC.md, DRAFT header, date-is-version; quote coupling, roster-line trap
-- [Reconcile seats against synthesis](feedback_reconcile_seats_against_synthesis.md) — diff the seat set against the synthesis before acting on it
-- [Re-run the gate after your own fix](feedback_rerun_gate_after_own_fix.md) — the fix commit carried a .PHONY no-op; prove the new check red once
-- [Takeover handoff pattern](feedback_takeover_handoff_pattern.md) — state check with SHAs, record in the PR, explicit ack, then lane discipline
-- [Atomic PRs, short branches](feedback_atomic_prs_short_branches.md) — author verbatim "not folded here"; one concern per PR, upstream filings included
-- [Review catches only what it checks](feedback_review_catches_only_what_it_checks.md) — two passes verified citations; his orthogonal question found the real defect
-- [Stacked PR on a live sibling's branch](feedback_stacked_pr_on_live_sibling_branch.md) — find the owner via ListAgents, message it, then poll the PR state
-- [Read the schema before asking for state](feedback_read_the_schema_before_asking_for_state.md) — an ask reduced to existing state plus a test is the handoff his pattern ships
-- [Control arms need a committed tree](feedback_control_arms_need_a_committed_tree.md) — the helper reverts the fix it is testing; commit first, then break on purpose
-- [Deferral must name a measurer](feedback_deferral_must_name_a_measurer.md) — two questions before writing "left to X"
-- [Hold out the answer key](feedback_hold_out_the_answer_key.md) — ground truth the system itself reads is circular
-- [Archive bot walls](reference_archive_bot_walls.md) — IA/Commons/Wikisource serve scripts; HAL, Gallica, UKGWA need a browser fetch
-- [Reading blocked sources](reference_reading_blocked_sources.md) — Reddit answers on `.rss`; a closed plugin's design is in its shipped .xpi
-- [gh resolves repo from cwd](feedback_gh_resolves_repo_from_cwd.md) — pass -R on every gh mutation outside the project checkout
-- [Fork cwd and the worktree guard](feedback_fork_cwd_and_worktree_guard.md) — cd into fork/ persists; use git -C per tree, fork work on its own branch
-- [One gate per PR at a time](feedback_one_gate_per_pr_at_a_time.md) — two review forks on one branch contradicted; settle with one fresh gate
-- [Guard budget is net-negative](feedback_guard_budget_is_net_negative.md) — a new guard costs two retirements
-- [Stage by path in shared checkouts](feedback_stage_by_path_in_shared_checkouts.md) — commit -am steals a sibling's work; the tell is a conflict in an untouched file
-- [Check for the guard before proposing one](feedback_check_for_the_guard_before_proposing_one.md) — grep the guards, then prove it red in a throwaway worktree
-- [Zotero 10 plugin and reindex](reference_zotero_10_plugin_and_reindex.md) — manifest needs update_url; group libraries load lazily; no bulk reindex; 60–80 p/s
-- [Positive control before waiting](feedback_positive_control_before_waiting.md) — time the smallest comparable job instead of extending the watch
-- [Cloud runs need routines](feedback_cloud_runs_need_routines.md) — Agent isolation "remote" falls back to local silently; use a RemoteTrigger routine
-- [Two gate channels find different defects](feedback_two_gate_channels_find_different_defects.md) — controls prove a check ran; review proves the sentence matches the evidence
-- [Merge is one command](feedback_merge_is_one_command.md) — "merge" means merge; no CI probe and full check in front of an inert docs PR
-- [The briefing is a claim](feedback_the_briefing_is_a_claim.md) — a gate directive got five counts wrong in one night; verify before relaying
-- [Merge authority needs an attached verdict](feedback_merge_authority_needs_attached_verdict.md) — reviewer results land at the parent, not the lead that spawned them
-- [A gate without the button is advisory](feedback_a_gate_without_the_button.md) — 3 of 5 PRs merged from other lanes; the gate became a post-merge audit
-- [A constant cannot witness a run](feedback_a_constant_cannot_witness_a_run.md) — hardcoded warm:true in 6/6 drivers; check for the key, not the value
-- [Verdicts belong on the forge](feedback_verdicts_belong_on_the_forge.md) — reviewers post the verdict as a PR comment, the gate polls the page, never a ticket
-- [Lane dormant after EnterWorktree](feedback_lane_dormant_after_enterworktree.md) — diagnose by transcript growth and tool-call shape, not forge artifacts
-- [A denial that matches a rule](feedback_a_denial_that_matches_a_rule.md) — the distinguishing variable was authorship, and a standing rule already named it
-- [A primitive is not a requirement](feedback_a_primitive_is_not_a_requirement.md) — read what calls it on the default path, and its caps
-- [A question is not a directive](feedback_a_question_is_not_a_directive.md) — he probes to test the reasoning; don't reshape delivered work until he says so
-- [A ruling's scope is its reasoning](feedback_a_ruling_scope_is_its_reasoning.md) — "no knobs" meant precision cannot travel alone; the ground later expired
-- [Branch from origin/main, not main](feedback_branch_from_origin_main_not_main.md) — local main goes stale silently; sync by ref before trusting any check
-- [Concurrent agent can merge under you](feedback_concurrent_agent_can_merge_under_you.md) — check gh pr view ground truth before trusting your in-flight plan
-- [Defect fix over design argument](feedback_defect_fix_over_design_argument.md) — thirteen of thirteen merged; a focused fix beats arguing his settings shape
-- [A disclaimer does not protect a claim](feedback_disclaimer_does_not_protect_a_claim.md) — check that a budget's topology applies before comparing to it
-- [Mechanism wearing a requirement's number](feedback_mechanism_wearing_a_requirements_number.md) — R31 and C4 both named builds, not properties
-- [A poller's elapsed is the quantum](feedback_poller_elapsed_is_the_quantum.md) — two builds 44 493 passages apart both read 140,3 s at --poll 20
-- [Procedure without narration](feedback_procedure_without_narration.md) — hold the gate, skip the lecture
-- [Ratification entry needs its own check](feedback_ratification_entry_needs_its_own_check.md) — a number sweep missed the DECISIONS.md entry ratifying that number
-- [Read the code before designing around SPEC](feedback_read_the_code_before_designing_around_spec.md) — §5.2.6's ladder is unbuilt; three tickets written about constants that never existed
-- [Rebase can overwrite a sibling fix](feedback_rebase_can_overwrite_a_sibling_fix.md) — a clean, conflict-free rebase reintroduced content main had already fixed
-- [Search the fork before claiming absence](feedback_search_the_fork_before_claiming_absence.md) — code lives in the untracked fork/; a repo grep returns nothing for shipping work
-- [Union append-only logs by timestamp](feedback_union_append_only_by_timestamp.md) — resolve erg log conflicts by union sorted on each stamp, never by side
-- [tmp quota kills the shell silently](feedback_tmp_quota_kills_the_shell_silently.md) — every Bash exit 1 with no output while Read works is EDQUOT; ask the author to purge
-- [Crash recovery under the worktree guard](feedback_crash_recovery_under_worktree_guard.md) — audit sibling worktrees read-only, then hand the commit to the owning session
-- [Review dispatch invisible to lane](feedback_review_dispatch_invisible_to_lane.md) — a coordinator-dispatched panel is invisible to the agent's hunt loop
-- [One-liner, no ticket](feedback_one_liner_no_ticket.md) — a one-line probe fix is a hotfix PR with Ticket: none; tickets are for handoffs
-- [Matching a stale number is not confirmation](feedback_matching_a_stale_number_is_not_confirmation.md) — both ran the same non-recursive reader; needle one document first
-- [Not offered is not nothing to see](feedback_not_offered_is_not_nothing_to_see.md) — a not-offered cell says the harness could not look
-- [Challenged premise gets a default](feedback_challenged_premise_gets_a_default_not_a_relitigation.md) — default to the side the measurement protects; append, don't amend
-- [Check ticket status against main](feedback_check_ticket_status_against_main.md) — a stale branch read a closed ticket as open; confirm against origin/main
-- [Live smoke recipe](project_live_smoke_recipe.md) — cloud key, standalone transformers.js, a 1-item build for the schema fixture
-- [Redaction commit doesn't scrub history](feedback_redaction_commit_does_not_scrub_history.md) — the fixing commit's own diff re-exposes it; reset --soft and force-push
-- [Ship simple fallback first](feedback_ship_simple_fallback_first.md) — build the simple path first, Blocked-by rather than parallel
-- [Review rounds don't fix code](feedback_review_rounds_dont_fix_code.md) — real bugs found twice means stop and fix, not trust the round cap
-- [Conductor implementation state](project_conductor_implementation_state.md) — 0551/0552/0556 merged, 0553 parked, 0565–0567 filed
-- [Execute agent self-review summary can misreport](feedback_execute_agent_self_review_summary_can_misreport.md) — "all five approve" was false; doc-propagation had requested changes
-- [sudo incompatible with rootless isolation](project_sudo_incompatible_with_rootless_isolation.md) — wrap tracer and mechanism from outside, never inside
-- [Acceptance arena permission model](project_acceptance_arena_permission_model.md) — operator-owned with a default ACL; check the full parent-path chain
-- [gh pr edit is broken here](feedback_gh_pr_edit_broken_use_api_patch.md) — a Projects-classic error silently no-ops the body; use gh api -X PATCH
-- [Verify security exemption premises live](feedback_verify_security_exemption_premises_live.md) — 0638's podman-unshare skip was never measured, and was false
-- [Amend needs add after late edits](feedback_amend_needs_add_after_late_edits.md) — --amend reuses the staged tree; re-add after any post-staging edit
-- [Orchestrator and execute agent, same branch](feedback_orchestrator_and_execute_agent_same_branch.md) — stand the agent down, then rebase and merge both fixes
-- [Validate utility before sending upstream](feedback_validate_utility_before_sending_upstream.md) — green tests prove correctness, not usefulness; run the downstream check
-- [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md) — gaps A/B closed upstream (#54, #55); gap C a decided FAIL (#56)
-- [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md) — check the real time; a guessed stamp drifts ahead and fails the gate
-- [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md) — lead paused mid-injection on t0029-menagerie-build; resume, never relaunch
-- [A red gate on main is contended](feedback_red_gate_on_main_is_a_contended_repair.md) — re-run the check right before pushing; don't file its ticket until the fix is yours
-- [A mock that invents the platform](feedback_mock_that_invents_the_platform.md) — Fluent imported from a module Zotero never had; 40 green tests over dead code
-- [A stale artifact reads as live](feedback_a_stale_artifact_reads_as_live.md) — 12 611 log entries with today's dates, writer retired two versions back; grep what writes a file before inferring from it
-- [Measure the recommendation you wrote](feedback_measure_the_recommendation_you_wrote.md) — two mechanism-only recommendations, one reversed and one undercut by ten minutes of counting; his short challenge means a number is missing
-- [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md) — the check_ticket_logs gate compares to UTC while the session banner shows local (+2); three failed gates in one session from hand-written stamps
-- [The author's console is the instrument](feedback_the_author_s_console_is_the_instrument.md) — three host-contract defects, each settled by one pasted line; every theory I reasoned out instead was wrong
-- [Sitter install paths on doudou](project_sitter_install_paths_on_doudou.md) — only the GUI menu registers; the three arms of 2026-09-08 refuted both standing 0727 hypotheses
-- [Squash merge loses roar attribution](feedback_squash_merge_loses_roar_attribution.md) — the enumerator matches merge-commit subjects only; five PRs went unlogged
-- [No past tense without a run](feedback_no_past_tense_without_a_run.md) — three of six seats wrote test results they could not have observed; ask which command produced it
-- [Zoteus security notes](reference_zoteus_security_notes.md) — confidential findings live in ~/.local/state, outside the tree; a repo-rooted search cannot find them
-- [Assent is not a trigger](feedback_assent_is_not_a_trigger.md) — "qu'ils partent" named the destination, not the moment; irreversible acts need the moment
-- [`if:`-gated hooks get unparsed commands](reference_if_gated_hooks_get_unparsed_commands.md) — a settings matcher hands over what it cannot decompose; the hook must read the command
+- [Code under ~/CNRS/code, data under ~/data](feedback_code_under_cnrs_code_data_under_data.md)
+- [Stay on Max plan billing](feedback_stay_on_max_plan_billing.md)
+- [Author voice corpus](reference_author_voice_corpus.md)
+- [Execute authorized outward actions](feedback_execute_authorized_outward_actions.md)
+- [Repo prepares upstream, ships nothing](feedback_repo_prepares_upstream_it_ships_nothing.md)
+- [Benchmark harness traps](feedback_benchmark_harness_traps.md)
+- [Decision briefs, not option menus](feedback_decision_briefs.md)
+- [Preserve agent output, not just its report](feedback_preserve_agent_output.md)
+- [Verify the load-bearing claim](feedback_verify_the_load_bearing_claim.md)
+- [The metric decides the verdict](feedback_metric_decides_the_verdict.md)
+- [Adopted constants carry mechanisms](feedback_adopted_constants_carry_mechanisms.md)
+- [Probes need a discriminating control](feedback_probe_needs_discriminating_control.md)
+- [Guard the silent failure first](feedback_guard_the_silent_failure_first.md)
+- [A move can leave the gate](feedback_a_move_can_leave_the_gate.md)
+- [Append-only merges keep both](feedback_append_only_merge_union.md)
+- [A close claim needs a manual check](feedback_close_claim_needs_a_manual_check.md)
+- [No optional offers](feedback_no_optional_offers.md)
+- [Warm runs and single-point fits](feedback_warm_runs_and_single_point_fits.md)
+- [The ticket's own test needs a control](feedback_the_tickets_own_test_needs_a_control.md)
+- [A judgement must not outlive its subject](feedback_judgement_must_not_outlive_its_subject.md)
+- [Green PRs, red union](feedback_green_prs_red_union.md)
+- [Executor gate-loop stall](feedback_executor_gate_loop_stall.md)
+- [Registry, not knobs](project_registry_not_knobs.md)
+- [Room for multilingual embedders](feedback_room_for_multilingual_embedders.md)
+- [Negative results name their mechanism](feedback_negative_result_names_its_mechanism.md)
+- [Leads park on untracked background](feedback_leads_park_on_untracked_background.md)
+- [Spec edit mechanics](project_spec_edit_mechanics.md)
+- [Reconcile seats against synthesis](feedback_reconcile_seats_against_synthesis.md)
+- [Re-run the gate after your own fix](feedback_rerun_gate_after_own_fix.md)
+- [Takeover handoff pattern](feedback_takeover_handoff_pattern.md)
+- [Atomic PRs, short branches](feedback_atomic_prs_short_branches.md)
+- [Review catches only what it checks](feedback_review_catches_only_what_it_checks.md)
+- [Stacked PR on a live sibling's branch](feedback_stacked_pr_on_live_sibling_branch.md)
+- [Read the schema before asking for state](feedback_read_the_schema_before_asking_for_state.md)
+- [Control arms need a committed tree](feedback_control_arms_need_a_committed_tree.md)
+- [Deferral must name a measurer](feedback_deferral_must_name_a_measurer.md)
+- [Hold out the answer key](feedback_hold_out_the_answer_key.md)
+- [Archive bot walls](reference_archive_bot_walls.md)
+- [Reading blocked sources](reference_reading_blocked_sources.md)
+- [gh resolves repo from cwd](feedback_gh_resolves_repo_from_cwd.md)
+- [Fork cwd and the worktree guard](feedback_fork_cwd_and_worktree_guard.md)
+- [One gate per PR at a time](feedback_one_gate_per_pr_at_a_time.md)
+- [Guard budget is net-negative](feedback_guard_budget_is_net_negative.md)
+- [Stage by path in shared checkouts](feedback_stage_by_path_in_shared_checkouts.md)
+- [Check for the guard before proposing one](feedback_check_for_the_guard_before_proposing_one.md)
+- [Zotero 10 plugin and reindex](reference_zotero_10_plugin_and_reindex.md)
+- [Positive control before waiting](feedback_positive_control_before_waiting.md)
+- [Cloud runs need routines](feedback_cloud_runs_need_routines.md)
+- [Two gate channels find different defects](feedback_two_gate_channels_find_different_defects.md)
+- [Merge is one command](feedback_merge_is_one_command.md)
+- [The briefing is a claim](feedback_the_briefing_is_a_claim.md)
+- [Merge authority needs an attached verdict](feedback_merge_authority_needs_attached_verdict.md)
+- [A gate without the button is advisory](feedback_a_gate_without_the_button.md)
+- [A constant cannot witness a run](feedback_a_constant_cannot_witness_a_run.md)
+- [Verdicts belong on the forge](feedback_verdicts_belong_on_the_forge.md)
+- [Lane dormant after EnterWorktree](feedback_lane_dormant_after_enterworktree.md)
+- [A denial that matches a rule](feedback_a_denial_that_matches_a_rule.md)
+- [A primitive is not a requirement](feedback_a_primitive_is_not_a_requirement.md)
+- [A question is not a directive](feedback_a_question_is_not_a_directive.md)
+- [A ruling's scope is its reasoning](feedback_a_ruling_scope_is_its_reasoning.md)
+- [Branch from origin/main, not main](feedback_branch_from_origin_main_not_main.md)
+- [Concurrent agent can merge under you](feedback_concurrent_agent_can_merge_under_you.md)
+- [Defect fix over design argument](feedback_defect_fix_over_design_argument.md)
+- [A disclaimer does not protect a claim](feedback_disclaimer_does_not_protect_a_claim.md)
+- [Mechanism wearing a requirement's number](feedback_mechanism_wearing_a_requirements_number.md)
+- [A poller's elapsed is the quantum](feedback_poller_elapsed_is_the_quantum.md)
+- [Procedure without narration](feedback_procedure_without_narration.md)
+- [Ratification entry needs its own check](feedback_ratification_entry_needs_its_own_check.md)
+- [Read the code before designing around SPEC](feedback_read_the_code_before_designing_around_spec.md)
+- [Rebase can overwrite a sibling fix](feedback_rebase_can_overwrite_a_sibling_fix.md)
+- [Search the fork before claiming absence](feedback_search_the_fork_before_claiming_absence.md)
+- [Union append-only logs by timestamp](feedback_union_append_only_by_timestamp.md)
+- [tmp quota kills the shell silently](feedback_tmp_quota_kills_the_shell_silently.md)
+- [Crash recovery under the worktree guard](feedback_crash_recovery_under_worktree_guard.md)
+- [Review dispatch invisible to lane](feedback_review_dispatch_invisible_to_lane.md)
+- [One-liner, no ticket](feedback_one_liner_no_ticket.md)
+- [Matching a stale number is not confirmation](feedback_matching_a_stale_number_is_not_confirmation.md)
+- [Not offered is not nothing to see](feedback_not_offered_is_not_nothing_to_see.md)
+- [Challenged premise gets a default](feedback_challenged_premise_gets_a_default_not_a_relitigation.md)
+- [Check ticket status against main](feedback_check_ticket_status_against_main.md)
+- [Live smoke recipe](project_live_smoke_recipe.md)
+- [Redaction commit doesn't scrub history](feedback_redaction_commit_does_not_scrub_history.md)
+- [Ship simple fallback first](feedback_ship_simple_fallback_first.md)
+- [Review rounds don't fix code](feedback_review_rounds_dont_fix_code.md)
+- [Conductor implementation state](project_conductor_implementation_state.md)
+- [Execute agent self-review summary can misreport](feedback_execute_agent_self_review_summary_can_misreport.md)
+- [sudo incompatible with rootless isolation](project_sudo_incompatible_with_rootless_isolation.md)
+- [Acceptance arena permission model](project_acceptance_arena_permission_model.md)
+- [gh pr edit is broken here](feedback_gh_pr_edit_broken_use_api_patch.md)
+- [Verify security exemption premises live](feedback_verify_security_exemption_premises_live.md)
+- [Amend needs add after late edits](feedback_amend_needs_add_after_late_edits.md)
+- [Orchestrator and execute agent, same branch](feedback_orchestrator_and_execute_agent_same_branch.md)
+- [Validate utility before sending upstream](feedback_validate_utility_before_sending_upstream.md)
+- [Zoteus ladder goal-1 status](project_zoteus_ladder_goal1_status.md)
+- [erg log stamp must match wall clock](feedback_erg_log_stamp_must_match_wall_clock.md)
+- [Menagerie build state 2026-09-06](project_menagerie_build_state_2026-09-06.md)
+- [A red gate on main is contended](feedback_red_gate_on_main_is_a_contended_repair.md)
+- [A mock that invents the platform](feedback_mock_that_invents_the_platform.md)
+- [A stale artifact reads as live](feedback_a_stale_artifact_reads_as_live.md)
+- [Measure the recommendation you wrote](feedback_measure_the_recommendation_you_wrote.md)
+- [Ticket-log stamps are UTC](feedback_ticket_log_stamps_are_utc.md)
+- [The author's console is the instrument](feedback_the_author_s_console_is_the_instrument.md)
+- [Sitter install paths on doudou](project_sitter_install_paths_on_doudou.md)
+- [Squash merge loses roar attribution](feedback_squash_merge_loses_roar_attribution.md)
+- [No past tense without a run](feedback_no_past_tense_without_a_run.md)
+- [Zoteus security notes](reference_zoteus_security_notes.md)
+- [Assent is not a trigger](feedback_assent_is_not_a_trigger.md)
+- [`if:`-gated hooks get unparsed commands](reference_if_gated_hooks_get_unparsed_commands.md)
