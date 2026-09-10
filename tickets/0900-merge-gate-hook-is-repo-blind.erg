@@ -5,8 +5,9 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-09-10T09:45Z HDMX-coding-agent created
-2026-09-10T12:30Z HDMX-coding-agent note Decision recorded: per-project barrier.
-2026-09-10T14:10Z HDMX-coding-agent note Fix merged in the consumer repo (PR 1317, ticket 0706 closed); repo literals gone from its main.
+2026-09-10T10:11Z HDMX-coding-agent note Decision recorded: per-project barrier. Fix landed in the consumer repo, ticket 0706.
+2026-09-10T11:03Z HDMX-coding-agent note Correction to the note above: the fix had not landed when it was written. PR 1317 was open with no reviews; it merged at 10:57Z.
+2026-09-10T11:25Z HDMX-coding-agent note Red-team pass found two more blind spots in the same gate — the REST merge form, and gh's recorded default repo. Filed and fixed in the consumer repo, ticket 0707.
 
 --- body ---
 ## Contexte
@@ -184,6 +185,35 @@ ci-dessous sont donc vrais au moment où ce ticket se ferme, et non promis.
 - Contrôle en conditions réelles : les deux verdicts erronés observés le
   2026-09-10 sont inversés sur les PR réelles, et les titres relevés confirment
   que le hook interrogeait bien les PR sans rapport décrites plus haut.
+
+## Ce que la relecture a trouvé après la décision
+
+Deux passes adverses sur cette PR ont trouvé, dans la barrière que la fiche 0706
+venait de corriger, deux angles morts de la même famille — non plus « se tromper
+de dépôt », mais « ne pas se déclencher du tout ». Ils sont fichés et corrigés
+chez le consommateur sous la fiche 0707, et ce ticket ne se ferme qu'après.
+
+- `gh api repos/<o>/<d>/pulls/<n>/merge -X PUT` fusionne une PR, et la barrière
+  répondait « pas une fusion, la porte ne s'applique pas ». Pire, son filtre
+  `if` valait `Bash(gh pr merge *)`, donc cette forme n'atteignait même pas le
+  script. Et ce n'est pas une orthographe exotique : le garde de worktree du
+  harnais imprime précisément cette commande comme contournement prescrit. Un
+  agent qui suivait les instructions du harnais empruntait la seule voie que la
+  barrière ne voyait pas.
+- `gh repo set-default` enregistre le dépôt par défaut dans
+  `remote.<nom>.gh-resolved`, et le hook lisait `origin` en appelant cela une
+  mesure. Sous une topologie de fourche, ce n'est pas la même réponse.
+
+Il faut en tirer la leçon dans le texte, pas seulement dans le code. Ce ticket
+écrivait que les tests de comportement étaient « le rempart » qui rend la
+barrière par projet tenable. C'était encore trop fort : une variante qui cache
+l'identité dans un repli de `cwd` a passé les trente-sept tests, parce que le
+banc d'essai n'atteignait jamais ce repli. Le chemin est couvert désormais, mais
+la formulation juste est plus modeste — les tests couvrent les chemins de
+résolution que le hook possède, aucun jeu fini de gardes de source n'attrape une
+réintroduction arbitrairement obfusquée, et ce qui protège un script court reste
+qu'on le relise. La décision par projet tient sur cette base-là, qui est plus
+mince que celle annoncée deux fois, et il vaut mieux l'écrire que la redécouvrir.
 
 ## Exit criteria
 
