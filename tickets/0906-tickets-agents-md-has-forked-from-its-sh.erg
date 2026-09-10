@@ -6,9 +6,9 @@ Label: needs-human
 
 --- log ---
 2026-09-10T11:43Z claude created
-2026-09-10T12:05Z claude note Measured the fork: harness copy 7969 chars vs shipped asset 2141; nine adopters byte-identical to the asset; erg migrate force-overwrites a diverged copy by charter
-2026-09-10T12:40Z claude note Body rewritten. Found git-erg 0277/0278/0279, filed by a sibling session 06:53-09:40 the same day, which own the upstream half and correct three claims made above: the migrate overwrite is unit-asserted but not reproduced end to end, byte-identical adopters are current rather than frozen, and neither shipped claim is false. Author verdict recorded; one conflict with 0277's recorded destination left open for arbitration.
-
+2026-09-10T11:45Z claude note Measured the fork: harness copy 7969 chars vs shipped asset 2141; nine adopters byte-identical to the asset; erg migrate force-overwrites a diverged copy by charter
+2026-09-10T12:06Z claude note Body rewritten. Found git-erg 0277/0278/0279, filed by a sibling session 06:53-09:40 the same day, which own the upstream half and correct three claims made above: the migrate overwrite is unit-asserted but not reproduced end to end, byte-identical adopters are current rather than frozen, and neither shipped claim is false. Author verdict recorded; one conflict with 0277's recorded destination left open for arbitration.
+2026-09-10T12:25Z claude note recorded the PREAMBLE_BUDGET coupling: PR 875 pins 9800 to a chain that is 83 percent AGENTS.md, measured independently by both passes at 719/7969/958, so the trim must lower it to ~3900 in the same commit or the ratchet stops being able to fail
 --- body ---
 ## Status
 
@@ -98,6 +98,17 @@ hand:
   Measured against that known-positive: anchored 0 hits, whitespace-tolerant
   1 hit. This blind spot is independent of this ticket and applies to `rules/**`.
 
+**A gate that does reach it, and that this trim will make slack.** PR #875
+introduces `tests/test_resident_preamble_budget.py` with
+`PREAMBLE_BUDGET = 9800` over `CLAUDE.md` and its `@` chain. That chain is
+`CLAUDE.md` 719 + `tickets/AGENTS.md` 7 969 + `RTK.md` 958 = 9 646, so
+**AGENTS.md is 83% of the whole preamble budget** — measured independently by
+that PR's own pass and by this one, arriving at the same split. The number is
+therefore pinned to a file this ticket is about to shrink: at the shipped
+2 141 the chain falls to 3 818, and 9 800 would pass while guarding less than
+half of what it was set against. The constant carries a comment saying so at
+the line. **Lowering it is part of this trim, not a follow-up.**
+
 ## The candidate, measured
 
 A merged version was drafted to price the question rather than argue it: every
@@ -154,8 +165,11 @@ arbitration for the author, and no upstream work should start before it.
    embedded in the vendored `tickets/erg`. Prefer it over a size budget — it
    makes drift impossible rather than expensive, and it self-heals after any
    path that reinstalls the asset.
-6. Fix `SHELL_FENCE` to tolerate leading whitespace (observation, independent).
-7. `chemin-de-voix`, deferred: it is a tool upgrade, not a doc fix. Its `erg` is
+6. Lower `PREAMBLE_BUDGET` in `tests/test_resident_preamble_budget.py` in the
+   same commit as the trim — ~3 900 keeps the thin headroom the rules-tree gate
+   uses. Leaving it at 9 800 turns a live ratchet into a gate that cannot fail.
+7. Fix `SHELL_FENCE` to tolerate leading whitespace (observation, independent).
+8. `chemin-de-voix`, deferred: it is a tool upgrade, not a doc fix. Its `erg` is
    the 2026-05-18 build and its four tickets use `Tag:`, so its AGENTS.md is
    consistent with the binary it runs. Update the binary, migrate the headers,
    and the asset is rewritten by the tool. Blocked in practice by two unpushed
@@ -181,6 +195,8 @@ so the relaxation is proved to change only what it should.
 - [ ] the anti-suffix rule is present in whatever this repo ends up reading
 - [ ] no rule listed under "the candidate, measured" is lost — each is
       upstreamed, relocated to `rules/`, or in a memory note something cites
+- [ ] `PREAMBLE_BUDGET` lowered in the same commit as the trim, and red against
+      the pre-trim chain
 - [ ] `uv run pytest -m adherence` green, `erg check tickets/` PASS
 
 ## Invariants
