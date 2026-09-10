@@ -42,11 +42,7 @@ import skill_frontmatter as sf  # noqa: E402
 # authoring made conditional, runtime specifics split into claude-code.md, and
 # every procedure returned to the skill or script that runs it. Headroom is
 # deliberately thin: it fits a clarifying sentence, not a section.
-# Raised from 36000 on 2026-09-10 to fund the waiter rule in `workflow.md`: 105
-# of them written in 101 days, every one by an agent, and the memory note that
-# already held the recipe reached none — a resident body is what reaches them.
-# This is a loan of 500 characters against a trimming pass, not an end state.
-RESIDENT_BUDGET = 36500
+RESIDENT_BUDGET = 36000
 
 def is_resident(path: Path) -> bool:
     """True when the runtime loads this body unconditionally.

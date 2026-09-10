@@ -206,14 +206,6 @@ chain of single-command turns pays the context tax repeatedly for no new work â€
 lookups, one tool call. The figure is a *share*, not a weekly rate: re-measures
 move the rate with activity and leave the share where it is (`/trace-doctor`).
 
-**Never poll for a process in a shell loop.** A `pgrep` predicate matches the
-waiting shell's own command line, so the loop waits for itself â€” written 105
-times, always by an agent. Worse, it spends a tool call on nothing and outlives
-the session, polling forever with nothing to sweep it. Launch with
-`run_in_background` and let the completion notification arrive; if polling is
-unavoidable, wait on a PID captured beforehand, never on a pattern that can
-describe itself.
-
 # Autonomous action
 
 **Batch the decisions, then run to the end.** The author's attention is the

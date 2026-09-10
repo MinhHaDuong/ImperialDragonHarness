@@ -56,13 +56,26 @@ which is the tell that the defect is the shape, not the predicate.
 live process whose cwd is a *deleted* worktree, which held for the first
 specimen and failed on the second, stranded in a scratchpad that still exists —
 n=1 dressed as a rule. The signal that fits both is reparentation: a process
-whose parent is init while its cwd sits under a session path. It was dropped
-anyway, on the author's call: the mop does not close the tap, and the rule now
-sits in `rules/workflow.md`, resident in every session, where a memory note
-recalled by relevance reached none of the 105.
+whose parent is init while its cwd sits under a session path. Kept here for
+whoever builds the sweep; the mop was dropped because it does not close the tap.
+
+**What closed the tap: a `PreToolUse(Bash)` guard**, `guard-pgrep-waiter.sh`,
+denying the shape outright. Two instruments were tried and rejected first, and
+the order is the lesson. A memory note — this one — had the correct recipe since
+2026-09-09 and reached none of the 105, because memory is recalled by relevance.
+A resident rule in `rules/workflow.md` was then written, and it would have
+worked, but it cost 474 characters in every session of every project and
+required raising a capped budget. Review found the cheapest instrument had never
+been weighed: a script costs *zero* resident budget and blocks the mistake
+structurally instead of hoping the prose is read. **Reach for the guard before
+the rule before the note** — the three differ by orders of magnitude in both
+cost and reliability, and the ranking is not the order they come to mind in.
 
 Three details that cost a step each. `readlink /proc/<pid>/cwd` returns the path
 with a literal `" (deleted)"` suffix. Killing the waiter leaves its `sleep`
-child alive, so kill the children too. And a sweep that greps command lines for
-the waiter *matches itself*, exactly like the waiter — reparentation is the
-signal that cannot describe itself.
+child alive, so kill the children too (the 14 h 57 specimen had one; the
+16 h 49 one did not). And a sweep that greps command lines for the waiter
+*matches itself*, exactly like the waiter — which is why the guard requires
+`sleep` alongside `pgrep` and a loop keyword, so that a command written to hunt
+these waiters is not blocked by the guard against them. That fired for real,
+against an earlier draft, in the session that wrote it.
