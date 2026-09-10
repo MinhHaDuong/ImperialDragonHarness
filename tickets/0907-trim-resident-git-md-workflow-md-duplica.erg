@@ -1,0 +1,71 @@
+%erg 0.1
+Title: Trim resident git.md/workflow.md duplicates into /merge and /gaze
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T14:23Z claude created
+
+--- body ---
+## Context
+
+`rules/git.md` and `rules/workflow.md` are fully resident (no `paths:`
+frontmatter) — loaded in every session of every project (`rules/README.md`).
+Several of their bullets are recovery procedures for a specific moment
+(a merge, a `/gaze` invocation) that already live, in full or in near-full
+duplicate, inside the skill that owns that moment. Paying their prose in
+every session that will never run `/merge` or `/gaze` is the same waste
+`test_branch_cleanup_recipes.py` already ratchets against for the
+`§ Branch cleanup` section (moved to `/roar` step 10, 2026-09-09).
+
+## Actions taken
+
+- `rules/git.md` § Merging: trimmed 7 bullets to short pointers; ported
+  substance to `skills/merge/SKILL.md` (`## Before merging`, `## Merge
+  conflict recovery`) and `skills/gaze/SKILL.md` (`## Invariants`,
+  branch-currency prerequisite).
+- `rules/workflow.md` § Worktree paths: trimmed the memory carve-out
+  corollary to a one-line pointer at `/roar` step 6, which already carries
+  the fuller procedure (including the background-session case that
+  `workflow.md` never had).
+- Added `tests/test_git_md_merging_delegates.py`, a string-match ratchet
+  mirroring `test_branch_cleanup_recipes.py`: proves the content moved,
+  not merely duplicated.
+
+## Explicitly descoped (found not worth the risk)
+
+- `rules/git.md` § Repo layout "Prose workpackages" bullet: cited by name
+  from `skills/gaze/SKILL.md`, `skills/hunt/SKILL.md`, `rules/workflow.md`,
+  and pinned by `tests/test_gaze_prose_routing.py`. The ~150-word saving
+  did not justify breaking a tested citation chain tied to a real incident
+  (ticket 0550). Left untouched.
+- "Reviewers are decorrelated from the coder" (`rules/workflow.md`
+  § Delegation): `/gaze`'s own SKILL.md already cites this bullet as its
+  source (`rules/workflow.md § Delegation`) — it is the canonical origin,
+  not a duplicate. Extracting it would invert the citation. Left untouched.
+- Child-ticket-split-before-work paragraph (`rules/workflow.md` § Ticket
+  discipline): fires at planning time, before any specific skill is
+  invoked — no clean skill-shaped home. Left untouched.
+
+## Verification
+
+- `make check-fast` and `make lint` (adherence tier) both green except one
+  pre-existing, unrelated failure (`test_real_scripts_dir_is_agnostic`,
+  origin/main commits `b49f01a`/`625932a`, files this ticket never touched).
+- `./scripts/check-agnostic.sh skills` and `rules` both exit 0.
+- Resident savings, measured via `wc -c` before/after: `rules/git.md`
+  10086 → 8994 chars (−1092); `rules/workflow.md` 14155 → 13840 chars
+  (−315). Total ≈ 1.4 kB (~500 tokens at the census's 2.8 chars/token) off
+  every session's resident budget.
+
+## Exit criteria
+
+- [x] `rules/git.md` § Merging bullets point at `/merge`/`/gaze` instead of
+      inlining recovery procedures already owned there.
+- [x] `rules/workflow.md` memory-carve-out corollary points at `/roar`
+      step 6 instead of duplicating it.
+- [x] `tests/test_git_md_merging_delegates.py` proves delegation, not mere
+      duplication.
+- [x] `make check-fast` and `make lint` pass (module pre-existing failure
+      excepted).
+- [x] `./scripts/check-agnostic.sh skills rules` both exit 0.
