@@ -497,6 +497,62 @@ reports success over the entries it can see. Three instances were found while
 writing this document, twice in the author's own new code, and a fourth in its
 own central claim — see §9.
 
+### The format of a body
+
+Markdown with YAML frontmatter, on the **OKF v0.1** field names: `type`,
+`title`, `description`, `tags`, `timestamp`. That costs nothing, because those
+are the fields ranking needs anyway — compatibility here is a naming decision
+rather than a concession.
+
+**The canonical form is the portable one, and runtime-specific spellings are
+generated aliases rather than the source.** This is a rule with teeth, and it
+decides the cases that would otherwise be argued one at a time:
+
+- The **slug is the filename**, so a `name:` field restating it is a runtime
+  idiosyncrasy and is dropped. The runtime falls back to deriving a name from
+  the path when the field is absent, so nothing is lost.
+- `type` sits **flat**, not nested under `metadata:`. The nesting is
+  Claude-shaped; the flat spelling is the convention's.
+- `description` stays, and needs no argument: the convention wants it and the
+  runtime's own selector keys on it. Where the two agree there is no idiosyncrasy
+  to avoid.
+
+One consequence inverts today's arrangement: **`title` moves into the body.**
+The index currently holds the only human-readable title a memory has, which is
+backwards for a generated view — everything the index displays has to come from
+the store, or the store cannot regenerate it.
+
+Links between memories are `[[slug]]`. Not a new convention: 533 bodies already
+carry such links and nothing has ever resolved them, so what is missing is not
+the syntax but a check that the targets exist.
+
+**Two indexes, and they do not carry the same content.** `index.md` is the
+**complete** catalogue: one line per live body, no cut. `MEMORY.md` is the
+**budgeted** view: the top N, with an overflow line that now has somewhere to
+point — *"N bodies not listed, see `index.md`"*. The runtime loads the second by
+that name and will not look for the first, so it has to be emitted; the first is
+what the store publishes and what an adapter on another runtime should read.
+
+Whether a folder index in the target convention is expected to be complete is a
+question about that convention, and it is not answered here — but the two-view
+split is right on its own merits, because the two jobs are different. A resident
+view has a budget and must cut; a catalogue exists to leave nothing out, and
+naming a budgeted excerpt after a catalogue would mislead whatever reads it.
+
+This also settles something earlier versions argued over. A full-catalogue file
+was rejected in favour of a search, on the grounds that a materialised view goes
+stale and needs its own collector. That objection does not survive here:
+`index.md` is regenerated from the directory by the same pass that writes
+`MEMORY.md`, so it cannot drift from the store any more than the budgeted view
+can. The door of P2 may be a file again — provided it is generated, which was
+always the real condition.
+
+On tooling: read and write with `python-frontmatter`, validate with a small
+pydantic model kept in this repository. **No common validator for the
+convention exists**, which is the weak point of the ecosystem rather than of
+this design — and it is the reason the schema is owned here rather than
+imported.
+
 ### Why flat files, and not a database
 
 The store is one file per memory in a directory tracked by git. A database

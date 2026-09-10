@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Frontmatter migration: one type field, one shape, across the corpus
+Title: Migrate memory bodies to the common format (OKF-compatible frontmatter)
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0917
@@ -8,51 +8,111 @@ Blocked-by: 0917
 2026-09-10T15:50Z claude created
 
 --- body ---
+
 ## Context
 
-Ranking reads frontmatter, and the frontmatter is not uniform enough to rank
-on. Across roughly 954 bodies: 47 carry no frontmatter type at all, 208 use a
-top-level `type:`, and 746 use `metadata.type`. Until that converges, any
-per-type or score-carrying field is reading two schemas and a gap.
+Ranking reads frontmatter, and the frontmatter is neither uniform nor rich
+enough to rank on. Across roughly 954 bodies: 47 carry no type at all, 208 use
+a top-level `type:`, 746 use `metadata.type`, and none carries a title, a
+timestamp or tags. The index holds the human-readable title, which is backwards
+— the index is a generated view, so everything it displays must come from the
+bodies.
 
-This ticket is **only** the migration. The grammar, the resolver, `supersedes`
-and the scorer are `0914`; they were bundled here and the bundle was three
-units.
+The target format is settled: **Markdown with YAML frontmatter on the OKF v0.1
+field names** — `type`, `title`, `description`, `tags`, `timestamp` — which
+costs nothing, since those are the fields ranking needs anyway.
 
-Design reference: defect 3 in `docs/2026-09-10-dragon-memory-design.md`. Review: sizing in `docs/2026-09-10-dragon-memory-design-review-fable-design.md` §3.
+**The canonical form is the portable one.** Runtime-specific spellings are
+generated aliases, never the source. So `name:` is dropped (the filename is the
+slug, and the runtime derives one from the path when the field is absent), and
+`type` sits flat rather than nested under `metadata:`. `description` stays
+because the convention and the runtime agree on it — where they agree there is
+no idiosyncrasy to remove.
+
+This ticket is **only** the format and the migration. The grammar, the
+resolver, `supersedes` and the scorer are `0914`; the quality dimensions are
+`0919`; the dates that fill `timestamp` come from `0917`, which must merge
+first.
+
+## The index filename, decided
+
+**Two indexes, different content.** `index.md` is the **complete** catalogue —
+one line per live body, no cut. `MEMORY.md` is the **budgeted** view — the top
+N, whose overflow line points at `index.md`. The runtime loads the second by
+that name and `tests/test_resident_census.py` budgets it under that name, so
+dropping it would remove the resident index from the system prompt in silence.
+The first is what the store publishes and what an adapter on another runtime
+reads.
+
+**Open, and this ticket's to settle:** whether a folder index in the target
+convention is expected to be complete. If it is, the split above is already
+right. If a partial index is admissible, the split is still right, because the
+two views have different jobs — but say which reading the schema follows rather
+than leaving a reader to infer it.
 
 ## Relevant files
 
 - `projects/*/memory/*.md` and `memory/*.md` — the corpus
 - `skills/memory/SKILL.md` — the shape new memories are written in
+- `tests/test_resident_census.py` — budgets `MEMORY.md` by name
+- `requirements-dev.txt` — `PyYAML` is declared; `python-frontmatter` and
+  `pydantic` are not
 
 ## Actions
 
-1. Converge on one shape and one field name.
-2. Migrate the 208 top-level and type the 47 untyped. A data change of this
-   size is reviewable by count and by spot-check, not by reading 954 diffs —
-   say so in the pull request and give the counts.
-3. Update the skill so new memories are written in the surviving shape.
+1. Fix the schema: OKF v0.1 fields (`type`, `title`, `description`, `tags`,
+   `timestamp`), flat, one nesting level. Drop `name:`. The current split
+   between top-level `type:` and `metadata.type` is what the migration removes,
+   and it resolves toward the flat spelling.
+2. Declare `python-frontmatter` and `pydantic` as pinned dependencies and lock
+   them. Read and write with the first; validate with a pydantic model in this
+   repo, since **no common OKF validator exists** — that gap is the ecosystem's,
+   not this repo's, and the model is small enough to own.
+3. Migrate: type the 47, converge the 208, fill `title` from the index line that
+   currently holds it, fill `timestamp` from `0917`'s rescued dates, leave
+   `tags` empty rather than inventing them.
+4. Emit both indexes: `index.md` complete, `MEMORY.md` budgeted with an
+   overflow line naming `index.md`.
+5. **Validate the `[[slug]]` links.** 533 bodies already carry them and nothing
+   has ever resolved them, so the convention is established and its integrity is
+   unknown. Report dangling links; do not auto-fix them, since a dangling link
+   may mean a body that should exist rather than a typo.
 
 ## Test
 
-A lint test with a **deliberately untyped fixture**, so the check fails on a
-real case rather than passing because the corpus happens to be clean. "47
-untyped are now typed" is a count-of-zero and passes vacuously the day after.
+Red first, and each on a fixture rather than on a count — a count-based
+criterion passes vacuously the day after it is written:
+
+- a deliberately untyped body fails the schema check
+- a body with `type:` at top level fails, so the old shape cannot come back
+- a body whose `[[slug]]` names nothing is reported
+- the generator emits a complete `index.md` and a budgeted `MEMORY.md`, on a
+  fixture where the two differ — identical output would mean the cut is not
+  being applied, or the catalogue is not complete
 
 ## Verification
 
 - [ ] Counts before and after, stated in the pull request
-- [ ] The lint fixture fails without the fix and passes with it
-- [ ] A spot-check sample of migrated bodies reads correctly
+- [ ] Every fixture fails without the fix and passes with it
+- [ ] A spot-check sample of migrated bodies reads correctly in both consumers
+- [ ] `MEMORY.md` is still loaded by the runtime after the change
 
 ## Invariants
 
-- No body content changes. This is a frontmatter migration.
+- No body content changes. This is frontmatter plus a link report.
 - No body is deleted.
+- `MEMORY.md` keeps being emitted. Anything that stops emitting it removes the
+  resident index, which is the channel the whole design is about — but it is the
+  alias, not the canonical name.
 
 ## Exit criteria
 
-- [ ] One shape, one field name, across the whole corpus
-- [ ] The skill writes the surviving shape
-- [ ] A lint test with an untyped fixture guards the convergence
+- [ ] One schema, validated by a pydantic model in this repo
+- [ ] `python-frontmatter` and `pydantic` pinned and locked
+- [ ] Every live body carries the OKF fields, flat, with no `name:`
+- [ ] `title` lives in the body; the index derives it rather than holding it
+- [ ] `index.md` complete and `MEMORY.md` budgeted, both generated, the
+      difference proven on an over-budget fixture
+- [ ] The overflow line names `index.md`
+- [ ] The convention's completeness expectation is checked and recorded
+- [ ] Dangling `[[slug]]` links reported, with a count
