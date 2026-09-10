@@ -1,81 +1,74 @@
 %erg 0.1
-Title: Consolidation pass: pool, dedupe, promote, tombstone
+Title: Consolidation pass: deterministic pooling, grouping and reports
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0908
+Blocked-by: 0910
+Blocked-by: 0914
 
 --- log ---
 2026-09-10T15:50Z claude created
 
 --- body ---
-
 ## Context
 
-Promotion currently identifies entries by filename equality, which yields one
-candidate. A lexical pass over slug words finds roughly 43 candidate pairs of
-which 17–21 are genuine — so the mechanism is not short of material, it is
-short of a way to recognise it. About half of any lexical pass is noise, which
-is why confirmation is part of this ticket rather than an afterthought.
+The deterministic half of consolidation: pool the tiers, group candidates,
+report, and instrument. The judged half — deciding whether a group is one
+lesson and writing the merged text — is `0916`, and keeping the two apart is
+what lets this half be tested.
 
-Design reference: defect 2, "What the model decides, and what it must not", and
-ticket T4 in `docs/2026-09-10-dragon-memory-design.md`.
+Promotion currently identifies entries by filename equality, which yields one
+candidate. A lexical pass finds roughly 43 candidate pairs of which 17–21 are
+genuine, so the mechanism is not short of material; it is short of a way to
+recognise it.
+
+Design reference: defect 2 and "What the consolidation pass does" in `docs/2026-09-10-dragon-memory-design.md`.
 
 ## Relevant files
 
-- `skills/dream/SKILL.md` — the consolidation pass
-- `skills/dream/provenance.py` — promotion candidacy and the live-body walker
+- `skills/dream/SKILL.md` — the pass
+- `skills/dream/provenance.py` — candidacy and the walker
 
 ## Actions
 
-1. Pool the project directories **and the harness tier**. The harness is a
-   project like any other here: it has direct writes, it is compared against,
-   and it takes part in the pairs the pass finds. The one asymmetry is a
-   direction — promotion moves up into it and never back out — which settles in
-   advance what happens when a pair straddles the tiers: the harness copy
-   survives, the project copy is tombstoned, nothing new is created.
-2. Group candidates mechanically. Grouping is not the judgment step.
-3. Let a model decide whether a group is one lesson and write the merged body,
-   naming what it supersedes. **It decides nothing about retention** — not what
-   ranks, not what expires, not what is still true. Those stay deterministic,
-   which is what keeps the index reproducible from the store alone.
-4. Route merges into the harness tier through review. It is the only operation
-   that replaces text with different text, it reaches every session, and it is
-   where both silent loss and poisoning would enter.
-5. Record the model's identity and its prompt in the run's provenance, beside
-   the embedding model's, so a later reader can tell why a merge looks as it
-   does.
-6. Report near-miss pairs — similar enough to suspect, different enough not to
-   merge — as contradiction candidates. The similarity is already computed.
-7. Record the body count and the pass's own wall-clock duration. Growth gets an
-   **alarm, not a cap**: a file-count ceiling would be a deletion mechanism, and
-   what actually degrades is this pass, not the corpus.
-8. Trigger `0910`'s regeneration when the pass changes a directory.
+1. Pool the project directories **and the harness tier**, which participates on
+   the same footing. The one asymmetry is a direction: promotion moves up into
+   the harness tier and never back out, so a pair straddling the two resolves in
+   advance — harness copy survives, project copy is tombstoned.
+2. Group candidates mechanically and hand the groups to `0916`.
+3. Report near-miss pairs — similar enough to suspect, different enough not to
+   merge — as contradiction candidates.
+4. Keep a **rejection ledger**: a pair a human rejected once must not be
+   re-proposed every run.
+5. Record body count and the pass's wall-clock duration, **with a threshold
+   that fails a test**. A duration written to a log is not an alarm; an alarm
+   has a threshold and a reader.
+6. Refuse to run against a checkout with uncommitted bodies, and hold a run
+   lock so two passes cannot interleave. An overwritten uncommitted body has no
+   ancestor to recover from.
 
 ## Test
 
-Red first: a known-genuine pair is surfaced; a known lexical false positive
-(`dropna_before_merge` / `rebase_before_merge` is one) is not merged; a pair
-straddling project and harness tiers resolves by tombstoning the project copy.
+Red first, and these fixtures are reused by `0916`: a known-genuine pair is
+surfaced; the named lexical false positive (`dropna_before_merge` /
+`rebase_before_merge`) is not; a pair straddling project and harness tiers is
+grouped with the resolution direction recorded. Plus: a dirty checkout is
+refused; a second pass blocks on the lock; a duration over threshold fails.
 
 ## Verification
 
-- [ ] Candidates rise from 1 to the 17–21 genuine pairs
-- [ ] No merge applies without confirmation
-- [ ] Promoted slugs leave no body counted live (depends on `0908`)
-- [ ] The run's provenance carries model identity, prompt, body count, duration
+- [ ] Candidates rise from 1 to the genuine pairs, false positives excluded
+- [ ] A rejected pair is not re-proposed on the next run
+- [ ] The lock and the dirty-tree refusal both fire in tests
 
 ## Invariants
 
-- Nothing is deleted. Merged originals are tombstoned and remain readable, which
-  is what makes a wrong merge recoverable rather than fatal.
-- The harness tier is never a promotion *destination for removal*: entries move
-  up into it and stop.
+- This ticket merges nothing. It proposes.
+- Nothing is deleted.
 
 ## Exit criteria
 
-- [ ] Genuine cross-project pairs surfaced, lexical false positives rejected
-      before any merge
-- [ ] The harness tier participates on the same footing, promotion one-way
-- [ ] Promotion tombstones the project copies
-- [ ] Near-miss pairs reported as contradiction candidates
-- [ ] Corpus size and pass duration recorded; no file-count cap introduced
+- [ ] The three grouping fixtures pass
+- [ ] Rejection ledger persists across runs, proven by a fixture
+- [ ] Duration threshold fails a test when exceeded
+- [ ] Dirty-tree refusal and run lock each proven by a fixture

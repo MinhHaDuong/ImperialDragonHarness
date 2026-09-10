@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Tracker: memory retention program (design v3)
+Title: Tracker: memory retention program (design v4)
 Created: 2026-09-10
 Author: claude
 
@@ -10,35 +10,95 @@ Author: claude
 
 ## Context
 
-The memory design reached v3 after three external reviews and a working session
+The memory design reached v4 after four external reviews and a working session
 with the author. `docs/2026-09-10-dragon-memory-design.md` is the settled architecture; this ticket tracks
 turning it into code. It stays open until every child is merged and the
 integration review in `/roar` step 8 has run.
 
 The architecture in one paragraph: the store is the bodies, one file per memory
-under git; `MEMORY.md` is generated as the top N by score and never
-hand-edited; nothing is ever deleted, and the only removal from a project
+under git; `MEMORY.md` is generated as the top N by score and written only by
+the consolidation pass, so a session's writes and the index's writes are
+disjoint sets; nothing is ever deleted, and the only removal from a project
 directory is promotion into the harness tier; a memory declares what it is true
-*while*, and expiry only unranks, so it is reversible.
+*while*, and expiry only unranks, so it is reversible; and a declared class
+stays resident regardless of score, because falling below the cut removes
+awareness, not merely reachability.
 
-## Children
+## Children, in wave order
+
+**Wave 0 — expires. Do this first or it becomes impossible.**
+
+- `0917` — rescue the history dates before the frontmatter sweep destroys them.
+  `0911` rewrites 954 files, and the moment it merges the last-commit dates are
+  reset corpus-wide. No body carries a date in frontmatter and the provenance
+  stamps are batched, so version history is the only stable recency the corpus
+  has.
+
+**Wave 1 — independent of everything.**
 
 - `0908` — promotion marks the project copy dead in the form the walker reads
-- `0910` — generate the memory index as the top N of its directory
-- `0911` — one type field, one frontmatter shape, `valid_while` and `supersedes`
-- `0912` — consolidation pass: pool, dedupe, promote, tombstone
+- `0911` — frontmatter migration: one type field, one shape, across the corpus
+  *(needs 0917 first, for the reason above)*
+- `0913` — retire the dead retention machinery and ship the resident search line
 
-Only `0912` has a real prerequisite (`0908`). The other three are independent.
+**Wave 2.**
+
+- `0910` — generate the memory index as the top N of its directory *(needs 0913:
+  until the resident search line exists, a body below the cut has no documented
+  way back)*
+
+**Wave 3.**
+
+- `0914` — `valid_while` grammar, resolver, scorer integration and `supersedes`
+  *(needs 0910's generator and 0911's uniform frontmatter)*
+- `0915` — enforce the validity predicate on the write path *(needs 0914; and it
+  begins by establishing whether a write path exists as code at all)*
+
+**Wave 4.**
+
+- `0912` — consolidation pass: deterministic pooling, grouping and reports
+  *(needs 0908, 0910 and 0914)*
+
+**Wave 5.**
+
+- `0916` — model-judged merge, reviewed promotion, tombstoning *(needs 0912)*
+
+**Alongside, once the index exists.**
+
+- `0918` — ranking miss-rate instrument *(needs 0910)*. `0910` proves the index
+  reproducible; nothing proves it good. A read of a body absent from that day's
+  index is a ranking miss, and that is measurable without an A/B.
+- `0919` — backfill the quality dimensions across the corpus with a model pass
+  *(needs 0911's uniform frontmatter and 0917's dates)*. New memories declare
+  their dimensions at writing; the 950 that already exist declare nothing, so
+  without this the scorer ranks a corpus of blanks.
+
+An earlier version of this tracker said only `0912` had a real prerequisite and
+named `0908`. That was wrong in both directions: `0912` depends on three
+siblings, and `0910` depends on `0913`.
 
 ## Deliberately not children
 
 A decay pass, a corpus cap, an orphan collector, and a full-catalogue file. §5
-of the design removes the need for all four; they are listed here so a later
-reader does not re-derive them as gaps.
+of the design removes the need for all four; `0913` deletes the machinery that
+survives from them. They are listed here so a later reader does not re-derive
+them as gaps.
+
+Parked rather than planned: the embedding database and its content-hash cache.
+The design describes them; nothing depends on them, and `0912` ships without
+them.
+
+## Open decision carried by a child
+
+`0910` records it: **what "recency" means as a score input.** Provenance dates
+are batch-stamped and filesystem mtimes reset on clone, so neither is usable.
+`0917` preserves the only stable source before it is destroyed; choosing
+between creation and last-touch, or scoring without recency at all, stays open
+and is `0910`'s to settle.
 
 ## Exit criteria
 
-- [ ] All four children merged
+- [ ] All eleven children merged
 - [ ] Child diffs re-read together, not only individually
 - [ ] `make check` passes on the union
-- [ ] The design's §6 matches what shipped, or the design is amended to match
+- [ ] The design's §6 and Annex A match what shipped, or the design is amended

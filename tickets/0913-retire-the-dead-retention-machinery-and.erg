@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Retire the dead retention machinery and ship the resident search line
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T16:24Z claude created
+
+--- body ---
+## Context
+
+The design retired four mechanisms — a decay pass, a per-type TTL table, a
+corpus cap, an orphan collector — and added one: a single resident line naming
+how the store is searched. None of the retirements happened, and the line does
+not exist. So the repository still carries code and prose for a policy the
+design abandoned, and does not carry the one line the architecture depends on.
+
+This blocks index generation: `0910` cuts an index at N, and until the resident
+line ships, a body below the cut has no documented way back. The fourth review
+made that point sharply — an unlisted body is unreachable *by the design's own
+§2.4* until the door exists.
+
+Design reference: §5 (P2, and the list of what §5 removes) in `docs/2026-09-10-dragon-memory-design.md`.
+Review: F7 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+
+## Relevant files
+
+- `skills/dream/` — the decay pass, the `confirm` step and their tests
+- `skills/memory/SKILL.md` — the TTL table
+- `tests/test_resident_census.py` — the harness index budget, currently a
+  ratchet stamped on a nearly empty tier rather than a decision
+- `skills/dream/read-index.py` — reads the store from `MEMORY.md`, which
+  inverts store and view
+
+## Actions
+
+1. Delete the decay pass, the `confirm` step and their tests.
+2. Delete the TTL table and the 200-line cap.
+3. Delete the "an entry dropped from an index is unreachable, so never unlist"
+   prose wherever it survives in skill files — the architecture now unlists by
+   design.
+4. Restate the harness index budget as a decision about what that tier must
+   carry, not a ratchet on what it currently holds. The harness and project
+   indexes are separate resident channels; neither constrains the other.
+5. Ship P2's resident line: one line, in the resident set, naming the search
+   and how to run it.
+6. Fix the `read-index.py` inversion, or file it if it is larger than it looks.
+
+## Test
+
+Red first: assert the resident line is present in the resident set and that the
+resident set is under budget with it. Then let the suite name the callers of
+what you delete — a reference list and the set of things that break are
+different sets.
+
+## Verification
+
+- [ ] `grep -r "decay\|TTL" skills/` returns nothing load-bearing
+- [ ] The resident line is present and the budget test passes with it
+- [ ] Nothing in `skills/` still tells a reader that unlisting loses an entry
+
+## Invariants
+
+- No memory body is deleted by this ticket. It removes machinery, not content.
+
+## Exit criteria
+
+- [ ] Decay, `confirm`, the TTL table and the 200-line cap are gone with their tests
+- [ ] The harness budget is a stated decision with its reasoning
+- [ ] The resident search line exists, is resident, and is covered by a test

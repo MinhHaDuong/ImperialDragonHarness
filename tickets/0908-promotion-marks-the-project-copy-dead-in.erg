@@ -51,5 +51,8 @@ counted live. It fails today for all five.
 ## Exit criteria
 
 - [ ] One marker value, not two, across writer and reader
-- [ ] The five stubs are counted dead
+- [ ] The five named slugs are counted dead — assert on the slugs, not on
+      "the count drops by five", which races with any session writing memory
+      before this merges
+- [ ] The new marker is added to the coverage test's positive control
 - [ ] A test asserts a promoted entry has no body counted live

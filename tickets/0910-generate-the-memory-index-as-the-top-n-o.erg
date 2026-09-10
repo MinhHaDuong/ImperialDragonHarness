@@ -2,6 +2,7 @@
 Title: Generate the memory index as the top N of its directory
 Created: 2026-09-10
 Author: claude
+Blocked-by: 0913
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -61,6 +62,23 @@ body dropped below N is still reachable — the point of the whole design.
 ## Exit criteria
 
 - [ ] The index is generated, not authored, for both tiers
-- [ ] N derives from a character budget, and the budget is a parameter
-- [ ] An overflow line states how many bodies are not listed
+- [ ] N derives from a character budget, proven on a fixture directory that
+      **exceeds** the budget — an empty directory passes the criterion otherwise
+- [ ] An overflow line states how many bodies are not listed, and the count
+      equals live minus N on that fixture
 - [ ] Regeneration is idempotent, proven by a test
+- [ ] **No declared-resident entry falls below N**, proven by a fixture with a
+      declared entry that a naive score would demote
+- [ ] The fixture's below-cut body is found by the documented search on its
+      `name:` — "no entry becomes unreachable" is a null trap on its own, and
+      is false by §2.4 until `0913` ships the resident line
+
+## Decisions recorded
+
+- **Git status of the view:** `MEMORY.md` stays tracked, committed by the pass.
+  Only the pass writes it, so a regenerated whole-file index collides with
+  nothing; sessions write bodies, and the two write sets are disjoint.
+- **Harness budget:** a decision, not the current ratchet — see `0913`.
+- **Recency source:** undecided. Provenance dates are batch-stamped and
+  filesystem mtimes reset on clone, so neither is a usable recency signal as
+  it stands. Settle it here or score without recency.

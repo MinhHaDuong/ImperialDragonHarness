@@ -1,73 +1,58 @@
 %erg 0.1
-Title: One type field, one frontmatter shape, valid_while and supersedes
+Title: Frontmatter migration: one type field, one shape, across the corpus
 Created: 2026-09-10
 Author: claude
+Blocked-by: 0917
 
 --- log ---
 2026-09-10T15:50Z claude created
 
 --- body ---
-
 ## Context
 
 Ranking reads frontmatter, and the frontmatter is not uniform enough to rank
-on: 47 bodies carry no type field, and two shapes are in use (`type:` at top
-level versus `metadata.type`). Separately, nothing declares when a memory stops
-being true — the TTL table meant to handle it gives `feedback`, 74% of the
-corpus, no threshold at all.
+on. Across roughly 954 bodies: 47 carry no frontmatter type at all, 208 use a
+top-level `type:`, and 746 use `metadata.type`. Until that converges, any
+per-type or score-carrying field is reading two schemas and a gap.
 
-The replacement is a declared, executable condition. A memory says what it is
-true *while*: a path exists, a pattern is still present in a named file, a tool
-is below a version. Expiry only unranks, so it is **reversible** — a tool that
-regresses revives its memory at the next pass with no human action.
+This ticket is **only** the migration. The grammar, the resolver, `supersedes`
+and the scorer are `0914`; they were bundled here and the bundle was three
+units.
 
-Design reference: defects 3 and 4, principle P3, ticket T3 in `docs/2026-09-10-dragon-memory-design.md`.
+Design reference: defect 3 in `docs/2026-09-10-dragon-memory-design.md`. Review: sizing in `docs/2026-09-10-dragon-memory-design-review-fable-design.md` §3.
 
 ## Relevant files
 
-- `skills/memory/SKILL.md` — the write path and the TTL table this replaces
-- `skills/dream/provenance.py` — where the scorer will call the resolver
-- `projects/*/memory/*.md` — the 47 untyped bodies and the two shapes
+- `projects/*/memory/*.md` and `memory/*.md` — the corpus
+- `skills/memory/SKILL.md` — the shape new memories are written in
 
 ## Actions
 
-1. Normalise: one type field, one frontmatter shape, every body typed.
-2. Define `valid_while` as a **closed** grammar — path exists, pattern present
-   in a named file, tool below a version — and reject anything else. Prose in
-   this field degrades into a comment nothing can check.
-3. Check it at both ends, failing differently:
-   - **At writing, fail closed.** The predicate must parse, evaluate, and
-     evaluate *true*. A memory born expired can never rank, so it is an error,
-     not a record. The author is present and can fix it.
-   - **At scoring, fail open and report.** An unevaluable predicate leaves the
-     entry valid and raises a lint. Nobody is present, and a silent expiry
-     loses a lesson for a reason no one will ever see.
-4. Add `supersedes`, naming a slug; the generator refuses to rank both.
-
-Do not harmonise the two failure modes. Fail closed where a human can fix it,
-fail open where none can.
+1. Converge on one shape and one field name.
+2. Migrate the 208 top-level and type the 47 untyped. A data change of this
+   size is reviewable by count and by spot-check, not by reading 954 diffs —
+   say so in the pull request and give the counts.
+3. Update the skill so new memories are written in the surviving shape.
 
 ## Test
 
-Red first, one per rule: a malformed predicate rejected at write; a
-false-at-write predicate rejected; an unevaluable predicate at scoring leaving
-the entry ranked *and* producing a lint line; a false predicate unranking; the
-same predicate becoming true again and the entry returning.
+A lint test with a **deliberately untyped fixture**, so the check fails on a
+real case rather than passing because the corpus happens to be clean. "47
+untyped are now typed" is a count-of-zero and passes vacuously the day after.
 
 ## Verification
 
-- [ ] No body lacks a type; one shape survives
-- [ ] The grammar rejects a prose condition
-- [ ] A revived entry reappears with no human action
+- [ ] Counts before and after, stated in the pull request
+- [ ] The lint fixture fails without the fix and passes with it
+- [ ] A spot-check sample of migrated bodies reads correctly
 
 ## Invariants
 
-- Expiry never deletes. It unranks.
-- The scorer stays deterministic: no model judges validity.
+- No body content changes. This is a frontmatter migration.
+- No body is deleted.
 
 ## Exit criteria
 
-- [ ] 47 untyped bodies typed; one frontmatter shape
-- [ ] `valid_while` accepts the closed grammar and nothing else
-- [ ] Write-time rejection and scoring-time valid-and-report, both tested
-- [ ] `supersedes` prevents both entries ranking
+- [ ] One shape, one field name, across the whole corpus
+- [ ] The skill writes the surviving shape
+- [ ] A lint test with an untyped fixture guards the convergence

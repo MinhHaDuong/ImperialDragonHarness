@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Enforce the validity predicate on the write path
+Created: 2026-09-10
+Author: claude
+Blocked-by: 0914
+
+--- log ---
+2026-09-10T16:24Z claude created
+
+--- body ---
+## Context
+
+The design says the validity predicate is checked twice, failing closed at
+write time and open at scoring. `0914` builds the scoring half. This ticket is
+the write half — **and it starts by establishing whether there is a write path
+to hook into**, because the fourth review found there may not be: `memory/SKILL.md`
+is prose, and the runtime's own auto-memory writes bypass it entirely.
+
+So this ticket is conditional by design. If no write path exists as code, the
+correct outcome is to say so in the skill and enforce at scoring alone, not to
+build a write path in order to have somewhere to put a check.
+
+Design reference: P3's two failure modes in `docs/2026-09-10-dragon-memory-design.md`. Review: F5 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+
+## Relevant files
+
+- `skills/memory/SKILL.md` — prose, today
+- whatever the survey in step 1 turns up
+
+## Actions
+
+1. Survey: is there a code path that every memory write passes through? Include
+   the runtime's auto-memory writes, which are the ones most likely to bypass a
+   skill.
+2. If yes: reject at write a predicate that does not parse, does not evaluate,
+   or evaluates false. A memory born expired can never rank, so writing one is
+   an error rather than a record.
+3. If no: record the finding in the ticket log, state in the skill that
+   enforcement is at scoring only, and close. That is a result, not a failure.
+
+## Test
+
+Conditional on step 1. If a write path exists: a malformed predicate is
+rejected; a false-at-write predicate is rejected; a valid one passes.
+
+## Verification
+
+- [ ] Step 1's answer is recorded in the ticket log either way
+- [ ] The skill states where enforcement actually happens
+
+## Invariants
+
+- Do not build a write path solely to host this check.
+- Do not harmonise the two failure modes: fail closed where a human can fix it,
+  fail open where none can.
+
+## Exit criteria
+
+- [ ] The survey is recorded
+- [ ] Either write-time rejection ships with fixtures, or the skill states
+      scoring-only enforcement and says why
