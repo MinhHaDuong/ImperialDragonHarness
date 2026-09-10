@@ -11,66 +11,66 @@
 
 ## Entries
 
-- [No version-suffix filenames](feedback-no-version-suffix-filenames.md) — one canonical manuscrit.pdf; git holds history
-- [erg-pr-merge stale-worktree bounce](feedback-ergprmerge-stale-worktree-after-api-push.md) — gaze API-pushes leave executor worktrees behind; recover via detached cherry-pick + ff push, never rerun
-- [Grep sans contexte n'est pas un audit](feedback-grep-context-audit.md) — toujours une fenêtre de contexte avant de qualifier une occurrence
-- [Après un merge, vérifier le diff pas la sortie](feedback-merge-verifier-le-diff-pas-la-sortie.md) — `git diff origin/main --stat` ne doit montrer que vos fichiers ; le merge dit « clean » même sur base périmée
-- [Purge de bib partagée casse les frères](feedback-purge-bib-partagee-casse-les-freres.md) — refs.bib sert 3 manuscrits ; après purge ou conflit, construire tous les frères et lire les .blg
-- [Rejouer ou reconstruire une branche](feedback-rejouer-ou-reconstruire-une-branche.md) — deux commits qui s'annulent : reconstruire l'état final sur origin/main, pas rebaser
-- [Typo fine à la finition](feedback-typo-fine-a-la-finition.md) — jamais en rédaction ; dépend de la langue du texte ET du balisage ; pas de rétro-port mécanique
-- [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md) — le candidat « secondaire » d'un ticket peut être le support principal ; tirer tous les candidats avant de rédiger
-- [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md) — dans une table de preuves, la ligne qui ne dit pas ce que ses sœurs disent est le défaut
-- [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md) — dater un changement avec `git log -S`, jamais conclure « c'est le nouveau » depuis le worktree d'une autre session
-- [Worktree partagé réattribué en cours de tâche](feedback-worktree-partage-reattribue-en-cours.md) — pousser avant toute délégation ; seul le poussé est sûr, et l'état d'un arbre partagé ne se rapporte que daté
-- [Sortie rtk — pipes corrigés en v0.45.0, écart résiduel non isolé](feedback-rtk-sortie-git-non-fiable.md) — le test empirique tranche et non la lecture du code amont ; vérifier par effet, jamais en analysant une sortie
-- [/roar sous-compte depuis le worktree de la branche](feedback-roar-enumerate-merges-head.md) — `enumerate-merges.py` vise HEAD en dur ; détacher sur `origin/main` avant l'étape 2, sinon la MR qu'on vient de merger manque sans que rien ne le signale
-- [Sentinelle roar partagée](feedback-sentinelle-roar-partagee.md) — en sessions parallèles une autre session avance la sentinelle et absorbe vos merges ; lire le journal avant de logger
-- [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md) — une page citée se lit sur la page, jamais interpolée depuis un `pdftotext` du document entier
-- [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md) — récursion corrigée (vérifié 19/08) ; l'exemption des fichiers sans marqueur reste, mais est désormais documentée plutôt que cachée ; ne jamais tamponner « revu » sans lire
-- [Affirmation négative sur une source](feedback-affirmation-negative-sur-source.md) — la phrase qui nie est la plus fragile ; quatre formes, dont le lot dont une pièce n'a pas été lue — la valeur aberrante de taille est le tell
-- [Un intervalle listé n'est pas un périmètre](feedback-intervalle-liste-nest-pas-perimetre.md) — un enfant peut lister le fichier sans que ses Actions couvrent le passage ; écrire « raffine le périmètre de NNNN », pas « manque dans NNNN »
-- [Éditer un paragraphe en endosse la cohérence](feedback-editer-un-paragraphe-en-endosse-la-coherence.md) — « je n'ai touché qu'une ligne » ne défend pas contre la contradiction que le reste du paragraphe crée ; chasser les « only »
-- [`checkout <ref> -- fichier` écrase l'index](feedback-checkout-ref-ecrase-l-index.md) — détruit les modifications stagées sans avertir ; `git show <ref>:<chemin>` pour lire
-- [Chercher le contenu, pas le vocabulaire](feedback-chercher-le-contenu-pas-le-vocabulaire.md) — un grep de mots ne dit pas si une source porte le théorème ; la thèse du papier est que les mots manquent
-- [L'OCR perd parfois les équations](feedback-ocr-perd-les-equations-affichees.md) — 2 fac-similés sur 4 rendent la prose et zéro équation ; sonder (lignes avec `=`) avant de conclure sur le contenu formel
-- [La paraphrase dérive en session longue](feedback-paraphrase-derive-en-session-longue.md) — rouvrir le passage avant d'écrire qu'il se trompe ; le §2.1 avait été lu entier cinq heures plus tôt et fut accusé à tort
-- [La sync ignore les MR ouvertes](feedback-sync-ignore-les-mr-ouvertes.md) — `origin/main` ne voit que ce qui a atterri ; scanner les titres des MR ouvertes avant d'écrire, pas après
-- [Test de vacuité du cycle](project-test-de-vacuite-du-cycle.md) — sur quel graphe les arbitrages d'une source tournent ; tranche la réduction de l'appendice, plus le compte
-- [Critère du compte non tranché](project-critere-du-compte-non-tranche.md) — quatre critères en vigueur se divisent 3-1 sur Cournot ; fixer le critère avant d'appliquer aux trois cas en vol
-- [Rapports trop détaillés](feedback-rapports-trop-detailles.md) — trois lignes : ce qui est fait, où c'est, ce qu'on attend ; le détail va dans l'artefact
-- [Fusion au mieux + liste de revue](feedback-fusion-au-mieux-liste-de-revue.md) — mode de vague arbitré 18/08 : tout fusionner, un PDF final, une liste committée de points ; un point traité se barre, ne disparaît pas
-- [Ligatures fi/fl cassent le grep PDF](feedback-ligatures-cassent-le-grep-pdf.md) — `pdftotext` rend `veriﬁcation`, pas `verification` ; un 0 inattendu est d'abord une sonde aveugle, pas un contenu perdu
-- [Garde fulltext aveugle sans docs/](feedback-garde-fulltext-aveugle-sans-docs.md) — dans un worktree `make lint` dit « clean » sans avoir regardé ; monter `docs/` en lien, l'ôter avant de commiter
-- [Artefact généré périmé en silence](feedback-artefact-genere-perime-en-silence.md) — le garde court en CI depuis le 18/08 et a rougi 4 MR le jour même ; toute MR de manuscrit régénère `make complexity` dans la même MR
-- [Couper déplace le domicile de l'obscurité](feedback-couper-deplace-le-domicile-de-l-obscurite.md) — un terme est facturé à sa première occurrence ; couper la phrase qui le portait dégrade le paragraphe d'accueil, qui n'a pas bougé
-- [Arbre partagé pendant une revue](feedback-arbre-partage-pendant-une-revue.md) — une porte peut restaurer l'arbre et effacer le travail non commité ; committer avant de la lancer
-- [Pas de centaure inversé](feedback-no-inverted-centaur.md) — ne jamais laisser à l'auteur une corvée de vérification résiduelle
-- [Cible : accessible aux non-spécialistes](project-cible-accessibilite-non-specialistes.md) — l'érudition n'est pas l'illisibilité ; mesurer les noms et vocabulaires inédits, pas Flesch (`make complexity`)
-- [Boucle dictée-arbitrage prose](project-boucle-dictee-arbitrage.md) — circuit registre sur main pour les arbitrages de prose dictés
-- [Orthographes par manuscrit](project-orthographes-par-manuscrit.md) — HET en britannique -ise (EJHET), no-arbitrage en américain, MIMO en oxfordien : trois variétés cohérentes, ne jamais uniformiser ensemble
-- [Pagination manuelle HET §3](project-het-hand-pagination.md) — tout ajout au *corps* déborde une page, une note de bas de page ne coûte rien (mesuré) ; construire avant/après plutôt que prédire
-- [DOI manquants dans Zotero](project-zotero-dois-manquants.md) — 9 fiches sans le DOI de refs.bib, écart refermé ; l'enrichissement d'un item existant (PR #758) reste ouvert, non mergé au 19/08
-- [Zotero injection auto (implémentée)](project-zotero-injection-auto.md) — le skill zotero-import injecte via l'API (PR harness #718) ; RIS en repli
-- [zotero-import force le rôle « auteur »](feedback-zotero-import-force-le-role-auteur.md) — un ouvrage dirigé demande un PATCH `creatorType: editor` après l'inject
-- [Scripts de découpe non publiables](feedback-scripts-de-decoupe-non-publiables.md) — inséparables d'ouvrages non redistribuables ; un découpeur générique, pas une copie
-- [Feuille de route : manuscrits seulement](feedback-feuille-de-route-manuscrits-seulement.md) — un dépôt de données n'y a pas de ligne ; la page perso accueille les deux
-- [Email professionnel de l'auteur](user-professional-email.md) — adresse pour manuscrits et correspondance
-- [Collection Zotero du projet](reference-zotero-collection-polycentric.md) — polycentric-import (7D7EAHBM) ; T4X7ZNQL = ASEAN, ne pas y verser
-- [DOIfetch](reference-doifetch.md) — ~/CNRS/code/DOIfetch : chaîne DOI→PDF complète (`uv run fetch.py --source …`) ; l'utiliser au lieu du curl ad hoc, canaux licites explicités ; limite connue sur BibCNRS, voir l'entrée voisine
-- [BibCNRS : passerelle ezticket en JS](feedback-bibcnrs-ezticket-pas-de-cookies-txt.md) — cookies.txt + requests ne peut pas marcher ; les cookies de session sont dans recovery.jsonlz4, pas cookies.sqlite
-- [Fork confus se croit coordinateur, commite sans demander](feedback_fork_identity_confusion_and_unauthorized_commit.md) — SendMessage de reprise pris pour une injection ; un fork peut committer/pousser du travail non commité qu'il voit dans l'arbre partagé
-- [Minimiser la demande humaine inévitable](feedback_minimiser_la_demande_humaine_inevitable.md) — « suis pas un turc mécanique » ; une action hors de portée se demande en une phrase, jamais en protocole numéroté
-- [`\clearpage` fait sauter un flottant au-dessus du titre](feedback-clearpage-flottant-saute-le-titre.md) — `\FloatBarrier` corrige ; trouvé en lisant le PDF rendu, pas en compilant propre
-- [Iconographie du changeur : stéréotype antisémite](feedback-iconographie-changeur-stereotype.md) — van Reymerswale documenté, Matsys plus ambigu ; vérifier avant de recommander une toile de ce genre
-- [Un contrôle rouge accuse parfois le contrôle](feedback-un-controle-rouge-accuse-parfois-le-controle.md) — 5/5 d'échecs sur un seul sous-ensemble décrit une méthode aveugle, pas un artefact faux
-- [pkill : vérifier la mort par PID](feedback-pkill-verifier-la-mort-par-pid.md) — un fantôme survivant fait accuser un flag innocent ; chercher le détenteur de la ressource avant le paramètre
-- [Carte du champ (Handbook)](project-carte-du-champ-handbook.md) — verdict v2 : le corpus élève la note, la carte non ; Palgrave non cartographié ; note technique dans conception/
-- [Benchmark contre concurrent maladroit](feedback-benchmark-concurrent-maladroit.md) — l'économie v1 de la carte appartenait à la baseline sans grep ; lire comment le rival a travaillé
-- [Copie salée étalonne le jury](feedback-copie-salee-etalonne-le-jury.md) — « aucune fabrication » infalsifiable sans étalon positif ; 6/6 deux fois, critère union ≥5/6
-- [La carte ne dit pas le contenu](feedback-la-carte-ne-dit-pas-le-contenu.md) — la mise en garde sert à distinguer lu de rapporté, pas à refuser les inférences que le modèle refuse déjà
-- [Identifiant scrapé = hypothèse](feedback-identifiant-scrape-est-une-hypothese.md) — 77 fiches sur 116 corrigées ; le DOI d'une page est souvent celui d'un ouvrage cité
-- [Auditer docs/ contre Zotero](reference-zotero-audit-staging.md) — `sync-index` + `audit` sans base locale ; « ambiguous » est une réponse, 4 œuvres distinctes sauvées
-- [Un test vert peut être inatteignable](feedback-un-test-vert-peut-etre-inatteignable.md) — passé deux fois contre un défaut vivant ; muter le garde et exiger le rouge, après avoir commité
-- [Revue croisée dépôt : cwd épinglé](feedback-revue-cross-repo-cwd-epingle.md) — /gaze sur un autre dépôt depuis un worktree isolé bloque tout Bash du panel ; sortir du worktree avant
-- [Pas de garde pour la carte du champ](project-carte-pas-de-garde-de-coherence.md) — 0301 fermé wontfix (arbitrage 20/08) ; ne pas re-proposer, régénérer corrige
-- [refs.bib suivi par git ici](project-refsbib-suivi-par-git-ici.md) — exception à l'EDM ; vérifier ce qu'est un fichier avant de supprimer ce qu'on croit avoir créé
+- [No version-suffix filenames](feedback-no-version-suffix-filenames.md)
+- [erg-pr-merge stale-worktree bounce](feedback-ergprmerge-stale-worktree-after-api-push.md)
+- [Grep sans contexte n'est pas un audit](feedback-grep-context-audit.md)
+- [Après un merge, vérifier le diff pas la sortie](feedback-merge-verifier-le-diff-pas-la-sortie.md)
+- [Purge de bib partagée casse les frères](feedback-purge-bib-partagee-casse-les-freres.md)
+- [Rejouer ou reconstruire une branche](feedback-rejouer-ou-reconstruire-une-branche.md)
+- [Typo fine à la finition](feedback-typo-fine-a-la-finition.md)
+- [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md)
+- [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md)
+- [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md)
+- [Worktree partagé réattribué en cours de tâche](feedback-worktree-partage-reattribue-en-cours.md)
+- [Sortie rtk — pipes corrigés en v0.45.0, écart résiduel non isolé](feedback-rtk-sortie-git-non-fiable.md)
+- [/roar sous-compte depuis le worktree de la branche](feedback-roar-enumerate-merges-head.md)
+- [Sentinelle roar partagée](feedback-sentinelle-roar-partagee.md)
+- [Folio imprimé, pas offset d'extraction](feedback-folio-imprime-pas-offset-extraction.md)
+- [Contrôle de cadence au glob trop étroit](feedback-controle-cadence-glob-etroit.md)
+- [Affirmation négative sur une source](feedback-affirmation-negative-sur-source.md)
+- [Un intervalle listé n'est pas un périmètre](feedback-intervalle-liste-nest-pas-perimetre.md)
+- [Éditer un paragraphe en endosse la cohérence](feedback-editer-un-paragraphe-en-endosse-la-coherence.md)
+- [`checkout <ref> -- fichier` écrase l'index](feedback-checkout-ref-ecrase-l-index.md)
+- [Chercher le contenu, pas le vocabulaire](feedback-chercher-le-contenu-pas-le-vocabulaire.md)
+- [L'OCR perd parfois les équations](feedback-ocr-perd-les-equations-affichees.md)
+- [La paraphrase dérive en session longue](feedback-paraphrase-derive-en-session-longue.md)
+- [La sync ignore les MR ouvertes](feedback-sync-ignore-les-mr-ouvertes.md)
+- [Test de vacuité du cycle](project-test-de-vacuite-du-cycle.md)
+- [Critère du compte non tranché](project-critere-du-compte-non-tranche.md)
+- [Rapports trop détaillés](feedback-rapports-trop-detailles.md)
+- [Fusion au mieux + liste de revue](feedback-fusion-au-mieux-liste-de-revue.md)
+- [Ligatures fi/fl cassent le grep PDF](feedback-ligatures-cassent-le-grep-pdf.md)
+- [Garde fulltext aveugle sans docs/](feedback-garde-fulltext-aveugle-sans-docs.md)
+- [Artefact généré périmé en silence](feedback-artefact-genere-perime-en-silence.md)
+- [Couper déplace le domicile de l'obscurité](feedback-couper-deplace-le-domicile-de-l-obscurite.md)
+- [Arbre partagé pendant une revue](feedback-arbre-partage-pendant-une-revue.md)
+- [Pas de centaure inversé](feedback-no-inverted-centaur.md)
+- [Cible : accessible aux non-spécialistes](project-cible-accessibilite-non-specialistes.md)
+- [Boucle dictée-arbitrage prose](project-boucle-dictee-arbitrage.md)
+- [Orthographes par manuscrit](project-orthographes-par-manuscrit.md)
+- [Pagination manuelle HET §3](project-het-hand-pagination.md)
+- [DOI manquants dans Zotero](project-zotero-dois-manquants.md)
+- [Zotero injection auto (implémentée)](project-zotero-injection-auto.md)
+- [zotero-import force le rôle « auteur »](feedback-zotero-import-force-le-role-auteur.md)
+- [Scripts de découpe non publiables](feedback-scripts-de-decoupe-non-publiables.md)
+- [Feuille de route : manuscrits seulement](feedback-feuille-de-route-manuscrits-seulement.md)
+- [Email professionnel de l'auteur](user-professional-email.md)
+- [Collection Zotero du projet](reference-zotero-collection-polycentric.md)
+- [DOIfetch](reference-doifetch.md)
+- [BibCNRS : passerelle ezticket en JS](feedback-bibcnrs-ezticket-pas-de-cookies-txt.md)
+- [Fork confus se croit coordinateur, commite sans demander](feedback_fork_identity_confusion_and_unauthorized_commit.md)
+- [Minimiser la demande humaine inévitable](feedback_minimiser_la_demande_humaine_inevitable.md)
+- [`\clearpage` fait sauter un flottant au-dessus du titre](feedback-clearpage-flottant-saute-le-titre.md)
+- [Iconographie du changeur : stéréotype antisémite](feedback-iconographie-changeur-stereotype.md)
+- [Un contrôle rouge accuse parfois le contrôle](feedback-un-controle-rouge-accuse-parfois-le-controle.md)
+- [pkill : vérifier la mort par PID](feedback-pkill-verifier-la-mort-par-pid.md)
+- [Carte du champ (Handbook)](project-carte-du-champ-handbook.md)
+- [Benchmark contre concurrent maladroit](feedback-benchmark-concurrent-maladroit.md)
+- [Copie salée étalonne le jury](feedback-copie-salee-etalonne-le-jury.md)
+- [La carte ne dit pas le contenu](feedback-la-carte-ne-dit-pas-le-contenu.md)
+- [Identifiant scrapé = hypothèse](feedback-identifiant-scrape-est-une-hypothese.md)
+- [Auditer docs/ contre Zotero](reference-zotero-audit-staging.md)
+- [Un test vert peut être inatteignable](feedback-un-test-vert-peut-etre-inatteignable.md)
+- [Revue croisée dépôt : cwd épinglé](feedback-revue-cross-repo-cwd-epingle.md)
+- [Pas de garde pour la carte du champ](project-carte-pas-de-garde-de-coherence.md)
+- [refs.bib suivi par git ici](project-refsbib-suivi-par-git-ici.md)

@@ -8,88 +8,88 @@
 
 ## Entries
 
-- [PR scope discipline](feedback_scope_discipline.md) — don't add arch rules/tickets/sweeps to a feature PR branch
-- [Lean over comprehensive](feedback_lean_methods.md) — prefer one right method per concern, shed sunk-cost bias on existing code
-- [Verify contract](feedback_verify_contract.md) — /verify loop for PR gating; anti-rubber-stamp; two rounds max; never merges from skill
-- [Agent timeout on refactor](feedback_agent_timeout_refactor.md) — provide pre-written code, narrow scope, commit early
-- [Reimagine catches stale deps](feedback_reimagine_catches_stale_deps.md) — always reimagine before execution; dep graphs decay fast
-- [Pass full DF not a slice to stat helpers](feedback_null_df_slicing.md) — sliced DataFrame silently produces NaN output; callee needs all columns
-- [Companion paper design](project_companion_paper_design.md) — DORMANT (author 2026-07-23: no third paper); outlets = data paper + Œconomia only
-- [Verify vars file provenance](feedback_vars_file_provenance.md) — check compute_vars.py + Makefile before editing metadata-files; stale artifacts mislead
-- [Machine: padme](reference_machine_padme.md) — GPU server; corpus data lives here; test_corpus_acceptance failures are real, not expected
-- [a4paper always](feedback_a4paper.md) — every QMD format:pdf: block must have papersize: a4
-- [Analytical null as overlay](feedback_analytical_null_overlay.md) — MC + analytical ribbons as overlapping semi-transparent fills; no standalone script
-- [Verify agent must cd into PR worktree](feedback_verify_agent_worktree.md) — tests run outside the PR worktree produce false failures; always cd in first
-- [Never force-delete active worktrees](feedback_worktree_deletion.md) — unlocked ≠ abandoned; check for other sessions before --force remove
-- [gh Projects-classic error](feedback_gh_projects_classic_error.md) — gh pr edit/merge exit non-zero on a deprecated-Projects GraphQL error; use gh api REST + gh pr ready
-- [Auto-discovery class guards](feedback_autodiscovery_class_guard.md) — Makefile/source-driven discovery beats hardcoded lists; caught 5 missed/rebased-in offenders
-- [Resolve all conflict hunks, validate before push](feedback_merge_conflict_all_hunks.md) — first-match regex left raw markers on main; union wrong for removed headers
-- [padme Downloads dir](reference_padme_downloads_dir.md) — ~/Téléchargements until locale fix; use xdg-user-dir DOWNLOAD
-- [Rio-markers dataset for book](reference_riomarkers_dataset_book.md) — DSD_RIOMRKR@DF_RIOMARKERS zips in data/book/riomarkers/; book chapter, NOT the data paper
-- [Téléchargements is scratch](feedback_telechargements_scratch.md) — move+checksum+delete downloads to durable homes asap
-- [Cookie-replay fetch](reference_cookie_replay_fetch.md) — author's Firefox cookies unlock oecd.org/one.oecd.org; tabs via recovery.jsonlz4
-- [uv --env-file no override](feedback_env_file_no_override.md) — ambient shell vars shadow refreshed .env keys; pass rotated creds explicitly
-- [Render oracle for generated markup](feedback_render_oracle_for_generated_markup.md) — test the rendered page, not the emitted source; raw blocks own their escaping
-- [No CI — local merge gate](feedback_no_ci_local_merge_gate.md) — repo has no workflows; CLEAN means no conflicts, not tests passed; run make lint + check-fast
-- [Axis is unimodal, not bimodal](project_axis_is_unimodal.md) — dip p=1.0 at n=29675; ΔBIC measured non-normality; §5.3 rewritten to a continuum (0345), Œconomia never exposed
-- [BASH_ENV re-injects secrets](feedback_bash_env_reinjects_secrets.md) — unsetting a key in a parent shell is a no-op; clear BASH_ENV or use env -i
-- [Keystore + KEYS= selection](reference_keystore_keys_selection.md) — all secrets live once in ~/.config/keys; ~/.claude/.env holds none
-- [Terse reports](feedback_terse_reports.md) — chat = finding + decision + open question, not a PR summary
-- [Assert on the written artifact](feedback_assert_on_written_artifact.md) — `columns=` allowlists drop computed fields; drive main() and read the file back
-- [Corpus rerun needs a byte-compare](feedback_corpus_rerun_byte_compare.md) — `make data` in the worktree, force the network closed, finish with dvc commit+push; Flag 6 rescores 2,688 uncacheable works
-- [Ticket PR fast path](feedback_ticket_pr_fast_path.md) — tickets-only diffs merge on erg check + collision scan; no draft, no verify, auto-merge is pointless here
-- [Check the detector first](feedback_check_the_detector_first.md) — a QA hit on careful prose is a hypothesis; read the check (including ones you wrote) before acting
-- [Regenerate, do not merge, generated files](feedback_regenerate_dont_merge_generated.md) — prove the regen reproduces the other side's data first
-- [Credential migration hits every entry point](feedback_credential_migration_all_entry_points.md) — make, bare script, and dvc repro each need separate proof; agent path always passes
-- [Worktree make check and the corpus](feedback_worktree_make_check_corpus.md) — relative CLIMATE_FINANCE_DATA + uncopied DVC data; check mtimes before blaming code
-- [mtime, not content, proves a leak stopped](feedback_mtime_not_content_for_leaks.md) — idempotent writes keep the checksum identical; diff stat -c '%Y'
-- [Concurrent ticket-ID repair](feedback_concurrent_ticket_id_repair.md) — two sessions renumbering the same duplicate create a new one; the cross-PR gate is blind to merged collisions
-- [Diff fully before deleting a fork](feedback_diff_fully_before_deleting_a_fork.md) — the copy you delete may hold unique content, and the survivor may be the wrong one
-- [DVC checkout reflinks, it does not copy](feedback_reflink_not_copy.md) — worktree data is nearly free on btrfs; inodes and du cannot tell reflink from copy, use filefrag
-- [Nested DVC outputs kill the graph](reference_dvc_add_overlap.md) — dvc repro/dag abort while status/commit/push all report healthy; check with dvc dag
-- [gh pr list --json files is empty](feedback_gh_pr_list_files_empty.md) — ID-collision scans built on it report clean without looking; loop gh pr view instead
-- [gh mergeability UNKNOWN stall](feedback_gh_mergeability_unknown_stall.md) — repo-wide ~10 min under merge bursts; retry erg-pr-merge 30s apart, server-side merge checks conflicts itself
-- [rtk rewrites grep output](feedback_rtk_rewrites_grep_output.md) — silent summary substitution yields plausible wrong counts; re-derive tallies in Python
-- [Union-only defects](feedback_union_only_defects.md) — a guard one PR adds can be broken by a sibling's addition; test the composed tree
-- [Stale branch helper duplicates main](feedback_stale_branch_helper_duplicates_main.md) — adopt main's hardened version, never re-inline
-- [Data-paper release actions](project_datapaper_release_actions.md) — Zenodo retitle + version-string sync, author-only, at the new-version upload
-- [Guard the class, not the stale value](feedback_guard_the_class_not_the_stale_value.md) — a STALE tuple of literals blesses the next wrong value; forbid the shape
-- [Red-test the guard you wrote](feedback_red_test_the_guard_you_wrote.md) — replay the originating defect; two drafts passed it, a rename mutation proved nothing
-- [Check open PRs for the ticket](feedback_check_open_prs_for_ticket.md) — origin/main currency hides a sibling session mid-flight; two PRs for ticket 0359 opened 62s apart
-- [Stale prerequisite masks a missing artifact](feedback_stale_prerequisite_masks_missing_artifact.md) — a drifted Make list fails open: exit 0, broken PDF, five figures that never existed
-- [Enumerate from the surface, not the diff](feedback_enumerate_from_the_surface_not_the_diff.md) — re-run the class sweep at merge; a defect class keeps accruing members while your PR is open
-- [Filename-keyed guards collide at merge](feedback_filename_keyed_guards_collide_at_merge.md) — retiring an artifact breaks sentinels/allowlists on main; grep origin/main, expect a round per merge
-- [A nullable blank passes the schema](feedback_nullable_blank_passes_the_schema.md) — errors="coerce" hides a lost value where required=false; make the write step strict
-- [Worktree .env is a snapshot](feedback_worktree_env_is_a_snapshot.md) — credential test failing after a merge is often local drift, not main being red
-- [Deposit prose is unguarded](feedback_deposit_prose_is_unguarded.md) — revision-rdj26561/*.md name deposit files with nothing checking them (0403)
-- [Renderer placeholders exit 0](feedback_renderer_placeholder_exit_zero.md) — Quarto writes `?meta:`/`?@ref` and returns 0; render to markdown on stdout and grep stdout AND stderr (captions/citations leave no output mark)
-- [Pin known defects, don't xfail](feedback_pin_known_defect_not_xfail.md) — xfail is content-blind; assert the exact expected set so a second defect can't hide
-- [External panel is inert here](feedback_external_panel_inert.md) — /gaze's cli-agent seats fail open silently; needs REVIEWERS_REPO + the IDH key
-- [Scan open PRs before filing](feedback_scan_open_prs_before_filing.md) — a sibling may deliver your sweep's finding the same day (0373 → 0359)
-- [Human labels never in regenerable files](feedback_human_labels_never_in_regenerable_files.md) — a fill-me-in column is destroyed by the generator's next run; annotations get an append-only artifact (0372)
-- [Read which target the ERROR names](feedback_read_which_target_the_error_names.md) — a make/dvc tail puts a success line right above the failure; I misattributed one into a PR body
-- [erg check spans closed/](feedback_erg_check_spans_closed_dir.md) — closing one half of a duplicate ID does not clear it; only a renumber does
-- [Merge gate fires on the text, not the act](feedback_merge_gate_blocks_ticket_fast_path.md) — any Bash containing "gh pr merge <digits>" is gated; tickets-only diffs now exempt
-- [Fine-grained PAT scope check](reference_finegrained_pat_scope_check.md) — only a private repo 404 proves bounded scope; public repos read implicitly
-- [make -B on a ruleless target exits 0](feedback_make_B_no_rule_exits_zero.md) — no rule in scope means no rebuild and no error; an A/B churn check then compares a file to itself
-- [`or ""` does not catch NaN](feedback_or_empty_does_not_catch_nan.md) — NaN is truthy and the key is present, so both common null guards ship the string "nan" (52 sites, 0550)
-- [Static guard cannot replace an invariant](feedback_static_guard_cannot_replace_an_invariant.md) — regex→AST→runtime; where you take the measurement is the whole guard
-- [Automated PR fixes can redden main](feedback_automated_pr_fixes_can_redden_main.md) — a bot's "potential fix" dropped a return on top of a merged PR; no CI to catch it
-- [Merge gate eased to check-fast + lint](project_merge_gate_eased.md) — full make check ex post via lair step 9; 18-day census found zero gate-time catches; runner design parked
-- [Merge gate cannot count self-reviews](feedback_merge_gate_cannot_count_self_reviews.md) — agent-authored PRs stall at 1 of 2; ALLOW_MISSING_TICKET override; Ticket: none for closed refs
-- [Split contract needs a parity assertion](feedback_split_contract_needs_parity.md) — one dict into two: one direction KeyErrors, the other silently writes nothing
-- [Sweep beats guard for prose](feedback_sweep_beats_guard_for_prose.md) — 3 instances, 2 found by sweep not review; 115 guard lines reverted as disproportionate
-- [Hunt/raid economics 2026-07](project_hunt_raid_economics_2026-07.md) — verification 41%/ceremony 14%; interactive hunts 5.4× a detached executor; fixes = IDH 0376-0378
-- [Single-seed determinism test is blind](feedback_single_seed_determinism_blind.md) — test under two different PYTHONHASHSEED values; ties in stable sorts hide the class
-- [Stale-by-construction needs a cause check](feedback_stale_by_construction_needs_cause_check.md) — rerun the old producer on current inputs; 0610 diffs were corpus drift, not the code change
-- [Hand-copied pairs need bidirectional guards](feedback_hand_copied_pairs_need_bidirectional_guards.md) — a "must match" comment is a confession, not a guard; assert set equality both ways and red-test each direction (0571)
-- [Raid salvage and completion detection 2026-07-28](feedback_raid_salvage_and_completion_detection_0728.md) — session-limit kill survived by salvage-first; a silent monitor cost 80 idle minutes; pgrep matched a sibling worktree; `make -j4 NJOBS=6` cut a divergence chain from hours to under one
-- [Containment guard blind to second file](feedback_containment_guard_blind_to_second_file.md) — `value in text` passes once any file has it; assert the property (traces to the pipeline value) and search whitespace-collapsed text so a rewrap can't hide the line (0625)
-- [Run the chain, reading code is not enough](feedback_run_the_chain_reveals_what_reading_code_cannot.md) — an argmax over the wrong table range and a vars target missing prerequisites both only surfaced on the first real build (0570)
-- [Prose coupling hides in four forms](feedback_prose_coupling_multiple_detection_paths.md) — grep for quoted numbers misses all of them; a failing guard, a hardcoded plot threshold, a freeze claim, a Makefile pairing each caught one (0641)
-- [Shared worktree during concurrent merge](feedback_shared_worktree_concurrent_merge_collision.md) — a peer session's erg-pr-merge cherry-pick advanced the branch tip under a local commit; recovered by cherry-picking onto the pushed tip from a throwaway worktree (0565)
-- [Letters get a claim-verification pass](feedback_letters_get_claim_verification.md) — correspondence to editors and referees is adversarially checked before sign-off, same as a manuscript
-- [Next deliverable starts in LaTeX](feedback_prefer_latex_over_qmd.md) — author decision 2026-07-29: plain LaTeX, not Quarto/QMD
-- [Captioned pipe tables cannot float](feedback_quarto_pipe_tables_cannot_float.md) — they render as longtables that split across pages; `tbl-pos` on a caption is ignored, only raw-latex-tabular-in-div floats
-- [A pipe masks the command's exit code](feedback_pipe_masks_exit_code.md) — `cmd | tail` reports the pipe's status, so a failed build notifies "completed (exit 0)"
-- [REALF release rules](reference_realf_release_rules.md) — the author's business rules for submitting, revising and releasing research outputs (minh.haduong.com/realf.html)
+- [PR scope discipline](feedback_scope_discipline.md)
+- [Lean over comprehensive](feedback_lean_methods.md)
+- [Verify contract](feedback_verify_contract.md)
+- [Agent timeout on refactor](feedback_agent_timeout_refactor.md)
+- [Reimagine catches stale deps](feedback_reimagine_catches_stale_deps.md)
+- [Pass full DF not a slice to stat helpers](feedback_null_df_slicing.md)
+- [Companion paper design](project_companion_paper_design.md)
+- [Verify vars file provenance](feedback_vars_file_provenance.md)
+- [Machine: padme](reference_machine_padme.md)
+- [a4paper always](feedback_a4paper.md)
+- [Analytical null as overlay](feedback_analytical_null_overlay.md)
+- [Verify agent must cd into PR worktree](feedback_verify_agent_worktree.md)
+- [Never force-delete active worktrees](feedback_worktree_deletion.md)
+- [gh Projects-classic error](feedback_gh_projects_classic_error.md)
+- [Auto-discovery class guards](feedback_autodiscovery_class_guard.md)
+- [Resolve all conflict hunks, validate before push](feedback_merge_conflict_all_hunks.md)
+- [padme Downloads dir](reference_padme_downloads_dir.md)
+- [Rio-markers dataset for book](reference_riomarkers_dataset_book.md)
+- [Téléchargements is scratch](feedback_telechargements_scratch.md)
+- [Cookie-replay fetch](reference_cookie_replay_fetch.md)
+- [uv --env-file no override](feedback_env_file_no_override.md)
+- [Render oracle for generated markup](feedback_render_oracle_for_generated_markup.md)
+- [No CI — local merge gate](feedback_no_ci_local_merge_gate.md)
+- [Axis is unimodal, not bimodal](project_axis_is_unimodal.md)
+- [BASH_ENV re-injects secrets](feedback_bash_env_reinjects_secrets.md)
+- [Keystore + KEYS= selection](reference_keystore_keys_selection.md)
+- [Terse reports](feedback_terse_reports.md)
+- [Assert on the written artifact](feedback_assert_on_written_artifact.md)
+- [Corpus rerun needs a byte-compare](feedback_corpus_rerun_byte_compare.md)
+- [Ticket PR fast path](feedback_ticket_pr_fast_path.md)
+- [Check the detector first](feedback_check_the_detector_first.md)
+- [Regenerate, do not merge, generated files](feedback_regenerate_dont_merge_generated.md)
+- [Credential migration hits every entry point](feedback_credential_migration_all_entry_points.md)
+- [Worktree make check and the corpus](feedback_worktree_make_check_corpus.md)
+- [mtime, not content, proves a leak stopped](feedback_mtime_not_content_for_leaks.md)
+- [Concurrent ticket-ID repair](feedback_concurrent_ticket_id_repair.md)
+- [Diff fully before deleting a fork](feedback_diff_fully_before_deleting_a_fork.md)
+- [DVC checkout reflinks, it does not copy](feedback_reflink_not_copy.md)
+- [Nested DVC outputs kill the graph](reference_dvc_add_overlap.md)
+- [gh pr list --json files is empty](feedback_gh_pr_list_files_empty.md)
+- [gh mergeability UNKNOWN stall](feedback_gh_mergeability_unknown_stall.md)
+- [rtk rewrites grep output](feedback_rtk_rewrites_grep_output.md)
+- [Union-only defects](feedback_union_only_defects.md)
+- [Stale branch helper duplicates main](feedback_stale_branch_helper_duplicates_main.md)
+- [Data-paper release actions](project_datapaper_release_actions.md)
+- [Guard the class, not the stale value](feedback_guard_the_class_not_the_stale_value.md)
+- [Red-test the guard you wrote](feedback_red_test_the_guard_you_wrote.md)
+- [Check open PRs for the ticket](feedback_check_open_prs_for_ticket.md)
+- [Stale prerequisite masks a missing artifact](feedback_stale_prerequisite_masks_missing_artifact.md)
+- [Enumerate from the surface, not the diff](feedback_enumerate_from_the_surface_not_the_diff.md)
+- [Filename-keyed guards collide at merge](feedback_filename_keyed_guards_collide_at_merge.md)
+- [A nullable blank passes the schema](feedback_nullable_blank_passes_the_schema.md)
+- [Worktree .env is a snapshot](feedback_worktree_env_is_a_snapshot.md)
+- [Deposit prose is unguarded](feedback_deposit_prose_is_unguarded.md)
+- [Renderer placeholders exit 0](feedback_renderer_placeholder_exit_zero.md)
+- [Pin known defects, don't xfail](feedback_pin_known_defect_not_xfail.md)
+- [External panel is inert here](feedback_external_panel_inert.md)
+- [Scan open PRs before filing](feedback_scan_open_prs_before_filing.md)
+- [Human labels never in regenerable files](feedback_human_labels_never_in_regenerable_files.md)
+- [Read which target the ERROR names](feedback_read_which_target_the_error_names.md)
+- [erg check spans closed/](feedback_erg_check_spans_closed_dir.md)
+- [Merge gate fires on the text, not the act](feedback_merge_gate_blocks_ticket_fast_path.md)
+- [Fine-grained PAT scope check](reference_finegrained_pat_scope_check.md)
+- [make -B on a ruleless target exits 0](feedback_make_B_no_rule_exits_zero.md)
+- [`or ""` does not catch NaN](feedback_or_empty_does_not_catch_nan.md)
+- [Static guard cannot replace an invariant](feedback_static_guard_cannot_replace_an_invariant.md)
+- [Automated PR fixes can redden main](feedback_automated_pr_fixes_can_redden_main.md)
+- [Merge gate eased to check-fast + lint](project_merge_gate_eased.md)
+- [Merge gate cannot count self-reviews](feedback_merge_gate_cannot_count_self_reviews.md)
+- [Split contract needs a parity assertion](feedback_split_contract_needs_parity.md)
+- [Sweep beats guard for prose](feedback_sweep_beats_guard_for_prose.md)
+- [Hunt/raid economics 2026-07](project_hunt_raid_economics_2026-07.md)
+- [Single-seed determinism test is blind](feedback_single_seed_determinism_blind.md)
+- [Stale-by-construction needs a cause check](feedback_stale_by_construction_needs_cause_check.md)
+- [Hand-copied pairs need bidirectional guards](feedback_hand_copied_pairs_need_bidirectional_guards.md)
+- [Raid salvage and completion detection 2026-07-28](feedback_raid_salvage_and_completion_detection_0728.md)
+- [Containment guard blind to second file](feedback_containment_guard_blind_to_second_file.md)
+- [Run the chain, reading code is not enough](feedback_run_the_chain_reveals_what_reading_code_cannot.md)
+- [Prose coupling hides in four forms](feedback_prose_coupling_multiple_detection_paths.md)
+- [Shared worktree during concurrent merge](feedback_shared_worktree_concurrent_merge_collision.md)
+- [Letters get a claim-verification pass](feedback_letters_get_claim_verification.md)
+- [Next deliverable starts in LaTeX](feedback_prefer_latex_over_qmd.md)
+- [Captioned pipe tables cannot float](feedback_quarto_pipe_tables_cannot_float.md)
+- [A pipe masks the command's exit code](feedback_pipe_masks_exit_code.md)
+- [REALF release rules](reference_realf_release_rules.md)
