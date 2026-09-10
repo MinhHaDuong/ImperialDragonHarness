@@ -57,6 +57,11 @@ merge** — the merge decision belongs to the caller (the human or the raid).
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
   invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
+- **Branch-currency prerequisite**: the caller rebases the PR branch onto current
+  `origin/main` and force-pushes with lease before invoking (`rules/git.md`
+  § Merging) — a gate validates the *combination* branch ⊕ base, so a verdict
+  computed on a stale base is partially void. `/gaze` does not rebase the
+  branch itself; that is a caller-side step, not a phase here.
 
 ## Fork execution contract
 
