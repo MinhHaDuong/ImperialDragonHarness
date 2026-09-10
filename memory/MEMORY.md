@@ -4,7 +4,7 @@
 
 ## Entries
 
-- [Zotero library](reference_zotero.md) — userID 95318, API keys in ~/.config/keys (RO + RW scopes), collection T4X7ZNQL, endpoints
-- [Subagent model/effort levers](feedback_subagent_model_effort_levers.md) — model needs a per-call pin everywhere; effort is set on the agent definition (`effort:` frontmatter), measured, not on the Agent call
-- [git in a worktree session](reference_git_in_a_worktree_session.md) — two guards, two messages, two remedies: `\git` beats the rtk rewrite, only a script file reaches another checkout; the guard reads text, not intent, and a refusal takes the whole compound
-- [Branch-cleanup incidents](reference_branch_cleanup_incidents.md) — what each guard in the git.md cleanup loops cost before it existed: local main deleted, a sweep aborted on the bare `origin` symref, `-d` refusing merged branches
+- [Zotero library](reference_zotero.md)
+- [Subagent model/effort levers](feedback_subagent_model_effort_levers.md)
+- [git in a worktree session](reference_git_in_a_worktree_session.md)
+- [Branch-cleanup incidents](reference_branch_cleanup_incidents.md)
