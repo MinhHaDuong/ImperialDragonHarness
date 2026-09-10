@@ -2,11 +2,13 @@
 Title: Bare gh pr merge drops the close claim, unwatched
 Created: 2026-09-10
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #869
 
 --- log ---
 2026-09-10T10:17Z Minh Ha-Duong created
 
 2026-09-10T10:31Z HDMX-coding-agent note guard narrowed to --delete-branch plus advisory; detector at skills/roar/check-close-claims.sh wired into roar step 7 without renumbering
+2026-09-10T10:42Z Minh Ha-Duong closed — autoclosed — PR #869
 --- body ---
 ## Context
 
