@@ -1,0 +1,114 @@
+%erg 0.1
+Title: gaze approves PRs it cannot have reviewed: no upper bound on the battery, no ticket-count check
+Created: 2026-09-10
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-10T10:17Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`/gaze` classifies a PR into a battery tier from `(lines, files)` and stops
+there. The ladder's top rung is `full` at 150 lines / 5 files, and Agent C's
+panel maxes at five perspectives (`substantial → all five`). Above that rung
+nothing changes: a 200-line PR and a 145 000-line PR get the same battery.
+
+Measured over 30 days, 74 gaze invocations, joining transcript notifications
+(which name every perspective agent that ran) to PR size:
+
+- Depth does track size on average — Spearman 0.73 between lines and
+  perspectives, medians 2 / 2 / 4 for tiny / small / full.
+- But **60% of the corpus sits above the top rung**, where the tier stops
+  discriminating.
+- swfz#409: +142 753/-2 117 over **421 files**, four tickets bundled in one
+  PR → 4 perspectives, APPROVED.
+- swfz#3: +28 463/-542 over 46 files, six tickets closed at once → 3
+  perspectives, APPROVED.
+
+gaze has no lower bound on review-per-line. It therefore issues APPROVED on
+PRs it cannot structurally have reviewed, and the verdict carries the same
+weight as one on a 40-line diff. That is a merge criterion, which is what puts
+this above the severity floor: the other findings from the same measurement
+degrade quality, this one manufactures unfounded approval.
+
+The harness already has the rule — `rules/workflow.md` § Autonomous action,
+"Monster ticket → propose a decomposition", 15+ files. It exists at the
+*ticket* level and gaze has never applied it at the *PR* level.
+
+The ticket-count half is nearly free: gaze already parses the `Ticket:` line of
+the PR body to know what to close. It never counts. `rules/git.md` § Merging
+states "One ticket per PR is the review hygiene" — written, never checked. Both
+monsters above announce multiple tickets in their own body, so the cheap check
+catches the expensive case.
+
+## Follow-on
+
+0902 (`Blocked-by: 0901`) fixes the other half of the same measurement: the
+tier reads size and never reads which paths the diff touches, so a session
+hook got less review than a seven-line test. It waits on this ticket for a
+measurement reason, not a code one — while 400-file PRs are still accepted,
+they dominate any before/after comparison of a risk-routing change.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — phase 1 computes `pr_lines`/`pr_files` and the tier;
+  § Circuit breakers holds the existing bail-out list; § Branch on verdict has
+  the ESCALATE path this reuses.
+- `tests/test_verify_fork_contracts.py` — where gaze's tier and telemetry
+  contracts are already ratcheted; the new breaker belongs in the same file.
+- `rules/workflow.md` § Autonomous action — the 15-file monster threshold to
+  reuse rather than invent.
+- `rules/git.md` § Merging — the one-ticket-per-PR hygiene the count check
+  enforces.
+
+## Actions
+
+1. Phase 1, after the tier is computed: if the diff exceeds the un-reviewable
+   threshold, ESCALATE with reason `un-reviewable: <n> files / <n> lines —
+   split before review`, and do not spawn the battery. Reuse the 15-file
+   threshold from `rules/workflow.md` rather than inventing a number; state in
+   the skill text that it is borrowed, so the two move together.
+2. Phase 1, same place: count the ticket close-claims in the PR body. More than
+   one is not an error — `git.md` allows it when they genuinely land together —
+   so emit a non-blocking `multi_ticket` finding the gate dispositions, not a
+   refusal. Two or more claims *plus* the size breaker firing is the
+   decomposition signal worth naming in the ESCALATE reason.
+3. Record both in the § Circuit breakers list and in the § Output shape
+   template, so the verdict comment says which breaker fired.
+
+## Test
+
+Red first, in `tests/test_verify_fork_contracts.py`:
+`test_gaze_refuses_unreviewable_prs` — assert the skill body names an
+un-reviewable circuit breaker keyed on file count, and that its threshold cites
+`rules/workflow.md` rather than a bare literal. It must fail against the
+current skill text; prove that by extracting the section from `origin/main`
+before writing the fix, the way PR #860's ratchet was proved.
+
+## Verification
+
+- [ ] The breaker's threshold and `rules/workflow.md`'s monster threshold are
+      the same number, and the skill says so.
+- [ ] ESCALATE is reached without spawning phases 2-5 — the point is to not pay
+      for a review that cannot be adequate.
+- [ ] The multi-ticket check does NOT block on its own; a legitimately bundled
+      pair still merges.
+- [ ] `make check` passes.
+
+## Invariants
+
+- The gate (phase 6) stays invariant at every tier — this adds a pre-gate
+  refusal, it must not weaken the gate.
+- No change to the tiny/small/full thresholds; this ticket adds a rung above
+  `full`, it does not move the existing ones.
+- `--force-approve` still overrides, loudly, as it does for every other breaker.
+
+## Exit criteria
+
+- [ ] A PR above the threshold returns ESCALATE naming the breaker, with no
+      reviewer battery spawned.
+- [ ] The verdict comment names which breaker fired.
+- [ ] A multi-ticket PR below the threshold still gets a normal review, with a
+      non-blocking finding recorded.
+- [ ] Ratchet test present and proved red against the pre-fix text.
