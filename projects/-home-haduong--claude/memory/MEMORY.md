@@ -67,6 +67,7 @@
 - [erg binary installation](project_erg_binary.md) — erg committed at tickets/erg in all repos; git pull to update; build from git-erg source if missing
 - [BASH_ENV secret loading pattern](project_bash_env_secret_loading.md) — secrets go via BASH_ENV→bash-env.sh; CLAUDE_ENV_FILE inlines KEY=VALUE into argv, leaking to ps -ef
 - [erg verb drift recurs in skill examples](feedback_erg_verb_drift.md) — correct log verbs are `created`, `note`, `closed`; cross-check against spec-erg-v1.md, not other skills
+- [erg log's actor is a flag now](feedback_erg_log_actor_is_a_flag_now.md) — LINE carries `VERB [detail]` only, actor via `--author`; a committed binary months behind git-erg keeps the old form looking correct until the bump doubles it
 - [Rogue agent pattern — verify agents spiral](feedback_rogue_agent_pattern.md) — re-verify agents can spiral into unscoped harness work; add explicit "task complete after verdict" to the
 - [Verify forks can under-execute](feedback_verify_fork_under_execution.md) — a /verify fork can return a plausible partial result; check 3 completion markers after every run
 - [Agent stall: watchdog kill + silent fork death](feedback_agent_stall_watchdog_recovery.md) — 600s-watchdog stalls hit a coder AND a gaze fork in one night (2026-07-11)
