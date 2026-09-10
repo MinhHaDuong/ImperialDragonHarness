@@ -8625,6 +8625,24 @@
       "last_confirmed": "2026-09-10T15:48:11Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_reachable_is_not_resident": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T16:55:23Z",
+      "last_confirmed": "2026-09-10T16:55:23Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_worktree_guard_reads_written_content": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-10T16:55:23Z",
+      "last_confirmed": "2026-09-10T16:55:23Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
