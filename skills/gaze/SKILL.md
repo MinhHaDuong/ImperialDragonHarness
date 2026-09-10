@@ -282,12 +282,12 @@ prose either way; the audit found it earning its seat there — a rebuilt PDF
 with its link integrity checked on MR 136, and a catch the prose panel missed
 on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
 `/simplify` is the other built-in slash
-command; it stays as a direct invocation for now — out of this ticket's scope —
-and would be Agent-WRAPped the same way when converted. Until it is, `/simplify`
-runs in the fork's own cwd — a sibling worktree, not review-<pr> — so the
-worktree-identity guard denies its Edit/Write and it must apply fixes via Bash;
-the Agent-WRAP is what lets those edits execute inside review-<pr>. Tracked at
-ticket 0349.)
+command, and it stays a direct invocation **by decision**: ticket 0349 proposed
+Agent-WRAPping it and was closed wontfix on 2026-07-14 — the worktree-identity
+guard works as designed and the fallback functions. So `/simplify` runs in the
+fork's own cwd — a sibling worktree, not review-<pr> — the guard denies its
+Edit/Write, and it applies fixes via Bash. That is the design, not a gap.
+Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
@@ -522,8 +522,9 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
 ## Not in scope
 
-- **Wave-level integration review.** Verify one PR at a time. Use a separate
-  `/verify-wave` (not yet drafted) for post-merge integration testing of a batch.
+- **Wave-level integration review.** Verify one PR at a time. Post-merge
+  integration review of a batch is `/roar` step 8 — child diffs re-read and the
+  full suite run once every child has merged.
 - **Merging.** Ever. That is the caller's job.
 
 ## External reviewer panel
