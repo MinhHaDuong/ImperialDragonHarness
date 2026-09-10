@@ -5,7 +5,7 @@ worktree" — is the weak class shape: it also fires on a submodule and on any
 ad-hoc worktree outside the harness convention, and trusts the path blindly.
 It bit erg-pr-merge (fixed, 0301) and two sibling guards (fixed, 0308:
 scripts/pretooluse-worktree-path-guard.sh and
-scripts/block-pr-merge-in-worktree.sh — both merged, no live predicate left).
+scripts/guard-gh-pr-merge.sh — both merged, no live predicate left).
 The correct detection resolves git's own dirs (`git rev-parse
 --absolute-git-dir` vs `--git-common-dir`) or verifies the harness
 `.claude/worktrees/<name>` identity against the resolved toplevel.
@@ -45,10 +45,6 @@ WEAK_PREDICATE = re.compile(r"""-[fe][ \t]+["'${}]*[\w./{}-]*\.git\b""")
 # live code. Shrinks only when such a comment is removed; a NEW hit (live or
 # comment) that is not listed here fails the ratchet.
 ALLOWLIST: set[tuple[str, str]] = {
-    (
-        "scripts/block-pr-merge-in-worktree.sh",
-        "# The old `[ -f .git ] && grep gitdir:` check had one real false positive: a",
-    ),
     (
         "scripts/pretooluse-worktree-path-guard.sh",
         "# would satisfy the old `[ -f .git ] && grep gitdir:` check and trip a spurious",

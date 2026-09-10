@@ -155,7 +155,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/scripts/block-pr-merge-in-worktree.sh",
+            "command": "$HOME/.claude/scripts/guard-gh-pr-merge.sh",
             "timeout": 5
           }
         ]

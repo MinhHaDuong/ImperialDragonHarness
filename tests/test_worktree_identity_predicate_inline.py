@@ -11,7 +11,7 @@ worktree predicate, only two share the exact identity check —
 
 The two integrity guards (`scripts/guard-worktree-identity.sh`,
 `scripts/guard-commit-on-main.sh`) read the hook-JSON `.cwd` through `git -C`
-and are fail-CLOSED, and `scripts/block-pr-merge-in-worktree.sh` uses a
+and are fail-CLOSED, and `scripts/guard-gh-pr-merge.sh` uses a
 deliberately different linked-worktree predicate — none can share one helper
 without changing an input model or a fail-open/fail-closed contract, which the
 ticket's invariant forbids. A `source scripts/lib/…` from the skill would also

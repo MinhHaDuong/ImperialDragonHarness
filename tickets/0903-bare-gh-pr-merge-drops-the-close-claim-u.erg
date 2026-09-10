@@ -1,0 +1,137 @@
+%erg 0.1
+Title: Bare gh pr merge drops the close claim, unwatched
+Created: 2026-09-10
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-10T10:17Z Minh Ha-Duong created
+
+2026-09-10T10:31Z HDMX-coding-agent note guard narrowed to --delete-branch plus advisory; detector at skills/roar/check-close-claims.sh wired into roar step 7 without renumbering
+--- body ---
+## Context
+
+A PR body's `**Ticket:** tickets/NNNN-...` line does not close anything by
+itself. It is executed by `erg-pr-merge`, which runs `erg close` and then
+`erg archive` on the named ticket. A bare `gh pr merge` bypasses that entirely,
+and the claim is dropped with no output.
+
+Nothing downstream notices. `erg check` passes either way — an open ticket is
+not an error — so a dropped close and a clean merge produce identical evidence.
+
+**Observed 2026-09-10, git-erg PR #334**: the fix for ticket 0276 landed on
+`main` while 0276 stayed in `tickets/` with no `Closed:` header. It took a
+`/perch` pass to notice, and a second PR (#335) to repair.
+
+This ticket closes the gap on both sides: prevention at the moment of merge,
+and detection for the merge routes a hook cannot see.
+
+## Why the existing machinery does not cover it
+
+**The hook that already intercepts `gh pr merge` steers toward the defect.**
+`scripts/block-pr-merge-in-worktree.sh` fires on this exact command, and its
+block message recommends:
+
+    gh api "repos/{owner}/{repo}/pulls/$PR/merge" -X PUT -f merge_method=squash
+
+which is the very bypass above. Its stated premise — that `gh pr merge` aborts
+in every linked worktree — was refuted on 2026-09-08: `erg-pr-merge` calls it
+from worktrees, and did so for PRs 808 through 826 without a failure.
+
+The refutation does not reach the whole guard. `gh pr merge --merge` is a pure
+API call touching no local git, but `--delete-branch` does check out and delete
+locally, and can genuinely fail against the parent checkout's ref lock. So the
+guard was right about one flag and over-broad about the command from birth.
+Narrow it; do not delete the true part with the false part.
+
+**The detector that exists covers the other half of the failure.**
+`/healthcheck` step 9 reports `tickets.closed_unarchived` — tickets carrying a
+`Closed:` header that were never moved to `tickets/closed/`. That is the
+close-without-*archive* escape. On PR #334 there was no `Closed:` header at
+all: `erg close` never ran, so there was nothing to archive. Step 9 indexes on
+the presence of `Closed:`, which makes it blind by construction to a ticket
+that was never closed — indistinguishable, to it, from a ticket still legitimately
+open.
+
+The missing check is the other side of the join: *merged PRs carrying a close
+claim → is that ticket actually closed?*
+
+## Relevant files
+
+- `scripts/block-pr-merge-in-worktree.sh` — the hook to narrow and repurpose;
+  its name asserts the refuted premise, so it is renamed
+- `tests/test_block_pr_merge_in_worktree.sh` — its test, renamed with it
+- `settings.shared.json`, `adapters/claude-code/hooks/hooks.json` — the wiring
+  that names the script path (`scripts/check-settings-drift.sh` compares them)
+- `skills/roar/SKILL.md` — step 7 (`**Close** the ticket if still open`) is the
+  natural home for the detector: it is already the ticket-closure step
+- `skills/roar/enumerate-merges.py` — reference for the close-commit template
+  the detector must recognise
+
+## Actions
+
+1. Rename the guard to `scripts/guard-gh-pr-merge.sh`, joining the existing
+   `guard-*.sh` family, and update both wiring files.
+2. Narrow the worktree block to `--delete-branch` / `-d` only — the one flag
+   the 2026-09-08 measurement did not refute.
+3. Add the close-claim warning, gated on a `tickets/` directory being present
+   in the repo the command runs in. Warn (exit 0 + stdout), do not block: the
+   author asked for an advisory, and a repo may have legitimate bare merges.
+   No network call — a `PreToolUse` hook runs under a 5 s timeout, and a
+   timed-out body fetch yields an all-clear indistinguishable from
+   "I could not look".
+4. Add `skills/roar/check-close-claims.sh`: for each PR merged since a given
+   point, read its body, extract a close claim, and report any whose ticket has
+   no `Closed:` header. This covers the routes the hook cannot see — the forge
+   web UI, another machine, another session.
+5. Wire it into `/roar` step 7 without renumbering: `git.md` cites "roar step
+   10" and `workflow.md` cites "/roar step 8", and step 2's snippet is executed
+   verbatim by `tests/test_roar_step2_attribution.py`, which must keep seeing
+   exactly one runnable block.
+
+## Test
+
+Red first, on the guard: a payload carrying `gh pr merge 449 --merge` in a repo
+with a `tickets/` directory must produce the close-claim warning. Against the
+current script it produces a worktree block instead.
+
+**The positive control is mandatory on the detector**, because its natural
+output is silence. Build a fixture with a merged PR whose body carries
+`**Ticket:** tickets/0001-x.erg` and a `tickets/0001-x.erg` with no `Closed:`
+header, and assert the detector names it. A fixture where every claim was
+honoured cannot tell a working detector from one that never looked.
+
+## Verification
+
+- [ ] `bash tests/test_guard_gh_pr_merge.sh` passes, including the warning case
+- [ ] The new test run against the OLD script fails on exactly the new
+      assertions — a test passing against both proves nothing about the change
+- [ ] The detector names a known-bad fixture, and stays quiet on one where every
+      claim was honoured
+- [ ] The detector's live run reports counts that add up to what it examined
+- [ ] `tests/test_roar_step2_attribution.py` still passes (step 2 untouched)
+- [ ] `make check` passes
+
+**Deployment note, found while doing this.** The rename needs the live
+`~/.claude/settings.json` re-aligned by hand: it names the old script path, and
+`scripts/check-settings-drift.sh` is advisory (exit 0) and already reports
+pre-existing drift on `hooks`, so it will not stop a machine from running a hook
+that points at a deleted file. One `sed` per machine after this merges:
+
+    sed -i 's#block-pr-merge-in-worktree.sh#guard-gh-pr-merge.sh#' ~/.claude/settings.json
+
+## Invariants
+
+- `erg-pr-merge` remains the sanctioned path and never trips the hook: it is a
+  script, so the matcher never sees the string `gh pr merge` coming from it.
+- No renumbering of `/roar` steps — resident rules cite step 8 and step 10.
+- `--delete-branch` in a linked worktree stays blocked.
+- `make check` passes.
+
+## Exit criteria
+
+- A bare `gh pr merge` in a repo with a ticket store produces a visible warning
+  naming `/merge`, at the moment of merge rather than days later.
+- A merged PR whose close claim was dropped is named by `/roar`, whatever route
+  merged it.
+- The guard's name and header describe what it now does, with the refuted
+  premise removed and the surviving narrow case documented.

@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" block-pr-merge-in-worktree.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" guard-gh-pr-merge.sh",
             "timeout": 5
           }
         ]
