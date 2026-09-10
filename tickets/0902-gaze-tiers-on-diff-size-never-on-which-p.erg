@@ -1,0 +1,95 @@
+%erg 0.1
+Title: gaze tiers on diff size, never on which paths the diff touches
+Created: 2026-09-10
+Author: Minh Ha-Duong
+Blocked-by: 0901
+
+--- log ---
+2026-09-10T10:17Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`/gaze` picks its battery from `(lines, files)` alone. Size is a weak proxy for
+risk, and the mismatch inverts exactly where risk lives.
+
+From the same 30-day measurement as 0901 (74 invocations, transcript
+notifications joined to PR size):
+
+- harness#812 — 1 480 lines over 9 files, touching `scripts/on-end.sh` and
+  `settings.shared.json`, i.e. a session hook and the shared settings →
+  **2 perspectives** (adherence + built-in, no Agent C panel).
+- harness#177 — 7 lines over 2 files, adding `tests/test_beat.py` →
+  **3 perspectives**.
+
+A test addition was reviewed more deeply than a change to shared settings and a
+session hook. Nothing in the rule can tell them apart, because the rule never
+reads which paths the diff touches.
+
+The dangerous quadrant is small-and-critical: a 4-line change to a guard script
+classifies `tiny`, whose battery is adherence plus the gate and nothing else.
+
+The resolver already exists. `scripts/prose_predicate.py` classifies a changed
+file set by path and project manifest to route the prose panel versus the code
+panel; gaze already calls it twice in phases 2-4. Emitting a second value from
+the same walk is an addition to a live code path, not new machinery — this is
+the "reuse before you orchestrate" case, and the alternative (a parallel
+risk classifier) would be the wrong shape.
+
+## Why this is blocked by 0901
+
+Not a hard dependency, a measurement one. While gaze still accepts PRs of 400
+files, the extremes dominate any before/after comparison of a risk-routing
+change — 0901 removes them from the population. Land 0901, let a fortnight of
+un-polluted runs accumulate, then calibrate the bands on that.
+
+## Relevant files
+
+- `scripts/prose_predicate.py` — the existing path/manifest resolver to extend.
+- `skills/gaze/SKILL.md` — phase 1 tier computation; the Agent C risk
+  assessment in §§ 2-4 that consumes the band.
+- `.claude/rules-map.toml` (per project) — the existing manifest the resolver
+  walks; the natural home for per-repo band overrides if any prove necessary.
+
+## Actions
+
+1. Extend `prose_predicate.py` with a `--risk` mode emitting a band: `high` for
+   `scripts/`, `hooks*`, `settings*.json`, guards and `rules/`; `low` for
+   `docs/`, `.bib`, fixtures; `normal` otherwise. Derive the high set from what
+   the repo already treats as dangerous rather than from taste — the guard
+   scripts and settings files are where the harness's own incident notes cluster.
+2. In gaze phase 1, combine the band with the size tier: a `high` band raises
+   the tier by one rung (never lowers it); a `low` band may lower it by one, but
+   never below the gate, which stays invariant.
+3. State in the skill text that size and risk are two axes, so a later reader
+   does not collapse them back into one.
+
+## Test
+
+Red first: `test_prose_predicate_emits_a_risk_band` — a fixture set containing
+`scripts/on-end.sh` returns `high`, one containing only `docs/*.md` returns
+`low`. Then `test_gaze_raises_tier_on_high_risk_paths` on the skill text. Prove
+both red against `origin/main` before fixing.
+
+## Verification
+
+- [ ] A 4-line diff touching a guard script no longer classifies `tiny`.
+- [ ] A 1 000-line diff touching only `docs/` is not raised.
+- [ ] The band never lowers the battery below the phase-6 gate.
+- [ ] `prose_predicate.py`'s existing prose/code verdict is byte-identical for
+      every input that produced one before — this is an addition, not a change.
+- [ ] `make check` passes.
+
+## Invariants
+
+- Phase 6 (`/verify-gate`) runs at every tier and every band. Unchanged.
+- The prose/code routing verdict is untouched; only a new output is added.
+- No new config file: bands come from the resolver and the existing manifest.
+
+## Exit criteria
+
+- [ ] `prose_predicate.py --risk` returns a band for any changed-file set.
+- [ ] gaze combines band and size, with the raising/lowering asymmetry above.
+- [ ] Re-running the 0901/0902 measurement on a fortnight of post-0901 runs
+      shows harness#812's shape (critical paths, mid size) receiving more
+      perspectives than harness#177's shape (trivial paths, tiny size).
