@@ -1,6 +1,6 @@
 """§ Merging in rules/git.md must delegate its recovery procedures, not inline
-them (ticket-less housekeeping, 2026-09-10 — same pattern as
-test_branch_cleanup_recipes.py for § Branch cleanup).
+them (ticket 0907, 2026-09-10 — same pattern as test_branch_cleanup_recipes.py
+for § Branch cleanup).
 
 rules/git.md is resident in every session of every project; the multi-PR-wave
 and generated-file-conflict recovery procedures are long enough to be worth
