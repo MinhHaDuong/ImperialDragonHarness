@@ -355,11 +355,26 @@ store can be searched and how.
 
 **P3 — Validity is declared at writing and checked by a program.** A memory
 says what it is true *while*: a path exists, a pattern is still present in a
-named file, a tool is below a version. At scoring time the condition is
-evaluated. It must be an executable predicate from a small closed grammar, not
-a sentence — prose degrades into a comment nothing can check. A condition that
-cannot be evaluated leaves the entry valid **and reports**: a silent pass and a
-silent expiry are both worse than a lint error.
+named file, a tool is below a version. It must be an executable predicate from
+a small closed grammar, not a sentence — prose degrades into a comment nothing
+can check.
+
+**The predicate is checked twice, and fails differently each time, because the
+two moments have different audiences.**
+
+*At writing, it fails closed.* The predicate must parse and must evaluate, and
+it must evaluate **true** — a memory born already expired would never rank, so
+writing one is an error, not a record. A malformed or unevaluable predicate is
+rejected there and then, while the author is present and still knows what they
+meant.
+
+*At scoring, it fails open and reports.* Nobody is present, so an
+unevaluable predicate leaves the entry valid and raises a lint. A silent expiry
+loses a lesson for a reason no one will ever see; a stale line costs a place in
+a list. Between two silent failures, prefer the visible one.
+
+These two rules are not in tension and should not be harmonised by a later
+reader. Fail closed where a human can fix it, fail open where none can.
 
 Because expiry only unranks, it is **reversible**. A tool that regresses
 revives its memory at the next scoring pass with no human action. That is the
@@ -634,10 +649,9 @@ Ordered by how much a wrong answer would cost.
 ## 9. Decision requested, and the review record
 
 **Approve the four tickets in §6.** T1 and T2 stand alone; T3 upgrades T2's
-score; T4 needs T1's marker fix under it. One decision is open and belongs to
-the owner: whether an unevaluable `valid_while` leaves an entry valid (this
-document's default, on the grounds that a silent expiry is worse than a stale
-line) or expired.
+score; T4 needs T1's marker fix under it. No decision is left open: the one
+that was — what an unevaluable `valid_while` means — is settled in P3, valid at
+scoring time and rejected at write time.
 
 **Review record.** Three study reports commissioned before this draft
 ([Fable](./2026-09-10-memoire-agent-fable.md),
@@ -672,7 +686,7 @@ and where an answer changed the design it is in §5 rather than in a reply.
 | T0 | Tracker: memory retention program | — | all children merged, integration review |
 | T1 | Promotion marks the project copy dead in the form the walker reads | — | the 5 live `# PROMOTED` stubs are counted dead; a test asserts a promoted entry has no body counted live; the marker vocabulary is one value, not two |
 | T2 | Generate the index as the top N of its directory | — | `MEMORY.md` is regenerated, never hand-edited, for project and harness tiers alike; N is set from a character budget; an overflow line states how many are not listed; regenerating twice is a no-op; no entry becomes unreachable by falling out |
-| T3 | One type field, one frontmatter shape, `valid_while` and `supersedes` | — | the 47 untyped bodies carry a type; one shape survives; `valid_while` accepts a closed grammar (path exists, pattern present in a named file, tool below a version) and nothing else; an unevaluable predicate leaves the entry valid and is reported; a body whose predicate is false is not ranked and revives when it becomes true again; `supersedes` names a slug and the generator refuses to rank both |
+| T3 | One type field, one frontmatter shape, `valid_while` and `supersedes` | — | the 47 untyped bodies carry a type; one shape survives; `valid_while` accepts a closed grammar (path exists, pattern present in a named file, tool below a version) and nothing else; at write time a predicate that does not parse, does not evaluate, or evaluates false is rejected; at scoring time an unevaluable predicate leaves the entry valid and is reported; a body whose predicate is false is not ranked and revives when it becomes true again; `supersedes` names a slug and the generator refuses to rank both |
 | T4 | Consolidation pass: pool, dedupe, promote, tombstone | T1 | the 17–21 genuine cross-project pairs are surfaced and the false positives rejected before any merge; the harness tier participates on the same footing, with promotion moving up into it and never out; promotion tombstones the project copies; near-miss pairs — similar enough to suspect, different enough not to merge — are reported as contradiction candidates; the pass triggers regeneration |
 
 Not tickets, deliberately: a corpus cap, a decay pass, an orphan collector and a
