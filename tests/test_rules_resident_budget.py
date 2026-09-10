@@ -62,7 +62,8 @@ def test_resident_rules_stay_within_budget():
     detail = ", ".join(f"{name} {size}" for name, size in worst)
     assert total <= RESIDENT_BUDGET, (
         f"resident rules total {total} chars (> {RESIDENT_BUDGET}), "
-        f"~{total // 4} tokens in every session of every project. "
+        f"~{round(total / rc.CHARS_PER_TOKEN)} tokens in every session "
+        "of every project. "
         f"Biggest: {detail}. Trim a body, or scope one with `paths:` "
         "frontmatter — raising the budget is a ticket, not an edit."
     )

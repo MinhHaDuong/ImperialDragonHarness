@@ -8,6 +8,8 @@
 
 ## Entries
 
+- [A divided-out token figure must be swept, not just corrected](feedback_derived_token_figures_must_be_swept.md)
+- [Built-in skill bodies live in the binary as zstd frames](reference_builtin_skill_bodies_in_the_binary.md)
 - [A guard wired to one spelling is not a guard](feedback_guard_wired_to_one_spelling.md)
 - [tickets/AGENTS.md is a tool-owned asset](reference_agents_md_is_a_tool_owned_asset.md)
 - [A guard's exemption must be anchored](feedback_guard_exemption_must_be_anchored.md)
