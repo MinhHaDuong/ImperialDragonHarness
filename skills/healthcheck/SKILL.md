@@ -63,6 +63,14 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
    - **PR cross-check** — PRs described as pending but already merged/closed.
      Use `prs.items` from the probe. Skip if `prs.error`.
    - **Count consistency** — "N open tickets" claims vs `tickets.open` from probe
+   - **Stale forward promises** — resident skill and rule bodies are directive
+     docs too. Grep `skills/*/SKILL.md` and `rules/` for `until the`, `not yet
+     drafted`, `when converted`, `for now`, then confront each promise with the
+     decision behind it: a study voided, a ticket closed wontfix, work never
+     scheduled. Such text reads as pending work and agents act on it — a flag
+     from an A/B cancelled on 2026-07-14 was still being recommended as a live
+     cost lever two months later (PR #856). Judgment call, deliberately
+     unguarded: report the stale ones, never auto-edit.
 12. **Session scratch (host-level)** — from `session_scratch`. The one check
     that is not about this repo: every session gets a scratch directory under
     the user's temp root, one per distinct cwd it visits, and nothing but the

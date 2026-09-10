@@ -107,14 +107,6 @@ Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/claude-code.md` § Subagent levers and
 `rules/workflow.md` § Delegation).
 
-This is not gaze's **Convergence mode** (ticket 0315, default off) under
-another name. Round scoping works *within* one review invocation, across its
-rounds, and always runs at least the objecting perspectives plus the
-regression check. Convergence mode works at the *caller* level, deciding
-whether a whole repeat `/gaze` runs its panel again at all. The two are
-orthogonal; neither replaces the other, and enabling or disabling one says
-nothing about the other.
-
 ## Each agent runs
 
 1. Read the issue exit criteria and the diff.
