@@ -1,0 +1,98 @@
+%erg 0.1
+Title: molt closes a ticket then stages the move that erg close already did
+Created: 2026-09-10
+Author: claude
+
+--- log ---
+2026-09-10T10:36Z claude created found by the /roar sweep after PR #864 bumped the binary past the close contract change
+
+--- body ---
+## Context
+
+`erg close` became a four-step operation: it now files the ticket into
+`closed/` itself. Before, closing only wrote the `Closed:` header and left the
+file at top level for a separate `erg archive`.
+
+Measured on the two binaries, same fixture:
+
+| binary | after `erg close 0001` |
+|---|---|
+| 2026-06-08 (rev `616b023`) | `tickets/0001-probe.erg` |
+| 2026-09-10 (rev `4fd3c98`) | `tickets/closed/0001-probe.erg` |
+
+PR #864 bumped the harness to the second one, so the new behaviour is live in
+any checkout that has `main`.
+
+`/molt` step 2.5 closes qualifying tickets, and step 2.6 stages the archive
+move by parsing `erg archive`'s output:
+
+```bash
+tickets/erg archive tickets/ | sed -n 's#^ARCHIVED #tickets/closed/#p' | xargs -r git add --
+```
+
+Under the new binary `erg close` has already moved the file, so `erg archive`
+finds nothing, prints nothing, and `xargs -r` stages nothing. The working tree
+is left with a tracked deletion at `tickets/NNNN-*.erg` and an **untracked**
+`tickets/closed/NNNN-*.erg`. The duplicate-removal loop that follows iterates
+`tickets/*.erg` and cannot see the file either, because it is no longer there.
+
+Step 3 then commits the sweep. A blanket `git add -u tickets/` picks up the
+deletion but not the untracked archived copy, which is how a housekeeping run
+can commit the removal of a ticket without its archive — and the untracked copy
+dies with the worktree.
+
+The staging idiom is not wrong so much as **orphaned**: it stages the output of
+a command that no longer has anything to do. `erg-pr-merge` survives the same
+change only because it stages the destination path explicitly after its
+`erg archive` call, and guards that call with `|| true` (`skills/merge/erg-pr-merge`
+l. 253-267). That is the shape molt needs.
+
+## Relevant files
+
+- `skills/molt/SKILL.md` — steps 2.5, 2.6 and 3; the close, the orphaned archive-staging idiom, the commit
+- `skills/merge/erg-pr-merge` l. 253-267 — the contract-agnostic shape to copy: archive guarded, destination staged explicitly
+- `scripts/project-state.py` l. 117-122 — comment still describes the old "close-without-archive escape"; stale prose, no behaviour change
+
+## Actions
+
+1. Stage what `erg close` moved, not what `erg archive` reports. Record each
+   ticket's file path **before** closing, and stage both sides of the rename
+   afterwards.
+2. Keep `erg archive` as a guarded no-op so the step still works against an
+   older binary, the way `erg-pr-merge` does.
+3. Drop or rewrite the duplicate-removal loop if the one-step close makes the
+   duplicate state unreachable — verify before deleting it.
+4. Refresh the stale comment in `scripts/project-state.py`.
+
+## Test
+
+Red step first, and it must fail against today's SKILL.md: a fixture ticket
+store on the **new** binary, one qualifying ticket, molt's step 2.5/2.6/3
+sequence run over it, then assert that after the sweep commit the tree has
+`tickets/closed/NNNN-*.erg` **tracked** and nothing left unstaged. Today that
+assertion fails on the untracked archived copy.
+
+Run the same fixture against the old binary (`git show 51ee49c:tickets/erg`) to
+confirm the fix is contract-agnostic rather than merely swapping one hard
+assumption for the other.
+
+## Verification
+
+- [ ] The red test fails before the fix and passes after
+- [ ] `git status --porcelain` is empty after a molt sweep that closed a ticket
+- [ ] The same sweep works against the 2026-06-08 binary
+- [ ] `scripts/project-state.py`'s comment matches current close behaviour
+
+## Invariants
+
+- Nothing outside `tickets/` is staged — the path-scoping that ticket 0193
+  established stays.
+- A stray untracked file under `tickets/closed/` still never rides along.
+- Closing stays idempotent: re-running molt over an already-closed ticket is a
+  no-op, not a second commit.
+
+## Exit criteria
+
+- [ ] A molt sweep that closes a ticket leaves the tree clean and the archived
+      ticket tracked, under both binaries
+- [ ] `make check` passes
