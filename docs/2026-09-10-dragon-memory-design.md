@@ -801,18 +801,37 @@ and where an answer changed the design it is in §5 rather than in a reply.
 
 ---
 
-## Annex A — Proposed tickets
+## Annex A — The plan as filed
 
-| id | title | depends on | exit criterion |
+Eight tickets, in `tickets/`. The tracker is `0909`; it carries the wave order
+and the reasoning, and this table is the summary.
+
+| id | title | wave | depends on |
 |---|---|---|---|
-| T0 | Tracker: memory retention program | — | all children merged, integration review |
-| T1 | Promotion marks the project copy dead in the form the walker reads | — | the 5 live `# PROMOTED` stubs are counted dead; a test asserts a promoted entry has no body counted live; the marker vocabulary is one value, not two |
-| T2 | Generate the index as the top N of its directory | — | `MEMORY.md` is regenerated, never hand-edited, for project and harness tiers alike; N is set from a character budget; an overflow line states how many are not listed; regenerating twice is a no-op; no entry becomes unreachable by falling out |
-| T3 | One type field, one frontmatter shape, `valid_while` and `supersedes` | — | the 47 untyped bodies carry a type; one shape survives; `valid_while` accepts a closed grammar (path exists, pattern present in a named file, tool below a version) and nothing else; at write time a predicate that does not parse, does not evaluate, or evaluates false is rejected; at scoring time an unevaluable predicate leaves the entry valid and is reported; a body whose predicate is false is not ranked and revives when it becomes true again; `supersedes` names a slug and the generator refuses to rank both |
-| T4 | Consolidation pass: pool, dedupe, promote, tombstone | T1 | the 17–21 genuine cross-project pairs are surfaced and the false positives rejected before any merge; the harness tier participates on the same footing, with promotion moving up into it and never out; promotion tombstones the project copies; near-miss pairs — similar enough to suspect, different enough not to merge — are reported as contradiction candidates; the pass triggers regeneration |
+| 0909 | Tracker: memory retention program | — | — |
+| 0908 | Promotion marks the project copy dead in the form the walker reads | 1 | — |
+| 0911 | Frontmatter migration: one type field, one shape | 1 | — |
+| 0913 | Retire the dead machinery, ship the resident search line | 1 | — |
+| 0910 | Generate the index as the top N of its directory | 2 | 0913 |
+| 0914 | `valid_while` grammar, resolver, scorer, `supersedes` | 3 | 0910, 0911 |
+| 0915 | Enforce the validity predicate on the write path | 3 | 0914 |
+| 0912 | Consolidation: deterministic pooling, grouping, reports | 4 | 0908, 0910, 0914 |
+| 0916 | Model-judged merge, reviewed promotion, tombstoning | 5 | 0912 |
 
-Not tickets, deliberately: a corpus cap, a decay pass, an orphan collector and a
-full-catalogue file. §5 removes the need for all four.
+The seams follow one rule: **everything a program can decide ships before
+anything a model decides.** 0912 proposes and 0916 judges; splitting them is
+what lets the first half be tested at all.
+
+Exit criteria are gated on fixtures rather than on counts, because a count-based
+criterion passes vacuously the day after it is written — "the 47 untyped bodies
+are typed" is true of an empty set, and "no entry becomes unreachable" is true
+at the exact moment a guard memory stops working. Each ticket names the fixture
+that would fail without the fix.
+
+Not tickets, deliberately: a corpus cap, a decay pass, an orphan collector, a
+full-catalogue file. §5 removes the need for all four, and 0913 deletes what
+survives of them. The embedding database and its cache are parked rather than
+planned: the design describes them, nothing depends on them.
 
 ## Annex B — Reproducibility
 
