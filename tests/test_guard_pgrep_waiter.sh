@@ -23,7 +23,7 @@ fail=0
 # was being written, which is the same all-clear-indistinguishable-from-could-
 # not-look defect the guard itself exists to prevent.
 ran=0
-EXPECTED=18
+EXPECTED=23
 
 # Feed a command through the hook, return its exit code.
 probe() {
@@ -73,8 +73,20 @@ deny "loop split across lines" \
 do
   sleep 30
 done'
-deny "bounded for-loop poll — the reviewer's find, one token to close" \
-    'for i in $(seq 1 100); do pgrep -f make || break; sleep 5; done'
+# Four shapes that a first, unanchored heredoc exemption let through: a single
+# `<<` anywhere in the text waived every other check, so a genuine waiter rode
+# in beside a bitshift, a decorative string, or a herestring. And a heredoc fed
+# to an interpreter EXECUTES what it carries, so it keeps no exemption.
+deny "waiter beside bitshift arithmetic" \
+    'x=$((1<<3)); until [ -z "$(pgrep -f make)" ]; do sleep 25; done'
+deny "waiter beside a string that merely mentions a heredoc" \
+    'echo "legacy uses <<END markers"; until pgrep -f make >/dev/null; do sleep 25; done'
+deny "waiter beside a herestring" \
+    'cat <<< "hi"; until pgrep -f make >/dev/null; do sleep 25; done'
+deny "heredoc piped INTO an interpreter runs what it carries" \
+    'bash <<EOF
+until [ -z "$(pgrep -f make)" ]; do sleep 25; done
+EOF'
 # Not a misfire: a backgrounded monitor strands exactly like a waiter, by
 # design, and reparents the same way. Blocking it is the intended behaviour.
 deny "backgrounded monitor loop" \
@@ -95,8 +107,15 @@ allow "loop with sleep, no process predicate at all" \
     'until [ -f /tmp/ready ]; do sleep 5; done'
 allow "pgrep and sleep, but no loop" \
     'pgrep -f make; sleep 2; echo done'
-allow "enumeration survives for becoming a loop keyword: sleep is what saves it" \
+allow "enumeration, again — a for loop runs a finite list and terminates" \
     'for pid in $(pgrep -f x); do readlink /proc/$pid/cwd; done'
+# `for` was added on a review finding, then reverted: a finite loop terminates,
+# so it cannot strand, and requiring it blocked ordinary ops work for the sake
+# of intercepting a bounded poll that wastes a tool call and then exits.
+allow "bounded for-loop poll — wasteful, but it ends, so it cannot strand" \
+    'for i in $(seq 1 100); do pgrep -f make || break; sleep 5; done'
+allow "finite ops sweep with a diagnostic pgrep and a stagger sleep" \
+    'for host in a b c; do ssh "$host" "pgrep myproc || echo down"; sleep 1; done'
 # Writing text ABOUT this defect is indistinguishable, to a grep, from running
 # it — and the text most often written about it is this repo's own memory note,
 # which quotes the banned shape verbatim. A heredoc edit to that note must not

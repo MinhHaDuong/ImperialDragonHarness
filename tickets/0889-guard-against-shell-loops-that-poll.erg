@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-09-10T07:57Z Minh Ha-Duong created
 2026-09-10T08:20Z Minh Ha-Duong note Pivoted after review of PR #855: a PreToolUse guard replaces the resident rule, so the budget raise is withdrawn
 2026-09-10T08:45Z Minh Ha-Duong note Second review round: for-loop gap closed, heredocs skipped, write-then-exec conceded in writing
+2026-09-10T09:05Z Minh Ha-Duong note Third review round: heredoc exemption anchored and interpreter-aware; the for keyword reverted on the termination argument
 
 --- body ---
 ## Context
@@ -76,20 +77,35 @@ here rather than left for the next reader to rediscover:
   and mentions `pgrep` second, so it does not advertise the substitution — the
   first draft named `pgrep` first, which put the escape hatch one paraphrase
   from the block.
-- **A heredoc**, skipped wholesale, so `bash <<EOF … EOF` would slip through.
-  The trade is deliberate: writing text *about* this defect is indistinguishable
-  to a grep from running it, and the text most often written about it is this
-  repo's own memory note, which quotes the banned shape verbatim. A heredoc edit
-  to that note tripped the guard the note documents. Documentation authoring is
-  frequent; `bash <<EOF` waiters have never been seen.
+- **A heredoc that is not fed to an interpreter.** Writing text *about* this
+  defect is indistinguishable to a grep from running it, and the text most often
+  written about it is this repo's own memory note, which quotes the banned shape
+  verbatim — a heredoc edit to that note tripped the guard the note documents.
+  The exemption is anchored at end of line and refuses interpreters. A first
+  version was neither, and that was worse than having none: a single `<<`
+  anywhere waived every other check, so a genuine waiter rode in beside a
+  bitshift `$((1<<3))`, beside a string mentioning `<<END`, or beside a
+  herestring — and `bash <<EOF … EOF` executed what it carried. All four are now
+  deny cases, so the boundary between documenting the shape and running it is
+  pinned rather than asserted.
 
-Two residual false positives are accepted rather than fixed, because narrowing
-further costs more complexity than the misfire costs a caller: a command whose
+One residual false positive is accepted rather than fixed: a command whose
 *search patterns* contain all three words (`grep -RIn pgrep . | grep -E
 "sleep|until"`) is blocked — split it, or use the Grep tool. A backgrounded
 monitor (`while true; do pgrep -c nginx; sleep 30; done &`) is also blocked, and
 that one is not a misfire: it strands exactly like a waiter, by design. Both are
 test cases, so the behaviour is pinned rather than incidental.
+
+**A review finding was accepted, then reversed on argument.** Round two asked
+for `for` in the loop-keyword set, since `for i in $(seq 1 100); do pgrep …;
+sleep …; done` polls like the rest. It was added. Round three showed the price:
+ordinary finite work — a `for host in a b c` ssh sweep with a diagnostic
+`pgrep`, a bulk `systemctl restart` with a post-check — started being denied.
+Reverted, because **unboundedness is the defect**. A `for` loop runs a finite
+list and terminates, so it cannot strand; a bounded poll wastes a tool call and
+then exits, which is a different and much smaller harm than a process still
+looping the next morning. `until` and `while` are the forms that never end.
+Both ops shapes are allow cases now, so the reversal is pinned too.
 
 ## The guard's own cost, measured rather than assumed
 

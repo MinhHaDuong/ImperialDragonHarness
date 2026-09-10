@@ -14,8 +14,15 @@ set -euo pipefail
 # The match is a THREE-WAY conjunction — loop keyword, pgrep, sleep — and each
 # term is there to keep a legitimate command out:
 #
-#   - `for pid in $(pgrep -f foo); do echo $pid; done` enumerates, never polls:
-#     no sleep, so it passes even though `for` is a loop keyword.
+#   - `for` in any form. A `for` loop runs a finite list and TERMINATES, so it
+#     cannot strand — which is the hazard this guard exists for. A review round
+#     asked for `for` and it was added; adding it blocked ordinary finite ops
+#     work (`for host in a b c; do ssh "$host" "pgrep x"; sleep 1; done`, a bulk
+#     `systemctl restart` with a post-check) while buying only the interception
+#     of a bounded poll that wastes a tool call and then exits. Reverted, on the
+#     argument that unboundedness is the defect: `until` and `while` are the
+#     forms that never end. Enumeration (`for pid in $(pgrep …)`) passes for the
+#     same reason, and would anyway for want of a `sleep`.
 #   - `pgrep -af waiter` on its own investigates: no loop, no sleep, passes.
 #   - `until [ -f /tmp/ready ]; do sleep 5; done` polls a file, not a process:
 #     no pgrep, passes. Out of scope on purpose — this guard owns one class.
@@ -40,12 +47,14 @@ set -euo pipefail
 #     sleep polls just as badly. Naming pgrep alone in a deny message would
 #     advertise the substitution, which is why the message below leads with the
 #     general shape and mentions pgrep second.
-#   - **A heredoc.** Commands carrying `<<WORD` are skipped wholesale, because
-#     writing text ABOUT this defect is indistinguishable, to a grep, from
-#     running it — and the text most often written about it is this repo's own
-#     memory note, which quotes the banned shape verbatim. The cost is that
-#     `bash <<EOF … EOF` would slip through. Documentation authoring is
-#     frequent; that shape has never been seen.
+#   - **A heredoc that is not fed to an interpreter.** Writing text ABOUT this
+#     defect is indistinguishable, to a grep, from running it, and the text most
+#     often written about it is this repo's own memory note, which quotes the
+#     banned shape verbatim. So a heredoc introducer at end of line exempts the
+#     command — unless the same line invokes an interpreter, since
+#     `bash <<EOF … EOF` executes what it carries. Both sides are pinned by
+#     tests, the dangerous side as a deny case, so the boundary cannot drift
+#     unnoticed.
 #
 # Residual false positives, known and accepted rather than fixed, because
 # narrowing further costs more complexity than the misfire costs a caller:
@@ -70,12 +79,25 @@ cmd=$(echo "$input" | jq -r '.tool_input.command // empty')
 
 # grep -P (PCRE): \b is spec-defined there, unlike POSIX ERE where it is a
 # GNU-only extension that degrades to a literal on other builds.
-# A heredoc means the command is writing text, not running a loop. See above.
-echo "$cmd" | grep -qP '<<-?\s*[\x27"]?\w' && exit 0
+# A heredoc usually means the command is WRITING text about this defect rather
+# than running it, so it is exempt — but the exemption is anchored, because an
+# unanchored one is worse than none. A first version matched `<<` followed by a
+# word character ANYWHERE in the command text, and a single such match waived
+# every other check: `x=$((1<<3)); until … pgrep … sleep …` sailed through on a
+# bitshift, as did a waiter sharing a compound command with `cat <<< "hi"` or
+# with the string "uses <<END markers". Requiring the introducer to sit at end
+# of line makes those three stop matching, since grep is line-oriented here.
+HEREDOC='<<-?\s*[\x27"]?\w+[\x27"]?\s*$'
+# …and a heredoc fed to an interpreter EXECUTES what it carries, so it is not
+# documentation and keeps no exemption.
+INTERP='\b(bash|sh|zsh|ksh|dash|python3?|perl|ruby|node|eval|source)\b.*'
+if echo "$cmd" | grep -qP "$HEREDOC"; then
+    echo "$cmd" | grep -qP "$INTERP$HEREDOC" || exit 0
+fi
 
-echo "$cmd" | grep -qP '\bpgrep\b'             || exit 0
-echo "$cmd" | grep -qP '\bsleep\b'             || exit 0
-echo "$cmd" | grep -qP '\b(until|while|for)\b' || exit 0
+echo "$cmd" | grep -qP '\bpgrep\b'         || exit 0
+echo "$cmd" | grep -qP '\bsleep\b'         || exit 0
+echo "$cmd" | grep -qP '\b(until|while)\b' || exit 0
 
 echo "BLOCKED: this waits for a process by polling it in a shell loop. Any such predicate matches the waiting shell's own command line — pgrep is only the usual one — so the loop waits for itself, and it outlives the session reparented to init. Swapping the predicate does not fix it. Launch the job with run_in_background and let the completion notification arrive. If something truly must be polled, wait on a PID captured beforehand (until ! kill -0 \"\$PID\" 2>/dev/null) or on a marker the job writes when it ends — never on a pattern that can describe itself." >&2
 exit 2
