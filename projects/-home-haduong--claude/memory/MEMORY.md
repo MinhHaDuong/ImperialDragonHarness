@@ -115,3 +115,5 @@
 - [A positive control validates the detector, not the enumerator](feedback_positive_control_validates_the_detector_not_the_enumerator.md)
 - [Background isolation blocks primary-checkout writes](feedback_background_session_isolation_blocks_primary_writes.md)
 - [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md)
+- [A blocked compound command skips every line](feedback_blocked_compound_command_skips_every_line.md)
+- [Content-match recovery needs diff-size verification](feedback_content_match_recovery_needs_diff_verification.md)
