@@ -473,6 +473,42 @@ the same indexes as a run that finds a full one. That equivalence is the test
 this ticket ships with, in the spirit of P6: a cache nobody has proved
 disposable is a store wearing a cache's name.
 
+### What the model decides, and what it must not
+
+Finding candidate groups is mechanical: embeddings cluster, lexical matching
+proposes, predicates evaluate, scores compute. Deciding whether a group is one
+lesson, and writing the merged text, is judgment, and no amount of similarity
+settles it — two entries can be near-identical in wording and record different
+conditions, which is why roughly half of what lexical matching proposes is
+noise. So the consolidation pass needs a model, and the design is better for
+saying exactly where.
+
+**The model proposes a merge and writes the merged body.** It names the group,
+argues that it is one lesson, produces the text that replaces it, and declares
+what the result supersedes. That is authorship, and it is the one thing in this
+pipeline no predicate can do.
+
+**The model decides nothing about retention.** Not what ranks, not what
+expires, not what is still true. Ranking is a score over declared fields;
+expiry is a predicate a program evaluates. Keeping judgment out of those two is
+what makes an index reproducible from the store alone — regenerate twice, get
+the same file — and reproducibility is the property that lets anything else be
+tested.
+
+**A merge is reviewed before it lands.** It is the only operation here that
+replaces text with different text, so it is where both silent loss and
+poisoning would enter. Merges into the harness tier reach every session, and
+they go through a pull request like any other harness change; the
+out-of-family review was blunt that human review of the shared tier is the only
+serious defence, and this is the operation that needs it.
+
+**And a bad merge is recoverable, which is the point of keeping everything.**
+The originals are tombstoned, not deleted, so a group wrongly conflated can be
+read back and split. A design that deleted its inputs would have to be right
+the first time; this one only has to be reviewable. Two things go into the
+run's provenance so a later reader can tell why a merge looks the way it does:
+the model's identity, and the prompt it ran under.
+
 ### Contradiction between ranked entries
 
 Keeping everything means an entry and its correction coexist, and both can rank.
