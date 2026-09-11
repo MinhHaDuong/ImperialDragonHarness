@@ -7,7 +7,10 @@
 
 Fifth review, and the first at **acceptance** level: not "is the design
 right" but "can implementation start on it without a new decision". Reviews
-[v6](./2026-09-10-dragon-memory-design.md) at `origin/main` `8e54245e`. The
+[v6](./2026-09-10-dragon-memory-design.md) as it stood at `a68fd1ed`
+(`origin/main`). An earlier revision of this line cited `8e54245e`, which is a
+commit on the review branch adding the nomenclature note, not a commit on main;
+the design text reviewed is the same under either ref. The
 earlier reviews — [Claude](./2026-09-10-dragon-memory-design-review-claude.md)
 and [ChatGPT](./2026-09-10-dragon-memory-design-review-chatgpt.md) on v0,
 [Fable](./2026-09-10-dragon-memory-design-review-fable.md) on v1 (figures),
