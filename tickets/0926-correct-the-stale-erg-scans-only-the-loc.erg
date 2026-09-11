@@ -1,0 +1,182 @@
+%erg 0.1
+Title: Correct the stale erg-scans-only-the-local-checkout premise in tickets AGENTS.md
+Created: 2026-09-11
+Author: claude
+Label: deferred
+
+--- log ---
+2026-09-11T15:37Z claude created
+
+--- body ---
+## Context
+
+`tickets/AGENTS.md` is resident in every session of every project. It states:
+
+> ID allocation is optimistic (git-erg#282, wontfix): `erg new` scans only the
+> local checkout, so parallel sessions on different branches/checkouts can hand
+> out the same ID.
+
+That premise is false for the binaries in use on doudou as of 2026-09-11, and a
+substantial doctrine rests on it: fetch before allocating, `erg check` after
+every fetch, re-run the seat check at the merge gate, and on collision renumber
+**clear of the frontier rather than to the next free ID**. The same document
+records what the frontier-jumping rule cost when over-applied — in
+search-works-for-zotero it produced allocations at 0050, 0060, 0070 … 0480 in
+round decades, "wasting two thirds of its ID space and making the sequence
+unreadable".
+
+The harness is paying a parade against a limitation the tool no longer has. The
+doctrine is not worthless: a residual window remains, named below. It is
+calibrated against the wrong width.
+
+Found while allocating in search-works-for-zotero, where a sibling session held
+0766 on a branch. `erg` routed the allocation to 0767 by itself.
+
+## Evidence
+
+Four readings, two of them isolated controls, all doudou 2026-09-11.
+
+1. **The binaries document it themselves.** `strings tickets/erg`: "The
+   same-relative subtree of every `refs/heads/` and `refs/remotes/` tip in the
+   local refs cache, enumerated via `git for-each-ref` + `git ls-tree`. Catches
+   tickets committed on branches not currently checked out", plus a parallel
+   clause for "uncommitted drafts in parallel worktrees". Both binaries also
+   state the boundary the shorter quote omits: the branch-tip pass has a 200 ms
+   deadline and on timeout falls back to the worktree-level result with a
+   warning on stderr.
+
+2. **Live routing.** The recorded `find` search over the repository found ticket
+   0766 in no working tree; it lived only in a sibling session's branch. `erg
+   next-id` returned 0767. The allocator avoided an ID it could only have
+   learned from a ref.
+
+3. **Isolated control, the unpushed case.** A local branch was built with
+   plumbing (temp `GIT_INDEX_FILE`, so the shared checkout's index and working
+   tree were never touched) carrying `tickets/0899-…`, never pushed, no remote
+   counterpart:
+
+   | state | `erg next-id` |
+   |---|---|
+   | baseline | 0768 |
+   | unpushed local branch carrying 0899 present | **0900** |
+   | probe ref deleted | 0768 |
+
+   0 modified paths in the working tree throughout.
+
+4. **Independent confirmation on the second binary.** The harness build
+   (`sha256 53fbf0e0f8e0cd13712ca864da4bdd71efb29b7f8aaf56c8fdce320cbbdcc3fb`,
+   revision `4fd3c98`) differs from the search-works-for-zotero build (`sha256
+   1e204c1ffd9cd703ac6e778a3b5f3337597accaa3d5ac5c693bf3d8ffb7d9436`,
+   revision `5158508`). It carries the same enumeration, and while this ticket
+   sat on an unpushed branch as 0926, the harness checkout's `erg next-id`
+   returned 0927.
+
+## Two questions the author raised, both answered here
+
+**Does an unpushed sibling branch in a worktree on the same machine get
+found?** Yes. Worktrees of one clone share `refs/heads`, and reading 3 shows an
+unpushed local branch alone moves the allocation. No forge call is involved.
+
+**Does it fill the holes?** No — it is max+1, never lowest-free. Measured in
+search-works-for-zotero: 322 distinct IDs, highest 0767, and **445 free slots
+below the maximum**, 58 % of the space. `next-id` returned 0768, not 0038. A gap
+below a retained high-water mark is therefore never reused by the current
+allocator, which raises the price of the renumber advice above rather than
+lowering it.
+
+## Does the harness actually use the allocator?
+
+Mostly yes, which is what makes the correction worth making. `tickets/erg new`
+or `$ERG new` is called by `skills/release`, `skills/molt`, `skills/raid`,
+`skills/roar`, `skills/trace-doctor`, and `scripts/worktree-exit-preflight.sh`
+guards against its uncommitted output.
+
+Two skills mention filing a ticket without pinning the allocator —
+`skills/healthcheck` ("create a ticket") and `skills/memory` ("File ticket or
+delete"). Neither prescribes hand-picking an ID, so this is a loose end rather
+than a defect. The genuinely unguarded path is the collision-recovery advice in
+`AGENTS.md` itself, which tells the agent to *choose* a number above the
+high-water mark, bypassing the allocator exactly when IDs are most contended.
+
+## The stale claim is repeated elsewhere
+
+`scripts/check-cross-pr-ticket-collision.sh` line 5 carries it again in its
+header comment: "`erg new` scans only the local checkout, so two branches can
+hand out the same ID". Correcting `AGENTS.md` alone leaves the claim standing in
+the script that exists because of it.
+
+## What stays genuinely open
+
+Outside what any local scan can reach:
+
+- a **separate clone** of the same project on the machine, with its own `.git`;
+- another machine entirely;
+- refs present on the forge but not yet fetched here;
+- a sibling that has allocated but neither committed nor left a draft where the
+  parallel-worktree scan can see it;
+- a branch-tip pass that exceeds its 200 ms deadline and falls back, with a
+  warning, to the local and sibling-worktree result; Git enumeration failures
+  can likewise reduce ref coverage.
+
+Whether to close any of these, and how, is the "another day" question. Note that
+git-erg#282 declined *reservation*, which is a far stronger mechanism than the
+read-only scan the binaries now perform, so that wontfix does not settle a
+future proposal on its own terms.
+
+## Actions
+
+1. Rewrite the stale bullet in `tickets/AGENTS.md`: say what `erg new` actually
+   scans (store subtree, parallel worktrees' uncommitted drafts, and a
+   best-effort pass over `refs/heads` and `refs/remotes` tips bounded at 200 ms),
+   and name the fallback as well as the residual window of a separate clone or
+   unfetched refs.
+2. Fix the same claim in `scripts/check-cross-pr-ticket-collision.sh`'s header.
+3. Keep the fetch-before-allocating rule. It is exactly what shrinks the
+   residual window, and it survives the correction intact.
+4. Re-scope the renumber-clear-of-the-frontier rule to the narrowed hazard,
+   weighed against its recorded cost and against the max+1 finding above, which
+   makes every jumped ID a permanent hole.
+5. Re-read the surrounding doctrine for other sentences resting on the same
+   premise — the `erg check`-after-every-fetch cadence, the merge-gate seat
+   re-check — and say for each whether it still earns its place.
+6. Leave the cross-PR CI gate's *behaviour* alone unless step 5 says otherwise:
+   it covers the separate-clone and unfetched-refs cases no local scan reaches,
+   and in a repo with no CI it is the only check there is.
+
+## Test
+
+Before trusting any inventory of call sites, run the search pattern once
+against a case known to be positive. Two greps written for this ticket were
+wrong in that exact way: `erg new` missed `trace-doctor`'s `$ERG new`, and a
+whitespace-anchored retry dropped `release`'s `tickets/erg new`. A pattern whose
+"no hits" is indistinguishable from "I could not look" is not a check.
+
+## Verification
+
+- [ ] Each claim in the corrected bullet is re-derived on the machine rather
+      than copied from this ticket, with the binary sha256 recorded beside it.
+- [ ] A positive control fires before any "no collision" claim is trusted.
+
+## Invariants
+
+- Do not delete the fetch discipline; the correction narrows the hazard, it does
+  not remove it.
+- Do not let a binary's strings carry the claim alone. Two of the four readings
+  above are behavioural, and those are the ones that settle it.
+- `tickets/AGENTS.md` is resident in every session of every project, so every
+  sentence added is paid for everywhere. Correct the bullet; do not grow an
+  essay around it.
+
+## Exit criteria
+
+`tickets/AGENTS.md` and the collision script describe what the tool actually
+does, the collision doctrine is scoped to the residual window, and a reader can
+tell which cases remain unprotected and why.
+
+## Note on urgency
+
+Deferred at the author's direction, 2026-09-11. Nothing breaks while it waits.
+The cost of waiting is that a resident document tells every session something
+false about its tooling, and the frontier-jumping advice it justifies has
+already burned two thirds of one project's ID space, permanently, since the
+allocator never reuses a hole.
