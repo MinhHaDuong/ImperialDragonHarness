@@ -7,6 +7,8 @@ Blocked-by: 0921
 --- log ---
 2026-09-11T07:04Z codex created
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -24,7 +26,8 @@ Library/CLI; `rules/knowledge-hints.md`; `scripts/knowledge_hints.py`; pilot cor
 1. Search title, description, tags and body with a simple lexical baseline; use explicit applicability for exclusion, not missing keywords.
 2. Select a bounded task bundle with provenance, status and caveats; adjust redundancy here without permanently penalising particulars in static orientation.
 3. Reuse pointer/caveat discovery and deduplicate canonical artefacts; account knowledge-hint exposure separately from controlled memory.
-4. Return empty or incomplete results honestly; expose uncached shared coverage. No embeddings or hosted backend required.
+4. Expose explicit historical retrieval with inactive status and replacement links; ordinary recall always excludes those records and redirects.
+5. Use the validated current-corpus fallback from 0921 when ranking/publication is absent or corrupt; lexical recall must not depend on a healthy dream snapshot. Return empty or incomplete results honestly; expose uncached shared coverage. No embeddings or hosted backend required.
 
 ## Test
 

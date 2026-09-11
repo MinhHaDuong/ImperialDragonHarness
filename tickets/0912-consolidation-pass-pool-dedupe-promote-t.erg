@@ -2,17 +2,20 @@
 Title: Propose consolidation candidates without prescribing outcomes
 Created: 2026-09-10
 Author: claude
+Label: deferred
 Blocked-by: 0923
 
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
 
-After useful delivery exists, add optional editorial support on the strong host. Candidate grouping is not generalisation, and rediscovery creates only an opportunity.
+After useful delivery exists, optionally automate candidate discovery on the strong host. This deferred extension is not required for the manual editorial workflow or programme closure. Candidate grouping is not generalisation, and rediscovery creates only an opportunity.
 
 Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
@@ -23,7 +26,7 @@ Dreaming skill; library corpus reader; pilot/available shared inputs; review/pro
 ## Actions
 
 1. Propose lexical candidate groups and possible contradictions with source UUID/revisions. Do not prescribe harness-copy survival or project-copy retirement.
-2. Hand candidates to 0916; empty output or no change is valid. A false-positive fixture may be proposed but must never be represented as already judged equivalent.
+2. Hand candidates to the same review/apply contract used by manual proposals in 0916; empty output or no change is valid. A false-positive fixture may be proposed but must never be represented as already judged equivalent.
 3. Record useful operational diagnostics without a new mandatory rejection database. If dismissed candidates need suppression, use existing review provenance keyed by source revisions, not an eternal pair ban.
 4. Keep editorial analysis separate from publication; perform no canonical writes in this ticket.
 

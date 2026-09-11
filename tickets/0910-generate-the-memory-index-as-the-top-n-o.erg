@@ -8,6 +8,8 @@ Blocked-by: 0920
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -22,14 +24,14 @@ Internal package/CLI from 0911; pilot inputs from 0920; `skills/dream/read-index
 
 ## Actions
 
-1. Deduplicate available replicas by UUID and compile index.md, MEMORY.md and a manifest containing processed revisions, available candidates, policy/context/time inputs and hashes.
+1. Deduplicate available replicas by UUID and compile index.md, MEMORY.md and a manifest containing processed revisions, available candidates, policy/context/time inputs and hashes. Take the processed UUID/revision set as an explicit dreaming acknowledgement; compiler-only republishing preserves it, never inferring processing from enumeration, copying or selection. New/current revisions remain recent until acknowledged. Acknowledgement does not require accepting a pending synthesis proposal.
 2. Use explicit simple ranking defaults and stable tie-breaking; no mandatory entries, independent tier quotas, compulsory quality backfill or prerequisite broad predicate grammar.
-3. Support configurable budgets with declared token estimates; 1500/500/2000 remains a calibration proposal, not silently adopted production policy.
-4. Publish a coherent generation atomically after optimistic expected-revision checks. A rejected stale publication must not overwrite newer accepted changes.
+3. Count the complete rendered payload (headings, labels, links and identifiers), not body text alone. Record schema/generator/policy versions and fixed budget profiles; processed revisions include below-cut bodies. Support configurable budgets with declared token estimates; 1500/500/2000 remains a calibration proposal, not silently adopted production policy.
+4. Publish a coherent generation atomically after optimistic expected-revision checks. A rejected stale publication must not overwrite newer accepted changes. Package the refreshed snapshot and views as one generation; record upstream revision and refresh date.
 
 ## Test
 
-Over-budget fixture distinguishes complete catalogue and bounded orientation. Repeat fixed inputs for identical output; change policy/context input explicitly. Inject interrupted publication and conflicting revision; ensure coherent old/new output and rejection respectively.
+Over-budget fixture distinguishes complete catalogue and bounded orientation. Repeat fixed inputs for identical output; change policy/context input explicitly. Inject interrupted publication and conflicting revision; ensure coherent old/new output and rejection respectively. Add a memory, republish without a dreaming acknowledgement, and verify it remains recent; acknowledging it later marks it processed even when it is below the orientation cut.
 
 ## Verification
 

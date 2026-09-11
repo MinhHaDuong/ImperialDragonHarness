@@ -5,10 +5,13 @@ Author: claude
 Blocked-by: 0913
 Blocked-by: 0918
 Blocked-by: 0925
+Blocked-by: 0916
 
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to v6 after design-review merge #903; retain IDs, add delivery workpackages 0920–0925, defer optional experiments.
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 
 --- body ---
 
@@ -37,11 +40,12 @@ concurrency replace runtime modes and global locks.
 1. Foundation: 0911 and 0917; then legacy compatibility 0908 and admission 0915.
 2. Pilot: 0920 → 0910 → 0921 → 0922 → 0923. First acceptance is one project,
    a small shared snapshot and one runtime in a disposable offline clone.
-3. Expand through 0924 → 0913. In parallel, evaluate with 0918 and develop
-   editorial support through 0912 → 0916 → 0925.
-4. Keep 0914 (predicate extensions) and 0919 (quality annotation experiment)
+3. Expand through 0924 and 0918 → 0913, with measured readiness before broad activation/retirement. In parallel, develop
+   manual editorial review through 0923 → 0916 and independent harvesting through 0923 → 0925. Base editorial workflows can use manual judgments; model-assisted automation is optional.
+4. Keep 0912 (automated candidate discovery), 0914 (predicate extensions) and 0919 (quality annotation experiment)
    deferred and outside the core closure gate. Reactivate only on evidence.
-5. Review the merged union, actual adapter capabilities, migration coverage and
+5. Rerun the relevant 0918 behavioural scenarios on the completed union, adding accepted generalisation/local-exception and harvested-then-amended-procedure cases once 0916/0925 exist. Check their predeclared margins; early pilot results alone cannot certify these later features.
+6. Review the merged union, actual adapter capabilities, migration coverage and
    evaluation results. Record any authorised scope changes; do not quietly omit
    a core child or pretend optional work was implemented.
 

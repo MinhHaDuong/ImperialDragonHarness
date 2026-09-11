@@ -2,11 +2,13 @@
 Title: Review generalisations while preserving particular observations
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0912
+Blocked-by: 0923
 
 --- log ---
 2026-09-10T16:24Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+
+2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 
 --- body ---
 
@@ -18,18 +20,18 @@ Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-desig
 
 ## Relevant files
 
-Dreaming skill; candidate interface from 0912; library schema/admission; existing shared-change review process.
+Dreaming skill; manually supplied proposals (optional automated discovery in 0912); library schema/admission; existing shared-change review process.
 
 ## Actions
 
-1. Have the model consider evidence, conditions, exceptions and usefulness, with no-change as a first-class result.
-2. Record accepted synthesis and its rationale with source revisions and model/prompt identity. Retain particulars active unless an explicit independent supersession/retraction is justified.
+1. Provide a reviewed editorial workflow that considers evidence, conditions, exceptions and usefulness, with no-change as a first-class result. Manual agent-led review suffices for the base; automated model-assisted generalisation is an optional strong-host extension, not a prerequisite for closure or harvesting.
+2. Record accepted synthesis and its rationale with source revisions and reviewer identity; record model/prompt identity when a model is used. Retain particulars active unless an explicit independent supersession/retraction is justified.
 3. Route shared semantic changes through the existing review process. Do not infer decision authority from recurrence or a model-authored field.
 4. Compile accepted changes independently of pending proposals; protect against changed source revisions at integration.
 
 ## Test
 
-Mechanical fixtures verify UUID/relationship/lifecycle invariants. Behavioural cases cover genuine synthesis, lexical false positives, a repeated observation warranting no action and a useful local exception. Do not make guaranteed model judgment a deterministic gate.
+Mechanical fixtures verify UUID/relationship/lifecycle invariants through the common mutation path. The base must be exercisable with recorded manual judgments and no model service. Behavioural cases cover genuine synthesis, lexical false positives, a repeated observation warranting no action and a useful local exception. Do not make guaranteed model judgment a deterministic gate.
 
 ## Verification
 

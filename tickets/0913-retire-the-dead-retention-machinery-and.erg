@@ -3,10 +3,13 @@ Title: Roll out portable memory and retire replaced machinery
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0924
+Blocked-by: 0918
 
 --- log ---
 2026-09-10T16:24Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 
 --- body ---
 
@@ -22,10 +25,11 @@ Existing `projects/*/memory/`, shared/IDH roots; legacy memory/dream skills and 
 
 ## Actions
 
-1. Inventory each target project and audience; batch migration using the proven identity/date mapping. Keep unrelated external repositories behind their own normal PR processes.
-2. Record each batch and language/provenance exceptions. Do not automatically translate quotations or copy private data into a shared repository.
-3. Retire legacy decay/TTL/confirmation, duplicate index writers and obsolete promotion rules only after their consumers have migrated.
-4. Replace discovery with the common loader/knowledge-hint path and check no legacy reader treats an index as canonical storage.
+1. Before broad activation or retiring a working path, inspect 0918 results against the predeclared acceptance margins. Unmet margins require remediation or an explicitly recorded scope/risk decision; a green mechanical smoke alone is insufficient.
+2. Inventory each target project and audience; batch migration using the proven identity/date mapping. Keep unrelated external repositories behind their own normal PR processes.
+3. Record each batch and language/provenance exceptions. Do not automatically translate quotations or copy private data into a shared repository.
+4. Retire legacy decay/TTL/confirmation, duplicate index writers and obsolete promotion rules only after their consumers have migrated.
+5. Replace discovery with the common loader/knowledge-hint path and check no legacy reader treats an index as canonical storage.
 
 ## Test
 

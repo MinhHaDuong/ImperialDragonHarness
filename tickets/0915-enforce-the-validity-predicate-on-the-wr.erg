@@ -8,6 +8,8 @@ Blocked-by: 0911
 2026-09-10T16:24Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
+2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
+
 --- body ---
 
 ## Context
@@ -25,11 +27,12 @@ Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-desig
 1. Require a recorded canonical-owner routing outcome: existing decision records, STATE/ticket, reusable artefact, knowledge hint, experiential memory, or unresolved.
 2. Validate admitted bodies through the common library. Reject malformed predicates; preserve explicitly unverified applicability where the consuming environment cannot evaluate it.
 3. Document branch-local acceptance: author's working context may be uncommitted; other readers use committed branch state through normal Git integration.
-4. Keep schema validation distinct from truth, audience suitability and routing judgment. Do not build native-note import or bidirectional synchronisation.
+4. Require a recorded audience/scope suitability judgment before canonical admission; unresolved audience or scope prevents publication into that destination without forcing an automatic confirmation loop. Keep this judgment distinct from structural validation and truth. Do not build native-note import or bidirectional synchronisation.
+5. Provide the common lifecycle mutation path: explicit retraction/supersession updates status, moves the local body into inactive/, adds a readable notice and repairs relative links in one committed change. UUID references remain stable; redirects cannot become active memories. Use expected revisions and refuse to overwrite uncommitted changes.
 
 ## Test
 
-Mechanical fixtures reject missing routing outcome and malformed schema, accept a qualified unknown, and avoid an automatic user-confirmation loop. Behavioural routing examples are labelled evaluation cases, not deterministic semantic guarantees.
+Mechanical fixtures reject missing routing outcome and malformed schema, accept a qualified unknown, and avoid an automatic user-confirmation loop. Missing or unresolved audience/scope cannot publish into the destination. Exercise post-migration retraction/supersession, stale expected revisions, uncommitted edits, historical links and redirect exclusion. Behavioural routing examples are labelled evaluation cases, not deterministic semantic guarantees.
 
 ## Verification
 

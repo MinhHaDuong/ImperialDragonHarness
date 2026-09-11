@@ -7,6 +7,8 @@ Blocked-by: 0910
 --- log ---
 2026-09-11T07:04Z codex created
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -22,13 +24,14 @@ Library/CLI publication from 0910; branch corpus and snapshot from 0920; budget 
 ## Actions
 
 1. Implement lightweight static-order filtering and refill only within the published available set. Evaluate basic scope in the consuming checkout; preserve unknown labels.
-2. Derive provisional status from processed UUID/revisions, not another stored lifecycle flag. Bound the recent supplement; overflow remains searchable.
+2. Derive provisional status from processed UUID/revisions, not another stored lifecycle flag. Use deterministic freshness/relevance ordering and a stable tie-break within a fixed recent allowance. A configurable freshness interval ends preferential exposure, never provisional status or searchability; report the ageing backlog. Overflow remains searchable.
 3. Apply withdrawal before budget selection; exclude stale orientation revisions even if their replacement is unavailable or does not fit.
-4. Use ordinary Git integration and optimistic expected revisions. No global/distributed lock, cross-branch exchange or uncommitted global overlay.
+4. When a publication/manifest is missing or damaged, validate current local bodies and expose deterministic catalogue browsing to recall; report lost ranking and shared coverage. Malformed bodies and UUID conflicts are reported, never silently certified active. Distinguish an empty store from failed enumeration.
+5. Use ordinary Git integration and optimistic expected revisions. No global/distributed lock, cross-branch exchange or uncommitted global overlay.
 
 ## Test
 
-Write during compilation, then load: the new committed revision remains recent. Retract an orientation entry with unavailable replacement: old advice is absent. Two branches add independent bodies then integrate: both survive. Conflicting same-UUID edits are reported, never latest-timestamp-wins.
+Write during compilation, then load: the new committed revision remains recent. Retract an orientation entry with unavailable replacement: old advice is absent. Two branches add independent bodies then integrate: both survive. Conflicting same-UUID edits are reported, never latest-timestamp-wins. Missing/corrupt manifests still permit validated local browsing; a broken walker cannot report an empty successful generation. A revision ageing out of the supplement stays provisional and available to recall.
 
 ## Verification
 

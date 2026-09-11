@@ -2,16 +2,18 @@
 Title: Harvest lessons into existing rules skills and hooks
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0916
+Blocked-by: 0923
 
 --- log ---
 2026-09-11T07:04Z codex created
+
+2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 
 --- body ---
 
 ## Context
 
-Memory may suggest requirements but must not become another instruction system or decision ledger. Harvesting proposes changes through the normal adoption process.
+Memory may suggest requirements but must not become another instruction system or decision ledger. Harvesting proposes changes through the normal adoption process. A particular lesson can warrant a harvest directly: candidate grouping, synthesis and model integration are not prerequisites.
 
 Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 

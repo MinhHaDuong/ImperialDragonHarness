@@ -9,6 +9,8 @@ Blocked-by: 0915
 --- log ---
 2026-09-11T07:04Z codex created
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -26,11 +28,12 @@ Baseline/mapping from 0917; legacy import from 0908; schema/admission package; o
 1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge.
 2. Assign UUIDs once and preserve a durable old-path-to-UUID mapping; migrate explicit lifecycle, scope, dates and relative navigation. Preserve source text unless a separately reviewed correction is necessary.
 3. Fix a bounded available shared candidate set before ranking. Commit readable replicas with UUID, source revision and hash; never copy credentials or private traces indiscriminately.
-4. Provide catalogue input fixtures, inactive navigation and rollback instructions. Report language exceptions and unavailable evidence for later reviewed treatment.
+4. Implement reusable bounded snapshot selection/refresh for every publication, invoked by dreaming and consumed by 0910. Include referenced shared bodies plus the bounded candidate selection; resolve dependencies or report them unavailable. Reconcile live/shared replicas by UUID and proven revision ancestry: accept verified successors, report divergence, never use timestamps as winners. Retain source revisions/refresh date, validate hashes and propagate known withdrawals even when replacement bodies are outside the set. Refreshed successors remain recent until explicitly processed. Treat uncached sources as unavailable, not refill candidates; document offline staleness. Replicas are not independently editable; propose changes upstream or create a distinct local observation.
+5. Provide catalogue input fixtures, inactive navigation and rollback instructions. Report language exceptions and unavailable evidence for later reviewed treatment.
 
 ## Test
 
-Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, retained particulars and idempotent rerun without new UUIDs.
+Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, verified-successor versus divergent refresh, missing referenced dependencies, retained particulars and idempotent rerun without new UUIDs. Refresh a stale shared replica after an upstream withdrawal with an uncached replacement: the withdrawal survives export and is effective at the next supported load without dreaming; offline readers explicitly cannot know unseen upstream changes.
 
 ## Verification
 

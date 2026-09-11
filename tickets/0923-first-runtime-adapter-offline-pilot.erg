@@ -7,6 +7,8 @@ Blocked-by: 0922
 --- log ---
 2026-09-11T07:04Z codex created
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -23,12 +25,12 @@ Library/CLI from 0911–0922; selected runtime integration points; existing star
 
 1. Implement a thin event/delivery adapter with one owner per component and no duplicated memory policy.
 2. Protect canonical bodies from native writers. Disclose uncontrollable native-memory interference; no three-mode configuration or importer.
-3. Record supported start/task/pre-action/resume/child/compaction boundaries and a small delivery record outside model summaries.
+3. Trigger task recall once the task is sufficiently clear and before its first relevant consequential action; refresh on material task or constraint changes without requiring a user recall request. Record supported start/task/pre-action/resume/child/compaction boundaries and a small delivery record outside model summaries. Rebuild bundles and reset duplicate suppression according to context retained after compaction, not everything ever sent.
 4. Run in a disposable offline clone. Test logical bundle replacement and cumulative cost where old injected text cannot be removed.
 
 ## Test
 
-Live smoke verifies actual delivered context, not just a required sentence in a skill. Inject, compact where supported, retract and resume: verify correction delivery and no stale re-injection. Show explicit reduced guarantees for unavailable hooks.
+Live smoke verifies actual delivered context, not just a required sentence in a skill. Inject, compact where supported, retract and resume: verify correction delivery and no stale re-injection. Show explicit reduced guarantees for unavailable hooks. Verify pre-action recall and material-task-change refresh, including repeated changes within bounded active allocation and measured cumulative transcript cost.
 
 ## Verification
 

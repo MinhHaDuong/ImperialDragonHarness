@@ -27,7 +27,8 @@ uses Git isolation and optimistic revision checks.
 1. [Ticket map](#ticket-map)
 2. [Execution order and milestones](#execution-order-and-milestones)
 3. [Scope changes from the previous train](#scope-changes-from-the-previous-train)
-4. [Validation and adoption](#validation-and-adoption)
+4. [Design coverage and acceptance gates](#design-coverage-and-acceptance-gates)
+5. [Validation and adoption](#validation-and-adoption)
 
 ## Ticket map
 
@@ -47,11 +48,11 @@ The following table is the scheduling contract; `Blocked-by` headers mirror it.
 | 0923 | First runtime adapter and offline live smoke | 0922 | First usable milestone |
 | 0924 | Remaining Codex/Pi/Claude Code adapters | 0923 | Broader delivery |
 | 0918 | Channel-attributed behavioural evaluation and calibration | 0923 | Parallel measurement |
-| 0912 | Candidate proposals without prescribed outcomes | 0923 | Editorial support |
-| 0913 | Staged rollout and retirement of replaced machinery | 0924 | Broader delivery |
-| 0916 | Reviewed generalisation, sources retained | 0912 | Editorial support |
-| 0925 | Harvesting through existing governance | 0916 | Editorial support |
-| 0909 | Union/integration review and programme closure | 0913, 0918, 0925 | Tracker, final gate |
+| 0912 | Automated candidate discovery without prescribed outcomes | 0923; deferred | Optional, not closure gate |
+| 0913 | Staged rollout and retirement of replaced machinery | 0924, 0918 | Broader delivery |
+| 0916 | Manual editorial review/apply contract, sources retained | 0923 | Editorial support |
+| 0925 | Harvesting through existing governance | 0923 | Editorial support |
+| 0909 | Union/integration review and programme closure | 0913, 0918, 0925, 0916 | Tracker, final gate |
 | 0914 | Additional predicates for demonstrated failures | 0923; deferred | Optional, not closure gate |
 | 0919 | Sample-based quality annotation experiment | 0918; deferred | Optional, not closure gate |
 
@@ -80,8 +81,10 @@ execution evidence. Remaining runtimes use the same contract; the choice does
 not grant permanent privilege or permit runtime policy forks.
 
 **Expansion.** After 0923, remaining adapters, initial behavioural evaluation
-and editorial candidate support may proceed independently. Broad migration
-and cleanup follow verified adapter coverage; do not delete the old path before
+and manual editorial review/harvesting may proceed independently. Broad migration
+and cleanup follow verified adapter coverage and 0918 evaluation against
+predeclared margins. Unmet margins need remediation or an explicit scope/risk
+decision before broad activation or retirement; do not delete the old path before
 its replacement works for its consumers. Migration of another repository uses
 that repository's normal branch/review process.
 
@@ -89,12 +92,18 @@ that repository's normal branch/review process.
 merge. A generalisation gets a new UUID and source relations; unchanged scope
 expansion preserves identity; supersession is a separate withdrawal. Shared
 changes follow existing review. Harvested procedures go through normal adoption,
-with evidence preserved and old prescriptions explicitly qualified.
+with evidence preserved and old prescriptions explicitly qualified. Harvesting
+can start directly from particular lessons after 0923, without waiting for
+candidate grouping or generalisation. The core editorial workflow supports
+manual judgments; automated/model-assisted generalisation remains optional.
 
 **Closure.** Tracker 0909 reviews the union of the three branches of work:
 delivery/rollout, evaluation, and editorial/harvesting. All core descendants
 must be completed or explicitly re-scoped through a recorded decision before
-closure. Optional predicates and subjective backfill do not block it.
+closure. Rerun relevant evaluation on the integrated result, including later
+generalisation and harvesting scenarios; pilot measurements cannot certify
+features that did not yet exist. Optional predicates and subjective backfill do
+not block it.
 
 ## Scope changes from the previous train
 
@@ -111,7 +120,8 @@ closure. Optional predicates and subjective backfill do not block it.
   are baseline work, and unknown applicability is never relabelled true.
 - **0915** owns actual admission mechanics, not a survey that can declare
   scoring-only enforcement sufficient. Routing correctness remains judgment.
-- **0912/0916** keep the useful separation between proposing and judging.
+- **0912/0916** separate optional automated discovery from core manual review/apply.
+  Defer 0912; 0916 accepts manually supplied proposals and does not depend on it.
   Remove predetermined promotion direction, automatic tombstoning, an eternal
   rejected-pair ledger and a run lock as the concurrency model.
 - **0917** preserves useful provenance without false expiry urgency.
@@ -119,6 +129,29 @@ closure. Optional predicates and subjective backfill do not block it.
   below-cut recall is not automatically a ranking failure.
 - **0919** is an evidence-driven optional sample experiment. Missing subjective
   annotations never make every existing body unrankable.
+
+## Design coverage and acceptance gates
+
+These are acceptance responsibilities within the existing train, not additional
+subsystems. Each owner supplies failing controls and reviewable evidence.
+
+| V6 contract | Owner | Evidence required |
+|---|---|---|
+| UUID/lifecycle, project identity and minimal bounded applicability grammar | 0911; admission 0915 | Conflicts, invalid operators and true/false/unknown fixtures |
+| Portable snapshot and recurring refresh | 0920; publication 0910; loading 0921 | Verified ancestry, divergent replicas, dependency gaps, withdrawals and coherent snapshot/view handover |
+| Reproducible coherent publication | 0910 | Explicit dreaming acknowledgement; compiler-only republishing cannot clear Recent; rendered cost and interrupted handover |
+| Admission and later lifecycle edits | 0915; history 0922 | Audience/scope judgment, atomic status/move/link repair, redirects excluded from ordinary recall |
+| Current withdrawals, recent freshness and backlog | 0921 | Withdrawal before selection; aged entries remain provisional/searchable |
+| Damaged or absent publication | 0921; recall 0922 | Validated local browse/search survives; broken enumeration cannot pass as empty success |
+| Proactive recall and material task changes | 0923; parity 0924 | Actual pre-action delivery, refresh, compaction recovery and cumulative cost |
+| Behavioural readiness before broad rollout | 0918 → 0913 | Predeclared margins, repeated matched tasks and an explicit rollout verdict |
+| Editorial changes and harvesting on the completed system | 0916/0925; final 0909 | Preserved local exceptions and current procedure followed after later amendment |
+
+Core editorial workflows are part of programme closure, while automated model
+integration, individual proposals and changes remain optional. Manual reviewed
+judgments and no-change passes suffice for the base. Harvesting is independent
+of generalisation. Automated candidate discovery (0912), extra predicates (0914)
+and quality annotations (0919) are deferred, outside closure requirements.
 
 ## Validation and adoption
 
@@ -137,7 +170,9 @@ from a single passing run.
 
 Token figures 1,500 / 500 / 2,000 remain proposed calibration inputs, not newly
 ratified defaults. No third-party component is licence-cleared by this plan.
-Record the actual revision, licence and obligations before copying, adapting or
+0911 owns the small build/reuse assessment of the MemU patterns identified in
+the companion comparison before implementing equivalents. Record the actual
+revision, licence and obligations before copying, adapting or
 depending on a component. Reuse existing knowledge-hint mechanisms and canonical
 decision records; introduce no new memory governance database.
 

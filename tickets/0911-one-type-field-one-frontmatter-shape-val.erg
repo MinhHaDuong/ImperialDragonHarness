@@ -7,6 +7,8 @@ Author: claude
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+
 --- body ---
 
 ## Context
@@ -24,7 +26,9 @@ Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-desig
 1. Choose and document the internal package location and CLI entry point. Keep model calls and adapters outside its policy core; no standalone framework or binary.
 2. Implement minimal schema parsing/validation: immutable UUID, readable slug, explicit project/shared scope, active/superseded/retracted status, provenance, dates and relationships. UK English authoring; exact external identifiers preserved.
 3. Expose structured validation and identity-resolution results. Distinguish malformed data, unknown applicability and inactive records. Generalisation and supersession are different relations.
-4. Specify stable project identity and rename/fork handling; preserve replica identity. Assess licences and minimal dependencies before adding them; do not mandate both pydantic and python-frontmatter without justification.
+4. Specify the minimal closed applicability grammar and structured true/false/unknown result, shared by admission and loading. Reject unknown operators; do not execute memory-authored shell code. Any supported path probes have explicit roots and bounded cost. Broader operators remain deferred to 0914.
+5. Inspect the companion comparison’s MemU adapter/service patterns before implementing equivalents; record a small build/reuse decision in this ticket. Reuse ideas freely; copying or depending on a component requires the specific revision/licence/dependency/notice assessment. No adoption is presumed.
+6. Specify stable project identity and rename/fork handling; preserve replica identity. Assess licences and minimal dependencies before adding them; do not mandate both pydantic and python-frontmatter without justification.
 
 ## Test
 
