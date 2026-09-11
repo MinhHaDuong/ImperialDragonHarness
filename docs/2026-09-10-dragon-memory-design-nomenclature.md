@@ -62,7 +62,20 @@ dragon that notices one missing cup. That is §8 as written: "The persistent
 corpus has no score- or count-driven deletion cap. Monitor growth, consolidation
 duration and unresolved backlog."
 
-**`hoard` names the store and the library. It does not name the system.** A
+**`hoard` names the library and its verbs — not the store's path, and not the
+system.** The store root stays `memory/`: it is the first directory a stranger
+sees on cloning the project, so §2's no-harness browsing guarantee and §12.1's
+bare-clone gate make it stranger-facing, and rule 1 of §2 above puts it under
+"name capabilities, not the tool that provides them". The harness already sets
+that precedent — the skill is `memory`, the pass is `/dream`. Runtime
+compatibility pushes the same way, with one caveat settled elsewhere: the Fable
+acceptance review's condition 2 requires the canonical root and every runtime's
+native memory root to be disjoint *paths*, which §3.1 gives for free once bodies
+live in their own project repositories — except for IDH itself, whose repository
+is `~/.claude`. That collision is positional, not lexical, and is not resolved
+by renaming the directory.
+
+A
 single-vessel image — basin or pile — implies one pool and one access mode, and
 v6 refuses that: §1 gives "three delivery components [that] handle different
 timescales" and §6 gives each its own allowance. The architecture is a room
@@ -130,6 +143,8 @@ the body is ours, retraction withdraws that claim without asserting a successor.
 
 ## 6. Open
 
-The `hoard` package layout, the store's directory name inside a project repo
-(§3.2 leaves "the concrete format/layout to specify"), and whether a restoration
-verb is needed at all.
+The `hoard` package layout; whether the shared store carries the same root name
+as the project store (§3.1 treats them as two scopes of one kind, which argues
+for one word); and whether a restoration verb is needed at all — §4.3 makes
+restoration "an explicit editorial act", so it cannot be a flag, but nothing yet
+says it must exist.
