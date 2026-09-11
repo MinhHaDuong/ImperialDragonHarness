@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Tracker: implement the adopted memory design v6
+Title: Tracker: implement the adopted memory design v7
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0913
@@ -12,6 +12,7 @@ Blocked-by: 0916
 2026-09-11T07:04Z codex note Realigned to v6 after design-review merge #903; retain IDs, add delivery workpackages 0920–0925, defer optional experiments.
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
@@ -31,7 +32,7 @@ concurrency replace runtime modes and global locks.
 
 ## Relevant files
 
-- `docs/2026-09-10-dragon-memory-design.md` — adopted v6, not edited by this plan
+- `docs/2026-09-10-dragon-memory-design.md` — adopted v7, not edited by this plan
 - `docs/2026-09-11-memory-implementation-plan.md` — exact ticket/dependency map
 - Tickets 0908, 0910–0919 and 0920–0925 — implementation and optional experiments
 
@@ -77,6 +78,6 @@ semantic assertions. All substantive fixtures need a known failing control.
       work are integrated and reviewed together.
 - [ ] Evaluation records behaviour and cost, including limitations; budget proposals
       are not silently promoted to policy.
-- [ ] The implementation plan and v6 accurately describe the delivered contract, or
+- [ ] The implementation plan and v7 accurately describe the delivered contract, or
       any deviation is explicitly adopted through the normal decision process.
 - [ ] Final integration review is recorded and only then this tracker is closed.

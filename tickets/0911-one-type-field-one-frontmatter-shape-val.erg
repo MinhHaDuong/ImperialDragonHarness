@@ -8,14 +8,15 @@ Author: claude
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
 ## Context
 
-V6 needs one executable contract before corpus migration. This ticket now owns the small internal Python package, schema and thin CLI skeleton, not a 950-file rewrite or index generation. Preserve existing corpus and runtime behaviour.
+V7 needs one executable contract before corpus migration. This ticket now owns the small internal Python package, schema and thin CLI skeleton, not a 950-file rewrite or index generation. Preserve existing corpus and runtime behaviour.
 
-Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
@@ -23,7 +24,7 @@ Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-desig
 
 ## Actions
 
-1. Choose and document the internal package location and CLI entry point. Keep model calls and adapters outside its policy core; no standalone framework or binary.
+1. Adopt the names v7 §17 settles — package and CLI `hoard`, verbs `assay`, `reckon`, `seal`, `sift`, `shed`, `disown`, `weigh` — and document only the package location and entry point, which §17 leaves open. Keep model calls and adapters outside its policy core; no standalone framework or binary.
 2. Implement minimal schema parsing/validation: immutable UUID, readable slug, explicit project/shared scope, active/superseded/retracted status, provenance, dates and relationships. UK English authoring; exact external identifiers preserved.
 3. Expose structured validation and identity-resolution results. Distinguish malformed data, unknown applicability and inactive records. Generalisation and supersession are different relations.
 4. Specify the minimal closed applicability grammar and structured true/false/unknown result, shared by admission and loading. Reject unknown operators; do not execute memory-authored shell code. Any supported path probes have explicit roots and bounded cost. Broader operators remain deferred to 0914.
@@ -38,7 +39,7 @@ Use small fixtures: flat type is accepted; obsolete metadata nesting is rejected
 
 - [ ] Run the focused fixtures and show they detect the relevant failure.
 - [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
@@ -51,3 +52,6 @@ Use small fixtures: flat type is accepted; obsolete metadata nesting is rejected
 - [ ] Canonical schema and package/CLI boundary are documented and exercised on fixtures.
 - [ ] Flat type test agrees with the schema; no mandatory-residency field or slug identity introduced.
 - [ ] Core runs without network/model/embedding service; dependencies justified with licence evidence.
+- [ ] Package and CLI are named `hoard` per v7 §17, with the verbs `assay`, `reckon`, `seal`, `sift`, `shed`, `disown`, `weigh` bound to the sections they implement. The names are adopted, not chosen: this action no longer carries a naming decision.
+- [ ] `shed` without `--by` does not parse and `disown` accepts no successor, so §4.3's malformed lifecycle call is unwritable rather than rejected after the fact.
+- [ ] The closed predicate operator subset is enumerated, so 0915's unknown-operator fixture has a definition to test against.

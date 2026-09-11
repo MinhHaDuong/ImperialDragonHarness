@@ -8,6 +8,7 @@ Blocked-by: 0910
 2026-09-11T07:04Z codex created
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
@@ -15,7 +16,7 @@ Blocked-by: 0910
 
 Bridge dream lag without a memory bus. Pin publication G and current accepted branch corpus C; use unchanged ranked bodies from G, current withdrawals from C, and changed/unprocessed revisions as the recent supplement.
 
-Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
@@ -37,7 +38,7 @@ Write during compilation, then load: the new committed revision remains recent. 
 
 - [ ] Run the focused fixtures and show they detect the relevant failure.
 - [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
@@ -49,4 +50,5 @@ Write during compilation, then load: the new committed revision remains recent. 
 
 - [ ] Own-branch committed memories are eligible before PR merge and dreaming.
 - [ ] Loader respects orientation/recent caps and avoids duplicate UUID exposure.
+- [ ] v7 §12.1 revision-overlay row: for one UUID whose accepted revision in C differs from the revision ranked in G, G's text is never rendered; the C revision appears in the supplement if it fits, otherwise the UUID appears nowhere and the backlog report names it. Removing the revision comparison at load must fail this.
 - [ ] Relocation/unknown context works without model or network.

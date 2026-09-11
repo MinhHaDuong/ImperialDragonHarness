@@ -7,6 +7,7 @@ Blocked-by: 0911
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
@@ -14,7 +15,7 @@ Blocked-by: 0911
 
 The existing #PROMOTED/#DELETED mismatch is a compatibility defect, not a justification to tombstone every generalised source. Narrow this ticket to the legacy reader/import mapping required by the portable migration.
 
-Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
@@ -23,7 +24,7 @@ Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-desig
 ## Actions
 
 1. Enumerate legacy markers and distinguish actual inactive stubs from substantive local observations.
-2. Map verified inactive records to explicit v6 lifecycle and replacement references where known; report ambiguous promotion semantics for review.
+2. Map verified inactive records to explicit v7 lifecycle and replacement references where known; report ambiguous promotion semantics for review.
 3. Provide an import result used by 0920. Do not run the old promotion algorithm or rewrite the entire corpus.
 
 ## Test
@@ -34,7 +35,7 @@ Fixtures cover both legacy markers, an active particular with a generalises rela
 
 - [ ] Run the focused fixtures and show they detect the relevant failure.
 - [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 

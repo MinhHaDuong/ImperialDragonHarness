@@ -9,6 +9,7 @@ Blocked-by: 0920
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
@@ -16,7 +17,7 @@ Blocked-by: 0920
 
 Own deterministic compilation, not editorial dreaming. Compile the fixed available local/shared pool into a complete catalogue, default orientation and full static candidate order. Pending proposals do not block publication.
 
-Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
@@ -37,7 +38,7 @@ Over-budget fixture distinguishes complete catalogue and bounded orientation. Re
 
 - [ ] Run the focused fixtures and show they detect the relevant failure.
 - [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
@@ -50,3 +51,5 @@ Over-budget fixture distinguishes complete catalogue and bounded orientation. Re
 - [ ] Generation reproducible for recorded inputs and available set.
 - [ ] Below-cut bodies retained and discoverable; default index is not the store.
 - [ ] Pending semantic review does not block compilation; no mixed-generation handover.
+- [ ] v7 §12.1 compiler invariants: the body set is byte-identical before and after `reckon` and `seal`, and the processed manifest excludes an uncommitted body and an unmerged branch. These replace the two absence-shaped rows that no removable mechanism could fail.
+- [ ] Divergence and any supersession cycle are named in the report's structured `conflicts` field, with a positive control requiring it non-empty when the condition holds.

@@ -8,6 +8,7 @@ Blocked-by: 0921
 2026-09-11T07:04Z codex created
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
@@ -15,7 +16,7 @@ Blocked-by: 0921
 
 Task recall searches beyond the resident cut. Integrate existing .knowledge.toml pointers/caveats without turning domain assets, reusable code or decision registers into memory bodies.
 
-Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
@@ -37,7 +38,7 @@ Fixtures retrieve a below-cut lesson, preserve a local exception beside a genera
 
 - [ ] Run the focused fixtures and show they detect the relevant failure.
 - [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 

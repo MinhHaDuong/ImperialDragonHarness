@@ -1,9 +1,17 @@
 # Memory implementation plan
 
 **Publication date:** 11 September 2026  
-**Préparé par ChatGPT prompté par Ha-Duong Minh**  
+**Préparé par ChatGPT prompté par Ha-Duong Minh**; realigned to v7 by Claude on
+the same prompting  
 **Phase:** Plan — no runtime implementation in this change  
-**Design baseline:** [v6](./2026-09-10-dragon-memory-design.md), adopted in [PR #903](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/903) at `a68fd1ed`
+**Design baseline:** [v7](./2026-09-10-dragon-memory-design.md). v6 was adopted in
+[PR #903](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/903) at
+`a68fd1ed` and is [frozen](./2026-09-10-dragon-memory-design-v6.md); v7 closes
+the four conditions of the
+[acceptance review](./2026-09-10-dragon-memory-design-review-fable-acceptance.md)
+and settles the [nomenclature](./2026-09-10-dragon-memory-design-nomenclature.md).
+The architecture is unchanged, so no ticket's scope moves; four acceptance
+obligations gain an owner, and the names the train writes are now fixed.
 
 ## Executive summary
 
@@ -135,6 +143,27 @@ not block it.
 These are acceptance responsibilities within the existing train, not additional
 subsystems. Each owner supplies failing controls and reviewable evidence.
 
+**The four v7 gates.** v7 rewrote §12.1 so that every row names a mechanism whose
+removal makes it fail. Four rows are new or newly deterministic, and each needs
+an owner in this train rather than a new workpackage:
+
+| V7 §12.1 gate | Owner | Note |
+|---|---|---|
+| Predicate with an operator outside the closed subset, a path outside its declared root, or a payload with a side effect if interpreted → rejected at entry, *unknown* at evaluation, sentinel verifiably absent | 0915, with the grammar from 0911 | The sentinel is the positive control separating "did not execute" from "did not look". It must exist before the first `shared-snapshot/` is committed in 0920, because a replica carries predicates authored in another project |
+| Same UUID, accepted revision in C differs from the revision ranked in G → G's text never rendered | 0921 | This is the invariant the whole G/C construction exists for; three neighbouring rows each miss it |
+| Adapter's declared native memory root disjoint from the canonical root; foreign line in the generated view discarded and reported, no model in the loop | 0923, parity 0924 | Recorded **known red** in v7 until 0913/0920 move IDH's own store out of `~/.claude` |
+| Compiler never creates, modifies or moves a canonical body; processed manifest excludes uncommitted bodies and unmerged branches | 0910 | Replaces two absence-shaped rows that no removable mechanism could fail |
+
+**Names are settled.** v7 §17 fixes what this train writes, so 0911 adopts rather
+than chooses: the internal package and its CLI are `hoard`; a project's memory
+root is `memory/` in its own repository and the shared store is `memory-shared/`
+at harness level, with `shared-snapshot/` unchanged under `memory/`. The verbs
+are `assay` (§5 admission and routing), `reckon` (§6.1/§7.3 catalogue and ranked
+manifest), `seal` (§10.1 snapshot and handover), `sift` (§6.3 task recall),
+`shed --by` (§4.3 supersession), `disown` (§4.3 retraction) and `weigh` (§8
+growth monitoring). `shed` without `--by` must not parse and `disown` must take
+no successor: §4.3's malformed call is unwritable, not rejected afterwards.
+
 | V6 contract | Owner | Evidence required |
 |---|---|---|
 | UUID/lifecycle, project identity and minimal bounded applicability grammar | 0911; admission 0915 | Conflicts, invalid operators and true/false/unknown fixtures |
@@ -177,7 +206,7 @@ depending on a component. Reuse existing knowledge-hint mechanisms and canonical
 decision records; introduce no new memory governance database.
 
 This planning PR changes handoff tickets and this plan only. It does not close
-implementation tickets, change runtime behaviour or revise the adopted v6
+implementation tickets, change runtime behaviour or revise the adopted
 architecture. Preserve existing ticket logs; Git retains the former scope.
 
 Before merging the planning PR, recheck allocated IDs 0920–0925 against current
