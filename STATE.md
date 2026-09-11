@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-10T05:44Z
+Last updated: 2026-09-11T07:30Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-09T16:43Z · as of 3e88928 -->
+<!-- generated 2026-09-11T07:30Z · as of a68fd1e -->
 
-**Tickets:** 16 ready · 8 blocked — `erg ready tickets/` for full list
+**Tickets:** 26 ready · 18 blocked · 1 awaiting author — `erg ready tickets/` for full list
   next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
-**In flight:** 4 open PRs, oldest #794 3d · CI main: in progress
+**In flight:** [#904](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/904) draft, planning review open; all 9 checks pass. Remain in Planning; implementation unstarted. CI main: success.
 **Recent (first-parent):**
-  3e88928 Merge pull request #845 from MinhHaDuong/memory-census-2026-09-09
-  b8086b9 Merge pull request #844 from MinhHaDuong/t0884-census-handoff
-  c20afb4 Merge pull request #842 from MinhHaDuong/t0883-simplify-settings
+  a68fd1e Merge pull request #903: accept memory design v6 review baseline
+  a90a9f5 Merge pull request #902 from MinhHaDuong/worktree-roar-memory-lessons
+  1079ca9 Merge pull request #901 from MinhHaDuong/memory-format-okf
 
 ## Blockers
 
