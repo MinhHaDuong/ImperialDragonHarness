@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Pilot one runtime adapter and offline container delivery
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0922
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+--- body ---
+
+## Context
+
+The first acceptance milestone is one project, one small shared snapshot and one adapter. Select the first runtime based on accessible representative execution evidence; record the choice rather than promising all runtimes at once.
+
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Library/CLI from 0911–0922; selected runtime integration points; existing startup/prompt hooks; `rules/knowledge-hints.md`.
+
+## Actions
+
+1. Implement a thin event/delivery adapter with one owner per component and no duplicated memory policy.
+2. Protect canonical bodies from native writers. Disclose uncontrollable native-memory interference; no three-mode configuration or importer.
+3. Record supported start/task/pre-action/resume/child/compaction boundaries and a small delivery record outside model summaries.
+4. Run in a disposable offline clone. Test logical bundle replacement and cumulative cost where old injected text cannot be removed.
+
+## Test
+
+Live smoke verifies actual delivered context, not just a required sentence in a skill. Inject, compact where supported, retract and resume: verify correction delivery and no stale re-injection. Show explicit reduced guarantees for unavailable hooks.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] One runtime demonstrates orientation, recent supplement and task recall end to end.
+- [ ] Fresh clone needs no original home directory or shared service.
+- [ ] Ownership, boundaries, budget accounting and limitations documented from evidence.

@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Harvest lessons into existing rules skills and hooks
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0916
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+--- body ---
+
+## Context
+
+Memory may suggest requirements but must not become another instruction system or decision ledger. Harvesting proposes changes through the normal adoption process.
+
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Dreaming/memory skills; existing rules and hook workflows; canonical project decision records; library relationship metadata.
+
+## Actions
+
+1. Identify lessons that justify a rule, procedure or mechanically enforceable invariant, without requiring a proposal on each run.
+2. Create reviewable proposals in the existing workflow; adopted decisions stay in their established canonical records.
+3. After acceptance, preserve incident evidence and link the governing artefact. Qualify obsolete copied prescriptions so they cannot compete with its newer procedure.
+4. Use normal licence assessment for any reused component and ordinary review for hook/rule changes; no auto-adoption via memory score.
+
+## Test
+
+Scenario with a harvested procedure later amended: discovery points to current canonical advice and preserved memory is qualified as historical evidence. Proposal without approval does not become an instruction.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] Harvesting has a no-change outcome and no mandatory residency class.
+- [ ] Existing governance and knowledge-hint interfaces reused.
+- [ ] Evidence preserved without duplicating decisions or authoritative procedures.

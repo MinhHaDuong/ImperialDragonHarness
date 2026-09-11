@@ -1,59 +1,50 @@
 %erg 0.1
-Title: Ranking miss-rate instrument
+Title: Evaluate memory delivery and task outcomes across channels
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0910
+Blocked-by: 0923
 
 --- log ---
 2026-09-10T16:34Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 --- body ---
+
 ## Context
 
-`0910` ships an index and proves it **reproducible**. Nothing proves it
-**good**. Idempotence passes on a constant order, and no other ticket carries a
-quality criterion — so a ranking could be worthless and every gate would stay
-green.
+Below-index reads can be successful task recall rather than failed orientation. Replace the single ranking-miss target with component-attributed diagnostics and behavioural comparisons.
 
-There is a cheap measure, and it needs no A/B: **any read of a body that was
-not in that day's index is a ranking miss.** The agent went looking for
-something the index should have surfaced. The slug extraction in the usage pass
-plus a snapshot of each day's index is enough to compute it.
-
-Design reference: P4 and P6 in `docs/2026-09-10-dragon-memory-design.md`. Review: F6 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/provenance.py` — the usage pass and its slug extraction
-- whatever `0910` writes as the index, plus a snapshot of it per run
+Publication/delivery records; common fixtures from 0923; v6 §§8 and 12; tests/evaluation artefacts in normal project locations.
 
 ## Actions
 
-1. Snapshot each generated index at generation time, so a later read can be
-   judged against what was actually resident that day.
-2. Compute the miss rate: reads of bodies absent from the index in force.
-3. Report it per run, next to the body count and duration `0912` records.
+1. Define representative tasks and outcome rubrics before running comparisons. Separate mechanical delivery gates from semantic correctness.
+2. Compare disabled memory, orientation alone and full delivery with matched corpus/model/settings; repeated runs report denominators and uncertainty.
+3. Attribute observed reads to orientation, recent supplement and task recall using UUID/revisions and actual delivered context rather than a daily default index.
+4. Evaluate half/baseline/double channel budgets, one component at a time; record controlled and cumulative tokens, latency, stale-advice use, unknown applicability and ledger routing.
 
 ## Test
 
-The positive control is the point, and it is what makes this a check rather
-than a number: **deliberately unrank a body that is known to be read, and watch
-the miss rate move.** A miss-rate instrument that cannot be made to fire is
-indistinguishable from one that is not running.
+Positive control removes a known useful lesson and changes the relevant measurement; no-read run reports unavailable rate. A successful below-cut recall is not classified as orientation failure by definition.
 
 ## Verification
 
-- [ ] The instrument fires on the deliberately unranked body
-- [ ] The rate is reported per run, not only computable on demand
-- [ ] A run with no reads reports no rate rather than a misleading zero
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
 
 ## Invariants
 
-- This measures; it changes no ranking and deletes nothing.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] Index snapshots exist per run
-- [ ] Miss rate computed and reported
-- [ ] The positive control fires, proven by a test
-- [ ] A zero rate is distinguishable from an absent measurement
+- [ ] Reproducible evaluation protocol and first-runtime results reported; later adapter results attached as available.
+- [ ] No invented universal success threshold or vendor score equivalence.
+- [ ] Calibration recommendation distinguishes proposals from adopted budget policy.

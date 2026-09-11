@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Port thin delivery adapters to the remaining target runtimes
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0923
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+--- body ---
+
+## Context
+
+Extend the proven adapter seam to the remaining members of Codex, Pi and Claude Code. Reuse library policy and common fixtures; do not introduce another store or mode matrix.
+
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+First adapter and shared tests from 0923; target runtime integration code/documentation; library CLI.
+
+## Actions
+
+1. Inspect primary current runtime interfaces and implement only event translation/delivery packaging.
+2. Run the same canonical corpus/context fixtures and report tokenizer/capability differences.
+3. Verify native-memory isolation and resume/child/compaction semantics per runtime. Mark unsupported boundaries explicitly; do not claim full equivalence.
+4. Confirm bare-project browsing still works when each adapter is removed.
+
+## Test
+
+Actual smoke evidence on each target plus differential eligibility/lifecycle fixtures. A deliberately miswired delivery path must fail the smoke check rather than return empty success.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] All three named targets have evidence-backed capability declarations.
+- [ ] No policy fork, duplicate canonical writer or hidden native-memory budget.
+- [ ] Runtime-specific limitations are visible and do not become fabricated guarantees.

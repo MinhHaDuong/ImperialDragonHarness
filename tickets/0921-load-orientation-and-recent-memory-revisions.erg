@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Load orientation and recent changes with optimistic revision checks
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0910
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+--- body ---
+
+## Context
+
+Bridge dream lag without a memory bus. Pin publication G and current accepted branch corpus C; use unchanged ranked bodies from G, current withdrawals from C, and changed/unprocessed revisions as the recent supplement.
+
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Library/CLI publication from 0910; branch corpus and snapshot from 0920; budget profile and manifest contract.
+
+## Actions
+
+1. Implement lightweight static-order filtering and refill only within the published available set. Evaluate basic scope in the consuming checkout; preserve unknown labels.
+2. Derive provisional status from processed UUID/revisions, not another stored lifecycle flag. Bound the recent supplement; overflow remains searchable.
+3. Apply withdrawal before budget selection; exclude stale orientation revisions even if their replacement is unavailable or does not fit.
+4. Use ordinary Git integration and optimistic expected revisions. No global/distributed lock, cross-branch exchange or uncommitted global overlay.
+
+## Test
+
+Write during compilation, then load: the new committed revision remains recent. Retract an orientation entry with unavailable replacement: old advice is absent. Two branches add independent bodies then integrate: both survive. Conflicting same-UUID edits are reported, never latest-timestamp-wins.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] Own-branch committed memories are eligible before PR merge and dreaming.
+- [ ] Loader respects orientation/recent caps and avoids duplicate UUID exposure.
+- [ ] Relocation/unknown context works without model or network.

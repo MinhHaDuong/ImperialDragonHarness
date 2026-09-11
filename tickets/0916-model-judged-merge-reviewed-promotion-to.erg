@@ -1,67 +1,50 @@
 %erg 0.1
-Title: Model-judged merge, reviewed promotion, tombstoning
+Title: Review generalisations while preserving particular observations
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0912
 
 --- log ---
 2026-09-10T16:24Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 --- body ---
+
 ## Context
 
-`0912` builds the deterministic half of consolidation: pooling, grouping,
-reports, instrumentation. This ticket is the judged half — deciding whether a
-group is one lesson, writing the merged body, and landing it.
+Replace the old merge-and-tombstone contract. Scope expansion preserves identity; a broader synthesis gets a new UUID and generalizes references; supersession is a separate explicit withdrawal decision.
 
-Similarity never settles the question. Two entries can be near-identical in
-wording and record different conditions, which is why roughly half of what
-lexical matching proposes is noise. So a model authors here, and the boundary
-matters more than the mechanism.
-
-Design reference: "What the model decides, and what it must not" in `docs/2026-09-10-dragon-memory-design.md`.
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/SKILL.md` — the consolidation pass
-- whatever `0912` leaves as the grouped-candidate interface
+Dreaming skill; candidate interface from 0912; library schema/admission; existing shared-change review process.
 
 ## Actions
 
-1. The model reads a group and decides whether it is one lesson. It writes the
-   merged body and declares what the result supersedes.
-2. **It decides nothing about retention** — not what ranks, not what expires,
-   not what is still true. Those stay deterministic, which is what keeps the
-   index reproducible from the store alone.
-3. Tombstone the merged originals. They stay readable; that is what makes a
-   wrong merge recoverable rather than fatal.
-4. Route merges into the harness tier through a pull request. It is the only
-   operation that replaces text with different text, and it reaches every
-   session.
-5. Record the model's identity and its prompt in the run's provenance, beside
-   the embedding model's.
+1. Have the model consider evidence, conditions, exceptions and usefulness, with no-change as a first-class result.
+2. Record accepted synthesis and its rationale with source revisions and model/prompt identity. Retain particulars active unless an explicit independent supersession/retraction is justified.
+3. Route shared semantic changes through the existing review process. Do not infer decision authority from recurrence or a model-authored field.
+4. Compile accepted changes independently of pending proposals; protect against changed source revisions at integration.
 
 ## Test
 
-Red first, on fixtures `0912` already ships: the known-genuine pair merges and
-the merged body carries `supersedes`; the named lexical false positive
-(`dropna_before_merge` / `rebase_before_merge`) is not merged; the straddling
-project/harness pair resolves by tombstoning the project copy.
+Mechanical fixtures verify UUID/relationship/lifecycle invariants. Behavioural cases cover genuine synthesis, lexical false positives, a repeated observation warranting no action and a useful local exception. Do not make guaranteed model judgment a deterministic gate.
 
 ## Verification
 
-- [ ] No merge applies without confirmation
-- [ ] Merged originals are readable after the merge
-- [ ] Provenance carries model identity and prompt
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
 
 ## Invariants
 
-- Nothing is deleted. Merged originals are tombstoned.
-- Promotion moves up into the harness tier and never back out.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] The three fixtures pass: genuine pair merged with `supersedes`, named
-      false positive refused, straddling pair tombstoning the project copy
-- [ ] Harness-tier merges are PR-routed, proven by the routing not by prose
-- [ ] Model identity and prompt in provenance
+- [ ] Accepted generalisation retains sources and resolvable provenance.
+- [ ] No occurrence threshold or straddling-tier rule automatically retires content.
+- [ ] Conflicting edits are reported; no unreviewed shared semantic change lands.

@@ -1,70 +1,50 @@
 %erg 0.1
-Title: Retire the dead retention machinery and ship the resident search line
+Title: Roll out portable memory and retire replaced machinery
 Created: 2026-09-10
 Author: claude
+Blocked-by: 0924
 
 --- log ---
 2026-09-10T16:24Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 --- body ---
+
 ## Context
 
-The design retired four mechanisms — a decay pass, a per-type TTL table, a
-corpus cap, an orphan collector — and added one: a single resident line naming
-how the store is searched. None of the retirements happened, and the line does
-not exist. So the repository still carries code and prose for a policy the
-design abandoned, and does not carry the one line the architecture depends on.
+Move cleanup after replacement paths work. This ticket now owns staged rollout and removal of obsolete code/prose, not an independent harness-tier budget or early destructive cleanup.
 
-This blocks index generation: `0910` cuts an index at N, and until the resident
-line ships, a body below the cut has no documented way back. The fourth review
-made that point sharply — an unlisted body is unreachable *by the design's own
-§2.4* until the door exists.
-
-Design reference: §5 (P2, and the list of what §5 removes) in `docs/2026-09-10-dragon-memory-design.md`.
-Review: F7 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/` — the decay pass, the `confirm` step and their tests
-- `skills/memory/SKILL.md` — the TTL table
-- `tests/test_resident_census.py` — the harness index budget, currently a
-  ratchet stamped on a nearly empty tier rather than a decision
-- `skills/dream/read-index.py` — reads the store from `MEMORY.md`, which
-  inverts store and view
+Existing `projects/*/memory/`, shared/IDH roots; legacy memory/dream skills and readers; resident budget tests; validated pilot migration tooling.
 
 ## Actions
 
-1. Delete the decay pass, the `confirm` step and their tests.
-2. Delete the TTL table and the 200-line cap.
-3. Delete the "an entry dropped from an index is unreachable, so never unlist"
-   prose wherever it survives in skill files — the architecture now unlists by
-   design.
-4. Restate the harness index budget as a decision about what that tier must
-   carry, not a ratchet on what it currently holds. The harness and project
-   indexes are separate resident channels; neither constrains the other.
-5. Ship P2's resident line: one line, in the resident set, naming the search
-   and how to run it.
-6. Fix the `read-index.py` inversion, or file it if it is larger than it looks.
+1. Inventory each target project and audience; batch migration using the proven identity/date mapping. Keep unrelated external repositories behind their own normal PR processes.
+2. Record each batch and language/provenance exceptions. Do not automatically translate quotations or copy private data into a shared repository.
+3. Retire legacy decay/TTL/confirmation, duplicate index writers and obsolete promotion rules only after their consumers have migrated.
+4. Replace discovery with the common loader/knowledge-hint path and check no legacy reader treats an index as canonical storage.
 
 ## Test
 
-Red first: assert the resident line is present in the resident set and that the
-resident set is under budget with it. Then let the suite name the callers of
-what you delete — a reference list and the set of things that break are
-different sets.
+Replay pilot migration on representative batch fixtures; compare identity/source coverage and relative links. Prove replacement consumer works before removing its old path; exercise a deliberately missed consumer.
 
 ## Verification
 
-- [ ] `grep -r "decay\|TTL" skills/` returns nothing load-bearing
-- [ ] The resident line is present and the budget test passes with it
-- [ ] Nothing in `skills/` still tells a reader that unlisting loses an entry
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
 
 ## Invariants
 
-- No memory body is deleted by this ticket. It removes machinery, not content.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] Decay, `confirm`, the TTL table and the 200-line cap are gone with their tests
-- [ ] The harness budget is a stated decision with its reasoning
-- [ ] The resident search line exists, is resident, and is covered by a test
+- [ ] Rollout batches and exceptions recorded with reversible mappings.
+- [ ] No two canonical writers or automatic destructive promotion remain.
+- [ ] Old machinery retired only where replacement coverage is verified; no ticket closes on grep emptiness alone.

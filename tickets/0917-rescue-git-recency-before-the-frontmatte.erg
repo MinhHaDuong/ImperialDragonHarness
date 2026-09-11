@@ -1,65 +1,48 @@
 %erg 0.1
-Title: Rescue git recency before the frontmatter sweep destroys it
+Title: Preserve a pre-migration baseline and qualified memory dates
 Created: 2026-09-10
 Author: claude
 
 --- log ---
 2026-09-10T16:34Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 --- body ---
+
 ## Context
 
-**This ticket expires.** It is free today and impossible after `0911` lands.
+Keep this evidence preparation before the migration, but remove the false claim that one new commit destroys retained Git history. A later log query can start from the preserved pre-migration revision. First Git appearance is not necessarily real creation, and last touch is not necessarily semantic freshness.
 
-The score needs a recency signal and the corpus has none that survives. No body
-carries a date in frontmatter — zero of roughly 950. `.provenance.json` is
-batch-stamped: 972 entries share 168 distinct `first_seen` values, one of them
-across 78 entries, so ordering on it is run order followed by slug alphabet.
-File mtime is destroyed by every clone and by the daily pull. That leaves git
-history as the only stable source.
-
-And `0911` rewrites 954 files. The moment it merges, git last-commit recency is
-reset corpus-wide and cannot be recovered from the repository. So the snapshot
-has to be taken first, whatever is later decided about how to use it.
-
-Design reference: P4 in `docs/2026-09-10-dragon-memory-design.md`. Review: F6 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `memory/.provenance.json` — the durable place a date can live
-- `projects/*/memory/*.md` and `memory/*.md` — the corpus being dated
+`memory/.provenance.json`; existing `projects/*/memory/` and `memory/` bodies; Git history at the captured baseline.
 
 ## Actions
 
-1. For every live body, extract from git history both the **first-commit** and
-   the **last-commit** date. First-commit is creation; last-commit is the
-   recency that `0911` is about to destroy.
-2. Write both into the durable store, distinct from the batch-stamped
-   `first_seen` / `last_confirmed` already there — those record when a dream run
-   noticed an entry, which is a different fact and should not be overwritten.
-3. Record how many bodies got each date, and how many could not be dated.
+1. Record the baseline commit and per-body original path/blob identity before rewriting or moving files.
+2. Extract first observable Git appearance and last relevant touch, recording meaning and uncertainty. Preserve existing first_seen/last_confirmed separately.
+3. List undatable bodies, imports and renames requiring qualification. Specify how shallow consumers use exported provenance without needing full history.
 
 ## Test
 
-Red first: a body whose git history is known has both dates recorded and they
-match `git log` for that path. Then a guard against the trap itself — a test
-that fails if a body has no recorded creation date, so the coverage cannot
-silently regress.
+Create a fixture repository with initial content, later edit and mechanical migration. Verify dates can still be queried at the baseline after migration; distinguish absent history from zero age.
 
 ## Verification
 
-- [ ] Every live body carries both dates, or is listed as undatable with a reason
-- [ ] The recorded dates match `git log` for a spot-check sample
-- [ ] Existing `first_seen` / `last_confirmed` are unmodified
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
 
 ## Invariants
 
-- This ticket adds fields. It changes no body content and deletes nothing.
-- It must merge **before** `0911`. That ordering is the whole point.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] First-commit and last-commit dates recorded for every live body
-- [ ] Coverage stated as a count, with the undatable listed
-- [ ] A test prevents silent regression of the coverage
-- [ ] Merged before `0911`
+- [ ] Baseline revision and mapping are durable, documented and reproducible.
+- [ ] Dates retain their actual meaning; uncertain or absent dates are reported.
+- [ ] No body text is rewritten and no claim of irreversible history loss remains.

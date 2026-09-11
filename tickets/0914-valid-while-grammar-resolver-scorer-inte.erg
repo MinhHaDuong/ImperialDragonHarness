@@ -1,70 +1,51 @@
 %erg 0.1
-Title: valid_while grammar, resolver, scorer integration and supersedes
+Title: Extend applicability predicates only for demonstrated needs
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0910
-Blocked-by: 0911
+Blocked-by: 0923
+Label: deferred
 
 --- log ---
 2026-09-10T16:24Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 
 --- body ---
+
 ## Context
 
-A memory declares what it is true *while*, and the scorer evaluates that
-condition. This ticket builds the grammar, the resolver behind it, the
-`supersedes` field, and the scorer's use of both.
+Optional follow-up. Core UUID lifecycle and basic applicability already belong to 0911/0921. No broad grammar is needed before the travelling project works.
 
-**Its scope is bounded by a measurement, and the ticket should not pretend
-otherwise.** On a 54-body sample the proposed grammar expressed a condition for
-about a quarter of the corpus and could evaluate fewer, because the dominant
-way a memory here dies is an *event* — a decision reversed, a practice
-abandoned — which no predicate over a working tree can see. The coverage ledger
-is committed; read it before widening the grammar speculatively.
-
-Design reference: P3 and P5 in `docs/2026-09-10-dragon-memory-design.md`. Ledger:
-`docs/2026-09-10-valid-while-coverage-ledger.md`.
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/provenance.py` — where the scorer calls the resolver
-- `projects/*/memory/*.md` — the corpus the grammar must survive
-- `docs/2026-09-10-valid-while-coverage-ledger.md` — what it can and cannot express
+Library predicate interface; actual adapter misses; `docs/2026-09-10-valid-while-coverage-ledger.md`.
 
 ## Actions
 
-1. Define the grammar: path exists, pattern present in a named file, tool below
-   a version. **Include negation** — the ledger found conditions that only state
-   cleanly as an absence.
-2. Build the resolver, and handle what the ledger flagged: the slug-to-checkout
-   map for project-scoped paths, and a token for the harness root so predicates
-   do not hard-code a home directory and trip the agnostic guard.
-3. Wire it into scoring: false unranks; unevaluable leaves the entry valid and
-   emits a lint line.
-4. Add `supersedes`, naming a slug; the generator refuses to rank both.
-5. State the default for a body with no predicate, and do not call it solved.
+1. Identify an observed scope/filtering failure requiring a new operator before implementing it.
+2. Add a bounded closed-grammar operator with explicit roots, costs and false/unknown semantics; never execute memory-authored shell.
+3. Keep unknown distinct from true. Retraction/supersession cannot revive when an environmental predicate changes.
+4. Record the operator decision and consumer evidence; retain no-change/deferred if there is no demonstrated need.
 
 ## Test
 
-Red first, one per rule: a false predicate unranks; the same predicate becoming
-true again returns the entry; an unevaluable predicate leaves the entry ranked
-*and* produces a lint line; `supersedes` prevents both entries ranking. A
-negation fixture, since negation is the addition.
+Operator fixtures cover true, false, unknown, malformed input and resource bounds in a relocated checkout. An inactive body remains inactive even when the condition becomes true.
 
 ## Verification
 
-- [ ] The grammar rejects a prose condition
-- [ ] A revived entry reappears with no human action
-- [ ] No predicate in the corpus hard-codes an absolute home path
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
 
 ## Invariants
 
-- Expiry never deletes; it unranks.
-- The scorer stays deterministic: no model judges validity.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] Grammar with negation, closed, rejecting anything outside it
-- [ ] Resolver handles project-scoped paths and the harness root token
-- [ ] Unrank / revive / lint / supersedes each proven by a fixture
-- [ ] The no-predicate default is stated in the skill, with its coverage
+- [ ] Any extension justified by a concrete consumer failure and validated offline.
+- [ ] No slug supersedes field, universal write-time truth requirement or automatic lifecycle revival.
+- [ ] Not a prerequisite for core completion.

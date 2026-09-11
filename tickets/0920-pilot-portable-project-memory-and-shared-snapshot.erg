@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Pilot portable project memory and a bounded shared snapshot
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0917
+Blocked-by: 0908
+Blocked-by: 0915
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+--- body ---
+
+## Context
+
+Deliver one representative project and a small shared candidate set before broad migration. Reuse existing content; do not combine the pilot with corpus-wide English rewriting or quality annotation.
+
+Design baseline: v6, merged by PR #903. See `docs/2026-09-10-dragon-memory-design.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Baseline/mapping from 0917; legacy import from 0908; schema/admission package; one chosen project repository; IDH project and shared memory roots.
+
+## Actions
+
+1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge.
+2. Assign UUIDs once and preserve a durable old-path-to-UUID mapping; migrate explicit lifecycle, scope, dates and relative navigation. Preserve source text unless a separately reviewed correction is necessary.
+3. Fix a bounded available shared candidate set before ranking. Commit readable replicas with UUID, source revision and hash; never copy credentials or private traces indiscriminately.
+4. Provide catalogue input fixtures, inactive navigation and rollback instructions. Report language exceptions and unavailable evidence for later reviewed treatment.
+
+## Test
+
+Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, retained particulars and idempotent rerun without new UUIDs.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v6, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] One portable project and shared snapshot can be read offline without harness installation.
+- [ ] No automatic generalisation or loss of local conditions.
+- [ ] All migrated bodies reconcile to baseline identities; no broad rollout hidden in the pilot.
