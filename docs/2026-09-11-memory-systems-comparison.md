@@ -1,9 +1,9 @@
-# Memory systems compared with IDH v5
+# Memory systems compared with IDH v6
 
 **Publication date:** 11 September 2026  
 **Préparé par ChatGPT prompté par Ha-Duong Minh**  
 **Status:** architectural comparison; no installation, integration test or performance benchmark  
-**Related design:** [IDH memory v5](./2026-09-10-dragon-memory-design.md)
+**Related design:** [IDH memory v6](./2026-09-10-dragon-memory-design.md)
 
 ## Executive summary
 
@@ -25,7 +25,7 @@ that custom integration is impossible.
 1. [Documented architectures](#1-documented-architectures)
 2. [What IDH should borrow](#2-what-idh-should-borrow)
 3. [Reuse decision and comparison protocol](#3-reuse-decision-and-comparison-protocol)
-4. [Review changes applied to v5](#4-review-changes-applied-to-v5)
+4. [Review outcomes carried into v6](#4-review-outcomes-carried-into-v6)
 
 ## 1. Documented architectures
 
@@ -93,10 +93,20 @@ and generated reverse links can represent the initial requirement.
 
 ## 3. Reuse decision and comparison protocol
 
+**Licence condition**
+
+All component-reuse recommendations are conditional: inspect the specific
+revision's licence and dependency obligations for the intended distribution,
+retain required notices and record the assessment before adoption. No component
+in this comparison has been cleared for integration. Unclear permissions mean
+no copying, adaptation or dependency adoption until clarified. Reusing an idea
+does not justify copying its implementation.
+
 **Recommended order**
 
-1. Implement the smallest IDH admission/compiler/reader contract, reusing existing
-   knowledge hints and repository workflows.
+1. Implement the smallest IDH admission/compiler/reader contract as one internal
+   Python library with thin CLI and adapters, reusing existing knowledge hints
+   and repository workflows.
 2. Inspect MemU's adapter and preparation interfaces for reusable parts.
 3. Compare one optional retrieval implementation against lexical retrieval on
    the same accepted corpus.
@@ -135,14 +145,14 @@ different problems. IDH's distinctive requirement is project ownership plus
 graceful consumption across runtimes, with editorial memory kept separate from
 decisions and existing knowledge assets.
 
-## 4. Review changes applied to v5
+## 4. Review outcomes carried into v6
 
 Three independent reviewers examined runtime memory, neighbouring subsystems,
 and design integrity. The applied amendments are:
 
 | Finding | Applied resolution |
 |---|---|
-| Native auto-memory can bypass canonical admission | Declare disabled/managed/independent modes and a single delivery owner |
+| Native auto-memory can bypass canonical admission | One ownership contract and a single delivery owner; disclose uncontrollable native memory |
 | Compaction and child sessions can retain stale paraphrases | Explicit boundaries and a small non-model delivery record; limited guarantees |
 | Admission omits existing canonical homes | Route STATE, tickets, reusable assets and hints before admitting memory |
 | Knowledge hints duplicate discovery | Reuse the pointer/caveat interface and account for its exposure |
