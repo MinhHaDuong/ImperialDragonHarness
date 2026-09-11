@@ -11,10 +11,13 @@ Reference materials and review records for the Imperial Dragon Harness.
 | `VISION-original.md` | Original harness vision document |
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
-| `2026-09-10-dragon-memory-design.md` | Design for the harness memory system — always the current version, v4 today |
+| `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
+| `2026-09-10-dragon-memory-design.md` | Design for the harness memory system — always the current version, v6 today |
 | `2026-09-10-dragon-memory-design-v0.md` | Frozen v0 — the text the first two reviews read |
 | `2026-09-10-dragon-memory-design-v1.md` | Frozen v1 — the text the Fable review read |
 | `2026-09-10-dragon-memory-design-v2.md` | Frozen v2 — the retention-policy draft, superseded by the settled architecture |
+| `2026-09-10-dragon-memory-design-v5.md` | Frozen v5 — reviewed architecture before KISS ownership, library and concurrency decisions |
+| `2026-09-10-dragon-memory-design-v4.md` | Frozen v4 — before the portable-store, generalisation and publication redesign |
 | `2026-09-10-dragon-memory-design-v3.md` | Frozen v3 — the settled architecture before the awareness correction |
 | `2026-09-10-portable-agent-memory-calibration.md` | Calibration note for the memory tier: what the literature fixes, what it declines to fix, and the local measurement to run |
 | `2026-09-10-memoire-agent-fable.md` | **Non-normative study report** by Fable — agent memory: state of the art and a proposal for IDH, suggested and not adopted (French) |

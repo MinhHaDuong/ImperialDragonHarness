@@ -1,19 +1,18 @@
-# The Dragon's memory — design v6
+# The Dragon's memory — design v5
 
 **Publication date:** 11 September 2026  
-**Status:** design v6 for review; incorporates the owner's subsequent decisions  
+**Status:** design draft for review; revised after three independent architectural reviews  
 **Préparé par ChatGPT prompté par Ha-Duong Minh**  
-**Source revision:** `2e1adaa60a6fe7be56331b4ba071a2db76020d88`  
-**Previous design:** [v5, frozen](./2026-09-10-dragon-memory-design-v5.md)
-**Review:** three architectural reviews followed by the owner's KISS, library,
-licensing, ownership and optimistic-concurrency decisions.
+**Repository baseline:** `a90a9f5e9be4f88889b180bd05ba0ef8aaa993f6`  
+**Previous design:** [v4, frozen](./2026-09-10-dragon-memory-design-v4.md)
+**Review:** runtime ownership, subsystem boundaries and integrity reviews applied;
+initial v5 remains in Git history at `9804bbee`.
 
 This is an architectural specification, not a report on implementation progress.
-It replaces v5's architectural proposal. Historical measurements, runtime probes
+It replaces v4's architectural proposal. Historical measurements, runtime probes
 and earlier reviews remain in the frozen versions; they are not revalidated here.
 The established current-design filename is retained so existing references still
-lead to the latest design. Document versions are whole numbers only; Git records
-edits within a version. There are no minor document versions.
+lead to the latest design.
 
 ## Contents
 
@@ -32,11 +31,10 @@ edits within a version. There are no minor document versions.
 13. [Migration and remaining choices](#13-migration-and-remaining-choices)
 14. [Decision trace and references](#14-decision-trace-and-references)
 15. [Comparison with other memory systems](#15-comparison-with-other-memory-systems)
-16. [Implementation direction](#16-implementation-direction)
 
 ## 1. Executive summary
 
-Two knowledge scopes, one body format, one Python library and three delivery channels.
+Two knowledge scopes, one body format, one compiler and three delivery channels.
 Dreaming exercises editorial judgment; compilation publishes accepted knowledge;
 a small reader supplies context. These are responsibilities, not additional
 user-facing commands.
@@ -99,7 +97,7 @@ stored entries, reads or injected tokens.
 Memory cannot guarantee awareness or obedience. V4 correctly distinguished
 reachability from unprompted awareness, but its mandatory-residency remedy
 created another instruction system and an impossible promise under unbounded
-mandatory growth. V6 keeps the distinction and removes that remedy.
+mandatory growth. V5 keeps the distinction and removes that remedy.
 
 A preventive lesson may enter memory immediately. Periodic harvesting can propose
 a rule, skill or hook amendment. Urgent explicit requirements use the normal
@@ -375,7 +373,7 @@ At loading, a lightweight adapter checks current lifecycle and applicability,
 walks the published order and selects what fits the orientation budget. It need
 not invoke a model, embed a query or recompute importance.
 
-**V6 drafting default:** publish a full ranked candidate order rather than only
+**V5 drafting default:** publish a full ranked candidate order rather than only
 the budget-sized excerpt. This permits refilling after current-context filtering
 without moving ranking into the container. It replaces the earlier discussion's
 temporary acceptance of underfilling solely because the published excerpt was
@@ -604,13 +602,11 @@ alongside dreaming does not make semantic change a prerequisite for fresh views.
 Record source revisions, accepted judgments and the model/prompt identity for
 semantic changes. Reproducible compilation does not imply repeatable model prose.
 
-A pass works in an isolated checkout and refuses to overwrite uncommitted bodies.
-Concurrency is optimistic: independent additions proceed without a global lock.
-Compare the expected parent/body revisions before integrating or publishing;
-conflicting edits to the same UUID require explicit resolution. Never choose a
-winner solely by timestamp. Ordinary Git integration provides cross-branch and
-cross-machine sharing; there is no distributed lock or cross-branch memory bus.
-Atomic publication protects the handover, not an entire long-running dream.
+A pass works in isolation and refuses to overwrite uncommitted bodies. A local
+lock prevents local overlap; it does not establish exclusivity across machines.
+Concurrent edits to the same UUID require a merge or explicit conflict state.
+Independent additions and per-body granularity reduce contention without
+eliminating semantic conflicts.
 
 Review contradictory claims as well as near duplicates. A semantic report can
 identify possible conflicts; it does not autonomously declare which decision
@@ -659,20 +655,10 @@ supplement; withdrawals in C filter both. This deliberate current-state overlay
 is not an accidental mixture of publication files. A withdrawal after C becomes
 visible at the next supported boundary.
 
-Acceptance is relative to the consuming branch, not a global publication gate:
-
-| Where | Availability |
-|---|---|
-| Authoring session | May use its own uncommitted observation as working context |
-| Same branch/worktree | A locally committed memory is eligible immediately, without waiting for a merged PR or dreaming |
-| Other branches or machines | Eligible after ordinary Git synchronisation and integration |
-| Shared generalisation | Follows the existing review process before admission to shared canonical knowledge |
-
-Uncommitted observations do not silently become another session's accepted memory.
-A branch may temporarily repeat a lesson already learned elsewhere: that is the
-accepted cost of Git isolation. No cross-branch exchange or accepted-overlay
-protocol is added. Branch-local commit does not bypass the review required for
-integration into a protected branch or the shared store.
+For the base implementation, accepted means committed through the applicable
+project change process. Uncommitted candidates are the authoring session's work,
+not silently published cross-session knowledge. A future accepted local overlay
+would need its own explicit revision and review contract.
 
 Refresh at session start and task boundaries. Resume, fork/child creation and
 compaction recovery are also capability boundaries. Check locally known
@@ -706,33 +692,33 @@ access to readable bodies.
 
 ## 11. Runtime adapters and graceful degradation
 
-### 11.1 One ownership contract
+### 11.1 Native memory ownership
 
-**IDH owns canonical memory. A runtime may consume a generated view, but its
-independent memory must not write into that store.**
+Each runtime profile declares native persistence as **disabled for this project**,
+**managed projection**, or **independent coexistence**. IDH owns its canonical
+experiential bodies; native-authored notes are admission candidates, not accepted
+canonical writes. Never give an unrestricted native writer an alias to the
+canonical store or its generated views.
 
-There is no three-mode configuration. Each adapter implements this one contract
-with the controls its runtime provides. Generated views are disposable delivery
-artefacts, never an unrestricted writable alias of canonical bodies.
+Managed projections are disposable delivery representations. Avoid bidirectional
+synchronisation between two editorial stores. Independent coexistence is allowed
+but must disclose incomplete deduplication, withdrawal coverage and accounting.
 
-Assign one delivery owner to each IDH component. Avoid duplicate loading by a
-native mechanism and an IDH hook; count controlled delivery in the same budget.
-If independent native memory cannot be disabled or controlled, disclose the
-limits on duplicate exposure, withdrawal coverage and total accounting. That
-limitation does not become a supported synchronisation mode.
+Assign one delivery owner to each IDH component so native loading and an IDH hook
+do not both inject it. Count controlled projections in the IDH budget and report
+unobservable native payloads separately. Native feature activation must neither
+duplicate a component nor silently remove it.
 
-No bidirectional synchronisation, native-note import pipeline or reconciliation
-between independent editorial stores is required by the base design.
+### 11.2 Capability declaration
 
-### 11.2 Adapter responsibilities
-
-| Aspect | Adapter documents |
+| Aspect | Adapter declares |
 |---|---|
-| Ownership | How canonical bodies are isolated from native writers |
-| Delivery | One owner per component; generated format and observable payloads |
+| Persistence | Disabled, managed projection or independent |
+| Writes | Admission path and canonical ownership |
+| Delivery | Owner of each component and observable payloads |
 | Boundaries | Start, task change, pre-action, resume, child and compaction |
 | Isolation | Project identity, checkout and accepted revision binding |
-| Limits | Uncontrollable native memory and unobservable exposure |
+| Accounting | Controlled budget and separately reported exposure |
 
 ### 11.3 Degradation
 
@@ -773,9 +759,7 @@ Each gate includes a fixture that fails when the relevant mechanism is removed.
 | Retracted body still present in stale orientation | Excluded at next supported load, even if incorrectly placed outside `inactive/` |
 | Replacement is unavailable or below budget | Superseded advice remains suppressed; unavailability is reported |
 | New write during dreaming | Present in the unprocessed set after publication |
-| Concurrent edit/retraction to a processed UUID | Optimistic revision check detects conflict; no timestamp winner or silent overwrite |
-| Independent additions on separate branches | Both survive normal integration without a global lock |
-| Committed memory before PR merge or dreaming | Eligible on its own branch; not presumed visible on unrelated branches |
+| Concurrent edit/retraction to a processed UUID | Publication detects revision mismatch; no silent overwrite |
 | Interrupted publication | Reader sees a complete old or new generation |
 | False and unknown applicability | False excluded; unknown retains its label |
 | Rediscovery in several projects | Candidate consideration only; no automatic scope change or synthesis |
@@ -785,7 +769,7 @@ Each gate includes a fixture that fails when the relevant mechanism is removed.
 | Ranking manifest absent or corrupt | Local inspection remains possible; no false completeness claim |
 | Oversized pool and repeated task changes | Per-component bounds hold; retained cumulative injection is measured |
 | Entry workflow omits a routing outcome | Reject incomplete admission; semantic correctness is evaluated below |
-| Native loading plus adapter enabled | Canonical store protected from native writes; one delivery owner; uncontrollable exposure disclosed |
+| Native loading plus adapter enabled | One delivery owner per component; controlled exposure deduplicated and counted |
 | Inject, compact, retract, resume/child | Current correction delivered at supported boundary; no stale re-injection |
 | Memory and knowledge hints present | Canonical pointers deduplicated; caveats preserved; costs attributed |
 | Generalisation filtered out | Particular retains its static rank; no assumed selection penalty |
@@ -829,7 +813,7 @@ release thresholds require calibration and are not invented here.
 ### 13.1 Migration outline
 
 This is a design dependency outline, not a claim that the existing tickets
-implement v6.
+implement v5.
 
 1. Freeze v4 and reconcile the architecture decisions through the project's
    decision-ledger process. Preserve prior review citations.
@@ -840,11 +824,10 @@ implement v6.
    into their repositories and introduce readable versioned shared snapshots.
 4. Establish ledger routing at entry, lifecycle handling and canonical validation.
    Remove mandatory-memory residency from the design and any later implementation.
-5. Implement the internal Python library and thin CLI: deterministic publication,
-   ranked candidate manifests, local loading and the recent supplement. Use
-   optimistic revision checks and ordinary Git integration.
-6. Add lexical task recall and thin adapters under the single ownership contract.
-   Exercise fresh containers and no-harness browsing.
+5. Implement deterministic publication, ranked candidate manifests, local loading
+   and the recent supplement before relying on model-assisted consolidation.
+6. Add lexical task recall and the adapter capability contract. Exercise fresh
+   containers and no-harness browsing.
 7. Add reviewed generalisation, semantic consolidation and harvesting on the
    strong host. Add embeddings only when justified.
 8. Calibrate capacity and behavioural acceptance with the preserved evaluation
@@ -857,11 +840,10 @@ tickets, and it does not modify runtime code.
 
 ### 13.2 Explicit proposal boundaries
 
-The ownership contract, internal library and optimistic concurrency are adopted
-design choices. The following are
+The principal architecture follows the owner's discussion. The following are
 drafting defaults or calibration work, not claims of separately ratified detail:
 
-| Item | V6 position |
+| Item | V5 position |
 |---|---|
 | 1,500 / 500 / 2,000 tokens | Proposed initial profile |
 | Full ranked manifest for load-time refilling | Recommended resolution of the earlier underfill alternative |
@@ -869,12 +851,11 @@ drafting defaults or calibration work, not claims of separately ratified detail:
 | Unknown write-time predicates | Preserve unverified observation; reject malformed grammar |
 | Ranking weights, freshness interval and relevance threshold | Versioned calibration choices |
 | Predicate operators and context probing | Bounded portable grammar to specify |
-| Adapter refresh/interception coverage | Must be declared and verified per runtime; no mode selector |
+| Adapter refresh/interception coverage | Must be declared and verified per runtime |
 | Behavioural release thresholds | Set from representative trials before claiming improvement |
 
 No new database service, globally unique human slug scheme, automatic capacity
-growth, memory-specific approval bureaucracy, cross-branch memory bus or
-three-mode configuration is required.
+growth or memory-specific approval bureaucracy is required.
 
 ## 14. Decision trace and references
 
@@ -882,7 +863,7 @@ This section explains design changes and points to their source discussion.
 It is not a substitute decision ledger. Adoption and subsequent changes belong
 in the project's established decision process.
 
-| V4 premise | V6 resolution |
+| V4 premise | V5 resolution |
 |---|---|
 | Mandatory resident memories | Removed; requirements harvested to rules, skills and hooks |
 | Harness tier conflates infrastructure and shared knowledge | Ordinary IDH project memory plus separate shared scope |
@@ -901,10 +882,8 @@ in the project's established decision process.
 
 - [Frozen v4](./2026-09-10-dragon-memory-design-v4.md): historical measurements,
   earlier runtime observations, review record and previous ticket plan.
-- [Frozen v5](./2026-09-10-dragon-memory-design-v5.md): the reviewed architecture
-  before the single ownership contract, internal library and concurrency decisions.
 - [Portable-memory calibration note](./2026-09-10-portable-agent-memory-calibration.md):
-  earlier research synthesis; its numerical analogies are not v6 budget mandates.
+  earlier research synthesis; its numerical analogies are not v5 budget mandates.
 - [Validity-coverage ledger](./2026-09-10-valid-while-coverage-ledger.md):
   limits of environmental predicates for real experiential memories.
 
@@ -938,75 +917,7 @@ memory and background dreaming are not unique to IDH. Neither observation remove
 the need to verify project-owned offline delivery, ledger routing and native
 runtime ownership.
 
-Keep IDH's base small: one library for admission mechanics, canonical bodies,
-compilation and reading, exposed through thin entry points. Component reuse
-requires the licence assessment in section 16.2.
+Keep IDH's base small: admission, canonical bodies, a compiler and a reader.
 Embeddings, rich temporal graphs and automated synthesis must earn their place
 against observed failures, without turning a disposable checkout into a service
 deployment. This comparison does not authorise installation or migration.
-
-## 16. Implementation direction
-
-The discussion has entered implementation design. The choices below are part of
-v6: an internal Python library, thin entry points and licence-aware reuse. They
-do not claim that implementation exists. Exact module names, CLI verbs and
-dependency selections remain choices for the implementation work.
-
-### 16.1 One library, thin entry points
-
-Implement a small internal Python package in IDH. A thin CLI exposes its operations
-to skills, hooks and shell workflows; thin runtime adapters translate events
-and deliver results. They do not implement competing copies of memory policy.
-
-| Part | Responsibility |
-|---|---|
-| Library | Read and validate bodies; resolve identities; filter eligibility; select within budgets; compile views; lexical retrieval |
-| CLI | Expose library operations with stable inputs, outputs and failure reporting |
-| Runtime adapter | Translate host events and deliver generated context |
-| Dreaming skill | Exercise editorial judgment and call the CLI |
-| Optional strong-host components | Model clients, embeddings and richer analysis outside the minimal library core |
-
-Start with Python and minimal dependencies. Do not publish a separate framework
-or produce a standalone binary until a real consumer or deployment constraint
-justifies it. Reuse existing knowledge-hint helpers where their contracts fit.
-Scripts are thin wrappers or one-off migrations, not independent policy engines.
-
-The library does not own model calls, runtime orchestration, the decision ledger
-or a replacement domain-knowledge subsystem. Its API follows the canonical
-contract; exact package names and CLI verbs are implementation choices.
-
-### 16.2 Licence-aware component reuse
-
-Reuse ideas; copy, adapt or depend on third-party components only when their
-licence permits the intended use and distribution. Before adopting a component,
-check the specific revision, licence files, relevant dependencies and required
-notices or other obligations; record that assessment with the adoption change.
-An unclear licence blocks component reuse until clarified.
-
-A repository's visibility, a conceptual resemblance or a benchmark result is
-not licence clearance. The comparison in section 15 identifies candidates for
-inspection, not approved dependencies. No new runtime dependency is adopted
-by this design.
-
-### 16.3 First implementation boundary
-
-The first usable increment should read canonical bodies, validate identities and
-lifecycle, build the catalogue and ranked publication, and load a bounded view
-with the recent supplement. Expose the same operations through the CLI rather
-than duplicating them in scripts. Preserve the semantic routing judgment at entry;
-validation enforces its presence, not its correctness.
-
-Keep filesystem and revision inputs explicit so tests can use temporary project
-trees and consumers need no original home directory. Return structured results
-to adapters; let each adapter package them for its runtime. Normal Git commands
-and revision checks supply optimistic integration rather than a custom
-synchronisation service.
-
-Lexical recall and the existing knowledge-hint integration are the next small
-boundary. Model-assisted generalisation and embeddings remain optional strong-host
-work. No useful first increment depends on building every future evaluator,
-importer or diagnostic.
-
-Verify the base with a disposable offline checkout and conflicting-commit fixtures
-before expanding optional capabilities. Do not distribute a binary or separate
-package simply to make the implementation appear complete.
