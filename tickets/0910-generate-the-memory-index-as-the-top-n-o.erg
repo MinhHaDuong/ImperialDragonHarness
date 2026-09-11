@@ -10,6 +10,7 @@ Blocked-by: 0920
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note Owns the two v7 compiler invariants and, after the Fable plan review, §8 growth monitoring (`hoard weigh`) — it was unowned across the whole train.
 
 --- body ---
 
@@ -53,3 +54,4 @@ Over-budget fixture distinguishes complete catalogue and bounded orientation. Re
 - [ ] Pending semantic review does not block compilation; no mixed-generation handover.
 - [ ] v7 §12.1 compiler invariants: the body set is byte-identical before and after `reckon` and `seal`, and the processed manifest excludes an uncommitted body and an unmerged branch. These replace the two absence-shaped rows that no removable mechanism could fail.
 - [ ] Divergence and any supersession cycle are named in the report's structured `conflicts` field, with a positive control requiring it non-empty when the condition holds.
+- [ ] §8 growth monitoring has an owner here, exposed as `hoard weigh`: the manifest records body-count growth, compilation duration and unresolved backlog — the three quantities §8 names. Positive control: a fixture corpus over a declared threshold makes the report non-empty. Without this the train closes with a `weigh` verb that reports nothing, while §8's refusal of a deletion cap rests on monitoring.

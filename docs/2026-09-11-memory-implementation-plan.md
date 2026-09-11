@@ -149,10 +149,11 @@ an owner in this train rather than a new workpackage:
 
 | V7 §12.1 gate | Owner | Note |
 |---|---|---|
-| Predicate with an operator outside the closed subset, a path outside its declared root, or a payload with a side effect if interpreted → rejected at entry, *unknown* at evaluation, sentinel verifiably absent | 0915, with the grammar from 0911 | The sentinel is the positive control separating "did not execute" from "did not look". It must exist before the first `shared-snapshot/` is committed in 0920, because a replica carries predicates authored in another project |
+| Predicate with an operator outside the closed subset, a path outside its declared root, or a payload with a side effect if interpreted → rejected at entry, *unknown* at evaluation, sentinel verifiably absent | 0915, with the grammar **and evaluator** from 0911 | The sentinel is the positive control separating "did not execute" from "did not look". It must exist before the first `shared-snapshot/` is committed in 0920, because a replica carries predicates authored in another project |
 | Same UUID, accepted revision in C differs from the revision ranked in G → G's text never rendered | 0921 | This is the invariant the whole G/C construction exists for; three neighbouring rows each miss it |
-| Adapter's declared native memory root disjoint from the canonical root; foreign line in the generated view discarded and reported, no model in the loop | 0923, parity 0924 | Recorded **known red** in v7 until 0913/0920 move IDH's own store out of `~/.claude` |
-| Compiler never creates, modifies or moves a canonical body; processed manifest excludes uncommitted bodies and unmerged branches | 0910 | Replaces two absence-shaped rows that no removable mechanism could fail |
+| Adapter's declared native memory root disjoint from the canonical root; foreign line in the generated view discarded and reported, no model in the loop | 0923, parity 0924 | Recorded **known red** in v7. **0920 clears it**, not 0913: IDH's repository *is* `~/.claude`, so the store cannot leave it, and what moves is its position relative to the runtime's *declared* native root — `memory/` → `memory-shared/` and `projects/-home-haduong--claude/memory/` → `memory/`, with every hard-coded reader repointed |
+| Compiler never creates, modifies or moves a canonical body; processed manifest excludes uncommitted bodies and unmerged branches | 0910 |
+| §8 growth monitoring — body-count growth, consolidation duration and unresolved backlog, exposed as `hoard weigh` | 0910 | Replaces two absence-shaped rows that no removable mechanism could fail |
 
 **Names are settled.** v7 §17 fixes what this train writes, so 0911 adopts rather
 than chooses: the internal package and its CLI are `hoard`; a project's memory

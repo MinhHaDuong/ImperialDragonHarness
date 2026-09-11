@@ -9,6 +9,7 @@ Blocked-by: 0910
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: inherits the loader half of 0920's withdrawal test, which 0920 cannot exercise at its position.
 
 --- body ---
 
@@ -50,5 +51,6 @@ Write during compilation, then load: the new committed revision remains recent. 
 
 - [ ] Own-branch committed memories are eligible before PR merge and dreaming.
 - [ ] Loader respects orientation/recent caps and avoids duplicate UUID exposure.
+- [ ] The withdrawal 0920 exports and proves present in its snapshot is *effective* here, at the next supported load without dreaming. 0920 stops at export because it has no loader.
 - [ ] v7 §12.1 revision-overlay row: for one UUID whose accepted revision in C differs from the revision ranked in G, G's text is never rendered; the C revision appears in the supplement if it fits, otherwise the UUID appears nowhere and the backlog report names it. Removing the revision comparison at load must fail this.
 - [ ] Relocation/unknown context works without model or network.

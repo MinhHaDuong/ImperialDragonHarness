@@ -11,6 +11,7 @@ Blocked-by: 0915
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: owns the v7 disjoint-roots row. The plan's 'move out of ~/.claude' was unachievable — the repo is ~/.claude — so the two moves are named against the declared native root instead. The loader half of the withdrawal test moves to 0921.
 
 --- body ---
 
@@ -26,7 +27,7 @@ Baseline/mapping from 0917; legacy import from 0908; schema/admission package; o
 
 ## Actions
 
-1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge.
+1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge. **This ticket owns the v7 §12.1 disjoint-roots row.** IDH's repository *is* the runtime's home (`README` lines 7 and 77), so the store cannot leave `~/.claude`; what moves is its position relative to the runtime's *declared* native root, which today is `~/.claude/projects/<slug>/memory/` (`provenance.py` `PROJECTS_BASE`). Perform both moves inside the harness repository — `memory/` → `memory-shared/`, and `projects/-home-haduong--claude/memory/` → `memory/` — and repoint every existing reader that hard-codes the old paths (`HARNESS_MEMORY` in `skills/dream/provenance.py`, `skills/dream/read-index.py`, the resident census).
 2. Assign UUIDs once and preserve a durable old-path-to-UUID mapping; migrate explicit lifecycle, scope, dates and relative navigation. Preserve source text unless a separately reviewed correction is necessary.
 3. Fix a bounded available shared candidate set before ranking. Commit readable replicas with UUID, source revision and hash; never copy credentials or private traces indiscriminately.
 4. Implement reusable bounded snapshot selection/refresh for every publication, invoked by dreaming and consumed by 0910. Include referenced shared bodies plus the bounded candidate selection; resolve dependencies or report them unavailable. Reconcile live/shared replicas by UUID and proven revision ancestry: accept verified successors, report divergence, never use timestamps as winners. Retain source revisions/refresh date, validate hashes and propagate known withdrawals even when replacement bodies are outside the set. Refreshed successors remain recent until explicitly processed. Treat uncached sources as unavailable, not refill candidates; document offline staleness. Replicas are not independently editable; propose changes upstream or create a distinct local observation.
@@ -34,7 +35,7 @@ Baseline/mapping from 0917; legacy import from 0908; schema/admission package; o
 
 ## Test
 
-Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, verified-successor versus divergent refresh, missing referenced dependencies, retained particulars and idempotent rerun without new UUIDs. Refresh a stale shared replica after an upstream withdrawal with an uncached replacement: the withdrawal survives export and is effective at the next supported load without dreaming; offline readers explicitly cannot know unseen upstream changes.
+Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, verified-successor versus divergent refresh, missing referenced dependencies, retained particulars and idempotent rerun without new UUIDs. Refresh a stale shared replica after an upstream withdrawal with an uncached replacement: the withdrawal survives export and is present in the committed snapshot and manifest after refresh, with the uncached replacement reported unavailable; offline readers explicitly cannot know unseen upstream changes. Whether that withdrawal is *effective at the next supported load* is 0921's test, not this one — there is no loader at this position.
 
 ## Verification
 
@@ -53,3 +54,4 @@ Relocate a fresh pilot clone without the originating home directory. Verify plai
 - [ ] One portable project and shared snapshot can be read offline without harness installation.
 - [ ] No automatic generalisation or loss of local conditions.
 - [ ] All migrated bodies reconcile to baseline identities; no broad rollout hidden in the pilot.
+- [ ] The v7 §12.1 disjoint-roots fixture passes against the adapter's declared native root, so 0923 can record the row green rather than known red. Until then the row stays red with its reason; it is this ticket that clears it, not 0913.

@@ -9,6 +9,7 @@ Author: claude
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: this ticket implements the predicate evaluator, not just enumerates the grammar; 0915 and 0921 both call one no other ticket builds. Three unlocated artefacts added to Relevant files.
 
 --- body ---
 
@@ -20,14 +21,14 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16; `skills/memory/SKILL.md`; existing dependency declarations and knowledge-hint helpers.
+`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16, 17; `skills/memory/SKILL.md`; `tests/test_dream.py` — the flat-`type` contradiction is at lines 27 and 30, where fixtures nest `type:` under `metadata:` while every live body uses it top-level; `docs/2026-09-11-memory-systems-comparison.md` — the MemU adapter/service patterns action 5 refers to; `requirements-dev.txt` — the dependency declarations, which also record that a `pyproject.toml` is an author-reserved decision (ticket 0530); knowledge-hint helpers in `scripts/knowledge_hints.py`.
 
 ## Actions
 
 1. Adopt the names v7 §17 settles — package and CLI `hoard`, verbs `assay`, `reckon`, `seal`, `sift`, `shed`, `disown`, `weigh` — and document only the package location and entry point, which §17 leaves open. Keep model calls and adapters outside its policy core; no standalone framework or binary.
 2. Implement minimal schema parsing/validation: immutable UUID, readable slug, explicit project/shared scope, active/superseded/retracted status, provenance, dates and relationships. UK English authoring; exact external identifiers preserved.
 3. Expose structured validation and identity-resolution results. Distinguish malformed data, unknown applicability and inactive records. Generalisation and supersession are different relations.
-4. Specify the minimal closed applicability grammar and structured true/false/unknown result, shared by admission and loading. Reject unknown operators; do not execute memory-authored shell code. Any supported path probes have explicit roots and bounded cost. Broader operators remain deferred to 0914.
+4. Specify **and implement** the minimal closed applicability grammar and structured true/false/unknown result, shared by admission and loading. This ticket owns the evaluator: 0915's sentinel row and 0921's scope evaluation both call it, and neither is scheduled to build it. Reject unknown operators; do not execute memory-authored shell code. Any supported path probes have explicit roots and bounded cost. Broader operators remain deferred to 0914.
 5. Inspect the companion comparison’s MemU adapter/service patterns before implementing equivalents; record a small build/reuse decision in this ticket. Reuse ideas freely; copying or depending on a component requires the specific revision/licence/dependency/notice assessment. No adoption is presumed.
 6. Specify stable project identity and rename/fork handling; preserve replica identity. Assess licences and minimal dependencies before adding them; do not mandate both pydantic and python-frontmatter without justification.
 
@@ -54,4 +55,4 @@ Use small fixtures: flat type is accepted; obsolete metadata nesting is rejected
 - [ ] Core runs without network/model/embedding service; dependencies justified with licence evidence.
 - [ ] Package and CLI are named `hoard` per v7 §17, with the verbs `assay`, `reckon`, `seal`, `sift`, `shed`, `disown`, `weigh` bound to the sections they implement. The names are adopted, not chosen: this action no longer carries a naming decision.
 - [ ] `shed` without `--by` does not parse and `disown` accepts no successor, so §4.3's malformed lifecycle call is unwritable rather than rejected after the fact.
-- [ ] The closed predicate operator subset is enumerated, so 0915's unknown-operator fixture has a definition to test against.
+- [ ] The closed predicate operator subset is enumerated **and evaluable**, with true/false/unknown and invalid-operator fixtures in this ticket — the plan's contract table already assigns them here. Enumeration alone does not close this ticket: 0915 and 0921 both call an evaluator that no other ticket builds.

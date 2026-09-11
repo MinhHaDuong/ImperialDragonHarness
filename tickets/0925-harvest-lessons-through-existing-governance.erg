@@ -9,6 +9,7 @@ Blocked-by: 0923
 
 2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: adds a positive exit criterion; the three existing ones were absence-shaped and met by harvesting nothing.
 
 --- body ---
 
@@ -47,6 +48,7 @@ Scenario with a harvested procedure later amended: discovery points to current c
 
 ## Exit criteria
 
+- [ ] At least one particular lesson from the pilot corpus is harvested into a rule, skill or hook through the normal PR, with the governing artefact linked from the memory body and the source qualified as historical evidence. The amended-procedure fixture passes against that real pair, not a synthetic one. Without this criterion the other three are satisfied by a ticket that adds a paragraph and harvests nothing.
 - [ ] Harvesting has a no-change outcome and no mandatory residency class.
 - [ ] Existing governance and knowledge-hint interfaces reused.
 - [ ] Evidence preserved without duplicating decisions or authoritative procedures.

@@ -10,6 +10,7 @@ Blocked-by: 0923
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: acceptance margins must land on a named surface in a commit preceding the first trial run, so 'predeclared' is a fact Git can show.
 
 --- body ---
 
@@ -25,7 +26,7 @@ Publication/delivery records; common fixtures from 0923; v7 §§8 and 12; tests/
 
 ## Actions
 
-1. Define representative IDH-maintenance, consumer-code and research tasks, outcome rubrics and task-specific acceptance margins before running comparisons. Separate mechanical delivery gates from semantic correctness. Include incidental lesson use, below-cut recall, local exceptions, correction adherence, routing, unknown applicability, irrelevant-corpus growth and bare/offline use. Later generalisation/harvesting scenarios are carried into the final tracker gate.
+1. Define representative IDH-maintenance, consumer-code and research tasks, outcome rubrics and task-specific acceptance margins before running comparisons, and commit the margins to a named surface — a log entry on this ticket, or a file under the evaluation artefacts — in a **separate commit landing before the first trial run**, with every result referencing its revision. A margin written in the same commit as the results cannot be distinguished from one chosen after seeing them, and 0913 then gates on a number that cannot fail. Separate mechanical delivery gates from semantic correctness. Include incidental lesson use, below-cut recall, local exceptions, correction adherence, routing, unknown applicability, irrelevant-corpus growth and bare/offline use. Later generalisation/harvesting scenarios are carried into the final tracker gate.
 2. Compare disabled memory, orientation alone and full delivery with matched corpus/model/settings; repeated runs report denominators and uncertainty.
 3. Attribute observed reads to orientation, recent supplement and task recall using UUID/revisions and actual delivered context rather than a daily default index.
 4. Evaluate half/baseline/double channel budgets, one component at a time; record controlled and cumulative tokens, latency, stale-advice use, unknown applicability and ledger routing.
