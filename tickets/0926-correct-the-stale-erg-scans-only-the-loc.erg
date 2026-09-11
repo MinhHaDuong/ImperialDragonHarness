@@ -40,12 +40,15 @@ Four readings, two of them isolated controls, all doudou 2026-09-11.
    same-relative subtree of every `refs/heads/` and `refs/remotes/` tip in the
    local refs cache, enumerated via `git for-each-ref` + `git ls-tree`. Catches
    tickets committed on branches not currently checked out", plus a parallel
-   clause for "uncommitted drafts in parallel worktrees".
+   clause for "uncommitted drafts in parallel worktrees". Both binaries also
+   state the boundary the shorter quote omits: the branch-tip pass has a 200 ms
+   deadline and on timeout falls back to the worktree-level result with a
+   warning on stderr.
 
-2. **Live routing.** Ticket 0766 existed in no working tree anywhere on the
-   machine (`find` over the whole repo found nothing); it lived only in a
-   sibling session's branch. `erg next-id` returned 0767. The allocator avoided
-   an ID it could only have learned from a ref.
+2. **Live routing.** The recorded `find` search over the repository found ticket
+   0766 in no working tree; it lived only in a sibling session's branch. `erg
+   next-id` returned 0767. The allocator avoided an ID it could only have
+   learned from a ref.
 
 3. **Isolated control, the unpushed case.** A local branch was built with
    plumbing (temp `GIT_INDEX_FILE`, so the shared checkout's index and working
@@ -60,9 +63,11 @@ Four readings, two of them isolated controls, all doudou 2026-09-11.
 
    0 modified paths in the working tree throughout.
 
-4. **Independent confirmation on the second binary.** The harness ships a
-   different build from the project's (`53fbf0e0f8e0cd13` against
-   `1e204c1ffd9cd703`); it carries the same enumeration, and while this ticket
+4. **Independent confirmation on the second binary.** The harness build
+   (`sha256 53fbf0e0f8e0cd13712ca864da4bdd71efb29b7f8aaf56c8fdce320cbbdcc3fb`,
+   revision `4fd3c98`) differs from the search-works-for-zotero build (`sha256
+   1e204c1ffd9cd703ac6e778a3b5f3337597accaa3d5ac5c693bf3d8ffb7d9436`,
+   revision `5158508`). It carries the same enumeration, and while this ticket
    sat on an unpushed branch as 0926, the harness checkout's `erg next-id`
    returned 0927.
 
@@ -74,9 +79,10 @@ unpushed local branch alone moves the allocation. No forge call is involved.
 
 **Does it fill the holes?** No — it is max+1, never lowest-free. Measured in
 search-works-for-zotero: 322 distinct IDs, highest 0767, and **445 free slots
-below the maximum**, 58 % of the space. `next-id` returned 0768, not 38. So an
-ID burned by a frontier jump is burned permanently, which raises the price of
-the renumber advice above rather than lowering it.
+below the maximum**, 58 % of the space. `next-id` returned 0768, not 0038. A gap
+below a retained high-water mark is therefore never reused by the current
+allocator, which raises the price of the renumber advice above rather than
+lowering it.
 
 ## Does the harness actually use the allocator?
 
@@ -107,7 +113,10 @@ Outside what any local scan can reach:
 - another machine entirely;
 - refs present on the forge but not yet fetched here;
 - a sibling that has allocated but neither committed nor left a draft where the
-  parallel-worktree scan can see it.
+  parallel-worktree scan can see it;
+- a branch-tip pass that exceeds its 200 ms deadline and falls back, with a
+  warning, to the local and sibling-worktree result; Git enumeration failures
+  can likewise reduce ref coverage.
 
 Whether to close any of these, and how, is the "another day" question. Note that
 git-erg#282 declined *reservation*, which is a far stronger mechanism than the
@@ -117,9 +126,10 @@ future proposal on its own terms.
 ## Actions
 
 1. Rewrite the stale bullet in `tickets/AGENTS.md`: say what `erg new` actually
-   scans (store subtree, parallel worktrees' uncommitted drafts, every
-   `refs/heads` and `refs/remotes` tip), and that the residual window is a
-   separate clone or unfetched refs.
+   scans (store subtree, parallel worktrees' uncommitted drafts, and a
+   best-effort pass over `refs/heads` and `refs/remotes` tips bounded at 200 ms),
+   and name the fallback as well as the residual window of a separate clone or
+   unfetched refs.
 2. Fix the same claim in `scripts/check-cross-pr-ticket-collision.sh`'s header.
 3. Keep the fetch-before-allocating rule. It is exactly what shrinks the
    residual window, and it survives the correction intact.
