@@ -1,27 +1,27 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-11T07:30Z
+Last updated: 2026-09-11T08:30Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-11T07:30Z · as of a68fd1e -->
+<!-- generated 2026-09-11T08:30Z · as of 8ce98c19 -->
 
-**Tickets:** 26 ready · 18 blocked · 1 awaiting author — `erg ready tickets/` for full list
+**Tickets:** 24 ready · 26 blocked · 1 awaiting author — `erg ready tickets/` for full list
   next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
-**In flight:** [#904](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/904) draft, planning review open; all 9 checks pass. Remain in Planning; implementation unstarted. CI main: success.
 **Recent (first-parent):**
-  a68fd1e Merge pull request #903: accept memory design v6 review baseline
-  a90a9f5 Merge pull request #902 from MinhHaDuong/worktree-roar-memory-lessons
-  1079ca9 Merge pull request #901 from MinhHaDuong/memory-format-okf
+  8ce98c19 Merge pull request #904: realign the implementation train to design v7
+  a1184031 Merge pull request #906: design v7 — acceptance conditions closed, nomenclature settled
+  222b0566 Merge pull request #905 from MinhHaDuong/housekeeping-state-2026-09-11
 
 ## Blockers
 
 (none)
 
 ## Next actions
+- **Memory design at v7, train realigned and merged; implementation not started** (2026-09-11, #906 then #904). The acceptance review verdict was *accept with four conditions*, all §12.1 gate-definition gaps — none touched the architecture. v7 closes them: a predicate-safety row whose sentinel separates "did not execute" from "did not look"; a row for a revision change at constant UUID across G/C, the invariant the whole construction exists for and which three neighbouring rows each missed; the native-write row split into a structural assertion on *declared* disjoint roots plus a fixture with no model in the loop; and two compiler invariants replacing absence-shaped rows no removable mechanism could fail. The table's preamble is now its own acceptance condition. **One row is known red and this is the standing item**: disjoint roots cannot hold while the runtime's declared native root is `~/.claude/projects/<slug>/memory/` and IDH's own 116-body store sits inside it. 0920 owns the clearance — two moves inside this repo, `memory/` → `memory-shared/` and `projects/-home-haduong--claude/memory/` → `memory/`, with `HARNESS_MEMORY`, `read-index.py` and the resident census repointed. The plan's earlier wording ("move the store out of `~/.claude`") was unachievable, since the repo *is* `~/.claude`. **Names are settled** (v7 §17): `memory/`, `memory-shared/`, `shared-snapshot/`, package and CLI `hoard`, verbs `assay`/`reckon`/`seal`/`sift`/`shed`/`disown`/`weigh`; rationale and rejects in the nomenclature note. A Fable plan review found eight items, all applied — the two material ones were the unowned red row above and 0923's live smoke, which had no negative control and no observation surface the adapter did not itself author while 0924 assumed it inherited one. Foundation tickets 0911 and 0917 are unblocked and nothing is started. The v2 machinery measured on 2026-09-11 — 945 live bodies, 651 tracked in provenance so 308 orphaned, 3 promoted, decay reaching 3 of 945 — is what v7 replaces, not a defect to fix in place; 0913 retires it.
 - **Slimming pass done, portage next** (2026-09-09, tickets 0881-0884, ~11 600 lines removed). A usage census over 3,42 GB of local session traces — all repositories — drove four merged cuts: eleven never-invoked skills reduced to seven, the nightbeat block removed entire (its scheduler had been uninstalled for months), 31 dead permission rules dropped. **`HANDOFF-2026-09-09.md` carries the full state**: numbers behind each decision, three arbitrations that remain the author's, five identified-but-unstarted threads. `scripts/census/` holds the instruments; re-running them a month out is how the cut gets verified.
 - **Rules-tree residency: mechanism isolated, trimmed, capped** (2026-09-09, 0572). The runtime loads `~/.claude/rules/**.md` itself — `paths:` frontmatter makes a body conditional, its absence makes it resident in every session of every project; the pointer-table design was never in force. Scoping the path-expressible bodies, then cutting `workflow.md` and `git.md` by half, took the **rules tree** 28 400 → 8785 tokens; `tests/test_rules_resident_budget.py` caps it at 36000 chars. That tree is not the whole resident preamble: `CLAUDE.md` + its `@` chain (9646 chars) and each project's `MEMORY.md` (worst 26 531) were ungated and grew ×4.3 and ×3.6 in three months — `tests/test_resident_preamble_budget.py` ratchets both since 2026-09-10, and the real per-session floor is ~65 900 chars. Runtime specifics now sit alone in `rules/claude-code.md` — **what an adapter must inject is exactly the resident set, minus that file**. An independent Fable pass found eight contradictions in the two files; four fixed, two recorded (0800), evicted incidents kept in 0572. **Author review accepted 2026-09-10:** retain the cuts with three targeted restorations — questions only when author input is needed, null conclusions limited to the tested scope, and the no-avian-analogy rule resident for conversations too. 0572 is complete. Live loading-canary verification on the author's machine remains unverified; this acceptance does not claim it was run. The seven situation-scoped bodies are gone: four were file-triggered (scoped by `paths:`), three were task-triggered and became the skills `/pdf-finish`, `/cut-prose`, `/submission-event`. What stays resident is the core plus `claude-code.md`, which the adapter skips.
 - **Cool-down doctrine in force** (2026-07-14): file a tooling ticket only if the defect blocks a merge, corrupts state, or bites a science project; throughput points at the science repos.
