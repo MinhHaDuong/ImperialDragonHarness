@@ -80,12 +80,25 @@ one kind, which argues for a single word, but the design separates them in ways
 that land at the path level: a shared body carries explicit applicability, and
 under §3.3 its replica in a project "is not a new memory and is not
 independently editable". One word would invite exactly the confusion the
-distinction exists to prevent. The shared root is therefore `shared/`, and the
-design has already fixed the name of its committed replica inside a project,
-`shared-snapshot/` (§3.2), so the relation reads without new vocabulary. Three
-plain paths: `memory/` in the project repository, `shared/` at harness level,
-`shared-snapshot/` for the replica. The verbs do not split — one library serves
-both scopes, and scope is an argument, not a second command set.
+distinction exists to prevent. Three plain paths: `memory/` in the project
+repository, `memory-shared/` at harness level, and §3.2's existing
+`shared-snapshot/` for the committed replica. The verbs do not split — one
+library serves both scopes, and scope is an argument, not a second command set.
+
+`shared/` alone was considered and rejected as too generic: at the harness root
+it could be shared anything. `hoard/` was the other candidate and is the better
+*fit* — the shared root is the one path on the filesystem that stays themable,
+since a stranger cloning a project sees `memory/` and `shared-snapshot/` and
+never the source, and §12.1's bare-clone gate requires only the local bodies and
+the committed snapshot to be readable. It is rejected for polysemy: `hoard`
+already names the library and its verbs, which serve *both* scopes, so a
+`hoard/` directory holding only one of them would suggest the tool belongs to
+that scope. The `git` / `.git/` precedent argues the other way, but there `.git/`
+is the single store; here there are two and the word would cover one.
+`memory-shared/` inverts the order of `shared-snapshot/`; adjacency with
+`memory/` in a directory listing is worth more than symmetry with a replica
+name. Should the theme need to reach the filesystem, the clean move is to rename
+the library, not to make one word do two jobs.
 
 A single-vessel image — basin or pile — implies one pool and one access mode, and
 v6 refuses that: §1 gives "three delivery components [that] handle different
