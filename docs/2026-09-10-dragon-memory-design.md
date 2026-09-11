@@ -1,10 +1,12 @@
 # The Dragon's memory — design v5
 
 **Publication date:** 11 September 2026  
-**Status:** design draft for review; incorporates the owner's design discussion following v4  
+**Status:** design draft for review; revised after three independent architectural reviews  
 **Préparé par ChatGPT prompté par Ha-Duong Minh**  
 **Repository baseline:** `a90a9f5e9be4f88889b180bd05ba0ef8aaa993f6`  
 **Previous design:** [v4, frozen](./2026-09-10-dragon-memory-design-v4.md)
+**Review:** runtime ownership, subsystem boundaries and integrity reviews applied;
+initial v5 remains in Git history at `9804bbee`.
 
 This is an architectural specification, not a report on implementation progress.
 It replaces v4's architectural proposal. Historical measurements, runtime probes
@@ -28,8 +30,14 @@ lead to the latest design.
 12. [Acceptance criteria](#12-acceptance-criteria)
 13. [Migration and remaining choices](#13-migration-and-remaining-choices)
 14. [Decision trace and references](#14-decision-trace-and-references)
+15. [Comparison with other memory systems](#15-comparison-with-other-memory-systems)
 
 ## 1. Executive summary
+
+Two knowledge scopes, one body format, one compiler and three delivery channels.
+Dreaming exercises editorial judgment; compilation publishes accepted knowledge;
+a small reader supplies context. These are responsibilities, not additional
+user-facing commands.
 
 The canonical store is readable Markdown bodies with structured frontmatter,
 tracked with the project. Generated catalogues, rankings and retrieval caches
@@ -136,7 +144,7 @@ The following names are an illustrative layout, not a mandated migration path:
 | `shared-snapshot/` | Committed readable replicas of relevant shared bodies |
 | `index.md` | Generated complete catalogue of active available bodies |
 | `MEMORY.md` | Generated bounded default orientation |
-| `publication.json` | Publication inputs, processed revisions, ordered candidates and scores |
+| `publication.json` | Publication inputs, processed revisions and ordered candidates; optional score diagnostics |
 | `.cache/` | Ignored, disposable acceleration data |
 
 All navigational links are relative. Generated catalogues use ordinary Markdown
@@ -151,10 +159,14 @@ not active memories and cannot enter rankings.
 
 ### 3.3 Shared snapshots
 
-Each project commits a snapshot of shared bodies selected for its orientation
-and those explicitly referenced by active local memories. Required reference
-dependencies are included or explicitly reported unavailable. Do not copy the
-whole shared corpus by default.
+Each publication first fixes an explicit project-relevant shared candidate set:
+bodies referenced by active local memories and a bounded selection for orientation,
+optionally with a small refill reserve. Resolve required dependencies or report
+them unavailable. Then rank local bodies plus this available set and commit its
+readable shared snapshot. This avoids a circular promise to refill from bodies
+that were ranked but never copied. Refilling is limited to this available set;
+it does not promise access to the whole shared corpus. Candidate-set size is a
+separate snapshot policy, not the resident token budget.
 
 A replica preserves the UUID, upstream revision and content hash. It is not a new
 memory and is not independently editable. Changes are proposed upstream, or an
@@ -198,8 +210,9 @@ explicitly. Compatibility with an external convention must be validated against
 its version before being claimed; runtime-specific aliases are derived, never
 canonical alternatives.
 
-The schema must represent the following concepts; exact field nesting is an
-implementation decision:
+The schema distinguishes the following concepts; exact field nesting is an
+implementation decision. The base requirements and optional annotations are
+separated below:
 
 | Concept | Meaning |
 |---|---|
@@ -218,6 +231,12 @@ must not manufacture semantic freshness.
 
 Computed scores and ranks do not belong in filenames or canonical bodies.
 Annotated importance is a judgment with provenance, not an authoritative score.
+
+The base contract requires identity, lifecycle, basic scope, source, meaningful
+dates and readable content. Rich scoring annotations and detailed telemetry are
+optional extensions. Carry a concise, audience-appropriate account of the
+observation and its limitations in the body. Private trace IDs are audit pointers,
+not portable evidence by themselves; label unavailable supporting evidence.
 
 ### 4.3 Lifecycle, applicability and provisional status
 
@@ -249,28 +268,63 @@ retained as uncertainty, never silently rewritten as true.
 
 ## 5. Admission and authority
 
-### 5.1 The entry question
+### 5.1 Canonical ownership at entry
 
-Before a candidate enters memory, ask:
+Before admitting a candidate, ask which existing artefact owns the information,
+then distinguish what was decided from what was observed or learned.
 
-> Does this record what was decided or authorised, or what was observed or learned?
-
-| Candidate | Route |
+| Candidate | Canonical destination |
 |---|---|
-| Adopted decision, commitment, authorisation | Decision-ledger process |
-| Observation, experience or inferred lesson | Memory, with provenance |
-| Both | Split; memory references the canonical decision |
-| Ambiguous | Proposal or unresolved question; do not assert an adopted decision |
+| Current progress, blocker or handoff | STATE or the existing ticket |
+| Adopted decision, commitment or authorisation | Project's declared decision records |
+| Reusable code, corpus or procedure | Ordinary artefact location or skill |
+| Proposed reuse work | Existing proposal/work tracking mechanism |
+| Existing useful artefact needing discovery | Pointer or knowledge hint |
+| Experiential lesson not otherwise captured | Memory, with provenance |
+| Mixed decision and observation | Split; memory references the governing record |
+| Ambiguous | Record the routing judgment as unresolved; do not assert adoption |
 
-This is an agent classification step, not an automatic request for human
-confirmation. Clarify only if the conversation cannot establish the distinction.
+“Decision ledger” names a role, not a mandatory new store. Existing ticket
+decision records, ADRs or other declared project records may fulfil it. Bind to
+the project's actual convention; an unconfigured destination does not justify
+inventing a ledger or putting the decision in memory. In IDH, ticket bodies
+already carry decision records under [tickets/AGENTS.md](../tickets/AGENTS.md).
+
+Do not copy information already obtainable from code, Git history, README,
+STATE, rules or skills merely to populate memory. “Script X exists” needs a
+pointer; “X failed under condition Y” can be a lesson citing X. This retains
+the existing [memory admission exclusions](../skills/memory/SKILL.md).
+
+Routing is an agent judgment. The entry mechanism can require a recorded routing
+outcome; it cannot deterministically guarantee semantic classification. Evaluate
+classification correctness behaviourally. Clarify with the user only when the
+conversation cannot establish the distinction.
 
 A candidate must also pass structural validation and a suitability check for the
 repository's audience. Recording an observation does not grant permission to
 publish confidential material. Unresolved scope or audience questions must not
 silently expand access.
 
-### 5.2 Editorial authority
+### 5.2 Existing knowledge subsystems
+
+[Knowledge hints](../rules/knowledge-hints.md) already provide a vendor-neutral
+`.knowledge.toml` catalogue and term-triggered pointers with caveats. Reuse that
+discovery envelope where appropriate; do not convert canons, vocabularies,
+decision registers or reusable assets into memory bodies. Content ownership
+remains with their canonical subsystem, which dreaming cannot rewrite.
+
+Deduplicate discovery of the same canonical artefact and preserve its caveat.
+Account for hint exposure alongside memory in the total context census; do not
+silently charge it twice or claim memory's budget includes an unmeasured hint
+channel. Shared interface does not imply identical retention or ranking policy.
+
+Lessons remain experiential memory when not captured elsewhere. Reuse
+opportunities that request future work belong to the established work/proposal
+tracker. This design creates no new lessons database, reuse ledger or evidence
+store. Any separately maintained reuse subsystem must be identified before
+migration, not assumed absent.
+
+### 5.3 Editorial authority
 
 Sessions may record experiential memories. Dreaming may consolidate, generalise,
 rescope and retire experiential memories, preserving their originals and the
@@ -290,7 +344,7 @@ Admission is not ranking. Validating syntax does not establish truth, and a
 deterministic score over model-authored inputs does not remove model judgment.
 Judgment is recorded and reviewable; selection is reproducible for fixed inputs.
 
-### 5.3 Harvesting requirements
+### 5.4 Harvesting requirements
 
 During dreaming, identify experiential lessons that warrant an amendment to:
 
@@ -301,7 +355,11 @@ During dreaming, identify experiential lessons that warrant an amendment to:
 Propose the amendment through the existing process. After acceptance, record a
 reference to the adopted artefact and reduce redundant exposure where appropriate.
 Do not automatically delete the supporting evidence or treat the harvesting
-proposal as an adopted instruction.
+proposal as an adopted instruction. Preserve the incident and rationale, but
+mark copied procedural advice as historical and governed by the linked artefact.
+Recall should lead to the current procedure rather than let an old prescription
+compete with a subsequently amended skill. This needs a reference and explicit
+qualification, not another lifecycle state.
 
 ## 6. Orientation, recent supplement and task recall
 
@@ -322,7 +380,7 @@ temporary acceptance of underfilling solely because the published excerpt was
 too short. Genuine lack of useful applicable candidates still leaves the view
 underfilled.
 
-The manifest must describe the pool it ranks. An absent uncached shared body is
+The manifest must describe the fixed, available pool it ranks. An absent uncached shared body is
 not a locally available candidate. New or semantically changed revisions belong
 to the supplement, rather than inheriting an obsolete content score.
 
@@ -370,11 +428,15 @@ difference between active allocation and actual retained transcript cost.
 ### 7.1 Consuming context
 
 Evaluate applicability against the consuming project's identity, environment and
-available tool versions, not the host that ran dreaming. Task recall additionally
+available tool versions, bound to the actual checkout/corpus revision, not the
+host that ran dreaming. A home-directory runtime store shared across worktrees
+does not establish equal accepted knowledge on their different branches.
+Task recall additionally
 uses the current task.
 
-A small closed predicate grammar may express paths, bounded text checks and tool
-version conditions. It must not execute arbitrary memory-authored shell code.
+Begin with explicit scope and only the small closed predicate subset that
+consumer tasks require. Paths, bounded text checks and tool version conditions
+are possible extensions, not a requirement to build a broad evaluator first. It must not execute arbitrary memory-authored shell code.
 Bind paths to explicit roots and bound evaluation cost.
 
 False excludes current use. Unknown is explicit and may remain a candidate with
@@ -406,10 +468,10 @@ Embeddings are optional, initially most useful to dreaming for proposing related
 groups. Their use must justify identifiable lexical misses. Embeddings suggest
 similarity, not equivalence or contradiction resolution.
 
-A disposable embedding cache is keyed by content hash, embedding model/version
-and preprocessing configuration. It is ignored by git. Deleting it changes
-cost, not canonical knowledge. Warm and cold runs with fixed inputs must agree
-on deterministic downstream results within a documented numerical policy.
+If implemented, a disposable embedding cache is keyed by content hash,
+embedding model/version and preprocessing configuration. It is ignored by git.
+Deleting it changes cost, not canonical knowledge. Numerical-equivalence tests
+belong to that optional implementation, not the base memory contract.
 
 Task-time semantic retrieval additionally needs a compatible query embedder.
 Precomputed body vectors alone do not make semantic search available offline.
@@ -426,14 +488,19 @@ Preventive value can contribute weight but never grants mandatory residency.
 No blanket preference awards local origin precedence over a more useful shared
 lesson.
 
-Account for length and redundant content when selecting a bundle. Once a
-generalisation is selected, a related particular must justify its additional
+Orientation uses a static dream ranking plus current eligibility filtering;
+it does not promise the optimal bundle for every consuming environment. Do not
+pre-penalise particulars on the assumption that their generalisation will survive
+runtime filtering.
+
+Task recall may adjust for length and redundancy during selection. Once a
+generalisation is selected there, a related particular must justify its additional
 context cost; local conditions can justify it. Do not permanently penalise every
 generalised source or force every active memory to fill remaining capacity.
 
 Exact weights, thresholds and redundancy functions are versioned calibration
-choices. Start simple. Record component scores and ordered UUIDs in generated
-manifests, not filenames.
+choices. Start simple. Record the ordered UUIDs and policy version in generated
+manifests, not filenames. Component-score diagnostics are optional.
 
 Reproduction requires more than the bodies:
 
@@ -459,7 +526,10 @@ evidence of utility.
 | Total active allocation | 4,000 tokens | Sum of proposals; not a measured optimum |
 
 These figures were proposed in the discussion, not separately ratified as
-permanent values. They exclude rules, skills, conversation and task evidence.
+permanent values. They bound IDH-controlled memory exposure, including any native
+projection implementing an IDH component. They exclude rules, skills, knowledge
+hints, independent native memory, conversation and task evidence. Report these
+other channels separately; 4,000 tokens is not a total-runtime-context claim.
 Leaving capacity unused is acceptable.
 
 Count the rendered payload, including headings, status labels, links and
@@ -520,13 +590,17 @@ particular claims.
 
 ### 9.2 Pass responsibilities
 
-A pass captures its input snapshot, validates identities and links, identifies
-candidate groups, applies the authorised editorial process, updates shared
-snapshots, computes rankings and publishes views.
+Dreaming performs editorial work: it considers rediscoveries, proposes groups
+and harvests, and lands only authorised semantic edits. The deterministic
+compiler publishes views of accepted bodies and the fixed shared snapshot set.
+It does not wait for pending generalisation proposals or repository reviews.
 
-Deterministic work can be tested independently from model-authored synthesis.
-Record model identity, prompt/template version, source revisions, judgments and
-accepted outputs for semantic changes.
+A dreaming command may invoke the compiler after accepted edits, but editorial
+completion and publication are separate transactions. Scheduling compilation
+alongside dreaming does not make semantic change a prerequisite for fresh views.
+
+Record source revisions, accepted judgments and the model/prompt identity for
+semantic changes. Reproducible compilation does not imply repeatable model prose.
 
 A pass works in isolation and refuses to overwrite uncommitted bodies. A local
 lock prevents local overlap; it does not establish exclusivity across machines.
@@ -549,7 +623,8 @@ A publication manifest identifies:
 - included snapshot bodies and source provenance;
 - schema, generator and ranking-policy versions;
 - evaluation time, contextual assumptions and budget profile;
-- full ordered candidates and their component scores;
+- the fixed available candidate set and full ordered candidates;
+- optional component-score diagnostics;
 - hashes of emitted views.
 
 Bodies processed but below the cut are still processed. Selection and processing
@@ -573,17 +648,35 @@ revision check, not a filesystem-lock assumption.
 
 ### 10.2 Loading and withdrawal
 
-Refresh at session start and task boundaries. Check locally known withdrawals
-before consequential actions on adapter-supported paths. Filtering must consult
-current local lifecycle state, not trust the status copied into an old index.
+Each load pins two inputs: publication generation **G**, and one current accepted
+corpus revision **C** for the consuming checkout. Orientation uses bodies whose
+revisions still match G; accepted new or changed revisions in C feed the recent
+supplement; withdrawals in C filter both. This deliberate current-state overlay
+is not an accidental mixture of publication files. A withdrawal after C becomes
+visible at the next supported boundary.
 
-A withdrawal suppresses advice even if the replacement is unavailable. Already
-injected text cannot always be removed: emit an explicit correction at the next
-supported boundary and exclude it from future bundles. This guarantees delivery
-only on instrumented paths; subsequent model adherence remains probabilistic.
+For the base implementation, accepted means committed through the applicable
+project change process. Uncommitted candidates are the authoring session's work,
+not silently published cross-session knowledge. A future accepted local overlay
+would need its own explicit revision and review contract.
+
+Refresh at session start and task boundaries. Resume, fork/child creation and
+compaction recovery are also capability boundaries. Check locally known
+withdrawals before consequential actions on supported interception paths.
+
+Keep a small delivery record outside model-authored summaries: component,
+publication, UUID and revision. It is session bookkeeping, not another canonical
+store. Rebuild current bundles after compaction where supported; reset duplicate
+suppression according to what remains in context, not merely what was ever sent.
+
+A withdrawal suppresses advice even if the replacement is unavailable. Where
+old text cannot be removed, deliver an explicit correction at the next supported
+boundary and prevent stale re-injection. Opaque runtime summaries can retain
+unattributed paraphrases: deterministic removal is not guaranteed there.
+Measure adherence separately from correction delivery.
 
 Offline consumers cannot know later upstream withdrawals. Once synchronisation
-reveals one, it takes effect without awaiting the next dream.
+reveals one in the accepted corpus, it takes effect without waiting for dreaming.
 
 ### 10.3 Missing or damaged publication
 
@@ -598,6 +691,37 @@ requires rebuilding or a slower path; a missing publication must not destroy
 access to readable bodies.
 
 ## 11. Runtime adapters and graceful degradation
+
+### 11.1 Native memory ownership
+
+Each runtime profile declares native persistence as **disabled for this project**,
+**managed projection**, or **independent coexistence**. IDH owns its canonical
+experiential bodies; native-authored notes are admission candidates, not accepted
+canonical writes. Never give an unrestricted native writer an alias to the
+canonical store or its generated views.
+
+Managed projections are disposable delivery representations. Avoid bidirectional
+synchronisation between two editorial stores. Independent coexistence is allowed
+but must disclose incomplete deduplication, withdrawal coverage and accounting.
+
+Assign one delivery owner to each IDH component so native loading and an IDH hook
+do not both inject it. Count controlled projections in the IDH budget and report
+unobservable native payloads separately. Native feature activation must neither
+duplicate a component nor silently remove it.
+
+### 11.2 Capability declaration
+
+| Aspect | Adapter declares |
+|---|---|
+| Persistence | Disabled, managed projection or independent |
+| Writes | Admission path and canonical ownership |
+| Delivery | Owner of each component and observable payloads |
+| Boundaries | Start, task change, pre-action, resume, child and compaction |
+| Isolation | Project identity, checkout and accepted revision binding |
+| Accounting | Controlled budget and separately reported exposure |
+
+### 11.3 Degradation
+
 
 | Capability | Full adapter | Lightweight container | No harness |
 |---|---|---|---|
@@ -644,7 +768,13 @@ Each gate includes a fixture that fails when the relevant mechanism is removed.
 | Cold cache, missing embedding model, no network | Lexical baseline works and reduced capability is explicit |
 | Ranking manifest absent or corrupt | Local inspection remains possible; no false completeness claim |
 | Oversized pool and repeated task changes | Per-component bounds hold; retained cumulative injection is measured |
-| Decision-shaped input | Routed to ledger process, not admitted as authoritative experiential advice |
+| Entry workflow omits a routing outcome | Reject incomplete admission; semantic correctness is evaluated below |
+| Native loading plus adapter enabled | One delivery owner per component; controlled exposure deduplicated and counted |
+| Inject, compact, retract, resume/child | Current correction delivered at supported boundary; no stale re-injection |
+| Memory and knowledge hints present | Canonical pointers deduplicated; caveats preserved; costs attributed |
+| Generalisation filtered out | Particular retains its static rank; no assumed selection penalty |
+| Shared candidate absent from snapshot | Unavailable candidate cannot be used for refill |
+| Pending editorial review | Compilation of accepted bodies still succeeds |
 
 Tests of publication atomicity and conflict handling concern machine behaviour.
 A test that merely checks whether a skill contains a required sentence does not
@@ -663,7 +793,8 @@ Evaluate whether agents:
 - obtain below-cut evidence through task recall;
 - preserve a local exception when applying a generalisation;
 - recognise a correction rather than repeat superseded advice;
-- distinguish an observation from a ledger decision;
+- correctly route observations, decisions, project state and reusable artefacts;
+- consult the current canonical procedure after harvesting;
 - avoid inventing applicability when the environment is unknown;
 - maintain task quality as irrelevant memories accumulate;
 - remain usefully informed from a bare clone and an offline snapshot.
@@ -770,3 +901,23 @@ in the project's established decision process.
 
 The draft's acceptance suite must assess IDH's own workloads. External benchmark
 results do not certify this design or its adapters.
+
+## 15. Comparison with other memory systems
+
+The [companion comparison](./2026-09-11-memory-systems-comparison.md) examines
+MemU, Letta, Mem0 and Graphiti against this design's actual requirements, using
+primary project documentation checked on 11 September 2026. It separates
+documented capabilities from IDH's design judgments and does not compare
+incompatible benchmark scores.
+
+The recommendation is to borrow patterns and evaluate optional strong-host
+components before adopting another canonical memory backend. MemU's adapter
+boundaries and agent/service separation are relevant; Letta shows that Git-backed
+memory and background dreaming are not unique to IDH. Neither observation removes
+the need to verify project-owned offline delivery, ledger routing and native
+runtime ownership.
+
+Keep IDH's base small: admission, canonical bodies, a compiler and a reader.
+Embeddings, rich temporal graphs and automated synthesis must earn their place
+against observed failures, without turning a disposable checkout into a service
+deployment. This comparison does not authorise installation or migration.

@@ -11,6 +11,7 @@ Reference materials and review records for the Imperial Dragon Harness.
 | `VISION-original.md` | Original harness vision document |
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
+| `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; v5 review amendments |
 | `2026-09-10-dragon-memory-design.md` | Design for the harness memory system — always the current version, v5 today |
 | `2026-09-10-dragon-memory-design-v0.md` | Frozen v0 — the text the first two reviews read |
 | `2026-09-10-dragon-memory-design-v1.md` | Frozen v1 — the text the Fable review read |
