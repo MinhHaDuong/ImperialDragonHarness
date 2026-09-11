@@ -1,58 +1,50 @@
 %erg 0.1
-Title: Promotion marks the project copy dead in the form the walker reads
+Title: Import legacy inactive markers without retiring particulars
 Created: 2026-09-10
 Author: claude
+Blocked-by: 0911
 
 --- log ---
 2026-09-10T15:50Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
 ## Context
 
-Promotion is meant to leave a dead marker behind in the project directory. The
-skill writes a stub headed `# PROMOTED`; the walker that decides what is live
-recognises only `# DELETED`. Five stubs are therefore still counted as live
-bodies, and they inflate the per-slug frequency count that decides the next
-promotion — so the defect feeds itself.
+The existing #PROMOTED/#DELETED mismatch is a compatibility defect, not a justification to tombstone every generalised source. Narrow this ticket to the legacy reader/import mapping required by the portable migration.
 
-Design reference: defect 1 in `docs/2026-09-10-dragon-memory-design.md`.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/provenance.py` — the `live_bodies` walker; the head check is at
-  the `startswith("# DELETED")` line
-- `skills/dream/SKILL.md` — the promotion step that writes the `# PROMOTED` stub
+`skills/dream/provenance.py` live-body walker; existing marker stubs; schema/import API selected in 0911.
 
 ## Actions
 
-1. Choose one marker vocabulary. Two spellings for one state is the defect;
-   picking either and applying it everywhere is the fix.
-2. Make writer and reader agree, in the same commit.
-3. Migrate the five existing `# PROMOTED` stubs to the surviving form.
+1. Enumerate legacy markers and distinguish actual inactive stubs from substantive local observations.
+2. Map verified inactive records to explicit v7 lifecycle and replacement references where known; report ambiguous promotion semantics for review.
+3. Provide an import result used by 0920. Do not run the old promotion algorithm or rewrite the entire corpus.
 
 ## Test
 
-Red first: assert that a body whose head carries the promotion marker is not
-counted live. It fails today for all five.
+Fixtures cover both legacy markers, an active particular with a generalises relationship, and an ambiguous stub. Both known inactive markers are excluded; the particular stays active; ambiguity is reported.
 
 ## Verification
 
-- [ ] `grep -rl '^# PROMOTED' projects/*/memory/*.md` returns nothing, or the
-      walker counts what it returns as dead
-- [ ] The live-body count drops by exactly five
-- [ ] A promotion run leaves no body counted live for the promoted slug
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
-- No body is deleted. A stub is a marker, not a removal.
-- The provenance coverage gate stays shut.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] One marker value, not two, across writer and reader
-- [ ] The five named slugs are counted dead — assert on the slugs, not on
-      "the count drops by five", which races with any session writing memory
-      before this merges
-- [ ] The new marker is added to the coverage test's positive control
-- [ ] A test asserts a promoted entry has no body counted live
+- [ ] Legacy mapping and ambiguity report are available to the migration.
+- [ ] Reader/writer status contract agrees; generalisation does not imply inactivity.
+- [ ] No count-based assertion or automatic project-copy retirement remains.

@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Load orientation and recent changes with optimistic revision checks
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0910
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: inherits the loader half of 0920's withdrawal test, which 0920 cannot exercise at its position.
+
+--- body ---
+
+## Context
+
+Bridge dream lag without a memory bus. Pin publication G and current accepted branch corpus C; use unchanged ranked bodies from G, current withdrawals from C, and changed/unprocessed revisions as the recent supplement.
+
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Library/CLI publication from 0910; branch corpus and snapshot from 0920; budget profile and manifest contract.
+
+## Actions
+
+1. Implement lightweight static-order filtering and refill only within the published available set. Evaluate basic scope in the consuming checkout; preserve unknown labels.
+2. Derive provisional status from processed UUID/revisions, not another stored lifecycle flag. Use deterministic freshness/relevance ordering and a stable tie-break within a fixed recent allowance. A configurable freshness interval ends preferential exposure, never provisional status or searchability; report the ageing backlog. Overflow remains searchable.
+3. Apply withdrawal before budget selection; exclude stale orientation revisions even if their replacement is unavailable or does not fit.
+4. When a publication/manifest is missing or damaged, validate current local bodies and expose deterministic catalogue browsing to recall; report lost ranking and shared coverage. Malformed bodies and UUID conflicts are reported, never silently certified active. Distinguish an empty store from failed enumeration.
+5. Use ordinary Git integration and optimistic expected revisions. No global/distributed lock, cross-branch exchange or uncommitted global overlay.
+
+## Test
+
+Write during compilation, then load: the new committed revision remains recent. Retract an orientation entry with unavailable replacement: old advice is absent. Two branches add independent bodies then integrate: both survive. Conflicting same-UUID edits are reported, never latest-timestamp-wins. Missing/corrupt manifests still permit validated local browsing; a broken walker cannot report an empty successful generation. A revision ageing out of the supplement stays provisional and available to recall.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] Own-branch committed memories are eligible before PR merge and dreaming.
+- [ ] Loader respects orientation/recent caps and avoids duplicate UUID exposure.
+- [ ] The withdrawal 0920 exports and proves present in its snapshot is *effective* here, at the next supported load without dreaming. 0920 stops at export because it has no loader.
+- [ ] v7 §12.1 revision-overlay row: for one UUID whose accepted revision in C differs from the revision ranked in G, G's text is never rendered; the C revision appears in the supplement if it fits, otherwise the UUID appears nowhere and the backlog report names it. Removing the revision comparison at load must fail this.
+- [ ] Relocation/unknown context works without model or network.

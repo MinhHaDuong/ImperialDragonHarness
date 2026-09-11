@@ -1,61 +1,56 @@
 %erg 0.1
-Title: Enforce the validity predicate on the write path
+Title: Add canonical-owner routing and validated memory admission
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0914
+Blocked-by: 0911
 
 --- log ---
 2026-09-10T16:24Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+
+2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
+
 ## Context
 
-The design says the validity predicate is checked twice, failing closed at
-write time and open at scoring. `0914` builds the scoring half. This ticket is
-the write half — **and it starts by establishing whether there is a write path
-to hook into**, because the fourth review found there may not be: `memory/SKILL.md`
-is prose, and the runtime's own auto-memory writes bypass it entirely.
+The base library must enforce recorded admission outcomes while leaving semantic classification to agent judgment. This replaces the conditional survey that could close with scoring-only enforcement; native memory must not be an unrestricted canonical writer.
 
-So this ticket is conditional by design. If no write path exists as code, the
-correct outcome is to say so in the skill and enforce at scoring alone, not to
-build a write path in order to have somewhere to put a check.
-
-Design reference: P3's two failure modes in `docs/2026-09-10-dragon-memory-design.md`. Review: F5 in `docs/2026-09-10-dragon-memory-design-review-fable-design.md`.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/memory/SKILL.md` — prose, today
-- whatever the survey in step 1 turns up
+`skills/memory/SKILL.md`; `rules/knowledge-hints.md`; `tickets/AGENTS.md`; package/CLI from 0911.
 
 ## Actions
 
-1. Survey: is there a code path that every memory write passes through? Include
-   the runtime's auto-memory writes, which are the ones most likely to bypass a
-   skill.
-2. If yes: reject at write a predicate that does not parse, does not evaluate,
-   or evaluates false. A memory born expired can never rank, so writing one is
-   an error rather than a record.
-3. If no: record the finding in the ticket log, state in the skill that
-   enforcement is at scoring only, and close. That is a result, not a failure.
+1. Require a recorded canonical-owner routing outcome: existing decision records, STATE/ticket, reusable artefact, knowledge hint, experiential memory, or unresolved.
+2. Validate admitted bodies through the common library. Reject malformed predicates; preserve explicitly unverified applicability where the consuming environment cannot evaluate it.
+3. Document branch-local acceptance: author's working context may be uncommitted; other readers use committed branch state through normal Git integration.
+4. Require a recorded audience/scope suitability judgment before canonical admission; unresolved audience or scope prevents publication into that destination without forcing an automatic confirmation loop. Keep this judgment distinct from structural validation and truth. Do not build native-note import or bidirectional synchronisation.
+5. Provide the common lifecycle mutation path: explicit retraction/supersession updates status, moves the local body into inactive/, adds a readable notice and repairs relative links in one committed change. UUID references remain stable; redirects cannot become active memories. Use expected revisions and refuse to overwrite uncommitted changes.
 
 ## Test
 
-Conditional on step 1. If a write path exists: a malformed predicate is
-rejected; a false-at-write predicate is rejected; a valid one passes.
+Mechanical fixtures reject missing routing outcome and malformed schema, accept a qualified unknown, and avoid an automatic user-confirmation loop. Missing or unresolved audience/scope cannot publish into the destination. Exercise post-migration retraction/supersession, stale expected revisions, uncommitted edits, historical links and redirect exclusion. Behavioural routing examples are labelled evaluation cases, not deterministic semantic guarantees.
 
 ## Verification
 
-- [ ] Step 1's answer is recorded in the ticket log either way
-- [ ] The skill states where enforcement actually happens
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
-- Do not build a write path solely to host this check.
-- Do not harmonise the two failure modes: fail closed where a human can fix it,
-  fail open where none can.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] The survey is recorded
-- [ ] Either write-time rejection ships with fixtures, or the skill states
-      scoring-only enforcement and says why
+- [ ] CLI/library admission emits structured outcomes and provenance.
+- [ ] Decision-shaped input is not silently made authoritative by a score.
+- [ ] False/unknown applicability policy matches v7; no universal true-at-write requirement.
+- [ ] v7 §12.1 predicate-safety row: an operator outside 0911's closed subset, a path outside its declared root, or a payload that would have a side effect if interpreted is rejected at entry and evaluates *unknown*, with a sentinel the payload would create verifiably absent afterwards. The sentinel is the positive control; without it the row cannot distinguish a predicate that did not execute from one that was never looked at.
+- [ ] That fixture exists before 0920 commits any `shared-snapshot/`, since a replica carries predicates authored in another project.

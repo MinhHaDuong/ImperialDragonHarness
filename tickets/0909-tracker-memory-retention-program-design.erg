@@ -1,104 +1,83 @@
 %erg 0.1
-Title: Tracker: memory retention program (design v4)
+Title: Tracker: implement the adopted memory design v7
 Created: 2026-09-10
 Author: claude
+Blocked-by: 0913
+Blocked-by: 0918
+Blocked-by: 0925
+Blocked-by: 0916
 
 --- log ---
 2026-09-10T15:50Z claude created
+2026-09-11T07:04Z codex note Realigned to v6 after design-review merge #903; retain IDs, add delivery workpackages 0920–0925, defer optional experiments.
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
 
 ## Context
 
-The memory design reached v4 after four external reviews and a working session
-with the author. `docs/2026-09-10-dragon-memory-design.md` is the settled architecture; this ticket tracks
-turning it into code. It stays open until every child is merged and the
-integration review in `/roar` step 8 has run.
+Design v6 was adopted by PR #903. The former v4 train is superseded by the
+[implementation plan](../docs/2026-09-11-memory-implementation-plan.md).
+This tracker closes only after the core implementation union is reviewed.
+Its dependencies deliberately keep it out of the ready queue until then.
 
-The architecture in one paragraph: the store is the bodies, one file per memory
-under git; `MEMORY.md` is generated as the top N by score and written only by
-the consolidation pass, so a session's writes and the index's writes are
-disjoint sets; nothing is ever deleted, and the only removal from a project
-directory is promotion into the harness tier; a memory declares what it is true
-*while*, and expiry only unranks, so it is reversible; and a declared class
-stays resident regardless of score, because falling below the cut removes
-awareness, not merely reachability.
+The architecture is one internal Python library with thin CLI/adapters,
+project-owned bodies plus a bounded shared snapshot, UUID lifecycle and
+orientation/recent/task delivery. Rediscovery is only an opportunity for
+generalisation; keep particulars unless explicitly withdrawn. Canonical
+decisions stay in existing records. One ownership contract and optimistic Git
+concurrency replace runtime modes and global locks.
 
-## Children, in wave order
+## Relevant files
 
-**Wave 0 — expires. Do this first or it becomes impossible.**
+- `docs/2026-09-10-dragon-memory-design.md` — adopted v7, not edited by this plan
+- `docs/2026-09-11-memory-implementation-plan.md` — exact ticket/dependency map
+- Tickets 0908, 0910–0919 and 0920–0925 — implementation and optional experiments
 
-- `0917` — rescue the history dates before the frontmatter sweep destroys them.
-  `0911` rewrites 954 files, and the moment it merges the last-commit dates are
-  reset corpus-wide. No body carries a date in frontmatter and the provenance
-  stamps are batched, so version history is the only stable recency the corpus
-  has.
+## Actions
 
-**Wave 1 — independent of everything.**
+1. Foundation: 0911 and 0917; then legacy compatibility 0908 and admission 0915.
+2. Pilot: 0920 → 0910 → 0921 → 0922 → 0923. First acceptance is one project,
+   a small shared snapshot and one runtime in a disposable offline clone.
+3. Expand through 0924 and 0918 → 0913, with measured readiness before broad activation/retirement. In parallel, develop
+   manual editorial review through 0923 → 0916 and independent harvesting through 0923 → 0925. Base editorial workflows can use manual judgments; model-assisted automation is optional.
+4. Keep 0912 (automated candidate discovery), 0914 (predicate extensions) and 0919 (quality annotation experiment)
+   deferred and outside the core closure gate. Reactivate only on evidence.
+5. Rerun the relevant 0918 behavioural scenarios on the completed union, adding accepted generalisation/local-exception and harvested-then-amended-procedure cases once 0916/0925 exist. Check their predeclared margins; early pilot results alone cannot certify these later features.
+6. Review the merged union, actual adapter capabilities, migration coverage and
+   evaluation results. Record any authorised scope changes; do not quietly omit
+   a core child or pretend optional work was implemented.
 
-- `0908` — promotion marks the project copy dead in the form the walker reads
-- `0911` — frontmatter migration: one type field, one shape, across the corpus
-  *(needs 0917 first, for the reason above)*
-- `0913` — retire the dead retention machinery and ship the resident search line
+## Test
 
-**Wave 2.**
+The integration assessment must exercise active/inactive identity, generalisation
+without source retirement, fixed available snapshots, G/C loading, recent writes,
+lexical recall, canonical-owner routing, native-writer isolation and optimistic
+conflicts. Behavioural judgments use repeated scenarios, not deterministic
+semantic assertions. All substantive fixtures need a known failing control.
 
-- `0910` — generate the memory index as the top N of its directory *(needs 0913:
-  until the resident search line exists, a body below the cut has no documented
-  way back)*
+## Verification
 
-**Wave 3.**
+- [ ] Every core child has a merged completion or an explicitly recorded scope decision.
+- [ ] Applicable checks pass on the union; actual runtime smoke evidence is read.
+- [ ] First-runtime evaluation and remaining-runtime capability declarations agree.
+- [ ] No stale ticket demands mandatory residency, automatic promotion or a new ledger.
 
-- `0914` — `valid_while` grammar, resolver, scorer integration and `supersedes`
-  *(needs 0910's generator and 0911's uniform frontmatter)*
-- `0915` — enforce the validity predicate on the write path *(needs 0914; and it
-  begins by establishing whether a write path exists as code at all)*
+## Invariants
 
-**Wave 4.**
-
-- `0912` — consolidation pass: deterministic pooling, grouping and reports
-  *(needs 0908, 0910 and 0914)*
-
-**Wave 5.**
-
-- `0916` — model-judged merge, reviewed promotion, tombstoning *(needs 0912)*
-
-**Alongside, once the index exists.**
-
-- `0918` — ranking miss-rate instrument *(needs 0910)*. `0910` proves the index
-  reproducible; nothing proves it good. A read of a body absent from that day's
-  index is a ranking miss, and that is measurable without an A/B.
-- `0919` — backfill the quality dimensions across the corpus with a model pass
-  *(needs 0911's uniform frontmatter and 0917's dates)*. New memories declare
-  their dimensions at writing; the 950 that already exist declare nothing, so
-  without this the scorer ranks a corpus of blanks.
-
-An earlier version of this tracker said only `0912` had a real prerequisite and
-named `0908`. That was wrong in both directions: `0912` depends on three
-siblings, and `0910` depends on `0913`.
-
-## Deliberately not children
-
-A decay pass, a corpus cap, an orphan collector, and a full-catalogue file. §5
-of the design removes the need for all four; `0913` deletes the machinery that
-survives from them. They are listed here so a later reader does not re-derive
-them as gaps.
-
-Parked rather than planned: the embedding database and its content-hash cache.
-The design describes them; nothing depends on them, and `0912` ships without
-them.
-
-## Open decision carried by a child
-
-`0910` records it: **what "recency" means as a score input.** Provenance dates
-are batch-stamped and filesystem mtimes reset on clone, so neither is usable.
-`0917` preserves the only stable source before it is destroyed; choosing
-between creation and last-touch, or scoring without recency at all, stays open
-and is `0910`'s to settle.
+- This planning amendment closes no implementation work and writes no runtime code.
+- Existing IDs and log entries remain; historical scope is available in Git.
+- Decisions are not made by memory scores; shared semantic changes are reviewed.
+- Optional experiments do not block a useful or complete baseline.
 
 ## Exit criteria
 
-- [ ] All eleven children merged
-- [ ] Child diffs re-read together, not only individually
-- [ ] `make check` passes on the union
-- [ ] The design's §6 and Annex A match what shipped, or the design is amended
+- [ ] Foundation, portable pilot, all target adapters, rollout and editorial/harvesting
+      work are integrated and reviewed together.
+- [ ] Evaluation records behaviour and cost, including limitations; budget proposals
+      are not silently promoted to policy.
+- [ ] The implementation plan and v7 accurately describe the delivered contract, or
+      any deviation is explicitly adopted through the normal decision process.
+- [ ] Final integration review is recorded and only then this tracker is closed.

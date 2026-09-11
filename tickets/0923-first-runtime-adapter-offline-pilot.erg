@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Pilot one runtime adapter and offline container delivery
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0922
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-09-11T08:45Z claude note After the Fable plan review: the live smoke gains a miswired-delivery negative control and a runtime-side observation surface the adapter does not author. Disjoint-roots clearance reattributed to 0920.
+
+--- body ---
+
+## Context
+
+The first acceptance milestone is one project, one small shared snapshot and one adapter. Select the first runtime based on accessible representative execution evidence; record the choice rather than promising all runtimes at once.
+
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Library/CLI from 0911–0922; selected runtime integration points; existing startup/prompt hooks; `rules/knowledge-hints.md`.
+
+## Actions
+
+1. Implement a thin event/delivery adapter with one owner per component and no duplicated memory policy.
+2. Protect canonical bodies from native writers. Disclose uncontrollable native-memory interference; no three-mode configuration or importer.
+3. Trigger task recall once the task is sufficiently clear and before its first relevant consequential action; refresh on material task or constraint changes without requiring a user recall request. Record supported start/task/pre-action/resume/child/compaction boundaries and a small delivery record outside model summaries. Rebuild bundles and reset duplicate suppression according to context retained after compaction, not everything ever sent.
+4. Run in a disposable offline clone. Test logical bundle replacement and cumulative cost where old injected text cannot be removed.
+
+## Test
+
+Live smoke verifies actual delivered context, not just a required sentence in a skill, and is read from a runtime-side surface the adapter does not write. Include the miswired-delivery control — disconnect the delivery path, or point it at an empty view — and require the smoke to go red; an adapter that records "delivered" while injecting nothing must not pass. Inject, compact where supported, retract and resume: verify correction delivery and no stale re-injection. Show explicit reduced guarantees for unavailable hooks. Verify pre-action recall and material-task-change refresh, including repeated changes within bounded active allocation and measured cumulative transcript cost.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] One runtime demonstrates orientation, recent supplement and task recall end to end.
+- [ ] Fresh clone needs no original home directory or shared service.
+- [ ] Ownership, boundaries, budget accounting and limitations documented from evidence.
+- [ ] v7 §12.1 disjoint-roots row: the adapter declares its runtime's native memory root, a test asserts it disjoint from the canonical root against that declared value rather than a hardcoded one, and a fixture writes a foreign line into the generated view, runs a load, and asserts the canonical store byte-identical with the foreign line discarded and reported — no model in the loop.
+- [ ] While IDH's own store remains inside the runtime's declared native memory root, that row is recorded known red with its reason rather than skipped or softened. **0920 clears it**, by the two moves named in its action 1.
+- [ ] The live smoke carries a negative control: delivery disconnected, or pointed at an empty view, turns it red. Without it the smoke cannot fail, and 0924's parity check would inherit that.
+- [ ] The smoke asserts delivery against a named runtime-side surface the adapter does not author — the transcript, or hook output captured by the runtime — per component and with its token count. The adapter's own delivery record is evidence, not the observation surface.

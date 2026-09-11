@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Add lexical task recall and reuse knowledge-hint discovery
+Created: 2026-09-11
+Author: codex
+Blocked-by: 0921
+
+--- log ---
+2026-09-11T07:04Z codex created
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+
+--- body ---
+
+## Context
+
+Task recall searches beyond the resident cut. Integrate existing .knowledge.toml pointers/caveats without turning domain assets, reusable code or decision registers into memory bodies.
+
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Relevant files
+
+Library/CLI; `rules/knowledge-hints.md`; `scripts/knowledge_hints.py`; pilot corpus and available shared snapshot.
+
+## Actions
+
+1. Search title, description, tags and body with a simple lexical baseline; use explicit applicability for exclusion, not missing keywords.
+2. Select a bounded task bundle with provenance, status and caveats; adjust redundancy here without permanently penalising particulars in static orientation.
+3. Reuse pointer/caveat discovery and deduplicate canonical artefacts; account knowledge-hint exposure separately from controlled memory.
+4. Expose explicit historical retrieval with inactive status and replacement links; ordinary recall always excludes those records and redirects.
+5. Use the validated current-corpus fallback from 0921 when ranking/publication is absent or corrupt; lexical recall must not depend on a healthy dream snapshot. Return empty or incomplete results honestly; expose uncached shared coverage. No embeddings or hosted backend required.
+
+## Test
+
+Fixtures retrieve a below-cut lesson, preserve a local exception beside a generalisation, exclude inactive advice, return no advice for irrelevant input, and exercise simultaneous hint/memory references with no duplicate pointer or lost caveat.
+
+## Verification
+
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
+
+## Invariants
+
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+
+## Exit criteria
+
+- [ ] Task bundle bounded and provenance-preserving; all available eligible sources searched.
+- [ ] Existing knowledge assets keep their canonical ownership.
+- [ ] Offline lexical path is sufficient for the first adapter.

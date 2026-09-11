@@ -1,71 +1,52 @@
 %erg 0.1
-Title: Backfill quality dimensions across the corpus with a model pass
+Title: Calibrate optional quality annotations on a small sample
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0911
-Blocked-by: 0917
+Blocked-by: 0918
+Label: deferred
 
 --- log ---
 2026-09-10T16:34Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
+
 ## Context
 
-The score reads declared dimensions — importance, durability, whether a memory
-prevents an action or answers a question, the cost of rediscovering it, its
-scope. New memories will declare them at writing. **The roughly 950 that already
-exist declare nothing**, so on the day the scorer ships it would rank a corpus
-of blanks, and every ticket downstream would be exercised against a degenerate
-input.
+Optional follow-up to measured ranking failures, not a mandatory corpus-wide backfill. Missing subjective dimensions must not prevent baseline ranking.
 
-So the existing corpus needs a one-off seeding pass, and judging what a memory
-is worth is not something a predicate does. A model reads each body and
-proposes its dimensions.
-
-Design reference: P4's importance axis and P5 in `docs/2026-09-10-dragon-memory-design.md`.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `projects/*/memory/*.md` and `memory/*.md` — the corpus to annotate
-- `skills/memory/SKILL.md` — where the same dimensions are declared going forward
+Library ranking inputs; evaluation findings from 0918; representative existing bodies; model/provenance conventions.
 
 ## Actions
 
-1. Fix the dimension vocabulary first, in the skill, so the pass annotates
-   against a written definition rather than inventing one per body.
-2. Run the model over every live body. It reads the body and proposes values.
-3. Land the annotations as a data change, reviewable by count and spot-check
-   like `0911` — not by reading 950 diffs. State the distribution: how many
-   guards, how many references, the spread of importance.
-4. Record the model's identity and the prompt, so a later reader knows what
-   produced the numbers and can re-run with a better prompt.
+1. Only proceed if evaluation identifies a failure plausibly improved by a declared annotation.
+2. Define a small vocabulary and annotated comparison sample; record disagreements as evidence, not proof the vocabulary alone is wrong.
+3. Compare gains before proposing corpus-wide annotation. Preserve explicit defaults for unannotated bodies and record model/source provenance.
+4. No mandatory guard category, occurrence-based authority or silent budget increase.
 
 ## Test
 
-Red first: a body with no dimensions is rejected by the scorer's input check,
-so the gap is visible before the pass rather than after. Then a hand-scored
-sample of a dozen bodies as a calibration set — if the pass disagrees with the
-sample on the guard/reference distinction, the vocabulary is wrong, not the
-bodies.
+Unannotated body remains rankable under baseline defaults. Compare fixed-policy selections and task outcomes with/without sample annotations, preserving evidence and scope.
 
 ## Verification
 
-- [ ] Every live body carries every dimension, or is listed as skipped with a reason
-- [ ] The calibration sample agrees on the guard/reference split
-- [ ] Distribution reported in the pull request
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
-- **The model proposes dimensions; it does not rank.** Writing a field is
-  authorship, which is the model's side of the line; combining fields into an
-  order is the scorer's, and stays deterministic. The boundary in §5 is not
-  crossed by this ticket and must not be.
-- Nothing is deleted, and the pass is re-runnable: a better prompt can replace
-  the annotations, which is why getting it imperfect is survivable.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] The dimension vocabulary is written down before the pass runs
-- [ ] Every live body annotated, coverage stated as a count
-- [ ] Calibration sample passes
-- [ ] Model identity and prompt recorded
+- [ ] Sample result and cost justify any expansion, or the proposal remains deferred.
+- [ ] No reject-all-unannotated test or automatic full-corpus model pass.
+- [ ] Not a prerequisite for core completion.

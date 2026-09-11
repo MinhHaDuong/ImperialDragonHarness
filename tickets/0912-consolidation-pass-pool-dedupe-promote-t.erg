@@ -1,74 +1,54 @@
 %erg 0.1
-Title: Consolidation pass: deterministic pooling, grouping and reports
+Title: Propose consolidation candidates without prescribing outcomes
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0908
-Blocked-by: 0910
-Blocked-by: 0914
+Label: deferred
+Blocked-by: 0923
 
 --- log ---
 2026-09-10T15:50Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 --- body ---
+
 ## Context
 
-The deterministic half of consolidation: pool the tiers, group candidates,
-report, and instrument. The judged half — deciding whether a group is one
-lesson and writing the merged text — is `0916`, and keeping the two apart is
-what lets this half be tested.
+After useful delivery exists, optionally automate candidate discovery on the strong host. This deferred extension is not required for the manual editorial workflow or programme closure. Candidate grouping is not generalisation, and rediscovery creates only an opportunity.
 
-Promotion currently identifies entries by filename equality, which yields one
-candidate. A lexical pass finds roughly 43 candidate pairs of which 17–21 are
-genuine, so the mechanism is not short of material; it is short of a way to
-recognise it.
-
-Design reference: defect 2 and "What the consolidation pass does" in `docs/2026-09-10-dragon-memory-design.md`.
+Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
 
 ## Relevant files
 
-- `skills/dream/SKILL.md` — the pass
-- `skills/dream/provenance.py` — candidacy and the walker
+Dreaming skill; library corpus reader; pilot/available shared inputs; review/provenance conventions.
 
 ## Actions
 
-1. Pool the project directories **and the harness tier**, which participates on
-   the same footing. The one asymmetry is a direction: promotion moves up into
-   the harness tier and never back out, so a pair straddling the two resolves in
-   advance — harness copy survives, project copy is tombstoned.
-2. Group candidates mechanically and hand the groups to `0916`.
-3. Report near-miss pairs — similar enough to suspect, different enough not to
-   merge — as contradiction candidates.
-4. Keep a **rejection ledger**: a pair a human rejected once must not be
-   re-proposed every run.
-5. Record body count and the pass's wall-clock duration, **with a threshold
-   that fails a test**. A duration written to a log is not an alarm; an alarm
-   has a threshold and a reader.
-6. Refuse to run against a checkout with uncommitted bodies, and hold a run
-   lock so two passes cannot interleave. An overwritten uncommitted body has no
-   ancestor to recover from.
+1. Propose lexical candidate groups and possible contradictions with source UUID/revisions. Do not prescribe harness-copy survival or project-copy retirement.
+2. Hand candidates to the same review/apply contract used by manual proposals in 0916; empty output or no change is valid. A false-positive fixture may be proposed but must never be represented as already judged equivalent.
+3. Record useful operational diagnostics without a new mandatory rejection database. If dismissed candidates need suppression, use existing review provenance keyed by source revisions, not an eternal pair ban.
+4. Keep editorial analysis separate from publication; perform no canonical writes in this ticket.
 
 ## Test
 
-Red first, and these fixtures are reused by `0916`: a known-genuine pair is
-surfaced; the named lexical false positive (`dropna_before_merge` /
-`rebase_before_merge`) is not; a pair straddling project and harness tiers is
-grouped with the resolution direction recorded. Plus: a dirty checkout is
-refused; a second pass blocks on the lock; a duration over threshold fails.
+Known related observations are surfaced; differently scoped near-matches retain their distinct evidence. Repeating a discovery changes no lifecycle or scope. Pending/rejected proposals cannot block compiler output.
 
 ## Verification
 
-- [ ] Candidates rise from 1 to the genuine pairs, false positives excluded
-- [ ] A rejected pair is not re-proposed on the next run
-- [ ] The lock and the dirty-tree refusal both fire in tests
+- [ ] Run the focused fixtures and show they detect the relevant failure.
+- [ ] Run applicable repository checks; record commands, results and limitations.
+- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
 
 ## Invariants
 
-- This ticket merges nothing. It proposes.
-- Nothing is deleted.
+- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
+- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
+- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
 
 ## Exit criteria
 
-- [ ] The three grouping fixtures pass
-- [ ] Rejection ledger persists across runs, proven by a fixture
-- [ ] Duration threshold fails a test when exceeded
-- [ ] Dirty-tree refusal and run lock each proven by a fixture
+- [ ] Candidate interface is reviewable and UUID/revision-addressed.
+- [ ] No synthesis, automatic scope expansion, tombstoning or lock-based global coordination.
+- [ ] No embedding or quality-backfill prerequisite.
