@@ -94,11 +94,19 @@ the committed snapshot to be readable. It is rejected for polysemy: `hoard`
 already names the library and its verbs, which serve *both* scopes, so a
 `hoard/` directory holding only one of them would suggest the tool belongs to
 that scope. The `git` / `.git/` precedent argues the other way, but there `.git/`
-is the single store; here there are two and the word would cover one.
-`memory-shared/` inverts the order of `shared-snapshot/`; adjacency with
-`memory/` in a directory listing is worth more than symmetry with a replica
-name. Should the theme need to reach the filesystem, the clean move is to rename
-the library, not to make one word do two jobs.
+is the single store; here there are two and the word would cover one. Should the
+theme need to reach the filesystem, the clean move is to rename the library, not
+to make one word do two jobs.
+
+`memory-shared/` does not clash with `shared-snapshot/`, and no third name is
+needed for the replica. §3.2's table lists paths *under the project memory
+root*, so the replica is `memory/shared-snapshot/` — nested, never a sibling of
+the harness-level `memory-shared/`, and already carrying the prefix by position.
+`memory/memory-shared-snapshot/` would only stutter. The adjacency `memory-shared/`
+buys is at the IDH root, where §3.1 requires the harness to hold ordinary project
+memory of its own — "maintaining the harness does not confer global scope" — so
+`memory/` and `memory-shared/` sit side by side there. That is the one pair a
+reader must not conflate, and the one place the shared noun earns its keep.
 
 A single-vessel image — basin or pile — implies one pool and one access mode, and
 v6 refuses that: §1 gives "three delivery components [that] handle different
