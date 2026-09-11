@@ -75,8 +75,19 @@ live in their own project repositories — except for IDH itself, whose reposito
 is `~/.claude`. That collision is positional, not lexical, and is not resolved
 by renaming the directory.
 
-A
-single-vessel image — basin or pile — implies one pool and one access mode, and
+The two scopes take two names, not one. §3.1 calls them two knowledge scopes of
+one kind, which argues for a single word, but the design separates them in ways
+that land at the path level: a shared body carries explicit applicability, and
+under §3.3 its replica in a project "is not a new memory and is not
+independently editable". One word would invite exactly the confusion the
+distinction exists to prevent. The shared root is therefore `shared/`, and the
+design has already fixed the name of its committed replica inside a project,
+`shared-snapshot/` (§3.2), so the relation reads without new vocabulary. Three
+plain paths: `memory/` in the project repository, `shared/` at harness level,
+`shared-snapshot/` for the replica. The verbs do not split — one library serves
+both scopes, and scope is an argument, not a second command set.
+
+A single-vessel image — basin or pile — implies one pool and one access mode, and
 v6 refuses that: §1 gives "three delivery components [that] handle different
 timescales" and §6 gives each its own allowance. The architecture is a room
 holding several instruments with different access disciplines, and the harness
@@ -143,8 +154,6 @@ the body is ours, retraction withdraws that claim without asserting a successor.
 
 ## 6. Open
 
-The `hoard` package layout; whether the shared store carries the same root name
-as the project store (§3.1 treats them as two scopes of one kind, which argues
-for one word); and whether a restoration verb is needed at all — §4.3 makes
-restoration "an explicit editorial act", so it cannot be a flag, but nothing yet
-says it must exist.
+The `hoard` package layout; and whether a restoration verb is needed at all —
+§4.3 makes restoration "an explicit editorial act", so it cannot be a flag, but
+nothing yet says it must exist.
