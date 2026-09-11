@@ -1,16 +1,12 @@
-# The Dragon's memory — design v7
+# The Dragon's memory — design v6
 
 **Publication date:** 11 September 2026  
-**Status:** design v7; closes the acceptance review's four conditions and adopts
-the settled nomenclature  
-**Préparé par Claude prompté par Ha-Duong Minh**; v6 and earlier prepared by
-ChatGPT on the same prompting  
-**Previous design:** [v6, frozen](./2026-09-10-dragon-memory-design-v6.md)
-**Review:** three architectural reviews, then the owner's KISS, library,
-licensing, ownership and optimistic-concurrency decisions, then an
-[acceptance review](./2026-09-10-dragon-memory-design-review-fable-acceptance.md)
-whose verdict was accept with four named conditions — all four are §12.1
-gate-definition gaps, and this version closes them.
+**Status:** design v6 for review; incorporates the owner's subsequent decisions  
+**Préparé par ChatGPT prompté par Ha-Duong Minh**  
+**Source revision:** `2e1adaa60a6fe7be56331b4ba071a2db76020d88`  
+**Previous design:** [v5, frozen](./2026-09-10-dragon-memory-design-v5.md)
+**Review:** three architectural reviews followed by the owner's KISS, library,
+licensing, ownership and optimistic-concurrency decisions.
 
 This is an architectural specification, not a report on implementation progress.
 It replaces v5's architectural proposal. Historical measurements, runtime probes
@@ -18,12 +14,6 @@ and earlier reviews remain in the frozen versions; they are not revalidated here
 The established current-design filename is retained so existing references still
 lead to the latest design. Document versions are whole numbers only; Git records
 edits within a version. There are no minor document versions.
-
-**What v7 changes.** §12.1 gains three rows and rewrites four, so that every row
-names a mechanism whose removal makes it fail; §3.2 and the new §17 replace the
-illustrative names with the settled ones. The architecture is unchanged: the
-acceptance review found no contradiction requiring a new decision and no first
-increment blocked by a deferral.
 
 ## Contents
 
@@ -43,7 +33,6 @@ increment blocked by a deferral.
 14. [Decision trace and references](#14-decision-trace-and-references)
 15. [Comparison with other memory systems](#15-comparison-with-other-memory-systems)
 16. [Implementation direction](#16-implementation-direction)
-17. [Nomenclature](#17-nomenclature)
 
 ## 1. Executive summary
 
@@ -147,11 +136,9 @@ fork policy remain schema decisions, not inferred from directory names.
 
 ### 3.2 Portable project layout
 
-The roots are settled (§17); the names *under* them remain an illustrative
-layout, not a mandated migration path. A project's memory root is `memory/`
-inside its own repository; the shared store is `memory-shared/` at harness level.
+The following names are an illustrative layout, not a mandated migration path:
 
-| Path under the project memory root `memory/` | Role |
+| Path under the project memory root | Role |
 |---|---|
 | `README.md` | Plain-language discovery and usage instructions |
 | `*.md` | Active locally owned bodies, with reserved filenames for views |
@@ -778,20 +765,6 @@ to embeddings, an external database, private session traces or the original host
 ### 12.1 Deterministic contracts
 
 Each gate includes a fixture that fails when the relevant mechanism is removed.
-This is the table's own acceptance condition, not a description of it: a row
-whose pass is indistinguishable from the mechanism never having been exercised
-is not a gate, and §12.2 makes these hard gates, so such a row is a coverage
-claim that will be believed. Where a row requires something to be reported or
-disclosed, it names the structured field carrying it and pairs the row with a
-positive control — a fixture in which the condition holds and the field must be
-non-empty. §10.3 already states this discipline for the store: "Positive controls
-must distinguish an empty store from a broken walker." It applies here too.
-
-A row that cannot yet be met is recorded as **known red** with its reason, never
-omitted and never softened into a claim. One is red today: the disjoint-roots
-row below cannot pass while IDH's own canonical store sits inside `~/.claude`,
-which is a runtime's native memory root. §13.1 step 3 moves it; until then the
-row is red and the protection is documented, not enforced.
 
 | Fixture | Required result |
 |---|---|
@@ -805,22 +778,19 @@ row is red and the protection is documented, not enforced.
 | Committed memory before PR merge or dreaming | Eligible on its own branch; not presumed visible on unrelated branches |
 | Interrupted publication | Reader sees a complete old or new generation |
 | False and unknown applicability | False excluded; unknown retains its label |
-| Predicate with an operator outside the closed subset, a path outside its declared root, or a payload that would have a side effect if interpreted | Rejected at entry; *unknown* at evaluation; a sentinel the payload would create is verifiably absent afterwards |
-| Same UUID, accepted revision in C differs from the revision ranked in G | G's text is never rendered; the C revision appears in the supplement if it fits, otherwise the UUID appears nowhere and the backlog report names it |
+| Rediscovery in several projects | Candidate consideration only; no automatic scope change or synthesis |
 | Accepted generalisation from particulars | New identity, intact sources and resolvable relations |
-| Duplicate UUID replicas, divergent revisions, and a cycle in the supersession graph | Replicas deduplicated; divergence and the cycle each named in the report's structured `conflicts` field, which a positive-control fixture requires to be non-empty |
+| Duplicate UUID replicas and divergent revisions | Replicas deduplicated; divergence reported |
 | Cold cache, missing embedding model, no network | Lexical baseline works and reduced capability is explicit |
 | Ranking manifest absent or corrupt | Local inspection remains possible; no false completeness claim |
 | Oversized pool and repeated task changes | Per-component bounds hold; retained cumulative injection is measured |
 | Entry workflow omits a routing outcome | Reject incomplete admission; semantic correctness is evaluated below |
-| Adapter declares its runtime's native memory root | That root and the canonical memory root are disjoint paths, asserted against the declared value, not against a hardcoded one |
-| Foreign line written into the generated view a runtime loads, then a load performed | Canonical store byte-identical; the foreign line discarded and named in the report. No model in the loop |
+| Native loading plus adapter enabled | Canonical store protected from native writes; one delivery owner; uncontrollable exposure disclosed |
 | Inject, compact, retract, resume/child | Current correction delivered at supported boundary; no stale re-injection |
 | Memory and knowledge hints present | Canonical pointers deduplicated; caveats preserved; costs attributed |
 | Generalisation filtered out | Particular retains its static rank; no assumed selection penalty |
 | Shared candidate absent from snapshot | Unavailable candidate cannot be used for refill |
-| Compiler run over any corpus | The body set is byte-identical before and after `reckon` and `seal`: the compiler never creates, modifies or moves a canonical body. A compiler that writes a synthesis or a scope change fails |
-| Uncommitted body and unmerged branch present, with a generalisation proposal open | The processed manifest excludes both, and compilation of accepted bodies still succeeds |
+| Pending editorial review | Compilation of accepted bodies still succeeds |
 
 Tests of publication atomicity and conflict handling concern machine behaviour.
 A test that merely checks whether a skill contains a required sentence does not
@@ -861,8 +831,8 @@ release thresholds require calibration and are not invented here.
 This is a design dependency outline, not a claim that the existing tickets
 implement v6.
 
-1. Freeze the superseded design and reconcile the architecture decisions through
-   the project's decision-ledger process. Preserve prior review citations.
+1. Freeze v4 and reconcile the architecture decisions through the project's
+   decision-ledger process. Preserve prior review citations.
 2. Specify the minimal schema, stable project identity and portable layout.
    Preserve historical dates before bulk rewriting; assign UUIDs with an
    auditable old-path-to-ID mapping and repair links.
@@ -1040,55 +1010,3 @@ importer or diagnostic.
 Verify the base with a disposable offline checkout and conflicting-commit fixtures
 before expanding optional capabilities. Do not distribute a binary or separate
 package simply to make the implementation appear complete.
-
-## 17. Nomenclature
-
-Settled 2026-09-11. The reasoning, the rejected candidates and the constraints
-that bound the choice are recorded in the
-[nomenclature note](./2026-09-10-dragon-memory-design-nomenclature.md); this
-section carries only the names.
-
-The dividing line is who reads a name. A name a stranger meets — someone who
-cloned a project repository without the harness, whom §2 and §12.1's bare-clone
-row guarantee can browse and assess the memory — is plain. A name only a
-maintainer meets may be themed. Wire keys are neither: they are frozen, as §9.1
-already states for `generalizes`.
-
-| Surface | Name | Register |
-|---|---|---|
-| Project memory root, in the project's repository | `memory/` | plain, stranger-facing |
-| Shared store, at harness level | `memory-shared/` | plain, stranger-facing |
-| Committed replica of shared bodies, under `memory/` | `shared-snapshot/` | plain; unchanged from §3.2 |
-| Internal Python library and its CLI | `hoard` | themed, maintainer-facing |
-| Editorial pass | `/dream` | exists |
-| Session wrap that invokes it | `/lair` | exists |
-
-| Operation | Verb |
-|---|---|
-| §5 Admission and routing | `hoard assay` |
-| §6.1, §7.3 Catalogue and ranked manifest | `hoard reckon` |
-| §10.1 Snapshot and atomic handover | `hoard seal` |
-| §6.3 Task recall | `hoard sift` |
-| §4.3 Supersession | `hoard shed <uuid> --by <uuid>` |
-| §4.3 Retraction | `hoard disown <uuid>` |
-| §8 Growth monitoring | `hoard weigh` |
-
-Two choices are load-bearing rather than decorative. `assay` rather than
-`admit`, because §5.1's routing table sends most candidates away from memory, so
-the operation is a judgment of ownership whose common case is refusal — `admit`
-names the outcome and hides that. And `shed` and `disown` are two verbs rather
-than one verb with a flag, because §4.3 separates supersession from retraction
-and they resolve differently against replacement links: `shed` without `--by`
-does not parse, `disown` takes no successor, so the malformed call §4.3 would
-have to reject becomes unwritable instead. Neither has an implicit inverse;
-§4.3 makes restoration an explicit editorial act, so it can never be an `--undo`.
-
-`hoard` names the library and its verbs only. It does not name a directory:
-one word covering both the tool and one of two stores would suggest the tool
-belongs to that store. The scope is an argument, not a second command set.
-
-The verbs are not user-facing — §16.1 exposes the CLI "to skills, hooks and
-shell workflows" — so they are chosen for exactness rather than discoverability.
-The `THEME_LEXICON` ratchet in `tests/test_skill_descriptions.py` reaches only
-the first sentence of a skill `description:` and does not bind here; the standing
-rule that the Imperial Dragon is not a bird does, and no name above is avian.
