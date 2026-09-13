@@ -31,9 +31,9 @@ census (H7) measured top-tier raid mains at ≈4.7× the cost curve while Sonnet
 mains sit on it, and the orchestrator only sequences waves — the coders keep
 their own pins below. Every launch below pins `model` explicitly:
 
-- **Imagine / Plan / integration-review** agents (read-only judgement — scope
-  reasoning, test design, cross-PR composition) → `model: sonnet`. Reviewers stay
-  below the coder tier (rules/workflow.md § Delegation).
+- **Imagine / Blind-Spot / Plan / integration-review** agents (read-only judgement — scope
+  reasoning, omitted-frame detection, test design, cross-PR composition) → `model: sonnet`.
+  Reviewers stay below the coder tier (rules/workflow.md § Delegation).
 - **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
   checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
   conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
@@ -127,7 +127,39 @@ For each ticket, launch an agent (background, no isolation needed — read-only;
   don't hand-roll what a library already does), premature abstraction.
   Annotate any hits with the proposed fix.
 
-Wait for all. Commit reimagined tickets. Report scorecard.
+Wait for all.
+
+### Blind-Spot pass (cross-ticket)
+
+Before committing the reimagined tickets, launch **one** additional read-only
+agent (`model: sonnet` per § Model policy) over the original tickets **and all
+Imagine outputs together**. Its job is not to review implementation quality or
+repeat the per-ticket critique. It challenges the *search space the Imagine
+team considered*: what important thing did the whole team fail to look for?
+
+Probe explicitly for material omissions in:
+- hidden or shared assumptions and alternative framings;
+- stakeholders, users, or downstream consumers absent from the discussion;
+- evidence, data sources, counterexamples, or regime changes that could reverse
+  a recommendation;
+- credible alternative approaches or dependencies nobody considered;
+- failure modes, boundary cases, and common-mode reasoning shared by several
+  Imagine agents.
+
+Report only omissions that could change scope, priority, feasibility, or the
+recommended path. For each finding give: **omission → why it matters → smallest
+follow-up check/question**. Do not manufacture novelty and do not restate risks
+already surfaced by the Imagine agents. If nothing material is missing, return
+`BLIND-SPOT: CLEAN`.
+
+Feed each material finding back into the affected ticket's Imagine annotation
+before the drift guard below. The Blind-Spot pass has the same intent boundary
+as every Imagine agent: it may expose a missing premise or recommend a simpler
+implementation path, but it may not invent a new deliverable or substitute the
+author's goal. A finding that requires new intent is returned to the author,
+not silently written into the ticket.
+
+Commit reimagined tickets. Report scorecard, including the Blind-Spot verdict.
 
 **Drift guard**: For each reimagined ticket, compare against the original:
 - Exit criteria dropped or reworded to change intent → ESCALATE.
