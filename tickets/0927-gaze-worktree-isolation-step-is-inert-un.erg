@@ -1,0 +1,88 @@
+%erg 0.1
+Title: gaze worktree-isolation step is inert under the identity guard
+Created: 2026-09-14
+Author: claude
+
+--- log ---
+2026-09-14T04:00Z claude created
+
+--- body ---
+## Context
+
+During `/gaze` round 2 on `search-works-for-zotero` PR #553 (2026-09-13),
+phases 2-4 and 6 spawn read-only reviewer Agents with cwd pinned to the
+isolated review worktree `$primary_root/.claude/worktrees/review-553`,
+exactly as `skills/gaze/SKILL.md` phase 1 sets up and phases 2-4/6 require
+("Do **not** give these agents `isolation: "worktree"`... cwd is **pinned to
+the existing review worktree**"). In this run every one of those agents had
+its git operations refused by the worktree-identity guard — including
+read-only ones — and fell back to running inside the caller's (the
+orchestrating team-lead's) own worktree instead. The isolation phase 1 exists
+to provide gave none, silently: no error, no flag, just a quietly wrong cwd.
+The run still produced a correct verdict (the internal battery caught a real
+liveness bug and four wrong numbers), so this did not corrupt that result,
+but the isolation guarantee `/gaze` documents and depends on did not hold,
+and a future run relying on it for actual containment (not just correctness)
+would not be warned.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — phase 1 (`## 1. Setup`, isolation setup shell
+  block) creates the review worktree; phases 2-4 and 6 pin reviewer Agent cwd
+  to it and rely on "the same worktree-identity check as every worktree: an
+  Edit/Write is allowed when the acting process is physically inside that
+  worktree, denied otherwise" (phase 1 comment, ~line 150).
+- `scripts/pretooluse-worktree-path-guard.sh` — the identity guard itself; it
+  refused git operations naming `review-553`, including read-only ones.
+
+## Actions
+
+1. Reproduce: spawn a read-only Agent with cwd pinned to a
+   `.claude/worktrees/review-<n>` tree (via the `Agent` tool's cwd pinning,
+   the same mechanism `/gaze` uses — not `EnterWorktree`) and have it run a
+   read-only git command (`git status`, `git log`) naming that path. Confirm
+   whether the guard denies it or misroutes it to the caller's worktree.
+2. If reproduced, diagnose why the guard's "acting process is physically
+   inside that worktree" check fails for an Agent-spawned subagent whose cwd
+   was pinned this way — the guard likely keys off session-level worktree
+   state that a subagent's pinned cwd does not set, rather than the
+   subagent's actual process cwd.
+3. Fix the guard (or the pinning mechanism) so a read-only reviewer Agent
+   genuinely confined to `review-<pr-number>` is recognized as inside it, and
+   its git operations succeed there instead of silently falling back to the
+   caller's own worktree.
+
+## Test
+
+- Red first: spawn a read-only Agent cwd-pinned to an isolated review
+  worktree containing a marker absent from the caller's worktree (e.g. a
+  distinct file or branch); have it read that marker. Today it should
+  correctly find the marker only if the fallback lands in the caller's tree
+  instead — asserting on the actual git state read, not on the agent's own
+  claim of where it ran, is what makes this test discriminate the bug from
+  a fix.
+
+## Verification
+
+- [ ] A cwd-pinned reviewer Agent's git operations resolve against its own
+      pinned worktree, confirmed by a distinguishing marker.
+- [ ] The fix is exercised by an actual `/gaze` run (or a scripted
+      equivalent) showing zero guard refusals for the pinned cwd.
+
+## Invariants
+
+- The fallback-to-caller's-worktree behavior must not silently succeed; if
+  isolation cannot be provided, `/gaze` should say so loudly (a
+  `PANEL-INTEGRITY`-style flag), not proceed silently as if isolated.
+- No change to the guard's actual purpose (preventing cross-worktree writes)
+  — only to recognizing a legitimately pinned reviewer as inside its own
+  tree.
+
+## Exit criteria
+
+A read-only reviewer Agent whose cwd is pinned to
+`$primary_root/.claude/worktrees/review-<pr-number>` can perform git
+operations (including read-only ones) against that worktree without the
+identity guard refusing them and without silently falling back to the
+caller's tree — verified by an actual `/gaze` run showing no isolation
+fallback.

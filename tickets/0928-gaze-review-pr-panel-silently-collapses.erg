@@ -1,0 +1,87 @@
+%erg 0.1
+Title: gaze review-pr panel silently collapses to one sequential pass
+Created: 2026-09-14
+Author: claude
+
+--- log ---
+2026-09-14T04:00Z claude created
+
+--- body ---
+## Context
+
+`/gaze`'s phase 2-4 "Agent C — PR review" is specified to fan out its own
+five-perspective panel (correctness, consistency, scope, red-team,
+doc-propagation) as a recursive Agent-spawn: `skills/gaze/SKILL.md`'s "Fork
+execution contract" states "The contract applies recursively... a reviewer
+Agent (e.g. Agent C) that itself spins a panel of perspective agents...
+inherits this same rule" — it must launch its perspective agents in one
+message and poll their artifacts, exactly like `/gaze`'s own top-level
+fan-out.
+
+During round 2 of `/gaze` on `search-works-for-zotero` PR #553 (2026-09-13),
+the agent running Agent C's role had no `Agent` tool in its own toolset. It
+did not error or flag this — it silently ran all five perspectives itself,
+sequentially, in one pass. The gate's `dissent: none` then reflected one
+agent unable to disagree with itself, not five independent reviewers
+agreeing. The internal battery still caught a real liveness bug and four
+wrong numbers in that run, so the defect did not produce a wrong verdict
+here, but it silently weakened the decorrelation guarantee the panel exists
+to provide, in exactly the "reported as run while its seats silently never
+worked" shape `SKILL.md`'s own "Panel integrity" section (ticket 0393) warns
+against for the *external* reviewer seats — this is the same failure shape
+one layer in, on the *internal* panel.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — "Agent C — PR review" (phase 2-4) and "Fork
+  execution contract" § "The contract applies recursively".
+- Whatever launches Agent C (the gaze orchestrator's own Agent call, or
+  `/review-pr`'s own definition if invoked as a fresh agent) — the tool
+  grant for that launch needs to include `Agent` itself so the spawned agent
+  can recurse.
+
+## Actions
+
+1. Confirm the tool grant given to the Agent C launch site (in `/gaze`'s own
+   orchestration and/or `/review-pr`'s own agent definition) includes the
+   `Agent` tool.
+2. If missing, add it.
+3. Regardless, add an explicit self-check to `/review-pr`'s embedded
+   procedure: if it needs to fan out to perspective agents and finds it has
+   no `Agent` tool, say so in its returned structured block (a
+   `PANEL-INTEGRITY`-style flag) rather than silently running every
+   perspective itself and reporting `dissent: none` as if independent
+   agreement occurred.
+
+## Test
+
+- Red first: spawn Agent C's role without the `Agent` tool (a toolset that
+  excludes it) and confirm it currently proceeds sequentially with no
+  error/flag in its returned block.
+- Green: with the fix, either the tool is present and fan-out genuinely
+  occurs (confirmed by distinct sub-agent artifacts under
+  `.panel/<pr>/`), or its absence is loudly flagged in the structured output
+  instead of silently absorbed.
+
+## Verification
+
+- [ ] Agent C, launched exactly as `/gaze` launches it in production, has the
+      `Agent` tool and can spawn its own perspective sub-agents.
+- [ ] A run where fan-out is genuinely unavailable produces a visible
+      `PANEL-INTEGRITY`-style flag in the returned block and the posted PR
+      comment, not a silent `dissent: none`.
+
+## Invariants
+
+- `dissent: none` in a gate verdict must mean "N independent perspectives
+  agreed," never "one agent ran N passes."
+- No change to the actual review content or judgment of the five
+  perspectives — only to how they are parallelized and how a failure to
+  parallelize is surfaced.
+
+## Exit criteria
+
+Agent C's five-perspective panel genuinely fans out to independent
+sub-agents in a production `/gaze` run, or, when it cannot, the verdict
+comment visibly flags reduced decorrelation instead of reporting
+`dissent: none` as if full fan-out occurred.
