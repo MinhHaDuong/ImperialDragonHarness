@@ -8659,6 +8659,14 @@
       "first_seen": "2026-09-15T16:41:28Z",
       "last_confirmed": "2026-09-15T16:41:28Z",
       "promoted": false
+    },
+    "feedback_scale_justification_to_blast_radius": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-15T20:42:26Z",
+      "last_confirmed": "2026-09-15T20:42:26Z",
+      "promoted": false
     }
   }
 }

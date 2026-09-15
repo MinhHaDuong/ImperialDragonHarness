@@ -22,6 +22,7 @@
 - [padme GPU/CPU idle power](project_padme_gpu_power.md)
 - [padme X display for xdg-open](reference_padme_display.md) — l'auteur est à doudou, l'agent sur padme : `xdg-open` y ouvre sur un écran vide, donner des liens
 - [The resident memory index is the one for the starting cwd, not the repo you end up in](feedback_memory_index_follows_start_cwd.md)
+- [Branch-and-PR is mandatory, but the depth of justification scales with blast radius](feedback_scale_justification_to_blast_radius.md)
 - [Check docs/ staging before "inaccessible"](feedback_check_docs_staging_before_inaccessible.md)
 - [ISTEX token](reference_istex.md)
 - [Adversarial pair verification](feedback_adversarial_pair_verification.md)
