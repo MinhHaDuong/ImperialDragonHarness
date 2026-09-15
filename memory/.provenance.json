@@ -8643,6 +8643,22 @@
       "last_confirmed": "2026-09-10T16:55:23Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_memory_index_follows_start_cwd": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-15T16:41:28Z",
+      "last_confirmed": "2026-09-15T16:41:28Z",
+      "promoted": false
+    },
+    "reference_padme_display": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-15T16:41:28Z",
+      "last_confirmed": "2026-09-15T16:41:28Z",
+      "promoted": false
     }
   }
 }
