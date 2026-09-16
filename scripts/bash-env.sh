@@ -155,6 +155,29 @@
 #     diagnostics), BASH_XTRACEFD, HISTFILE.
 # The `case` block below is the authoritative enumeration; this prose summarises
 # it by category and may lag — read the `case` when in doubt.
+# ---------------------------------------------------------------------------
+# xtrace guard (ticket 0939). Everything below assigns and exports credential
+# values through ordinary commands, and `set -x` prints those WITH THE VALUE
+# ALREADY EXPANDED — so a plain `bash -x script.sh` wrote six live credentials
+# to stderr (measured 2026-09-16). Suppress tracing for this loader's own body
+# and restore the caller's setting at the very end, leaving the calling script's
+# own trace untouched.
+#
+# This is NOT the remedy in rules/coding-bash.md § "Unsetting a variable in the
+# parent does not unset it in the child". That one (`export BASH_ENV=`, or
+# `env -i … bash -c`) makes hermetic a child you CHOSE to isolate, and is
+# ratcheted over tests/*.sh by test_bash_tests_are_hermetic.sh. It cannot cover
+# a `bash -x` where the loader must still run because the script needs the keys.
+# The two are complementary, and neither reduces residency: the values stay in
+# every child's environment and in /proc/<pid>/environ regardless.
+#
+# _be_had_xtrace is _be_*-prefixed, so _be_is_protected_name below already
+# refuses it as a project .env export name.
+case "$-" in
+    *x*) _be_had_xtrace=1; set +x ;;
+    *)   _be_had_xtrace=0 ;;
+esac
+
 _be_is_protected_name() {
     case "$1" in
         *GUARD_*|_be_*) return 0 ;;
@@ -487,3 +510,11 @@ fi
 
 # Drop the shared predicate so it does not leak into every subprocess's shell.
 unset -f _be_is_protected_name 2>/dev/null || true
+
+# Restore the caller's xtrace setting (ticket 0939). Must stay LAST: every line
+# above it handles credential values. The `unset` runs after the restore so the
+# file's exit status is 0 even when the caller had xtrace off — a bare
+# `[ … ] && set -x` as the final command would return 1 and set $? for the
+# script that BASH_ENV was loaded for.
+[ "${_be_had_xtrace:-0}" = 1 ] && set -x
+unset _be_had_xtrace
