@@ -12,6 +12,7 @@ Author: Codex
 2026-09-16T13:03Z claude note origin/t0802-perch-adapters holds the closed-unmerged PR #780 attempt and is deliberately NOT the base for this work; retire that branch once this ticket successor PR merges, since it is then no longer the only copy of anything worth keeping
 2026-09-16T13:15Z claude note second attempt: neutral home ~/.agents/skills is created by the installer, version gate is a floor plus a probe, and a target that already resolves to the canonical source is success not a collision. Discovery proved by offline model-free probes (codex debug prompt-input, pi rpc get_commands) with negative and positive controls; pi 0.85.1 installed from npm @earendil-works/pi-coding-agent. Live invocation on all three stays manual-only and pending
 2026-09-16T14:15Z claude note exit criterion 2 reworded before merge: it claimed offline probes on all three harnesses, but pilot-support.json carries local-probe evidence for codex and pi only. Claude Code exposes no probe channel equivalent to codex debug prompt-input or pi rpc get_commands, and there its skills root is the canonical source itself, so static-test plus a pending manual-smoke is the honest evidence. The claim now matches the inventory
+2026-09-16T14:52Z bump verify-reroll — round 1: install() built the skills root outside the Refusal contract (NotADirectoryError escaped main(), exit 1 with a traceback) and the round-3 ASCII prose dash at adapters/perch.py:149 was still present; both fixed in this round
 --- body ---
 ## Context
 

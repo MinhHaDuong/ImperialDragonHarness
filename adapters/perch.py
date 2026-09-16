@@ -146,7 +146,7 @@ def _probe(harness: str) -> str:
     except (OSError, subprocess.SubprocessError, UnicodeError) as exc:
         raise Refusal(f"could not run {executable!r} --version: {exc}") from exc
     # parse_version takes the FIRST semver it is handed, so handing it a whole
-    # stream lets a banner line ahead of the real answer flip the floor -- a
+    # stream lets a banner line ahead of the real answer flip the floor — a
     # decoy "node 20.11.0" made codex 0.154.0 read as 20.11.0, which clears a
     # 0.154.0 minimum. Narrow to one line, and refuse when the output offers
     # more than one candidate: an ambiguous answer is an unknown version, and
@@ -298,7 +298,14 @@ def install(harness: str, version: str | None = None) -> str:
             )
         raise Refusal(f"{target} exists and is not the canonical {SLICE}")
 
-    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        # Building the skills root is an OS call like any other, so it owes
+        # the same contract as the rest: a plain file where the neutral home
+        # should be raises NotADirectoryError, which is neither a Refusal nor
+        # anything main() catches, and the CLI exited 1 with a traceback.
+        raise Refusal(f"could not create {target.parent}: {exc}") from exc
     try:
         target.symlink_to(source, target_is_directory=True)
     except FileExistsError as exc:

@@ -184,6 +184,22 @@ def test_install_creates_the_neutral_home(home, harness):
     assert perch.status(harness)["installed"] is True
 
 
+def test_a_blocked_neutral_home_refuses_instead_of_raising_a_traceback(home):
+    """Making the target's parent is an OS call, so it belongs to the contract.
+
+    ``main()`` shows a ``Refusal`` as one line and exits 2; everything else
+    leaves the module as a traceback at exit 1. A plain file where the neutral
+    home should go is the cheapest way to make ``mkdir`` fail, and it fails
+    with ``NotADirectoryError`` — neither a ``Refusal`` nor anything
+    ``main()`` catches.
+    """
+    (home / ".agents").write_text("not a directory\n", encoding="utf-8")
+    with pytest.raises(perch.Refusal) as caught:
+        perch.install("codex", version="99.0.0")
+    assert ".agents" in str(caught.value)
+    assert perch.main(["install", "codex", "--version", "99.0.0"]) == 2
+
+
 def test_codex_and_pi_share_one_target_and_install_is_idempotent(home):
     perch.install("codex", version="99.0.0")
     perch.install("pi", version="99.0.0")
