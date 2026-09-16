@@ -8,6 +8,7 @@ Blocked-by: 0923
 2026-09-11T07:04Z codex created
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
+2026-09-16T06:48Z claude note Pi capability declaration recorded at docs/2026-09-16-runtime-capability-survey.md: subagent definitions (third-party extension, md+YAML, inherit_context) and 36 lifecycle events covering all five hook classes this harness registers. Documentation only, no smoke evidence; Codex hooks still unverified.
 --- body ---
 
 ## Context
