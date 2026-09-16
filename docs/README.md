@@ -33,6 +33,7 @@ drafts* below.
 | `2026-09-10-dragon-memory-design-review-fable-design.md` | **Non-normative review** by a Fable panel of v3 — design-scoped; finds that the index cut removes awareness rather than only reachability |
 | `2026-09-10-valid-while-coverage-ledger.md` | Measurement record — what a `valid_while` predicate grammar can express and evaluate over real memory bodies |
 | `2026-09-10-dragon-memory-design-review-fable.md` | **Non-normative review** by a Fable panel of v1 — the first with repository access; refutes v1's central amendment and finds the recall channel in the runtime |
+| `2026-09-16-ocr-note-manuscrite-allocution.md` | Transcription OCR d'une note manuscrite de préparation d'allocution — noms pseudonymisés, passages incertains signalés (French) |
 
 ## Reviews
 
