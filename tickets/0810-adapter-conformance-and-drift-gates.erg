@@ -2,7 +2,6 @@
 Title: Evaluate the three-slice pilot and prove safe deployment
 Created: 2026-08-28
 Author: Codex
-Blocked-by: 0802
 Blocked-by: 0803
 Blocked-by: 0809
 
@@ -10,6 +9,7 @@ Blocked-by: 0809
 2026-08-28T12:57Z Codex created final integration child of 0800
 2026-08-28T14:08Z Codex reduced final integration to pilot evaluation, deployment safety and a go/no-go decision
 
+2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
 --- body ---
 ## Context
 
