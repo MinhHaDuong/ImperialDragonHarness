@@ -146,6 +146,7 @@ def test_an_unreadable_version_refuses_rather_than_passing(harness):
         perch.check_version(harness, supplied="not a version at all")
 
 
+@pytest.mark.integration  # reaches subprocess.run one frame deep, in check_version
 def test_a_missing_cli_refuses_rather_than_passing(monkeypatch):
     monkeypatch.setenv("PERCH_CODEX_BIN", "/nonexistent/codex")
     with pytest.raises(perch.Refusal):

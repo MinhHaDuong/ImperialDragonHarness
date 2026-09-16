@@ -43,6 +43,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 INVENTORY_PATH = HERE / "pilot-support.json"
@@ -85,8 +87,6 @@ def canonical_source() -> Path:
 
 def frontmatter(path: Path) -> dict:
     """The YAML frontmatter of a SKILL.md, as a mapping."""
-    import yaml
-
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
         raise Refusal(f"{path} has no frontmatter")
