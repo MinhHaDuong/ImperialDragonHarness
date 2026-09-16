@@ -1,0 +1,83 @@
+%erg 0.1
+Title: Skill-tool /review resolves the wrong worktree and returns an empty diff
+Created: 2026-09-16
+Author: Integration Test
+
+--- log ---
+2026-09-16T07:48Z Integration Test created
+2026-09-16T07:52Z claude note Observed during /gaze on PR #921. A panel agent caught it and fell back to a manual review; without that fallback the run would have reported an empty diff as a clean approval.
+
+--- body ---
+## Context
+
+During `/gaze` on PR #921, `/review` was invoked through the Skill tool inside a
+pinned agent. It resolved its working directory to a **different worktree** than
+the PR under review — `memory-consolidation-project-keys`, which another session
+had checked out in the primary checkout at that moment — diffed that branch, and
+returned an **empty diff**.
+
+An empty diff is indistinguishable from "this PR changes nothing that concerns
+me". The panel agent noticed the branch name did not match the PR and fell back
+to a manual review; that fallback is the only reason the #921 verdict is
+trustworthy. A less careful agent would have reported APPROVE on a review it
+never performed.
+
+This is the failure class of ticket 0216, recurring on the Skill-tool path.
+`rules/git.md` § Merging already carries the human-facing form of the rule
+("Anchor branch-mutating git across a forked-skill boundary"), but it is prose
+addressed to an agent, and nothing mechanical enforces it for a skill that only
+*reads*.
+
+Severity: this is above the floor. It does not corrupt files, but it corrupts a
+verdict — a verification gate that returns a green answer to a question it never
+asked. The harness treats an all-clear indistinguishable from "I could not look"
+as a blocker everywhere else (`tickets/AGENTS.md` on `gh pr list --json files`,
+`rules/workflow.md` § Diagnosis discipline).
+
+## Relevant files
+
+- `skills/review-pr/SKILL.md` — the panel that invokes `/review` per perspective
+- `skills/gaze/SKILL.md` — the caller; its worktree-isolation step is the context
+- `rules/git.md` § Merging — the prose rule this would mechanize
+- `tickets/0216-*` — the original failure class
+- `tickets/0927-gaze-worktree-isolation-step-is-inert-un.erg` — adjacent, check
+  for overlap before starting; these may want merging into one fix
+
+## Actions
+
+1. Reproduce: invoke `/review` through the Skill tool from an agent whose
+   session cwd differs from the PR's branch, and confirm the empty diff.
+2. Decide where the anchor belongs — in the skill body (resolve the PR's branch
+   and pass `-C`), or in a shared preamble every review-family skill runs.
+3. Make the empty-diff case *loud*: a review that finds no changed files must
+   fail, not pass. An empty diff is either a wrong-tree resolution or an empty
+   PR, and both deserve a stop rather than an approval.
+4. Sweep the sibling skills that invoke `/review` or diff a branch the same way.
+
+## Test
+
+Write the red step first: a test that invokes the review path with a deliberately
+mismatched cwd and asserts it **fails loudly** rather than returning an empty
+result. Confirm the test fails against the current code before fixing it — a
+green test here is exactly the defect being fixed.
+
+## Verification
+
+- [ ] The reproduction is captured in a test that fails on today's code.
+- [ ] After the fix, the same invocation either reviews the right tree or stops.
+- [ ] A review returning zero changed files exits non-zero with a named reason.
+- [ ] Sibling skills swept; the ones that share the pattern are listed in the log.
+
+## Invariants
+
+- `/gaze` and `/review` keep working when cwd and PR branch already agree.
+- No skill gains a per-repo CONFIG block (`feedback_skills_just_work_no_config_blocks`).
+- The fix does not make a legitimately empty diff unreportable — it makes it
+  distinguishable from a failure to look.
+
+## Exit criteria
+
+- [ ] `/review` through the Skill tool reviews the branch of the PR it is given,
+      from any session cwd, or refuses.
+- [ ] An empty diff can no longer be returned as a passing review.
+- [ ] `make check` passes.
