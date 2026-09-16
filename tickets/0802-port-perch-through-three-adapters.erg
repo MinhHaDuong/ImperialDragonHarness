@@ -11,6 +11,7 @@ Author: Codex
 
 2026-09-16T13:03Z claude note origin/t0802-perch-adapters holds the closed-unmerged PR #780 attempt and is deliberately NOT the base for this work; retire that branch once this ticket successor PR merges, since it is then no longer the only copy of anything worth keeping
 2026-09-16T13:15Z claude note second attempt: neutral home ~/.agents/skills is created by the installer, version gate is a floor plus a probe, and a target that already resolves to the canonical source is success not a collision. Discovery proved by offline model-free probes (codex debug prompt-input, pi rpc get_commands) with negative and positive controls; pi 0.85.1 installed from npm @earendil-works/pi-coding-agent. Live invocation on all three stays manual-only and pending
+2026-09-16T14:15Z claude note exit criterion 2 reworded before merge: it claimed offline probes on all three harnesses, but pilot-support.json carries local-probe evidence for codex and pi only. Claude Code exposes no probe channel equivalent to codex debug prompt-input or pi rpc get_commands, and there its skills root is the canonical source itself, so static-test plus a pending manual-smoke is the honest evidence. The claim now matches the inventory
 --- body ---
 ## Context
 
@@ -81,8 +82,10 @@ The architecture vocabulary is **core, config and adapters**:
 ## Exit criteria
 
 - [x] Round-2 panel cleared the `needs-human` gate
-- [x] One canonical `perch` works through Claude Code, Codex and Pi adapters — discovery proved
-      by local offline probes on all three; live invocation is manual-only, recorded pending
+- [x] One canonical `perch` works through Claude Code, Codex and Pi adapters — discovery is
+      probed offline on codex and pi (negative and positive controls); Claude Code exposes no
+      equivalent probe channel, and there its skills root *is* the canonical source, attested
+      by static-test. Live invocation on all three is manual-only, recorded pending
 - [x] `adapters/pilot-support.json` is committed and names any manual-only assertions
 - [x] Follow-up abstractions are proposed only for duplication observed in this slice — the
       only duplication observed is `name` + `description`, already in the canonical frontmatter,
