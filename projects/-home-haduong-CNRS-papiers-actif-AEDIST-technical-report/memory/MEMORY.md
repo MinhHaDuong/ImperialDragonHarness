@@ -1,42 +1,27 @@
-# AEDIST Technical Report - Project Memory
-
 ## Key insights
-<!-- /dream consolidation 2026-06-16 -->
 
 - Anchor on stable identifiers, never on position: label-keyed test extraction, grep-relocation over line hints, slug-keyed memories — every positional anchor (line numbers, section titles, annex letters) broke at least once during the 2026-06 manuscript waves.
 - In multi-session and background work, cwd and branch state are not yours: parallel sessions legitimately move a worktree's branch; sync to origin before any fan-out, anchor every mutating command in one compound (`cd X && …` / `git -C`), and verify with `rev-parse`. Forge automation is also not idempotent — check forge state before retrying a merge.
 - Agent-surveyed numbers are hypotheses; committed artifacts are the source of truth — re-derive before writing prose, and guard quoted literals with re-derivation tests.
 - The ticket/state dependency graph is the only durable "remember later" primitive: reminders → an OPEN ticket `Blocked-by` the trigger (auto-fires in `erg ready` when it closes); handoffs → STATE + edges; closed tickets and orphaned worktree WIP silently lose their unlanded content (re-ticket it, never leave it in a closed ticket's notes).
 - Dissemination is not the paper — code+data need their own persistent citable DOI (a mutable forge URL is not one), and register precision matters ("article" = peer-reviewed only; negative prose guards beat positive wording pins — the polarity rule).
-
-## Project Structure
 - **Monorepo**: code absorbed into report repo (2026-04-02). aedist GitHub archived.
 - **Report dir**: `/home/haduong/CNRS/papiers/actif/AEDIST-technical-report/`
 - LaTeX built with **Tectonic** (XeTeX engine): `tectonic report.tex`
 - Python managed with **uv** (no venv): `uv run --project ...`
 - `UV_CACHE_DIR=/scratch/uv` (set in Makefile)
-
-## Pipeline
 - Manager+worker dispatch via `make` targets in `experiments/Makefile`
 - `experiments/models.yaml` — 46 model registry
 - `experiments/experiments.toml` — routers, model sets, and condition configs
 - `experiments/outputs/` — tracked in git (census, rag, multiturn, web, frontier, decomposed, sourced)
 - `make tables` → generates LaTeX in `report/inputs/generated/`
 - `make` or `make all` → builds `report.pdf`
-
-## Design Decisions
 - Tables generated **per-table** not per-experiment (tables combine data from multiple experiments)
 - `inputs/generated/*` gitignored; `experiments/outputs/` tracked
-
-## Reference repos
 - [Homepage publication list](reference_homepage_publication_list.md)
-
-## User Preferences
 - [Linux only](user_platform.md)
 - Wants minimal, non-over-engineered solutions
 - French-language report about Vietnamese thermal power plants as AI benchmark task
-
-## Active
 - [Release needs code+data DOI](project_release_needs_codedata_doi.md)
 - [Durable reminder = blocked open ticket](feedback_durable_reminder_is_blocked_open_ticket.md)
 - ["Article" = peer-reviewed only](feedback_no_article_for_working_paper.md)
@@ -107,3 +92,138 @@
 - [Stacked PR waves](feedback_stacked_pr_waves.md)
 - [BG merge anchoring + auto-merge race](feedback_bg_merge_anchoring.md)
 - [pgrep self-match watcher](feedback_pgrep_self_match_watcher.md)
+- FP labeling: say "non-reconnus/unrecognized" not "hallucinés/hallucinated" for LP-irreconcilable assets — some are LP name-variant failures, not model errors. See [[feedback-fp-unrecognized-not-hallucinated]].
+- Ruff post-edit hook strips imports between Edits — always add import + first usage in one Edit block; same trap hits DictWriter fieldnames and `--model-set` dispatch paths.
+- Git state surgery starts with diagnosis: `git log HEAD origin/main` + worktree list before acting; DU flood from interrupted checkout clears with `git reset --mixed HEAD`; `git fetch origin` after every API merge — local ref is stale until then.
+- Experiment data integrity is explicit discipline: archive outputs are integrity signals (never chmod), smoke `--promote-as-production` saves correct filenames, `make rebuild-measurements` destroys all records, verify prose claims against raw data not summaries.
+- Ticket/PR precision prevents silent work loss: erg-pr-merge closes **Ticket:** unconditionally — split multi-PR work into child tickets; detect partial success (ticket closed, merge failed) and skip to `gh api merge`; fetch origin/main before picking ticket IDs.
+- Provider quirks accumulate silently: `reasoning_effort="minimal"` turns thinking ON; Qwen `*:free` rate-limits in seconds; MoE needs `repeat=3`; local routing is `llama_server` (Ollama deprecated); Padme is serial-only for Ollama.
+- Stale pre-fix PDFs: after patching a plot script, always rebuild before committing — PDFs in working tree may predate the fix; size should grow when adding content, shrink signals regression.
+- Conference delivered 2026-05-27 (Econom'IA 2026 at Thema/Cergy) — paper writing phase now open; H1-H4 and OSF preregistration relevant again for journal submission.
+- The arXiv preprint = slides/manuscript/main.md; report.tex is internal ("no future"). See [[project-preprint-target-main-md]].
+- Reference = **177 plants (v2.4)**; manuscript reconciled to 177 by 0501/#909 (2026-06-10) — no longer stale; `reference_plant_count()` is the source of truth, never hardcode the size. See [[project-reference-v2-adopted]].
+- User hedges ("typically", "often") = curatorial judgment, NOT mechanical rules — don't carve absolutes. Reference boundary: a project = proposed development (typically a power complex), any status, any channel; a potential site (E542 candidate location) is excluded; the decision is the compiler's. See [[feedback-preserve-hedges-not-absolutes]].
+
+## Entries
+
+- [Preprint target is main.md](project_preprint_target_main_md.md)
+- [Reference v2.1 adopted](project_reference_v2_adopted.md)
+- [Async agent continuation](feedback_async_agent_continuation.md)
+- [Peek/kill sibling sessions](reference_peek_kill_sibling_sessions.md)
+- [Phase build layout](project_phase_build_layout.md)
+- [Make stamp discipline](feedback_make_stamp_discipline.md)
+- [Greedy-glob class](project_greedy_glob_class.md)
+- [Archive move: outputs/ is record-only](project_archive_move_record_only_outputs.md)
+- [Concurrent author-session raids](feedback_concurrent_author_session_raids.md)
+- [Pre-commit hook commit ordering](feedback_precommit_hook_commit_ordering.md)
+- [Optimistic concurrency for ticket IDs](feedback_optimistic_concurrency_ticket_ids.md)
+- [erg close bookkeeping conflict](feedback_erg_close_bookkeeping_conflict.md)
+- [quickpr limitations](feedback_quickpr_limitations.md)
+- [Parallel push during investigation](feedback_parallel_push_during_investigation.md)
+- [Worktree agent env leak](feedback_worktree_agent_env_leak.md)
+- [Raid wave stale base](feedback_raid_wave_stale_base.md)
+- [Concurrent pipelines, shared tickets](feedback_concurrent_pipelines_shared_tickets.md)
+- [Tactical editorial round 0522](project_tactical_editorial_round_0522.md)
+- [Conversation ≠ manuscript](feedback_conversation_not_manuscript.md)
+- [Argparse defaults drift](feedback_argparse_defaults_drift.md)
+- [Chore branch + data commits](feedback_rebase_chore_data_branch.md)
+- [Frozen results chmod](feedback_frozen_results_chmod.md)
+- [xargs env var syntax](feedback_xargs_env_var.md)
+- [uv run --project cwd and $(CURDIR)](feedback_uv_run_project_cwd.md)
+- [Exp1 batch2 canonical dataset](project_exp1_batch2.md)
+- [erg premature autoclosure](feedback_erg_premature_autoclosure.md)
+- [Ticket line in PR](feedback_ticket_line_in_pr.md)
+- [Permutation test power](feedback_permutation_test_power.md)
+- [Compute before figure](feedback_compute_before_figure.md)
+- [API keys location](reference_api_keys_location.md)
+- [Econom'IA 2026 venue](reference_econom_ia_2026.md)
+- [Padme local AI infra](project_padme_local_infra.md)
+- [Local routing → llama_server](project_local_routing_llama_server.md)
+- [Harness architecture: git-erg vs IDH](project_harness_architecture.md)
+- [Padme Ollama serial](feedback_padme_ollama_serial.md)
+- [Imagine mode = design dialogue](feedback_imagine_mode.md)
+- [ESCALATE = think harder, not stop](feedback_escalate_means_think_harder.md)
+- [Ticket log entry placement](feedback_ticket_log_placement.md)
+- [DictWriter fieldnames must match rows](feedback_csv_writer_fieldnames.md)
+- [--model-set dispatch path not tested](feedback_model_set_dispatch_test_gap.md)
+- [seed silent-drop bug](project_seed_silentdrop_bug.md)
+- [Raid budget recovery](feedback_raid_budget_recovery.md)
+- [F1=None means non-attempt, not zero](project_f1_none_semantics.md)
+- [erg auto-archives to tickets/closed/](project_erg_closed_dir.md)
+- [H1–H4 deprioritised for conference push](project_h1_h4_hypotheses.md)
+- [H3 empirical, not impossibility](feedback_h3_empirical_not_impossibility.md)
+- [Exp 1 design: thinking allowed, no web](project_exp1_design_thinking_allowed.md)
+- [Test one before blasting at experiment level](feedback_test_one_before_blasting_experiment_level.md)
+- [Killed agent salvage](feedback_killed_agent_salvage.md)
+- [Rebase-drop cascade](feedback_rebase_drop_cascade.md)
+- [git pull on diverged main creates merge commit](feedback_git_pull_creates_merge_commit.md)
+- [/merge main-lock wrinkle](feedback_merge_skill_main_lock.md)
+- [Exp 1 done](project_exp1_done.md)
+- [Refusal is data](feedback_refusal_is_data.md)
+- [Namespace migration trap](feedback_namespace_migration_trap.md)
+- [smoke --promote-as-production](feedback_smoke_promote_production.md)
+- [arms_runs CSV has no n_matched](feedback_arms_runs_csv_no_nmatched.md)
+- [Verify prose claims against raw data](feedback_verify_prose_claims.md)
+- [Dictated constants: verify against disk](feedback_dictated_constants_verify_disk.md)
+- [ODS XML surgery pattern](project_ods_xml_surgery_pattern.md)
+- [Task-notification exit code](feedback_task_notification_exit_code.md)
+- [LP matcher cost function](project_lp_matcher_cost.md)
+- [Semantic-completeness test for resolvers](feedback_semantic_completeness_resolvers.md)
+- [gh pr edit blocked here](feedback_gh_pr_edit_blocked.md)
+- [Audit before extra='forbid'](feedback_pydantic_forbid_extras_audit.md)
+- [/verify routes to healthcheck on 2nd call](feedback_verify_re_invocation_routes_healthcheck.md)
+- [Supervised runs need no standing guards](feedback_supervised_runs_no_standing_guards.md)
+- [OpenRouter reasoning_effort semantics](project_openrouter_reasoning_effort.md)
+- [Check origin/main for ticket ID before picking](feedback_ticket_id_collision_check.md)
+- [Exp 3 reconstruction sweep](project_exp3_reconstruction_sweep.md)
+- [Source classification scheme](project_source_classification_scheme.md)
+- [Talk narrative: three experiments + case study](project_talk_narrative_three_plus_case_study.md)
+- [Design debate, not ouioui](feedback_design_debate_not_ouioui.md)
+- [Beamer plain frame sizing](feedback_beamer_plain_frame_sizing.md)
+- [size_class per-record split](feedback_size_class_per_record_split.md)
+- [/merge leaves worktree on main](feedback_merge_leaves_worktree_on_main.md)
+- [Main repo on foreign branch](feedback_main_repo_on_foreign_branch.md)
+- [pathlib with_suffix on dotted stems](feedback_pathlib_with_suffix_dotted_stems.md)
+- [make rebuild-measurements destroys records](feedback_make_rebuild_measurements_destroys_records.md)
+- [gpt-oss-* lives in gpt family](project_gpt_oss_family.md)
+- [Qwen free-tier rate limit](feedback_qwen_free_tier_rate_limit.md)
+- [claude-code-cli route](reference_claude_cli_route.md)
+- [Run adherence tests locally before push](feedback_run_adherence_locally_before_push.md)
+- [erg-pr-merge partial success](feedback_erg_pr_merge_partial_success.md)
+- [CI chore-bypass via workflow path-filter](project_ci_chore_bypass_workflow.md)
+- [gh pr merge --delete-branch in worktree](feedback_gh_pr_merge_delete_branch_worktree.md)
+- [Agent identity separation](project_agent_identity_separation.md)
+- [git cherry misleads on squash merge](feedback_git_cherry_misleads_on_squash_merge.md)
+- [Exp 2 Phase B done](project_exp2_phase_b_done.md)
+- [README: no autoscript](feedback_readme_no_autoscript.md)
+- [Anthropic adapter filename](project_anthropic_adapter_name.md)
+- [Branch from stale local main](feedback_branch_from_stale_local_main.md)
+- [git existence check](feedback_git_existence_check.md)
+- [Squash merge disabled](project_squash_merge_disabled.md)
+- [Use auto-merge when CI blocks](feedback_use_auto_merge.md)
+- [Auto-merge bypasses ticket close](feedback_auto_merge_bypasses_ticket_close.md)
+- [erg close does not auto-archive](feedback_erg_close_no_auto_archive.md)
+- [PR without Ticket line](feedback_pr_no_ticket_line.md)
+- [Plot axis: ask count vs ratio](feedback_plot_axis_ask_count_vs_ratio.md)
+- [exp2_interactive_smoke PYTHONPATH](feedback_exp2_interactive_smoke_pythonpath.md)
+- [Unit suffix stripping design](feedback_unit_suffix_stripping_design.md)
+- [LP Mismatched fix](project_lp_mismatched_fix.md)
+- [Experiment costs](project_experiment_costs.md)
+- [Modify/delete rebase](feedback_modify_delete_rebase.md)
+- [Presence metrics saturate in Exp 1](feedback_presence_metrics_saturate.md)
+- [API merge fetch after](feedback_api_merge_fetch_after.md)
+- [Verify artifacts after Python fix](feedback_verify_artifacts_after_fix.md)
+- [Bash cd-to-primary-repo trap](feedback_bash_cd_primary_repo_trap.md)
+- [Figure verify: worst-case panel](feedback_figure_verify_worst_case_panel.md)
+- [Matplotlib annotation autoscale](feedback_matplotlib_annotation_autoscale.md)
+- [Autonomous raid + cross-machine pickup](feedback_autonomous_raid_doudou_pickup.md)
+- [Ticket premises are hypotheses](feedback_ticket_premises_are_hypotheses.md)
+- [Plan-agent test inversion](feedback_plan_agent_test_inversion.md)
+- [Gaze fork async reviewers vs auto-merge](feedback_gaze_fork_async_reviewers_automerge_race.md)
+- [Light review for mechanical diffs](feedback_light_review_for_mechanical_diffs.md)
+- [Chore-close staging + late close](feedback_chore_close_staging_and_late_close.md)
+- [Ratchet race + dropped close](feedback_ratchet_ceiling_race_and_dropped_close.md)
+- [Gaze fork orphans reviewers](feedback_gaze_fork_orphans_reviewers.md)
+- [Human sign-off criterion not waivable](feedback_human_signoff_criterion_not_waivable.md)
+- [PYTEST_ADDOPTS breaks uv pytest](feedback_pytest_addopts_env_breaks_uv_pytest.md)
+- [Merge classifier blocks autonomous raid](feedback_merge_classifier_blocks_autonomous_raid.md)
