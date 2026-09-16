@@ -1,0 +1,96 @@
+%erg 0.1
+Title: provenance.py subcommands hardcode the primary checkout, so /dream's documented steps write outside the worktree
+Created: 2026-09-16
+Author: Integration Test
+
+--- log ---
+2026-09-16T08:58Z Integration Test created
+2026-09-16T09:02Z claude note Surfaced by a memory sweep that skipped the documented `remove` call rather than write into the primary checkout. Verified and widened: the defect is seven of nine subcommands, not `remove` alone, and it hits /dream's ADD path as well as its DELETE path.
+
+2026-09-16T09:38Z claude note Review measured the stale-slug count independently: 55 of 119 resolve under current project keys, 90 via the two-entry .project-aliases.json, the residual 29 entangled with the deferred 451-slug re-link. Body softened from an asserted 119 to a measured range.
+--- body ---
+## Context
+
+`skills/dream/provenance.py` resolves its paths from module globals:
+
+```python
+HARNESS_MEMORY = Path.home() / ".claude" / "memory"
+PROJECTS_BASE  = Path.home() / ".claude" / "projects"
+```
+
+Only two of its nine subcommands can override that. `backfill` and `usage`
+take `--root`; `record`, `remove`, `candidates`, `promote`, `confirm`, `decay`
+and `show` do not.
+
+`skills/dream/SKILL.md` mandates two of the seven:
+
+- line 99, on DELETE: `provenance.py remove <entry_slug> <project>`
+- line 148, on ADD: `provenance.py record <entry_slug> <project>`
+
+So a worktree-isolated session following the documented procedure writes its
+provenance mutations into the **primary checkout**, not into its worktree. The
+mutations land untracked in someone else's tree, outside the PR under review,
+where the next session to run `git add -A` sweeps them into an unrelated commit.
+This is the failure mode memory `feedback_module_level_git_paths` records, and
+the one `rules/workflow.md` § Worktree paths warns about from the agent side —
+except here it is the tool doing it, so no amount of agent discipline avoids it.
+
+Observed 2026-09-16 during the sweep landed by PR #922: the agent noticed and
+**skipped** the documented `remove` call for all 119 entries it tombstoned
+rather than write outside its worktree. Correct call, with a cost — the
+provenance store still lists those slugs against their projects, which inflates
+the two-project frequency count that gates promotion to the harness tier.
+Promotion decisions are being made against a store that overcounts.
+
+How far it overcounts is **not** cleanly measurable today, and the ticket says so
+rather than asserting a round number. Of the 119 tombstoned bodies, 55 still list
+their current project directory; resolving the thin two-entry
+`.project-aliases.json` recovers 90; the remaining 29 carry pre-rename keys the
+alias table does not cover. Those 29 are entangled with the 451-slug re-link
+below, so the honest figure is a range, 55 to 119, and it cannot be narrowed
+until the re-link is decided. Do not treat 119 as measured.
+
+## Relevant files
+
+- `skills/dream/provenance.py` — the nine subcommands; `--root` at lines 608, 615
+- `skills/dream/SKILL.md` — lines 99 and 148, the two mandated calls
+- `tests/test_provenance_coverage.py` — the existing gate; does not cover this
+- `memory/.provenance.json` — the store, overcounting by 55 to 119 slugs
+- `.project-aliases.json` — two entries; too thin to resolve the pre-rename keys
+
+## Actions
+
+1. Give every subcommand that reads or writes the store the same `--root` that
+   `backfill` and `usage` already have, resolved once rather than per command.
+2. Update `SKILL.md` lines 99 and 148 to pass it, so the documented procedure is
+   the safe one rather than a trap the careful agent has to notice.
+3. Reconcile the store: drop the 119 tombstoned slugs. Decide separately whether
+   to also re-link the 451 slugs the 2026-09-13 key consolidation stranded — that
+   is a 1154-line diff and its own decision, named here only so it is not lost.
+
+## Test
+
+Red step first: from a worktree, run the `SKILL.md` line 99 command and assert
+the primary checkout's `memory/.provenance.json` is **unchanged**. That test must
+fail on today's code. A green result before the fix means the test is not
+reaching the defect.
+
+## Verification
+
+- [ ] The red test fails before the fix and passes after.
+- [ ] Every subcommand touching the store accepts `--root`.
+- [ ] `SKILL.md`'s two commands pass it.
+- [ ] Store reconciled; promotion candidate counts recomputed and sane.
+
+## Invariants
+
+- `/dream` keeps working unchanged from the primary checkout, where the default
+  root is already right.
+- No skill gains a per-repo CONFIG block.
+- `tests/test_provenance_coverage.py` keeps passing.
+
+## Exit criteria
+
+- [ ] Following `SKILL.md` from a worktree cannot write to the primary checkout.
+- [ ] The 119 stale slugs no longer inflate the promotion gate.
+- [ ] `make check` passes.
