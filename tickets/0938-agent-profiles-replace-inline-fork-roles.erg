@@ -1,0 +1,108 @@
+%erg 0.1
+Title: Agent profiles: replace inline fork roles with named, portable agent definitions
+Created: 2026-09-16
+Author: Integration Test
+
+--- log ---
+2026-09-16T10:30Z Integration Test created
+2026-09-16T10:34Z claude note Measurements in the body were taken on this tree, not carried from a report. The architectural decision in Actions step 1 is the author's, not the executor's.
+
+--- body ---
+## Context
+
+The harness declares **one** agent profile, `agents/team-lead.md`. Real delegation
+does not go through it: it goes through `subagent_type: "fork"` **86 times across
+ten skills** — `gaze` 37, `review-pr` 16, `review-pr-prose` 11, `verify-gate` 5,
+`verify-adherence` 4, `reviewers` 4, `raid` 4, `trace-doctor` 2, `hunt` 2,
+`update-publist` 1. Only `hunt` names an agent type at an `Agent()` call.
+
+Two reasons to change that, one of which is measured and counter-intuitive.
+
+**Portability.** `docs/2026-09-16-runtime-capability-survey.md` establishes that a
+declarative agent definition is the *most* portable Claude Code primitive: the same
+markdown-plus-YAML-frontmatter shape works in Claude Code, Gemini CLI and OpenCode,
+Codex wants the same fields in TOML, and Pi accepts it through a third-party
+extension. A named profile ports by renaming frontmatter keys. A role written inline
+in a skill body ports by hand. The 86 forks are therefore the harness's largest
+single obstacle to the Codex work in 0802 and 0924 — not its agent definitions.
+
+**Duplication.** Roles are currently re-described at each call site, so the same
+role drifts between skills instead of being fixed once.
+
+## The decision that must be made first
+
+**A fork inherits the parent's resident context; a named agent starts bare**
+(memory `feedback_fork_skills_bare_context`). Converting without settling this ships
+reviewers that do not know the git discipline, the MOE posture or the guards — the
+conversion would look clean and silently lower review quality.
+
+Two candidate answers, and the choice is the author's, not the executor's:
+
+- each profile body loads the subset of `rules/` it needs, explicitly; or
+- one shared preamble is injected into every profile, so the roster stays terse.
+
+Do not start step 2 before this is answered in this ticket's log.
+
+## The budget constraint
+
+`tests/test_resident_census.py:48` caps the `agents` channel at **800 characters —
+`name` plus `description` of every `agents/*.md`, not the bodies.** `team-lead`
+spends 350 of it (name 9, description 341). About 450 characters remain, which is
+two to four more profiles at that description length, or more with terser ones.
+The roster is capped by design; this ticket must not raise the budget
+(`feedback_rules_crystallize_from_memory` and the census docstring both make a
+budget raise a defended decision, not an edit).
+
+## Relevant files
+
+- `agents/team-lead.md` — the only existing profile, and the shape to follow
+- `tests/test_resident_census.py` — lines 48 and 59, the channel budget and floor
+- `tests/test_model_rightsizing.py` — pins the short model enum profiles must use
+- `rules/claude-code.md` § Subagent levers — model and effort per launch, nesting depth
+- `skills/gaze/`, `skills/review-pr/`, `skills/review-pr-prose/` — the three heaviest
+  fork sites, 64 of the 86 between them
+- `docs/2026-09-16-runtime-capability-survey.md` — the portability evidence
+
+## Actions
+
+1. Settle the bare-context decision above and record it in this ticket's log.
+2. Inventory the distinct roles actually played by the 86 forks. Do not assume a
+   count — derive it, and name each role by what it decides, not by the skill that
+   calls it.
+3. Write the profiles the inventory justifies, within the 800-character channel.
+   Candidates named by the author: `coder`, `advisor`, `reviewer-*`, and a default
+   MOE posture.
+4. Convert **one** heavy site first — `review-pr` is the natural pilot, 16 forks in
+   one skill with a clear per-perspective role — and compare review output against
+   the fork version before converting the rest.
+5. Leave a fork where inherited context genuinely is the point, and say so in the
+   skill. This ticket is not a mandate to reach zero forks.
+
+## Test
+
+Red step first: a test asserting every `agents/*.md` declares a `model` from the
+short enum and that the channel stays under budget must **fail** against a
+deliberately malformed profile before it is trusted. Then a behavioural check on the
+pilot: the converted `review-pr` must still surface a defect that the fork version
+surfaced — pick one from a past PR and replay it.
+
+## Verification
+
+- [ ] The architectural decision is in the log before any profile is written.
+- [ ] `tests/test_resident_census.py` passes; the `agents` channel is under 800.
+- [ ] The pilot conversion catches the replayed defect.
+- [ ] Every remaining fork is either converted or justified in its skill body.
+
+## Invariants
+
+- No skill gains a per-repo CONFIG block (`feedback_skills_just_work_no_config_blocks`).
+- Reviewers stay decorrelated from the coder (`rules/workflow.md` § Delegation).
+- The `agents` channel budget is not raised by this ticket.
+- `make check` passes.
+
+## Exit criteria
+
+- [ ] The roles the harness actually uses are declared, not re-described per call.
+- [ ] The pilot skill delegates through profiles with no loss of review quality.
+- [ ] A profile ports to Codex or Pi by frontmatter translation alone, demonstrated
+      once against the inventory in 0802.
