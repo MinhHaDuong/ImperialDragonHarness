@@ -25,3 +25,117 @@ variable in an `env -i` subshell, never print / log / argv the value.
       silent no-op (see feedback_gaze_external_seats_fail_open)
 - [ ] Fake-sentinel test, never a real key; asserts against a child process
 - [ ] `make check` passes
+
+## Imagine pass 2026-09-16 — premise gap, and the author's decision
+
+**The ticket as filed would have produced a regression.** `~/.config/keys/openrouter.env`
+holds NO bare `OPENROUTER_API_KEY`. It defines only `OPENROUTER_API_KEY_AEDIST`,
+`_CLIMATEFINANCE`, `_IDH`, `_PI` and five `EXPIRED_*`. The canonical name exists
+at runtime only because the harness `.env` `KEYS=` line RENAMES
+`OPENROUTER_API_KEY_IDH` to it — i.e. it is manufactured by the very mechanism
+0945 deletes. A faithful port scanning the keystore for `OPENROUTER_API_KEY`
+finds nothing and fails on every invocation.
+
+`reviewers.sh` never meets this because each seat's `panel.yml` `credential-env:`
+names its keyset variant directly. `peer_review.py` had no equivalent input.
+
+**Author's decision, 2026-09-16:** add a `--credential-env NAME` flag defaulting
+to `OPENROUTER_API_KEY_IDH`. The identity becomes an input of the caller rather
+than a constant, mirroring what `panel.yml` already does per seat, so a project
+invoking this skill can bill its own identity without editing code. Rejected:
+hardcoding `_IDH` (a project would silently bill the harness identity), and
+adding a bare `OPENROUTER_API_KEY` to the keystore (a sixth credential copy in a
+file whose header promises there is no second copy).
+
+**Shape.** Do not port `env -i` literally: Python's `subprocess.run(env=...)`
+replaces the child environment natively, and there is no `BASH_ENV` re-entry to
+defeat from Python. Keep a `bash -c` shell-out for the EXTRACTION itself, so the
+provider file is sourced as trusted shell code with the same semantics as
+`bash-env.sh` and `reviewers.sh` — a hand-rolled Python parse of the same file
+would silently diverge. Locating the file needs no subprocess. The provider is
+static (`openrouter.env`), so no multi-file scan is needed; the failure message
+must name the exact file and variable probed.
+
+**In scope, found by the pass and easy to miss:** `--repo-root` exists solely to
+seed the `.env` walk and becomes dead with it; `skills/external-peer-review/SKILL.md:26`
+documents the fallback and becomes false. Both must be swept in this change.
+Nothing tested exercises the walk (`tests/test_external_peer_review_skill.py:63`
+only asserts a substring appears in the source), so removal breaks no test —
+which also means no test currently protects this behaviour either way.
+
+**Antipattern scan:** clean. 0944 turns out not to be a Python consumer, so
+0943 is the only one; a shared `resolver.py` module would be premature
+abstraction for a single call site. Private functions in `peer_review.py`, which
+is where `reviewers.sh` keeps its equivalents.
+
+## Exit criteria (revised 2026-09-16)
+- [ ] `--credential-env NAME` flag added, defaulting to `OPENROUTER_API_KEY_IDH`
+- [ ] Resolves that name from `~/.config/keys/openrouter.env` at point of use;
+      an already-set environment variable still wins
+- [ ] Extraction shells out so the provider file is sourced as trusted shell
+      code, never hand-parsed; the value reaches neither argv nor any log
+- [ ] The `.env`-walking fallback is removed, not deprioritized
+- [ ] `--repo-root` removed with it, since the walk was its only consumer
+- [ ] `SKILL.md:26` rewritten to describe keystore resolution
+- [ ] Fails loud, naming the exact file and variable probed -- never a silent
+      no-op (see feedback_gaze_external_seats_fail_open)
+- [ ] Fake-sentinel test, never a real key; asserts against a child process
+- [ ] `make check` passes
+
+## Plan 2026-09-16
+
+**Actions, in order.** Write the first test RED first, then: add
+`_credential_provider_file()` (static `~/.config/keys/openrouter.env`; no bespoke
+override knob — the test overrides `HOME`); add `_keystore_value(file, name)`
+porting `reviewers.sh:_keystore_value`, keeping the `bash -c` shell-out but using
+`subprocess.run(env=...)` instead of an `env -i` prefix (redundant once `env=`
+replaces the environment, and two mechanisms invite a reviewer to ask which is
+authoritative); add `resolve_credential(name)` with order env-then-keystore;
+DELETE `load_api_key` outright, not as a wrapper; drop `--repo-root`, add
+`--credential-env` defaulting to `OPENROUTER_API_KEY_IDH`; update `main()`.
+Then SKILL.md:26, then the test replacement below. Land 2-6 as one atomic change
+so `main()` is never half-migrated.
+
+**The first test** spawns a real child with an `env=` dict built FROM SCRATCH —
+only `HOME` (a fake home with a planted keystore) and `PATH`. **Never
+`{**os.environ, ...}`**: this machine carries a live `OPENROUTER_API_KEY_IDH`,
+and the inheriting pattern used elsewhere in the Python suites would run the
+resolution against it. The child prints the LENGTH of the resolved value, never
+the value. Assert the sentinel never appears in stdout+stderr, with a second
+planted string as a positive control so the haystack is known non-empty.
+A second case plants a different-length value in the child's env and asserts env
+wins over keystore — measured on the child, not reasoned from the source.
+
+**The discriminator that makes "never hand-parsed" testable.** The happy path
+cannot tell a `bash -c` source from a hand-rolled Python parser: a bare
+`NAME=value` fixture line satisfies both. Plant a second line in `export NAME=value`
+form. The old `.env` walk used `line.startswith("NAME=")`, which misses the
+`export ` prefix; the bash reference handles both. That one fixture line is what
+fails a reimplementation rather than merely a different implementation.
+
+**Shell-injection guard:** `--credential-env` is a CLI argument that reaches a
+`bash -c`. Validate it against `^[A-Za-z_][A-Za-z0-9_]*$` before use and pass it
+POSITIONALLY (`_ "$1" "$2"`), never interpolated into the script text — the same
+validation `_resolve_seat_credential` already applies.
+
+**Replace the tautological assertion.** `tests/test_external_peer_review_skill.py:63`
+asserts `"OPENROUTER_API_KEY" in src`. That is spelling, not behaviour — and it
+will keep passing after this change because `OPENROUTER_API_KEY_IDH` CONTAINS it
+as a substring. It would survive deleting `resolve_credential` entirely. Replace
+with the behavioural child-process test above, and demote any source grep to a
+narrow removal ratchet (`--repo-root` and `load_api_key` absent from source).
+
+**Risks.** Grep for other invocations of `peer_review.py` before landing: every
+caller not passing the flag silently switches identity to IDH billing. And a
+caller exporting only the old bare `OPENROUTER_API_KEY` will now fail loud rather
+than resolve — correct per this ticket, but it must be said in SKILL.md so it
+reads as a decision rather than a regression.
+
+## Feasibility 2026-09-16: PASS
+Targets verified present: `load_api_key` at peer_review.py:82, `--repo-root` at
+:187, its only call at :214, SKILL.md:26 is the "Check the key" step, and
+tests/test_external_peer_review_skill.py:63 is the substring assertion. No
+cross-cutting registry: the new imports are stdlib, so `IMPORT_TO_DIST` in
+tests/test_deps_declared.py needs no entry. No file overlap with 0944.
+If you change SKILL.md FRONTMATTER, run `make skills-catalog` and say so in the
+PR — README.md is generated from it and a sibling PR touching it would collide.
