@@ -663,7 +663,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-07T03:49:11Z",
-      "last_confirmed": "2026-09-07T03:49:11Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 7,
@@ -674,7 +674,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-14"
@@ -740,7 +740,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:16Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 39,
       "last_accessed": "2026-07-14"
@@ -770,7 +770,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-07-14"
@@ -799,7 +799,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-14"
@@ -826,7 +826,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T10:51:21Z",
-      "last_confirmed": "2026-09-10T10:51:21Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -905,7 +905,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:40Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_assent_is_not_a_trigger": {
@@ -996,7 +996,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:40Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_autonomous_raid_doudou_pickup": {
@@ -1022,7 +1022,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T10:10:36Z",
-      "last_confirmed": "2026-09-10T10:10:36Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -1068,7 +1068,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:41Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-07-15"
@@ -1078,7 +1078,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:41Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-11"
@@ -1097,7 +1097,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:42Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_beat_padme_ssh": {
@@ -1133,7 +1133,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T09:02:31Z",
-      "last_confirmed": "2026-09-16T09:02:31Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -1142,7 +1142,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T15:48:11Z",
-      "last_confirmed": "2026-09-10T15:48:11Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -1161,7 +1161,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-07T03:49:11Z",
-      "last_confirmed": "2026-09-07T03:49:11Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 8,
@@ -1377,7 +1377,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:42Z",
-      "last_confirmed": "2026-09-06T22:39:42Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_chore_close_staging_and_late_close": {
@@ -1441,7 +1441,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:14Z",
-      "last_confirmed": "2026-09-06T22:39:42Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 5,
       "last_accessed": "2026-07-14"
@@ -1451,7 +1451,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:42Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "access_count": 8,
       "last_accessed": "2026-07-21"
@@ -1489,7 +1489,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:43Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_close_claim_needs_a_manual_check": {
@@ -1606,7 +1606,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T09:02:31Z",
-      "last_confirmed": "2026-09-16T09:02:31Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -1635,7 +1635,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T15:48:11Z",
-      "last_confirmed": "2026-09-10T15:48:11Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -1704,7 +1704,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-09-06T22:39:43Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 6,
       "last_accessed": "2026-07-14"
@@ -1722,7 +1722,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:44Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-10"
@@ -1822,7 +1822,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T13:30:09Z",
-      "last_confirmed": "2026-09-10T13:30:09Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true
     },
@@ -1895,7 +1895,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:44Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-10"
@@ -1905,7 +1905,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-09-06T22:39:44Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 10,
       "last_accessed": "2026-07-11"
@@ -1915,7 +1915,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-10"
@@ -1982,7 +1982,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-08T06:48:54Z",
-      "last_confirmed": "2026-09-08T06:48:54Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -2029,7 +2029,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:45Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_env_file_no_override": {
@@ -2125,7 +2125,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T10:29:04Z",
-      "last_confirmed": "2026-09-10T10:41:00Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 3,
@@ -2146,7 +2146,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-07"
@@ -2156,7 +2156,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-06-18"
@@ -2192,7 +2192,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:08Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-10"
@@ -2202,7 +2202,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_erg_verb_drift": {
@@ -2210,7 +2210,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:45Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-10"
@@ -2430,7 +2430,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:53Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-15"
@@ -2577,7 +2577,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-07-15"
@@ -2642,7 +2642,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_gh_pr_edit_classic_projects": {
@@ -2801,7 +2801,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T09:02:31Z",
-      "last_confirmed": "2026-09-16T09:02:31Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -2810,7 +2810,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-14"
@@ -2820,7 +2820,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T10:26:05Z",
-      "last_confirmed": "2026-09-10T10:26:05Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 1,
@@ -2848,7 +2848,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T09:11:12Z",
-      "last_confirmed": "2026-09-10T09:11:12Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -2859,7 +2859,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:46Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false
     },
     "feedback_guard_one_instance_not_the_class": {
@@ -2895,7 +2895,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T11:44:31Z",
-      "last_confirmed": "2026-09-10T11:44:31Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -2951,7 +2951,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 5,
       "last_accessed": "2026-09-10"
@@ -2961,7 +2961,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:55Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-07-15"
@@ -2990,7 +2990,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:46Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-09-10"
@@ -3026,7 +3026,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 18,
       "last_accessed": "2026-07-15"
@@ -3036,7 +3036,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T10:46:00Z",
-      "last_confirmed": "2026-09-10T10:46:00Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 3,
@@ -3095,7 +3095,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_inspect_ref_readonly": {
@@ -3139,7 +3139,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:47Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 13,
       "last_accessed": "2026-09-07"
@@ -3237,7 +3237,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_leads_park_on_untracked_background": {
@@ -3343,7 +3343,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-15"
@@ -3361,7 +3361,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:47Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_longrunning_jobs": {
@@ -3495,7 +3495,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-08T06:48:54Z",
-      "last_confirmed": "2026-09-08T06:48:54Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 5,
@@ -3522,7 +3522,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 10,
       "last_accessed": "2026-09-10"
@@ -3736,7 +3736,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:47Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_moodle_grade_csv_format": {
@@ -3984,7 +3984,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_no_shared_env_sync_during_sibling_agent": {
@@ -4176,7 +4176,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-08T09:01:10Z",
-      "last_confirmed": "2026-09-08T09:01:10Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 4,
@@ -4248,7 +4248,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_parallel_push_during_investigation": {
@@ -4334,7 +4334,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-09T16:41:41Z",
-      "last_confirmed": "2026-09-10T08:43:18Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 17,
@@ -4361,7 +4361,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 5,
       "last_accessed": "2026-07-14"
@@ -4420,7 +4420,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-14"
@@ -4473,7 +4473,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T09:05:41Z",
-      "last_confirmed": "2026-09-10T09:05:41Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 1,
@@ -4569,7 +4569,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:55Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-11"
@@ -4761,7 +4761,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:09Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_ratchet_ceiling_race_and_dropped_close": {
@@ -4803,7 +4803,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T16:55:23Z",
-      "last_confirmed": "2026-09-10T16:55:23Z",
+      "last_confirmed": "2026-09-16T17:14:36Z",
       "promoted": false,
       "backfilled": true
     },
@@ -4965,7 +4965,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-09T16:41:41Z",
-      "last_confirmed": "2026-09-09T16:41:41Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -5246,7 +5246,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-14"
@@ -5266,7 +5266,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-06-18"
@@ -5294,7 +5294,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:17Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 8,
       "last_accessed": "2026-09-10"
@@ -5425,7 +5425,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-14"
@@ -5479,7 +5479,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 6,
       "last_accessed": "2026-09-06"
@@ -5572,7 +5572,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_skill_commit_discipline": {
@@ -5580,7 +5580,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "feedback_skill_invocation_flag_gates_mandates": {
@@ -5588,7 +5588,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-13"
@@ -5598,7 +5598,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:49Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-10"
@@ -5616,7 +5616,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-06T12:21:11Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_smoke_one_then_blast_parallel": {
@@ -5624,7 +5624,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false
     },
     "feedback_smoke_promote_production": {
@@ -5787,7 +5787,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T08:51:20Z",
-      "last_confirmed": "2026-09-10T08:51:20Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 2,
@@ -5862,7 +5862,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:54Z",
       "promoted": true,
       "promoted_at": "2026-08-10T20:02:34Z",
       "access_count": 6,
@@ -5873,7 +5873,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T13:43:31Z",
-      "last_confirmed": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-16T17:14:36Z",
       "promoted": false,
       "backfilled": true
     },
@@ -5891,7 +5891,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:14Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-13"
@@ -5931,7 +5931,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-07T03:49:11Z",
-      "last_confirmed": "2026-09-07T04:18:05Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 13,
@@ -5942,7 +5942,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 16,
       "last_accessed": "2026-09-07"
@@ -6047,7 +6047,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:50Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-08-14"
@@ -6182,7 +6182,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_trust_the_llm": {
@@ -6236,7 +6236,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:50Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "feedback_unreviewed_not_clean": {
@@ -6254,7 +6254,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-09-07"
@@ -6336,7 +6336,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-11"
@@ -6483,7 +6483,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:56Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-08-14"
@@ -6503,7 +6503,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 6,
       "last_accessed": "2026-09-10"
@@ -6584,7 +6584,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:51Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false
     },
     "feedback_verify_simplify_isolation": {
@@ -6628,7 +6628,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T13:43:31Z",
-      "last_confirmed": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true
     },
@@ -6653,7 +6653,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false
     },
     "feedback_workflow_sandbox_contract": {
@@ -6681,7 +6681,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:51Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 38,
       "last_accessed": "2026-09-07"
@@ -6720,7 +6720,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T16:55:23Z",
-      "last_confirmed": "2026-09-10T16:55:23Z",
+      "last_confirmed": "2026-09-16T17:14:36Z",
       "promoted": false,
       "backfilled": true
     },
@@ -6765,7 +6765,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:10Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 6,
       "last_accessed": "2026-07-13"
@@ -7180,7 +7180,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 68,
       "last_accessed": "2026-09-07"
@@ -7275,7 +7275,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-15"
@@ -7349,7 +7349,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-10"
@@ -7494,7 +7494,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-07-15"
@@ -7574,7 +7574,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false
     },
     "project_het_submission_branches_protected": {
@@ -7599,7 +7599,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-05T19:24:54Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:40Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-08-14"
@@ -7909,7 +7909,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "project_paper_instrument_circulation": {
@@ -8181,7 +8181,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-09-06T22:39:52Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 3,
       "last_accessed": "2026-09-08"
@@ -8460,7 +8460,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T11:50:51Z",
-      "last_confirmed": "2026-09-10T12:07:43Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 3,
@@ -8514,7 +8514,7 @@
     "reference_branch_cleanup_incidents": {
       "projects": [],
       "first_seen": "2026-09-09T18:04:51Z",
-      "last_confirmed": "2026-09-09T18:04:51Z",
+      "last_confirmed": "2026-09-16T17:14:54Z",
       "promoted": true,
       "backfilled": true
     },
@@ -8523,7 +8523,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T13:30:09Z",
-      "last_confirmed": "2026-09-10T13:30:09Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true
     },
@@ -8559,7 +8559,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-06T22:39:53Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-08-14"
@@ -8644,7 +8644,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-06-08T10:21:56Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 1,
       "last_accessed": "2026-09-10"
@@ -8654,7 +8654,7 @@
         "-home-haduong-CNRS-code-search-works-for-zotero"
       ],
       "first_seen": "2026-09-06T21:44:32Z",
-      "last_confirmed": "2026-09-06T21:44:32Z",
+      "last_confirmed": "2026-09-16T17:14:54Z",
       "promoted": true,
       "access_count": 3,
       "last_accessed": "2026-09-06"
@@ -8713,7 +8713,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:38Z",
       "promoted": false,
       "access_count": 13,
       "last_accessed": "2026-09-07"
@@ -8753,7 +8753,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-10T13:43:31Z",
-      "last_confirmed": "2026-09-10T13:43:31Z",
+      "last_confirmed": "2026-09-16T17:14:36Z",
       "promoted": false,
       "backfilled": true
     },
@@ -8899,7 +8899,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-09T16:41:41Z",
-      "last_confirmed": "2026-09-09T17:39:48Z",
+      "last_confirmed": "2026-09-16T17:14:37Z",
       "promoted": false,
       "backfilled": true,
       "access_count": 7,
@@ -9061,7 +9061,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-24T20:24:11Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:41Z",
       "promoted": false
     },
     "user_moa_moe_contract": {
@@ -9105,7 +9105,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-07-13T10:47:15Z",
-      "last_confirmed": "2026-09-06T22:39:53Z",
+      "last_confirmed": "2026-09-16T17:14:39Z",
       "promoted": false,
       "access_count": 2,
       "last_accessed": "2026-07-10"
@@ -9155,7 +9155,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T09:40:00Z",
-      "last_confirmed": "2026-09-16T09:40:00Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false
     },
     "feedback_memory_batch_lands_as_three_things": {
@@ -9163,7 +9163,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T09:40:00Z",
-      "last_confirmed": "2026-09-16T09:40:00Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false
     },
     "feedback_rules_crystallize_from_memory": {
@@ -9171,7 +9171,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T10:05:00Z",
-      "last_confirmed": "2026-09-16T10:05:00Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false
     },
     "feedback_reviewers_share_the_authors_environment": {
@@ -9179,7 +9179,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T16:03:40Z",
-      "last_confirmed": "2026-09-16T16:03:40Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },
@@ -9308,7 +9308,7 @@
         "-home-haduong--claude"
       ],
       "first_seen": "2026-09-16T16:36:55Z",
-      "last_confirmed": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T17:14:42Z",
       "promoted": false,
       "backfilled": true
     },

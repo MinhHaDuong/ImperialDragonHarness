@@ -1,9 +1,9 @@
 ## Key insights
 
-- Shared state has owners, and the owner is findable. Uncommitted work in the primary checkout, a branch switched under a background job, a worktree another session is standing in: the frontmatter's originSessionId leads to a transcript, and a peer answers in a minute. Asking beat every inference a file scan could make.
-- A check whose all-clear cannot be told from "I could not look" is not a check, and the failure runs both ways: a probe returning everything hides a broken parse as surely as one returning nothing. Run it once against a case known to be positive before trusting it.
-- Merge by union, never by copying a file wholesale. An index, a provenance store, or an append-only log taken from a stale checkout silently reverts whatever landed meanwhile, and the merge reports clean while doing it.
-- Stored state describes the moment it was written, and the tool reading it describes the branch it stands on: a restore takes from HEAD and not from the ref you just compared against, `erg ready` lists the current tree, rtk rewrites git's output. Re-verify live before acting.
+- Shared state has owners, and the owner is findable. Uncommitted work in the primary checkout, a branch switched under a background job, a worktree another session is standing in: ask the peer before acting, and where no peer answers, verify byte-identity before you discard anything.
+- A check whose all-clear cannot be told from "I could not look" is not a check. Its positive control must fire against the detector actually in question, on the population present at that moment — a control that passed yesterday, or that exercised the enumerator instead of the detector, licenses nothing.
+- Merge by union, never by copying a file wholesale. An index, a provenance store or an append-only log taken from a stale checkout silently reverts whatever landed meanwhile, and reports clean while doing it.
+- Evidence degrades in relay. A tool reads the branch it stands on; a quote reproduced from a summary drifts toward the argument citing it; an artifact corrected in one place leaves its description still wrong. Re-read the live source, and re-read what you yourself wrote.
 - This memory is the harness's operational runbook: invisible invariants and failure modes discovered at cost, not what the code does (git) nor architecture decisions (tickets and docs). A rule or a guard earns its place only against a defect class that demonstrably exists.
 
 ## Entries
@@ -115,7 +115,7 @@
 - [An orphan branch may already be archived as a tag](feedback_orphan_branch_may_be_archived_as_a_tag.md)
 - [Stale forward promises in skill bodies](feedback_stale_forward_promises_in_skills.md)
 - [A positive control validates the detector, not the enumerator](feedback_positive_control_validates_the_detector_not_the_enumerator.md)
-- [Reviewers share the author's environment](feedback_reviewers_share_the_authors_environment.md) — decorrelated by model and angle, not by machine; CI found what twenty-one agents could not
+- [Reviewers share the author's environment](feedback_reviewers_share_the_authors_environment.md)
 - [Background isolation blocks primary-checkout writes](feedback_background_session_isolation_blocks_primary_writes.md)
 - [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md)
 - [A blocked compound command skips every line](feedback_blocked_compound_command_skips_every_line.md)
@@ -123,7 +123,7 @@
 - [grep and find are shell functions, not GNU tools](feedback_grep_find_are_shell_functions.md)
 - [Two reviewers in one worktree poison each other's derived files](feedback_concurrent_reviewers_one_worktree.md)
 - [Blob SHAs tell a deletion from a move](feedback_blob_sha_distinguishes_absent_from_moved.md)
-- [A positive control's witness can expire](feedback_positive_control_witness_can_expire.md) — a merged PR is no longer an open PR
-- [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md) — index line, body, provenance record
-- [Rules crystallize from memory, not from a session](feedback_rules_crystallize_from_memory.md) — stop writing lessons straight into rules/
-- [A paraphrase drifts toward the argument](feedback_paraphrase_drifts_toward_the_argument.md) — verify a load-bearing quote verbatim, and fix the PR body too
+- [A positive control's witness can expire](feedback_positive_control_witness_can_expire.md)
+- [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md)
+- [Rules crystallize from memory, not from a session](feedback_rules_crystallize_from_memory.md)
+- [A paraphrase drifts toward the argument](feedback_paraphrase_drifts_toward_the_argument.md)
