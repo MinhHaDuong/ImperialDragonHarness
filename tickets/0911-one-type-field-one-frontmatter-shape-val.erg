@@ -21,7 +21,7 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16, 17; `skills/memory/SKILL.md`; `tests/test_dream.py` — the flat-`type` contradiction is at lines 27 and 30, where fixtures nest `type:` under `metadata:` while every live body uses it top-level; `docs/2026-09-11-memory-systems-comparison.md` — the MemU adapter/service patterns action 5 refers to; `requirements-dev.txt` — the dependency declarations, which also record that a `pyproject.toml` is an author-reserved decision (ticket 0530); knowledge-hint helpers in `scripts/knowledge_hints.py`.
+`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16, 17; `skills/memory-sweep/SKILL.md`; `tests/test_dream.py` — the flat-`type` contradiction is at lines 27 and 30, where fixtures nest `type:` under `metadata:` while every live body uses it top-level; `docs/2026-09-11-memory-systems-comparison.md` — the MemU adapter/service patterns action 5 refers to; `requirements-dev.txt` — the dependency declarations, which also record that a `pyproject.toml` is an author-reserved decision (ticket 0530); knowledge-hint helpers in `scripts/knowledge_hints.py`.
 
 ## Actions
 

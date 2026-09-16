@@ -92,7 +92,7 @@ or `$ERG new` is called by `skills/release`, `skills/molt`, `skills/raid`,
 guards against its uncommitted output.
 
 Two skills mention filing a ticket without pinning the allocator —
-`skills/healthcheck` ("create a ticket") and `skills/memory` ("File ticket or
+`skills/healthcheck` ("create a ticket") and `skills/memory-sweep` ("File ticket or
 delete"). Neither prescribes hand-picking an ID, so this is a loose end rather
 than a defect. The genuinely unguarded path is the collision-recovery advice in
 `AGENTS.md` itself, which tells the agent to *choose* a number above the

@@ -95,7 +95,7 @@ case "$file_path" in
         esac
         rel="${file_path#$primary_root/}"
         # projects/*/memory/** is tracked via the primary .gitignore whitelist by
-        # design, and skills/memory tells every session to write it directly by
+        # design, and skills/memory-sweep tells every session to write it directly by
         # absolute path — so a primary-checkout write there is intended, not the
         # trap. Scoped narrowly (NOT a blanket projects/* exemption); for a
         # non-harness project the pattern never matches, so it is a no-op.

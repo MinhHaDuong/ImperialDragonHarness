@@ -180,7 +180,7 @@ fi
 
 # 10. Memory-dir exemption: projects/*/memory/** in the primary checkout is
 # written directly by absolute path by design (the primary .gitignore whitelist
-# tracks it; skills/memory tells every session to write it there). Not denied.
+# tracks it; skills/memory-sweep tells every session to write it there). Not denied.
 rc=$(_rc "$WORKTREE" "$PRIMARY" "$PRIMARY/projects/-home-haduong--claude/memory/MEMORY.md")
 if [ "$rc" = "0" ]; then
     echo "PASS: exempts primary projects/*/memory/** path (exit 0)"

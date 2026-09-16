@@ -9,7 +9,7 @@ because the index told it the body exists, when nothing in the conversation
 would have surfaced it.
 
 That event has a signature: a **working** session reads a memory body. A
-session that runs `/dream`, `/roar`, `/lair` or `/memory` reads bodies because
+session that runs `/dream`, `/roar`, `/lair` or `/memory-sweep` reads bodies because
 maintaining them is its job, and counting those would measure the memory
 system's own housekeeping rather than its use. So sessions are split, and the
 maintenance arm doubles as the positive control: if the probe cannot see reads
@@ -54,8 +54,14 @@ TU = re.compile(
     rb'\s*"input":\s*\{(?:[^{}]|\{[^{}]*\}){0,600}?"file_path":\s*"([^"]{0,300})"'
 )
 MEM = re.compile(r"memory/([A-Za-z0-9_.-]+\.md)$")
-SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory)"')
-CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory)</command-name>")
+# `memory` was renamed `memory-sweep` on 2026-09-16, and both spellings must
+# match: this script scans the whole trace corpus, which spans either side of
+# the rename. Order inside the alternation buys nothing — Python's `re`
+# backtracks into it, so `memory` failing on the trailing `-sweep` retries the
+# longer branch anyway; both orders measured identical. The longer one is
+# listed first for the reader, not for the engine.
+SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory-sweep|memory)"')
+CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory-sweep|memory)</command-name>")
 BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
 BASH_MEM = re.compile(r"memory/((?:feedback|project|reference|user)[A-Za-z0-9_.-]*\.md)")
 
@@ -210,4 +216,5 @@ def main() -> None:
         print(f"    {name:30s} {b['touched']:5d} / {b['sessions']:5d}  ({pct:.2f}%)")
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -130,7 +130,9 @@ MANDATED_PATH_RE = re.compile(r"/memory/|MEMORY\.md|STATE\.md")
 MANDATED_BASH_RE = re.compile(
     r"(?:^|&&|;|\|)\s*(?:git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close)\b"
 )
-MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "housekeeping"}
+# `memory` and `memory-sweep` are the same skill either side of the
+# 2026-09-16 rename; the corpus spans both, so both stay.
+MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "memory-sweep", "housekeeping"}
 PATH_TOOLS = {"Read", "Edit", "Write", "NotebookEdit"}
 
 
