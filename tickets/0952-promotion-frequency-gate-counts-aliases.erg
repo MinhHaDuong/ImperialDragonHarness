@@ -1,0 +1,91 @@
+%erg 0.1
+Title: The promotion frequency gate counts path aliases as distinct projects
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+
+2026-09-16T17:30Z claude created by the same run: 253 of 258 promotion candidates were one project counted under alias paths, so nothing was promoted
+--- body ---
+## Context
+
+Found during the `/dream -home-haduong--claude` run of 2026-09-16.
+
+`provenance.py candidates` returned **258** promotion candidates. Measured by
+canonicalising the project slugs, **253 of them are a single project counted
+twice or three times under different paths**:
+
+| Same project, counted as several |
+|---|
+| `-home-haduong-Climate-finance` / `-home-haduong-CNRS-projets-actifs-climate-finance-het` / `-home-haduong-Climate-finance--superseded-20260913` |
+| `-home-haduong-chemin-de-voix` / `-home-haduong-CNRS-projets-actifs-chemin-de-voix` |
+| `-home-haduong-git-erg` / `-home-haduong-CNRS-code-git-erg` |
+| `-home-haduong-CNRS-papiers-actif-livre-milliards-climat` / `-home-haduong-CNRS-projets-actifs-livre-milliards-climat` |
+| `-home-haduong-Oeconomia-Climate-finance` / `-home-haduong-Oeconomia-Climate-finance--superseded-20260913` |
+
+`memory/.project-aliases.json` holds exactly two mappings, neither of them one
+of the families above. The skill documents the frequency gate as ">=2 distinct
+**canonical** projects (path aliases collapsed)", so the gate is specified
+correctly and implemented against an alias table that was never filled in.
+
+Of the five candidates that do span two canonical projects, four belong to one
+research programme (`chemin-de-voix` / `tracing-kieu`) and would fail the
+context-independence gate; the fifth, `user_profile`, spans two **machines**
+(`cadens`, `padme`), not two projects — a second alias class the table does not
+model either.
+
+So the true candidate count is between zero and four, against 258 reported.
+
+## Why this is above the floor
+
+The frequency gate is the only **mechanical** gate of the three; cost and
+context-independence are agent judgement. A broken mechanical gate does not
+merely add noise — it moves the whole decision onto judgement while presenting
+itself as evidence, and the decision it gates *writes to the harness tier*,
+which is resident in every session of every project. A project-local lesson
+promoted there is paid for by every session forever.
+
+Nothing was promoted on 2026-09-16: the run refused the pass rather than
+exercise judgement 258 times on a gate it had just measured broken.
+
+## Relevant files
+
+- `memory/.project-aliases.json` — two entries, needs the families above
+- `skills/dream/provenance.py` — `candidates`, and wherever canonicalisation is applied
+- `skills/dream/SKILL.md` — steps 9 and 10 state the gate's contract
+- `memory/.provenance.json` — carries the raw project lists
+
+## Actions
+
+1. Populate the alias table with the observed families. Prefer deriving them
+   where the derivation is safe (a `--superseded-<date>` suffix is a rename of
+   the same project) over hand-listing what will drift.
+2. Decide and record how a **machine** slug is treated. `user_profile` seen on
+   `cadens` and `padme` is one project on two machines, not cross-project
+   evidence, and the current table has no concept for it.
+3. Make the gate report its own health: print how many candidates survive
+   canonicalisation versus how many were raw, so a future flood is visible in
+   the run output rather than in a hand count.
+4. Re-run `candidates` after the table is filled and record the real number in
+   this ticket before any promotion is evaluated.
+
+## Test
+
+- A candidate whose project list is two aliases of one project does **not**
+  appear in `candidates` output. Positive control: a candidate whose list is two
+  genuinely distinct canonical projects still does.
+- The alias table is exercised by test, not merely present — a fixture with a
+  known alias pair and a known real pair, asserting one is collapsed and the
+  other is not.
+- `--superseded-<date>` collapses to its base, asserted directly.
+
+## Verification
+
+- [ ] `candidates` collapses every alias family observed on 2026-09-16
+- [ ] A machine-scoped entry is classified deliberately, not by omission
+- [ ] The run output states raw versus canonical candidate counts
+- [ ] The real candidate count is recorded here before any promotion is applied
+
+## Exit criteria
+
+- [ ] The frequency gate counts projects, and a test proves it does not count paths
