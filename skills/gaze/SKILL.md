@@ -575,6 +575,27 @@ finish well inside its wall time. Before phase 6, run
 `/reviewers harvest <pr>` synchronously and hand the normalized
 `verifiable:` / `consider:` findings to the gate as panel comments.
 
+**Reviewing a PR outside this harness — pass `REVIEWERS_REPO`.** The seats
+read *this harness* by default, so a PR in another repository fails with an
+unknown pathspec: the head branch does not exist where the seats are looking.
+Whenever the reviewed checkout is not `~/.claude`, invoke as
+
+```bash
+REVIEWERS_REPO=<path-to-the-reviewed-checkout> \
+REVIEWERS_PR_BRANCH=<head-branch> \
+  ~/.claude/skills/reviewers/reviewers.sh request <pr>
+```
+
+`REVIEWERS_PR_BRANCH` is optional and skips the forge lookup; supply it when
+the head branch is already known, which it is by the time this runs.
+`reviewers.sh help` documents both.
+
+This is not hypothetical: a `/gaze` run on a git-erg PR (2026-09-16) lost all
+three seats, one of the two causes being exactly this — the seats searched the
+harness for a branch that lived in git-erg. Because the panel is fail-open, the
+run reported no external findings rather than an error, and the pathspec
+failure surfaced only in the integrity lines.
+
 **Disposition.** The gate dispositions external findings identically to
 internal ones (0205 rule 1). Seats are **advisory**: only verifiable-class
 findings may bounce. A seat that errors or hangs WARNs and the review
