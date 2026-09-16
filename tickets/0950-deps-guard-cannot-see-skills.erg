@@ -1,0 +1,88 @@
+%erg 0.1
+Title: The dependency guard cannot see skills/, and one undeclared import is already live
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+
+2026-09-16T16:50Z claude created by the roar sweep after 0802: the same guard hole one directory over, with a live undeclared openai import in skills/external-peer-review
+--- body ---
+## Context
+
+Found by the `/roar` sweep after `0802` merged. That ticket added `adapters/` to
+`tests/repo_sources.py`'s `SCAN_DIRS` because the import-declaration guard could
+not see a directory the same PR had just filled with Python. The sweep asked the
+obvious next question -- which *other* directories hold Python the guard cannot
+read -- and found one, with a live instance in it.
+
+`SCAN_DIRS` is `("scripts", "tests", "hooks", "bin", "adapters")`. On
+`origin/main` the repository carries eight Python files under `skills/`, none of
+them scanned. `skills/external-peer-review/peer_review.py` imports `openai`,
+which is not in `requirements-dev.txt`. So `tests/test_deps_declared.py` passes
+while a shipped skill depends on an undeclared package.
+
+The consequence is not abstract. `requirements-dev.txt` says in its own header
+that CI installs from it and "a fresh machine reads it at setup". A fresh
+machine therefore gets a harness whose `/external-peer-review` fails at import
+time, and the guard built to prevent exactly that reports green.
+
+## Evidence
+
+The detector was validated before the finding was trusted: run against
+`scripts/skill_frontmatter.py` it reports `yaml`, so it does see a third-party
+import when one is present. An earlier control run against `adapters/perch.py`
+returned only `skill_frontmatter`, a local module -- that control proved
+nothing, and is recorded here because a weaker control almost passed for a
+stronger one.
+
+| Directory | Python files on `origin/main` | In `SCAN_DIRS` |
+|---|---|---|
+| `tests` | 78 | yes |
+| `scripts` | 38 | yes |
+| `skills` | 8 | **no** |
+| `adapters` | 1 | yes (added by `0802`) |
+| `projects` | 1 | no -- memory bodies, not code this repo runs |
+
+Scanned directories currently carry no undeclared third-party import, so this is
+the only live instance.
+
+## Relevant files
+
+- `tests/repo_sources.py` -- `SCAN_DIRS`
+- `tests/test_deps_declared.py` -- the guard that reads it
+- `requirements-dev.txt` -- where `openai` is missing
+- `skills/external-peer-review/peer_review.py` -- the live instance
+- `pytest.ini` -- `norecursedirs`, for whether `skills/` needs the same treatment
+  `tests/fixtures` already gets via `EXCLUDED_ROOT`
+
+## Actions
+
+1. Add `skills` to `SCAN_DIRS`.
+2. Declare `openai` in `requirements-dev.txt` with a version range, matching the
+   file's existing pinning convention, and say in a comment which skill needs it.
+3. Re-run the guard and fix whatever else `skills/` turns out to carry. Seven
+   other files come into scope at once; this ticket owns their fallout.
+4. Decide whether `projects/` should also be scanned or explicitly excluded.
+   It holds one `.py` among memory bodies, so silence there is currently
+   accidental rather than decided.
+
+## Test
+
+- A positive control first: add an undeclared third-party import to a file under
+  `skills/`, confirm `test_deps_declared.py` goes red and names that file, then
+  remove it and confirm green. The guard extension is worthless if it cannot be
+  shown to fire on the directory it was extended to cover -- which is how
+  `0802` verified the `adapters/` case.
+- `make check` passes with `openai` declared.
+
+## Verification
+
+- [ ] `skills` is in `SCAN_DIRS` and the guard fires on a planted import there
+- [ ] `openai` is declared, with the reason recorded next to it
+- [ ] No other undeclared third-party import remains in any scanned directory
+- [ ] `projects/` is either scanned or excluded on purpose, not by omission
+
+## Exit criteria
+
+- [ ] A fresh install reading `requirements-dev.txt` can run every shipped skill
+- [ ] The guard's coverage is decided per directory rather than inherited
