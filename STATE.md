@@ -16,6 +16,37 @@ A reusable, science-backed personal harness for AI-assisted research: code and p
   a1184031 Merge pull request #906: design v7 — acceptance conditions closed, nomenclature settled
   222b0566 Merge pull request #905 from MinhHaDuong/housekeeping-state-2026-09-11
 
+## Resume point
+
+**2026-09-16, end of day — stopped deliberately, nothing is half-written.**
+
+Start here: `/hunt 0945`. The ticket carries its own complete contract — Imagine
+pass, Plan, feasibility verdict, and both settled author decisions. Do not
+re-plan it; implement what is written, and if something in it looks wrong, say
+so rather than deviating silently.
+
+Three things to know before the first command:
+
+1. **Wave 1 is merged and verified**, `make check` 996 on main. 0945's
+   `Blocked-by` is empty *in the tree*, checked, not merely in the header.
+2. **The dangerous file is `tests/test_bash_env_xtrace_silent.sh`.** Removing its
+   KEYS cases leaves a suite that passes while testing nothing — the exact
+   failure 0945's own exit criteria forbid. Its replacement case and both its
+   controls are specified in the ticket. This wave already shipped two tests that
+   could not fail; both were caught only by mutation testing, which is why the
+   plan names a killing mutation for every case.
+3. **PR #947 may still be open** (planning and state only, no code). Merge or
+   close it before branching, so 0945 does not start on a stale base.
+
+Owed to the author, outside any diff and not blocking 0945:
+
+- **Rotate** the six values a plain `bash -x` exposed — `ANTHROPIC_API_KEY`,
+  `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `HAL_ID`, `HAL_PASSWORD`, `KEYS`.
+  `~/.codex/auth.json` holds its own copy of the OpenAI key, so the keystore is
+  not the whole rotation surface.
+- **Decide** the fate of `scripts/projects.json`, orphaned when the dead
+  `setup-claude-agent.sh` was deleted (0941). Kept deliberately, not forgotten.
+
 ## Blockers
 
 (none)
