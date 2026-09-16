@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Hermeticity guard does not cover Python test suites
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+2026-09-16T13:24Z claude created
+
+--- body ---
+## Context
+
+`tests/test_bash_tests_are_hermetic.sh` (0359) makes BASH_ENV hermeticity
+mechanical — but it is a textual scanner over shell source, discovered by a
+`tests/*.sh` glob. Its own header is explicit that coverage is stated rather
+than implied, and it never mentions Python.
+
+**20 `tests/*.py` suites spawn subprocesses without clearing `BASH_ENV`.** A
+Python child gets `BASH_ENV` from `os.environ` exactly as a shell child does, so
+the 2026-07-27 defect class is live on the other half of the test tree: an
+injected fixture credential is overridden by the real one at child startup, and
+a failing assertion prints what it found. That incident leaked two live keys and
+forced a rotation.
+
+Same remedy, other language: pass an env with `BASH_ENV` cleared (or `env -i`)
+to every `subprocess.run`/`Popen`, and ratchet it with a guard over `tests/*.py`.
+
+Sibling of 0939 (xtrace tracing of the same loader), which covers a different
+exposure path of the same mechanism.
+
+## Exit criteria
+- [ ] A guard covers `tests/*.py` subprocess spawns for `BASH_ENV` neutralization
+- [ ] It reports file names and line numbers only, never the offending text and
+      never an environment value, per 0359's own discipline
+- [ ] It states its coverage and blind spots explicitly, and fails loudly rather
+      than reporting clean a file it could not parse
+- [ ] It carries a static negative control that fails against a naive implementation
+- [ ] The 20 existing offenders are fixed, verified by a fake sentinel, never a real key
+- [ ] `make check` passes

@@ -1,0 +1,45 @@
+%erg 0.1
+Title: setup-claude-agent.sh greps .env for a key that no longer lives there
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+2026-09-16T13:31Z claude created
+
+--- body ---
+## Context
+
+`scripts/setup-claude-agent.sh:75`:
+
+```sh
+grep 'ANTHROPIC_API_KEY' "$HARNESS/.env" | sudo tee /etc/claude-agent/env >/dev/null
+```
+
+This assumes `~/.claude/.env` holds literal `VAR=value` credential assignments.
+It has not since the KEYS mechanism landed — the file's own header states "NO
+SECRET MATERIAL LIVES HERE. This file names keys; it never holds them."
+
+So the script was already wrong before 0939 touched anything: its grep matched
+the `KEYS=` line by substring and wrote the whole *selector* line into
+`/etc/claude-agent/env`, where the service would read it as a credential
+assignment named KEYS. Removing `anthropic` from KEYS (2026-09-16) changes the
+failure mode from "writes the wrong thing" to "writes nothing"; it does not
+introduce the defect.
+
+The grep-a-comment hazard is real and was hit during that edit: a first pass at
+documenting the removal spelled the variable out in a `.env` comment, which the
+grep would have piped verbatim into the service env file. The `.env` comment now
+says explicitly why the token must not appear there — but a guard would be
+better than a warning nobody reads.
+
+Not fixed in the 0939 PR: how the agent should obtain its key is a design
+question (read the keystore directly? a helper invoked at need?), and it is the
+same question as the cross-runtime portability of the secrets mechanism.
+
+## Exit criteria
+- [ ] `setup-claude-agent.sh` obtains the key from the keystore, not by grepping `.env`
+- [ ] It fails loudly when the key cannot be resolved, rather than writing an
+      empty or malformed `/etc/claude-agent/env`
+- [ ] A test covers the resolution path with a fake sentinel, never a real key
+- [ ] No code path can write a `.env` comment line into a service env file
+- [ ] `make check` passes
