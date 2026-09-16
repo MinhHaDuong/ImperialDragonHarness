@@ -9,7 +9,7 @@ jobs:
   validate-tickets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate tickets
         run: chmod +x ./tickets/erg && ./tickets/erg check tickets/
 
@@ -23,7 +23,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history so `origin/<base>` resolves for the added-ticket diff.
           fetch-depth: 0
@@ -37,7 +37,7 @@ jobs:
   skill-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check SKILL.md frontmatter
         run: |
           fail=0
@@ -57,7 +57,7 @@ jobs:
   agnostic-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check for consumer-project assumptions in skills, tickets, and scripts
         run: bash scripts/check-agnostic.sh
       - name: Self-test — script must catch a deliberate violation
@@ -84,7 +84,7 @@ jobs:
   status-verb-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: No legacy status verb in skill log examples
         run: bash scripts/check-status-verb.sh
       - name: Self-test — guard must catch a deliberate violation
@@ -121,7 +121,7 @@ jobs:
   pipefail-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: All hook scripts must have set -euo pipefail
         run: |
           missing=$(grep -L 'set -euo pipefail' scripts/*.sh | grep -Ev 'shell-init\.sh|bash-env\.sh' || true)
@@ -158,7 +158,7 @@ jobs:
   grep-e-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: No grep -E/-G with PCRE character escapes in hook scripts
         run: |
           violations=$(grep -Pn '(?=.*\bgrep\b)(?=.*-[a-zA-Z]*[EG])(?=.*\\[bsw])' scripts/*.sh 2>/dev/null || true)
@@ -192,7 +192,7 @@ jobs:
   tab-ifs-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: No IFS=$'\t' read with 3+ fields in shell scripts
         # Tab is IFS *whitespace*: consecutive tabs collapse, so an empty
         # middle field silently shifts later fields left (bit reviewers.sh
@@ -231,7 +231,7 @@ jobs:
   pytest-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install dev dependencies
         # Declared in one place so CI and a fresh machine read the same
         # contract; tests/test_deps_declared.py guards the list (ticket 0530).
