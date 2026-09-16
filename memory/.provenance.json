@@ -8719,6 +8719,14 @@
       "first_seen": "2026-09-16T09:40:00Z",
       "last_confirmed": "2026-09-16T09:40:00Z",
       "promoted": false
+    },
+    "feedback_rules_crystallize_from_memory": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-16T10:05:00Z",
+      "last_confirmed": "2026-09-16T10:05:00Z",
+      "promoted": false
     }
   }
 }

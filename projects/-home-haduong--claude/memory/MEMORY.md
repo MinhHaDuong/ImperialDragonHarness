@@ -124,3 +124,4 @@
 - [Blob SHAs tell a deletion from a move](feedback_blob_sha_distinguishes_absent_from_moved.md)
 - [A positive control's witness can expire](feedback_positive_control_witness_can_expire.md) — a merged PR is no longer an open PR
 - [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md) — index line, body, provenance record
+- [Rules crystallize from memory, not from a session](feedback_rules_crystallize_from_memory.md) — stop writing lessons straight into rules/
