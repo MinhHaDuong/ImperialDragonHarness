@@ -123,17 +123,18 @@ Distinguish "this path does not cause it" from "nothing causes it"; a null
 result supports only the tested scope.
 
 **Which shapes the proxy rewrites is a version fact, not a rule.** The `rtk`
-PreToolUse hook rewrites the command string before the shell runs it, and what it
-spares has moved twice: on 0.42.1 it rewrote through a redirection, so a file was
-not a control; 0.49.0 leaves a redirection and a pipe into `cat` untouched, while
-still dropping every `Merge:` line from `git log`. Do not memorise the safe
-shapes — `rtk hook check <cmd>` answers for the installed build, and it
-discriminates, reporting no rewrite for `git rev-parse` and a rewrite for
-`git log`. What does not move: `RTK_DISABLED=1` per command, `exclude_commands`
-in `~/.config/rtk/config.toml`, and a script or heredoc, which the hook parses as
-one opaque command — the same opacity silently voids a probe whose cases sit
-inside a shell function. `~/.local/share/rtk/tee/` keeps the unfiltered output
-after the fact.
+PreToolUse hook rewrites the command before the shell runs it, and what it
+spares moves: 0.42.1 rewrote through a redirection, so a file was no control;
+0.49.0 spares a redirection and a pipe into `cat`, yet still drops every
+`Merge:` line from `git log`. Don't memorise the safe shapes — `rtk hook check
+<cmd>` answers for the installed build. Past ~2 kB it truncates head-first, so a
+test runner's verdict, which sits in the tail, goes first: a 120-test
+`make check` showed forty `PASSED` lines, no counts and two of three failures
+gone — the exit code still told the truth, the diagnosis did not. What does not
+move: `RTK_DISABLED=1`, `exclude_commands` in `~/.config/rtk/config.toml`, and a
+script or heredoc, read by the hook as one opaque command — the same opacity
+silently voids a probe whose cases sit in a shell function.
+`~/.local/share/rtk/tee/` keeps the unfiltered output.
 
 **A number you divided out is not a number you measured.** A per-unit figure
 obtained by dividing someone else's aggregate reads like data, carries no error
