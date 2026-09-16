@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-16T06:31Z claude created
 2026-09-16T06:52Z claude note Third instance found in check-close-claims.sh; the detector is blind to the bug it detects
+2026-09-16T07:05Z claude note Extraction is fence-blind; a PR documenting the claim syntax carries live claims
 
 --- body ---
 ## Context
@@ -54,6 +55,31 @@ no-close" bucket silently absorbs them.
 
 The harness copy is the one that runs at most merges, so fixing only the git-erg
 side leaves the common path broken.
+
+## Second defect in the same parser: it is fence-blind
+
+The extraction is a line-oriented `grep`, so it does not know about Markdown
+code fences. **A PR body that documents the claim syntax carries live claims.**
+
+Observed on this ticket's own paper trail: PR #917's body contains, inside a
+fenced block illustrating the bug, a line reading
+`**Ticket:** tickets/0276-some-slug.erg` followed by its expected output. That
+line matches the *current* regex. #917 was merged with a plain `gh pr merge`, so
+nothing fired; through `erg-pr-merge` the claim on 0276 would have been
+extracted. Harness 0276 is archived, so step 1.5's existence-at-tip guard would
+have aborted the merge -- confusing, but safe. Had the illustrative ID named an
+**open** ticket, existence-at-tip passes and the ticket closes spuriously.
+
+This interacts with the main fix rather than being independent of it: widening
+the grammar to accept the closed path makes a second illustrative line
+extractable too, and requires step 1.5 to look in `tickets/closed/` as well, or
+every legitimate closed-path claim will abort.
+
+Options, none yet chosen -- a design call for whoever takes the ticket: strip
+fenced blocks before matching; require the claim outside any fence; or keep the
+parser dumb and add a lint that refuses a PR body whose fenced content would
+match. The last is the cheapest and the most honest about what the parser is.
+
 
 ## Relevant files
 
@@ -109,6 +135,8 @@ passes.
 - A re-run of `check-close-claims.sh --days 30` after the fix is compared
   against the pre-fix run, since the pre-fix "explicit no-close" counts may hide
   real drops
+- A decision is recorded on the fence-blind defect above, and step 1.5's
+  existence-at-tip guard accepts `tickets/closed/` once the grammar does
 - The red test is committed and passes
 - The accepted grammar is the same in this repo and in git-erg's
   `tickets/erg-github`, or the difference is documented in both
