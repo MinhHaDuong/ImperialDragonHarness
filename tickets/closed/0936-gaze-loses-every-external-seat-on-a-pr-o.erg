@@ -1,0 +1,100 @@
+%erg 0.1
+Title: gaze loses every external seat on a PR outside the harness
+Created: 2026-09-16
+Author: claude
+Closed: 2026-09-16 fixed in the same PR
+
+--- log ---
+2026-09-16T11:50Z claude created
+2026-09-16T11:50Z claude note Found by a /gaze run on a git-erg PR that lost all three seats. Two independent causes; this is the one that is ours to fix. The other is a dead credential (see body).
+2026-09-16T11:50Z claude closed fixed in the same PR
+
+--- body ---
+## Context
+
+`/gaze` launches the external panel with a bare `/reviewers request <pr>`.
+`reviewers.sh` reads **this harness** by default, so when the reviewed PR
+lives in another repository the head branch does not exist where the seats
+look, and they die on an unknown pathspec.
+
+`reviewers.sh help` already documents the remedy, and has all along:
+
+> `REVIEWERS_REPO=<path>` — the checkout the seats read (default: this harness)
+> `REVIEWERS_PR_BRANCH=<branch>` — skip the forge lookup for the head branch
+> Without the first, a branch that lives elsewhere fails as an unknown pathspec.
+
+`/gaze`'s own invocation never passes either. So the harness documents the
+requirement in one skill and violates it in the other.
+
+## How it surfaced, and why it stayed hidden
+
+A `/gaze` run on git-erg PR #341 (2026-09-16) reported **zero of three seats
+reviewed**. Two independent causes, presenting as one symptom:
+
+1. **This one.** The seats searched `~/.claude` for `t0279-init-rollback-guard`,
+   a branch that lives in git-erg.
+2. **A dead credential**, not fixable here: `OPENROUTER_API_KEY_IDH` returns
+   `401 User not found` from OpenRouter. Verified with a positive control —
+   two sibling keys in the same keystore file return 200, so the account, the
+   network and the endpoint are all fine and only that key is dead. It needs
+   rotating, then renaming to `EXPIRED_*` per that file's own convention.
+
+The panel is fail-open by design, and that is the right default — one seat
+must never block a verdict. But fail-open makes a dead seat and a seat that
+found nothing **indistinguishable in the verdict**: the run reported no
+external findings rather than an error. The failure appeared only in the
+`PANEL-INTEGRITY:` lines that ticket 0393 added for exactly this reason, and
+those are carried as a note, not as a gate.
+
+The author's ruling (2026-09-16) is that fail-open stays: a run should not
+stop because an external provider is down. This ticket therefore removes one
+of the two causes rather than changing what a missing panel does.
+
+## Relevant files
+
+- `skills/gaze/SKILL.md` — the panel-extension contract's **How** paragraph,
+  which issues the invocation
+- `skills/reviewers/reviewers.sh` — `usage_text()`, which documents both
+  variables
+
+## Actions
+
+1. State in `/gaze`'s How paragraph that a PR outside `~/.claude` must pass
+   `REVIEWERS_REPO`, with `REVIEWERS_PR_BRANCH` when the head branch is known
+   — which it is by the time the panel launches.
+2. Record the incident inline, so the next reader sees why the variable is
+   named rather than reading it as boilerplate.
+
+## Test
+
+None added. This is a contract sentence in a skill body, and the harness has
+no test that executes a skill's prose. The honest check is the next `/gaze`
+run on an out-of-harness PR: its `PANEL-INTEGRITY:` line should report seats
+that ran, or fail for the credential reason alone.
+
+That absence is itself worth noting. A skill instruction that contradicts
+another skill's documented requirement went unnoticed until a run lost its
+whole panel, and nothing mechanical could have caught it.
+
+## Verification
+
+- [x] `/gaze`'s How paragraph names `REVIEWERS_REPO`
+- [x] The remedy matches `reviewers.sh help` verbatim in substance
+- [ ] A subsequent out-of-harness `/gaze` run reports seats that actually ran
+
+## Invariants
+
+- Fail-open stays. One seat failing, or the whole panel failing, must never
+  block a verdict — author ruling, 2026-09-16.
+- `PANEL-INTEGRITY:` lines stay verbatim in the gaze comment. They are the
+  only surface on which a silent panel becomes visible.
+
+## Exit criteria
+
+- `/gaze` on a PR outside this harness reaches its seats
+
+## Related
+
+- 0393 — added the `PANEL-INTEGRITY:` reporting that made this visible at all
+- 0873 — the earlier instance of the same class: seats silently unauthenticated
+  across five runs before anyone noticed
