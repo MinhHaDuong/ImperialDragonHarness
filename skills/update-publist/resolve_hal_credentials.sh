@@ -66,6 +66,8 @@
 #   4  variable absent, or defined but empty
 #   5  value is not a single line, so it cannot be carried by a curl -K config
 set -euo pipefail
+# So the size check below counts BYTES, not multibyte characters.
+export LC_ALL=C
 
 PROG="resolve_hal_credentials"
 # No legitimate .env approaches this; the cap is what stops a pathological or
@@ -100,11 +102,26 @@ if [ ! -f "$file" ] || [ ! -r "$file" ]; then
     exit 2
 fi
 
-size="$(wc -c < "$file" 2>/dev/null || echo 0)"
-if [ "${size:-0}" -gt "$MAX_KEYSTORE_BYTES" ]; then
-    echo "$PROG: the keystore file $file exceeds the size cap (${size} > ${MAX_KEYSTORE_BYTES} bytes), refusing to source it (needed for $name)" >&2
+# The cap is enforced with a BUILTIN, deliberately. `wc -c` resolves through
+# PATH, so a shim `wc` earlier on it would defeat the very guard this line
+# exists to be — and an absolute `/usr/bin/wc` only trades that for a path that
+# is not the same on every system. `read -N` is bash's own, so neither problem
+# arises: read one byte past the cap and see whether that many arrived.
+# (`-f` above already guarantees this cannot block on a FIFO.)
+oversize=""
+read -r -N "$((MAX_KEYSTORE_BYTES + 1))" oversize < "$file" || true
+if [ "${#oversize}" -gt "$MAX_KEYSTORE_BYTES" ]; then
+    echo "$PROG: the keystore file $file exceeds the size cap (${MAX_KEYSTORE_BYTES} bytes), refusing to source it (needed for $name)" >&2
     exit 2
 fi
+unset -v oversize
+
+# NOT done here, and worth saying why rather than adding a line that looks like
+# a mitigation: `unset -v BASH_ENV ENV` at this point protects nothing. A
+# hostile BASH_ENV has already run, before line 1, and the one child this script
+# spawns is under `env -i`, which drops both. The precondition for either is a
+# calling shell that is already compromised — the state the harness env loader
+# exists to prevent, and which no line in this file could recover from.
 
 # The leading `v` is a completion marker, not decoration. A provider file that
 # calls `exit 0` — or any other early exit from the sourced code — ends the
