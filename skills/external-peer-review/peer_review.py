@@ -36,7 +36,14 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from openai import APIStatusError, OpenAI
+# The OpenAI SDK is imported lazily, inside the two functions that use it
+# (`review_one`, `main`), NOT here. It is a per-skill runtime dependency that CI
+# does not install, and the credential-resolution half of this module
+# (`_credential_provider_file`, `_keystore_value`, `resolve_credential`) has no
+# use for an HTTP client. A module-level import made those functions
+# unreachable wherever the SDK is absent: the resolution tests import this file
+# in a child process, so all seven passed on a developer machine that happens to
+# have `openai` installed and failed in CI, which does not.
 
 log = logging.getLogger(__name__)
 
@@ -249,6 +256,8 @@ def review_one(model: str, persona: str, pdf_path: Path, api_key: str,
                task: str, engine: str, max_tokens: int, out_dir: Path,
                data_url: str | None, text: str | None) -> Path:
     """Run one (model, persona) review and write its markdown file."""
+    from openai import OpenAI  # lazy: see the import note at the top of the file
+
     client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=api_key, timeout=600)
     mode = "text" if text is not None else "file"
     log.info("START model=%s persona=%s mode=%s", model, persona, mode)
@@ -304,6 +313,8 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 
 def main(argv=None) -> None:
+    from openai import APIStatusError  # lazy: see the import note at the top
+
     args = parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
