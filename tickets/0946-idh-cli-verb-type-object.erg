@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 
 2026-09-16T15:54Z claude created child of 0800 after the author chose the verb/type/object grammar over a flat form; the perch adapter's SLICE constant is the only thing standing between one skill and any skill
+2026-09-16T16:03Z claude note round 1 review: test count corrected to 65, and action 7 split so that putting bin/ on PATH -- which changes invocation of four unrelated shipped scripts and has no test line -- moves to the lifecycle ticket instead of riding along here
 --- body ---
 ## Context
 
@@ -65,7 +66,7 @@ slots their own tickets fill.
 - `adapters/perch.py` — becomes the skill type's implementation
 - `adapters/README.md` — command surface, invocation table
 - `adapters/pilot-support.json` — `native_expression` fields quote CLI commands
-- `tests/test_perch_pilot.py`, `tests/test_perch_discovery.py` — 64 tests to
+- `tests/test_perch_pilot.py`, `tests/test_perch_discovery.py` — 65 tests to
   re-point at a named object rather than a constant
 - `scripts/shell-init.sh` — where an `idh` entry point reaches PATH
 
@@ -84,11 +85,15 @@ slots their own tickets fill.
    installing a second real skill to prove the object axis is genuinely open.
 6. Update `adapters/README.md` and every `native_expression` in
    `pilot-support.json` that quotes a command string.
-7. Ship the entry point as `bin/idh`, reached by name through
-   `scripts/shell-init.sh`. That file currently defines only a `claude` shell
-   function and adds nothing to PATH, which is why the four scripts already in
-   `bin/` are reachable only by full path; putting `bin/` on PATH fixes them in
-   the same edit.
+7. Ship the entry point as `bin/idh`. Invoking it by full path is sufficient
+   for this ticket.
+
+Putting `bin/` on PATH is deliberately **not** part of this ticket, though
+`scripts/shell-init.sh` adds nothing to PATH today and the four scripts already
+in `bin/` are therefore reachable only by full path. That change alters how four
+unrelated, already-shipped scripts are invoked -- `snapshot` in particular is a
+name likely to shadow or be shadowed -- and it needs its own tests. It belongs
+with the lifecycle ticket that absorbs those scripts.
 
 ## Out of scope
 
