@@ -1,0 +1,120 @@
+%erg 0.1
+Title: roar and molt must purge review-pr panel scratch
+Created: 2026-09-16
+Author: MinhHaDuong
+
+--- log ---
+2026-09-16T16:02Z claude created
+2026-09-16T16:05Z claude note Filed at the author's request after a /molt on git-erg left five dead worktrees standing, every one of them held open by a `.panel/<pr>/` directory and nothing else. Measured, not inferred: worktree-gc.sh reported `skip ... (uncommitted WIP)` for agent-a2f9efde52baf24ea, -a6a0158170957bafb, -a7f8ddde10e210fca, -aca79be11b484871c and -aea3969b25731b34b, and a directory listing of each showed a single `.panel/NNN/` entry (PRs 363, 346, 353, 347, 352 and 358) with no other untracked or modified file. The branches behind three of them were already merged and deleted; the trees are pure residue.
+
+--- body ---
+## Context
+
+`/review-pr` writes its per-seat reports into `.panel/<pr>/` inside the worktree
+it reviews, and `/gaze` does the same. Nothing removes them. They are untracked,
+so every downstream gate that asks "is this tree clean?" answers no, forever.
+
+Two gates are affected, and the author's request names the first:
+
+1. **`/roar` step 9a**, `~/.claude/scripts/worktree-exit-preflight.sh`. It
+   refuses to let a session exit its own worktree while untracked files are
+   present. A session that ran `/review-pr` on its own PR therefore cannot
+   dispose of its worktree at wrap-up, which is precisely when it should.
+
+2. **`/molt` step 1.5**, `~/.claude/scripts/worktree-gc.sh`. It skips any
+   worktree with uncommitted changes. Dead trees whose branches are merged and
+   pruned accumulate indefinitely; on git-erg five had piled up by 2026-09-16,
+   and the first `/molt` to look at them collected none.
+
+The residue was noticed and explicitly left alone once before: the executor of
+git-erg ticket 0292 hit `make test-encoding` tripping on a U+FFFD inside the
+archived ticket copies `/review-pr` had staged under `.panel/`, moved the
+directory out of the tree by hand, and wrote: *"I moved them out rather than
+gitignoring, since that is a harness decision, not this ticket's."* This ticket
+is that decision.
+
+## The distinction the fix must preserve
+
+Do not widen either gate to "ignore untracked files". The skip is load-bearing:
+`/molt` step 1.5 and `/lair` step 8 both say in as many words that a worktree
+skipped for uncommitted changes is a *signal*, because a closed ticket's dropped
+deliverable looks exactly like this from the outside (harness ticket 0609, whose
+mandated adherence test sat uncommitted for weeks after PR #1111 autoclosed the
+ticket on the data fix alone).
+
+So the fix names the scratch and purges only that:
+
+- `.panel/` at the worktree root, and
+- `build/panel-head/`, the checkout `/review-pr` builds to diff against.
+
+Anything else untracked still blocks, still gets looked at, still gets reported.
+A gate that stops distinguishing residue from a dropped deliverable has traded a
+nuisance for a data-loss channel.
+
+## Actions
+
+1. Have the producer clean up after itself: `/review-pr` and `/gaze` remove
+   their own `.panel/<pr>/` and `build/panel-head/` when they finish. This is
+   the primary fix -- a gate purging another command's litter is the fallback,
+   not the design.
+2. `worktree-exit-preflight.sh`: treat the two paths above as scratch. Remove
+   them, then re-evaluate cleanliness, and refuse as before on anything else.
+3. `worktree-gc.sh`: same, before its uncommitted-changes test, so a tree held
+   open by nothing but scratch becomes collectable.
+4. Decide and record whether `.panel/` should also be gitignored in adopter
+   repos. Note that this does NOT substitute for 2 and 3: an ignored file still
+   exists on disk, and `git status --porcelain` with default flags would stop
+   reporting it, which changes what both gates see. State the interaction rather
+   than leave the next reader to rediscover it.
+
+## Test
+
+Red step, per case, before any fix:
+
+- Build a worktree on a merged-and-deleted branch, put a `.panel/999/report.md`
+  in it, run `worktree-gc.sh`, watch it print `skip ... (uncommitted WIP)`.
+- In the same tree, run `worktree-exit-preflight.sh` and watch it exit 1.
+
+Then the two positive controls, which matter more than the red step:
+
+- The same tree with an untracked file that is NOT scratch -- say
+  `tests/test_dropped.sh` -- must STILL be skipped and must STILL fail
+  preflight, after the fix. This is the arm that proves the widening did not
+  happen. Build it from git-erg 0292's real shape: a test file that a merged PR
+  never committed.
+- A tree with both a `.panel/` and a real untracked file must be skipped, and
+  the report must name the real file, not the scratch.
+
+Prove non-vacuity the per-case way: revert the scratch-purge hunk and watch the
+scratch arm redden alone; hardcode the purge to match everything and watch the
+dropped-deliverable control redden alone.
+
+## Verification
+
+- [ ] `/review-pr` and `/gaze` leave no `.panel/` or `build/panel-head/` behind
+- [ ] a worktree held open by scratch alone is collected by `worktree-gc.sh`
+- [ ] a worktree holding any non-scratch untracked file is still skipped, and
+      the skip names that file
+- [ ] `worktree-exit-preflight.sh` passes on scratch, refuses on anything else
+- [ ] the gitignore question is answered in writing, with its interaction with
+      the two gates stated
+- [ ] the five git-erg worktrees standing on 2026-09-16 are collectable
+
+## Invariants
+
+- No gate stops distinguishing scratch from a dropped deliverable.
+- Nothing is deleted outside the two named paths.
+- `worktree-gc.sh` keeps its existing rails untouched: never a live process's
+  cwd, never a locked tree, never the tree it runs from.
+
+## Exit criteria
+
+A session that reviewed its own PR can dispose of its worktree at wrap-up, and
+`/molt` collects trees that nothing but review scratch is holding open -- while
+a tree holding real uncommitted work is still stopped and still surfaced.
+
+## Related
+
+- 0928 -- the same panel, a different defect (it collapses to one sequential
+  pass). No overlap in the fix.
+- 0609 -- the dropped-deliverable incident the positive control is modelled on.
