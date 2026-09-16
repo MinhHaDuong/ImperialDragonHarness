@@ -122,18 +122,18 @@ independent zeros feel like evidence and are one zero measured three times.
 Distinguish "this path does not cause it" from "nothing causes it"; a null
 result supports only the tested scope.
 
-**Measure through a channel the proxy cannot rewrite.** The `rtk` PreToolUse
-hook rewrites the command string *before* the shell runs it, so redirecting to a
-file saves the rewritten bytes — a file is not a control. Measured 2026-09-16 on
-0.42.1: `git log -5 > f` lost every `Merge:` line and two thirds of its bytes;
-`grep -n` truncated the listing and replaced paths with `/.../`; `pytest`
-announced "No tests collected" for a run that collected four and passed three.
-The last is not truncation but a false statement, and no token saving buys it.
-Prefix a measurement with `RTK_DISABLED=1`, or run it inside a script or
-`python3 - <<EOF` heredoc, which the hook parses as one opaque command — the same
-opacity silently voids a probe that wraps its cases in a shell function.
-`rtk hook check <cmd>` says in advance whether a command would be rewritten, and
-`~/.local/share/rtk/tee/` keeps the unfiltered output after the fact.
+**Which shapes the proxy rewrites is a version fact, not a rule.** The `rtk`
+PreToolUse hook rewrites the command string before the shell runs it, and what it
+spares has moved twice: on 0.42.1 it rewrote through a redirection, so a file was
+not a control; 0.49.0 leaves a redirection and a pipe into `cat` untouched, while
+still dropping every `Merge:` line from `git log`. Do not memorise the safe
+shapes — `rtk hook check <cmd>` answers for the installed build, and it
+discriminates, reporting no rewrite for `git rev-parse` and a rewrite for
+`git log`. What does not move: `RTK_DISABLED=1` per command, `exclude_commands`
+in `~/.config/rtk/config.toml`, and a script or heredoc, which the hook parses as
+one opaque command — the same opacity silently voids a probe whose cases sit
+inside a shell function. `~/.local/share/rtk/tee/` keeps the unfiltered output
+after the fact.
 
 **A number you divided out is not a number you measured.** A per-unit figure
 obtained by dividing someone else's aggregate reads like data, carries no error
