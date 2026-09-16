@@ -43,3 +43,42 @@ same question as the cross-runtime portability of the secrets mechanism.
 - [ ] A test covers the resolution path with a fake sentinel, never a real key
 - [ ] No code path can write a `.env` comment line into a service env file
 - [ ] `make check` passes
+
+## Update 2026-09-16: the script is dead code — prefer deletion to repair
+
+Measured on padme, after the ticket was filed:
+
+- `scripts/claude-night-sweep.service` and `.timer`, which lines 94-95 copy into
+  `/etc/systemd/system/`, **do not exist**. They were removed by 0882
+  ("remove the nightbeat block", 90d56b4, 2026-09-09) — the same commit that
+  last touched this script.
+- No `claude-agent` user exists.
+- No `/etc/claude-agent` directory exists.
+- No `claude-night-sweep` timer is installed or listed.
+
+So the script cannot run to completion: under `set -e` it aborts at the `cp` of
+a missing unit file, having already created a system user, written
+`/etc/claude-agent/env` and chmod'ed it. It provisions nothing and leaves
+half-built state behind.
+
+Nothing references it but its own test, and that test exercises only `--list`,
+the side-effect-free entry point. It is green on a script whose provisioning
+half is dead — an all-clear that cannot be told from "I could not look".
+
+Recommendation: **delete `scripts/setup-claude-agent.sh` and
+`tests/test_setup_claude_agent_projects.sh`** rather than teach the script to
+resolve keys from the keystore. This follows the tooling-repo rule — prefer
+deleting a guard and its tests over growing them — and removes one of the two
+remaining `.env`-grep hazards outright. Reinstating an overnight agent later is
+a fresh design against whatever secrets mechanism exists then, not a revival of
+this file.
+
+Deferred to the author: 0882 decommissioned the nightbeat, so confirming this
+script is collateral of that decision, not an independent capability someone
+still intends to use, is a judgment call outside the diff.
+
+Consequence for the portability work: the materialization constraint collapses
+to ONE consumer, `scripts/seat-runner.sh`, which is ours and patchable. R2R is
+dormant and lives in another repo entirely (only project-memory references in
+this tree). A general `with-secrets <provider> -- <cmd>` wrapper may not be
+needed at all.
