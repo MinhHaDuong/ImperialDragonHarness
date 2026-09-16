@@ -144,9 +144,22 @@ def _probe(harness: str) -> str:
         )
     except (OSError, subprocess.SubprocessError, UnicodeError) as exc:
         raise Refusal(f"could not run {executable!r} --version: {exc}") from exc
-    # Prefer stdout. All three CLIs print their own version there, and a
-    # startup warning on stderr must not be adopted as the version of record.
-    return done.stdout if SEMVER.search(done.stdout) else done.stdout + done.stderr
+    # parse_version takes the FIRST semver it is handed, so handing it a whole
+    # stream lets a banner line ahead of the real answer flip the floor -- a
+    # decoy "node 20.11.0" made codex 0.154.0 read as 20.11.0, which clears a
+    # 0.154.0 minimum. Narrow to one line, and refuse when the output offers
+    # more than one candidate: an ambiguous answer is an unknown version, and
+    # this module does not pass unknown versions.
+    for stream in (done.stdout, done.stderr):
+        candidates = [line for line in stream.splitlines() if SEMVER.search(line)]
+        if len(candidates) == 1:
+            return candidates[0]
+        if candidates:
+            raise Refusal(
+                f"{executable!r} --version offered {len(candidates)} version-like "
+                f"lines; refusing to pick one"
+            )
+    return done.stdout + done.stderr
 
 
 def check_version(harness: str, supplied: str | None = None) -> str:
@@ -219,7 +232,9 @@ def _is_dangling_link(target: Path) -> bool:
     """
     if not target.is_symlink() or target.exists():
         return False
-    return Path(os.readlink(target)).name == SLICE
+    # A bare basename match would adopt any dangling link happening to be
+    # called perch. Require the shape install writes: <checkout>/skills/perch.
+    return Path(os.readlink(target)).parts[-2:] == ("skills", SLICE)
 
 
 def status(harness: str) -> dict:
@@ -311,6 +326,11 @@ def _prune_empty(start: Path, stop: Path) -> None:
     that install happened not to create goes too: nothing on disk tells the two
     apart, and the README says as much rather than claiming otherwise.
     """
+    # Walking through a symlinked ancestor would rmdir outside $HOME
+    # entirely. Refuse the whole prune rather than reason about each step.
+    for directory in (start, stop):
+        if directory.is_symlink() or any(p.is_symlink() for p in directory.parents):
+            return
     current = start
     while True:
         try:
@@ -320,6 +340,14 @@ def _prune_empty(start: Path, stop: Path) -> None:
         if current == stop:
             return
         current = current.parent
+
+
+def _unlink(target: Path) -> None:
+    """Removing something already gone is a success, not a traceback."""
+    try:
+        target.unlink()
+    except FileNotFoundError:
+        return
 
 
 def sharing_target(harness: str) -> tuple[str, ...]:
@@ -346,12 +374,12 @@ def uninstall(harness: str) -> str:
             )
         raise Refusal(f"{target} is not the managed {SLICE} link")
     if _is_dangling_link(target):
-        target.unlink()
+        _unlink(target)
         _prune_empty(target.parent, prune_root(harness))
         return f"{reached}: removed {target}, a link whose target no longer exists"
     if not _is_canonical(target):
         raise Refusal(f"{target} is not the managed {SLICE} link")
-    target.unlink()
+    _unlink(target)
     _prune_empty(target.parent, prune_root(harness))
     return f"{reached}: removed {target}"
 
@@ -369,7 +397,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     for name, help_text in (
         ("install", "make the canonical skill discoverable"),
-        ("uninstall", "give back exactly what install created"),
+        ("uninstall", "remove the link, then what it leaves empty"),
         ("status", "where each harness looks, and what is there"),
     ):
         child = commands.add_parser(name, help=help_text)

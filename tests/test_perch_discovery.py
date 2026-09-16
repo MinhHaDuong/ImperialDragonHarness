@@ -214,14 +214,41 @@ def test_the_cli_reports_a_refusal_as_one_line_and_exit_two(tmp_path):
     assert "Traceback" not in done.stderr
 
 
-def test_a_startup_warning_on_stderr_is_not_adopted_as_the_version(
-    tmp_path, monkeypatch
+@pytest.mark.parametrize(
+    "body",
+    (
+        "echo 'bundled with node 20.11.0' >&2\necho 'codex-cli 0.154.0'\n",
+        "echo '' >&2\necho 'codex-cli 0.154.0'\n",
+    ),
+    ids=("banner-on-stderr", "empty-stderr"),
+)
+def test_a_decoy_version_on_the_other_stream_is_not_adopted(
+    tmp_path, monkeypatch, body
 ):
-    """`parse_version` takes the first semver it sees; stderr must not supply it."""
-    script = _fake_cli(
-        tmp_path,
-        "noisycodex",
-        "echo 'bundled with node 20.11.0' >&2\necho '0.154.0'\n",
-    )
+    script = _fake_cli(tmp_path, "noisycodex", body)
     monkeypatch.setenv("PERCH_CODEX_BIN", str(script))
     assert perch.check_version("codex") == "0.154.0"
+
+
+@pytest.mark.parametrize(
+    "body",
+    (
+        "echo 'bundled with node 20.11.0'\necho 'codex-cli 0.154.0'\n",
+        "echo 'codex-cli 0.154.0'\necho 'see 1.2.3 for details'\n",
+    ),
+    ids=("decoy-first", "decoy-after"),
+)
+def test_an_ambiguous_version_answer_refuses_rather_than_picking(
+    tmp_path, monkeypatch, body
+):
+    """A decoy ahead of the real answer flipped the floor.
+
+    `parse_version` takes the first semver it is handed, so codex 0.154.0
+    behind a "node 20.11.0" banner read as 20.11.0 — which clears a 0.154.0
+    minimum. Two candidate lines is an unknown version, and this module does
+    not pass unknown versions.
+    """
+    script = _fake_cli(tmp_path, "noisycodex", body)
+    monkeypatch.setenv("PERCH_CODEX_BIN", str(script))
+    with pytest.raises(perch.Refusal, match="version-like"):
+        perch.check_version("codex")

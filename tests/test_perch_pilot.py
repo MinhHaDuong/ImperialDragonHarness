@@ -241,6 +241,46 @@ def test_a_link_left_dangling_by_a_moved_checkout_is_named_and_removable(home):
     assert not (home / ".agents").exists()
 
 
+def test_a_dangling_link_named_perch_but_shaped_wrong_is_left_alone(home):
+    """A bare basename match would adopt any dangling link called perch."""
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(home / "gone" / "elsewhere" / "perch", target_is_directory=True)
+    assert perch.status("codex")["projection"] == "unmanaged"
+    with pytest.raises(perch.Refusal):
+        perch.uninstall("codex")
+
+
+def test_pruning_refuses_to_walk_through_a_symlinked_neutral_home(home, tmp_path):
+    """Otherwise the walk rmdirs its way out of $HOME entirely."""
+    outside = tmp_path / "outside"
+    (outside / "skills").mkdir(parents=True)
+    (home / ".agents").symlink_to(outside, target_is_directory=True)
+    perch.install("codex", version="99.0.0")
+    perch.uninstall("codex")
+    assert outside.is_dir()
+    assert (outside / "skills").is_dir()
+    assert not (outside / "skills" / "perch").exists()
+
+
+def test_uninstalling_a_link_that_vanished_mid_call_is_not_a_traceback(home):
+    perch.install("codex", version="99.0.0")
+    target = home / ".agents" / "skills" / "perch"
+    target.unlink()
+    assert "not installed" in perch.uninstall("codex")
+
+
+def test_no_surface_still_claims_uninstall_gives_back_only_what_it_created():
+    """The round-2 contradiction: the README was fixed, three copies were not."""
+    stale = "exactly the directories"
+    for path in (
+        ADAPTERS / "perch.py",
+        ADAPTERS / "README.md",
+        INVENTORY,
+    ):
+        assert stale not in path.read_text(encoding="utf-8"), path
+
+
 def test_a_dangling_link_that_is_not_ours_is_left_alone(home):
     target = home / ".agents" / "skills" / "perch"
     target.parent.mkdir(parents=True)
