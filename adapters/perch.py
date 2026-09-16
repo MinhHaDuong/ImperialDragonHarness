@@ -43,10 +43,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
+
+# SKILL.md frontmatter extraction has exactly one definition in this repo
+# (ticket 0531, after three copies of the `---`-block parser had diverged).
+# A fourth copy here would sit outside the ratchet that keeps it unique.
+sys.path.insert(0, str(REPO / "scripts"))
+import skill_frontmatter  # noqa: E402
 INVENTORY_PATH = HERE / "pilot-support.json"
 SLICE = "perch"
 
@@ -60,12 +64,6 @@ NEUTRAL_HARNESSES = ("codex", "pi")
 # require exactly these two fields, and the canonical body already carries
 # them. Nothing else is promoted to core (ticket action 7).
 SHARED_REQUIRED_FIELDS = ("name", "description")
-
-BIN_ENV = {
-    "claude": "PERCH_CLAUDE_BIN",
-    "codex": "PERCH_CODEX_BIN",
-    "pi": "PERCH_PI_BIN",
-}
 
 SEMVER = re.compile(r"(?<!\d)(\d+)\.(\d+)\.(\d+)(?!\d)")
 
@@ -86,15 +84,18 @@ def canonical_source() -> Path:
 
 
 def frontmatter(path: Path) -> dict:
-    """The YAML frontmatter of a SKILL.md, as a mapping."""
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        raise Refusal(f"{path} has no frontmatter")
-    _, _, rest = text.partition("---\n")
-    block, sep, _ = rest.partition("\n---")
-    if not sep:
-        raise Refusal(f"{path} has an unterminated frontmatter block")
-    return yaml.safe_load(block) or {}
+    """The YAML frontmatter of a SKILL.md, as a mapping, or a Refusal.
+
+    The parsing itself belongs to ``scripts/skill_frontmatter``: one
+    definition, ratcheted by an adherence test. All this adds is the
+    translation into this module's refusal contract — a missing fence,
+    invalid YAML, or a block that parses to something other than a mapping
+    are all "this is not a skill I can read", shown without a traceback.
+    """
+    try:
+        return skill_frontmatter.load(path)
+    except skill_frontmatter.FrontmatterError as exc:
+        raise Refusal(str(exc)) from exc
 
 
 # --- the evidence inventory ---------------------------------------------
@@ -129,7 +130,7 @@ def parse_version(text: str) -> tuple[int, int, int]:
 
 
 def _probe(harness: str) -> str:
-    executable = os.environ.get(BIN_ENV[harness], harness)
+    executable = os.environ.get(f"PERCH_{harness.upper()}_BIN", harness)
     try:
         done = subprocess.run(
             [executable, "--version"],
@@ -164,7 +165,7 @@ def _probe(harness: str) -> str:
 
 def check_version(harness: str, supplied: str | None = None) -> str:
     """The version in use, or a Refusal. Never a silent pass."""
-    if harness not in BIN_ENV:
+    if harness not in HARNESSES:
         raise Refusal(f"unknown harness {harness!r}")
     raw = supplied if supplied is not None else _probe(harness)
     found = parse_version(raw)
