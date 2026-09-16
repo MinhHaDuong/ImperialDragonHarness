@@ -1,0 +1,86 @@
+%erg 0.1
+Title: read-index.py silently drops any memory entry whose title contains a bracket
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+
+2026-09-16T17:30Z claude created by the dream run of 2026-09-16: the index parser skipped one of 119 entries and a blind regeneration would have deleted its only pointer
+--- body ---
+## Context
+
+Found during the `/dream -home-haduong--claude` run of 2026-09-16.
+
+`skills/dream/read-index.py` parses `MEMORY.md` with
+
+    re.match(r"-\s+\[([^\]]+)\]\(([^\)]+)\)\s*[—-]?\s*(.*)", line)
+
+`[^\]]+` stops at the first `]`, so a line whose **title** contains a closing
+bracket fails to match and is skipped. There is no warning: the entry simply
+does not appear in the JSON the rest of dream reasons over.
+
+One entry is affected today:
+
+    - [grep -E is line-oriented; bash [[ =~ ]] matches the whole string](feedback_grep_line_vs_bash_wholestring.md)
+
+The run read 118 entries against 119 index lines. Confirmed with a positive
+control: a plain title matches, `- [A test [green] for a reason](x.md)` is
+skipped.
+
+## Why this is not cosmetic
+
+Dream's step 6 rewrites `MEMORY.md` from the entries it parsed. A run that
+regenerates the index from 118 parsed entries **deletes the 119th line**. The
+harness has already measured that no recall channel fires on this runtime — the
+resident index is the only door (`reference_no_recall_channel_fires`), so an
+entry dropped from the index is not demoted, it is unreachable. The consolidation
+pass would consume a memory by accident, report `119 → 118` as a successful
+dedup, and nothing downstream could tell that from an intended deletion.
+
+The 2026-09-16 run avoided this only because the count mismatch was noticed and
+the index was rebuilt from a bracket-safe parse by hand.
+
+The same blindness affects the passes that read the parsed set rather than the
+file: an unparsed entry is invisible to classification, to reflection, and to
+step 7's provenance `record`, so its `last_confirmed` freezes and the decay pass
+will eventually flag it for a staleness it never had.
+
+## Relevant files
+
+- `skills/dream/read-index.py` — the regex
+- `skills/dream/SKILL.md` — steps 1, 2, 6, 7 all consume its output
+- `projects/-home-haduong--claude/memory/feedback_grep_line_vs_bash_wholestring.md`
+  — the live instance
+- `projects/*/memory/MEMORY.md` — 46 indexes to check for other bracketed titles
+
+## Actions
+
+1. Anchor the title capture so it cannot end early: match greedily up to the
+   final `](...)` on the line, e.g. `^-\s+\[(.+)\]\(([^)]+)\)`. Any fix must be
+   checked against a title containing `]`, `]]`, and a title containing `)`.
+2. Make the parser **loud rather than lossy**: count index lines that look like
+   pointers and fail to parse, and refuse to proceed when the number is nonzero.
+   A silent skip is what turned a parser bug into a deletion risk.
+3. Sweep all 46 project indexes for titles carrying brackets and report them.
+4. Check whether `skills/dream/commit.py` or the provenance scripts share the
+   same pattern.
+
+## Test
+
+- Positive control first: a line with a plain title parses. Then a line whose
+  title contains `]]` parses, and its filename is captured correctly.
+- A malformed pointer line makes the reader exit non-zero rather than return a
+  short list.
+- An end-to-end guard: parsed-entry count equals pointer-line count for every
+  project index in the repo.
+
+## Verification
+
+- [ ] A bracketed title round-trips through read, classify and rewrite unchanged
+- [ ] An unparseable pointer line fails loudly instead of being skipped
+- [ ] Parsed count equals pointer count across all project indexes, asserted by test
+- [ ] No other dream script carries the same regex shape
+
+## Exit criteria
+
+- [ ] No memory entry can be removed from an index by a parser that could not read it
