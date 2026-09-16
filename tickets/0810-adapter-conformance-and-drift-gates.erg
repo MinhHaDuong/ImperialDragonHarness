@@ -10,6 +10,9 @@ Blocked-by: 0809
 2026-08-28T14:08Z Codex reduced final integration to pilot evaluation, deployment safety and a go/no-go decision
 
 2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
+2026-09-16T15:30Z claude note recorded the Agent Plugins 1.0 landscape in the body: launched 2026-08-06 by AWS, Cursor, GitHub, Microsoft, OpenAI and Vercel, scoped to Agent Skills plus MCP only, with hooks, commands and agents explicitly left to clients, and Anthropic in neither the coalition nor the day-one clients. Action 8 therefore has no compiler target for three of the five layers; two reopen-triggers are written down beside it
+2026-09-16T16:03Z claude note corrected the Agent Plugins entry against primary sources: the steering committee is five (Microsoft, not GitHub) with Google unconfirmed, and the quoted non-goal was a paraphrase that hardened a provisional exclusion into a permanent one. The real sentence names rules and LSP servers too, and conditions the exclusion on formats converging
+2026-09-16T16:22Z claude note round 1 review: the layer scorecard now reconciles against its own enumeration -- MCP config was being scored as one of the five without being one of them -- the day-one client list is hedged to the source that actually carries it, and the section matches the document's em-dash convention
 --- body ---
 ## Context
 
@@ -17,6 +20,72 @@ The first phase covers exactly three behaviors: `perch`, `healthcheck`, and the
 commit-on-main guard. This ticket decides what those experiments justify. It also owns safe
 installation and removal because the repository is the live Claude harness: a clean-profile
 smoke test alone does not prove that upgrade, interruption or rollback is safe.
+
+## External landscape, recorded 2026-09-16
+
+Action 8 decides go/no-go on broader portability. That decision now has an
+external fact it did not have when this ticket was written, and the fact cuts
+against building a compiler.
+
+**Agent Plugins 1.0** (agent-plugins.org) launched 2026-08-06, Vercel
+initiating and a technical steering committee of five governing it: AWS,
+Anysphere/Cursor, Microsoft, OpenAI, Vercel. GitHub is **not** a committee
+member — Microsoft is, and GitHub appears as a client via Copilot. GitHub's own
+changelog states Google joined as a core maintainer the same day; that is a
+primary claim not reflected on agent-plugins.org's own page, so treat the roster
+as five-plus-one-unconfirmed and re-read it before relying on it. Day-one
+clients, per Vercel's announcement and not found on agent-plugins.org's own
+pages: ChatGPT, Codex, Cursor, GitHub Copilot, Kiro, VS Code.
+
+Two properties matter here:
+
+- **Its v1 scope is two component types only** — Agent Skills (`skills/`) and
+  MCP servers (`mcp.json`). The exclusion is broader than skills-adjacent
+  tooling and is explicitly **provisional**, in the spec's own words: *"Other
+  proposed component types — such as commands, hooks, agents, rules, and LSP
+  servers — remain too client-specific for a stable portable contract and are
+  outside the v1 format until their formats converge."* Two things follow that
+  an earlier draft of this note got wrong. `rules` is on that list, so IDH's
+  rules layer has no portable target either. And "until their formats converge"
+  is a stated roadmap contingency, not a permanent design boundary: the standard
+  expects to grow here, which makes waiting a live option rather than a bet on
+  stagnation.
+- **Anthropic is in neither the coalition nor the day-one client list.** Claude
+  Code plugins predate it and use an unrelated manifest
+  (`.claude-plugin/plugin.json`). Verified as an evidenced negative against the
+  published rosters and against Claude Code's own changelog through 2.1.273
+  (2026-09-15), which mentions its native plugin system and never the open spec.
+  No Anthropic statement either way was found, so this is "absent as of that
+  changelog", not a refusal.
+
+Score that against the layers this programme would want to port. Skill bodies
+have a cross-vendor standard covering all three targets. Hooks and lifecycle,
+settings and permissions, and subagent definitions have none on any target, and
+rules — named in the spec's own exclusion list — would be a fourth with none.
+MCP configuration, which this enumeration did not originally count as a layer,
+has a standard that excludes the reference harness. A compiler emitting native
+installs for all three runtimes therefore has nothing to compile *to* for the
+majority of the stack.
+
+Consequence for Action 8: absent new evidence, prefer thin hand-written
+adapters. Two triggers would reopen the question, and either should be checked
+before the go/no-go is recorded:
+
+1. Agent Plugins expands scope to hooks, commands, rules or agent definitions.
+   The spec names convergence as the condition, so this is the likely trigger
+   rather than the remote one.
+2. Anthropic joins Agent Plugins, or Claude Code ships support for it.
+
+Also relevant to the `Why not a plugin?` reconciliation listed below: plugin
+packaging and cross-runtime portability are **orthogonal axes**. A Claude Code
+plugin makes the harness installable by another Claude Code user; it does
+nothing for Codex or Pi. Reconciling the README should say which axis it
+answers.
+
+One caveat on the evidence itself: pi's own primary documentation was not
+confirmed to describe `~/.agents/skills` as its skills root. `0802`'s local
+probe establishes that it behaves that way; the doc citation is missing, not
+the behaviour.
 
 ## Relevant files
 
