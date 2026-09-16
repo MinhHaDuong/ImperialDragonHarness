@@ -32,3 +32,42 @@ Selection is EXPLICIT/VERBOSE — no suffix-stripping convention. `SRC`/`DST` ea
 - `bash-env.sh` must NOT have `set -euo pipefail` (it's sourced, not executed — flags would propagate into the calling shell); excluded from the `pipefail-guard` CI check alongside `shell-init.sh`.
 - Never write secrets back to `CLAUDE_ENV_FILE` in hooks.
 - Tests: `tests/test_bash_env_project_env_parse.sh`, `tests/test_bash_env_keys_selection.sh`, `tests/test_bash_env_keys_selection_explicit.sh`, `tests/test_bash_env_keys_protect_critical_names.sh`, `tests/test_bash_env_robustness.sh` (auto-run by `tests/test_bash_suites.py`).
+
+## 2026-09-16: the mechanism is being retired, and why
+
+PR #939 closed the trace channel only: `bash -x script.sh` was printing six live
+credentials to stderr, because the loader moves them with `source` under
+`set -a` and `export "$DST=$VAL"`, which xtrace prints already expanded. An
+xtrace guard now brackets the loader body (ticket 0939), ratcheted by
+`tests/test_bash_env_xtrace_silent.sh`.
+
+That fixes a symptom. The decision taken the same day is to remove the cause:
+**tracker 0942** moves credentials off ambient residency to point-of-use
+resolution, with children 0943 (`peer_review.py`), 0944 (`update-publist`) and
+0945 (stop exporting from `bash-env.sh`, blocked by the other two). The author
+decided `KEYS=` is removed OUTRIGHT — no inert no-op, no deprecation shim.
+
+Three things worth carrying into that work:
+
+- **The mechanism is not one to invent.** Ticket 0393 already built consumer-side
+  keystore resolution for reviewer seats in `skills/reviewers/reviewers.sh`, with
+  18 sentinel-based cases in `test_reviewers.sh` covering env-over-keystore
+  precedence and leak assertions. The remaining work is promotion of that
+  pattern, not design.
+- **The materialization objection is smaller than it looks.** Consumers needing
+  the value at process creation were surveyed and collapse to nothing:
+  `seat-runner.sh` is already on-demand via 0393, `setup-claude-agent.sh` was
+  deleted as dead code, R2R is dormant in another repo. A general
+  `with-secrets <provider> -- <cmd>` wrapper was drafted and then dropped for
+  want of a consumer.
+- **`apiKeyHelper` is the wrong lever.** It is a Claude Code settings key,
+  authenticating the client itself to one provider. It does not serve
+  OpenRouter, the reviewer OpenAI endpoint or HAL, which is all the harness now
+  selects. What ports across runtimes is a resolver invoked as a *program*;
+  every host config key is then a thin adapter over it.
+
+**The failure mode of the whole mechanism is silence**, which is what a port
+discovers last: an absent rule degrades quality, an absent credential produces
+a no-op that nothing turns red (see the five gaze runs in
+[[feedback_gaze_external_seats_fail_open]]). Any replacement must fail loud and
+named. Related: [[reference_keys_config_dir]].

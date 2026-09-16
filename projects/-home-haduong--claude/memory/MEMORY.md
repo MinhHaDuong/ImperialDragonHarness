@@ -115,6 +115,7 @@
 - [An orphan branch may already be archived as a tag](feedback_orphan_branch_may_be_archived_as_a_tag.md)
 - [Stale forward promises in skill bodies](feedback_stale_forward_promises_in_skills.md)
 - [A positive control validates the detector, not the enumerator](feedback_positive_control_validates_the_detector_not_the_enumerator.md)
+- [Reviewers share the author's environment](feedback_reviewers_share_the_authors_environment.md) — decorrelated by model and angle, not by machine; CI found what twenty-one agents could not
 - [Background isolation blocks primary-checkout writes](feedback_background_session_isolation_blocks_primary_writes.md)
 - [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md)
 - [A blocked compound command skips every line](feedback_blocked_compound_command_skips_every_line.md)
