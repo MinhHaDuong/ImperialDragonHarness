@@ -93,13 +93,12 @@ together. Exit codes are a two-value channel; most real state is not.
 
 **A negative result is the default output of everything that fails silently** —
 wrong flag, wrong path, permission denied, wrong predicate. So a check whose
-"all clear" is indistinguishable from its "I could not look" is not a check;
-`tickets/AGENTS.md` states the general form for forge queries. The remedy is
-the same everywhere: run the check once against a case **known to be positive**
-— a deliberately broken fixture, the real state while the defect is live, or a
-mock that lies in the right direction — and only then trust its silence. In a
-test suite, the case that earns its place is the one that fails against the old
-code.
+"all clear" is indistinguishable from its "I could not look" is not a check.
+The remedy is the same everywhere: run the check once against a case **known to
+be positive** — a deliberately broken fixture, the real state while the defect
+is live, or a mock that lies in the right direction — and only then trust its
+silence. In a test suite, the case that earns its place is the one that fails
+against the old code.
 
 ## General `set -euo pipefail` discipline
 
