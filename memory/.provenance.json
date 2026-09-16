@@ -8703,6 +8703,22 @@
       "last_confirmed": "2026-07-11T13:07:04Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_positive_control_witness_can_expire": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-16T09:40:00Z",
+      "last_confirmed": "2026-09-16T09:40:00Z",
+      "promoted": false
+    },
+    "feedback_memory_batch_lands_as_three_things": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-16T09:40:00Z",
+      "last_confirmed": "2026-09-16T09:40:00Z",
+      "promoted": false
     }
   }
 }

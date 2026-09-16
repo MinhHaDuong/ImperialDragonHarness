@@ -122,3 +122,5 @@
 - [grep and find are shell functions, not GNU tools](feedback_grep_find_are_shell_functions.md)
 - [Two reviewers in one worktree poison each other's derived files](feedback_concurrent_reviewers_one_worktree.md)
 - [Blob SHAs tell a deletion from a move](feedback_blob_sha_distinguishes_absent_from_moved.md)
+- [A positive control's witness can expire](feedback_positive_control_witness_can_expire.md) — a merged PR is no longer an open PR
+- [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md) — index line, body, provenance record
