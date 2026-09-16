@@ -138,12 +138,18 @@ def _keystore_value(provider: Path, name: str) -> str | None:
     Hygiene, non-negotiable: the resolved value is returned as a string and is
     never printed, logged, written to a file, or placed on any argv.
     """
-    proc = subprocess.run(
-        ["bash", "-c", _EXTRACT_SH, "_", str(provider), name],
-        capture_output=True,
-        text=True,
-        env={},
-    )
+    try:
+        proc = subprocess.run(
+            ["bash", "-c", _EXTRACT_SH, "_", str(provider), name],
+            capture_output=True,
+            text=True,
+            env={},
+        )
+    except OSError:
+        # An empty `env` means bash is looked up on os.defpath, so a host that
+        # keeps it elsewhere would raise here. Degrade to "not readable" so the
+        # caller still fails loud and NAMED, rather than as a raw traceback.
+        return None
     if proc.returncode != 0:
         return None
     return proc.stdout
