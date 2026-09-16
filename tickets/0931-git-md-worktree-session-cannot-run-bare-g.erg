@@ -1,0 +1,56 @@
+%erg 0.1
+Title: git.md: record that a worktree session cannot run bare git
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+2026-09-16T06:40Z claude created
+
+--- body ---
+## Context
+
+In a worktree-isolated session, every bare `git ...` call is refused. The rtk
+PreToolUse hook rewrites `git X` into `rtk git X`; the worktree isolation guard
+cannot then prove the command stays inside the worktree, and fails closed:
+"runs rtk with a git command among its operands ... what it runs cannot be shown
+not to be git".
+
+Both hooks are behaving correctly. The deadlock is emergent, and neither hook's
+message names the other, so the failure reads as "git is broken here". Piping or
+redirecting does not help, unlike the output-rewrite workaround already recorded
+in git.md -- it is the command rewrite the guard objects to, not the framing.
+
+Cost when met cold (git-erg salvage session, 2026-09-16): six refused calls
+across three distinct phrasings before the pattern was recognised.
+
+## Relevant files
+
+- `rules/git.md` -- section "Reading state you will act on", after the existing
+  rtk bullet, which primes the reader on the same actor
+
+## Actions
+
+1. Add one bullet naming the workaround `/usr/bin/git -C <worktree>`: rtk
+   rewrites only the bare token `git`, and the explicit `-C` is the confinement
+   proof the guard wants.
+2. Note the two adjacent refusals in the same family -- a compound command that
+   merely mentions a repo-ish path in a variable assignment, and a `gh` call
+   with a `--jq` expression inside a loop -- with the remedy of moving
+   multi-step logic into a script file.
+
+## Verification
+
+- [ ] `tests/test_rules_resident_budget.py` passes; headroom was 1427 chars
+- [ ] The addition stays well inside that, per the test's own note that the
+      headroom "fits a clarifying sentence, not a section"
+
+## Invariants
+
+- No change to either hook in this ticket; this records the interaction.
+- The existing rtk bullet stays as-is -- it documents a different failure
+  (output rewriting), and merging the two would blur which one is being met.
+
+## Exit criteria
+
+- `rules/git.md` names the deadlock and the `/usr/bin/git -C` workaround
+- The resident budget test still passes
