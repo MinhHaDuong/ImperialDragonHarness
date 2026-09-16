@@ -1,20 +1,26 @@
 %erg 0.1
-Title: Standing regression test for close-claim extraction across both copies
+Title: Standing regression test for close-claim extraction across all three copies
 Created: 2026-09-16
 Author: claude
 Blocked-by: 0929
 
 --- log ---
 2026-09-16T06:33Z claude created
+2026-09-16T06:58Z claude note Scope widened to three copies; check-close-claims.sh shares the defect
 
 --- body ---
 ## Context
 
-0929 fixes the close-claim extraction regex in `skills/merge/erg-pr-merge`.
-git-erg 0255 fixes the same defect in its own copy. Two independent point fixes
-to one grammar is exactly the shape that drifts back apart: nothing today asserts
-that the two copies accept the same PR-body forms, and the defect survived from
-2026-05-23 (the original GitHub issue #145) to 2026-09-16 unnoticed in both.
+0929 fixes the close-claim extraction regex in `skills/merge/erg-pr-merge` and
+in `skills/roar/check-close-claims.sh`. git-erg 0255 fixes the same defect in
+its own copy. Three independent point fixes to one grammar is exactly the shape
+that drifts back apart: nothing today asserts that the copies accept the same
+PR-body forms, and the defect survived from 2026-05-23 (the original GitHub
+issue #145) to 2026-09-16 unnoticed in all three.
+
+The `check-close-claims.sh` instance is why this ticket is not optional. That
+script is the field detector for dropped claims, and it shared the defect --
+so the one mechanism that would have caught the drift was itself blind to it.
 
 This is a `/roar` step 4 follow-up, filed because the sweep was juicy -- two
 instances of one anti-pattern -- and per that step the test is deliberately NOT
