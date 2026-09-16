@@ -122,6 +122,19 @@ independent zeros feel like evidence and are one zero measured three times.
 Distinguish "this path does not cause it" from "nothing causes it"; a null
 result supports only the tested scope.
 
+**Measure through a channel the proxy cannot rewrite.** The `rtk` PreToolUse
+hook rewrites the command string *before* the shell runs it, so redirecting to a
+file saves the rewritten bytes — a file is not a control. Measured 2026-09-16 on
+0.42.1: `git log -5 > f` lost every `Merge:` line and two thirds of its bytes;
+`grep -n` truncated the listing and replaced paths with `/.../`; `pytest`
+announced "No tests collected" for a run that collected four and passed three.
+The last is not truncation but a false statement, and no token saving buys it.
+Prefix a measurement with `RTK_DISABLED=1`, or run it inside a script or
+`python3 - <<EOF` heredoc, which the hook parses as one opaque command — the same
+opacity silently voids a probe that wraps its cases in a shell function.
+`rtk hook check <cmd>` says in advance whether a command would be rewritten, and
+`~/.local/share/rtk/tee/` keeps the unfiltered output after the fact.
+
 **A number you divided out is not a number you measured.** A per-unit figure
 obtained by dividing someone else's aggregate reads like data, carries no error
 bars, and inherits every assumption in the aggregate. Label derived quantities
