@@ -1,0 +1,27 @@
+%erg 0.1
+Title: peer_review.py resolves OPENROUTER_API_KEY from the keystore
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+2026-09-16T13:46Z claude created
+
+--- body ---
+## Context
+
+`skills/external-peer-review/peer_review.py:87` reads `OPENROUTER_API_KEY` from
+`os.environ`, falling back to walking parent directories for a `.env` that
+assigns it. Both paths depend on the credential being ambient or on a file that
+is not the keystore.
+
+Child of 0942. The pattern to copy is `skills/reviewers/reviewers.sh`
+(ticket 0393): locate the provider file defining the variable, extract that one
+variable in an `env -i` subshell, never print / log / argv the value.
+
+## Exit criteria
+- [ ] Resolves from `~/.config/keys/` at point of use; env still wins if set
+- [ ] The `.env`-walking fallback is removed, not merely deprioritized
+- [ ] Fails loud and named when the credential cannot be resolved -- never a
+      silent no-op (see feedback_gaze_external_seats_fail_open)
+- [ ] Fake-sentinel test, never a real key; asserts against a child process
+- [ ] `make check` passes

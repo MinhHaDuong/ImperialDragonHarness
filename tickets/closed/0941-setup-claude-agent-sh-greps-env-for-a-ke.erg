@@ -2,10 +2,12 @@
 Title: setup-claude-agent.sh greps .env for a key that no longer lives there
 Created: 2026-09-16
 Author: claude
+Closed: script deleted -- dead code since 0882 removed the units it installs
 
 --- log ---
 2026-09-16T13:31Z claude created
 
+2026-09-16T13:46Z Integration Test closed — script deleted -- dead code since 0882 removed the units it installs
 --- body ---
 ## Context
 
