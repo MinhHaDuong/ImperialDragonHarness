@@ -7,6 +7,7 @@ Author: MinhHaDuong
 2026-09-16T07:18Z MinhHaDuong created
 
 2026-09-16T07:19Z MinhHaDuong note padme half done: rtk 0.42.1 -> 0.49.0 and exclude_commands installed, measurements in PR #914. doudou version not yet measured.
+2026-09-16T09:20Z MinhHaDuong note doudou done: rtk 0.45.0 (cargo build of 2026-08-14) -> 0.49.0 via install.sh into ~/.local/bin, cargo copy removed; config.toml created with padme's three exclusions; red step fired before the config (rtk git log -5); every verification box observed, not asserted
 --- body ---
 ## Context
 
@@ -61,17 +62,26 @@ is not a verification.
 
 ## Verification
 
-- [ ] `rtk --version` reports 0.49.0 or later.
-- [ ] `rtk hook check` discriminates: **no rewrite** for `git log -5`,
+- [x] `rtk --version` reports 0.49.0 or later. Observed: `rtk 0.49.0`, at
+      `~/.local/bin/rtk` (install.sh, checksum verified); the cargo-installed
+      0.45.0 that shadowed it in PATH was removed with `cargo uninstall rtk`.
+- [x] `rtk hook check` discriminates (doudou, 2026-09-16): `No rewrite for:` on all
+      four spared shapes; `rtk grep -n N f`, `rtk git diff HEAD`, `rtk make build`,
+      `rtk make lint` on the four control shapes. Original criterion: **no rewrite** for `git log -5`,
       `git status`, `make check`, `make check-fast`; **still rewritten** for
       `grep -n N f`, `git diff HEAD`, `make build`, `make lint`. Both arms
       matter — an exclusion list that spares everything is not a test.
-- [ ] A bare `git log -5` contains `Merge:` lines and is ~4x the byte count of
-      the pre-config output.
-- [ ] A deliberately failing `make check` names every failing test and prints the
-      `N failed, M passed` summary.
-- [ ] `rtk pytest <a file with 3 green and 1 red>` reports "3 passed, 1 failed",
-      not "No tests collected".
+- [x] A bare `git log -5` contains `Merge:` lines and is ~4x the byte count of
+      the pre-config output. Observed on doudou: bare 2110 bytes with 2 `Merge:`
+      lines; `rtk git log -5` 936 bytes with 0. A 2.3x ratio on this repo's
+      top-5, the `Merge:` loss is the same defect as on padme.
+- [x] A deliberately failing `make check` names every failing test and prints the
+      `N failed, M passed` summary. Observed on a scratch Makefile (4 green, 2 red):
+      `FAILED test_a.py::test_red`, `FAILED test_b.py::test_red2`,
+      `2 failed, 4 passed in 0.19s`; `rtk hook check` reported `No rewrite` for it.
+- [x] `rtk pytest <a file with 3 green and 1 red>` reports "3 passed, 1 failed",
+      not "No tests collected". Observed: `Pytest: 3 passed, 1 failed` followed by
+      `1. [FAIL] test_red`.
 
 ## Invariants
 
@@ -88,10 +98,10 @@ is not a verification.
 
 ## Exit criteria
 
-- [ ] doudou runs rtk 0.49.0 or later.
-- [ ] `~/.config/rtk/config.toml` on doudou carries the `[hooks]`
+- [x] doudou runs rtk 0.49.0 or later.
+- [x] `~/.config/rtk/config.toml` on doudou carries the `[hooks]`
       `exclude_commands` list, with a comment naming the measurement behind each
-      entry.
-- [ ] Every box under Verification is ticked with the observed output pasted or
+      entry. Same three entries as padme.
+- [x] Every box under Verification is ticked with the observed output pasted or
       quoted, not asserted.
-- [ ] A log entry here records doudou's before/after version and the date.
+- [x] A log entry here records doudou's before/after version and the date.
