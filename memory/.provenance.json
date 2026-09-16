@@ -9377,10 +9377,10 @@
     },
     "project_styleme_methodology": {
       "projects": [
-        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+        "-home-haduong-CNRS-projets-actifs-styleme"
       ],
       "first_seen": "2026-09-16T16:36:55Z",
-      "last_confirmed": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T17:33:29Z",
       "promoted": false,
       "backfilled": true
     }
