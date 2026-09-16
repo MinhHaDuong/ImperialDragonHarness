@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """External peer review of a manuscript PDF via OpenRouter.
 
-Sends a PDF to OpenAI and Mistral models (one ``OPENROUTER_API_KEY``, OpenAI
-SDK against the OpenRouter base URL), each model adopting a reviewer persona,
-and writes one markdown review per (model, persona) combo.
+Sends a PDF to OpenAI and Mistral models (one OpenRouter key, OpenAI SDK
+against the OpenRouter base URL), each model adopting a reviewer persona, and
+writes one markdown review per (model, persona) combo.
+
+The credential is named by ``--credential-env`` (default
+``OPENROUTER_API_KEY_IDH``) and resolved from the environment, else from
+``~/.config/keys/openrouter.env``. Resolution fails loud: there is no silent
+no-op and no ``.env`` search.
 
 Portable across projects: no project-specific hardcoding. Models, personas,
 and the task prompt are all configurable from the command line.
@@ -26,6 +31,7 @@ import base64
 import concurrent.futures as cf
 import logging
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -79,23 +85,95 @@ def slug(model: str) -> str:
     return model.replace("/", "_").replace(":", "_")
 
 
-def load_api_key(repo_root: Path) -> str:
-    """Read OPENROUTER_API_KEY from the environment, else the nearest .env.
+DEFAULT_CREDENTIAL_ENV = "OPENROUTER_API_KEY_IDH"
 
-    Walks up from ``repo_root`` looking for a ``.env`` containing the key.
+# The provider file in the user's credential keystore. It is static for this
+# script, so no multi-file scan is needed and no bespoke override knob is
+# offered: a test overrides HOME (ticket 0943).
+CREDENTIAL_PROVIDER_BASENAME = "openrouter.env"
+
+_VALID_ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+# Read ONE variable out of a trusted provider file. Passed to `bash -c`, with
+# the file and the variable name supplied POSITIONALLY as $1 and $2 — never
+# interpolated into this text, which is what keeps a CLI-supplied name out of
+# the shell's parse. Exit 3 = unreadable file, 4 = name absent.
+_EXTRACT_SH = """
+set -a
+. "$1" >/dev/null 2>&1 || exit 3
+[ -z "${!2+x}" ] && exit 4
+printf "%s" "${!2}"
+"""
+
+
+def _credential_provider_file() -> Path:
+    """The keystore file that defines the OpenRouter credentials."""
+    return Path.home() / ".config" / "keys" / CREDENTIAL_PROVIDER_BASENAME
+
+
+def _keystore_value(provider: Path, name: str) -> str | None:
+    """Read one variable out of the provider file, or None when unreadable.
+
+    Ported from ``skills/reviewers/reviewers.sh:_keystore_value`` (ticket 0393)
+    and deliberately kept as a shell-out: the provider file is *sourced*, so an
+    export-less assignment, an ``export`` prefix, a quoted value and a
+    continuation all behave exactly as they do for ``scripts/bash-env.sh``. A
+    hand-rolled Python parse of the same file would silently diverge from that
+    reference. ``set -a`` is what makes an export-less assignment visible at
+    all; the extracted value is printed literally, never eval'd, and the file's
+    other variables die with the child.
+
+    The child environment is replaced wholesale via ``env={}`` — the Python
+    equivalent of the reference's ``env -i`` prefix, and the reason that prefix
+    is not carried over as well: two mechanisms would leave a reader asking
+    which one is authoritative. Replacing it drops ``BASH_ENV`` (so this shell
+    cannot re-source the harness env script) and clears the environment (so the
+    lookup can only resolve a name the provider file itself defines).
+
+    Sourcing executes the provider file's entire content: it is trusted code,
+    exactly as ``bash-env.sh`` trusts the same files for the same reason.
+    Reaching that execution requires prior write access to the keystore, which
+    is the trust boundary this design already assumes.
+
+    Hygiene, non-negotiable: the resolved value is returned as a string and is
+    never printed, logged, written to a file, or placed on any argv.
     """
-    key = os.environ.get("OPENROUTER_API_KEY")
-    if key:
-        return key
-    for parent in [repo_root, *repo_root.parents]:
-        env = parent / ".env"
-        if env.exists():
-            for line in env.read_text().splitlines():
-                if line.startswith("OPENROUTER_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    proc = subprocess.run(
+        ["bash", "-c", _EXTRACT_SH, "_", str(provider), name],
+        capture_output=True,
+        text=True,
+        env={},
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
+def resolve_credential(name: str = DEFAULT_CREDENTIAL_ENV) -> str:
+    """Resolve the API credential named ``name``: environment first, then keystore.
+
+    Fails loud and named — never a silent no-op — quoting the variable and the
+    exact file probed. Neither is a secret; the value never appears.
+    """
+    if not _VALID_ENV_NAME.match(name):
+        raise SystemExit(
+            f"credential-env {name!r} is not a valid shell variable name "
+            "(expected ^[A-Za-z_][A-Za-z0-9_]*$)"
+        )
+    value = os.environ.get(name)
+    if value:
+        return value
+    provider = _credential_provider_file()
+    if provider.exists():
+        value = _keystore_value(provider, name)
+        if value:
+            log.info("credential %s resolved from the keystore (%s)",
+                     name, provider.name)
+            return value
     raise SystemExit(
-        "OPENROUTER_API_KEY not found in environment or any .env walking up "
-        f"from {repo_root}"
+        f"credential {name} is neither set in the environment nor readable "
+        f"from {provider}. Define it there, export it into the environment, or "
+        "pass --credential-env with the name your own keystore uses."
     )
 
 
@@ -184,8 +262,12 @@ def parse_args(argv=None) -> argparse.Namespace:
                    help="file-parser PDF engine (default: mistral-ocr).")
     p.add_argument("--max-tokens", type=int, default=6000)
     p.add_argument("--out-dir", type=Path, default=Path("reviews"))
-    p.add_argument("--repo-root", type=Path, default=Path.cwd(),
-                   help="Where to start the .env search (default: cwd).")
+    p.add_argument(
+        "--credential-env", default=DEFAULT_CREDENTIAL_ENV,
+        help="Name of the variable holding the OpenRouter key, looked up in "
+             "the environment then in ~/.config/keys/openrouter.env "
+             f"(default: {DEFAULT_CREDENTIAL_ENV}). Pass your project's own "
+             "keyset variant to bill your own identity.")
     p.add_argument("--text", action="store_true",
                    help="Send locally-extracted text instead of the PDF file "
                         "(also the automatic fallback on HTTP 402).")
@@ -211,7 +293,7 @@ def main(argv=None) -> None:
         task = f"{task}\n\nPaper topic: {args.topic}"
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    api_key = load_api_key(args.repo_root)
+    api_key = resolve_credential(args.credential_env)
 
     text: str | None = None
     data_url: str | None = None

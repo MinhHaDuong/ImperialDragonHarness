@@ -23,10 +23,18 @@ The bundled script is `~/.claude/skills/external-peer-review/peer_review.py`.
    whose output is that `.pdf`), offer to build it. Degrade gracefully if there
    is no such target — just ask the user for a path.
 
-2. **Check the key.** Confirm `OPENROUTER_API_KEY` is available (in the
-   environment or a `.env` walking up from the project root). The script reads
-   it the same way; never echo the value. If it is missing, stop and tell the
-   user.
+2. **Check the key.** The script resolves its OpenRouter credential from the
+   variable named by `--credential-env` (default `OPENROUTER_API_KEY_IDH`):
+   from the environment if it is set there, else from
+   `~/.config/keys/openrouter.env`, which is sourced as shell code so an
+   `export`-prefixed assignment resolves like a bare one. There is no `.env`
+   search: a project that exported only a bare `OPENROUTER_API_KEY` now fails
+   loud rather than resolving, which is deliberate — the keystore is the system
+   of record, and the identity being billed should be named, not inherited.
+   Pass your project's own keyset variant (`--credential-env
+   OPENROUTER_API_KEY_MYPROJECT`) to bill your own identity rather than the
+   harness one. Resolution failure names the variable and the file probed and
+   stops; never echo the value.
 
 3. **Pick models and personas.** Defaults: models
    `openai/gpt-5.5,mistralai/mistral-large-2512`, personas `grinchy,student`
