@@ -98,9 +98,17 @@ _VALID_ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 # the file and the variable name supplied POSITIONALLY as $1 and $2 — never
 # interpolated into this text, which is what keeps a CLI-supplied name out of
 # the shell's parse. Exit 3 = unreadable file, 4 = name absent.
+#
+# The readability probe is deliberate, and a divergence from
+# reviewers.sh:_keystore_value. `. file || exit 3` reports the status of the
+# LAST command the sourced file ran, not whether sourcing succeeded, so a
+# provider file ending on a non-zero command makes a correctly-defined
+# variable look unreadable. `[ -r ]` answers the question actually being
+# asked; a genuine mid-file failure still leaves the name unset and exits 4.
 _EXTRACT_SH = """
 set -a
-. "$1" >/dev/null 2>&1 || exit 3
+[ -r "$1" ] || exit 3
+. "$1" >/dev/null 2>&1 || :
 [ -z "${!2+x}" ] && exit 4
 printf "%s" "${!2}"
 """
@@ -142,7 +150,6 @@ def _keystore_value(provider: Path, name: str) -> str | None:
         proc = subprocess.run(
             ["bash", "-c", _EXTRACT_SH, "_", str(provider), name],
             capture_output=True,
-            text=True,
             env={},
         )
     except OSError:
@@ -152,7 +159,18 @@ def _keystore_value(provider: Path, name: str) -> str | None:
         return None
     if proc.returncode != 0:
         return None
-    return proc.stdout
+    try:
+        # Decoded here rather than by `text=True`, which also turns on universal
+        # newlines: that would silently rewrite a CR *inside* a value into LF.
+        value = proc.stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        # Not an OSError, so it needs its own arm, and it needs one: uncaught it
+        # escapes the designed SystemExit, and its ``repr`` embeds the entire
+        # raw undecoded buffer — one careless ``repr(e)`` from leaking the value.
+        return None
+    # A CRLF provider file leaves a trailing carriage return inside the value:
+    # a byte-wrong credential that looks present and fails only at the API call.
+    return value.rstrip("\r")
 
 
 def resolve_credential(name: str = DEFAULT_CREDENTIAL_ENV) -> str:

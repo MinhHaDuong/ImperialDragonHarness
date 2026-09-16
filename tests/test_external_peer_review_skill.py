@@ -203,6 +203,63 @@ def test_rejects_a_credential_name_that_is_not_a_variable_name(tmp_path):
     )
 
 
+@pytest.mark.integration
+def test_a_crlf_provider_file_does_not_smuggle_a_carriage_return(tmp_path):
+    """CRLF would give a byte-wrong value that fails only at the API call."""
+    home = tmp_path / "crlf-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_bytes(
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\r\n".encode()
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout, (
+        "a trailing carriage return must not become part of the credential"
+    )
+
+
+@pytest.mark.integration
+def test_a_provider_file_ending_on_a_failing_command_still_resolves(tmp_path):
+    """`. file || exit 3` reports the last sourced command's status, not the source's.
+
+    A provider file whose last line exits non-zero would make a
+    correctly-defined variable look unreadable.
+    """
+    home = tmp_path / "trailing-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_text(
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\nfalse\n"
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout
+
+
+@pytest.mark.integration
+def test_a_non_utf8_credential_byte_fails_loud_rather_than_raising(tmp_path):
+    """``text=True`` raises UnicodeDecodeError, which is not an OSError.
+
+    Uncaught it escapes the designed SystemExit — and its ``repr`` embeds the
+    whole raw buffer, putting the value one careless ``repr(e)`` from a log.
+    """
+    home = tmp_path / "latin1-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_bytes(
+        b"export " + CRED_NAME.encode() + b"='fake-\xff-sentinel-0943'\n"
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode != 0
+    assert "UnicodeDecodeError" not in proc.stderr, (
+        "must fail loud and named, not as a decoding traceback"
+    )
+    assert CRED_NAME in proc.stderr and "openrouter.env" in proc.stderr
+
+
 def test_dotenv_walk_and_repo_root_are_gone():
     """Removal ratchet: the walk and its only consumer must not come back."""
     src = script_text()
