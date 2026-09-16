@@ -1,8 +1,11 @@
 ---
 name: feedback-executor-gate-loop-stall
-description: An executor can stall re-requesting a review panel that already reported — the seat reports reach the orchestrator, so read them and take over rather than waiting
-metadata:
+description: "An executor can stall re-requesting a review panel that already reported — the seat reports reach the orchestrator, so read them and take over rather than waiting"
+metadata: 
+  node_type: memory
   type: feedback
+  originSessionId: ec860e90-d36f-4a14-9411-bfed986e87e4
+  modified: 2026-09-14T04:11:10.105Z
 ---
 
 A raid executor working ticket 0261 opened its PR, ran a five-seat review panel,
@@ -37,6 +40,23 @@ own worktree, so `git switch` to that name fails. Either check it out under a
 distinct local name and push with `HEAD:<branch>`, or remove the dead worktree
 first — `erg-pr-merge` requires the local branch name to match the PR's head, so
 the rename has to happen before the merge step.
+
+**Corollary (2026-09-13, closing tickets 0744/0760, `search-works-for-zotero`):
+a stale/unhelpful terminal status is not automatically this stall.** A
+delegated team-lead repeated near-identical unhelpful lines across several
+notifications ("I'll wait for the gate", "I'll merge as soon as the gate
+returns") even after the gate had already posted APPROVED. The tell that
+distinguishes this from the stall above: check whether the branch tip is
+actually moving between notifications, not just whether the reported text is
+repeating. Here the tip kept advancing (a real rebase, a real mutant-range
+fix commit) even though the self-reported status text was stale and
+uninformative — the work was real, the self-reporting was just bad. Taking
+over in that case would have discarded live, correct progress. The stall
+memo's own test still applies as the discriminator: *identical content AND no
+branch movement* means stalled, take over; *moving branch, just a vague or
+stale status line* means push back for a concrete answer (a direct message
+naming exactly what outcome you need this round) rather than take over.
+Related: [[feedback_double_backgrounding_and_unverified_watch_claims]].
 
 Related: [[feedback-preserve-agent-output]],
 [[feedback-verify-the-load-bearing-claim]].

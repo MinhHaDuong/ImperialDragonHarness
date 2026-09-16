@@ -1,6 +1,0 @@
-- [Methodology: SWOT, not ranking](methodology_swot.md)
-- [Orchestrator lessons — wave-1](feedback_orchestrator.md)
-- [Module boundary rule](feedback_module_boundaries.md)
-- [Torch sparse degree computation](feedback_torch_sparse_degrees.md)
-- [LaTeX notation conventions and pitfalls](feedback_latex_notation.md)
-- [Squash merge ticket closure timing](feedback_squash_merge_ticket_closure.md)
