@@ -7,6 +7,7 @@ Author: claude
 
 2026-09-16T15:54Z claude created child of 0800 after the author chose the verb/type/object grammar over a flat form; the perch adapter's SLICE constant is the only thing standing between one skill and any skill
 2026-09-16T16:03Z claude note round 1 review: test count corrected to 65, and action 7 split so that putting bin/ on PATH -- which changes invocation of four unrelated shipped scripts and has no test line -- moves to the lifecycle ticket instead of riding along here
+2026-09-16T16:28Z claude note renumbered from 0946 after a cross-PR ID collision: a sibling session landed its own 0946 on main first. IDs are atomic, so the file moves rather than taking a suffix
 --- body ---
 ## Context
 
