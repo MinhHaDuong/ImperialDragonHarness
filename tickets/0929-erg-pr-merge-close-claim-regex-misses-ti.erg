@@ -1,0 +1,82 @@
+%erg 0.1
+Title: erg-pr-merge close-claim regex misses tickets/closed/NNNN paths
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+2026-09-16T06:31Z claude created
+
+--- body ---
+## Context
+
+A PR body's `**Ticket:**` line is executed by `erg-pr-merge`, not by the forge.
+The extraction regex matches `tickets/NNNN` and not `tickets/closed/NNNN`, so
+when a ticket is archived before the merge the close claim is skipped with no
+output and a non-zero exit nowhere. `erg check` passes either way, because the
+store is internally consistent -- the ticket is simply still open while its fix
+sits on main.
+
+This is the mechanism behind git-erg PR #334 (2026-09-10): ticket 0276's fix
+landed while 0276 stayed open, found by luck in a `/perch` pass and repaired by
+a second PR.
+
+The defect has two live instances, which is why it is filed as a class rather
+than a one-line fix:
+
+- `skills/merge/erg-pr-merge:146` (this repo) --
+  `grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+'`
+- `tickets/erg-github:77` (git-erg) --
+  `grep -iE '^[*]{0,2}ticket:?[*]{0,2}:? *tickets/[0-9]{4}'`, covered there by
+  **git-erg ticket 0255**, salvaged onto main 2026-09-16 in git-erg PR #337.
+
+The harness copy is the one that runs at most merges, so fixing only the git-erg
+side leaves the common path broken.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` -- line 146, `TICKET_IDS` extraction
+- `skills/roar/check-close-claims.sh` -- the after-the-fact detector; it joins
+  from the merged-PR side and is what would catch a regression in the field
+- git-erg `tickets/erg-github` -- the sibling copy, fixed under git-erg 0255
+
+## Actions
+
+1. Widen the extraction to accept an optional `closed/` segment, keeping the
+   captured group the bare 4-digit ID.
+2. Confirm `erg close` on an already-archived ticket is a no-op or a clean
+   success, so that accepting the path does not turn a skipped claim into a
+   hard failure at the merge gate.
+3. Coordinate with git-erg 0255 so both copies end up with the same accepted
+   grammar; a divergence here is worse than the bug, because the two paths would
+   then disagree about which PR bodies are valid.
+
+## Test
+
+Red step first: a unit test that feeds a PR body carrying
+`**Ticket:** tickets/closed/0276-some-slug.erg` to the extraction and asserts it
+yields `0276`. It must fail against the current line 146 before any fix lands --
+a green-on-arrival test here proves nothing, since the open-path case already
+passes.
+
+## Verification
+
+- [ ] The red test above fails before the change and passes after
+- [ ] `tickets/NNNN`, `**Ticket:** tickets/NNNN` and `Ticket: tickets/NNNN` all
+      still extract, including the multi-line `sort -u` case
+- [ ] A body with no ticket line still yields empty without error
+- [ ] `check-close-claims.sh --days 7` still reports 0 findings
+
+## Invariants
+
+- The `harness-extension-point` comments around the forge-specific calls stay
+  where they are; this change is not a refactor of that boundary.
+- Do not change what the script does when extraction yields empty -- that path
+  is the "explicit no-close" PR, which is legitimate and common.
+
+## Exit criteria
+
+- `skills/merge/erg-pr-merge` extracts a ticket ID from both `tickets/NNNN` and
+  `tickets/closed/NNNN` forms
+- The red test is committed and passes
+- The accepted grammar is the same in this repo and in git-erg's
+  `tickets/erg-github`, or the difference is documented in both
