@@ -7,6 +7,7 @@ Author: Integration Test
 2026-09-16T08:58Z Integration Test created
 2026-09-16T09:02Z claude note Surfaced by a memory sweep that skipped the documented `remove` call rather than write into the primary checkout. Verified and widened: the defect is seven of nine subcommands, not `remove` alone, and it hits /dream's ADD path as well as its DELETE path.
 
+2026-09-16T09:38Z claude note Review measured the stale-slug count independently: 55 of 119 resolve under current project keys, 90 via the two-entry .project-aliases.json, the residual 29 entangled with the deferred 451-slug re-link. Body softened from an asserted 119 to a measured range.
 --- body ---
 ## Context
 
@@ -37,16 +38,25 @@ except here it is the tool doing it, so no amount of agent discipline avoids it.
 Observed 2026-09-16 during the sweep landed by PR #922: the agent noticed and
 **skipped** the documented `remove` call for all 119 entries it tombstoned
 rather than write outside its worktree. Correct call, with a cost — the
-provenance store still lists those 119 slugs against their projects, which
-inflates the two-project frequency count that gates promotion to the harness
-tier. Promotion decisions are now being made against a store that overcounts.
+provenance store still lists those slugs against their projects, which inflates
+the two-project frequency count that gates promotion to the harness tier.
+Promotion decisions are being made against a store that overcounts.
+
+How far it overcounts is **not** cleanly measurable today, and the ticket says so
+rather than asserting a round number. Of the 119 tombstoned bodies, 55 still list
+their current project directory; resolving the thin two-entry
+`.project-aliases.json` recovers 90; the remaining 29 carry pre-rename keys the
+alias table does not cover. Those 29 are entangled with the 451-slug re-link
+below, so the honest figure is a range, 55 to 119, and it cannot be narrowed
+until the re-link is decided. Do not treat 119 as measured.
 
 ## Relevant files
 
 - `skills/dream/provenance.py` — the nine subcommands; `--root` at lines 608, 615
 - `skills/dream/SKILL.md` — lines 99 and 148, the two mandated calls
 - `tests/test_provenance_coverage.py` — the existing gate; does not cover this
-- `memory/.provenance.json` — the store, currently overcounting by 119 slugs
+- `memory/.provenance.json` — the store, overcounting by 55 to 119 slugs
+- `.project-aliases.json` — two entries; too thin to resolve the pre-rename keys
 
 ## Actions
 
