@@ -1,0 +1,97 @@
+%erg 0.1
+Title: Upgrade rtk aussi sur doudou
+Created: 2026-09-16
+Author: MinhHaDuong
+
+--- log ---
+2026-09-16T07:18Z MinhHaDuong created
+
+2026-09-16T07:19Z MinhHaDuong note padme half done: rtk 0.42.1 -> 0.49.0 and exclude_commands installed, measurements in PR #914. doudou version not yet measured.
+--- body ---
+## Context
+
+rtk on **padme** went 0.42.1 -> 0.49.0 on 2026-09-16, and gained an
+`exclude_commands` block in `~/.config/rtk/config.toml`. That file is **not
+version-controlled and not shared between machines**, so neither half of the fix
+has reached doudou. Until it does, a session there measures through a filter
+whose defects were established on padme the same day:
+
+- Below 0.45.0 a redirection to a file does **not** dodge the rewrite — the hook
+  is PreToolUse and rewrites the command string before any shell sees the `>`.
+  `git log -5 > f` came back 1447 bytes against 5946, with every `Merge:` line
+  gone.
+- At 0.42.1 the pytest filter announced **"Pytest: No tests collected"** for a
+  run that collected four and passed three. Not a truncation, a false statement.
+  0.49.0 fixes it and reports "3 passed, 1 failed".
+- At 0.49.0, still: `rtk git log` drops every `Merge:` line (1596 bytes against
+  4924), and `rtk make` truncates head-first past ~2 kB, so a test runner's
+  verdict — which pytest prints in the tail — disappears. A 120-test green run
+  showed no count at all; a red one hid two of its three failures.
+
+The version on doudou has **not been measured**. Step 1 measures it; do not
+assume it matches padme's former state.
+
+## Relevant files
+
+- `~/.config/rtk/config.toml` — per-machine, not in git. The artifact this
+  ticket installs. On padme it now reads
+  `exclude_commands = ["git log", "git status", "^make\\b.*\\bcheck\\b"]`.
+- `rules/workflow.md` § Diagnosis discipline — the resident rule this implements
+  ("Which shapes the proxy rewrites is a version fact, not a rule").
+- `rules/git.md` § Reading state you will act on — the two rtk bullets.
+
+## Actions
+
+1. Record the installed version: `rtk --version`, and the binary's mtime.
+2. Upgrade:
+   `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh`
+   Take the stable release, never a `dev-*-rc.*` pre-release.
+3. `rtk config --create` if `~/.config/rtk/config.toml` is absent, then set
+   `exclude_commands` in the `[hooks]` section to padme's list above.
+4. Re-run the verification below **on doudou** — padme's results do not transfer.
+
+## Test
+
+Red first, and the red step is the point: **before** writing the config, run
+`rtk hook check "git log -5"`. It must report a rewrite (`rtk git log -5`). If it
+already reports "No rewrite", the config is present or the command is spared for
+some other reason, and the rest of this ticket needs re-reading before it is
+applied. A verification whose pass is indistinguishable from "I could not look"
+is not a verification.
+
+## Verification
+
+- [ ] `rtk --version` reports 0.49.0 or later.
+- [ ] `rtk hook check` discriminates: **no rewrite** for `git log -5`,
+      `git status`, `make check`, `make check-fast`; **still rewritten** for
+      `grep -n N f`, `git diff HEAD`, `make build`, `make lint`. Both arms
+      matter — an exclusion list that spares everything is not a test.
+- [ ] A bare `git log -5` contains `Merge:` lines and is ~4x the byte count of
+      the pre-config output.
+- [ ] A deliberately failing `make check` names every failing test and prints the
+      `N failed, M passed` summary.
+- [ ] `rtk pytest <a file with 3 green and 1 red>` reports "3 passed, 1 failed",
+      not "No tests collected".
+
+## Invariants
+
+- **Do not exclude `grep`.** It is 123 M tokens, 24.6 % of total savings on
+  padme's census, and its `N matches in M files` header is accurate. Its cost is
+  a truncated listing and paths rewritten to `/.../`, which fail loudly when
+  used.
+- **Do not exclude `pytest`** on 0.49.0 or later. The filter is honest there and
+  excluding it taxes every test run. It was excluded on padme only while 0.42.1
+  was lying, and removed once measured.
+- Exclude only the `check*` make targets, not `make` wholesale.
+- The config is machine-local by design. Do not try to commit it into the harness
+  repo; record in this ticket what each machine ended up with.
+
+## Exit criteria
+
+- [ ] doudou runs rtk 0.49.0 or later.
+- [ ] `~/.config/rtk/config.toml` on doudou carries the `[hooks]`
+      `exclude_commands` list, with a comment naming the measurement behind each
+      entry.
+- [ ] Every box under Verification is ticked with the observed output pasted or
+      quoted, not asserted.
+- [ ] A log entry here records doudou's before/after version and the date.
