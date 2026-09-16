@@ -5,7 +5,13 @@ These ratchets pin the documented contract in the skill text and the portability
 invariants in the bundled script (no project-specific hardcoding).
 """
 
+import os
+import site
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 SKILL_DIR = REPO / "skills" / "external-peer-review"
@@ -60,4 +66,239 @@ def test_script_is_portable_no_project_hardcoding():
     assert "--models" in src and "--personas" in src, (
         "models and personas must be CLI-configurable"
     )
-    assert "OPENROUTER_API_KEY" in src, "must read the OpenRouter key from env/.env"
+    assert "--credential-env" in src, (
+        "the credential identity must be a CLI input, not a constant"
+    )
+
+
+# ── credential resolution (ticket 0943) ──────────────────────────────────────
+#
+# Hygiene, non-negotiable: every value below is an obviously-fake sentinel in a
+# fake keystore under a fake HOME. No real credential is ever read, and the
+# child prints the LENGTH of what it resolved, never the value itself.
+
+# The keystore line for the target variable carries an `export ` prefix. That
+# is the discriminator: the deleted `.env` walk matched `line.startswith(NAME=)`
+# and would miss it, while sourcing the file as shell code does not. A test
+# whose fixture used only a bare assignment would pass against a hand-rolled
+# Python parser too.
+KEYSTORE_SENTINEL = "sk-or-v1-FAKE-KEYSTORE-SENTINEL-0943-not-a-real-key"
+ENV_SENTINEL = "sk-or-v1-FAKE-ENV-SENTINEL-0943"
+POSITIVE_CONTROL = "PEER-REVIEW-0943-HAYSTACK-CONTROL"
+CRED_NAME = "OPENROUTER_API_KEY_IDH"
+DECOY_NAME = "OPENROUTER_API_KEY_AEDIST"
+
+CHILD = """
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("peer_review_under_test", sys.argv[1])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+value = mod.resolve_credential(sys.argv[2])
+print({control!r})
+print("resolved_length=%d" % len(value))
+"""
+
+
+def _fake_home(tmp_path):
+    """A fake HOME carrying a fake keystore. Returns the home path."""
+    home = tmp_path / "fake-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_text(
+        f"# fake keystore fixture — no real credential lives here\n"
+        f"{DECOY_NAME}=fake-decoy-value-0943\n"
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\n"
+    )
+    return home
+
+
+def _child_env(home, extra=None):
+    """A child environment built FROM SCRATCH.
+
+    Never ``{**os.environ, ...}``: this machine can carry a live
+    ``OPENROUTER_API_KEY_IDH``, and inheriting it would make the keystore case
+    pass without the keystore being read at all. PATH is needed for ``bash``
+    and PYTHONPATH for the script's third-party import, since a fake HOME
+    hides the real user site-packages.
+    """
+    env = {
+        "HOME": str(home),
+        "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+        "PYTHONPATH": site.getusersitepackages(),
+    }
+    env.update(extra or {})
+    return env
+
+
+def _run_child(tmp_path, home, extra_env=None, name=CRED_NAME):
+    child = tmp_path / "child.py"
+    child.write_text(CHILD.format(control=POSITIVE_CONTROL))
+    return subprocess.run(
+        [sys.executable, str(child), str(SCRIPT), name],
+        env=_child_env(home, extra_env),
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+
+
+@pytest.mark.integration
+def test_resolves_credential_from_keystore_without_leaking_it(tmp_path):
+    home = _fake_home(tmp_path)
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    haystack = proc.stdout + proc.stderr
+    assert POSITIVE_CONTROL in haystack, (
+        "positive control absent — the leak assertion below would pass "
+        "vacuously against an empty haystack"
+    )
+    assert KEYSTORE_SENTINEL not in haystack, (
+        "the resolved value must never reach stdout, stderr or a log"
+    )
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout, (
+        "must resolve the export-prefixed keystore assignment by sourcing the "
+        "provider file as shell code"
+    )
+
+
+@pytest.mark.integration
+def test_environment_wins_over_keystore(tmp_path):
+    home = _fake_home(tmp_path)
+    assert len(ENV_SENTINEL) != len(KEYSTORE_SENTINEL), "lengths must discriminate"
+    proc = _run_child(tmp_path, home, {CRED_NAME: ENV_SENTINEL})
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    haystack = proc.stdout + proc.stderr
+    assert POSITIVE_CONTROL in haystack
+    assert ENV_SENTINEL not in haystack and KEYSTORE_SENTINEL not in haystack
+    assert f"resolved_length={len(ENV_SENTINEL)}" in proc.stdout, (
+        "an already-set environment variable must win over the keystore"
+    )
+
+
+@pytest.mark.integration
+def test_fails_loud_naming_file_and_variable(tmp_path):
+    home = tmp_path / "empty-home"
+    (home / ".config" / "keys").mkdir(parents=True)
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode != 0, "unresolvable credential must never be a silent no-op"
+    assert CRED_NAME in proc.stderr, "the failure must name the variable probed"
+    assert "openrouter.env" in proc.stderr, "the failure must name the file probed"
+
+
+@pytest.mark.integration
+def test_rejects_a_credential_name_that_is_not_a_variable_name(tmp_path):
+    """The name reaches a ``bash -c``; it must be validated before it gets there."""
+    home = _fake_home(tmp_path)
+    proc = _run_child(tmp_path, home, name='X"; echo INJECTED; #')
+    assert proc.returncode != 0, (
+        "a name reaching a bash -c must be rejected, not passed through"
+    )
+    assert "not a valid shell variable name" in proc.stderr, (
+        "rejection must happen in the validator, before any shell sees the name"
+    )
+    assert POSITIVE_CONTROL not in proc.stdout, (
+        "rejection must abort before the credential is resolved"
+    )
+
+
+@pytest.mark.integration
+def test_a_crlf_provider_file_does_not_smuggle_a_carriage_return(tmp_path):
+    """CRLF would give a byte-wrong value that fails only at the API call."""
+    home = tmp_path / "crlf-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_bytes(
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\r\n".encode()
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout, (
+        "a trailing carriage return must not become part of the credential"
+    )
+
+
+@pytest.mark.integration
+def test_a_provider_file_ending_on_a_failing_command_still_resolves(tmp_path):
+    """`. file || exit 3` reports the last sourced command's status, not the source's.
+
+    A provider file whose last line exits non-zero would make a
+    correctly-defined variable look unreadable.
+    """
+    home = tmp_path / "trailing-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_text(
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\nfalse\n"
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout
+
+
+@pytest.mark.integration
+def test_a_non_utf8_credential_byte_fails_loud_rather_than_raising(tmp_path):
+    """``text=True`` raises UnicodeDecodeError, which is not an OSError.
+
+    Uncaught it escapes the designed SystemExit — and its ``repr`` embeds the
+    whole raw buffer, putting the value one careless ``repr(e)`` from a log.
+    """
+    home = tmp_path / "latin1-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_bytes(
+        b"export " + CRED_NAME.encode() + b"='fake-\xff-sentinel-0943'\n"
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode != 0
+    assert "UnicodeDecodeError" not in proc.stderr, (
+        "must fail loud and named, not as a decoding traceback"
+    )
+    assert CRED_NAME in proc.stderr and "openrouter.env" in proc.stderr
+
+
+def test_dotenv_walk_and_repo_root_are_gone():
+    """Removal ratchet: the walk and its only consumer must not come back."""
+    src = script_text()
+    assert "load_api_key" not in src, "the .env-walking resolver must be deleted"
+    assert "--repo-root" not in src, (
+        "--repo-root existed only to seed the .env walk"
+    )
+
+
+@pytest.mark.integration
+def test_credential_resolution_does_not_need_the_openai_sdk(tmp_path):
+    """Resolving a credential must not require the OpenAI SDK to be importable.
+
+    The SDK is a per-skill runtime dependency that CI does not install. While it
+    was imported at module level, importing this file to reach
+    ``resolve_credential`` pulled it in — so every resolution test passed on a
+    developer machine that happens to have ``openai`` and failed on the runner,
+    which does not. Seven of them, on PR #942, after a local ``make check``
+    reported 994 passed.
+
+    This reproduces that condition locally instead of waiting for CI: the child
+    gets a fake HOME, which already hides the real user site-packages, and —
+    unlike every other case in this file — no ``PYTHONPATH``. ``import openai``
+    therefore fails in the child exactly as it does on the runner. Restoring a
+    module-level SDK import turns this red.
+    """
+    home = _fake_home(tmp_path)
+    child = tmp_path / "child.py"
+    child.write_text(CHILD.format(control=POSITIVE_CONTROL))
+    proc = subprocess.run(
+        [sys.executable, str(child), str(SCRIPT), CRED_NAME],
+        env={"HOME": str(home), "PATH": os.environ.get("PATH", "/usr/bin:/bin")},
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
+    )
+    assert "ModuleNotFoundError" not in proc.stderr, (
+        "resolution must not depend on an importable SDK: " + proc.stderr
+    )
+    assert proc.returncode == 0, f"child failed: {proc.stderr}"
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
