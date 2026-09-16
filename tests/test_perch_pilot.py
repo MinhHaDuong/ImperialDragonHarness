@@ -132,11 +132,21 @@ def test_a_release_above_the_floor_is_supported(harness):
 @pytest.mark.parametrize("harness", perch.HARNESSES)
 def test_below_the_floor_refuses(harness):
     major, minor, patch = perch.parse_version(perch.policy(harness)["minimum_version"])
-    older = f"{major}.{minor}.{patch}" if minor == 0 else f"{major}.{minor - 1}.{patch}"
-    if older == perch.policy(harness)["minimum_version"]:
-        pytest.skip("floor is x.0.0; the below-floor case has no representative")
+    if minor:
+        older = f"{major}.{minor - 1}.{patch}"
+    elif patch:
+        older = f"{major}.{minor}.{patch - 1}"
+    else:
+        older = f"{max(major - 1, 0)}.99.99"
+    assert perch.parse_version(older) < (major, minor, patch), older
     with pytest.raises(perch.Refusal):
         perch.check_version(harness, supplied=older)
+
+
+def test_a_pre_release_compares_equal_to_its_release():
+    """A decision, pinned so it stays one: identifiers are ignored."""
+    assert perch.parse_version("0.85.1-rc.1") == perch.parse_version("0.85.1")
+    assert perch.parse_version("0.85.1+build.99") == perch.parse_version("0.85.1")
 
 
 @pytest.mark.parametrize("harness", perch.HARNESSES)
@@ -199,6 +209,47 @@ def test_uninstall_keeps_a_neutral_home_that_holds_someone_elses_skill(home):
     assert not (home / ".agents" / "skills" / "perch").exists()
 
 
+def test_uninstall_names_every_harness_it_reaches(home):
+    """One neutral home, one perch: removing it for Codex removes it for Pi."""
+    assert perch.sharing_target("codex") == ("codex", "pi")
+    assert perch.sharing_target("claude") == ("claude",)
+    perch.install("codex", version="99.0.0")
+    message = perch.uninstall("pi")
+    assert "codex, pi" in message
+    assert perch.status("codex")["installed"] is False
+
+
+def test_uninstall_never_prunes_above_the_neutral_home(home):
+    """$HOME/.claude is Claude Code's own directory, not the pilot's to remove."""
+    assert perch.prune_root("codex") == home / ".agents"
+    assert perch.prune_root("claude") == home / ".claude" / "skills"
+    perch.install("claude", version="99.0.0")
+    perch.uninstall("claude")
+    assert (home / ".claude").is_dir()
+    assert not (home / ".claude" / "skills").exists()
+
+
+def test_a_link_left_dangling_by_a_moved_checkout_is_named_and_removable(home):
+    """Fail-safe is not enough when the safe state cannot be cleaned up."""
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(home / "gone" / "skills" / "perch", target_is_directory=True)
+    assert perch.status("codex")["projection"] == "dangling"
+    with pytest.raises(perch.Refusal, match="uninstall"):
+        perch.install("codex", version="99.0.0")
+    assert "no longer exists" in perch.uninstall("codex")
+    assert not (home / ".agents").exists()
+
+
+def test_a_dangling_link_that_is_not_ours_is_left_alone(home):
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(home / "gone" / "something-else", target_is_directory=True)
+    assert perch.status("codex")["projection"] == "unmanaged"
+    with pytest.raises(perch.Refusal):
+        perch.uninstall("codex")
+
+
 def test_install_refuses_to_replace_an_unmanaged_entry(home):
     target = home / ".agents" / "skills" / "perch"
     target.mkdir(parents=True)
@@ -230,8 +281,29 @@ def test_claude_needs_no_projection_when_the_repo_is_the_claude_home(home):
     state = perch.status("claude")
     assert state["installed"] is True
     assert state["projection"] == "none"
-    assert perch.install("claude")  # returns a line, raises nothing
+    assert perch.install("claude", version="99.0.0")  # a line, not a Refusal
     assert (home / ".claude" / "skills" / "perch" / "SKILL.md").is_file()
+
+
+def test_the_floor_is_asserted_even_when_install_creates_nothing(home):
+    """The already-discoverable path is a support claim, not a bare report.
+
+    It is also the reference machine's own topology, so a floor skipped here
+    is a floor never asserted for Claude Code at all.
+    """
+    (home / ".claude").symlink_to(REPO, target_is_directory=True)
+    assert perch.status("claude")["installed"] is True
+    with pytest.raises(perch.Refusal):
+        perch.install("claude", version="0.0.1")
+
+
+def test_status_never_probes_a_cli(home, monkeypatch):
+    """status is the read-only report; it must answer with no CLI at all."""
+    monkeypatch.setenv("PERCH_CODEX_BIN", "/nonexistent/codex")
+    monkeypatch.setenv("PERCH_CLAUDE_BIN", "/nonexistent/claude")
+    monkeypatch.setenv("PERCH_PI_BIN", "/nonexistent/pi")
+    for harness in perch.HARNESSES:
+        assert perch.status(harness)["installed"] is False
 
 
 def test_claude_uninstall_never_deletes_the_canonical_skill(home):

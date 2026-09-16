@@ -173,6 +173,45 @@
       "result": "pass"
     },
     {
+      "id": "the-floor-is-asserted-on-every-install-path",
+      "slice": "perch",
+      "harness": "all",
+      "harness_version": "claude 2.1.273, codex 0.154.0, pi 0.85.1",
+      "assertion": "Install probes the version floor before anything else, the already-discoverable path included. That path is the reference machine's own topology for Claude Code, so a floor skipped there would be a floor never asserted for it at all. status() stays the read-only report and probes nothing.",
+      "source_concept": "version support policy",
+      "native_expression": "check_version before any branch of install",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_pilot.py::test_the_floor_is_asserted_even_when_install_creates_nothing",
+      "result": "pass"
+    },
+    {
+      "id": "a-dangling-link-is-named-and-removable",
+      "slice": "perch",
+      "harness": "codex",
+      "harness_version": "0.154.0",
+      "assertion": "Moving the checkout leaves the installed link pointing nowhere. That state is reported as dangling and removed on request; reporting it as unmanaged would read as a third party's entry and leave nothing able to clean it up. A dangling link that does not name this slice is still refused.",
+      "source_concept": "removal",
+      "native_expression": "$HOME/.agents/skills/perch, projection: dangling",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_perch_pilot.py::test_a_link_left_dangling_by_a_moved_checkout_is_named_and_removable",
+      "result": "pass"
+    },
+    {
+      "id": "a-cli-emitting-invalid-utf8-still-refuses-cleanly",
+      "slice": "perch",
+      "harness": "codex",
+      "harness_version": "0.154.0",
+      "assertion": "A CLI whose --version output is not valid UTF-8 stays inside the refusal contract: one line on stderr and exit 2, never a traceback at exit 1. Probed against a stand-in CLI whose bytes are confirmed undecodable.",
+      "source_concept": "version support policy",
+      "native_expression": "exit 2, 'perch pilot: ...'",
+      "disposition": "shared",
+      "evidence_kind": "local-probe",
+      "test": "tests/test_perch_discovery.py::test_the_cli_reports_a_refusal_as_one_line_and_exit_two",
+      "result": "pass"
+    },
+    {
       "id": "uninstall-restores-pre-experiment-state",
       "slice": "perch",
       "harness": "all",

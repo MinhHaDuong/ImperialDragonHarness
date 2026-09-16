@@ -155,16 +155,73 @@ def test_uninstall_takes_perch_back_out_of_a_pi_profile(profile):
     assert not perch.neutral_home().exists()
 
 
-@pytest.mark.parametrize("harness", ("codex", "pi"))
+@pytest.mark.parametrize("harness", perch.HARNESSES)
 def test_the_recorded_probe_command_is_the_one_that_ran(harness):
-    """The inventory's probe_command must be runnable, not decorative."""
+    """The inventory's probe_command must be runnable, not decorative.
+
+    Routed through ``check_version`` rather than run directly, so the binary
+    ``_probe`` resolves is asserted to be the binary the inventory names --
+    the two could drift silently otherwise.
+    """
     command = perch.policy(harness)["probe_command"]
     binary = command.split()[0]
     if shutil.which(binary) is None:
         pytest.skip(f"{binary} not installed")
-    done = subprocess.run(
-        command.split(), capture_output=True, text=True, timeout=TIMEOUT
-    )
-    assert done.returncode == 0, done.stderr[-500:]
-    probed = perch.parse_version(done.stdout + done.stderr)
+    assert command.split()[1:] == ["--version"], command
+    assert binary == harness, f"{command} does not probe {harness}"
+    probed = perch.parse_version(perch.check_version(harness))
     assert probed >= perch.parse_version(perch.policy(harness)["minimum_version"])
+
+
+def _fake_cli(tmp_path: Path, name: str, body: str) -> Path:
+    """A stand-in CLI, so the odd outputs below need no odd real binary."""
+    script = tmp_path / name
+    script.write_bytes(b"#!/bin/sh\n" + body.encode("utf-8"))
+    script.chmod(0o755)
+    return script
+
+
+def test_invalid_utf8_from_a_cli_stays_inside_the_refusal_contract(
+    tmp_path, monkeypatch
+):
+    """Strict decoding raised through `_probe`'s except clause as a traceback.
+
+    UnicodeDecodeError is neither OSError nor SubprocessError, so `main()`,
+    which catches only Refusal, exited 1 with a traceback where the module
+    documents exit 2 and one line.
+    """
+    script = _fake_cli(tmp_path, "badcodex", r"printf 'codex-cli \377\376 0.154.0\n'")
+    monkeypatch.setenv("PERCH_CODEX_BIN", str(script))
+    assert perch.check_version("codex") == "0.154.0"
+
+    mute = _fake_cli(tmp_path, "mutecodex", r"printf '\377\376\n'")
+    monkeypatch.setenv("PERCH_CODEX_BIN", str(mute))
+    with pytest.raises(perch.Refusal):
+        perch.check_version("codex")
+
+
+def test_the_cli_reports_a_refusal_as_one_line_and_exit_two(tmp_path):
+    mute = _fake_cli(tmp_path, "mutecodex", r"printf '\377\376\n'")
+    done = subprocess.run(
+        ["python3", str(REPO / "adapters" / "perch.py"), "check-version", "codex"],
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT,
+        env={**os.environ, "PERCH_CODEX_BIN": str(mute)},
+    )
+    assert done.returncode == 2, done
+    assert done.stderr.startswith("perch pilot: ")
+    assert "Traceback" not in done.stderr
+
+
+def test_a_startup_warning_on_stderr_is_not_adopted_as_the_version(
+    tmp_path, monkeypatch
+):
+    """`parse_version` takes the first semver it sees; stderr must not supply it."""
+    script = _fake_cli(
+        tmp_path,
+        "noisycodex",
+        "echo 'bundled with node 20.11.0' >&2\necho '0.154.0'\n",
+    )
+    monkeypatch.setenv("PERCH_CODEX_BIN", str(script))
+    assert perch.check_version("codex") == "0.154.0"

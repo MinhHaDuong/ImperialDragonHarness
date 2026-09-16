@@ -27,6 +27,7 @@ ImperialDragonHarness/          # cloned as ~/.claude
 ├── scripts/                # Hook implementations, guards, shell init
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
+├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
 ├── memory/                 # Cross-project lessons, injected at session start
 ├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory-sweep
 ├── commands/ bin/ hooks/   # Guidance docs, PATH utilities, git hooks

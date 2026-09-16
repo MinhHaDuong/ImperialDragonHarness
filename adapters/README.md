@@ -76,8 +76,15 @@ three harnesses within nine days.
 
 ### Taking it back out
 
-`adapters/perch.py uninstall <harness>` removes the managed link and gives back
-exactly the directories `install` created — a neutral home holding anything
-else is left alone, and the canonical skill is never deleted. Nothing under
-`skills/` is touched at any point, so the pre-experiment Claude state is
-restored by construction.
+`adapters/perch.py uninstall <harness>` removes the managed link, then every
+directory the removal left empty, up to and including the neutral home. A
+neutral home holding anything else survives untouched, and the canonical skill
+is never deleted. One caveat stated rather than papered over: nothing on disk
+records which of those empty directories `install` created, so an empty one you
+made by hand goes with them. Nothing under `skills/` is touched at any point,
+so the pre-experiment Claude state is restored by construction.
+
+`uninstall codex` and `uninstall pi` reach the same link — one neutral home,
+one perch — so each names both harnesses in what it reports. A link left
+dangling by moving the checkout is reported as `dangling` and removed on
+request, rather than sitting there as an entry nothing can clean up.

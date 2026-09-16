@@ -2,7 +2,7 @@
 """Make one canonical ``perch`` skill discoverable by Claude Code, Codex and Pi.
 
 Ticket 0802, second attempt. The provider-neutral destination is
-``$HOME/.agents/skills`` -- not a name this pilot invents, but the user-level
+``$HOME/.agents/skills`` — not a name this pilot invents, but the user-level
 Agent Skills root that Codex and Pi both document and both scan. This module
 *creates* it; the first attempt only asserted it, and the two harnesses the
 pilot exists to reach had nothing to find.
@@ -12,7 +12,7 @@ Three decisions, each one a defect of PR #780 turned around:
 **The neutral home is built.** ``install codex`` / ``install pi`` create
 ``$HOME/.agents/skills/perch`` as a symlink onto this repository's
 ``skills/perch``. Both harnesses follow a symlinked skill directory, so the
-Markdown body stays canonical and live -- no copy, no build step.
+Markdown body stays canonical and live — no copy, no build step.
 
 **The version gate is a floor, not an allowlist.** An exact-match list of
 supported versions goes stale on every upstream release, and PR #780's already
@@ -115,6 +115,13 @@ def policy(harness: str) -> dict:
 
 
 def parse_version(text: str) -> tuple[int, int, int]:
+    """The first ``major.minor.patch`` in *text*, or a Refusal.
+
+    Pre-release and build metadata are deliberately ignored: ``0.85.1-rc.1``
+    compares equal to ``0.85.1``. The floor asks whether a release carries the
+    behaviour this pilot needs, and a candidate for it does; reading the
+    identifier would tighten the gate in the one direction that helps nobody.
+    """
     match = SEMVER.search(text)
     if not match:
         raise Refusal(f"no semantic version in {text!r}; refusing to guess one")
@@ -129,11 +136,17 @@ def _probe(harness: str) -> str:
             check=True,
             capture_output=True,
             text=True,
+            # Strict decoding would raise UnicodeDecodeError, which is neither
+            # OSError nor SubprocessError: the refusal contract leaked a raw
+            # traceback at exit 1 instead of the documented exit 2.
+            errors="replace",
             timeout=60,
         )
-    except (OSError, subprocess.SubprocessError) as exc:
+    except (OSError, subprocess.SubprocessError, UnicodeError) as exc:
         raise Refusal(f"could not run {executable!r} --version: {exc}") from exc
-    return done.stdout + done.stderr
+    # Prefer stdout. All three CLIs print their own version there, and a
+    # startup warning on stderr must not be adopted as the version of record.
+    return done.stdout if SEMVER.search(done.stdout) else done.stdout + done.stderr
 
 
 def check_version(harness: str, supplied: str | None = None) -> str:
@@ -183,10 +196,10 @@ def _holds_another_copy(target: Path) -> bool:
 
     The case is ordinary rather than exotic: run from a git worktree, the
     canonical source is the worktree's ``skills/perch`` while the Claude
-    skills root still holds the primary checkout's. Refusing is right --
-    pointing a live skills root at a throwaway worktree is not an
-    improvement -- but the refusal has to say which situation it is, or it
-    reads as the unmanaged-entry collision that closed PR #780.
+    skills root still holds the primary checkout's. Refusing is right:
+    pointing a live skills root at a throwaway worktree is no
+    improvement. But the refusal has to say which situation it is, or
+    it reads as the unmanaged-entry collision that closed PR #780.
     """
     manifest = target / "SKILL.md"
     if target.is_symlink() or not manifest.is_file():
@@ -197,6 +210,18 @@ def _holds_another_copy(target: Path) -> bool:
         return False
 
 
+def _is_dangling_link(target: Path) -> bool:
+    """A link of ours whose target went away, typically a moved checkout.
+
+    Unlinking one destroys no data, so naming this state is what makes it
+    removable. Calling it "unmanaged" reads as "a third party put it there"
+    and leaves an entry nothing can clean up.
+    """
+    if not target.is_symlink() or target.exists():
+        return False
+    return Path(os.readlink(target)).name == SLICE
+
+
 def status(harness: str) -> dict:
     target = target_path(harness)
     present = os.path.lexists(target) and _is_canonical(target)
@@ -205,6 +230,8 @@ def status(harness: str) -> dict:
             projection = "absent"
         elif _holds_another_copy(target):
             projection = "other-checkout"
+        elif _is_dangling_link(target):
+            projection = "dangling"
         else:
             projection = "unmanaged"
     elif target.is_symlink():
@@ -230,10 +257,16 @@ def install(harness: str, version: str | None = None) -> str:
     source = canonical_source()
     target = target_path(harness)
 
+    # Probe before anything else, the already-discoverable path included.
+    # "already discoverable" is a support claim about *this* CLI, not a bare
+    # report, and the module promises never to pass an unknown version
+    # silently. status() is the read-only report, and it probes nothing.
+    checked = check_version(harness, supplied=version)
+
     if os.path.lexists(target):
         if _is_canonical(target):
             return (
-                f"{harness}: {SLICE} already discoverable at {target} "
+                f"{harness} {checked}: {SLICE} already discoverable at {target} "
                 f"(projection: {status(harness)['projection']})"
             )
         if _holds_another_copy(target):
@@ -242,27 +275,67 @@ def install(harness: str, version: str | None = None) -> str:
                 f"this one is {source}. Run install from that checkout, or "
                 f"remove the entry deliberately first"
             )
+        if _is_dangling_link(target):
+            raise Refusal(
+                f"{target} is a {SLICE} link whose target is gone, probably a "
+                f"moved checkout; run uninstall {harness} first"
+            )
         raise Refusal(f"{target} exists and is not the canonical {SLICE}")
 
-    checked = check_version(harness, supplied=version)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.symlink_to(source, target_is_directory=True)
+    try:
+        target.symlink_to(source, target_is_directory=True)
+    except FileExistsError as exc:
+        # Another install won the race between lexists and symlink_to.
+        raise Refusal(f"{target} appeared while installing; refusing to race") from exc
     return f"{harness} {checked}: installed {target} -> {source}"
 
 
-def _prune_empty(directory: Path) -> None:
-    """Give back exactly the directories the install created, no more."""
-    home = _home().resolve()
-    while directory != home and home in directory.resolve().parents:
+def prune_root(harness: str) -> Path:
+    """The highest directory uninstall may remove for this harness.
+
+    For Codex and Pi that is the neutral home, which install may have created.
+    For Claude Code it is the skills root: ``$HOME/.claude`` is that harness's
+    own configuration directory and never this pilot's to remove.
+    """
+    if harness in NEUTRAL_HARNESSES:
+        return neutral_home()
+    return target_path(harness).parent
+
+
+def _prune_empty(start: Path, stop: Path) -> None:
+    """Remove each directory the removal left empty, up to and including *stop*.
+
+    ``rmdir`` fails closed on a directory holding anything, so a neutral home
+    with someone else's skill in it survives untouched. An *empty* directory
+    that install happened not to create goes too: nothing on disk tells the two
+    apart, and the README says as much rather than claiming otherwise.
+    """
+    current = start
+    while True:
         try:
-            directory.rmdir()
+            current.rmdir()
         except OSError:
             return
-        directory = directory.parent
+        if current == stop:
+            return
+        current = current.parent
+
+
+def sharing_target(harness: str) -> tuple[str, ...]:
+    """Every harness that reads the directory this one reads.
+
+    Codex and Pi share the neutral home, so removing perch for one removes it
+    for the other. The CLI spells them as separate verbs, so the message has
+    to say which harnesses a removal actually reaches.
+    """
+    target = target_path(harness)
+    return tuple(other for other in HARNESSES if target_path(other) == target)
 
 
 def uninstall(harness: str) -> str:
     target = target_path(harness)
+    reached = ", ".join(sharing_target(harness))
     if not os.path.lexists(target):
         return f"{harness}: {SLICE} is not installed at {target}"
     if not target.is_symlink():
@@ -272,11 +345,15 @@ def uninstall(harness: str) -> str:
                 f"pilot artifact; nothing removed"
             )
         raise Refusal(f"{target} is not the managed {SLICE} link")
+    if _is_dangling_link(target):
+        target.unlink()
+        _prune_empty(target.parent, prune_root(harness))
+        return f"{reached}: removed {target}, a link whose target no longer exists"
     if not _is_canonical(target):
         raise Refusal(f"{target} is not the managed {SLICE} link")
     target.unlink()
-    _prune_empty(target.parent)
-    return f"{harness}: removed {target}"
+    _prune_empty(target.parent, prune_root(harness))
+    return f"{reached}: removed {target}"
 
 
 # --- CLI ----------------------------------------------------------------
