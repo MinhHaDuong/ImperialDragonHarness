@@ -177,9 +177,10 @@ the real cause.
 **The stderr line is what tells you what went wrong**, and it is the one to
 read back to the user: one line naming the VARIABLE and the FILE, never a
 value. The exit code is a coarse companion — `1` bad argument, `2` keystore
-file missing or unreadable, `3` keystore file could not be sourced or did not
-run to completion, `4` variable absent or defined-but-empty — and `|| exit $?`
-above is what keeps it, rather than flattening every case to 1.
+file missing, unreadable, not a regular file or over the size cap, `3` keystore
+file could not be sourced or did not run to completion, `4` variable absent or
+defined-but-empty, `5` value spans more than one line — and `|| exit $?` above
+is what keeps it, rather than flattening every case to 1.
 
 ```
 curl -K "$TMPCONFIG" \
@@ -205,6 +206,12 @@ the values never reach a process argv where `ps -ef` could read them — which
 quoted string is backslash-escaped, so a `"` or `\` inside a password would
 otherwise terminate the string and turn the rest of the credential into curl
 *directives*; `_kesc` escapes both, backslash first.
+
+`_kesc` handles the quoting layer and only that layer. The other way a value
+can break this file is a **line** boundary — `curl -K` parses one directive per
+line, so an embedded newline truncates the credential and feeds its tail to
+curl as a directive, and no amount of quoting reaches below that. That case is
+refused upstream, by the resolver, with exit `5`; do not try to escape it here.
 
 **Dry run first.** The same request with `-H "X-test: 1"` validates the
 package without creating a record. Run it, read the response, and only

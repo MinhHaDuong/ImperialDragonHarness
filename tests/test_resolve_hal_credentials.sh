@@ -100,6 +100,17 @@ printf 'HAL_ID=(((\n' > "$UNPARSABLE"
 EARLYEXIT="$WORK/earlyexit.env"
 printf 'exit 0\nHAL_ID=%s\n' "$ID_SENTINEL" > "$EARLYEXIT"
 
+# A CRLF keystore. Without a CR strip the value carries a trailing carriage
+# return into the curl config and the deposit fails as an HAL auth error.
+CRLF="$WORK/crlf.env"
+printf 'HAL_ID=%s\r\nHAL_PASSWORD=%s\r\n' "$ID_SENTINEL" "$PW_SENTINEL" > "$CRLF"
+
+# A keystore whose value spans two lines. `curl -K` parses one directive per
+# line, so this must be refused at resolution — the caller's quoting layer sits
+# above the line boundary and cannot reach it.
+MULTILINE="$WORK/multiline.env"
+printf "HAL_PASSWORD='first-line\nsecond-line'\n" > "$MULTILINE"
+
 # --- (0) the script exists and is executable ---------------------------------
 if [ -x "$RESOLVER" ]; then
     ok "(0) resolver exists and is executable"
@@ -301,6 +312,18 @@ else
     bad "(4d) invalid variable name: expected exit 1 and no echo of the argument, got exit $rc"
 fi
 
+# The name argument is an ALLOWLIST of the two credentials the deposit needs,
+# not "any shell identifier": nothing else in the provider file is reachable
+# through this resolver, the decoy included. A pattern-based check would return
+# the decoy's value here.
+rc="$(_rc_of "$KEYFILE" HAL_DECOY)"
+err="$(_stderr_of "$KEYFILE" HAL_DECOY)"
+if [ "$rc" = 1 ] && [[ "$err" != *"$DECOY_SENTINEL"* ]]; then
+    ok "(4d) a well-formed name outside the two credentials is refused (exit 1)"
+else
+    bad "(4d) the resolver served a name outside its two credentials, got exit $rc"
+fi
+
 rc="$(_rc_of "$UNPARSABLE" HAL_ID)"
 err="$(_stderr_of "$UNPARSABLE" HAL_ID)"
 if [ "$rc" = 3 ] && [[ "$err" == *"$UNPARSABLE"* ]]; then
@@ -318,6 +341,65 @@ if [ "$rc" = 3 ] && [[ "$err" == *"$EARLYEXIT"* ]]; then
     ok "(4f) a keystore that exits early is diagnosed as a file fault (exit 3), not an empty variable"
 else
     bad "(4f) early-exiting keystore: expected exit 3 naming the file, got exit $rc"
+fi
+
+rc="$(_rc_of "$MULTILINE" HAL_PASSWORD)"
+err="$(_stderr_of "$MULTILINE" HAL_PASSWORD)"
+if [ "$rc" = 5 ] && [[ "$err" == *HAL_PASSWORD* ]]; then
+    ok "(4g) a multi-line value is refused (exit 5), not silently truncated by the curl config"
+else
+    bad "(4g) multi-line value: expected exit 5 naming the variable, got exit $rc"
+fi
+if [[ "$err" == *first-line* || "$err" == *second-line* ]]; then
+    bad "(4g) the refusal message disclosed part of the value"
+else
+    ok "(4g) the refusal message discloses no part of the value"
+fi
+
+# --- (5) the keystore file must be a plain, bounded, CR-tolerant file ---------
+got="$(_match_in_file "$CRLF" HAL_ID "$ID_SENTINEL")"
+if [ "$got" = "MATCH" ]; then
+    ok "(5a) a CRLF keystore yields the value without its carriage return"
+else
+    bad "(5a) a CRLF keystore did not yield a clean value (probe said: $got)"
+fi
+
+# A FIFO at the keystore path would block the read forever — an interactive
+# deposit hanging with no diagnosis. `timeout` bounds the assertion itself, so
+# a regression here fails the suite instead of wedging CI.
+if command -v mkfifo >/dev/null && command -v timeout >/dev/null; then
+    FIFO="$WORK/fifo.env"
+    mkfifo "$FIFO"
+    rc=0
+    timeout 10 env -i HOME="$FHOME" PATH="$PATH" bash -c \
+        '"$1" HAL_ID "$2"' _ "$RESOLVER" "$FIFO" >/dev/null 2>&1 || rc=$?
+    if [ "$rc" = 2 ]; then
+        ok "(5b) a FIFO at the keystore path is refused (exit 2) instead of blocking"
+    elif [ "$rc" = 124 ]; then
+        bad "(5b) a FIFO at the keystore path blocked the resolver until the timeout"
+    else
+        bad "(5b) a FIFO at the keystore path returned exit $rc, expected 2"
+    fi
+    rm -f "$FIFO"
+else
+    bad "(5b) mkfifo or timeout is missing — this probe cannot run, so its silence means nothing"
+fi
+
+# An oversized keystore is refused before it is sourced, at bash-env.sh's own
+# 256 KiB figure. The fixture defines HAL_ID first, so a resolver without the
+# cap would happily succeed — the case discriminates.
+OVERSIZE="$WORK/oversize.env"
+printf 'HAL_ID=%s\n' "$ID_SENTINEL" > "$OVERSIZE"
+printf '# %0.spadding' $(seq 1 30000) >> "$OVERSIZE"
+if [ "$(wc -c < "$OVERSIZE")" -gt 262144 ]; then
+    rc="$(_rc_of "$OVERSIZE" HAL_ID)"
+    if [ "$rc" = 2 ]; then
+        ok "(5c) an oversized keystore is refused (exit 2) before it is sourced"
+    else
+        bad "(5c) an oversized keystore returned exit $rc, expected 2"
+    fi
+else
+    bad "(5c) the oversize fixture is below the cap — the case would prove nothing"
 fi
 
 echo "--- $(basename "$0"): $fail failing case(s) ---"

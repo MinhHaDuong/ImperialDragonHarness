@@ -61,28 +61,48 @@
 # HAL_PASSWORD does not) is diagnosed here rather than as an HAL auth error:
 #   0  value printed on stdout
 #   1  bad usage or invalid variable name
-#   2  provider file missing or unreadable
+#   2  provider file missing, unreadable, not a regular file, or over the size cap
 #   3  provider file could not be sourced, or did not run to completion
 #   4  variable absent, or defined but empty
+#   5  value is not a single line, so it cannot be carried by a curl -K config
 set -euo pipefail
 
 PROG="resolve_hal_credentials"
+# No legitimate .env approaches this; the cap is what stops a pathological or
+# adversarial file being read at all, and it is bash-env.sh's own figure.
+MAX_KEYSTORE_BYTES=262144
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     echo "$PROG: usage: resolve_hal_credentials.sh <HAL_ID|HAL_PASSWORD> [keystore-file]" >&2
     exit 1
 fi
 
+# An ALLOWLIST, not a shell-identifier pattern. This resolver is the HAL
+# deposit's credential step, not a general keystore reader: the two names it
+# serves are the two the deposit needs, and nothing in the provider file — the
+# decoy of the test fixture included — is reachable through it. A pattern would
+# have matched whatever the caller asked for, which is a wider surface than the
+# skill has any use for.
 name="$1"
-if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-    echo "$PROG: the argument is not a valid shell variable name (expected HAL_ID or HAL_PASSWORD)" >&2
-    exit 1
-fi
+case "$name" in
+    HAL_ID|HAL_PASSWORD) ;;
+    *)  echo "$PROG: unknown credential; this resolver serves HAL_ID and HAL_PASSWORD only" >&2
+        exit 1 ;;
+esac
 
 file="${2:-$HOME/.config/keys/hal.env}"
 
-if [ ! -r "$file" ]; then
-    echo "$PROG: cannot read the keystore file $file (needed for $name)" >&2
+# `-f` before anything that reads: a FIFO at the keystore path would block the
+# size check and then the source, hanging an interactive deposit with no
+# diagnosis at all. A named pipe, a directory or a device is not a keystore.
+if [ ! -f "$file" ] || [ ! -r "$file" ]; then
+    echo "$PROG: cannot read the keystore file $file as a regular file (needed for $name)" >&2
+    exit 2
+fi
+
+size="$(wc -c < "$file" 2>/dev/null || echo 0)"
+if [ "${size:-0}" -gt "$MAX_KEYSTORE_BYTES" ]; then
+    echo "$PROG: the keystore file $file exceeds the size cap (${size} > ${MAX_KEYSTORE_BYTES} bytes), refusing to source it (needed for $name)" >&2
     exit 2
 fi
 
@@ -123,5 +143,20 @@ if [ -z "$value" ]; then
     echo "$PROG: $name is defined but empty in $file" >&2
     exit 4
 fi
+
+# A `curl -K` config is parsed one directive per LINE, so an embedded newline
+# would split the value: the password silently truncates at the break and its
+# tail is read as a curl directive. Quoting and backslash-escaping in the
+# caller do not reach this — the line boundary is below the quoting layer.
+# Refusing here rather than escaping there is the fix with the right blast
+# radius: one check, at the single point every caller goes through, and the
+# failure names the variable instead of arriving as an HAL auth error. No
+# credential this skill deposits is multi-line; if one ever is, the config file
+# is the wrong carrier for it and that decision belongs to the author.
+case "$value" in
+    *$'\n'*|*$'\r'*)
+        echo "$PROG: $name from $file spans more than one line, which a curl -K config cannot carry" >&2
+        exit 5 ;;
+esac
 
 printf '%s' "$value"
