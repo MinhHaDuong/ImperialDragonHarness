@@ -54,9 +54,12 @@ TU = re.compile(
     rb'\s*"input":\s*\{(?:[^{}]|\{[^{}]*\}){0,600}?"file_path":\s*"([^"]{0,300})"'
 )
 MEM = re.compile(r"memory/([A-Za-z0-9_.-]+\.md)$")
-# `memory-sweep` first: it is the skill renamed from `memory` on 2026-09-16,
-# and both spellings must match — traces older than the rename carry the bare
-# name, newer ones the new one, and this script scans the whole corpus.
+# `memory` was renamed `memory-sweep` on 2026-09-16, and both spellings must
+# match: this script scans the whole trace corpus, which spans either side of
+# the rename. Order inside the alternation buys nothing — Python's `re`
+# backtracks into it, so `memory` failing on the trailing `-sweep` retries the
+# longer branch anyway; both orders measured identical. The longer one is
+# listed first for the reader, not for the engine.
 SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory-sweep|memory)"')
 CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory-sweep|memory)</command-name>")
 BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
