@@ -14,6 +14,7 @@ Blocked-by: 0916
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
+2026-09-16T15:55Z claude note author settled where the canonical roots live: the harness project's own memory and the collective memory both stay central in ~/.idh, separated from each other. Recorded in the body with its consequence, that step 3 alone does not close the disjoint-roots row and the relocation out of ~/.claude is the remaining half
 --- body ---
 
 ## Context
@@ -29,6 +30,49 @@ orientation/recent/task delivery. Rediscovery is only an opportunity for
 generalisation; keep particulars unless explicitly withdrawn. Canonical
 decisions stay in existing records. One ownership contract and optimistic Git
 concurrency replace runtime modes and global locks.
+
+## Author decision, 2026-09-16: the canonical roots live in `~/.idh`
+
+The design records the disjoint-roots row as **known red**, for one stated
+reason: IDH's own canonical store sits inside `~/.claude`, which is a runtime's
+native memory root (design SS12, citing SS13.1 step 3 as the remedy).
+
+Step 3 as written moves *project-owned bodies into their repositories*. That
+disperses the per-project corpus, but it does not by itself say where the
+harness's own memory and the shared snapshot land. If either stays under
+`~/.claude`, the row stays red, because the objection is the location, not the
+volume.
+
+The author settled it on 2026-09-16:
+
+- **The harness project's own memory stays central, in `~/.idh`.** The harness
+  is a project like any other and its repository is the one being relocated, so
+  "project memory in its repository" resolves to `~/.idh` for this one.
+- **The collective memory stays central too, in `~/.idh`, kept separate from
+  it.** The existing split already has the shape: top-level `memory/` for the
+  shared corpus, `projects/<slug>/memory/` for per-project bodies.
+
+Consequence, which is a reading of the decision rather than part of it:
+relocating the repository out of `~/.claude` is what turns the disjoint-roots
+row green, because `~/.idh` is no runtime's native memory root. Step 3 is
+necessary and not sufficient; the relocation is the remaining half, and it
+belongs to this programme rather than to a parallel portability effort that
+could contradict it.
+
+Two facts worth carrying into whichever ticket executes it:
+
+- **The skill layer already supports relocation.** Probed 2026-09-16: with the
+  repository outside `~/.claude`, `adapters/perch.py install claude` creates a
+  real symlink and reads `SKILL.md` through it. No code change is owed there.
+- **The blast radius is 104 files** referencing `~/.claude` outside `projects/`
+  and `tickets/` (29 skills, 27 docs, 19 scripts, 14 tests, 5 adapters). Many
+  are doc examples rather than live dependencies; the count is an upper bound,
+  not an estimate of work.
+
+Three cheap probes remain unrun, and each one gates the relocation independently:
+does the runtime follow a symlinked `rules/`, a symlinked `CLAUDE.md`, and a
+symlinked `projects/<slug>/memory/`? A negative on any of them constrains the
+layout and is worth knowing before a path is rewritten.
 
 ## Relevant files
 
