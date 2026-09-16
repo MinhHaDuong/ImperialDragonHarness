@@ -60,10 +60,6 @@ tickets/tools/go/*.test
 !systemd/
 !systemd/**
 
-# Python build artefacts inside whitelisted dirs
-**/__pycache__/
-*.pyc
-
 # Adapters (ticket 0800 family). The Claude Code adapter ships inert; its
 # activation symlink is created at runtime by scripts/adapter-claude-code-activate.sh
 # and must not be committed -- committing it would auto-load the plugin on merge,
@@ -71,3 +67,10 @@ tickets/tools/go/*.test
 !adapters/
 !adapters/**
 skills/claude-code
+
+# Python build artefacts inside whitelisted dirs. Last on purpose: a
+# re-inclusion below these lines wins over them, which is how adapters/
+# quietly started offering its __pycache__ for commit once it held python
+# (ticket 0802).
+**/__pycache__/
+*.pyc
