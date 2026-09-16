@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-09-16T06:31Z claude created
+2026-09-16T06:52Z claude note Third instance found in check-close-claims.sh; the detector is blind to the bug it detects
 
 --- body ---
 ## Context
@@ -28,6 +29,28 @@ than a one-line fix:
 - `tickets/erg-github:77` (git-erg) --
   `grep -iE '^[*]{0,2}ticket:?[*]{0,2}:? *tickets/[0-9]{4}'`, covered there by
   **git-erg ticket 0255**, salvaged onto main 2026-09-16 in git-erg PR #337.
+- `skills/roar/check-close-claims.sh:109` (this repo) -- byte-identical to the
+  `erg-pr-merge` copy.
+
+That third one is the worst of the set, because it is the **detector**. A body
+carrying `tickets/closed/NNNN` fails ID extraction at line 109, then matches the
+`Ticket: none | tickets/` classifier at line 115, so the PR is counted as an
+*explicit no-close* and never reported. The detector is blind to precisely the
+case the bug produces, and its all-clear is indistinguishable from "I could not
+look" -- the trap `rules/git.md` keeps naming.
+
+Verified 2026-09-16 with a positive control, not by reading:
+
+```
+body: **Ticket:** tickets/0276-some-slug.erg        -> extracts 0276
+body: **Ticket:** tickets/closed/0276-some-slug.erg -> extracts nothing,
+                                                       and matches the
+                                                       no-close classifier
+```
+
+Consequence for past runs: a `check-close-claims.sh` report of "0 findings, N
+explicit no-close" cannot be trusted to mean no claim was dropped. The "explicit
+no-close" bucket silently absorbs them.
 
 The harness copy is the one that runs at most merges, so fixing only the git-erg
 side leaves the common path broken.
@@ -46,8 +69,12 @@ side leaves the common path broken.
 2. Confirm `erg close` on an already-archived ticket is a no-op or a clean
    success, so that accepting the path does not turn a skipped claim into a
    hard failure at the merge gate.
-3. Coordinate with git-erg 0255 so both copies end up with the same accepted
-   grammar; a divergence here is worse than the bug, because the two paths would
+3. Fix `skills/roar/check-close-claims.sh:109` in the same pass, and make the
+   line-115 classifier stop swallowing a closed-path claim into "explicit
+   no-close" -- a claim it cannot parse must be reported, not counted as
+   deliberate.
+4. Coordinate with git-erg 0255 so all copies end up with the same accepted
+   grammar; a divergence here is worse than the bug, because the paths would
    then disagree about which PR bodies are valid.
 
 ## Test
@@ -75,8 +102,13 @@ passes.
 
 ## Exit criteria
 
-- `skills/merge/erg-pr-merge` extracts a ticket ID from both `tickets/NNNN` and
-  `tickets/closed/NNNN` forms
+- `skills/merge/erg-pr-merge` and `skills/roar/check-close-claims.sh` both
+  extract a ticket ID from `tickets/NNNN` and `tickets/closed/NNNN` alike
+- `check-close-claims.sh` reports, rather than silently absorbing, a claim whose
+  path form it cannot parse
+- A re-run of `check-close-claims.sh --days 30` after the fix is compared
+  against the pre-fix run, since the pre-fix "explicit no-close" counts may hide
+  real drops
 - The red test is committed and passes
 - The accepted grammar is the same in this repo and in git-erg's
   `tickets/erg-github`, or the difference is documented in both
