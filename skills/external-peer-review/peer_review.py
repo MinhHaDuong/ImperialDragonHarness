@@ -168,8 +168,11 @@ def _keystore_value(provider: Path, name: str) -> str | None:
         # escapes the designed SystemExit, and its ``repr`` embeds the entire
         # raw undecoded buffer — one careless ``repr(e)`` from leaking the value.
         return None
-    # A CRLF provider file leaves a trailing carriage return inside the value:
-    # a byte-wrong credential that looks present and fails only at the API call.
+    # A CRLF provider file ends the assignment's line with CR, which lands
+    # INSIDE the value: a byte-wrong credential that looks present and fails
+    # only at the API call. Stripping it is unconditional because no credential
+    # legitimately ends in a carriage return; a value carrying CR internally is
+    # out of scope, and would not survive an HTTP header anyway.
     return value.rstrip("\r")
 
 
@@ -188,7 +191,9 @@ def resolve_credential(name: str = DEFAULT_CREDENTIAL_ENV) -> str:
     if value:
         return value
     provider = _credential_provider_file()
-    if provider.exists():
+    # is_file, not exists: a directory at that path is readable to `[ -r ]` and
+    # would report the name absent rather than the provider unusable.
+    if provider.is_file():
         value = _keystore_value(provider, name)
         if value:
             log.info("credential %s resolved from the keystore (%s)",
