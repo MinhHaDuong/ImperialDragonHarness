@@ -2,10 +2,12 @@
 Title: git.md: record that a worktree session cannot run bare git
 Created: 2026-09-16
 Author: claude
+Closed: autoclosed — PR #916
 
 --- log ---
 2026-09-16T06:40Z claude created
 
+2026-09-16T06:37Z Integration Test closed — autoclosed — PR #916
 --- body ---
 ## Context
 
