@@ -8,6 +8,8 @@ Author: claude
 2026-09-16T06:52Z claude note Third instance found in check-close-claims.sh; the detector is blind to the bug it detects
 2026-09-16T07:05Z claude note Extraction is fence-blind; a PR documenting the claim syntax carries live claims
 
+2026-09-16T12:10Z claude note git-erg 0255 landed. Folding in its reference grammar (case-fold once, drop -i), the two failure modes its first two rounds produced -- the second converted fail-closed into a silent gate bypass -- and a harness-only coupling verified in the current script: existence-at-tip globs tickets/ alone, so widening the regex alone moves the abort rather than removing it. Three coupled changes, not one.
+
 --- body ---
 ## Context
 
@@ -102,6 +104,74 @@ match. The last is the cheapest and the most honest about what the parser is.
 4. Coordinate with git-erg 0255 so all copies end up with the same accepted
    grammar; a divergence here is worse than the bug, because the paths would
    then disagree about which PR bodies are valid.
+
+## What git-erg 0255's landing established (2026-09-16)
+
+The sibling fix shipped. It took **three review rounds, and the first two were
+worse than the bug.** Read this before touching the regex here: the harness can
+buy the result without repaying the rounds.
+
+**Failure 1 — widening only the grep.** Adding `closed/` to the `grep` filter
+and not to the paired `sed` left the two stages disagreeing about case: `grep
+-i` folds every literal, a BRE `sed` folds none. A mis-cased `tickets/Closed/`
+cleared the filter, failed to substitute, and passed the whole body line
+through as the id. Ugly, and a hard failure — but fail-closed.
+
+**Failure 2 — guarding the symptom.** The repair added a trailing
+`grep -xE '[0-9]{4}'` to discard the unsubstituted line. That removed the leak
+and **converted fail-closed into fail-open**: an empty id list *is* the escape
+hatch, so an open ticket named `TICKETS/0043` returned exit 0 and passed the
+required gate. The PR's own test for the case asserted `rc==0` and no leak,
+which both the intended resolution and the escape hatch satisfy, so it passed
+while proving nothing.
+
+**What worked.** Case-fold the body once, up front (`tr '[:upper:]' '[:lower:]'`)
+and drop `grep -i`, so filter and substitution cannot disagree about any
+literal — the one added later included. Adopt that grammar here verbatim;
+Action 4 requires the copies to agree, and this is now the thing to agree with.
+
+**The general shape, which is the part worth keeping.** In a parser feeding a
+gate, *"I could not read it"* and *"there is nothing to read"* land in the same
+branch, and that branch is the permissive one. Widening what the parser attempts
+does not touch that confusion — it enlarges the set of inputs that can fall into
+it. This is why Action 3's second half (report an unparseable claim rather than
+counting it as deliberate) is not a tidiness item: it is what stops the next
+widening from becoming the next bypass.
+
+## The harness has a coupling git-erg did not
+
+`tickets/erg-github` only *reads* state. `erg-pr-merge` *mutates*: it closes,
+commits, pushes, merges. Two consequences, the first verified in the current
+script on 2026-09-16:
+
+- **Existence-at-tip globs `tickets/` alone.** Line ~210 is
+  `compgen -G "tickets/${tid}-*.erg"`. An archived ticket is not there, so a
+  successfully-extracted closed-path id is reported MISSING and the script
+  **dies** — unless `ERG_PR_MERGE_ALLOW_MISSING_TICKET=1`. Widening only the
+  regex therefore moves the failure from "die: no close-claim in PR body" to
+  "die: ticket absent from tickets/". Different message, same hard stop, and a
+  superficial test of the regex would report success.
+- **`erg close` on an already-archived ticket** must be a clean no-op, which is
+  Action 2 — but note it is reached only after the guard above is fixed, so the
+  two cannot be sequenced independently.
+
+So this is three coupled changes, not one: the grammar, the existence-at-tip
+lookup, and the already-closed close. Any one alone leaves the path broken in a
+way that looks fixed.
+
+## Evidence that the trap is live and recurring
+
+Three firings on 2026-09-16, two of them by the agent that had just documented
+it:
+
+- git-erg PR #340's body was written with a `tickets/closed/0281-...` claim;
+  caught before merge and rewritten to `Ticket: none`.
+- Harness PR #929's body, same mistake, same day, after the above.
+- The original report (git-erg 0255) came from aedist PR #442/#443.
+
+The practical workaround until this lands stays as recorded: do not pre-close a
+ticket before running the merge, or write `Ticket: none` when the close is
+already in the diff.
 
 ## Test
 
