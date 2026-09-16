@@ -84,3 +84,26 @@ to ONE consumer, `scripts/seat-runner.sh`, which is ours and patchable. R2R is
 dormant and lives in another repo entirely (only project-memory references in
 this tree). A general `with-secrets <provider> -- <cmd>` wrapper may not be
 needed at all.
+
+## Exit criteria SUPERSEDED — resolved by deletion, not by repair
+
+The criteria above were written to REPAIR the script's key resolution. They are
+left unticked on purpose: the resolution was deletion, so most of them were
+never met and never will be. Ticking them to tidy the audit trail would record
+something false. What actually landed:
+
+- [x] `scripts/setup-claude-agent.sh` deleted
+- [x] `tests/test_setup_claude_agent_projects.sh` deleted with it, rather than
+      left green on a script that no longer exists
+- [x] Verified dead independently before deletion: `claude-night-sweep.service`
+      and `.timer` absent from origin/main since 0882, no `claude-agent` user,
+      no `/etc/claude-agent`, no timer installed
+- [x] No code path can write a `.env` comment line into a service env file --
+      satisfied by removal of the only such path
+- [x] `make check` passes (921 passed, 1 skipped)
+
+Left behind and NOT resolved here: `scripts/projects.json`, the registry the
+deleted script's `--list` read, now has zero readers anywhere in the repo
+(checked for both `projects.json` and `PROJECTS_JSON`). It is a data file
+describing the projects this harness manages, so deleting it is a judgment call
+the author owns rather than collateral of this cleanup. Recorded in 0942.
