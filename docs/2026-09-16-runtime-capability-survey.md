@@ -48,7 +48,7 @@ registers all have a counterpart:
 | `SessionStart` | `on-start.sh` | `session_start` (bind), `before_agent_start` (inject) | injection |
 | `SessionEnd` | `on-end.sh` | `session_shutdown` | no |
 | `UserPromptSubmit` | `knowledge_hints.py` | `input` | no |
-| `PreToolUse` ×10 | `guard-*.sh`, `pretooluse-worktree-path-guard.sh`, `inject_rule_on_edit.py`, `rtk hook` | `tool_call` | yes |
+| `PreToolUse` ×11 | `guard-*.sh`, `pretooluse-worktree-path-guard.sh`, `inject_rule_on_edit.py`, `rtk hook` | `tool_call` | yes |
 | `PostToolUse Write\|Edit` | `lint-on-edit.sh` | `tool_result` | no |
 | `PreCompact` (unused here) | — | `session_before_compact`, `session_compact`, `session_compact_failed` | no |
 
@@ -66,16 +66,23 @@ Events with no Claude Code counterpart: `before_provider_request`,
 `thinking_level_select`, `agent_settled`, `session_before_switch`,
 `session_tree`.
 
+Counts in this section come from `settings.shared.json`, the tracked file. The
+untracked `settings.json` on this machine has drifted from it, holding ten
+PreToolUse entries instead of eleven and pointing one of them at a retired
+script, so counting from whichever file happens to be local gives a wrong
+answer. Memory
+`feedback_hook_rename_is_a_two_phase_deploy` records why the two diverge.
+
 ## What this implies for the port
 
 **The boundary is not the obstacle; the calling convention is.** Claude Code
 hooks are external executables with a JSON-on-stdin, exit-code-out contract.
 Pi extensions are TypeScript modules in `~/.pi/agent/extensions/*.ts` or
 `.pi/extensions/*.ts`, loaded through jiti without a compile step. Porting
-therefore does not mean rewriting fourteen guards: one shim extension can
-re-implement the Claude Code hook contract — subscribe to `tool_call`, spawn
-the existing script with the same JSON, map exit code 2 onto
-`{ block: true, reason }` — leaving the scripts and their tests untouched.
+therefore does not mean rewriting the fifteen registrations one by one. One
+shim extension can re-implement the Claude Code hook contract: subscribe to
+`tool_call`, spawn the existing script with the same JSON, map exit code 2 onto
+`{ block: true, reason }`. The scripts and their tests stay as they are.
 
 **The matchers are where it will break.** `Bash(git commit*)`,
 `Write|Edit|NotebookEdit` and `EnterWorktree|Skill` are declarative in
@@ -92,8 +99,9 @@ auto-load "gets none of it". For Pi the conclusion holds but the reasoning
 misleads: the adapter must indeed inject the resident set, and
 `before_agent_start` is a more controllable injection point than Claude Code's
 built-in auto-load, which the harness cannot inspect. `resources_discover` is
-the seam for the `paths:`-conditional bodies. The same sentence appears in
-memory `reference_rules_tree_is_resident.md`.
+the seam for the `paths:`-conditional bodies. Memory
+`reference_rules_tree_is_resident.md` records the same conclusion in different
+words, so it needs the same correction.
 
 ## Not verified
 
