@@ -11,6 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
 SKILL_DIR = REPO / "skills" / "external-peer-review"
 SKILL = SKILL_DIR / "SKILL.md"
@@ -142,6 +144,7 @@ def _run_child(tmp_path, home, extra_env=None, name=CRED_NAME):
     )
 
 
+@pytest.mark.integration
 def test_resolves_credential_from_keystore_without_leaking_it(tmp_path):
     home = _fake_home(tmp_path)
     proc = _run_child(tmp_path, home)
@@ -160,6 +163,7 @@ def test_resolves_credential_from_keystore_without_leaking_it(tmp_path):
     )
 
 
+@pytest.mark.integration
 def test_environment_wins_over_keystore(tmp_path):
     home = _fake_home(tmp_path)
     assert len(ENV_SENTINEL) != len(KEYSTORE_SENTINEL), "lengths must discriminate"
@@ -173,6 +177,7 @@ def test_environment_wins_over_keystore(tmp_path):
     )
 
 
+@pytest.mark.integration
 def test_fails_loud_naming_file_and_variable(tmp_path):
     home = tmp_path / "empty-home"
     (home / ".config" / "keys").mkdir(parents=True)
@@ -182,6 +187,7 @@ def test_fails_loud_naming_file_and_variable(tmp_path):
     assert "openrouter.env" in proc.stderr, "the failure must name the file probed"
 
 
+@pytest.mark.integration
 def test_rejects_a_credential_name_that_is_not_a_variable_name(tmp_path):
     """The name reaches a ``bash -c``; it must be validated before it gets there."""
     home = _fake_home(tmp_path)

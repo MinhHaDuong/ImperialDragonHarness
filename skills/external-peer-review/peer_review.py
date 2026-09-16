@@ -117,7 +117,7 @@ def _keystore_value(provider: Path, name: str) -> str | None:
     Ported from ``skills/reviewers/reviewers.sh:_keystore_value`` (ticket 0393)
     and deliberately kept as a shell-out: the provider file is *sourced*, so an
     export-less assignment, an ``export`` prefix, a quoted value and a
-    continuation all behave exactly as they do for ``scripts/bash-env.sh``. A
+    continuation all behave exactly as they do for ``~/.claude/scripts/bash-env.sh``. A
     hand-rolled Python parse of the same file would silently diverge from that
     reference. ``set -a`` is what makes an export-less assignment visible at
     all; the extracted value is printed literally, never eval'd, and the file's
