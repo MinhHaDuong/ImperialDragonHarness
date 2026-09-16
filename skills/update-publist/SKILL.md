@@ -164,18 +164,22 @@ shell variables that go into that chmod-600 file and nowhere else:
 
 ```
 RESOLVE=~/.claude/skills/update-publist/resolve_hal_credentials.sh
-HAL_ID_VALUE="$("$RESOLVE" HAL_ID)" || exit 1
-HAL_PASSWORD_VALUE="$("$RESOLVE" HAL_PASSWORD)" || exit 1
+HAL_ID_VALUE="$("$RESOLVE" HAL_ID)" || exit $?
+HAL_PASSWORD_VALUE="$("$RESOLVE" HAL_PASSWORD)" || exit $?
 ```
 
 **Guard each call separately, and let the resolver's stderr reach you** — do
 not redirect it away, and do not collapse the two calls into one unguarded
 line. A partial resolution (`HAL_ID` resolves, `HAL_PASSWORD` does not) builds
 a half-empty config and comes back as an HAL *auth* error, one layer away from
-the real cause. The exit code says which layer failed: `1` bad argument,
-`2` keystore file missing or unreadable, `3` keystore file could not be
-sourced, `4` variable absent or defined-but-empty. Every failure prints one
-line naming the VARIABLE and the FILE, never a value.
+the real cause.
+
+**The stderr line is what tells you what went wrong**, and it is the one to
+read back to the user: one line naming the VARIABLE and the FILE, never a
+value. The exit code is a coarse companion — `1` bad argument, `2` keystore
+file missing or unreadable, `3` keystore file could not be sourced or did not
+run to completion, `4` variable absent or defined-but-empty — and `|| exit $?`
+above is what keeps it, rather than flattening every case to 1.
 
 ```
 curl -K "$TMPCONFIG" \
@@ -191,11 +195,16 @@ repo tree), chmod-600'd, and cleaned up via `trap 'rm -f "$TMPCONFIG"' EXIT`
 so it is deleted even on error or interruption. Write it with a redirect —
 never by echoing the line to the terminal first:
 ```
-printf 'user = "%s:%s"\n' "$HAL_ID_VALUE" "$HAL_PASSWORD_VALUE" > "$TMPCONFIG"
+_kesc() { local s=${1//\\/\\\\}; printf '%s' "${s//\"/\\\"}"; }
+printf 'user = "%s:%s"\n' "$(_kesc "$HAL_ID_VALUE")" "$(_kesc "$HAL_PASSWORD_VALUE")" \
+  > "$TMPCONFIG"
 ```
-(`printf` is a shell builtin, so the values never reach a process argv where
-`ps -ef` could read them — which `echo` via an external command, or
-`curl -u user:pass`, would.)
+Two properties of that line, both load-bearing. `printf` is a shell builtin, so
+the values never reach a process argv where `ps -ef` could read them — which
+`echo` via an external command, or `curl -u user:pass`, would. And a `curl -K`
+quoted string is backslash-escaped, so a `"` or `\` inside a password would
+otherwise terminate the string and turn the rest of the credential into curl
+*directives*; `_kesc` escapes both, backslash first.
 
 **Dry run first.** The same request with `-H "X-test: 1"` validates the
 package without creating a record. Run it, read the response, and only

@@ -4,11 +4,12 @@
 #
 #   resolve_hal_credentials.sh HAL_ID
 #   resolve_hal_credentials.sh HAL_PASSWORD
+#   resolve_hal_credentials.sh HAL_ID <keystore-file>   # tests only
 #
 # Prints the value on stdout, alone and with no trailing newline, so the
 # documented call is a command substitution into ONE shell variable:
 #
-#   HAL_ID_VALUE="$(~/.claude/skills/update-publist/resolve_hal_credentials.sh HAL_ID)" || exit 1
+#   HAL_ID_VALUE="$(~/.claude/skills/update-publist/resolve_hal_credentials.sh HAL_ID)" || exit $?
 #
 # The ambient environment is NOT consulted. A pre-set HAL_ID or HAL_PASSWORD has
 # no effect here, which is the point: the `KEYS=` selection layer made the
@@ -43,19 +44,32 @@
 # Reference implementation of the same idiom: skills/reviewers/reviewers.sh
 # `_keystore_value`.
 #
+# WHY THE PROVIDER FILE IS AN ARGUMENT AND NOT AN ENVIRONMENT OVERRIDE.
+# The obvious shape is a `HAL_KEYSTORE_FILE` variable honoured "for tests only",
+# as `REVIEWERS_KEYSTORE` is. Nothing enforces such a label: the protected-name
+# predicate of the harness env loader (~/.claude/scripts/bash-env.sh,
+# `_be_is_protected_name`) does not list it, so an UNTRUSTED project `.env` — the
+# threat model that loader is built around — could point this resolver at a file
+# of its choosing, and the `.` below would then execute it. A second positional
+# argument cannot be set ambiently: it has to be written into the call, which is
+# fixed prose in SKILL.md. (What remains, unchanged by this script, is the
+# harness-wide assumption that `$HOME` is honest — bash-env.sh resolves its own
+# keystore under it too.) The path is not a secret, so argv is the right place
+# for it; a VALUE never goes there.
+#
 # Exit codes — the taxonomy exists so a PARTIAL resolution (HAL_ID resolves,
 # HAL_PASSWORD does not) is diagnosed here rather than as an HAL auth error:
 #   0  value printed on stdout
 #   1  bad usage or invalid variable name
 #   2  provider file missing or unreadable
-#   3  provider file could not be sourced
+#   3  provider file could not be sourced, or did not run to completion
 #   4  variable absent, or defined but empty
 set -euo pipefail
 
 PROG="resolve_hal_credentials"
 
-if [ "$#" -ne 1 ]; then
-    echo "$PROG: usage: resolve_hal_credentials.sh <HAL_ID|HAL_PASSWORD>" >&2
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    echo "$PROG: usage: resolve_hal_credentials.sh <HAL_ID|HAL_PASSWORD> [keystore-file]" >&2
     exit 1
 fi
 
@@ -65,21 +79,24 @@ if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
     exit 1
 fi
 
-# Fixed provider file. HAL_KEYSTORE_FILE is a TEST-ONLY override, same shape as
-# REVIEWERS_KEYSTORE: it names a file, never a value.
-file="${HAL_KEYSTORE_FILE:-$HOME/.config/keys/hal.env}"
+file="${2:-$HOME/.config/keys/hal.env}"
 
 if [ ! -r "$file" ]; then
     echo "$PROG: cannot read the keystore file $file (needed for $name)" >&2
     exit 2
 fi
 
+# The leading `v` is a completion marker, not decoration. A provider file that
+# calls `exit 0` — or any other early exit from the sourced code — ends the
+# subshell with status 0 and no output, which is indistinguishable from a
+# successfully extracted empty string. The marker separates the two: no marker
+# means the extraction never reached its own printf.
 rc=0
-value="$(env -i bash -c '
+marked="$(env -i bash -c '
     set -a
     . "$1" >/dev/null 2>&1 || exit 3
     [ -z "${!2+x}" ] && exit 4
-    printf "%s" "${!2}"
+    printf "v%s" "${!2}"
 ' _ "$file" "$name")" || rc=$?
 
 case "$rc" in
@@ -88,6 +105,17 @@ case "$rc" in
     4) echo "$PROG: $name is not defined in $file" >&2; exit 4 ;;
     *) echo "$PROG: unexpected failure (exit $rc) resolving $name from $file" >&2; exit "$rc" ;;
 esac
+
+if [ -z "$marked" ]; then
+    echo "$PROG: the keystore file $file did not run to completion (needed for $name)" >&2
+    exit 3
+fi
+
+value="${marked#v}"
+# A CRLF provider file would otherwise append a carriage return to the value and
+# corrupt the curl config in a way that reads as an HAL auth error. bash-env.sh
+# strips CR for the same reason.
+value="${value%$'\r'}"
 
 # A defined-but-empty credential would otherwise be a silent-empty success,
 # building a half-filled curl config that fails as an HAL auth error.

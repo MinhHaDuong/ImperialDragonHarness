@@ -8,7 +8,8 @@
 # NO REAL CREDENTIAL IS USED OR NEEDED ANYWHERE IN THIS SUITE. Every fixture
 # value is an obviously-fake sentinel in a fake keystore under a fake HOME; the
 # real `~/.config/keys/hal.env` is never read, because every child is spawned
-# with `env -i` and an explicit `HAL_KEYSTORE_FILE` (or an explicit fake HOME).
+# with `env -i` and is handed an explicit fixture path (or an explicit fake
+# HOME, for the default-path case).
 #
 # Hygiene this suite holds itself to, mirroring the one it tests: a resolved
 # value never reaches this shell's stdout, a failure message, or an argv. The
@@ -23,20 +24,35 @@
 # tests/test_bash_tests_are_hermetic.sh enforces, and this suite uses it
 # uniformly rather than the suite-wide `export BASH_ENV=` exemption.
 #
-# TWO DIFFERENT ISOLATION LAYERS, DO NOT CONFLATE THEM:
-#   * the `env -i` on the spawns BELOW isolates the TEST from the live harness;
-#   * the `env -i` INSIDE the resolver isolates the keystore extraction from
-#     the caller. Case (2)/(3) is what actually tests the second one, and it
-#     is invisible to case (1).
+# TWO DIFFERENT ISOLATION LAYERS, AND WHICH CASE TESTS WHICH. The `env -i` on
+# the spawns below isolates the TEST from the live harness. The `env -i` INSIDE
+# the resolver isolates the keystore extraction from its caller. They are not
+# the same property and no single case covers both:
 #
-# WHY THE GRANDCHILD PROBE IS `env`, NOT `bash -c`. Case (2)/(3) must observe
+#   * (1)/(1b) test the value, the variable and the file, and nothing else.
+#   * (2)/(3) test the CALLER-SIDE property: invoking the resolver the way
+#     SKILL.md documents it implants nothing in the caller or its children.
+#     What they discriminate is the shape the ticket rejected — a caller that
+#     does `set -a; . ~/.config/keys/hal.env` itself, which leaks all three
+#     variables including the decoy. What they do NOT discriminate, and cannot,
+#     is a resolver that sources wholesale INSIDE its own process: that is a
+#     separate process, so there is nowhere for it to leak to. An earlier
+#     revision of this file claimed otherwise; review of PR #941 disproved it
+#     by building that resolver and watching these cases stay green.
+#   * (2b)/(2c) are what pin the resolver's OWN `env -i`. (2b) is behavioural —
+#     an ambient value must never satisfy a lookup, and must never win over the
+#     file. (2c) is direct: the fixture dumps the environment of the very
+#     subshell that sources it, and a marker exported by the caller must not be
+#     in that dump. Delete `env -i` from the resolver and both go red.
+#
+# WHY THE GRANDCHILD PROBE IN (2)/(3) IS `env`, NOT `bash -c`. It must observe
 # what a child of the CALLING shell inherits, so that grandchild must NOT be
-# hermetic — it has to inherit. `env` is exactly that observation (the
-# environment a freshly spawned process receives) and keeps every `bash` spawn
-# in this file textually hermetic, so the 0359 guard reads this suite as it
-# really is instead of being talked around with a heredoc-written script. The
-# companion `own:` markers cover the complementary case an `env` probe cannot
-# see on its own: a leak into a NON-exported shell variable of the caller.
+# hermetic — inheriting is the whole observation. `env` is exactly that
+# observation, and it keeps every `bash` spawn in this file textually hermetic,
+# so the 0359 guard reads this suite as it really is instead of being talked
+# around with a heredoc-written script. The companion `own:` markers cover the
+# complementary case an `env` probe cannot see: a leak into a NON-exported
+# shell variable of the caller.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -44,7 +60,7 @@ RESOLVER="$PWD/skills/update-publist/resolve_hal_credentials.sh"
 fail=0
 
 ok()   { echo "PASS: $1"; }
-bad()  { echo "FAIL: $1" >&2; fail=1; }
+bad()  { echo "FAIL: $1" >&2; fail=$((fail + 1)); }
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -57,6 +73,7 @@ KEYFILE="$FHOME/.config/keys/hal.env"
 ID_SENTINEL='fake-hal-id-sentinel-0944'
 PW_SENTINEL='fake-hal-password-sentinel-0944'
 DECOY_SENTINEL='should-never-appear'
+AMBIENT_SENTINEL='fake-ambient-value-that-must-never-win'
 
 # The DECOY is the whole point of the fixture. A named extraction and a
 # wholesale `. hal.env` produce IDENTICAL output on the happy path; only a
@@ -64,7 +81,7 @@ DECOY_SENTINEL='should-never-appear'
 printf 'HAL_ID=%s\nHAL_PASSWORD=%s\nHAL_DECOY=%s\n' \
     "$ID_SENTINEL" "$PW_SENTINEL" "$DECOY_SENTINEL" > "$KEYFILE"
 
-# A keystore missing HAL_PASSWORD, for the loud-failure case.
+# A keystore missing HAL_PASSWORD, for the loud-failure and ambient cases.
 PARTIAL="$WORK/partial.env"
 printf 'HAL_ID=%s\nHAL_DECOY=%s\n' "$ID_SENTINEL" "$DECOY_SENTINEL" > "$PARTIAL"
 
@@ -72,6 +89,16 @@ printf 'HAL_ID=%s\nHAL_DECOY=%s\n' "$ID_SENTINEL" "$DECOY_SENTINEL" > "$PARTIAL"
 # build a half-empty curl config and surface as an HAL auth error.
 EMPTYVAL="$WORK/emptyval.env"
 printf 'HAL_ID=\n' > "$EMPTYVAL"
+
+# A keystore that cannot be parsed as shell at all.
+UNPARSABLE="$WORK/unparsable.env"
+printf 'HAL_ID=(((\n' > "$UNPARSABLE"
+
+# A keystore that exits before defining anything. Its subshell ends with status
+# 0 and no output, which without a completion marker is indistinguishable from
+# a successfully extracted empty string.
+EARLYEXIT="$WORK/earlyexit.env"
+printf 'exit 0\nHAL_ID=%s\n' "$ID_SENTINEL" > "$EARLYEXIT"
 
 # --- (0) the script exists and is executable ---------------------------------
 if [ -x "$RESOLVER" ]; then
@@ -86,15 +113,15 @@ fi
 # Catches a wrong value, the wrong variable, the wrong file, and a silent-empty
 # success. The comparison happens inside the child; only MATCH/MISMATCH is
 # printed, never the value.
-_match_via_keystore_file() {  # $1 variable name, $2 expected sentinel
-    env -i HOME="$FHOME" PATH="$PATH" HAL_KEYSTORE_FILE="$KEYFILE" bash -c '
-        v="$("$1" "$2")" || { printf "EXIT_%s" "$?"; exit 0; }
-        if [ "$v" = "$3" ]; then printf "MATCH"; else printf "MISMATCH"; fi
-    ' _ "$RESOLVER" "$1" "$2" 2>/dev/null
+_match_in_file() {  # $1 keystore file, $2 variable name, $3 expected sentinel
+    env -i HOME="$FHOME" PATH="$PATH" bash -c '
+        v="$("$1" "$3" "$2")" || { printf "EXIT_%s" "$?"; exit 0; }
+        if [ "$v" = "$4" ]; then printf "MATCH"; else printf "MISMATCH"; fi
+    ' _ "$RESOLVER" "$1" "$2" "$3" 2>/dev/null
 }
 
 for probe in "HAL_ID:$ID_SENTINEL" "HAL_PASSWORD:$PW_SENTINEL"; do
-    got="$(_match_via_keystore_file "${probe%%:*}" "${probe#*:}")"
+    got="$(_match_in_file "$KEYFILE" "${probe%%:*}" "${probe#*:}")"
     if [ "$got" = "MATCH" ]; then
         ok "(1) ${probe%%:*} resolves to its own value"
     else
@@ -103,45 +130,58 @@ for probe in "HAL_ID:$ID_SENTINEL" "HAL_PASSWORD:$PW_SENTINEL"; do
 done
 
 # --- (1b) the default provider path is ~/.config/keys/hal.env ----------------
-# Without the test-only HAL_KEYSTORE_FILE override, the resolver must find the
-# file under HOME by itself — otherwise every case above would be testing the
-# override rather than the shipped default.
+# Called with ONE argument, the resolver must find the file under HOME by
+# itself — otherwise every case above would be testing the test-only path
+# argument rather than the shipped default.
 got="$(env -i HOME="$FHOME" PATH="$PATH" bash -c '
     v="$("$1" HAL_ID)" || { printf "EXIT_%s" "$?"; exit 0; }
     if [ "$v" = "$2" ]; then printf "MATCH"; else printf "MISMATCH"; fi
 ' _ "$RESOLVER" "$ID_SENTINEL" 2>/dev/null)"
 if [ "$got" = "MATCH" ]; then
-    ok "(1b) default provider path under HOME resolves"
+    ok "(1b) the one-argument form resolves the default path under HOME"
 else
-    bad "(1b) default provider path under HOME did not resolve (probe said: $got)"
+    bad "(1b) the one-argument form did not resolve the default path under HOME (probe said: $got)"
 fi
 
-# --- (2) leak probe + (3) decoy ----------------------------------------------
+# --- (2) caller-side leak probe + (3) decoy ----------------------------------
 # The calling shell invokes the resolver the way SKILL.md documents it —
 # COMMAND SUBSTITUTION, not `source` — then asks what it and its children can
-# see. A correct implementation resolves the value into one shell variable of
-# the caller's choosing and implants nothing: no HAL_* variable of its own in
-# the caller, and none in the caller's children.
+# see. Scope of the claim: see the header. This discriminates the rejected
+# caller-side `. hal.env`, not a resolver's internals.
 #
 # `out` accumulates MARKER NAMES only (`own:NAME` / `child:NAME`), never values.
-leak="$(env -i HOME="$FHOME" PATH="$PATH" HAL_KEYSTORE_FILE="$KEYFILE" bash -c '
-    resolver="$1"; expected="$2"
-    hal_id_value="$("$resolver" HAL_ID)" || { printf "EXIT_%s" "$?"; exit 0; }
-    [ "$hal_id_value" = "$expected" ] || { printf "RESOLVE_FAILED"; exit 0; }
-    out=""
-    for n in HAL_ID HAL_PASSWORD HAL_DECOY; do
-        [ -n "${!n+x}" ] && out="$out own:$n"
-        env | grep -q "^${n}=" && out="$out child:$n"
-    done
-    printf "%s" "${out:-CLEAN}"
-' _ "$RESOLVER" "$ID_SENTINEL" 2>/dev/null)"
+_leak_markers() {  # $1 shell snippet that is expected to obtain HAL_ID
+    env -i HOME="$FHOME" PATH="$PATH" KEYFILE="$KEYFILE" RESOLVER="$RESOLVER" bash -c '
+        eval "$1"
+        out=""
+        for n in HAL_ID HAL_PASSWORD HAL_DECOY; do
+            [ -n "${!n+x}" ] && out="$out own:$n"
+            env | grep -q "^${n}=" && out="$out child:$n"
+        done
+        printf "%s" "${out:-CLEAN}"
+    ' _ "$1" 2>/dev/null
+}
+
+# (2/3-control) The REJECTED shape, run first: a caller that sources the
+# provider file wholesale. If this comes back CLEAN the probe is blind and the
+# green below would prove nothing — the positive control fires before the
+# measurement, not after it.
+control="$(_leak_markers 'set -a; . "$KEYFILE"; set +a')"
+case "$control" in
+    *child:HAL_DECOY*)
+        ok "(2/3-control) the probe does detect the rejected wholesale source" ;;
+    *)
+        bad "(2/3-control) the probe is blind: the rejected wholesale source came back '$control'" ;;
+esac
+
+leak="$(_leak_markers 'hal_id_value="$("$RESOLVER" HAL_ID "$KEYFILE")"')"
 
 case "$leak" in
     CLEAN|*"own:"*|*"child:"*) ;;
     *) bad "(2/3) the leak probe did not run to completion (probe said: $leak)" ;;
 esac
 
-if [ "$leak" = "CLEAN" ] || [ "${leak//HAL_DECOY/}" = "$leak" ]; then
+if [ "${leak//HAL_DECOY/}" = "$leak" ]; then
     ok "(3) the decoy variable is invisible to the caller and its children"
 else
     bad "(3) the decoy variable leaked — a wholesale source, not a named extraction ($leak)"
@@ -154,17 +194,69 @@ case "$leak" in
         ok "(2) no resolved credential variable reaches the caller or its children" ;;
 esac
 
+# --- (2b) the ambient environment is not consulted ----------------------------
+# The documented contract is that a pre-set HAL_ID / HAL_PASSWORD has no effect
+# at all. Two directions, and the second is the discriminating one: a resolver
+# that dropped its internal `env -i` would resolve the AMBIENT value for a name
+# the file does not define, and a resolver copying the reviewers.sh
+# prefer-the-environment branch would return the ambient value even when the
+# file does define it.
+got="$(env -i HOME="$FHOME" PATH="$PATH" HAL_ID="$AMBIENT_SENTINEL" bash -c '
+    v="$("$1" HAL_ID "$2")" || { printf "EXIT_%s" "$?"; exit 0; }
+    if [ "$v" = "$3" ]; then printf "FILE_WINS"
+    elif [ "$v" = "$4" ]; then printf "AMBIENT_WINS"
+    else printf "NEITHER"; fi
+' _ "$RESOLVER" "$KEYFILE" "$ID_SENTINEL" "$AMBIENT_SENTINEL" 2>/dev/null)"
+if [ "$got" = "FILE_WINS" ]; then
+    ok "(2b) the keystore value wins over an ambient value of the same name"
+else
+    bad "(2b) an ambient value influenced the result (probe said: $got)"
+fi
+
+got="$(env -i HOME="$FHOME" PATH="$PATH" HAL_PASSWORD="$AMBIENT_SENTINEL" bash -c '
+    v="$("$1" HAL_PASSWORD "$2")" || { printf "EXIT_%s" "$?"; exit 0; }
+    if [ "$v" = "$3" ]; then printf "AMBIENT_WINS"; else printf "SOMETHING_ELSE"; fi
+' _ "$RESOLVER" "$PARTIAL" "$AMBIENT_SENTINEL" 2>/dev/null)"
+if [ "$got" = "EXIT_4" ]; then
+    ok "(2b) an ambient value cannot stand in for a variable the keystore lacks"
+else
+    bad "(2b) a variable absent from the keystore did not fail loud (probe said: $got)"
+fi
+
+# --- (2c) the extraction subshell really runs under a cleared environment -----
+# Direct observation rather than inference: the fixture dumps the environment
+# of the very subshell that sources it, and the caller exports a marker that
+# must not appear there. This is the case that goes red if `env -i` is dropped
+# from the resolver.
+if [ -x /usr/bin/env ]; then
+    DUMP="$WORK/introspect.dump"
+    INTROSPECT="$WORK/introspect.env"
+    { printf 'HAL_ID=%s\n' "$ID_SENTINEL"
+      printf "/usr/bin/env > '%s'\n" "$DUMP"; } > "$INTROSPECT"
+    env -i HOME="$FHOME" PATH="$PATH" HAL_AMBIENT_MARKER="$AMBIENT_SENTINEL" bash -c \
+        '"$1" HAL_ID "$2" >/dev/null' _ "$RESOLVER" "$INTROSPECT" 2>/dev/null || true
+    if [ ! -s "$DUMP" ]; then
+        bad "(2c) the introspection fixture produced no dump — the probe did not run"
+    elif grep -q '^HAL_AMBIENT_MARKER=' "$DUMP"; then
+        bad "(2c) the extraction subshell inherited the caller's environment — env -i is not in force"
+    else
+        ok "(2c) the extraction subshell inherits nothing from the caller"
+    fi
+else
+    bad "(2c) /usr/bin/env is missing — this probe cannot run, so its silence means nothing"
+fi
+
 # --- (4) loud, named failures -------------------------------------------------
 # Each case asserts the exit code AND that the message names the variable and
 # the file, then asserts that NO sentinel value appears in that message.
-_stderr_of() {  # $1 keystore file (may not exist), $2 variable name; prints stderr
-    env -i HOME="$FHOME" PATH="$PATH" HAL_KEYSTORE_FILE="$1" bash -c \
-        '"$1" "$2"' _ "$RESOLVER" "$2" 2>&1 >/dev/null || true
+_stderr_of() {  # $1 keystore file (may not exist), $2 variable name
+    env -i HOME="$FHOME" PATH="$PATH" bash -c \
+        '"$1" "$3" "$2"' _ "$RESOLVER" "$1" "$2" 2>&1 >/dev/null || true
 }
 _rc_of() {  # same args; prints the exit code
     local rc=0
-    env -i HOME="$FHOME" PATH="$PATH" HAL_KEYSTORE_FILE="$1" bash -c \
-        '"$1" "$2"' _ "$RESOLVER" "$2" >/dev/null 2>&1 || rc=$?
+    env -i HOME="$FHOME" PATH="$PATH" bash -c \
+        '"$1" "$3" "$2"' _ "$RESOLVER" "$1" "$2" >/dev/null 2>&1 || rc=$?
     printf '%s' "$rc"
 }
 
@@ -207,6 +299,25 @@ if [ "$rc" = 1 ] && [[ "$err" != *pwned* ]]; then
     ok "(4d) an invalid variable name exits 1 without echoing the rejected string"
 else
     bad "(4d) invalid variable name: expected exit 1 and no echo of the argument, got exit $rc"
+fi
+
+rc="$(_rc_of "$UNPARSABLE" HAL_ID)"
+err="$(_stderr_of "$UNPARSABLE" HAL_ID)"
+if [ "$rc" = 3 ] && [[ "$err" == *"$UNPARSABLE"* ]]; then
+    ok "(4e) an unsourceable keystore exits 3 and names the file"
+else
+    bad "(4e) unsourceable keystore: expected exit 3 naming the file, got exit $rc"
+fi
+
+# A provider file that exits early leaves the extraction subshell at status 0
+# with no output. Without a completion marker that is read as "defined but
+# empty" — the wrong diagnosis, pointing at the variable instead of the file.
+rc="$(_rc_of "$EARLYEXIT" HAL_ID)"
+err="$(_stderr_of "$EARLYEXIT" HAL_ID)"
+if [ "$rc" = 3 ] && [[ "$err" == *"$EARLYEXIT"* ]]; then
+    ok "(4f) a keystore that exits early is diagnosed as a file fault (exit 3), not an empty variable"
+else
+    bad "(4f) early-exiting keystore: expected exit 3 naming the file, got exit $rc"
 fi
 
 echo "--- $(basename "$0"): $fail failing case(s) ---"
