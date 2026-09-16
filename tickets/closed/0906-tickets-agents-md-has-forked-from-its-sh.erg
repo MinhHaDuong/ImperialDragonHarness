@@ -3,12 +3,15 @@ Title: tickets/AGENTS.md has forked from its shipped template
 Created: 2026-09-10
 Author: claude
 Label: needs-human
+Closed: autoclosed — PR #937
 
 --- log ---
 2026-09-10T11:43Z claude created
 2026-09-10T11:45Z claude note Measured the fork: harness copy 7969 chars vs shipped asset 2141; nine adopters byte-identical to the asset; erg migrate force-overwrites a diverged copy by charter
 2026-09-10T12:06Z claude note Body rewritten. Found git-erg 0277/0278/0279, filed by a sibling session 06:53-09:40 the same day, which own the upstream half and correct three claims made above: the migrate overwrite is unit-asserted but not reproduced end to end, byte-identical adopters are current rather than frozen, and neither shipped claim is false. Author verdict recorded; one conflict with 0277's recorded destination left open for arbitration.
 2026-09-10T12:25Z claude note recorded the PREAMBLE_BUDGET coupling: PR 875 pins 9800 to a chain that is 83 percent AGENTS.md, measured independently by both passes at 719/7969/958, so the trim must lower it to ~3900 in the same commit or the ratchet stops being able to fail
+2026-09-16T12:44Z claude note Arbitration moot: upstream 0288 moved the generic lore to erg integration and declared tickets/LOCAL.md, settling the 0277 conflict. Strict review of the 6352 chars of local material returned 2 survivors of 19 units (~290 chars, this repo's CI wiring) into tickets/LOCAL.md; everything else already covered by rules/, memory notes, or upstream. Restore done by erg init --force: 8005 to 2356, byte-identical to the asset. Positive control run both arms before deleting: stale binary 7531 bytes 0 of 4 sections, refreshed 13506 bytes 4 of 4.
+2026-09-16T12:50Z Integration Test closed — autoclosed — PR #937
 --- body ---
 ## Status
 

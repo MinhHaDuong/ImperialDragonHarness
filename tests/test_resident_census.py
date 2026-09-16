@@ -36,7 +36,11 @@ import resident_census as rc  # noqa: E402
 # is derived). Headroom is a sentence, not a section.
 BUDGETS = {
     "rules": 36000,  # owned by test_rules_resident_budget.py, mirrored here
-    "import": 10500,  # CLAUDE.md + tickets/AGENTS.md + RTK.md
+    # Lowered 2026-09-16 (ticket 0906): tickets/AGENTS.md was a local fork of
+    # the erg-shipped asset, 8005 chars where the asset is 2356. Restored
+    # byte-for-byte, the chain is 4041. At 10500 this gate could no longer
+    # fail on anything the chain could plausibly do.
+    "import": 4300,  # CLAUDE.md + tickets/AGENTS.md + RTK.md
     # Both lowered 2026-09-10 by the title-only index pass: the index line is a
     # title and a link, the trailing hook having been a third copy of a sentence
     # the body already carries as `name:` and `description:`. 47 indexes went
