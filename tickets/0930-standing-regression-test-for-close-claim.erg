@@ -1,0 +1,69 @@
+%erg 0.1
+Title: Standing regression test for close-claim extraction across both copies
+Created: 2026-09-16
+Author: claude
+Blocked-by: 0929
+
+--- log ---
+2026-09-16T06:33Z claude created
+
+--- body ---
+## Context
+
+0929 fixes the close-claim extraction regex in `skills/merge/erg-pr-merge`.
+git-erg 0255 fixes the same defect in its own copy. Two independent point fixes
+to one grammar is exactly the shape that drifts back apart: nothing today asserts
+that the two copies accept the same PR-body forms, and the defect survived from
+2026-05-23 (the original GitHub issue #145) to 2026-09-16 unnoticed in both.
+
+This is a `/roar` step 4 follow-up, filed because the sweep was juicy -- two
+instances of one anti-pattern -- and per that step the test is deliberately NOT
+bundled into 0929's fix PR. A per-PR gate catches the bug being reintroduced in
+the file under review; a standing test is what catches the class coming back in
+an unrelated future PR.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` -- the extraction under test
+- `skills/roar/check-close-claims.sh` -- the field detector, which should keep
+  agreeing with the extraction about what counts as a claim
+- `tests/` -- wherever the harness's shell-level tests live; follow the existing
+  convention rather than inventing a new harness
+
+## Actions
+
+1. Write a table-driven test over PR-body fixtures: open path, closed path, the
+   three `Ticket:` spellings, multiple claims in one body, no claim at all, and
+   a body that mentions `tickets/` in prose without a claim line.
+2. Assert the extraction and `check-close-claims.sh` agree on every fixture --
+   the two must not disagree about what a claim is, or the detector will report
+   phantom DROPPED findings.
+3. Decide and record whether git-erg's `tickets/erg-github` copy is in scope for
+   a cross-repo assertion, or whether each repo tests its own copy against a
+   shared fixture list. Prefer the shared fixture list: a cross-repo test needs a
+   checkout it cannot assume.
+
+## Test
+
+This ticket *is* the test. The red step is that the fixture list must include at
+least one case that fails against the pre-0929 extraction, so the suite
+demonstrates it can see the defect it exists to prevent -- a fixture set that
+passes against both the broken and the fixed regex is a vacuous control.
+
+## Verification
+
+- [ ] Running the new test against the pre-0929 `erg-pr-merge` fails
+- [ ] Running it against the post-0929 `erg-pr-merge` passes
+- [ ] The test runs in whatever `make` target CI already invokes, not only by hand
+
+## Invariants
+
+- No change to `erg-pr-merge` behaviour in this ticket; 0929 owns the fix.
+- The test must not require a forge, a network call, or a real PR.
+
+## Exit criteria
+
+- A standing test covers the close-claim grammar, fails against the old
+  extraction, and runs in CI
+- The fixture list is written down in one place both copies can be checked
+  against
