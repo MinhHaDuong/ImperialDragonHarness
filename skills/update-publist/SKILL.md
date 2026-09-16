@@ -72,17 +72,21 @@ This directory is NOT a git repo. It deploys over FTP.
 ## Step 2: HAL deposit via SWORD
 
 Credentials: `HAL_ID` and `HAL_PASSWORD` live in `~/.config/keys/hal.env` and
-reach the environment because a `KEYS=` line selects them — no `.env` holds a
-credential value. Selection is default-deny, so the selection in force must
-name `hal:HAL_ID,hal:HAL_PASSWORD`; `~/.claude/.env` does, which covers any
-startup directory that sets no `KEYS=` of its own.
+are resolved **at point of use**, one variable per call, by
+`~/.claude/skills/update-publist/resolve_hal_credentials.sh` — see § 2c, which
+is the only place in this skill that runs it.
 
-A project `KEYS=` **replaces** the harness one rather than adding to it
-(ticket 0360), so from a project whose `.env` carries its own `KEYS=` line the
-deposit fails as an ordinary auth error unless that line also names `hal:`.
-Run from a directory with no `KEYS=` of its own, or check first —
-names only, never values:
-`bash -c ': "${HAL_ID:?not selected from this cwd}"'`.
+The ambient environment is **no longer consulted**: a `HAL_ID` or
+`HAL_PASSWORD` already exported in the shell does not take precedence and has
+no effect at all. That is deliberate. Their presence used to depend on the
+`KEYS=` selection in force, and a project `KEYS=` **replaces** the harness one
+rather than adding to it (ticket 0360), so the deposit failed as an ordinary
+HAL auth error whenever it was run from a project whose `.env` carried its own
+`KEYS=` line. Point-of-use resolution bypasses that layer, so there is nothing
+left to probe for before starting: the resolver itself fails loud and named,
+and covers the cases a presence probe never did (missing or malformed
+`hal.env`, a variable defined but empty).
+
 **Never echo, display, log, or commit credential values.** Pass them
 to curl via a chmod-600 temporary config file (`curl -K`), never on the
 command line. Mask `<hal:password>` in any displayed API response.
@@ -155,6 +159,24 @@ Do NOT proceed to the POST without user approval.
 
 ### 2c. Deposit
 
+Resolve the two credentials immediately before building `$TMPCONFIG`, into
+shell variables that go into that chmod-600 file and nowhere else:
+
+```
+RESOLVE=~/.claude/skills/update-publist/resolve_hal_credentials.sh
+HAL_ID_VALUE="$("$RESOLVE" HAL_ID)" || exit 1
+HAL_PASSWORD_VALUE="$("$RESOLVE" HAL_PASSWORD)" || exit 1
+```
+
+**Guard each call separately, and let the resolver's stderr reach you** — do
+not redirect it away, and do not collapse the two calls into one unguarded
+line. A partial resolution (`HAL_ID` resolves, `HAL_PASSWORD` does not) builds
+a half-empty config and comes back as an HAL *auth* error, one layer away from
+the real cause. The exit code says which layer failed: `1` bad argument,
+`2` keystore file missing or unreadable, `3` keystore file could not be
+sourced, `4` variable absent or defined-but-empty. Every failure prints one
+line naming the VARIABLE and the FILE, never a value.
+
 ```
 curl -K "$TMPCONFIG" \
   -X POST https://api.archives-ouvertes.fr/sword/hal/ \
@@ -166,10 +188,14 @@ curl -K "$TMPCONFIG" \
 
 Where `$TMPCONFIG` is created with `mktemp` in `/tmp` (outside the
 repo tree), chmod-600'd, and cleaned up via `trap 'rm -f "$TMPCONFIG"' EXIT`
-so it is deleted even on error or interruption. Contents:
+so it is deleted even on error or interruption. Write it with a redirect —
+never by echoing the line to the terminal first:
 ```
-user = "HAL_ID_VALUE:HAL_PASSWORD_VALUE"
+printf 'user = "%s:%s"\n' "$HAL_ID_VALUE" "$HAL_PASSWORD_VALUE" > "$TMPCONFIG"
 ```
+(`printf` is a shell builtin, so the values never reach a process argv where
+`ps -ef` could read them — which `echo` via an external command, or
+`curl -u user:pass`, would.)
 
 **Dry run first.** The same request with `-H "X-test: 1"` validates the
 package without creating a record. Run it, read the response, and only
