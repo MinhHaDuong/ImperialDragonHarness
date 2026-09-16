@@ -130,3 +130,12 @@ caller not passing the flag silently switches identity to IDH billing. And a
 caller exporting only the old bare `OPENROUTER_API_KEY` will now fail loud rather
 than resolve — correct per this ticket, but it must be said in SKILL.md so it
 reads as a decision rather than a regression.
+
+## Feasibility 2026-09-16: PASS
+Targets verified present: `load_api_key` at peer_review.py:82, `--repo-root` at
+:187, its only call at :214, SKILL.md:26 is the "Check the key" step, and
+tests/test_external_peer_review_skill.py:63 is the substring assertion. No
+cross-cutting registry: the new imports are stdlib, so `IMPORT_TO_DIST` in
+tests/test_deps_declared.py needs no entry. No file overlap with 0944.
+If you change SKILL.md FRONTMATTER, run `make skills-catalog` and say so in the
+PR — README.md is generated from it and a sibling PR touching it would collide.
