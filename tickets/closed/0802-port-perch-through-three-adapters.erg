@@ -2,6 +2,7 @@
 Title: Port perch through Claude Code, Codex and Pi adapters
 Created: 2026-08-28
 Author: Codex
+Closed: autoclosed — PR #938
 
 --- log ---
 2026-08-28T12:57Z Codex created child of 0800 as a provider adapter generator
@@ -9,6 +10,11 @@ Author: Codex
 2026-08-28T14:08Z Codex replaced generator-first scope with one hand-ported skill slice pending round-2 panel review
 2026-09-07T02:10Z claude note PR 780 closed unmerged, not merged: the ~/.agents destination it declares is never created by any code path; the exact-match version allowlist already refuses claude 2.1.263 and codex 0.153.4 (installed tonight); and _target() collides with the canonical skill because ~/.claude is this harness's own repo, so install claude refuses as an unmanaged entry. The three manual-smoke entries are therefore unreachable rather than merely undone. Branch t0802-perch-adapters kept as the only copy of its commits; see the closing comment on PR 780 for what a successor must change
 
+2026-09-16T13:03Z claude note origin/t0802-perch-adapters holds the closed-unmerged PR #780 attempt and is deliberately NOT the base for this work; retire that branch once this ticket successor PR merges, since it is then no longer the only copy of anything worth keeping
+2026-09-16T13:15Z claude note second attempt: neutral home ~/.agents/skills is created by the installer, version gate is a floor plus a probe, and a target that already resolves to the canonical source is success not a collision. Discovery proved by offline model-free probes (codex debug prompt-input, pi rpc get_commands) with negative and positive controls; pi 0.85.1 installed from npm @earendil-works/pi-coding-agent. Live invocation on all three stays manual-only and pending
+2026-09-16T14:15Z claude note exit criterion 2 reworded before merge: it claimed offline probes on all three harnesses, but pilot-support.json carries local-probe evidence for codex and pi only. Claude Code exposes no probe channel equivalent to codex debug prompt-input or pi rpc get_commands, and there its skills root is the canonical source itself, so static-test plus a pending manual-smoke is the honest evidence. The claim now matches the inventory
+2026-09-16T14:52Z bump verify-reroll — round 1: install() built the skills root outside the Refusal contract (NotADirectoryError escaped main(), exit 1 with a traceback) and the round-3 ASCII prose dash at adapters/perch.py:149 was still present; both fixed in this round
+2026-09-16T15:00Z Integration Test closed — autoclosed — PR #938
 --- body ---
 ## Context
 
@@ -61,13 +67,13 @@ The architecture vocabulary is **core, config and adapters**:
 
 ## Verification
 
-- [ ] Claude reads the canonical skill directly; editing its prose needs no build
-- [ ] Clean Codex and Pi profiles discover an installable `perch`
-- [ ] All three expose the same read-only workflow and stable output headings
-- [ ] Exact supported versions and unknown-version behavior are tested and recorded
-- [ ] No generic generator, workflow DSL, capability algebra or copied prose was introduced
-- [ ] The schema-valid pilot inventory identifies actual, not anticipated, duplication
-- [ ] `./scripts/check-agnostic.sh` and `make check` pass
+- [x] Claude reads the canonical skill directly; editing its prose needs no build
+- [x] Clean Codex and Pi profiles discover an installable `perch`
+- [x] All three expose the same read-only workflow and stable output headings
+- [x] Supported versions (a floor, not an allowlist) and unknown-version behavior are tested and recorded
+- [x] No generic generator, workflow DSL, capability algebra or copied prose was introduced
+- [x] The schema-valid pilot inventory identifies actual, not anticipated, duplication
+- [x] `./scripts/check-agnostic.sh` and `make check` pass
 
 ## Invariants
 
@@ -79,6 +85,11 @@ The architecture vocabulary is **core, config and adapters**:
 ## Exit criteria
 
 - [x] Round-2 panel cleared the `needs-human` gate
-- [ ] One canonical `perch` works through Claude Code, Codex and Pi adapters
-- [ ] `adapters/pilot-support.json` is committed and names any manual-only assertions
-- [ ] Follow-up abstractions are proposed only for duplication observed in this slice
+- [x] One canonical `perch` works through Claude Code, Codex and Pi adapters — discovery is
+      probed offline on codex and pi (negative and positive controls); Claude Code exposes no
+      equivalent probe channel, and there its skills root *is* the canonical source, attested
+      by static-test. Live invocation on all three is manual-only, recorded pending
+- [x] `adapters/pilot-support.json` is committed and names any manual-only assertions
+- [x] Follow-up abstractions are proposed only for duplication observed in this slice — the
+      only duplication observed is `name` + `description`, already in the canonical frontmatter,
+      so no abstraction is proposed and no core field is added

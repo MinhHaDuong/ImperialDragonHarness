@@ -2,12 +2,12 @@
 Title: Port the commit-on-main guard through three adapters
 Created: 2026-08-28
 Author: Codex
-Blocked-by: 0802
 
 --- log ---
 2026-08-28T12:57Z Codex created child of 0800
 2026-08-28T14:08Z Codex folded lifecycle and capability questions into one enforcing safety experiment
 
+2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
 --- body ---
 ## Context
 
