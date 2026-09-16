@@ -119,3 +119,18 @@
 - [`if:`-gated hooks get unparsed commands](reference_if_gated_hooks_get_unparsed_commands.md)
 - [This repo runs no CI](project_search_works_has_no_ci.md)
 - [He rules the class, delegates the wording](feedback_he_rules_the_class_delegates_the_wording.md)
+- [Imperial Dragon Harness repo](reference_imperial_dragon_harness_repo.md)
+- [Double-backgrounding and unverified watch claims](feedback_double_backgrounding_and_unverified_watch_claims.md)
+- [What consumes SDT in Zotero 10](reference_what_consumes_sdt_in_zotero_10.md) — only the reader; search does not.
+- [No synthetic keys in Zotero](reference_no_synthetic_keys_in_zotero.md) — keyboard readings need a human at the machine.
+- [Proportionate gate for the change](feedback_proportionate_gate_for_the_change.md) — don't run the full suite on prose.
+- [Run the gate that covers the change](feedback_run_the_gate_that_covers_the_change.md) — I ran the gates I knew, not the ones reading my diff; main went red.
+- [Zotero's pending-removal race](reference_zotero_pending_removal_race.md) — remove, quit, then install; never remove and install in one session.
+- [A throw is not a bound](feedback_a_throw_is_not_a_bound.md) — the code under test caught the test's own abort signal and ended the runaway it was meant to expose.
+- [Verify your own citations](feedback_verify_your_own_citations.md) — re-derive the figures; re-reading the prose is not a review.
+- [erg log owns the stamp](feedback_erg_log_owns_the_stamp.md) — never hand-write a ticket log line.
+- [Line citations rot](feedback_line_citations_rot.md) — the same site was cited 3548, 3560 and 3569 in one evening by three readers on three trees.
+- [A checkbox needs its procedure](feedback_a_checkbox_needs_its_procedure.md) — a box naming no grep is tickable while SPEC says the opposite; then positive-control the grep's narrow form.
+- [Search the archives before instrumenting](feedback_search_the_archives_before_instrumenting.md) — a correct conclusion from live data was an eleven-day-old rediscovery; 0679 was open the whole time.
+- [Provenance is the silent half of a deposit](feedback_provenance_is_the_silent_half_of_a_deposit.md) — files and MEMORY.md lines complete, provenance 0/12; the slug is the filename stem, not the frontmatter name.
+- [Refreshing is not copying forward](feedback_refreshing_is_not_copying_forward.md) — a carried-forward STATE line said two closed tickets were the critical path; answer a status question by running the gate.

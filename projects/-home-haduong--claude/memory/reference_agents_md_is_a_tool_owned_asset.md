@@ -1,52 +1,54 @@
 ---
 name: reference_agents_md_is_a_tool_owned_asset
-description: tickets/AGENTS.md is an asset embedded in the erg binary, not a project file — the harness copy has forked to 3.7x the shipped text, and the shipped text itself describes an uninstalled optional check in the indicative
-metadata:
+description: "tickets/AGENTS.md is an asset embedded in the erg binary, not a project file — restored to pristine 2026-09-16 and now gated; erg check compares it to the committed stamp, never to the running binary's embedded hash"
+metadata: 
+  node_type: memory
   type: reference
+  originSessionId: c1559b8c-fb50-4f07-9cc7-8204a2db11f7
+  modified: 2026-09-16T12:55:45.400Z
 ---
 
 `tickets/AGENTS.md` looks like a project file and is not one. It is embedded in
-the `erg` binary (`git-erg/src/go/assets/AGENTS.md`, via `bootstrap_assets.go`)
-and written by `erg init`. Before editing it in any repo, decide which layer the
-text belongs to — see [[feedback_layer_correctness]].
+the `erg` binary (`assets/AGENTS.md`, via `bootstrap_assets.go`) and written by
+`erg init`. Before editing it in any repo, decide which layer the text belongs
+to — see [[feedback_layer_correctness]].
 
-**How exposed a local edit is, at the evidence level actually reached.**
-`migrate.go:261` calls `installAssets(…, refuseDiverged=false)` and
-`migrate_test.go:448` asserts at unit level that a diverged `AGENTS.md` is
-force-overwritten by `migrateLayout` "(charter behaviour)". End to end this is
-**not** demonstrated: git-erg 0278 records a fixture with a local edit that
-survived `erg migrate`, the run reporting `already clean` and never reaching the
-asset step. Real in the code, open in practice. Do not state it as a settled
-fact — an earlier version of this note did.
+**Settled 2026-09-16, harness ticket 0906.** The harness copy had forked to
+8 005 chars against a shipped 2 356 and was resident in every session of every
+project via `@tickets/AGENTS.md`. It is now pristine and gated by
+`tests/test_erg_assets_pristine.py`, which hashes `AGENTS.md` and `.ergrc`
+against `tickets/.erg-assets`. Do not edit the file; edit upstream, or use the
+shelf below.
 
-**Byte-identical adopters are current, not frozen.** Nine copies on this machine
-match the shipped asset (md5 `b622d4f0…`, 2 141 chars) and that reads like
-staleness. Measured with `erg init --dry-run` instead of inferred from hashes
-(git-erg 0278, eleven repos): six `unchanged`, four `would refresh` and since
-refreshed, one stampless (`chemin-de-voix`). The problem is what the shipped
-asset *says*, not its age. Inferring freshness from a checksum is the trap here.
+**`tickets/LOCAL.md` is the shelf for adopter-specific lore** — CI job names,
+local scripts, past incidents. `erg` never touches it. It is deliberately NOT
+imported by `CLAUDE.md` and must stay that way: it is cheap only while it is not
+resident. The harness copy holds ~290 chars, all of it CI wiring.
 
-**What the shipped asset says wrong.** Two lines, and neither is false:
+**Generic long-form conventions print on demand: `erg integration`.** ID
+collision recovery, the `gh pr view` scan, `erg check` against the default
+branch, decision-records-vs-artifacts, the handoff-document template. A local
+copy of any of it is duplication, not documentation.
 
-- The `erg-github` sentence is a **mood error**. The helper is real (a
-  5 471-byte POSIX script, verbs `install` and `verify`) and does what the
-  sentence says, but the sentence is in the indicative and the check is
-  installed in zero repos — the script lives only in git-erg's own `tickets/`,
-  and `erg-verify.yml` is in no workflows directory anywhere. An optional
-  facility described as installed.
-- "Renumber to the next free ID" is **under-generalized**, not wrong: correct in
-  a single-session repo, racy under parallel sessions.
+**The check compares your file to your committed stamp, never to the running
+binary's embedded hash** (`isCleanUpgrade`, `manifest.go:391`). With a stamp
+present the test is `diskHash == stampedHash`; only a *stampless* store falls
+back to a known-hash list. So a repo whose `.erg-assets` records 2 356 stays
+green after upstream ships 2 393 — being behind the binary is a *warning*
+meaning "a re-init would refresh you", not a divergence. Vendor a new binary
+whenever convenient and `erg init` refreshes through the stamp path. This is
+why no binary-bump coordination was needed at 0906, contrary to what both
+sessions assumed before reading the code.
 
-**The drift runs both ways.** The harness fork *dropped* the anti-suffix rule
-(`never suffix them (0134a, 0134b)`) that the asset and nine adopters still
-carry.
+**Restore by running the tool, not by copying the file.** `erg init --force`
+makes the equality true by construction; a hand copy makes it true by care, and
+care is what produced the fork. Corollary that nearly bit: the asset's last line
+promises the long-form conventions "print on demand", and with a stale vendored
+binary that promise is false — measured 7 531 bytes and 0 of 4 sections before
+the refresh, 13 506 and 4 of 4 after. Refresh the binary and confirm the channel
+carries the content *before* deleting any local copy.
 
-**Cost.** The harness copy is 7 969 chars, ~2 000 tokens resident in every
-session via `@tickets/AGENTS.md`, outside `tests/test_rules_resident_budget.py`
-(which scopes to `rules/`). A merged version with every durable idea kept and
-all narrative stripped measures 3 873 chars — the substance survives at under
-half the cost.
-
-Harness ticket 0906; upstream git-erg 0277 (ban and destination, blocked by
-0278), 0278 (asset machinery), 0279 (direction-blind downgrade).
-Adopter-shape detection: [[reference_git_erg_adopter_canonical_shape]].
+Two claims the shipped asset used to get wrong — an `erg-github` sentence in the
+indicative for a check installed nowhere, and an allocator premise contradicted
+by [[feedback_cross_pr_ticket_id_collision]] — were corrected upstream the same
+day. Adopter-shape detection: [[reference_git_erg_adopter_canonical_shape]].

@@ -9182,6 +9182,207 @@
       "last_confirmed": "2026-09-16T16:03:40Z",
       "promoted": false,
       "backfilled": true
+    },
+    "reference_imperial_dragon_harness_repo": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_double_backgrounding_and_unverified_watch_claims": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "reference_what_consumes_sdt_in_zotero_10": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "reference_no_synthetic_keys_in_zotero": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_proportionate_gate_for_the_change": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_run_the_gate_that_covers_the_change": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "reference_zotero_pending_removal_race": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_a_throw_is_not_a_bound": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_verify_your_own_citations": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_erg_log_owns_the_stamp": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_line_citations_rot": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_a_checkbox_needs_its_procedure": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:07:08Z",
+      "last_confirmed": "2026-09-16T11:07:08Z",
+      "promoted": false
+    },
+    "feedback_search_the_archives_before_instrumenting": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:14:39Z",
+      "last_confirmed": "2026-09-16T11:14:39Z",
+      "promoted": false
+    },
+    "feedback_provenance_is_the_silent_half_of_a_deposit": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:14:39Z",
+      "last_confirmed": "2026-09-16T11:14:39Z",
+      "promoted": false
+    },
+    "feedback_refreshing_is_not_copying_forward": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-16T11:46:18Z",
+      "last_confirmed": "2026-09-16T11:46:18Z",
+      "promoted": false
+    },
+    "feedback_paraphrase_drifts_toward_the_argument": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_fixture_helper_hides_the_gap": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_local_make_check_is_partial": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_no_meta_test_infrastructure": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_non_vacuity_is_per_case": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_raid_no_debt_contract": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_worktree_guard_rtk_git_deadlock": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_ticket_regex_gap_two_copies": {
+      "projects": [
+        "-home-haduong-CNRS-code-git-erg"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_styleme_methodology": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-chemin-de-voix"
+      ],
+      "first_seen": "2026-09-16T16:36:55Z",
+      "last_confirmed": "2026-09-16T16:36:55Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
