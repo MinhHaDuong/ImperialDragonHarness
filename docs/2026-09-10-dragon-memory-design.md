@@ -929,10 +929,11 @@ in the project's established decision process.
 
 **Historical design and evidence**
 
-- [Frozen v4](./2026-09-10-dragon-memory-design-v4.md): historical measurements,
-  earlier runtime observations, review record and previous ticket plan.
-- [Frozen v5](./2026-09-10-dragon-memory-design-v5.md): the reviewed architecture
-  before the single ownership contract, internal library and concurrency decisions.
+- Drafts v0 through v5 — historical measurements, earlier runtime observations,
+  the review record and the previous ticket plan — were retired from the tree and
+  live in git history; see [docs/README.md](./README.md) for how to read them back.
+  The frozen predecessor [v6](./2026-09-10-dragon-memory-design-v6.md) remains in
+  the tree as the baseline the open memory tickets were written against.
 - [Portable-memory calibration note](./2026-09-10-portable-agent-memory-calibration.md):
   earlier research synthesis; its numerical analogies are not v6 budget mandates.
 - [Validity-coverage ledger](./2026-09-10-valid-while-coverage-ledger.md):
