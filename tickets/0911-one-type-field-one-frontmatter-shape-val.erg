@@ -11,6 +11,7 @@ Author: claude
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: this ticket implements the predicate evaluator, not just enumerates the grammar; 0915 and 0921 both call one no other ticket builds. Three unlocated artefacts added to Relevant files.
 
+2026-09-16T10:27Z claude note Recorded the author's open question on who writes the shared store: v7 settles where project memory lives but not who publishes to memory-shared. Options, costs and a recommendation are in the body; the decision is the author's and sits above this ticket.
 --- body ---
 
 ## Context
@@ -18,6 +19,60 @@ Author: claude
 V7 needs one executable contract before corpus migration. This ticket now owns the small internal Python package, schema and thin CLI skeleton, not a 950-file rewrite or index generation. Preserve existing corpus and runtime behaviour.
 
 Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+
+## Open architectural question — who writes the shared store
+
+Raised by the author 2026-09-16, not settled, and above this ticket's scope. It
+is recorded here because action 6 (stable project identity) is the first thing
+the answer constrains, and because it has no other home: the dated design
+documents are frozen archives.
+
+**The question.** v7 §3.1 and §17 settle that project memory lives in the
+project's own repository and the shared store is `memory-shared/` at harness
+level. They do not say who *writes* the shared store. §9.2 assumes ordinary Git
+integration by many actors — "there is no distributed lock or cross-branch memory
+bus" — with optimistic concurrency. The author asks whether to make the harness
+the single writer instead: projects publish in their own repositories, and the
+harness **pulls**.
+
+**What it would buy.** Write contention on the harness repository falls to zero by
+construction rather than by discipline. On 2026-09-16 a single session's `git add
+-A` swept 18 files belonging to four other sessions out of their hands; under a
+pull model those sessions never write there, so the class disappears rather than
+being mitigated. It also makes both synchronisation directions harness-owned,
+where today `shared-snapshot/` is already harness-to-project.
+
+**What it would cost, and what must be answered first.**
+
+1. *A registry.* The harness must know which repositories to pull from. Today the
+   `projects/*/` tree is that registry for free; once memory lives in project
+   repositories, something must list them, and that list rots.
+2. *A new invisible state.* A pull sees only what a project pushed. A lesson
+   committed on an unpushed branch becomes invisible, where today it is at least
+   present on the shared disk.
+3. *The self-reference, and this is the hard one.* The harness project's own
+   memory is written in the harness repository. A session working **on** the
+   harness recording a harness lesson either pushes — breaking the rule at once —
+   or the harness project's memory must itself move out. That is a decision, not
+   a detail.
+4. *The trigger.* If a session triggers the pull, sessions act on the harness
+   repository again. If a timer does, that is new infrastructure. If `/dream`
+   does, the proposal reduces to making §9.2's editorial pass **exclusive**,
+   which is a small delta on paper and a large one to enforce.
+
+**Recommendation, for the author to accept or reject.** Do the §3.1 move first and
+measure the residue. Relocating project memory removes 968 of the 971 files that
+contended on 2026-09-16 by itself; the single-writer rule removes the remaining 3.
+Decide the rule on that measurement rather than ahead of it, by which time the
+self-reference question will have had to be answered anyway.
+
+The exception that would reverse this: if admission to the shared store is meant
+to be an act of **curation** rather than a flow — someone periodically deciding
+what rises, instead of each session pushing its find — then the pull is a policy,
+not a contention optimisation, and it stands on its own. That reading is coherent
+with the author's 2026-09-16 decision on rules (project memory, global memory,
+crystallisation — three tiers, each crossed by a decision rather than a push),
+recorded as memory `feedback_rules_crystallize_from_memory`.
 
 ## Relevant files
 
