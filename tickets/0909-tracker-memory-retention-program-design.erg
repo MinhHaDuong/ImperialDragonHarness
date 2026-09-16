@@ -15,6 +15,7 @@ Blocked-by: 0916
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
 2026-09-16T15:55Z claude note author settled where the canonical roots live: the harness project's own memory and the collective memory both stay central in ~/.idh, separated from each other. Recorded in the body with its consequence, that step 3 alone does not close the disjoint-roots row and the relocation out of ~/.claude is the remaining half
+2026-09-16T16:05Z claude note ran the three relocation probes with positive controls: the runtime follows a symlinked rules/ and a symlinked CLAUDE.md, both confirmed. The memory probe's own control did not fire, so it is recorded as an invalid probe rather than a negative, with the experiment that would settle it named
 --- body ---
 
 ## Context
@@ -69,10 +70,34 @@ Two facts worth carrying into whichever ticket executes it:
   are doc examples rather than live dependencies; the count is an upper bound,
   not an estimate of work.
 
-Three cheap probes remain unrun, and each one gates the relocation independently:
-does the runtime follow a symlinked `rules/`, a symlinked `CLAUDE.md`, and a
-symlinked `projects/<slug>/memory/`? A negative on any of them constrains the
-layout and is worth knowing before a path is rewritten.
+Those three probes were run on 2026-09-16, each with a positive control in a
+disposable `HOME` before the symlinked case, and the apparatus itself smoke-
+tested before either. Results:
+
+| Layer | Control (real file) | Test (symlink) |
+|---|---|---|
+| `rules/` | codeword returned | codeword returned |
+| `CLAUDE.md` | codeword returned | codeword returned |
+| `projects/<slug>/memory/` | **control did not fire** | control did not fire |
+
+**Two of three clear the relocation.** The runtime reads a symlinked `rules/`
+directory and a symlinked `CLAUDE.md` and loads both into the session. Neither
+constrains the layout.
+
+**The third is an invalid probe, not a negative result.** The control placed a
+real `MEMORY.md` at `projects/<slug>/memory/` in a disposable home and the
+codeword did not come back, so the probe cannot distinguish "the symlink is not
+followed" from "this is not the channel memory arrives through". Recorded as
+unknown. The cause is not established; the disposable home carried no
+`settings.json` and no project context, either of which may gate the load. IDH
+injects nothing here -- no hook in `settings.shared.json` or `hooks/` mentions
+memory -- so the loader is the runtime's own.
+
+The experiment that would settle it: repeat the control inside a real project
+checkout with the harness's own settings present, changing one variable at a
+time until the control fires, and only then introduce the symlink. Until that
+control fires, this row stays open and the relocation should not assume either
+answer for the memory layer.
 
 ## Relevant files
 
