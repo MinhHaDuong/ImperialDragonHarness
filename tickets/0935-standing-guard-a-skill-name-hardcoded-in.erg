@@ -1,0 +1,94 @@
+%erg 0.1
+Title: Standing guard: a skill name hardcoded in a script survives the skill's rename
+Created: 2026-09-16
+Author: Integration Test
+
+--- log ---
+2026-09-16T08:58Z Integration Test created
+2026-09-16T09:02Z Integration Test note Filed from /roar step 4 after PR #925; the class fired once and the sweep found 9 names across 5 scripts
+
+--- body ---
+## Context
+
+PR #925 renamed the skill `memory` to `memory-sweep`. The sweep was keyed on
+two search terms — the path `skills/memory` and the command `/memory` — and
+both are structurally blind to a third form: the skill name as a **bare
+identifier inside a script**. Two live regressions got through and were caught
+only by an external review, not by `make check`:
+
+- `scripts/census/memory-recall.py` — `re.compile(rb'"skill":\s*"(dream|roar|lair|memory)"')`
+- `scripts/trace-stats.py` — `MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", ...}`
+
+Neither had test coverage of the classifier, so the suite stayed green while
+the scripts silently stopped recognising the renamed skill. Both were fixed in
+#925 and both now have tests.
+
+The class is wider than the instance. A `/roar` step-3 sweep of `origin/main`
+found **9 skill names hardcoded across 5 scripts**:
+
+| Skill | Files |
+|---|---|
+| `dream`, `gaze`, `molt`, `verify-gate` | `scripts/trace-stats.py` |
+| `lair`, `roar` | `scripts/census/memory-recall.py`, `scripts/trace-stats.py` |
+| `merge` | `scripts/guard-cd-primary-repo.sh`, `scripts/guard-worktree-identity.sh` |
+| `zotero-import` | `scripts/zotero-import.py` |
+
+Renaming any of them repeats the defect, silently.
+
+## The design question this ticket owns
+
+The obvious guard — "every skill name hardcoded in a script must match an
+existing `skills/` directory" — **misfires on the correct fix**. #925
+deliberately kept `"memory"` beside `"memory-sweep"`, because these scripts
+read a historical trace corpus spanning both sides of the rename. A naive
+guard flags that as a dangling name. So the guard needs a way to express
+"this name is intentionally historical", and that is the part worth designing
+rather than improvising.
+
+Do not auto-write the test before settling this. `rules/workflow.md` warns
+against growing a guard whose defect class misfires, and a guard that cries
+wolf on every deliberate historical alias is worse than none.
+
+## Relevant files
+
+- `scripts/trace-stats.py` — `MANDATED_SKILLS`, `BUILTIN_COMMANDS`
+- `scripts/census/memory-recall.py` — `SKILL`, `CMD` regexes
+- `scripts/guard-cd-primary-repo.sh`, `scripts/guard-worktree-identity.sh` — `merge`
+- `scripts/zotero-import.py` — `zotero-import`
+- `tests/test_memory_recall.py`, `tests/test_trace_stats.py` — the per-instance
+  tests #925 added; the standing guard is the class-level complement, not a
+  replacement
+- `rules/authoring-skills.md` — carries the naming rules, including the
+  reserved-name rule #925 added
+
+## Actions
+
+1. Decide how a deliberately-historical name is declared. Candidates: an
+   inline marker comment the guard parses, a single declared alias map, or
+   scoping the guard to names that no script comment marks.
+2. Write the guard as an `adherence`-tier test.
+3. Re-run the step-3 sweep to confirm the 9 known names either resolve or are
+   explicitly declared historical.
+
+## Test
+
+Red step: a test that fails on a fixture script naming a skill directory that
+does not exist, and passes when the same name carries the historical marker
+chosen in action 1.
+
+## Verification
+
+- [ ] The guard fails on a deliberately dangling skill name
+- [ ] The guard passes on `"memory"` in `MANDATED_SKILLS`, which is correct
+- [ ] `make check` green
+
+## Invariants
+
+- The two per-instance tests from #925 keep passing unchanged
+- No script's runtime behaviour changes; this ticket adds a check, not a fix
+
+## Exit criteria
+
+Renaming any skill in this repo produces a red gate rather than a silent
+classifier regression, without flagging the deliberate historical aliases
+that #925 established.

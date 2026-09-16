@@ -119,3 +119,6 @@
 - [Grep tests for the recipe before extending it](feedback_grep_tests_for_the_recipe_before_extending_it.md)
 - [A blocked compound command skips every line](feedback_blocked_compound_command_skips_every_line.md)
 - [Content-match recovery needs diff-size verification](feedback_content_match_recovery_needs_diff_verification.md)
+- [grep and find are shell functions, not GNU tools](feedback_grep_find_are_shell_functions.md)
+- [Two reviewers in one worktree poison each other's derived files](feedback_concurrent_reviewers_one_worktree.md)
+- [Blob SHAs tell a deletion from a move](feedback_blob_sha_distinguishes_absent_from_moved.md)
