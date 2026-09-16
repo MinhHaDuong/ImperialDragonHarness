@@ -191,7 +191,8 @@ did not run it.
 
 **T4 claim:** "the 191 aged entries are flagged; per-type thresholds read from
 the memory skill's TTL table."
-**Evidence:** `skills/memory-sweep/SKILL.md` TTL table: 14 days for "X needed / X
+**Evidence:** `skills/memory/SKILL.md` [renamed `skills/memory-sweep/` on
+2026-09-16, after this check] TTL table: 14 days for "X needed / X
 blocked", 60 for benchmarks, 90 for remote machine config, and **"No TTL:
 feedback"**. Feedback is 74% of the corpus. A pass that follows that table
 cannot flag the 191; the two halves of T4's exit criterion contradict each

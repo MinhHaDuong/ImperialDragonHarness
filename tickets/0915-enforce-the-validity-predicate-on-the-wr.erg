@@ -21,7 +21,7 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-`skills/memory/SKILL.md`; `rules/knowledge-hints.md`; `tickets/AGENTS.md`; package/CLI from 0911.
+`skills/memory-sweep/SKILL.md`; `rules/knowledge-hints.md`; `tickets/AGENTS.md`; package/CLI from 0911.
 
 ## Actions
 

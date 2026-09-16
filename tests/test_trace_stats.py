@@ -549,3 +549,17 @@ def test_category_columns_populated_in_row(tmp_path):
     assert row["cat_reading_calls"] == 1
     assert row["cat_reading_chars"] == len(json.dumps("HELLO"))
     assert row["cat_execution_calls"] == 0
+
+
+def test_mandated_skills_covers_both_sides_of_the_memory_rename():
+    """The memory skill was renamed `memory`->`memory-sweep` on 2026-09-16.
+
+    The rename sweep keyed on the path `skills/memory` and the command
+    `/memory`, and walked straight past this set, where the skill appears as a
+    bare identifier. The census spans traces from either side of the rename, so
+    both spellings must classify as mandated; dropping the old one would
+    silently reclassify every historical wrap-up turn.
+    """
+    assert ts._is_mandated_tool("Skill", {"skill": "memory-sweep"}) is True
+    assert ts._is_mandated_tool("Skill", {"skill": "memory"}) is True
+    assert ts._is_mandated_tool("Skill", {"skill": "hunt"}) is False

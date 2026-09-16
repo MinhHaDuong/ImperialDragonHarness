@@ -54,8 +54,11 @@ TU = re.compile(
     rb'\s*"input":\s*\{(?:[^{}]|\{[^{}]*\}){0,600}?"file_path":\s*"([^"]{0,300})"'
 )
 MEM = re.compile(r"memory/([A-Za-z0-9_.-]+\.md)$")
-SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory)"')
-CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory)</command-name>")
+# `memory-sweep` first: it is the skill renamed from `memory` on 2026-09-16,
+# and both spellings must match — traces older than the rename carry the bare
+# name, newer ones the new one, and this script scans the whole corpus.
+SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory-sweep|memory)"')
+CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory-sweep|memory)</command-name>")
 BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
 BASH_MEM = re.compile(r"memory/((?:feedback|project|reference|user)[A-Za-z0-9_.-]*\.md)")
 
@@ -210,4 +213,5 @@ def main() -> None:
         print(f"    {name:30s} {b['touched']:5d} / {b['sessions']:5d}  ({pct:.2f}%)")
 
 
-main()
+if __name__ == "__main__":
+    main()

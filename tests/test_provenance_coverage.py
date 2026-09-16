@@ -82,10 +82,13 @@ def test_usage_path_pattern_ignores_the_memory_skill():
     wherever it lands.
 
     The skill is `skills/memory-sweep/` since the rename that freed `/memory`
-    for the built-in, and that path no longer carries a `memory/` segment for a
-    bare pattern to catch. The historical path stays asserted anyway: it is the
-    case that actually fired, and dropping it would leave the anchor guarded
-    only by an input that cannot fail.
+    for the built-in. Under the anchored regex neither path matches, so neither
+    assertion can fail as written — measured, not assumed. What separates them
+    is the regression this guard exists for: unanchor the pattern back to a
+    bare `memory/<name>\\.md` and the historical path matches again while
+    `skills/memory-sweep/`, carrying no `memory/` segment, still does not. Only
+    the old path fails on that regression, which is why it stays asserted; the
+    new one documents the current tree and is expected to be inert.
     """
     assert not provenance._MEM_PATH.search("/home/x/.claude/skills/memory/SKILL.md")
     assert not provenance._MEM_PATH.search("skills/memory/README.md")
