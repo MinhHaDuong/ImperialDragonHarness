@@ -1,6 +1,0 @@
-- [Managed-agent mobile dominance](feedback_ccr_mobile_dominance.md)
-- [gh pr merge worktree workaround](reference_gh_pr_merge_worktree.md)
-- [Rebase after worktree deletion](feedback_rebase_deleted_worktree.md)
-- [last-prompt JSONL record](project_last_prompt_record.md)
-- [slash data undercount](project_slash_data_sparse.md)
-- [Machine-specific env in .env not settings.json](feedback_env_settings_json.md)
