@@ -60,3 +60,10 @@
 - [red-control: no cooperating instrumentation](feedback_redcontrol_no_cooperating_instrumentation.md)
 - [verify delivery gate runs check](feedback_verify_delivery_gate_runs_check.md)
 - [sweep emitted vs gated surface](feedback_sweep_emitted_vs_gated_surface.md)
+- [worktree guard x rtk git deadlock](feedback_worktree_guard_rtk_git_deadlock.md) — bare `git` is refused in a worktree session; use `/usr/bin/git -C`
+- [close-claim regex gap](project_ticket_regex_gap_two_copies.md) — git-erg FIXED (0255); two harness copies still live (0929/0930); two intermediate fixes were worse than the bug
+- [non-vacuity is per-case](feedback_non_vacuity_is_per_case.md) — a suite proven to bite can still hold a case that cannot fail; ask which property it fired on
+- [local make check is partial](feedback_local_make_check_is_partial.md) — it halts at the first failing target; a stray empty .git above /tmp causes it and regrows (0287)
+- [no meta-test infrastructure](feedback_no_meta_test_infrastructure.md) — validating the test suite itself was removed on purpose; the goal is research
+- [raid NO DEBT contract](feedback_raid_no_debt_contract.md) — arbitrate as MOE, invent no work, a ticket opened is closed in the same run
+- [fixture helper hides the gap](feedback_fixture_helper_hides_the_gap.md) — a helper that gets the test to the code is describing what the code refuses to do

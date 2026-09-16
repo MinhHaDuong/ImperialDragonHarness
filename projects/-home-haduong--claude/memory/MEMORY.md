@@ -126,3 +126,4 @@
 - [A positive control's witness can expire](feedback_positive_control_witness_can_expire.md) — a merged PR is no longer an open PR
 - [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md) — index line, body, provenance record
 - [Rules crystallize from memory, not from a session](feedback_rules_crystallize_from_memory.md) — stop writing lessons straight into rules/
+- [A paraphrase drifts toward the argument](feedback_paraphrase_drifts_toward_the_argument.md) — verify a load-bearing quote verbatim, and fix the PR body too
