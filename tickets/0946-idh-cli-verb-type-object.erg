@@ -1,0 +1,130 @@
+%erg 0.1
+Title: Generalise the perch adapter into an idh CLI with a verb/type/object grammar
+Created: 2026-09-16
+Author: claude
+
+--- log ---
+
+2026-09-16T15:54Z claude created child of 0800 after the author chose the verb/type/object grammar over a flat form; the perch adapter's SLICE constant is the only thing standing between one skill and any skill
+--- body ---
+## Context
+
+Child of `0800`, successor to `0802`.
+
+`0802` shipped `adapters/perch.py`, which makes one named skill discoverable by
+Claude Code, Codex and Pi. The skill it manages is a module constant,
+`SLICE = "perch"`, used sixteen times and never for anything but a path
+component or a message string. Nothing in the module transforms skill content.
+
+That constant was correct for a one-slice pilot: `0802`'s exit criterion only
+permits abstractions justified by duplication *observed in the slice*, and one
+slice observes none. A second skill is what makes the duplication observable,
+and it is one constant wide.
+
+This is explicitly **not** the generator `0800` and `0802` rule out. Taking the
+skill name as an argument transforms nothing; `tests/test_perch_pilot.py`'s
+`test_the_pilot_introduces_no_generator` stays as it is and must keep passing.
+The evidence already says no skills generator will ever be needed: the only
+duplication `0802` recorded across three harnesses is `name` + `description`,
+both already in the canonical frontmatter. For the skill layer a parameterised
+installer is the complete answer, not a step toward a compiler.
+
+## The grammar
+
+Decided with the author on 2026-09-16: **verb, then type, then object**, with
+the destination an option rather than a trailing positional, so objects can be
+variadic without ambiguity.
+
+    idh install skill perch                  # everywhere it applies
+    idh install skill perch roar --to codex  # narrowed, variadic
+    idh uninstall skill perch
+    idh status skill perch                   # object optional
+    idh check harness codex
+
+Three constraints behind that shape, each recorded so a later reader does not
+relitigate them:
+
+- **The executable is a noun.** `idh-setup uninstall` is the "click Start to
+  shut down" absurdity the harness already rules out; the verb belongs in the
+  sub-command.
+- **A missing `--to` means every applicable harness.** The tool knows codex and
+  pi share `$HOME/.agents/skills` and that claude's root is the canonical source
+  itself. Making the operator name each harness produces the "already
+  discoverable" no-op that today's `install codex` then `install pi` prints.
+- **The type slot is carried from the start.** `0803` ports a script and `0809`
+  ports an enforcing guard. A bare object name collides across those types, and
+  adding a type later breaks a CLI already written into docs, tickets and
+  habits. `idh install script healthcheck` and `idh install guard
+  commit-on-main` must fit without a rename.
+
+Only the `skill` type is implemented here. `script` and `guard` are grammar
+slots their own tickets fill.
+
+## Relevant files
+
+- `adapters/perch.py` — becomes the skill type's implementation
+- `adapters/README.md` — command surface, invocation table
+- `adapters/pilot-support.json` — `native_expression` fields quote CLI commands
+- `tests/test_perch_pilot.py`, `tests/test_perch_discovery.py` — 64 tests to
+  re-point at a named object rather than a constant
+- `scripts/shell-init.sh` — where an `idh` entry point reaches PATH
+
+## Actions
+
+1. Replace `SLICE` with an object argument threaded through `canonical_source`,
+   `target_path`, `_is_canonical`, `_is_dangling_link`, `status`, `install`,
+   `uninstall` and every message that names the slice.
+2. Build the verb/type/object parser with nested sub-parsers. `--to` accepts one
+   harness; absent, the verb applies to every harness the type supports.
+3. Keep `HARNESSES` a closed tuple. The harness axis stays enumerated and
+   tested; only the object axis opens.
+4. Refuse an unknown object the way an unknown harness is refused today: a
+   `Refusal` naming what was looked for and where, never a silent success.
+5. Re-point the existing tests at `perch` as a named object, and add one test
+   installing a second real skill to prove the object axis is genuinely open.
+6. Update `adapters/README.md` and every `native_expression` in
+   `pilot-support.json` that quotes a command string.
+7. Ship the entry point as `bin/idh`, reached by name through
+   `scripts/shell-init.sh`. That file currently defines only a `claude` shell
+   function and adds nothing to PATH, which is why the four scripts already in
+   `bin/` are reachable only by full path; putting `bin/` on PATH fixes them in
+   the same edit.
+
+## Out of scope
+
+The IDH lifecycle family -- `setup`, `update`, and absorbing the verb-named
+`bin/install-cron`, `bin/snapshot`, `bin/usage-report` and `bin/mammoth-audit`
+into noun-first sub-commands -- is a separate ticket. This one ships the
+projection family and the grammar that leaves room for the rest.
+
+Relocating the repository out of `~/.claude` is likewise out of scope, and is
+owned by the memory programme: `docs/2026-09-10-dragon-memory-design.md` records
+the disjoint-roots invariant as known red precisely because IDH's canonical
+store sits inside a runtime's native memory root. Nothing here depends on that
+move, and a probe on 2026-09-16 confirmed `install claude` already creates a
+real symlink when the repository lives elsewhere.
+
+## Test
+
+- Installing two different skills produces two independent links, and
+  uninstalling one leaves the other discoverable.
+- `idh install skill perch` with no `--to` reports one action per applicable
+  harness, and is idempotent on a second run.
+- An object with no canonical directory refuses with exit 2 and one stderr
+  line, matching the module's existing Refusal contract.
+- `test_the_pilot_introduces_no_generator` still passes unchanged.
+
+## Verification
+
+- [ ] `SLICE` is gone; no module-level constant names a specific skill
+- [ ] Two skills install, uninstall and report independently, proved by test
+- [ ] Absent `--to` covers every applicable harness; the narrowed form still works
+- [ ] `HARNESSES` remains a closed, tested tuple
+- [ ] README and pilot inventory quote the shipped commands, checked by test
+- [ ] `make check` and `./scripts/check-agnostic.sh` pass
+
+## Exit criteria
+
+- [ ] One CLI installs any named skill into any supported harness
+- [ ] The grammar leaves `script` and `guard` addable without a breaking rename
+- [ ] No generator, IR or content transformation was introduced
