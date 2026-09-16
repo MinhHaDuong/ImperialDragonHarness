@@ -60,7 +60,7 @@ cost** `w_i` — the unit is utility per token, not utility, so a long entry mus
 earn its length. Second, MaRS allows **soft budget partitioning by type**
 (`B^(epi)`, `B^(sem)`, `B^(soc)`, `B^(task)`), with the split tuned to equalise
 marginal utility per token across slices. That is the defensible form of the
-per-type caps `skills/memory/SKILL.md` already declares — a byte split, not a
+per-type caps `skills/memory-sweep/SKILL.md` already declares — a byte split, not a
 count.
 
 Measured against this, `/dream` today runs **one of the four passes**:
@@ -215,7 +215,7 @@ that a number in the one under test can be read:
 
 | arm | what it is | role |
 |---|---|---|
-| maintenance | main session invoking `/dream`, `/roar`, `/lair`, `/memory` | positive control |
+| maintenance | main session invoking `/dream`, `/roar`, `/lair`, `/memory-sweep` | positive control |
 | working | every other main session | **the measurement** |
 | subagent | nested `…/subagents/agent-*.jsonl` runs | counted apart, see below |
 | writes | `Edit`/`Write` on a body | housekeeping volume |

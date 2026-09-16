@@ -74,14 +74,23 @@ def test_tombstones_are_not_counted_as_live():
 
 
 def test_usage_path_pattern_ignores_the_memory_skill():
-    """`skills/memory/SKILL.md` is not a memory body.
+    """Neither the memory skill's old path nor its new one is a memory body.
 
-    A bare `memory/<name>\\.md` matches it, and did: the memory *skill* entered
-    the first usage run with 19 reads. Nothing was corrupted — no such slug
-    exists — but a count that is wrong is wrong wherever it lands.
+    A bare `memory/<name>\\.md` matches `skills/memory/SKILL.md`, and did: the
+    memory *skill* entered the first usage run with 19 reads. Nothing was
+    corrupted — no such slug exists — but a count that is wrong is wrong
+    wherever it lands.
+
+    The skill is `skills/memory-sweep/` since the rename that freed `/memory`
+    for the built-in, and that path no longer carries a `memory/` segment for a
+    bare pattern to catch. The historical path stays asserted anyway: it is the
+    case that actually fired, and dropping it would leave the anchor guarded
+    only by an input that cannot fail.
     """
     assert not provenance._MEM_PATH.search("/home/x/.claude/skills/memory/SKILL.md")
     assert not provenance._MEM_PATH.search("skills/memory/README.md")
+    assert not provenance._MEM_PATH.search("/home/x/.claude/skills/memory-sweep/SKILL.md")
+    assert not provenance._MEM_PATH.search("skills/memory-sweep/README.md")
     assert provenance._MEM_PATH.search(
         "/home/x/.claude/projects/-home-x-proj/memory/feedback_a.md"
     ).group(1) == "feedback_a"

@@ -191,7 +191,7 @@ only needs applying to its own table.
 **Verified against the tree at `origin/main` `8e54245e`.**
 
 - §5.1's "existing memory admission exclusions" are the *What NOT to remember*
-  list in `skills/memory/SKILL.md`. (That file also still carries the caps
+  list in `skills/memory-sweep/SKILL.md`. (That file also still carries the caps
   and TTL table §8 retires; ticket 0913 owns that, and it is a design-vs-tree
   gap, not a §-vs-§ contradiction.)
 - §5.2's knowledge-hint subsystem: `rules/knowledge-hints.md` and

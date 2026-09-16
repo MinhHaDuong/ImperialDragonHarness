@@ -472,10 +472,13 @@ _TU_READ = re.compile(
 )
 _BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
 # Anchored on the two directories that actually hold memory bodies. A bare
-# `memory/<name>.md` also matches `skills/memory/SKILL.md`, which put the memory
+# `memory/<name>.md` also matched `skills/memory/SKILL.md`, which put the memory
 # *skill* into the counts at 19 reads on the first run — a slug that does not
 # exist, so nothing was corrupted, but a count that is wrong is wrong whether or
-# not it lands anywhere.
+# not it lands anywhere. That skill is `skills/memory-sweep/` since the rename
+# that freed `/memory` for the built-in, so the bare pattern would no longer
+# reach it — but the anchor stays: `.claude/memory/` still has to be told apart
+# from every other `memory/` segment on a path.
 _MEM_PATH = re.compile(r"(?:projects/[^/\s\"]+|\.claude)/memory/([A-Za-z0-9_.-]+)\.md")
 
 

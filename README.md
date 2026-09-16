@@ -28,7 +28,7 @@ ImperialDragonHarness/          # cloned as ~/.claude
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
 ├── memory/                 # Cross-project lessons, injected at session start
-├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory
+├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory-sweep
 ├── commands/ bin/ hooks/   # Guidance docs, PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
@@ -133,7 +133,7 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 | `/index-source` | Index/catalogue a document from a URL into Zotero with the right item type and clean metadata. Fetches the page, stages it locally, scrapes author/date/title/identifiers/pagination from meta tags (JSON-LD, citation_*, Dublin Core, OpenGraph) and DOI/arXiv APIs, classifies the Zotero type with judgment, dedupes, and hands a RIS + attachment to Zotero. URL sibling of zotero-import; implements the EDM workflow (docs/ staging → Zotero). |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
-| `/memory` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
+| `/memory-sweep` | Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
 | `/pdf-finish` | Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Automates pagination through header knobs, verifies the result with a scripted text sweep rather than by eye, and treats each named variant as a reproducible transform layer. Keyword: finition. |

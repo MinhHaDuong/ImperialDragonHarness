@@ -16,6 +16,19 @@ tests are the gate, this is why.
   hardcode `gh`. The harness outlives tool generations — names rot, capabilities
   don't. Enforced by `scripts/check-agnostic.sh`; a genuinely runtime-specific
   line goes behind `<!-- harness-extension-point -->`.
+- **Never take a name the runtime already binds.** A skill directory whose name
+  matches a built-in command shadows it, with no warning at either end: the
+  built-in simply stops being reachable, and the only symptom is a user typing
+  the command and getting something else. `skills/memory/` held `/memory` from
+  the harness's first commit until 2026-09-16, when the author typed it expecting
+  the built-in's view of the resident memory files. Nothing in the tree recorded
+  the collision, and the skill had drifted to describing a store schema that no
+  longer existed — a shadowed name hides its own staleness, since the users who
+  would notice are the ones the built-in was serving. No test gates this: a list
+  of built-in names is exactly the kind that rots, and the runtime's own command
+  list is the authority. Check it when you name a skill, not after.
+  Renaming away from a collision takes no stub at the old name — a stub keeps the
+  shadow, which is the thing being removed.
 - **Discoverability first in `description:`.** The first sentence states the
   plain, unthemed function in the words a naive user would search ("Audit
   test-suite quality…"). Theming, lore and jargon come after it. Skill *names*

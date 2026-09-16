@@ -295,7 +295,7 @@ already carry decision records under [tickets/AGENTS.md](../tickets/AGENTS.md).
 Do not copy information already obtainable from code, Git history, README,
 STATE, rules or skills merely to populate memory. “Script X exists” needs a
 pointer; “X failed under condition Y” can be a lesson citing X. This retains
-the existing [memory admission exclusions](../skills/memory/SKILL.md).
+the existing [memory admission exclusions](../skills/memory-sweep/SKILL.md).
 
 Routing is an agent judgment. The entry mechanism can require a recorded routing
 outcome; it cannot deterministically guarantee semantic classification. Evaluate

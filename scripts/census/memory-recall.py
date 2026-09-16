@@ -9,7 +9,7 @@ because the index told it the body exists, when nothing in the conversation
 would have surfaced it.
 
 That event has a signature: a **working** session reads a memory body. A
-session that runs `/dream`, `/roar`, `/lair` or `/memory` reads bodies because
+session that runs `/dream`, `/roar`, `/lair` or `/memory-sweep` reads bodies because
 maintaining them is its job, and counting those would measure the memory
 system's own housekeeping rather than its use. So sessions are split, and the
 maintenance arm doubles as the positive control: if the probe cannot see reads
