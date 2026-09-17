@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Robustness regressions for scripts/bash-env.sh (ticket 0335) — follow-ups from
-# the #588 (strict-parse) and #593 (KEYS=) gaze reviews. Three nits:
+# the strict-parse reviews. Three nits:
 #
 #   1. CRLF tolerance — a Windows-edited project .env terminates lines with \r\n.
-#      `read` strips only \n, so a trailing \r survives into every value and,
-#      worse, into the last KEYS= provider name (corrupting the ^[a-z0-9-]+$
-#      match). The strict parser must drop a trailing CR.
+#      `read` strips only \n, so a trailing \r survives in the value. The strict
+#      parser must drop it.
 #   2. Size cap — bash-env.sh is sourced on EVERY bash subprocess. A pathological
 #      or adversarial project .env must not tax each one: past a generous byte
 #      cap the parse is skipped with a stderr warning, never partially parsed.
@@ -100,11 +99,6 @@ _assert_contains() {
 EMPTY_HOME="$WORK/empty-home"   # no ~/.claude/.env — isolates the project file
 mkdir -p "$EMPTY_HOME"
 
-# Fake HOME with a ~/.config/keys/ provider fixture — NON-secret sentinel only.
-FHOME="$WORK/keys-home"
-mkdir -p "$FHOME/.config/keys"
-printf 'FAKE_HF=hfval\n' > "$FHOME/.config/keys/huggingface.env"
-
 # --- (1) CRLF value: a trailing \r is stripped -------------------------------
 # printf '\r\n' writes a CRLF line terminator (Windows-edited .env). `read`
 # strips only the \n; the parser must drop the surviving \r so the value is clean.
@@ -112,15 +106,6 @@ P1="$WORK/p1"; mkdir -p "$P1"
 printf 'FOO=bar\r\n' > "$P1/.env"
 _assert_eq "(1) CRLF value FOO=bar loses its trailing CR" \
     "$(_load_var "$EMPTY_HOME" "$P1" FOO)" "bar"
-
-# --- (2) CRLF on the KEYS= line: provider name is not \r-corrupted ------------
-# A trailing \r on 'KEYS=huggingface' would make the provider name
-# 'huggingface\r', failing ^[a-z0-9-]+$ and loading nothing. With CR stripped the
-# provider resolves and its (sentinel) secret loads.
-P2="$WORK/p2"; mkdir -p "$P2"
-printf 'KEYS=huggingface\r\n' > "$P2/.env"
-_assert_eq "(2) CRLF KEYS=huggingface resolves the provider (FAKE_HF=hfval)" \
-    "$(_load_var "$FHOME" "$P2" FAKE_HF)" "hfval"
 
 # --- (3) oversized project .env: parse is skipped, warned, shell survives -----
 # Generate a file well past the 256 KiB cap. It must be skipped (FOO not loaded),

@@ -193,7 +193,7 @@ so the next `/gaze` cycle opens a follow-up ticket.
 
 Scans the agent's tool-call **trace** (not the diff) for
 Read/Edit/Write/NotebookEdit/Bash calls that touch a forbidden path — a
-credential/secret file (`~/.ssh`, `~/.aws`, `~/.netrc`, `bash-env.sh`,
+credential/secret file or sensitive environment loader (`~/.ssh`, `~/.aws`, `~/.netrc`, `bash-env.sh`,
 `.git-credentials`) or another session's worktree. This is the scope-violation
 class a diff-only check structurally misses: an agent that READS a forbidden
 path leaves no trace in the diff (arXiv:2604.21965 App. B.3).

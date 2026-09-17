@@ -21,12 +21,9 @@ WORKTREE="/home/testuser/repo/.claude/worktrees/t001"
 # `env -i` is load-bearing, not tidiness. The silent-allow cases below assert
 # stderr is EMPTY, and this child inherited the caller's whole environment —
 # including BASH_ENV, which makes a fresh bash re-run scripts/bash-env.sh here.
-# With HOME pinned at /home/testuser, that loader finds no keystore under the
-# synthetic home and writes to stderr, so any operator-level `KEYS=` line in
-# ~/.claude/.env turns those assertions red on a correctly configured machine
-# (measured 2026-09-07, ticket 0873: `bash-env: KEYS provider not found:
-# openrouter` on two cases). Nothing here tests credential loading; the guard
-# under test reads a JSON payload and nothing else.
+# The loader can parse a project `.env` and write refusal diagnostics to
+# stderr. Nothing here tests that loader; the guard under test reads a JSON
+# payload and nothing else.
 #
 # The test was green only because no one had that line — an all-clear that
 # meant "the ambient environment happened to be quiet", not "the guard is

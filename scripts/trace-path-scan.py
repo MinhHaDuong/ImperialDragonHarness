@@ -54,7 +54,7 @@ FORBIDDEN_PATH_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"/\.ssh(?:/|$)"), "ssh credentials directory"),
     (re.compile(r"/\.aws(?:/|$)"), "aws credentials directory"),
     (re.compile(r"/\.netrc$"), "netrc credentials file"),
-    (re.compile(r"bash-env\.sh$"), "secret-loading bash-env.sh"),
+    (re.compile(r"bash-env\.sh$"), "sensitive BASH_ENV loader"),
     (re.compile(r"/\.git-credentials$"), "git-credentials file"),
 )
 
