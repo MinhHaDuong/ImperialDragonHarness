@@ -74,3 +74,6 @@ skills/claude-code
 # (ticket 0802).
 **/__pycache__/
 *.pyc
+
+# Populated by the client at run time from the account's skill sync (ticket 0950); never shipped.
+skills/synced/

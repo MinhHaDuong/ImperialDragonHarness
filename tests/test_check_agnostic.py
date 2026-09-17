@@ -306,3 +306,24 @@ def test_forge_patterns_not_applied_to_rules(tmp_path):
         "forge patterns leaked onto rules/ — intended scope is skills/ only:\n"
         + result.stdout
     )
+
+
+def test_synced_runtime_skills_are_not_checked(tmp_path):
+    """skills/synced/ is populated by the client at run time (ticket 0950); a
+    violation there is not the harness's, and a fresh sync must not turn the
+    local gate red while CI, which has no such directory, stays green."""
+    skills = tmp_path / "skills"
+    (skills / "synced" / "vendor-skill").mkdir(parents=True)
+    (skills / "synced" / "vendor-skill" / "SKILL.md").write_text(
+        "Run python scripts/comment.py contract.docx\n"
+    )
+    (skills / "own-skill").mkdir()
+    (skills / "own-skill" / "SKILL.md").write_text("Run the thing from $HOME/x.py\n")
+    result = _run(skills)
+    assert result.returncode == 0, result.stdout + result.stderr
+    # Control: the same line outside synced/ is still caught.
+    (skills / "own-skill" / "SKILL.md").write_text(
+        "Run python scripts/comment.py contract.docx\n"
+    )
+    result = _run(skills)
+    assert result.returncode != 0
