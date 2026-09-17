@@ -1,0 +1,179 @@
+%erg 0.1
+Title: verify-adherence hardcodes uv instead of the project's verification entry point
+Created: 2026-09-17
+Author: Codex
+Closed: fixed: verify-adherence uses the project's declared verification entry point; PR #960
+
+--- log ---
+2026-09-17T07:51Z Codex created
+2026-09-17T09:20Z Codex raid imagine PASS — use the project's declared Make target; no pyproject, uv manifest, or inferred Python probes
+2026-09-17T09:35Z Codex raid plan PASS — discover Make lint, delegate from gaze, harden the agnosticism guard, and remove trace-doctor uv
+2026-09-17T09:48Z Codex raid feasibility PASS — generic declaration contract clarified; known ruff cache failure is environmental baseline
+2026-09-17T08:50Z Codex implemented declared project runner, live gaze delegation, uv spelling guard, and stdlib trace-doctor entry point; 751 fast and 67 adherence tests pass
+
+2026-09-17T10:47Z Integration Test closed — fixed: verify-adherence uses the project's declared verification entry point; PR #960
+--- body ---
+
+## Context
+
+Found while running the documented `/hunt` pre-PR gate for tickets 0945 and
+0947. This repository deliberately has no `pyproject.toml` and no uv project:
+`requirements-dev.txt` records that Make + that requirements file are its
+chosen dependency/test interface, and the adherence target is `make lint`.
+
+`skills/verify-adherence/SKILL.md` nevertheless hardcodes:
+
+- `uv run python -c ...` for import probes;
+- `uv run python -m pytest <files> -q` for per-module tests;
+- `uv run python -m pytest -m adherence -q` for the mechanical suite.
+
+Here, the last command failed with `No module named pytest` because uv selected
+an isolated Python without the dependencies installed for the repository. The
+equivalent project-owned command, `make lint`, passed 67 adherence tests. The
+skill's own prose says "the stack is the project's concern", so its procedure
+contradicts its protocol and turns a healthy project into a circuit-breaker
+failure.
+
+Adding a `pyproject.toml` merely to satisfy that command is the wrong fix. It
+would introduce a second dependency manifest beside `requirements-dev.txt`,
+contradict the explicit decision recorded there and in closed ticket 0470, and
+make the consumer adapt to the harness rather than the harness discover the
+consumer's verification interface.
+
+## Sweep
+
+The roar sweep found the same hardcoding copied into
+`skills/gaze/SKILL.md`'s embedded adherence-agent procedure. Fixing only the
+sub-skill would leave `/gaze` divergent.
+
+`scripts/check-agnostic.sh` intends to prevent stack-specific commands in
+skills, but its pattern is only `uv run pytest`; it misses the live spelling
+`uv run python -m pytest`. This is why both copies pass CI.
+
+`skills/trace-doctor/SKILL.md` also invokes harness scripts through `uv run
+python`. Its scripts are currently standard-library-only and the skill is
+harness-specific, not a target-project test gate. Decide explicitly whether
+that is a valid `harness-extension-point` or should use the harness's own
+Python entry point; do not let it remain accidental.
+
+## Relevant files
+
+- `skills/verify-adherence/SKILL.md`
+- `skills/gaze/SKILL.md`
+- `scripts/check-agnostic.sh`
+- `tests/test_check_agnostic.py`
+- `Makefile`, `requirements-dev.txt`, and `pytest.ini` as the live no-uv
+  project contract
+- `skills/trace-doctor/SKILL.md` for the explicit extension-point decision
+
+## Actions
+
+1. Define how a Python project exposes its adherence and per-module test entry
+   points. Prefer a project-owned command (`make lint`, a documented Make
+   target, or another declared runner) over package-manager inference.
+2. Make `verify-adherence` discover and invoke that interface, failing loud
+   when none is declared rather than silently choosing uv.
+3. Apply the same protocol to gaze's embedded procedure, or remove the copied
+   procedure in favour of one live invocation contract so the two cannot
+   drift.
+4. Broaden the agnosticism guard to catch `uv run python -m pytest` and
+   equivalent stack-specific uv test spellings without flagging fixtures or an
+   explicitly documented harness extension point.
+5. Decide and document the `trace-doctor` case.
+
+## Raid reimagination (2026-09-17)
+
+Keep the consumer-facing contract smaller than the original implementation
+suggestion: one project-owned adherence command. For this repository that
+command is `make lint`; no `pyproject.toml`, uv project, runner registry, or
+package-manager inference is added. The project command owns whatever imports,
+targeted tests, and adherence suite its stack requires. Absence of a declared
+entry point must produce a named contract failure instead of a guessed command.
+
+Implementation decisions:
+
+- make `verify-adherence` describe and invoke that single project-owned
+  contract;
+- make gaze delegate to the same live verify-adherence procedure instead of
+  copying its commands;
+- extend the agnosticism guard and its positive control to catch
+  `uv run python -m pytest` as well as the already-covered spelling;
+- replace trace-doctor's stdlib-only harness-script launches with `python3`;
+  this is not an extension-point exception;
+- treat `requirements-dev.txt` and the Makefile as IDH's explicit local
+  exception to the generic uv advice in `rules/coding-python.md`; changing the
+  global rule is outside this ticket.
+
+YAGNI: a configurable runner framework would add a second protocol before a
+second consumer exists. Blind-spot review confirmed that the two raid tickets
+can execute in parallel and do not share implementation files.
+
+## Raid plan (2026-09-17)
+
+1. First add red controls for `uv run python -m pytest` and `python3 -m
+   pytest` to `tests/test_check_agnostic.py`, including the existing explicit
+   extension-point behavior. Both spellings must report the violating line.
+2. Rewrite verify-adherence's project gate to discover a command explicitly
+   declared by the project in its instructions, build file, or CI contract,
+   then invoke that command verbatim. For IDH, validate the documented
+   `Makefile` target with `make -n lint` and run `make lint`; do not make Make a
+   universal requirement. If no command is declared, return blocking
+   `adherence: FAIL` with the named reason `no declared adherence runner` and
+   rule reference `verify-adherence#project-runner`. A missing executable for
+   a declared command is an environment escalation. Remove uv/pytest/ruff
+   inference while retaining reference resolution and trace-path checks.
+3. Make gaze Agent A mechanically invoke verify-adherence and return its
+   structured result. Remove the embedded runner procedure.
+4. Extend `scripts/check-agnostic.sh` for `uv run (python|python3) -m pytest`
+   while retaining its same-line, preceding-line, and continued-command
+   extension-point exemptions.
+5. Replace trace-doctor's four stdlib harness-script invocations with
+   `python3`.
+6. Add bounded source-contract tests for the project-runner section, gaze
+   delegation, and trace-doctor launches; update only the obsolete sub-check
+   assertion in the existing reference-resolution ratchet. Run focused tests,
+   `make lint`, then `make check`.
+
+These controls fail the present tree and distinguish partial fixes of only the
+guard, only verify-adherence, or only gaze; they do not merely assert prose
+chosen by the implementation. The forbidden new controls cover `uv run
+pytest`, `uv run python -m pytest`, and `uv run python3 -m pytest`; a bare
+`python3` invocation of trace-doctor's stdlib harness scripts is intentionally
+not a consumer test-runner pattern.
+
+## Raid feasibility (2026-09-17)
+
+PASS after the declaration-contract clarification above. Mechanical checks
+confirmed all sections, extension-point behavior, four trace-doctor calls, and
+the viability of `make -n lint`. Cross-ticket review found no shared
+implementation file or registry, so no coordination PR is required. Baseline
+`make lint` reaches all 67 adherence tests here but ruff cannot create a cache
+file under the sandbox's read-only `/data/cache`; execution must distinguish
+that environment failure from a product regression (for local verification,
+use a writable `RUFF_CACHE_DIR`).
+
+## Test
+
+- In a fixture Python project with `Makefile` + `pytest.ini` +
+  `requirements-dev.txt` and no `pyproject.toml`, the adherence gate invokes
+  the project target and passes; planting a failing adherence test makes it
+  fail.
+- A skill fixture containing `uv run python -m pytest` makes
+  `test_check_agnostic.py` fail and name the line. Positive control: an
+  annotated harness extension point is accepted.
+- A fixture that declares no adherence entry point fails with a named contract
+  error, not a guessed package-manager command.
+
+## Verification
+
+- [x] The harness repository's documented pre-PR adherence gate runs without a
+      uv project and without bypassing the skill's circuit breaker
+- [x] `verify-adherence` and gaze use one project-owned runner protocol
+- [x] The agnosticism guard catches the spelling that escaped here
+- [x] `trace-doctor`'s uv usage is either removed or explicitly justified
+
+## Exit criteria
+
+- [x] A consumer project does not need to adopt uv or add `pyproject.toml` to
+      satisfy the harness's adherence gate
+- [x] A standing test prevents stack-specific test commands returning to skills

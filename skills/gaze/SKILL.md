@@ -248,9 +248,8 @@ Every reviewer agent's prompt:
   procedure it runs and the PR;
 - forbids `cd` out of the pinned cwd, and forbids commits, pushes, new
   branches, new PRs, and any write to `tickets/*.erg` (read-only role);
-- imperatively embeds the sub-skill's operating procedure (the steps below
-  — not a `/skill` invocation), so the agent cannot misread the body as
-  documentation;
+- imperatively embeds the sub-skill's operating procedure (the steps below),
+  except Agent A, which invokes the live adherence contract as specified below;
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
@@ -267,25 +266,29 @@ read-only reviewer to
 § Delegation), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
-**Agent A — adherence** (`/verify-adherence <branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
-is the equivalent procedure). **Label-skip:** if the PR carries the
+**Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
+**Label-skip:** if the PR carries the
 `verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
 do **not** spawn this agent — the adherence check already ran clean before the
 PR was opened. Otherwise spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
-whose embedded procedure is: (1) cheap static checks — for each touched `.py`
-under `scripts/`, probe import resolution (`uv run python -c "import sys;
-sys.path.insert(0,'scripts'); import <m>; getattr(<m>,'<sym>')"`) and run each
-touched module's test file (`uv run python -m pytest <files> -q`); both
-blocking, <10 s budget, ESCALATE rather than trim. (2) Run the adherence suite
-`uv run python -m pytest -m adherence -q` (with the legacy `test_hygiene_*` /
-`test_discipline_*` / `test_schema_contracts` fallback for unmigrated repos);
-failures are blocking. (3) If `pyproject.toml` names ruff and no test calls
-ruff, emit one non-blocking `untested_rules` entry. (4) Only if a
-`.claude/rules/*.md` file changed, run one semantic check citing file:line +
-`suggested_test` per finding. Return the verdict block:
+whose FIRST action is to invoke the live contract:
+
+<!-- harness-extension-point: runtime skill-loader invocation. -->
+```
+Skill(skill: "verify-adherence", args: "<branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>")
+```
+
+Substitute the resolved branch and absolute review-worktree path in the args.
+Pass through `trace=<path>` when the caller supplied it. Do not embed or
+reimplement the verification steps here: the skill loader supplies the current
+procedure, including project-runner discovery, reference resolution, and trace
+checks. Wait for completion and return its structured verdict unchanged:
 `adherence: PASS|FAIL`, plus `mechanical_failures`, `semantic_findings`
 (each with `severity: blocking|nit`), and `untested_rules`. The orchestrator's
-early-exit reads `adherence` and the count of `blocking` findings.
+early-exit reads `adherence` and the count of `blocking` findings. Propagate
+ESCALATE, a timeout, or an unparseable result as an infrastructure failure;
+never replace a missing verdict with PASS. Write the result to Agent A's
+phase artifact using the same completion protocol as the other reviewers.
 
 **Agent B — built-in review** (`/review`). **Tier-skip:** skip this agent when
 the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup

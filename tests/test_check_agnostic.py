@@ -9,6 +9,8 @@ in ticket bodies. The check already exists; these tests pin its behavior so the
 import subprocess
 from pathlib import Path
 
+import pytest
+
 SCRIPT = Path(__file__).parent.parent / "scripts" / "check-agnostic.sh"
 
 # A synthetic ticket body carrying a hardcoded home path (the forbidden pattern).
@@ -97,6 +99,39 @@ def _skill_doc(tmp_path, body):
     d = _skill_dir(tmp_path)
     (d / "SKILL.md").write_text(f"# Example skill\n\n{body}\n")
     return d
+
+
+@pytest.mark.adherence
+@pytest.mark.parametrize(
+    "command", ["uv run pytest", "uv run python -m pytest", "uv run python3 -m pytest"]
+)
+def test_flags_consumer_test_runner_with_line(tmp_path, command):
+    result = _run(_skill_doc(tmp_path, command))
+    assert result.returncode == 1, result.stdout
+    assert f"SKILL.md:3: {command}" in result.stdout
+
+
+@pytest.mark.adherence
+@pytest.mark.parametrize(
+    "command", ["uv run pytest", "uv run python -m pytest", "uv run python3 -m pytest"]
+)
+@pytest.mark.parametrize("placement", ["same", "preceding", "continuation"])
+def test_consumer_runner_extension_point(tmp_path, command, placement):
+    marker = "# harness-extension-point"
+    body = {
+        "same": f"{command} {marker}",
+        "preceding": f"{marker}\n{command}",
+        "continuation": f"{command} \\\n  -q {marker}",
+    }[placement]
+    result = _run(_skill_doc(tmp_path, body))
+    assert result.returncode == 0, result.stdout
+
+
+@pytest.mark.adherence
+def test_real_skills_pass_agnostic_gate():
+    """The declared adherence runner must scan real skills, not fixtures alone."""
+    result = _run(SCRIPT.parent.parent / "skills")
+    assert result.returncode == 0, result.stdout
 
 
 def test_fails_on_repo_relative_script_path(tmp_path):
