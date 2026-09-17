@@ -1,0 +1,145 @@
+%erg 0.1
+Title: The dependency guard cannot see skills/, and one undeclared import is already live
+Created: 2026-09-16
+Author: claude
+Closed: autoclosed — PR #961
+
+--- log ---
+
+2026-09-16T16:50Z claude created by the roar sweep after 0802: the same guard hole one directory over, with a live undeclared openai import in skills/external-peer-review
+2026-09-17T09:20Z Codex raid imagine PASS — preserve the coverage goal; interpret fresh-install execution as Python-source importability, not credentials or external binaries
+2026-09-17T09:35Z Codex raid plan PASS — real openai import is the red control; preserve lazy-import proof with site-packages disabled
+2026-09-17T09:48Z Codex raid feasibility PASS — planned paths, symbols, subprocess shape, dependency range, and verification commands exist
+2026-09-17T09:55Z Codex implemented and verified — scanner positive control red before skills coverage; declaration guard red with the real openai file attribution before declaration; lazy-import mutation red under -S then green; focused tests 21 passed, adherence 67 passed, full make check 1000 passed and 1 skipped
+2026-09-17T09:35Z Integration Test closed — autoclosed — PR #961
+--- body ---
+## Context
+
+Found by the `/roar` sweep after `0802` merged. That ticket added `adapters/` to
+`tests/repo_sources.py`'s `SCAN_DIRS` because the import-declaration guard could
+not see a directory the same PR had just filled with Python. The sweep asked the
+obvious next question -- which *other* directories hold Python the guard cannot
+read -- and found one, with a live instance in it.
+
+`SCAN_DIRS` is `("scripts", "tests", "hooks", "bin", "adapters")`. On
+`origin/main` the repository carries eight Python files under `skills/`, none of
+them scanned. `skills/external-peer-review/peer_review.py` imports `openai`,
+which is not in `requirements-dev.txt`. So `tests/test_deps_declared.py` passes
+while a shipped skill depends on an undeclared package.
+
+The consequence is not abstract. `requirements-dev.txt` says in its own header
+that CI installs from it and "a fresh machine reads it at setup". A fresh
+machine therefore gets a harness whose `/external-peer-review` fails at import
+time, and the guard built to prevent exactly that reports green.
+
+## Evidence
+
+The detector was validated before the finding was trusted: run against
+`scripts/skill_frontmatter.py` it reports `yaml`, so it does see a third-party
+import when one is present. An earlier control run against `adapters/perch.py`
+returned only `skill_frontmatter`, a local module -- that control proved
+nothing, and is recorded here because a weaker control almost passed for a
+stronger one.
+
+| Directory | Python files on `origin/main` | In `SCAN_DIRS` |
+|---|---|---|
+| `tests` | 78 | yes |
+| `scripts` | 38 | yes |
+| `skills` | 8 | **no** |
+| `adapters` | 1 | yes (added by `0802`) |
+| `projects` | 1 | no -- memory bodies, not code this repo runs |
+
+Scanned directories currently carry no undeclared third-party import, so this is
+the only live instance.
+
+## Relevant files
+
+- `tests/repo_sources.py` -- `SCAN_DIRS`
+- `tests/test_deps_declared.py` -- the guard that reads it
+- `requirements-dev.txt` -- where `openai` is missing
+- `skills/external-peer-review/peer_review.py` -- the live instance
+- `pytest.ini` -- `norecursedirs`, for whether `skills/` needs the same treatment
+  `tests/fixtures` already gets via the source inventory's exclusions
+
+## Actions
+
+1. Add `skills` to `SCAN_DIRS`.
+2. Declare `openai` in `requirements-dev.txt` with a version range, matching the
+   file's existing pinning convention, and say in a comment which skill needs it.
+3. Re-run the guard and fix whatever else `skills/` turns out to carry. Seven
+   other files come into scope at once; this ticket owns their fallout.
+4. Decide whether `projects/` should also be scanned or explicitly excluded.
+   It holds one `.py` among memory bodies, so silence there is currently
+   accidental rather than decided.
+
+## Raid reimagination (2026-09-17)
+
+The premise still holds, but the boundary needs to be explicit. Ticket 0943
+made the `openai` import lazy so credential discovery remains usable in CI; it
+did not make the shipped Python dependency undeclared by design. This ticket
+therefore covers **Python import dependencies of shipped sources**. It does not
+promise that every skill can complete without its normal credentials, input
+files, services, or system tools such as `pdftotext`.
+
+Minimal path:
+
+- add `skills` to the shared source inventory and use the existing real
+  `openai` import as a durable positive control for that directory;
+- declare `openai>=2,<3` beside a comment naming external-peer-review;
+- keep `projects/` outside the inventory, with an explicit policy comment:
+  those files are user/project memory artifacts, not harness runtime source;
+- update the guard's stale scope documentation and run the whole check.
+
+YAGNI: do not introduce per-skill manifests or an installer for the only
+optional Python SDK currently found. The existing requirements contract and
+guard can express this case. Blind-spot review found no cross-ticket conflict;
+0950 and 0953 touch disjoint implementation surfaces.
+
+## Raid plan (2026-09-17)
+
+1. First extend `POSITIVE_CONTROLS` in `tests/test_deps_declared.py` with
+   `openai` at `skills/external-peer-review/peer_review.py`. On the current
+   inventory this fails, so it proves the scanner reaches the new directory
+   and is not a tautological assertion about a tuple.
+2. Add `skills` to `tests/repo_sources.py::SCAN_DIRS`, document the intentional
+   exclusion of `projects/`, and update the dependency test's scope prose.
+3. Before declaring the dependency, confirm the declaration guard reports the
+   real file attribution. Then add the commented `openai>=2,<3` requirement.
+4. Preserve 0943's lazy-import regression after the SDK becomes a CI
+   dependency: run its credential-resolution subprocess with `-S`, revise the
+   stale explanation, and prove credential discovery still works without
+   site-packages.
+5. Run the two focused test modules, `make lint`, then `make check`.
+
+The test catches two credible partial fixes: declaring `openai` without
+scanning skills, and moving the SDK import back to module scope once CI has it.
+
+## Raid feasibility (2026-09-17)
+
+PASS. Mechanical checks confirmed all planned files and symbols, the `-S`
+subprocess form, installed OpenAI 2.38.0 within the chosen range, and the test
+commands. Cross-ticket review found no shared implementation file, dependency,
+or cross-cutting registry; no coordination PR is required.
+
+## Test
+
+- A positive control first: add an undeclared third-party import to a file under
+  `skills/`, confirm `test_deps_declared.py` goes red and names that file, then
+  remove it and confirm green. The guard extension is worthless if it cannot be
+  shown to fire on the directory it was extended to cover -- which is how
+  `0802` verified the `adapters/` case.
+- `make check` passes with `openai` declared.
+
+## Verification
+
+- [x] `skills` is in `SCAN_DIRS` and the guard fires on the existing undeclared import there
+- [x] `openai` is declared, with the reason recorded next to it
+- [x] No other undeclared third-party import remains in any scanned directory
+- [x] `projects/` is excluded on purpose as user/project memory artifacts
+- [x] `skills/synced/` is excluded as external runtime content; a disposable
+  inventory test includes a new shipped skill while excluding syncs and fixtures
+
+## Exit criteria
+
+- [x] A fresh install reading `requirements-dev.txt` has the Python import dependencies of every shipped skill (credentials and external tools retain their own contracts)
+- [x] The guard's coverage is decided per directory rather than inherited

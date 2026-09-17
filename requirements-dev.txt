@@ -9,6 +9,8 @@
 # Validates adapters/pilot-support.json against its own schema (ticket 0802);
 # hand-rolling that check would duplicate the schema it is meant to verify.
 jsonschema>=4.10,<5
+# external-peer-review's bundled script calls OpenAI-compatible review APIs.
+openai>=2,<3
 pytest>=8,<10
 pytest-cov>=5,<8
 PyYAML>=6,<7

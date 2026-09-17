@@ -20,9 +20,9 @@ positive control has fired): the scan must rediscover a known third-party
 import through *each* extraction path before its "all declared" verdict is
 worth anything.
 
-skills/ is outside the ticket's scope ("tout module importé par tests/ et
-scripts/") — per-skill runtime deps (e.g. openai in external-peer-review)
-are a separate contract.
+Bundled skill Python shares this declaration contract (ticket 0950), including
+lazy imports: resolving credentials without the SDK does not make the SDK
+optional when the skill actually requests a review.
 """
 
 import ast
@@ -33,6 +33,7 @@ from pathlib import Path
 
 import pytest
 
+import repo_sources
 from repo_sources import REPO, source_texts
 
 REQUIREMENTS = REPO / "requirements-dev.txt"
@@ -49,6 +50,7 @@ IMPORT_TO_DIST = {
 # unit test below instead.
 POSITIVE_CONTROLS = {
     "yaml": {"scripts/skill_frontmatter.py"},
+    "openai": {"skills/external-peer-review/peer_review.py"},
 }
 
 # Only a QUOTED delimiter (<<'EOF') guarantees the body is literal,
@@ -134,6 +136,24 @@ def declared_dists() -> set[str]:
         if m:
             dists.add(_normalize(m.group(0)))
     return dists
+
+
+def test_inventory_excludes_runtime_skills_and_mutation_fixtures(tmp_path, monkeypatch):
+    """Local skill syncs must not add dependencies to the shipped harness."""
+    shipped = "skills/new-skill/run.py"
+    excluded = (
+        "skills/synced/external-skill/run.py",
+        "tests/fixtures/mutation_sample.py",
+    )
+    for rel in (shipped, *excluded):
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("import undeclared_sdk\n", encoding="utf-8")
+    monkeypatch.setattr(repo_sources, "REPO", tmp_path)
+    # Bypass the shared cache so this disposable inventory cannot poison it.
+    assert repo_sources.source_texts.__wrapped__() == (
+        (shipped, "import undeclared_sdk\n"),
+    )
 
 
 @pytest.mark.adherence
