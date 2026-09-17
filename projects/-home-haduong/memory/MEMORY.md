@@ -29,3 +29,5 @@
 - [LinkedIn posts: always a personal note](feedback_linkedin_personal_note.md)
 - [Aider les rapporteurs](feedback_aider_les_rapporteurs.md)
 - [Avancement DR1 2027](project_avancement_dr1_2027.md)
+- [Tour des chantiers: advisor role, review by comment](feedback_tour_des_chantiers_advisor_role.md) — no repo work, sub-agent PR comments even post-merge, no unasked tickets
+- [Inspect peer sessions on padme](reference_inspect_peer_sessions_on_padme.md) — Codex is read from ~/.codex/sessions jsonl, not messageable; pkill -f self-match; pts numbers are reused

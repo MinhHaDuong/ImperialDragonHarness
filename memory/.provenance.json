@@ -9401,6 +9401,24 @@
       "last_confirmed": "2026-09-17T10:46:11Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_tour_des_chantiers_advisor_role": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-17T16:00:42Z",
+      "last_confirmed": "2026-09-17T16:00:42Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_inspect_peer_sessions_on_padme": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-17T16:00:42Z",
+      "last_confirmed": "2026-09-17T16:00:42Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
