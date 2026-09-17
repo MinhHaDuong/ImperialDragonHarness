@@ -123,7 +123,7 @@ _assert_not_contains() {
     fi
 }
 
-# An empty HOME so no trusted ~/.claude/.env exists (isolates the project file).
+# An empty HOME isolates the project file.
 EMPTY_HOME="$WORK/empty-home"
 mkdir -p "$EMPTY_HOME"
 
@@ -174,14 +174,6 @@ printf 'BAZ="a b"\n' > "$P4/.env"
 _assert_eq "quoted BAZ=\"a b\" loads as: a b" \
     "$(_load_var "$EMPTY_HOME" "$P4" BAZ)" "a b"
 
-# --- (5) regression: trusted ~/.claude/.env still gets full source behavior ---
-USER_HOME="$WORK/user-home"
-mkdir -p "$USER_HOME/.claude"
-printf 'USERKEY=uval\n' > "$USER_HOME/.claude/.env"
-P5="$WORK/p5"; mkdir -p "$P5"   # project dir with NO .env — isolates the user file
-_assert_eq "trusted ~/.claude/.env is sourced (USERKEY=uval)" \
-    "$(_load_var "$USER_HOME" "$P5" USERKEY)" "uval"
-
 # --- (6) strict-parse critical-name denylist (ticket 0345, policy a) -----------
 # The untrusted project .env strict-parse loop must refuse shell/process/
 # interpreter-critical export NAMES, not only GUARD_* keys. Attacker controls
@@ -189,7 +181,7 @@ _assert_eq "trusted ~/.claude/.env is sourced (USERKEY=uval)" \
 # every subprocess: GCONV_PATH → glibc iconv-module RCE, PATH → interpreter
 # clobber, LD_PRELOAD/BASH_ENV → code execution, PYTHONPATH/NODE_OPTIONS →
 # interpreter hijack. The shared predicate _be_is_protected_name refuses them
-# on the strict-parse path (mirroring the KEYS-selection path).
+# on the strict-parse path.
 
 # (6a) GCONV_PATH is refused (not exported) with a warning.
 P6="$WORK/p6"; mkdir -p "$P6"
@@ -271,10 +263,14 @@ printf 'PROJECT_DATA=/some/path\n' > "$P7/.env"
 _assert_eq "benign PROJECT_DATA still exports" \
     "$(_load_var "$EMPTY_HOME" "$P7" PROJECT_DATA)" "/some/path"
 
-# (7b) a KEYS= line is not a protected name; it still parses as a plain value.
+# (7b) KEYS belonged to the retired ambient-selection mechanism.  Refuse it
+# rather than leaving an inert line that looks like configuration still in use.
 P7B="$WORK/p7b"; mkdir -p "$P7B"
 printf 'KEYS=someprovider\n' > "$P7B/.env"
-_assert_eq "KEYS= line still parses (not refused as protected)" \
-    "$(_load_var "$EMPTY_HOME" "$P7B" KEYS)" "someprovider"
+_assert_eq "project .env cannot set retired KEYS" \
+    "$(_load_var "$EMPTY_HOME" "$P7B" KEYS)" ""
+_assert_contains "project .env KEYS warns 'refusing protected name'" \
+    "$(_load_stderr "$EMPTY_HOME" "$P7B")" \
+    "refusing protected name from project .env: KEYS"
 
 exit "$fail"

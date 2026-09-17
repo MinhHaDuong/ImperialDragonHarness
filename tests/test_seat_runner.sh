@@ -32,12 +32,10 @@ set -euo pipefail
 unset OPENAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY DEEPSEEK_API_KEY \
       MISTRAL_API_KEY TAVILY_API_KEY ZOTERO_API_KEY ZOTERO_RW_API_KEY
 
-# Unsetting here is NOT enough on its own. BASH_ENV points every child bash at
-# scripts/bash-env.sh, which re-runs the KEYS selection and re-exports the real
-# credential — overriding whatever this parent set. The stubs are bash scripts,
-# so they were being handed the live key no matter what happened up here. Clear
-# BASH_ENV so children stay hermetic; the fixture arrives via --credential-env,
-# which needs no loader.
+# Unsetting here is NOT enough on its own: child processes inherit the rest of
+# the ambient environment, and BASH_ENV re-runs the project `.env` parser.
+# Clear BASH_ENV so children stay hermetic; the fixture arrives via
+# --credential-env, which needs no loader.
 export BASH_ENV=
 
 # Assert against a CHILD, not this shell. A parent-scope check passes while the

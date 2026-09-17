@@ -2,15 +2,13 @@
 # Guard (ticket 0359): a shell suite must spawn its bash children hermetically.
 #
 # BASH_ENV points every child bash at scripts/bash-env.sh, which re-runs the
-# credential selection at child startup. A suite that spawns `bash -c` without
-# clearing that path hands the child whatever the live harness loaded — so a
-# failing assertion prints a real credential (two leaked into a terminal and a
-# session transcript on 2026-07-27), and an inherited value silently masks the
-# behaviour under test (green while testing nothing).
+# project .env parser at child startup. A suite that spawns `bash -c` without
+# clearing that path inherits ambient values and can also load fixture-adjacent
+# project values, silently masking the behaviour under test.
 #
 # Two remedies are accepted, both already in the tree:
 #   * spawn hermetically — `env -i HOME=… PATH=… bash -c …`, every variable the
-#     child needs passed explicitly (test_bash_env_keys_selection_explicit.sh);
+#     child needs passed explicitly (test_bash_env_project_env_parse.sh);
 #   * clear the loader for the whole suite — `export BASH_ENV=` before any
 #     child runs (test_seat_runner.sh, which also unsets the ambient keys it
 #     inherited at its own startup).

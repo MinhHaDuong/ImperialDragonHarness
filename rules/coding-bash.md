@@ -138,7 +138,7 @@ mechanism the caller triggers. Enforced by
 
 ### Unsetting a variable in the parent does not unset it in the child
 
-`BASH_ENV` re-runs the loader — including its credential selection — at the
+`BASH_ENV` re-runs the loader — including its project `.env` parse — at the
 startup of *every* child bash. Whatever the parent set is overwritten:
 
 ```bash

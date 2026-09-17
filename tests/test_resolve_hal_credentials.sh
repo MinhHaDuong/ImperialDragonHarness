@@ -18,9 +18,9 @@
 # (rules/coding-bash.md; the 2026-07-27 incident).
 #
 # WHY `env -i` ON EVERY SPAWN. BASH_ENV points every child bash at
-# scripts/bash-env.sh, which re-runs credential selection at child startup — so
-# a plain `bash -c` would hand the child the LIVE HAL credential, masking the
-# fixture and printing a real secret on failure. `env -i` is the remedy
+# scripts/bash-env.sh, and a plain `bash -c` also inherits any ambient HAL
+# credential. Either can mask the fixture and print a real secret on failure.
+# `env -i` is the remedy
 # tests/test_bash_tests_are_hermetic.sh enforces, and this suite uses it
 # uniformly rather than the suite-wide `export BASH_ENV=` exemption.
 #

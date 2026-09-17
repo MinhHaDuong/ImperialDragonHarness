@@ -288,12 +288,11 @@ fi
 # ── ticket 0393: the seat credential resolves, and a seat that cannot ────────
 # authenticate is REPORTED, never omitted in silence.
 #
-# Background: panel.yml pins `credential-env: OPENROUTER_API_KEY_IDH`, but the
-# BASH_ENV keystore path is default-deny — it exports a provider's variables
-# only where a `.env` KEYS= line selects that provider. From a cwd with no such
-# selection the variable is simply absent, the seat dies, and `request`'s WARN
-# goes to stderr while `harvest` prints nothing and exits 0 — the panel reads as
-# complete. The fix is consumer-side (the author's key files are never edited):
+# Background: panel.yml pins `credential-env: OPENROUTER_API_KEY_IDH`, but an
+# ambient credential is not a portable contract. Where the variable is absent,
+# the seat dies and `request`'s WARN goes to stderr while `harvest` prints
+# nothing and exits 0 — the panel reads as complete. The fix is consumer-side
+# (the author's key files are never edited):
 # resolve the named variable from the keystore, and make the failure visible on
 # the report stream.
 #
@@ -303,10 +302,10 @@ fi
 # it found, so the failure message would BE the leak (rules/coding-bash.md).
 #
 # Hermetic children, mandatory here (rules/coding-bash.md § "Unsetting a
-# variable in the parent does not unset it in the child"): BASH_ENV re-runs the
-# harness loader — credential selection included — at the startup of EVERY child
-# bash, so a check run against the ambient environment can pass on a variable
-# the loader re-injected rather than on the code path under test. Every
+# variable in the parent does not unset it in the child"): every child inherits
+# ambient variables, and BASH_ENV also re-runs the project loader. A check
+# against that environment can pass on inherited state rather than on the code
+# path under test. Every
 # invocation below is spawned `env -i` with a FAKE BASH_ENV loader that exports
 # one recognisable dummy and no credential: what the seat sees can then only
 # have come from reviewers.sh's own resolution.
