@@ -9,6 +9,7 @@ Author: claude
 2026-09-17T09:20Z Codex raid imagine PASS — preserve the coverage goal; interpret fresh-install execution as Python-source importability, not credentials or external binaries
 2026-09-17T09:35Z Codex raid plan PASS — real openai import is the red control; preserve lazy-import proof with site-packages disabled
 2026-09-17T09:48Z Codex raid feasibility PASS — planned paths, symbols, subprocess shape, dependency range, and verification commands exist
+2026-09-17T09:55Z Codex implemented and verified — scanner positive control red before skills coverage; declaration guard red with the real openai file attribution before declaration; lazy-import mutation red under -S then green; focused tests 21 passed, adherence 67 passed, full make check 1000 passed and 1 skipped
 --- body ---
 ## Context
 
@@ -129,12 +130,12 @@ or cross-cutting registry; no coordination PR is required.
 
 ## Verification
 
-- [ ] `skills` is in `SCAN_DIRS` and the guard fires on a planted import there
-- [ ] `openai` is declared, with the reason recorded next to it
-- [ ] No other undeclared third-party import remains in any scanned directory
-- [ ] `projects/` is either scanned or excluded on purpose, not by omission
+- [x] `skills` is in `SCAN_DIRS` and the guard fires on the existing undeclared import there
+- [x] `openai` is declared, with the reason recorded next to it
+- [x] No other undeclared third-party import remains in any scanned directory
+- [x] `projects/` is excluded on purpose as user/project memory artifacts
 
 ## Exit criteria
 
-- [ ] A fresh install reading `requirements-dev.txt` can run every shipped skill
-- [ ] The guard's coverage is decided per directory rather than inherited
+- [x] A fresh install reading `requirements-dev.txt` has the Python import dependencies of every shipped skill (credentials and external tools retain their own contracts)
+- [x] The guard's coverage is decided per directory rather than inherited
