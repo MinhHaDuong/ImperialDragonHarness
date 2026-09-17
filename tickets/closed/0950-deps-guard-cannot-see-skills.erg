@@ -2,6 +2,7 @@
 Title: The dependency guard cannot see skills/, and one undeclared import is already live
 Created: 2026-09-16
 Author: claude
+Closed: autoclosed — PR #961
 
 --- log ---
 
@@ -10,6 +11,7 @@ Author: claude
 2026-09-17T09:35Z Codex raid plan PASS — real openai import is the red control; preserve lazy-import proof with site-packages disabled
 2026-09-17T09:48Z Codex raid feasibility PASS — planned paths, symbols, subprocess shape, dependency range, and verification commands exist
 2026-09-17T09:55Z Codex implemented and verified — scanner positive control red before skills coverage; declaration guard red with the real openai file attribution before declaration; lazy-import mutation red under -S then green; focused tests 21 passed, adherence 67 passed, full make check 1000 passed and 1 skipped
+2026-09-17T09:35Z Integration Test closed — autoclosed — PR #961
 --- body ---
 ## Context
 
