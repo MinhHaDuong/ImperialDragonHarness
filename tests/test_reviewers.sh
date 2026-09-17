@@ -272,10 +272,9 @@ CEDIR="$WORK/ce-findings"
 # NON-secret synthetic sentinel, and a BARE assignment with no `export` — the
 # real ~/.config/keys files have that shape, which is why sourcing must enable
 # allexport for the value to reach a child process at all.
-CEKEYS="$WORK/ce-keystore"; mkdir -p "$CEKEYS"
+CEHOME="$WORK/ce-home"; CEKEYS="$CEHOME/.config/keys"; mkdir -p "$CEKEYS"
 printf 'MY_ROSTER_KEY=ce-sentinel-not-a-secret\n' > "$CEKEYS/fixture.env"
-REVIEWERS_PANEL="$CEROSTER" SEAT_RUNNER="$CE_STUB" REVIEWERS_FINDINGS_DIR="$CEDIR" \
-    REVIEWERS_KEYSTORE="$CEKEYS" \
+HOME="$CEHOME" REVIEWERS_PANEL="$CEROSTER" SEAT_RUNNER="$CE_STUB" REVIEWERS_FINDINGS_DIR="$CEDIR" \
     REVIEWERS_PR_BRANCH="some-branch" "$REVIEWERS" request 77 >/dev/null 2>&1
 assert_contains "request: credential-env seat passes the flag through" \
     "--credential-env MY_ROSTER_KEY" "$(cat "$CEDIR/77/seat-with-cred.argv" 2>/dev/null || true)"
@@ -350,7 +349,7 @@ fi
 STUBEOF
 chmod +x "$K_STUB"
 
-KSTORE="$WORK/keystore"; mkdir -p "$KSTORE"
+KSTORE="$FHOME/.config/keys"
 # 24-character synthetic sentinel, bare assignment (no `export`).
 printf 'T393_FIXTURE_KEY=keystore-sentinel-000000\n' > "$KSTORE/fixture-provider.env"
 
@@ -368,7 +367,7 @@ YAML
 
 KDIR="$WORK/k-findings"
 H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR"
-       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+       REVIEWERS_PR_BRANCH="some-branch")
 k_err=$(hermetic_reviewers request 393 2>&1 >/dev/null)
 k_cred="$(cat "$KDIR/393/keyed-seat.cred" 2>/dev/null || echo missing)"
 # `loader=loader-ran` is the control: the fake BASH_ENV loader DID run in the
@@ -382,7 +381,7 @@ assert_eq "request: keystore credential reaches a hermetic seat child (presence 
 # source won, without either value ever being printed.
 KDIR2="$WORK/k-findings-env"
 H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR2"
-       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch"
+       REVIEWERS_PR_BRANCH="some-branch"
        T393_FIXTURE_KEY="env-sentinel-0000000")
 hermetic_reviewers request 393 >/dev/null 2>&1
 assert_eq "request: an environment credential takes precedence over the keystore" \
@@ -428,7 +427,7 @@ YAML
 
 UDIR="$WORK/u-findings"
 H_ENV=(REVIEWERS_PANEL="$UROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR"
-       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+       REVIEWERS_PR_BRANCH="some-branch")
 u_err=$(hermetic_reviewers request 394 2>&1 >/dev/null)
 assert_contains "request: unresolved credential WARNs and names the variable" \
     "T393_NOWHERE_KEY" "$u_err"
@@ -505,7 +504,7 @@ YAML
 SDIR="$WORK/stale-findings"
 # RUN 1 — the credential resolves from the keystore; the seat reviews.
 H_ENV=(REVIEWERS_PANEL="$STALEROSTER" SEAT_RUNNER="$STALE_STUB" REVIEWERS_FINDINGS_DIR="$SDIR"
-       REVIEWERS_KEYSTORE="$KSTORE" REVIEWERS_PR_BRANCH="some-branch")
+       REVIEWERS_PR_BRANCH="some-branch")
 hermetic_reviewers request 700 >/dev/null 2>&1
 assert_contains "request: run 1 wrote the seat's findings" "stale-run-1-finding" \
     "$(cat "$SDIR/700/stale-seat.findings" 2>/dev/null || echo missing)"
@@ -516,9 +515,9 @@ printf 'FINDING|severity=verifiable|file=old.sh:1|rationale=orphan-seat-finding\
 
 # RUN 2 — same merge request, empty keystore: the credential is now unresolvable
 # and the seat does NOT review.
-EMPTYSTORE="$WORK/empty-keystore"; mkdir -p "$EMPTYSTORE"
+mv "$KSTORE/fixture-provider.env" "$KSTORE/fixture-provider.env.off"
 H_ENV=(REVIEWERS_PANEL="$STALEROSTER" SEAT_RUNNER="$STALE_STUB" REVIEWERS_FINDINGS_DIR="$SDIR"
-       REVIEWERS_KEYSTORE="$EMPTYSTORE" REVIEWERS_PR_BRANCH="some-branch")
+       REVIEWERS_PR_BRANCH="some-branch")
 hermetic_reviewers request 700 >/dev/null 2>&1
 H_ENV=(REVIEWERS_PANEL="$STALEROSTER" REVIEWERS_FINDINGS_DIR="$SDIR")
 stale_report=$(hermetic_reviewers harvest 700 2>/dev/null)
@@ -534,6 +533,108 @@ if [[ "$stale_report" == *"orphan-seat-finding"* ]]; then
 else
     echo "PASS: harvest: an off-roster seat leaves no orphaned findings behind"; PASS=$((PASS+1))
 fi
+unset H_ENV
+
+# ── ticket 0947: the copied extractor's security contract ──────────────────────────
+# Restore the provider under its real suffix after the stale-run scenario.
+mv "$KSTORE/fixture-provider.env.off" "$KSTORE/fixture-provider.env"
+
+# An ambient path override must not redirect a source operation. HOME is the
+# trust boundary; REVIEWERS_KEYSTORE is deliberately ignored.
+ATTACKER_STORE="$WORK/attacker-keystore"; mkdir -p "$ATTACKER_STORE"
+printf 'T393_FIXTURE_KEY=attacker-value-must-not-run\n' > "$ATTACKER_STORE/attacker.env"
+KDIR_SAFE="$WORK/k-findings-safe"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_SAFE"
+       REVIEWERS_KEYSTORE="$ATTACKER_STORE" REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 947 >/dev/null 2>&1
+assert_eq "request: ambient REVIEWERS_KEYSTORE cannot redirect the sourced file" \
+    "present len=24 loader=loader-ran-not-a-secret" \
+    "$(cat "$KDIR_SAFE/947/keyed-seat.cred" 2>/dev/null || echo missing)"
+
+# CRLF contributes a trailing carriage return to a shell assignment. It must
+# be removed from the extracted credential, not handed to the endpoint.
+printf 'T393_FIXTURE_KEY=keystore-sentinel-000000\r\n' > "$KSTORE/fixture-provider.env"
+KDIR_CRLF="$WORK/k-findings-crlf"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_CRLF"
+       REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 948 >/dev/null 2>&1
+assert_eq "request: CRLF keystore yields a credential without carriage return" \
+    "present len=24 loader=loader-ran-not-a-secret" \
+    "$(cat "$KDIR_CRLF/948/keyed-seat.cred" 2>/dev/null || echo missing)"
+
+# An array is not a scalar credential. Bash's ordinary indirect expansion
+# would silently take element zero, so the resolver must reject it.
+printf 'T393_FIXTURE_KEY=(first second)\n' > "$KSTORE/fixture-provider.env"
+KDIR_ARRAY="$WORK/k-findings-array"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_ARRAY"
+       REVIEWERS_PR_BRANCH="some-branch")
+array_err=$(hermetic_reviewers request 949 2>&1 >/dev/null)
+assert_contains "request: array-valued credential fails loud" "could not be read" "$array_err"
+assert_eq "request: array-valued credential never reaches the seat" "missing" \
+    "$(cat "$KDIR_ARRAY/949/keyed-seat.cred" 2>/dev/null || echo missing)"
+
+# A suffix marker must preserve a trailing LF across Bash command substitution;
+# otherwise the shell silently turns this malformed value into a valid scalar.
+printf "T393_FIXTURE_KEY='line-with-trailing-lf\n'\n" > "$KSTORE/fixture-provider.env"
+KDIR_MULTILINE="$WORK/k-findings-multiline"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_MULTILINE"
+       REVIEWERS_PR_BRANCH="some-branch")
+multiline_err=$(hermetic_reviewers request 954 2>&1 >/dev/null)
+assert_contains "request: trailing-LF credential fails loud" "could not be read" "$multiline_err"
+assert_eq "request: trailing-LF credential never reaches the seat" "missing" \
+    "$(cat "$KDIR_MULTILINE/954/keyed-seat.cred" 2>/dev/null || echo missing)"
+
+# Credential names are keys, not arbitrary shell variables. The documented
+# contract admits names containing API_KEY, TOKEN, PASSWORD, or SECRET only.
+BADNAME_ROSTER="$WORK/badname.yml"
+sed 's/T393_FIXTURE_KEY/PATH/' "$KROSTER" > "$BADNAME_ROSTER"
+KDIR_BADNAME="$WORK/k-findings-badname"
+H_ENV=(REVIEWERS_PANEL="$BADNAME_ROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_BADNAME"
+       REVIEWERS_PR_BRANCH="some-branch")
+badname_err=$(hermetic_reviewers request 950 2>&1 >/dev/null)
+assert_contains "request: non-credential shell name is rejected" "not an allowed credential name" "$badname_err"
+
+# Non-regular and oversized providers are refused before grep/source can read
+# them. A FIFO is the regression control for the old indefinite block.
+rm -f "$KSTORE/fixture-provider.env"
+mkfifo "$KSTORE/fifo.env"
+KDIR_FIFO="$WORK/k-findings-fifo"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_FIFO"
+       REVIEWERS_PR_BRANCH="some-branch")
+if command -v timeout >/dev/null 2>&1; then
+    rc=0
+    timeout 3 env -i HOME="$FHOME" PATH="$PATH" BASH_ENV="$FAKE_LOADER" \
+        REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" \
+        REVIEWERS_FINDINGS_DIR="$KDIR_FIFO" REVIEWERS_PR_BRANCH="some-branch" \
+        bash "$REVIEWERS" request 951 </dev/null >/dev/null 2>&1 || rc=$?
+    if [ "$rc" = 124 ]; then
+        echo "FAIL: request: FIFO provider blocked the resolver"; FAIL=$((FAIL+1))
+    else
+        echo "PASS: request: FIFO provider is refused without blocking"; PASS=$((PASS+1))
+    fi
+fi
+rm -f "$KSTORE/fifo.env"
+printf 'T393_FIXTURE_KEY=short\n' > "$KSTORE/oversize.env"
+head -c 270000 /dev/zero | tr '\0' x >> "$KSTORE/oversize.env"
+KDIR_BIG="$WORK/k-findings-big"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_BIG"
+       REVIEWERS_PR_BRANCH="some-branch")
+big_err=$(hermetic_reviewers request 952 2>&1 >/dev/null)
+assert_contains "request: oversized provider is refused before sourcing" "neither in the environment nor defined" "$big_err"
+
+# The byte-count guard must not resolve `wc` through caller-controlled PATH.
+# This shim lies that every file is zero bytes; a plain `wc` lookup would then
+# source the oversized provider above and resolve the short value.
+FAKEBIN="$WORK/fake-bin"; mkdir -p "$FAKEBIN"
+printf '#!/usr/bin/env bash\nprintf "0\\n"\n' > "$FAKEBIN/wc"; chmod +x "$FAKEBIN/wc"
+KDIR_PATH="$WORK/k-findings-path"
+rc=0
+env -i HOME="$FHOME" PATH="$FAKEBIN:$PATH" BASH_ENV="$FAKE_LOADER" \
+    REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" \
+    REVIEWERS_FINDINGS_DIR="$KDIR_PATH" REVIEWERS_PR_BRANCH="some-branch" \
+    bash "$REVIEWERS" request 953 >/dev/null 2>&1 || rc=$?
+assert_eq "request: a PATH-planted wc cannot waive the size cap" "missing" \
+    "$(cat "$KDIR_PATH/953/keyed-seat.cred" 2>/dev/null || echo missing)"
 unset H_ENV
 
 # ── forge-bot seat: on-demand request via the forge review API (0206) ────────

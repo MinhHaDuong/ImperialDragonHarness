@@ -22,20 +22,31 @@ exits 0. Fail-open is not fail-silent: every seat that did not review is
 recorded in a `<seat>.status` sidecar and named by `harvest` in the report
 (see **Panel integrity** in `references/harvest.md`). No secrets in config.
 
-**Seat credentials** (ticket 0393). A seat's `credential-env: NAME` is read
-from the environment when the BASH_ENV path (0207) exported it — which happens
-only where the cwd's `.env` `KEYS=` line selects that provider, a **default-deny**
-selection. From a project selecting a different key, or any cwd declaring none,
-`NAME` is simply absent. `request` then resolves it from the keystore
-(`~/.config/keys/*.env`, override `REVIEWERS_KEYSTORE`): the single file
+**Seat credentials** (tickets 0393, 0947). A seat's `credential-env: NAME` is an
+uppercase credential-shaped shell name: it must contain an underscore-delimited
+`API_KEY`, `KEY`, `TOKEN`, `PASSWORD`, or `SECRET` component. It is read from
+the environment only when the caller explicitly exported it. Normally `NAME`
+is absent because the harness startup path does not make credentials resident
+in the ambient environment (0945). `request` then resolves it from the fixed keystore
+(`~/.config/keys/*.env`): the single bounded regular file
 defining `NAME` is sourced under `set -a` in an `env -i` subshell, only that one
-variable is extracted, and it is exported solely inside the subshell that execs
+scalar, single-line variable is extracted, and it is exported solely inside the subshell that execs
 the seat-runner. The author's key files are never edited — they hold bare
 assignments with no `export`, and enabling allexport at source time is what
 makes such an assignment reach a child process. A value never touches argv, a
 log line, or a sidecar; warnings name variables and provider files only. A seat
 whose credential resolves nowhere is skipped, WARNed, and reported by `harvest`
 — it is not quietly dropped from the panel.
+
+The three keystore consumers intentionally remain local implementations rather
+than sharing a Bash library: one port is Python and their error/value contracts
+differ. What is shared is the security checklist a future copier must reapply:
+fixed or positional provider path, regular-file and 256 KiB bounds before
+reading, controlled utility lookup, cleared child environment, credential-name
+allowlist, scalar/single-line value, and CRLF normalization. `BASH_ENV` is not
+claimed as a script-local mitigation: Bash evaluates it before the script's
+first line, so a hostile calling environment is already executing code before
+this resolver can unset anything.
 
 **Per-seat latency** (ticket 0353): each `cli-agent`/`local-model` seat is timed
 and its wall-clock seconds written to a `<seat>.latency` sidecar beside the

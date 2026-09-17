@@ -195,12 +195,47 @@ def test_rejects_a_credential_name_that_is_not_a_variable_name(tmp_path):
     assert proc.returncode != 0, (
         "a name reaching a bash -c must be rejected, not passed through"
     )
-    assert "not a valid shell variable name" in proc.stderr, (
+    assert "not an allowed credential name" in proc.stderr, (
         "rejection must happen in the validator, before any shell sees the name"
     )
     assert POSITIVE_CONTROL not in proc.stdout, (
         "rejection must abort before the credential is resolved"
     )
+
+
+@pytest.mark.integration
+def test_rejects_a_non_credential_shell_variable_name(tmp_path):
+    """A valid shell identifier is still not authority to read arbitrary state."""
+    home = _fake_home(tmp_path)
+    proc = _run_child(tmp_path, home, name="PATH")
+    assert proc.returncode != 0
+    assert "not an allowed credential name" in proc.stderr
+
+
+@pytest.mark.integration
+def test_rejects_an_oversized_provider_before_sourcing(tmp_path):
+    home = tmp_path / "oversize-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_bytes(
+        f"{CRED_NAME}='short'\n".encode() + b"#" * 270_000
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode != 0
+    assert CRED_NAME in proc.stderr and "openrouter.env" in proc.stderr
+    assert POSITIVE_CONTROL not in proc.stdout
+
+
+@pytest.mark.integration
+def test_rejects_an_array_valued_credential(tmp_path):
+    home = tmp_path / "array-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_text(f"{CRED_NAME}=(first second)\n")
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode != 0
+    assert CRED_NAME in proc.stderr and "openrouter.env" in proc.stderr
+    assert POSITIVE_CONTROL not in proc.stdout
 
 
 @pytest.mark.integration

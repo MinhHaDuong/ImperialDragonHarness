@@ -89,11 +89,10 @@ judgment call; this section documents only how to enumerate the options.
 
 **Endpoint inventory.** The authenticated providers are the `*.env` files in
 `~/.config/keys/` — one file per provider (e.g. `openrouter.env`), each holding
-that endpoint's API key. Keys load via the BASH_ENV path (0207) where the cwd's
-`KEYS=` selection covers the provider, and are resolved from the keystore
-otherwise (see **Seat credentials** in `references/request.md`); never inline
-a key into config or
-argv. The commented seat examples in `panel.yml` show the
+that endpoint's API key. An explicitly exported key wins; otherwise it is
+resolved from the keystore (see **Seat credentials** in
+`references/request.md`); never inline a key into config or argv. The commented
+seat examples in `panel.yml` show the
 two endpoint shapes: a local llama-server (`http://127.0.0.1:8012/v1`, no
 credential) and OpenRouter (`https://openrouter.ai/api/v1`, key via
 `credential-env`). Probe a local `llama-server` by hitting its base URL.

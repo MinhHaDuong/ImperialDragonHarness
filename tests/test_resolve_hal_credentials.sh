@@ -110,6 +110,8 @@ printf 'HAL_ID=%s\r\nHAL_PASSWORD=%s\r\n' "$ID_SENTINEL" "$PW_SENTINEL" > "$CRLF
 # above the line boundary and cannot reach it.
 MULTILINE="$WORK/multiline.env"
 printf "HAL_PASSWORD='first-line\nsecond-line'\n" > "$MULTILINE"
+TRAILING_LF="$WORK/trailing-lf.env"
+printf "HAL_PASSWORD='line-with-trailing-lf\n'\n" > "$TRAILING_LF"
 
 # --- (0) the script exists and is executable ---------------------------------
 if [ -x "$RESOLVER" ]; then
@@ -349,6 +351,13 @@ if [ "$rc" = 5 ] && [[ "$err" == *HAL_PASSWORD* ]]; then
     ok "(4g) a multi-line value is refused (exit 5), not silently truncated by the curl config"
 else
     bad "(4g) multi-line value: expected exit 5 naming the variable, got exit $rc"
+fi
+
+rc="$(_rc_of "$TRAILING_LF" HAL_PASSWORD)"
+if [ "$rc" = 5 ]; then
+    ok "(4h) a value ending in LF is rejected before command substitution can normalize it"
+else
+    bad "(4h) trailing-LF credential returned exit $rc, expected 5"
 fi
 if [[ "$err" == *first-line* || "$err" == *second-line* ]]; then
     bad "(4g) the refusal message disclosed part of the value"

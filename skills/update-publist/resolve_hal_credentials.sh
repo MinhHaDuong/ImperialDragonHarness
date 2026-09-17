@@ -45,8 +45,8 @@
 # `_keystore_value`.
 #
 # WHY THE PROVIDER FILE IS AN ARGUMENT AND NOT AN ENVIRONMENT OVERRIDE.
-# The obvious shape is a `HAL_KEYSTORE_FILE` variable honoured "for tests only",
-# as `REVIEWERS_KEYSTORE` is. Nothing enforces such a label: the protected-name
+# The obvious shape is a `HAL_KEYSTORE_FILE` variable honoured "for tests only".
+# Nothing enforces such a label: the protected-name
 # predicate of the harness env loader (~/.claude/scripts/bash-env.sh,
 # `_be_is_protected_name`) does not list it, so an UNTRUSTED project `.env` — the
 # threat model that loader is built around — could point this resolver at a file
@@ -133,7 +133,9 @@ marked="$(env -i bash -c '
     set -a
     . "$1" >/dev/null 2>&1 || exit 3
     [ -z "${!2+x}" ] && exit 4
-    printf "v%s" "${!2}"
+    # The suffix keeps a trailing LF inside the command substitution so the
+    # single-line validation below can see it instead of Bash stripping it.
+    printf "v%sx" "${!2}"
 ' _ "$file" "$name")" || rc=$?
 
 case "$rc" in
@@ -143,12 +145,15 @@ case "$rc" in
     *) echo "$PROG: unexpected failure (exit $rc) resolving $name from $file" >&2; exit "$rc" ;;
 esac
 
-if [ -z "$marked" ]; then
+case "$marked" in
+    v*x) ;;
+    *)
     echo "$PROG: the keystore file $file did not run to completion (needed for $name)" >&2
-    exit 3
-fi
+    exit 3 ;;
+esac
 
 value="${marked#v}"
+value="${value%x}"
 # A CRLF provider file would otherwise append a carriage return to the value and
 # corrupt the curl config in a way that reads as an HAL auth error. bash-env.sh
 # strips CR for the same reason.

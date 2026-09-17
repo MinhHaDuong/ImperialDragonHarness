@@ -31,10 +31,13 @@ The bundled script is `~/.claude/skills/external-peer-review/peer_review.py`.
    search: a project that exported only a bare `OPENROUTER_API_KEY` now fails
    loud rather than resolving, which is deliberate — the keystore is the system
    of record, and the identity being billed should be named, not inherited.
-   Pass your project's own keyset variant (`--credential-env
-   OPENROUTER_API_KEY_MYPROJECT`) to bill your own identity rather than the
-   harness one. Resolution failure names the variable and the file probed and
-   stops; never echo the value.
+   Pass your project's own uppercase, credential-shaped keyset variant
+   (`--credential-env OPENROUTER_API_KEY_MYPROJECT`) to bill your own identity
+   rather than the harness one. The name must contain an underscore-delimited
+   `API_KEY`, `KEY`, `TOKEN`, `PASSWORD`, or `SECRET` component. The provider
+   must be a regular file no larger than 256 KiB; only a scalar, single-line
+   value is accepted. Resolution failure names the variable and the file probed
+   and stops; never echo the value.
 
 3. **Pick models and personas.** Defaults: models
    `openai/gpt-5.5,mistralai/mistral-large-2512`, personas `grinchy,student`

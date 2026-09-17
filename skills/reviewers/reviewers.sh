@@ -8,10 +8,10 @@
 # 0205 contract shape; `scorecard` appends a fixed-schema trial line.
 #
 # Containment is the seat-runner's OS sandbox (0217), NOT this script.
-# This script holds no secrets. A seat's credential comes from the environment
-# when the BASH_ENV path exported it (0207); when it did not, the variable is
-# resolved from the user's keystore at run time (0393, see § seat credential
-# resolution). Either way the value lives only in a shell variable and reaches
+# This script holds no secrets. A seat's credential comes from an explicitly
+# inherited environment variable when present; otherwise it is resolved from
+# the user's keystore at run time (0393, see § seat credential resolution).
+# Either way the value lives only in a shell variable and reaches
 # the seat-runner through a subshell's environment — never argv, never a file,
 # never any log line.
 set -euo pipefail
@@ -29,8 +29,12 @@ BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
 # The erg binary used to append trial-ticket log lines. Overridable for tests.
 ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
 # The user's credential keystore, consulted when a seat's `credential-env`
-# variable is absent from the environment (ticket 0393). Overridable for tests.
-KEYSTORE="${REVIEWERS_KEYSTORE:-$HOME/.config/keys}"
+# variable is absent from the environment (ticket 0393). Deliberately NOT
+# overridable through the environment: this directory contains shell code that
+# is sourced below, so an ambient path knob would be a code-execution redirect.
+# Tests replace HOME, which is the harness-wide trust boundary (ticket 0947).
+KEYSTORE="$HOME/.config/keys"
+MAX_KEYSTORE_BYTES=262144
 
 usage_text() {
     cat <<'EOF'
@@ -251,10 +255,10 @@ _audition_classify() {  # location panel-anchors defect-anchors
 
 # ── seat credential resolution (ticket 0393) ─────────────────────────────────
 # A seat's `credential-env: NAME` names the variable holding its endpoint key.
-# The BASH_ENV path (0207) exports it — but only where the cwd's `.env` KEYS=
-# line selects that provider, and that selection is DEFAULT-DENY. From a project
-# whose selection names a different key, or from any cwd declaring none, NAME is
-# simply absent: the seat cannot authenticate, and before 0393 it failed open.
+# An explicitly inherited environment can provide it. Ordinarily NAME is
+# absent, because the harness startup path no longer places credentials in the
+# ambient environment (0945); before consumer-side resolution (0393), that made
+# the seat fail open.
 #
 # Robustness belongs on the CONSUMER side. The key files under the keystore are
 # the author's and are never edited here: they hold bare assignments with no
@@ -266,15 +270,36 @@ _audition_classify() {  # location panel-anchors defect-anchors
 # is exported solely inside the subshell that execs the seat-runner.
 _CRED_VALUE=""
 
+# A provider must be a bounded regular file before anything reads it. The byte
+# count uses the POSIX utility path (`command -p`), not the caller's PATH: a
+# planted `wc` must not be able to waive the guard it implements. A bash
+# `read -N` guard looks more self-contained but silently discards NUL bytes and
+# therefore is not a byte count.
+_keystore_file_is_safe() {  # $1 provider file
+    local file="$1" bytes
+    [ -f "$file" ] && [ -r "$file" ] || return 1
+    bytes="$(command -p wc -c < "$file")" || return 1
+    case "$bytes" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$bytes" -le "$MAX_KEYSTORE_BYTES" ]
+}
+
 # The keystore file defining NAME, or non-zero when none does. Provider file
 # names are not secrets, so an ambiguity WARN may name them.
 _keystore_file_for() {  # $1 validated variable name
-    local name="$1" f restore
+    local name="$1" f restore line found
     local -a hits=()
     restore="$(shopt -p nullglob)"
     shopt -s nullglob
     for f in "$KEYSTORE"/*.env; do
-        grep -Eq "^[[:space:]]*(export[[:space:]]+)?${name}=" "$f" 2>/dev/null && hits+=("$f")
+        _keystore_file_is_safe "$f" || continue
+        found=""
+        while IFS= read -r line || [ -n "$line" ]; do
+            if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?${name}= ]]; then
+                found=1
+                break
+            fi
+        done < "$f"
+        [ -n "$found" ] && hits+=("$f")
     done
     eval "$restore"
     [ "${#hits[@]}" -gt 0 ] || return 1
@@ -297,15 +322,33 @@ _keystore_file_for() {  # $1 validated variable name
 # bash-env.sh trusts the same files for the same reason. Reaching that
 # execution requires prior write access to the keystore, which is the trust
 # boundary this design already assumes; the isolation above bounds what such
-# code can reach, it does not stop it running. Exit 3 = unreadable file,
-# 4 = name absent.
+# code can reach, it does not stop it running. The regular-file and 256 KiB
+# checks deliberately repeat after discovery to narrow the scan/source race.
+# Exit 3 = unsafe/unreadable file, 4 = name absent, 5 = non-scalar value.
 _keystore_value() {  # $1 provider file, $2 validated variable name
-    env -i bash -c '
+    local file="$1" name="$2" marked rc=0 value
+    _keystore_file_is_safe "$file" || return 3
+    marked="$(command -p env -i bash -c '
         set -a
         . "$1" >/dev/null 2>&1 || exit 3
         [ -z "${!2+x}" ] && exit 4
-        printf "%s" "${!2}"
-    ' _ "$1" "$2"
+        declaration="$(declare -p "$2" 2>/dev/null)" || exit 4
+        case "$declaration" in
+            "declare -a "*|"declare -A "*) exit 5 ;;
+        esac
+        # Prefix proves completion; suffix prevents command substitution from
+        # stripping a trailing LF out of the credential before validation.
+        printf "v%sx" "${!2}"
+    ' _ "$file" "$name")" || rc=$?
+    [ "$rc" -eq 0 ] || return "$rc"
+    # No marker means the sourced provider exited before extraction completed.
+    case "$marked" in v*x) ;; *) return 3 ;; esac
+    value="${marked#v}"
+    value="${value%x}"
+    value="${value%$'\r'}"
+    [ -n "$value" ] || return 4
+    case "$value" in *$'\n'*|*$'\r'*) return 5 ;; esac
+    printf '%s' "$value"
 }
 
 # Resolve a seat's credential into _CRED_VALUE. Returns 0 when the seat can
@@ -315,9 +358,11 @@ _keystore_value() {  # $1 provider file, $2 validated variable name
 _resolve_seat_credential() {  # $1 credential-env name
     local name="$1" file val
     _CRED_VALUE=""
-    if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-        # Also keeps the name out of the grep regex above as a metacharacter.
-        echo "reviewers: WARN credential-env '${name}' is not a valid variable name" >&2
+    if [[ ! "$name" =~ ^[A-Z][A-Z0-9_]*$ ]] \
+       || [[ ! "$name" =~ (^|_)(API_KEY|KEY|TOKEN|PASSWORD|SECRET)($|_) ]]; then
+        # This is a credential resolver, not a general variable extractor.
+        # Uppercase credential-shaped names also stay literal in the scan regex.
+        echo "reviewers: WARN credential-env '${name}' is not an allowed credential name" >&2
         return 1
     fi
     [ -n "${!name:-}" ] && return 0

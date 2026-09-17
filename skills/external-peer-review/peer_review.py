@@ -99,7 +99,9 @@ DEFAULT_CREDENTIAL_ENV = "OPENROUTER_API_KEY_IDH"
 # offered: a test overrides HOME (ticket 0943).
 CREDENTIAL_PROVIDER_BASENAME = "openrouter.env"
 
-_VALID_ENV_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_VALID_ENV_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
+_CREDENTIAL_COMPONENT = re.compile(r"(?:^|_)(?:API_KEY|KEY|TOKEN|PASSWORD|SECRET)(?:$|_)")
+MAX_KEYSTORE_BYTES = 262_144
 
 # Read ONE variable out of a trusted provider file. Passed to `bash -c`, with
 # the file and the variable name supplied POSITIONALLY as $1 and $2 — never
@@ -117,6 +119,10 @@ set -a
 [ -r "$1" ] || exit 3
 . "$1" >/dev/null 2>&1 || :
 [ -z "${!2+x}" ] && exit 4
+declaration="$(declare -p "$2" 2>/dev/null)" || exit 4
+case "$declaration" in
+    "declare -a "*|"declare -A "*) exit 5 ;;
+esac
 printf "%s" "${!2}"
 """
 
@@ -154,6 +160,11 @@ def _keystore_value(provider: Path, name: str) -> str | None:
     never printed, logged, written to a file, or placed on any argv.
     """
     try:
+        # Python owns the byte count, so an ambient PATH cannot replace the
+        # guard with a permissive `wc`. Rechecking here narrows the check/use
+        # race and keeps this helper safe when called directly.
+        if not provider.is_file() or provider.stat().st_size > MAX_KEYSTORE_BYTES:
+            return None
         proc = subprocess.run(
             ["bash", "-c", _EXTRACT_SH, "_", str(provider), name],
             capture_output=True,
@@ -180,7 +191,10 @@ def _keystore_value(provider: Path, name: str) -> str | None:
     # only at the API call. Stripping it is unconditional because no credential
     # legitimately ends in a carriage return; a value carrying CR internally is
     # out of scope, and would not survive an HTTP header anyway.
-    return value.rstrip("\r")
+    value = value.rstrip("\r")
+    if "\n" in value or "\r" in value:
+        return None
+    return value
 
 
 def resolve_credential(name: str = DEFAULT_CREDENTIAL_ENV) -> str:
@@ -189,10 +203,10 @@ def resolve_credential(name: str = DEFAULT_CREDENTIAL_ENV) -> str:
     Fails loud and named — never a silent no-op — quoting the variable and the
     exact file probed. Neither is a secret; the value never appears.
     """
-    if not _VALID_ENV_NAME.match(name):
+    if not _VALID_ENV_NAME.fullmatch(name) or not _CREDENTIAL_COMPONENT.search(name):
         raise SystemExit(
-            f"credential-env {name!r} is not a valid shell variable name "
-            "(expected ^[A-Za-z_][A-Za-z0-9_]*$)"
+            f"credential-env {name!r} is not an allowed credential name "
+            "(uppercase and containing API_KEY, KEY, TOKEN, PASSWORD, or SECRET)"
         )
     value = os.environ.get(name)
     if value:
