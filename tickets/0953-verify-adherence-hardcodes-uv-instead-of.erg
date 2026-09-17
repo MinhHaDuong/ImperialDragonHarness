@@ -1,0 +1,102 @@
+%erg 0.1
+Title: verify-adherence hardcodes uv instead of the project's verification entry point
+Created: 2026-09-17
+Author: Codex
+
+--- log ---
+2026-09-17T07:51Z Codex created
+
+--- body ---
+
+## Context
+
+Found while running the documented `/hunt` pre-PR gate for tickets 0945 and
+0947. This repository deliberately has no `pyproject.toml` and no uv project:
+`requirements-dev.txt` records that Make + that requirements file are its
+chosen dependency/test interface, and the adherence target is `make lint`.
+
+`skills/verify-adherence/SKILL.md` nevertheless hardcodes:
+
+- `uv run python -c ...` for import probes;
+- `uv run python -m pytest <files> -q` for per-module tests;
+- `uv run python -m pytest -m adherence -q` for the mechanical suite.
+
+Here, the last command failed with `No module named pytest` because uv selected
+an isolated Python without the dependencies installed for the repository. The
+equivalent project-owned command, `make lint`, passed 67 adherence tests. The
+skill's own prose says "the stack is the project's concern", so its procedure
+contradicts its protocol and turns a healthy project into a circuit-breaker
+failure.
+
+Adding a `pyproject.toml` merely to satisfy that command is the wrong fix. It
+would introduce a second dependency manifest beside `requirements-dev.txt`,
+contradict the explicit decision recorded there and in closed ticket 0470, and
+make the consumer adapt to the harness rather than the harness discover the
+consumer's verification interface.
+
+## Sweep
+
+The roar sweep found the same hardcoding copied into
+`skills/gaze/SKILL.md`'s embedded adherence-agent procedure. Fixing only the
+sub-skill would leave `/gaze` divergent.
+
+`scripts/check-agnostic.sh` intends to prevent stack-specific commands in
+skills, but its pattern is only `uv run pytest`; it misses the live spelling
+`uv run python -m pytest`. This is why both copies pass CI.
+
+`skills/trace-doctor/SKILL.md` also invokes harness scripts through `uv run
+python`. Its scripts are currently standard-library-only and the skill is
+harness-specific, not a target-project test gate. Decide explicitly whether
+that is a valid `harness-extension-point` or should use the harness's own
+Python entry point; do not let it remain accidental.
+
+## Relevant files
+
+- `skills/verify-adherence/SKILL.md`
+- `skills/gaze/SKILL.md`
+- `scripts/check-agnostic.sh`
+- `tests/test_check_agnostic.py`
+- `Makefile`, `requirements-dev.txt`, and `pytest.ini` as the live no-uv
+  project contract
+- `skills/trace-doctor/SKILL.md` for the explicit extension-point decision
+
+## Actions
+
+1. Define how a Python project exposes its adherence and per-module test entry
+   points. Prefer a project-owned command (`make lint`, a documented Make
+   target, or another declared runner) over package-manager inference.
+2. Make `verify-adherence` discover and invoke that interface, failing loud
+   when none is declared rather than silently choosing uv.
+3. Apply the same protocol to gaze's embedded procedure, or remove the copied
+   procedure in favour of one live invocation contract so the two cannot
+   drift.
+4. Broaden the agnosticism guard to catch `uv run python -m pytest` and
+   equivalent stack-specific uv test spellings without flagging fixtures or an
+   explicitly documented harness extension point.
+5. Decide and document the `trace-doctor` case.
+
+## Test
+
+- In a fixture Python project with `Makefile` + `pytest.ini` +
+  `requirements-dev.txt` and no `pyproject.toml`, the adherence gate invokes
+  the project target and passes; planting a failing adherence test makes it
+  fail.
+- A skill fixture containing `uv run python -m pytest` makes
+  `test_check_agnostic.py` fail and name the line. Positive control: an
+  annotated harness extension point is accepted.
+- A fixture that declares no adherence entry point fails with a named contract
+  error, not a guessed package-manager command.
+
+## Verification
+
+- [ ] The harness repository's documented pre-PR adherence gate runs without a
+      uv project and without bypassing the skill's circuit breaker
+- [ ] `verify-adherence` and gaze use one project-owned runner protocol
+- [ ] The agnosticism guard catches the spelling that escaped here
+- [ ] `trace-doctor`'s uv usage is either removed or explicitly justified
+
+## Exit criteria
+
+- [ ] A consumer project does not need to adopt uv or add `pyproject.toml` to
+      satisfy the harness's adherence gate
+- [ ] A standing test prevents stack-specific test commands returning to skills
