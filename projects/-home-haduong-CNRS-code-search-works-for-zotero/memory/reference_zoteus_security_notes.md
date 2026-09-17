@@ -50,3 +50,19 @@ the private channel, and the two are written as separate documents so the split
 cannot be lost by accident.
 
 Related: [[reference_zotero]], [[feedback_repo_prepares_upstream_it_ships_nothing]].
+
+## Patches and how to tell whether the maintainer received them (2026-09-17)
+
+`patches-2026-09-13/` beside the two notes holds four `git format-patch`
+files (findings 1, 4, 5, 6), a zip, and `DRAFT-COMMENT.md`, the cover comment
+drafted for the advisory thread. On 2026-09-17 nothing showed it had been
+posted or acted on: the advisory sat in `triage` with `updated_at` still at
+the 2026-09-08 submission, no private fork, none of the four fixes in
+upstream main at c386e83 (fly.toml still `ZOTEUS_METRICS_ENABLED = "true"`),
+no GitHub notification and no mail about the advisory since the 8th, while
+the maintainer answered every public item within 48 h.
+
+The REST advisory endpoint does not expose comments, so "did he receive it"
+cannot be settled from the CLI: open the advisory page in the browser. What
+the CLI can settle is "did he act on it": grep the patched files at the
+upstream tip for the patch's own marker strings.

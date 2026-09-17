@@ -9383,6 +9383,24 @@
       "last_confirmed": "2026-09-16T17:33:29Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_check_your_own_reservation_before_delegating": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-17T10:46:11Z",
+      "last_confirmed": "2026-09-17T10:46:11Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_upstream_rebaseline_recipe_drift": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-17T10:46:11Z",
+      "last_confirmed": "2026-09-17T10:46:11Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
