@@ -51,8 +51,8 @@ header). No secrets in config — a seat names its credential *variable*, and
 the value is resolved at run time (see **Seat credentials** in
 `references/request.md`).
 
-Environment: `REVIEWERS_KEYSTORE` overrides the credential keystore directory
-(default `~/.config/keys`); `REVIEWERS_PANEL`, `REVIEWERS_FINDINGS_DIR`,
+The credential keystore is fixed at `~/.config/keys`: it is sourced as trusted
+shell code, so no environment variable may redirect it. `REVIEWERS_PANEL`, `REVIEWERS_FINDINGS_DIR`,
 `REVIEWERS_REPO`, `SEAT_RUNNER`, and `ERG` override the roster, the findings
 directory, the repo under review, the seat mechanism, and the ticket binary.
 
