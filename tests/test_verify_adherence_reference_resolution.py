@@ -1,9 +1,8 @@
 """Guard: verify-adherence phase 1.0 must gate prose reference resolution (ticket 0440).
 
-The harness already treats an unresolved symbol as blocking — phase 1.0 (a),
-"Any unresolved symbol → fail". Its scope stops at scripts/*.py, so a change
-that drops an `import` fails the gate while one that drops a `.bib` entry
-passes. Sub-check (c) closes that asymmetry.
+Reference resolution remains a harness-level blocking check even when imports
+and targeted tests are delegated to the project's declared runner (ticket 0953).
+A deleted bibliography entry must fail even if no changed manuscript is rebuilt.
 
 Two clauses are load-bearing and are the ones a paraphrase would quietly lose:
 
@@ -17,8 +16,8 @@ Two clauses are load-bearing and are the ones a paraphrase would quietly lose:
 Two more clauses were added after the MR #726 review round, each closing a way
 the sub-check could exist on paper and never fire:
 
-3. The "no scripts/ directory" circuit breaker must skip (a) and (b) only.
-   A manuscript-only repo has no scripts/ and is exactly the layout (c) exists
+3. The "no scripts/ directory" circuit breaker must preserve reference resolution.
+   A manuscript-only repo has no scripts/ and is exactly the layout this check exists
    for; skipping the whole phase there makes its all-clear indistinguishable
    from "I could not look".
 4. The enumerated syntax must cover Quarto/pandoc (`@key`), not LaTeX alone.
@@ -42,16 +41,16 @@ RULES_INDEX = REPO / "rules" / "README.md"
     "needle,reason",
     [
         (
-            "**(c) Reference resolution (prose).**",
-            "phase 1.0 must carry the prose sub-check as (c), alongside (a) and (b)",
+            "**Reference resolution (prose).**",
+            "phase 1.0 must retain the prose check independently of the project runner",
         ),
         (
-            "Three sub-checks, all **blocking**",
-            "the phase header must count three blocking sub-checks, not two",
+            "Reference resolution is **blocking**",
+            "the prose check must remain blocking after runner delegation",
         ),
         (
             "verify-adherence#reference-resolution",
-            "the sub-check must emit its own rule ref, like (a) does",
+            "the reference check must retain its own rule ref",
         ),
         (
             "check **every manuscript in the repo that cites it**",
@@ -68,10 +67,9 @@ RULES_INDEX = REPO / "rules" / "README.md"
             "the sub-check must point at the rule holding the doctrine and recipes",
         ),
         (
-            "**(c) still runs**",
-            "the 'no scripts/ directory' circuit breaker must skip (a) and (b) only "
-            "— a manuscript-only repo has no scripts/ and is precisely the layout "
-            "(c) exists for, so skipping the whole phase there silences the check "
+            "**reference resolution still runs**",
+            "a manuscript-only repo has no scripts/ and is precisely the layout "
+            "this check exists for, so skipping the whole phase there silences it "
             "in its own target class",
         ),
         (

@@ -25,7 +25,9 @@ counterfactuals note does.
 
 ## 1. Survey
 
-Run the four committed scripts. All intermediate outputs go to a scratch
+Run the four committed, standard-library-only scripts with the harness's
+`python3` interpreter. They do not require a package-manager environment.
+All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
 straight through to each script's own `--days` argparse flag (default 28) —
 there is no shell-side day parsing to keep in sync.
@@ -37,21 +39,21 @@ SCRATCH=$(mktemp -d)
 
 # Census and compaction advisory are independent full-corpus walks (neither
 # consumes the other's output) — run them concurrently.
-uv run python "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
+python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
-uv run python "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
+python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
 wait
 
 # Forge join: reads AND writes the accumulating committed cache (do not create a
 # new dated cache). Add --no-network if the forge is unreachable, and say so in
 # the report.
-uv run python "$HARNESS_DIR/scripts/trace-pr-join.py" \
+python3 "$HARNESS_DIR/scripts/trace-pr-join.py" \
   --census "$SCRATCH/census.csv" --cache docs/trace-pr-join-2026-06.csv
 
 # Hypotheses: the compact-audit --json → --compact-audit-json routing IS the
 # adopt-item-#3 wiring — the compaction detector's output is consumed here as H8.
-uv run python "$HARNESS_DIR/scripts/trace-hypotheses.py" \
+python3 "$HARNESS_DIR/scripts/trace-hypotheses.py" \
   --census "$SCRATCH/census.csv" \
   --compact-audit-json "$SCRATCH/compact-audit.json" \
   --pr-stats docs/trace-pr-join-2026-06.csv \

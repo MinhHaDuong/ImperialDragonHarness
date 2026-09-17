@@ -37,7 +37,7 @@ PROSE_PATTERNS=(
 # Note: consumer project *names* cannot be caught by static grep — the list would be
 # instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
-    'uv run pytest'   # stack-specific; skills must be stack-agnostic
+    'uv[[:space:]]\+run[[:space:]]\+\(python3\?[[:space:]]\+-m[[:space:]]\+\)\?pytest\b'  # stack-specific test runner
     '\bgh '           # GitHub CLI; skills must be forge-agnostic
     'github\.com'     # GitHub URL; skills must be forge-agnostic
     '\(^\|[^.~/]\)scripts/[A-Za-z0-9_-]\+\.\(sh\|py\)'  # repo-relative script path; use ~/.claude/scripts/ or $HARNESS_DIR

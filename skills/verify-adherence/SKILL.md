@@ -48,9 +48,17 @@ all phases run from that path.
 
 ## Protocol
 
-Any project using this skill must expose a command or test suite that emits verdicts in the schema defined in `## Phases → 4. Emit verdict`. The harness calls that entry point; the project owns what runs internally.
+Any project using this skill must declare an adherence command in its own
+instructions, build file, or CI contract. That command owns the stack-specific
+checks: imports, targeted tests, hygiene, linters, and rule enforcement. It
+returns zero on success and non-zero on failure, with diagnostic output. The
+harness invokes it unchanged and maps its result to phase 4's verdict schema;
+the project need not implement that schema itself.
 
-Python projects fulfill the protocol via `@pytest.mark.adherence` tests invoked by `uv run python -m pytest`. A Go project would expose `go test -run Adherence ./...`; a LaTeX project might expose a `make check-adherence` target that runs a custom linter. The stack is the project's concern; the verdict schema is the harness's concern.
+Discover the declaration, never infer a package manager from the language or
+invent a test command. A named build target is one possible interface, not a
+requirement for every consumer. The phases below run sequentially because an
+earlier blocking failure must stop later review work.
 
 ## Phases
 
@@ -61,36 +69,11 @@ already ran clean before the PR was opened.
 
 ### 1.0 Cheap static checks (always first, budget <10 s)
 
-Runs before anything else in the mechanical phase. Three sub-checks, all **blocking**;
-failure stops the phase here and does not fall through to 1/2/3. Combined budget <10 s.
+Runs before the project command. Reference resolution is **blocking**;
+failure stops the phase here and does not fall through to 1/2/3. Budget <10 s.
+Import resolution and per-module tests belong to the project runner (phase 1).
 
-**(a) Import resolution.** Parse the diff for every symbol referenced in touched modules
-under `scripts/`. For each `(module, name)` pair:
-
-```bash
-uv run python -c "import sys; sys.path.insert(0, 'scripts'); import <module>; getattr(<module>, '<symbol>')"
-```
-
-Scope: touched `.py` files under `scripts/`. Use dotted import paths for
-nested packages (e.g., `data.loader` for `scripts/data/loader.py`).
-Modules outside `scripts/` are not probed.
-
-Catches the formatter-strip-import class of bug: tests are green, but the first real run
-`NameError`s because an auto-formatter dropped the import line for a just-used symbol.
-Any unresolved symbol → fail with rule ref `verify-adherence#import-resolution`, record
-`{module, name, file:line}`.
-
-**(b) Per-module test run.** For each touched module, run its matching test file(s):
-
-```bash
-uv run python -m pytest <touched-modules-test-files> -q
-```
-
-Catches per-module regressions seconds after the edit, before the full hygiene suite or
-deep review pays the cost. Failures record as `{test_id, rule_ref, file:line}` with rule
-ref `verify-adherence#per-module-tests`.
-
-**(c) Reference resolution (prose).** The prose counterpart of (a), with the same
+**Reference resolution (prose).** This has a
 blocking verdict: in a manuscript, `\cite`/`\ref` are external references and the
 `.bib` is the symbol table, but there is no link step to reject a dangling one —
 the toolchain warns, renders a placeholder, and exits 0. Skip when the diff
@@ -131,63 +114,37 @@ Any unresolved reference → fail with rule ref `verify-adherence#reference-reso
 record `{key, file:line, kind}`. Do not flag `Underfull`/`Overfull` or pre-existing
 BibTeX field warnings. Doctrine and per-tool build recipes: `rules/manuscript-build.md`.
 
-All three checks are intentionally cheap. If any exceeds the 10 s budget,
+This check is intentionally cheap. If it exceeds the 10 s budget,
 ESCALATE rather than silently trimming scope (a trimmed check that drops
 a failing test is worse than no check).
 
-### 1. Adherence test suite (never skip)
+### 1. Project runner (never skip)
 
-Run every test marked `@pytest.mark.adherence`:
+Read the project instructions, build file, and CI configuration for an explicit
+adherence entry point. Record the declaring file and line with the exact command.
+A filename or a target named `lint` alone is not a declaration of adherence;
+its documented purpose must establish that contract. If declarations conflict,
+ESCALATE with their locations rather than choosing silently.
 
-```bash
-uv run python -m pytest -m adherence -q
-```
+If none is declared, stop with blocking `adherence: FAIL`, reason
+`no declared adherence runner`, rule ref `verify-adherence#project-runner`.
+Do not guess from installed tools or add a dependency manifest to satisfy the
+harness. A declared command whose executable or dependencies are missing is an
+environment error: ESCALATE; never report a clean pass or skip the gate.
 
-Adherence tests are pytest tests that encode project-specific rules
-(hygiene, discipline, contracts, grep-based checks). They are selected
-by the `adherence` marker, not by filename. Any test in any file can
-contribute by adding `@pytest.mark.adherence` or setting
-`pytestmark = pytest.mark.adherence` at module level.
+Invoke the declared command verbatim from the project worktree, including its
+declared environment or wrapper. Keep its output and exit status. A non-zero
+test/check result is blocking: map diagnostics into `mechanical_failures`,
+preserving their test IDs and source anchors when available. If no finer anchor
+is emitted, use the declaration's file and line and rule ref
+`verify-adherence#project-runner`. A timeout or failure to execute is an
+infrastructure escalation, not a test verdict. This runner is not subject to
+phase 1.0's 10 s static-check budget.
 
-Projects register the marker in `pyproject.toml`:
-
-```toml
-[tool.pytest.ini_options]
-markers = [
-    "adherence: project rule enforcement (hygiene/discipline/contracts)",
-]
-```
-
-Failures here are **blocking**. Record each as `{test_id, rule_ref, file:line}`.
-
-**Transitional fallback.** Projects that have not yet adopted the marker
-are picked up by the old filename convention (`test_hygiene_*.py`,
-`test_discipline_*.py`, `test_schema_contracts.py`). A project is fully
-migrated when every such file carries the marker and `pytest -m adherence`
-matches the full suite. Drop the fallback per project once migrated.
-
-### 1.1 Missing ruff adherence test (Python projects only)
-
-If `pyproject.toml` exists and `ruff` appears in it (under `[tool.ruff]` or as a
-dependency), check whether any adherence test calls `ruff`:
-
-```bash
-grep -r "ruff" tests/ --include="*.py" -l
-```
-
-If no match: emit one `untested_rules` entry:
-
-```yaml
-rule: rules/coding-python.md#testing
-suggested_test: |
-  @pytest.mark.adherence
-  def test_ruff():
-      result = subprocess.run(["uv", "run", "ruff", "check", "."], capture_output=True)
-      assert result.returncode == 0, result.stdout.decode()
-```
-
-This is non-blocking — it does not set `adherence: FAIL`. It triggers the ratchet
-so the next `/gaze` cycle opens a follow-up ticket.
+For the harness repository itself, the Makefile explicitly documents its
+adherence target: validate it with `make -n lint`, then run `make lint`.
+Other projects may declare another target or a command without Make. All
+stack-specific import probes and per-module tests remain project-owned.
 
 ### 1.2 Path-access allow/forbid scan (trace-based)
 
@@ -220,18 +177,18 @@ hit's `line` — with rule ref `verify-adherence#path-access-scan`.
 ### 2. Grep rules live as adherence tests (no central bank)
 
 Grep-based checks are just adherence tests that call `rg` or use a regex
-internally. They live in the target repo as `@pytest.mark.adherence`
-tests — not in this skill. The harness does not maintain a central grep
+internally. They live in the target repo as tests run by its declared adherence
+command — not in this skill. The harness does not maintain a central grep
 bank; each project owns its patterns as code.
 
-**Why tests instead of a YAML bank.** A pytest test can scope its grep
+**Why tests instead of a YAML bank.** A project test can scope its grep
 (diff-only vs whole-repo), attach fixtures, explain the rule in an
 assertion message, and evolve without changing a harness interface. A
 central YAML/grep bank would force a framework for one beneficiary until
 a second project arrives wanting the same mechanism.
 
 When `/gaze` or a review surfaces a rule worth mechanizing, write a
-`@pytest.mark.adherence` test in the target repo. That is the ratchet
+test covered by the declared adherence command in the target repo. That is the ratchet
 in practice.
 
 ### 3. Semantic subagent (fallback only)
@@ -269,7 +226,7 @@ semantic_findings:
     file: <path>
     line: <n>
     severity: blocking | nit
-    suggested_test: <grep pattern or pytest snippet>
+    suggested_test: <grep pattern or project test snippet>
 untested_rules:
   - rule: <.claude/rules/foo.md#bar>
     suggested_test: <code>
@@ -281,7 +238,7 @@ After each run, if `semantic_findings` is non-empty:
 
 1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo:
    "Mechanize adherence rule X per suggested_test."
-2. That ticket adds a `@pytest.mark.adherence` test (in any existing test file, or a
+2. That ticket adds a test run by the declared adherence command (in an existing test file, or a
    new one) that asserts the rule mechanically.
 3. Next invocation of `/verify-adherence`, the rule is caught by phase 1 instead of
    phase 3. LLM surface shrinks permanently.
@@ -290,11 +247,10 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Circuit breakers
 
-- `uv` missing → ESCALATE (environment broken, all phases need it).
-- No `scripts/` directory → skip sub-checks (a) and (b) silently (legitimate repo
-  layout); **(c) still runs**. A manuscript-only repo has no `scripts/` and is
-  exactly the layout (c) exists for, so skipping the whole phase there would make
-  its all-clear indistinguishable from "I could not look".
+- No declared adherence runner → blocking contract failure (phase 1).
+- A declared runner cannot execute → ESCALATE (environment broken).
+- No `scripts/` directory → **reference resolution still runs** when prose is
+  in scope. A manuscript-only layout does not exempt phase 1.0 or the project runner.
 - No `trace=<path>` argument supplied → skip phase 1.2 silently (the trace is an
   optional input, like `worktree=`; a standalone author pre-check has none).
 - Phase 1 fails to run (env broken) → ESCALATE; don't fall through.
