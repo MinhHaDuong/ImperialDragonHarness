@@ -72,7 +72,7 @@ warning, never on the rendered text.
 
 The build guard protects the manuscript being built, and can do no more. The
 cross-manuscript purge, whose victim is not rebuilt in that change, is caught
-at the review gate instead, by `verify-adherence` phase 1.0 (c), which reads
-sources rather than logs. That gate runs even in a repo with no `scripts/`
+at the review gate instead, by `verify-adherence` phase 1.0's reference-resolution
+check, which reads sources rather than logs. That gate runs even in a repo with no `scripts/`
 directory. Reference implementation: `scripts/check_tex_unresolved.py`
 in polycentric_activity (ticket 0091).

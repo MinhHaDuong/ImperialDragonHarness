@@ -37,6 +37,9 @@ PROSE_PATTERNS=(
 # Note: consumer project *names* cannot be caught by static grep — the list would be
 # instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
+    # Bounded regression guard: the three documented forms are "uv run pytest",
+    # "uv run python -m pytest", and "uv run python3 -m pytest". This is not a
+    # shell parser: additional uv options/versioned executables need review.
     'uv[[:space:]]\+run[[:space:]]\+\(python3\?[[:space:]]\+-m[[:space:]]\+\)\?pytest\b'  # stack-specific test runner
     '\bgh '           # GitHub CLI; skills must be forge-agnostic
     'github\.com'     # GitHub URL; skills must be forge-agnostic

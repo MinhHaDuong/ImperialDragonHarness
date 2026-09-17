@@ -101,6 +101,7 @@ def _skill_doc(tmp_path, body):
     return d
 
 
+@pytest.mark.adherence
 @pytest.mark.parametrize(
     "command", ["uv run pytest", "uv run python -m pytest", "uv run python3 -m pytest"]
 )
@@ -110,6 +111,7 @@ def test_flags_consumer_test_runner_with_line(tmp_path, command):
     assert f"SKILL.md:3: {command}" in result.stdout
 
 
+@pytest.mark.adherence
 @pytest.mark.parametrize(
     "command", ["uv run pytest", "uv run python -m pytest", "uv run python3 -m pytest"]
 )
@@ -122,6 +124,13 @@ def test_consumer_runner_extension_point(tmp_path, command, placement):
         "continuation": f"{command} \\\n  -q {marker}",
     }[placement]
     result = _run(_skill_doc(tmp_path, body))
+    assert result.returncode == 0, result.stdout
+
+
+@pytest.mark.adherence
+def test_real_skills_pass_agnostic_gate():
+    """The declared adherence runner must scan real skills, not fixtures alone."""
+    result = _run(SCRIPT.parent.parent / "skills")
     assert result.returncode == 0, result.stdout
 
 
