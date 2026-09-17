@@ -134,3 +134,5 @@
 - [Search the archives before instrumenting](feedback_search_the_archives_before_instrumenting.md) — a correct conclusion from live data was an eleven-day-old rediscovery; 0679 was open the whole time.
 - [Provenance is the silent half of a deposit](feedback_provenance_is_the_silent_half_of_a_deposit.md) — files and MEMORY.md lines complete, provenance 0/12; the slug is the filename stem, not the frontmatter name.
 - [Refreshing is not copying forward](feedback_refreshing_is_not_copying_forward.md) — a carried-forward STATE line said two closed tickets were the critical path; answer a status question by running the gate.
+- [Check your own reservation before delegating](feedback_check_your_own_reservation_before_delegating.md) — the 0809 brief named the doubt that settled it, then an Opus executor was launched past it.
+- [Upstream rebaseline recipe drift](project_upstream_rebaseline_recipe_drift.md) — baseline at v1.20.2 since 2026-09-17; the recipe still prescribes README rows dissolved on 09-04.
