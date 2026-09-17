@@ -1,43 +1,43 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-16T16:31Z
+Last updated: 2026-09-17T13:05Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-16T16:31Z · as of 76d4209 -->
+<!-- generated 2026-09-17T13:05Z · as of becbcf4f -->
 
-**Tickets:** 40 ready · 25 blocked — `erg ready tickets/` for full list
+**Tickets:** 38 ready · 25 blocked — `erg ready tickets/` for full list
   next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  76d4209 Merge pull request #945 from MinhHaDuong/t0946-idh-cli
-  9fea894 Merge pull request #944 from MinhHaDuong/t0909-memory-root
-  8a92f24 Merge pull request #943 from MinhHaDuong/t0810-agent-plugins-landscape
+  becbcf4f Merge pull request #960 from MinhHaDuong/t0953-adherence-runner
+  1bd2a743 Merge pull request #963 from MinhHaDuong/zotero-memory-2026-09-17
+  4347d87b Merge pull request #962 from MinhHaDuong/erg-upgrade-63b5e92
 
 ## Resume point
 
-**2026-09-16, end of day — stopped deliberately, nothing is half-written.**
+**2026-09-17, afternoon — the IDH raid is merged, the tree is swept, nothing is
+half-written.** Landed today: 0950 (#961, the deps guard now sees bundled
+skills and excludes `skills/synced/`, a runtime directory that stays untracked
+and unignored), 0953 (#960, verify-adherence uses the project's declared
+verification entry point, merged after rebase without the gaze and verify-gate
+comments its raid session wanted to post), the erg helper at rev 63b5e92
+(#962), and #947. Swept: 33 stale worktrees across this repo, git-erg and
+search-works-for-zotero, each probed before removal; `memsweep-work` abandoned
+after measurement — its only residue against `main` was the deletion of seven
+git-erg memories the later dream consolidation had kept, which `/dream` owns.
 
 Start here: `/hunt 0945`. The ticket carries its own complete contract — Imagine
 pass, Plan, feasibility verdict, and both settled author decisions. Do not
 re-plan it; implement what is written, and if something in it looks wrong, say
-so rather than deviating silently.
-
-Three things to know before the first command:
-
-1. **Wave 1 is merged and verified**, `make check` 996 on main. 0945's
-   `Blocked-by` is empty *in the tree*, checked, not merely in the header.
-2. **The dangerous file is `tests/test_bash_env_xtrace_silent.sh`.** Removing its
-   KEYS cases leaves a suite that passes while testing nothing — the exact
-   failure 0945's own exit criteria forbid. Its replacement case and both its
-   controls are specified in the ticket. This wave already shipped two tests that
-   could not fail; both were caught only by mutation testing, which is why the
-   plan names a killing mutation for every case.
-3. **PR #947 may still be open** (planning and state only, no code). Merge or
-   close it before branching, so 0945 does not start on a stale base.
+so rather than deviating silently. **Wave 1 is merged and verified**; 0945's
+`Blocked-by` is empty in the tree. **The dangerous file is
+`tests/test_bash_env_xtrace_silent.sh`**: removing its KEYS cases leaves a suite
+that passes while testing nothing; its replacement case and both controls are
+specified in the ticket, with a killing mutation for every case.
 
 Owed to the author, outside any diff and not blocking 0945:
 
