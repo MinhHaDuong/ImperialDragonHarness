@@ -6,7 +6,6 @@ invariants in the bundled script (no project-specific hardcoding).
 """
 
 import os
-import site
 import subprocess
 import sys
 from pathlib import Path
@@ -119,14 +118,12 @@ def _child_env(home, extra=None):
 
     Never ``{**os.environ, ...}``: this machine can carry a live
     ``OPENROUTER_API_KEY_IDH``, and inheriting it would make the keystore case
-    pass without the keystore being read at all. PATH is needed for ``bash``
-    and PYTHONPATH for the script's third-party import, since a fake HOME
-    hides the real user site-packages.
+    pass without the keystore being read at all. PATH is needed for ``bash``;
+    credential resolution itself needs no third-party Python package.
     """
     env = {
         "HOME": str(home),
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-        "PYTHONPATH": site.getusersitepackages(),
     }
     env.update(extra or {})
     return env

@@ -23,10 +23,10 @@ REPO = Path(__file__).resolve().parents[1]
 # user/project memory artifacts, not harness runtime source.
 SCAN_DIRS = ("scripts", "tests", "hooks", "bin", "adapters", "skills")
 
-# Mutation-audit sample files, not code this repo runs — same policy as
-# pytest.ini's norecursedirs (ticket 0219), stated there for collection and
-# here for scanning.
-EXCLUDED_ROOT = REPO / "tests" / "fixtures"
+# Mutation-audit samples follow pytest.ini's norecursedirs (ticket 0219).
+# Synced skills are external runtime content, not shipped harness source;
+# their dependencies belong to their own installers (ticket 0950).
+EXCLUDED_DIRS = ("tests/fixtures", "skills/synced")
 
 
 @functools.lru_cache(maxsize=1)
@@ -36,7 +36,9 @@ def source_texts() -> tuple[tuple[str, str], ...]:
     out = []
     for dirname in SCAN_DIRS:
         for path in sorted((REPO / dirname).rglob("*")):
-            if not path.is_file() or path.is_relative_to(EXCLUDED_ROOT):
+            if not path.is_file() or any(
+                path.is_relative_to(REPO / excluded) for excluded in EXCLUDED_DIRS
+            ):
                 continue
             try:
                 text = path.read_text(encoding="utf-8")

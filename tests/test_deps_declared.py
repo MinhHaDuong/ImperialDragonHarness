@@ -33,6 +33,7 @@ from pathlib import Path
 
 import pytest
 
+import repo_sources
 from repo_sources import REPO, source_texts
 
 REQUIREMENTS = REPO / "requirements-dev.txt"
@@ -135,6 +136,24 @@ def declared_dists() -> set[str]:
         if m:
             dists.add(_normalize(m.group(0)))
     return dists
+
+
+def test_inventory_excludes_runtime_skills_and_mutation_fixtures(tmp_path, monkeypatch):
+    """Local skill syncs must not add dependencies to the shipped harness."""
+    shipped = "skills/new-skill/run.py"
+    excluded = (
+        "skills/synced/external-skill/run.py",
+        "tests/fixtures/mutation_sample.py",
+    )
+    for rel in (shipped, *excluded):
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("import undeclared_sdk\n", encoding="utf-8")
+    monkeypatch.setattr(repo_sources, "REPO", tmp_path)
+    # Bypass the shared cache so this disposable inventory cannot poison it.
+    assert repo_sources.source_texts.__wrapped__() == (
+        (shipped, "import undeclared_sdk\n"),
+    )
 
 
 @pytest.mark.adherence

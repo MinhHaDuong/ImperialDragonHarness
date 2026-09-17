@@ -57,7 +57,7 @@ the only live instance.
 - `requirements-dev.txt` -- where `openai` is missing
 - `skills/external-peer-review/peer_review.py` -- the live instance
 - `pytest.ini` -- `norecursedirs`, for whether `skills/` needs the same treatment
-  `tests/fixtures` already gets via `EXCLUDED_ROOT`
+  `tests/fixtures` already gets via the source inventory's exclusions
 
 ## Actions
 
@@ -134,6 +134,8 @@ or cross-cutting registry; no coordination PR is required.
 - [x] `openai` is declared, with the reason recorded next to it
 - [x] No other undeclared third-party import remains in any scanned directory
 - [x] `projects/` is excluded on purpose as user/project memory artifacts
+- [x] `skills/synced/` is excluded as external runtime content; a disposable
+  inventory test includes a new shipped skill while excluding syncs and fixtures
 
 ## Exit criteria
 
