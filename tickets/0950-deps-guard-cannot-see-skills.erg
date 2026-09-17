@@ -6,6 +6,9 @@ Author: claude
 --- log ---
 
 2026-09-16T16:50Z claude created by the roar sweep after 0802: the same guard hole one directory over, with a live undeclared openai import in skills/external-peer-review
+2026-09-17T09:20Z Codex raid imagine PASS — preserve the coverage goal; interpret fresh-install execution as Python-source importability, not credentials or external binaries
+2026-09-17T09:35Z Codex raid plan PASS — real openai import is the red control; preserve lazy-import proof with site-packages disabled
+2026-09-17T09:48Z Codex raid feasibility PASS — planned paths, symbols, subprocess shape, dependency range, and verification commands exist
 --- body ---
 ## Context
 
@@ -65,6 +68,55 @@ the only live instance.
 4. Decide whether `projects/` should also be scanned or explicitly excluded.
    It holds one `.py` among memory bodies, so silence there is currently
    accidental rather than decided.
+
+## Raid reimagination (2026-09-17)
+
+The premise still holds, but the boundary needs to be explicit. Ticket 0943
+made the `openai` import lazy so credential discovery remains usable in CI; it
+did not make the shipped Python dependency undeclared by design. This ticket
+therefore covers **Python import dependencies of shipped sources**. It does not
+promise that every skill can complete without its normal credentials, input
+files, services, or system tools such as `pdftotext`.
+
+Minimal path:
+
+- add `skills` to the shared source inventory and use the existing real
+  `openai` import as a durable positive control for that directory;
+- declare `openai>=2,<3` beside a comment naming external-peer-review;
+- keep `projects/` outside the inventory, with an explicit policy comment:
+  those files are user/project memory artifacts, not harness runtime source;
+- update the guard's stale scope documentation and run the whole check.
+
+YAGNI: do not introduce per-skill manifests or an installer for the only
+optional Python SDK currently found. The existing requirements contract and
+guard can express this case. Blind-spot review found no cross-ticket conflict;
+0950 and 0953 touch disjoint implementation surfaces.
+
+## Raid plan (2026-09-17)
+
+1. First extend `POSITIVE_CONTROLS` in `tests/test_deps_declared.py` with
+   `openai` at `skills/external-peer-review/peer_review.py`. On the current
+   inventory this fails, so it proves the scanner reaches the new directory
+   and is not a tautological assertion about a tuple.
+2. Add `skills` to `tests/repo_sources.py::SCAN_DIRS`, document the intentional
+   exclusion of `projects/`, and update the dependency test's scope prose.
+3. Before declaring the dependency, confirm the declaration guard reports the
+   real file attribution. Then add the commented `openai>=2,<3` requirement.
+4. Preserve 0943's lazy-import regression after the SDK becomes a CI
+   dependency: run its credential-resolution subprocess with `-S`, revise the
+   stale explanation, and prove credential discovery still works without
+   site-packages.
+5. Run the two focused test modules, `make lint`, then `make check`.
+
+The test catches two credible partial fixes: declaring `openai` without
+scanning skills, and moving the SDK import back to module scope once CI has it.
+
+## Raid feasibility (2026-09-17)
+
+PASS. Mechanical checks confirmed all planned files and symbols, the `-S`
+subprocess form, installed OpenAI 2.38.0 within the chosen range, and the test
+commands. Cross-ticket review found no shared implementation file, dependency,
+or cross-cutting registry; no coordination PR is required.
 
 ## Test
 

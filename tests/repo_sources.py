@@ -18,8 +18,10 @@ REPO = Path(__file__).resolve().parents[1]
 # first python (ticket 0802); until then the guard's silence about it could
 # not be told from a pass. hooks/ and bin/ host python too (bin/usage-report
 # is an extensionless python-shebang program), so a scan limited to scripts/
-# and tests/ would miss real consumers.
-SCAN_DIRS = ("scripts", "tests", "hooks", "bin", "adapters")
+# and tests/ would miss real consumers. skills/ bundles executable Python too
+# (ticket 0950). projects/ stays out intentionally: its Python files are
+# user/project memory artifacts, not harness runtime source.
+SCAN_DIRS = ("scripts", "tests", "hooks", "bin", "adapters", "skills")
 
 # Mutation-audit sample files, not code this repo runs — same policy as
 # pytest.ini's norecursedirs (ticket 0219), stated there for collection and

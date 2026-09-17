@@ -20,9 +20,9 @@ positive control has fired): the scan must rediscover a known third-party
 import through *each* extraction path before its "all declared" verdict is
 worth anything.
 
-skills/ is outside the ticket's scope ("tout module importé par tests/ et
-scripts/") — per-skill runtime deps (e.g. openai in external-peer-review)
-are a separate contract.
+Bundled skill Python shares this declaration contract (ticket 0950), including
+lazy imports: resolving credentials without the SDK does not make the SDK
+optional when the skill actually requests a review.
 """
 
 import ast
@@ -49,6 +49,7 @@ IMPORT_TO_DIST = {
 # unit test below instead.
 POSITIVE_CONTROLS = {
     "yaml": {"scripts/skill_frontmatter.py"},
+    "openai": {"skills/external-peer-review/peer_review.py"},
 }
 
 # Only a QUOTED delimiter (<<'EOF') guarantees the body is literal,

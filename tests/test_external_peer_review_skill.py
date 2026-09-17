@@ -308,24 +308,22 @@ def test_dotenv_walk_and_repo_root_are_gone():
 def test_credential_resolution_does_not_need_the_openai_sdk(tmp_path):
     """Resolving a credential must not require the OpenAI SDK to be importable.
 
-    The SDK is a per-skill runtime dependency that CI does not install. While it
+    Before ticket 0950 declared the SDK, CI did not install it. While it
     was imported at module level, importing this file to reach
     ``resolve_credential`` pulled it in — so every resolution test passed on a
-    developer machine that happens to have ``openai`` and failed on the runner,
-    which does not. Seven of them, on PR #942, after a local ``make check``
+    developer machine that happened to have ``openai`` and failed on the runner.
+    Seven of them, on PR #942, after a local ``make check``
     reported 994 passed.
 
-    This reproduces that condition locally instead of waiting for CI: the child
-    gets a fake HOME, which already hides the real user site-packages, and —
-    unlike every other case in this file — no ``PYTHONPATH``. ``import openai``
-    therefore fails in the child exactly as it does on the runner. Restoring a
-    module-level SDK import turns this red.
+    Reproduce that condition even when CI installs the SDK: ``-S`` disables
+    site-packages, and the child receives no ``PYTHONPATH``. Restoring a
+    module-level SDK import turns this red on both developer and CI machines.
     """
     home = _fake_home(tmp_path)
     child = tmp_path / "child.py"
     child.write_text(CHILD.format(control=POSITIVE_CONTROL))
     proc = subprocess.run(
-        [sys.executable, str(child), str(SCRIPT), CRED_NAME],
+        [sys.executable, "-S", str(child), str(SCRIPT), CRED_NAME],
         env={"HOME": str(home), "PATH": os.environ.get("PATH", "/usr/bin:/bin")},
         capture_output=True,
         text=True,

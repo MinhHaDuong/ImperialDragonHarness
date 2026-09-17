@@ -37,13 +37,13 @@ import subprocess
 from pathlib import Path
 
 # The OpenAI SDK is imported lazily, inside the two functions that use it
-# (`review_one`, `main`), NOT here. It is a per-skill runtime dependency that CI
-# does not install, and the credential-resolution half of this module
+# (`review_one`, `main`), NOT here. The credential-resolution half of this module
 # (`_credential_provider_file`, `_keystore_value`, `resolve_credential`) has no
 # use for an HTTP client. A module-level import made those functions
 # unreachable wherever the SDK is absent: the resolution tests import this file
-# in a child process, so all seven passed on a developer machine that happens to
-# have `openai` installed and failed in CI, which does not.
+# in a child process, so all seven passed on a developer machine with `openai`
+# installed and failed in CI before ticket 0950 declared it. Keep resolution
+# usable without the SDK; its regression test disables site-packages explicitly.
 
 log = logging.getLogger(__name__)
 
