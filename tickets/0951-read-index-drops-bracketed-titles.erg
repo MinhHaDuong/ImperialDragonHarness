@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 
 2026-09-16T17:30Z claude created by the dream run of 2026-09-16: the index parser skipped one of 119 entries and a blind regeneration would have deleted its only pointer
+2026-09-17T07:40Z Integration-Test sweep: 40 project indexes present (ticket's 46 count was stale); exactly one live bracketed title was previously dropped, projects/-home-haduong--claude/memory/MEMORY.md entry feedback_grep_line_vs_bash_wholestring.md. No other Python or shell script under skills/dream shares the lossy regex; commit.py does not parse index lines.
 --- body ---
 ## Context
 

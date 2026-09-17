@@ -11,6 +11,54 @@ import sys
 from pathlib import Path
 
 MEMORY_BASE = Path.home() / ".claude" / "projects"
+INDEX_ENTRY_RE = re.compile(
+    r"^-\s+\[(.+)\]\(([^)]+)\)\s*(?:[—-]\s*)?(.*)$"
+)
+POINTER_LINE_RE = re.compile(r"^-\s+\[")
+
+
+class IndexParseError(ValueError):
+    """A pointer-looking index line could not be parsed losslessly."""
+
+
+def read_entries(index_path: Path, memory_dir: Path) -> list[dict[str, str]]:
+    """Parse every memory pointer, refusing a partial result.
+
+    The title capture is intentionally greedy: Markdown link titles in this
+    index may contain closing brackets, so the structural boundary is the last
+    ``](`` that can still lead to a closing filename parenthesis. Lines that do
+    not look like pointers remain headings/prose; lines that do look like one
+    must parse or the entire read fails before Dream can rewrite a short index.
+    """
+    entries = []
+    malformed = []
+    with index_path.open() as index:
+        for lineno, raw_line in enumerate(index, start=1):
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            match = INDEX_ENTRY_RE.match(line)
+            if not match:
+                if POINTER_LINE_RE.match(line):
+                    malformed.append(lineno)
+                continue
+            title, filename, desc = match.groups()
+            filepath = memory_dir / filename
+            content = filepath.read_text() if filepath.exists() else "(file missing)"
+            entries.append(
+                {
+                    "filename": filename,
+                    "title": title,
+                    "desc": desc,
+                    "path": str(filepath),
+                    "content": content,
+                }
+            )
+
+    if malformed:
+        lines = ", ".join(f"line {number}" for number in malformed)
+        raise IndexParseError(f"Unparseable memory pointer in {index_path}: {lines}")
+    return entries
 
 
 def main():
@@ -46,27 +94,12 @@ def main():
         )
         return
 
-    entries = []
-    with open(index_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            match = re.match(r"-\s+\[([^\]]+)\]\(([^\)]+)\)\s*[—-]?\s*(.*)", line)
-            if not match:
-                continue
-            title, filename, desc = match.group(1), match.group(2), match.group(3)
-            filepath = memory_dir / filename
-            content = filepath.read_text() if filepath.exists() else "(file missing)"
-            entries.append(
-                {
-                    "filename": filename,
-                    "title": title,
-                    "desc": desc,
-                    "path": str(filepath),
-                    "content": content,
-                }
-            )
+    try:
+        entries = read_entries(index_path, memory_dir)
+    except IndexParseError as error:
+        json.dump({"error": str(error), "entries": []}, sys.stdout, indent=2)
+        print()
+        sys.exit(1)
 
     json.dump(
         {

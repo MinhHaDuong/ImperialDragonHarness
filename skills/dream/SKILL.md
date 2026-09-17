@@ -37,6 +37,11 @@ python3 ~/.claude/skills/dream/read-index.py <project>
 
 Output is JSON: `{project, memory_dir, entries[]}` where each entry has `filename`, `title`, `desc`, `content`, `path`.
 
+The reader is fail-loud: any line that looks like a memory pointer but cannot
+be parsed returns non-zero with `{error, entries: []}`. Stop on that result and
+repair the index/parser before classification; never continue to step 6 with a
+partial entry set.
+
 If `entries` is empty, log "No memory entries found" and stop.
 
 **2. Classify each entry.**

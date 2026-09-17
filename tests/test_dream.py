@@ -76,6 +76,71 @@ def test_read_index_empty_index(tmp_path):
     assert data["entries"] == []
 
 
+def test_read_index_preserves_brackets_and_parenthesis_in_title(tmp_path):
+    mem = tmp_path / ".claude" / "projects" / "brackets" / "memory"
+    mem.mkdir(parents=True)
+    title = "A test [green]] still works (for a reason)"
+    filename = "feedback_brackets.md"
+    (mem / filename).write_text("Bracketed lesson.\n")
+    original = f"- [{title}]({filename})\n"
+    (mem / "MEMORY.md").write_text("## Entries\n\n" + original)
+
+    result = _run(READ_INDEX, "brackets", home=tmp_path)
+    assert result.returncode == 0, result.stderr
+    entry = json.loads(result.stdout)["entries"][0]
+    assert entry["title"] == title
+    assert entry["filename"] == filename
+    assert f'- [{entry["title"]}]({entry["filename"]})\n' == original
+
+
+def test_read_index_fails_loud_on_malformed_pointer(tmp_path):
+    mem = tmp_path / ".claude" / "projects" / "malformed" / "memory"
+    mem.mkdir(parents=True)
+    (mem / "MEMORY.md").write_text(
+        "## Entries\n\n- [valid](valid.md)\n- [missing close](broken.md\n"
+    )
+    (mem / "valid.md").write_text("Valid.\n")
+
+    result = _run(READ_INDEX, "malformed", home=tmp_path)
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert data["entries"] == []
+    assert "line 4" in data["error"]
+
+
+def test_every_project_index_parses_every_pointer_line(tmp_path):
+    """End-to-end corpus guard: a lossy parser cannot shorten an index."""
+    repo = Path(__file__).parent.parent
+    projects = repo / "projects"
+    fake_claude = tmp_path / ".claude"
+    fake_claude.mkdir()
+    (fake_claude / "projects").symlink_to(projects, target_is_directory=True)
+
+    indexes = sorted(projects.glob("*/memory/MEMORY.md"))
+    assert indexes, "positive control: repository carries no memory indexes"
+    for index in indexes:
+        pointer_count = sum(
+            bool(re.match(r"^-\s+\[", line.strip()))
+            for line in index.read_text().splitlines()
+        )
+        result = _run(READ_INDEX, index.parents[1].name, home=tmp_path)
+        assert result.returncode == 0, f"{index}: {result.stdout} {result.stderr}"
+        parsed_count = len(json.loads(result.stdout)["entries"])
+        assert parsed_count == pointer_count, (
+            f"{index}: parsed {parsed_count} of {pointer_count} pointer lines"
+        )
+
+
+def test_no_other_dream_script_carries_the_lossy_index_regex():
+    old_shape = "[^\\]]+"
+    offenders = [
+        path.name
+        for path in DREAM_DIR.glob("*.py")
+        if path != READ_INDEX and old_shape in path.read_text()
+    ]
+    assert offenders == []
+
+
 def test_skill_md_instructs_preserve_evolution():
     content = (DREAM_DIR / "SKILL.md").read_text()
     assert "evolution" in content.lower() or "preserve" in content.lower()
