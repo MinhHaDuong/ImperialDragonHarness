@@ -85,7 +85,8 @@ check_pattern() {
         fi
         echo "VIOLATION [$pattern]: $file:$lineno: $line"
         fail=1
-    done < <(grep -rn --exclude-dir=closed "$pattern" "$dir" 2>/dev/null || true)
+    # skills/synced/ is runtime-populated by the client (ticket 0950): not ours, not shipped, not checked.
+    done < <(grep -rn --exclude-dir=closed --exclude-dir=synced "$pattern" "$dir" 2>/dev/null || true)
 }
 
 for dir in "${DIRS[@]}"; do
