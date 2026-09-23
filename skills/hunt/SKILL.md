@@ -123,8 +123,10 @@ argument-hint: "<ticket-id> [inline]"
     steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation, ticket 0293).
     Each pass through the 11–12 loop is one **review round**. Do not pass a round
     number: `/review-pr` derives its own round from the merge request's posted
-    review history and scopes the panel accordingly — round 1 runs the full
-    proportional panel, later rounds re-run only the perspectives that objected
+    review history and scopes the panel accordingly — round 1 uses the
+    configured small-diff width from `skills/review-pr/panel-width.json`
+    (Correctness only when eligible; `review:standard` requests all five
+    perspectives), while later rounds re-run only perspectives that objected
     plus a regression check (§ Round scoping in `skills/review-pr/SKILL.md`,
     ticket 0377).
 12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.

@@ -8,8 +8,8 @@ objected, plus one cheap regression check.
 
 Two mechanisms had to change together:
 
-- `skills/review-pr/SKILL.md` gains a § Round scoping rule (round 1 = full
-  proportional panel; round N>1 = objecting perspectives + regression check).
+- `skills/review-pr/SKILL.md` gains a § Round scoping rule (round 1 uses its
+  width criterion; round N>1 = objecting perspectives + regression check).
 - `skills/gaze/SKILL.md` drops the #562 clause that sent *any* round ≥ 2 to
   the full battery unconditionally, replacing it with a reset condition tied
   to substantial diff rewrite.
@@ -65,7 +65,7 @@ def test_gaze_has_round_scoping_section():
 def test_review_pr_has_round_scoping_section():
     assert "Round scoping" in _text(REVIEW_PR), (
         "skills/review-pr/SKILL.md must carry a 'Round scoping' section: "
-        "round 1 runs the full proportional panel, later rounds re-run only "
+        "round 1 applies the width criterion, later rounds re-run only "
         "the perspectives that objected (ticket 0377)."
     )
 
@@ -105,4 +105,3 @@ def test_prose_sibling_has_round_scoping_section():
         "skills/review-pr-prose/SKILL.md must carry a 'Round scoping' section "
         "too — gaze points a round >= 2 prose panel at it (ticket 0377)."
     )
-

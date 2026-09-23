@@ -1,0 +1,14 @@
+{
+  "max_lines": 30,
+  "max_files": 2,
+  "pipeline_paths": [
+    ".github/**",
+    ".gitlab-ci.yml",
+    "Makefile",
+    "Dockerfile",
+    ".claude/hooks/**",
+    "scripts/**",
+    "skills/**",
+    "rules/**"
+  ]
+}
