@@ -1256,6 +1256,30 @@ def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
                         "authors": entry.get("authors") or []}, text)
 
 
+def entry_identity_keys(entry: dict[str, Any]) -> set[tuple[str, str]]:
+    """Keys that can reveal two input rows describe one work before POST."""
+    keys: set[tuple[str, str]] = set()
+    if doi := str(entry.get("doi") or "").strip():
+        doi = re.sub(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", "", doi,
+                     flags=re.IGNORECASE).strip().lower()
+        keys.add(("doi", doi))
+    if isbn := _isbn_key(str(entry.get("isbn") or "")):
+        keys.add(("isbn", isbn))
+    url = str(entry.get("url") or "")
+    if match := ARXIV_ANY_RE.search(url):
+        keys.add(("arxiv", match.group(1).lower()))
+    if match := HDL_ANY_RE.search(url):
+        keys.add(("handle", match.group(1).lower().rstrip("/")))
+    authors = entry.get("authors") or []
+    author = first_author_surname(str(authors[0])) if authors else ""
+    year_match = YEAR_RE.search(str(entry.get("year") or ""))
+    title = _norm_title(str(entry.get("title") or ""))
+    if author and year_match and title:
+        keys.add(("author_year_title", f"{_name_key(author)}|"
+                                        f"{year_match.group()}|{title}"))
+    return keys
+
+
 def cmd_inject(args: argparse.Namespace) -> int:
     if args.entries_json:
         entries = json.loads(args.entries_json)
@@ -1303,7 +1327,6 @@ def cmd_inject(args: argparse.Namespace) -> int:
         index = (None if force else
                  getattr(args, "_fresh_index", None) or build_index(user, key))
         pending: list[tuple[int, dict[str, Any], str | None]] = []
-        seen: set[str] = set()
         for n, entry in enumerate(entries):
             row = results[n]
             pdf = Path(entry["pdf"]) if entry.get("pdf") else None
@@ -1312,12 +1335,6 @@ def cmd_inject(args: argparse.Namespace) -> int:
                 status = 1
                 continue
             digest = file_md5(pdf) if pdf and pdf.is_file() else None
-            if digest and not force and digest in seen:
-                row["error"] = "same file appears twice in this batch"
-                status = 1
-                continue
-            if digest:
-                seen.add(digest)
             previous = ledger.get(digest) if digest else None
             if previous and previous["state"] in {"creating", "attachment_creating"}:
                 row["error"] = ("earlier Zotero response was lost; inspect "
@@ -1356,9 +1373,16 @@ def cmd_inject(args: argparse.Namespace) -> int:
                 continue
             if not force:
                 author = (entry.get("authors") or [""])[0]
+                url = str(entry.get("url") or "")
+                arxiv_match = ARXIV_ANY_RE.search(url)
+                handle_match = HDL_ANY_RE.search(url)
                 match = api_matches(index, pdf_path=pdf,
                                     title=entry.get("title"),
                                     doi=entry.get("doi"), isbn=entry.get("isbn"),
+                                    arxiv=(arxiv_match.group(1)
+                                            if arxiv_match else None),
+                                    handle=(handle_match.group(1)
+                                            if handle_match else None),
                                     year=str(entry.get("year") or ""),
                                     first_author=first_author_surname(author))
                 if match["matches"]:
@@ -1367,6 +1391,25 @@ def cmd_inject(args: argparse.Namespace) -> int:
                     status = 1
                     continue
             pending.append((n, entry, digest))
+
+        if not force:
+            owners: dict[tuple[str, str], list[int]] = {}
+            for n, entry, digest in pending:
+                keys = entry_identity_keys(entry)
+                if digest:
+                    keys.add(("md5", digest))
+                if len(keys) == 1 and ("md5", digest) in keys:
+                    results[n]["error"] = ("insufficient work identity for "
+                                           "duplicate guard; use --force")
+                    status = 1
+                for identity in keys:
+                    owners.setdefault(identity, []).append(n)
+            collisions = {n for ns in owners.values() if len(ns) > 1 for n in ns}
+            for n in collisions:
+                results[n]["error"] = "same work appears more than once in input"
+                status = 1
+            pending = [(n, entry, digest) for n, entry, digest in pending
+                       if "error" not in results[n]]
 
         for start in range(0, len(pending), 50):
             batch = pending[start:start + 50]
@@ -1691,6 +1734,11 @@ def read_injection_ledger(user: str) -> dict[str, dict[str, Any]]:
                      not isinstance(item_key, str)) or
                     (item_key is not None and
                      not re.fullmatch(r"[A-Z0-9]{8}", item_key)) or
+                    (state in {"attachment_created", "uploaded"} and
+                     attachment_key is None) or
+                    (state in {"creating", "failed", "created",
+                               "attachment_creating"} and
+                     attachment_key is not None) or
                     (attachment_key is not None and
                      (not isinstance(attachment_key, str) or
                       not re.fullmatch(r"[A-Z0-9]{8}", attachment_key)))):
@@ -2620,6 +2668,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                         job_paths.append(path)
                 report["deferred"] = deferred
                 if deferred:
+                    summary["absent"] -= len(deferred)
                     summary["deferred"] = len(deferred)
                     report["actions"]["deferred"] = "supply and corroborate metadata"
                 if jobs:
@@ -2640,25 +2689,33 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                     report["applied"] = json.loads(captured.getvalue())["results"]
                     for path, result in zip(job_paths, report["applied"]):
                         result["file"] = str(path.relative_to(root))
-                        if result.get("status") == "created":
-                            summary["absent"] -= 1
+                        summary["absent"] -= 1
+                        if result.get("error") or result.get("attachment_error"):
+                            summary["failed_write"] = summary.get("failed_write", 0) + 1
+                        elif result.get("status") == "created":
                             summary["injected"] = summary.get("injected", 0) + 1
+                        else:
+                            summary["already_present"] = summary.get(
+                                "already_present", 0) + 1
                     if summary.get("absent") == 0:
                         summary.pop("absent", None)
+                        report["actions"].pop("absent", None)
                     if summary.get("injected"):
                         report["actions"]["injected"] = "created in Zotero"
-                    failures = sum(1 for result in report["applied"]
-                                   if result.get("error") or
-                                   result.get("attachment_error"))
+                    failures = summary.get("failed_write", 0)
                     if failures:
-                        summary["failed_write"] = failures
                         report["actions"]["failed_write"] = (
                             "inspect outcome and retry only after reconciliation")
+                    if summary.get("already_present"):
+                        report["actions"]["already_present"] = "nothing"
                     report["apply_status"] = (
                         "partial" if failures else
                         "deferred" if deferred else "applied")
                 else:
                     report["applied"] = []
+                    if summary.get("absent") == 0:
+                        summary.pop("absent", None)
+                        report["actions"].pop("absent", None)
                     report["apply_status"] = "deferred" if deferred else "nothing"
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
                 urllib.error.URLError) as exc:

@@ -1767,7 +1767,8 @@ def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys
     entries.write_text(json.dumps([{
         "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
                                  "online optimization",
-        "authors": ["Albers, Susanne"], "pdf": str(pdf)}]))
+        "authors": ["Albers, Susanne"], "year": "2020",
+        "pdf": str(pdf)}]))
     monkeypatch.setattr(zi, "api_request",
                         lambda *a, **k: {"successful": {"0": {"key": "ZZZZZZZZ"}}})
     monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
@@ -1837,6 +1838,77 @@ def test_inject_batches_51_and_ledger_prevents_second_create(
     second = json.loads(capsys.readouterr().out)
     assert calls == [50, 1]
     assert all(r["status"] == "already_in_ledger" for r in second["results"])
+
+
+@pytest.mark.parametrize("count,second", [(2, 1), (51, 50)])
+def test_inject_blocks_distinct_pdfs_with_same_doi_before_post(
+        tmp_path, monkeypatch, capsys, count, second):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    posts = []
+
+    def fake_request(method, path, key, body=None, **kw):
+        batch = json.loads(body)
+        posts.extend(batch)
+        return {"successful": {str(i): {"key": f"{i:08d}"}
+                               for i in range(len(batch))}}
+
+    monkeypatch.setattr(zi, "api_request", fake_request)
+    entries = []
+    for n in range(count):
+        pdf = tmp_path / f"paper-{n}.pdf"
+        pdf.write_bytes(f"different content {n}".encode())
+        doi = "10.1234/duplicate" if n in (0, second) else f"10.1234/{n}"
+        entries.append({"title": f"Distinct Article {n}",
+                        "authors": ["Smith, Jane"], "year": "2020",
+                        "doi": doi, "pdf": str(pdf)})
+    args = argparse.Namespace(entries_json=json.dumps(entries),
+                              entries_file=None, collection=None, user_id="1",
+                              api_key="key", dry_run=False,
+                              skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "same work" in out["results"][0]["error"]
+    assert "same work" in out["results"][second]["error"]
+    assert len(posts) == count - 2
+    assert not any(item.get("DOI") == "10.1234/duplicate" for item in posts)
+
+
+def test_inject_allows_generic_title_when_author_or_year_differs(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    posts = []
+
+    def fake_request(method, path, key, body=None, **kw):
+        posts.extend(json.loads(body))
+        return {"successful": {"0": {"key": "ABCDEFGH"},
+                               "1": {"key": "HGFEDCBA"}}}
+
+    monkeypatch.setattr(zi, "api_request", fake_request)
+    entries = []
+    for n, (author, year) in enumerate((('Smith, Jane', '2020'),
+                                        ('Jones, Pat', '2021'))):
+        pdf = tmp_path / f"work-{n}.pdf"
+        pdf.write_bytes(f"paper {n}".encode())
+        entries.append({"title": "Introduction to Economics",
+                        "authors": [author], "year": year,
+                        "pdf": str(pdf)})
+    args = argparse.Namespace(entries_json=json.dumps(entries),
+                              entries_file=None, collection=None, user_id="1",
+                              api_key="key", dry_run=False,
+                              skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 0
+    capsys.readouterr()
+    assert len(posts) == 2
 
 
 def test_inject_fails_closed_on_damaged_ledger(tmp_path, monkeypatch):
@@ -2127,6 +2199,30 @@ def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
     assert seen[0]["title"] == "A Newly Acquired Paper"
     assert seen[0]["authors"] == ["Jane Smith"]
     assert not (docs / ".zotero-reconcile.lock").exists()
+
+
+def test_reconcile_apply_defers_orphan_without_metadata_once(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "orphan.pdf").write_bytes(b"unreadable scan")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    idx = {"works": [], "attachments": [], "fetched": "now"}
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
+    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote orphan"))
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"] == {"deferred": 1}
+    assert report["apply_status"] == "deferred"
 
 
 def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
