@@ -1324,8 +1324,7 @@ def cmd_inject(args: argparse.Namespace) -> int:
         ledger = read_injection_ledger(user)
         # A fresh Web API index is mandatory before creating new items.  The
         # desktop mirror and a cached index can both lag yesterday's write.
-        index = (None if force else
-                 getattr(args, "_fresh_index", None) or build_index(user, key))
+        index = None if force else build_index(user, key)
         pending: list[tuple[int, dict[str, Any], str | None]] = []
         for n, entry in enumerate(entries):
             row = results[n]
@@ -2681,8 +2680,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                         entries_json=json.dumps(jobs), entries_file=None,
                         collection=config.get("collection"), user_id=user,
                         api_key=write_key, dry_run=False,
-                        skip_corroboration=False, force=False,
-                        _fresh_index=fresh)
+                        skip_corroboration=False, force=False)
                     captured = io.StringIO()
                     with contextlib.redirect_stdout(captured):
                         apply_rc = cmd_inject(inject_args)

@@ -1911,6 +1911,49 @@ def test_inject_allows_generic_title_when_author_or_year_differs(
     assert len(posts) == 2
 
 
+def test_two_sweeps_refresh_inside_user_lock_before_second_write(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    remote = {"works": [], "attachments": []}
+    pulls = []
+
+    def fresh_index(*args):
+        pulls.append(len(remote["works"]))
+        return {"works": list(remote["works"]), "attachments": []}
+
+    monkeypatch.setattr(zi, "build_index", fresh_index)
+    posts = []
+
+    def fake_request(method, path, key, body=None, **kw):
+        item = json.loads(body)[0]
+        posts.append(item)
+        remote["works"].append({
+            "key": "ABCDEFGH", "title": item["title"], "DOI": item["DOI"],
+            "date": "2020", "creators": ["Smith"]})
+        return {"successful": {"0": {"key": "ABCDEFGH"}}}
+
+    monkeypatch.setattr(zi, "api_request", fake_request)
+    stale_prelock_index = {"works": [], "attachments": []}
+    for n in range(2):
+        pdf = tmp_path / f"copy-{n}.pdf"
+        pdf.write_bytes(f"different PDF {n}".encode())
+        args = argparse.Namespace(entries_json=json.dumps([{
+            "title": "The Same Paper", "authors": ["Smith, Jane"],
+            "year": "2020", "doi": "10.1234/same", "pdf": str(pdf)}]),
+            entries_file=None, collection=None, user_id="1", api_key="key",
+            dry_run=False, skip_corroboration=False, force=False,
+            _fresh_index=stale_prelock_index)
+        assert zi.cmd_inject(args) == (0 if n == 0 else 1)
+        result = json.loads(capsys.readouterr().out)
+        if n == 1:
+            assert "duplicate" in result["results"][0]["error"]
+    assert pulls == [0, 1]
+    assert len(posts) == 1
+
+
 def test_inject_fails_closed_on_damaged_ledger(tmp_path, monkeypatch):
     monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path)
     zi.injection_ledger_path("1").write_text("not-json\n")
