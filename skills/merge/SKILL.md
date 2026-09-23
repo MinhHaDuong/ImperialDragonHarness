@@ -117,7 +117,24 @@ command it recovers.)
   detached, `git cherry-pick <close-commit>`, fast-forward push, then merge
   directly (raid 234/235, PR #998).
 
-## Manual chore-close — only when a PR merged without this script
+## Dropped close-claim sweep
+
+After a direct forge merge that bypassed this script, verify each `**Ticket:**`
+claim immediately: the ticket must be in `tickets/closed/` with a `Closed:`
+header. After a merge wave, run the wider sweep from the updated base checkout:
+
+```bash
+bash ~/.claude/skills/roar/check-close-claims.sh --days 7 --limit 40
+```
+
+It reports how many merged PRs it examined, how many close claims it parsed,
+and how many it found unhonoured (`DROPPED` or `UNRESOLVED`). A zero finding
+count is not an all-clear when zero PRs or zero claims were parsed; check the
+window and any unrecognised bodies. The test suite gives this detector a
+positive control: a merged PR claiming an open ticket must be named and cause
+exit 1. `Ticket-ref:` is excluded.
+
+## Manual chore-close — when a PR merged without this script
 
 First confirm no close commit rode the PR; if one did, the ticket is already
 closed and there is nothing to do. `erg close <ID> <reason>` edits the ticket
@@ -126,6 +143,14 @@ file but does **not** stage its own edit, so `git add -u tickets/` BEFORE the
 with the pre-edit blob and silently drops the `Closed:` header (aedist PR #1008;
 a 100%-rename, 0-insertion commit is the tell). A later "no ticket found"
 bounce here means a review round already closed it — harmless, skip it.
+
+An `erg-pr-merge` mode taking only a PR number was considered for a head branch
+owned by another session. It would close on the caller's branch rather than
+putting the close commit on the reviewed PR, weakening the current atomic
+close-and-merge path. Keep the branch requirement and `-C` form; if the
+isolation guard still makes that branch unreachable, use a direct forge merge
+with the immediate verification and sweep above, then repair on a separate
+branch and PR.
 
 ## After the merge lands
 
