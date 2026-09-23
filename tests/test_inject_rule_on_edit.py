@@ -115,6 +115,37 @@ def test_draft_and_rendered_markdown_hook_contexts_differ(tmp_path):
     assert "----- finishing pointer -----" in rendered
     assert "insécable" not in draft + rendered
 
+
+@pytest.mark.integration
+def test_same_session_draft_then_rendered_gets_pointer_once(tmp_path):
+    repo = _manifest_repo(
+        tmp_path,
+        'default_lang = "fr"\n[[map]]\nglob = "livrables/**/*.md"\nrender = true\n',
+    )
+    (repo / "conception").mkdir()
+    (repo / "livrables").mkdir()
+    draft = repo / "conception" / "note.md"
+    rendered = repo / "livrables" / "report.md"
+    draft.write_text("draft\n")
+    rendered.write_text("report\n")
+    marker_dir = tmp_path / "markers"
+    marker_dir.mkdir()
+
+    def context_for(file):
+        result = subprocess.run(
+            [sys.executable, str(_HOOK)],
+            input=json.dumps({"session_id": "same-session-0425", "tool_input": {"file_path": str(file)}}),
+            text=True, capture_output=True, check=True,
+            env={**os.environ, "TMPDIR": str(marker_dir), **_STRICT},
+        )
+        if not result.stdout:
+            return ""
+        return json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+
+    assert "/typography-finish" not in context_for(draft)
+    assert "/typography-finish" in context_for(rendered)
+    assert context_for(rendered) == ""
+
 # --- doctype sniff (markup, .tex only today) ---------------------------------
 
 @pytest.mark.parametrize(

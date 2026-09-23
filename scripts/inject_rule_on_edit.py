@@ -282,18 +282,19 @@ def marker_path(session_id: str, rule: Path) -> Path:
     return base / f"{sid}.{rule.parent.name}.{rule.name}"
 
 
-def build_context(path: str, axes: dict[str, str], files: list[Path]) -> str:
+def build_context(
+    path: str, axes: dict[str, str], files: list[Path], *, include_pointer: bool = False
+) -> str:
     fmt = axes.get("format", "")
     desc = ", ".join(f"{k}={v}" for k, v in axes.items())
     parts = [
-        f"You are editing a {fmt} file ({path}). Its global style rules "
-        f"({desc}) apply to such files in this session. They are reproduced "
-        f"once below for reference:"
+        f"You are editing a {fmt} file ({path}). Its global style context "
+        f"({desc}) follows:"
     ]
+    if include_pointer:
+        parts.append(f"\n----- finishing pointer -----\n{finishing_pointer(axes)}")
     for f in files:
         parts.append(f"\n----- {f.parent.name}/{f.name} -----\n{f.read_text(encoding='utf-8').rstrip()}")
-    if pointer := finishing_pointer(axes):
-        parts.append(f"\n----- finishing pointer -----\n{pointer}")
     return "\n".join(parts)
 
 
@@ -318,8 +319,6 @@ def main() -> int:
 
     axes = resolve_axes(file_path)
     files = candidate_rule_files(axes, args.rules_dir)
-    if not files:
-        return 0
 
     session_id = payload.get("session_id") or ""
     fresh: list[Path] = []
@@ -333,10 +332,23 @@ def main() -> int:
         except OSError:
             pass  # dedup best-effort; still inject
         fresh.append(f)
-    if not fresh:
+    # The pointer is its own once-per-session message. A preceding draft edit
+    # may already have consumed every prose/lang rule marker; it must not
+    # suppress the later rendered-file pointer.
+    fresh_pointer = False
+    if finishing_pointer(axes):
+        marker = marker_path(session_id, Path("finishing/pointer"))
+        if not marker.exists():
+            try:
+                marker.parent.mkdir(parents=True, exist_ok=True)
+                marker.touch()
+            except OSError:
+                pass  # advisory dedup, like rule markers above
+            fresh_pointer = True
+    if not fresh and not fresh_pointer:
         return 0
 
-    context = build_context(file_path, axes, fresh)
+    context = build_context(file_path, axes, fresh, include_pointer=fresh_pointer)
     if len(context) > MAX_CONTEXT:
         context = context[:MAX_CONTEXT] + "\n\n[... truncated at the additionalContext size limit ...]"
     json.dump(
