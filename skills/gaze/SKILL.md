@@ -370,6 +370,9 @@ return those same lines in Agent C's structured block. The /gaze orchestrator
 must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
 and use `panel integrity: DEGRADED` in the actions section. Never write
 `dissent: none` for this path.
+If a launched perspective is still missing at the bounded collection deadline,
+name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
+perspective report: <name>`, and use `dissent: unavailable` there too.
 **Width-gate:** run Agent C at every tier. For round-1 code diffs, read
 `${IDH_HOME:-$HOME/.claude}/skills/review-pr/panel-width.json` and apply its
 `max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat

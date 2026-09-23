@@ -18,6 +18,7 @@ def test_agent_c_launch_grants_nested_agent_tool():
         "Wait for all spawned agents", 1
     )[0]
     assert "subagent_type: gaze-pr-review" in agent_c
+    assert "missing at the bounded collection deadline" in agent_c
 
 
 def test_agent_c_missing_fanout_is_visible_in_both_pr_comments():
