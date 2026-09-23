@@ -330,15 +330,21 @@ _keystore_value() {  # $1 provider file, $2 validated variable name
     _keystore_file_is_safe "$file" || return 3
     marked="$(command -p env -i bash -c '
         set -a
-        . "$1" >/dev/null 2>&1 || exit 3
-        [ -z "${!2+x}" ] && exit 4
-        declaration="$(declare -p "$2" 2>/dev/null)" || exit 4
-        case "$declaration" in
-            "declare -a "*|"declare -A "*) exit 5 ;;
-        esac
-        # Prefix proves completion; suffix prevents command substitution from
-        # stripping a trailing LF out of the credential before validation.
-        printf "v%sx" "${!2}"
+        [ -r "$1" ] || exit 3
+        __idh_emit_credential() {
+            [ -z "${!1+x}" ] && exit 4
+            declaration="$(declare -p "$1" 2>/dev/null)" || exit 4
+            case "$declaration" in
+                "declare -a "*|"declare -A "*) exit 5 ;;
+            esac
+            # Prefix proves completion; suffix preserves a trailing LF.
+            printf "v%sx" "${!1}"
+            exit 0
+        }
+        # A sourced provider may end in a failed command or call exit. Extract
+        # on shell exit so either path can use a value already defined above.
+        trap '\''__idh_emit_credential "$2"'\'' EXIT
+        . "$1" >/dev/null 2>&1 || :
     ' _ "$file" "$name")" || rc=$?
     [ "$rc" -eq 0 ] || return "$rc"
     # No marker means the sourced provider exited before extraction completed.
