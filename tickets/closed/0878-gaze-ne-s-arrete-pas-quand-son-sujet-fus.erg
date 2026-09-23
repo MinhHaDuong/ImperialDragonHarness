@@ -2,10 +2,12 @@
 Title: gaze ne s'arrete pas quand son sujet fusionne, et continue de porter sur une merge request morte
 Created: 2026-09-08
 Author: claude
+Closed: autoclosed — PR #977
 
 --- log ---
 2026-09-08T07:38Z claude created constate en tuant deux agents orphelins : leur derniere ligne disait avoir vu la fusion et poursuivait quand meme
 
+2026-09-23T15:49Z Minh Ha-Duong closed — autoclosed — PR #977
 --- body ---
 ## Context
 
