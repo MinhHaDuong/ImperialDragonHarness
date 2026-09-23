@@ -58,7 +58,7 @@ Reviewing a branch in another repository (a fork of an upstream project, say):
   REVIEWERS_PR_BRANCH=<branch>  skip the forge lookup for the head branch
 Without the first, a branch that lives elsewhere fails as an unknown pathspec.
 
-`request` exits non-zero when cli/model seats were attempted and none of them ran.
+`request` exits non-zero when cli/model seats were configured and none of them ran.
 Per-seat fail-open is unchanged: one seat failing never blocks the others.
 EOF
 }
@@ -476,6 +476,10 @@ case "$subcmd" in
                 cli-agent|local-model)
                     # Per-seat fail-open: a seat that errors WARNs and the
                     # others proceed — one seat never blocks the verdict (0205).
+                    # Count this seat before credential resolution: skipping
+                    # every local seat for missing keys is still no review.
+                    # Forge-only rosters remain outside this local gate.
+                    attempted=$((attempted+1))
                     # Thread the credential-env NAME only when the seat sets it;
                     # a local, unauthenticated endpoint carries no credential.
                     cred_args=()
@@ -500,22 +504,6 @@ case "$subcmd" in
                     # seats run async server-side and get no sidecar — there is
                     # nothing local to time.
                     #
-                    # `attempted` counts the seats actually handed to the
-                    # seat-runner, so it is incremented HERE and not before the
-                    # credential gate above. That boundary is an arbitration
-                    # between two tickets' contracts, recorded rather than
-                    # decided: 0870 (settled by PR #793) says a panel that
-                    # produced no verdict must exit non-zero, and a seat skipped
-                    # for an unresolved credential produced none either; 0393
-                    # (open) says an unresolved credential stays fail-open
-                    # (0205) and is reported on `harvest`'s STDOUT as
-                    # SEAT-FAILED / PANEL-INTEGRITY, which is the
-                    # channel the panel's reader actually sees. Counting it here
-                    # keeps both tickets' own tests true. The residual case —
-                    # a roster whose EVERY seat is credential-skipped exits 0,
-                    # loud on harvest's report but silent to a caller gating on
-                    # the exit status — is noted in ticket 0393 for the author.
-                    attempted=$((attempted+1))
                     t0=$(date +%s.%N)
                     _seat_exec "$ce" --repo "$REPO_ROOT" --branch "$branch" \
                         --endpoint "$ep" --model "$mo" --out "${dest}/${name}.findings" \
@@ -553,8 +541,8 @@ case "$subcmd" in
         # Placed AFTER the `unrun` report so a caller that gates on the exit status
         # still gets the per-seat detail on the way out.
         if [ "$attempted" -gt 0 ] && [ "$ran" -eq 0 ]; then
-            echo "request: no seat reviewed MR #${pr} — all ${attempted} attempted seat(s) failed;" \
-                 "see ${dest}/*.err. This is not an approval." >&2
+            echo "request: no seat reviewed MR #${pr} — all ${attempted} configured cli/model seat(s) failed or were skipped;" \
+                 "see ${dest}/*.status and any *.err. This is not an approval." >&2
             exit 1
         fi
         ;;
