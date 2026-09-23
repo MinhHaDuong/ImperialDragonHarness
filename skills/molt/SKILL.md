@@ -133,11 +133,22 @@ Run full repo housekeeping and act on every finding.
    3. **Symbol presence**: `grep -qE '^(def|class|func) <name>' <file>`
 
    If *all* of a ticket's exit criteria reduce to these shapes AND all
-   pass: record its `tickets/<id>-*.erg` path in `MOLT_CLOSED_TICKET_PATHS`
-   (one path per line) **before** running `erg close <id> already-done`.
-   `erg close` may move it into `tickets/closed/` immediately. Keep the paths
-   for step 2.6; the close lands in the housekeeping branch's sweep commit.
-   Log each closure as a fix-now
+   pass, run the following **as one shell command** for each qualifying ID.
+   Keep the path lookup, close, and staging together: shell variables do not
+   survive separate Bash tool calls.
+
+   ```bash
+   ticket_id=<id>
+   source=$(find tickets -maxdepth 1 -type f -name "${ticket_id}-*.erg" -print -quit)
+   [ -n "$source" ] || { echo "No open ticket file for $ticket_id" >&2; exit 1; }
+   tickets/erg close "$ticket_id" already-done tickets/
+   git add -u -- "$source"
+   destination="tickets/closed/$(basename "$source")"
+   [ ! -f "$destination" ] || git add -- "$destination"
+   ```
+
+   Current `erg` moves the file on close; older `erg` leaves it at the source
+   path until step 2.6 archives it. Log each closure as a fix-now
    action and include it in the step 3 commit. If *any* criterion is vague
    or cannot be reduced to these shapes → leave the ticket open.
 
@@ -148,22 +159,20 @@ Run full repo housekeeping and act on every finding.
 
    ```bash
    # Older erg moves files here; current erg may already have moved them on
-   # close. In either case stage the recorded source and its exact destination.
+   # close. Stage only paths reported by this archive call.
    archive_output=$(tickets/erg archive tickets/ 2>/dev/null) || true
-   paths_to_stage=${MOLT_CLOSED_TICKET_PATHS:-}
    while IFS= read -r line; do
      case "$line" in
-       "ARCHIVED "*) paths_to_stage+="${paths_to_stage:+$'\n'}tickets/${line#ARCHIVED }" ;;
+       "ARCHIVED "*)
+         source="tickets/${line#ARCHIVED }"
+         if git ls-files --error-unmatch -- "$source" >/dev/null 2>&1; then
+           git add -u -- "$source"
+         fi
+         destination="tickets/closed/$(basename "$source")"
+         [ ! -f "$destination" ] || git add -- "$destination"
+         ;;
      esac
    done <<< "$archive_output"
-   while IFS= read -r source; do
-     [ -n "$source" ] || continue
-     if git ls-files --error-unmatch -- "$source" >/dev/null 2>&1; then
-       git add -u -- "$source"  # tracked source modification or deletion
-     fi
-     destination="tickets/closed/$(basename "$source")"
-     [ ! -f "$destination" ] || git add -- "$destination"
-   done <<< "$paths_to_stage"
    ```
 
    The guarded archive moves any remaining ticket with a non-empty `Closed:`

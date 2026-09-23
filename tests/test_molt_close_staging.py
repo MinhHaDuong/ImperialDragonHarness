@@ -27,6 +27,15 @@ def archive_commands():
     return "\n".join(re.findall(r"```bash\n(.*?)\n\s*```", section, re.S))
 
 
+def close_commands():
+    section = MOLT.read_text().split("2.5. **Audit open-ticket exit criteria.**", 1)[1].split(
+        "2.6. **Archive closed tickets.**", 1
+    )[0]
+    blocks = re.findall(r"```bash\n(.*?)\n\s*```", section, re.S)
+    assert len(blocks) == 1, "step 2.5 must show one atomic close/staging command"
+    return blocks[0].replace("<id>", "0001")
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize(
     ("old_binary", "recorded_close"),
@@ -64,8 +73,12 @@ def test_molt_closure_commit_tracks_archive_without_strays(tmp_path, old_binary,
         erg = ROOT / "tickets/erg"
     env = os.environ.copy()
     env["MOLT_ERG"] = str(erg)
-    env["MOLT_CLOSED_TICKET_PATHS"] = "tickets/0001-probe.erg" if recorded_close else ""
-    run(str(erg), "close", "0001", "already-done", "tickets/", cwd=repo)
+    if recorded_close:
+        run("bash", "-e", "-c", close_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
+    else:
+        # A ticket closed in an earlier command on old erg is archived by 2.6.
+        run(str(erg), "close", "0001", "already-done", "tickets/", cwd=repo)
+    # A new Bash process proves the handoff does not depend on shell variables.
     run("bash", "-e", "-c", archive_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
     run("git", "commit", "-qm", "chore: housekeeping fixes (sweep)", cwd=repo)
 
