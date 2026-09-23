@@ -17,6 +17,11 @@ def main() -> int:
     model = os.environ["SEAT_MODEL"]
     if model.startswith("openai/"):
         model = model[len("openai/") :]
+    # Bound prompt cost and wall time. A larger diff is not silently truncated:
+    # the seat fails loud, leaving the regular panel to handle that PR.
+    if os.path.getsize("/review.diff") > 32768:
+        print("direct-client: diff exceeds 32768-byte local review limit", file=sys.stderr)
+        return 1
     with open("/review.diff", encoding="utf-8") as f:
         diff = f.read()
     instructions = (

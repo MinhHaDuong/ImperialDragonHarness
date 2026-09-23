@@ -61,7 +61,10 @@ For an on-demand Padmé-only trial, run
 forward to the existing llama-server, uses `panel-padme.yml` and the bounded
 direct client inside the same read-only seat sandbox, then closes the forward.
 Run `skills/reviewers/padme-reviewers.sh harvest <pr>` to read that trial's
-findings. The regular roster and its paid seats are not invoked by this path.
+findings. Its sidecars live under `${TMPDIR:-/tmp}/reviewers-padme` by default,
+away from the regular panel's sidecars. The regular roster and its paid seats
+are not invoked by this path. The local client fails loud for diffs above
+32,768 bytes so the bounded trial never silently truncates a large PR.
 
 `skills/reviewers/benchmark-board.yml` is the frozen audition board: ~10
 already-merged multi-file code PRs of this repo, each with `base`/`head` commit
