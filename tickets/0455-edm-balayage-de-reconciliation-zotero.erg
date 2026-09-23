@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-08-14T18:30Z claude note Relecture du code et mesure de la bibliothèque : six défauts ajoutés (cadrage bibliothèque, pièces jointes subordonnées, miroir local périmé, inject sans garde, lots de 50, sérialisation). Câblage retargeté de /lair étape 8 vers /molt.
 
 2026-09-23T16:47Z Codex note 2026-09-23 reassessment: matcher Actions 1-2 landed via PR #735; 0410 is closed; all three original 0075 files are already in Zotero by exact storageHash, so do not re-inject them. Phase 1 is report-only BibTeX/staging discovery and dedup audit. Remaining ledger, guarded injection, batching, /molt wiring, and a fresh controlled live pilot stay open; project tickets 0031 and 0300 own their corpus-specific cleanup.
+2026-09-23T17:18Z Codex note Tooling review written in skills/zotero-import/references/backfill.md: native Zotero Web API is reused; Better BibTeX is absent and does not prove upload; installed plugins are empty; zotero-mcp would still require the same guard and ledger; local connector requires a running desktop client and cannot serve headless /molt. Phase 2 adds project opt-in, durable replay ledger, bounded batches and rate handling. Read-only pilot in polycentric_activity found 287 exact files, 3 works with a different file, 1 ambiguous, 6 orphans without a match, and 7 duplicate BibTeX references that make the sweep unchecked. No live writes made. Controlled positive write pilot remains open.
 --- body ---
 ## Context
 L'acquisition d'une source produit aujourd'hui trois écritures — le PDF dans
@@ -314,5 +315,7 @@ d'objets visés par la contrainte (3) de l'auteur. Livrer le mode rapport avant
       client Zotero éteint compris
 - [ ] La dédup mord sur un livre pré-DOI, prouvé par un test qui échoue si on
       retire la clé non-DOI
-- [ ] La dette du ticket 0075 de `polycentric_activity` est soldée par le
-      balayage lui-même, pas à la main
+- [ ] Un PDF neuf dans une bibliothèque Zotero de test contrôlée est injecté
+      par le balayage, puis reconnu au second passage sans synchronisation du
+      client. Les trois PDF du ticket 0075 sont déjà présents par hash exact
+      (constaté le 2026-09-23) et ne doivent pas être réinjectés.

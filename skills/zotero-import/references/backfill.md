@@ -32,6 +32,31 @@ Resolve any `errors` and inspect `ambiguous` rows before taking action. An
 auto-inject it. The command reuses the cached Web API index; `--refresh`
 updates it first.
 
+For unattended import, the project owner opts in with a root-level
+`.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`
+(an optional `collection` key files created items there). Then run
+`reconcile . --apply`, or let `/molt` call it at the next maintenance. The
+script locks staging and the user library, pulls a fresh index, and creates
+only absent PDFs with corroborated title/author metadata. Missing metadata,
+weak matches, ties, and discovery errors remain visible in `deferred` or
+`errors`; they cannot become an automatic write. The default invocation stays
+report-only. `inject` itself now consults the fresh index and append-only
+file-md5 ledger; use `--force` only after inspecting a legitimate exception.
+Successful creates enter the ledger before attachment upload so a failed
+upload can resume under the same Zotero parent. Writes are sent in at most
+50-item requests, and Zotero's `Backoff` / `Retry-After` headers are honored.
+
+The 2026-09-23 tooling review found no existing unattended replacement for
+this exact staging-to-library sweep. Zotero's native API supplies the actual
+write and attachment protocol, but does not discover project BibTeX or stage
+orphans. Better BibTeX is not installed in the checked Zotero profile and its
+export mapping does not prove that a staged PDF was uploaded. The installed
+plugin roster was empty at review time. `zotero-mcp` would still need the
+same project discovery, duplicate guard, and durable replay state; adding it
+would increase moving parts for this workflow. The local Zotero connector API
+requires a running desktop client, whereas headless `/molt` must work without
+one. The helper therefore reuses the existing Web API index and upload path.
+
 `audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
 

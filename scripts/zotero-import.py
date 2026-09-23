@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import io
 import json
 import logging
 import os
@@ -24,6 +25,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import configparser
+import contextlib
+import email.utils
+import fcntl
+from datetime import datetime, timezone
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
@@ -1108,8 +1113,36 @@ def api_request(method: str, path: str, key: str,
         req.add_header("Content-Type", content_type)
     for h, v in (extra_headers or {}).items():
         req.add_header(h, v)
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        raw = resp.read()
+    # Zotero can request a pause even after a successful response.  A 429 is
+    # rejected before writing, so it is safe to retry; other failed POSTs may
+    # have created items and must be reconciled instead of replayed blindly.
+    global _API_BACKOFF_UNTIL
+    for attempt in range(5):
+        delay = _API_BACKOFF_UNTIL - time.monotonic()
+        if delay > MAX_RATE_WAIT:
+            raise RuntimeError(f"Zotero Backoff exceeds {MAX_RATE_WAIT}s; stop "
+                               "and retry later")
+        if delay > 0:
+            time.sleep(delay)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                raw = resp.read()
+                backoff = resp.headers.get("Backoff")
+                if backoff:
+                    seconds = _rate_delay(backoff)
+                    if seconds is not None:
+                        _API_BACKOFF_UNTIL = max(_API_BACKOFF_UNTIL,
+                                                 time.monotonic() + seconds)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code != 429 or attempt == 4:
+                raise
+            retry = exc.headers.get("Retry-After") if exc.headers else None
+            seconds = _rate_delay(retry)
+            delay = seconds if seconds is not None else 2 ** attempt
+            if delay > MAX_RATE_WAIT:
+                raise
+            time.sleep(delay)
     if not raw:
         return None
     try:
@@ -1118,7 +1151,33 @@ def api_request(method: str, path: str, key: str,
         return raw.decode("utf-8", "replace")
 
 
-def upload_attachment(user: str, key: str, parent: str, pdf: Path) -> str:
+_API_BACKOFF_UNTIL = 0.0
+MAX_RATE_WAIT = 300.0
+
+
+def _rate_delay(value: str | None) -> float | None:
+    """Parse Zotero seconds or an HTTP-date; malformed values use fallback."""
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+    except ValueError:
+        try:
+            when = email.utils.parsedate_to_datetime(value)
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=timezone.utc)
+            seconds = (when - datetime.now(timezone.utc)).total_seconds()
+        except (TypeError, ValueError, OverflowError):
+            return None
+    if not (0 <= seconds < float("inf")):
+        return None
+    return seconds
+
+
+def upload_attachment(user: str, key: str, parent: str, pdf: Path,
+                      *, existing_key: str | None = None,
+                      on_before_create: Any = None,
+                      on_created: Any = None) -> str:
     """Create an imported_file attachment under parent and upload the PDF.
 
     Returns the attachment item key. Zotero's three-step contract: register
@@ -1133,9 +1192,16 @@ def upload_attachment(user: str, key: str, parent: str, pdf: Path) -> str:
         "filename": pdf.name,
         "contentType": "application/pdf",
     }]
-    created = api_request("POST", f"/users/{user}/items", key,
-                          json.dumps(att).encode())
-    att_key = created["successful"]["0"]["key"]
+    if existing_key:
+        att_key = existing_key
+    else:
+        if on_before_create:
+            on_before_create()
+        created = api_request("POST", f"/users/{user}/items", key,
+                              json.dumps(att).encode())
+        att_key = created["successful"]["0"]["key"]
+        if on_created:
+            on_created(att_key)
 
     data = pdf.read_bytes()
     form = urllib.parse.urlencode({
@@ -1225,34 +1291,141 @@ def cmd_inject(args: argparse.Namespace) -> int:
         return 0
 
     user, key = resolve_credentials(args)
-    results: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = [
+        {"title": entry.get("title"), "corroboration": check["confidence"]}
+        for entry, check in zip(entries, checks)]
     status = 0
-    created = api_request("POST", f"/users/{user}/items", key,
-                          json.dumps(items).encode())
-    for idx, entry in enumerate(entries):
-        row: dict[str, Any] = {"title": entry.get("title"),
-                               "corroboration": checks[idx]["confidence"]}
-        ok = created.get("successful", {}).get(str(idx))
-        if not ok:
-            row["error"] = created.get("failed", {}).get(str(idx),
-                                                         "not created")
-            results.append(row)
-            status = 1
-            continue
-        row["itemKey"] = ok["key"]
-        if entry.get("attach_pdf") and (p := entry.get("pdf")):
-            pdf = Path(p)
-            if pdf.exists():
-                try:
-                    row["attachmentKey"] = upload_attachment(
-                        user, key, ok["key"], pdf)
-                except (urllib.error.URLError, KeyError, OSError) as exc:
-                    row["attachment_error"] = f"{type(exc).__name__}: {exc}"
-                    status = 1
-            else:
-                row["attachment_error"] = "pdf not found"
+    force = getattr(args, "force", False)
+    with injection_lock(user):
+        ledger = read_injection_ledger(user)
+        # A fresh Web API index is mandatory before creating new items.  The
+        # desktop mirror and a cached index can both lag yesterday's write.
+        index = (None if force else
+                 getattr(args, "_fresh_index", None) or build_index(user, key))
+        pending: list[tuple[int, dict[str, Any], str | None]] = []
+        seen: set[str] = set()
+        for n, entry in enumerate(entries):
+            row = results[n]
+            pdf = Path(entry["pdf"]) if entry.get("pdf") else None
+            if not force and (pdf is None or not pdf.is_file()):
+                row["error"] = "no readable PDF for duplicate guard; use --force"
                 status = 1
-        results.append(row)
+                continue
+            digest = file_md5(pdf) if pdf and pdf.is_file() else None
+            if digest and not force and digest in seen:
+                row["error"] = "same file appears twice in this batch"
+                status = 1
+                continue
+            if digest:
+                seen.add(digest)
+            previous = ledger.get(digest) if digest else None
+            if previous and previous["state"] in {"creating", "attachment_creating"}:
+                row["error"] = ("earlier Zotero response was lost; inspect "
+                                "remote library before retrying this file")
+                status = 1
+                continue
+            if previous and previous["state"] == "failed":
+                previous = None
+            if previous and not force:
+                row["itemKey"] = previous["itemKey"]
+                row["status"] = "already_in_ledger"
+                if (entry.get("attach_pdf") and pdf and
+                        not previous.get("uploadComplete")):
+                    try:
+                        attachment = upload_attachment(user, key,
+                            previous["itemKey"], pdf,
+                            existing_key=previous.get("attachmentKey"),
+                            on_before_create=lambda: append_injection_ledger(
+                                user, digest, previous["itemKey"],
+                                state="attachment_creating"),
+                            on_created=lambda att: append_injection_ledger(
+                                user, digest, previous["itemKey"],
+                                attachment_key=att))
+                        append_injection_ledger(user, digest,
+                                                previous["itemKey"],
+                                                attachment_key=attachment,
+                                                upload_complete=True)
+                        ledger[digest]["attachmentKey"] = attachment
+                        ledger[digest]["uploadComplete"] = True
+                        row["attachmentKey"] = attachment
+                        row["status"] = "attachment_resumed"
+                    except (urllib.error.URLError, KeyError, OSError,
+                            RuntimeError) as exc:
+                        row["attachment_error"] = str(exc)
+                        status = 1
+                continue
+            if not force:
+                author = (entry.get("authors") or [""])[0]
+                match = api_matches(index, pdf_path=pdf,
+                                    title=entry.get("title"),
+                                    doi=entry.get("doi"), isbn=entry.get("isbn"),
+                                    year=str(entry.get("year") or ""),
+                                    first_author=first_author_surname(author))
+                if match["matches"]:
+                    row["error"] = "duplicate or ambiguous library match"
+                    row["matches"] = match["matches"][:5]
+                    status = 1
+                    continue
+            pending.append((n, entry, digest))
+
+        for start in range(0, len(pending), 50):
+            batch = pending[start:start + 50]
+            for _, _, digest in batch:
+                if digest:
+                    append_injection_ledger(user, digest, None,
+                                            state="creating")
+            try:
+                created = api_request("POST", f"/users/{user}/items", key,
+                                      json.dumps([items[n] for n, _, _ in batch])
+                                      .encode())
+            except (urllib.error.URLError, OSError, RuntimeError) as exc:
+                # A failed POST may have reached Zotero. Do not replay it in
+                # this run; the next run refreshes the remote index first.
+                for n, _, _ in batch:
+                    results[n]["error"] = f"create outcome unknown: {exc}"
+                for n, _, _ in pending[start + 50:]:
+                    results[n]["error"] = "not attempted after uncertain batch"
+                status = 1
+                break
+            for offset, (n, entry, digest) in enumerate(batch):
+                row = results[n]
+                ok = created.get("successful", {}).get(str(offset))
+                if not ok:
+                    row["error"] = created.get("failed", {}).get(
+                        str(offset), "not created")
+                    if digest and str(offset) in created.get("failed", {}):
+                        append_injection_ledger(user, digest, None,
+                                                state="failed")
+                    status = 1
+                    continue
+                item_key = ok["key"]
+                row["itemKey"] = item_key
+                row["status"] = "created"
+                if digest:
+                    append_injection_ledger(user, digest, item_key)
+                    ledger[digest] = {"itemKey": item_key}
+                if entry.get("attach_pdf") and entry.get("pdf"):
+                    try:
+                        attachment = upload_attachment(
+                            user, key, item_key, Path(entry["pdf"]),
+                            on_before_create=(
+                                lambda: append_injection_ledger(
+                                    user, digest, item_key,
+                                    state="attachment_creating"))
+                            if digest else None,
+                            on_created=(
+                                lambda att: append_injection_ledger(
+                                    user, digest, item_key, attachment_key=att))
+                            if digest else None)
+                        row["attachmentKey"] = attachment
+                        if digest:
+                            append_injection_ledger(user, digest, item_key,
+                                                    attachment_key=attachment,
+                                                    upload_complete=True)
+                    except (urllib.error.URLError, KeyError, OSError,
+                            RuntimeError) as exc:
+                        row["attachment_error"] = str(exc)
+                        status = 1
     json.dump({"library": f"users/{user}", "results": results},
               sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
@@ -1487,6 +1660,97 @@ def file_md5(path: Path, chunk: int = 1 << 20) -> str:
         for block in iter(lambda: fh.read(chunk), b""):
             h.update(block)
     return h.hexdigest()
+
+
+def injection_ledger_path(user: str) -> Path:
+    if not re.fullmatch(r"[0-9]+", user):
+        raise ValueError("Zotero user id must be numeric")
+    return INDEX_CACHE_DIR / f"injections-{user}.jsonl"
+
+
+def read_injection_ledger(user: str) -> dict[str, dict[str, Any]]:
+    """Last durable event for each content hash. A damaged line fails closed."""
+    path = injection_ledger_path(user)
+    found: dict[str, dict[str, Any]] = {}
+    if not path.exists():
+        return found
+    for number, line in enumerate(path.read_text().splitlines(), 1):
+        try:
+            event = json.loads(line)
+            digest = event["md5"]
+            state = event.get("state")
+            item_key = event.get("itemKey")
+            attachment_key = event.get("attachmentKey")
+            if (event["user"] != user or
+                    not re.fullmatch(r"[0-9a-f]{32}", digest) or
+                    state not in {
+                        "creating", "failed", "created", "attachment_creating",
+                        "attachment_created", "uploaded"} or
+                    (state in {"creating", "failed"} and item_key is not None) or
+                    (state not in {"creating", "failed"} and
+                     not isinstance(item_key, str)) or
+                    (item_key is not None and
+                     not re.fullmatch(r"[A-Z0-9]{8}", item_key)) or
+                    (attachment_key is not None and
+                     (not isinstance(attachment_key, str) or
+                      not re.fullmatch(r"[A-Z0-9]{8}", attachment_key)))):
+                raise ValueError("invalid event")
+        except (ValueError, KeyError, TypeError) as exc:
+            raise ValueError(f"damaged injection ledger {path}:{number}") from exc
+        found[digest] = event
+    return found
+
+
+def append_injection_ledger(user: str, digest: str, item_key: str | None,
+                            *, attachment_key: str | None = None,
+                            upload_complete: bool = False,
+                            state: str | None = None) -> None:
+    """Persist the parent key before uploading; failed uploads can resume."""
+    path = injection_ledger_path(user)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    state = state or ("uploaded" if upload_complete else
+                      "attachment_created" if attachment_key else "created")
+    event = {"user": user, "md5": digest, "itemKey": item_key,
+             "attachmentKey": attachment_key,
+             "uploadComplete": upload_complete,
+             "state": state,
+             "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    # O_APPEND and fsync make each successful parent recoverable after a crash.
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    try:
+        os.write(fd, (json.dumps(event) + "\n").encode())
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+@contextlib.contextmanager
+def injection_lock(user: str):
+    """Serialize check -> create -> ledger across local sweep processes."""
+    path = injection_ledger_path(user).with_suffix(".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+@contextlib.contextmanager
+def staging_locks(directories: list[Path]):
+    """One advisory lock per staging root, acquired in stable order."""
+    with contextlib.ExitStack() as stack:
+        for directory in sorted(set(directories)):
+            if directory.is_dir():
+                lock_dir = INDEX_CACHE_DIR / "staging-locks"
+                lock_dir.mkdir(parents=True, exist_ok=True)
+                digest = hashlib.sha256(str(directory.resolve()).encode()).hexdigest()
+                handle = stack.enter_context((lock_dir / f"{digest}.lock")
+                                             .open("a+"))
+                fcntl.flock(handle, fcntl.LOCK_EX)
+                stack.callback(fcntl.flock, handle, fcntl.LOCK_UN)
+        yield
 
 
 def index_path(user: str) -> Path:
@@ -2257,7 +2521,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
 
 
 def cmd_reconcile(args: argparse.Namespace) -> int:
-    """Report BibTeX-linked files and staging orphans without Zotero writes."""
+    """Report by default; apply only with a matching project opt-in file."""
     root = Path(args.root).resolve()
     if not root.is_dir():
         json.dump({"verdict": "unchecked", "error": f"not a directory: {root}"},
@@ -2321,6 +2585,88 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
               "summary": summary,
               "actions": {k: actions[k] for k in summary},
               "rows": rows, "errors": errors}
+    apply_rc = 0
+    if getattr(args, "apply", False):
+        config_path = root / ".zotero-reconcile.json"
+        try:
+            config = json.loads(config_path.read_text())
+            if config.get("apply") is not True:
+                raise ValueError("apply must be true")
+            if str(config.get("user_id")) != str(user):
+                raise ValueError("configured user_id differs from target library")
+            if errors:
+                raise ValueError("discovery or audit is unchecked")
+            with staging_locks(found["staging_dirs"]):
+                # Recompute after acquiring the lock. Another sweep may have
+                # completed while this process waited for the staging root.
+                fresh = build_index(user, key)
+                sources = found["linked"] + [
+                    {"path": path, "entry": {}} for path in found["orphans"]]
+                jobs = []
+                job_paths = []
+                deferred = []
+                for source in sources:
+                    path = source["path"]
+                    current = audit_one(path, fresh,
+                                        bib_entry=source.get("entry"))
+                    if current["verdict"] != "absent":
+                        continue
+                    entry = bib_to_inject_entry(source.get("entry") or {}, path)
+                    if entry is None or corroborate_entry(entry)["confidence"] != "corroborated":
+                        deferred.append({"file": str(path.relative_to(root)),
+                                         "reason": "metadata needs manual corroboration"})
+                    else:
+                        jobs.append(entry)
+                        job_paths.append(path)
+                report["deferred"] = deferred
+                if deferred:
+                    summary["deferred"] = len(deferred)
+                    report["actions"]["deferred"] = "supply and corroborate metadata"
+                if jobs:
+                    write_args = argparse.Namespace(
+                        user_id=user, api_key=getattr(args, "rw_api_key", None))
+                    write_user, write_key = resolve_credentials(write_args)
+                    if write_user != user:
+                        raise ValueError("write credential targets another user")
+                    inject_args = argparse.Namespace(
+                        entries_json=json.dumps(jobs), entries_file=None,
+                        collection=config.get("collection"), user_id=user,
+                        api_key=write_key, dry_run=False,
+                        skip_corroboration=False, force=False,
+                        _fresh_index=fresh)
+                    captured = io.StringIO()
+                    with contextlib.redirect_stdout(captured):
+                        apply_rc = cmd_inject(inject_args)
+                    report["applied"] = json.loads(captured.getvalue())["results"]
+                    for path, result in zip(job_paths, report["applied"]):
+                        result["file"] = str(path.relative_to(root))
+                        if result.get("status") == "created":
+                            summary["absent"] -= 1
+                            summary["injected"] = summary.get("injected", 0) + 1
+                    if summary.get("absent") == 0:
+                        summary.pop("absent", None)
+                    if summary.get("injected"):
+                        report["actions"]["injected"] = "created in Zotero"
+                    failures = sum(1 for result in report["applied"]
+                                   if result.get("error") or
+                                   result.get("attachment_error"))
+                    if failures:
+                        summary["failed_write"] = failures
+                        report["actions"]["failed_write"] = (
+                            "inspect outcome and retry only after reconciliation")
+                    report["apply_status"] = (
+                        "partial" if failures else
+                        "deferred" if deferred else "applied")
+                else:
+                    report["applied"] = []
+                    report["apply_status"] = "deferred" if deferred else "nothing"
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError,
+                urllib.error.URLError) as exc:
+            report["apply_error"] = str(exc)
+            report["apply_status"] = "failed"
+            summary["apply_failed"] = 1
+            report["actions"]["apply_failed"] = "inspect error; no clean sweep"
+            apply_rc = 1
     if args.out:
         Path(args.out).write_text(json.dumps(report, indent=2,
                                             ensure_ascii=False) + "\n")
@@ -2328,7 +2674,35 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                      if args.out else report)
     json.dump(stdout_report, sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
-    return 1 if errors else 0
+    return 1 if errors or apply_rc else 0
+
+
+def bib_to_inject_entry(bib: dict[str, Any], path: Path) -> dict[str, Any] | None:
+    """Use curated BibTeX first; accept orphan PDF metadata only if complete."""
+    info = pdfinfo(path) if path.suffix.lower() == ".pdf" else {}
+    title = str(bib.get("title") or info.get("Title") or "").strip()
+    author = str(bib.get("author") or info.get("Author") or "").strip()
+    year = str(bib.get("year") or "").strip()
+    if not year:
+        m = YEAR_RE.search(str(info.get("CreationDate") or path.name))
+        year = m.group() if m else ""
+    if not (title and author and year and path.suffix.lower() == ".pdf"):
+        return None
+    types = {"article": "JOUR", "book": "BOOK", "inbook": "CHAP",
+             "incollection": "CHAP", "inproceedings": "CONF",
+             "proceedings": "CONF", "phdthesis": "THES",
+             "mastersthesis": "THES", "techreport": "RPRT",
+             "misc": "GEN", "unpublished": "UNPB"}
+    entry: dict[str, Any] = {
+        "type": types.get(str(bib.get("_type", "")).lower(), "GEN"),
+        "title": title, "authors": [a.strip() for a in author.split(" and ")],
+        "year": year, "pdf": str(path), "attach_pdf": True}
+    for source, target in (("doi", "doi"), ("isbn", "isbn"),
+                           ("url", "url"), ("journal", "journal"),
+                           ("publisher", "publisher"), ("pages", "pages")):
+        if bib.get(source):
+            entry[target] = str(bib[source])
+    return entry
 
 
 def cmd_attach(args: argparse.Namespace) -> int:
@@ -2423,14 +2797,19 @@ def main() -> int:
     pa.set_defaults(func=cmd_audit)
 
     pr = sub.add_parser("reconcile", help="report BibTeX-linked staging files "
-                        "and unlinked orphans against Zotero; never writes")
+                        "and unlinked orphans; explicit opt-in to apply")
     pr.add_argument("root", nargs="?", default=".",
                     help="repository root (default: current directory)")
     pr.add_argument("--out", help="write the full JSON report to this path")
     pr.add_argument("--refresh", action="store_true",
                     help="re-pull the library index first")
+    pr.add_argument("--apply", action="store_true",
+                    help="apply corroborated absent PDFs only when the project "
+                         "has .zotero-reconcile.json with apply=true and "
+                         "matching user_id")
     pr.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
     pr.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+    pr.add_argument("--rw-api-key", help="write key for --apply (prefer env)")
     pr.set_defaults(func=cmd_reconcile)
 
     pt = sub.add_parser("attach",
@@ -2463,6 +2842,9 @@ def main() -> int:
     pi.add_argument("--skip-corroboration", action="store_true",
                     help="create items even when the metadata is contradicted "
                          "by the PDF's own front matter (default: refuse)")
+    pi.add_argument("--force", action="store_true",
+                    help="explicitly bypass the library and ledger duplicate "
+                         "guard; use only after examining matches")
     pi.set_defaults(func=cmd_inject)
 
     pe = sub.add_parser("enrich",

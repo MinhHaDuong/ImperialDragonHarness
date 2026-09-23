@@ -1769,13 +1769,16 @@ def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys
                                  "online optimization",
         "authors": ["Albers, Susanne"], "pdf": str(pdf)}]))
     monkeypatch.setattr(zi, "api_request",
-                        lambda *a, **k: {"successful": {"0": {"key": "ZZZ"}}})
+                        lambda *a, **k: {"successful": {"0": {"key": "ZZZZZZZZ"}}})
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),
                               collection=None, user_id="1", api_key="k",
                               dry_run=False, skip_corroboration=True)
     assert zi.cmd_inject(args) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["results"][0]["itemKey"] == "ZZZ"
+    assert out["results"][0]["itemKey"] == "ZZZZZZZZ"
     assert out["results"][0]["corroboration"] == "contradicted"
 
 
@@ -1797,6 +1800,205 @@ def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
     assert out["items"][0]["title"] == "Coherent Measures of Risk"
 
 
+def test_inject_batches_51_and_ledger_prevents_second_create(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    calls = []
+
+    def fake_request(method, path, key, body=None, **kw):
+        assert method == "POST"
+        batch = json.loads(body)
+        calls.append(len(batch))
+        return {"successful": {str(i): {"key": f"{len(calls):04d}{i:04d}"}
+                               for i in range(len(batch))}}
+
+    monkeypatch.setattr(zi, "api_request", fake_request)
+    entries = []
+    for n in range(51):
+        pdf = tmp_path / f"p{n}.pdf"
+        pdf.write_bytes(f"distinct {n}".encode())
+        entries.append({"title": f"Article {n}", "authors": ["Smith, Jane"],
+                        "year": "2020", "pdf": str(pdf)})
+    args = argparse.Namespace(entries_json=json.dumps(entries),
+                              entries_file=None, collection=None, user_id="1",
+                              api_key="key", dry_run=False,
+                              skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 0
+    first = json.loads(capsys.readouterr().out)
+    assert calls == [50, 1]
+    assert len(first["results"]) == 51
+    assert len(zi.read_injection_ledger("1")) == 51
+    assert zi.cmd_inject(args) == 0
+    second = json.loads(capsys.readouterr().out)
+    assert calls == [50, 1]
+    assert all(r["status"] == "already_in_ledger" for r in second["results"])
+
+
+def test_inject_fails_closed_on_damaged_ledger(tmp_path, monkeypatch):
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path)
+    zi.injection_ledger_path("1").write_text("not-json\n")
+    with pytest.raises(ValueError, match="damaged injection ledger"):
+        zi.read_injection_ledger("1")
+
+
+def test_inject_resumes_attachment_without_recreating_parent(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"new paper")
+    creates = []
+
+    def fake_request(method, path, key, body=None, **kw):
+        creates.append(path)
+        return {"successful": {"0": {"key": "ABCDEFGH"}}}
+
+    monkeypatch.setattr(zi, "api_request", fake_request)
+    uploads = []
+
+    def fake_upload(user, key, parent, path, **kw):
+        uploads.append(parent)
+        if len(uploads) == 1:
+            raise OSError("temporary upload failure")
+        return "HGFEDCBA"
+
+    monkeypatch.setattr(zi, "upload_attachment", fake_upload)
+    args = argparse.Namespace(entries_json=json.dumps([{
+        "title": "New Paper", "authors": ["Smith, Jane"],
+        "year": "2020", "pdf": str(pdf), "attach_pdf": True}]),
+        entries_file=None, collection=None, user_id="1", api_key="key",
+        dry_run=False, skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 1
+    first = json.loads(capsys.readouterr().out)
+    assert first["results"][0]["itemKey"] == "ABCDEFGH"
+    assert zi.cmd_inject(args) == 0
+    second = json.loads(capsys.readouterr().out)
+    assert creates == ["/users/1/items"]
+    assert uploads == ["ABCDEFGH", "ABCDEFGH"]
+    assert second["results"][0]["status"] == "attachment_resumed"
+    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["attachmentKey"] == "HGFEDCBA"
+
+
+def test_inject_lost_parent_response_blocks_replay(tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"new paper")
+    posts = []
+
+    def lost_response(method, path, key, body=None, **kw):
+        posts.append(path)
+        raise urllib.error.URLError("response lost after remote create")
+
+    monkeypatch.setattr(zi, "api_request", lost_response)
+    args = argparse.Namespace(entries_json=json.dumps([{
+        "title": "New Paper", "authors": ["Smith, Jane"],
+        "year": "2020", "pdf": str(pdf)}]),
+        entries_file=None, collection=None, user_id="1", api_key="key",
+        dry_run=False, skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 1
+    capsys.readouterr()
+    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["state"] == "creating"
+    assert zi.cmd_inject(args) == 1
+    second = json.loads(capsys.readouterr().out)
+    assert posts == ["/users/1/items"]
+    assert "inspect remote library" in second["results"][0]["error"]
+
+
+def test_inject_lost_attachment_response_blocks_replay(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: {"works": [], "attachments": []})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"new paper")
+    posts = []
+
+    def lost_attachment(method, path, key, body=None, **kw):
+        posts.append(path)
+        if len(posts) == 1:
+            return {"successful": {"0": {"key": "ABCDEFGH"}}}
+        raise urllib.error.URLError("attachment response lost")
+
+    monkeypatch.setattr(zi, "api_request", lost_attachment)
+    args = argparse.Namespace(entries_json=json.dumps([{
+        "title": "New Paper", "authors": ["Smith, Jane"],
+        "year": "2020", "pdf": str(pdf), "attach_pdf": True}]),
+        entries_file=None, collection=None, user_id="1", api_key="key",
+        dry_run=False, skip_corroboration=False, force=False)
+    assert zi.cmd_inject(args) == 1
+    capsys.readouterr()
+    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["state"] == "attachment_creating"
+    assert zi.cmd_inject(args) == 1
+    second = json.loads(capsys.readouterr().out)
+    assert posts == ["/users/1/items", "/users/1/items"]
+    assert "inspect remote library" in second["results"][0]["error"]
+
+
+def test_api_request_retries_429_and_honors_backoff(monkeypatch):
+    from email.message import Message
+    headers = Message()
+    headers["Retry-After"] = "2"
+    waits = []
+    clock = [100.0]
+    monkeypatch.setattr(zi.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(zi.time, "sleep",
+                        lambda seconds: (waits.append(seconds),
+                                         clock.__setitem__(0, clock[0] + seconds)))
+    monkeypatch.setattr(zi, "_API_BACKOFF_UNTIL", 0.0)
+    calls = [0]
+
+    class Response:
+        headers = {"Backoff": "3"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b"{}"
+
+    def fake_urlopen(req, timeout):
+        calls[0] += 1
+        if calls[0] == 1:
+            raise urllib.error.HTTPError(req.full_url, 429, "rate", headers,
+                                         None)
+        return Response()
+
+    monkeypatch.setattr(zi.urllib.request, "urlopen", fake_urlopen)
+    assert zi.api_request("GET", "/users/1/items", "key") == {}
+    assert zi.api_request("GET", "/users/1/items", "key") == {}
+    assert waits == [2.0, 3.0]
+
+
+def test_rate_delay_handles_http_date_and_invalid_header():
+    from datetime import datetime, timedelta, timezone
+    from email.utils import format_datetime
+    future = format_datetime(datetime.now(timezone.utc) + timedelta(seconds=30))
+    assert 0 < zi._rate_delay(future) <= 30
+    assert zi._rate_delay("garbled") is None
+    assert zi._rate_delay("NaN") is None
+    assert zi._rate_delay("999999999999999999999999") > zi.MAX_RATE_WAIT
+
+
 def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
@@ -1816,6 +2018,115 @@ def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
     ]
     assert found["orphans"] == [orphan]
     assert found["errors"] == []
+
+
+def test_reconcile_apply_requires_matching_project_opt_in(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    docs.mkdir()
+    pdf = docs / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={An Interesting Paper}, "
+        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
+    idx = {"works": [], "attachments": [], "fetched": "now"}
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote without opt-in"))
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert "apply_error" in report
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "2"}')
+    assert zi.cmd_reconcile(args) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert "differs from target" in report["apply_error"]
+
+
+def test_reconcile_apply_imports_only_corroborated_absent_pdf(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    docs.mkdir()
+    pdf = docs / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={An Interesting Paper}, "
+        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    idx = {"works": [], "attachments": [], "fetched": "now"}
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "resolve_credentials", lambda _: ("1", "write"))
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    seen = []
+
+    def fake_inject(args):
+        seen.extend(json.loads(args.entries_json))
+        assert args.api_key == "write"
+        print(json.dumps({"results": [{"status": "created"}]}))
+        return 0
+
+    monkeypatch.setattr(zi, "cmd_inject", fake_inject)
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"] == {"injected": 1}
+    assert report["applied"] == [{"status": "created", "file": "docs/paper.pdf"}]
+    assert seen[0]["title"] == "An Interesting Paper"
+    assert seen[0]["pdf"] == str(pdf)
+
+
+def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    pdf = docs / "orphan.pdf"
+    pdf.write_bytes(b"orphan bytes")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    idx = {"works": [], "attachments": [], "fetched": "now"}
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "resolve_credentials", lambda _: ("1", "write"))
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda _: {
+        "Title": "A Newly Acquired Paper", "Author": "Jane Smith",
+        "CreationDate": "2020"})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    seen = []
+
+    def fake_inject(args):
+        seen.extend(json.loads(args.entries_json))
+        print(json.dumps({"results": [{"status": "created"}]}))
+        return 0
+
+    monkeypatch.setattr(zi, "cmd_inject", fake_inject)
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"]["injected"] == 1
+    assert seen[0]["title"] == "A Newly Acquired Paper"
+    assert seen[0]["authors"] == ["Jane Smith"]
+    assert not (docs / ".zotero-reconcile.lock").exists()
 
 
 def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
