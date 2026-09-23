@@ -210,7 +210,7 @@ Runs after consolidation. Evaluates whether any project-level entries have earne
 python3 ~/.claude/skills/dream/provenance.py candidates
 ```
 
-Output is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed) that are not yet promoted. If empty, skip to step 13.
+Stdout is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed, machine-scoped records excluded) that are not yet promoted. Stderr reports `raw=` and `canonical=` candidate counts so an alias flood is visible without breaking JSON consumers. The alias table maps known machine paths to `machine:<host>`; these are hosts, not projects. If empty, skip to step 13.
 
 **10. Evaluate each candidate against three gates (all required).**
 

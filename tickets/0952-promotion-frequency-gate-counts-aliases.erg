@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 
 2026-09-16T17:30Z claude created by the same run: 253 of 258 promotion candidates were one project counted under alias paths, so nothing was promoted
+2026-09-23T15:39Z codex reran candidates on the tracked provenance snapshot after alias and machine classification: raw=347, canonical=4. The four span chemin-de-voix and Tracing-Kieu and still need context-independence review; no promotion was applied. The 27 Oeconomia/climate-finance-het pairs also collapse: `projects/-home-haduong-CNRS-projets-actifs-climate-finance-het/memory/feedback_gh_projects_classic_error.md` records that the old Oeconomia remote redirects to climate-finance-het, so it is a rename, not a second project. The five-candidate estimate of 2026-09-16 is stale for this snapshot because machine-only `user_profile` no longer counts.
 --- body ---
 ## Context
 

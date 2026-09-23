@@ -114,8 +114,11 @@ def _canonical_project(project: str, aliases: dict) -> str:
     multi-hop table collapses fully. A visited-set guards against a cyclic table
     looping forever: on a cycle we stop and return the last resolved slug, which
     keeps the result deterministic (ticket 0270 reroll)."""
-    seen = {project}
-    current = project
+    # A dated superseded directory is the same project before a rename. Only
+    # the exact generated suffix is safe to derive; other spellings need the
+    # explicit table below.
+    current = re.sub(r"--superseded-\d{8}$", "", project)
+    seen = {current}
     while current in aliases:
         nxt = aliases[current]
         if nxt in seen:
@@ -274,13 +277,23 @@ def candidates(args):
     data = _load_provenance()
     aliases = _load_aliases()
     result = []
+    raw_count = 0
     for slug, entry in data["entries"].items():
+        if entry["promoted"]:
+            continue
+        if len(set(entry["projects"])) >= 2:
+            raw_count += 1
         # Count distinct *canonical* projects: two path-spellings of one project
         # (a relocated/symlinked tree registered under two slugs) must count once,
         # else the frequency gate promotes a single-project note (ticket 0270).
         canonical = {_canonical_project(p, aliases) for p in entry["projects"]}
-        if len(canonical) >= 2 and not entry["promoted"]:
+        # Machine-scoped memory is attached to a host, not a project. The
+        # alias table maps observed machine slugs to machine:<host> so a note
+        # copied across hosts cannot satisfy the cross-project gate.
+        projects = {p for p in canonical if not p.startswith("machine:")}
+        if len(projects) >= 2:
             result.append({"slug": slug, **entry})
+    print(f"Promotion candidates: raw={raw_count} canonical={len(result)}", file=sys.stderr)
     json.dump(result, sys.stdout, indent=2)
     print()
 
