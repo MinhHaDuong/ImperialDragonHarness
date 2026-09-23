@@ -416,9 +416,24 @@ a forked-skill boundary); it inspects the salvaged WIP via
 Salvage is the FIRST step of any restart, not an afterthought.
 (memory: feedback_agent_stall_watchdog_recovery)
 
-**Agent timeout**: If an agent has not pushed within 10 minutes, salvage its
-worktree (above), then kill it. Split the ticket or relaunch with narrower
-scope. Bump reason: `agent timeout`.
+**Agent timeout**: Record the time of each push and each observed change in
+the executor's worktree (compare status snapshots; an already-dirty tree does
+not prove recent progress). The ordinary stall window is 10 minutes since
+the latest of these. During a declared project gate, check the executor's
+worktree with `python3 "${IDH_HOME:-$HOME/.claude}/scripts/raid-breaker.py" --worktree <path>
+--last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
+`/hunt` runs the gate through `raid-gate.py`, whose short-lived heartbeat is
+keyed to this worktree. Another session's gate cannot excuse this executor,
+and a gate in another process namespace is still visible. A heartbeat older
+than 30 seconds is stale, not proof of a live gate. `GATE_RUNNING` suspends the ordinary window;
+it does not prove a pass. Set the project's maximum above a measured cold gate
+run (`gate_max_seconds` in `.idh-checks.json` when present), and record that
+budget in the raid log. `GATE_TIMEOUT` means salvage, then kill or escalate;
+never grant an unbounded exemption. On gate exit, record the exit time as the
+new progress point and resume the ordinary 10-minute window. `STALL` means
+salvage the worktree (above), then kill, split or relaunch with narrower scope.
+A WIP push after the red test improves salvage but does not exempt the later
+gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.

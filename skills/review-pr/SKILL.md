@@ -175,7 +175,7 @@ Proceed to synthesis with what landed, carrying the gap forward by name.
 1. **Preserve dissent** — surface contradictions verbatim. The human author decides.
 2. **Triage by confidence** — investigate low-confidence findings before posting.
 3. **Deduplicate** findings across agents.
-4. **Run tests**: `make check`
+4. **Run tests**: use the project's declared gate. For a mapped doc-only diff, run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and include both `selected:` and `skipped:` in the review; Python code, unmapped paths, and projects without `.idh-checks.json` run `make check`.
 5. **Write the synthesis to `<panel>/review.md` before posting it.** Findings then
    survive a forge outage, a fork that dies mid-step, and a failed post. A review
    that exists only inside a tool call's arguments is gone the moment that call

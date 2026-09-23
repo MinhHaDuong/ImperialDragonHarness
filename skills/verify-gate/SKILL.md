@@ -37,6 +37,10 @@ standalone-callable for debugging.
 2. **Exit criteria are contract.** Every item in the ticket's "Exit criteria" section must
    get an explicit ADDRESSED/MISSING verdict with evidence. A missing criterion cannot be
    papered over.
+   For a project with `.idh-checks.json`, accept a scoped gate for a mapped
+   doc-only diff only when the PR quotes both `selected:` and `skipped:` and
+   those targets match the actual changed paths. Python code, unmapped paths, or a
+   project without a map require the full gate; never label a scoped pass full.
 3. **Review comments are load-bearing.** Every review comment (from `/review`,
    `/review-pr`, human authors) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
