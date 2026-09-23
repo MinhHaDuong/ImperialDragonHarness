@@ -15,6 +15,23 @@ zotero-import.py sync-index          # ~1 min per 10k items; re-pulls every time
 zotero-import.py audit docs/ --out /tmp/audit.json
 ```
 
+For EDM projects with BibTeX, use `reconcile` to discover `.bib` files at the
+repository root and one level below it, follow their `file=` paths, and report
+both linked files and unlinked staging files. It uses the BibTeX metadata when
+matching linked files. The command is **report-only**: it never injects or
+attaches anything. It uses `docs/` as the staging default only when no `.bib`
+exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
+an empty clean report.
+
+```bash
+zotero-import.py reconcile . --out /tmp/zotero-reconcile.json
+```
+
+Resolve any `errors` and inspect `ambiguous` rows before taking action. An
+`absent` row is a proposal for a later, explicit import, not permission to
+auto-inject it. The command reuses the cached Web API index; `--refresh`
+updates it first.
+
 `audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
 

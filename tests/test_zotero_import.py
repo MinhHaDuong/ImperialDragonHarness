@@ -1795,3 +1795,241 @@ def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["corroboration"][0]["confidence"] == "corroborated"
     assert out["items"][0]["title"] == "Coherent Measures of Risk"
+
+
+def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    linked = docs / "linked.pdf"
+    orphan = docs / "orphan.pdf"
+    linked.write_bytes(b"linked")
+    orphan.write_bytes(b"orphan")
+    (tmp_path / "reading.bib").write_text(
+        "@article{levin, title={Useful Paper}, file={docs/linked.pdf}}\n"
+    )
+
+    found = zi.discover_reconcile_files(tmp_path)
+
+    assert [p.name for p in found["bib_files"]] == ["reading.bib"]
+    assert [(r["key"], r["path"]) for r in found["linked"]] == [
+        ("levin", linked)
+    ]
+    assert found["orphans"] == [orphan]
+    assert found["errors"] == []
+
+
+def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    only = docs / "only.pdf"
+    only.write_bytes(b"x")
+    assert zi.discover_reconcile_files(tmp_path)["orphans"] == [only]
+
+    (tmp_path / "empty.bib").write_text("@article{one,title={No file}}\n")
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["orphans"] == []
+    assert found["errors"], "a bib with no staging path cannot report clean"
+
+
+def test_reconcile_discovers_one_level_bib_and_better_bibtex_path(tmp_path):
+    refs = tmp_path / "refs"
+    docs = tmp_path / "docs"
+    refs.mkdir()
+    docs.mkdir()
+    pdf = docs / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    (refs / "sources.bib").write_text(
+        "@article{one, file={:../docs/paper.pdf:PDF}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert [r["path"] for r in found["linked"]] == [pdf]
+    assert found["errors"] == []
+
+
+def test_reconcile_duplicate_bib_file_link_is_not_two_import_proposals(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    pdf = docs / "one.pdf"
+    pdf.write_bytes(b"paper")
+    for name in ("one.bib", "two.bib"):
+        (tmp_path / name).write_text(
+            "@article{key, file={docs/one.pdf}}\n"
+        )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert [r["path"] for r in found["linked"]] == [pdf]
+    assert any("multiple BibTeX" in e for e in found["errors"])
+
+
+def test_reconcile_scans_staging_root_beyond_linked_subdirectory(tmp_path):
+    nested = tmp_path / "docs" / "section"
+    nested.mkdir(parents=True)
+    linked = nested / "linked.pdf"
+    orphan = tmp_path / "docs" / "orphan.pdf"
+    linked.write_bytes(b"linked")
+    orphan.write_bytes(b"orphan")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, file={docs/section/linked.pdf}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["orphans"] == [orphan]
+    assert found["staging_dirs"] == [tmp_path / "docs"]
+
+
+def test_reconcile_without_bib_finds_nested_staging_orphan(tmp_path):
+    nested = tmp_path / "docs" / "section"
+    nested.mkdir(parents=True)
+    orphan = nested / "orphan.pdf"
+    orphan.write_bytes(b"orphan")
+    assert zi.discover_reconcile_files(tmp_path)["orphans"] == [orphan]
+
+
+def test_reconcile_symlinked_staging_directory_is_unchecked(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    external = tmp_path.parent / "reconcile-external"
+    external.mkdir(exist_ok=True)
+    (external / "paper.pdf").write_bytes(b"paper")
+    (docs / "external").symlink_to(external, target_is_directory=True)
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["errors"]
+    assert not found["orphans"]
+
+
+def test_reconcile_unclosed_bib_entry_is_not_a_clean_prefix(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "ok.pdf").write_bytes(b"ok")
+    (tmp_path / "sources.bib").write_text(
+        "@article{ok, file={docs/ok.pdf}}\n"
+        "@article{broken, file={docs/lost.pdf}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["errors"], "an unclosed trailing entry must fail closed"
+
+
+def test_reconcile_malformed_file_field_is_not_silently_dropped(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "ok.pdf").write_bytes(b"ok")
+    (tmp_path / "sources.bib").write_text(
+        "@article{ok, file={docs/ok.pdf}}\n"
+        "@article{bad, file {docs/lost.pdf}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["errors"], "malformed file field must fail closed"
+
+
+def test_reconcile_does_not_scan_file_outside_repository(tmp_path):
+    outside = tmp_path.parent / "external.pdf"
+    (tmp_path / "refs.bib").write_text(
+        f"@article{{one, file={{{outside}}}}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["linked"] == []
+    assert found["orphans"] == []
+    assert found["errors"]
+
+
+def test_reconcile_does_not_read_symlinked_bib_outside_repository(
+        tmp_path, monkeypatch):
+    external = tmp_path.parent / "external-sources.bib"
+    external.write_text("@article{one, file={docs/secret.pdf}}\n")
+    (tmp_path / "refs.bib").symlink_to(external)
+    monkeypatch.setattr(zi, "_bib_entries", lambda _path: pytest.fail(
+        "external BibTeX was read"))
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["linked"] == []
+    assert found["errors"]
+
+
+def test_reconcile_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    seen = {}
+
+    def fake_match(_idx, **kwargs):
+        seen.update(kwargs)
+        return {"matches": [], "consulted": ["doi"], "skipped": []}
+
+    monkeypatch.setattr(zi, "api_matches", fake_match)
+    row = zi.audit_one(pdf, {"works": [], "attachments": []}, bib_entry={
+        "_key": "levin", "title": "Useful Paper", "doi": "10.1234/test",
+        "author": "Levin, John and Smith, Jane", "year": "1997"
+    })
+    assert seen["doi"] == "10.1234/test"
+    assert seen["title"] == "Useful Paper"
+    assert seen["first_author"] == "Levin"
+    assert seen["year"] == "1997"
+    assert row["verdict"] == "absent"
+
+
+def test_reconcile_normalizes_natural_order_bib_author(tmp_path, monkeypatch):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    seen = {}
+
+    def fake_match(_idx, **kwargs):
+        seen.update(kwargs)
+        return {"matches": [], "consulted": [], "skipped": []}
+
+    monkeypatch.setattr(zi, "api_matches", fake_match)
+    zi.audit_one(pdf, {"works": [], "attachments": []}, bib_entry={
+        "author": "John Levin and Jane Smith", "title": "Useful Paper"
+    })
+    assert seen["first_author"] == "Levin"
+
+
+def test_reconcile_report_is_read_only_and_counts_both_directions(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "linked.pdf").write_bytes(b"linked")
+    (docs / "orphan.pdf").write_bytes(b"orphan")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={Useful Paper}, file={docs/linked.pdf}}\n"
+    )
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *_a, **_k: {
+        "fetched": "2026-09-23", "works": [], "attachments": []
+    })
+    monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
+        "file": path.name, "verdict": "absent"
+    })
+    args = argparse.Namespace(root=str(tmp_path), refresh=False,
+                              user_id=None, api_key=None, out=None)
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"] == {"absent": 2}
+    assert {r["source"] for r in report["rows"]} == {"bib", "orphan"}
+    assert report["actions"] == {"absent": "inject only with explicit apply"}
+
+
+def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "paper.pdf").write_bytes(b"paper")
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *_a, **_k: {
+        "fetched": "2026-09-23", "works": [], "attachments": []
+    })
+    monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
+        "file": path.name, "verdict": "work_present_no_file",
+        "also_matches": [{"key": "B", "title": "Paper", "why": ["title"]}]
+    })
+    output = tmp_path / "report.json"
+    args = argparse.Namespace(root=str(tmp_path), refresh=False,
+                              user_id=None, api_key=None, out=str(output))
+    assert zi.cmd_reconcile(args) == 0
+    compact = json.loads(capsys.readouterr().out)
+    full = json.loads(output.read_text())
+    assert "rows" not in compact
+    assert len(full["rows"]) == 1
+    assert compact["summary"] == {"work_present_no_file": 1,
+                                   "tied_parents": 1}
+    assert "tied_parents" in compact["actions"]
