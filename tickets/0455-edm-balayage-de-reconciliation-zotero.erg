@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 
 2026-09-23T16:47Z Codex note 2026-09-23 reassessment: matcher Actions 1-2 landed via PR #735; 0410 is closed; all three original 0075 files are already in Zotero by exact storageHash, so do not re-inject them. Phase 1 is report-only BibTeX/staging discovery and dedup audit. Remaining ledger, guarded injection, batching, /molt wiring, and a fresh controlled live pilot stay open; project tickets 0031 and 0300 own their corpus-specific cleanup.
 2026-09-23T17:18Z Codex note Tooling review written in skills/zotero-import/references/backfill.md: native Zotero Web API is reused; Better BibTeX is absent and does not prove upload; installed plugins are empty; zotero-mcp would still require the same guard and ledger; local connector requires a running desktop client and cannot serve headless /molt. Phase 2 adds project opt-in, durable replay ledger, bounded batches and rate handling. Read-only pilot in polycentric_activity found 287 exact files, 3 works with a different file, 1 ambiguous, 6 orphans without a match, and 7 duplicate BibTeX references that make the sweep unchecked. No live writes made. Controlled positive write pilot remains open.
+2026-09-23T19:03Z Codex note Approved live pilot in an isolated copy of climate-finance-het: one corroborated Alonso-Robisco et al. (2024) PDF, DOI 10.1080/20430795.2024.2370325, was absent on the read-only sweep. Guarded reconcile --apply created user-library item F8J2BTNF and PDF attachment NHHM4J48. Durable ledger records MD5 ba318835f3571b3e268371075e36b3d4 as uploaded. A second identical apply returned applied=[] and apply_status=nothing, with no duplicate write. The report's read-only summary still says absent from its older snapshot; the locked apply and ledger provide the no-write verdict. CI for PR #988 passed all nine checks; focused tests cover discovery, both audit directions, non-DOI deduplication, ambiguity, attachment resume, replay, and 51-item batching. Acceptance complete.
 --- body ---
 ## Context
 L'acquisition d'une source produit aujourd'hui trois écritures — le PDF dans
@@ -279,18 +280,18 @@ chaque exécution, sans quoi « rien trouvé » et « je n'ai pas su regarder »
 le même résultat.
 
 ## Verification
-- [ ] Le mode réconciliation tourne sans qu'aucun nom de `.bib` figure dans le code
-- [ ] Les deux sens A et B sont couverts par un test chacun
-- [ ] Un livre pré-DOI déjà présent n'est pas réinjecté
-- [ ] Un cas ambigu est signalé, ni injecté ni sauté
-- [ ] Le rapport distingue : injecté / déjà présent / ambigu / illisible
-- [ ] `/molt` no-op silencieusement dans un dépôt sans `.bib` ni staging
-- [ ] Une correspondance trouvée dans une bibliothèque de groupe ne supprime pas
+- [x] Le mode réconciliation tourne sans qu'aucun nom de `.bib` figure dans le code
+- [x] Les deux sens A et B sont couverts par un test chacun
+- [x] Un livre pré-DOI déjà présent n'est pas réinjecté
+- [x] Un cas ambigu est signalé, ni injecté ni sauté
+- [x] Le rapport distingue : injecté / déjà présent / ambigu / illisible
+- [x] `/molt` no-op silencieusement dans un dépôt sans `.bib` ni staging
+- [x] Une correspondance trouvée dans une bibliothèque de groupe ne supprime pas
       une injection dans la bibliothèque de l'utilisateur
-- [ ] Un PDF déjà joint sous des métadonnées illisibles est reconnu sans que le
+- [x] Un PDF déjà joint sous des métadonnées illisibles est reconnu sans que le
       titre ne score
-- [ ] Deux balayages successifs sans synchronisation Zotero n'injectent qu'une fois
-- [ ] Un lot de plus de 50 entrées passe sans échec en bloc
+- [x] Deux balayages successifs sans synchronisation Zotero n'injectent qu'une fois
+- [x] Un lot de plus de 50 entrées passe sans échec en bloc
 
 ## Invariants
 - Zotero reste le système de référence : le balayage n'efface jamais `docs/`,
@@ -308,14 +309,14 @@ d'objets visés par la contrainte (3) de l'auteur. Livrer le mode rapport avant
 0410, n'activer l'injection qu'après.
 
 ## Exit criteria
-- [ ] Un PDF acquis et non versé dans Zotero est rattrapé sans intervention,
+- [x] Un PDF acquis et non versé dans Zotero est rattrapé sans intervention,
       au plus tard à la maintenance suivante — interactive ou headless — quel
       que soit le nom du `.bib`
-- [ ] Le balayage rejoué deux fois de suite n'injecte rien la seconde fois,
+- [x] Le balayage rejoué deux fois de suite n'injecte rien la seconde fois,
       client Zotero éteint compris
-- [ ] La dédup mord sur un livre pré-DOI, prouvé par un test qui échoue si on
+- [x] La dédup mord sur un livre pré-DOI, prouvé par un test qui échoue si on
       retire la clé non-DOI
-- [ ] Un PDF neuf dans une bibliothèque Zotero de test contrôlée est injecté
+- [x] Un PDF neuf dans une bibliothèque Zotero de test contrôlée est injecté
       par le balayage, puis reconnu au second passage sans synchronisation du
       client. Les trois PDF du ticket 0075 sont déjà présents par hash exact
       (constaté le 2026-09-23) et ne doivent pas être réinjectés.
