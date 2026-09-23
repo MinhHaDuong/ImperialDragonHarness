@@ -103,6 +103,10 @@ command it recovers.)
   that step. Do not re-run it and do not hand-close the ticket: the close
   commit is already on the branch, so finish with a direct forge merge once CI
   is green.
+- **"CI checks never registered" on a repo with no checks.** The close commit
+  is already pushed. If the PR is mergeable, its rollup is empty, and the base
+  has no required checks, finish with `gh pr merge --merge`; do not retry the <!-- harness-extension-point -->
+  non-idempotent close step.
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
