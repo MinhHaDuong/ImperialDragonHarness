@@ -2184,6 +2184,7 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
     monkeypatch.setattr(zi, "corroborate_entry",
                         lambda _: {"confidence": "corroborated"})
     seen = []
