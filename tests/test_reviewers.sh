@@ -450,13 +450,35 @@ YAML
 UDIR="$WORK/u-findings"
 H_ENV=(REVIEWERS_PANEL="$UROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR"
        REVIEWERS_PR_BRANCH="some-branch")
-u_err=$(hermetic_reviewers request 394 2>&1 >/dev/null)
+u_err=$(hermetic_reviewers request 394 2>&1 >/dev/null || true)
 assert_contains "request: unresolved credential WARNs and names the variable" \
     "T393_NOWHERE_KEY" "$u_err"
 assert_contains "request: unresolved credential names the seat" \
     "unauthenticated-seat" "$u_err"
-assert_exit_0 "request: an unresolved credential stays fail-open (exit 0)" \
+assert_contains "request: all credential-skipped seats produce no approval" \
+    "no seat reviewed MR #394" "$u_err"
+assert_exit_nonzero "request: every credential-skipped local seat exits non-zero" \
     hermetic_reviewers request 394
+
+# A second local seat can still provide a verdict. The missing key remains
+# visible on that seat's status, while the panel request succeeds.
+MIXED_ROSTER="$WORK/mixed-credential.yml"
+cat "$UROSTER" > "$MIXED_ROSTER"
+cat >> "$MIXED_ROSTER" <<'YAML'
+  - name: unkeyed-seat
+    kind: local-model
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:9/v1
+    model: openai/stub
+YAML
+H_ENV=(REVIEWERS_PANEL="$MIXED_ROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$UDIR"
+       REVIEWERS_PR_BRANCH="some-branch")
+assert_exit_0 "request: a good local seat keeps a credential failure advisory" \
+    hermetic_reviewers request 395
+assert_eq "request: credential-skipped seat remains recorded beside success" \
+    "fail credential T393_NOWHERE_KEY unresolved" \
+    "$(cat "$UDIR/395/unauthenticated-seat.status")"
 
 # The load-bearing half (ticket 0393 action 3): the panel REPORT — harvest's
 # stdout — must say the seat did not review. A stderr WARN is exactly what was
@@ -540,7 +562,7 @@ printf 'FINDING|severity=verifiable|file=old.sh:1|rationale=orphan-seat-finding\
 mv "$KSTORE/fixture-provider.env" "$KSTORE/fixture-provider.env.off"
 H_ENV=(REVIEWERS_PANEL="$STALEROSTER" SEAT_RUNNER="$STALE_STUB" REVIEWERS_FINDINGS_DIR="$SDIR"
        REVIEWERS_PR_BRANCH="some-branch")
-hermetic_reviewers request 700 >/dev/null 2>&1
+hermetic_reviewers request 700 >/dev/null 2>&1 || true
 H_ENV=(REVIEWERS_PANEL="$STALEROSTER" REVIEWERS_FINDINGS_DIR="$SDIR")
 stale_report=$(hermetic_reviewers harvest 700 2>/dev/null)
 if [[ "$stale_report" == *"stale-run-1-finding"* ]]; then
@@ -590,7 +612,7 @@ printf 'T393_FIXTURE_KEY=(first second)\n' > "$KSTORE/fixture-provider.env"
 KDIR_ARRAY="$WORK/k-findings-array"
 H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_ARRAY"
        REVIEWERS_PR_BRANCH="some-branch")
-array_err=$(hermetic_reviewers request 949 2>&1 >/dev/null)
+array_err=$(hermetic_reviewers request 949 2>&1 >/dev/null || true)
 assert_contains "request: array-valued credential fails loud" "could not be read" "$array_err"
 assert_eq "request: array-valued credential never reaches the seat" "missing" \
     "$(cat "$KDIR_ARRAY/949/keyed-seat.cred" 2>/dev/null || echo missing)"
@@ -601,7 +623,7 @@ printf "T393_FIXTURE_KEY='line-with-trailing-lf\n'\n" > "$KSTORE/fixture-provide
 KDIR_MULTILINE="$WORK/k-findings-multiline"
 H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_MULTILINE"
        REVIEWERS_PR_BRANCH="some-branch")
-multiline_err=$(hermetic_reviewers request 954 2>&1 >/dev/null)
+multiline_err=$(hermetic_reviewers request 954 2>&1 >/dev/null || true)
 assert_contains "request: trailing-LF credential fails loud" "could not be read" "$multiline_err"
 assert_eq "request: trailing-LF credential never reaches the seat" "missing" \
     "$(cat "$KDIR_MULTILINE/954/keyed-seat.cred" 2>/dev/null || echo missing)"
@@ -613,7 +635,7 @@ sed 's/T393_FIXTURE_KEY/PATH/' "$KROSTER" > "$BADNAME_ROSTER"
 KDIR_BADNAME="$WORK/k-findings-badname"
 H_ENV=(REVIEWERS_PANEL="$BADNAME_ROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_BADNAME"
        REVIEWERS_PR_BRANCH="some-branch")
-badname_err=$(hermetic_reviewers request 950 2>&1 >/dev/null)
+badname_err=$(hermetic_reviewers request 950 2>&1 >/dev/null || true)
 assert_contains "request: non-credential shell name is rejected" "not an allowed credential name" "$badname_err"
 
 # Non-regular and oversized providers are refused before grep/source can read
@@ -641,7 +663,7 @@ head -c 270000 /dev/zero | tr '\0' x >> "$KSTORE/oversize.env"
 KDIR_BIG="$WORK/k-findings-big"
 H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_BIG"
        REVIEWERS_PR_BRANCH="some-branch")
-big_err=$(hermetic_reviewers request 952 2>&1 >/dev/null)
+big_err=$(hermetic_reviewers request 952 2>&1 >/dev/null || true)
 assert_contains "request: oversized provider is refused before sourcing" "neither in the environment nor defined" "$big_err"
 
 # The byte-count guard must not resolve `wc` through caller-controlled PATH.
