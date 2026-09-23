@@ -13,6 +13,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 
@@ -203,6 +205,7 @@ def test_gaze_multi_ticket_is_advisory_below_size_breaker():
     assert "multi_ticket" in VERIFY.split("## Output shape", 1)[1]
 
 
+@pytest.mark.integration
 def test_gaze_close_claim_count_ignores_refs_none_and_duplicate_ids():
     """Exercise the extraction command documented in gaze, including exclusions."""
     setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
