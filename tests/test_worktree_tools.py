@@ -217,12 +217,100 @@ def test_gc_keeps_dirty_worktree(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+def test_gc_collects_gone_worktree_with_review_scratch(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-panel")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    (wt / ".panel" / "999" / "report.md").write_text("review\n")
+    (wt / "build" / "panel-head").mkdir(parents=True)
+    (wt / "build" / "panel-head" / "README").write_text("base\n")
+    make_branch_gone(remote, primary, "agent-panel")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-panel" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_preserves_dropped_deliverable_after_purging_scratch(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-dropped")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    (wt / ".panel" / "999" / "report.md").write_text("review\n")
+    (wt / "tests").mkdir()
+    (wt / "tests" / "test_dropped.sh").write_text("#!/bin/sh\nexit 0\n")
+    make_branch_gone(remote, primary, "agent-dropped")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-dropped (uncommitted WIP" in res.stdout
+    assert "tests/test_dropped.sh" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert not (wt / ".panel").exists()
+    assert (wt / "tests" / "test_dropped.sh").exists()
+
+
+def test_gc_does_not_purge_scratch_in_locked_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-locked-panel")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    (wt / ".panel" / "999" / "report.md").write_text("review\n")
+    git(primary, "worktree", "lock", str(wt))
+    make_branch_gone(remote, primary, "agent-locked-panel")
+
+    res = _gc(primary)
+    assert "skip agent-locked-panel (locked" in res.stdout
+    assert (wt / ".panel" / "999" / "report.md").exists()
+
+
+def test_gc_does_not_follow_build_symlink_outside_worktree(origin, tmp_path):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-linked-build")
+    outside = tmp_path / "outside"
+    (outside / "panel-head").mkdir(parents=True)
+    (outside / "panel-head" / "keep.txt").write_text("keep\n")
+    (wt / "build").symlink_to(outside, target_is_directory=True)
+    make_branch_gone(remote, primary, "agent-linked-build")
+
+    _gc(primary)
+    assert (outside / "panel-head" / "keep.txt").exists()
+
+
+def test_gc_keeps_modified_tracked_panel_file(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tracked-panel")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    report = wt / ".panel" / "999" / "report.md"
+    report.write_text("committed\n")
+    git(wt, "add", ".panel")
+    git(wt, "commit", "-m", "track panel file")
+    report.write_text("unsaved\n")
+    make_branch_gone(remote, primary, "agent-tracked-panel")
+
+    res = _gc(primary)
+    assert "skip agent-tracked-panel (uncommitted WIP)" in res.stdout
+    assert report.read_text() == "unsaved\n"
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_gc_keeps_live_branch_worktree(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-live", dirty=False)  # branch still on origin
 
     res = _gc(primary)
     assert res.returncode == 0
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_still_reports_real_wip_on_live_branch(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-live-wip")
+    (wt / "tests").mkdir()
+    (wt / "tests" / "test_dropped.sh").write_text("#!/bin/sh\nexit 0\n")
+
+    res = _gc(primary)
+    assert "skip agent-live-wip (uncommitted WIP)" in res.stdout
+    assert "tests/test_dropped.sh" in res.stdout
     assert str(wt) in _worktree_paths(primary)
 
 
@@ -457,6 +545,63 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+def test_preflight_purges_review_scratch_and_passes(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-panel-exit")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    (wt / ".panel" / "999" / "report.md").write_text("review\n")
+    (wt / "build" / "panel-head").mkdir(parents=True)
+    (wt / "build" / "panel-head" / "README").write_text("base\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 0
+    assert not (wt / ".panel").exists()
+    assert not (wt / "build" / "panel-head").exists()
+
+
+def test_preflight_preserves_dropped_deliverable_with_scratch(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-dropped-exit")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    (wt / ".panel" / "999" / "report.md").write_text("review\n")
+    (wt / "tests").mkdir()
+    (wt / "tests" / "test_dropped.sh").write_text("#!/bin/sh\nexit 0\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 1
+    assert "tests/test_dropped.sh" in res.stderr
+    assert ".panel" not in res.stderr
+    assert not (wt / ".panel").exists()
+    assert (wt / "tests" / "test_dropped.sh").exists()
+
+
+def test_preflight_does_not_follow_build_symlink_outside_worktree(origin, tmp_path):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-linked-build-exit")
+    outside = tmp_path / "outside"
+    (outside / "panel-head").mkdir(parents=True)
+    (outside / "panel-head" / "keep.txt").write_text("keep\n")
+    (wt / "build").symlink_to(outside, target_is_directory=True)
+
+    _preflight(wt)
+    assert (outside / "panel-head" / "keep.txt").exists()
+
+
+def test_preflight_keeps_modified_tracked_panel_file(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-tracked-panel-exit")
+    (wt / ".panel" / "999").mkdir(parents=True)
+    report = wt / ".panel" / "999" / "report.md"
+    report.write_text("committed\n")
+    git(wt, "add", ".panel")
+    git(wt, "commit", "-m", "track panel file")
+    report.write_text("unsaved\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 1
+    assert report.read_text() == "unsaved\n"
+
+
 @pytest.mark.integration
 def test_preflight_defaults_to_cwd(origin):
     """No arg → check the current directory. Mirrors how skill prose invokes
@@ -505,6 +650,9 @@ def test_gc_skips_live_process_cwd_worktree(origin):
     2026-07-13 incident removed (ticket 0355). Must be skipped, in place."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-session", dirty=False)
+    (wt / ".panel" / "999").mkdir(parents=True)
+    report = wt / ".panel" / "999" / "report.md"
+    report.write_text("live review\n")
     make_branch_gone(remote, primary, "agent-session")
 
     proc = subprocess.Popen(["sleep", "60"], cwd=str(wt))
@@ -513,6 +661,7 @@ def test_gc_skips_live_process_cwd_worktree(origin):
         assert res.returncode == 0
         assert "skip agent-session (live process cwd inside" in res.stdout
         assert str(wt) in _worktree_paths(primary)
+        assert report.read_text() == "live review\n"
     finally:
         proc.kill()
         proc.wait()

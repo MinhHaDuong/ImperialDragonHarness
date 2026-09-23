@@ -18,6 +18,15 @@ set -euo pipefail
 path="${1:-.}"
 [ -d "$path" ] || { echo "worktree-exit-preflight: not a directory: $path" >&2; exit 2; }
 
+# Review reports and the temporary base checkout are command-owned scratch.
+# Remove only these named paths, then apply the original complete status gate.
+if [ -z "$(git -C "$path" ls-files -- .panel)" ]; then
+    rm -rf -- "$path/.panel"
+fi
+if [ ! -L "$path/build" ] && [ -z "$(git -C "$path" ls-files -- build/panel-head)" ]; then
+    rm -rf -- "$path/build/panel-head"
+fi
+
 # -uall expands untracked directories so each lost file is named in the message
 # (the failure mode was a single .erg file inside an otherwise-untracked dir).
 status=$(git -C "$path" status --porcelain --untracked-files=all 2>/dev/null || true)
