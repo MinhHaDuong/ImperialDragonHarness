@@ -6,11 +6,14 @@ Author: Integration Test
 --- log ---
 2026-09-16T10:30Z Integration Test created
 2026-09-16T10:34Z claude note Measurements in the body were taken on this tree, not carried from a report. The architectural decision in Actions step 1 is the author's, not the executor's.
+2026-09-23T19:30Z Codex note Roster audit: PR #980 added agents/gaze-pr-review.md, so the one-profile and 86-fork figures below are a 2026-09-16 baseline, not current inventory. Recount before implementation and keep the new profile in the resident-channel budget. The bare-context design decision, broader role inventory, pilot, and Codex/Pi portability proof remain open; this ticket is not already done.
 
 --- body ---
 ## Context
 
-The harness declares **one** agent profile, `agents/team-lead.md`. Real delegation
+At the 2026-09-16 baseline, the harness declared **one** agent profile,
+`agents/team-lead.md`. PR #980 has since added `agents/gaze-pr-review.md`.
+The following fork count is likewise the dated baseline. Real delegation
 does not go through it: it goes through `subagent_type: "fork"` **86 times across
 ten skills** — `gaze` 37, `review-pr` 16, `review-pr-prose` 11, `verify-gate` 5,
 `verify-adherence` 4, `reviewers` 4, `raid` 4, `trace-doctor` 2, `hunt` 2,
@@ -55,7 +58,7 @@ budget raise a defended decision, not an edit).
 
 ## Relevant files
 
-- `agents/team-lead.md` — the only existing profile, and the shape to follow
+- `agents/team-lead.md` and `agents/gaze-pr-review.md` — the current profiles
 - `tests/test_resident_census.py` — lines 48 and 59, the channel budget and floor
 - `tests/test_model_rightsizing.py` — pins the short model enum profiles must use
 - `rules/claude-code.md` § Subagent levers — model and effort per launch, nesting depth

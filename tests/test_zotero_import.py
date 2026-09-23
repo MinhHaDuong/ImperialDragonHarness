@@ -2164,6 +2164,42 @@ def test_reconcile_apply_requires_matching_project_opt_in(
     assert "differs from target" in report["apply_error"]
 
 
+def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "paper.pdf").write_bytes(b"paper")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={An Interesting Paper}, "
+        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    cached = {"fetched": "before"}
+    fresh = {"fetched": "after"}
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: cached)
+    monkeypatch.setattr(zi, "build_index", lambda *a, **k: fresh)
+    monkeypatch.setattr(
+        zi, "audit_one",
+        lambda path, idx, **kwargs: {
+            "file": str(path),
+            "verdict": "absent" if idx is cached else "identical",
+        })
+    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("duplicate write"))
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"] == {"identical": 1}
+    assert report["rows"][0]["verdict"] == "identical"
+    assert report["rows"][0]["source"] == "bib"
+    assert report["index_fetched"] == "after"
+    assert report["applied"] == []
+    assert report["apply_status"] == "nothing"
+
+
 def test_reconcile_apply_imports_only_corroborated_absent_pdf(
         tmp_path, monkeypatch, capsys):
     import argparse
