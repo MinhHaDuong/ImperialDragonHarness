@@ -1,0 +1,68 @@
+%erg 0.1
+Title: Scope the pre-commit gate to what the diff can move
+Created: 2026-09-23
+Author: claude
+
+--- log ---
+2026-09-23T08:24Z claude created
+
+--- body ---
+## Context
+
+On 2026-09-23 in search-works-for-zotero, a session ran the full `make check`
+(twelve targets, over ten minutes, pytest and a mutation gate) twice in one
+morning on diffs that held no code: an evidence PR (#612, one JSON record and
+one log) and a ruling PR (#613, DECISIONS.md, a new doc, five tickets). The
+author: "WTF are we running make check for a DECISIONS-only ticket". Of the
+twelve targets, six can see such a diff; the rest cannot, whatever it contains.
+
+Five whys, short: the project rule says "`make check` green before any commit"
+with no scope; the session's memory reinforced it (a note measured it against
+an hour of `/gaze`, so ten minutes read as cheap); the Makefile offers one
+monolithic target; it is monolithic on purpose, after a partial run that died
+on its last step was read as green (that project's ticket 0498); and with no
+CI the local gate is the only gate, so the rule was kept simple enough that
+nobody skips it. Root cause: the gate is uniform across diffs and nothing
+asks what a given diff can break. That is a harness question, not one
+project's: every repo with a pre-commit gate meets it.
+
+## Relevant files
+
+- `rules/workflow.md` — where a resident rule on scoping the gate would live
+- `skills/verify-gate/SKILL.md`, `skills/gaze/SKILL.md` — gates that quote a
+  `make` target; 0320 already scaled `/gaze`'s reviewer battery to the diff
+- a project Makefile, e.g. search-works-for-zotero's `check:` line — the
+  per-project map from paths to targets
+
+## Actions
+
+1. A harness rule: run the checks the diff can move, not the whole gate; name
+   the skipped targets wherever the result is quoted (PR page, commit
+   message), so a scoped run can never be read as a full one.
+2. A small harness script that reads a per-project path-to-target map,
+   diffs against `origin/<default>`, and runs the union of targets; any
+   unmapped path runs the full gate. Last line: the targets it skipped.
+3. Pilot in search-works-for-zotero: docs and tickets → lint, figures, names,
+   progress, tickets, ticket-logs; `plugins/**` adds sitter-version and
+   sitter-mutants; anything else → full `make check`.
+
+## Test
+
+Red first: a diff touching only `DECISIONS.md` selects the six doc targets and
+names the other six as skipped; a diff touching one `.py` file selects the full
+gate; a path absent from the map selects the full gate.
+
+## Verification
+
+- [ ] The three test diffs select what the Test section says.
+- [ ] The skipped-targets line is present on every run ("skipped: none" on a full one).
+
+## Invariants
+
+- The full gate stays one command and stays required before a code merge.
+- A scoped run never prints a bare success: the skipped list is always there.
+
+## Exit criteria
+
+The rule is resident, the script ships with its tests, and the pilot project
+uses it for its next doc-only PR.
