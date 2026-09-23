@@ -517,6 +517,47 @@ def test_provenance_candidates_chained_alias_not_candidate(provenance_env):
     assert [c["slug"] for c in candidates] == []
 
 
+def test_production_alias_families_and_real_pair(provenance_env):
+    """The production table must collapse observed paths, not merely a toy map."""
+    aliases = (DREAM_DIR.parent.parent / "memory" / ".project-aliases.json").read_text()
+    (provenance_env / ".claude" / "memory" / ".project-aliases.json").write_text(aliases)
+    families = [
+        ("-home-haduong-Climate-finance", "-home-haduong-CNRS-projets-actifs-climate-finance-het"),
+        ("-home-haduong-Oeconomia-Climate-finance", "-home-haduong-CNRS-projets-actifs-climate-finance-het"),
+        ("-home-haduong-chemin-de-voix", "-home-haduong-CNRS-projets-actifs-chemin-de-voix"),
+        ("-home-haduong-git-erg", "-home-haduong-CNRS-code-git-erg"),
+        ("-home-haduong-CNRS-papiers-actif-livre-milliards-climat", "-home-haduong-CNRS-projets-actifs-livre-milliards-climat"),
+        ("-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus", "-home-haduong-CNRS-papiers-actif-fuzzy-corpus"),
+        ("-home-haduong-fuzzy-corpus", "-home-haduong-CNRS-papiers-actif-fuzzy-corpus"),
+    ]
+    entries = {}
+    for n, pair in enumerate(families):
+        entries[f"alias_{n}"] = {"projects": list(pair), "promoted": False}
+    entries["real_pair"] = {"projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het",
+        "-home-haduong-CNRS-code-git-erg",
+    ], "promoted": False}
+    entries["superseded"] = {"projects": [
+        "-home-haduong-Oeconomia-Climate-finance",
+        "-home-haduong-Oeconomia-Climate-finance--superseded-20260913",
+    ], "promoted": False}
+    entries["machine_only"] = {"projects": [
+        "-home-haduong-cadens", "-home-haduong-CNRS-papiers-actif-cadens",
+        "-home-haduong-CNRS-papiers-actif-Cadens",
+        "-home-haduong-padme", "-home-haduong-CNRS-projets-actifs-padme",
+    ], "promoted": False}
+    entries["machine_plus_project"] = {"projects": [
+        "-home-haduong-padme", "-home-haduong-CNRS-code-git-erg",
+    ], "promoted": False}
+    provenance = provenance_env / ".claude" / "memory" / ".provenance.json"
+    provenance.write_text(json.dumps({"entries": entries}))
+    result = _run_provenance("candidates", home=provenance_env)
+    assert result.returncode == 0, result.stderr
+    assert [c["slug"] for c in json.loads(result.stdout)] == ["real_pair"]
+    assert "raw=11" in result.stderr
+    assert "canonical=1" in result.stderr
+
+
 def test_provenance_decay_empty(provenance_env):
     result = _run_provenance("decay", home=provenance_env)
     assert result.returncode == 0

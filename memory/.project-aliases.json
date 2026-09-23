@@ -1,4 +1,16 @@
 {
+  "-home-haduong-CNRS-papiers-actif-Cadens": "machine:cadens",
+  "-home-haduong-CNRS-papiers-actif-Fuzzy-Corpus": "-home-haduong-CNRS-papiers-actif-fuzzy-corpus",
+  "-home-haduong-CNRS-papiers-actif-cadens": "machine:cadens",
+  "-home-haduong-CNRS-papiers-actif-livre-milliards-climat": "-home-haduong-CNRS-projets-actifs-livre-milliards-climat",
+  "-home-haduong-CNRS-projets-actifs-padme": "machine:padme",
+  "-home-haduong-Climate-finance": "-home-haduong-CNRS-projets-actifs-climate-finance-het",
+  "-home-haduong-Oeconomia-Climate-finance": "-home-haduong-CNRS-projets-actifs-climate-finance-het",
   "-home-haduong-aedist-technical-report": "-home-haduong-CNRS-papiers-actif-AEDIST-technical-report",
+  "-home-haduong-cadens": "machine:cadens",
+  "-home-haduong-chemin-de-voix": "-home-haduong-CNRS-projets-actifs-chemin-de-voix",
+  "-home-haduong-fuzzy-corpus": "-home-haduong-CNRS-papiers-actif-fuzzy-corpus",
+  "-home-haduong-git-erg": "-home-haduong-CNRS-code-git-erg",
+  "-home-haduong-padme": "machine:padme",
   "-tmp-claude-1001--home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet--2e29adca-1aad-47ad-807b-291b5fd3d56b-scratchpad-merge-odt": "-home-haduong-CNRS-papiers-actif-Oeconomia---Joint-production--5-Juillet-"
 }
