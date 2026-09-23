@@ -161,18 +161,31 @@ fi
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 
-# Accept: **Ticket:** tickets/NNNN, **Ticket**: tickets/NNNN, Ticket: tickets/NNNN
+# Accept both tickets/NNNN and tickets/closed/NNNN with the usual Ticket prefix.
 # A PR may bundle several tickets — collect ALL matching lines. `sort -u` is
 # load-bearing: a duplicated ID would re-close an already-archived ticket in
-# the loop below and abort under `set -e`.
-TICKET_IDS=$(echo "$BODY" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u || true)
+# the loop below. Ignore Markdown fenced examples: they are documentation,
+# not instructions to close a ticket. Fold case before matching so the filter
+# and extracted ID always agree (the git-erg 0255 grammar).
+CLAIM_BODY=$(printf '%s\n' "$BODY" | awk '
+    /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
+    !fenced { print }
+' | tr '[:upper:]' '[:lower:]')
+TICKET_IDS=$(printf '%s\n' "$CLAIM_BODY" | grep -oP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?\K[0-9]{4}(?![0-9])' | sort -u || true)
 
 # No-close markers: a PR may reference a ticket without closing it
 # (Ticket-ref:, precedent IDH PR #190 on deferred 0068), or declare it
 # closes nothing (Ticket: none). Either suppresses the die() below.
 NOCLOSE=""
-if echo "$BODY" | grep -qiP '^\*{0,2}ticket-ref:?\*{0,2}:?\s*tickets/\d+'; then NOCLOSE=1; fi
-if echo "$BODY" | grep -qiP '^\*{0,2}ticket:?\*{0,2}:?\s*none\b'; then NOCLOSE=1; fi
+if printf '%s\n' "$CLAIM_BODY" | grep -qP '^\*{0,2}ticket-ref:?\*{0,2}:?\s*tickets/[0-9]{4}(?![0-9])'; then NOCLOSE=1; fi
+if printf '%s\n' "$CLAIM_BODY" | grep -qP '^\*{0,2}ticket:?\*{0,2}:?\s*none\b'; then NOCLOSE=1; fi
+
+# A malformed Ticket path must not fall through to the permissive no-close
+# branch, even when another line says Ticket: none.
+CLAIM_LINES=$(printf '%s\n' "$CLAIM_BODY" | grep -P '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/' || true)
+if [[ -n "$CLAIM_LINES" ]] && printf '%s\n' "$CLAIM_LINES" | grep -qPv '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?[0-9]{4}(?![0-9])'; then
+    die "unparseable Ticket path in PR body — expected tickets/NNNN or tickets/closed/NNNN"
+fi
 
 if [[ -z "$TICKET_IDS" ]] && [[ -z "$NOCLOSE" ]] && [[ -d tickets ]]; then
     die "no close-claim in PR body — add a 'Ticket: tickets/NNNN-...' line to close a ticket, 'Ticket-ref: tickets/NNNN-...' to reference one without closing, or 'Ticket: none' if this PR closes nothing. (Title prefixes like chore(NNNN) are NOT close claims.)"
@@ -230,6 +243,9 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]]; then
         # removes — so the clean-tree assumption is the deliberate trade-off.
         # (ticket 0333)
         tf=$(compgen -G "tickets/${tid}-*.erg" 2>/dev/null | head -1 || true)
+        if [[ -z "$tf" ]]; then
+            tf=$(compgen -G "tickets/closed/${tid}-*.erg" 2>/dev/null | head -1 || true)
+        fi
         if [[ -z "$tf" ]] || ! git cat-file -e "HEAD:${tf}" 2>/dev/null; then
             MISSING="${MISSING:+${MISSING} }${tid}"
         fi
@@ -263,7 +279,17 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
         # the paths erg touches. A blanket `git add tickets/` once swept a
         # stray stash-resurrected file into the close commit and bounced the
         # merge on corpus validation (ticket 0193).
-        TICKET_FILE=$(ls tickets/"${tid}"-*.erg 2>/dev/null | head -1 || true)
+        TICKET_FILE=$(compgen -G "tickets/${tid}-*.erg" 2>/dev/null | head -1 || true)
+        ARCHIVED_FILE=$(compgen -G "tickets/closed/${tid}-*.erg" 2>/dev/null | head -1 || true)
+        if [[ -z "$TICKET_FILE" && -n "$ARCHIVED_FILE" ]]; then
+            # erg close is idempotent here, but no mutation or close commit is
+            # needed for a ticket that already carries its terminal header.
+            if grep -qE '^Closed:[[:space:]]*[^[:space:]]' "$ARCHIVED_FILE"; then
+                echo "Ticket ${tid} is already closed and archived."
+                continue
+            fi
+            TICKET_FILE="$ARCHIVED_FILE"
+        fi
         # Reachable only under ERG_PR_MERGE_ALLOW_MISSING_TICKET (Step 1.5 would
         # otherwise have died): the claimed ticket has no file to close, so skip
         # it rather than let `erg close` abort the script under set -e.

@@ -111,16 +111,24 @@ while IFS='|' read -r num title_b64 body_b64; do
     title=$(printf '%s' "$title_b64" | base64 -d 2>/dev/null || true)
     body=$(printf '%s' "$body_b64" | base64 -d 2>/dev/null || true)
 
-    # Same acceptance as erg-pr-merge: **Ticket:** / **Ticket**: / Ticket:,
-    # followed by tickets/NNNN. `Ticket-ref:` does not match (no colon straight
-    # after "ticket"), and `Ticket: none` carries no tickets/ path.
-    ids=$(printf '%s' "$body" | grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u || true)
+    # Match erg-pr-merge: ignore fenced examples and fold case once before
+    # interpreting either the path or the ID.
+    claim_body=$(printf '%s\n' "$body" | awk '
+        /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
+        !fenced { print }
+    ' | tr '[:upper:]' '[:lower:]')
+    ids=$(printf '%s\n' "$claim_body" | grep -oP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?\K[0-9]{4}(?![0-9])' | sort -u || true)
+    claim_lines=$(printf '%s\n' "$claim_body" | grep -P '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/' || true)
+    if [ -n "$claim_lines" ] && printf '%s\n' "$claim_lines" | grep -qPv '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?[0-9]{4}(?![0-9])'; then
+        echo "UNPARSEABLE: PR #${num} has a Ticket path this checker cannot parse — ${title}"
+        FINDINGS=$((FINDINGS + 1))
+    fi
     if [ -z "$ids" ]; then
         # Not a claim. Separate a body that explicitly declares no close from
         # one this script simply did not recognise, so the two never share a
         # bucket — a growing UNRECOGNISED count is how regex drift becomes
         # visible instead of silently shrinking what gets checked.
-        if printf '%s' "$body" | grep -qiP '^\*{0,2}ticket(-ref)?:?\*{0,2}:?\s*(none\b|tickets/)'; then
+        if [ -z "$claim_lines" ] && printf '%s\n' "$claim_body" | grep -qP '^\*{0,2}ticket(-ref)?:?\*{0,2}:?\s*(none\b|tickets/)'; then
             NOCLOSE=$((NOCLOSE + 1))
         else
             UNRECOGNISED=$((UNRECOGNISED + 1))

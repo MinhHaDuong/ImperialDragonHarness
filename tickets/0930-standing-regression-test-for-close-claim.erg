@@ -2,12 +2,12 @@
 Title: Standing regression test for close-claim extraction across all three copies
 Created: 2026-09-16
 Author: claude
-Blocked-by: 0929
 
 --- log ---
 2026-09-16T06:33Z claude created
 2026-09-16T06:58Z claude note Scope widened to three copies; check-close-claims.sh shares the defect
 
+2026-09-23T20:10Z Minh Ha-Duong note blocker 0929 closed — Blocked-by removed.
 --- body ---
 ## Context
 

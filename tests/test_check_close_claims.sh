@@ -144,6 +144,40 @@ out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bas
 _check_rc "a claim on an absent ticket exits 1" 1 "$rc"
 _check_says "…reported as UNRESOLVED, not DROPPED" "$out" "UNRESOLVED: PR #110"
 
+# Ticket 0929: the closed/ spelling must still identify a dropped claim.
+cat > "$repo/prs.json" <<EOF
+[{"number":111,"title":"closed path dropped","mergedAt":"$RECENT",
+  "body":"**Ticket:** tickets/closed/0001-dropped.erg\n"}]
+EOF
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "closed-path dropped claim exits 1" 1 "$rc"
+_check_says "closed-path claim identifies the open ticket" "$out" "DROPPED: PR #111 claims ticket 0001"
+
+# Mis-cased paths are accepted consistently by both parser stages.
+cat > "$repo/prs.json" <<EOF
+[{"number":112,"title":"mixed case claim","mergedAt":"$RECENT",
+  "body":"Ticket: TICKETS/Closed/0001-dropped.erg\n"}]
+EOF
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "mixed-case dropped claim exits 1" 1 "$rc"
+_check_says "mixed-case path retains its ID" "$out" "DROPPED: PR #112 claims ticket 0001"
+
+# An unknown Ticket path is a finding, even beside an explicit no-close line.
+cat > "$repo/prs.json" <<EOF
+[{"number":113,"title":"bad claim path","mergedAt":"$RECENT",
+  "body":"Ticket: tickets/archive/0001-dropped.erg\nTicket: none\n"}]
+EOF
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "unparseable claim exits 1" 1 "$rc"
+_check_says "unparseable claim is named" "$out" "UNPARSEABLE: PR #113"
+_check_says "unparseable claim is not no-close" "$out" "0 explicit no-close, 1 unrecognised"
+
+jq -n --arg merged "$RECENT" --arg body $'Example:\n```markdown\n**Ticket:** tickets/0001-dropped.erg\n```\nTicket: none\n' \
+    '[{number:114,title:"fenced example",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "fenced claim example is ignored" 0 "$rc"
+_check_says "fenced example is counted as no-close" "$out" "0 close claim(s) across 0 PR(s), 1 explicit no-close"
+
 # --- 3. The mergedAt window is real, not assumed --------------------------
 cat > "$repo/prs.json" <<EOF
 [{"number":120,"title":"merged long ago","mergedAt":"$OLD",

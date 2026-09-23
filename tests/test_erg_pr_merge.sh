@@ -431,6 +431,49 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
+# Ticket 0929: an archived path is a real claim. Seed the terminal state at
+# the branch tip so the guard and close step both have to accept it.
+seed_repo archivedclaim 0929
+( cd "$REPO" && tickets/erg close 0929 'already handled' >/dev/null )
+git -C "$REPO" add -A tickets/
+git -C "$REPO" commit -q -m 'ticket(0929): already archived'
+BODY_ARCHIVED=$'**Ticket:** tickets/closed/0929-fixture.erg\n'
+if run_merge "$BODY_ARCHIVED" 'ticket(0929): archived claim' >/dev/null 2>&1; then
+    closed_has 0929 && echo 'PASS: closed-path claim accepts an already archived ticket' || { echo 'FAIL: archived ticket disappeared'; fail=1; }
+else
+    echo 'FAIL: closed-path claim should merge cleanly'; fail=1
+fi
+
+# A file pre-archived without its Closed header still needs erg close to repair
+# the terminal state, rather than taking the already-closed fast path.
+seed_repo incompletearchive 0934
+mkdir -p "$REPO/tickets/closed"
+git -C "$REPO" mv tickets/0934-fixture.erg tickets/closed/0934-fixture.erg
+git -C "$REPO" commit -q -m 'ticket(0934): premature archive'
+if run_merge $'Ticket: tickets/closed/0934-fixture.erg\n' 'ticket(0934): repair archive' >/dev/null 2>&1; then
+    if git -C "$REPO" show "$BRANCH:tickets/closed/0934-fixture.erg" | grep -q '^Closed:'; then
+        echo 'PASS: closed-path claim repairs archived ticket without Closed header'
+    else echo 'FAIL: archived ticket still lacks Closed header'; fail=1; fi
+else echo 'FAIL: archived ticket without Closed header could not be repaired'; fail=1; fi
+
+# An illustrative claim in a fenced block cannot close an open ticket.
+seed_repo fencedclaim 0930
+BODY_FENCED=$'Example:\n```markdown\n**Ticket:** tickets/0930-fixture.erg\n```\nTicket: none\n'
+if run_merge "$BODY_FENCED" 'docs: claim syntax' >/dev/null 2>&1; then
+    if closed_has 0930; then echo 'FAIL: fenced example closed ticket 0930'; fail=1
+    else echo 'PASS: fenced claim example is ignored'; fi
+else echo 'FAIL: fenced example with Ticket: none should merge'; fail=1; fi
+
+seed_repo malformedclaim 0932
+BODY_MALFORMED=$'Ticket: tickets/archive/0932-fixture.erg\nTicket: none\n'
+if out_malformed=$(run_merge "$BODY_MALFORMED" 'ticket(0932): malformed claim' 2>&1); then
+    echo 'FAIL: malformed Ticket path merged despite Ticket: none'; fail=1
+elif [[ "$out_malformed" == *'unparseable Ticket path'* ]] && ! closed_has 0932; then
+    echo 'PASS: malformed Ticket path fails closed beside Ticket: none'
+else
+    echo 'FAIL: malformed Ticket path did not produce the expected guard'; fail=1
+fi
+
 # Case 11: stray untracked ticket file in tickets/ -> NOT swept into the close
 # commit (ticket 0193: a stash-resurrected 0149 file was swept by the blanket
 # `git add tickets/` and bounced PR #242 on corpus validation)
