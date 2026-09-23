@@ -115,3 +115,33 @@ def test_no_full_model_id_in_skill_bodies():
         "(valid only in frontmatter, a different code path — 0235):\n"
         + "\n".join(offenders)
     )
+
+
+FRONTMATTER_MODEL = re.compile(r"^model:\s*['\"]?(\S+?)['\"]?\s*$", re.MULTILINE)
+
+
+def _frontmatter(md_text: str) -> str:
+    parts = md_text.split("---", 2)
+    return parts[1] if md_text.startswith("---") and len(parts) == 3 else ""
+
+
+def test_forked_skills_pin_their_own_model():
+    """A `context: fork` skill runs as its own agent, and THAT agent does honour
+    frontmatter `model:` — measured 2026-09-23 on Claude Code 2.1.280: a forked
+    probe pinned `model: haiku` ran as claude-haiku-4-5 under a Sonnet parent,
+    its unpinned twin inherited claude-sonnet-5. Unpinned, a fork inherits its
+    caller's model, so a gate forked from an Opus executor runs at Opus: the
+    ticket-0820 executor's /verify-adherence fork spent 38 Opus turns, 26 of
+    them Bash. The 0235 lesson (frontmatter does not reach spawned children)
+    still holds; this is the fork itself."""
+    forked, unpinned = [], []
+    for path in _skill_md_files():
+        fm = _frontmatter(path.read_text(encoding="utf-8"))
+        if not re.search(r"^context:\s*fork\s*$", fm, re.MULTILINE):
+            continue
+        forked.append(path)
+        m = FRONTMATTER_MODEL.search(fm)
+        if not m or m.group(1) not in VALID_MODELS:
+            unpinned.append(str(path.relative_to(REPO)))
+    assert forked, "no context: fork skill found — the scan has no subject"
+    assert not unpinned, f"forked skills without a valid frontmatter model: {unpinned}"
