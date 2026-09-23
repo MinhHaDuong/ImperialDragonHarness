@@ -7,6 +7,7 @@ Author: claude
 2026-09-23T08:24Z claude created
 
 2026-09-23T09:38Z Minh-Ha-Duong note raid breaker in search-works-for-zotero fired on a compliant executor running a >10 min gate; section added
+2026-09-23T14:00Z Codex note review: wire the selector into /hunt and distinguish a live long-running gate from agent silence
 --- body ---
 ## Context
 
@@ -30,6 +31,9 @@ project's: every repo with a pre-commit gate meets it.
 ## Relevant files
 
 - `rules/workflow.md` — where a resident rule on scoping the gate would live
+- `skills/hunt/SKILL.md` step 10 and `rules/coding-python.md` — currently
+  require the full `make check` before every PR; both must recognize the
+  scoped result for a doc-only PR or the pilot will still run the full gate
 - `skills/verify-gate/SKILL.md`, `skills/gaze/SKILL.md` — gates that quote a
   `make` target; 0320 already scaled `/gaze`'s reviewer battery to the diff
 - a project Makefile, e.g. search-works-for-zotero's `check:` line — the
@@ -46,17 +50,26 @@ project's: every repo with a pre-commit gate meets it.
 3. Pilot in search-works-for-zotero: docs and tickets → lint, figures, names,
    progress, tickets, ticket-logs; `plugins/**` adds sitter-version and
    sitter-mutants; anything else → full `make check`.
+4. Wire the selector into `/hunt`'s pre-PR step and align the resident Python
+   testing rule: a doc-only PR with a declared path map runs the selected
+   targets, with the skipped list in the PR description; a code PR and any
+   project without a map still run the full gate. Make `/verify-gate` and
+   `/gaze` recognize the scoped result without mistaking it for a full run.
 
 ## Test
 
 Red first: a diff touching only `DECISIONS.md` selects the six doc targets and
 names the other six as skipped; a diff touching one `.py` file selects the full
-gate; a path absent from the map selects the full gate.
+gate; a path absent from the map selects the full gate. Exercise `/hunt`'s
+pre-PR step for both doc-only and code diffs, so a direct `make check` there
+cannot bypass the selector.
 
 ## Verification
 
 - [ ] The three test diffs select what the Test section says.
 - [ ] The skipped-targets line is present on every run ("skipped: none" on a full one).
+- [ ] `/hunt` uses the scoped result before a mapped doc-only PR and the full
+      gate before a code PR or in a project without a path map.
 
 ## Invariants
 
@@ -65,8 +78,9 @@ gate; a path absent from the map selects the full gate.
 
 ## Exit criteria
 
-The rule is resident, the script ships with its tests, and the pilot project
-uses it for its next doc-only PR.
+The rule is resident, the script ships with its tests, `/hunt` and the review
+gates consume its result, and the pilot project uses it for its next doc-only
+PR without also running the full gate.
 
 ## Related: the raid's agent-timeout breaker measures the gate, not the agent
 
@@ -79,15 +93,20 @@ more than 10 minutes (`sitter-mutants` alone, cold). An executor that follows
 the contract cannot push inside the breaker, so the breaker fires on
 compliance, not on stalls. Switching the coder model would not change it.
 
-Two fixes, either sufficient; this ticket's scoped gate makes both cheaper:
+The breaker must observe a gate separately from the executor's edits. Merely
+resetting its clock on a commit or worktree change still kills a compliant
+executor during a gate that takes more than 10 minutes and makes no edits.
+The scoped gate reduces that exposure but does not eliminate it for code PRs.
 
-1. **Time the breaker from the last commit, not from launch**, in
-   `skills/raid/SKILL.md` § Circuit breakers: a stall is "no new commit and no
-   worktree change for N minutes", read from the worktree, which the
-   orchestrator can already inspect.
-2. **A checkpoint in the execute contract**: push a WIP commit once the red
-   test exists, so a timeout salvages a known-good point rather than whatever
-   the tree held.
+In `skills/raid/SKILL.md` § Circuit breakers, use the last push or worktree
+change for the ordinary 10-minute stall window. While the executor is running
+the declared gate, suspend that window only for a bounded gate allowance:
+confirm that the gate process is still alive, set a project-specific maximum
+longer than its measured cold run, and kill or escalate when that maximum
+expires. Resume the ordinary stall window when the gate exits. A WIP push
+after the red test is a useful recovery checkpoint, not a substitute for the
+gate allowance; it cannot prevent the next 10-minute timeout by itself.
 
-Exit addition: the breaker no longer fires on an executor whose worktree
-changed within its window, shown on a run whose gate exceeds 10 minutes.
+Exit addition: a live gate lasting more than 10 minutes with no worktree edits
+does not trigger the ordinary breaker, while a silent executor outside the
+gate still does and a hung gate reaches its own bounded deadline.
