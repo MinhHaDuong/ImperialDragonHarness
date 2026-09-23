@@ -2,11 +2,11 @@
 Title: EDM: dédoublonner la bibliothèque Zotero existante — détection locale, fusion dans le client
 Created: 2026-08-14
 Author: Minh Ha-Duong
-Blocked-by: 0455
 
 --- log ---
 2026-08-14T19:10Z claude created — 269 grappes de fichiers md5-identiques sous des parents distincts, invisibles au volet Doublons de Zotero
 
+2026-09-23T19:15Z Minh Ha-Duong note blocker 0455 closed — Blocked-by removed.
 --- body ---
 ## Context
 
