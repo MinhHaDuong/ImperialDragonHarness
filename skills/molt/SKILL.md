@@ -121,6 +121,28 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the healthcheck
    names the knob).
 
+1.8. **Reconcile EDM staging with Zotero.** In the current project checkout,
+   run only when a `.bib` exists at the root or one level below, or `docs/`
+   exists. With neither, stay silent. Use the harness helper so unattended
+   `beat` and interactive `/lair` take the same path:
+
+   ```bash
+   if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
+     if [ -f .zotero-reconcile.json ]; then
+       python3 ~/.claude/scripts/zotero-import.py reconcile . --apply --out /tmp/zotero-reconcile.json
+     else
+       python3 ~/.claude/scripts/zotero-import.py reconcile . --out /tmp/zotero-reconcile.json
+     fi
+   fi
+   ```
+
+   The command is report-only unless this project carries an explicit
+   `.zotero-reconcile.json` containing `{"apply": true, "user_id": "<Zotero user ID>"}`.
+   An apply run takes locks, refreshes the Web API library, and imports only
+   absent PDFs whose metadata agrees with their own front matter. Surface
+   `unchecked`, `deferred`, and nonzero exit statuses; never read an empty
+   report as proof that the library is complete. Do not purge staging files.
+
 2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
    runs once inside healthcheck and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
