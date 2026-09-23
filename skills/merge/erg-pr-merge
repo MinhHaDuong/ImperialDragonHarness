@@ -368,19 +368,27 @@ no_checks_required() {
     local pr_now branch_now rules_now
     pr_now=$(gh pr view "$PR" --json mergeable,statusCheckRollup) \
         || die "could not inspect PR checks after registration retries — aborting merge"  # harness-extension-point
-    [[ $(echo "$pr_now" | jq -r '.mergeable') == MERGEABLE ]] \
+    echo "$pr_now" | jq -e '.mergeable == "MERGEABLE"' >/dev/null \
         || die "PR is not MERGEABLE after checks failed to register — aborting merge"
-    [[ $(echo "$pr_now" | jq -r '.statusCheckRollup | length') -eq 0 ]] \
-        || die "PR check rollup is not empty after checks failed to register — aborting merge"
+    echo "$pr_now" | jq -e '(.statusCheckRollup | type == "array") and (.statusCheckRollup | length == 0)' >/dev/null \
+        || die "PR check rollup is unavailable or not empty after checks failed to register — aborting merge"
 
     branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}") \
         || die "could not inspect base branch protection — aborting merge"  # harness-extension-point
-    [[ $(echo "$branch_now" | jq -r '[(.protection.required_status_checks.contexts // [])[], (.protection.required_status_checks.checks // [])[]] | length') -eq 0 ]] \
+    echo "$branch_now" | jq -e '
+        (.protection.required_status_checks.contexts // []) as $contexts |
+        (.protection.required_status_checks.checks // []) as $checks |
+        ($contexts | type) == "array" and ($checks | type) == "array" and
+        ($contexts | length) == 0 and ($checks | length) == 0
+    ' >/dev/null \
         || die "base branch has required checks that have not registered — aborting merge"
 
     rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate) \
         || die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
-    [[ $(echo "$rules_now" | jq -s 'add | [.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]?] | length') -eq 0 ]] \
+    echo "$rules_now" | jq -se '
+        length > 0 and all(.[]; type == "array") and
+        ([.[][] | select(.type == "required_status_checks") | .parameters.required_status_checks[]?] | length == 0)
+    ' >/dev/null \
         || die "base branch rules require checks that have not registered — aborting merge"
     echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
 }

@@ -600,10 +600,24 @@ if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
    STUB_MERGE_LOG="$MLOG" \
    run_merge "$BODY_ROLLUP" "ticket(0874): rollup" 2>&1); then
     echo "FAIL: nonempty rollup allowed no-checks direct merge"; fail=1
-elif [[ "$out" != *"rollup is not empty"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+elif [[ "$out" != *"rollup is unavailable or not empty"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
     echo "FAIL: nonempty rollup was not recognized"; fail=1
 else
     echo "PASS: nonempty rollup blocks no-checks direct merge"
+fi
+
+# A null rollup is unavailable data, not evidence that the PR has no checks.
+seed_repo nullrollup 0875
+MLOG="$WORK/merge-null-rollup.log"; : > "$MLOG"
+BODY_NULL=$'Summary.\n\n**Ticket:** tickets/0875-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_ROLLUP=null STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_NULL" "ticket(0875): null rollup" 2>&1); then
+    echo "FAIL: null rollup allowed no-checks direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: null rollup issued direct merge"; fail=1
+else
+    echo "PASS: null rollup blocks no-checks direct merge"
 fi
 
 # A red check remains a hard stop with the original diagnostic.
