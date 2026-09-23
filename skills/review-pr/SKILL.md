@@ -80,7 +80,22 @@ in the posted review and leave it unresolved for the next round.
 
 1. **Read the issue** linked to the PR. Note the exit criteria.
 2. **Read the diff** of the merge request.
-3. **Assess risk level** and determine proportional depth (see table below).
+3. **Determine round-1 panel width**, then assess risk level and proportional
+   depth (see below). Read `${IDH_HOME:-$HOME/.claude}/skills/review-pr/panel-width.json`;
+   its `max_lines`, `max_files`, and `pipeline_paths` are the configured
+   criterion. Use the PR base branch and `git diff --numstat --no-renames
+   origin/<base>...HEAD` in the review worktree. Sum added and deleted lines
+   and count changed files. A binary/unknown count, missing base, or unreadable
+   config chooses the proportional panel. On round 1, choose **Correctness only**
+   when both counts are within the configured maxima and no changed path
+   matches a `pipeline_paths` glob (treat `/**` as including every descendant).
+   Otherwise choose the proportional panel below, with at least Correctness +
+   Consistency even if the risk description is trivial. Record the counts, matched
+   pipeline paths, and chosen width in `<panel>/width.txt` and the posted
+   synthesis; `manifest.txt` remains perspective names only.
+   A `review:standard` label on the PR or the exact token `review:standard` in
+   its linked ticket body or PR body overrides the small-diff choice and runs
+   all five perspectives. The author can request that token at any time.
 4. **Write the manifest, then launch the review agents** in parallel, in one
    message, per the concurrency contract above. Each agent's prompt must name
    the exact `<panel>/<perspective>.md` path it writes and the `.part`-then-
@@ -100,7 +115,6 @@ in the posted review and leave it unresolved for the next round.
 
 | PR risk | Agents |
 |---|---|
-| Trivial + user present | **Skip PR** — merge directly |
 | Trivial (typo, config) | Correctness only |
 | Standard | Correctness + Consistency |
 | Standard + scripts | + Doc propagation |
@@ -109,8 +123,15 @@ in the posted review and leave it unresolved for the next round.
 
 ### Round scoping
 
-The table above prices **round 1**. Round 1 always runs the full proportional
-panel — no perspective is skipped on a PR's first review.
+The table above prices the proportional panel. The mechanical width criterion
+in Setup selects Correctness only for a qualifying round-1 diff. Any concern
+from that reviewer (including low confidence or a suspected unseen failure)
+must **escalate** within round 1: add the other four perspectives to the
+manifest, run and collect them, then synthesize
+the complete roster before posting the review. Never post a single-seat
+approval while the reviewer requests escalation. If the author's
+`review:standard` request arrives after a single-seat review, the next review
+runs all five perspectives as a reset exception.
 
 Derive the round here, from the PR itself: count the reviews already posted by
 this skill on the merge request; the round is that count plus one. No caller
@@ -141,6 +162,8 @@ rewrite rather than a patch — the cleared perspectives cleared different code.
 Run the full proportional panel for this round — scoping is ignored. The
 derived round number itself is untouched: the count of posted reviews cannot
 be rolled back, and the review this round posts still increments it.
+An explicit `review:standard` request is also a reset exception and runs all
+five perspectives.
 
 Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/claude-code.md` § Subagent levers and
