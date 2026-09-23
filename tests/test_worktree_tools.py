@@ -602,6 +602,21 @@ def test_preflight_keeps_modified_tracked_panel_file(origin):
     assert report.read_text() == "unsaved\n"
 
 
+def test_preflight_never_purges_non_git_directory(tmp_path):
+    folder = tmp_path / "not-a-worktree"
+    (folder / ".panel" / "999").mkdir(parents=True)
+    report = folder / ".panel" / "999" / "report.md"
+    report.write_text("keep\n")
+    (folder / "build" / "panel-head").mkdir(parents=True)
+    base = folder / "build" / "panel-head" / "README"
+    base.write_text("keep\n")
+
+    res = _preflight(folder)
+    assert res.returncode != 0
+    assert report.read_text() == "keep\n"
+    assert base.read_text() == "keep\n"
+
+
 @pytest.mark.integration
 def test_preflight_defaults_to_cwd(origin):
     """No arg → check the current directory. Mirrors how skill prose invokes

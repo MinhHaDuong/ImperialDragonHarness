@@ -110,10 +110,17 @@ flush() {
     # while retaining every other uncommitted file as a removal blocker.
     # A tracked file under either path may contain real edits; never erase it.
     # Also do not follow a symlinked build/ parent outside the worktree.
-    if [ -z "$(git -C "$path" ls-files -- .panel)" ]; then
+    local tracked_panel tracked_base
+    if ! tracked_panel=$(git -C "$path" ls-files -- .panel 2>/dev/null) ||
+       ! tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null); then
+        echo "worktree-gc: skip $base (could not inspect review scratch)" >&2
+        skipped_wip=$((skipped_wip + 1))
+        reset; return
+    fi
+    if [ -z "$tracked_panel" ]; then
         rm -rf -- "$path/.panel"
     fi
-    if [ ! -L "$path/build" ] && [ -z "$(git -C "$path" ls-files -- build/panel-head)" ]; then
+    if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
         rm -rf -- "$path/build/panel-head"
     fi
     if report_wip "$path" "$base"; then
