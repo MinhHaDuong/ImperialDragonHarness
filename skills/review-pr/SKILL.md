@@ -89,7 +89,8 @@ in the posted review and leave it unresolved for the next round.
    config chooses the proportional panel. On round 1, choose **Correctness only**
    when both counts are within the configured maxima and no changed path
    matches a `pipeline_paths` glob (treat `/**` as including every descendant).
-   Otherwise choose the proportional panel below. Record the counts, matched
+   Otherwise choose the proportional panel below, with at least Correctness +
+   Consistency even if the risk description is trivial. Record the counts, matched
    pipeline paths, and chosen width in `<panel>/width.txt` and the posted
    synthesis; `manifest.txt` remains perspective names only.
    A `review:standard` label on the PR or the exact token `review:standard` in

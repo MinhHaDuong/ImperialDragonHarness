@@ -186,8 +186,8 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
   - **full** — everything else, and any round ≥ 2. The **tiny** and **small** tiers are round-1 classifications only; a round ≥ 2 is never tiny or small.
 
   The tier selects which reviewer agents run (see §§ 2–4, 5); phase 6 (`/verify-gate`) is **invariant** — it runs at every tier, never reduced. Per-tier battery:
-  - **tiny** → Agent A (adherence) + phase 6 gate only. Skip Agent B (`/review`), Agent C (`/review-pr`), and phase 5 (`/simplify`) — each skip logged like the existing `review-pr: skipped (…)` line.
-  - **small** → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate. Agent C runs with the reduced "correctness only" perspective set (trivial risk, § 2–4) instead of the full five-perspective panel.
+  - **tiny** → Agent A + Agent C + phase 6 gate. Skip Agent B (`/review`) and phase 5 (`/simplify`); Agent C still supplies a review seat.
+  - **small** → Agent A + Agent B + Agent C + phase 5 (`/simplify`) + phase 6 gate.
   - **full**, round 1 → the complete battery below, unchanged; an explicit
     `review:standard` request runs all five Agent C perspectives.
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
@@ -325,12 +325,17 @@ Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
-**Tier-gate:** skip this agent when the tier is **tiny** and log
-`review-pr: skipped (tier: tiny, <pr_lines> lines, <pr_files> files)` in the
-setup summary. When the tier is **small**, run it with the reduced **correctness
-only** perspective set (the `trivial` risk band below) regardless of the risk
-assessment. When the tier is **full** on round 1, run the full proportional
-panel as assessed (all five perspectives when `review:standard` was requested);
+**Width-gate:** run Agent C at every tier. For round-1 code diffs, read
+`${IDH_HOME:-$HOME/.claude}/skills/review-pr/panel-width.json` and apply its
+`max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat
+--no-renames origin/<base>...HEAD` in the review worktree. A diff within both
+limits and with no pipeline path gets Correctness only. A binary count, missing
+base, or unreadable config selects the proportional panel, with at least
+Correctness + Consistency even if the risk description is trivial. `review:standard`
+in the PR label/body or linked ticket body selects all five code perspectives
+even for a tiny diff. A Correctness reviewer concern or low confidence adds
+the other four perspectives before synthesis. The gaze battery tier controls
+Agents A/B and simplify, but never overrides this Agent C width decision;
 when the merge request already carries a prior Agent C
 review (the caller-level repeat `/gaze` case), run the panel scoped per
 § Round scoping — only the perspectives whose previous verdict was
@@ -358,9 +363,11 @@ refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
 the audit measured as correct for it (ticket 0550). Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
 whose embedded procedure is: read the linked ticket's exit criteria and the
-diff, assess risk, and run the proportional perspective set in parallel —
+diff, assess risk, apply the Width-gate for round-1 code, and run the selected
+perspective set in parallel —
 **code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
-correctness only; standard → +consistency; +scripts → +doc-propagation;
+correctness only when Width-gate qualifies; otherwise at least +consistency;
+scripts or other pipeline paths → +doc-propagation;
 substantial → all five); **prose:** discipline panel sized to the change,
 always including an adversarial referee and an AI-tells auditor that scans the
 full text against `config/ai-tells.yml`. Each perspective reports
@@ -664,7 +671,7 @@ tier: tiny|small|full
 adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
-review-pr scope: full panel | scoped: <objecting perspectives> + regression (omit if round 1)
+review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
