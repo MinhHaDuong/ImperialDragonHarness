@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-14T04:00Z claude created
 
+2026-09-23T15:53Z Minh-Ha-Duong implemented explicit Agent C tool grant and visible nested-panel integrity fallback; red-first regression now passes
 --- body ---
 ## Context
 
