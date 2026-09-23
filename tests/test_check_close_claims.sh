@@ -112,7 +112,28 @@ _check_says "the run reports what it examined" "$out" "examined 5 PRs"
 # unrecognised = 5. A gap here would mean the script silently checks less than
 # it reports, which is the failure shape the whole ticket is about.
 _check_says "…and the buckets account for every PR" "$out" \
-    "3 close claim(s), 2 explicit no-close, 0 unrecognised"
+    "3 close claim(s) across 3 PR(s), 2 explicit no-close, 0 unrecognised"
+
+# One PR may claim several tickets. Count claims, not just PRs carrying claims.
+cat > "$repo/prs.json" <<EOF
+[{"number":106,"title":"two tickets","mergedAt":"$RECENT",
+  "body":"**Ticket:** tickets/0002-honoured.erg\n**Ticket:** tickets/0003-archived.erg\n"}]
+EOF
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "two honoured claims exit cleanly" 0 "$rc"
+_check_says "the sweep counts both claims on one PR" "$out" "2 close claim(s)"
+
+# An archived path alone is insufficient: a botched rename can move the
+# pre-close blob, leaving the ticket in closed/ without its Closed: header.
+printf '%%erg 0.1\nTitle: moved without close\nCreated: 2026-09-01\nAuthor: t\n' \
+    > "$repo/tickets/closed/0004-missing-header.erg"
+cat > "$repo/prs.json" <<EOF
+[{"number":107,"title":"bad archive","mergedAt":"$RECENT",
+  "body":"**Ticket:** tickets/0004-missing-header.erg\n"}]
+EOF
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "archived ticket without Closed header exits 1" 1 "$rc"
+_check_says "the bad archive is named as dropped" "$out" "DROPPED: PR #107 claims ticket 0004"
 
 # --- 2. A claim on a ticket that is not in the tree at all -----------------
 cat > "$repo/prs.json" <<EOF
