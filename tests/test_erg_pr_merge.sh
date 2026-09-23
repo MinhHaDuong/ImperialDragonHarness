@@ -72,8 +72,8 @@ case "$1 $2" in
     jq -n \
       --arg n "$STUB_PR" --arg h "$STUB_BRANCH" --arg b "$STUB_BASE" \
       --arg body "$STUB_BODY" --arg draft "${STUB_IS_DRAFT:-false}" \
-      --arg t "$STUB_TITLE" \
-      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:[],body:$body,isDraft:($draft=="true"),title:$t}'
+      --arg t "$STUB_TITLE" --argjson rollup "${STUB_ROLLUP:-[]}" \
+      '{number:($n|tonumber),headRefName:$h,baseRefName:$b,mergeable:"MERGEABLE",statusCheckRollup:$rollup,body:$body,isDraft:($draft=="true"),title:$t}'
     exit 0 ;;
   "pr ready")
     echo "$*" >> "${STUB_READY_LOG:-/dev/null}"
@@ -106,6 +106,12 @@ case "$1 $2" in
     echo "stub: merged $3"; exit 0 ;;
   "pr checks")
     echo "$*" >> "${STUB_CHECKS_LOG:-/dev/null}"
+    if [[ "${STUB_CHECKS_RED:-0}" == "1" ]]; then
+      echo "stub: test failed" >&2; exit 1
+    fi
+    if [[ "${STUB_CHECKS_NOCHECKS_ALWAYS:-0}" == "1" ]]; then
+      echo "no checks reported on the $STUB_BRANCH branch" >&2; exit 1
+    fi
     # Check-registration race: first watch reports "no checks reported" and
     # exits non-zero instantly; a later watch passes.
     if [[ -n "${STUB_CHECKS_NOCHECKS_ONCE:-}" ]]; then
@@ -117,6 +123,21 @@ case "$1 $2" in
       fi
     fi
     echo "stub: checks ok"; exit 0 ;;
+  "api repos/{owner}/{repo}/branches/$STUB_BASE")
+    if [[ "${STUB_LEGACY_MALFORMED:-0}" == "1" ]]; then
+      echo '{"protected":true,"protection":{}}'
+    elif [[ "${STUB_LEGACY_UNPROTECTED_EMPTY:-0}" == "1" ]]; then
+      echo '{"protected":false,"protection":{}}'
+    else
+      jq -n --argjson n "${STUB_LEGACY_REQUIRED:-0}" \
+        '{protected:true,protection:{required_status_checks:{contexts:(if $n > 0 then ["required"] else [] end),checks:[]}}}'
+    fi ;;
+  "api repos/{owner}/{repo}/rules/branches/$STUB_BASE")
+    if [[ "${STUB_RULE_MALFORMED:-0}" == "1" ]]; then
+      echo '[{"type":"required_status_checks","parameters":{}}]'
+    elif [[ "${STUB_RULE_REQUIRED:-0}" == "1" ]]; then
+      echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"required"}]}}]'
+    else echo '[]'; fi ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
 esac
@@ -219,6 +240,14 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_AUTO_NOTMERGEABLE_ONCE="${STUB_AUTO_NOTMERGEABLE_ONCE:-}" \
       STUB_MERGEABLE_UNKNOWN_ONCE="${STUB_MERGEABLE_UNKNOWN_ONCE:-}" \
       STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
+      STUB_CHECKS_NOCHECKS_ALWAYS="${STUB_CHECKS_NOCHECKS_ALWAYS:-0}" \
+      STUB_CHECKS_RED="${STUB_CHECKS_RED:-0}" \
+      STUB_LEGACY_REQUIRED="${STUB_LEGACY_REQUIRED:-0}" \
+      STUB_LEGACY_MALFORMED="${STUB_LEGACY_MALFORMED:-0}" \
+      STUB_LEGACY_UNPROTECTED_EMPTY="${STUB_LEGACY_UNPROTECTED_EMPTY:-0}" \
+      STUB_RULE_REQUIRED="${STUB_RULE_REQUIRED:-0}" \
+      STUB_RULE_MALFORMED="${STUB_RULE_MALFORMED:-0}" \
+      STUB_ROLLUP="${STUB_ROLLUP:-[]}" \
       STUB_IS_DRAFT="${STUB_IS_DRAFT:-false}" \
       STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
       STUB_MERGE_COSMETIC_FAIL="${STUB_MERGE_COSMETIC_FAIL:-0}" \
@@ -530,6 +559,132 @@ if STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
     else echo "PASS: fallback watch retries past no-checks race, then merges"; fi
 else
     echo "FAIL: erg-pr-merge exited non-zero on no-checks registration race"; fail=1
+fi
+
+# Case 14b: a repository with no checks cannot satisfy gh's checks watcher.
+# After bounded registration retries, a mergeable PR with no required checks
+# and an empty rollup must take the direct fallback merge.
+seed_repo nochecksforever 0871
+MLOG="$WORK/merge14b.log"; CLOG="$WORK/checks14b.log"
+: > "$MLOG"; : > "$CLOG"
+BODY14b=$'Summary.\n\n**Ticket:** tickets/0871-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   run_merge "$BODY14b" "ticket(0871): no checks" 2>&1); then
+    nc_miss=0
+    closed_has 0871 || { echo "  ticket not closed"; nc_miss=1; }
+    [[ $(grep -c -- '--watch' "$CLOG") -eq 3 ]] || { echo "  registration retries missing"; nc_miss=1; }
+    grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' || { echo "  direct merge missing"; nc_miss=1; }
+    [[ "$out" == *"no required checks"* ]] || { echo "  no-check decision not explained"; nc_miss=1; }
+    if (( nc_miss )); then echo "FAIL: no-checks fallback incomplete"; fail=1
+    else echo "PASS: no-checks repo merges after bounded retries"; fi
+else
+    echo "FAIL: no-checks repo aborted: $out"; fail=1
+fi
+
+# A configured required check, whether legacy branch protection or a ruleset,
+# must prevent direct merge when no check registered.
+for required_kind in legacy rule; do
+    seed_repo "required-$required_kind" 0872
+    MLOG="$WORK/merge-required-$required_kind.log"; : > "$MLOG"
+    BODY_REQUIRED=$'Summary.\n\n**Ticket:** tickets/0872-fixture.erg\n'
+    if [[ "$required_kind" == legacy ]]; then legacy=1; rule=0; else legacy=0; rule=1; fi
+    if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+       STUB_LEGACY_REQUIRED="$legacy" STUB_RULE_REQUIRED="$rule" \
+       STUB_MERGE_LOG="$MLOG" \
+       run_merge "$BODY_REQUIRED" "ticket(0872): required checks" 2>&1); then
+        echo "FAIL: $required_kind required check allowed direct merge"; fail=1
+    elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+        echo "FAIL: $required_kind required check issued direct merge"; fail=1
+    else
+        echo "PASS: $required_kind required check blocks no-checks direct merge"
+    fi
+done
+
+# A required-check rule with missing parameters is malformed forge data. Do
+# not interpret its absent list as zero required checks and merge.
+seed_repo malformedrule 0876
+MLOG="$WORK/merge-malformed-rule.log"; : > "$MLOG"
+BODY_MALFORMED=$'Summary.\n\n**Ticket:** tickets/0876-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_RULE_MALFORMED=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_MALFORMED" "ticket(0876): malformed rule" 2>&1); then
+    echo "FAIL: malformed required-check rule allowed direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: malformed required-check rule issued direct merge"; fail=1
+else
+    echo "PASS: malformed required-check rule blocks direct merge"
+fi
+
+# A protected base with missing protection fields is incomplete forge data.
+seed_repo malformedlegacy 0877
+MLOG="$WORK/merge-malformed-legacy.log"; : > "$MLOG"
+BODY_MALFORMED_LEGACY=$'Summary.\n\n**Ticket:** tickets/0877-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_LEGACY_MALFORMED=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_MALFORMED_LEGACY" "ticket(0877): malformed protection" 2>&1); then
+    echo "FAIL: malformed legacy protection allowed direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: malformed legacy protection issued direct merge"; fail=1
+else
+    echo "PASS: malformed legacy protection blocks direct merge"
+fi
+
+# An explicit unprotected base needs no legacy required-check subobject.
+seed_repo unprotected 0878
+MLOG="$WORK/merge-unprotected.log"; : > "$MLOG"
+BODY_UNPROTECTED=$'Summary.\n\n**Ticket:** tickets/0878-fixture.erg\n'
+if STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_LEGACY_UNPROTECTED_EMPTY=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_UNPROTECTED" "ticket(0878): unprotected" >/dev/null 2>&1; then
+    if grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+        echo "PASS: explicit unprotected base permits direct merge"
+    else echo "FAIL: unprotected base did not issue direct merge"; fail=1; fi
+else
+    echo "FAIL: explicit unprotected base was blocked"; fail=1
+fi
+
+# A contradictory nonempty PR rollup must fail closed rather than claim that
+# the repository has no checks.
+seed_repo nonemptyrollup 0874
+MLOG="$WORK/merge-rollup.log"; : > "$MLOG"
+BODY_ROLLUP=$'Summary.\n\n**Ticket:** tickets/0874-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_ROLLUP='[{"status":"COMPLETED","conclusion":"SUCCESS"}]' \
+   STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_ROLLUP" "ticket(0874): rollup" 2>&1); then
+    echo "FAIL: nonempty rollup allowed no-checks direct merge"; fail=1
+elif [[ "$out" != *"rollup is unavailable or not empty"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: nonempty rollup was not recognized"; fail=1
+else
+    echo "PASS: nonempty rollup blocks no-checks direct merge"
+fi
+
+# A null rollup is unavailable data, not evidence that the PR has no checks.
+seed_repo nullrollup 0875
+MLOG="$WORK/merge-null-rollup.log"; : > "$MLOG"
+BODY_NULL=$'Summary.\n\n**Ticket:** tickets/0875-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_ROLLUP=null STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_NULL" "ticket(0875): null rollup" 2>&1); then
+    echo "FAIL: null rollup allowed no-checks direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: null rollup issued direct merge"; fail=1
+else
+    echo "PASS: null rollup blocks no-checks direct merge"
+fi
+
+# A red check remains a hard stop with the original diagnostic.
+seed_repo redcheck 0873
+MLOG="$WORK/merge-redcheck.log"; : > "$MLOG"
+BODY_RED=$'Summary.\n\n**Ticket:** tickets/0873-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_RED=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_RED" "ticket(0873): red check" 2>&1); then
+    echo "FAIL: red check allowed merge"; fail=1
+elif [[ "$out" != *"CI checks failed"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: red check did not retain abort behavior"; fail=1
+else
+    echo "PASS: red check still aborts with CI failure"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
