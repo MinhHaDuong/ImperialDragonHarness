@@ -32,12 +32,16 @@ with the PR branch checked out. Point it at a checkout in one of two ways:
 
 The script reads close intent from the PR **body** only — never the title:
 
-- `**Ticket:** tickets/NNNN-...` (bold or bare `Ticket:`) — a **close claim**:
-  the named ticket is closed and archived on merge.
+- `**Ticket:** tickets/NNNN-...` or `**Ticket:** tickets/closed/NNNN-...`
+  (bold or bare `Ticket:`) — a **close claim**: the named ticket is closed and
+  archived on merge. An already closed and archived ticket is accepted as a
+  clean no-op.
 - `Ticket-ref: tickets/NNNN-...` — references a ticket **without closing it**
   (for annotating a deliberately-open ticket).
 - `Ticket: none` — the PR closes nothing.
 - With none of these lines and a `tickets/` dir present, the script errors.
+- Ticket lines inside Markdown code fences are examples and are ignored.
+  Ticket paths outside fences that cannot be parsed cause an error.
 - Title prefixes like `chore(0216):` are subject references — they **never**
   close anything.
 

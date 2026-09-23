@@ -9,6 +9,7 @@ Author: claude
 2026-09-16T07:05Z claude note Extraction is fence-blind; a PR documenting the claim syntax carries live claims
 
 2026-09-16T12:10Z claude note git-erg 0255 landed. Folding in its reference grammar (case-fold once, drop -i), the two failure modes its first two rounds produced -- the second converted fail-closed into a silent gate bypass -- and a harness-only coupling verified in the current script: existence-at-tip globs tickets/ alone, so widening the regex alone moves the abort rather than removing it. Three coupled changes, not one.
+2026-09-23T19:37Z codex note Implemented closed-path grammar, archived-tip lookup, already-closed no-op, fenced-example exclusion, and malformed-claim finding. Local regressions pass. Live 30-day forge sweep returned no data (exit 2), so the required before/after comparison remains open; ticket stays open.
 
 --- body ---
 ## Context
@@ -188,6 +189,28 @@ passes.
       still extract, including the multi-line `sort -u` case
 - [ ] A body with no ticket line still yields empty without error
 - [ ] `check-close-claims.sh --days 7` still reports 0 findings
+
+## Implementation decision and remaining verification (2026-09-23)
+
+Markdown fenced blocks are stripped before interpreting Ticket lines in both
+the merge gate and detector. This keeps examples from closing tickets. The
+scripts fold case before matching the same `tickets/(closed/)?NNNN` path forms;
+the gate rejects and the detector reports any Ticket path it cannot parse.
+Regression fixtures cover a closed-path claim, mixed-case claim, malformed
+claim next to `Ticket: none`, and a fenced example. The pre-change extraction
+regex returns no ID for `tickets/closed/0276-some-slug.erg`; the new integration
+fixture closes the case through the full merge script.
+
+The live `check-close-claims.sh --days 30 --limit 100` attempt exited 2:
+`gh pr list` returned no data in this environment. A before/after comparison
+and the 7-day all-clear cannot be asserted until forge access works. The
+git-erg sibling's source was also unavailable here; its landing is described
+in the ticket log, but exact source parity remains to be checked.
+
+Both targeted shell suites pass, and `erg validate` passes for this ticket.
+`make check` reached pytest and reported unrelated failures in the broader
+shell suite, including `test_bash_env_xtrace_silent.sh` (its fixture did not
+load); the full run was stopped after that failure was reproduced alone.
 
 ## Invariants
 
