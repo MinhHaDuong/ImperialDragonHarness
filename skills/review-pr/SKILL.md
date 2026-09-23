@@ -103,6 +103,20 @@ in the posted review and leave it unresolved for the next round.
    a fork that is already gone. On round ≥ 2, scope the set per § Round scoping
    below before launching, and let the manifest list exactly that scoped set:
 
+   **Fan-out preflight:** inspect your available tools for `Agent` before the
+   launch. If it is absent, or a launch returns a depth-limit, permission, or
+   other spawn error, do not run the perspectives sequentially yourself.
+   Keep every unlaunched manifest entry as `no report`. Write
+   `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or spawn failed;
+   independent perspectives not run` and `dissent: unavailable` into
+   `<panel>/review.md`, post them in the single PR review, and return them in
+   the structured result. A panel with missing reports also carries a
+   `PANEL-INTEGRITY:` line naming those perspectives. Never use
+   `dissent: none` unless every selected perspective has a distinct completed
+   artifact. If no reviewer launched, skip the collection wait; if some
+   launched, collect those reports under the normal deadline before synthesis.
+   The remaining review content and perspective judgments are unchanged.
+
 | Agent | Focus | Key question |
 |---|---|---|
 | **Correctness** | Logic, edge cases, test coverage | Does this do what the exit criteria say? |
@@ -192,6 +206,8 @@ whether five reviewers approved in silence or none of them ever started.
 
 Never wait unbounded, and never extend the deadline to avoid recording a gap.
 Proceed to synthesis with what landed, carrying the gap forward by name.
+If any perspective is `no report`, write and post a `PANEL-INTEGRITY: DEGRADED`
+line naming it; set `dissent: unavailable` instead of `dissent: none`.
 
 ## Synthesis
 
