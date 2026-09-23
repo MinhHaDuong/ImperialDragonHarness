@@ -12,8 +12,8 @@ from pathlib import Path
 
 
 HISTORICAL = re.compile(r"^\s*# historical-skill: ([a-z][a-z0-9-]*) -> ([a-z][a-z0-9-]*)\s*$", re.M)
-SKILL_PATH = re.compile(r"skills/([a-z][a-z0-9-]*)/SKILL\.md")
-ALTERNATION = re.compile(r"\(([a-z][a-z0-9-]*(?:\|[a-z][a-z0-9-]*)+)\)")
+SKILL_PATH = re.compile(r"skills/([a-z][a-z0-9-]*)/[A-Za-z0-9_.-]+")
+CLASSIFIER_GROUP = re.compile(r"\(([a-z][a-z0-9-]*(?:\|[a-z][a-z0-9-]*)*)\)")
 
 
 def _names_in_python(source: str) -> set[str]:
@@ -38,7 +38,7 @@ def _names_in_python(source: str) -> set[str]:
                 pattern = value.args[0]
                 if isinstance(pattern, ast.Constant) and isinstance(pattern.value, (bytes, str)):
                     raw = pattern.value.decode() if isinstance(pattern.value, bytes) else pattern.value
-                    for group in ALTERNATION.findall(raw):
+                    for group in CLASSIFIER_GROUP.findall(raw):
                         names.update(group.split("|"))
     return names
 

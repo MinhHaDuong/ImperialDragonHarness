@@ -55,6 +55,24 @@ def test_regex_and_skill_path_references_are_guarded(tmp_path):
     assert guard().check_script(script, tmp_path / "skills") == ["deleted", "former"]
 
 
+def test_single_name_skill_and_command_classifiers_are_guarded(tmp_path):
+    (tmp_path / "skills").mkdir()
+    script = tmp_path / "trace.py"
+    script.write_text(
+        'import re\n'
+        'SKILL = re.compile(rb\'"skill":\\\\s*"(former)"\')\n'
+        'CMD = re.compile(rb"<command-name>/?(obsolete)</command-name>")\n'
+    )
+    assert guard().check_script(script, tmp_path / "skills") == ["former", "obsolete"]
+
+
+def test_skill_owned_command_path_is_guarded(tmp_path):
+    (tmp_path / "skills").mkdir()
+    script = tmp_path / "guard.sh"
+    script.write_text('echo "~/.claude/skills/merge/erg-pr-merge"\n')
+    assert guard().check_script(script, tmp_path / "skills") == ["merge"]
+
+
 def test_git_verb_and_cache_name_are_not_skill_references(tmp_path):
     (tmp_path / "skills").mkdir()
     script = tmp_path / "helper.py"
