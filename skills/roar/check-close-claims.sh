@@ -74,7 +74,8 @@ if [ -z "$PRS" ]; then
 fi
 
 EXAMINED=$(printf '%s' "$PRS" | jq 'length')
-CLAIMED=0
+CLAIMED_PRS=0
+CLAIMS=0
 NOCLOSE=0
 UNRECOGNISED=0
 FINDINGS=0
@@ -83,7 +84,14 @@ FINDINGS=0
 ticket_state() {
     local id="$1" f
     for f in tickets/closed/"$id"-*.erg tickets/closed/"$id".erg; do
-        [ -e "$f" ] && { echo archived; return 0; }
+        if [ -e "$f" ]; then
+            if grep -qE '^Closed:[[:space:]]*[^[:space:]]' "$f"; then
+                echo archived
+            else
+                echo open
+            fi
+            return 0
+        fi
     done
     for f in tickets/"$id"-*.erg tickets/"$id".erg; do
         if [ -e "$f" ]; then
@@ -119,9 +127,10 @@ while IFS='|' read -r num title_b64 body_b64; do
         fi
         continue
     fi
-    CLAIMED=$((CLAIMED + 1))
+    CLAIMED_PRS=$((CLAIMED_PRS + 1))
 
     for id in $ids; do
+        CLAIMS=$((CLAIMS + 1))
         case "$(ticket_state "$id")" in
             archived|closed) ;;
             open)
@@ -143,10 +152,10 @@ while IFS='|' read -r num title_b64 body_b64; do
 done < <(printf '%s' "$PRS" | jq -r '.[] | [(.number|tostring), (.title // "" | @base64), (.body // "" | @base64)] | join("|")')
 
 # The counts are the positive control: they say what was looked at, so a silent
-# run cannot pass for an all-clear when nothing was examined. They also add up,
-# which is the point — a gap between EXAMINED and the three buckets would mean
-# this script is checking less than it appears to.
-echo "check-close-claims: examined ${EXAMINED} PRs merged since ${SINCE}; ${CLAIMED} close claim(s), ${NOCLOSE} explicit no-close, ${UNRECOGNISED} unrecognised; ${FINDINGS} finding(s)."
+# run cannot pass for an all-clear when nothing was examined. PRs in the three
+# buckets add up to EXAMINED; CLAIMS counts individual ticket IDs, including
+# multiple claims from one PR.
+echo "check-close-claims: examined ${EXAMINED} PRs merged since ${SINCE}; ${CLAIMS} close claim(s) across ${CLAIMED_PRS} PR(s), ${NOCLOSE} explicit no-close, ${UNRECOGNISED} unrecognised; ${FINDINGS} finding(s)."
 if [ "$EXAMINED" = 0 ]; then
     echo "check-close-claims: zero PRs examined — widen --days/--limit before reading this as clean." >&2
 fi
