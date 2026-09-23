@@ -234,8 +234,17 @@ and post no comment or verdict. Do not log a REROLL bump for a stopped PR.
 1. Structured verdict returned to caller (for `/gaze` consumption).
 2. PR comment posted with human-readable summary:
 
+   For a `/gaze` call, receive its `gate_session_id` and absolute review
+   worktree path. In standalone mode, generate a fresh UUID for this gate.
+   Immediately before ruling, read the full tip SHA with `git -C <review-worktree>
+   rev-parse HEAD`; stop with ESCALATE if this fails. These are audit fields,
+   not a substitute for checking the live PR state before posting.
+
    ```
    /verify-gate round=<n> verdict=<V>
+   Gate session id: <UUID from gaze claim, or standalone UUID>
+   Review worktree path: <absolute path used for evidence>
+   Ruled tip SHA: <full commit SHA read from that worktree>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>

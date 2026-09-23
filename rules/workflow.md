@@ -178,6 +178,7 @@ build" is a preference, not a licence to skip validation.
 - **Watch contention, not headcount.** The runtime caps concurrency; the harness
   pins nothing. When three or more agents touch the same file or registry, open
   a coordination change first.
+- **One gate per PR at a time.** Never run `/gaze` while that branch's lead is live.
 - **A delegate in a shared worktree can act on what it sees there.** A
   read-only research brief does not imply "don't touch git" unless it says so:
   state explicitly that the delegate must not `add`/`commit`/`push` whatever is
@@ -189,10 +190,9 @@ Model and effort levers, nesting depth, and the fork-resume trap: `claude-code.m
 
 Before designing any multi-cycle autonomous orchestration — scheduled loops,
 overnight supervisors, wave runners — inventory the existing skills and declare,
-in the run plan, either which one is reused or why none fits. The declaration is
-the compliance artifact: it makes the decision verifiable ex post, where a
-silent improvisation is not. The one recorded failure was not a bad choice but
-an absent one — the improviser never looked.
+in the run plan, either which one is reused or why none fits. Record the
+decision so reviewers can verify it; the recorded failure was an orchestrator
+who never checked existing skills.
 
 # Ticket discipline for multi-PR work
 
