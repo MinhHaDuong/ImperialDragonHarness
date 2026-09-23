@@ -353,6 +353,26 @@ Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
+Launch Agent C with `subagent_type: gaze-pr-review` from
+`agents/gaze-pr-review.md`. Its explicit `tools: Agent, ...` grant is required:
+the inner perspective fan-out cannot be inferred from the outer Agent's tools.
+If Agent C itself cannot launch, record the same panel integrity failure in
+the /gaze verdict comment, mark Agent C unresolved, and do not claim a completed
+review round.
+Before launching perspectives, Agent C checks that the `Agent` tool is in its
+own available toolset and that a spawn call succeeds. A missing tool, depth
+limit, or denied spawn is a panel integrity failure, not permission to replace
+independent perspectives with sequential self-review. Write the selected roster
+to the manifest and mark each unlaunched perspective `no report`. Post the
+review on the PR with `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or
+spawn failed; independent perspectives not run` and `dissent: unavailable`;
+return those same lines in Agent C's structured block. The /gaze orchestrator
+must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
+and use `panel integrity: DEGRADED` in the actions section. Never write
+`dissent: none` for this path.
+If a launched perspective is still missing at the bounded collection deadline,
+name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
+perspective report: <name>`, and use `dissent: unavailable` there too.
 **Width-gate:** run Agent C at every tier. For round-1 code diffs, read
 `${IDH_HOME:-$HOME/.claude}/skills/review-pr/panel-width.json` and apply its
 `max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat
@@ -725,6 +745,7 @@ adherence: PASS|FAIL — <n_blocking> blocking
 review: <n_comments_posted> | skipped (tier: tiny)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
 review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
+panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 
