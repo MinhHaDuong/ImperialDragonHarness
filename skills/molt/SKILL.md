@@ -141,11 +141,14 @@ Run full repo housekeeping and act on every finding.
    ticket_id=<id>
    source=$(find tickets -maxdepth 1 -type f -name "${ticket_id}-*.erg" -print -quit)
    [ -n "$source" ] || { echo "No open ticket file for $ticket_id" >&2; exit 1; }
-   tickets/erg close "$ticket_id" already-done tickets/
+   tickets/erg close "$ticket_id" already-done tickets/ || exit $?
    git add -u -- "$source"
    destination="tickets/closed/$(basename "$source")"
    [ ! -f "$destination" ] || git add -- "$destination"
    ```
+
+   If the close command fails, stop the sweep and report the error; do not
+   continue to archive or commit its partial edits.
 
    Current `erg` moves the file on close; older `erg` leaves it at the source
    path until step 2.6 archives it. Log each closure as a fix-now

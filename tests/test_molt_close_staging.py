@@ -74,7 +74,7 @@ def test_molt_closure_commit_tracks_archive_without_strays(tmp_path, old_binary,
     env = os.environ.copy()
     env["MOLT_ERG"] = str(erg)
     if recorded_close:
-        run("bash", "-e", "-c", close_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
+        run("bash", "-c", close_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
     else:
         # A ticket closed in an earlier command on old erg is archived by 2.6.
         run(str(erg), "close", "0001", "already-done", "tickets/", cwd=repo)
@@ -93,3 +93,38 @@ def test_molt_closure_commit_tracks_archive_without_strays(tmp_path, old_binary,
     # A second sweep over the closed ticket has no tracked changes to commit.
     run("bash", "-e", "-c", archive_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
     assert run("git", "diff", "--cached", "--name-only", cwd=repo).stdout == ""
+
+
+@pytest.mark.integration
+def test_failed_close_does_not_stage_colliding_archive(tmp_path):
+    """A close error must stop the shell before its explicit destination add."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    tickets = repo / "tickets"
+    (tickets / "closed").mkdir(parents=True)
+    (tickets / "0001-probe.erg").write_text(
+        "%erg 0.1\nTitle: Probe\nCreated: 2026-09-10\nAuthor: test\n"
+        "\n--- log ---\n2026-09-10T10:00Z test created\n\n--- body ---\n"
+        "## Exit criteria\n- [ ] Done\n"
+    )
+    run("git", "init", "-q", cwd=repo)
+    run("git", "config", "user.name", "Test", cwd=repo)
+    run("git", "config", "user.email", "test@example.invalid", cwd=repo)
+    run("git", "add", "--", "tickets/0001-probe.erg", cwd=repo)
+    run("git", "commit", "-qm", "fixture", cwd=repo)
+    collision = tickets / "closed/0001-probe.erg"
+    collision.write_text("pre-existing untracked file\n")
+    env = os.environ.copy()
+    env["MOLT_ERG"] = str(ROOT / "tickets/erg")
+
+    result = subprocess.run(
+        ["bash", "-c", close_commands().replace("tickets/erg", '"$MOLT_ERG"')],
+        cwd=repo, env=env, text=True, capture_output=True,
+    )
+    assert result.returncode != 0
+    assert run("git", "diff", "--cached", "--name-only", cwd=repo).stdout == ""
+    assert run("git", "status", "--porcelain", "--untracked-files=all", cwd=repo).stdout == (
+        " M tickets/0001-probe.erg\n"
+        "?? tickets/closed/0001-probe.erg\n"
+    )
+    assert collision.read_text() == "pre-existing untracked file\n"
