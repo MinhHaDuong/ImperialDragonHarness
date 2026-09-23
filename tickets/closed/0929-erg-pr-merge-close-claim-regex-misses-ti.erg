@@ -2,6 +2,7 @@
 Title: erg-pr-merge close-claim regex misses tickets/closed/NNNN paths
 Created: 2026-09-16
 Author: claude
+Closed: autoclosed — PR #994
 
 --- log ---
 2026-09-16T06:31Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-09-23T19:37Z codex note Implemented closed-path grammar, archived-tip lookup, already-closed no-op, fenced-example exclusion, and malformed-claim finding. Local regressions pass. Live 30-day forge sweep returned no data (exit 2), so the required before/after comparison remains open; ticket stays open.
 2026-09-23T20:07Z codex note Live review completed: 30-day sweep examined 100 PRs, zero findings; pre-fix detector counted 31 claims/21 unrecognised versus 30 claims/22 unrecognised after, showing one old false extraction. Seven-day sweep examined 39 PRs, zero findings. Compared current git-erg erg-github source: both accept the same case-folded tickets/(closed/)?NNNN path forms; this merge helper additionally ignores fenced examples and rejects malformed Ticket paths. Focused shell suites and CI pass.
 
+2026-09-23T20:10Z Minh Ha-Duong closed — autoclosed — PR #994
 --- body ---
 ## Context
 
