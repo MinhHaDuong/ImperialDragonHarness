@@ -175,7 +175,8 @@ second_round_needed:   # only if REROLL
   APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
-**On REROLL**: run `${ERG:-erg} log <ticket-id> "bump verify-reroll — round {n}: {top unresolved criterion}"`
+**On REROLL**: check live PR state first as specified under Output
+destinations, then run `${ERG:-erg} log <ticket-id> "bump verify-reroll — round {n}: {top unresolved criterion}"`
 
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
 
@@ -223,6 +224,12 @@ current round = count + 1.
   unblock an ESCALATED `/gaze` sequence).
 
 ## Output destinations
+
+Immediately before posting any PR verdict comment, from the review worktree
+run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> verdict`.
+In standalone mode, run this check before gathering evidence too. If it reports
+MERGED, CLOSED, or UNKNOWN, stop, return its phase/state line to the caller,
+and post no comment or verdict. Do not log a REROLL bump for a stopped PR.
 
 1. Structured verdict returned to caller (for `/gaze` consumption).
 2. PR comment posted with human-readable summary:
