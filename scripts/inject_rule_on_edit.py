@@ -23,6 +23,9 @@ Axes (composed per file):
             overridable by a project manifest. e.g. techreport/article/slides.
   lang    — not mechanically detectable; from the project manifest, else the
             manifest's default_lang. e.g. fr/en.
+  finishing — advisory pointer for a language-mapped rendered deliverable.
+            .tex/.qmd render by default; .md/.txt require manifest render=true.
+            The typography body loads only when /typography-finish is invoked.
   prose   — implied for prose formats (tex/qmd/md/txt); injects prose/_all.md
             (LLMism guards, Elements of Style) regardless of doctype/lang.
 
@@ -39,6 +42,10 @@ Project manifest (optional): ``<repo>/.claude/rules-map.toml`` ::
     glob = "slides/manuscript/**/*.tex"
     doctype = "techreport"
     lang = "fr"
+    [[map]]
+    glob = "livrables/**/*.md"
+    lang = "fr"
+    render = true
 
 Output: JSON on stdout with ``hookSpecificOutput.additionalContext`` (exit 0).
 Claude surfaces it in a system reminder before the edit runs. Framing is
@@ -68,6 +75,7 @@ EXT_FORMAT = {
     ".txt": "txt",
 }
 PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
+RENDERED_FORMATS = {"tex", "qmd"}
 
 # Keep injected context under the platform's 10,000-char additionalContext cap.
 MAX_CONTEXT = 9500
@@ -160,7 +168,7 @@ def find_manifest(path: str) -> Path | None:
 
 
 def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
-    """Resolve doctype/lang overrides + default_lang from the project manifest.
+    """Resolve doctype/lang/render overrides + default_lang from the manifest.
 
     The first ``[[map]]`` whose glob matches the file (relative to the dir that
     holds ``.claude/``) supplies its doctype/lang. ``default_lang`` is the
@@ -189,6 +197,8 @@ def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
             for axis in ("doctype", "lang"):
                 if isinstance(entry.get(axis), str):
                     out[axis] = entry[axis]
+            if isinstance(entry.get("render"), bool):
+                out["render"] = "true" if entry["render"] else "false"
             break  # first match wins
     return out
 
@@ -216,7 +226,23 @@ def resolve_axes(path: str) -> dict[str, str]:
         axes["doctype"] = doctype
     if overrides.get("lang"):
         axes["lang"] = overrides["lang"]
+    rendered = fmt in RENDERED_FORMATS
+    if overrides.get("render") in ("true", "false"):
+        rendered = overrides["render"] == "true"
+    if rendered and axes.get("lang"):
+        axes["finishing"] = "pointer"
     return axes
+
+
+def finishing_pointer(axes: dict[str, str]) -> str:
+    """Mention the task-triggered skill; never impose a drafting obligation."""
+    if axes.get("finishing") != "pointer":
+        return ""
+    return (
+        "Rendered deliverable: at finalization, invoke /typography-finish "
+        "for the language and markup specific pass. During drafting there is "
+        "no fine-typography obligation; never retrofit source drafts."
+    )
 
 
 def candidate_rule_files(axes: dict[str, str], rules_dir: Path) -> list[Path]:
@@ -256,14 +282,17 @@ def marker_path(session_id: str, rule: Path) -> Path:
     return base / f"{sid}.{rule.parent.name}.{rule.name}"
 
 
-def build_context(path: str, axes: dict[str, str], files: list[Path]) -> str:
+def build_context(
+    path: str, axes: dict[str, str], files: list[Path], *, include_pointer: bool = False
+) -> str:
     fmt = axes.get("format", "")
     desc = ", ".join(f"{k}={v}" for k, v in axes.items())
     parts = [
-        f"You are editing a {fmt} file ({path}). Its global style rules "
-        f"({desc}) apply to such files in this session. They are reproduced "
-        f"once below for reference:"
+        f"You are editing a {fmt} file ({path}). Its global style context "
+        f"({desc}) follows:"
     ]
+    if include_pointer:
+        parts.append(f"\n----- finishing pointer -----\n{finishing_pointer(axes)}")
     for f in files:
         parts.append(f"\n----- {f.parent.name}/{f.name} -----\n{f.read_text(encoding='utf-8').rstrip()}")
     return "\n".join(parts)
@@ -290,8 +319,6 @@ def main() -> int:
 
     axes = resolve_axes(file_path)
     files = candidate_rule_files(axes, args.rules_dir)
-    if not files:
-        return 0
 
     session_id = payload.get("session_id") or ""
     fresh: list[Path] = []
@@ -305,10 +332,23 @@ def main() -> int:
         except OSError:
             pass  # dedup best-effort; still inject
         fresh.append(f)
-    if not fresh:
+    # The pointer is its own once-per-session message. A preceding draft edit
+    # may already have consumed every prose/lang rule marker; it must not
+    # suppress the later rendered-file pointer.
+    fresh_pointer = False
+    if finishing_pointer(axes):
+        marker = marker_path(session_id, Path("finishing/pointer"))
+        if not marker.exists():
+            try:
+                marker.parent.mkdir(parents=True, exist_ok=True)
+                marker.touch()
+            except OSError:
+                pass  # advisory dedup, like rule markers above
+            fresh_pointer = True
+    if not fresh and not fresh_pointer:
         return 0
 
-    context = build_context(file_path, axes, fresh)
+    context = build_context(file_path, axes, fresh, include_pointer=fresh_pointer)
     if len(context) > MAX_CONTEXT:
         context = context[:MAX_CONTEXT] + "\n\n[... truncated at the additionalContext size limit ...]"
     json.dump(

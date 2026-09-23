@@ -27,7 +27,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [doctype/techreport.md](./doctype/techreport.md) | `**/*.tex` | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
-| [lang/fr.md](./lang/fr.md) | prose files | French norms: espaces insécables, guillemets « », virgule décimale, casse de phrase. |
+| [lang/fr.md](./lang/fr.md) | prose files | French language norms: guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
 | [edm.md](./edm.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
@@ -54,6 +54,7 @@ already resident, 1 069 times in 101 days; scoping is what gives it back a job.
 | **doctype** | `\documentclass` sniff for `.tex`; else project manifest | `doctype/<value>.md` |
 | **lang** | project manifest (`lang` per glob, else `default_lang`) | `lang/<value>.md` |
 | **prose** | implied for prose formats | `prose/_all.md` |
+
 
 Missing rule files are skipped silently, so content grows by adding files — no
 code change. Doc-type and language are not derivable from a filename: they come
