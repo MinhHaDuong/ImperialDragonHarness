@@ -2659,10 +2659,18 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 jobs = []
                 job_paths = []
                 deferred = []
+                fresh_rows = []
                 for source in sources:
                     path = source["path"]
                     current = audit_one(path, fresh,
                                         bib_entry=source.get("entry"))
+                    if "bib" in source:
+                        current.update({"source": "bib",
+                                        "bib": str(source["bib"].relative_to(root)),
+                                        "key": source["key"]})
+                    else:
+                        current["source"] = "orphan"
+                    fresh_rows.append(current)
                     if current["verdict"] != "absent":
                         continue
                     entry = bib_to_inject_entry(source.get("entry") or {}, path)
@@ -2672,6 +2680,18 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                     else:
                         jobs.append(entry)
                         job_paths.append(path)
+                # The displayed report must describe the same locked, fresh
+                # snapshot that decides writes. The earlier cached audit can
+                # legitimately predate another sweep or a just-created item.
+                summary.clear()
+                for row in fresh_rows:
+                    summary[row["verdict"]] = summary.get(row["verdict"], 0) + 1
+                tied = sum(1 for row in fresh_rows if row.get("also_matches"))
+                if tied:
+                    summary["tied_parents"] = tied
+                report["rows"] = fresh_rows
+                report["index_fetched"] = fresh["fetched"]
+                report["actions"] = {k: actions[k] for k in summary}
                 report["deferred"] = deferred
                 if deferred:
                     summary["absent"] -= len(deferred)

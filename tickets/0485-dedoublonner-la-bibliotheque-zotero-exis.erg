@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-08-14T19:10Z claude created — 269 grappes de fichiers md5-identiques sous des parents distincts, invisibles au volet Doublons de Zotero
 
 2026-09-23T19:15Z Minh Ha-Duong note blocker 0455 closed — Blocked-by removed.
+2026-09-23T19:30Z Codex note Roster audit: 0455's guarded import and matcher are merged, so this ticket now concerns the existing-library duplicate clusters only. The 269-cluster/7293-parent counts are the 2026-08-14 baseline and must be remeasured before deciding the work size. Reuse review remains mandatory; no automatic client-side merge was delivered by 0455.
 --- body ---
 ## Context
 

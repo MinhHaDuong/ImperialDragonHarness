@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-09-10T10:17Z Minh Ha-Duong created
 
 2026-09-23T16:21Z Minh Ha-Duong note blocker 0901 closed — Blocked-by removed.
+2026-09-23T19:30Z Codex note Roster audit: 0392 changed panel width for tiny/small diffs, and 0901 capped unreviewable PRs, but gaze still has no path-risk band from prose_predicate.py. The core proposal remains open. The requested fortnight of post-0901 measurement cannot yet be complete on 2026-09-23; calibrate after enough runs rather than treating blocker removal as finished evidence.
 --- body ---
 ## Context
 
