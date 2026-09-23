@@ -124,8 +124,14 @@ case "$1 $2" in
     fi
     echo "stub: checks ok"; exit 0 ;;
   "api repos/{owner}/{repo}/branches/$STUB_BASE")
-    jq -n --argjson n "${STUB_LEGACY_REQUIRED:-0}" \
-      '{protection:{required_status_checks:{contexts:(if $n > 0 then ["required"] else [] end)}}}' ;;
+    if [[ "${STUB_LEGACY_MALFORMED:-0}" == "1" ]]; then
+      echo '{"protected":true,"protection":{}}'
+    elif [[ "${STUB_LEGACY_UNPROTECTED_EMPTY:-0}" == "1" ]]; then
+      echo '{"protected":false,"protection":{}}'
+    else
+      jq -n --argjson n "${STUB_LEGACY_REQUIRED:-0}" \
+        '{protected:true,protection:{required_status_checks:{contexts:(if $n > 0 then ["required"] else [] end),checks:[]}}}'
+    fi ;;
   "api repos/{owner}/{repo}/rules/branches/$STUB_BASE")
     if [[ "${STUB_RULE_MALFORMED:-0}" == "1" ]]; then
       echo '[{"type":"required_status_checks","parameters":{}}]'
@@ -237,6 +243,8 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_CHECKS_NOCHECKS_ALWAYS="${STUB_CHECKS_NOCHECKS_ALWAYS:-0}" \
       STUB_CHECKS_RED="${STUB_CHECKS_RED:-0}" \
       STUB_LEGACY_REQUIRED="${STUB_LEGACY_REQUIRED:-0}" \
+      STUB_LEGACY_MALFORMED="${STUB_LEGACY_MALFORMED:-0}" \
+      STUB_LEGACY_UNPROTECTED_EMPTY="${STUB_LEGACY_UNPROTECTED_EMPTY:-0}" \
       STUB_RULE_REQUIRED="${STUB_RULE_REQUIRED:-0}" \
       STUB_RULE_MALFORMED="${STUB_RULE_MALFORMED:-0}" \
       STUB_ROLLUP="${STUB_ROLLUP:-[]}" \
@@ -606,6 +614,34 @@ elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
     echo "FAIL: malformed required-check rule issued direct merge"; fail=1
 else
     echo "PASS: malformed required-check rule blocks direct merge"
+fi
+
+# A protected base with missing protection fields is incomplete forge data.
+seed_repo malformedlegacy 0877
+MLOG="$WORK/merge-malformed-legacy.log"; : > "$MLOG"
+BODY_MALFORMED_LEGACY=$'Summary.\n\n**Ticket:** tickets/0877-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_LEGACY_MALFORMED=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_MALFORMED_LEGACY" "ticket(0877): malformed protection" 2>&1); then
+    echo "FAIL: malformed legacy protection allowed direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: malformed legacy protection issued direct merge"; fail=1
+else
+    echo "PASS: malformed legacy protection blocks direct merge"
+fi
+
+# An explicit unprotected base needs no legacy required-check subobject.
+seed_repo unprotected 0878
+MLOG="$WORK/merge-unprotected.log"; : > "$MLOG"
+BODY_UNPROTECTED=$'Summary.\n\n**Ticket:** tickets/0878-fixture.erg\n'
+if STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_LEGACY_UNPROTECTED_EMPTY=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_UNPROTECTED" "ticket(0878): unprotected" >/dev/null 2>&1; then
+    if grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+        echo "PASS: explicit unprotected base permits direct merge"
+    else echo "FAIL: unprotected base did not issue direct merge"; fail=1; fi
+else
+    echo "FAIL: explicit unprotected base was blocked"; fail=1
 fi
 
 # A contradictory nonempty PR rollup must fail closed rather than claim that

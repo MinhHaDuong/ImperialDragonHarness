@@ -376,12 +376,16 @@ no_checks_required() {
     branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}") \
         || die "could not inspect base branch protection — aborting merge"  # harness-extension-point
     echo "$branch_now" | jq -e '
-        (.protection.required_status_checks.contexts // []) as $contexts |
-        (.protection.required_status_checks.checks // []) as $checks |
-        ($contexts | type) == "array" and ($checks | type) == "array" and
-        ($contexts | length) == 0 and ($checks | length) == 0
+        .protection.required_status_checks as $required |
+        if .protected == false and $required == null then true
+        elif (.protected | type) == "boolean" and ($required | type) == "object" then
+            ($required.contexts | type) == "array" and
+            ($required.checks | type) == "array" and
+            ($required.contexts | length) == 0 and
+            ($required.checks | length) == 0
+        else false end
     ' >/dev/null \
-        || die "base branch has required checks that have not registered — aborting merge"
+        || die "base branch has required checks or returned invalid protection data — aborting merge"
 
     rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate) \
         || die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
