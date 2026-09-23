@@ -84,7 +84,14 @@ FINDINGS=0
 ticket_state() {
     local id="$1" f
     for f in tickets/closed/"$id"-*.erg tickets/closed/"$id".erg; do
-        [ -e "$f" ] && { echo archived; return 0; }
+        if [ -e "$f" ]; then
+            if grep -qE '^Closed:[[:space:]]*[^[:space:]]' "$f"; then
+                echo archived
+            else
+                echo open
+            fi
+            return 0
+        fi
     done
     for f in tickets/"$id"-*.erg tickets/"$id".erg; do
         if [ -e "$f" ]; then
