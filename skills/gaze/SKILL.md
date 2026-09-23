@@ -197,7 +197,8 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
 
 - Abort if not mergeable or if there are open merge conflicts.
 - Collect:
-  - The ticket file referenced in the PR title or body (`tickets/*.erg`).
+  - The ticket file(s) referenced by PR-body close claims (`tickets/*.erg`);
+    include any title/body reference when no close claim exists.
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
@@ -217,6 +218,29 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
     `review:standard` request runs all five Agent C perspectives.
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
+
+- **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
+  from the PR **body**, using the same line grammar as `erg-pr-merge`: bold or
+  bare `Ticket: tickets/NNNN...` lines count; the title, `Ticket-ref:` lines,
+  `Ticket: none`, and repeated claims for one ID do not. For example, extract
+  IDs with `grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u`.
+  If the count is two or more, record `multi_ticket: <IDs>` as a **non-blocking**
+  finding for phase 6 to disposition. Below the size breaker, continue the normal review;
+  genuinely bundled tickets are permitted by `rules/git.md` § Merging.
+- If `pr_files >= 15`, the PR exceeds the **15+ files** monster threshold
+  borrowed from `rules/workflow.md` § Autonomous action. Return ESCALATE
+  immediately, before spawning any phase 2–5 reviewer battery or phase 6 gate,
+  with `circuit_breaker: un-reviewable` and reason
+  `un-reviewable: <pr_files> files / <pr_lines> lines — split before review`.
+  When `multi_ticket` is present, add that the combined tickets are a
+  decomposition signal. Post the normal two-section verdict comment with the
+  breaker and `gate: skipped (un-reviewable)` visible. In that comment's
+  `/verify-gate verdict` section, mark the direct setup ESCALATE and its
+  unrun criterion checks explicitly; do not imply phase 6 produced a verdict.
+  Cleanup and containment
+  still run. An explicit `--force-approve <reason>` overrides this breaker
+  loudly under the existing override contract; record the waived breaker and
+  size in its PR comment.
 
 - If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
 
@@ -513,9 +537,15 @@ per_exit_criterion: [...]
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 unresolved_adherence_violations: [...]
+multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
 rationale: <paragraph>
 round: 1 | 2
 ```
+
+If phase 1 reported `multi_ticket`, carry it into the gate's findings and
+disposition each close-claimed ticket's exit criteria. The finding alone is
+non-blocking; it never changes APPROVED to REROLL or ESCALATE below the size
+breaker.
 
 ## Branch on verdict
 
@@ -585,6 +615,10 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 ## Circuit breakers
 
 - Setup step cannot find ticket file → ESCALATE.
+- `pr_files >= 15` → ESCALATE as `un-reviewable` before the reviewer battery;
+  this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
+  in the verdict comment and mention `multi_ticket` when multiple close claims
+  add a decomposition signal. `--force-approve` can override it loudly.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip). Exception: phase 5 (simplify) intentionally skipped when adherence is blocking — this is not an error.
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with phase 2–5 on a must-fix finding → ESCALATE (no silent resolution).
@@ -741,17 +775,20 @@ the gate previously returned APPROVED. The same check applies before any
 
 round: <n>
 tier: tiny|small|full
-adherence: PASS|FAIL — <n_blocking> blocking
-review: <n_comments_posted> | skipped (tier: tiny)
-review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking)
+circuit_breaker: un-reviewable | none
+multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
+adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable)
+review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable)
+review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable)
 review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
-simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage)
+simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
+gate: ran | skipped (un-reviewable) | skipped (--force-approve)
 
 ## /verify-gate verdict
 
-verdict: APPROVED|REROLL|ESCALATE
+verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
 
 Exit criteria:
 - <criterion 1>: ADDRESSED — <evidence>
