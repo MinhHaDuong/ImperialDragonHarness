@@ -503,6 +503,35 @@ STUB
         '{"choices":[{"message":{"content":"ok","reasoning_content":"step-by-step"}}]}' \
         "reasoning_content field (kimi-k2.7-code)"
 
+    # An unauthenticated llama-server can emit the same shape. It must fail
+    # before the aider stack hangs, and a requested reasoning mode must be
+    # sent to the probe as well as to aider.
+    _local_bin="$(mktemp -d "$WORK/localrsn.XXXXXX")"
+    cat > "$_local_bin/curl" <<'STUB'
+#!/usr/bin/env bash
+for arg in "$@"; do
+    if [[ "$arg" == *'"reasoning_effort": "none"'* ]]; then
+        : > "$PROBE_MODE_MARKER"
+    fi
+done
+printf '{"choices":[{"message":{"content":"ok","reasoning_content":"thought"}}]}'
+STUB
+    cat > "$_local_bin/podman" <<'STUB'
+#!/usr/bin/env bash
+[[ "${1:-}" == run ]] && echo 'GUARD-BYPASS: podman run reached' >&2
+exit 0
+STUB
+    chmod +x "$_local_bin/curl" "$_local_bin/podman"
+    _local_marker="$WORK/localrsn.mode"
+    _local_err="$(PROBE_MODE_MARKER="$_local_marker" PATH="$_local_bin:$PATH" \
+        bash "$SR" --base origin/main --branch feature --model openai/qwen3.8-27b \
+        --endpoint http://127.0.0.1:9/v1 --health-path "" \
+        --reasoning-effort none --out "$_local_bin/out" 2>&1 >/dev/null || true)"
+    assert_contains "reasoning-probe: local seat blocks reasoning response" "reasoning-field response" "$_local_err"
+    assert_absent "reasoning-probe: local seat blocks before podman" "GUARD-BYPASS" "$_local_err"
+    [[ -f "$_local_marker" ]] && pass "reasoning-probe: reasoning control sent to endpoint" \
+        || fail "reasoning-probe: reasoning control sent to endpoint"
+
     # Negative-space case: an ordinary (content-only) body must NOT block — the
     # full review path reaches podman run. Guards against a tautological always-
     # block. This one needs aider + a real diff (the review path clones + diffs).
