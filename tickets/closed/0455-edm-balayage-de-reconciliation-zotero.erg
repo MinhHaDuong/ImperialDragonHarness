@@ -2,6 +2,7 @@
 Title: EDM: balayage de réconciliation Zotero au /molt — les deux sens, .bib non nommé, dédup au-delà du DOI
 Created: 2026-08-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #989
 
 --- log ---
 2026-08-14T15:00Z claude-exec created — l'import Zotero des PDF acquis reste manuel et se perd ; constaté au ticket 0075 du projet polycentric_activity
@@ -10,6 +11,7 @@ Author: Minh Ha-Duong
 2026-09-23T16:47Z Codex note 2026-09-23 reassessment: matcher Actions 1-2 landed via PR #735; 0410 is closed; all three original 0075 files are already in Zotero by exact storageHash, so do not re-inject them. Phase 1 is report-only BibTeX/staging discovery and dedup audit. Remaining ledger, guarded injection, batching, /molt wiring, and a fresh controlled live pilot stay open; project tickets 0031 and 0300 own their corpus-specific cleanup.
 2026-09-23T17:18Z Codex note Tooling review written in skills/zotero-import/references/backfill.md: native Zotero Web API is reused; Better BibTeX is absent and does not prove upload; installed plugins are empty; zotero-mcp would still require the same guard and ledger; local connector requires a running desktop client and cannot serve headless /molt. Phase 2 adds project opt-in, durable replay ledger, bounded batches and rate handling. Read-only pilot in polycentric_activity found 287 exact files, 3 works with a different file, 1 ambiguous, 6 orphans without a match, and 7 duplicate BibTeX references that make the sweep unchecked. No live writes made. Controlled positive write pilot remains open.
 2026-09-23T19:03Z Codex note Approved live pilot in an isolated copy of climate-finance-het: one corroborated Alonso-Robisco et al. (2024) PDF, DOI 10.1080/20430795.2024.2370325, was absent on the read-only sweep. Guarded reconcile --apply created user-library item F8J2BTNF and PDF attachment NHHM4J48. Durable ledger records MD5 ba318835f3571b3e268371075e36b3d4 as uploaded. A second identical apply returned applied=[] and apply_status=nothing, with no duplicate write. The report's read-only summary still says absent from its older snapshot; the locked apply and ledger provide the no-write verdict. CI for PR #988 passed all nine checks; focused tests cover discovery, both audit directions, non-DOI deduplication, ambiguity, attachment resume, replay, and 51-item batching. Acceptance complete.
+2026-09-23T19:15Z Minh Ha-Duong closed — autoclosed — PR #989
 --- body ---
 ## Context
 L'acquisition d'une source produit aujourd'hui trois écritures — le PDF dans
