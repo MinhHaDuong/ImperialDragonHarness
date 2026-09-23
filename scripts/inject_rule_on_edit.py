@@ -23,6 +23,9 @@ Axes (composed per file):
             overridable by a project manifest. e.g. techreport/article/slides.
   lang    — not mechanically detectable; from the project manifest, else the
             manifest's default_lang. e.g. fr/en.
+  finishing — advisory pointer for a language-mapped rendered deliverable.
+            .tex/.qmd render by default; .md/.txt require manifest render=true.
+            The typography body loads only when /typography-finish is invoked.
   prose   — implied for prose formats (tex/qmd/md/txt); injects prose/_all.md
             (LLMism guards, Elements of Style) regardless of doctype/lang.
 
@@ -39,6 +42,10 @@ Project manifest (optional): ``<repo>/.claude/rules-map.toml`` ::
     glob = "slides/manuscript/**/*.tex"
     doctype = "techreport"
     lang = "fr"
+    [[map]]
+    glob = "livrables/**/*.md"
+    lang = "fr"
+    render = true
 
 Output: JSON on stdout with ``hookSpecificOutput.additionalContext`` (exit 0).
 Claude surfaces it in a system reminder before the edit runs. Framing is
@@ -68,6 +75,7 @@ EXT_FORMAT = {
     ".txt": "txt",
 }
 PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
+RENDERED_FORMATS = {"tex", "qmd"}
 
 # Keep injected context under the platform's 10,000-char additionalContext cap.
 MAX_CONTEXT = 9500
@@ -160,7 +168,7 @@ def find_manifest(path: str) -> Path | None:
 
 
 def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
-    """Resolve doctype/lang overrides + default_lang from the project manifest.
+    """Resolve doctype/lang/render overrides + default_lang from the manifest.
 
     The first ``[[map]]`` whose glob matches the file (relative to the dir that
     holds ``.claude/``) supplies its doctype/lang. ``default_lang`` is the
@@ -189,6 +197,8 @@ def manifest_axes(path: str, manifest: Path) -> dict[str, str]:
             for axis in ("doctype", "lang"):
                 if isinstance(entry.get(axis), str):
                     out[axis] = entry[axis]
+            if isinstance(entry.get("render"), bool):
+                out["render"] = "true" if entry["render"] else "false"
             break  # first match wins
     return out
 
@@ -216,7 +226,23 @@ def resolve_axes(path: str) -> dict[str, str]:
         axes["doctype"] = doctype
     if overrides.get("lang"):
         axes["lang"] = overrides["lang"]
+    rendered = fmt in RENDERED_FORMATS
+    if overrides.get("render") in ("true", "false"):
+        rendered = overrides["render"] == "true"
+    if rendered and axes.get("lang"):
+        axes["finishing"] = "pointer"
     return axes
+
+
+def finishing_pointer(axes: dict[str, str]) -> str:
+    """Mention the task-triggered skill; never impose a drafting obligation."""
+    if axes.get("finishing") != "pointer":
+        return ""
+    return (
+        "Rendered deliverable: at finalization, invoke /typography-finish "
+        "for the language and markup specific pass. During drafting there is "
+        "no fine-typography obligation; never retrofit source drafts."
+    )
 
 
 def candidate_rule_files(axes: dict[str, str], rules_dir: Path) -> list[Path]:
@@ -266,6 +292,8 @@ def build_context(path: str, axes: dict[str, str], files: list[Path]) -> str:
     ]
     for f in files:
         parts.append(f"\n----- {f.parent.name}/{f.name} -----\n{f.read_text(encoding='utf-8').rstrip()}")
+    if pointer := finishing_pointer(axes):
+        parts.append(f"\n----- finishing pointer -----\n{pointer}")
     return "\n".join(parts)
 
 

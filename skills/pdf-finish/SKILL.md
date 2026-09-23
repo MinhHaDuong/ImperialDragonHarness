@@ -16,6 +16,10 @@ submission, deposit, upload imminent — and you propose it. **Never during
 drafts**: while content moves, pagination polish is churn. This pass
 presupposes frozen content.
 
+For language-specific spacing and punctuation, use `/typography-finish` on the
+rendered deliverable during this same finalization pass. Its markup-specific
+rules avoid hand-inserting spaces that LaTeX already produces.
+
 ## 1. Automate first, paginate by hand never
 
 Layout intent belongs in the header or config, declared once — not in

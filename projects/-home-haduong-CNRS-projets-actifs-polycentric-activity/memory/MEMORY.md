@@ -17,7 +17,6 @@
 - [Après un merge, vérifier le diff pas la sortie](feedback-merge-verifier-le-diff-pas-la-sortie.md)
 - [Purge de bib partagée casse les frères](feedback-purge-bib-partagee-casse-les-freres.md)
 - [Rejouer ou reconstruire une branche](feedback-rejouer-ou-reconstruire-une-branche.md)
-- [Typo fine à la finition](feedback-typo-fine-a-la-finition.md)
 - [Piste secondaire lue sur pièce](feedback-piste-secondaire-lue-sur-piece.md)
 - [Ligne sans clause disculpatoire](feedback-ligne-sans-clause-disculpatoire.md)
 - [Worktree périmé sert l'ancienne version](feedback-worktree-perime-sert-une-version-ancienne.md)

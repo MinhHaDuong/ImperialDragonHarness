@@ -51,6 +51,70 @@ def test_format_for_unstyled_is_none():
     assert inj.format_for("ticket.erg") is None
 
 
+def test_rendered_markdown_gets_finishing_pointer_only(tmp_path):
+    repo = _manifest_repo(
+        tmp_path,
+        'default_lang = "fr"\n[[map]]\nglob = "livrables/**/*.md"\nrender = true\n',
+    )
+    (repo / "conception").mkdir()
+    (repo / "livrables").mkdir()
+    draft = repo / "conception" / "note.md"
+    rendered = repo / "livrables" / "report.md"
+    draft.write_text("draft\n")
+    rendered.write_text("report\n")
+
+    assert "finishing" not in inj.resolve_axes(str(draft))
+    assert inj.resolve_axes(str(rendered))["finishing"] == "pointer"
+    assert inj.finishing_pointer(inj.resolve_axes(str(draft))) == ""
+    pointer = inj.finishing_pointer(inj.resolve_axes(str(rendered)))
+    assert "/typography-finish" in pointer
+    assert "insécable" not in pointer
+
+
+def test_finishing_pointer_needs_language_and_respects_render_false(tmp_path):
+    repo = _manifest_repo(
+        tmp_path,
+        '[[map]]\nglob = "*.md"\nrender = true\n',
+    )
+    file = repo / "x.md"
+    file.write_text("x\n")
+    assert inj.finishing_pointer(inj.resolve_axes(str(file))) == ""
+
+    manifest = repo / ".claude" / "rules-map.toml"
+    manifest.write_text('default_lang = "fr"\n[[map]]\nglob = "*.md"\nrender = false\n')
+    assert inj.finishing_pointer(inj.resolve_axes(str(file))) == ""
+
+
+@pytest.mark.integration
+def test_draft_and_rendered_markdown_hook_contexts_differ(tmp_path):
+    repo = _manifest_repo(
+        tmp_path,
+        'default_lang = "fr"\n[[map]]\nglob = "livrables/**/*.md"\nrender = true\n',
+    )
+    (repo / "conception").mkdir()
+    (repo / "livrables").mkdir()
+    marker_dir = tmp_path / "markers"
+    marker_dir.mkdir()
+
+    def context_for(rel, session):
+        file = repo / rel
+        file.write_text("texte\n")
+        result = subprocess.run(
+            [sys.executable, str(_HOOK)],
+            input=json.dumps({"session_id": session, "tool_input": {"file_path": str(file)}}),
+            text=True,
+            capture_output=True,
+            env={**os.environ, "TMPDIR": str(marker_dir), **_STRICT},
+            check=True,
+        )
+        return json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+
+    draft = context_for("conception/note.md", "draft-0425")
+    rendered = context_for("livrables/report.md", "rendered-0425")
+    assert "/typography-finish" not in draft
+    assert "----- finishing pointer -----" in rendered
+    assert "insécable" not in draft + rendered
+
 # --- doctype sniff (markup, .tex only today) ---------------------------------
 
 @pytest.mark.parametrize(
