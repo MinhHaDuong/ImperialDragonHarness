@@ -2181,7 +2181,9 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
     monkeypatch.setattr(zi, "resolve_credentials", lambda _: ("1", "write"))
     monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
-    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    pulls = []
+    monkeypatch.setattr(zi, "build_index",
+                        lambda *a, **k: pulls.append(1) or idx)
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
@@ -2193,6 +2195,7 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     def fake_inject(args):
         seen.extend(json.loads(args.entries_json))
         assert args.api_key == "write"
+        assert args._locked_index is idx
         print(json.dumps({"results": [{"status": outcomes.pop(0)}]}))
         return 0
 
@@ -2209,6 +2212,7 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     second = json.loads(capsys.readouterr().out)
     assert second["summary"] == {"already_present": 1}
     assert second["apply_status"] == "nothing"
+    assert len(pulls) == 2, "one fresh library pull per apply sweep"
 
 
 def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(

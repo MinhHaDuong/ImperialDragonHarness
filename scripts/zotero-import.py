@@ -1320,11 +1320,17 @@ def cmd_inject(args: argparse.Namespace) -> int:
         for entry, check in zip(entries, checks)]
     status = 0
     force = getattr(args, "force", False)
-    with injection_lock(user):
+    # Reconcile can supply an index fetched while it holds this same user
+    # lock. CLI inject never supplies _locked_index and always locks+refreshes.
+    locked_index = getattr(args, "_locked_index", None)
+    lock_scope = (contextlib.nullcontext() if locked_index is not None
+                  else injection_lock(user))
+    with lock_scope:
         ledger = read_injection_ledger(user)
         # A fresh Web API index is mandatory before creating new items.  The
         # desktop mirror and a cached index can both lag yesterday's write.
-        index = None if force else build_index(user, key)
+        index = (None if force else locked_index if locked_index is not None
+                 else build_index(user, key))
         pending: list[tuple[int, dict[str, Any], str | None]] = []
         for n, entry in enumerate(entries):
             row = results[n]
@@ -2643,9 +2649,10 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 raise ValueError("configured user_id differs from target library")
             if errors:
                 raise ValueError("discovery or audit is unchecked")
-            with staging_locks(found["staging_dirs"]):
-                # Recompute after acquiring the lock. Another sweep may have
-                # completed while this process waited for the staging root.
+            with staging_locks(found["staging_dirs"]), injection_lock(user):
+                # Recompute under the destination-library lock and keep it
+                # through injection. A second sweep cannot act on a pre-lock
+                # snapshot, and the large library needs only one fresh pull.
                 fresh = build_index(user, key)
                 sources = found["linked"] + [
                     {"path": path, "entry": {}} for path in found["orphans"]]
@@ -2680,7 +2687,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                         entries_json=json.dumps(jobs), entries_file=None,
                         collection=config.get("collection"), user_id=user,
                         api_key=write_key, dry_run=False,
-                        skip_corroboration=False, force=False)
+                        skip_corroboration=False, force=False,
+                        _locked_index=fresh)
                     captured = io.StringIO()
                     with contextlib.redirect_stdout(captured):
                         apply_rc = cmd_inject(inject_args)
