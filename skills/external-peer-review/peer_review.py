@@ -108,22 +108,23 @@ MAX_KEYSTORE_BYTES = 262_144
 # interpolated into this text, which is what keeps a CLI-supplied name out of
 # the shell's parse. Exit 3 = unreadable file, 4 = name absent.
 #
-# The readability probe is deliberate, and a divergence from
-# reviewers.sh:_keystore_value. `. file || exit 3` reports the status of the
-# LAST command the sourced file ran, not whether sourcing succeeded, so a
-# provider file ending on a non-zero command makes a correctly-defined
-# variable look unreadable. `[ -r ]` answers the question actually being
-# asked; a genuine mid-file failure still leaves the name unset and exits 4.
+# The readability probe asks whether the file can be read. A sourced file's
+# final status says only how its last command ended. Extracting in an EXIT trap
+# also preserves an already-defined value if the provider calls `exit`.
 _EXTRACT_SH = """
 set -a
 [ -r "$1" ] || exit 3
+__idh_emit_credential() {
+    [ -z "${!1+x}" ] && exit 4
+    declaration="$(declare -p "$1" 2>/dev/null)" || exit 4
+    case "$declaration" in
+        "declare -a "*|"declare -A "*) exit 5 ;;
+    esac
+    printf "%s" "${!1}"
+    exit 0
+}
+trap '__idh_emit_credential "$2"' EXIT
 . "$1" >/dev/null 2>&1 || :
-[ -z "${!2+x}" ] && exit 4
-declaration="$(declare -p "$2" 2>/dev/null)" || exit 4
-case "$declaration" in
-    "declare -a "*|"declare -A "*) exit 5 ;;
-esac
-printf "%s" "${!2}"
 """
 
 

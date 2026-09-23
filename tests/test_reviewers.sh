@@ -376,6 +376,28 @@ k_cred="$(cat "$KDIR/393/keyed-seat.cred" 2>/dev/null || echo missing)"
 assert_eq "request: keystore credential reaches a hermetic seat child (presence + length only)" \
     "present len=24 loader=loader-ran-not-a-secret" "$k_cred"
 
+# The provider defines the credential before a final command fails. Sourcing
+# has worked for this lookup even though the provider's last status is nonzero.
+# Check the child, not just a successful request: request can return zero while
+# recording an unauthenticated seat.
+printf 'T393_FIXTURE_KEY=keystore-sentinel-000000\nfalse\n' > "$KSTORE/fixture-provider.env"
+KDIR_FALSE="$WORK/k-findings-false"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_FALSE"
+       REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 946 >/dev/null 2>&1
+assert_eq "request: a failing final provider command preserves an earlier credential" \
+    "present len=24 loader=loader-ran-not-a-secret" \
+    "$(cat "$KDIR_FALSE/946/keyed-seat.cred" 2>/dev/null || echo missing)"
+printf 'T393_FIXTURE_KEY=keystore-sentinel-000000\nexit 7\n' > "$KSTORE/fixture-provider.env"
+KDIR_EXIT="$WORK/k-findings-exit"
+H_ENV=(REVIEWERS_PANEL="$KROSTER" SEAT_RUNNER="$K_STUB" REVIEWERS_FINDINGS_DIR="$KDIR_EXIT"
+       REVIEWERS_PR_BRANCH="some-branch")
+hermetic_reviewers request 946 >/dev/null 2>&1
+assert_eq "request: an exiting provider preserves an earlier credential" \
+    "present len=24 loader=loader-ran-not-a-secret" \
+    "$(cat "$KDIR_EXIT/946/keyed-seat.cred" 2>/dev/null || echo missing)"
+printf 'T393_FIXTURE_KEY=keystore-sentinel-000000\n' > "$KSTORE/fixture-provider.env"
+
 # The environment wins over the keystore: an already-exported variable is used
 # as-is and the keystore is not consulted. Distinct length (20) proves which
 # source won, without either value ever being printed.
