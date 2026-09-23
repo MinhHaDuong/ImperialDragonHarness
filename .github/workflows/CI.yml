@@ -232,6 +232,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The /molt close regression runs the historical erg binary from
+          # commit 51ee49c as well as the current binary.
+          fetch-depth: 0
       - name: Install dev dependencies
         # Declared in one place so CI and a fresh machine read the same
         # contract; tests/test_deps_declared.py guards the list (ticket 0530).

@@ -2,10 +2,12 @@
 Title: erg-pr-merge dies on transient UNKNOWN mergeability at pre-flight though it already owns the settle poll
 Created: 2026-09-10
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #969
 
 --- log ---
 2026-09-10T10:30Z Minh Ha-Duong created
 
+2026-09-23T14:29Z Minh Ha-Duong closed — autoclosed — PR #969
 --- body ---
 ## Context
 

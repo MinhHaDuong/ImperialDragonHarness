@@ -2,10 +2,12 @@
 Title: molt closes a ticket then stages the move that erg close already did
 Created: 2026-09-10
 Author: claude
+Closed: autoclosed — PR #970
 
 --- log ---
 2026-09-10T10:36Z claude created found by the /roar sweep after PR #864 bumped the binary past the close contract change
 
+2026-09-23T14:39Z Minh Ha-Duong closed — autoclosed — PR #970
 --- body ---
 ## Context
 
