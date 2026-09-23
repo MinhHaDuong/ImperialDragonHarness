@@ -2,6 +2,7 @@
 Title: roar and molt must purge review-pr panel scratch
 Created: 2026-09-16
 Author: MinhHaDuong
+Closed: autoclosed — PR #982
 
 --- log ---
 2026-09-16T16:02Z claude created
@@ -9,6 +10,7 @@ Author: MinhHaDuong
 2026-09-23T16:02Z codex note The five historical git-erg worktrees are already absent: `git worktree list --porcelain` in the git-erg checkout lists only main. Do not recreate them. Equivalent gone-branch scratch-only and mixed scratch/real-WIP fixtures prove GC behavior; historical-path collection cannot be repeated.
 2026-09-23T16:25Z codex note Decision: do not gitignore `.panel/` in adopters. An ignore rule hides missed cleanup from default `git status --porcelain`; producer cleanup plus explicit gate purge is the fix. Standalone `/review-pr` cleans after a verified post, embedded Agent C leaves reports for `/gaze`, and `/gaze` cleans on terminal paths. Worktree-tool fixtures cover scratch-only collection, dropped untracked tests, locked/live trees, tracked files, symlinked parents, and non-Git paths.
 
+2026-09-23T16:32Z Minh Ha-Duong closed — autoclosed — PR #982
 --- body ---
 ## Context
 
