@@ -8,6 +8,10 @@ project=${1:-}
 project=$(cd "$project" && pwd -P)
 harness=$(cd "$(dirname "$0")/.." && pwd -P)
 [[ "$project" != "$harness" ]] || exit 0
+# A linked worktree is the same harness project even though its path differs.
+harness_git=$(git -C "$harness" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+project_git=$(git -C "$project" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+[[ -z "$harness_git" || "$project_git" != "$harness_git" ]] || exit 0
 
 sources=()
 for file in "$project/CLAUDE.md" "$project/AGENTS.md" \

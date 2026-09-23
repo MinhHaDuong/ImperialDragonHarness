@@ -1,6 +1,7 @@
 """SessionStart asks for a coherence pass only when local directives exist."""
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -42,3 +43,21 @@ def test_empty_skill_directory_does_not_prompt(tmp_path):
     project = tmp_path / "project"
     (project / ".claude/skills").mkdir(parents=True)
     assert "PROJECT DIRECTIVE COHERENCE" not in start(project, tmp_path)
+
+
+def test_harness_worktree_does_not_prompt(tmp_path):
+    harness = tmp_path / "harness"
+    scripts = harness / "scripts"
+    scripts.mkdir(parents=True)
+    shutil.copy2(ROOT / "scripts/prompt-project-coherence.sh", scripts)
+    (harness / "CLAUDE.md").write_text("# Harness instructions\n")
+    subprocess.run(["git", "init", "-b", "main", str(harness)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(harness), "config", "user.email", "test@example.com"], check=True)
+    subprocess.run(["git", "-C", str(harness), "config", "user.name", "Test"], check=True)
+    subprocess.run(["git", "-C", str(harness), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(harness), "commit", "-m", "fixture"], check=True, capture_output=True)
+    linked = tmp_path / "linked"
+    subprocess.run(["git", "-C", str(harness), "worktree", "add", "-b", "linked", str(linked)], check=True, capture_output=True)
+    result = subprocess.run(["bash", str(scripts / "prompt-project-coherence.sh"), str(linked)],
+                            check=True, capture_output=True, text=True)
+    assert result.stdout == ""
