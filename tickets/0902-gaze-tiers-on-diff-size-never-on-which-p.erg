@@ -2,11 +2,11 @@
 Title: gaze tiers on diff size, never on which paths the diff touches
 Created: 2026-09-10
 Author: Minh Ha-Duong
-Blocked-by: 0901
 
 --- log ---
 2026-09-10T10:17Z Minh Ha-Duong created
 
+2026-09-23T16:21Z Minh Ha-Duong note blocker 0901 closed — Blocked-by removed.
 --- body ---
 ## Context
 
