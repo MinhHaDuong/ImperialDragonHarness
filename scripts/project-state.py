@@ -118,10 +118,10 @@ def _scan_top_level_tickets(tickets_dir):
 
     Returns (open_count, closed_unarchived_ids). A .erg file sitting directly in
     tickets/ with a `Closed:` header is a closed ticket that was never archived
-    into tickets/closed/ — the close-without-archive escape that happens when a
-    PR merges outside erg-pr-merge (which would have run `erg archive`). This is
-    a deliberately narrow structural check, not the full `erg check` folder/header
-    warning: it never fires on a stale-binary false positive, only on the loophole.
+    into tickets/closed/. Current erg moves files on close; older erg left them
+    at top level for a later archive call. This check still catches a missed
+    archive from an older binary or a manually edited ticket. It is a narrow
+    structural check, not the full `erg check` folder/header warning.
     """
     open_count = 0
     closed_unarchived = []
