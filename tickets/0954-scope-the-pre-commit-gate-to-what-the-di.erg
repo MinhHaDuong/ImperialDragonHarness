@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-23T08:24Z claude created
 
+2026-09-23T09:38Z Minh-Ha-Duong note raid breaker in search-works-for-zotero fired on a compliant executor running a >10 min gate; section added
 --- body ---
 ## Context
 
@@ -66,3 +67,27 @@ gate; a path absent from the map selects the full gate.
 
 The rule is resident, the script ships with its tests, and the pilot project
 uses it for its next doc-only PR.
+
+## Related: the raid's agent-timeout breaker measures the gate, not the agent
+
+Same root cause, other surface. On 2026-09-23 a `/raid` in
+search-works-for-zotero killed its ticket-0820 executor at 17 minutes for "no
+push within 10 minutes". The executor was not stalled: its worktree held a
+coherent rename, and its last words were "the adherence self-gate". It was
+running the gate `/hunt` requires, and that project's full `make check` takes
+more than 10 minutes (`sitter-mutants` alone, cold). An executor that follows
+the contract cannot push inside the breaker, so the breaker fires on
+compliance, not on stalls. Switching the coder model would not change it.
+
+Two fixes, either sufficient; this ticket's scoped gate makes both cheaper:
+
+1. **Time the breaker from the last commit, not from launch**, in
+   `skills/raid/SKILL.md` § Circuit breakers: a stall is "no new commit and no
+   worktree change for N minutes", read from the worktree, which the
+   orchestrator can already inspect.
+2. **A checkpoint in the execute contract**: push a WIP commit once the red
+   test exists, so a timeout salvages a known-good point rather than whatever
+   the tree held.
+
+Exit addition: the breaker no longer fires on an executor whose worktree
+changed within its window, shown on a run whose gate exceeds 10 minutes.
