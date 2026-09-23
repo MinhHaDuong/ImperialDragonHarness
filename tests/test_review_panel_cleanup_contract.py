@@ -19,9 +19,13 @@ def test_standalone_review_pr_cleans_only_after_verified_post():
 
 def test_gaze_owns_delegated_panel_cleanup_on_every_exit():
     text = (ROOT / "skills/gaze/SKILL.md").read_text()
-    cleanup = text.split("## Review scratch cleanup", 1)[1]
+    cleanup = text.split("## Review scratch cleanup", 1)[1].split("\n## ", 1)[0]
     assert "every exit path" in cleanup.lower()
     assert '"$review_tree/.panel/<pr-number>"' in cleanup
     assert '"$review_tree/build/panel-head"' in cleanup
     assert "after" in cleanup.lower() and "consumed" in cleanup.lower()
     assert "circuit-breaker" in cleanup.lower()
+    assert 'worktree-exit-preflight.sh" "$review_tree"' in cleanup
+    assert 'git -C "$primary_root" worktree remove "$review_tree"' in cleanup
+    assert 'worktree remove "$review_tree" --force' not in cleanup
+    assert "leave the review worktree" in " ".join(cleanup.lower().split())

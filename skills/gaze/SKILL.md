@@ -195,7 +195,12 @@ abort, or live PR closure), after Agent C and the gate have consumed their
 artifacts, remove this run's review scratch before removing the worktree.
 The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
 this while perspective agents are still writing: cancel or wait for them first.
-If the review worktree was never created, there is nothing to clean up.
+If the review worktree was never created, there is nothing to clean up. The
+exit preflight must pass after scratch removal: if it reports other WIP, leave
+the review worktree registered and surface those file names as ESCALATE to the
+caller. Never force-remove a tree with real uncommitted files. A failed
+preflight or normal worktree removal is a cleanup failure, not a successful
+terminal verdict.
 
 ```bash
 review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
@@ -207,7 +212,11 @@ if [ -d "$review_tree" ]; then
         rm -rf -- "$review_tree/build/panel-head"
     fi
     rmdir -- "$review_tree/.panel" 2>/dev/null || true
-    git worktree remove "$review_tree" --force
+    if ! "${IDH_HOME:-$HOME/.claude}/scripts/worktree-exit-preflight.sh" "$review_tree"; then
+        echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
+        exit 1
+    fi
+    git -C "$primary_root" worktree remove "$review_tree" || exit 1
 fi
 ```
 
