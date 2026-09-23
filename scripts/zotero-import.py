@@ -1972,7 +1972,25 @@ def _bib_entries(path: Path) -> list[dict[str, Any]]:
         raise RuntimeError(f"cannot load BibTeX parser: {parser}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.parse_bibtex(path.read_text(encoding="utf-8"))
+    content = path.read_text(encoding="utf-8")
+    # bib-merge intentionally tolerates a malformed tail so an editor can
+    # salvage valid earlier entries. A reconciliation sweep must fail closed:
+    # the skipped tail might contain the only staged file needing import.
+    pos = 0
+    while match := module._ENTRY_START.search(content, pos):
+        close = module._balance_scan(content, match.end() - 1)
+        if close < 0:
+            raise ValueError(f"unclosed BibTeX entry near byte {match.start()}")
+        if match.group(1).lower() not in {"string", "preamble", "comment"}:
+            body = content[match.end():close]
+            comma = body.find(",")
+            if comma >= 0:
+                for field in module._split_top_level_commas(body[comma + 1:]):
+                    if field.strip() and "=" not in field:
+                        raise ValueError(f"malformed BibTeX field near byte "
+                                         f"{match.start()}: {field.strip()[:40]}")
+        pos = close + 1
+    return module.parse_bibtex(content)
 
 
 def _bib_file_values(value: str) -> list[str]:
@@ -2025,7 +2043,12 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
                     errors.append(f"file path outside repository: {bib.relative_to(root)} "
                                   f"entry {entry.get('_key', '?')}")
                     continue
-                staging_dirs.add(resolved.parent)
+                relative = resolved.relative_to(root)
+                if len(relative.parts) < 2:
+                    errors.append(f"cannot infer staging root from root-level "
+                                  f"file: {relative}")
+                else:
+                    staging_dirs.add(root / relative.parts[0])
                 if not resolved.is_file():
                     errors.append(f"missing file: {resolved.relative_to(root)} "
                                   f"in {bib.relative_to(root)}")
@@ -2048,7 +2071,10 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
         if not directory.resolve().is_relative_to(root):
             errors.append(f"staging directory outside repository: {directory}")
             continue
-        for path in sorted(directory.iterdir()):
+        for path in sorted(directory.rglob("*")):
+            if path.is_symlink() and (path.is_dir() or not path.is_file()):
+                errors.append(f"cannot scan symlinked staging directory: {path}")
+                continue
             if not path.is_file() or path.suffix.lower() not in STAGING_EXTENSIONS:
                 continue
             resolved = path.resolve()
@@ -2118,7 +2144,8 @@ def audit_one(path: Path, idx: dict[str, Any],
                       arxiv=bib_entry.get("arxiv"),
                       handle=bib_entry.get("handle"),
                       year=str(bib_entry.get("year") or year or ""),
-                      first_author=author or None, authors=list(surnames),
+                      first_author=first_author_surname(author) if author else None,
+                      authors=list(surnames),
                       pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
     # Five answers, not four. Collapsing a weak hit into "absent" is the
@@ -2270,6 +2297,9 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
     summary: dict[str, int] = {}
     for row in rows:
         summary[row["verdict"]] = summary.get(row["verdict"], 0) + 1
+    tied = sum(1 for row in rows if row.get("also_matches"))
+    if tied:
+        summary["tied_parents"] = tied
     if errors:
         summary["unchecked"] = len(errors)
     actions = {"identical": "nothing",
@@ -2278,7 +2308,9 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                "ambiguous": "inspect; neither inject nor skip",
                "absent": "inject only with explicit apply",
                "error": "inspect unreadable file",
-               "unchecked": "resolve discovery or audit error"}
+               "unchecked": "resolve discovery or audit error",
+               "tied_parents": "several records tie at the top tier "
+                               "(also_matches); pick one before attach --parent"}
     report = {"verdict": "unchecked" if errors else "checked",
               "root": str(root.resolve()),
               "bib_files": [str(p.relative_to(root.resolve()))
@@ -2292,7 +2324,9 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
     if args.out:
         Path(args.out).write_text(json.dumps(report, indent=2,
                                             ensure_ascii=False) + "\n")
-    json.dump(report, sys.stdout, indent=2, ensure_ascii=False)
+    stdout_report = ({k: v for k, v in report.items() if k != "rows"}
+                     if args.out else report)
+    json.dump(stdout_report, sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return 1 if errors else 0
 
