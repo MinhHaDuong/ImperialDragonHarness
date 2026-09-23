@@ -2,6 +2,7 @@
 Title: Scope the pre-commit gate to what the diff can move
 Created: 2026-09-23
 Author: claude
+Closed: autoclosed — PR #978
 
 --- log ---
 2026-09-23T08:24Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-09-23T14:00Z Codex note review: wire the selector into /hunt and distinguish a live long-running gate from agent silence
 2026-09-23T14:32Z Minh-Ha-Duong note implement scoped selector, review-gate wiring, and bounded raid gate probe; pilot map staged in search-works-for-zotero
 2026-09-23T15:35Z Minh-Ha-Duong note verification: IDH PR #971 merged selector/raid gate; Zotero PR #620 merged pilot map after full check (1464 passed, 16 skipped); Zotero PR #621 merged next doc-only change with selected lint figures names progress tickets ticket-logs and skipped deps models sitter-version sitter-mutants check-fast; no full gate on #621. Focused selector/breaker regressions passed.
+2026-09-23T15:43Z Minh Ha-Duong closed — autoclosed — PR #978
 --- body ---
 ## Context
 
