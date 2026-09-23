@@ -18,6 +18,18 @@ background: true
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
 
+**Live PR state at phase boundaries.** From the current repository worktree, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> <phase>` at each
+boundary named below (substitute the actual PR number and phase). Exit 0 means
+continue. Any nonzero exit means stop immediately, cancel any outstanding
+reviewer or seat work, clean up the review worktree, and return the command's
+`/gaze stopped: phase=<phase> state=<MERGED|CLOSED|UNKNOWN> pr=<number>` line to
+the caller. Post no gate or top-level verdict comment. An unavailable forge is
+`UNKNOWN` and also stops the run; it is never evidence that the PR stayed open.
+The helper bounds each forge state lookup to 10 seconds by default; a timed-out
+lookup reports `UNKNOWN` and stops under the same rule.
+These checks observe the caller's merge decision and do not delay it.
+
 > **TASK DIRECTIVE — execute now.** You are running `/gaze` on PR `$ARGUMENTS`.
 > This file is your operating procedure, not reference documentation: begin at
 > phase 1 immediately. If `$ARGUMENTS` does not contain a PR number, STOP and
@@ -99,6 +111,13 @@ verdicts and the merge request carried none of them.
 deadline is missing, not clear: name it in the verdict and treat its phase as
 unresolved. Never extend a deadline to avoid recording a gap.
 
+While waiting for reviewer, external-seat, gate, or fix-agent artifacts,
+recheck live PR state at most every 30 seconds using `check-pr-open.py` with
+the current phase name. If it stops, cancel outstanding work and return the
+phase/state line after cleanup; do not wait for the phase deadline. Pass this
+same polling rule into Agent C's nested panel so its perspective agents are
+also cancelled when the subject closes.
+
 **The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
 behalf — a reviewer Agent (e.g. Agent C) that itself spins a panel of
 perspective agents — inherits this same rule: the inner launch must be waited for by
@@ -111,6 +130,8 @@ narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
 worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
+First run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> gate`;
+a stopped PR needs no recovery verdict.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
 caller must see either the phase-6 verdict comment or a bump log line within
@@ -139,6 +160,10 @@ Always invoke `/gaze` from within a conversation worktree, never from the main r
 root. The worktree is the isolation boundary; no main-repo checkout is ever needed.
 
 **Isolation setup:**
+
+After resolving the PR number, before fetching its branch, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> setup`.
+If it stops, report the phase and state without creating a review worktree.
 
 ```bash
 # Step 1 — Resolve PR number to branch name (forge-specific step)
@@ -233,6 +258,9 @@ full panel for this round — scoping is ignored. The derived round number
 itself is never mutated; only the scoping decision changes.
 
 ### 2–4. Read-only review fan-out (parallel)
+
+Before launching this battery, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> review-panel`.
 
 These phases run as **Agent-spawned sub-agents, not `context: fork`
 invocations** (ticket 0216). A fork does not inherit this skill's cwd or
@@ -390,13 +418,19 @@ Post the single review on the PR and return the synthesized findings (blockers
 Agent C must launch its perspective agents in one message, each writing its
 own artifact, and poll those artifacts until every one has landed
 returns before it synthesizes — the fork contract applies recursively (see
-**Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11).
+**Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11). Embed in
+its prompt the 30-second live-state polling rule above; if the PR stops,
+cancel its perspective agents and return the phase/state line without posting
+a review.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
 **Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees a REROLL; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
 ### 5. Simplify (sequential)
+
+Before any simplify action (including a tier or prose skip), run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> simplify`.
 
 **Tier-skip:** when the tier is **tiny**, skip this phase and log
 `simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
@@ -414,6 +448,10 @@ exists). Otherwise, after 2–4 land their comments (and the early-exit check pa
 to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
 
 ### 6. Gate (the non-rubber-stamp step)
+
+Before spawning the gate agent, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> gate`.
+The gate agent checks state again immediately before posting its own verdict.
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
@@ -446,7 +484,8 @@ unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
 forbidden. On REROLL run `${ERG:-erg} log <ticket-id> "bump verify-reroll —
-round {n}: {top unresolved criterion}"` and post the PR verdict comment. Return:
+round {n}: {top unresolved criterion}"` only after the live `verdict` state
+check; then post the PR verdict comment. Return:
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE
@@ -462,7 +501,10 @@ round: 1 | 2
 
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
-- **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
+- **REROLL, round 1** → first run
+  `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> reroll-fix`.
+  If it stops, return the phase/state line without launching a fix agent.
+  Otherwise spawn a fix subagent with `isolation: "worktree"`,
   `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
   reviewer's sonnet; effort is not an Agent launch param and this definition
   pins none, so it tracks the session effort), waited for by polling
@@ -592,10 +634,15 @@ code-review seats. Empty roster or `/reviewers` unavailable →
 skip silently: the panel is fail-open and never blocks a gaze run.
 
 **How.** At the phase 2–4 reviewer-battery launch, also invoke
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> external-request`
+immediately before `/reviewers request <pr>`; a stopped PR must not solicit a
+seat. Then invoke
 `/reviewers request <pr>` as a background *shell* job (a Bash call, not an
 agent launch, so the fork-orphan contract does not apply): the sandboxed
 seats (~30–120 s) run concurrently with the internal reviewer battery and
-finish well inside its wall time. Before phase 6, run
+finish well inside its wall time. Before harvesting, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> external-harvest`;
+if the PR stopped, cancel any outstanding seat work. Before phase 6, run
 `/reviewers harvest <pr>` synchronously and hand the normalized
 `verifiable:` / `consider:` findings to the gate as panel comments.
 
@@ -662,6 +709,12 @@ of a few minutes, then proceed with a logged WARN — fail-open.
 Post a single top-level PR comment at end of skill. Two sections,
 always both present. No interim "started"/"finished" chatter — the
 final report is the signal.
+
+Immediately before posting that comment, run
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> verdict`. If it
+stops, report the phase and state to the caller and post no verdict, even if
+the gate previously returned APPROVED. The same check applies before any
+`verify: approved` comment in the branch-on-verdict path.
 
 ```
 ## /gaze actions
