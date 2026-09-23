@@ -177,6 +177,10 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
 - Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
+  Before classifying, check the PR label, PR body, and linked ticket body for
+  `review:standard`. An explicit request selects the **full** tier even when
+  the size thresholds below would select tiny or small; it also directs Agent C
+  to run all five perspectives.
   - **tiny** — `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
   - **small** — `pr_lines ≤ 150` and `pr_files ≤ 5` and this is round 1 (and not already tiny).
   - **full** — everything else, and any round ≥ 2. The **tiny** and **small** tiers are round-1 classifications only; a round ≥ 2 is never tiny or small.
@@ -184,7 +188,8 @@ git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
   The tier selects which reviewer agents run (see §§ 2–4, 5); phase 6 (`/verify-gate`) is **invariant** — it runs at every tier, never reduced. Per-tier battery:
   - **tiny** → Agent A (adherence) + phase 6 gate only. Skip Agent B (`/review`), Agent C (`/review-pr`), and phase 5 (`/simplify`) — each skip logged like the existing `review-pr: skipped (…)` line.
   - **small** → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate. Agent C runs with the reduced "correctness only" perspective set (trivial risk, § 2–4) instead of the full five-perspective panel.
-  - **full**, round 1 → the complete battery below, unchanged.
+  - **full**, round 1 → the complete battery below, unchanged; an explicit
+    `review:standard` request runs all five Agent C perspectives.
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
 
@@ -325,7 +330,8 @@ or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review
 setup summary. When the tier is **small**, run it with the reduced **correctness
 only** perspective set (the `trivial` risk band below) regardless of the risk
 assessment. When the tier is **full** on round 1, run the full proportional
-panel as assessed; when the merge request already carries a prior Agent C
+panel as assessed (all five perspectives when `review:standard` was requested);
+when the merge request already carries a prior Agent C
 review (the caller-level repeat `/gaze` case), run the panel scoped per
 § Round scoping — only the perspectives whose previous verdict was
 comment/request-changes (prose: minor/major), plus one regression agent
@@ -359,8 +365,12 @@ substantial → all five); **prose:** discipline panel sized to the change,
 always including an adversarial referee and an AI-tells auditor that scans the
 full text against `config/ai-tells.yml`. Each perspective reports
 confidence and a verdict (approve / comment / request-changes for code; accept
-/ minor / major for prose). Synthesize: preserve dissent verbatim, dedupe, run
-the project's declared gate. With `.idh-checks.json`, use
+/ minor / major for prose).
+If the round-1 code panel was reduced to Correctness only and that reviewer
+raises a concern or low confidence, add the other four perspectives and
+collect their reports before synthesis. An explicit `review:standard` request
+also forces all five code perspectives. Synthesize: preserve dissent verbatim,
+dedupe, and run the project's declared gate. With `.idh-checks.json`, use
 `python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
 into the review; without a map, run `make check`. A scoped pass is not a full
 gate claim. Every non-blocker (minor) finding **must** carry exactly one tag
