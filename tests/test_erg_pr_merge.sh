@@ -127,7 +127,9 @@ case "$1 $2" in
     jq -n --argjson n "${STUB_LEGACY_REQUIRED:-0}" \
       '{protection:{required_status_checks:{contexts:(if $n > 0 then ["required"] else [] end)}}}' ;;
   "api repos/{owner}/{repo}/rules/branches/$STUB_BASE")
-    if [[ "${STUB_RULE_REQUIRED:-0}" == "1" ]]; then
+    if [[ "${STUB_RULE_MALFORMED:-0}" == "1" ]]; then
+      echo '[{"type":"required_status_checks","parameters":{}}]'
+    elif [[ "${STUB_RULE_REQUIRED:-0}" == "1" ]]; then
       echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"required"}]}}]'
     else echo '[]'; fi ;;
   *)
@@ -236,6 +238,7 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_CHECKS_RED="${STUB_CHECKS_RED:-0}" \
       STUB_LEGACY_REQUIRED="${STUB_LEGACY_REQUIRED:-0}" \
       STUB_RULE_REQUIRED="${STUB_RULE_REQUIRED:-0}" \
+      STUB_RULE_MALFORMED="${STUB_RULE_MALFORMED:-0}" \
       STUB_ROLLUP="${STUB_ROLLUP:-[]}" \
       STUB_IS_DRAFT="${STUB_IS_DRAFT:-false}" \
       STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
@@ -589,6 +592,21 @@ for required_kind in legacy rule; do
         echo "PASS: $required_kind required check blocks no-checks direct merge"
     fi
 done
+
+# A required-check rule with missing parameters is malformed forge data. Do
+# not interpret its absent list as zero required checks and merge.
+seed_repo malformedrule 0876
+MLOG="$WORK/merge-malformed-rule.log"; : > "$MLOG"
+BODY_MALFORMED=$'Summary.\n\n**Ticket:** tickets/0876-fixture.erg\n'
+if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+   STUB_RULE_MALFORMED=1 STUB_MERGE_LOG="$MLOG" \
+   run_merge "$BODY_MALFORMED" "ticket(0876): malformed rule" 2>&1); then
+    echo "FAIL: malformed required-check rule allowed direct merge"; fail=1
+elif grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "FAIL: malformed required-check rule issued direct merge"; fail=1
+else
+    echo "PASS: malformed required-check rule blocks direct merge"
+fi
 
 # A contradictory nonempty PR rollup must fail closed rather than claim that
 # the repository has no checks.
