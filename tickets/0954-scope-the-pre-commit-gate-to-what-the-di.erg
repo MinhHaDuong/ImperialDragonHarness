@@ -8,15 +8,17 @@ Author: claude
 
 2026-09-23T09:38Z Minh-Ha-Duong note raid breaker in search-works-for-zotero fired on a compliant executor running a >10 min gate; section added
 2026-09-23T14:00Z Codex note review: wire the selector into /hunt and distinguish a live long-running gate from agent silence
+2026-09-23T14:32Z Minh-Ha-Duong note implement scoped selector, review-gate wiring, and bounded raid gate probe; pilot map staged in search-works-for-zotero
 --- body ---
 ## Context
 
 On 2026-09-23 in search-works-for-zotero, a session ran the full `make check`
-(twelve targets, over ten minutes, pytest and a mutation gate) twice in one
+(over ten minutes, pytest and a mutation gate) twice in one
 morning on diffs that held no code: an evidence PR (#612, one JSON record and
 one log) and a ruling PR (#613, DECISIONS.md, a new doc, five tickets). The
-author: "WTF are we running make check for a DECISIONS-only ticket". Of the
-twelve targets, six can see such a diff; the rest cannot, whatever it contains.
+author: "WTF are we running make check for a DECISIONS-only ticket". Six of
+the current `check` prerequisites can see such a diff; the rest cannot,
+whatever it contains.
 
 Five whys, short: the project rule says "`make check` green before any commit"
 with no scope; the session's memory reinforced it (a note measured it against
@@ -48,8 +50,9 @@ project's: every repo with a pre-commit gate meets it.
    diffs against `origin/<default>`, and runs the union of targets; any
    unmapped path runs the full gate. Last line: the targets it skipped.
 3. Pilot in search-works-for-zotero: docs and tickets → lint, figures, names,
-   progress, tickets, ticket-logs; `plugins/**` adds sitter-version and
-   sitter-mutants; anything else → full `make check`.
+   progress, tickets, ticket-logs; plugin docs and manifests add sitter-version
+   and sitter-mutants. Plugin source code and anything else unmapped run the
+   full `make check`, preserving the code-merge invariant below.
 4. Wire the selector into `/hunt`'s pre-PR step and align the resident Python
    testing rule: a doc-only PR with a declared path map runs the selected
    targets, with the skipped list in the PR description; a code PR and any
@@ -59,7 +62,7 @@ project's: every repo with a pre-commit gate meets it.
 ## Test
 
 Red first: a diff touching only `DECISIONS.md` selects the six doc targets and
-names the other six as skipped; a diff touching one `.py` file selects the full
+names every remaining declared target as skipped; a diff touching one `.py` file selects the full
 gate; a path absent from the map selects the full gate. Exercise `/hunt`'s
 pre-PR step for both doc-only and code diffs, so a direct `make check` there
 cannot bypass the selector.

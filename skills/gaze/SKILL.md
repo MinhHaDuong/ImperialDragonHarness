@@ -360,7 +360,10 @@ always including an adversarial referee and an AI-tells auditor that scans the
 full text against `config/ai-tells.yml`. Each perspective reports
 confidence and a verdict (approve / comment / request-changes for code; accept
 / minor / major for prose). Synthesize: preserve dissent verbatim, dedupe, run
-`make check`. Every non-blocker (minor) finding **must** carry exactly one tag
+the project's declared gate. With `.idh-checks.json`, use
+`python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
+into the review; without a map, run `make check`. A scoped pass is not a full
+gate claim. Every non-blocker (minor) finding **must** carry exactly one tag
 prefix — `verifiable:` (a reproducible failing assertion is attached),
 `consider:` (hypothesis, no enforcement), or `nofollow:` (noted, not pursued);
 hedged "might break X" phrasing is forbidden — produce the assertion or
@@ -496,7 +499,7 @@ The subagent spawned on REROLL receives:
   violations, per-exit-criterion gaps).
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
 - TDD discipline still applies: add a failing test for any behavioural fix before coding.
-- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one full `make check` before the final push — not per fix.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 
 Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 6.
 

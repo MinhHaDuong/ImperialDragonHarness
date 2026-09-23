@@ -1,11 +1,9 @@
 <!-- last-reviewed: 2026-09-10 -->
 # Workflow
 
-Resident in every session (`rules/README.md`), so this file carries rules, not
-their history: incidents live in memory notes and tickets, cited inline. Runtime
-mechanics — worktree entry, subagent levers, hook output — live in
-[claude-code.md](./claude-code.md); skill and hook authoring in
-[authoring-skills.md](./authoring-skills.md), loaded when you edit one.
+Resident in every session (`rules/README.md`). History lives in memory and
+tickets; runtime mechanics in [claude-code.md](./claude-code.md); authoring in
+[authoring-skills.md](./authoring-skills.md).
 
 **The Imperial Dragon is not a bird.** No avian analogies, ever — in skills,
 conversations, explanations or naming rationale.
@@ -48,6 +46,12 @@ shared-metadata repair until your fix is pushed and you know it is yours — a
 ticket for a repair someone else finished is noise, and dropping it unfiled is
 cheaper than closing it. None of this touches your own ticket's work, which
 nobody else is doing.
+
+# Check scope
+
+If `.idh-checks.json` exists, use the scoped gate before PRs. Unknown paths
+run the full gate. Quote `selected:` and `skipped:`; never call a scoped pass
+full. See `/hunt` (0954).
 
 # Worktree paths
 
