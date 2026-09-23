@@ -37,14 +37,21 @@ trap 'exit 0' EXIT
 # would hand the runtime an EPIPE on a hook that is supposed to be invisible.
 payload=$(cat 2>/dev/null) || payload=""
 
-# A subagent shares the PARENT session's scratch directory — measured on this
-# host 2026-09-07: a subagent's environment carries the parent's session id, and
-# its scratchpad path is the parent's directory. If a child context ever fires
-# SessionEnd, honouring it would delete a live session's scratchpad out from
-# under it. Child contexts clean up nothing; the parent's own exit does it.
-if [ -n "${CLAUDE_CODE_CHILD_SESSION:-}" ]; then
-    exit 0
+# A subagent shares the parent's scratch directory. The hook subprocess can
+# carry CLAUDE_CODE_CHILD_SESSION even for a main-thread SessionEnd (observed
+# on this host 2026-09-23), so that environment flag cannot identify the
+# owner. Claude's hook payload supplies agent_id only inside a subagent.
+agent_id=""
+if command -v jq >/dev/null 2>&1; then
+    agent_id=$(printf '%s' "$payload" | jq -r '.agent_id // empty' 2>/dev/null) \
+        || agent_id=""
 fi
+if [ -z "$agent_id" ]; then
+    agent_id=$(printf '%s' "$payload" | tr -d '\n' \
+        | sed -n 's/.*"agent_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+        | head -1) || agent_id=""
+fi
+if [ -n "$agent_id" ]; then exit 0; fi
 
 session_id=""
 if command -v jq >/dev/null 2>&1; then

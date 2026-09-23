@@ -167,23 +167,39 @@ def test_missing_temp_root_is_a_silent_no_op(tmp_path):
 def test_subagent_session_leaves_the_shared_dir_alone(tmp_path):
     """A subagent shares the parent session's scratch dir — never delete it.
 
-    Measured on this host 2026-09-07: a subagent's environment carries the
-    parent's session id and a child-session marker, and its scratchpad path is
-    the parent's directory. If a child ever fires SessionEnd, honouring it would
-    delete a live session's scratchpad out from under it.
+    A subagent's hook payload carries agent_id while its session id and
+    scratchpad path belong to the parent. Honour the payload, not the env flag.
     """
     root, dirs = _fixture(tmp_path)
 
     result = _run_hook(
         root,
         tmp_path,
-        {"session_id": TARGET_SID},
+        {"session_id": TARGET_SID, "agent_id": "agent-123"},
         extra_env={"CLAUDE_CODE_CHILD_SESSION": "1"},
     )
 
     assert result.returncode == 0, result.stderr
     for name, path in dirs.items():
         assert path.exists(), f"{name} removed from a child session's hook"
+
+
+@pytest.mark.integration
+def test_main_thread_hook_removes_dir_with_child_env_marker(tmp_path):
+    """Claude also sets the marker in a main-thread hook subprocess."""
+    root, dirs = _fixture(tmp_path)
+
+    result = _run_hook(
+        root,
+        tmp_path,
+        {"session_id": TARGET_SID, "reason": "prompt_input_exit"},
+        extra_env={"CLAUDE_CODE_CHILD_SESSION": "1"},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert not dirs["target_a"].exists()
+    assert not dirs["target_b"].exists()
+    assert dirs["sibling"].exists()
 
 
 @pytest.mark.integration
