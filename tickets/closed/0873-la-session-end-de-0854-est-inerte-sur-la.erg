@@ -2,6 +2,7 @@
 Title: Le SessionEnd de 0854 est inerte sur la machine, et la selection KEYS vide prive tous les sieges de leur credential
 Created: 2026-09-07
 Author: claude
+Closed: autoclosed — PR #993
 
 --- log ---
 2026-09-07T01:20Z claude created successeur de 0854 : les deux cases de verification laissees vides a la fermeture n'etaient portees par aucun ticket. Cause KEYS isolee dans la meme passe, mesuree et non supposee
@@ -13,6 +14,8 @@ Author: claude
 
 2026-09-23T19:30Z Codex note Roster audit: settings.json and settings.shared.json still both point SessionEnd to scripts/on-end.sh. This audit found no identified normal-session exit with before/after scratch-directory evidence, so that verification remains open. Settings drift/reconciliation is owned by ready ticket 0886; do not close 0873 merely from the configured hook or a manual molt cleanup. Credential and CLI-seat observations above remain valid; merged 0393 also improved fail-open visibility.
 2026-09-23T19:39Z Codex note Controlled live SessionEnd probe found the cause: Claude set CLAUDE_CODE_CHILD_SESSION in the main-thread hook process, so on-end.sh's old guard returned success without deleting the session directory. Default-root session 910f3da9 exited cleanly with the directory still present; manual invocation removed it. A candidate hook selected by temporary additional settings used the payload's agent_id to guard true subagents and removed controlled session aa553609's real scratch directory on interactive /exit. The fixture suite now covers both cases. Merge the fix, then verify the normal configured hook without extra settings before closing this ticket; 0886 owns the separate settings-drift guard.
+2026-09-23T19:44Z Codex note PR #992 merged the payload-agent_id hook fix; its nine CI checks passed. The live settings still call $HOME/.claude/scripts/on-end.sh, now byte-identical to merged origin/main. Controlled session bc6c68ef-3bc7-4eb8-bdf5-7bce7816d5eb had /tmp/claude-1001/<cwd-key>/<session-id>/scratchpad while open; after interactive /exit the debug log recorded SessionEnd:prompt_input_exit for that exact configured script with status 0, and the session directory was absent. No model prompt was needed for this final before/after. The unresolved settings-drift guard is explicitly carried by 0886, not silently accepted here. Ticket acceptance complete.
+2026-09-23T19:47Z Minh Ha-Duong closed — autoclosed — PR #993
 --- body ---
 ## Context
 
@@ -101,13 +104,10 @@ s'applique au panel lui-meme.
 - [x] La sonde boolenne passe au vert dans un enfant hermetique (2026-09-07)
 - [x] Un siege CLI rend un verdict non vide sur une passe de `/gaze` reelle —
       trois portes consecutives (813, 816, 818) apres cinq passes en echec ouvert
-- [ ] Apres une sortie de session normale, le repertoire de cette session a
-      disparu — **toujours pas etabli** le 2026-09-08 : le cablage est en place
-      dans le `settings.json` vif depuis la veille 11:18, mais aucune session
-      n'est sortie proprement depuis. Les huit repertoires presents sont vivants
-      ou dans la fenetre de grace ; les quatre orphelins balayes ce matin
-      dataient tous d'avant le correctif. Fait de calendrier, pas fait sur le
-      hook : rien ne lui a encore donne l'occasion de tirer
+- [x] Apres une sortie de session normale, le repertoire de cette session a
+      disparu — observe le 2026-09-23 sur le chemin configure, session
+      `bc6c68ef-3bc7-4eb8-bdf5-7bce7816d5eb` ; present pendant la session,
+      absent apres `/exit`, avec evenement `SessionEnd` dans le journal de debug
 - [x] Un orphelin plante est retire par molt sur la racine vive, et rien
       d'autre — verifie le 2026-09-08 sur la vraie racine, et sur des orphelins
       **reels** plutot que plantes, ce qui est plus fort : les quatre sont
@@ -115,9 +115,8 @@ s'applique au panel lui-meme.
       balayage), et les repertoires non-session du meme parent
       (`gittest_probe*`, `verify817/`) sont intacts
 - [ ] La garde de derive nomme `SessionEnd` avant correction, et se tait apres —
-      non construite ; `check-settings-drift.sh` signale aujourd'hui d'autres
-      cles (agentPushNotifEnabled, feedbackDrafts, modelSettings, permissions),
-      derive preexistante et consultative (sortie 0)
+      non construite dans 0873 ; transferee explicitement au ticket 0886,
+      qui porte la reconciliation de `settings.json` et son controle positif
 
 ## Invariants
 
@@ -129,9 +128,9 @@ s'applique au panel lui-meme.
 
 ## Exit criteria
 
-- [ ] Le hook `SessionEnd` s'execute reellement sur cette machine, prouve par
+- [x] Le hook `SessionEnd` s'execute reellement sur cette machine, prouve par
       une sortie de session et non par la lecture d'un fichier de configuration
-- [ ] Les sieges externes du panel repondent, prouve par un verdict rendu
-- [ ] Les deux cases laissees vides a la fermeture de 0854 sont soit satisfaites
+- [x] Les sieges externes du panel repondent, prouve par un verdict rendu
+- [x] Les deux cases laissees vides a la fermeture de 0854 sont soit satisfaites
       soit reportees ici avec leur raison
-- [ ] `make check` passe
+- [x] `make check` passe — CI du PR #992, neuf controles verts
