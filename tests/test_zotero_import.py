@@ -2187,11 +2187,12 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     monkeypatch.setattr(zi, "corroborate_entry",
                         lambda _: {"confidence": "corroborated"})
     seen = []
+    outcomes = ["created", "already_in_ledger"]
 
     def fake_inject(args):
         seen.extend(json.loads(args.entries_json))
         assert args.api_key == "write"
-        print(json.dumps({"results": [{"status": "created"}]}))
+        print(json.dumps({"results": [{"status": outcomes.pop(0)}]}))
         return 0
 
     monkeypatch.setattr(zi, "cmd_inject", fake_inject)
@@ -2203,6 +2204,10 @@ def test_reconcile_apply_imports_only_corroborated_absent_pdf(
     assert report["applied"] == [{"status": "created", "file": "docs/paper.pdf"}]
     assert seen[0]["title"] == "An Interesting Paper"
     assert seen[0]["pdf"] == str(pdf)
+    assert zi.cmd_reconcile(args) == 0
+    second = json.loads(capsys.readouterr().out)
+    assert second["summary"] == {"already_present": 1}
+    assert second["apply_status"] == "nothing"
 
 
 def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(

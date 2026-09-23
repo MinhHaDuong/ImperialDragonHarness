@@ -2708,7 +2708,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                         report["actions"]["already_present"] = "nothing"
                     report["apply_status"] = (
                         "partial" if failures else
-                        "deferred" if deferred else "applied")
+                        "deferred" if deferred else
+                        "applied" if summary.get("injected") else "nothing")
                 else:
                     report["applied"] = []
                     if summary.get("absent") == 0:
