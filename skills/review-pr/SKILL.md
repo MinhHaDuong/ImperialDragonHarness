@@ -5,6 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
+model: sonnet
 # Foreground: /gaze runs this as phase 4 (Agent C) and blocks on its structured
 # output. Claude Code 2.1.218 made `context: fork` skills background by default;
 # a fork cannot wait on a background completion, so the default would orphan

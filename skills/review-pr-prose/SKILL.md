@@ -5,6 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
+model: sonnet
 # Foreground: the prose sibling of review-pr, invoked the same way by /gaze on
 # manuscript PRs. Claude Code 2.1.218 made `context: fork` skills background by
 # default; a fork cannot wait on a background completion, so the default would

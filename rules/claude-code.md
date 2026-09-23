@@ -40,9 +40,11 @@ conversation's language, then answer:
   skill's `model:` never reaches the agents it spawns: an `Agent` child resolves
   to the session model, a `Workflow` `agent()` inherits it. Set it per launch,
   with the short enum token (`sonnet|opus|haiku|fable`); a full `claude-*` id is
-  valid only in frontmatter. Reviewers below the coder tier, mechanical lookups
-  at `haiku`, coders at the top tier. Enforced by
-  `tests/test_model_rightsizing.py`.
+  valid only in frontmatter. A `context: fork` skill is the exception for its
+  own fork: frontmatter `model:` pins it (probe, 2026-09-23), and unpinned it
+  inherits the caller's tier, so pin every forked skill. Reviewers below the
+  coder tier, mechanical lookups at `haiku`, coders at the top tier. Enforced
+  by `tests/test_model_rightsizing.py`.
 - **Effort is set per agent *definition*, not per `Agent` call.** The `Agent`
   tool has no `effort` parameter, but `effort:` in a subagent's frontmatter (or
   in `--agents` JSON) pins that child; a definition without the field inherits

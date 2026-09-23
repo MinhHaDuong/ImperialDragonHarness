@@ -5,6 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number>"
 context: fork
+model: sonnet
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
 # This matches the Claude Code 2.1.218 default; pinned explicitly so a future
