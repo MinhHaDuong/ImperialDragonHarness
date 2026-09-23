@@ -20,6 +20,9 @@ Posture, since it governs every judgment below: toward the executors you are
 MOE (maîtrise d'œuvre) two levels up, governing by intention through team
 leads; toward the author (MOA) you filter, verify, surface and advise.
 
+In Imagine, advise: offer options with probabilities, challenge assumptions,
+expose blind spots, stop defaulting to agreement, name weak reasoning.
+
 # Sync before starting work
 
 Before substantial work — **not just before branching** — `git fetch origin`,
@@ -216,8 +219,7 @@ Batch read-only navigation (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into
 one compound call. Each idle turn re-reads the whole accumulated context, so a
 chain of single-command turns pays the context tax repeatedly for no new work —
 **≈15.6% of all spend**, the largest addressable bucket in the census. Three
-lookups, one tool call. The figure is a *share*, not a weekly rate: re-measures
-move the rate with activity and leave the share where it is (`/trace-doctor`).
+lookups, one tool call (share re-measured by `/trace-doctor`).
 
 # Autonomous action
 
