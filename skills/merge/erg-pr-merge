@@ -106,7 +106,29 @@ if [[ "$CURRENT_BRANCH" != "$PR_BRANCH" ]]; then
     die "must run from PR branch '${PR_BRANCH}'; run: git checkout ${PR_BRANCH}"
 fi
 
+# Bounded retry tuning for the pre-flight and post-push mergeability races.
+# Overridable so tests drive them without sleeping (ticket 0200/0904).
+POLL_INTERVAL="${ERG_PR_MERGE_POLL_INTERVAL:-10}"
+MERGE_POLL_TRIES="${ERG_PR_MERGE_POLL_TRIES:-5}"
+
+# GitHub computes mergeability asynchronously. Both a newly opened PR and a
+# close-commit push can briefly report UNKNOWN. Return the last observed state
+# after a bounded number of polls; callers decide whether it permits a merge.
+settle_mergeable() {
+    local state i
+    state=UNKNOWN
+    for (( i=0; i<MERGE_POLL_TRIES; i++ )); do
+        state=$(gh pr view "$PR" --json mergeable --jq '.mergeable' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+        [[ "$state" != "UNKNOWN" ]] && { echo "$state"; return 0; }
+        sleep "$POLL_INTERVAL"
+    done
+    echo "$state"
+}
+
 MERGEABLE=$(echo "$PR_JSON" | jq -r '.mergeable')
+if [[ "$MERGEABLE" == "UNKNOWN" ]]; then
+    MERGEABLE=$(settle_mergeable)
+fi
 if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
     die "mergeability is ${MERGEABLE} — resolve conflicts or try again in a moment"
 fi
@@ -288,30 +310,13 @@ fi
 # in_worktree: deleteBranchOnMerge cleans the remote; the local --delete-branch
 # flag would fail on the primary worktree's main-lock (ticket 0170).
 
-# Bounded retry tuning for the two post-push races below. Overridable so the
-# test suite drives them without sleeping (ticket 0200).
-POLL_INTERVAL="${ERG_PR_MERGE_POLL_INTERVAL:-10}"   # seconds between polls
-MERGE_POLL_TRIES="${ERG_PR_MERGE_POLL_TRIES:-5}"    # mergeability settle polls
+# Bounded retry tuning for the post-push checks-watch and merged-state races.
 WATCH_RACE_TRIES="${ERG_PR_MERGE_WATCH_TRIES:-3}"   # checks-watch race retries
 MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-12}" # merged-state polls (ticket 0277)
 
 # Eager local-main sync once the merge lands (ticket 0277; rules/git.md
 # § Local main syncs eagerly). Overridable so the test suite injects a stub.
 SYNC_LOCAL_MAIN="${ERG_PR_MERGE_SYNC:-$(cd "$(dirname "$0")" && pwd)/../../scripts/sync-local-main.sh}"
-
-# Poll until GitHub finishes recomputing mergeability. The Step-2 close-commit
-# push flips `mergeable` to UNKNOWN transiently; bounded so a genuinely-stuck
-# UNKNOWN still returns. Emits the last observed state. (ticket 0200)
-settle_mergeable() {
-    local state i
-    state=UNKNOWN
-    for (( i=0; i<MERGE_POLL_TRIES; i++ )); do
-        state=$(gh pr view "$PR" --json mergeable --jq '.mergeable' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
-        [[ "$state" != "UNKNOWN" ]] && { echo "$state"; return 0; }
-        sleep "$POLL_INTERVAL"
-    done
-    echo "$state"
-}
 
 # The `gh` merge command can exit non-zero for a purely cosmetic reason: on a
 # repo that still carries Projects (classic), gh's post-action PR fetch fails on
