@@ -7,6 +7,7 @@ Author: MinhHaDuong
 2026-09-16T16:02Z claude created
 2026-09-16T16:05Z claude note Filed at the author's request after a /molt on git-erg left five dead worktrees standing, every one of them held open by a `.panel/<pr>/` directory and nothing else. Measured, not inferred: worktree-gc.sh reported `skip ... (uncommitted WIP)` for agent-a2f9efde52baf24ea, -a6a0158170957bafb, -a7f8ddde10e210fca, -aca79be11b484871c and -aea3969b25731b34b, and a directory listing of each showed a single `.panel/NNN/` entry (PRs 363, 346, 353, 347, 352 and 358) with no other untracked or modified file. The branches behind three of them were already merged and deleted; the trees are pure residue.
 2026-09-23T16:02Z codex note The five historical git-erg worktrees are already absent: `git worktree list --porcelain` in `/home/haduong/CNRS/code/git-erg` lists only main. Do not recreate them. Equivalent gone-branch scratch-only and mixed scratch/real-WIP fixtures prove GC behavior; historical-path collection cannot be repeated.
+2026-09-23T16:25Z codex note Decision: do not gitignore `.panel/` in adopters. An ignore rule hides missed cleanup from default `git status --porcelain`; producer cleanup plus explicit gate purge is the fix. Standalone `/review-pr` cleans after a verified post, embedded Agent C leaves reports for `/gaze`, and `/gaze` cleans on terminal paths. Worktree-tool fixtures cover scratch-only collection, dropped untracked tests, locked/live trees, tracked files, symlinked parents, and non-Git paths.
 
 --- body ---
 ## Context
