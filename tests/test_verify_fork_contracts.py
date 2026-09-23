@@ -10,6 +10,7 @@ containment so the contracts cannot silently regress.
 """
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -170,6 +171,57 @@ def test_gaze_tier_recorded_in_telemetry_and_output_shape():
         "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
         "a `tier` field (ticket 0320 exit criterion)"
     )
+
+
+def test_gaze_refuses_unreviewable_prs():
+    """The PR breaker must reuse the monster threshold and run before reviewers."""
+    workflow = (REPO / "rules" / "workflow.md").read_text()
+    monster = re.search(r"Monster ticket.*?\((\d+)\+ files", workflow, re.DOTALL)
+    assert monster, "workflow monster file threshold is missing"
+
+    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    breaker = re.search(r"pr_files\s*>=\s*(\d+).*?un-reviewable", setup, re.DOTALL)
+    assert breaker, "gaze setup has no file-count un-reviewable breaker"
+    assert breaker.group(1) == monster.group(1), "gaze threshold drifted from workflow"
+    assert "rules/workflow.md" in setup
+    assert "ESCALATE" in setup and "before spawning" in setup
+    assert "--force-approve" in setup
+
+    circuits = VERIFY.split("## Circuit breakers", 1)[1].split("## Telemetry", 1)[0]
+    output = VERIFY.split("## Output shape", 1)[1]
+    assert "un-reviewable" in circuits
+    assert "circuit_breaker:" in output
+
+
+def test_gaze_multi_ticket_is_advisory_below_size_breaker():
+    """Distinct close claims inform the gate without blocking a small PR."""
+    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    assert "Ticket-ref:" in setup and "Ticket: none" in setup
+    assert "distinct" in setup and "close-claim" in setup
+    assert "multi_ticket" in setup and "non-blocking" in setup
+    assert "continue the normal review" in setup
+    assert "multi_ticket" in VERIFY.split("## Output shape", 1)[1]
+
+
+def test_gaze_close_claim_count_ignores_refs_none_and_duplicate_ids():
+    """Exercise the extraction command documented in gaze, including exclusions."""
+    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    match = re.search(r"extract\s+IDs with `(grep[^`]+)`", setup)
+    assert match, "gaze must provide an executable close-claim extraction recipe"
+    body = "\n".join(
+        [
+            "**Ticket:** tickets/0901-a.erg",
+            "Ticket: tickets/0901-a.erg",
+            "Ticket-ref: tickets/0928-b.erg",
+            "Ticket: none",
+            "Ticket: tickets/0902-c.erg",
+            "Discussion mentions tickets/0903-d.erg",
+        ]
+    )
+    result = subprocess.run(
+        match.group(1), shell=True, input=body, text=True, capture_output=True, check=True
+    )
+    assert result.stdout.splitlines() == ["0901", "0902"]
 
 
 def test_gaze_documents_fork_liveness_window():
