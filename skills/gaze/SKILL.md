@@ -188,11 +188,36 @@ git worktree add "$primary_root/.claude/worktrees/review-<pr-number>" origin/"$P
 # invocation and runs from the fork's own cwd, not review-<pr> — see its note below.)
 ```
 
-On any exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker abort),
-remove the worktree:
+## Review scratch cleanup
+
+On every exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
+abort, or live PR closure), after Agent C and the gate have consumed their
+artifacts, remove this run's review scratch before removing the worktree.
+The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
+this while perspective agents are still writing: cancel or wait for them first.
+If the review worktree was never created, there is nothing to clean up. The
+exit preflight must pass after scratch removal: if it reports other WIP, leave
+the review worktree registered and surface those file names as ESCALATE to the
+caller. Never force-remove a tree with real uncommitted files. A failed
+preflight or normal worktree removal is a cleanup failure, not a successful
+terminal verdict.
 
 ```bash
-git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force
+review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
+if [ -d "$review_tree" ]; then
+    tracked_panel=$(git -C "$review_tree" ls-files -- ".panel/<pr-number>") || exit 2
+    tracked_base=$(git -C "$review_tree" ls-files -- build/panel-head) || exit 2
+    [ -n "$tracked_panel" ] || rm -rf -- "$review_tree/.panel/<pr-number>"
+    if [ ! -L "$review_tree/build" ] && [ -z "$tracked_base" ]; then
+        rm -rf -- "$review_tree/build/panel-head"
+    fi
+    rmdir -- "$review_tree/.panel" 2>/dev/null || true
+    if ! "${IDH_HOME:-$HOME/.claude}/scripts/worktree-exit-preflight.sh" "$review_tree"; then
+        echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
+        exit 1
+    fi
+    git -C "$primary_root" worktree remove "$review_tree" || exit 1
+fi
 ```
 
 - Abort if not mergeable or if there are open merge conflicts.
@@ -625,9 +650,9 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 - Two REROLL rounds reached → ESCALATE.
 - Telemetry thresholds (see `## Telemetry`).
 
-On **every** circuit-breaker exit (not only ESCALATE): run
-`git worktree remove "$primary_root/.claude/worktrees/review-<pr-number>" --force` before returning so the
-main repo is never left in a partial state.
+On **every** circuit-breaker exit (not only ESCALATE): run the
+`## Review scratch cleanup` procedure before returning so the main repo is
+never left in a partial state.
 
 ## Telemetry
 

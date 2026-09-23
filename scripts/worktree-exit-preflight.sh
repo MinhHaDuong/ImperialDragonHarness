@@ -17,10 +17,41 @@ set -euo pipefail
 
 path="${1:-.}"
 [ -d "$path" ] || { echo "worktree-exit-preflight: not a directory: $path" >&2; exit 2; }
+root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
+    echo "worktree-exit-preflight: not a Git worktree: $path" >&2
+    exit 2
+}
+if [ "$(realpath "$path")" != "$(realpath "$root")" ]; then
+    echo "worktree-exit-preflight: expected worktree root: $path" >&2
+    exit 2
+fi
+
+# Inspect both pathspecs successfully before deleting either one. A failed
+# ls-files must never look like an empty tracked set.
+tracked_panel=$(git -C "$path" ls-files -- .panel 2>/dev/null) || {
+    echo "worktree-exit-preflight: cannot inspect .panel in $path" >&2
+    exit 2
+}
+tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
+    echo "worktree-exit-preflight: cannot inspect build/panel-head in $path" >&2
+    exit 2
+}
+
+# Review reports and the temporary base checkout are command-owned scratch.
+# Remove only these named paths, then apply the original complete status gate.
+if [ -z "$tracked_panel" ]; then
+    rm -rf -- "$path/.panel"
+fi
+if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
+    rm -rf -- "$path/build/panel-head"
+fi
 
 # -uall expands untracked directories so each lost file is named in the message
 # (the failure mode was a single .erg file inside an otherwise-untracked dir).
-status=$(git -C "$path" status --porcelain --untracked-files=all 2>/dev/null || true)
+status=$(git -C "$path" status --porcelain --untracked-files=all 2>/dev/null) || {
+    echo "worktree-exit-preflight: cannot inspect worktree status: $path" >&2
+    exit 2
+}
 [ -z "$status" ] && exit 0
 
 cat >&2 <<EOF

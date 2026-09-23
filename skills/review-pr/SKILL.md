@@ -238,6 +238,38 @@ line naming it; set `dissent: unavailable` instead of `dissent: none`.
    spelling. Dedup (step 3) merges *findings*, never verdicts: a perspective whose
    only finding was deduped into another's still records its own comment verdict.
 
+## Panel scratch cleanup
+
+For a standalone `/review-pr`, clean up its own panel only **after** the review
+post is verified on the forge (Synthesis step 7), the verdict roster is delivered,
+and every perspective agent has finished or been cancelled. If the post fails,
+leave the panel and name `<panel>/review.md` so the review can be recovered.
+If an agent cannot be stopped after the collection deadline, leave the panel
+until the worktree exit/GC fallback can purge it; do not delete a live writer's
+files. When this procedure is embedded by /gaze as Agent C, leave the panel
+for `/gaze` to consume; `/gaze` owns cleanup at its terminal point.
+
+For a successful standalone review, run this from the review worktree (replace
+`<pr-number>` with the actual number):
+
+```bash
+worktree=$(git rev-parse --show-toplevel) || exit 2
+panel="$worktree/.panel/<pr-number>"
+tracked_panel=$(git -C "$worktree" ls-files -- ".panel/<pr-number>") || exit 2
+tracked_base=$(git -C "$worktree" ls-files -- build/panel-head) || exit 2
+[ -n "$tracked_panel" ] || rm -rf -- "$panel"
+if [ ! -L "$worktree/build" ] && [ -z "$tracked_base" ]; then
+    rm -rf -- "$worktree/build/panel-head"
+fi
+rmdir -- "$worktree/.panel" 2>/dev/null || true
+```
+
+Do not gitignore `.panel/` in adopter repos. With an ignore rule, default
+`git status --porcelain` hides this residue, so a missed producer cleanup no
+longer reaches the worktree gates as an untracked signal. The exit preflight
+and GC still purge the two named paths explicitly; the ignore rule is neither
+needed for that purge nor a replacement for it.
+
 ## Minor finding tags (mandatory)
 
 Every non-blocker finding posted in the review carries exactly one prefix:

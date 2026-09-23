@@ -76,8 +76,11 @@ Run full repo housekeeping and act on every finding.
    merged-and-pruned branches read `[gone]` while sessions still sat in them):
    it skips any worktree that is a live process's cwd, any locked worktree
    (lock = in use, mirroring step 0's marker — never unlock-and-remove), any
-   tree with uncommitted changes, and the one it runs from. It never `rm -rf`s
-   and stays silent when there is nothing to report — but it also **reports
+   tree with uncommitted changes other than `.panel/` and `build/panel-head/`
+   review scratch, and the one it runs from. After the live/lock checks it
+   purges only those two scratch paths, then reports and retains every other
+   WIP file by name (ticket 0948). It never `rm -rf`s a whole worktree and
+   stays silent when there is nothing to report — but it also **reports
    (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
    registered worktrees (a session base cwd deregistered mid-session), so a
    `worktree-gc: husk …` line breaks the silence without anything being

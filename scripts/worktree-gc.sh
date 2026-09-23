@@ -48,6 +48,20 @@ locked_flag=0
 
 reset() { path=""; branch=""; locked_flag=0; }
 
+report_wip() {
+    local tree="$1" base="$2" status
+    if ! status=$(git -C "$tree" status --porcelain --untracked-files=all 2>/dev/null); then
+        echo "worktree-gc: skip $base (could not inspect worktree status)" >&2
+        skipped_wip=$((skipped_wip + 1))
+        return 0
+    fi
+    [ -z "$status" ] && return 1
+    echo "worktree-gc: skip $base (uncommitted WIP)"
+    printf 'worktree-gc: WIP in %q: %q\n' "$base" "$status"
+    skipped_wip=$((skipped_wip + 1))
+    return 0
+}
+
 flush() {
     [ -z "$path" ] && return
     local base
@@ -56,17 +70,17 @@ flush() {
     # live session sits on a just-merged, now-gone branch). git worktree list
     # reports absolute paths; $PWD is absolute, so this compares cleanly.
     if [ "$path" = "$PWD" ]; then reset; return; fi
-    # Never touch a worktree with uncommitted changes (could be user WIP).
-    if [ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ]; then
-        echo "worktree-gc: skip $base (uncommitted WIP)"
-        skipped_wip=$((skipped_wip + 1))
+    if [ -z "$branch" ]; then
+        report_wip "$path" "$base" || true
         reset; return
     fi
-    if [ -z "$branch" ]; then reset; return; fi
     # 'gone' = the branch had an upstream that no longer exists (merged + pruned).
     local track
     track=$(git -C "$repo" for-each-ref --format='%(upstream:track)' "refs/heads/$branch" 2>/dev/null || true)
-    if [ "$track" != "[gone]" ]; then reset; return; fi
+    if [ "$track" != "[gone]" ]; then
+        report_wip "$path" "$base" || true
+        reset; return
+    fi
     # The tree is now a removal candidate. Never remove one that is a live
     # process's cwd: that process is an active session based there, whatever
     # its branch's upstream says (checked only past the [gone] gate so a
@@ -89,6 +103,27 @@ flush() {
     if [ "$locked_flag" -eq 1 ]; then
         echo "worktree-gc: skip $base (locked — treated as in use)"
         skipped_locked=$((skipped_locked + 1))
+        reset; return
+    fi
+    # Only a gone, inactive, unlocked tree reaches this point. The review
+    # commands own these two scratch paths; clear them before the WIP check,
+    # while retaining every other uncommitted file as a removal blocker.
+    # A tracked file under either path may contain real edits; never erase it.
+    # Also do not follow a symlinked build/ parent outside the worktree.
+    local tracked_panel tracked_base
+    if ! tracked_panel=$(git -C "$path" ls-files -- .panel 2>/dev/null) ||
+       ! tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null); then
+        echo "worktree-gc: skip $base (could not inspect review scratch)" >&2
+        skipped_wip=$((skipped_wip + 1))
+        reset; return
+    fi
+    if [ -z "$tracked_panel" ]; then
+        rm -rf -- "$path/.panel"
+    fi
+    if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
+        rm -rf -- "$path/build/panel-head"
+    fi
+    if report_wip "$path" "$base"; then
         reset; return
     fi
     if git -C "$repo" worktree remove "$path" 2>/dev/null; then

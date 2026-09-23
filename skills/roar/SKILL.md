@@ -191,7 +191,13 @@ default branch — there are no remote branches nor merge requests to inspect.
        ```bash
        ~/.claude/scripts/worktree-exit-preflight.sh
        ```
-       Refuses (exit 1) when there are uncommitted/untracked files — including a fresh ticket draft `tickets/erg new` wrote but never committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT fire on `ExitWorktree`, so this is the only gate. If it blocks, commit (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See ticket 0174.
+       Removes only `.panel/` and `build/panel-head/` review scratch first,
+       then refuses (exit 1) on every other uncommitted/untracked file —
+       including a fresh ticket draft `tickets/erg new` wrote but never
+       committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT
+       fire on `ExitWorktree`, so this is the only gate. If it blocks, commit
+       (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See tickets
+       0174 and 0948.
     b. Call `ExitWorktree` with action `remove`. When the pre-check
        (`git merge-base --is-ancestor HEAD origin/main`) has already
        passed, the worktree branch is fully merged — ExitWorktree's
