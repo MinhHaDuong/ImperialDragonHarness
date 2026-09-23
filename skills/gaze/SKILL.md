@@ -26,6 +26,8 @@ reviewer or seat work, clean up the review worktree, and return the command's
 `/gaze stopped: phase=<phase> state=<MERGED|CLOSED|UNKNOWN> pr=<number>` line to
 the caller. Post no gate or top-level verdict comment. An unavailable forge is
 `UNKNOWN` and also stops the run; it is never evidence that the PR stayed open.
+The helper bounds each forge state lookup to 10 seconds by default; a timed-out
+lookup reports `UNKNOWN` and stops under the same rule.
 These checks observe the caller's merge decision and do not delay it.
 
 > **TASK DIRECTIVE — execute now.** You are running `/gaze` on PR `$ARGUMENTS`.

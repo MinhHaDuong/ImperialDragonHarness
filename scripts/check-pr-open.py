@@ -10,7 +10,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("pr", type=int)
     parser.add_argument("phase")
+    parser.add_argument("--timeout-seconds", type=float, default=10)
     args = parser.parse_args()
+    if args.timeout_seconds <= 0:
+        parser.error("--timeout-seconds must be positive")
 
     try:
         result = subprocess.run(
@@ -18,7 +21,12 @@ def main() -> int:
             capture_output=True,
             text=True,
             check=False,
+            timeout=args.timeout_seconds,
         )
+    except subprocess.TimeoutExpired:
+        print(f"/gaze stopped: phase={args.phase} state=UNKNOWN pr={args.pr}", file=sys.stderr)
+        print(f"PR state check timed out after {args.timeout_seconds:g}s", file=sys.stderr)
+        return 3
     except OSError as exc:
         print(f"/gaze stopped: phase={args.phase} state=UNKNOWN pr={args.pr}", file=sys.stderr)
         print(f"PR state check failed: {exc}", file=sys.stderr)

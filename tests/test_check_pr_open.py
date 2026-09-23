@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ def _gh_stub(tmp_path):
     binary.write_text(
         "#!/bin/sh\n"
         'printf "%s\\n" "$*" >> "$GH_CALLS"\n'
+        'if [ -n "$GH_DELAY_SECONDS" ]; then exec sleep "$GH_DELAY_SECONDS"; fi\n'
         'cat "$GH_STATE"\n'
     )
     binary.chmod(0o755)
@@ -80,6 +82,27 @@ def test_merged_verdict_guard_prevents_following_post(tmp_path):
     )
     assert result.returncode == 3
     assert not posted.exists()
+
+
+@pytest.mark.integration
+def test_stalled_gh_state_lookup_stops_with_unknown(tmp_path):
+    state, _, env = _gh_stub(tmp_path)
+    state.write_text("OPEN\n")
+    env["GH_DELAY_SECONDS"] = "2"
+    continued = tmp_path / "continued"
+    started = time.monotonic()
+    result = subprocess.run(
+        f'python3 "{SCRIPT}" 826 review-panel --timeout-seconds 0.1 && touch "{continued}"',
+        shell=True,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert time.monotonic() - started < 1
+    assert result.returncode == 3
+    assert not continued.exists()
+    assert "phase=review-panel state=UNKNOWN" in result.stderr
+    assert "timed out" in result.stderr
 
 
 def test_gaze_guards_costly_transitions_and_verdict():
