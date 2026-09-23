@@ -74,6 +74,9 @@ Author: MinhHaDuong
 2026-09-23T17:12Z codex note MR #585 seat=local-padme-qwen verdict: PASS — project=search-works-for-zotero, 0 findings on a merged code diff; latency=9.0s
 2026-09-23T17:12Z codex note MR #1391 seat=local-padme-qwen verdict: NOISY — project=climate-finance-het, 1 self-nullifying consider finding (described the guarded KeyError path as correct), 0 adopted; latency=17.2s
 2026-09-23T17:12Z codex note Local config trial criterion met: 5 merged MRs across 3 PUBLIC projects, all five returned normalized results through the bounded read-only seat. Five emitted findings, zero verified useful catches, four noisy reviews; median latency 13.5s. Recommendation for 0205: DROP local-padme-qwen from the regular panel for now; keep the on-demand local trial path for model improvements and re-audition, and do not use this model to replace frontier review or grant approval. OpenRouter config still needs cross-project coverage before this ticket can close.
+2026-09-23T17:15Z codex note MR #585 seat=openrouter-frontier verdict: CONSIDER — project=search-works-for-zotero, 1 UI-label suggestion on the intentional split between attachment heading and still-visible no-attachment group; no verified defect or adopted change; latency=14.4s
+2026-09-23T17:15Z codex note MR #1391 seat=openrouter-frontier verdict: PASS — project=climate-finance-het, 0 findings on a compact merged code diff; latency=21.8s
+2026-09-23T17:15Z codex note OpenRouter config trial criterion met: existing IDH frontier scorecards cover at least MRs #614, #615, #616, #617 and #618, with a verified parser bug caught on #618; the two bounded PUBLIC cross-project replays above extend that to 7 merged MRs across 3 projects. Recommendation for 0205: RETAIN openrouter-frontier as the primary on-demand advisory seat for substantive code review; its useful IDH catches and cleaner specificity beat this Padmé qwen trial. Do not make it required or invoke it on trivial diffs without a separate cost/benefit decision. The budget OpenRouter seat remains noisy in the existing IDH log and is not recommended for promotion. Both endpoint configs now meet the five-MR, three-project trial, and no active ticket criterion remains.
 --- body ---
 ## Context
 
@@ -134,5 +137,5 @@ unreachable (fail-loud).
 
 - [x] Seat runs an agnostic CLI reviewer via the 0217 sandbox-runner, credentials via BASH_ENV minimal-env path
 - [x] Both endpoint configs (OpenRouter, llama-server) smoke-tested and logged (llama-server under 0217; OpenRouter real smoke 2026-07-14 with OPENROUTER_API_KEY_IDH — 3 judgeable findings, leak-check clean)
-- [ ] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
-- [ ] Promote/drop recommendation recorded for 0205's integration review
+- [x] Advisory trial: ≥5 MRs, ≥3 projects per config, scorecards logged
+- [x] Promote/drop recommendation recorded for 0205's integration review
