@@ -60,6 +60,7 @@ MEM = re.compile(r"memory/([A-Za-z0-9_.-]+\.md)$")
 # backtracks into it, so `memory` failing on the trailing `-sweep` retries the
 # longer branch anyway; both orders measured identical. The longer one is
 # listed first for the reader, not for the engine.
+# historical-skill: memory -> memory-sweep
 SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory-sweep|memory)"')
 CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory-sweep|memory)</command-name>")
 BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
