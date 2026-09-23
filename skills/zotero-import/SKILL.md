@@ -3,7 +3,7 @@ name: zotero-import
 description: "Import one or more PDFs into Zotero, or backfill a whole staging directory — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pdf>... | audit <dir>"
+argument-hint: "<pdf>... | audit <dir> | reconcile <repo>"
 ---
 
 
@@ -22,7 +22,7 @@ writes to items that already exist. **Read the mode's file before acting.**
 |---|---|---|
 | import | one or more PDFs to file as new items | `references/import.md` |
 | enrichment | the item exists; fields are missing | `references/enrichment.md` |
-| backfill | reconcile a whole staging directory | `references/backfill.md` |
+| backfill | report a staging directory or BibTeX-linked repository before explicit import | `references/backfill.md` |
 
 `references/helper-script.md` documents the `zotero-import.py` lookup and write
 subcommands and the guarantees of their output (`why` / `certainty` / `consulted` / `skipped`).

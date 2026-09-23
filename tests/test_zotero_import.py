@@ -1795,3 +1795,138 @@ def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["corroboration"][0]["confidence"] == "corroborated"
     assert out["items"][0]["title"] == "Coherent Measures of Risk"
+
+
+def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    linked = docs / "linked.pdf"
+    orphan = docs / "orphan.pdf"
+    linked.write_bytes(b"linked")
+    orphan.write_bytes(b"orphan")
+    (tmp_path / "reading.bib").write_text(
+        "@article{levin, title={Useful Paper}, file={docs/linked.pdf}}\n"
+    )
+
+    found = zi.discover_reconcile_files(tmp_path)
+
+    assert [p.name for p in found["bib_files"]] == ["reading.bib"]
+    assert [(r["key"], r["path"]) for r in found["linked"]] == [
+        ("levin", linked)
+    ]
+    assert found["orphans"] == [orphan]
+    assert found["errors"] == []
+
+
+def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    only = docs / "only.pdf"
+    only.write_bytes(b"x")
+    assert zi.discover_reconcile_files(tmp_path)["orphans"] == [only]
+
+    (tmp_path / "empty.bib").write_text("@article{one,title={No file}}\n")
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["orphans"] == []
+    assert found["errors"], "a bib with no staging path cannot report clean"
+
+
+def test_reconcile_discovers_one_level_bib_and_better_bibtex_path(tmp_path):
+    refs = tmp_path / "refs"
+    docs = tmp_path / "docs"
+    refs.mkdir()
+    docs.mkdir()
+    pdf = docs / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    (refs / "sources.bib").write_text(
+        "@article{one, file={:../docs/paper.pdf:PDF}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert [r["path"] for r in found["linked"]] == [pdf]
+    assert found["errors"] == []
+
+
+def test_reconcile_duplicate_bib_file_link_is_not_two_import_proposals(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    pdf = docs / "one.pdf"
+    pdf.write_bytes(b"paper")
+    for name in ("one.bib", "two.bib"):
+        (tmp_path / name).write_text(
+            "@article{key, file={docs/one.pdf}}\n"
+        )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert [r["path"] for r in found["linked"]] == [pdf]
+    assert any("multiple BibTeX" in e for e in found["errors"])
+
+
+def test_reconcile_does_not_scan_file_outside_repository(tmp_path):
+    outside = tmp_path.parent / "external.pdf"
+    (tmp_path / "refs.bib").write_text(
+        f"@article{{one, file={{{outside}}}}}\n"
+    )
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["linked"] == []
+    assert found["orphans"] == []
+    assert found["errors"]
+
+
+def test_reconcile_does_not_read_symlinked_bib_outside_repository(
+        tmp_path, monkeypatch):
+    external = tmp_path.parent / "external-sources.bib"
+    external.write_text("@article{one, file={docs/secret.pdf}}\n")
+    (tmp_path / "refs.bib").symlink_to(external)
+    monkeypatch.setattr(zi, "_bib_entries", lambda _path: pytest.fail(
+        "external BibTeX was read"))
+    found = zi.discover_reconcile_files(tmp_path)
+    assert found["linked"] == []
+    assert found["errors"]
+
+
+def test_reconcile_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    seen = {}
+
+    def fake_match(_idx, **kwargs):
+        seen.update(kwargs)
+        return {"matches": [], "consulted": ["doi"], "skipped": []}
+
+    monkeypatch.setattr(zi, "api_matches", fake_match)
+    row = zi.audit_one(pdf, {"works": [], "attachments": []}, bib_entry={
+        "_key": "levin", "title": "Useful Paper", "doi": "10.1234/test",
+        "author": "Levin, John and Smith, Jane", "year": "1997"
+    })
+    assert seen["doi"] == "10.1234/test"
+    assert seen["title"] == "Useful Paper"
+    assert seen["first_author"] == "Levin, John"
+    assert seen["year"] == "1997"
+    assert row["verdict"] == "absent"
+
+
+def test_reconcile_report_is_read_only_and_counts_both_directions(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "linked.pdf").write_bytes(b"linked")
+    (docs / "orphan.pdf").write_bytes(b"orphan")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={Useful Paper}, file={docs/linked.pdf}}\n"
+    )
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *_a, **_k: {
+        "fetched": "2026-09-23", "works": [], "attachments": []
+    })
+    monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
+        "file": path.name, "verdict": "absent"
+    })
+    args = argparse.Namespace(root=str(tmp_path), refresh=False,
+                              user_id=None, api_key=None, out=None)
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["summary"] == {"absent": 2}
+    assert {r["source"] for r in report["rows"]} == {"bib", "orphan"}
+    assert report["actions"] == {"absent": "inject only with explicit apply"}

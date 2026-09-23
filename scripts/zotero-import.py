@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Helper for the zotero-import skill.
 
-Subcommands: probe, match, write, inject, enrich, sync-index, audit, attach.
+Subcommands: probe, match, write, inject, enrich, sync-index, audit, reconcile,
+attach.
 The last three work without the Zotero desktop database, against a cached
 pull of the library from the Web API.
 """
@@ -9,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import logging
 import os
@@ -1957,6 +1959,106 @@ def _pdf_probe_text(pdf: Path) -> str:
 
 
 FRONT_MATTER_LINES = 25
+STAGING_EXTENSIONS = frozenset(
+    {".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"}
+)
+
+
+def _bib_entries(path: Path) -> list[dict[str, Any]]:
+    """Reuse the harness BibTeX parser rather than parsing `file=` with regex."""
+    parser = Path(__file__).with_name("bib-merge.py")
+    spec = importlib.util.spec_from_file_location("zotero_bib_merge", parser)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load BibTeX parser: {parser}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.parse_bibtex(path.read_text(encoding="utf-8"))
+
+
+def _bib_file_values(value: str) -> list[str]:
+    """Split the usual path and Better BibTeX `:path:TYPE` forms."""
+    paths = []
+    for part in value.split(";"):
+        part = part.strip()
+        if part.startswith(":"):
+            part = part[1:]
+        if ":" in part and part.rsplit(":", 1)[1].lower() in {
+            "pdf", "html", "htm", "jpg", "jpeg", "png", "djvu", "epub"
+        }:
+            part = part.rsplit(":", 1)[0]
+        if part:
+            paths.append(part)
+    return paths
+
+
+def discover_reconcile_files(root: Path) -> dict[str, Any]:
+    """Find BibTeX-linked staging files and orphans without touching Zotero.
+
+    A BibTeX file may sit at the repository root or one directory below it.
+    Only paths within the repository are scanned. If BibTeX exists but carries
+    no usable staging path, report that uncertainty instead of defaulting to
+    `docs/` and pretending the sweep looked everywhere.
+    """
+    root = root.resolve()
+    bib_files = sorted(set(root.glob("*.bib")) | set(root.glob("*/*.bib")))
+    linked: list[dict[str, Any]] = []
+    linked_paths: set[Path] = set()
+    staging_dirs: set[Path] = set()
+    errors: list[str] = []
+    for bib in bib_files:
+        if not bib.resolve().is_relative_to(root):
+            errors.append(f"BibTeX file outside repository: {bib.relative_to(root)}")
+            continue
+        try:
+            entries = _bib_entries(bib)
+        except (OSError, UnicodeError, ValueError, RuntimeError) as exc:
+            errors.append(f"cannot read {bib.relative_to(root)}: {exc}")
+            continue
+        for entry in entries:
+            for raw in _bib_file_values(str(entry.get("file", ""))):
+                candidate = Path(raw).expanduser()
+                paths = ([candidate] if candidate.is_absolute() else
+                         [root / candidate, bib.parent / candidate])
+                resolved = next((p.resolve() for p in paths if p.is_file()),
+                                paths[0].resolve())
+                if not resolved.is_relative_to(root):
+                    errors.append(f"file path outside repository: {bib.relative_to(root)} "
+                                  f"entry {entry.get('_key', '?')}")
+                    continue
+                staging_dirs.add(resolved.parent)
+                if not resolved.is_file():
+                    errors.append(f"missing file: {resolved.relative_to(root)} "
+                                  f"in {bib.relative_to(root)}")
+                    continue
+                if resolved in linked_paths:
+                    errors.append(f"multiple BibTeX entries reference "
+                                  f"{resolved.relative_to(root)}")
+                    continue
+                linked.append({"path": resolved, "bib": bib,
+                               "key": entry.get("_key", ""), "entry": entry})
+                linked_paths.add(resolved)
+    if not bib_files:
+        staging_dirs.add(root / "docs")
+    elif not staging_dirs:
+        errors.append("BibTeX files found but no staging directory could be inferred")
+    orphans: list[Path] = []
+    for directory in sorted(staging_dirs):
+        if not directory.is_dir():
+            continue
+        if not directory.resolve().is_relative_to(root):
+            errors.append(f"staging directory outside repository: {directory}")
+            continue
+        for path in sorted(directory.iterdir()):
+            if not path.is_file() or path.suffix.lower() not in STAGING_EXTENSIONS:
+                continue
+            resolved = path.resolve()
+            if not resolved.is_relative_to(root):
+                errors.append(f"staged file outside repository: {path}")
+            elif resolved not in linked_paths:
+                orphans.append(resolved)
+    return {"bib_files": bib_files, "linked": linked,
+            "orphans": sorted(set(orphans)), "errors": errors,
+            "staging_dirs": sorted(staging_dirs)}
 
 
 def _front_matter(text: str, lines: int = FRONT_MATTER_LINES) -> str:
@@ -1998,18 +2100,26 @@ def _pdf_title(pdf: Path) -> str:
     return "" if title.lower().endswith(".pdf") else title
 
 
-def audit_one(path: Path, idx: dict[str, Any]) -> dict[str, Any]:
+def audit_one(path: Path, idx: dict[str, Any],
+              bib_entry: dict[str, Any] | None = None) -> dict[str, Any]:
     """Reconcile one staged file against the library index."""
+    bib_entry = bib_entry or {}
     is_pdf = path.suffix.lower() == ".pdf"
     body = _pdf_probe_text(path) if is_pdf else ""
-    title = _pdf_title(path) if is_pdf else ""
+    title = str(bib_entry.get("title") or (_pdf_title(path) if is_pdf else ""))
     # The filename slug carries the author's own naming intent; split camelCase
     # so "MethodOfLimitsIndexNumbers" becomes words a title can match.
     slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
                   "-".join(path.stem.split("-")[1:]) or path.stem)
     surnames, year = _filename_hints(path.name)
+    author = str(bib_entry.get("author", "")).split(" and ", 1)[0]
     res = api_matches(idx, title=title, text=f"{slug} {_front_matter(body)}",
-                      year=year, authors=list(surnames), pdf_path=path)
+                      doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
+                      arxiv=bib_entry.get("arxiv"),
+                      handle=bib_entry.get("handle"),
+                      year=str(bib_entry.get("year") or year or ""),
+                      first_author=author or None, authors=list(surnames),
+                      pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
     # Five answers, not four. Collapsing a weak hit into "absent" is the
     # expensive mistake in both directions: called present, a document is
@@ -2119,6 +2229,74 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_reconcile(args: argparse.Namespace) -> int:
+    """Report BibTeX-linked files and staging orphans without Zotero writes."""
+    root = Path(args.root).resolve()
+    if not root.is_dir():
+        json.dump({"verdict": "unchecked", "error": f"not a directory: {root}"},
+                  sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    found = discover_reconcile_files(root)
+    if not found["bib_files"] and not any(d.is_dir() for d in found["staging_dirs"]):
+        json.dump({"verdict": "no_staging", "root": str(root.resolve()),
+                   "files": 0, "summary": {}, "rows": [], "errors": []}, sys.stdout)
+        sys.stdout.write("\n")
+        return 0
+    user, key = resolve_read_credentials(args)
+    idx = load_index(user, key, refresh=args.refresh)
+    if idx is None:
+        json.dump({"verdict": "unchecked", "error": "no library index; "
+                   "run sync-index first"}, sys.stdout)
+        sys.stdout.write("\n")
+        return 1
+    rows = []
+    errors = list(found["errors"])
+    for item in found["linked"]:
+        try:
+            row = audit_one(item["path"], idx, bib_entry=item["entry"])
+            row.update({"source": "bib", "bib": str(item["bib"].relative_to(root)),
+                        "key": item["key"]})
+            rows.append(row)
+        except Exception as exc:
+            errors.append(f"cannot audit {item['path'].relative_to(root)}: {exc}")
+    for path in found["orphans"]:
+        try:
+            row = audit_one(path, idx)
+            row["source"] = "orphan"
+            rows.append(row)
+        except Exception as exc:
+            errors.append(f"cannot audit {path.relative_to(root)}: {exc}")
+    summary: dict[str, int] = {}
+    for row in rows:
+        summary[row["verdict"]] = summary.get(row["verdict"], 0) + 1
+    if errors:
+        summary["unchecked"] = len(errors)
+    actions = {"identical": "nothing",
+               "work_present_with_file": "nothing; report the second copy",
+               "work_present_no_file": "attach only with explicit apply",
+               "ambiguous": "inspect; neither inject nor skip",
+               "absent": "inject only with explicit apply",
+               "error": "inspect unreadable file",
+               "unchecked": "resolve discovery or audit error"}
+    report = {"verdict": "unchecked" if errors else "checked",
+              "root": str(root.resolve()),
+              "bib_files": [str(p.relative_to(root.resolve()))
+                            for p in found["bib_files"]],
+              "staging_dirs": [str(p.relative_to(root.resolve()))
+                               for p in found["staging_dirs"] if p.is_dir()],
+              "index_fetched": idx["fetched"], "files": len(rows),
+              "summary": summary,
+              "actions": {k: actions[k] for k in summary},
+              "rows": rows, "errors": errors}
+    if args.out:
+        Path(args.out).write_text(json.dumps(report, indent=2,
+                                            ensure_ascii=False) + "\n")
+    json.dump(report, sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return 1 if errors else 0
+
+
 def cmd_attach(args: argparse.Namespace) -> int:
     """Upload a file onto an item that already exists — the C case of an audit.
 
@@ -2209,6 +2387,17 @@ def main() -> int:
     pa.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
     pa.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
     pa.set_defaults(func=cmd_audit)
+
+    pr = sub.add_parser("reconcile", help="report BibTeX-linked staging files "
+                        "and unlinked orphans against Zotero; never writes")
+    pr.add_argument("root", nargs="?", default=".",
+                    help="repository root (default: current directory)")
+    pr.add_argument("--out", help="write the full JSON report to this path")
+    pr.add_argument("--refresh", action="store_true",
+                    help="re-pull the library index first")
+    pr.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
+    pr.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+    pr.set_defaults(func=cmd_reconcile)
 
     pt = sub.add_parser("attach",
                         help="upload files onto an EXISTING item "
