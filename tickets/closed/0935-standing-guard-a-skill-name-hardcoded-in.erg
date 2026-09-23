@@ -2,11 +2,14 @@
 Title: Standing guard: a skill name hardcoded in a script survives the skill's rename
 Created: 2026-09-16
 Author: Integration Test
+Closed: autoclosed — PR #973
 
 --- log ---
 2026-09-16T08:58Z Integration Test created
 2026-09-16T09:02Z Integration Test note Filed from /roar step 4 after PR #925; the class fired once and the sweep found 9 names across 5 scripts
 
+2026-09-23T14:57Z Minh-Ha-Duong Design: local historical-skill old -> current markers in trace readers; sweep found memory, verify, housekeeping as historical aliases. Runtime skill classifiers are checked against live SKILL.md; shell git merge and Zotero cache directory are not skill references.
+2026-09-23T15:10Z Minh Ha-Duong closed — autoclosed — PR #973
 --- body ---
 ## Context
 
