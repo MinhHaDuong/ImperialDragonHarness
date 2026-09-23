@@ -2,7 +2,6 @@
 Title: External-reviewer panel for verify — contract, decorrelation rule, trial tracker
 Created: 2026-06-04
 Author: MinhHaDuong
-Blocked-by: 0207
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
@@ -21,6 +20,7 @@ Blocked-by: 0207
 2026-07-15T06:10Z Minh Ha-Duong note child 0356 filed — cross-project PR benchmark, mined-defect sample + pairwise challenger audition (deferred, no active work planned yet)
 2026-07-15T06:11Z Minh Ha-Duong note Actions 1-2 landed via PR #638 — gaze panel-extension contract (auto request/harvest/scorecard, fail-open advisory seats) + decorrelation rewording in rules/workflow.md; first two exit criteria satisfied
 2026-07-15T06:11Z Minh Ha-Duong note author reframe (2026-07-15) — squad-management model recorded in the body; the promote/drop endpoint becomes continuous squad management
+2026-09-23T17:17Z Minh Ha-Duong note blocker 0207 closed — Blocked-by removed.
 --- body ---
 ## Context
 
