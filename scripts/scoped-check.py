@@ -13,6 +13,14 @@ from pathlib import Path
 
 TARGET = re.compile(r"^[A-Za-z0-9_.-]+$")
 BRANCH = re.compile(r"^[A-Za-z0-9_./-]+$")
+SOURCE_SUFFIXES = {
+    ".bash", ".c", ".cc", ".cjs", ".cpp", ".cs", ".dart", ".ex",
+    ".exs", ".fish", ".go", ".h", ".hpp", ".hs", ".ipynb", ".java",
+    ".jl", ".js", ".jsx", ".kt", ".lua", ".mjs", ".php", ".pl",
+    ".ps1", ".py", ".r", ".rb", ".rs", ".scala", ".sh", ".sql",
+    ".swift", ".ts", ".tsx", ".zsh",
+}
+SOURCE_NAMES = {"Makefile", "Dockerfile", "Containerfile", "Jenkinsfile", "Rakefile", "Gemfile", "CMakeLists.txt"}
 
 
 def _string(value: object, pattern: re.Pattern[str], label: str) -> str:
@@ -76,6 +84,9 @@ def changed_paths(base: str) -> set[str] | None:
 def select_targets(data: dict, paths: set[str] | None) -> tuple[list[str], list[str]]:
     targets = data["targets"]
     if not paths:
+        return [data["full_target"]], []
+    if any(Path(path).suffix.lower() in SOURCE_SUFFIXES or Path(path).name in SOURCE_NAMES
+           for path in paths):
         return [data["full_target"]], []
     selected: set[str] = set()
     for path in paths:

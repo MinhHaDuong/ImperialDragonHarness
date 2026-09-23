@@ -85,6 +85,15 @@ def test_doc_code_unmapped_and_mixed_diffs(tmp_path: Path) -> None:
     assert "skipped: none" in unmapped
 
     (repo / "new.bin").unlink()
+    config["rules"].append({"paths": ["*.py", "*.js"], "targets": ["lint"]})
+    (repo / ".idh-checks.json").write_text(json.dumps(config))
+    (repo / "module.py").write_text("print('changed')\n")
+    assert "selected: check" in run().stdout  # mapped source still needs full gate
+    (repo / "module.py").write_text("print('baseline')\n")
+    (repo / "plugins" / "sitter" / "bootstrap.js").write_text("// code\n")
+    assert "selected: check" in run().stdout
+    (repo / "plugins" / "sitter" / "bootstrap.js").unlink()
+    (repo / ".idh-checks.json").write_text(json.dumps({**config, "rules": config["rules"][:-1]}))
     (repo / "tickets").mkdir()
     (repo / "tickets" / "0001-note.erg").write_text("note\n")
     ticket = run().stdout
