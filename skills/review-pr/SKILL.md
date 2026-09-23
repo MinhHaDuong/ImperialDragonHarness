@@ -78,6 +78,8 @@ in the posted review and leave it unresolved for the next round.
 
 ## Setup
 
+Before reading or posting a review, set `review_tree` to the absolute `worktree=<path>` argument when present; only when absent, resolve it from the current cwd with `git rev-parse --show-toplevel`. Then run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$review_tree"`. Use `git -C "$review_tree"` for every diff and checkout read; a shell `cd` in one tool call does not persist into another. The helper checks the requested PR's head commit and base against this checkout and exits nonzero with `REVIEW-ANCHOR:` for a wrong HEAD, missing base, or empty diff. Stop and report that reason on any failure; no empty changed-file list may yield an approving review. Carry the helper's HEAD and changed-file roster into every reviewer prompt. Re-run it before posting to catch branch motion during review.
+
 1. **Read the issue** linked to the PR. Note the exit criteria.
 2. **Read the diff** of the merge request.
 3. **Determine round-1 panel width**, then assess risk level and proportional

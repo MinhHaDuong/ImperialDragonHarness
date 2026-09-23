@@ -6,6 +6,7 @@ Author: Integration Test
 --- log ---
 2026-09-16T07:48Z Integration Test created
 2026-09-16T07:52Z claude note Observed during /gaze on PR #921. A panel agent caught it and fell back to a manual review; without that fallback the run would have reported an empty diff as a clean approval.
+2026-09-23T19:38Z codex note Red test first: mismatched-cwd worktree fixture failed before review-pr-anchor.py existed. Added explicit PR HEAD/base and nonempty-diff guard, invoked before and after gaze Agent B /review and by review-pr and review-pr-prose. Sibling sweep: gaze built-in review and code/prose review panels share the pattern; hunt delegates to review-pr and inherits its guard. Scripted fixture verifies wrong worktree and empty diff fail with named REVIEW-ANCHOR reasons. Live Skill-tool invocation not available in this harness.
 
 --- body ---
 ## Context

@@ -52,6 +52,10 @@ the current branch's PR number. -->
 
 One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
 merge** — the merge decision belongs to the caller (the human or the raid).
+Only one live `/gaze` may own a PR. A new invocation must acquire its per-PR
+claim before fetching or creating a review worktree; an existing claim stops
+the run and identifies its holder. A past verdict is evidence, not authority
+to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
 ## When to use
 
@@ -180,8 +184,22 @@ PR_BRANCH=<resolved-branch-name>
 # exact semantics live in `~/.claude/scripts/pretooluse-worktree-path-guard.sh`.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
-git fetch origin "$PR_BRANCH"
-git worktree add "$primary_root/.claude/worktrees/review-<pr-number>" origin/"$PR_BRANCH"
+review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
+# Atomic per-PR claim. Keep the printed gate_session_id for phase 6 and cleanup.
+# Failure (including an existing claim) stops /gaze before any reviewer starts.
+gate_session_id=$(python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
+    acquire "$primary_root" <pr-number> "$review_tree") || exit 1
+if ! git fetch origin "$PR_BRANCH"; then
+    python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
+        release "$primary_root" <pr-number> "$gate_session_id"
+    exit 1
+fi
+if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_tree"; then
+    echo "gaze: cannot create isolated review worktree for PR <pr-number>; refusing to fall back into the invoking tree" >&2
+    python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
+        release "$primary_root" <pr-number> "$gate_session_id"
+    exit 1
+fi
 # The cwd-pinned reviewer agents and the REROLL fix agent run inside
 # $primary_root/.claude/worktrees/review-<pr-number>; the main repo is never
 # switched, never dirtied. (Exception: phase 5 /simplify is still a direct
@@ -193,6 +211,8 @@ git worktree add "$primary_root/.claude/worktrees/review-<pr-number>" origin/"$P
 On every exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
 abort, or live PR closure), after Agent C and the gate have consumed their
 artifacts, remove this run's review scratch before removing the worktree.
+Every terminal path after a successful claim runs this cleanup and releases
+that same `gate_session_id`; a stopped setup before the claim has no lock.
 The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
 this while perspective agents are still writing: cancel or wait for them first.
 If the review worktree was never created, there is nothing to clean up. The
@@ -218,6 +238,10 @@ if [ -d "$review_tree" ]; then
     fi
     git -C "$primary_root" worktree remove "$review_tree" || exit 1
 fi
+# Once all spawned agents have stopped and cleanup succeeds, release only the
+# claim owned by this run. On a cleanup failure, keep the claim for inspection.
+python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
+    release "$primary_root" <pr-number> "$gate_session_id" || exit 1
 ```
 
 - Abort if not mergeable or if there are open merge conflicts.
@@ -227,6 +251,7 @@ fi
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
+- First run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.
 - Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
   Before classifying, check the PR label, PR body, and linked ticket body for
   `review:standard`. An explicit request selects the **full** tier even when
@@ -378,8 +403,7 @@ the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup
 summary; it runs on the **small** and **full** tiers. This is a built-in slash command
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
 embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
-same containment rails, whose prompt simply invokes `/review` on the PR and
-returns the review summary. **Hand it the resolved axes; it guesses without
+same containment rails, whose prompt first runs `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
 them.** `/review` checks prose against a house rulebook, and told nothing it
 picks one by inference — on a manuscript merge request it read
 `rules/doctype/book.md` where the project manifest declares `techreport`
@@ -521,6 +545,10 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 Before spawning the gate agent, run
 `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> gate`.
 The gate agent checks state again immediately before posting its own verdict.
+Pass this run's `gate_session_id` and `review_tree` to the gate agent. It must
+read the tip SHA from the pinned review worktree immediately before ruling and
+put all three values in its PR verdict comment. If the worktree is unavailable
+or its HEAD cannot be read, ESCALATE without posting an approval.
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
@@ -565,6 +593,9 @@ unresolved_adherence_violations: [...]
 multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
 rationale: <paragraph>
 round: 1 | 2
+gate_session_id: <this run's claim id>
+review_worktree_path: <absolute path>
+ruled_tip_sha: <full SHA read from review worktree at verdict time>
 ```
 
 If phase 1 reported `multi_ticket`, carry it into the gate's findings and
@@ -814,6 +845,9 @@ gate: ran | skipped (un-reviewable) | skipped (--force-approve)
 ## /verify-gate verdict
 
 verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
+gate_session_id: <this run's claim id>
+review_worktree_path: <absolute review tree path>
+ruled_tip_sha: <full SHA read from review tree at verdict time>
 
 Exit criteria:
 - <criterion 1>: ADDRESSED — <evidence>
