@@ -272,6 +272,21 @@ def test_a_provider_file_ending_on_a_failing_command_still_resolves(tmp_path):
 
 
 @pytest.mark.integration
+def test_a_provider_file_exiting_after_assignment_still_resolves(tmp_path):
+    """An explicit exit must not hide a value already defined in the provider."""
+    home = tmp_path / "exit-home"
+    keys = home / ".config" / "keys"
+    keys.mkdir(parents=True)
+    (keys / "openrouter.env").write_text(
+        f"export {CRED_NAME}='{KEYSTORE_SENTINEL}'\nexit 7\n"
+    )
+    proc = _run_child(tmp_path, home)
+    assert proc.returncode == 0, f"child failed: {proc.stderr[-2000:]}"
+    assert KEYSTORE_SENTINEL not in proc.stdout + proc.stderr
+    assert f"resolved_length={len(KEYSTORE_SENTINEL)}" in proc.stdout
+
+
+@pytest.mark.integration
 def test_a_non_utf8_credential_byte_fails_loud_rather_than_raising(tmp_path):
     """``text=True`` raises UnicodeDecodeError, which is not an OSError.
 
