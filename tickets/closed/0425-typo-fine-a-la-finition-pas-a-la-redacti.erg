@@ -2,6 +2,7 @@
 Title: Typo fine a la finition, pas a la redaction — promouvoir la regle au harness
 Created: 2026-08-14
 Author: claude
+Closed: autoclosed — PR #986
 
 --- log ---
 2026-08-14T00:00Z claude created arbitrage auteur du 2026-08-14 dans polycentric_activity ; regle generale actuellement captive d'une memoire projet
@@ -9,6 +10,8 @@ Author: claude
 2026-09-07T02:20Z claude note triage 0872 : verdict REVIVE, mais DIFFERE — non execute cette nuit, branche CONSERVEE. Le travail de la branche t0425-typo-fine-finition (commit 46e8a22, 14 aout, 275 lignes) est coherent et main n'en porte rien : ni rules/typo/, ni l'axe typo dans l'index, ni le conditionnement des clauses typographiques de lang/fr.md et lang/en.md. Deux empechements propres a ce run de nuit, aucun tenant au fond : la branche modifie scripts/inject_rule_on_edit.py, appartenant a un executeur parallele cette nuit, et elle cree deux fichiers sous rules/ portant un tampon last-reviewed, que la consigne de l'auteur interdit d'ajouter ou de modifier dans ce run. Un conflit reel attend le repreneur : main a ajoute 19 lignes a inject_rule_on_edit.py et 99 a son test depuis la base commune bc79854, ainsi que quatre nouveaux corps de regles (coding-bash, knowledge-hints, systemd-units, workflow) que rules/README.md indexe deja. Commits preserves sous le tag archive/t0425-typo-fine-finition
 2026-09-23T00:00Z codex note reprise depuis archive/t0425-typo-fine-finition comme plan, non cherry-pick. Depuis 0572 les règles déclenchées par une tâche vivent en skills, et le runtime charge automatiquement tout rules/**/*.md sans paths. Un corps typo avec paths génériques chargerait aussi sur les brouillons ; le seul critère render=true de l'archive désigne un livrable, pas sa phase de finition. Déviation motivée du contrôle original : le hook donne seulement un pointeur court au fichier rendu et mappé en langue ; le corps normatif est le skill /typography-finish, invoqué à la finition et partagé avec /pdf-finish. Le contrôle négatif vérifie donc trois états : brouillon Markdown sans pointeur ni exigence, Markdown rendu en rédaction avec pointeur mais sans exigence, passe explicite de finition avec choix langue × balisage. Aucun rétro-port de prose.
 2026-09-23T00:01Z codex note revue indépendante PR #984 : la première version omettait le pointeur si un brouillon avait déjà consommé les marqueurs prose/lang dans la même session. Test rouge brouillon→livrable sous un même session_id, puis marqueur propre au pointeur et émission indépendante des corps de règles. Même livrable réédité : pas de deuxième pointeur.
+2026-09-23T17:00Z IDH PR #984 merged (c01346a3) after independent review and green CI; polycentric_activity PR #204 merged after green check-adherence and independent review. The mapped rendered-file pointer, explicit finish skill, PDF reuse, and consumer preamble are live; no consumer prose changed. Closure PR follows.
+2026-09-23T17:02Z Minh Ha-Duong closed — autoclosed — PR #986
 --- body ---
 ## Context
 
