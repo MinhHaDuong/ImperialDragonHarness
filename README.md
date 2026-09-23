@@ -63,6 +63,12 @@ subagent are all in front of the model before the first question too — about
 `tests/test_rules_resident_budget.py` keeps the rules-specific rules. Trimming
 a body lowers a cap, growing one has to argue for a raise.
 
+At startup, a project with local `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`,
+or project skills gets a short coherence prompt. The session checks applicable
+local directives against harness rules and skill descriptions, then reports
+concrete conflicts, repeated procedures, and stale references. Projects with
+no local directives get no prompt.
+
 A runtime without this auto-load — the Pi and Codex adapters — must inject that
 set itself; that is the real work behind tickets 0800 and 0572.
 
