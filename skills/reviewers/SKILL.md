@@ -56,6 +56,13 @@ shell code, so no environment variable may redirect it. `REVIEWERS_PANEL`, `REVI
 `REVIEWERS_REPO`, `SEAT_RUNNER`, and `ERG` override the roster, the findings
 directory, the repo under review, the seat mechanism, and the ticket binary.
 
+For an on-demand Padmé-only trial, run
+`skills/reviewers/padme-reviewers.sh request <pr> [branch]`. It opens an SSH
+forward to the existing llama-server, uses `panel-padme.yml` and the bounded
+direct client inside the same read-only seat sandbox, then closes the forward.
+Run `skills/reviewers/padme-reviewers.sh harvest <pr>` to read that trial's
+findings. The regular roster and its paid seats are not invoked by this path.
+
 `skills/reviewers/benchmark-board.yml` is the frozen audition board: ~10
 already-merged multi-file code PRs of this repo, each with `base`/`head` commit
 SHAs (immutable, so the diff is reconstructable forever) and ground-truth

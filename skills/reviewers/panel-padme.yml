@@ -1,0 +1,9 @@
+# On-demand Padmé trial seat. Use padme-reviewers.sh so the SSH tunnel exists
+# only while the request runs; the regular panel remains independent.
+reviewers:
+  - name: local-padme-qwen
+    kind: local-model
+    status: advisory
+    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    endpoint: http://127.0.0.1:18080/v1
+    model: openai/qwen3.8-27b
