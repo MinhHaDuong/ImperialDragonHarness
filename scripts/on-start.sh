@@ -28,6 +28,13 @@ if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
     [ -n "$_stale" ] && echo "$_stale"
 fi
 
+# Ask for a project-level coherence pass only when the project has its own
+# directives. The helper prints a short instruction; it does not try to infer
+# semantic conflicts from matching words or delay startup with a model call.
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+    "$_script_dir/prompt-project-coherence.sh" "$CLAUDE_PROJECT_DIR" || true
+fi
+
 # Check shell-init.sh is sourced in the user's shell config
 _shell_init="$HOME/.claude/scripts/shell-init.sh"
 if ! grep -qlF "shell-init.sh" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
