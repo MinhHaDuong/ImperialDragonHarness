@@ -2,10 +2,12 @@
 Title: erg-pr-merge aborts on a repo whose branches register no CI checks
 Created: 2026-09-06
 Author: sim
+Closed: autoclosed — PR #974
 
 --- log ---
 2026-09-06T17:20Z sim created
 
+2026-09-23T15:21Z Minh Ha-Duong closed — autoclosed — PR #974
 --- body ---
 ## Context
 Observed on search-works-for-zotero PR #398, 2026-09-06. The script closed

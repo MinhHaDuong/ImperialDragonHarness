@@ -360,7 +360,44 @@ try_auto_merge() {
 # the <branch> branch" and exits non-zero in ~1s — that is neither a red check
 # nor a timeout, so retry it a bounded number of times. On a real failure or a
 # watch timeout, die() with a message naming the actual cause rather than the
-# misleading "did not pass within 600s". (ticket 0200)
+# misleading "did not pass within 600s". After all registration retries, only
+# an empty PR rollup AND no required checks on the base permit a direct merge.
+# GitHub's branch endpoint covers legacy protection; effective branch rules
+# cover repository and organization rulesets. (tickets 0200/0871)
+no_checks_required() {
+    local pr_now branch_now rules_now
+    pr_now=$(gh pr view "$PR" --json mergeable,statusCheckRollup) \
+        || die "could not inspect PR checks after registration retries — aborting merge"  # harness-extension-point
+    echo "$pr_now" | jq -e '.mergeable == "MERGEABLE"' >/dev/null \
+        || die "PR is not MERGEABLE after checks failed to register — aborting merge"
+    echo "$pr_now" | jq -e '(.statusCheckRollup | type == "array") and (.statusCheckRollup | length == 0)' >/dev/null \
+        || die "PR check rollup is unavailable or not empty after checks failed to register — aborting merge"
+
+    branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}") \
+        || die "could not inspect base branch protection — aborting merge"  # harness-extension-point
+    echo "$branch_now" | jq -e '
+        .protection.required_status_checks as $required |
+        if .protected == false and $required == null then true
+        elif (.protected | type) == "boolean" and ($required | type) == "object" then
+            ($required.contexts | type) == "array" and
+            ($required.checks | type) == "array" and
+            ($required.contexts | length) == 0 and
+            ($required.checks | length) == 0
+        else false end
+    ' >/dev/null \
+        || die "base branch has required checks or returned invalid protection data — aborting merge"
+
+    rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate) \
+        || die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
+    echo "$rules_now" | jq -se '
+        length > 0 and all(.[]; type == "array") and
+        all(.[][] | select(.type == "required_status_checks");
+            (.parameters.required_status_checks | type == "array" and length == 0))
+    ' >/dev/null \
+        || die "base branch rules require checks or returned invalid check data — aborting merge"
+    echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
+}
+
 watch_checks_or_die() {
     local out rc i
     for (( i=1; i<=WATCH_RACE_TRIES; i++ )); do
@@ -377,7 +414,8 @@ watch_checks_or_die() {
         fi
         die "CI checks failed (checks-watch exited ${rc}) — fix red checks before merging"
     done
-    die "CI checks never registered after ${WATCH_RACE_TRIES} attempts (no checks reported) — aborting merge"
+    echo "CI checks never registered after ${WATCH_RACE_TRIES} attempts; inspecting base requirements..."
+    no_checks_required
 }
 
 # Poll until the PR reports MERGED — bounded, for the auto-queued path where
