@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Tracker: portable model capability and effort policy
+Created: 2026-09-24
+Author: claude
+Blocked-by: 0975
+
+--- log ---
+2026-09-24T14:49Z claude created
+
+--- body ---
+## Context
+`docs/portable-model-capability-policy.md` (PR #1002) replaces concrete Claude
+tier names in portable skills with two semantic controls — `model-level`
+(`auto | cheap | standard | strong | frontier`) and `effort`
+(`economy | standard | intensive`) — resolved by per-runtime adapters. It
+proposes six phases (0–5); this tracker owns the sequence. Children are filed
+one phase at a time, each `Blocked-by` its predecessor, never this tracker.
+
+Blast radius: `rules/claude-code.md` § Subagent levers,
+`tests/test_model_rightsizing.py`, `agents/team-lead.md`, and every fan-out in
+`skills/` (`raid`, `hunt`, `gaze`, review and audit). Phases 3 and 5 touch many
+of these at once and will need their own decomposition when reached.
+
+Open design points to settle inside the phases, not before:
+- team lead effort: `standard` by default; `economy` only if Phase 5 traces
+  show verification quality holds (doc § Default role policy).
+- `decorrelated-from` resolution rule per adapter (invariant 5).
+
+## Children
+- 0975 — Phase 0: vocabulary + behaviour-preserving Claude mapping (open)
+
+## Exit criteria
+- [ ] Every phase child closed, and the integration review run per `/roar`
+      step 8 (child diffs re-read, full suite, union sweep for leftover
+      concrete tier names in portable skills)
+- [ ] Doc invariants 1–9 each backed by a test or explicitly waived in writing
+- [ ] `make check` passes
