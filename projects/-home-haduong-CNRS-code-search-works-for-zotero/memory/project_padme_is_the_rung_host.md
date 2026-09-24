@@ -43,3 +43,7 @@ that a few kept run directories cross the sitter's floor.
   of the live library on doudou (btrfs, cheap), then `rsync -aH --delete` to
   padme; only the delta crosses the link. Never point Zotero at it: runs get a
   `cp --reflink=always` copy in an arena.
+- `gh` on padme: no keyring token is reachable over ssh, and an interactive PAT
+  login stored nothing (2026-09-24). What works: `gh auth login --with-token
+  --insecure-storage` fed from `AGENT_GH_TOKEN` in `~/.config/keys/github.env`,
+  then `gh auth setup-git`. Check with `gh api user`, never by reading the token.
