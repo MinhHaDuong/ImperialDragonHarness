@@ -12,6 +12,7 @@ Author: claude
 2026-09-11T08:45Z claude note After the Fable plan review: this ticket implements the predicate evaluator, not just enumerates the grammar; 0915 and 0921 both call one no other ticket builds. Three unlocated artefacts added to Relevant files.
 
 2026-09-16T10:27Z claude note Recorded the author's open question on who writes the shared store: v7 settles where project memory lives but not who publishes to memory-shared. Options, costs and a recommendation are in the body; the decision is the author's and sits above this ticket.
+2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 --- body ---
 
 ## Context
@@ -76,7 +77,7 @@ recorded as memory `feedback_rules_crystallize_from_memory`.
 
 ## Relevant files
 
-`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16, 17; `skills/memory-sweep/SKILL.md`; `tests/test_dream.py` — the flat-`type` contradiction is at lines 27 and 30, where fixtures nest `type:` under `metadata:` while every live body uses it top-level; `docs/2026-09-11-memory-systems-comparison.md` — the MemU adapter/service patterns action 5 refers to; `requirements-dev.txt` — the dependency declarations, which also record that a `pyproject.toml` is an author-reserved decision (ticket 0530); knowledge-hint helpers in `scripts/knowledge_hints.py`.
+`docs/2026-09-10-dragon-memory-design.md` §§4, 5, 16, 17; `skills/memory-sweep/SKILL.md`; `tests/test_dream.py` — the flat-`type` contradiction is at lines 27 and 30, where fixtures nest `type:` under `metadata:` while every live body uses it top-level; `docs/2026-09-11-memory-systems-comparison.md` — the MemU adapter/service patterns action 5 refers to; `requirements-dev.txt` — the dependency declarations, which also record that a `pyproject.toml` is an author-reserved decision (ticket 0530); the `.knowledge.toml` manifest format, whose former reader `scripts/knowledge_hints.py` was deleted by 0976; any needed parser belongs to 0922.
 
 ## Actions
 

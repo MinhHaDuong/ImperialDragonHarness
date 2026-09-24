@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Port the commit-on-main guard through three adapters
+Title: Port the surviving dirty-reset guard through three adapters
 Created: 2026-08-28
 Author: Codex
 
@@ -8,28 +8,32 @@ Author: Codex
 2026-08-28T14:08Z Codex folded lifecycle and capability questions into one enforcing safety experiment
 
 2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
+2026-09-24T16:16Z Codex note Rebased after 0976 removed guard-commit-on-main.sh; the surviving guard-destructive-bash.sh dirty-reset case is the enforcing portability pilot.
 --- body ---
 ## Context
 
-`scripts/guard-commit-on-main.sh` is deterministic enforcing behavior, not advice. Porting
-this one guard tests the hardest boundary: whether Claude Code, Codex and Pi adapters can
+`scripts/guard-destructive-bash.sh` is the surviving deterministic enforcing hook after
+0976. Its `git reset --hard` over tracked dirty files case had a measured true positive.
+Porting this one guard tests whether Claude Code, Codex and Pi adapters can
 intercept an action, normalize enough input and preserve a blocking decision. This ticket
 does not create a general lifecycle schema, capability resolver or full policy catalog.
 
 ## Relevant files
 
-- `scripts/guard-commit-on-main.sh` — canonical deterministic guard
+- `scripts/guard-destructive-bash.sh` — current Claude hook and behavior baseline
 - `settings.shared.json` — existing Claude wiring
 - `rules/git.md` — normative commit/worktree policy
-- tests for `guard-commit-on-main.sh` — current behavior contract
+- tests for `guard-destructive-bash.sh` — current behavior contract
 
 ## Actions
 
-1. Record the current allowed/blocked cases, payload fields, exit semantics and cwd-less gap.
-2. Close fail-open parsing before using the guard as a reference: missing or untrusted `cwd`,
-   `git -C`, global Git options, `env git`, aliases/wrappers, nested shells and compound
-   commands must resolve the actual target repository or fail closed before mutation.
-3. Keep the shell guard canonical; add only thin input normalization in each adapter.
+1. Record the current allowed/blocked cases, payload fields, exit semantics and known
+   parser gaps, including nested shells and fail-open malformed input.
+2. Establish which command forms and target-directory resolution each adapter can
+   actually intercept. Close relevant bypasses or explicitly refuse activation for
+   unsupported mutation paths; do not describe the current fail-open hook as fail-closed.
+3. Keep one decision contract for dirty tracked files at the reset target; add only
+   adapter-specific input normalization and blocking-result translation.
 4. Wire it through native pre-action enforcement in Claude Code, Codex and Pi where the
    harness provides a blocking mechanism.
 5. Define refusal at the adapter-profile boundary: if Git-mutating shell access is enabled
@@ -42,14 +46,14 @@ does not create a general lifecycle schema, capability resolver or full policy c
 
 ## Test
 
-- Replay allowed, main-branch, primary-checkout, malformed and cwd-less fixtures through all
+- Replay clean, dirty, quoted-text, malformed and cwd-less fixtures through all
   three adapters, including `git -C`, Git options, wrappers and compound commands. Mutation-
   test removal of the event mapping, block result and exit semantics independently.
 
 ## Verification
 
-- [ ] Existing safe Claude cases remain unchanged; recorded bypass, malformed and cwd-less
-      cases now fail closed
+- [ ] Existing safe Claude cases remain unchanged; every claimed enforcing path blocks
+      a dirty tracked target and handles missing or untrusted context explicitly
 - [ ] Codex and Pi either block the same forbidden cases or refuse activation explicitly
 - [ ] No Git-mutating adapter profile activates without the required enforcing boundary
 - [ ] Adapter weakening and missing-hook positive controls fail distinctly

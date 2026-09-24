@@ -2,6 +2,7 @@
 Title: Le filtre "if" des hooks echoue en fermeture, et block-pr-merge-in-worktree refuse des commandes sans rapport
 Created: 2026-09-08
 Author: claude
+Closed: superseded by 0976: block-pr-merge-in-worktree and its wiring were deleted
 
 --- log ---
 2026-09-08T04:52Z claude created trouve en auditant la modification non commitee de settings.shared.json ; le defaut est deja vif dans settings.json, pas seulement en attente
@@ -11,6 +12,7 @@ Author: claude
 2026-09-08T06:41Z claude note L'auteur demande si ces incoherences sont des gardes sur des gardes qui n'ont jamais servi. Pour celui-ci la reponse est oui, et elle est mesurable : erg-pr-merge appelle gh pr merge et a tourne depuis des worktrees treize fois cette nuit sans echec, la 808 par un gh pr merge tape a la main depuis un worktree ; la premisse de block-pr-merge-in-worktree.sh est donc contredite treize fois, et le garde ne s'est jamais declenche sur le chemin sanctionne puisque c'est un script. Action 1 reecrite : etablir d'abord si le garde a encore une classe de defaut, supprimer ou reduire a --delete-branch plutot que restaurer un matcher. Nuance conservee : --merge seul est un appel d'API, --delete-branch fait un checkout local et pourrait echouer. Actions renumerotees et critere de sortie rendu conditionnel — l'insertion avait immediatement produit un « 2. » en double, huitieme instance du meme motif dans ce ticket
 2026-09-08T08:14Z claude note PR 831, fusionnee a la main par l'auteur, isole la cause et execute l'action 4. Le mecanisme n'est pas un echec d'evaluation mais un passage par defaut : le matcher decompose une commande composee pour tester chaque partie, et transmet quand meme celles qu'il ne sait pas decomposer — substitution, heredoc, boucle for, sous-shell. Les quatre reproducteurs sont exactement quatre formes indecomposables, et ${PIPESTATUS[0]} cesse d'etre l'anomalie que je ne savais pas placer. La section « Cause non isolee » est remplacee et non nuancee : annoncer une cause inconnue apres qu'elle est trouvee envoie le lecteur chercher ce qui existe deja. Action 4 cochee — le garde lit desormais la commande et sort 0 hors forme gh pr merge, fait avant l'action 1 et c'etait le bon ordre. L'action 1 reste seule ouverte et est desormais la seule question du ticket : le garde est sur mais laisse inerte dans le settings.json vif, parce que le reactiver refuserait une operation mesuree comme fonctionnelle treize fois
 
+2026-09-24T16:16Z Minh Ha-Duong closed — superseded by 0976: block-pr-merge-in-worktree and its wiring were deleted
 --- body ---
 ## Context
 
