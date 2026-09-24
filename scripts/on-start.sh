@@ -3,9 +3,10 @@ set -euo pipefail
 # SessionStart hook: enforce worktree isolation.
 # Runs at the beginning of every Claude Code session.
 #
-# NOTE: env vars (.env secrets) are injected into bash subprocesses via BASH_ENV
-# (settings.json → env.BASH_ENV → scripts/bash-env.sh). Do NOT use CLAUDE_ENV_FILE
-# for secrets: that mechanism inlines KEY=VALUE in argv, leaking to ps -ef.
+# NOTE: a project's non-secret .env settings reach bash subprocesses via BASH_ENV
+# (settings.json → env.BASH_ENV → scripts/bash-env.sh), which strict-parses them
+# and loads no credential: consumers read ~/.config/keys at point of use (0945).
+# Do NOT use CLAUDE_ENV_FILE either: it inlines KEY=VALUE in argv, leaking to ps -ef.
 
 # Worktree instruction — skip in automated night-sweep runs
 if [[ -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
