@@ -9446,6 +9446,24 @@
       "last_confirmed": "2026-09-24T10:16:55Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_record_a_ruling_in_the_author_s_words": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-24T12:25:38Z",
+      "last_confirmed": "2026-09-24T12:25:38Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_padme_is_the_rung_host": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-24T12:25:38Z",
+      "last_confirmed": "2026-09-24T12:25:38Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }

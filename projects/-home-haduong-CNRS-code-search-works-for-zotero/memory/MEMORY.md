@@ -136,3 +136,5 @@
 - [Refreshing is not copying forward](feedback_refreshing_is_not_copying_forward.md) — a carried-forward STATE line said two closed tickets were the critical path; answer a status question by running the gate.
 - [Check your own reservation before delegating](feedback_check_your_own_reservation_before_delegating.md) — the 0809 brief named the doubt that settled it, then an Opus executor was launched past it.
 - [Upstream rebaseline recipe drift](project_upstream_rebaseline_recipe_drift.md) — baseline at v1.20.2 since 2026-09-17; the recipe still prescribes README rows dissolved on 09-04.
+- [padme is the rung host](project_padme_is_the_rung_host.md) — Zotero rungs and make check on padme under Xvfb, arenas on ~/data; doudou's load and /tmp trip the sitter's gates
+- [Record a ruling in the author's words](feedback_record_a_ruling_in_the_author_s_words.md) — my clarifying edit to DECISIONS escalated #624; ask and log verbatim instead
