@@ -92,14 +92,10 @@ Compliance is verified ex post by the `verify-adherence` skill.
 ## Review cadence
 
 Each rule body carries a `last-reviewed: YYYY-MM-DD` marker, in the frontmatter
-where the file has one, else as an HTML comment on the first line.
-`scripts/warn-stale-rules.sh` runs at session start and warns, advisory only,
-when one is 30 or more days old. It scans `rules/*.md` and one level of
-subdirectory, so `prose/`, `doctype/` and `lang/` are covered.
-
-A file without a marker is skipped, not flagged, so absence buys permanent
-silence: a new rule body needs its marker at creation. Two files sat unmarked
-and unmonitored for months before the 2026-08-14 review found them.
+where the file has one, else as an HTML comment on the first line; a new rule
+body gets its marker at creation. Nothing warns on an old one any more: the
+session-start warning was dropped by ticket 0976 after 343 sessions in which
+it never led to a review.
 
 Read the marker for what it records: deliberate review passes, not edits.
 Nothing bumps it when a rule is amended in place, so an old stamp is weak

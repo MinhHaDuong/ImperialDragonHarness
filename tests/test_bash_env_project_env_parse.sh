@@ -182,24 +182,24 @@ _assert_eq "quoted BAZ=\"a b\" loads as: a b" \
 # interpreter hijack. The shared predicate _be_is_protected_name refuses them
 # on the strict-parse path.
 
-# (6a) GCONV_PATH is refused (not exported) with a warning.
+# (6a) GCONV_PATH is refused (not exported), silently.
 P6="$WORK/p6"; mkdir -p "$P6"
 printf 'GCONV_PATH=/evil\n' > "$P6/.env"
 _assert_eq "project .env cannot set GCONV_PATH" \
     "$(_load_var "$EMPTY_HOME" "$P6" GCONV_PATH)" ""
-_assert_contains "project .env GCONV_PATH warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P6")" "refusing protected name from project .env: GCONV_PATH"
+_assert_eq "project .env GCONV_PATH is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6")" ""
 
 # (6b) PATH is not overwritten by a project .env; the real inherited PATH stays.
 P6B="$WORK/p6b"; mkdir -p "$P6B"
 printf 'PATH=/evil\n' > "$P6B/.env"
 _assert_ne "project .env cannot overwrite PATH with /evil" \
     "$(_load_var "$EMPTY_HOME" "$P6B" PATH)" "/evil"
-_assert_contains "project .env PATH warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P6B")" "refusing protected name from project .env: PATH"
+_assert_eq "project .env PATH is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6B")" ""
 
 # (6c) parametrized: each critical name is refused (value never equals its
-# payload) and warns. IFS is checked additionally via the export attribute
+# payload), silently. IFS is checked additionally via the export attribute
 # (its value is restored to the caller's, not a clean discriminator alone).
 _be0345_case() {  # <key> <payload>
     local key="$1" payload="$2" dir="$WORK/p6c_$1"
@@ -207,8 +207,8 @@ _be0345_case() {  # <key> <payload>
     printf '%s=%s\n' "$key" "$payload" > "$dir/.env"
     _assert_ne "project .env cannot set $key" \
         "$(_load_var "$EMPTY_HOME" "$dir" "$key")" "$payload"
-    _assert_contains "project .env $key warns 'refusing protected name'" \
-        "$(_load_stderr "$EMPTY_HOME" "$dir")" "refusing protected name from project .env: $key"
+    _assert_eq "project .env $key is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$dir")" ""
 }
 _be0345_case PYTHONPATH /evil
 _be0345_case NODE_OPTIONS --require=/evil
@@ -268,8 +268,7 @@ P7B="$WORK/p7b"; mkdir -p "$P7B"
 printf 'KEYS=someprovider\n' > "$P7B/.env"
 _assert_eq "project .env cannot set retired KEYS" \
     "$(_load_var "$EMPTY_HOME" "$P7B" KEYS)" ""
-_assert_contains "project .env KEYS warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P7B")" \
-    "refusing protected name from project .env: KEYS"
+_assert_eq "project .env KEYS is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P7B")" ""
 
 exit "$fail"
