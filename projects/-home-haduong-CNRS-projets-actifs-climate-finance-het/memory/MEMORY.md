@@ -151,7 +151,7 @@
 - [Singleton test isolation](feedback_singleton_test_isolation.md)
 - [Circuit breaker shared](feedback_circuit_breaker_shared.md)
 - [YAML quoting for queries](feedback_yaml_quoting.md)
-- JETP: [three stages, M1a = explorable MVP, tracker 0834, acceptance ZAF+VNM](project_jetp_three_stages_m1a.md), [push JETP DVC objects from padme; make jetp-data is cache-only](project_jetp_dvc_push_from_padme.md), [preview: make jetp-observatory-refresh when stale; no dvc on doudou](reference_jetp_preview_documents_refresh.md).
+- JETP: [three stages, M1a = explorable MVP, tracker 0834, acceptance ZAF+VNM](project_jetp_three_stages_m1a.md), [push JETP DVC objects from padme; make jetp-data is cache-only](project_jetp_dvc_push_from_padme.md), [preview: make jetp-observatory-refresh when stale; no dvc on doudou](reference_jetp_preview_documents_refresh.md), [unpublished: no URL compat before go-live](feedback_observatory_unpublished_no_url_compat.md).
 - [A child ticket must quote the author's acceptance, not the mechanism](feedback_exit_criteria_carry_author_intent.md)
 - [Changement de décision : réécrire les actions](feedback_changement_de_decision_reecrire_les_actions.md)
 - [ESCALATE: circuit-breaker-only may merge on evidence; a real design call stops for the author](feedback_escalate_procedural_vs_substantive.md)
