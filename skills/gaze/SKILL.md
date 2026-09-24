@@ -79,6 +79,9 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
   § Merging) — a gate validates the *combination* branch ⊕ base, so a verdict
   computed on a stale base is partially void. `/gaze` does not rebase the
   branch itself; that is a caller-side step, not a phase here.
+- **Quiet-branch prerequisite**: never start `/gaze` while that branch's coding
+  lead is still live. The gate reviews a head the lead may move under it, and
+  the gate's fix loop would then commit on top of work in flight.
 
 ## Fork execution contract
 

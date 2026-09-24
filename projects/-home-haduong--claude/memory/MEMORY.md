@@ -130,3 +130,4 @@
 - [An erg binary refresh is not an erg init](feedback_erg_binary_refresh_is_not_init.md)
 - [Path-scoped rules miss CLI-driven work](feedback_path_scoped_rules_miss_bash_driven_work.md)
 - [A denied merge clears on evidence, not persistence](feedback_merge_permission_needs_review_and_author_words.md)
+- [rtk: three escapes that do not move](feedback_rtk_escapes_that_do_not_move.md)

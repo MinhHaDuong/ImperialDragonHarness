@@ -1,21 +1,17 @@
-<!-- last-reviewed: 2026-09-10 -->
+<!-- last-reviewed: 2026-09-24 -->
 # Workflow
 
-Resident in every session (`rules/README.md`). History lives in memory and
-tickets; runtime mechanics in [claude-code.md](./claude-code.md); authoring in
-[authoring-skills.md](./authoring-skills.md).
+Resident in every session. History lives in memory and tickets; runtime
+mechanics in [claude-code.md](./claude-code.md).
 
 **The Imperial Dragon is not a bird.** No avian analogies, ever — in skills,
 conversations, explanations or naming rationale.
 
 # Session start
 
-The SessionStart hook delivers setup and asks for worktree entry. Except for
-`/hunt N` (triage first) and manuscript prose (`git.md` § Prose workpackages),
-enter the worktree before answering, land on the right branch (`git switch`),
-then open with the phase label and one compact self-presentation line — model,
-effort, posture.
-Naming table and mechanics: `claude-code.md`.
+Enter the worktree before answering (exceptions and naming: `claude-code.md`),
+then open with the phase label and one self-presentation line — model, effort,
+posture.
 
 Posture, since it governs every judgment below: toward the executors you are
 MOE (maîtrise d'œuvre) two levels up, governing by intention through team
@@ -27,84 +23,48 @@ expose blind spots, stop defaulting to agreement, name weak reasoning.
 # Sync before starting work
 
 Before substantial work — **not just before branching** — `git fetch origin`,
-then scan two things: `git log --oneline HEAD..origin/main` for what landed
-upstream since your base, and `git diff --name-only origin/main...HEAD` for the
-files you would touch that upstream also changed.
+then scan `git log --oneline HEAD..origin/main` (what landed since your base)
+and `git diff --name-only origin/main...HEAD` (overlap with your files). If
+`origin/main` overlaps your area, reconcile before writing code.
 
-If `origin/main` is ahead and overlaps your area, reconcile before writing code.
-The fetch is cheap; rediscovering what a sibling already merged is not. (To test
-whether a path exists at a ref, use `git cat-file -e <ref>:<path>` — `git ls-tree`
-exits 0 even when the path is absent.)
-
-**Scan again immediately before you push, because a scan is a snapshot.** The
-window is the whole life of the branch: a sibling's PR opened *after* your scan
-can merge before your push. Re-run **both** scans against a freshly fetched
-`origin/main`, not just the one your work answers: the path scan comes back
-clean when a sibling solved your problem in another file, and only the log
+**Scan again immediately before you push** — both scans, against a fresh
+fetch: a sibling may have solved your problem in another file, and only the log
 catches that. Someone beat you → delete the branch and say so.
 
-**A red gate on `main` is a broadcast**: every parallel session sees the same
-failure and the severity floor tells each of them to fix it, so the urgency that
-makes the repair right is what makes it collide. Do not file a ticket for a
-shared-metadata repair until your fix is pushed and you know it is yours — a
-ticket for a repair someone else finished is noise, and dropping it unfiled is
-cheaper than closing it. None of this touches your own ticket's work, which
-nobody else is doing.
+**A red gate on `main` is a broadcast**: every parallel session sees it and
+races to fix it. Do not file a ticket for a shared-metadata repair until your
+fix is pushed and you know it is yours.
 
 # Check scope
 
 If `.idh-checks.json` exists, use the scoped gate before PRs. Unknown paths
 run the full gate. Quote `selected:` and `skipped:`; never call a scoped pass
-full. See `/hunt` (0954).
+full.
 
 # Worktree paths
 
-In a worktree session, `Edit`/`Write`/`Read` accept any absolute path, and an
-edit at `~/<repo>/<file>` lands in the **primary checkout**, not the worktree.
-Use worktree-rooted paths for code, prose and data. Everything lands via
-branch + PR — STATE, tickets, config, memory included.
+In a worktree session, an absolute path such as `~/<repo>/<file>` — for
+`Edit`/`Write`/`Read`, or behind a `cd <primary> &&` in Bash — lands in the
+**primary checkout**, on main. Use worktree-rooted paths, and `git -C <path>`
+for an intentional primary-repo mutation. Everything lands via branch + PR —
+STATE, tickets, config, memory included. On `main` with source or data to
+change, stop and switch to a branch (prose exception: `git.md`).
 
-**The memory carve-out is inert during a worktree session.** The path guard
-exempts `projects/*/memory/**`, but a second, platform-native write guard fires
-on the same path with no exemption. Write memory only after leaving the
-worktree — a denied write reads like "memory is unavailable here", not "wrong
-moment," so the lesson can silently end up in the final message instead. Full
-recovery procedure, including the background-session case, is `/roar` step 6.
+**Memory writes are refused inside a worktree session** by a platform guard
+the harness exemption does not reach, and the refusal reads like "memory is
+unavailable". Write memory after leaving the worktree (`/roar` step 6).
 
-For source and data: if `git branch --show-current` is `main`, stop and switch
-to a branch. Exception: manuscript prose in paper repos, see `git.md`
-§ Prose workpackages.
-
-**The same trap on the Bash surface.** Prefixing a command with
-`cd <primary-repo-root> &&` lands `git`/`erg` mutations on the primary checkout,
-on main. A guard blocks that during worktree sessions; read-only inspection is
-unpenalised. An intentional primary-repo mutation uses `git -C <path>`, never a
-`cd`.
-
-**Parked-cwd trap.** Worktree creation resolves the repo from the *session base
-cwd*, never from wherever the last `cd` landed. With the base cwd parked
-off-project, the worktree is silently created in the nearest enclosing repo —
-once, a project worktree inside the harness repo. A guard denies worktree entry
-and cwd-dependent skills when the base cwd sits in a git-ignored runtime
-directory inside a repo. After entering, check ownership:
-`basename "$(git rev-parse --show-toplevel)"` must be the expected project. If
-it is wrong, fall back to manual isolation in the right repo —
-`git -C <project> worktree add <project>/.claude/worktrees/<name> -b <branch>` —
-and drive everything with absolute paths and `git -C`.
+**Parked-cwd trap.** After entering, check `basename "$(git rev-parse --show-toplevel)"` is the
+expected project: worktree creation resolves the repo from the session base
+cwd, not the last `cd`, so a base cwd parked off-project lands it in the nearest enclosing repo. Wrong repo → `git -C <project> worktree add
+<project>/.claude/worktrees/<name> -b <branch>` and absolute paths throughout.
 
 # Escalation protocol
 
-When stuck, escalate progressively:
-
-1. Fix direct — the feedback is straightforward.
-2. Alternative approach — rethink the solution.
-3. Parallel expert agents — fan out different directions.
-4. Re-ticket with diagnosis — the problem is mis-specified.
-5. Stop — ask the author.
-
-Note what failed and why at each escalation, and save it as a feedback memory
-at the wrap-up — mid-session the worktree gate denies the write (§ Worktree
-paths). Stop if you are repeating yourself.
+When stuck: (1) fix direct; (2) rethink the approach; (3) fan out parallel
+experts; (4) re-ticket with a diagnosis — the problem is mis-specified;
+(5) stop and ask the author. Note what failed at each step and save it as a
+feedback memory at wrap-up. Stop if you are repeating yourself.
 
 **Ask the author** when three different approaches have failed, or when the call
 is a judgment outside your domain docs.
@@ -112,103 +72,57 @@ is a judgment outside your domain docs.
 # Diagnosis discipline
 
 **Report the observation; hold the cause until you have isolated it.** Loaded
-causal labels — *corrupt*, *broken*, *tampered*, *hacked* — misdirect the fix
-and manufacture false alarm. Check the cheap discriminators first: is the tool
-intact, is the behaviour deterministic, does an independent code path reproduce
-it, does upstream document it? Any yes points toward *intended behaviour*. Write
-"X emits Y for input Z; cause not yet established", not a verdict dressed as a
-finding.
+labels — *corrupt*, *broken*, *tampered*, *hacked* — misdirect the fix. Check
+the cheap discriminators first (tool intact? deterministic? reproduced by an
+independent path? documented upstream?); any yes points toward intended
+behaviour. Write "X emits Y for input Z; cause not yet established".
 
-**A null result is not a finding until a positive control has fired.** A probe
-that returns nothing reports one of two things and cannot say which: the
-phenomenon is absent, or the probe cannot see it. Produce a case known to be
-positive — a deliberately broken fixture, the state while the phenomenon is
-live, a mock that lies in the right direction — and watch the probe react. Where
-the positive case needs an action your tooling cannot perform, *that is the
-finding*: report the one experiment that would settle it, not a null. Three
-independent zeros feel like evidence and are one zero measured three times.
-Distinguish "this path does not cause it" from "nothing causes it"; a null
-result supports only the tested scope.
+**A null result is not a finding until a positive control has fired.** An
+empty probe cannot tell "absent" from "invisible to me". Produce a known
+positive and watch the probe react; where your tooling cannot, report the one
+experiment that would settle it, not a null. Three independent zeros are one
+zero measured three times. A null result supports only the tested scope.
 
-**Which shapes the proxy rewrites is a version fact, not a rule.** The `rtk`
-PreToolUse hook rewrites the command before the shell runs it, and what it
-spares moves: 0.42.1 rewrote through a redirection, so a file was no control;
-0.49.0 spares a redirection and a pipe into `cat`, yet still drops every
-`Merge:` line from `git log`. Don't memorise the safe shapes — `rtk hook check
-<cmd>` answers for the installed build. Past ~2 kB it truncates head-first, so a
-test runner's verdict, which sits in the tail, goes first: a 120-test
-`make check` showed forty `PASSED` lines, no counts and two of three failures
-gone — the exit code still told the truth, the diagnosis did not. What does not
-move: `RTK_DISABLED=1`, `exclude_commands` in `~/.config/rtk/config.toml`, and a
-script or heredoc, read by the hook as one opaque command — the same opacity
-silently voids a probe whose cases sit in a shell function.
-`~/.local/share/rtk/tee/` keeps the unfiltered output.
-
-**A number you divided out is not a number you measured.** A per-unit figure
-obtained by dividing someone else's aggregate reads like data, carries no error
-bars, and inherits every assumption in the aggregate. Label derived quantities
-as derived, show the arithmetic, and where a direct measurement is cheap, take
-it *before* recommending on the inference. The tell is a recommendation whose
-load-bearing quantity was never measured on any machine. Two corollaries: state
-which machine a number came from, and treat an unexplained gap as an open
-question, not a residual to attribute to a plausible cause.
+**A number you divided out is not a number you measured.** Label derived
+quantities as derived, show the arithmetic, say which machine a number came
+from, and take the cheap direct measurement *before* recommending on the
+inference. An unexplained gap is an open question, not a residual to attribute.
 
 **Validate a pure refactor by byte-comparing the artifact, not by a green
-suite.** A build, layout or rename change that must not alter output is proved
-by producing the artifact before and after on the same inputs and comparing the
-content — tests pass on a refactor that silently changed or *misplaced* its
-output. Set `SOURCE_DATE_EPOCH` first so a timestamp is not read as a content
-diff; where the format embeds paths, compare extracted content and explain any
-residual. A clean-room render is usually seconds: "let the author run the long
-build" is a preference, not a licence to skip validation.
+suite.** Produce it before and after on the same inputs (`SOURCE_DATE_EPOCH`
+set) and compare content; tests pass on a refactor that misplaced its output.
+A clean-room render is usually seconds — run it yourself.
 
 # Delegation
 
-- **Don't delegate simple work.** Single-file edits, a grep, reading files: do
-  them yourself. Delegate when the work is substantial, needs decorrelation, or
-  must run unattended — not to avoid doing it.
+- **Don't delegate simple work.** Delegate when the work is substantial, needs
+  decorrelation, or must run unattended — not to avoid doing it.
 - **One well-prompted agent first.** Add agents only when one clearly cannot
   cover the task.
-- **Delegate intent, not procedure.** State the goal, the constraints and the
-  definition of done; let the delegate choose the method and mobilize its own
-  executors. Step-by-step direction is for when the procedure *is* the
-  deliverable. Long runs go to background delegates that report on completion.
-- **Reviewers are decorrelated from the coder.** The verify panel never shares
-  the coding agent's model. Minimum: the sibling tier of the same family.
-  Stronger: another vendor or harness entirely. Pick by the change's risk.
-- **Watch contention, not headcount.** The runtime caps concurrency; the harness
-  pins nothing. When three or more agents touch the same file or registry, open
-  a coordination change first.
-- **One gate per PR at a time.** Never run `/gaze` while that branch's lead is live.
-- **A delegate in a shared worktree can act on what it sees there.** A
-  read-only research brief does not imply "don't touch git" unless it says so:
-  state explicitly that the delegate must not `add`/`commit`/`push` whatever is
-  sitting in the tree.
-
-Model and effort levers, nesting depth, and the fork-resume trap: `claude-code.md`.
-
-# Reuse before you orchestrate
-
-Before designing any multi-cycle autonomous orchestration — scheduled loops,
-overnight supervisors, wave runners — inventory the existing skills and declare,
-in the run plan, either which one is reused or why none fits. Record the
-decision so reviewers can verify it; the recorded failure was an orchestrator
-who never checked existing skills.
+- **Delegate intent, not procedure.** Goal, constraints, definition of done;
+  the delegate chooses the method. Long runs go to background delegates.
+- **Reviewers are decorrelated from the coder** — never the coder's model;
+  minimum the sibling tier, stronger another vendor. Pick by the change's risk.
+- **Watch contention, not headcount.** Three or more agents on one file or
+  registry → open a coordination change first. One `/gaze` per PR at a time.
+- **Say what a delegate in a shared worktree must not do.** A read-only brief
+  does not imply "don't touch git": forbid `add`/`commit`/`push` explicitly.
+- **Before building a multi-cycle orchestration**, inventory the existing
+  skills and record which one is reused or why none fits.
 
 # Ticket discipline for multi-PR work
 
-Close claims and their syntax are in `git.md` § Merging.
+Sub-tasks landing in separate PRs → child tickets *before* work starts, each
+PR closing its own child (close-claim syntax: `/merge`). The parent becomes a
+tracker listing every child, closed only after the integration review
+(`/roar` step 8), never on the bare event of the last child merging.
 
-When a ticket has sub-tasks landing in separate PRs, split it into child tickets
-*before* work starts; each child PR closes its own child. The parent stays open
-until every child is merged. Never repeat one `**Ticket:**` line across PRs
-unless you mean the first merge to close it.
-
-**Tracking tickets.** When investigation spawns sub-tickets, the original
-becomes a tracker: leave it open, list every child in it, and close it only
-after the integration review (`/roar` step 8 — all children closed, child diffs
-re-read, full suite run, exit criteria verified), never on the bare event of the
-last child merging.
+**Monster ticket → propose a decomposition.** A large blast radius (15+ files,
+or a symbol other tickets depend on), a build-gated exit, bundled sign-off
+units or a hidden dependency chain: draft a tracker (partition boundary,
+up-front decisions, wave order) and children sized to one sign-off unit,
+`Blocked-by` their real prerequisite, never the tracker. Autonomous: file the
+split. Interactive: propose it — the boundary can be the author's call.
 
 # Compaction
 
@@ -217,57 +131,34 @@ Preserve the list of modified files, the test commands, and the current plan.
 # Micro-turn discipline
 
 Batch read-only navigation (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into
-one compound call. Each idle turn re-reads the whole accumulated context, so a
-chain of single-command turns pays the context tax repeatedly for no new work —
-**≈15.6% of all spend**, the largest addressable bucket in the census. Three
-lookups, one tool call (share re-measured by `/trace-doctor`).
+one compound call: each idle turn re-reads the whole context, ≈15.6% of all
+spend in the census (`/trace-doctor` re-measures it).
 
 # Autonomous action
 
 **Batch the decisions, then run to the end.** The author's attention is the
-scarcest resource in the loop and a spinner is not a deliverable. When work
-needs author input, collect every foreseeable decision into ONE question round,
-each with a recommended default,
-then execute through verification, merge and cleanup without returning between
-steps, delegating waits to background agents, and deliver one report. Mid-run
-returns are for genuinely new scope or irreversible actions the batched round
-did not cover — never for progress, never for permission to continue.
+scarcest resource. Ask only when author input is needed: collect every
+foreseeable decision into ONE question round, each with a recommended default,
+then execute through verification, merge and cleanup and deliver one report.
+Mid-run returns are for new scope or irreversible actions the round did not
+cover — never for progress or permission to continue.
 
-**Sweep results are decisions.** When a sweep returns hits, act — file the
-ticket, open the PR, flag for review. The data is the decision. Silent no-op on
-an empty sweep.
+**Sweep results are decisions.** Hits → act (ticket, PR, review flag). Silent
+no-op on an empty sweep.
 
 **Severity floor, every repo.** File a ticket only when the defect blocks a
 merge, corrupts state, or bites the science. Below that: fix it inline, record
-it in memory, or drop it — sweeps *report* such findings, they do not mint
-tickets for them. The arrival rate is set by concurrency times the rule above,
-not by repo type: thirteen sessions each sweeping mint tickets faster than any
-queue closes them. In a tooling repo, when a guard misfires, check whether its
-defect class has fired recently and prefer deleting the guard and its tests over
-growing them.
+it in memory, or drop it; sweeps report such findings, they do not mint
+tickets. In a tooling repo, when a guard misfires, prefer deleting the guard and
+its tests over growing them.
 
-**Loophole found → offer the fix.** Reporting a gap without proposing a concrete
-repair leaves the author to ask the obvious follow-up. The floor above decides
-which form the offer takes: above it, a ticket; below it, fix it now or record
-it.
+**Loophole found → offer the fix**, in the form the floor dictates: a ticket
+above it, an inline fix or a memory below.
 
-**Better approach found → voice it before proceeding.** When you see a stronger
-approach than the one asked for, say so with the trade-off, then proceed as
-instructed unless told otherwise. Voicing the alternative is in scope; silently
-substituting it is not. Do not let the bias toward minimal change reduce you to
-executing a plan you could see was mediocre.
+**Better approach found → voice it before proceeding**, with the trade-off,
+then proceed as instructed unless told otherwise. Never substitute it silently;
+never execute a plan you can see is mediocre without saying so.
 
-**Rename and refactor sweeps cover the full logical unit.** Fixing one stale
-instance means sweeping the smallest containing unit (CI step, function, config
-block) and checking its parallel units, all in one commit.
-
-**Monster ticket → propose a decomposition.** A ticket with a large blast radius
-(15+ files, or a symbol other open tickets depend on), a build-gated or
-real-data exit, several sign-off units bundled together, or a dependency chain
-hidden in prose is neither a scheduling problem to skip nor a fan-out problem:
-it collides with siblings or blows the executor timeout. Draft a tracker naming
-the blast radius, the partition boundary, any up-front architectural decision
-and the wave order; then child tickets sized to one sign-off unit each,
-`Blocked-by` their real prerequisite and never the tracker. Autonomous: file the
-split directly. Interactive: propose it — the partition boundary can be an
-architectural call the author owns.
+**Rename and refactor sweeps cover the full logical unit**: the smallest
+containing unit (CI step, function, config block) and its parallel units, in
+one commit.

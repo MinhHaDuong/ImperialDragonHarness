@@ -1,4 +1,9 @@
-<!-- last-reviewed: 2026-09-09 -->
+---
+paths:
+  - "rules/**"
+  - "**/rules/**"
+last-reviewed: 2026-09-24
+---
 # Harness rules — how they load
 
 `~/.claude/rules/**.md` is loaded by the runtime itself, not by a hook. The
@@ -65,9 +70,11 @@ single source for prose/code review routing (`scripts/prose_predicate.py`).
 
 ## Resident rules
 
-`workflow.md` `git.md` `claude-code.md` — the whole resident set, plus this
-index. Bodies in context already, listed here only so an adapter knows what to
-ship, and `claude-code.md` is the one an adapter on another runtime skips.
+`workflow.md` `git.md` `claude-code.md` — the whole resident set. Bodies in
+context already, listed here only so an adapter knows what to ship, and
+`claude-code.md` is the one an adapter on another runtime skips. This index is
+itself conditional (`paths:` on the rules tree): it was 20% of the resident set
+while arguing that describing a resident body again is paying for it twice.
 
 Three former rule bodies left in 2026-09-09 because their trigger is a *task*,
 which no `paths:` glob reaches: they are the skills `/pdf-finish`,
@@ -80,7 +87,7 @@ loads every other resident file and skips it.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters, the resident set must be injected by the adapter
-or made genuinely on-demand; `~12 800 tokens` is what that decision moves.
+or made genuinely on-demand; `~6 000 tokens` is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 

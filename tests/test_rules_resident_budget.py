@@ -42,7 +42,10 @@ import resident_census as rc  # noqa: E402
 # authoring made conditional, runtime specifics split into claude-code.md, and
 # every procedure returned to the skill or script that runs it. Headroom is
 # deliberately thin: it fits a clarifying sentence, not a section.
-RESIDENT_BUDGET = 36000
+# 16729 chars measured 2026-09-24 (ticket 0973): rules/README.md scoped to the
+# rules tree, and the three resident bodies deduplicated against each other and
+# against the skills that already hold the procedures.
+RESIDENT_BUDGET = 17500
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.
