@@ -1,0 +1,58 @@
+%erg 0.1
+Title: bash-env refuses project .env names that shadow keystore credentials
+Created: 2026-09-24
+Author: Integration Test
+
+--- log ---
+2026-09-24T05:28Z Integration Test created
+
+--- body ---
+## Context
+
+Tracker 0942 moved every *harness* credential consumer to point-of-use
+resolution, and 0945 removed `KEYS=` and provider loading from `bash-env.sh`.
+Nobody audited the downstream projects. A cross-project sweep on 2026-09-24
+(57 repos under `~`) found:
+
+- **AEDIST-technical-report**: the project `.env` carries six live
+  credentials inline (all copies of `~/.config/keys/` entries). `bash-env.sh`
+  still strict-parses the project `.env` and exports every unprotected name,
+  so those credentials are resident in every bash subprocess opened there —
+  the exact state 0942 set out to end, re-created through the loader's
+  surviving half. Filed downstream as AEDIST 0681.
+- **climate-finance-het**: `Makefile`, `AGENTS.md`, DMP and
+  `pipeline_keystore.py` still document and rely on `KEYS=`; the loader
+  now refuses it with a warning on every command. Migration brief handed
+  to the Codex session working there.
+- **chemin-de-voix**: one script read `MISTRAL_API_KEY` from the environment
+  only (fixed, Tracing-Kieu PR #171).
+
+The loader cannot tell a project setting from a smuggled-in credential, so the
+fix belongs at the loader, not only in each project.
+
+## Proposal
+
+Extend `_be_is_protected_name` with a dynamic class: any name defined in
+`~/.config/keys/*.env` is refused from a project `.env`, with the same
+`bash-env: refusing protected name` stderr line (names only, never values).
+Parse the keystore for *names* with the same strict KEY= regex; never source
+it. Keep the per-subprocess cost bounded (the keystore is ~20 small files;
+measure before and after on padme).
+
+Open question for implementation: whether `AGENT_GIT_NAME` /
+`AGENT_GIT_EMAIL` (non-secret, but in `github.env`) should stay exportable
+from a project `.env`. Default: refuse them too — one rule, no allowlist —
+and let the projects that need them resolve at point of use.
+
+## Exit criteria
+- [ ] A project `.env` defining a keystore name exports nothing for it, and
+      stderr names it (test in `tests/test_bash_env_*`, hermetic: fake HOME
+      with a fake keystore)
+- [ ] `bash -x -c ':'` in such a project exposes no value (xtrace guard still
+      covers the new path)
+- [ ] Non-keystore names still export unchanged
+      (`test_bash_env_project_env_parse.sh` green)
+- [ ] Per-subprocess overhead measured on padme, before/after, stated in the
+      commit
+- [ ] 0942's tracker body gets a note naming the downstream gap and this fix
+- [ ] `make check` passes
