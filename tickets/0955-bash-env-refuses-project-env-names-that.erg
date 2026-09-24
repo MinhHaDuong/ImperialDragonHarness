@@ -1,0 +1,75 @@
+%erg 0.1
+Title: bash-env refuses credential-shaped names from a project .env
+Created: 2026-09-24
+Author: Integration Test
+
+--- log ---
+2026-09-24T05:28Z Integration Test created
+
+--- body ---
+## Context
+
+Tracker 0942 moved every *harness* credential consumer to point-of-use
+resolution, and 0945 removed `KEYS=` and provider loading from `bash-env.sh`.
+Nobody audited the downstream projects. A cross-project sweep on 2026-09-24
+(57 repos under `~`) found:
+
+- **AEDIST-technical-report**: the project `.env` carries six live
+  credentials inline (all copies of `~/.config/keys/` entries). `bash-env.sh`
+  still strict-parses the project `.env` and exports every unprotected name,
+  so those credentials are resident in every bash subprocess opened there —
+  the exact state 0942 set out to end, re-created through the loader's
+  surviving half. Filed downstream as AEDIST 0681.
+- **climate-finance-het**: `Makefile`, `AGENTS.md`, DMP and
+  `pipeline_keystore.py` still document and rely on `KEYS=`; the loader
+  now refuses it with a warning on every command. Migration brief handed
+  to the Codex session working there.
+- **chemin-de-voix**: one script read `MISTRAL_API_KEY` from the environment
+  only; fix in Tracing-Kieu PR #171.
+
+The loader cannot tell a project setting from a smuggled-in credential, so the
+fix belongs at the loader, not only in each project. 0942 closed its own scope
+(harness consumers) correctly; the gap is that the loader's surviving
+project-`.env` half was never examined as a residency path.
+
+## Proposal (revised after a seven-reviewer panel, 2026-09-24)
+
+The first draft refused names found in `~/.config/keys/*.env`. The panel
+(Opus, Terra, Sol, Luna; independently) rejected it: exact names miss renamed
+copies (AEDIST exports `OPENROUTER_API_KEY`, a copy of
+`OPENROUTER_API_KEY_AEDIST`), and scanning key files in every shell reverses
+the loader's "does not read provider files" rule, adds a fail-open case when
+the keystore is unreadable (another user, another HOME), and costs every
+subprocess.
+
+Refuse by **credential-shaped name** instead, inside `_be_is_protected_name`,
+a pure string test with no file access:
+
+- a name whose `_`-separated segments include `TOKEN`, `PASSWORD`, `PASSWD`,
+  `SECRET`, `APIKEY`, or the pair `API_KEY` (so `OPENROUTER_API_KEY_AEDIST`,
+  `HF_TOKEN`, `HAL_PASSWORD`, `CUSTOM_TOKEN` are caught; `TOKENIZERS_PARALLELISM`,
+  `KEYBOARD_LAYOUT` are not, since the match is on whole segments);
+- the refusal line stays names-only, on stderr.
+
+Survey of every project `.env` under `~` today: the names in use are
+`AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`, `HAL_ID`, `CLIMATE_FINANCE_DATA`,
+`CADENS_RAW_DIR`, `KEYS` (already refused) and the six AEDIST credentials.
+The rule refuses exactly those six and nothing else, so there is no
+false-positive migration to plan. `AGENT_GIT_NAME`/`EMAIL` stay exportable (not
+credential-shaped), which settles the draft's open question without a
+behaviour change for the two projects that set them.
+
+## Exit criteria
+- [ ] `_be_is_protected_name` refuses credential-shaped names by segment, with
+      no file access added to `bash-env.sh` (grep: no new path under
+      `.config/keys`)
+- [ ] Hermetic test: a project `.env` with `OPENROUTER_API_KEY`, `HF_TOKEN`,
+      `HAL_PASSWORD`, `CUSTOM_TOKEN`, `DB_SECRET` exports none of them and names
+      each on stderr; `TOKENIZERS_PARALLELISM`, `HAL_ID`, `AGENT_GIT_NAME` still
+      export
+- [ ] `bash -x -c ':'` in such a project exposes no value
+- [ ] `test_bash_env_project_env_parse.sh` and the other bash-env suites green
+- [ ] Per-subprocess overhead measured on padme before/after; accept only if
+      the median added time is under 1 ms (a string test should add ~0)
+- [ ] 0942's tracker body gets a note naming the downstream gap and this fix
+- [ ] `make check` passes
