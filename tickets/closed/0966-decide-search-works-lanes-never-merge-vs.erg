@@ -3,12 +3,14 @@ Title: Decide: search-works lanes never merge vs /raid Phase 7 merging
 Created: 2026-09-24
 Author: claude
 Label: needs-human
+Closed: Author ruled harness wins and authorized the edit; search-works-for-zotero#628 merged (6f356e5): a session may merge its own PR once /verify-gate returns APPROVED and the verdict is on the page; verdict rules unchanged
 
 --- log ---
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
 2026-09-24T07:50Z Claude claude decision Author 2026-09-24: harness wins. Correction to the finding: under /raid the orchestrator already is swz's coordinator, so the conflict is only an interactive session merging its own PR. Drafted swz DECISIONS.md entry + AGENTS.md rewrite; the edit was refused by the session's permission layer (it relaxes a ratified merge-safety rule in the author's name). Needs the author to apply or authorize
+2026-09-24T09:00Z Claude closed — Author ruled harness wins and authorized the edit; search-works-for-zotero#628 merged (6f356e5): a session may merge its own PR once /verify-gate returns APPROVED and the verdict is on the page; verdict rules unchanged
 --- body ---
 ## Context
 Audit A5 (`docs/2026-09-24-rules-coherence-audit.md`). swz `AGENTS.md:177`: a lane never presses merge, not even
