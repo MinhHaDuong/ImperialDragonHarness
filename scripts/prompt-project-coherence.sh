@@ -30,6 +30,11 @@ for directory in "$project/.claude/skills" "$project/.agents/skills"; do
     fi
 done
 
+# Resident-text budget for the project's own directives (0971): one
+# declarative line when it is over budget or declares a catch-all `paths:`.
+python3 "$harness/scripts/resident_census.py" --project "$project" --warn \
+    2>/dev/null || true
+
 ((${#sources[@]})) || exit 0
 source_list=$(printf '%s, ' "${sources[@]}")
 printf 'PROJECT DIRECTIVE COHERENCE: Local sources: %s. A startup coherence pass is due after worktree entry. Its scope is applicable project rules and skill descriptions against the loaded harness rules and skills: conflicting instructions, repeated procedures, and stale references. Full skill bodies are needed only where descriptions overlap. The result is concrete findings with file paths and the governing instruction, or "no actionable overlap found".\n' "${source_list%, }"
