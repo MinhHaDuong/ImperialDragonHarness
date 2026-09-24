@@ -2,12 +2,13 @@
 Title: Decide: livre vendored copy of the harness index-source skill
 Created: 2026-09-24
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude claude decision Author 2026-09-24: delete the duplicate. Done on livre PR #1 branch (ebeb34f); the harness copy was strictly newer (scheme guard, anchored DOI), nothing lost
+2026-09-24T07:50Z Claude unlabel needs-human
 --- body ---
 ## Context
 Audit C4 (`docs/2026-09-24-rules-coherence-audit.md`). livre `.claude/skills/index-source/` duplicates the harness

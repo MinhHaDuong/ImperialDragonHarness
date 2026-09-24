@@ -3,11 +3,13 @@ Title: Decide: aedist quickpr auto-merge and ticket close claims
 Created: 2026-09-24
 Author: claude
 Label: needs-human
+Closed: Dropped (author: generalize if useful, or drop). quickpr.sh opens its PR with the fixed body 'Opened via scripts/quickpr.sh.', so it never carries a **Ticket:** close claim and auto-merge cannot drop one; no defect to generalize. Side note, below the floor: it passes --delete-branch to gh pr merge, which aborts client-side from a worktree (climate git.md)
 
 --- log ---
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude closed — Dropped (author: generalize if useful, or drop). quickpr.sh opens its PR with the fixed body 'Opened via scripts/quickpr.sh.', so it never carries a **Ticket:** close claim and auto-merge cannot drop one; no defect to generalize. Side note, below the floor: it passes --delete-branch to gh pr merge, which aborts client-side from a worktree (climate git.md)
 --- body ---
 ## Context
 Audit B6 (`docs/2026-09-24-rules-coherence-audit.md`). aedist `scripts/quickpr.sh` opens chore PRs with forge

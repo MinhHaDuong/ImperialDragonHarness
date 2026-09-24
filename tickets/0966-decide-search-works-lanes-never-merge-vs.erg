@@ -8,6 +8,7 @@ Label: needs-human
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude claude decision Author 2026-09-24: harness wins. Correction to the finding: under /raid the orchestrator already is swz's coordinator, so the conflict is only an interactive session merging its own PR. Drafted swz DECISIONS.md entry + AGENTS.md rewrite; the edit was refused by the session's permission layer (it relaxes a ratified merge-safety rule in the author's name). Needs the author to apply or authorize
 --- body ---
 ## Context
 Audit A5 (`docs/2026-09-24-rules-coherence-audit.md`). swz `AGENTS.md:177`: a lane never presses merge, not even

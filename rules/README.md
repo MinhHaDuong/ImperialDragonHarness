@@ -36,8 +36,8 @@ it was 942 words while shipping full copies of what it summarised.
 | [systemd-units.md](./systemd-units.md) | `**/*.service`, `**/*.timer`, `**/systemd/**` | What PID 1 reads at boot lives on the root filesystem: install units as real copies, never symlinks into a late-mounted volume; `is-enabled` lies after a `daemon-reload`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
-Not a rules file, and not loaded by this mechanism: `tickets/AGENTS.md` reaches
-a session through `@tickets/AGENTS.md` in the project's own `CLAUDE.md`.
+Not a rules file, nor loaded here: `tickets/AGENTS.md` — `@`-imported by the
+harness `CLAUDE.md`, reached in projects via their `AGENTS.md` pointer.
 
 ## Per-file rule injection (axis model)
 

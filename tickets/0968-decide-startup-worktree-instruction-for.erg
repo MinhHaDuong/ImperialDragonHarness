@@ -8,6 +8,7 @@ Label: needs-human
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude claude decision Author 2026-09-24: keep open; reconsider as a general question -- how the author reaches and hand-edits files when agents work in worktrees or cloud containers, not a livre-specific hook tweak
 --- body ---
 ## Context
 Audit B2 (`docs/2026-09-24-rules-coherence-audit.md`). `scripts/on-start.sh` tells every project to enter a
@@ -23,3 +24,17 @@ line. Alternative: keep the instruction and let AGENTS.md override it.
 ## Exit criteria
 - [ ] Author decision logged here
 - [ ] A livre session start no longer contradicts livre's AGENTS.md
+
+## Reframed (2026-09-24): the author's hand-edit path
+
+The livre hook text is one symptom. The general question: with agents working
+in worktrees (local) or in cloud containers on `claude/*` branches, where does
+the author read and hand-edit files, and how do the two stay coherent? Today
+the harness answers it in pieces — `git.md` § Prose workpackages (prose is
+edited in the author's checkout), `claude-code.md` (worktree names), nothing
+for cloud sessions — and livre's `bgIsolation: none` is a local answer.
+Options to weigh: (a) a short "author access" section in `rules/README.md` or
+`docs/` stating the three places (primary checkout, `.claude/worktrees/<name>`,
+the pushed branch) and when each is authoritative; (b) the startup hook reads
+an explicit per-project declaration (`edit_in_place = true`) instead of
+inferring from `bgIsolation`; (c) both.
