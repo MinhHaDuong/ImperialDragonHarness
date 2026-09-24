@@ -2,10 +2,12 @@
 Title: gaze worktree-isolation step is inert under the identity guard
 Created: 2026-09-14
 Author: claude
+Closed: superseded by 0976: the worktree path guard causing this failure was deleted
 
 --- log ---
 2026-09-14T04:00Z claude created
 
+2026-09-24T16:16Z Minh Ha-Duong closed — superseded by 0976: the worktree path guard causing this failure was deleted
 --- body ---
 ## Context
 

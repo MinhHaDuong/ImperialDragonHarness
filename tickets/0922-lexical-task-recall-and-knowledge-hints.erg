@@ -10,6 +10,7 @@ Blocked-by: 0921
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
+2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 --- body ---
 
 ## Context
@@ -20,13 +21,13 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-Library/CLI; `rules/knowledge-hints.md`; `scripts/knowledge_hints.py`; pilot corpus and available shared snapshot.
+Library/CLI; project `.knowledge.toml` manifests; pilot corpus and available shared snapshot. The former `rules/knowledge-hints.md` and `scripts/knowledge_hints.py` were deleted by 0976; their runtime injection behavior is not a reusable dependency.
 
 ## Actions
 
 1. Search title, description, tags and body with a simple lexical baseline; use explicit applicability for exclusion, not missing keywords.
 2. Select a bounded task bundle with provenance, status and caveats; adjust redundancy here without permanently penalising particulars in static orientation.
-3. Reuse pointer/caveat discovery and deduplicate canonical artefacts; account knowledge-hint exposure separately from controlled memory.
+3. Read existing `.knowledge.toml` pointers and caveats through the common library, with a small contained-path parser if the pilot needs one; deduplicate canonical artefacts and account hint exposure separately from controlled memory. Do not restore the deleted prompt hook.
 4. Expose explicit historical retrieval with inactive status and replacement links; ordinary recall always excludes those records and redirects.
 5. Use the validated current-corpus fallback from 0921 when ranking/publication is absent or corrupt; lexical recall must not depend on a healthy dream snapshot. Return empty or incomplete results honestly; expose uncached shared coverage. No embeddings or hosted backend required.
 

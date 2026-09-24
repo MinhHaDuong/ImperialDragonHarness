@@ -11,6 +11,7 @@ Blocked-by: 0911
 2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 
+2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 --- body ---
 
 ## Context
@@ -21,7 +22,7 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-`skills/memory-sweep/SKILL.md`; `rules/knowledge-hints.md`; `tickets/AGENTS.md`; package/CLI from 0911.
+`skills/memory-sweep/SKILL.md`; `tickets/AGENTS.md`; package/CLI from 0911. The former `rules/knowledge-hints.md` was deleted by 0976.
 
 ## Actions
 

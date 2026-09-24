@@ -11,6 +11,7 @@ Blocked-by: 0922
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: the live smoke gains a miswired-delivery negative control and a runtime-side observation surface the adapter does not author. Disjoint-roots clearance reattributed to 0920.
 
+2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 --- body ---
 
 ## Context
@@ -21,7 +22,7 @@ Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-
 
 ## Relevant files
 
-Library/CLI from 0911–0922; selected runtime integration points; existing startup/prompt hooks; `rules/knowledge-hints.md`.
+Library/CLI from 0911–0922; selected runtime integration points; the current `settings.shared.json` hook surface. The 0976 cleanup removed the old `UserPromptSubmit` hint hook and `rules/knowledge-hints.md`; any task-trigger delivery must be implemented and tested by this adapter.
 
 ## Actions
 
