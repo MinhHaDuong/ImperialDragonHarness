@@ -2,7 +2,10 @@
 name: feedback_memory_batch_lands_as_three_things
 description: "A memory entry is an index line, a body file and a provenance record; committing any subset leaves a dangling pointer, an unreachable body, or a red gate"
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 7da31895-be72-4eb5-b36a-3c99a2b5dd50
+  modified: 2026-09-24T14:32:37.062Z
 ---
 
 On 2026-09-16 a batch of twelve memories written by several sessions sat
@@ -30,8 +33,15 @@ failing gate, and a promotion frequency count that no longer reflects reality.
 **How to apply:** when landing memory, stage all three or none, and verify the
 correspondence in both directions before committing rather than trusting that
 you wrote them together. When a batch spans several authors, the unit is the
-whole batch — do not carve one author's share out of a shared index file. Note
-that `skills/dream/provenance.py record` cannot be pointed at a worktree
-(ticket 0934), so from a worktree the record must be written into the JSON by
-hand or the whole batch landed from the primary checkout. Related:
+whole batch — do not carve one author's share out of a shared index file.
+From a worktree, `skills/dream/provenance.py backfill --root . --dry-run`
+names exactly the missing records (`record` alone cannot be pointed at a
+worktree, ticket 0934); take the real run only when it reports `linked: 0`,
+and after a rebase regenerate it rather than hand-merge the JSON.
+
+A fourth gate bites large batches: `tests/test_resident_census.py` caps each
+project `MEMORY.md` at 14500 characters. On 2026-09-24 landing one project's
+local edits took its index to 17047; the remedy was a sweep (39 bodies
+tombstoned with reasons), not compression. Run both tests before opening the
+PR, not after CI. Related:
 [[feedback_ask_the_live_peer_before_committing_its_work]].

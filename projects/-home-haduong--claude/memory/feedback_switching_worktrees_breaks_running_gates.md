@@ -2,7 +2,10 @@
 name: feedback_switching_worktrees_breaks_running_gates
 description: "The isolation guard tracks the SESSION's worktree, so an EnterWorktree or git switch while a /gaze fork is running strands that fork's Bash entirely — park the session until the gate returns"
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 7da31895-be72-4eb5-b36a-3c99a2b5dd50
+  modified: 2026-09-24T14:32:33.155Z
 ---
 
 A `/gaze` fork and its agents resolve their Bash against the *session's*
@@ -38,6 +41,15 @@ and held the cause; the cause was upstream and it had no way to reach it.
   down, then re-run the work yourself from a stable position.
 - A fresh probe subagent hitting the identical error is confirmation the fault
   is session-level, not that agent's state.
+
+**Not only gates.** On 2026-09-24 a background agent was sweeping a memory
+index in worktree A while the coordinator entered worktree B to start another
+ticket. The agent's first Bash call succeeded; every later Bash and every
+Write/Edit in A was refused. It had read every body, so it returned a finished
+plan instead of a commit, and the coordinator applied it — the cost was one
+duplicated pass. Any background agent that *writes* in the session's current
+worktree is bound the same way: before entering another worktree, either wait
+for it, or give it `isolation: "worktree"` so it is bound to its own tree.
 
 Related: [[feedback_shared_worktree_live_session_contention]],
 [[feedback_worktree_deleted_midrun_orphans_cwd]].

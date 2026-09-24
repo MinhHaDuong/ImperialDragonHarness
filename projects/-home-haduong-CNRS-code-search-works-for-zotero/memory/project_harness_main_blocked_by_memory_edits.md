@@ -31,6 +31,13 @@ restructured file silently duplicates.
 above, and for a conflicted index take the incoming layout plus the local patch's
 own `+` lines. Structural fix: harness ticket 0972. Related: [[harness-gate-and-breaker]] (ticket 0954, PR #967).
 
+**Fixed 2026-09-24 by harness PR #1011 (ticket 0972 closed).** The sync now
+absorbs a colliding file that is byte-identical to the incoming one, and a
+`memory/MEMORY.md` whose local edit only added lines (incoming index + local
+additions, left uncommitted). Other dirt still refuses, naming its paths. So
+landing local memory through a PR no longer stalls the next sync; the manual
+recipe above is only for genuine divergence.
+
 Recurred on padme 2026-09-24: 150 commits behind, with `scripts/scoped-check.py`
 missing, so a lane's `make check-diff` had to borrow a harness worktree. The only
 colliding path was a local log line on harness ticket 0207, closed and moved
