@@ -2,12 +2,13 @@
 Title: Decide: aedist /raid never defers vs harness escalate-to-author
 Created: 2026-09-24
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude claude decision Author 2026-09-24: harness wins. aedist AGENTS.md Autonomous mode rewritten (how-questions only; intent changes return to the author), committed on aedist PR #1176 branch
+2026-09-24T07:50Z Claude unlabel needs-human
 --- body ---
 ## Context
 Audit A4 (`docs/2026-09-24-rules-coherence-audit.md`). aedist `AGENTS.md:60`: "In autonomous mode (`/raid`), the

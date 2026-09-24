@@ -8,6 +8,7 @@ Label: needs-human
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
+2026-09-24T07:50Z Claude claude decision Author 2026-09-24: keep open and propose a generalization; proposal written in the body
 --- body ---
 ## Context
 Audit B7 (`docs/2026-09-24-rules-coherence-audit.md`). climate `.claude/rules/architecture.md` is scoped
@@ -23,3 +24,40 @@ Alternative: accept residency and extend a budget test to project rules.
 ## Exit criteria
 - [ ] Author decision logged here
 - [ ] Rule scoped, or residency budgeted
+
+## Proposal (2026-09-24): budget the project channel, not one file
+
+Measured 2026-09-24, characters of project rules a session pays before its
+first question (bodies without `paths:`, or with a catch-all glob):
+
+| Repo | Resident project rules | chars |
+|---|---|---|
+| climate-finance-het | architecture.md (`**/*`), git.md, workflow.md, jetp-research.md | 28 000 |
+| aedist-technical-report | workflow.md | 2 365 |
+| others | none | 0 |
+
+The harness caps its own resident rules at 36 000 chars; climate adds 78 % on
+top, unwatched. `scripts/resident_census.py` says so itself: a consumer
+project's own files are "not counted, because it is not in this repo".
+architecture.md is one instance of a class, so the fix is general:
+
+1. **Measure.** Extend `resident_census.py` with a project mode: for a repo,
+   sum `AGENTS.md` (+ `CLAUDE.md` and its `@` chain) and every
+   `.claude/rules/*.md` that is resident, counting a catch-all `paths:`
+   (`**/*`, `**`, `*`) as resident — a catch-all is residency in disguise.
+2. **Surface, don't gate.** The harness cannot gate a project's CI. At
+   session start `prompt-project-coherence.sh` already names local sources;
+   add one declarative line when the project channel exceeds a budget
+   (proposed 12 000 chars) or declares a catch-all, naming the files.
+3. **Doctrine, one line in `rules/README.md`:** the harness scoping rule
+   applies to project rules too — scope by path when the trigger is a path;
+   make it a skill when the trigger is a task (the 2026-09-09 move of
+   `/pdf-finish`, `/cut-prose`, `/submission-event`).
+4. **First application, climate:** split architecture.md by section onto the
+   paths each describes (data location → `data/**`, `dvc.yaml`, `.env`;
+   deliverable layout → `deliverables/**`; build graph → `Makefile`,
+   `paths.mk`), keeping in AGENTS.md only what every session needs;
+   jetp-research.md is task-triggered, so it becomes a project skill.
+
+Decision asked: adopt 1–3 as a harness ticket and 4 as a climate ticket? The
+12 000 budget is a starting point to ratchet from, not a measured optimum.
