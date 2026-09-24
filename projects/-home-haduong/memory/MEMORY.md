@@ -31,3 +31,6 @@
 - [Avancement DR1 2027](project_avancement_dr1_2027.md)
 - [Tour des chantiers: advisor role, review by comment](feedback_tour_des_chantiers_advisor_role.md) — no repo work, sub-agent PR comments even post-merge, no unasked tickets
 - [Inspect peer sessions on padme](reference_inspect_peer_sessions_on_padme.md) — Codex is read from ~/.codex/sessions jsonl, not messageable; pkill -f self-match; pts numbers are reused
+- [erg-pr-merge: don't pre-close a ticket before its PR](feedback_erg_pr_merge_dont_preclose_ticket.md)
+- [cadens / realf.hypotheses.org split](project_cadens_realf_split.md)
+- [IMACLIM collaboration with Ghersi](project_imaclim_ghersi_collaboration.md)

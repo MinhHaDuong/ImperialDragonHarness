@@ -1,0 +1,7 @@
+- [JETP, strate de climate-finance-het](project_jetp_strate_de_climate_finance_het.md) — tracker 0708, jetp/ n'est qu'un sas non versionné, 0713 tourne sur padme.
+- [Revérifier juste avant l'acte destructif](feedback_reverifier_juste_avant_l_acte_destructif.md) — une comparaison faite plus tôt dans la session ne protège plus au moment de renommer.
+- [Runs longs en nohup sur la machine cible](feedback_runs_longs_en_nohup_sur_la_machine_cible.md) — ppid=1 est la preuve du détachement ; vérifier que la cible a tout avant de lâcher l'agent.
+- [Cérémonie proportionnée au rayon d'action](feedback_ceremonie_proportionnee_au_rayon.md) — un changement de texte se commite et se merge sans panel de revue.
+- [Contact Christophe Cassen](reference_contact_christophe_cassen.md) — cnrs.fr seulement ; centre-cired.fr est retirée.
+- [Spécifier avant d'asserter une mesure](feedback_specifier_avant_d_asserter_une_mesure.md) — le chiffre bouge avec la population, le dénominateur et l'horizon ; trois erreurs en une session.
+- [Recette PDF des notes JETP](reference_recette_pdf_des_notes_jetp.md) — pandoc/xelatex, DejaVuSerif, lang=fr, bandeau HTML à retirer.
