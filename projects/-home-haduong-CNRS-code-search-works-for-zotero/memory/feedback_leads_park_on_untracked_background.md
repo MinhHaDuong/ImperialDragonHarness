@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: e3539725-9ee4-4662-bd11-94fde1db9112
-  modified: 2026-09-06T19:08:29.325Z
+  modified: 2026-09-24T00:45:36.723Z
 ---
 
 Three independent sonnet team-leads in one session (2026-08-30, the embedder
@@ -32,3 +32,15 @@ remote host over ssh: it left "a background waiter" and stopped. Model tier
 does not protect against it, and a remote process is exactly as untracked
 as a local nohup. The prompt that launched it said nothing about waits; the
 rule above has to be in the launch prompt, not only in the recovery message.
+
+Recurred four times in the raid of 2026-09-23: the 0816 and 0823 executors
+parked on their own `/review-pr` panels, the 0818 executor polled a 6-hour
+clone run on padme, and a forked `/verify-gate` returned "still waiting" on a
+`make check` it had started itself. What worked: stop the parked agent once
+`git status` is clean and its head is pushed, and take the rest over — the
+coordinator watches the remote run with a Monitor on its progress counters,
+commissions one synchronous review whose brief bans background waits, and
+re-runs the gate with the gates already quoted on the PR and "run nothing in
+the background" in its args. The coordinator's own failure was symmetric:
+waiting four hours on completion notices without measuring whether the
+worktree was still moving.
