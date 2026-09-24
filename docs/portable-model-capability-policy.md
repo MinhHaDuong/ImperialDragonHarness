@@ -1,435 +1,353 @@
-# Portable model capability and effort policy
+# Portable model and effort policy
 
 **Status:** design note / migration proposal  
 **Date:** 2026-09-24
 
 ## Decision
 
-IDH should stop treating vendor model names as architectural roles. Portable
-skills and agent profiles should declare semantic requirements; runtime adapters
-should resolve them to concrete models and provider-specific controls.
+IDH should express **how much model capability and deliberation a task deserves**,
+without maintaining its own catalogue of concrete models.
 
-Keep four independent axes:
-
-1. **capability** — minimum competence required;
-2. **effort** — requested deliberation;
-3. **backend** — allowed/preferred execution pool;
-4. **traits** — coding, tools, privacy, context, structured output,
-   decorrelation, etc.
-
-Cost is a resolver objective, not a capability level.
-
-Default organizational policy:
+Portable skills and agent profiles use two small semantic controls:
 
 ```text
-MOE/interface       L3 / standard
-  └─ team lead      L2 / economy
-       └─ executor  L1 / economy
+model-level: auto | cheap | standard | strong | frontier
+effort:      economy | standard | intensive
 ```
 
-This is a default, not a caste system. A difficult coding executor may request
-L3; a mechanical worker may request L0. Organizational depth and cognitive
-difficulty are separate.
+Runtime adapters translate those intentions into whatever their runtime supports.
+Concrete model names, availability, pricing, provider reasoning syntax, and local
+model loading remain runtime/configuration concerns.
 
-Principle:
+The boundary is:
 
-> Use the lowest capability adequate for the responsibility, at the lowest
-> effort adequate for the uncertainty. Escalate capability before extreme
-> effort.
+> **IDH specifies orchestration intent. The runtime supplies models.**
 
-## Audit of current IDH
+Portability is deliberately lossy: adapters preserve intent as far as their
+runtime permits; they do not pretend that provider controls are semantically
+identical.
 
-### What is already right
+## Why
 
-The three-level topology is explicit. `rules/workflow.md` places the interface
-session at MOE N+2, governing by intention through team leads.
-`agents/team-lead.md` receives intent, decomposes it, mobilizes executor
-subagents, verifies them and synthesizes one report. `rules/claude-code.md`
-requires nesting depth >=2 so delegation does not silently flatten.
+IDH is portable across Claude Code, Codex, Pi, OpenRouter and local llama.cpp
+execution on Padmé. Rules such as "workers use Sonnet" solve today's cost problem
+but make orchestration depend on one vendor's current product ladder.
 
-The harness also correctly learned that model and effort propagation are
-runtime-specific. Ticket 0235 and
-`memory/feedback_subagent_model_effort_levers.md` distinguish per-launch model
-pins from effort controls on definitions/Workflow calls/forks. Preserve that
-knowledge.
+The opposite extreme is also undesirable. A harness-wide model registry with
+capability matrices, lifecycle state, pricing and provider metadata would
+duplicate responsibilities better owned by runtimes and model gateways.
 
-### What is not portable
+IDH needs only enough abstraction to prevent accidental expensive inheritance
+and to communicate intentional rightsizing.
 
-The rightsizing API is still Claude-shaped:
+## Current-state audit
+
+### The organizational architecture is already right
+
+`rules/workflow.md` places the interface session at MOE N+2, governing by
+intention through team leads. `agents/team-lead.md` receives an intent-level
+directive, decomposes it, mobilizes executor subagents, verifies results and
+returns one synthesis. `rules/claude-code.md` requires nesting depth >=2.
+
+The topology is therefore already:
+
+```text
+author/MOA -> MOE -> team lead -> executors
+```
+
+### The current rightsizing implementation is Claude-shaped
+
+The existing implementation is technically disciplined but uses concrete Claude
+tiers as its portable vocabulary:
 
 - `rules/claude-code.md` requires fan-out launches to pin
   `sonnet|opus|haiku|fable`;
-- `tests/test_model_rightsizing.py` makes those names the valid vocabulary;
+- `tests/test_model_rightsizing.py` validates those names;
 - `skills/raid/SKILL.md` assigns Sonnet to planning/review, Haiku to
-  mechanical checks, and Opus to mutating coders;
+  mechanical checks and Opus to mutating coders;
 - `skills/hunt/SKILL.md` pins its coding executor to Opus;
-- `scripts/trace-stats.py` resolves pricing by Claude family name.
+- `scripts/trace-stats.py` understands Claude pricing families.
 
-Those concrete choices fixed runaway inheritance, but they belong in a Claude
-adapter rather than the portable orchestration contract.
+Ticket 0235 and `memory/feedback_subagent_model_effort_levers.md` document why
+this exists: unpinned fan-out can silently inherit an expensive session model.
+That lesson remains valid. The concrete mechanism belongs in the Claude adapter.
 
-### Middle-layer over-allocation is currently possible
+### The middle layer can inherit unnecessarily expensive settings
 
-`agents/team-lead.md` has neither model nor effort frontmatter. Under the
-documented Claude semantics it therefore inherits the session. An Opus/medium
-MOE can create an Opus/medium lead even though the lead owns a bounded intent.
-The hierarchy should make this allocation explicit.
+`agents/team-lead.md` currently has neither a model nor effort declaration.
+Under the documented Claude Code behavior it inherits the session. An
+Opus/medium MOE can therefore create an Opus/medium lead even though the lead
+owns a bounded intent.
 
-### Effort is not a portable enum
+The new policy should make this choice explicit without hard-coding Opus or any
+future replacement.
 
-IDH already has contrary provider semantics. The OpenRouter project memory
-records that omitting `reasoning_effort` produced no reasoning while
-`minimal` turned reasoning on. Padmé uses `llama-server`/llama.cpp, not
-Ollama, and its local models expose another reasoning surface. The 2026-09-23
-Padmé reviewer trial also observed `reasoning_content` and provider-specific
-suppression.
+### Effort semantics differ across runtimes
 
-Therefore Claude's `low|medium|high|xhigh|max` must not become IDH's portable
-contract.
+IDH already has evidence that provider controls are not interchangeable.
+OpenRouter project memory records that omitting `reasoning_effort` produced no
+reasoning while `minimal` turned reasoning on. Padmé uses
+`llama-server`/llama.cpp and has its own reasoning behavior.
 
-## Semantic API
+Therefore Claude's `low|medium|high|xhigh|max` must not become the portable
+IDH vocabulary.
 
-### Capability
+## Portable contract
 
-Use five ordered requirements:
+### Model level
 
 ```text
-L0 mechanical   extraction, grep-like classification, formatting
-L1 routine      bounded execution with clear instructions and cheap verification
-L2 capable      decomposition or judgment within a bounded domain
-L3 strong       global orchestration, difficult coding/reasoning, ambiguous synthesis
-L4 frontier     exceptional hard-tail work
+auto       let the runtime choose
+cheap      explicitly favor low-cost capability
+standard   ordinary competent model
+strong     deliberately spend for a difficult task
+frontier   best available; exceptional hard-tail work
 ```
 
-These are engineering contracts, not benchmark scores. A model registry says
-which levels a concrete model is eligible to serve.
+These are **relative intentions**, not capability scores and not aliases for
+particular models.
+
+`auto` is important. Modern runtimes increasingly have their own routing and
+model-selection logic. IDH should override that only when orchestration knows
+something useful about the task.
+
+A worker's organizational rank does not determine its model level. A mechanical
+worker can be `cheap`; a difficult concurrency repair can be `strong` even
+though it sits at the bottom of the delegation tree.
 
 ### Effort
 
-Expose only:
-
 ```text
-economy
-standard
-intensive
+economy     avoid unnecessary deliberation
+standard    normal runtime deliberation
+intensive   deliberately spend extra deliberation
 ```
 
-Adapters translate these to legal provider controls. Also support an explicit
-`reasoning: off` requirement where a provider distinguishes no reasoning from
-minimum reasoning. Do not encode xhigh/max in portable skills.
+These are intentions. An adapter may map two levels to the same runtime setting
+when the runtime cannot express the distinction.
 
-### Backend
+"Reasoning off" is provider-specific and should remain adapter/configuration
+behavior rather than a fourth portable effort level.
 
-Backend is orthogonal to capability:
+### Optional constraints
 
-```yaml
-backend:
-  allow: [local, openrouter, anthropic]
-  prefer: local
-```
+IDH may state constraints that arise from orchestration rather than model
+cataloguing, for example:
 
-Padmé is not a low-tier backend. It is an execution pool whose loaded models
-have individual capability qualifications.
+- local-only / cloud-allowed when privacy or execution location matters;
+- reviewer must be decorrelated from producer;
+- task requires tools or repository mutation.
 
-### Traits
+These constraints should remain sparse. IDH should not grow a model capability
+database to resolve them.
 
-Traits capture non-ordinal requirements:
+## Default role policy
 
-```yaml
-traits: [coding, repository-mutation, structured-output, long-context]
-decorrelate_from: producer
-```
+A useful default is:
 
-Reviewer decorrelation should mean "different family/provider from producer
-where practical", not "Sonnet reviews Opus."
-
-## Resolver
-
-A portable launch request should look approximately like:
-
-```yaml
-role: executor
-capability: L2
-effort: economy
-traits: [coding, repository-mutation]
-backend:
-  allow: [anthropic, openrouter, local]
-```
-
-A registry owns concrete candidates:
-
-```yaml
-models:
-  anthropic/<model>:
-    backend: anthropic
-    capability: L3
-    effort_adapter: claude
-  openrouter/<model>:
-    backend: openrouter
-    capability: L2
-    effort_adapter: openrouter
-  padme/<gguf-model>:
-    backend: local
-    runtime: llama.cpp
-    capability: L1
-    effort_adapter: llama-cpp
-```
-
-The names above are placeholders deliberately: current product names belong in
-live configuration, not this design.
-
-Resolution chooses the cheapest eligible candidate subject to minimum
-capability, backend, tools/context/output requirements and decorrelation.
-It should return an auditable explanation:
-
-```text
-requested: L2/economy + coding
-resolved:  openrouter/<model>
-reason:    cheapest eligible candidate; local pool lacks coding-L2 qualification
-```
-
-No calibrated success probability is required. Capability qualification is an
-engineering judgment; measurements may refine it later.
-
-## Role defaults and promotion
-
-| Role | Capability | Effort |
+| Role | Model level | Effort |
 |---|---|---|
-| MOE/interface | L3 | standard |
-| team lead | L2 | economy |
-| executor | L1 | economy |
-| mechanical helper | L0 | economy/off |
-| hard-tail escalation | L4 | intensive |
+| MOE/interface | strong | standard |
+| team lead | standard | economy |
+| executor | auto | economy |
+| mechanical helper | cheap | economy |
+| hard-tail escalation | frontier | intensive |
 
-Promote by task, not rank:
+This expresses the fan-out economics without claiming that all workers are easy.
 
-- difficult repository mutation -> L3/standard;
-- cross-cutting design/review -> L2-L3/standard;
-- extraction/search -> L0-L1/economy;
-- repeated failure -> capability promotion before intensive effort.
+Task-specific promotion is expected:
 
-## Portability boundary
+- difficult repository mutation -> `strong/standard`;
+- cross-cutting judgment/review -> `standard` or `strong`;
+- extraction/search -> `cheap/economy`;
+- repeated failure -> increase model level before using `intensive` effort.
 
-Portable rules/skills contain capability, semantic effort, traits, backend
-constraints/preferences and decorrelation requirements.
+The general rule is:
 
-Adapters contain concrete model IDs, provider effort syntax, inheritance quirks,
-launch schemas, availability and conversion to legal invocations.
+> Use the least expensive level adequate for the responsibility. Prefer a
+> stronger model at moderate effort to extreme effort on a weaker model.
 
-Thus `rules/claude-code.md` remains valuable, but as adapter knowledge rather
-than IDH's model ontology.
+## Harness/runtime frontier
 
-## Churn tolerance
+| Concern | IDH | Runtime / adapter |
+|---|:---:|:---:|
+| MOE -> lead -> worker hierarchy | yes | |
+| task deserves cheaper/stronger intelligence | yes | |
+| task deserves more deliberation | yes | |
+| reviewer should differ from producer | yes | |
+| concrete model name | | yes |
+| model availability | | yes |
+| pricing | | yes |
+| lifecycle/deprecation | | yes |
+| provider reasoning syntax | | yes |
+| model-specific strengths | | yes |
+| local GPU/model loading | | yes |
 
-Model churn is a first-class design requirement, not merely a portability
-benefit. No durable IDH orchestration artifact should depend on the continued
-existence of a named model.
+This frontier is intentional. IDH is an orchestration harness, not a model
+gateway.
 
-There are three distinct kinds of churn:
+## Runtime mappings
 
-1. **model churn** — a model appears, improves, is renamed, deprecated or
-   withdrawn;
-2. **provider/runtime churn** — effort controls, reasoning semantics, launch
-   schemas or tool support change;
-3. **capability churn** — IDH's engineering judgment about what a model is
-   trustworthy for changes with experience.
-
-The first and third belong in the registry; the second belongs in adapters.
-Skills and agent profiles should normally remain unchanged.
-
-For example, replacing one generation of a cloud model with another should be a
-registry edit. Likewise, if a new local model on Padmé becomes trustworthy for
-L2 coding, qualifying that registry entry makes it eligible for all compatible
-L2 coding requests without editing `raid`, `hunt`, `team-lead` or other
-orchestration logic.
-
-### Capability facets
-
-A single scalar level is useful as the minimum portable contract but too coarse
-for churn management. Models often have uneven strengths. The registry should
-therefore support a general level plus optional capability facets:
-
-```yaml
-models:
-  padme/<model>:
-    backend: local
-    runtime: llama.cpp
-    capability:
-      general: L2
-      coding: L2
-      research: L1
-      review: L2
-      tool_use: L1
-    constraints:
-      structured_output: true
-      context_tokens: 65536
-```
-
-A task trait selects the relevant facet when present; otherwise the conservative
-general level applies. Missing facets must not be optimistically inferred.
-
-This allows a new model to enter cautiously — for example L3 coding but only L1
-review — and be promoted facet by facet as engineering confidence changes.
-Capability assignments remain qualifications, not benchmark rankings.
-
-### Lifecycle state
-
-Registry entries should carry lifecycle independently of capability:
-
-```yaml
-status: experimental | active | deprecated | unavailable
-replaced_by: <optional registry key>
-```
-
-Resolver semantics:
-
-- `active` — normally eligible;
-- `experimental` — eligible only when policy explicitly permits it;
-- `deprecated` — fallback only, with replacement surfaced in traces;
-- `unavailable` — never selected.
-
-A provider retirement therefore changes registry state rather than skills.
-Dynamic local availability is separate again: a Padmé model can be registered
-and qualified but not currently loaded/available.
-
-### Stable and volatile layers
-
-The intended churn boundary is:
+Adapters need only a small mapping/configuration surface. Conceptually:
 
 ```text
-skills / agents
-  semantic requirement: L2 + economy + coding
-        |
-        v
-portable policy                 stable
-        |
-        v
-model registry                  volatile: model/capability/lifecycle churn
-        |
-        v
-runtime adapter                 volatile: provider API/runtime churn
-        |
-        v
-Claude / OpenRouter / Padmé / ...
+Claude:
+    cheap     -> configured cheap tier
+    standard  -> configured standard tier
+    strong    -> configured strong tier
+    frontier  -> configured frontier tier
+
+OpenRouter:
+    cheap     -> configured cheap model
+    standard  -> configured default model
+    strong    -> configured strong model
+    frontier  -> configured frontier model
+
+Padmé / llama.cpp:
+    auto      -> current configured local model
+    cheap     -> current configured local model
+    standard  -> current configured local model, if allowed
+    strong/frontier -> unsupported or explicit fallback
 ```
 
-The resolver trace should record enough information to reconstruct decisions
-after the registry changes: requested semantic profile, registry version or
-commit, selected concrete model/backend, lifecycle state and effective effort.
+These are configuration examples, not normative mappings. When model generations
+change, the adapter/config changes; portable skills do not.
+
+An unsupported level should either fail clearly or follow an explicitly
+configured fallback. It must not silently inherit an expensive caller setting.
+
+## Model churn
+
+Churn is handled by keeping model identity below the portability boundary.
+
+When a provider replaces a model generation, update the runtime mapping. When a
+different OpenRouter model becomes the preferred strong model, update OpenRouter
+configuration. When the GGUF served on Padmé changes, update the local runtime
+configuration.
+
+No `raid`, `hunt`, `team-lead`, or review skill should need editing merely
+because model names changed.
+
+IDH does **not** track model lifecycle, benchmark qualification or
+task-by-task capability matrices. Those may exist in a runtime or gateway if
+useful, but are outside the harness contract.
+
+## Escalation
+
+Escalation operates on the portable controls:
+
+```text
+alternative approach
+    -> model-level +1
+    -> standard effort
+    -> intensive effort / frontier
+    -> stop / author
+```
+
+The sequence is guidance rather than a rigid state machine. A clearly difficult
+task may start at `strong`. The invariant is that broad fan-out does not
+silently inherit frontier-level compute.
+
+The existing workflow escalation doctrine remains authoritative; this policy
+only governs compute allocation within it.
 
 ## Migration path
 
-### Phase 0 — representation only
+### Phase 0 — define semantics, change no behavior
 
-Add semantic vocabulary and registry schema. Populate mappings so every current
-pin resolves to exactly its present concrete model. Resolver dry-runs must
-reproduce current launch configurations. No behavior change.
+Add the two semantic controls and adapter mappings that reproduce today's
+concrete choices exactly.
 
-This separation matters because the previous trace A/B exercise was invalidated
-by simultaneous regime drift.
+Acceptance criterion: a dry-run or test demonstrates that current launch sites
+resolve to their existing model/effort behavior.
 
-### Phase 1 — semantic aliases beside concrete pins
+Do not change economics in this phase. The previous trace A/B work showed how
+quickly conclusions become unreliable when several runtime variables drift
+together.
 
-Let launch sites request a semantic profile while retaining the old concrete
-pin as assertion/fallback. Tests require semantic resolution and legacy pins to
-agree. Still no model-mix change.
+### Phase 1 — add semantic aliases beside current pins
 
-### Phase 2 — agent profiles, starting with team-lead
+Allow launch sites to declare `model-level` and semantic `effort` while the
+adapter still checks against the existing concrete pin. Tests require agreement.
 
-Make `team-lead` the first semantic profile: L2/economy. Initially the adapter
-may map it conservatively, but inheritance must become explicit rather than
-accidental. Then migrate dedicated review profiles.
+This establishes the abstraction without changing live routing.
 
-### Phase 3 — high-fan-out skills
+### Phase 2 — migrate team-lead and dedicated agent profiles
 
-Migrate `raid`, `gaze`, `review-pr`, `review-pr-prose`,
-`verify-gate`, audits and release checks by behavioral class:
+Make `team-lead` the first semantic profile:
 
-1. mechanical checks;
-2. routine reviewers/researchers;
-3. bounded planners/leads;
-4. mutating coders;
-5. skeptics/judges;
-6. exceptional diagnosis.
+```text
+model-level: standard
+effort: economy
+```
 
-Do not search-and-replace model names.
+Then migrate dedicated review profiles. Accidental inheritance becomes an
+explicit choice.
 
-### Phase 4 — provider adapters
+### Phase 3 — migrate high-fan-out skills
 
-Implement independently:
+Replace concrete model choices in `raid`, `gaze`, review and audit fan-outs
+with semantic intentions. Migrate by behavioral class rather than mechanically
+renaming model tokens.
 
-- Claude Code: short model tokens plus effort on the correct surface;
-- OpenRouter: registry choice and explicit distinction between omitted
-  reasoning and minimal/low reasoning;
-- llama.cpp/Padmé: currently available local model plus only explicitly
-  qualified capabilities;
-- Codex/Pi: their own model/effort controls.
+The current `tests/test_model_rightsizing.py` should evolve from "every launch
+pins a valid Claude name" to "every fan-out either explicitly delegates choice
+to `auto` or declares a semantic level, and the active adapter resolves it."
 
-Missing mappings fail loudly or use an explicit fallback. Never silently inherit
-the caller's expensive configuration.
+### Phase 4 — thin runtime adapters
 
-### Phase 5 — backend choice
+Implement only the translation required by each runtime:
 
-Only after semantic migration should the resolver choose among providers.
-Start with low-risk classes: mechanical work, extraction and constrained
-structured review. Keep difficult mutations explicitly high-capability until
-alternative registry entries are qualified.
+- Claude Code: concrete model token plus effort on the correct launch surface;
+- OpenRouter: configured model plus its actual reasoning semantics;
+- Padmé/llama.cpp: configured local model and supported controls;
+- Codex/Pi: their native model/effort controls.
 
-### Phase 6 — economic policy
+Do not centralize concrete model metadata in IDH.
 
-Finally change defaults centrally to L3/standard -> L2/economy -> L1/economy,
-with task promotion and escalation. This realizes fan-out savings without
-mixing architecture migration with an economic experiment.
+### Phase 5 — change economic defaults
+
+After migration is behavior-preserving, adopt the default hierarchy:
+
+```text
+MOE       strong   / standard
+team lead standard / economy
+executor  auto     / economy
+```
+
+Individual skills promote tasks where their domain knowledge justifies it.
 
 ## Tests and invariants
 
-Evolve `tests/test_model_rightsizing.py` toward these invariants:
+1. Broad fan-out never silently inherits an expensive root configuration.
+2. Every launch either declares a semantic level or explicitly says `auto`.
+3. Portable skills do not depend on concrete model names.
+4. Unsupported semantic levels fail clearly or use an explicit configured
+   fallback.
+5. Reviewer decorrelation remains enforceable without naming vendor tiers in
+   portable policy.
+6. `intensive` is not a default for broad fan-out.
+7. Adapter tests cover provider-specific model and effort mechanics.
+8. Traces record requested semantic level/effort and the concrete result when
+   the runtime exposes it.
 
-1. every fan-out declares an explicit semantic requirement;
-2. portable skills do not name concrete model families;
-3. every request resolves or fails loudly;
-4. unresolved requests never inherit caller model/effort silently;
-5. requested reviewer decorrelation is enforced;
-6. L0/L1 fan-out cannot resolve to L4 absent explicit fallback;
-7. intensive/max-like effort is not a broad fan-out default;
-8. "reasoning off" is tested separately from "minimum reasoning";
-9. local/cheap does not imply low or high capability;
-10. traces record requested profile, resolved backend/model and effective effort.
+## Non-goals
 
-Keep adapter-level tests for Claude's legal model tokens and other runtime
-mechanics; they no longer belong in portable policy tests.
-
-## Non-goals / traps
-
-- Do not rename Sonnet=L1, Opus=L3, etc.; levels are requirements, not aliases.
-- Do not infer capability from price, parameter count or provider.
-- Do not make organizational rank determine executor capability.
-- Do not equate "reasoning off" with lowest effort without adapter evidence.
-- Do not calibrate levels from unreliable historical traces.
-- Do not use a global cap that overrides deliberate high-capability tasks.
-- Do not require a benchmark campaign before adopting the abstraction.
-
-## Open decisions
-
-1. Canonical authoring vocabulary: terse L0..L4, or human labels with L-levels
-   only as internal representation?
-2. Unavailable minimum capability: default recommendation is promote upward
-   when budget permits; downgrade only by explicit opt-in.
-3. Registry ownership: recommended one semantic schema with adapter-owned
-   concrete entries.
-4. Qualification provenance: record why a model is admitted at a level, without
-   demanding statistically meaningful benchmarking.
-5. Dynamic local availability: Padmé must distinguish registered models from
-   currently loaded/available models.
-6. Tool competence remains a hard eligibility constraint, not part of the
-   ordinal capability score.
+- No harness-wide model registry.
+- No model capability matrix.
+- No benchmark-based automatic ranking.
+- No lifecycle/deprecation database.
+- No price optimizer in the harness.
+- No attempt to make provider effort controls semantically identical.
+- No assumption that worker rank implies task difficulty.
 
 ## Recommended first implementation slice
 
-Implement only the semantic types, registry schema, resolver dry-run and tests
-that reproduce today's routing. Do **not** change live model selection in the
-same PR.
+Implement the semantic vocabulary and a Claude adapter/mapping that reproduces
+today's behavior, plus tests proving that it does.
 
-That gives IDH the durable abstraction first. Team-lead rightsizing and
-cross-provider routing then become configuration/policy changes rather than
-rewrites of orchestration logic.
+Do not alter live model selection in the same change.
+
+That is enough to establish the portability boundary. OpenRouter, Padmé,
+Codex and Pi mappings can then be added independently without turning IDH into
+a model-management system.
