@@ -2,10 +2,12 @@
 Title: Tracing-Kieu: ticket hook runs erg validate on a directory, so tickets are never checked
 Created: 2026-09-24
 Author: claude
+Closed: Merged Tracing-Kieu#172 (fb33bb3): hook runs erg check (positive control fired), erg upgraded, PASS on master
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged Tracing-Kieu#172 (fb33bb3): hook runs erg check (positive control fired), erg upgraded, PASS on master
 --- body ---
 ## Context
 Audit finding C2 (`docs/2026-09-24-rules-coherence-audit.md`). The PostToolUse hook in `.claude/settings.json`

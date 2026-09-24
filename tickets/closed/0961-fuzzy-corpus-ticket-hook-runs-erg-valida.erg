@@ -2,10 +2,12 @@
 Title: fuzzy-corpus: ticket hook runs erg validate on a directory, so tickets are never checked
 Created: 2026-09-24
 Author: claude
+Closed: Merged fuzzy-corpus#63 (a7a0735): hook runs erg check, allow rules added, erg upgraded, PASS on main
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged fuzzy-corpus#63 (a7a0735): hook runs erg check, allow rules added, erg upgraded, PASS on main
 --- body ---
 ## Context
 Audit finding C2 (`docs/2026-09-24-rules-coherence-audit.md`). The PostToolUse hook in `.claude/settings.json`

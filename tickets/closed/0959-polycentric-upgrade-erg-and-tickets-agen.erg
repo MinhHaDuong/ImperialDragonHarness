@@ -2,10 +2,12 @@
 Title: polycentric: upgrade erg and tickets/AGENTS.md (stale next-free-ID renumber advice)
 Created: 2026-09-24
 Author: claude
+Closed: Merged polycentric_activity#205 (b509d0c): erg 63b5e92, AGENTS.md identical, erg check PASS on main
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged polycentric_activity#205 (b509d0c): erg 63b5e92, AGENTS.md identical, erg check PASS on main
 --- body ---
 ## Context
 Audit finding A2 (`docs/2026-09-24-rules-coherence-audit.md`). Same stale `tickets/AGENTS.md:38` text as aedist.

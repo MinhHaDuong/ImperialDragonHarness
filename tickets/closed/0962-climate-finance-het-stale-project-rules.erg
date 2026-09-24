@@ -2,10 +2,12 @@
 Title: climate-finance-het: stale project rules after the harness split and ruff policy
 Created: 2026-09-24
 Author: claude
+Closed: Merged climate-finance-het#1480 (af950cc): pointers fixed, formatter bullet dropped; main-unprotected line verified true against the forge and kept
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged climate-finance-het#1480 (af950cc): pointers fixed, formatter bullet dropped; main-unprotected line verified true against the forge and kept
 --- body ---
 ## Context
 Audit findings A3, C1, B4 (`docs/2026-09-24-rules-coherence-audit.md`). Repo: MinhHaDuong/climate-finance-het.
