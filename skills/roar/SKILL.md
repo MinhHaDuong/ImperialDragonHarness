@@ -219,14 +219,15 @@ default branch — there are no remote branches nor merge requests to inspect.
        deleted anyway: find the commit in `git reflog` (or the deletion
        message prints its sha) and re-create the branch with
        `git switch -c <branch> <sha>`.
-    c. A worktree the session entered by path, or one it does not own (an
-       isolated agent's `agent-…` tree, another session's), cannot be removed
-       by `ExitWorktree`: `remove` is refused. Exit with `keep`, then — the
-       tree clean and its branch an ancestor of `origin/main` — run
+    c. `ExitWorktree` refuses `remove` on a worktree the session entered by
+       path rather than creating it (16 sessions, 2026-06-18 to 09-10). If
+       this session created that tree itself (`git worktree add`), exit with
+       `keep`, then — tree clean, branch an ancestor of `origin/main` — run
        `git worktree remove <path>` and `git worktree prune` from the primary
-       checkout. Do not stop at `keep`: that leaves the tree behind for
-       `/molt` to find. Seen in 16 sessions across 7 projects, June–September
-       2026.
+       checkout. A tree it did not create (another session's, an isolated
+       agent's `agent-…`) stays: exit with `keep` and leave it to `/molt`.
+       Branch ancestry cannot show that no live session stands in it, the
+       0355 failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `origin/main`.
     Skip if not in a worktree. When roar runs inside an `isolation:"worktree"`
