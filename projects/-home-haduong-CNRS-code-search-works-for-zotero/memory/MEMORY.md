@@ -138,3 +138,4 @@
 - [Upstream rebaseline recipe drift](project_upstream_rebaseline_recipe_drift.md) — baseline at v1.20.2 since 2026-09-17; the recipe still prescribes README rows dissolved on 09-04.
 - [padme is the rung host](project_padme_is_the_rung_host.md) — Zotero rungs and make check on padme under Xvfb, arenas on ~/data; doudou's load and /tmp trip the sitter's gates
 - [Record a ruling in the author's words](feedback_record_a_ruling_in_the_author_s_words.md) — my clarifying edit to DECISIONS escalated #624; ask and log verbatim instead
+- [Harness main blocked by memory edits](project_harness_main_blocked_by_memory_edits.md) — ~/.claude lags origin/main because memory is written there uncommitted; reconcile recipe, structural ticket still owed

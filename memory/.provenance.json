@@ -9464,6 +9464,15 @@
       "last_confirmed": "2026-09-24T12:25:38Z",
       "promoted": false,
       "backfilled": true
+    },
+    "project_harness_main_blocked_by_memory_edits": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-24T12:31:21Z",
+      "last_confirmed": "2026-09-24T12:31:21Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }

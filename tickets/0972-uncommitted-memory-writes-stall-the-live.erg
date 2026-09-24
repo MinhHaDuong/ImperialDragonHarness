@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Uncommitted memory writes stall the live harness checkout on every host
+Created: 2026-09-24
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-24T12:30Z Minh Ha-Duong created
+
+2026-09-24T12:30Z Minh-Ha-Duong note Filed from search-works-for-zotero /roar; padme reconciled by hand the same day
+--- body ---
+## Context
+Memory is written straight into the live `~/.claude` checkout (the only path the
+write guard allows) and left uncommitted. Upstream also edits the same files
+(MEMORY.md indexes, `/dream`, archived tickets), so `sync-local-main.sh` refuses to
+fast-forward and merged harness changes never reach running sessions.
+
+Observed twice in two days:
+- doudou, 2026-09-23: 165 commits behind; harness PR #968 merged but not live.
+- padme, 2026-09-24: 150 commits behind; `scripts/scoped-check.py` was missing, so
+  a search-works lane could run `make check-diff` only from a borrowed harness
+  worktree. The one blocking file was a locally appended log line on ticket 0207,
+  which upstream had closed and moved.
+
+Per-host manual reconciles (backup, restore, ff, re-apply) fix the symptom only.
+
+## Exit criteria
+- [ ] Memory written during a session reaches origin without leaving the live
+      checkout dirty, or the sync tolerates it (e.g. ff when dirty paths don't
+      collide, and a named report when they do)
+- [ ] A live checkout that falls behind origin/main is reported at session start
+      on every host, with the blocking paths named
+- [ ] `make check` passes
