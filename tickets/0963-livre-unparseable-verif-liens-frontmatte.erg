@@ -1,0 +1,23 @@
+%erg 0.1
+Title: livre: unparseable verif-liens frontmatter and stale AGENTS.md/rules-map claims
+Created: 2026-09-24
+Author: claude
+
+--- log ---
+2026-09-24T07:11Z claude created
+
+--- body ---
+## Context
+Audit findings C3, C5 (`docs/2026-09-24-rules-coherence-audit.md`). Repo: MinhHaDuong/livre-milliards-climat.
+- `.claude/skills/verif-liens/SKILL.md:3` fails YAML parse (unquoted
+  `Réseau requis : c'est`); harness `rules/authoring-skills.md` requires quoted
+  free-text frontmatter. Quote `description:` in all four project skills.
+- `AGENTS.md:8` lists a `deep-research` skill that does not exist.
+- `.claude/rules-map.toml:5` says the doctype/lang bodies do not exist yet; they do.
+Livre works directly on `main` by its own rule; a PR is still fine for this fix.
+
+## Exit criteria
+- [ ] All four `SKILL.md` frontmatters parse with `yaml.safe_load`
+- [ ] `AGENTS.md` names only skills that exist (harness or project)
+- [ ] `rules-map.toml` comment no longer claims the bodies are absent
+- [ ] Merged in the target repo; PR number logged here

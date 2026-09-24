@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Decide: climate merge gate needs exactly two review cycles
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit B1 (`docs/2026-09-24-rules-coherence-audit.md`). climate `.claude/hooks/check-reviews.sh` requires ≥2
+review cycles unless `review:trivial`; `AGENTS.md` allows "two review rounds
+at most". A clean first round still forces a second. Harness `/gaze` allows
+one retry; aedist up to three.
+
+## Decision needed
+Recommended: default minimum 1 cycle with an independent reviewer; keep 2 for a
+`review:standard` label set on risk. Alternative: keep 2 and record that a
+clean round is repeated deliberately.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] Hook, `review-checklist.md` and `AGENTS.md` agree

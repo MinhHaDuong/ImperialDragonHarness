@@ -1,0 +1,25 @@
+%erg 0.1
+Title: climate-finance-het: stale project rules after the harness split and ruff policy
+Created: 2026-09-24
+Author: claude
+
+--- log ---
+2026-09-24T07:11Z claude created
+
+--- body ---
+## Context
+Audit findings A3, C1, B4 (`docs/2026-09-24-rules-coherence-audit.md`). Repo: MinhHaDuong/climate-finance-het.
+- `.claude/rules/coding.md:22` says the formatter strips unused imports; the
+  harness `lint-on-edit.sh` runs ruff with `--unfixable F401,I001,UP`.
+- `coding.md:13` and `state-roadmap.md:9` point to harness files that no
+  longer exist (`coding.md`, `state-roadmap.md`; now `coding-python.md`, `state.md`).
+- `rules/git.md:12` asserts "`main` is unprotected"; harness `git.md` says
+  there is no direct-push path. Read the forge's branch protection and make the
+  line say what is true.
+Sequence after climate PR #1478 (ticket climate/1477), which edits `rules/git.md`.
+
+## Exit criteria
+- [ ] The formatter bullet is removed (or rewritten to match the harness hook)
+- [ ] Both pointers name existing harness files; ROADMAP gap stated if kept
+- [ ] The `main` protection sentence matches the forge setting read on the day
+- [ ] Merged in the target repo; PR number logged here

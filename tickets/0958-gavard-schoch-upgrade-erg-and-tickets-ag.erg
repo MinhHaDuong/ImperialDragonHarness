@@ -1,0 +1,25 @@
+%erg 0.1
+Title: gavard-schoch: upgrade erg and tickets/AGENTS.md (stale next-free-ID renumber advice)
+Created: 2026-09-24
+Author: claude
+
+--- log ---
+2026-09-24T07:11Z claude created
+
+--- body ---
+## Context
+Audit finding A2 (`docs/2026-09-24-rules-coherence-audit.md`). Same stale `tickets/AGENTS.md:38` text as aedist.
+Repo: MinhHaDuong/gavard-schoch-2026-comment.
+
+## Actions
+Copy the harness `tickets/erg` (rev 63b5e92 or later) into the repo, then run
+plain `tickets/erg init` (no `--force`: it refreshes `tickets/AGENTS.md` and
+preserves a locally edited `.ergrc`). Verified on a scratch copy of aedist
+2026-09-24: AGENTS.md becomes byte-identical to the harness copy, `erg check`
+passes.
+
+## Exit criteria
+- [ ] `tickets/AGENTS.md` byte-identical to the harness copy
+- [ ] `tickets/erg version` reports rev 63b5e92 or later
+- [ ] `tickets/erg check tickets/` passes
+- [ ] Merged in the target repo; PR number logged here

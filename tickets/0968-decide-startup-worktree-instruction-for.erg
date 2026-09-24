@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Decide: startup worktree instruction for repos that work on main (livre)
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit B2 (`docs/2026-09-24-rules-coherence-audit.md`). `scripts/on-start.sh` tells every project to enter a
+worktree first. livre `AGENTS.md` says "Travail direct sur main" and sets
+`worktree.bgIsolation: none`; harness `git.md` § Prose workpackages exempts
+manuscript prose in paper repos, but the hook text does not.
+
+## Decision needed
+Recommended: the hook stays silent when the project declares the opt-out
+(`bgIsolation: none` or a one-line marker), and says so in one declarative
+line. Alternative: keep the instruction and let AGENTS.md override it.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] A livre session start no longer contradicts livre's AGENTS.md
