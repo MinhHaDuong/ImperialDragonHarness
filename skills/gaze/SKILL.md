@@ -372,10 +372,10 @@ with its link integrity checked on MR 136, and a catch the prose panel missed
 on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
 `/simplify` is the other built-in slash
 command, and it stays a direct invocation **by decision**: ticket 0349 proposed
-Agent-WRAPping it and was closed wontfix on 2026-07-14 — the worktree-identity
-guard works as designed and the fallback functions. So `/simplify` runs in the
-fork's own cwd — a sibling worktree, not review-<pr> — the guard denies its
-Edit/Write, and it applies fixes via Bash. That is the design, not a gap.
+Agent-WRAPping it and was closed wontfix on 2026-07-14 — the fallback
+functions. So `/simplify` runs in the fork's own cwd — a sibling worktree, not
+review-<pr> — and when an Edit/Write into review-<pr> is refused there, it
+applies fixes via Bash. That is the design, not a gap.
 Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`

@@ -7,9 +7,9 @@
 #                           values assigned literally, GUARD_* keys refused.
 #
 # The untrusted project file must never be executed and must never set a
-# GUARD_*-namespaced variable, or a project-controlled .env could forge the
-# per-process guard nonce (GUARD_ALLOW_PRIMARY_EDIT) or run arbitrary shell via
-# BASH_ENV (ticket 0323, residual 2).
+# GUARD_*-namespaced variable, or a project-controlled .env could forge a
+# harness-guard override or run arbitrary shell via BASH_ENV (ticket 0323,
+# residual 2).
 #
 # Harness idiom: run bash-env.sh in an isolated subprocess with a controlled
 # HOME (so the real ~/.claude/.env is never read) and a controlled project dir

@@ -141,7 +141,7 @@ default branch — there are no remote branches nor merge requests to inspect.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
 
-   **In a worktree session, this write is refused — defer it until after step 9.** The `projects/*/memory/**` carve-out is documented, and the harness's own path guard does exempt it, but a separate platform-native Edit/Write guard tied to the session's tracked worktree also fires and has no memory exemption (`rules/workflow.md` § Worktree paths). Reflect and decide *what* to save here; perform the write once step 9 has returned the session to the primary checkout. The failure is silent in the losing direction: a denied write reads like "memory is unavailable in this context", the natural response is to put the lesson in the final message instead, and after step 9 removes the worktree nothing distinguishes a lost lesson from a session that had none (ticket 0880, observed 2026-09-08 — three entries survived only because the write was retried after the exit, which nothing had asked for).
+   **In a worktree session, this write is refused — defer it until after step 9.** The platform-native Edit/Write guard tied to the session's tracked worktree refuses it and has no memory exemption (`rules/workflow.md` § Worktree paths). Reflect and decide *what* to save here; perform the write once step 9 has returned the session to the primary checkout. The failure is silent in the losing direction: a denied write reads like "memory is unavailable in this context", the natural response is to put the lesson in the final message instead, and after step 9 removes the worktree nothing distinguishes a lost lesson from a session that had none (ticket 0880, observed 2026-09-08 — three entries survived only because the write was retried after the exit, which nothing had asked for).
 
    **In a BACKGROUND session, step 9 does not unblock it either — use a fresh
    worktree and its own PR.** You do not need to know your own mode to apply
@@ -194,8 +194,7 @@ default branch — there are no remote branches nor merge requests to inspect.
        Removes only `.panel/` and `build/panel-head/` review scratch first,
        then refuses (exit 1) on every other uncommitted/untracked file —
        including a fresh ticket draft `tickets/erg new` wrote but never
-       committed. The `Bash(git worktree remove*)` PreToolUse matcher does NOT
-       fire on `ExitWorktree`, so this is the only gate. If it blocks, commit
+       committed. It is the only gate before removal. If it blocks, commit
        (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See tickets
        0174 and 0948.
     b. Call `ExitWorktree` with action `remove`. When the pre-check

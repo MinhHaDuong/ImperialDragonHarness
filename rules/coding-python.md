@@ -10,7 +10,7 @@ last-reviewed: 2026-08-14
 Style:
 - Built-in generics: `list[str]`, `dict[str, int]`, `str | None`. Never `from typing import List, Dict, Tuple, Optional`.
 - `X | Y` union syntax, not `Union[X, Y]`. No `from __future__ import annotations`.
-- Imports grouped at the top of the file; keep only imports that are used. Ruff flags unused imports (F401) and unsorted blocks (I001) via the post-edit hook, but it only *reports* — it does not auto-delete or reorder (`--unfixable F401,I001,UP`), so an import that is briefly unused while you wire up its first use is safe; finish the usage and the report clears.
+- Imports grouped at the top of the file; keep only imports that are used. Ruff flags unused imports (F401) and unsorted blocks (I001); run `ruff check` before committing, since nothing lints on edit and the ruff adherence test is the gate.
 - No ABC classes. Use Protocol for structural subtyping if needed.
 - Type hints where they clarify intent. Skip where they add noise.
 - Assertions at system boundaries. Trust internal code.
