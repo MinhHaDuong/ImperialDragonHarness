@@ -2,11 +2,13 @@
 Title: Uncommitted memory writes stall the live harness checkout on every host
 Created: 2026-09-24
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1011
 
 --- log ---
 2026-09-24T12:30Z Minh Ha-Duong created
 
 2026-09-24T12:30Z Minh-Ha-Duong note Filed from search-works-for-zotero /roar; padme reconciled by hand the same day
+2026-09-24T14:19Z Minh Ha-Duong closed — autoclosed — PR #1011
 --- body ---
 ## Context
 Memory is written straight into the live `~/.claude` checkout (the only path the
