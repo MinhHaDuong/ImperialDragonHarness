@@ -1,43 +1,39 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-17T13:05Z
+Last updated: 2026-09-24T10:16Z
 
 ## North star
 
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-17T13:05Z · as of becbcf4f -->
+<!-- generated 2026-09-24T10:16Z · as of 0947ecd0 -->
 
-**Tickets:** 38 ready · 25 blocked — `erg ready tickets/` for full list
-  next: 0207 Agnostic CLI reviewer seat — one config, OpenRo… · 0392 Round 1 fans out the full review panel regardle…
-**In flight:** no open PRs · CI main: success
+**Tickets:** 24 ready · 21 blocked — `erg ready tickets/` for full list
+  next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
 **Recent (first-parent):**
-  becbcf4f Merge pull request #960 from MinhHaDuong/t0953-adherence-runner
-  1bd2a743 Merge pull request #963 from MinhHaDuong/zotero-memory-2026-09-17
-  4347d87b Merge pull request #962 from MinhHaDuong/erg-upgrade-63b5e92
+  0947ecd0 Merge pull request #1006 from MinhHaDuong/claude/harness-repo-rules-coherence-83hnra
+  bbde4615 Merge pull request #1005 from MinhHaDuong/claude/harness-repo-rules-coherence-83hnra
+  0e67041f Merge pull request #1004 from MinhHaDuong/claude/harness-repo-rules-coherence-83hnra
 
 ## Resume point
 
-**2026-09-17, afternoon — the IDH raid is merged, the tree is swept, nothing is
-half-written.** Landed today: 0950 (#961, the deps guard now sees bundled
-skills and excludes `skills/synced/`, a runtime directory that stays untracked
-and unignored), 0953 (#960, verify-adherence uses the project's declared
-verification entry point, merged after rebase without the gaze and verify-gate
-comments its raid session wanted to post), the erg helper at rev 63b5e92
-(#962), and #947. Swept: 33 stale worktrees across this repo, git-erg and
-search-works-for-zotero, each probed before removal; `memsweep-work` abandoned
-after measurement — its only residue against `main` was the deletion of seven
-git-erg memories the later dream consolidation had kept, which `/dream` owns.
+**2026-09-24 — directive-coherence audit done, train closed (0956–0971).** The
+harness rules and skills were audited against eleven project repos
+(`docs/2026-09-24-rules-coherence-audit.md`, final disposition at its end).
+Landed across repos: climate's keystore migration with two review-found
+security fixes (climate #1478); erg and `tickets/AGENTS.md` upgraded in five
+repos (re-run `erg init`, a binary copy does not upgrade the conventions file);
+two dead ticket hooks revived; stale project rules fixed; search-works merge
+authority aligned with the harness (#628). New harness capability (0971, #1004):
+`resident_census.py --project DIR` counts a project's always-loaded text and
+the startup prompt warns above 12 000 chars or on a catch-all `paths:`; climate
+went 30 108 → 5 949, search-works 19 713 → 11 649. The worktree rule is now
+stated by kind of work, prose edited in place, the author edits only in their
+own checkout and agents carry the sync (0968, #1006).
 
-Start here: `/hunt 0945`. The ticket carries its own complete contract — Imagine
-pass, Plan, feasibility verdict, and both settled author decisions. Do not
-re-plan it; implement what is written, and if something in it looks wrong, say
-so rather than deviating silently. **Wave 1 is merged and verified**; 0945's
-`Blocked-by` is empty in the tree. **The dangerous file is
-`tests/test_bash_env_xtrace_silent.sh`**: removing its KEYS cases leaves a suite
-that passes while testing nothing; its replacement case and both controls are
-specified in the ticket, with a killing mutation for every case.
+Nothing is half-written. Not yet exercised live: a path-scoped project rule
+loading in a real session, and `/merge` under search-works' new rule.
 
 Owed to the author, outside any diff and not blocking 0945:
 
@@ -53,7 +49,7 @@ Owed to the author, outside any diff and not blocking 0945:
 (none)
 
 ## Next actions
-- **Secrets off ambient residency: wave 1 merged, 0945 planned and unstarted** (2026-09-16, tracker 0942). `bash-env.sh` exported six live credentials into every non-interactive bash, and a plain `bash -x` printed all six to stderr — closed for the trace channel by 0939, which added an xtrace guard and a sentinel suite. The residency itself is what 0942 removes. **Merged:** 0943 (`peer_review.py`, PR #942) and 0944 (`update-publist`, PR #941) now resolve at point of use from `~/.config/keys/`, porting the pattern ticket 0393 already built for reviewer seats. Both closed; `make check` 996 on main. **0945 is next and is fully planned in its own body** — line ranges for the four removable blocks, a suite-by-suite verdict on the nine-suite test corpus, the replacement xtrace case with both its controls, and a named killing mutation for every case. Two author decisions are settled in it: `KEYS=` removed outright with no shim, and `KEYS` added to the protected-name denylist. `Blocked-by` is empty in the tree, verified, not merely in the header. **Operator acts still owed, outside any diff**: rotate the six values that a `bash -x` exposed (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `HAL_ID`, `HAL_PASSWORD`, `KEYS`), remembering that `~/.codex/auth.json` holds its own copy of the OpenAI key, and decide the fate of `scripts/projects.json`, orphaned when the dead claude-agent setup script was deleted. `anthropic` was removed from `KEYS` on 2026-09-16 (no consumer read it) and the `openrouter.env.bak` second copy deleted after checking it held nothing unique. **0947 carries the wave's own finding**: the reference implementation in `reviewers.sh` now lags both its ports on six defects — CRLF, failure misattribution, no size cap, an ambient override naming a file that gets sourced, an over-wide name validation — because each port fixed only what its own red team happened to find. 0946 covers one of them. The transferable lesson is in memory: twenty-one review agents missed the one defect that would have shipped, because all of them shared the author's environment and CI did not.
+- **Secrets off ambient residency: 0945 merged** (#955; tracker 0942). `bash-env.sh` loads no credential and refuses `KEYS`; consumers read `~/.config/keys` at point of use. 0955 (refuse credential-shaped names) is filed, not implemented.
 - **Memory design at v7, train realigned and merged; implementation not started** (2026-09-11, #906 then #904). The acceptance review verdict was *accept with four conditions*, all §12.1 gate-definition gaps — none touched the architecture. v7 closes them: a predicate-safety row whose sentinel separates "did not execute" from "did not look"; a row for a revision change at constant UUID across G/C, the invariant the whole construction exists for and which three neighbouring rows each missed; the native-write row split into a structural assertion on *declared* disjoint roots plus a fixture with no model in the loop; and two compiler invariants replacing absence-shaped rows no removable mechanism could fail. The table's preamble is now its own acceptance condition. **One row is known red and this is the standing item**: disjoint roots cannot hold while the runtime's declared native root is `~/.claude/projects/<slug>/memory/` and IDH's own 116-body store sits inside it. **The author settled the roots on 2026-09-16 (0909, PR #944) and it reverses 0920's premise**: harness project memory and collective memory both stay central, in `~/.idh`, separated from each other — so relocating the repository out of `~/.claude` is the remedy, not an impossibility, and two intra-repo renames do not clear the row. 0920 and 0923 still carry the old wording and must be re-read before either is picked up. Probed the same day: the runtime follows a symlinked `rules/` and a symlinked `CLAUDE.md`; the memory probe's own positive control never fired, so that layer is unknown, not negative. **Names are settled** (v7 §17): `memory/`, `memory-shared/`, `shared-snapshot/`, package and CLI `hoard`, verbs `assay`/`reckon`/`seal`/`sift`/`shed`/`disown`/`weigh`; rationale and rejects in the nomenclature note. A Fable plan review found eight items, all applied — the two material ones were the unowned red row above and 0923's live smoke, which had no negative control and no observation surface the adapter did not itself author while 0924 assumed it inherited one. Foundation tickets 0911 and 0917 are unblocked and nothing is started. The v2 machinery measured on 2026-09-11 — 945 live bodies, 651 tracked in provenance so 308 orphaned, 3 promoted, decay reaching 3 of 945 — is what v7 replaces, not a defect to fix in place; 0913 retires it.
 - **Slimming pass done, portage next** (2026-09-09, tickets 0881-0884, ~11 600 lines removed). A usage census over 3,42 GB of local session traces — all repositories — drove four merged cuts: eleven never-invoked skills reduced to seven, the nightbeat block removed entire (its scheduler had been uninstalled for months), 31 dead permission rules dropped. **`HANDOFF-2026-09-09.md` carries the full state**: numbers behind each decision, three arbitrations that remain the author's, five identified-but-unstarted threads. `scripts/census/` holds the instruments; re-running them a month out is how the cut gets verified.
 - **Rules-tree residency: mechanism isolated, trimmed, capped** (2026-09-09, 0572). The runtime loads `~/.claude/rules/**.md` itself — `paths:` frontmatter makes a body conditional, its absence makes it resident in every session of every project; the pointer-table design was never in force. Scoping the path-expressible bodies, then cutting `workflow.md` and `git.md` by half, took the **rules tree** 28 400 → 8785 tokens; `tests/test_rules_resident_budget.py` caps it at 36000 chars. That tree is not the whole resident preamble: `CLAUDE.md` + its `@` chain (9646 chars) and each project's `MEMORY.md` (worst 26 531) were ungated and grew ×4.3 and ×3.6 in three months — `tests/test_resident_preamble_budget.py` ratchets both since 2026-09-10, and the real per-session floor is ~65 900 chars. Runtime specifics now sit alone in `rules/claude-code.md` — **what an adapter must inject is exactly the resident set, minus that file**. An independent Fable pass found eight contradictions in the two files; four fixed, two recorded (0800), evicted incidents kept in 0572. **Author review accepted 2026-09-10:** retain the cuts with three targeted restorations — questions only when author input is needed, null conclusions limited to the tested scope, and the no-avian-analogy rule resident for conversations too. 0572 is complete. Live loading-canary verification on the author's machine remains unverified; this acceptance does not claim it was run. The seven situation-scoped bodies are gone: four were file-triggered (scoped by `paths:`), three were task-triggered and became the skills `/pdf-finish`, `/cut-prose`, `/submission-event`. What stays resident is the core plus `claude-code.md`, which the adapter skips.

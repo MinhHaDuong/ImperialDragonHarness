@@ -9419,6 +9419,33 @@
       "last_confirmed": "2026-09-17T16:00:42Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_erg_binary_refresh_is_not_init": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-24T10:16:55Z",
+      "last_confirmed": "2026-09-24T10:16:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_permission_needs_review_and_author_words": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-24T10:16:55Z",
+      "last_confirmed": "2026-09-24T10:16:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_path_scoped_rules_miss_bash_driven_work": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-24T10:16:55Z",
+      "last_confirmed": "2026-09-24T10:16:55Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
