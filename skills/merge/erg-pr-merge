@@ -56,9 +56,7 @@ fi
 # self-contained by design. Ticket 0302 kept this copy inline (not a shared
 # `scripts/lib/…` helper) for that reason: sourcing across the scripts/↔skills/
 # boundary would couple this standalone skill to the scripts tree and, under
-# `set -euo pipefail`, turn a missing lib into an abort. It stays byte-identical
-# to `_in_worktree()` in ~/.claude/scripts/pretooluse-worktree-path-guard.sh,
-# pinned by tests/test_worktree_identity_predicate_inline.py.
+# `set -euo pipefail`, turn a missing lib into an abort.
 in_worktree() {
     local cwd top name prefix
     cwd=$(pwd -P)

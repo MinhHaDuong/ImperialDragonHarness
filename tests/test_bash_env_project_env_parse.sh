@@ -134,9 +134,8 @@ _assert_eq "project .env cannot set GUARD_ALLOW_PRIMARY_EDIT" \
     "$(_load_var "$EMPTY_HOME" "$P1" GUARD_ALLOW_PRIMARY_EDIT)" ""
 
 # --- (1b) the LEADING-UNDERSCORE guard override pair must NOT be set -----------
-# pretooluse-worktree-path-guard.sh reads _GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT
-# as an unconditional worktree-path override; a project .env forging both to equal
-# values would bypass the deny guard. The GUARD_* refusal must also catch _GUARD_*.
+# A guard override is a harness-guard knob whatever its spelling; the GUARD_*
+# refusal must also catch the leading-underscore _GUARD_* form.
 P1B="$WORK/p1b"; mkdir -p "$P1B"
 printf '_GUARD_WORKTREE_ROOT=/x\n_GUARD_PRIMARY_ROOT=/x\n' > "$P1B/.env"
 _assert_eq "project .env cannot set _GUARD_WORKTREE_ROOT" \

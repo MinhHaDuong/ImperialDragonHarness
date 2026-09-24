@@ -2,7 +2,6 @@
 
 Exercises:
   - scripts/worktree-salvage.sh         — commit + push WIP before removal
-  - scripts/guard-worktree-remove-wip.sh — PreToolUse guard blocking removal on WIP
   - scripts/worktree-gc.sh              — GC stale worktrees (any path/name)
                                           on upstream-gone branches; rails:
                                           clean tree, gone branch, not the
@@ -15,7 +14,6 @@ Exercises:
                                           the 0173 draft (ticket 0174).
 """
 
-import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -114,72 +112,6 @@ def test_salvage_clean_tree_is_noop(origin):
 def test_salvage_missing_arg_errors(origin):
     res = run([str(SCRIPTS / "worktree-salvage.sh")], check=False)
     assert res.returncode == 2
-
-
-# --------------------------------------------------------------------------- #
-# guard-worktree-remove-wip.sh
-# --------------------------------------------------------------------------- #
-
-def _guard(cmd, cwd=None):
-    body = {"tool_name": "Bash", "tool_input": {"command": cmd}}
-    if cwd is not None:
-        body["cwd"] = str(cwd)
-    payload = json.dumps(body)
-    return subprocess.run(
-        ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input=payload, capture_output=True, text=True,
-    )
-
-
-def test_guard_blocks_remove_with_wip(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-dirty", dirty=True)
-    res = _guard(f"git worktree remove --force {wt}")
-    assert res.returncode == 2
-    assert "uncommitted WIP" in res.stderr
-
-
-def test_guard_allows_remove_when_clean(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ok", dirty=False)
-    res = _guard(f"git worktree remove {wt}")
-    assert res.returncode == 0
-    assert res.stderr == ""
-
-
-def test_guard_ignores_unrelated_command(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-x", dirty=True)
-    # Not a worktree-remove command — must not block even with a dirty path.
-    res = _guard(f"git worktree list {wt}")
-    assert res.returncode == 0
-
-
-def test_guard_allows_nonexistent_path():
-    res = _guard("git worktree remove /no/such/worktree/path")
-    assert res.returncode == 0
-
-
-def test_guard_resolves_relative_path_against_json_cwd(origin):
-    """A relative path should resolve against the PreToolUse JSON .cwd, not
-    the hook's own cwd. Otherwise dirty removes via relative paths slip past."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-rel", dirty=True)
-    # Command uses a relative path; cwd is primary's parent (the tmp dir).
-    res = _guard(f"git worktree remove --force {wt.name}", cwd=wt.parent)
-    assert res.returncode == 2
-    assert "uncommitted WIP" in res.stderr
-
-
-@pytest.mark.integration
-def test_guard_handles_malformed_json():
-    """Bad JSON on stdin should exit cleanly, not abort the script with set -e."""
-    res = subprocess.run(
-        ["bash", str(SCRIPTS / "guard-worktree-remove-wip.sh")],
-        input="not json{", capture_output=True, text=True,
-    )
-    assert res.returncode == 0
-    assert res.stderr == ""
 
 
 # --------------------------------------------------------------------------- #
