@@ -9923,6 +9923,15 @@
       "last_confirmed": "2026-09-24T13:57:16Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_observatory_unpublished_no_url_compat": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-24T16:22:38Z",
+      "last_confirmed": "2026-09-24T16:22:38Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
