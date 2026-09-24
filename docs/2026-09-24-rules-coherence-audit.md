@@ -70,3 +70,14 @@ gavard-schoch carry no local rules that could conflict.
 Structural lesson: adopters refresh the `erg` binary without re-running
 `erg init`, so the conventions file silently lags the tool. The upgrade step
 is `erg init`, not a binary copy.
+
+## Disposition (2026-09-24, end of day)
+
+- **A1** fixed: climate #1478, plus two review-found defects fixed before merge (thread-shared env key; key file sourced as shell).
+- **A2, C2** fixed: erg upgrade and `erg init` in aedist #1176, gavard-schoch #5, polycentric #205, Tracing-Kieu #172, fuzzy-corpus #63.
+- **A3, C1** fixed: climate #1480. **B4** verified true (climate `main` unprotected), kept.
+- **A4** fixed (author: harness wins): aedist #1176. **A5** fixed (author: harness wins): search-works #628; finding narrowed, since under `/raid` the orchestrator already was the coordinator.
+- **B1** kept (author: no). **B6** dropped: quickpr never writes a close claim.
+- **C3, C5** fixed: livre #1. **C4** fixed (author: delete the duplicate): livre #1. **C6** fixed: harness #1000.
+- **Open:** B2 as 0968 (reframed: the author's hand-edit path), B7 as 0971 (proposal to budget the project channel).
+- **Noted only:** B3, B5.
