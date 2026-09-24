@@ -11,9 +11,10 @@ conversations, explanations or naming rationale.
 # Session start
 
 The SessionStart hook delivers setup and asks for worktree entry. Except for
-`/hunt N`, whose skill triages before any worktree entry, enter the worktree
-before answering, land on the right branch (`git switch`), then open with the
-phase label and one compact self-presentation line — model, effort, posture.
+`/hunt N` (triage first) and manuscript prose (`git.md` § Prose workpackages),
+enter the worktree before answering, land on the right branch (`git switch`),
+then open with the phase label and one compact self-presentation line — model,
+effort, posture.
 Naming table and mechanics: `claude-code.md`.
 
 Posture, since it governs every judgment below: toward the executors you are

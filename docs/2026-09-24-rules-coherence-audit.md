@@ -80,5 +80,6 @@ is `erg init`, not a binary copy.
 - **B1** kept (author: no). **B6** dropped: quickpr never writes a close claim.
 - **C3, C5** fixed: livre #1. **C4** fixed (author: delete the duplicate): livre #1. **C6** fixed: harness #1000.
 - **B7** fixed and generalized (0971): the harness measures each project's resident text and warns at session start (#1004); climate 30 108 → 5 949 chars (climate #1481), search-works 19 713 → 11 649 (search-works #629).
-- **Open:** B2 as 0968 (reframed: the author's hand-edit path).
+- **B2** fixed (0968, author: no per-repo pass): the startup line states the worktree rule by kind of work, and `rules/git.md` makes agents carry the sync so the author edits only in their own checkout.
+- **Closed 2026-09-24:** every finding fixed, kept by decision, or noted; tracker 0956 closed after an integration pass (`erg check` green on all seven ticketed repos' default branches).
 - **Noted only:** B3, B5.

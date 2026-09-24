@@ -9,8 +9,8 @@ files; the tool names that provide them belong here.
 ## Entering the session
 
 The SessionStart hook prints the worktree instruction and the effort setting.
-Except for `/hunt N` (the carve-out below), call `EnterWorktree` before
-answering, then `git switch <branch>`.
+Except for `/hunt N` (below) and manuscript prose (`git.md`), call
+`EnterWorktree` before answering, then `git switch <branch>`.
 
 | Context | Worktree name | Phase |
 |---------|---------------|-------|
