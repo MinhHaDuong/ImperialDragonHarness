@@ -219,6 +219,104 @@ launch schemas, availability and conversion to legal invocations.
 Thus `rules/claude-code.md` remains valuable, but as adapter knowledge rather
 than IDH's model ontology.
 
+## Churn tolerance
+
+Model churn is a first-class design requirement, not merely a portability
+benefit. No durable IDH orchestration artifact should depend on the continued
+existence of a named model.
+
+There are three distinct kinds of churn:
+
+1. **model churn** — a model appears, improves, is renamed, deprecated or
+   withdrawn;
+2. **provider/runtime churn** — effort controls, reasoning semantics, launch
+   schemas or tool support change;
+3. **capability churn** — IDH's engineering judgment about what a model is
+   trustworthy for changes with experience.
+
+The first and third belong in the registry; the second belongs in adapters.
+Skills and agent profiles should normally remain unchanged.
+
+For example, replacing one generation of a cloud model with another should be a
+registry edit. Likewise, if a new local model on Padmé becomes trustworthy for
+L2 coding, qualifying that registry entry makes it eligible for all compatible
+L2 coding requests without editing `raid`, `hunt`, `team-lead` or other
+orchestration logic.
+
+### Capability facets
+
+A single scalar level is useful as the minimum portable contract but too coarse
+for churn management. Models often have uneven strengths. The registry should
+therefore support a general level plus optional capability facets:
+
+```yaml
+models:
+  padme/<model>:
+    backend: local
+    runtime: llama.cpp
+    capability:
+      general: L2
+      coding: L2
+      research: L1
+      review: L2
+      tool_use: L1
+    constraints:
+      structured_output: true
+      context_tokens: 65536
+```
+
+A task trait selects the relevant facet when present; otherwise the conservative
+general level applies. Missing facets must not be optimistically inferred.
+
+This allows a new model to enter cautiously — for example L3 coding but only L1
+review — and be promoted facet by facet as engineering confidence changes.
+Capability assignments remain qualifications, not benchmark rankings.
+
+### Lifecycle state
+
+Registry entries should carry lifecycle independently of capability:
+
+```yaml
+status: experimental | active | deprecated | unavailable
+replaced_by: <optional registry key>
+```
+
+Resolver semantics:
+
+- `active` — normally eligible;
+- `experimental` — eligible only when policy explicitly permits it;
+- `deprecated` — fallback only, with replacement surfaced in traces;
+- `unavailable` — never selected.
+
+A provider retirement therefore changes registry state rather than skills.
+Dynamic local availability is separate again: a Padmé model can be registered
+and qualified but not currently loaded/available.
+
+### Stable and volatile layers
+
+The intended churn boundary is:
+
+```text
+skills / agents
+  semantic requirement: L2 + economy + coding
+        |
+        v
+portable policy                 stable
+        |
+        v
+model registry                  volatile: model/capability/lifecycle churn
+        |
+        v
+runtime adapter                 volatile: provider API/runtime churn
+        |
+        v
+Claude / OpenRouter / Padmé / ...
+```
+
+The resolver trace should record enough information to reconstruct decisions
+after the registry changes: requested semantic profile, registry version or
+commit, selected concrete model/backend, lifecycle state and effective effort.
+
 ## Migration path
 
 ### Phase 0 — representation only
