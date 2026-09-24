@@ -220,9 +220,11 @@ restore_reconciled() {
     return 0
 }
 
-# Abandon a reconcile midway: restore, and report nothing absorbed.
+# Abandon a reconcile midway: restore, and report nothing absorbed. The list
+# is emptied once drained, so the caller's own restore does not repeat it.
 abandon_reconcile() {
     restore_reconciled "$1"
+    : > "$RECON/touched"
     recon_ident=0
     recon_union=0
     rm -f "$RECON/union"
