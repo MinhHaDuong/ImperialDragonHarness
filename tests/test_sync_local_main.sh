@@ -327,6 +327,105 @@ else
     _fail "concurrent blocks must not merge their path lists (got: $out)"
 fi
 
+# --- cases 18-22: converged local state no longer stalls the sync (ticket 0972).
+# Memory is written uncommitted into the live checkout and later lands on origin
+# through a PR, so the fast-forward meets the very same bytes it is about to
+# write. Those collisions carry no information and must not block; anything that
+# does carry information must still refuse, with every file left as it was.
+
+# Helper: push one commit from the seed that writes <path> with <content>.
+_push() {
+    local seed="$1" path="$2" content="$3"
+    ( cd "$seed" && mkdir -p "$(dirname "$path")" && printf '%s' "$content" > "$path" &&
+      git add "$path" && git commit --quiet -m "push $path" && git push --quiet origin main )
+}
+
+# case 18: untracked file byte-identical to the incoming one → synced.
+_setup identuntracked
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/identuntracked-seed" p/memory/note.md $'same body\n'
+NEW=$(git -C "$SANDBOX/identuntracked-seed" rev-parse main)
+mkdir -p "$CLONE/p/memory" && printf 'same body\n' > "$CLONE/p/memory/note.md"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ "$(cat "$CLONE/p/memory/note.md")" = "same body" ] \
+   && [ -z "$(git -C "$CLONE" status --porcelain)" ] \
+   && echo "$out" | grep -q "identical"; then
+    _pass "an untracked file identical to the incoming one does not block the sync"
+else
+    _fail "identical untracked collision must be absorbed (got: $out)"
+fi
+
+# case 19: tracked edit byte-identical to the incoming version → synced.
+_setup identtracked
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/identtracked-seed" f.txt $'three\n'
+NEW=$(git -C "$SANDBOX/identtracked-seed" rev-parse main)
+printf 'three\n' > "$CLONE/f.txt"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ -z "$(git -C "$CLONE" status --porcelain)" ]; then
+    _pass "a tracked edit identical to the incoming version does not block the sync"
+else
+    _fail "identical tracked edit must be absorbed (got: $out)"
+fi
+
+# case 20: memory index appended on both sides → synced; the result is the
+# incoming index plus the local-only lines, left as an uncommitted edit.
+_setup unionidx
+_push "$SANDBOX/unionidx-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [gone](gone.md)\n'
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/unionidx-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [up](up.md)\n'
+NEW=$(git -C "$SANDBOX/unionidx-seed" rev-parse main)
+printf -- '- [a](a.md)\n- [gone](gone.md)\n- [mine](mine.md)\n' > "$CLONE/p/memory/MEMORY.md"
+out=$(bash "$SYNC" "$CLONE")
+expected=$'- [a](a.md)\n- [up](up.md)\n- [mine](mine.md)'
+if [ "$(_main_sha "$CLONE")" = "$NEW" ] \
+   && [ "$(cat "$CLONE/p/memory/MEMORY.md")" = "$expected" ] \
+   && echo "$out" | grep -q "union"; then
+    _pass "a memory index appended on both sides merges by union; upstream removals stay removed"
+else
+    _fail "memory index union merge (got: $out / $(cat "$CLONE/p/memory/MEMORY.md"))"
+fi
+
+# case 21: memory index where the local edit also deleted a line → still
+# refused, local edit intact (a deletion is a decision a union cannot make).
+_setup unionrefuse
+_push "$SANDBOX/unionrefuse-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [b](b.md)\n'
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/unionrefuse-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [b](b.md)\n- [up](up.md)\n'
+printf -- '- [a](a.md)\n- [mine](mine.md)\n' > "$CLONE/p/memory/MEMORY.md"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/p/memory/MEMORY.md")" = $'- [a](a.md)\n- [mine](mine.md)' ] \
+   && echo "$out" | grep -q "tracked modifications"; then
+    _pass "a memory index with a local deletion still refuses, edit intact"
+else
+    _fail "local deletion in a memory index must refuse (got: $out)"
+fi
+
+# case 22: an identical collision beside a genuine one → refused, and the
+# identical file is restored too: a failed sync leaves the checkout exactly as
+# it found it, rather than half-reconciled.
+_setup rollback
+bash "$SYNC" "$CLONE" >/dev/null
+( cd "$SANDBOX/rollback-seed" && printf 'same\n' > same.txt && printf 'theirs\n' > other.txt &&
+  git add same.txt other.txt && git commit --quiet -m c3 && git push --quiet origin main )
+printf 'same\n' > "$CLONE/same.txt"
+printf 'mine\n' > "$CLONE/other.txt"
+before=$(_main_sha "$CLONE")
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/same.txt")" = "same" ] \
+   && [ "$(cat "$CLONE/other.txt")" = "mine" ] \
+   && echo "$out" | grep -q "other\.txt" \
+   && ! echo "$out" | grep -q "same\.txt"; then
+    _pass "a genuine collision beside an identical one refuses and rolls the identical one back"
+else
+    _fail "partial reconcile must roll back and name only the genuine collision (got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi

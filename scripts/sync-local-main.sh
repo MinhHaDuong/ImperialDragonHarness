@@ -13,7 +13,9 @@
 # - fast-forward only: a diverged local default branch is reported, not moved;
 # - no working tree is discarded or stashed: when the default branch is
 #   checked out somewhere with conflicting local state, it is left untouched
-#   and reported.
+#   and reported. Local state that already converged with the incoming commits
+#   (byte-identical files, append-only memory indexes) is absorbed without
+#   losing a byte — see "Converged local state" below (ticket 0972).
 #
 # Always exits 0 (fit for hooks): staleness is reported on stdout, never
 # escalated to a failure that would break a session start or a merge flow.
@@ -151,6 +153,103 @@ refusal_cause() {
     printf '%s' "git refused: ${line:-no message} — nothing to clean here, re-run once the checkout is free"
 }
 
+# Converged local state (ticket 0972). Memory is written uncommitted into the
+# live checkout and reaches origin later through a PR, so a refused
+# fast-forward is usually refused by bytes it is about to write anyway. Two
+# shapes carry no information and are absorbed; every other refusal stands:
+#   - identical: a colliding file (untracked, or tracked with an unstaged edit)
+#     whose content is byte-identical to the incoming blob;
+#   - union: a memory index (`memory/MEMORY.md`) whose local edit only ADDED
+#     lines. It is reset for the fast-forward, then rewritten as the incoming
+#     index plus the local additions it lacks, left uncommitted as before.
+#     The local diff, not the whole local file, supplies the lines: re-adding
+#     the local copy of a line upstream removed would undo a sweep. A local
+#     deletion is a decision a union cannot make, so it refuses.
+# Every file touched is backed up first; if the retried fast-forward still
+# fails, all of them are restored and the ORIGINAL refusal is reported, so a
+# failed sync leaves the checkout exactly as it found it.
+RECON=""
+recon_ident=0
+recon_union=0
+
+# Lines the local edit added to <path> relative to HEAD; empty output plus
+# exit 1 when the edit also deleted a line.
+added_lines_only() {
+    git -C "$1" diff --no-color --no-ext-diff -U0 HEAD -- "$2" | awk '
+        /^@@/        { body = 1; next }
+        !body        { next }
+        /^-/         { deleted = 1; next }
+        /^\+/        { line = substr($0, 2); if (line != "") print line }
+        END          { exit deleted }'
+}
+
+reconcile_converged() {
+    local dir="$1" p incoming local_blob tracked n=0
+    RECON=$(mktemp -d)
+    : > "$RECON/touched"
+    while IFS= read -r p; do
+        [ -f "$dir/$p" ] && [ ! -L "$dir/$p" ] || continue
+        incoming=$(git -C "$dir" rev-parse --verify --quiet "refs/remotes/origin/$default:$p") || continue
+        if git -C "$dir" ls-files --error-unmatch -- "$p" >/dev/null 2>&1; then
+            tracked=1
+            git -C "$dir" diff --cached --quiet HEAD -- "$p" || continue   # staged: not ours to touch
+            ! git -C "$dir" diff --quiet -- "$p" || continue               # clean: not in the way
+        else
+            tracked=0
+        fi
+        local_blob=$(git -C "$dir" hash-object -- "$p")
+        n=$((n + 1))
+        if [ "$local_blob" = "$incoming" ]; then
+            cp -p "$dir/$p" "$RECON/$n"
+            printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched"
+            if [ "$tracked" = 1 ]; then
+                git -C "$dir" show "HEAD:$p" > "$dir/$p"
+            else
+                rm -f "$dir/$p"
+            fi
+            recon_ident=$((recon_ident + 1))
+        elif [ "$tracked" = 1 ] && [[ "/$p" == */memory/MEMORY.md ]] \
+             && added_lines_only "$dir" "$p" > "$RECON/$n.add"; then
+            cp -p "$dir/$p" "$RECON/$n"
+            printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched"
+            {   git -C "$dir" cat-file blob "$incoming"
+                git -C "$dir" cat-file blob "$incoming" | grep -Fvx -f - "$RECON/$n.add" || true
+            } > "$RECON/$n.union"
+            printf '%s\t%s\n' "$n" "$p" >> "$RECON/union"
+            git -C "$dir" show "HEAD:$p" > "$dir/$p"
+            recon_union=$((recon_union + 1))
+        fi
+    done < <(git -C "$dir" diff --name-only --no-renames "$local_sha" "$remote_sha")
+    [ $((recon_ident + recon_union)) -gt 0 ]
+}
+
+restore_reconciled() {
+    local dir="$1" n p
+    while IFS=$'\t' read -r n p; do
+        cp -p "$RECON/$n" "$dir/$p"
+    done < "$RECON/touched"
+}
+
+apply_unions() {
+    local dir="$1" n p
+    [ -f "$RECON/union" ] || return 0
+    while IFS=$'\t' read -r n p; do
+        cat "$RECON/$n.union" > "$dir/$p"
+    done < "$RECON/union"
+}
+
+recon_note() {
+    local parts=()
+    [ "$recon_ident" -gt 0 ] && parts+=("$recon_ident path(s) already identical upstream")
+    [ "$recon_union" -gt 0 ] && parts+=("$recon_union memory index(es) merged by union, local additions left uncommitted")
+    local IFS=';'
+    printf ' — absorbed %s' "${parts[*]}"
+}
+
+try_ff() {
+    LC_ALL=C git -C "$1" merge --ff-only --quiet "origin/$default" 2>&1 >/dev/null
+}
+
 # Where (if anywhere) is the default branch checked out? Refs are shared
 # across worktrees, so one sync covers them all.
 #
@@ -180,9 +279,17 @@ if [ -z "$co_path" ]; then
     else
         echo "sync-local-main: ref update of $default refused — left untouched"
     fi
-elif ff_err=$(LC_ALL=C git -C "$co_path" merge --ff-only --quiet "origin/$default" 2>&1 >/dev/null); then
+elif ff_err=$(try_ff "$co_path"); then
     echo "sync-local-main: $default fast-forwarded at $co_path ($local_sha -> $remote_sha)"
+elif reconcile_converged "$co_path" && ff_retry=$(try_ff "$co_path"); then
+    apply_unions "$co_path"
+    echo "sync-local-main: $default fast-forwarded at $co_path ($local_sha -> $remote_sha)$(recon_note)"
 else
+    # The retry's refusal names only the genuine blockers; the absorbed paths
+    # would send the operator after files that were never in the way.
+    [ -n "${ff_retry:-}" ] && ff_err=$ff_retry
+    [ -n "$RECON" ] && restore_reconciled "$co_path"
     echo "sync-local-main: could not fast-forward $default at $co_path, left untouched — $(refusal_cause "$co_path" "$ff_err")"
 fi
+[ -n "$RECON" ] && rm -rf "$RECON"
 exit 0
