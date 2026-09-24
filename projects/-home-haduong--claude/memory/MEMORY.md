@@ -127,3 +127,6 @@
 - [A memory entry lands as three things](feedback_memory_batch_lands_as_three_things.md)
 - [Rules crystallize from memory, not from a session](feedback_rules_crystallize_from_memory.md)
 - [A paraphrase drifts toward the argument](feedback_paraphrase_drifts_toward_the_argument.md)
+- [An erg binary refresh is not an erg init](feedback_erg_binary_refresh_is_not_init.md)
+- [Path-scoped rules miss CLI-driven work](feedback_path_scoped_rules_miss_bash_driven_work.md)
+- [A denied merge clears on evidence, not persistence](feedback_merge_permission_needs_review_and_author_words.md)
