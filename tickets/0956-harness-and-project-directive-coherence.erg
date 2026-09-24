@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Harness and project directive coherence: 2026-09-24 audit train
+Created: 2026-09-24
+Author: claude
+
+--- log ---
+2026-09-24T07:11Z claude created
+
+--- body ---
+## Context
+Tracker for the 2026-09-24 coherence audit of harness rules and skills
+against eleven project repositories. Observations, verification of in-flight
+PRs and ranked preconisations: `docs/2026-09-24-rules-coherence-audit.md`.
+Climate PR #1478 (climate ticket 1477) resolves finding A1 and is landed
+outside this train.
+
+## Children
+Autonomous (raid targets): 0957 aedist, 0958 gavard-schoch, 0959 polycentric
+(erg + tickets/AGENTS.md upgrade); 0960 Tracing-Kieu, 0961 fuzzy-corpus
+(broken validate hook + upgrade); 0962 climate stale rules (after #1478);
+0963 livre skill frontmatter and stale claims; 0964 harness stale comments.
+
+Author decisions (`needs-human`): 0965 aedist autonomous stance, 0966 swz merge
+authority vs /raid, 0967 climate review-cycle count, 0968 livre worktree
+opt-out at startup, 0969 aedist quickpr close claims, 0970 livre vendored
+index-source, 0971 climate architecture.md residency.
+
+## Exit criteria
+- [ ] Every child closed, or its decision logged and its follow-up filed
+- [ ] Integration review (`/roar` step 8): child diffs re-read, each target
+      repo's `erg check` / `make check` green on its default branch
+- [ ] Audit document updated with the final disposition of each finding

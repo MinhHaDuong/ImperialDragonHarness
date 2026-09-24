@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Decide: livre vendored copy of the harness index-source skill
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit C4 (`docs/2026-09-24-rules-coherence-audit.md`). livre `.claude/skills/index-source/` duplicates the harness
+skill under the same name; bodies differ only in the script path. It will
+drift. Vendoring may be deliberate: a cloud session has no `~/.claude`.
+
+## Decision needed
+Recommended: keep the vendored copy only if cloud use matters, and add a
+drift check against the harness copy; otherwise delete it. Renaming is the
+third option if the fork is meant to diverge.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] Either one copy remains, or the duplicate is drift-checked

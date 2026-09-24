@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Decide: climate architecture.md loads on every path
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit B7 (`docs/2026-09-24-rules-coherence-audit.md`). climate `.claude/rules/architecture.md` is scoped
+`paths: "**/*"`: 277 lines effectively resident, outside any harness budget
+test (`test_rules_resident_budget.py` covers `~/.claude/rules` only).
+
+## Decision needed
+Recommended: scope to the paths the body describes (`deliverables/**`,
+`scripts/**`, `Makefile`, `dvc.yaml`, `config/**`, `data/**`) and move the
+data-location paragraph into AGENTS.md if every session needs it.
+Alternative: accept residency and extend a budget test to project rules.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] Rule scoped, or residency budgeted

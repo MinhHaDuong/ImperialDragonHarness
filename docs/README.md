@@ -20,6 +20,7 @@ drafts* below.
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
 | `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
 | `2026-09-11-memory-implementation-plan.md` | V6 implementation train: dependencies, pilot milestone, rollout and deferred experiments |
+| `2026-09-24-rules-coherence-audit.md` | Harness ↔ project directive coherence audit of eleven repos: findings, in-flight PR check, ranked preconisations (tracker 0956) |
 | `2026-09-10-dragon-memory-design.md` | **Authoritative** design for the harness memory system — always the current version, v7 today |
 | `2026-09-10-dragon-memory-design-v6.md` | Frozen v6 — the predecessor the open memory tickets (0908–0925) were written against |
 | `2026-09-10-dragon-memory-design-nomenclature.md` | Settled nomenclature for the memory system — the vocabulary v7 and the open tickets use |

@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Decide: aedist quickpr auto-merge and ticket close claims
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit B6 (`docs/2026-09-24-rules-coherence-audit.md`). aedist `scripts/quickpr.sh` opens chore PRs with forge
+auto-merge, including `tickets/` and `.claude/`. Harness `git.md`: a direct
+forge merge silently skips `**Ticket:**` close claims.
+
+## Decision needed
+Recommended: quickpr refuses a PR that carries a `**Ticket:**` close claim (or
+runs `erg close` in the commit itself). Alternatives: retire quickpr; keep as is.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] quickpr cannot drop a close claim silently

@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Decide: search-works lanes never merge vs /raid Phase 7 merging
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit A5 (`docs/2026-09-24-rules-coherence-audit.md`). swz `AGENTS.md:177`: a lane never presses merge, not even
+on its own PR; the coordinator merges as PRs arrive. `/raid` Phase 7 merges
+APPROVED PRs itself and cannot see the local rule.
+
+## Decision needed
+Recommended: a per-repo declaration `/raid` reads (e.g. a `merge_authority`
+key in `.idh-checks.json`) that turns Phase 7 into "leave merge-ready and
+announce". Alternative: one sentence in `/raid` saying project rules may
+withdraw merge authority, enforced by reading AGENTS.md.
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] `/raid` honours the chosen mechanism; a raid on swz ends with open PRs

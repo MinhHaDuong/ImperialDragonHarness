@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Decide: aedist /raid never defers vs harness escalate-to-author
+Created: 2026-09-24
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-09-24T07:12Z claude created
+
+2026-09-24T07:12Z Claude label needs-human
+--- body ---
+## Context
+Audit A4 (`docs/2026-09-24-rules-coherence-audit.md`). aedist `AGENTS.md:60`: "In autonomous mode (`/raid`), the
+orchestrator never defers for human input … works around the issue." Harness
+`rules/workflow.md` escalation step 5 and `/raid` Phase 2 return intent changes
+(dropped or new exit criteria, expired premise) to the author.
+
+## Decision needed
+Recommended: keep the local stance for *how* questions; state that intent
+changes still return to the author. Alternative: aedist opts out of the drift
+guard entirely (the raid would then rewrite exit criteria unattended).
+
+## Exit criteria
+- [ ] Author decision logged here
+- [ ] aedist `AGENTS.md` (or `/raid`) edited to match
