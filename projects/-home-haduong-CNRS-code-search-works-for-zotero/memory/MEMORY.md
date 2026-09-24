@@ -139,3 +139,9 @@
 - [padme is the rung host](project_padme_is_the_rung_host.md) — Zotero rungs and make check on padme under Xvfb, arenas on ~/data; doudou's load and /tmp trip the sitter's gates
 - [Record a ruling in the author's words](feedback_record_a_ruling_in_the_author_s_words.md) — my clarifying edit to DECISIONS escalated #624; ask and log verbatim instead
 - [Harness main blocked by memory edits](project_harness_main_blocked_by_memory_edits.md) — ~/.claude lags origin/main because memory is written there uncommitted; reconcile recipe, structural ticket still owed
+- [Read the ticket log, not the body](feedback_read_the_ticket_log_not_the_body.md) — the log is append-only, so it is always newer; bodies drift behind their own refutations
+- [Author dictates by voice](feedback_author_dictates_by_voice.md) — his client transcribes; read messages as speech-to-text, answer in a listenable form
+- [Mail IMAP/SMTP access](reference_mail_imap_smtp_access.md) — Ouvaton and CNRS boxes reachable via curl --netrc; creds mirrored from Evolution keyring
+- [Gate fork returns without verdict](feedback_gate_fork_returns_without_verdict.md) — a fork's return text is not a verdict; read the PR page back before merging, re-run when empty
+- [gaze cost on a doc-only PR](feedback_gaze_cost_on_doc_only_pr.md) — an hour and twelve agents for no code; make check + /verify-gate is the path for governance-only diffs
+- [Clean room before live install](feedback_clean_room_before_live_install.md) — sitter ladder unit→smoke→Menagerie→clone→dogfood; clone rung before every live install, no release before he uses it

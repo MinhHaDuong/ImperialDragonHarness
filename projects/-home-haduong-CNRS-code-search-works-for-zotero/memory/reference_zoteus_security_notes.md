@@ -49,6 +49,10 @@ non-security half of a mixed review goes public; the security half goes through
 the private channel, and the two are written as separate documents so the split
 cannot be lost by accident.
 
+## Observability of the advisory
+
+The REST view of a repository security advisory does not expose its discussion: `GET .../security-advisories/<GHSA>/comments` returns `[]` even when comments exist (the 2026-09-15 follow-up is invisible to it), and `updated_at` does not move on a comment. Whether a comment was posted can only be read on the web page, in the author's browser. Status log for each round: `patches-<date>/STATUS.md` in the same directory; the 2026-09-23 round refreshed the patches against v1.21.0 (which fixed findings 2, 3, 5).
+
 Related: [[reference_zotero]], [[feedback_repo_prepares_upstream_it_ships_nothing]].
 
 ## Patches and how to tell whether the maintainer received them (2026-09-17)

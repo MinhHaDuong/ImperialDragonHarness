@@ -29,3 +29,7 @@ artifact present all along (ticket 0349). And never treat the empty `data/` as
 a reason to run Phase 1 in the primary checkout: on 0347 that bypassed the
 worktree's isolation and the DVC bookkeeping with it. See
 [[feedback_corpus_rerun_byte_compare]].
+
+## Paths and environment (moved from the index, 2026-09-24)
+
+Repo repo `~/CNRS/projets/actifs/climate-finance-het` (same path as doudou; `~/Climate_finance` is gone, checked 2026-09-22); `uv` at `~/.local/bin/uv` (prepend PATH non-interactively); torch `--extra cpu` (doudou) / `--extra cu130` (padme); cache config in `/etc/environment`.

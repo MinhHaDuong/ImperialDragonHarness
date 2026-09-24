@@ -1,11 +1,11 @@
 ---
 name: zotero-10-plugin-and-reindex
-description: "Zotero 10 facts learned building the full-text control plugin — manifest needs update_url, group libraries load lazily (use the async getter), no bulk reindex button, extraction speed 60–80 pages/s, the plugin's endpoints and client."
+description: "Zotero 10 facts learned building the full-text control plugin — manifest needs update_url, group libraries load lazily (use the async getter), no bulk reindex button, extraction speed 60–80 pages/s, the plugin's endpoints and client, and how to read document-worker version drift the changelog won't tell you."
 metadata: 
   node_type: memory
   type: reference
   originSessionId: b7159928-959f-4103-8860-e2c11cdefc7a
-  modified: 2026-09-03T10:27:30.610Z
+  modified: 2026-09-11T16:24:39.890Z
 ---
 
 Zotero 10.0.1, the author's build, 2026-09-02:
@@ -52,3 +52,55 @@ Zotero 10.0.1, the author's build, 2026-09-02:
 - Tool: `bench/zotero-fulltext-plugin/` + `bench/zotero_fulltext.py`
   (`status KEY…`, `reindex KEY… --wait`), merged PRs #189/#199.
   Related: [[fork-cwd-and-worktree-guard]].
+- **Zotero 10.0.2, 2026-09-11: the client changelog does not cover the
+  document-worker submodule.** `zotero.org/support/changelog` for 10.0.1/10.0.2
+  named only reader/Read-Aloud/full-text-*statistics* fixes — silence there is
+  not evidence the SDT extractor didn't change. To check, read the shipped
+  build's own stamps directly: `python3 -c "import zipfile,json;
+  z=zipfile.ZipFile('/opt/zotero7/app/omni.ja');
+  print(z.read('resource/document-worker/metadata.json').decode())"` (path is
+  per-install; find with `find / -name omni.ja` under the app dir, not the
+  profile). Between the 10.0 build (`20260817151751`, 2026-08-17) and 10.0.2
+  (`20260909184950`, 2026-09-11), `SDT_SCHEMA_VERSION` moved 1.1.0→1.2.0 and
+  `SDT_PROCESSOR_VERSIONS.pdf` moved 3→14 — neither `zotero/document-worker`
+  nor `zotero/structured-document-text` publishes release notes, so this is
+  the only way to see it. Update history/build IDs live in
+  `<profile>/updates.xml` and `<app>/updates/last-update.log`.
+- **`Zotero.SDT.ensure()` blocks on a stale-processor pack; `getPack()` does
+  not.** Per `zotero/zotero#6012`'s pinned `test/tests/sdtTest.js`
+  (`19e79625b1c6fbbdd75367aa85b62d5a7080d7f6`): `getPack()` returns the old
+  pack immediately and regenerates in the background, but `ensure()` — the
+  call an eager scheduler like the sitter's census makes — waits for the
+  fresh pack before resolving. So a `SDT_PROCESSOR_VERSIONS` bump costs a
+  synchronous, library-wide pass through every `ensure()` caller, recurring at
+  whatever cadence upstream ships it (observed: two point releases moved the
+  PDF processor 11 steps with zero announcement). Full finding:
+  ticket 0754's 2026-09-11 log entry, `search-works-for-zotero` PR #519.
+- **Scripting a real "Install Add-on From File" without a human click, and
+  the wrong API that looks right.** The Firefox RDP `AddonsActor`'s only
+  install method is `installTemporaryAddon()` -- Firefox's non-persistent
+  "Load Temporary Add-on" path (about:debugging), which does not exercise
+  `extensions.json` the way a real install does and cannot be substituted
+  for one. The real call, read verbatim from Zotero's own shipped
+  `omni.ja` (`toolkit/chrome/toolkit/content/mozapps/extensions/
+  aboutaddonsCommon.js`, `installAddonsFromFilePicker()`):
+  `AddonManager.getInstallForFile(file, null, {source: "about:addons",
+  method: "install-from-file"})` then `AddonManager
+  .installAddonFromAOMWithOptions(browser, uri, install,
+  {preferUpdateOverInstall: true})` -- `browser`/`uri` are only threaded
+  into inert observer-notification payloads in this build, never
+  dereferenced, so `null`/a throwaway URI is safe. Reachable over RDP by
+  attaching to the chrome/parent-process target's generic eval actor, not
+  the add-ons actor. Arming the debugger server needs no restart: replay
+  `handleDevToolsServerFlag()`'s five statements via Tools -> Developer ->
+  Run JavaScript (full chrome privilege there already), or seed
+  `devtools.debugger.remote-enabled`/`devtools.chrome.enabled` into a
+  fresh profile's `prefs.js` before first launch. One more pref matters and
+  is easy to miss reading source alone: `devtools.debugger.prompt-connection`
+  (true by default) blocks the connection on a server-side "allow?" prompt
+  before the hello packet -- in unattended/headless use this hangs forever
+  with zero bytes received, not a clean error; set it `false`. Built and
+  proven (read-only, and on a throwaway profile a real 17-cycle
+  install/disable/enable run) as `bench/zotero_rdp_client.py` +
+  `bench/sitter_volume_experiment.py`, ticket 0766, `search-works-for-zotero`
+  PR #523/#526, 2026-09-11.
