@@ -4,7 +4,7 @@ The 2026-08-17 audit of four real /gaze runs measured that the written rule —
 "if any `*.qmd` changed → prose panel" — can never fire in a LaTeX repo: the
 two manuscripts that got the prose panel got it by agent judgement, not by the
 rule. The authoritative signal already exists: `resolve_axes()` in
-`scripts/inject_rule_on_edit.py` yields a `doctype` for rendered deliverables
+`scripts/prose_predicate.py` yields a `doctype` for rendered deliverables
 (project manifest `rules-map.toml`, else the `\\documentclass` sniff) and none
 for process prose (`.md` notes, `.erg` tickets, `.py` scripts).
 

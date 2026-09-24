@@ -149,7 +149,7 @@ def test_a_missing_target_is_loud_and_never_denies(tmp_path):
 
 
 def test_a_python_target_needs_no_execute_bit(tmp_path):
-    """knowledge_hints.py is mode 644 in the repo; the launcher must still run it."""
+    """A Python hook target may be mode 644 in the repo; the launcher must still run it."""
     root = _tree(tmp_path, "unused")
     script = root / "scripts" / "probe.py"
     script.write_text("print('PY-RAN')\n")

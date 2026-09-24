@@ -50,13 +50,6 @@ fi
 # auto-load is what must inject it — that is the adapter's job, not this
 # hook's (tickets 0800, 0802).
 
-# Inject the project's domain-knowledge catalog (pointers, not bodies) — the
-# discipline the rules tree only appeared to follow until 2026-09-09, and the
-# one this catalog does follow. Declared in <repo>/.knowledge.toml;
-# silent when the project declares none. One line per hint, because this is
-# resident: the bodies are read on demand and can be orders of magnitude larger.
-python3 "$_script_dir/knowledge_hints.py" catalog 2>/dev/null || true
-
 # Inject harness-level memory (cross-project lessons promoted by /dream).
 # Kept tight — decay pass removes stale entries so injection cost stays bounded.
 cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
