@@ -116,7 +116,7 @@ whether such a router exists. Where it does not, `auto` resolves to a
 configured default tier, **never to the caller's model**. Claude Code is the
 case in point: an `Agent` launch without a model inherits the session's, so a
 literal `auto` there is exactly the silent inheritance this policy exists to
-prevent (invariant 1). Each adapter therefore declares what `auto` resolves
+prevent (invariants 1 and 9). Each adapter therefore declares what `auto` resolves
 to, and the Claude adapter maps it to a configured tier.
 
 A worker's organizational rank does not determine its model level. A mechanical
@@ -359,12 +359,12 @@ quality from traces, not assumed.
 5. Reviewer decorrelation remains enforceable without naming vendor tiers in
    portable policy: a reviewer launch declares `decorrelated-from`, and an
    adapter test shows it never resolves to the producer's concrete model.
-9. `auto` never resolves to the caller's model on a runtime without a router;
-   an adapter test demonstrates this against the Claude adapter.
 6. `intensive` is not a default for broad fan-out.
 7. Adapter tests cover provider-specific model and effort mechanics.
 8. Traces record requested semantic level/effort and the concrete result when
    the runtime exposes it.
+9. `auto` never resolves to the caller's model on a runtime without a router;
+   an adapter test demonstrates this against the Claude adapter.
 
 ## Non-goals
 
