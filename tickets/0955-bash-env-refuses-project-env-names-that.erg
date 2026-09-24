@@ -1,5 +1,5 @@
 %erg 0.1
-Title: bash-env refuses project .env names that shadow keystore credentials
+Title: bash-env refuses credential-shaped names from a project .env
 Created: 2026-09-24
 Author: Integration Test
 
@@ -25,34 +25,51 @@ Nobody audited the downstream projects. A cross-project sweep on 2026-09-24
   now refuses it with a warning on every command. Migration brief handed
   to the Codex session working there.
 - **chemin-de-voix**: one script read `MISTRAL_API_KEY` from the environment
-  only (fixed, Tracing-Kieu PR #171).
+  only; fix in Tracing-Kieu PR #171.
 
 The loader cannot tell a project setting from a smuggled-in credential, so the
-fix belongs at the loader, not only in each project.
+fix belongs at the loader, not only in each project. 0942 closed its own scope
+(harness consumers) correctly; the gap is that the loader's surviving
+project-`.env` half was never examined as a residency path.
 
-## Proposal
+## Proposal (revised after a seven-reviewer panel, 2026-09-24)
 
-Extend `_be_is_protected_name` with a dynamic class: any name defined in
-`~/.config/keys/*.env` is refused from a project `.env`, with the same
-`bash-env: refusing protected name` stderr line (names only, never values).
-Parse the keystore for *names* with the same strict KEY= regex; never source
-it. Keep the per-subprocess cost bounded (the keystore is ~20 small files;
-measure before and after on padme).
+The first draft refused names found in `~/.config/keys/*.env`. The panel
+(Opus, Terra, Sol, Luna; independently) rejected it: exact names miss renamed
+copies (AEDIST exports `OPENROUTER_API_KEY`, a copy of
+`OPENROUTER_API_KEY_AEDIST`), and scanning key files in every shell reverses
+the loader's "does not read provider files" rule, adds a fail-open case when
+the keystore is unreadable (another user, another HOME), and costs every
+subprocess.
 
-Open question for implementation: whether `AGENT_GIT_NAME` /
-`AGENT_GIT_EMAIL` (non-secret, but in `github.env`) should stay exportable
-from a project `.env`. Default: refuse them too — one rule, no allowlist —
-and let the projects that need them resolve at point of use.
+Refuse by **credential-shaped name** instead, inside `_be_is_protected_name`,
+a pure string test with no file access:
+
+- a name whose `_`-separated segments include `TOKEN`, `PASSWORD`, `PASSWD`,
+  `SECRET`, `APIKEY`, or the pair `API_KEY` (so `OPENROUTER_API_KEY_AEDIST`,
+  `HF_TOKEN`, `HAL_PASSWORD`, `CUSTOM_TOKEN` are caught; `TOKENIZERS_PARALLELISM`,
+  `KEYBOARD_LAYOUT` are not, since the match is on whole segments);
+- the refusal line stays names-only, on stderr.
+
+Survey of every project `.env` under `~` today: the names in use are
+`AGENT_GIT_NAME`, `AGENT_GIT_EMAIL`, `HAL_ID`, `CLIMATE_FINANCE_DATA`,
+`CADENS_RAW_DIR`, `KEYS` (already refused) and the six AEDIST credentials.
+The rule refuses exactly those six and nothing else, so there is no
+false-positive migration to plan. `AGENT_GIT_NAME`/`EMAIL` stay exportable (not
+credential-shaped), which settles the draft's open question without a
+behaviour change for the two projects that set them.
 
 ## Exit criteria
-- [ ] A project `.env` defining a keystore name exports nothing for it, and
-      stderr names it (test in `tests/test_bash_env_*`, hermetic: fake HOME
-      with a fake keystore)
-- [ ] `bash -x -c ':'` in such a project exposes no value (xtrace guard still
-      covers the new path)
-- [ ] Non-keystore names still export unchanged
-      (`test_bash_env_project_env_parse.sh` green)
-- [ ] Per-subprocess overhead measured on padme, before/after, stated in the
-      commit
+- [ ] `_be_is_protected_name` refuses credential-shaped names by segment, with
+      no file access added to `bash-env.sh` (grep: no new path under
+      `.config/keys`)
+- [ ] Hermetic test: a project `.env` with `OPENROUTER_API_KEY`, `HF_TOKEN`,
+      `HAL_PASSWORD`, `CUSTOM_TOKEN`, `DB_SECRET` exports none of them and names
+      each on stderr; `TOKENIZERS_PARALLELISM`, `HAL_ID`, `AGENT_GIT_NAME` still
+      export
+- [ ] `bash -x -c ':'` in such a project exposes no value
+- [ ] `test_bash_env_project_env_parse.sh` and the other bash-env suites green
+- [ ] Per-subprocess overhead measured on padme before/after; accept only if
+      the median added time is under 1 ms (a string test should add ~0)
 - [ ] 0942's tracker body gets a note naming the downstream gap and this fix
 - [ ] `make check` passes
