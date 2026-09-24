@@ -22,8 +22,11 @@ the channel totals below use the largest as the session upper bound, and the
 per-index budget is what the guard ratchets. Summing all of them would
 describe a session nobody runs.
 
-Not counted, because it is not in this repo: a consumer project's own
-``CLAUDE.md``/``AGENTS.md``, which a session in that project pays on top.
+A consumer project's own resident text — ``AGENTS.md``/``CLAUDE.md`` with
+their ``@`` imports, and every unscoped or catch-all ``.claude/rules`` body —
+is paid on top, per project. ``--project DIR`` measures it (0971); it is not a
+harness channel, because the harness cannot gate a project, so the budget is
+surfaced by the SessionStart coherence prompt rather than tested here.
 
 **Tokens here are derived, not measured.** This module counts characters,
 which is exact. ``/context`` reports tokens per category, which is the only
@@ -82,14 +85,46 @@ def repo_root(explicit: str | None = None) -> Path:
     return Path(explicit).resolve() if explicit else Path(__file__).resolve().parents[1]
 
 
+# Globs that match every file a session could touch. A body scoped to one of
+# them is resident in all but name: climate-finance-het's architecture.md
+# (``paths: "**/*"``, 20 560 chars) loaded on every session unwatched (0971).
+CATCH_ALL_GLOBS = frozenset({"**", "**/*", "*", "**/*.*", "./**", "./**/*"})
+
+# Project channel budget, chars. A starting point to ratchet from, not a
+# measured optimum (0971): about a third of the harness's own rules cap.
+PROJECT_BUDGET = 12000
+
+
+def rule_globs(path: Path) -> list[str] | None:
+    """The ``paths:`` globs of a rule body, or None when it declares none."""
+    m = skill_frontmatter.FRONTMATTER.match(path.read_text(encoding="utf-8"))
+    if not (m and re.search(r"^paths:", m.group(1), re.MULTILINE)):
+        return None
+    try:
+        value = skill_frontmatter.load(path).get("paths")
+    except skill_frontmatter.FrontmatterError:
+        # Declared but unparseable: count it resident, the safe direction for
+        # a budget, rather than let a YAML slip hide a body from the census.
+        return []
+    if isinstance(value, str):
+        return [value]
+    return [str(v) for v in value or []]
+
+
+def is_catch_all(path: Path) -> bool:
+    globs = rule_globs(path)
+    return globs is not None and any(g.strip() in CATCH_ALL_GLOBS for g in globs)
+
+
 def is_auto_loaded(path: Path) -> bool:
-    """True when the runtime loads this rule body unconditionally.
+    """True when the runtime loads this rule body on every session.
 
     The rule is the frontmatter's ``paths:`` key: with it the body arrives only
     when a matching file is touched, without it the body is always in context.
+    A catch-all glob, or a ``paths:`` that does not parse, counts as resident.
     """
-    m = skill_frontmatter.FRONTMATTER.match(path.read_text(encoding="utf-8"))
-    return not (m and re.search(r"^paths:", m.group(1), re.MULTILINE))
+    globs = rule_globs(path)
+    return not globs or is_catch_all(path)
 
 
 def rules_entries(root: Path) -> list[Entry]:
@@ -101,20 +136,29 @@ def rules_entries(root: Path) -> list[Entry]:
     ]
 
 
-def import_entries(root: Path) -> list[Entry]:
-    """``CLAUDE.md`` and everything its ``@`` lines pull in, transitively."""
+def import_entries(
+    root: Path, starts: tuple[str, ...] = ("CLAUDE.md",), channel: str = "import"
+) -> list[Entry]:
+    """The start files and everything their ``@`` lines pull in, transitively."""
     out: list[Entry] = []
     seen: set[Path] = set()
-    queue = [root / "CLAUDE.md"]
+    queue = [(root / start).resolve() for start in starts]
     while queue:
         path = queue.pop(0)
         if path in seen or not path.is_file():
             continue
         seen.add(path)
         text = path.read_text(encoding="utf-8")
-        out.append(Entry("import", str(path.relative_to(root)), len(text)))
+        out.append(Entry(channel, _rel(path, root), len(text)))
         queue.extend((root / target).resolve() for target in IMPORT_LINE.findall(text))
     return sorted(out, key=lambda e: e.path)
+
+
+def _rel(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root.resolve()))
+    except ValueError:  # an @import reaching outside the checkout
+        return str(path)
 
 
 def hook_entries(root: Path) -> list[Entry]:
@@ -151,6 +195,58 @@ def agent_entries(root: Path) -> list[Entry]:
         Entry("agents", str(p.relative_to(root)), _name_and_description(p))
         for p in sorted((root / "agents").glob("*.md"))
     ]
+
+
+def project_entries(project: Path) -> list[Entry]:
+    """What a consumer project adds to every session in it (0971)."""
+    project = project.resolve()
+    out = import_entries(
+        project, ("AGENTS.md", "CLAUDE.md", ".claude/CLAUDE.md"), channel="project"
+    )
+    rules = project / ".claude" / "rules"
+    if rules.is_dir():
+        out += [
+            Entry("project", _rel(p, project), len(p.read_text(encoding="utf-8")))
+            for p in sorted(rules.rglob("*.md"))
+            if is_auto_loaded(p)
+        ]
+    return out
+
+
+def catch_all_rules(project: Path) -> list[str]:
+    rules = project.resolve() / ".claude" / "rules"
+    if not rules.is_dir():
+        return []
+    return [_rel(p, project.resolve()) for p in sorted(rules.rglob("*.md")) if is_catch_all(p)]
+
+
+def project_warning(project: Path, budget: int = PROJECT_BUDGET) -> str | None:
+    """One declarative line for the startup prompt, or None when all is well.
+
+    Declarative on purpose: hook output phrased as an order is read as prompt
+    injection and discounted (``rules/claude-code.md`` § Hook output).
+    """
+    entries = project_entries(project)
+    total = sum(e.chars for e in entries)
+    wide = catch_all_rules(project)
+    if total <= budget and not wide:
+        return None
+    top = ", ".join(
+        f"{e.path} ({e.chars})" for e in sorted(entries, key=lambda e: -e.chars)[:3]
+    )
+    parts = [
+        f"PROJECT RESIDENT TEXT: this project adds {total} chars to every session "
+        f"(budget {budget}); largest: {top}."
+    ]
+    if wide:
+        parts.append(
+            f" A catch-all `paths:` makes {', '.join(wide)} resident in all but name."
+        )
+    parts.append(
+        " The harness scoping rule applies to project rules too: a body triggered"
+        " by a path is scoped to that path, one triggered by a task is a skill."
+    )
+    return "".join(parts)
 
 
 def census(root: Path) -> list[Entry]:
@@ -217,7 +313,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--detail", action="store_true", help="list every file, not just channel totals"
     )
+    parser.add_argument(
+        "--project", metavar="DIR", help="measure a consumer project's resident text"
+    )
+    parser.add_argument(
+        "--warn",
+        action="store_true",
+        help="with --project: print only the startup warning line, if any",
+    )
     args = parser.parse_args(argv)
+    if args.project:
+        project = Path(args.project)
+        if args.warn:
+            line = project_warning(project)
+            if line:
+                print(line)
+            return 0
+        entries = project_entries(project)
+        for e in sorted(entries, key=lambda e: -e.chars):
+            flag = "  catch-all" if e.path in catch_all_rules(project) else ""
+            print(f"{e.chars:7d} chars  ~{e.tokens:6d} tok  {e.path}{flag}")
+        total = sum(e.chars for e in entries)
+        print(f"{'TOTAL':>7} {total} chars (budget {PROJECT_BUDGET})")
+        return 0
     print(_render(census(repo_root(args.root)), args.detail))
     return 0
 

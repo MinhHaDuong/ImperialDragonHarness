@@ -9,6 +9,7 @@ Label: needs-human
 
 2026-09-24T07:12Z Claude label needs-human
 2026-09-24T07:50Z Claude claude decision Author 2026-09-24: keep open and propose a generalization; proposal written in the body
+2026-09-24T09:05Z Claude claude note Parts 1-3 of the proposal implemented on the harness branch (project mode in resident_census.py, startup warning line; the doctrine rides in the warning because rules/ is at 35984 of 36000). Measured: climate 30108 chars (architecture.md catch-all), search-works 19713 (AGENTS.md alone), others under budget. Part 4 (climate split) awaits the author
 --- body ---
 ## Context
 Audit B7 (`docs/2026-09-24-rules-coherence-audit.md`). climate `.claude/rules/architecture.md` is scoped
