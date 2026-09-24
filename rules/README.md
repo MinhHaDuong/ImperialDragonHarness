@@ -36,7 +36,6 @@ it was 942 words while shipping full copies of what it summarised.
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
 | [edm.md](./edm.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
-| [knowledge-hints.md](./knowledge-hints.md) | `**/.knowledge.toml`, `**/knowledge_hints.py` | `<repo>/.knowledge.toml` + `scripts/knowledge_hints.py`: one catalog line resident at session start, pointer + caveat on a declared term. Inject the pointer, never the payload. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
 | [systemd-units.md](./systemd-units.md) | `**/*.service`, `**/*.timer`, `**/systemd/**` | What PID 1 reads at boot lives on the root filesystem: install units as real copies, never symlinks into a late-mounted volume; `is-enabled` lies after a `daemon-reload`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
@@ -44,14 +43,13 @@ it was 942 words while shipping full copies of what it summarised.
 Not a rules file, nor loaded here: `tickets/AGENTS.md` — `@`-imported by the
 harness `CLAUDE.md`, reached in projects via their `AGENTS.md` pointer.
 
-## Per-file rule injection (axis model)
+## Axis model
 
 `paths:` is coarse where the axis is not a path: any `.tex` edit brings all
-three doctypes and both languages. `scripts/inject_rule_on_edit.py` (PreToolUse
-`Edit|Write`) is the precise channel — on the first edit of a file along each
-axis it injects the one body that applies, then stays silent (deduped per
-`session_id` + rule). Before the bodies were scoped it re-served what was
-already resident, 1 069 times in 101 days; scoping is what gives it back a job.
+three doctypes and both languages. The review skills resolve the one that
+applies with `scripts/prose_predicate.py --axes`, which prints each file's
+doctype and language so a reviewer reads the declared rulebook instead of
+guessing it.
 
 | Axis | Resolved from | Rule path |
 |------|---------------|-----------|
@@ -61,12 +59,12 @@ already resident, 1 069 times in 101 days; scoping is what gives it back a job.
 | **prose** | implied for prose formats | `prose/_all.md` |
 
 
-Missing rule files are skipped silently, so content grows by adding files — no
-code change. Doc-type and language are not derivable from a filename: they come
+A value with no rule file has no body; content grows by adding files — no code
+change. Doc-type and language are not derivable from a filename: they come
 from an optional per-project manifest `<repo>/.claude/rules-map.toml`, which
 holds path→axis *mappings* only, never rule text. Format, precedence and a
-worked manifest live in the hook's own docstring; the same resolver is the
-single source for prose/code review routing (`scripts/prose_predicate.py`).
+worked manifest live in the resolver's docstring; the same resolver is the
+single source for prose/code review routing.
 
 ## Resident rules
 
@@ -94,14 +92,10 @@ Compliance is verified ex post by the `verify-adherence` skill.
 ## Review cadence
 
 Each rule body carries a `last-reviewed: YYYY-MM-DD` marker, in the frontmatter
-where the file has one, else as an HTML comment on the first line.
-`scripts/warn-stale-rules.sh` runs at session start and warns, advisory only,
-when one is 30 or more days old. It scans `rules/*.md` and one level of
-subdirectory, so `prose/`, `doctype/` and `lang/` are covered.
-
-A file without a marker is skipped, not flagged, so absence buys permanent
-silence: a new rule body needs its marker at creation. Two files sat unmarked
-and unmonitored for months before the 2026-08-14 review found them.
+where the file has one, else as an HTML comment on the first line; a new rule
+body gets its marker at creation. Nothing warns on an old one any more: the
+session-start warning was dropped by ticket 0976 after 343 sessions in which
+it never led to a review.
 
 Read the marker for what it records: deliberate review passes, not edits.
 Nothing bumps it when a rule is amended in place, so an old stamp is weak

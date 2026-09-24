@@ -3,9 +3,8 @@
 A `[ -f .git ]` test — "this dir has a `.git` FILE, so it must be a linked
 worktree" — is the weak class shape: it also fires on a submodule and on any
 ad-hoc worktree outside the harness convention, and trusts the path blindly.
-It bit erg-pr-merge (fixed, 0301) and two sibling guards (fixed, 0308:
-scripts/pretooluse-worktree-path-guard.sh and
-scripts/guard-gh-pr-merge.sh — both merged, no live predicate left).
+It bit erg-pr-merge (fixed, 0301) and two sibling guards (fixed, 0308;
+both since deleted by ticket 0976).
 The correct detection resolves git's own dirs (`git rev-parse
 --absolute-git-dir` vs `--git-common-dir`) or verifies the harness
 `.claude/worktrees/<name>` identity against the resolved toplevel.
@@ -14,10 +13,9 @@ A green per-PR gate does not stop the class from re-entering in an unrelated
 future script; this standing ratchet does. It greps scripts/ and skills/ for
 the weak predicate and fails on any hit outside the explicit allowlist below.
 
-The allowlist holds only the three surviving *explanatory comments* that name
-the old check to warn against regressing to it — no live code. When 0308
-landed, the live predicates in the two guard scripts were removed; what remains
-in those files is documentation, not behaviour (cross-ref: tickets 0301, 0308).
+The allowlist holds only the surviving *explanatory comments* that name the
+old check to warn against regressing to it — no live code (cross-ref: tickets
+0301, 0308).
 
 RED proof (2026-07-13): adding `[ -f .git ]` to a scratch script under scripts/
 made this test fail with that line reported as a non-allowlisted hit; removing
@@ -45,10 +43,6 @@ WEAK_PREDICATE = re.compile(r"""-[fe][ \t]+["'${}]*[\w./{}-]*\.git\b""")
 # live code. Shrinks only when such a comment is removed; a NEW hit (live or
 # comment) that is not listed here fails the ratchet.
 ALLOWLIST: set[tuple[str, str]] = {
-    (
-        "scripts/pretooluse-worktree-path-guard.sh",
-        "# would satisfy the old `[ -f .git ] && grep gitdir:` check and trip a spurious",
-    ),
     (
         "skills/merge/erg-pr-merge",
         "# `[ -f .git ]`: that matched ANY dir with a `.git` FILE — a submodule, or a",

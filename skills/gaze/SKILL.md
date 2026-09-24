@@ -18,18 +18,6 @@ background: true
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
 
-**Live PR state at phase boundaries.** From the current repository worktree, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> <phase>` at each
-boundary named below (substitute the actual PR number and phase). Exit 0 means
-continue. Any nonzero exit means stop immediately, cancel any outstanding
-reviewer or seat work, clean up the review worktree, and return the command's
-`/gaze stopped: phase=<phase> state=<MERGED|CLOSED|UNKNOWN> pr=<number>` line to
-the caller. Post no gate or top-level verdict comment. An unavailable forge is
-`UNKNOWN` and also stops the run; it is never evidence that the PR stayed open.
-The helper bounds each forge state lookup to 10 seconds by default; a timed-out
-lookup reports `UNKNOWN` and stops under the same rule.
-These checks observe the caller's merge decision and do not delay it.
-
 > **TASK DIRECTIVE — execute now.** You are running `/gaze` on PR `$ARGUMENTS`.
 > This file is your operating procedure, not reference documentation: begin at
 > phase 1 immediately. If `$ARGUMENTS` does not contain a PR number, STOP and
@@ -52,9 +40,8 @@ the current branch's PR number. -->
 
 One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
 merge** — the merge decision belongs to the caller (the human or the raid).
-Only one live `/gaze` may own a PR. A new invocation must acquire its per-PR
-claim before fetching or creating a review worktree; an existing claim stops
-the run and identifies its holder. A past verdict is evidence, not authority
+Only one live `/gaze` may run on a PR at a time; the caller keeps to that
+(`rules/workflow.md` § Delegation). A past verdict is evidence, not authority
 to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
 ## When to use
@@ -118,13 +105,6 @@ verdicts and the merge request carried none of them.
 deadline is missing, not clear: name it in the verdict and treat its phase as
 unresolved. Never extend a deadline to avoid recording a gap.
 
-While waiting for reviewer, external-seat, gate, or fix-agent artifacts,
-recheck live PR state at most every 30 seconds using `check-pr-open.py` with
-the current phase name. If it stops, cancel outstanding work and return the
-phase/state line after cleanup; do not wait for the phase deadline. Pass this
-same polling rule into Agent C's nested panel so its perspective agents are
-also cancelled when the subject closes.
-
 **The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
 behalf — a reviewer Agent (e.g. Agent C) that itself spins a panel of
 perspective agents — inherits this same rule: the inner launch must be waited for by
@@ -137,8 +117,6 @@ narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
 worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
-First run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> gate`;
-a stopped PR needs no recovery verdict.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
 caller must see either the phase-6 verdict comment or a bump log line within
@@ -168,39 +146,21 @@ root. The worktree is the isolation boundary; no main-repo checkout is ever need
 
 **Isolation setup:**
 
-After resolving the PR number, before fetching its branch, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> setup`.
-If it stops, report the phase and state without creating a review worktree.
-
 ```bash
 # Step 1 — Resolve PR number to branch name (forge-specific step)
 PR_BRANCH=<resolved-branch-name>
 
 # Step 2 — Resolve the primary repo root, then create the worktree under its
-# guarded `.claude/worktrees/` namespace (ticket 0300 — /tmp is outside every
-# guard fast-path). `.claude/worktrees/review-*` is not whitelisted by name; it
-# is covered by the same worktree-identity check as every worktree: an Edit/Write
-# is allowed when the acting process is physically inside that worktree, denied
-# otherwise — save the human-set `GUARD_ALLOW_PRIMARY_EDIT` escape hatch (the
-# `projects/*/memory/*` exemption cannot match a review-* path). 0300 moved
-# review worktrees here from /tmp for that coverage, not for a name allowlist;
-# exact semantics live in `~/.claude/scripts/pretooluse-worktree-path-guard.sh`.
+# `.claude/worktrees/` namespace (ticket 0300), where the runtime's worktree
+# isolation covers it like every other worktree; never under /tmp.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
-# Atomic per-PR claim. Keep the printed gate_session_id for phase 6 and cleanup.
-# Failure (including an existing claim) stops /gaze before any reviewer starts.
-gate_session_id=$(python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
-    acquire "$primary_root" <pr-number> "$review_tree") || exit 1
-if ! git fetch origin "$PR_BRANCH"; then
-    python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
-        release "$primary_root" <pr-number> "$gate_session_id"
-    exit 1
-fi
+# A fresh id for this run; the phase 6 gate names it in its verdict comment.
+gate_session_id=$(python3 -c 'import uuid; print(uuid.uuid4())')
+git fetch origin "$PR_BRANCH" || exit 1
 if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_tree"; then
     echo "gaze: cannot create isolated review worktree for PR <pr-number>; refusing to fall back into the invoking tree" >&2
-    python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
-        release "$primary_root" <pr-number> "$gate_session_id"
     exit 1
 fi
 # The cwd-pinned reviewer agents and the REROLL fix agent run inside
@@ -212,10 +172,8 @@ fi
 ## Review scratch cleanup
 
 On every exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
-abort, or live PR closure), after Agent C and the gate have consumed their
-artifacts, remove this run's review scratch before removing the worktree.
-Every terminal path after a successful claim runs this cleanup and releases
-that same `gate_session_id`; a stopped setup before the claim has no lock.
+abort), after Agent C and the gate have consumed their artifacts, remove this
+run's review scratch before removing the worktree.
 The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
 this while perspective agents are still writing: cancel or wait for them first.
 If the review worktree was never created, there is nothing to clean up. The
@@ -241,10 +199,6 @@ if [ -d "$review_tree" ]; then
     fi
     git -C "$primary_root" worktree remove "$review_tree" || exit 1
 fi
-# Once all spawned agents have stopped and cleanup succeeds, release only the
-# claim owned by this run. On a cleanup failure, keep the claim for inspection.
-python3 "${IDH_HOME:-$HOME/.claude}/scripts/gaze-gate-lock.py" \
-    release "$primary_root" <pr-number> "$gate_session_id" || exit 1
 ```
 
 - Abort if not mergeable or if there are open merge conflicts.
@@ -336,9 +290,6 @@ itself is never mutated; only the scoping decision changes.
 
 ### 2–4. Read-only review fan-out (parallel)
 
-Before launching this battery, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> review-panel`.
-
 These phases run as **Agent-spawned sub-agents, not `context: fork`
 invocations** (ticket 0216). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
@@ -421,10 +372,10 @@ with its link integrity checked on MR 136, and a catch the prose panel missed
 on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
 `/simplify` is the other built-in slash
 command, and it stays a direct invocation **by decision**: ticket 0349 proposed
-Agent-WRAPping it and was closed wontfix on 2026-07-14 — the worktree-identity
-guard works as designed and the fallback functions. So `/simplify` runs in the
-fork's own cwd — a sibling worktree, not review-<pr> — the guard denies its
-Edit/Write, and it applies fixes via Bash. That is the design, not a gap.
+Agent-WRAPping it and was closed wontfix on 2026-07-14 — the fallback
+functions. So `/simplify` runs in the fork's own cwd — a sibling worktree, not
+review-<pr> — and when an Edit/Write into review-<pr> is refused there, it
+applies fixes via Bash. That is the design, not a gap.
 Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
@@ -525,9 +476,6 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 ### 5. Simplify (sequential)
 
-Before any simplify action (including a tier or prose skip), run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> simplify`.
-
 **Tier-skip:** when the tier is **tiny**, skip this phase and log
 `simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
 **small** and **full** tiers.
@@ -545,9 +493,6 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 
 ### 6. Gate (the non-rubber-stamp step)
 
-Before spawning the gate agent, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> gate`.
-The gate agent checks state again immediately before posting its own verdict.
 Pass this run's `gate_session_id` and `review_tree` to the gate agent. It must
 read the tip SHA from the pinned review worktree immediately before ruling and
 put all three values in its PR verdict comment. If the worktree is unavailable
@@ -596,7 +541,7 @@ unresolved_adherence_violations: [...]
 multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
 rationale: <paragraph>
 round: 1 | 2
-gate_session_id: <this run's claim id>
+gate_session_id: <this run's id>
 review_worktree_path: <absolute path>
 ruled_tip_sha: <full SHA read from review worktree at verdict time>
 ```
@@ -610,10 +555,7 @@ breaker.
 
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
-- **REROLL, round 1** → first run
-  `python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> reroll-fix`.
-  If it stops, return the phase/state line without launching a fix agent.
-  Otherwise spawn a fix subagent with `isolation: "worktree"`,
+- **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
   `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
   reviewer's sonnet; effort is not an Agent launch param and this definition
   pins none, so it tracks the session effort), waited for by polling
@@ -747,15 +689,10 @@ code-review seats. Empty roster or `/reviewers` unavailable →
 skip silently: the panel is fail-open and never blocks a gaze run.
 
 **How.** At the phase 2–4 reviewer-battery launch, also invoke
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> external-request`
-immediately before `/reviewers request <pr>`; a stopped PR must not solicit a
-seat. Then invoke
 `/reviewers request <pr>` as a background *shell* job (a Bash call, not an
 agent launch, so the fork-orphan contract does not apply): the sandboxed
 seats (~30–120 s) run concurrently with the internal reviewer battery and
-finish well inside its wall time. Before harvesting, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> external-harvest`;
-if the PR stopped, cancel any outstanding seat work. Before phase 6, run
+finish well inside its wall time. Before phase 6, run
 `/reviewers harvest <pr>` synchronously and hand the normalized
 `verifiable:` / `consider:` findings to the gate as panel comments.
 
@@ -823,12 +760,6 @@ Post a single top-level PR comment at end of skill. Two sections,
 always both present. No interim "started"/"finished" chatter — the
 final report is the signal.
 
-Immediately before posting that comment, run
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/check-pr-open.py" <pr-number> verdict`. If it
-stops, report the phase and state to the caller and post no verdict, even if
-the gate previously returned APPROVED. The same check applies before any
-`verify: approved` comment in the branch-on-verdict path.
-
 ```
 ## /gaze actions
 
@@ -848,7 +779,7 @@ gate: ran | skipped (un-reviewable) | skipped (--force-approve)
 ## /verify-gate verdict
 
 verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
-gate_session_id: <this run's claim id>
+gate_session_id: <this run's id>
 review_worktree_path: <absolute review tree path>
 ruled_tip_sha: <full SHA read from review tree at verdict time>
 

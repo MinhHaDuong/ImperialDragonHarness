@@ -1,0 +1,79 @@
+%erg 0.1
+Title: Cut the guards that never earned their place (2026-09-24 audit)
+Created: 2026-09-24
+Author: claude
+Closed: autoclosed — PR #1016
+
+--- log ---
+2026-09-24T15:29Z claude created
+
+2026-09-24T16:05Z Minh Ha-Duong closed — autoclosed — PR #1016
+--- body ---
+## Context
+
+On 2026-09-24 the author asked for a strict audit of every harness guard
+against the session transcripts, with the stated aim of rationalizing (cutting)
+the set. Burden of proof on the guard: it stays only with a quoted firing that
+prevented real damage.
+
+Population: 6,417 transcripts (651 main sessions, 5,766 subagent traces,
+167 project dirs), 2026-06-01..2026-09-24, count reconciled by an independent
+`find | wc -l`. Hook firings were detected by the `PreToolUse:<Tool> hook error:
+[<script>]:` prefix on tool_result text only (never Read/cat of source, never
+test runs); the detector's positive control fired for every wired hook, and a
+missing-script hook error (`check-reviews.sh`, exit 127) is also recorded.
+
+Findings (TP = prevented real damage, FP = blocked a legitimate action):
+
+| Guard | Firings | TP / FP | Note |
+|---|---|---|---|
+| guard-gh-pr-merge (live: block-pr-merge-in-worktree.sh) | 176, all 09-08 | 0 / 176 | never matched any of 893 real `gh pr merge`; live settings points at a file deleted 09-10 |
+| guard-pgrep-waiter | 0 | — | never wired live; hazard ran 133× |
+| guard-enterworktree-parked-cwd | 32 | 0 | |
+| guard-worktree-remove-wip | 17 | 0 | all review scratch / pushed content |
+| guard-commit-on-main | 23 | 0 verified / ≥6 | reads session cwd, not the `cd` target; pre-commit covers it |
+| guard-destructive-bash | 785 | 1 / most | the one TP is `reset --hard` over a dirty primary (2026-06-18); 657 recursive-force-rm firings 0 TP; one block provoked a worse `git checkout -- file`; it also blocked the heredoc writing this ticket, for quoting its own pattern |
+| guard-cd-primary-repo | 93 | 1 / ~20 of 30 | TP recoverable; bypassed via `git -C` |
+| guard-worktree-identity | 85 | 4 (one episode) | TPs recoverable; FPs on quoted text, nested repos |
+| pretooluse-worktree-path-guard | 62 | 23 / 38 | TPs recoverable; FPs on sibling worktrees |
+| inject_rule_on_edit, lint-on-edit, knowledge_hints | — | unmeasurable | ~1.5 M chars injected; no effect shown |
+| STALE RULE warning | 343 sessions | — | never resolved |
+| bash-env KEYS warning | ~2,400 outputs in 2 days | — | noise, also prefixes hook messages |
+| check-settings-drift | 0 visible | — | output discarded: `on-start.sh` redirects to /dev/null before it runs |
+| check-pr-open, gaze-gate-lock, check-script-skill-refs | 0 live | — | added the week of 09-17 |
+
+Kept, with their best TP:
+- `git reset --hard` block, narrowed to a dirty target tree (2026-06-18, dirty
+  settings.json and shell-init.sh in the primary).
+- git pre-commit hook: blocked a commit on the primary's main that every
+  PreToolUse guard missed (2026-07-13), and a malformed ticket.
+- check-cross-pr-ticket-collision (CI): caught tickets 0337/0339 colliding
+  with PR #603.
+
+The worktree-trap hooks (cd-primary, identity, path-guard) have only
+recoverable TPs, are bypassed immediately, and Claude Code's own worktree
+isolation now refuses that class (6,206 refusals in September transcripts).
+That overlap is inferred, not tested; the author chose the strict cut.
+
+## Scope (author's decisions, 2026-09-24)
+
+Delete, with their tests, canonical wiring (settings.shared.json,
+adapters/claude-code/hooks/hooks.json) and callers:
+guard-gh-pr-merge, guard-pgrep-waiter, guard-enterworktree-parked-cwd,
+guard-worktree-remove-wip, guard-commit-on-main, guard-cd-primary-repo,
+guard-worktree-identity, pretooluse-worktree-path-guard, inject_rule_on_edit,
+lint-on-edit, knowledge_hints, warn-stale-rules and the on-start STALE RULE
+block, the bash-env KEYS warning line, check-settings-drift,
+check-pr-open, gaze-gate-lock, check-script-skill-refs.
+
+Narrow guard-destructive-bash to `git reset --hard` on a dirty tree.
+
+Live `~/.claude/settings.json` is not tracked; it is re-aligned to
+settings.shared.json by the author (or a session in the primary) after merge.
+
+## Exit criteria
+- [ ] Listed scripts, their tests and their wiring are gone; no remaining caller
+- [ ] guard-destructive-bash blocks only `git reset --hard` on a dirty tree, with a test
+- [ ] Rules, skills and docs no longer instruct agents about deleted guards
+- [ ] Full test suite passes
+- [ ] Live settings.json re-aligned after merge

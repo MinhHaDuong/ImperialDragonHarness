@@ -7,9 +7,9 @@
 #                           values assigned literally, GUARD_* keys refused.
 #
 # The untrusted project file must never be executed and must never set a
-# GUARD_*-namespaced variable, or a project-controlled .env could forge the
-# per-process guard nonce (GUARD_ALLOW_PRIMARY_EDIT) or run arbitrary shell via
-# BASH_ENV (ticket 0323, residual 2).
+# GUARD_*-namespaced variable, or a project-controlled .env could forge a
+# harness-guard override or run arbitrary shell via BASH_ENV (ticket 0323,
+# residual 2).
 #
 # Harness idiom: run bash-env.sh in an isolated subprocess with a controlled
 # HOME (so the real ~/.claude/.env is never read) and a controlled project dir
@@ -134,9 +134,8 @@ _assert_eq "project .env cannot set GUARD_ALLOW_PRIMARY_EDIT" \
     "$(_load_var "$EMPTY_HOME" "$P1" GUARD_ALLOW_PRIMARY_EDIT)" ""
 
 # --- (1b) the LEADING-UNDERSCORE guard override pair must NOT be set -----------
-# pretooluse-worktree-path-guard.sh reads _GUARD_WORKTREE_ROOT / _GUARD_PRIMARY_ROOT
-# as an unconditional worktree-path override; a project .env forging both to equal
-# values would bypass the deny guard. The GUARD_* refusal must also catch _GUARD_*.
+# A guard override is a harness-guard knob whatever its spelling; the GUARD_*
+# refusal must also catch the leading-underscore _GUARD_* form.
 P1B="$WORK/p1b"; mkdir -p "$P1B"
 printf '_GUARD_WORKTREE_ROOT=/x\n_GUARD_PRIMARY_ROOT=/x\n' > "$P1B/.env"
 _assert_eq "project .env cannot set _GUARD_WORKTREE_ROOT" \
@@ -183,24 +182,24 @@ _assert_eq "quoted BAZ=\"a b\" loads as: a b" \
 # interpreter hijack. The shared predicate _be_is_protected_name refuses them
 # on the strict-parse path.
 
-# (6a) GCONV_PATH is refused (not exported) with a warning.
+# (6a) GCONV_PATH is refused (not exported), silently.
 P6="$WORK/p6"; mkdir -p "$P6"
 printf 'GCONV_PATH=/evil\n' > "$P6/.env"
 _assert_eq "project .env cannot set GCONV_PATH" \
     "$(_load_var "$EMPTY_HOME" "$P6" GCONV_PATH)" ""
-_assert_contains "project .env GCONV_PATH warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P6")" "refusing protected name from project .env: GCONV_PATH"
+_assert_eq "project .env GCONV_PATH is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6")" ""
 
 # (6b) PATH is not overwritten by a project .env; the real inherited PATH stays.
 P6B="$WORK/p6b"; mkdir -p "$P6B"
 printf 'PATH=/evil\n' > "$P6B/.env"
 _assert_ne "project .env cannot overwrite PATH with /evil" \
     "$(_load_var "$EMPTY_HOME" "$P6B" PATH)" "/evil"
-_assert_contains "project .env PATH warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P6B")" "refusing protected name from project .env: PATH"
+_assert_eq "project .env PATH is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P6B")" ""
 
 # (6c) parametrized: each critical name is refused (value never equals its
-# payload) and warns. IFS is checked additionally via the export attribute
+# payload), silently. IFS is checked additionally via the export attribute
 # (its value is restored to the caller's, not a clean discriminator alone).
 _be0345_case() {  # <key> <payload>
     local key="$1" payload="$2" dir="$WORK/p6c_$1"
@@ -208,8 +207,8 @@ _be0345_case() {  # <key> <payload>
     printf '%s=%s\n' "$key" "$payload" > "$dir/.env"
     _assert_ne "project .env cannot set $key" \
         "$(_load_var "$EMPTY_HOME" "$dir" "$key")" "$payload"
-    _assert_contains "project .env $key warns 'refusing protected name'" \
-        "$(_load_stderr "$EMPTY_HOME" "$dir")" "refusing protected name from project .env: $key"
+    _assert_eq "project .env $key is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$dir")" ""
 }
 _be0345_case PYTHONPATH /evil
 _be0345_case NODE_OPTIONS --require=/evil
@@ -269,8 +268,7 @@ P7B="$WORK/p7b"; mkdir -p "$P7B"
 printf 'KEYS=someprovider\n' > "$P7B/.env"
 _assert_eq "project .env cannot set retired KEYS" \
     "$(_load_var "$EMPTY_HOME" "$P7B" KEYS)" ""
-_assert_contains "project .env KEYS warns 'refusing protected name'" \
-    "$(_load_stderr "$EMPTY_HOME" "$P7B")" \
-    "refusing protected name from project .env: KEYS"
+_assert_eq "project .env KEYS is refused silently" \
+    "$(_load_stderr "$EMPTY_HOME" "$P7B")" ""
 
 exit "$fail"

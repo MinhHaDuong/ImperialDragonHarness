@@ -22,12 +22,7 @@ echo "Running on host: $(hostname -s)"
 _effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
 echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
 
-# Check for stale rules (advisory — prints warnings if any)
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "$_script_dir/warn-stale-rules.sh" ]; then
-    _stale=$(bash "$_script_dir/warn-stale-rules.sh" 2>/dev/null)
-    [ -n "$_stale" ] && echo "$_stale"
-fi
 
 # Ask for a project-level coherence pass only when the project has its own
 # directives. The helper prints a short instruction; it does not try to infer
@@ -49,13 +44,6 @@ fi
 # of a file that was already resident. An adapter on a runtime without that
 # auto-load is what must inject it — that is the adapter's job, not this
 # hook's (tickets 0800, 0802).
-
-# Inject the project's domain-knowledge catalog (pointers, not bodies) — the
-# discipline the rules tree only appeared to follow until 2026-09-09, and the
-# one this catalog does follow. Declared in <repo>/.knowledge.toml;
-# silent when the project declares none. One line per hint, because this is
-# resident: the bodies are read on demand and can be orders of magnitude larger.
-python3 "$_script_dir/knowledge_hints.py" catalog 2>/dev/null || true
 
 # Inject harness-level memory (cross-project lessons promoted by /dream).
 # Kept tight — decay pass removes stale entries so injection cost stays bounded.
@@ -100,7 +88,3 @@ if [ -n "$_gcd" ]; then
         && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
         || rm -f "$_gcd/sync-local-main.last.$$"; } & )
 fi
-
-# Settings drift: live settings.json vs tracked settings.shared.json
-# (volatile keys model/effortLevel ignored). Report-only, never blocks.
-"$_script_dir/check-settings-drift.sh" 2>/dev/null || true

@@ -1,16 +1,16 @@
-"""doctype/ and lang/ rule bodies for the injection hook (ticket 0256).
+"""doctype/ and lang/ rule bodies for the axis resolver (ticket 0256).
 
-The axis engine (PR #404) resolves doctype and lang, but until these bodies
-exist those axes inject nothing. Two ratchets:
+The axis resolver (`scripts/prose_predicate.py`) tells reviewers a file's
+doctype and lang; a body must exist for each value it can name. Two ratchets:
 
 1. Coverage — the in-use doctype values (techreport, slides, book) and the
    documented langs (fr, en) each have a rule body, indexed in rules/README.md.
 2. Reachability — every rules/doctype/*.md and rules/lang/*.md file corresponds
-   to a value the hook's resolver can actually emit; an orphan file that can
-   never be injected is dead content.
+   to a value the resolver can actually emit; an orphan file that can never
+   be named is dead content.
 
-Each body is injected verbatim and composes with format + prose bodies under
-the hook's MAX_CONTEXT cap, so every file also gets a size budget.
+Each body is loaded verbatim alongside format + prose bodies, so every file
+also gets a size budget.
 """
 
 import importlib.util
@@ -20,11 +20,11 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 RULES = REPO / "rules"
-_HOOK = REPO / "scripts" / "inject_rule_on_edit.py"
+_RESOLVER = REPO / "scripts" / "prose_predicate.py"
 
 
 def _load():
-    spec = importlib.util.spec_from_file_location("inject_rule_on_edit", _HOOK)
+    spec = importlib.util.spec_from_file_location("prose_predicate", _RESOLVER)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -33,14 +33,14 @@ def _load():
 inj = _load()
 
 # Langs are manifest-supplied (free-form), so reachability can't be derived
-# from the hook; this documented set is the allowlist. Extend it when a
+# from the resolver; this documented set is the allowlist. Extend it when a
 # project's manifest introduces a new lang.
 DOCUMENTED_LANGS = {"fr", "en"}
 
 REQUIRED_DOCTYPES = {"techreport", "slides", "book"}
 
 # Composability budget: format (~3k) + doctype + lang + prose/_all (~3k) must
-# fit under MAX_CONTEXT (9500), so each axis body stays small.
+# stay small together, so each axis body stays small.
 SIZE_BUDGET = 2000
 
 
@@ -73,7 +73,7 @@ def test_doctype_files_are_reachable():
     for f in doctype_files():
         assert f.stem in reachable, (
             f"rules/doctype/{f.name} is unreachable: '{f.stem}' is not a "
-            "DOCUMENTCLASS_DOCTYPE value, so the hook can never inject it "
+            "DOCUMENTCLASS_DOCTYPE value, so the resolver can never name it "
             "(manifest-only doctypes must be added to the map or documented)"
         )
 
@@ -94,8 +94,8 @@ def test_axis_body_stays_terse(file):
     size = len(file.read_text(encoding="utf-8"))
     assert size <= SIZE_BUDGET, (
         f"{file.relative_to(REPO)} is {size} chars (> {SIZE_BUDGET}): axis "
-        "bodies are injected verbatim and must compose with format + prose "
-        "bodies under the hook's MAX_CONTEXT cap"
+        "bodies are loaded verbatim and must compose with format + prose "
+        "bodies"
     )
 
 

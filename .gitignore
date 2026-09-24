@@ -52,7 +52,7 @@ tickets/tools/go/*.test
 
 # settings.shared.json: canonical shared config (hooks, env, permissions) — tracked
 # settings.json: live per-machine file (CLI writes model/effortLevel into it) — untracked;
-#   bootstrapped from settings.shared.json, drift checked by scripts/check-settings-drift.sh
+#   bootstrapped from and re-aligned to settings.shared.json by hand
 # settings.local.json: machine-specific permissions — gitignored
 !settings.shared.json
 !tests/

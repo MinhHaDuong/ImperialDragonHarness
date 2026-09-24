@@ -172,9 +172,8 @@ flush
 # whose .claude/worktrees/ is absent, silently skipping the scan.
 # `--git-common-dir` points at the shared .git of the primary checkout, so its
 # parent IS the primary root — from any worktree, registered or not
-# (invocation-invariant; same plumbing idiom as guard-commit-on-main.sh and
-# pretooluse-worktree-path-guard.sh, hardened by ticket 0297 — no dependency
-# on `git worktree list` output ordering).
+# (invocation-invariant, hardened by ticket 0297 — no dependency on
+# `git worktree list` output ordering).
 git_common_dir=$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
 primary_root=""
 [ -n "$git_common_dir" ] && primary_root=$(dirname "$git_common_dir")

@@ -241,7 +241,7 @@ jobs:
         # contract; tests/test_deps_declared.py guards the list (ticket 0530).
         run: pip install -r requirements-dev.txt
       # The shell-based regression suites in tests/*.sh are run under pytest via
-      # tests/test_bash_suites.py; jq is needed by the guard-destructive suite.
+      # tests/test_bash_suites.py; several of them build their payloads with jq.
       - name: Ensure jq is available
         run: jq --version
       - name: Run test suite with coverage

@@ -113,8 +113,8 @@ block_paths() {
 }
 
 # The checkout's own dirty paths. Used only where git named no files itself: an
-# isolated session cannot run `git -C <primary> status` (the worktree path guard
-# refuses reads too), so this line is the only diagnostic it gets, and "dirty"
+# isolated session cannot run `git -C <primary> status` (the runtime's worktree
+# isolation refuses reads too), so this line is the only diagnostic it gets, and "dirty"
 # without a path is what sent one session inferring the set from a stale
 # snapshot.
 local_dirty_paths() {

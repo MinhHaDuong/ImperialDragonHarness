@@ -9,9 +9,8 @@ last-reviewed: 2026-08-14
 # Prose rules — every prose file
 
 Applies to all prose formats (tex, qmd, md, txt) regardless of document type or
-language. Injected on the first prose edit of a session by the
-`inject_rule_on_edit.py` PreToolUse hook. This is the universal layer; doctype-
-and language-specific rules compose on top of it.
+language. Loaded whenever a prose file is touched. This is the universal
+layer; doctype- and language-specific rules compose on top of it.
 
 ## LLMism guards — phrasings to avoid
 
@@ -56,6 +55,6 @@ These are the tics that mark text as machine-written. Cut them.
 ## Scope note
 
 This is a seed. Grow it deliberately — add a guard only when you have seen the
-defect in real drafts, and keep each entry one line so the injected body stays
+defect in real drafts, and keep each entry one line so the loaded body stays
 small. Document-type conventions (techreport, slides, book) and language norms
 (fr, en) live in `rules/doctype/` and `rules/lang/`, not here.

@@ -406,9 +406,9 @@ survives the deletion:
 ~/.claude/scripts/worktree-salvage.sh <worktree-path>
 ```
 
-This commits everything on the agent's branch and pushes it. A PreToolUse guard
-enforces the order: `git worktree remove` is blocked while the worktree has
-uncommitted changes. Relaunch the finisher on the **existing** branch with
+This commits everything on the agent's branch and pushes it. Nothing enforces
+the order, so keep it: salvage first, then `git worktree remove` (never
+`--force` over uncommitted changes). Relaunch the finisher on the **existing** branch with
 `git switch <branch>` (NOT `-c`) — if this follows a killed-agent fork, confirm
 the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor across
 a forked-skill boundary); it inspects the salvaged WIP via

@@ -80,11 +80,10 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
                         _be_val="${_be_val:1:${#_be_val}-2}"
                     fi
                 fi
-                if _be_is_protected_name "$_be_key"; then
-                    printf 'bash-env: refusing protected name from project .env: %s\n' \
-                        "$_be_key" >&2
-                    continue
-                fi
+                # Refused silently: a warning here printed on every subprocess
+                # and prefixed hook messages (~2,400 lines in two days, ticket
+                # 0976) without ever changing an action.
+                _be_is_protected_name "$_be_key" && continue
                 export "$_be_key=$_be_val"
             done < "$PWD/.env"
             unset _be_line _be_trim _be_key _be_val _be_first _be_last

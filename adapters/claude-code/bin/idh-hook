@@ -16,8 +16,7 @@
 # Exit codes matter here. A missing target exits 1: loud on stderr, and NOT 2 --
 # 2 is Claude Code's "deny the tool call", so a broken launcher must never
 # silently start blocking every Bash command. Exit 0 is equally wrong: it makes
-# a broken hook byte-identical to a correct silent no-op, the failure mode
-# tests/test_hook_failures_are_visible.py exists to keep closed.
+# a broken hook byte-identical to a correct silent no-op (ticket 0610).
 set -euo pipefail
 
 SELF=$(readlink -f "$0")
