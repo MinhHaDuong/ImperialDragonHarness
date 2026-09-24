@@ -2,10 +2,12 @@
 Title: livre: unparseable verif-liens frontmatter and stale AGENTS.md/rules-map claims
 Created: 2026-09-24
 Author: claude
+Closed: Merged livre-milliards-climat#1 (661d942): all project skill frontmatters parse, stale claims dropped
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged livre-milliards-climat#1 (661d942): all project skill frontmatters parse, stale claims dropped
 --- body ---
 ## Context
 Audit findings C3, C5 (`docs/2026-09-24-rules-coherence-audit.md`). Repo: MinhHaDuong/livre-milliards-climat.

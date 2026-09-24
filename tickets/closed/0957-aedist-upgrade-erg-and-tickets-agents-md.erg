@@ -2,10 +2,12 @@
 Title: aedist: upgrade erg and tickets/AGENTS.md (stale next-free-ID renumber advice)
 Created: 2026-09-24
 Author: claude
+Closed: Merged aedist-technical-report#1176 (2b346bb): erg 63b5e92, tickets/AGENTS.md byte-identical to the harness copy, erg check PASS on main
 
 --- log ---
 2026-09-24T07:11Z claude created
 
+2026-09-24T08:10Z Claude closed — Merged aedist-technical-report#1176 (2b346bb): erg 63b5e92, tickets/AGENTS.md byte-identical to the harness copy, erg check PASS on main
 --- body ---
 ## Context
 Audit finding A2 (`docs/2026-09-24-rules-coherence-audit.md`). `tickets/AGENTS.md:38` still says "on ID
