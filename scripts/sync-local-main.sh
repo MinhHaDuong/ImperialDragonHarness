@@ -165,28 +165,74 @@ refusal_cause() {
 #     The local diff, not the whole local file, supplies the lines: re-adding
 #     the local copy of a line upstream removed would undo a sweep. A local
 #     deletion is a decision a union cannot make, so it refuses.
-# Every file touched is backed up first; if the retried fast-forward still
-# fails, all of them are restored and the ORIGINAL refusal is reported, so a
-# failed sync leaves the checkout exactly as it found it.
+# Every file is backed up before it is touched, and any failed step (backup,
+# reset, removal) abandons the whole reconcile and puts back what was touched
+# so far. If the retried fast-forward still fails, everything is restored and
+# the retry's refusal is reported: the checkout ends exactly as it was found.
+# Restoring never aborts the script (the hook contract is exit 0); a restore
+# that cannot complete keeps the backup directory and names it.
 RECON=""
+recon_keep=0
 recon_ident=0
 recon_union=0
 
-# Lines the local edit added to <path> relative to HEAD; empty output plus
+cleanup_recon() {
+    if [ -n "$RECON" ] && [ "$recon_keep" = 0 ]; then
+        rm -rf "$RECON"
+    fi
+    return 0
+}
+trap cleanup_recon EXIT
+
+# Lines the local edit added to <path> relative to HEAD, blank ones included;
 # exit 1 when the edit also deleted a line.
 added_lines_only() {
     git -C "$1" diff --no-color --no-ext-diff -U0 HEAD -- "$2" | awk '
         /^@@/        { body = 1; next }
         !body        { next }
         /^-/         { deleted = 1; next }
-        /^\+/        { line = substr($0, 2); if (line != "") print line }
+        /^\+/        { print substr($0, 2) }
         END          { exit deleted }'
+}
+
+# The incoming index, a newline if it lacks a final one, then the local
+# additions it does not already carry (blank lines always kept).
+build_union() {
+    local incoming_file="$1" add_file="$2"
+    cat "$incoming_file"
+    if [ -s "$incoming_file" ] && [ "$(tail -c1 "$incoming_file" | wc -l)" -eq 0 ]; then
+        echo
+    fi
+    awk 'FILENAME == ARGV[1] { if ($0 != "") seen[$0] = 1; next }
+         $0 == "" || !($0 in seen)' "$incoming_file" "$add_file"
+}
+
+# Put back every file touched so far. Never fails the script.
+restore_reconciled() {
+    local dir="$1" n p
+    [ -n "$RECON" ] && [ -f "$RECON/touched" ] || return 0
+    while IFS=$'\t' read -r n p; do
+        if ! cp -p "$RECON/$n" "$dir/$p"; then
+            recon_keep=1
+            echo "sync-local-main: could not restore $p — its backup is kept at $RECON/$n"
+        fi
+    done < "$RECON/touched"
+    return 0
+}
+
+# Abandon a reconcile midway: restore, and report nothing absorbed.
+abandon_reconcile() {
+    restore_reconciled "$1"
+    recon_ident=0
+    recon_union=0
+    rm -f "$RECON/union"
+    return 1
 }
 
 reconcile_converged() {
     local dir="$1" p incoming local_blob tracked n=0
-    RECON=$(mktemp -d)
-    : > "$RECON/touched"
+    RECON=$(mktemp -d) || { RECON=""; return 1; }
+    : > "$RECON/touched" || return 1
     while IFS= read -r p; do
         [ -f "$dir/$p" ] && [ ! -L "$dir/$p" ] || continue
         incoming=$(git -C "$dir" rev-parse --verify --quiet "refs/remotes/origin/$default:$p") || continue
@@ -197,45 +243,45 @@ reconcile_converged() {
         else
             tracked=0
         fi
-        local_blob=$(git -C "$dir" hash-object -- "$p")
+        local_blob=$(git -C "$dir" hash-object -- "$p") || continue
         n=$((n + 1))
         if [ "$local_blob" = "$incoming" ]; then
-            cp -p "$dir/$p" "$RECON/$n"
-            printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched"
-            if [ "$tracked" = 1 ]; then
-                git -C "$dir" show "HEAD:$p" > "$dir/$p"
-            else
-                rm -f "$dir/$p"
-            fi
+            { cp -p "$dir/$p" "$RECON/$n" &&
+              printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched" &&
+              if [ "$tracked" = 1 ]; then
+                  git -C "$dir" show "HEAD:$p" > "$dir/$p"
+              else
+                  rm -f "$dir/$p"
+              fi
+            } || { abandon_reconcile "$dir"; return 1; }
             recon_ident=$((recon_ident + 1))
         elif [ "$tracked" = 1 ] && [[ "/$p" == */memory/MEMORY.md ]] \
              && added_lines_only "$dir" "$p" > "$RECON/$n.add"; then
-            cp -p "$dir/$p" "$RECON/$n"
-            printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched"
-            {   git -C "$dir" cat-file blob "$incoming"
-                git -C "$dir" cat-file blob "$incoming" | grep -Fvx -f - "$RECON/$n.add" || true
-            } > "$RECON/$n.union"
-            printf '%s\t%s\n' "$n" "$p" >> "$RECON/union"
-            git -C "$dir" show "HEAD:$p" > "$dir/$p"
+            { git -C "$dir" cat-file blob "$incoming" > "$RECON/$n.in" &&
+              build_union "$RECON/$n.in" "$RECON/$n.add" > "$RECON/$n.union" &&
+              cp -p "$dir/$p" "$RECON/$n" &&
+              printf '%s\t%s\n' "$n" "$p" >> "$RECON/touched" &&
+              printf '%s\t%s\n' "$n" "$p" >> "$RECON/union" &&
+              git -C "$dir" show "HEAD:$p" > "$dir/$p"
+            } || { abandon_reconcile "$dir"; return 1; }
             recon_union=$((recon_union + 1))
         fi
     done < <(git -C "$dir" diff --name-only --no-renames "$local_sha" "$remote_sha")
     [ $((recon_ident + recon_union)) -gt 0 ]
 }
 
-restore_reconciled() {
-    local dir="$1" n p
-    while IFS=$'\t' read -r n p; do
-        cp -p "$RECON/$n" "$dir/$p"
-    done < "$RECON/touched"
-}
-
+# After the fast-forward: rewrite each union. A failed write leaves the file at
+# the incoming version, so the local additions stay in the backup, named.
 apply_unions() {
     local dir="$1" n p
     [ -f "$RECON/union" ] || return 0
     while IFS=$'\t' read -r n p; do
-        cat "$RECON/$n.union" > "$dir/$p"
+        if ! cat "$RECON/$n.union" > "$dir/$p"; then
+            recon_keep=1
+            echo "sync-local-main: could not re-apply local additions to $p — kept at $RECON/$n"
+        fi
     done < "$RECON/union"
+    return 0
 }
 
 recon_note() {
@@ -291,5 +337,4 @@ else
     [ -n "$RECON" ] && restore_reconciled "$co_path"
     echo "sync-local-main: could not fast-forward $default at $co_path, left untouched — $(refusal_cause "$co_path" "$ff_err")"
 fi
-[ -n "$RECON" ] && rm -rf "$RECON"
 exit 0

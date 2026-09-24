@@ -426,6 +426,54 @@ else
     _fail "partial reconcile must roll back and name only the genuine collision (got: $out)"
 fi
 
+# case 23: incoming index lacks a trailing newline → the union must not glue
+# the last incoming line to the first local addition (PR #1011 review).
+_setup unionnonl
+_push "$SANDBOX/unionnonl-seed" p/memory/MEMORY.md $'- [a](a.md)\n'
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/unionnonl-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [up](up.md)'
+printf -- '- [a](a.md)\n- [mine](mine.md)\n' > "$CLONE/p/memory/MEMORY.md"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(cat "$CLONE/p/memory/MEMORY.md")" = $'- [a](a.md)\n- [up](up.md)\n- [mine](mine.md)' ]; then
+    _pass "union separates local additions from an incoming index without a final newline"
+else
+    _fail "union glued lines (got: $out / $(cat "$CLONE/p/memory/MEMORY.md"))"
+fi
+
+# case 24: a blank line the local edit added survives the union.
+_setup unionblank
+_push "$SANDBOX/unionblank-seed" p/memory/MEMORY.md $'- [a](a.md)\n'
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/unionblank-seed" p/memory/MEMORY.md $'- [a](a.md)\n- [up](up.md)\n'
+printf -- '- [a](a.md)\n\n- [mine](mine.md)\n' > "$CLONE/p/memory/MEMORY.md"
+out=$(bash "$SYNC" "$CLONE")
+if [ "$(cat "$CLONE/p/memory/MEMORY.md")" = $'- [a](a.md)\n- [up](up.md)\n\n- [mine](mine.md)' ]; then
+    _pass "union keeps a blank line the local edit added"
+else
+    _fail "union dropped a local blank line (got: $out / $(cat "$CLONE/p/memory/MEMORY.md"))"
+fi
+
+# case 25: the backup copy fails → nothing is removed, the sync refuses as
+# before, and the script still exits 0 (PR #1011 review: an unchecked cp let
+# the original be deleted with no backup, then the restore aborted the script).
+_setup cpfail
+bash "$SYNC" "$CLONE" >/dev/null
+_push "$SANDBOX/cpfail-seed" p/memory/note.md $'same body\n'
+mkdir -p "$CLONE/p/memory" && printf 'same body\n' > "$CLONE/p/memory/note.md"
+CPSHIM="$SANDBOX/cpfail-bin" && mkdir -p "$CPSHIM"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$CPSHIM/cp" && chmod +x "$CPSHIM/cp"
+before=$(_main_sha "$CLONE")
+rc=0
+out=$(PATH="$CPSHIM:$PATH" bash "$SYNC" "$CLONE") || rc=$?
+if [ "$rc" = 0 ] \
+   && [ "$(_main_sha "$CLONE")" = "$before" ] \
+   && [ "$(cat "$CLONE/p/memory/note.md")" = "same body" ] \
+   && echo "$out" | grep -q "left untouched"; then
+    _pass "a failed backup aborts the reconcile, deletes nothing and still exits 0"
+else
+    _fail "failed backup must not lose the file or the exit-0 contract (rc=$rc, got: $out)"
+fi
+
 if (( fail )); then
     exit 1
 fi
