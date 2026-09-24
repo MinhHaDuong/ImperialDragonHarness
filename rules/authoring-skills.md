@@ -29,11 +29,6 @@ tests are the gate, this is why.
   list is the authority. Check it when you name a skill, not after.
   Renaming away from a collision takes no stub at the old name — a stub keeps the
   shadow, which is the thing being removed.
-- **Check script classifiers when renaming a skill.** The adherence test
-  `test_script_skill_references.py` resolves literal skill names in script
-  classifiers against `skills/*/SKILL.md`. A trace reader that intentionally
-  keeps an old corpus name declares `# historical-skill: old -> current` in
-  that script; the current name must resolve to a live skill.
 - **Discoverability first in `description:`.** The first sentence states the
   plain, unthemed function in the words a naive user would search ("Audit
   test-suite quality…"). Theming, lore and jargon come after it. Skill *names*

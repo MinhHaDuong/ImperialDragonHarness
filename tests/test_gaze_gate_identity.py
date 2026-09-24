@@ -1,7 +1,9 @@
-"""Regression contracts for gaze's isolation and gate identity (ticket 0852)."""
+"""Regression contracts for gaze's isolation and gate identity (ticket 0852).
+
+The per-PR claim lock of 0852 was deleted by ticket 0976; the gate identity
+fields and the no-fallback worktree setup remain."""
 
 from pathlib import Path
-import importlib.util
 import os
 import subprocess
 
@@ -11,11 +13,6 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 GAZE = ROOT / "skills/gaze/SKILL.md"
 VERIFY = ROOT / "skills/verify-gate/SKILL.md"
-LOCK_SCRIPT = ROOT / "scripts/gaze-gate-lock.py"
-
-spec = importlib.util.spec_from_file_location("gaze_gate_lock", LOCK_SCRIPT)
-lock = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(lock)
 
 
 def test_worktree_creation_failure_stops_gaze():
@@ -34,19 +31,6 @@ def test_verdict_comment_names_gate_identity():
     )[0]
     for field in ("Gate session id:", "Review worktree path:", "Ruled tip SHA:"):
         assert field in template
-
-
-def test_gate_claim_is_atomic_per_pr_and_release_requires_owner(tmp_path):
-    first = lock.acquire(tmp_path, "85", "/review-85")
-    with pytest.raises(RuntimeError, match=f"session={first}"):
-        lock.acquire(tmp_path, "85", "/other-85")
-    other = lock.acquire(tmp_path, "86", "/review-86")
-    with pytest.raises(RuntimeError, match="another gate"):
-        lock.release(tmp_path, "85", other)
-    lock.release(tmp_path, "85", first)
-    lock.release(tmp_path, "86", other)
-    replacement = lock.acquire(tmp_path, "85", "/new-review-85")
-    lock.release(tmp_path, "85", replacement)
 
 
 @pytest.mark.integration
@@ -73,4 +57,3 @@ def test_denied_worktree_add_stops_without_fallback(tmp_path):
     assert result.returncode != 0
     assert "gaze: cannot create isolated review worktree" in result.stderr
     assert not (tmp_path / ".claude/worktrees/review-85").exists()
-    assert not (tmp_path / ".claude/worktrees/.gaze-gates/pr-85.lock").exists()
