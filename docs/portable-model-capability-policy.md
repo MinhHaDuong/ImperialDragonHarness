@@ -111,6 +111,14 @@ particular models.
 model-selection logic. IDH should override that only when orchestration knows
 something useful about the task.
 
+`auto` means "the runtime's own router chooses", and only an adapter can say
+whether such a router exists. Where it does not, `auto` resolves to a
+configured default tier, **never to the caller's model**. Claude Code is the
+case in point: an `Agent` launch without a model inherits the session's, so a
+literal `auto` there is exactly the silent inheritance this policy exists to
+prevent (invariant 1). Each adapter therefore declares what `auto` resolves
+to, and the Claude adapter maps it to a configured tier.
+
 A worker's organizational rank does not determine its model level. A mechanical
 worker can be `cheap`; a difficult concurrency repair can be `strong` even
 though it sits at the bottom of the delegation tree.
@@ -129,6 +137,13 @@ when the runtime cannot express the distinction.
 "Reasoning off" is provider-specific and should remain adapter/configuration
 behavior rather than a fourth portable effort level.
 
+Where effort can be set also differs. Claude Code takes no effort on an
+`Agent` launch: it is fixed per agent *definition* (frontmatter `effort:`),
+and only `Workflow`'s `agent()` accepts it per call (`rules/claude-code.md`).
+On that runtime, semantic effort is therefore a property of agent profiles,
+not of individual launches: a launch that needs a different effort needs a
+different profile. Adapters must document this, not paper over it.
+
 ### Optional constraints
 
 IDH may state constraints that arise from orchestration rather than model
@@ -141,6 +156,12 @@ cataloguing, for example:
 These constraints should remain sparse. IDH should not grow a model capability
 database to resolve them.
 
+Decorrelation is the one constraint levels cannot express: two launches at
+different levels may still resolve to the same model family. It is stated as
+a relation, `decorrelated-from: <producer launch>`, and the adapter resolves it
+from what it knows of both concrete models (at minimum, a different family or
+tier; where the runtime offers another vendor, that is stronger).
+
 ## Default role policy
 
 A useful default is:
@@ -148,12 +169,19 @@ A useful default is:
 | Role | Model level | Effort |
 |---|---|---|
 | MOE/interface | strong | standard |
-| team lead | standard | economy |
+| team lead | standard | standard |
 | executor | auto | economy |
 | mechanical helper | cheap | economy |
 | hard-tail escalation | frontier | intensive |
 
 This expresses the fan-out economics without claiming that all workers are easy.
+
+The MOE row is a recommendation to the author, not a setting: the interface
+session's model is chosen when the session starts, and IDH cannot pin it.
+
+The team lead keeps `standard` effort because it verifies its executors'
+results, and verification is where judgment is spent. `economy` for leads is a
+hypothesis for Phase 5 to measure, not a default to assume.
 
 Task-specific promotion is expected:
 
@@ -192,6 +220,7 @@ Adapters need only a small mapping/configuration surface. Conceptually:
 
 ```text
 Claude:
+    auto      -> configured default tier (no router: never session inheritance)
     cheap     -> configured cheap tier
     standard  -> configured standard tier
     strong    -> configured strong tier
@@ -278,7 +307,7 @@ Make `team-lead` the first semantic profile:
 
 ```text
 model-level: standard
-effort: economy
+effort: standard
 ```
 
 Then migrate dedicated review profiles. Accidental inheritance becomes an
@@ -298,7 +327,8 @@ to `auto` or declares a semantic level, and the active adapter resolves it."
 
 Implement only the translation required by each runtime:
 
-- Claude Code: concrete model token plus effort on the correct launch surface;
+- Claude Code: concrete model token per launch; effort through agent-definition
+  profiles (or `Workflow` per-call options), since `Agent` launches take none;
 - OpenRouter: configured model plus its actual reasoning semantics;
 - Padmé/llama.cpp: configured local model and supported controls;
 - Codex/Pi: their native model/effort controls.
@@ -311,11 +341,13 @@ After migration is behavior-preserving, adopt the default hierarchy:
 
 ```text
 MOE       strong   / standard
-team lead standard / economy
+team lead standard / standard
 executor  auto     / economy
 ```
 
 Individual skills promote tasks where their domain knowledge justifies it.
+Lowering team leads to `economy` is decided here, on measured verification
+quality from traces, not assumed.
 
 ## Tests and invariants
 
@@ -325,7 +357,10 @@ Individual skills promote tasks where their domain knowledge justifies it.
 4. Unsupported semantic levels fail clearly or use an explicit configured
    fallback.
 5. Reviewer decorrelation remains enforceable without naming vendor tiers in
-   portable policy.
+   portable policy: a reviewer launch declares `decorrelated-from`, and an
+   adapter test shows it never resolves to the producer's concrete model.
+9. `auto` never resolves to the caller's model on a runtime without a router;
+   an adapter test demonstrates this against the Claude adapter.
 6. `intensive` is not a default for broad fan-out.
 7. Adapter tests cover provider-specific model and effort mechanics.
 8. Traces record requested semantic level/effort and the concrete result when
