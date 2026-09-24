@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Halve the resident rules set
+Created: 2026-09-24
+Author: claude
+Closed: resident rules 35 928 -> 16 823 chars; budget 17 500
+
+--- log ---
+2026-09-24T13:28Z claude created
+
+2026-09-24T13:28Z Claude closed — resident rules 35 928 -> 16 823 chars; budget 17 500
+--- body ---
+## Context
+Author, 2026-09-24: "The harness is too fat." The rules tree was at 35 928 of
+its 36 000-char resident cap, loaded into every session of every project.
+`rules/README.md` alone was 7 337 chars resident while arguing that describing
+a resident body again is paying for it twice; `workflow.md`, `git.md` and
+`claude-code.md` restated each other (session start, worktree traps, rtk) and
+inlined procedures `/merge` and `/roar` already hold.
+
+## Exit criteria
+- [x] `rules/README.md` scoped with `paths:` to the rules tree
+- [x] Resident bodies deduplicated; incident narrative left to memory/tickets
+- [x] Author-accepted 0572 restorations kept (questions only when input is
+      needed, null results bounded to tested scope, no avian analogies)
+- [x] `RESIDENT_BUDGET` ratcheted 36 000 -> 17 500
+- [x] Rules channel 35 928 -> 16 823 chars (~12 800 -> ~6 000 tokens)
