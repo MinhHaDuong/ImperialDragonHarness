@@ -3,12 +3,14 @@ Title: Decide: startup worktree instruction for repos that work on main (livre)
 Created: 2026-09-24
 Author: claude
 Label: needs-human
+Closed: Author ruled 2026-09-24: no per-repo pass. The startup line now states the rule by kind of work (code/data/config in a worktree; manuscript prose in place in the author's checkout), and git.md makes agents carry the sync: the author edits only in their own checkout
 
 --- log ---
 2026-09-24T07:12Z claude created
 
 2026-09-24T07:12Z Claude label needs-human
 2026-09-24T07:50Z Claude claude decision Author 2026-09-24: keep open; reconsider as a general question -- how the author reaches and hand-edits files when agents work in worktrees or cloud containers, not a livre-specific hook tweak
+2026-09-24T10:07Z Claude closed — Author ruled 2026-09-24: no per-repo pass. The startup line now states the rule by kind of work (code/data/config in a worktree; manuscript prose in place in the author's checkout), and git.md makes agents carry the sync: the author edits only in their own checkout
 --- body ---
 ## Context
 Audit B2 (`docs/2026-09-24-rules-coherence-audit.md`). `scripts/on-start.sh` tells every project to enter a
