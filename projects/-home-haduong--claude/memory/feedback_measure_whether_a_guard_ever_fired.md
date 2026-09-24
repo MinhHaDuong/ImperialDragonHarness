@@ -41,5 +41,22 @@ Open with the two questions. Write the measurement into the ticket so the next
 reader inherits evidence rather than a repair plan resting on an unexamined
 premise.
 
+**The whole-set run, 2026-09-24 (ticket 0976, PR #1016).** The two questions,
+applied to every guard at once over 6,417 transcripts, with the burden of proof
+on the guard. The detector that works: a blocking hook renders as a
+`tool_result` starting `PreToolUse:<Tool> hook error: [<script>]:`, which
+excludes source reads and test runs by construction. About 1,300 firings in
+total, and one prevented lost work: a hard reset over a dirty primary checkout.
+Everything else was a scratch-dir deletion, a recoverable stray, or a false
+positive the agent sidestepped at once. The same session then saw the live
+guard block its own ticket and PR text twice, for quoting its patterns. Two
+further failures seen in that run: a drift alarm (`check-settings-drift.sh`)
+whose output `on-start.sh` sent to `/dev/null` before calling it, so the dead
+hook wiring it had flagged by hand went unseen for two weeks; and a guard
+wired live to a script deleted on 09-10, which never errored because its
+matcher never matched. An alarm nobody can see and a guard nobody can trigger
+both look like a guard that has not fired yet.
+
 Related: [[feedback_harness_cooldown_stop_second_order_tooling]],
-[[feedback_editing_a_ticket_body_is_not_appending]].
+[[feedback_editing_a_ticket_body_is_not_appending]],
+[[feedback_hook_rename_is_a_two_phase_deploy]].
