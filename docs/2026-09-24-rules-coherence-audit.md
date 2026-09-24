@@ -79,5 +79,6 @@ is `erg init`, not a binary copy.
 - **A4** fixed (author: harness wins): aedist #1176. **A5** fixed (author: harness wins): search-works #628; finding narrowed, since under `/raid` the orchestrator already was the coordinator.
 - **B1** kept (author: no). **B6** dropped: quickpr never writes a close claim.
 - **C3, C5** fixed: livre #1. **C4** fixed (author: delete the duplicate): livre #1. **C6** fixed: harness #1000.
-- **Open:** B2 as 0968 (reframed: the author's hand-edit path), B7 as 0971 (proposal to budget the project channel).
+- **B7** fixed and generalized (0971): the harness measures each project's resident text and warns at session start (#1004); climate 30 108 → 5 949 chars (climate #1481), search-works 19 713 → 11 649 (search-works #629).
+- **Open:** B2 as 0968 (reframed: the author's hand-edit path).
 - **Noted only:** B3, B5.
