@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Make one canonical ``perch`` skill discoverable by Claude Code, Codex and Pi.
+"""Make any canonical skill discoverable by Claude Code, Codex and Pi.
 
 Ticket 0802, second attempt. The provider-neutral destination is
 ``$HOME/.agents/skills`` — not a name this pilot invents, but the user-level
@@ -9,8 +9,8 @@ pilot exists to reach had nothing to find.
 
 Three decisions, each one a defect of PR #780 turned around:
 
-**The neutral home is built.** ``install codex`` / ``install pi`` create
-``$HOME/.agents/skills/perch`` as a symlink onto this repository's
+**The neutral home is built.** ``install skill perch --to codex`` or ``--to pi``
+creates ``$HOME/.agents/skills/perch`` as a symlink onto this repository's
 ``skills/perch``. Both harnesses follow a symlinked skill directory, so the
 Markdown body stays canonical and live — no copy, no build step.
 
@@ -26,13 +26,13 @@ installation the harness repository *is* ``$HOME/.claude``, so
 That is the goal state for Claude Code, reached with nothing installed; PR #780
 read it as a collision and refused its own skill as an unmanaged entry.
 
-One hand-ported slice. No generator, no workflow DSL, no second copy of the
-prose. Usage::
+The perch pilot established the directory contract. This CLI names the skill
+to project; it does not transform or copy its body. Usage::
 
-    adapters/perch.py status
-    adapters/perch.py install codex
-    adapters/perch.py uninstall codex
-    adapters/perch.py check-version pi
+    bin/idh status skill perch
+    bin/idh install skill perch --to codex
+    bin/idh uninstall skill perch
+    bin/idh check harness pi
 """
 
 import argparse
@@ -52,7 +52,6 @@ REPO = HERE.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import skill_frontmatter  # noqa: E402
 INVENTORY_PATH = HERE / "pilot-support.json"
-SLICE = "perch"
 
 HARNESSES = ("claude", "codex", "pi")
 
@@ -75,11 +74,16 @@ class Refusal(RuntimeError):
 # --- the canonical body -------------------------------------------------
 
 
-def canonical_source() -> Path:
+def canonical_source(skill: str) -> Path:
     """The one live skill directory. Everything else points at it."""
-    source = (REPO / "skills" / SLICE).resolve()
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", skill):
+        raise Refusal(f"invalid skill name {skill!r}")
+    source = (REPO / "skills" / skill).resolve()
     if not (source / "SKILL.md").is_file():
-        raise Refusal(f"canonical {SLICE} skill missing at {source}/SKILL.md")
+        raise Refusal(f"canonical {skill} skill missing at {source}/SKILL.md")
+    fields = frontmatter(source / "SKILL.md")
+    if fields.get("name") != skill or not fields.get("description"):
+        raise Refusal(f"canonical {skill} skill has mismatched or missing frontmatter")
     return source
 
 
@@ -190,23 +194,23 @@ def neutral_home() -> Path:
     return _home() / ".agents"
 
 
-def target_path(harness: str) -> Path:
+def target_path(harness: str, skill: str) -> Path:
     if harness == "claude":
-        return _home() / ".claude" / "skills" / SLICE
+        return _home() / ".claude" / "skills" / skill
     if harness in NEUTRAL_HARNESSES:
-        return neutral_home() / "skills" / SLICE
+        return neutral_home() / "skills" / skill
     raise Refusal(f"unknown harness {harness!r}")
 
 
-def _is_canonical(target: Path) -> bool:
+def _is_canonical(target: Path, skill: str) -> bool:
     try:
-        return target.resolve() == canonical_source()
+        return target.resolve() == canonical_source(skill)
     except OSError:
         return False
 
 
-def _holds_another_copy(target: Path) -> bool:
-    """Is this a live ``perch`` skill that simply is not *our* checkout's?
+def _holds_another_copy(target: Path, skill: str) -> bool:
+    """Is this skill live from a different checkout?
 
     The case is ordinary rather than exotic: run from a git worktree, the
     canonical source is the worktree's ``skills/perch`` while the Claude
@@ -216,15 +220,15 @@ def _holds_another_copy(target: Path) -> bool:
     it reads as the unmanaged-entry collision that closed PR #780.
     """
     manifest = target / "SKILL.md"
-    if target.is_symlink() or not manifest.is_file():
+    if not manifest.is_file():
         return False
     try:
-        return frontmatter(manifest).get("name") == SLICE
+        return frontmatter(manifest).get("name") == skill
     except (Refusal, OSError):
         return False
 
 
-def _is_dangling_link(target: Path) -> bool:
+def _is_dangling_link(target: Path, skill: str) -> bool:
     """A link of ours whose target went away, typically a moved checkout.
 
     Unlinking one destroys no data, so naming this state is what makes it
@@ -233,20 +237,20 @@ def _is_dangling_link(target: Path) -> bool:
     """
     if not target.is_symlink() or target.exists():
         return False
-    # A bare basename match would adopt any dangling link happening to be
-    # called perch. Require the shape install writes: <checkout>/skills/perch.
-    return Path(os.readlink(target)).parts[-2:] == ("skills", SLICE)
+    # A bare basename match would adopt an unrelated dangling link. Require
+    # the shape install writes: <checkout>/skills/<skill>.
+    return Path(os.readlink(target)).parts[-2:] == ("skills", skill)
 
 
-def status(harness: str) -> dict:
-    target = target_path(harness)
-    present = os.path.lexists(target) and _is_canonical(target)
+def status(harness: str, skill: str) -> dict:
+    target = target_path(harness, skill)
+    present = os.path.lexists(target) and _is_canonical(target, skill)
     if not present:
         if not os.path.lexists(target):
             projection = "absent"
-        elif _holds_another_copy(target):
+        elif _holds_another_copy(target, skill):
             projection = "other-checkout"
-        elif _is_dangling_link(target):
+        elif _is_dangling_link(target, skill):
             projection = "dangling"
         else:
             projection = "unmanaged"
@@ -258,9 +262,9 @@ def status(harness: str) -> dict:
         projection = "none"
     return {
         "harness": harness,
-        "slice": SLICE,
+        "slice": skill,
         "target": str(target),
-        "source": str(canonical_source()),
+        "source": str(canonical_source(skill)),
         "installed": present,
         "projection": projection,
     }
@@ -269,9 +273,9 @@ def status(harness: str) -> dict:
 # --- install / uninstall ------------------------------------------------
 
 
-def install(harness: str, version: str | None = None) -> str:
-    source = canonical_source()
-    target = target_path(harness)
+def install(harness: str, skill: str, version: str | None = None) -> str:
+    source = canonical_source(skill)
+    target = target_path(harness, skill)
 
     # Probe before anything else, the already-discoverable path included.
     # "already discoverable" is a support claim about *this* CLI, not a bare
@@ -280,23 +284,23 @@ def install(harness: str, version: str | None = None) -> str:
     checked = check_version(harness, supplied=version)
 
     if os.path.lexists(target):
-        if _is_canonical(target):
+        if _is_canonical(target, skill):
             return (
-                f"{harness} {checked}: {SLICE} already discoverable at {target} "
-                f"(projection: {status(harness)['projection']})"
+                f"{harness} {checked}: {skill} already discoverable at {target} "
+                f"(projection: {status(harness, skill)['projection']})"
             )
-        if _holds_another_copy(target):
+        if _holds_another_copy(target, skill):
             raise Refusal(
-                f"{target} already holds a {SLICE} skill from another checkout; "
+                f"{target} already holds a {skill} skill from another checkout; "
                 f"this one is {source}. Run install from that checkout, or "
                 f"remove the entry deliberately first"
             )
-        if _is_dangling_link(target):
+        if _is_dangling_link(target, skill):
             raise Refusal(
-                f"{target} is a {SLICE} link whose target is gone, probably a "
-                f"moved checkout; run uninstall {harness} first"
+                f"{target} is a {skill} link whose target is gone, probably a "
+                f"moved checkout; run bin/idh uninstall skill {skill} --to {harness} first"
             )
-        raise Refusal(f"{target} exists and is not the canonical {SLICE}")
+        raise Refusal(f"{target} exists and is not the canonical {skill}")
 
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -314,7 +318,7 @@ def install(harness: str, version: str | None = None) -> str:
     return f"{harness} {checked}: installed {target} -> {source}"
 
 
-def prune_root(harness: str) -> Path:
+def prune_root(harness: str, skill: str) -> Path:
     """The highest directory uninstall may remove for this harness.
 
     For Codex and Pi that is the neutral home, which install may have created.
@@ -323,7 +327,7 @@ def prune_root(harness: str) -> Path:
     """
     if harness in NEUTRAL_HARNESSES:
         return neutral_home()
-    return target_path(harness).parent
+    return target_path(harness, skill).parent
 
 
 def _prune_empty(start: Path, stop: Path) -> None:
@@ -358,81 +362,91 @@ def _unlink(target: Path) -> None:
         return
 
 
-def sharing_target(harness: str) -> tuple[str, ...]:
+def sharing_target(harness: str, skill: str) -> tuple[str, ...]:
     """Every harness that reads the directory this one reads.
 
-    Codex and Pi share the neutral home, so removing perch for one removes it
+    Codex and Pi share the neutral home, so removing a skill for one removes it
     for the other. The CLI spells them as separate verbs, so the message has
     to say which harnesses a removal actually reaches.
     """
-    target = target_path(harness)
-    return tuple(other for other in HARNESSES if target_path(other) == target)
+    target = target_path(harness, skill)
+    return tuple(other for other in HARNESSES if target_path(other, skill) == target)
 
 
-def uninstall(harness: str) -> str:
-    target = target_path(harness)
-    reached = ", ".join(sharing_target(harness))
+def uninstall(harness: str, skill: str) -> str:
+    target = target_path(harness, skill)
+    reached = ", ".join(sharing_target(harness, skill))
     if not os.path.lexists(target):
-        return f"{harness}: {SLICE} is not installed at {target}"
+        return f"{harness}: {skill} is not installed at {target}"
     if not target.is_symlink():
-        if _is_canonical(target):
+        if _is_canonical(target, skill):
             return (
-                f"{harness}: {target} is the canonical {SLICE} skill, not a "
+                f"{harness}: {target} is the canonical {skill} skill, not a "
                 f"pilot artifact; nothing removed"
             )
-        raise Refusal(f"{target} is not the managed {SLICE} link")
-    if _is_dangling_link(target):
+        raise Refusal(f"{target} is not the managed {skill} link")
+    if _is_dangling_link(target, skill):
         _unlink(target)
-        _prune_empty(target.parent, prune_root(harness))
+        _prune_empty(target.parent, prune_root(harness, skill))
         return f"{reached}: removed {target}, a link whose target no longer exists"
-    if not _is_canonical(target):
-        raise Refusal(f"{target} is not the managed {SLICE} link")
+    if not _is_canonical(target, skill):
+        raise Refusal(f"{target} is not the managed {skill} link")
     _unlink(target)
-    _prune_empty(target.parent, prune_root(harness))
+    _prune_empty(target.parent, prune_root(harness, skill))
     return f"{reached}: removed {target}"
 
 
 # --- CLI ----------------------------------------------------------------
 
 
+def known_skills() -> list[str]:
+    return sorted(
+        path.name for path in (REPO / "skills").iterdir() if (path / "SKILL.md").is_file()
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
-
-    probe = commands.add_parser("check-version", help="floor-and-probe gate")
-    probe.add_argument("harness", choices=HARNESSES)
-    probe.add_argument("--version", help="check this text instead of running the CLI")
-
-    for name, help_text in (
-        ("install", "make the canonical skill discoverable"),
-        ("uninstall", "remove the link, then what it leaves empty"),
-        ("status", "where each harness looks, and what is there"),
-    ):
-        child = commands.add_parser(name, help=help_text)
-        child.add_argument("harness", nargs="?", choices=HARNESSES)
+    for name in ("install", "uninstall", "status"):
+        action = commands.add_parser(name)
+        action.add_argument("type", choices=("skill",))
+        action.add_argument("skills", nargs="*" if name == "status" else "+")
+        action.add_argument("--to", choices=HARNESSES)
         if name == "install":
-            child.add_argument("--version", help="skip the probe with this version")
+            action.add_argument("--version", help="use this version instead of probing the CLI")
+    check = commands.add_parser("check", help="probe a harness version")
+    check.add_argument("type", choices=("harness",))
+    check.add_argument("harness", choices=HARNESSES)
+    check.add_argument("--version", help="check this text instead of running the CLI")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    targets = [args.harness] if args.harness else list(HARNESSES)
     try:
-        if args.command == "check-version":
-            for harness in targets:
-                print(f"{harness}: {check_version(harness, args.version)}")
-        elif args.command == "install":
-            for harness in targets:
-                print(install(harness, version=args.version))
-        elif args.command == "uninstall":
-            for harness in targets:
-                print(uninstall(harness))
+        if args.command == "check":
+            print(f"{args.harness}: {check_version(args.harness, args.version)}")
         else:
-            for harness in targets:
-                print(json.dumps(status(harness), indent=2))
+            targets = (args.to,) if args.to else HARNESSES
+            skills = args.skills or known_skills()
+            for skill in skills:
+                canonical_source(skill)
+            if args.command == "install":
+                # Refuse an absent or below-floor CLI before creating any link.
+                versions = {
+                    harness: check_version(harness, args.version) for harness in targets
+                }
+            for skill in skills:
+                for harness in targets:
+                    if args.command == "install":
+                        print(install(harness, skill, version=versions[harness]))
+                    elif args.command == "uninstall":
+                        print(uninstall(harness, skill))
+                    else:
+                        print(json.dumps(status(harness, skill), indent=2))
     except Refusal as exc:
-        print(f"perch pilot: {exc}", file=sys.stderr)
+        print(f"idh: {exc}", file=sys.stderr)
         return 2
     return 0
 
