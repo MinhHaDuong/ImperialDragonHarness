@@ -52,6 +52,13 @@ perch = _module()
 pytestmark = pytest.mark.integration
 
 
+def _require_supported(harness: str) -> None:
+    try:
+        perch.check_version(harness)
+    except perch.Refusal as exc:
+        pytest.skip(str(exc))
+
+
 @pytest.fixture
 def profile(tmp_path, monkeypatch):
     """A throwaway harness profile: empty $HOME, a cwd outside any project."""
@@ -113,7 +120,7 @@ def test_a_clean_codex_profile_gains_perch_only_after_install(profile):
         "skills, or an empty result would prove nothing"
     )
 
-    perch.install("codex")
+    perch.install("codex", "perch")
 
     after = _codex_prompt(profile)
     assert "- perch:" in after
@@ -123,10 +130,11 @@ def test_a_clean_codex_profile_gains_perch_only_after_install(profile):
 
 @pytest.mark.skipif(shutil.which("pi") is None, reason="pi CLI not installed")
 def test_a_clean_pi_profile_gains_perch_only_after_install(profile):
+    _require_supported("pi")
     before = {command["name"] for command in _pi_commands(profile)}
     assert "skill:perch" not in before, "negative control failed"
 
-    perch.install("pi")
+    perch.install("pi", "perch")
 
     after = {command["name"]: command for command in _pi_commands(profile)}
     assert "skill:perch" in after, sorted(after)
@@ -139,7 +147,8 @@ def test_a_clean_pi_profile_gains_perch_only_after_install(profile):
 
 @pytest.mark.skipif(shutil.which("pi") is None, reason="pi CLI not installed")
 def test_pi_reads_perch_through_the_neutral_home_symlink(profile):
-    perch.install("pi")
+    _require_supported("pi")
+    perch.install("pi", "perch")
     entry = {c["name"]: c for c in _pi_commands(profile)}["skill:perch"]
     path = Path(entry.get("path") or entry["sourceInfo"]["path"])
     assert path.is_relative_to(perch.neutral_home())
@@ -148,9 +157,10 @@ def test_pi_reads_perch_through_the_neutral_home_symlink(profile):
 
 @pytest.mark.skipif(shutil.which("pi") is None, reason="pi CLI not installed")
 def test_uninstall_takes_perch_back_out_of_a_pi_profile(profile):
-    perch.install("pi")
+    _require_supported("pi")
+    perch.install("pi", "perch")
     assert "skill:perch" in {c["name"] for c in _pi_commands(profile)}
-    perch.uninstall("pi")
+    perch.uninstall("pi", "perch")
     assert "skill:perch" not in {c["name"] for c in _pi_commands(profile)}
     assert not perch.neutral_home().exists()
 
@@ -169,6 +179,7 @@ def test_the_recorded_probe_command_is_the_one_that_ran(harness):
         pytest.skip(f"{binary} not installed")
     assert command.split()[1:] == ["--version"], command
     assert binary == harness, f"{command} does not probe {harness}"
+    _require_supported(harness)
     probed = perch.parse_version(perch.check_version(harness))
     assert probed >= perch.parse_version(perch.policy(harness)["minimum_version"])
 
@@ -203,14 +214,14 @@ def test_invalid_utf8_from_a_cli_stays_inside_the_refusal_contract(
 def test_the_cli_reports_a_refusal_as_one_line_and_exit_two(tmp_path):
     mute = _fake_cli(tmp_path, "mutecodex", r"printf '\377\376\n'")
     done = subprocess.run(
-        ["python3", str(REPO / "adapters" / "perch.py"), "check-version", "codex"],
+        ["python3", str(REPO / "bin" / "idh"), "check", "harness", "codex"],
         capture_output=True,
         text=True,
         timeout=TIMEOUT,
         env={**os.environ, "PERCH_CODEX_BIN": str(mute)},
     )
     assert done.returncode == 2, done
-    assert done.stderr.startswith("perch pilot: ")
+    assert done.stderr.startswith("idh: ")
     assert "Traceback" not in done.stderr
 
 

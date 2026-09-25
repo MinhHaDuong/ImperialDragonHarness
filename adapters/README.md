@@ -5,8 +5,8 @@ into. Two unrelated things live here today:
 
 - `claude-code/` — the harness's hook wiring as a Claude Code plugin (ticket
   0887). Its own README is next to it.
-- `perch.py` + `pilot-support.*` — the multi-harness skill pilot (ticket
-  0802), described below.
+- `perch.py` and `bin/idh` — the multi-harness skill installer, generalized
+  from the perch pilot (tickets 0802 and 0949).
 
 ## The perch pilot
 
@@ -16,17 +16,26 @@ answer — portable Markdown, read-only, no tools. It is hand-ported, not
 generated: there is no skill IR here, no workflow DSL and no second copy of
 the prose.
 
-    adapters/perch.py status              # where each harness looks, and what is there
-    adapters/perch.py install codex
-    adapters/perch.py uninstall codex
-    adapters/perch.py check-version pi
+    bin/idh status skill perch             # where each harness looks
+    bin/idh status skill perch roar --to codex
+    bin/idh install skill perch            # all three harnesses
+    bin/idh uninstall skill perch --to codex
+    bin/idh check harness pi
+
+The object argument names a directory under `skills/` whose `SKILL.md` has
+matching `name` and a nonempty `description`. `status skill` lists every
+canonical skill; `--to` narrows a command to one harness. Installation checks
+all requested skills and harness versions before it creates any links. This
+installer makes a skill discoverable; a skill's workflow still needs its own
+portability review before installation. In particular, `roar` is used as the
+second-object test but is not yet installed by this change.
 
 ### Where the skill goes
 
-`$HOME/.agents/skills` is not a name this pilot invents. It is the user-level
+`$HOME/.agents/skills` is not a name this installer invents. It is the user-level
 [Agent Skills](https://agentskills.io/specification) root that **Codex** and
 **Pi** each document and each scan, and both follow a symlinked skill
-directory — so `install` points it at `skills/perch` in this repository and
+directory — so `install skill perch` points it at `skills/perch` in this repository and
 the body stays canonical and live. Editing the prose needs no build step and
 no reinstall.
 
@@ -44,14 +53,14 @@ Claude.
 | Codex | `$HOME/.agents/skills` | `$perch` |
 | Pi | `$HOME/.agents/skills` | `/skill:perch` |
 
-Run from a git worktree, `status claude` reports `other-checkout`: the
+Run from a git worktree, `bin/idh status skill perch --to claude` reports `other-checkout`: the
 canonical source is then the worktree's copy while the skills root still holds
 the primary checkout's. Install refuses — pointing a live skills root at a
 throwaway worktree is not an improvement — and says so in those words.
 
 ### Version support is a floor, not a list
 
-`check-version` probes `<cli> --version` and compares it against
+`bin/idh check harness <name>` probes `<cli> --version` and compares it against
 `minimum_version` in `pilot-support.json`. Above the floor is supported with no
 edit to this repository; below it, unparseable, or a CLI that will not run at
 all is **refused**, never silently accepted. The predecessor of this pilot
@@ -76,7 +85,7 @@ three harnesses within nine days.
 
 ### Taking it back out
 
-`adapters/perch.py uninstall <harness>` removes the managed link, then every
+`bin/idh uninstall skill <name> --to <harness>` removes the managed link, then every
 directory the removal left empty, up to and including the neutral home. A
 neutral home holding anything else survives untouched, and the canonical skill
 is never deleted. One caveat stated rather than papered over: nothing on disk
@@ -84,7 +93,7 @@ records which of those empty directories `install` created, so an empty one you
 made by hand goes with them. Nothing under `skills/` is touched at any point,
 so the pre-experiment Claude state is restored by construction.
 
-`uninstall codex` and `uninstall pi` reach the same link — one neutral home,
+`uninstall skill perch --to codex` and its Pi equivalent reach the same link — one neutral home,
 one perch — so each names both harnesses in what it reports. A link left
 dangling by moving the checkout is reported as `dangling` and removed on
 request, rather than sitting there as an entry nothing can clean up.

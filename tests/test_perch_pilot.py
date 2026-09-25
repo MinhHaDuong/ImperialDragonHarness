@@ -168,20 +168,20 @@ def test_a_missing_cli_refuses_rather_than_passing(monkeypatch):
 
 def test_a_clean_profile_does_not_discover_perch(home):
     assert not (home / ".agents").exists()
-    assert perch.status("codex")["installed"] is False
-    assert perch.status("pi")["installed"] is False
+    assert perch.status("codex", "perch")["installed"] is False
+    assert perch.status("pi", "perch")["installed"] is False
 
 
 @pytest.mark.parametrize("harness", ("codex", "pi"))
 def test_install_creates_the_neutral_home(home, harness):
-    perch.install(harness, version="99.0.0")
+    perch.install(harness, "perch", version="99.0.0")
     target = home / ".agents" / "skills" / "perch"
     assert target.is_symlink()
     assert target.resolve() == (REPO / "skills" / "perch").resolve()
     assert (target / "SKILL.md").read_text(encoding="utf-8") == CANONICAL.read_text(
         encoding="utf-8"
     )
-    assert perch.status(harness)["installed"] is True
+    assert perch.status(harness, "perch")["installed"] is True
 
 
 def test_a_blocked_neutral_home_refuses_instead_of_raising_a_traceback(home):
@@ -195,22 +195,62 @@ def test_a_blocked_neutral_home_refuses_instead_of_raising_a_traceback(home):
     """
     (home / ".agents").write_text("not a directory\n", encoding="utf-8")
     with pytest.raises(perch.Refusal) as caught:
-        perch.install("codex", version="99.0.0")
+        perch.install("codex", "perch", version="99.0.0")
     assert ".agents" in str(caught.value)
-    assert perch.main(["install", "codex", "--version", "99.0.0"]) == 2
+    assert perch.main(["install", "skill", "perch", "--to", "codex", "--version", "99.0.0"]) == 2
 
 
 def test_codex_and_pi_share_one_target_and_install_is_idempotent(home):
-    perch.install("codex", version="99.0.0")
-    perch.install("pi", version="99.0.0")
-    assert perch.status("codex")["target"] == perch.status("pi")["target"]
+    perch.install("codex", "perch", version="99.0.0")
+    perch.install("pi", "perch", version="99.0.0")
+    assert perch.status("codex", "perch")["target"] == perch.status("pi", "perch")["target"]
     assert (home / ".agents" / "skills" / "perch").is_symlink()
+
+
+def test_two_real_skills_install_and_uninstall_independently(home):
+    assert perch.main(["install", "skill", "perch", "roar", "--to", "codex", "--version", "99.0.0"]) == 0
+    for skill in ("perch", "roar"):
+        assert perch.status("codex", skill)["installed"] is True
+    assert perch.main(["uninstall", "skill", "perch", "--to", "pi"]) == 0
+    assert perch.status("codex", "perch")["installed"] is False
+    assert perch.status("codex", "roar")["installed"] is True
+
+
+def test_default_install_covers_every_harness_and_is_idempotent(home, capsys):
+    args = ["install", "skill", "perch", "--version", "99.0.0"]
+    assert perch.main(args) == 0
+    first = capsys.readouterr().out
+    assert all(f"{harness} 99.0.0:" in first for harness in perch.HARNESSES)
+    assert perch.main(args) == 0
+    assert capsys.readouterr().out.count("already discoverable") == len(perch.HARNESSES)
+
+
+def test_unknown_skill_refuses_with_one_line_and_no_link(home, capsys):
+    assert perch.main(["install", "skill", "not-a-skill", "--to", "codex", "--version", "99.0.0"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.count("\n") == 1
+    assert "not-a-skill" in captured.err
+    assert not (home / ".agents").exists()
+
+
+def test_preflight_checks_every_harness_before_creating_links(home, monkeypatch, capsys):
+    def probe(harness, supplied=None):
+        if harness == "pi":
+            raise perch.Refusal("pi is below the minimum")
+        return "99.0.0"
+
+    monkeypatch.setattr(perch, "check_version", probe)
+    assert perch.main(["install", "skill", "perch", "roar"]) == 2
+    assert capsys.readouterr().out == ""
+    assert not (home / ".agents").exists()
+    assert not (home / ".claude").exists()
 
 
 def test_uninstall_restores_the_exact_pre_experiment_state(home):
     before = sorted(p.name for p in home.iterdir())
-    perch.install("codex", version="99.0.0")
-    perch.uninstall("codex")
+    perch.install("codex", "perch", version="99.0.0")
+    perch.uninstall("codex", "perch")
     assert sorted(p.name for p in home.iterdir()) == before
     assert not (home / ".agents").exists()
 
@@ -219,28 +259,28 @@ def test_uninstall_keeps_a_neutral_home_that_holds_someone_elses_skill(home):
     other = home / ".agents" / "skills" / "unrelated"
     other.mkdir(parents=True)
     (other / "SKILL.md").write_text("---\nname: unrelated\n---\n", encoding="utf-8")
-    perch.install("pi", version="99.0.0")
-    perch.uninstall("pi")
+    perch.install("pi", "perch", version="99.0.0")
+    perch.uninstall("pi", "perch")
     assert other.is_dir()
     assert not (home / ".agents" / "skills" / "perch").exists()
 
 
 def test_uninstall_names_every_harness_it_reaches(home):
     """One neutral home, one perch: removing it for Codex removes it for Pi."""
-    assert perch.sharing_target("codex") == ("codex", "pi")
-    assert perch.sharing_target("claude") == ("claude",)
-    perch.install("codex", version="99.0.0")
-    message = perch.uninstall("pi")
+    assert perch.sharing_target("codex", "perch") == ("codex", "pi")
+    assert perch.sharing_target("claude", "perch") == ("claude",)
+    perch.install("codex", "perch", version="99.0.0")
+    message = perch.uninstall("pi", "perch")
     assert "codex, pi" in message
-    assert perch.status("codex")["installed"] is False
+    assert perch.status("codex", "perch")["installed"] is False
 
 
 def test_uninstall_never_prunes_above_the_neutral_home(home):
     """$HOME/.claude is Claude Code's own directory, not the pilot's to remove."""
-    assert perch.prune_root("codex") == home / ".agents"
-    assert perch.prune_root("claude") == home / ".claude" / "skills"
-    perch.install("claude", version="99.0.0")
-    perch.uninstall("claude")
+    assert perch.prune_root("codex", "perch") == home / ".agents"
+    assert perch.prune_root("claude", "perch") == home / ".claude" / "skills"
+    perch.install("claude", "perch", version="99.0.0")
+    perch.uninstall("claude", "perch")
     assert (home / ".claude").is_dir()
     assert not (home / ".claude" / "skills").exists()
 
@@ -250,10 +290,10 @@ def test_a_link_left_dangling_by_a_moved_checkout_is_named_and_removable(home):
     target = home / ".agents" / "skills" / "perch"
     target.parent.mkdir(parents=True)
     target.symlink_to(home / "gone" / "skills" / "perch", target_is_directory=True)
-    assert perch.status("codex")["projection"] == "dangling"
+    assert perch.status("codex", "perch")["projection"] == "dangling"
     with pytest.raises(perch.Refusal, match="uninstall"):
-        perch.install("codex", version="99.0.0")
-    assert "no longer exists" in perch.uninstall("codex")
+        perch.install("codex", "perch", version="99.0.0")
+    assert "no longer exists" in perch.uninstall("codex", "perch")
     assert not (home / ".agents").exists()
 
 
@@ -262,9 +302,9 @@ def test_a_dangling_link_named_perch_but_shaped_wrong_is_left_alone(home):
     target = home / ".agents" / "skills" / "perch"
     target.parent.mkdir(parents=True)
     target.symlink_to(home / "gone" / "elsewhere" / "perch", target_is_directory=True)
-    assert perch.status("codex")["projection"] == "unmanaged"
+    assert perch.status("codex", "perch")["projection"] == "unmanaged"
     with pytest.raises(perch.Refusal):
-        perch.uninstall("codex")
+        perch.uninstall("codex", "perch")
 
 
 def test_pruning_refuses_to_walk_through_a_symlinked_neutral_home(home, tmp_path):
@@ -272,18 +312,18 @@ def test_pruning_refuses_to_walk_through_a_symlinked_neutral_home(home, tmp_path
     outside = tmp_path / "outside"
     (outside / "skills").mkdir(parents=True)
     (home / ".agents").symlink_to(outside, target_is_directory=True)
-    perch.install("codex", version="99.0.0")
-    perch.uninstall("codex")
+    perch.install("codex", "perch", version="99.0.0")
+    perch.uninstall("codex", "perch")
     assert outside.is_dir()
     assert (outside / "skills").is_dir()
     assert not (outside / "skills" / "perch").exists()
 
 
 def test_uninstalling_a_link_that_vanished_mid_call_is_not_a_traceback(home):
-    perch.install("codex", version="99.0.0")
+    perch.install("codex", "perch", version="99.0.0")
     target = home / ".agents" / "skills" / "perch"
     target.unlink()
-    assert "not installed" in perch.uninstall("codex")
+    assert "not installed" in perch.uninstall("codex", "perch")
 
 
 def test_no_surface_still_claims_uninstall_gives_back_only_what_it_created():
@@ -301,9 +341,9 @@ def test_a_dangling_link_that_is_not_ours_is_left_alone(home):
     target = home / ".agents" / "skills" / "perch"
     target.parent.mkdir(parents=True)
     target.symlink_to(home / "gone" / "something-else", target_is_directory=True)
-    assert perch.status("codex")["projection"] == "unmanaged"
+    assert perch.status("codex", "perch")["projection"] == "unmanaged"
     with pytest.raises(perch.Refusal):
-        perch.uninstall("codex")
+        perch.uninstall("codex", "perch")
 
 
 def test_install_refuses_to_replace_an_unmanaged_entry(home):
@@ -311,7 +351,7 @@ def test_install_refuses_to_replace_an_unmanaged_entry(home):
     target.mkdir(parents=True)
     (target / "SKILL.md").write_text("someone else's perch\n", encoding="utf-8")
     with pytest.raises(perch.Refusal):
-        perch.install("codex", version="99.0.0")
+        perch.install("codex", "perch", version="99.0.0")
     assert (target / "SKILL.md").read_text(encoding="utf-8") == "someone else's perch\n"
 
 
@@ -320,7 +360,7 @@ def test_uninstall_refuses_to_remove_an_unmanaged_entry(home):
     target.mkdir(parents=True)
     (target / "SKILL.md").write_text("someone else's perch\n", encoding="utf-8")
     with pytest.raises(perch.Refusal):
-        perch.uninstall("codex")
+        perch.uninstall("codex", "perch")
     assert target.is_dir()
 
 
@@ -334,10 +374,10 @@ def test_claude_needs_no_projection_when_the_repo_is_the_claude_home(home):
     A target that already resolves to the canonical source is the goal state.
     """
     (home / ".claude").symlink_to(REPO, target_is_directory=True)
-    state = perch.status("claude")
+    state = perch.status("claude", "perch")
     assert state["installed"] is True
     assert state["projection"] == "none"
-    assert perch.install("claude", version="99.0.0")  # a line, not a Refusal
+    assert perch.install("claude", "perch", version="99.0.0")  # a line, not a Refusal
     assert (home / ".claude" / "skills" / "perch" / "SKILL.md").is_file()
 
 
@@ -348,9 +388,9 @@ def test_the_floor_is_asserted_even_when_install_creates_nothing(home):
     is a floor never asserted for Claude Code at all.
     """
     (home / ".claude").symlink_to(REPO, target_is_directory=True)
-    assert perch.status("claude")["installed"] is True
+    assert perch.status("claude", "perch")["installed"] is True
     with pytest.raises(perch.Refusal):
-        perch.install("claude", version="0.0.1")
+        perch.install("claude", "perch", version="0.0.1")
 
 
 def test_status_never_probes_a_cli(home, monkeypatch):
@@ -359,22 +399,22 @@ def test_status_never_probes_a_cli(home, monkeypatch):
     monkeypatch.setenv("PERCH_CLAUDE_BIN", "/nonexistent/claude")
     monkeypatch.setenv("PERCH_PI_BIN", "/nonexistent/pi")
     for harness in perch.HARNESSES:
-        assert perch.status(harness)["installed"] is False
+        assert perch.status(harness, "perch")["installed"] is False
 
 
 def test_claude_uninstall_never_deletes_the_canonical_skill(home):
     (home / ".claude").symlink_to(REPO, target_is_directory=True)
-    perch.uninstall("claude")
+    perch.uninstall("claude", "perch")
     assert CANONICAL.is_file()
     assert (REPO / "skills" / "perch").is_dir()
 
 
 def test_claude_gets_a_link_when_the_repo_lives_elsewhere(home):
-    perch.install("claude", version="99.0.0")
+    perch.install("claude", "perch", version="99.0.0")
     target = home / ".claude" / "skills" / "perch"
     assert target.is_symlink()
     assert target.resolve() == (REPO / "skills" / "perch").resolve()
-    perch.uninstall("claude")
+    perch.uninstall("claude", "perch")
     assert not target.exists()
 
 
@@ -389,16 +429,26 @@ def test_another_checkouts_perch_is_named_as_such_not_clobbered(home):
     (target / "SKILL.md").write_text(
         CANONICAL.read_text(encoding="utf-8"), encoding="utf-8"
     )
-    assert perch.status("claude")["projection"] == "other-checkout"
+    assert perch.status("claude", "perch")["projection"] == "other-checkout"
     with pytest.raises(perch.Refusal, match="another checkout"):
-        perch.install("claude", version="99.0.0")
+        perch.install("claude", "perch", version="99.0.0")
     assert (target / "SKILL.md").is_file()
+
+
+def test_a_link_to_another_checkout_is_named_as_such(home):
+    other = home / "other-checkout" / "skills" / "perch"
+    other.mkdir(parents=True)
+    (other / "SKILL.md").write_text(CANONICAL.read_text(encoding="utf-8"), encoding="utf-8")
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(other, target_is_directory=True)
+    assert perch.status("codex", "perch")["projection"] == "other-checkout"
 
 
 def test_claude_discovery_never_reaches_the_neutral_home(home):
     """Claude Code reads only ``~/.claude/skills``; no duplicate perch."""
-    perch.install("codex", version="99.0.0")
-    assert perch.status("claude")["installed"] is False
+    perch.install("codex", "perch", version="99.0.0")
+    assert perch.status("claude", "perch")["installed"] is False
 
 
 # --- the evidence inventory ---------------------------------------------
@@ -456,6 +506,11 @@ def test_the_pilot_introduces_no_generator(monkeypatch):
     text = (ADAPTERS / "perch.py").read_text(encoding="utf-8")
     for forbidden in ("def generate", "jinja", "template", "render_skill"):
         assert forbidden not in text.lower()
+
+
+def test_the_installer_has_no_fixed_skill_name():
+    assert not hasattr(perch, "SLICE")
+    assert {"perch", "roar"}.issubset(perch.known_skills())
 
 
 def test_no_absolute_home_path_is_baked_into_the_adapter():

@@ -299,7 +299,7 @@
       "native_expression": "$perch",
       "disposition": "manual-only",
       "evidence_kind": "manual-smoke",
-      "test": "MANUAL, author's own account only. After `adapters/perch.py install codex`, run $perch in a Codex session with one finished and one open item. Record the prompt, the CLI version, the date, the headings observed, and `git status --short` before and after.",
+      "test": "MANUAL, author's own account only. After `bin/idh install skill perch --to codex`, run $perch in a Codex session with one finished and one open item. Record the prompt, the CLI version, the date, the headings observed, and `git status --short` before and after.",
       "result": "pending"
     },
     {
@@ -312,7 +312,7 @@
       "native_expression": "/skill:perch",
       "disposition": "manual-only",
       "evidence_kind": "manual-smoke",
-      "test": "MANUAL, author's own account only. After `adapters/perch.py install pi`, run /skill:perch in a Pi session with one finished and one open item. Record the prompt, the CLI version, the date, the headings observed, and `git status --short` before and after.",
+      "test": "MANUAL, author's own account only. After `bin/idh install skill perch --to pi`, run /skill:perch in a Pi session with one finished and one open item. Record the prompt, the CLI version, the date, the headings observed, and `git status --short` before and after.",
       "result": "pending"
     }
   ]
