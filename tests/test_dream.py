@@ -108,6 +108,41 @@ def test_read_index_fails_loud_on_malformed_pointer(tmp_path):
     assert "line 4" in data["error"]
 
 
+def test_read_index_fails_loud_on_grouped_pointer_line(tmp_path):
+    """A list line packing several links behind a label is not prose.
+
+    The climate-finance-het index was once regrouped as ``- Guards: [a](a.md),
+    [b](b.md), …``; the reader skipped those lines as prose and returned 1 of 179
+    entries, which step 6 would have written back as the whole index.
+    """
+    mem = tmp_path / ".claude" / "projects" / "grouped" / "memory"
+    mem.mkdir(parents=True)
+    (mem / "MEMORY.md").write_text(
+        "## Entries\n\n- [valid](valid.md)\n- Guards: [a](a.md), [b](b.md)\n"
+    )
+    for name in ("valid", "a", "b"):
+        (mem / f"{name}.md").write_text("Body.\n")
+
+    result = _run(READ_INDEX, "grouped", home=tmp_path)
+    assert result.returncode != 0
+    data = json.loads(result.stdout)
+    assert data["entries"] == []
+    assert "line 4" in data["error"]
+
+
+def test_read_index_fails_loud_on_two_links_on_a_pointer_line(tmp_path):
+    """The greedy title capture would read ``[a](a.md), [b](b.md)`` as one entry."""
+    mem = tmp_path / ".claude" / "projects" / "twolinks" / "memory"
+    mem.mkdir(parents=True)
+    (mem / "MEMORY.md").write_text("## Entries\n\n- [a](a.md), [b](b.md)\n")
+    for name in ("a", "b"):
+        (mem / f"{name}.md").write_text("Body.\n")
+
+    result = _run(READ_INDEX, "twolinks", home=tmp_path)
+    assert result.returncode != 0
+    assert "line 3" in json.loads(result.stdout)["error"]
+
+
 def test_every_project_index_parses_every_pointer_line(tmp_path):
     """End-to-end corpus guard: a lossy parser cannot shorten an index."""
     repo = Path(__file__).parent.parent
@@ -120,7 +155,7 @@ def test_every_project_index_parses_every_pointer_line(tmp_path):
     assert indexes, "positive control: repository carries no memory indexes"
     for index in indexes:
         pointer_count = sum(
-            bool(re.match(r"^-\s+\[", line.strip()))
+            bool(re.match(r"^-\s+(?:\[|.*\]\([^)]+\.md\))", line.strip()))
             for line in index.read_text().splitlines()
         )
         result = _run(READ_INDEX, index.parents[1].name, home=tmp_path)
