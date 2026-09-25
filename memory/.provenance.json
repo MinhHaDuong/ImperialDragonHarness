@@ -9445,6 +9445,15 @@
       "last_confirmed": "2026-09-25T16:30:19Z",
       "promoted": false,
       "backfilled": true
+    },
+    "project_oeconomia_rejected": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-25T16:43:10Z",
+      "last_confirmed": "2026-09-25T16:43:10Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }

@@ -50,6 +50,7 @@
 
 ### Manuscripts and R&R
 
+- [Œconomia rejected the history article for good (2026-09-16): never route work there](project_oeconomia_rejected.md)
 - [Version increment planning](feedback_version_increment_planning.md)
 - [Paper ceiling growth imaginary](project_paper_ceiling_growth_imaginary.md)
 - [Paper instrument circulation](project_paper_instrument_circulation.md)
