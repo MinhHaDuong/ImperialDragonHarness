@@ -641,8 +641,15 @@ def duplicate_hash_html(report: dict[str, Any]) -> str:
                                             item["doi"]) if x)
             lines.append(
                 f'<li><a href="{esc(item["url"], quote=True)}">'
-                f'{esc(title)}</a> — {esc(details)}'
-                f' ({len(item["attachments"])} attachment(s))</li>')
+                f'{esc(title)}</a> — {esc(details)}<ul>')
+            for attachment in item["attachments"]:
+                attachment_url = ("zotero://select/library/items/"
+                                  + attachment["key"])
+                filename = attachment["filename"] or attachment["key"]
+                lines.append(
+                    f'<li><a href="{esc(attachment_url, quote=True)}">'
+                    f'{esc(filename)}</a></li>')
+            lines.append("</ul></li>")
         lines.append("</ul>")
         if cluster["bibliographic_overlap"]:
             hints = "; ".join(

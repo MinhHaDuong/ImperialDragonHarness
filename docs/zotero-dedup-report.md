@@ -26,9 +26,11 @@ actual merge and reuse `zotero-import.py` for a read-only report.
 python3 scripts/zotero-import.py dedup-report --out /tmp/zotero-duplicates.html
 ```
 
-The report is local HTML with one `zotero://select/library/items/<key>` link per
-candidate parent. `--format json` provides the same data for inspection. The
-command reads only `zotero.sqlite` through the existing immutable connection,
+The report is local HTML with `zotero://select/library/items/<key>` links for
+each candidate parent and every matching attachment beneath it. The attachment
+filenames identify the exact files to review when a parent has several children.
+`--format json` provides the same data for inspection. The command reads only
+`zotero.sqlite` through the existing immutable connection,
 defaults to the user library, excludes trashed items, and refuses a nonempty
 write-ahead log because an immutable connection would otherwise miss pending
 changes. It never calls the Web API or mutates Zotero. The only optional write

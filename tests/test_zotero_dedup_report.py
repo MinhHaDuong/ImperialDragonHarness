@@ -53,7 +53,7 @@ def fixture_db(path: Path) -> None:
     conn.executemany("INSERT INTO itemAttachments VALUES (?,?,?,?,?)", [
         (20, 10, "storage:a.pdf", "application/pdf", shared),
         (21, 11, "storage:b.pdf", "application/pdf", shared),
-        (22, 10, "storage:c.pdf", "application/pdf", shared),
+        (22, 10, "storage:<unsafe & name>.pdf", "application/pdf", shared),
         (23, 13, "storage:trashed.pdf", "application/pdf", shared),
         (30, 12, "storage:d.pdf", "application/pdf", same_parent),
         (31, 12, "storage:e.pdf", "application/pdf", same_parent),
@@ -92,6 +92,12 @@ def test_cli_report_is_escaped_linked_and_read_only(tmp_path):
     assert "1 candidate groups" in result.stdout
     assert "zotero://select/library/items/PARENT10" in body
     assert "zotero://select/library/items/PARENT11" in body
+    assert "zotero://select/library/items/ATT20" in body
+    assert "zotero://select/library/items/ATT21" in body
+    assert "zotero://select/library/items/ATT22" in body
+    assert "a.pdf" in body and "b.pdf" in body
+    assert "&lt;unsafe &amp; name&gt;.pdf" in body
+    assert "<unsafe & name>.pdf" not in body
     assert "&lt;Unsafe &amp; title&gt;" in body
     assert "<Unsafe & title>" not in body
     assert "GROUP50" not in body and "TRASHED" not in body
