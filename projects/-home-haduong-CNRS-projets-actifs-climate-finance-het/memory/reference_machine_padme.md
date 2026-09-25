@@ -33,3 +33,21 @@ worktree's isolation and the DVC bookkeeping with it. See
 ## Paths and environment (moved from the index, 2026-09-24)
 
 Repo repo `~/CNRS/projets/actifs/climate-finance-het` (same path as doudou; `~/Climate_finance` is gone, checked 2026-09-22); `uv` at `~/.local/bin/uv` (prepend PATH non-interactively); torch `--extra cpu` (doudou) / `--extra cu130` (padme); cache config in `/etc/environment`.
+
+## Services and machine settings (checked 2026-09-25)
+
+- Local LLM: `llama-server.service` (system unit, user haduong) runs
+  `~/llama.cpp/build/bin/llama-server` with Qwen3.8-27B Q4_K_M + mmproj on
+  `127.0.0.1:8080`, ctx 131072, all layers on RTX A4000 16 GB + RTX 3060 12 GB.
+  Not on PATH: `command -v llama-server` misses it; look at `systemctl` and
+  `pgrep -af llama-server`. No `--jinja` in its flags (needed for tool calls).
+  Ticket 1140 plans to use it for the weekly source refresh.
+- `Linger=no`: systemd *user* timers fire only while a session is open; use
+  cron or `sudo loginctl enable-linger haduong` (ticket 1141).
+- `.env` sets `PYTEST_WORKERS=16` (full suite 2 min 21 s vs 4 min 33 s at 4;
+  24 is slower). doudou stays at the default 4.
+- `~/.config/keys/archive.env` (Internet Archive S3 keys) copied from doudou.
+- The primary checkout may sit on another session's branch; run probes in a
+  throwaway worktree, and expect a fresh worktree to need `dvc checkout
+  --force` (the hook's JETP documents read as "unsaved") and to fail the two
+  corpus freshness tests on mtime order (ticket 1060).
