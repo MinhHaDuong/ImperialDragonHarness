@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 
 2026-09-23T19:15Z Minh Ha-Duong note blocker 0455 closed — Blocked-by removed.
 2026-09-23T19:30Z Codex note Roster audit: 0455's guarded import and matcher are merged, so this ticket now concerns the existing-library duplicate clusters only. The 269-cluster/7293-parent counts are the 2026-08-14 baseline and must be remeasured before deciding the work size. Reuse review remains mandatory; no automatic client-side merge was delivered by 0455.
+2026-09-25T11:55Z Minh-Ha-Duong note 2026-09-25 read-only census: 269 cross-parent storageHash groups in user library (252 PDF, 17 other), all files local. Tool review: Zotero native omits hashes; ajdavis hash-finder stops at Zotero 9 while installed client is 10.0.3; Zoplicate and Zoteus do not document this hash audit. Added dedup-report HTML/JSON command, 269 groups and 540 Zotero links in live report, fixture and focused tests green. Author sample arbitration and merge remain outstanding; see docs/zotero-dedup-report.md.
 --- body ---
 ## Context
 

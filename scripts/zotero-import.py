@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Helper for the zotero-import skill.
 
-Subcommands: probe, match, write, inject, enrich, sync-index, audit, reconcile,
-attach.
+Subcommands: probe, match, dedup-report, write, inject, enrich, sync-index,
+audit, reconcile, attach.
 The last three work without the Zotero desktop database, against a cached
 pull of the library from the Web API.
 """
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import importlib.util
 import io
 import json
@@ -525,6 +526,132 @@ def zotero_matches(
     verdict = classify_matches(matches) if consulted else "unchecked"
     return {"matches": matches, "verdict": verdict,
             "consulted": consulted, "skipped": skipped}
+
+
+def duplicate_hash_report(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Find exact-file candidates under distinct parents in My Library.
+
+    This is the library-to-library form of the matcher's strongest key,
+    ``storageHash``. It reports candidates, never a merge decision: two
+    records can deliberately carry the same file. Other bibliographic keys
+    are shown as supporting evidence, not as a substitute for the hash.
+    """
+    library_id = resolve_library_id(conn)
+    rows = conn.execute("""
+        SELECT LOWER(a.storageHash), a.parentItemID, ai.key, a.path,
+               a.contentType
+        FROM itemAttachments a
+        JOIN items ai ON ai.itemID = a.itemID
+        JOIN items p ON p.itemID = a.parentItemID
+        WHERE ai.libraryID = ? AND p.libraryID = ?
+          AND a.storageHash IS NOT NULL AND a.storageHash != ''
+          AND ai.itemID NOT IN (SELECT itemID FROM deletedItems)
+          AND p.itemID NOT IN (SELECT itemID FROM deletedItems)
+    """, (library_id, library_id)).fetchall()
+    by_hash: dict[str, dict[int, list[dict[str, str]]]] = {}
+    for digest, parent_id, attachment_key, path, content_type in rows:
+        by_hash.setdefault(digest, {}).setdefault(parent_id, []).append({
+            "key": attachment_key,
+            "filename": _attachment_basename(path or ""),
+            "content_type": content_type or "",
+        })
+    duplicated = {digest: parents for digest, parents in by_hash.items()
+                  if len(parents) > 1}
+    parent_ids = sorted({iid for parents in duplicated.values()
+                         for iid in parents})
+    metadata: dict[int, dict[str, str]] = {}
+    # Keep the query below SQLite's older 999-parameter default.
+    for start in range(0, len(parent_ids), 400):
+        ids = parent_ids[start:start + 400]
+        marks = ",".join("?" for _ in ids)
+        for iid, key, item_type, title, doi, isbn, date, surname in conn.execute(
+            f"""SELECT i.itemID, i.key, t.typeName,
+                       MAX(CASE WHEN f.fieldName='title' THEN v.value END),
+                       MAX(CASE WHEN f.fieldName='DOI' THEN v.value END),
+                       MAX(CASE WHEN f.fieldName='ISBN' THEN v.value END),
+                       MAX(CASE WHEN f.fieldName='date' THEN v.value END),
+                       (SELECT c.lastName FROM itemCreators ic
+                        JOIN creators c ON c.creatorID=ic.creatorID
+                        WHERE ic.itemID=i.itemID AND ic.orderIndex=0 LIMIT 1)
+                FROM items i JOIN itemTypes t ON t.itemTypeID=i.itemTypeID
+                LEFT JOIN itemData d ON d.itemID=i.itemID
+                LEFT JOIN fields f ON f.fieldID=d.fieldID
+                LEFT JOIN itemDataValues v ON v.valueID=d.valueID
+                WHERE i.itemID IN ({marks}) GROUP BY i.itemID""", ids):
+            metadata[iid] = {
+                "key": key, "item_type": item_type,
+                "title": title or "", "doi": doi or "",
+                "isbn": isbn or "", "date": date or "",
+                "first_author": surname or "",
+            }
+
+    def signals(left: dict[str, str], right: dict[str, str]) -> list[str]:
+        found = []
+        if left["item_type"] != right["item_type"]:
+            return found
+        if left["doi"] and left["doi"].casefold() == right["doi"].casefold():
+            found.append("doi")
+        left_isbn = re.sub(r"[^0-9Xx]", "", left["isbn"]).upper()
+        right_isbn = re.sub(r"[^0-9Xx]", "", right["isbn"]).upper()
+        if left_isbn and left_isbn == right_isbn:
+            found.append("isbn")
+        if left["title"] and _norm_title(left["title"]) == _norm_title(right["title"]):
+            found.append("title")
+        return found
+
+    clusters = []
+    for digest, parents in sorted(duplicated.items()):
+        items = []
+        for iid in sorted(parents):
+            meta = metadata[iid]
+            items.append({**meta, "attachments": parents[iid],
+                          "url": f"zotero://select/library/items/{meta['key']}"})
+        overlap = []
+        for pos, left in enumerate(items):
+            for right in items[pos + 1:]:
+                shared = signals(left, right)
+                if shared:
+                    overlap.append({"items": [left["key"], right["key"]],
+                                    "keys": shared})
+        clusters.append({"hash": digest, "matched_by": "storageHash",
+                         "items": items, "bibliographic_overlap": overlap})
+    return {"library_id": library_id,
+            "hashed_attachments_scanned": len(rows),
+            "candidate_clusters": len(clusters),
+            "clusters": clusters}
+
+
+def duplicate_hash_html(report: dict[str, Any]) -> str:
+    """Local, reviewable candidate list; all library strings are escaped."""
+    esc = html.escape
+    lines = ["<!doctype html>", '<html lang="en"><meta charset="utf-8">',
+             "<title>Zotero duplicate-file candidates</title>",
+             "<h1>Zotero duplicate-file candidates</h1>",
+             (f"<p>{report['candidate_clusters']} hash group(s) in My Library; "
+              f"{report['hashed_attachments_scanned']} hashed attachments scanned. "
+              "These are candidates, not merge instructions.</p>"),
+             ("<p>The match key is the attachment content hash. Additional "
+              "bibliographic matches below are hints, not a claim that "
+              "Zotero's Duplicates pane displayed the group.</p>")]
+    for number, cluster in enumerate(report["clusters"], 1):
+        lines.append(f"<section><h2>{number}. hash {esc(cluster['hash'])}</h2><ul>")
+        for item in cluster["items"]:
+            title = item["title"] or "(untitled)"
+            details = ", ".join(x for x in (item["item_type"], item["date"],
+                                            item["doi"]) if x)
+            lines.append(
+                f'<li><a href="{esc(item["url"], quote=True)}">'
+                f'{esc(title)}</a> — {esc(details)}'
+                f' ({len(item["attachments"])} attachment(s))</li>')
+        lines.append("</ul>")
+        if cluster["bibliographic_overlap"]:
+            hints = "; ".join(
+                f"{esc(', '.join(pair['keys']))} ({esc(' / '.join(pair['items']))})"
+                for pair in cluster["bibliographic_overlap"])
+            lines.append(f"<p>Additional bibliographic matches: {hints}</p>")
+        lines.append("</section>")
+    lines.append("</html>")
+    return "\n".join(lines) + "\n"
 
 
 def probe_one(pdf: Path, conn: sqlite3.Connection | None,
@@ -2234,6 +2361,36 @@ def cmd_match(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dedup_report(args: argparse.Namespace) -> int:
+    """Report existing-library duplicate-file candidates without Zotero writes."""
+    db_path = resolve_db_path(args.zotero_db)
+    if db_path is None:
+        raise SystemExit("dedup-report: no local Zotero database found")
+    wal = Path(str(db_path) + "-wal")
+    if wal.exists() and wal.stat().st_size:
+        raise SystemExit("dedup-report: Zotero has pending WAL writes; "
+                         "wait for a checkpoint before a read-only snapshot")
+    with zotero_open(db_path) as conn:
+        conn.execute("PRAGMA query_only=ON")
+        report = duplicate_hash_report(conn)
+    if not report["hashed_attachments_scanned"]:
+        raise SystemExit("dedup-report: no hashed attachments inspected; "
+                         "cannot call this an empty library")
+    body = (json.dumps(report, indent=2, ensure_ascii=False) + "\n"
+            if args.format == "json" else duplicate_hash_html(report))
+    if args.out:
+        output = Path(args.out)
+        fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            stream.write(body)
+        print(f"dedup-report: {report['candidate_clusters']} candidate groups "
+              f"written to {args.out}")
+    else:
+        sys.stdout.write(body)
+    return 0
+
+
 def cmd_write(args: argparse.Namespace) -> int:
     if args.entries_json:
         entries = json.loads(args.entries_json)
@@ -2855,6 +3012,13 @@ def main() -> int:
                          "index")
     pm.add_argument("--user-id", help="Zotero user id (else ZOTERO_USER_ID)")
     pm.add_argument("--api-key", help="read key (else ZOTERO_API_KEY)")
+
+    pd = sub.add_parser("dedup-report", help="read-only report of identical "
+                        "attachments under distinct My Library items")
+    pd.add_argument("--zotero-db", help="override local Zotero sqlite path")
+    pd.add_argument("--format", choices=("html", "json"), default="html")
+    pd.add_argument("--out", help="write report to this file (else stdout)")
+    pd.set_defaults(func=cmd_dedup_report)
 
     ps = sub.add_parser("sync-index",
                         help="cache the library (works + attachment md5s) "
