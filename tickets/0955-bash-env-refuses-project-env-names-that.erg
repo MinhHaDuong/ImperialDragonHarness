@@ -5,6 +5,8 @@ Author: Integration Test
 
 --- log ---
 2026-09-24T05:28Z Integration Test created
+2026-09-25T11:36Z Codex note Implemented the name-based refusal and hermetic regression on branch t955-credential-shaped-env. Doudou's 120-pair median added 0.166 ms. Padme benchmark awaits authorized transfer of the baseline script; automatic approval review rejected that copy as unverified code egress.
+2026-09-25T11:39Z Codex note make check passed with normal host access (1067 tests); the sandbox-only run had six environment failures. A second 120-pair doudou benchmark with credential-shaped names added 0.163 ms median.
 
 --- body ---
 ## Context
@@ -60,16 +62,16 @@ credential-shaped), which settles the draft's open question without a
 behaviour change for the two projects that set them.
 
 ## Exit criteria
-- [ ] `_be_is_protected_name` refuses credential-shaped names by segment, with
+- [x] `_be_is_protected_name` refuses credential-shaped names by segment, with
       no file access added to `bash-env.sh` (grep: no new path under
       `.config/keys`)
-- [ ] Hermetic test: a project `.env` with `OPENROUTER_API_KEY`, `HF_TOKEN`,
+- [x] Hermetic test: a project `.env` with `OPENROUTER_API_KEY`, `HF_TOKEN`,
       `HAL_PASSWORD`, `CUSTOM_TOKEN`, `DB_SECRET` exports none of them and names
       each on stderr; `TOKENIZERS_PARALLELISM`, `HAL_ID`, `AGENT_GIT_NAME` still
       export
-- [ ] `bash -x -c ':'` in such a project exposes no value
-- [ ] `test_bash_env_project_env_parse.sh` and the other bash-env suites green
+- [x] `bash -x -c ':'` in such a project exposes no value
+- [x] `test_bash_env_project_env_parse.sh` and the other bash-env suites green
 - [ ] Per-subprocess overhead measured on padme before/after; accept only if
       the median added time is under 1 ms (a string test should add ~0)
-- [ ] 0942's tracker body gets a note naming the downstream gap and this fix
-- [ ] `make check` passes
+- [x] 0942's tracker body gets a note naming the downstream gap and this fix
+- [x] `make check` passes

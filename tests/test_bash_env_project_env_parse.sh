@@ -271,4 +271,55 @@ _assert_eq "project .env cannot set retired KEYS" \
 _assert_eq "project .env KEYS is refused silently" \
     "$(_load_stderr "$EMPTY_HOME" "$P7B")" ""
 
+# --- (8) credential-shaped names are refused by whole segments (0955) --------
+P8="$WORK/p8"; mkdir -p "$P8"
+cat > "$P8/.env" <<'EOF'
+OPENROUTER_API_KEY=sentinel-openrouter-0955
+HF_TOKEN=sentinel-hf-0955
+HAL_PASSWORD=sentinel-hal-0955
+CUSTOM_TOKEN=sentinel-custom-0955
+DB_SECRET=sentinel-db-0955
+SMTP_PASSWD=sentinel-smtp-0955
+SERVICE_APIKEY=sentinel-service-0955
+TOKENIZERS_PARALLELISM=false
+KEYBOARD_LAYOUT=us
+HAL_ID=12345
+AGENT_GIT_NAME=Example Agent
+EOF
+
+# Load in a fresh, controlled shell, as in the helpers above. Capture stderr
+# separately so an assertion cannot print a value if the guard regresses.
+( cd "$P8" && env -i HOME="$EMPTY_HOME" PATH="$PATH" \
+    bash -c 'source "$1"; env' _ "$SCRIPT" ) > "$WORK/p8.exports" 2> "$WORK/p8.stderr"
+( cd "$P8" && env -i HOME="$EMPTY_HOME" PATH="$PATH" \
+    bash -x -c 'source "$1"; :' _ "$SCRIPT" > "$WORK/p8.trace.stdout" 2> "$WORK/p8.trace" )
+for key in OPENROUTER_API_KEY HF_TOKEN HAL_PASSWORD CUSTOM_TOKEN DB_SECRET SMTP_PASSWD SERVICE_APIKEY; do
+    if grep -q "^${key}=" "$WORK/p8.exports"; then
+        echo "FAIL: project .env exported $key"
+        fail=1
+    else
+        echo "PASS: project .env refused $key"
+    fi
+    if grep -Fqx "bash-env: refusing credential-shaped project .env name: $key" "$WORK/p8.stderr"; then
+        echo "PASS: project .env warned by name for $key"
+    else
+        echo "FAIL: project .env did not warn by name for $key"
+        fail=1
+    fi
+done
+for setting in 'TOKENIZERS_PARALLELISM=false' 'KEYBOARD_LAYOUT=us' 'HAL_ID=12345' 'AGENT_GIT_NAME=Example Agent'; do
+    if grep -Fqx "$setting" "$WORK/p8.exports"; then
+        echo "PASS: project .env exported ${setting%%=*}"
+    else
+        echo "FAIL: project .env did not export ${setting%%=*}"
+        fail=1
+    fi
+done
+if grep -q 'sentinel-.*-0955' "$WORK/p8.stderr" "$WORK/p8.trace"; then
+    echo 'FAIL: credential value appeared in warning or under bash -x'
+    fail=1
+else
+    echo 'PASS: credential values absent from warnings and bash -x'
+fi
+
 exit "$fail"
