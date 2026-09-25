@@ -7,6 +7,7 @@ Author: Integration Test
 2026-09-24T05:28Z Integration Test created
 2026-09-25T11:36Z Codex note Implemented the name-based refusal and hermetic regression on branch t955-credential-shaped-env. Doudou's 120-pair median added 0.166 ms. Padme benchmark awaits authorized transfer of the baseline script; automatic approval review rejected that copy as unverified code egress.
 2026-09-25T11:39Z Codex note make check passed with normal host access (1067 tests); the sandbox-only run had six environment failures. A second 120-pair doudou benchmark with credential-shaped names added 0.163 ms median.
+2026-09-25T11:43Z Codex note On padme, 160 interleaved before/after samples per fixture showed median added startup time of 0.031 ms with benign names and 0.043 ms with credential-shaped names. Both are below 1 ms; temporary loader copies and fixtures were removed.
 
 --- body ---
 ## Context
@@ -71,7 +72,7 @@ behaviour change for the two projects that set them.
       export
 - [x] `bash -x -c ':'` in such a project exposes no value
 - [x] `test_bash_env_project_env_parse.sh` and the other bash-env suites green
-- [ ] Per-subprocess overhead measured on padme before/after; accept only if
+- [x] Per-subprocess overhead measured on padme before/after; accept only if
       the median added time is under 1 ms (a string test should add ~0)
 - [x] 0942's tracker body gets a note naming the downstream gap and this fix
 - [x] `make check` passes
