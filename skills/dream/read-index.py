@@ -14,7 +14,11 @@ MEMORY_BASE = Path.home() / ".claude" / "projects"
 INDEX_ENTRY_RE = re.compile(
     r"^-\s+\[(.+)\]\(([^)]+)\)\s*(?:[—-]\s*)?(.*)$"
 )
-POINTER_LINE_RE = re.compile(r"^-\s+\[")
+# A list line is a pointer if it starts with a link OR links a .md body anywhere:
+# a grouped line (``- Guards: [a](a.md), [b](b.md)``) must fail loud, not pass as prose.
+POINTER_LINE_RE = re.compile(r"^-\s+(?:\[|.*\]\([^)]+\.md\))")
+# A second body link inside a captured title means two pointers on one line.
+EMBEDDED_LINK_RE = re.compile(r"\]\([^)]+\.md\)")
 
 
 class IndexParseError(ValueError):
@@ -38,6 +42,8 @@ def read_entries(index_path: Path, memory_dir: Path) -> list[dict[str, str]]:
             if not line or line.startswith("#"):
                 continue
             match = INDEX_ENTRY_RE.match(line)
+            if match and EMBEDDED_LINK_RE.search(match.group(1)):
+                match = None
             if not match:
                 if POINTER_LINE_RE.match(line):
                     malformed.append(lineno)
