@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Phase 0: semantic model-level and effort vocabulary with a behaviour-preserving Claude mapping
+Created: 2026-09-24
+Author: claude
+Closed: Phase 0 accepted; sandbox-only full-gate failures waived
+
+--- log ---
+2026-09-24T14:49Z claude created
+2026-09-25T11:35Z codex note Phase 0 resolver and live-pin baseline tests added. Targeted tests pass (10/10); make check reached 1064 passes and 9 unrelated environment/pre-existing memory failures, so the gate remains open.
+2026-09-25T11:52Z codex note Verified nine make-check failures: six reproduce on clean HEAD in the same sandbox (shell fixture, socket, and network tests); three memory checks pass on clean HEAD and fail only with the current unrelated worktree memory edits (five untracked provenance bodies and MEMORY.md over budget).
+2026-09-25T11:58Z codex note Isolated Phase 0 overlay on clean HEAD passes all non-integration, non-slow tests (867 passed) and all static Makefile checks. MEMORY.md work is owned elsewhere; no Phase 0 regression found.
+2026-09-25T13:59Z codex note Author accepted Phase 0 as done despite the full make-check gate: six failures reproduce on clean HEAD in this sandbox, and unrelated memory edits are being handled elsewhere. The make-check exit criterion is explicitly waived for this merge.
+
+2026-09-25T13:59Z Minh Ha-Duong closed — Phase 0 accepted; sandbox-only full-gate failures waived
+--- body ---
+## Context
+Child of tracker 0974. Phase 0 of `docs/portable-model-capability-policy.md`:
+define the semantic controls and a Claude adapter mapping that reproduces
+today's concrete choices exactly. No live model or effort selection changes.
+
+Today's choices to reproduce (verified on main 2026-09-24): `/hunt` coding
+executor `opus`; `/raid` orchestrator `claude-sonnet-5` in frontmatter,
+reviewers `sonnet`, mechanical checks `haiku`, coders `opus`; `team-lead` has
+no pin and inherits the session. The inheritance is recorded as today's
+behaviour, not endorsed — Phase 2 changes it.
+
+## Exit criteria
+- [x] A vocabulary module or config names the two controls and their values
+- [x] A Claude mapping resolves each level to a concrete enum token; `auto`
+      maps to a configured tier, never to session inheritance (doc invariant 9)
+- [x] A test enumerates current launch sites and shows each resolves to its
+      existing model/effort, and fails if one would change (positive control:
+      alter one mapping entry and watch it go red)
+- [x] No skill, agent or rule file changes behaviour in this PR
+- [ ] `make check` passes
