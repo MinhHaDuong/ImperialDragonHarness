@@ -1,16 +1,3 @@
----
-name: No markdown inside markdown fenced blocks
-description: Never put markdown (with ## headings) inside ``` fenced blocks — extract to a real file instead
-type: feedback
----
-
-Never put markdown content (especially `##` headings) inside fenced code blocks
-in a markdown document. Unindented `##` lines that are only "inside a block"
-because of a ``` several lines above are fragile and visually confusing.
-
-**Why:** The reader can't tell which `##` lines are document structure vs. example
-content without carefully tracking fence boundaries. It breaks scanning.
-
-**How to apply:** When you need to show a markdown template or example, extract it
-to its own file (e.g., `docs/ticket-template.md`) and reference it. The file
-serves as both documentation and a copyable starting point.
+# DELETED 2026-09-25T14:00Z: No markdown inside markdown fenced blocks
+# Reason: DELETE — LOW VALUE — generic formatting-hygiene advice with no concrete incident or evidence behind it; a competent agent already avoids nesting headings inside fenced blocks, and it is not tied to any specific defect found in this repo.
+# Original content preserved in git history.

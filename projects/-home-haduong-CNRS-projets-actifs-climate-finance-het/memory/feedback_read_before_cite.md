@@ -30,3 +30,13 @@ not fit; the author's answer was "keep institutional framing, I do not see the
 need for another guy". The read-and-decide outcome is logged in the owning ticket
 (0143 was the sole home of the Escobar/Mitchell selection). Related:
 [[feedback_manuscript_number_provenance]], [[reference_cited_works_local_docs_articles]].
+
+**Merged from `feedback_letters_get_claim_verification.md` (2026-09-25):** Letters to editors and referees get the same adversarial claim check as the paper; an attribution ('you asked for X') gets the strictest one.
+
+**Merged from `feedback_cite_at_existing_locus.md` (2026-09-25):** Place a requested citation at the passage that already makes the point, where it carries a load no adjacent citation carries.
+
+**Merged from `feedback_visual_verify_citations.md` (2026-09-25):** Before calling a paper done, read the rendered PDF (captions, bibliography): valid keys and DOIs can still name the wrong work or author.
+
+**Merged from `feedback_verify_new_citations_against_primary_pdf.md` (2026-09-25):** Grep the staged primary PDF (pdftotext, joined lines) for the exact phrase or paragraph before finalizing a citation.
+
+**Merged from `feedback_verify_ai_generated_includes.md` (2026-09-25):** Includes marked 'AI-generated, not human-reviewed' held a phantom reference: resolve every attribution before reuse (ticket 0244).

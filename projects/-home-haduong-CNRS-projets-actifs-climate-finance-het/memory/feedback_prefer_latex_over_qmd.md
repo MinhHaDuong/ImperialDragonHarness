@@ -22,3 +22,5 @@ is the one part worth keeping.
 LaTeX (with the vars pipeline emitting `\newcommand` macros instead of
 YAML) rather than a `.qmd`. Existing QMD deliverables stay as they are —
 this is a from-the-get-go preference, not a migration mandate.
+
+**Merged from `feedback_quarto_pipe_tables_cannot_float.md` (2026-09-25):** In existing QMD, captioned pipe tables become non-floating longtables; only a raw-LaTeX tabular in a ::: {#tbl-x tbl-pos="tbp"} div floats.

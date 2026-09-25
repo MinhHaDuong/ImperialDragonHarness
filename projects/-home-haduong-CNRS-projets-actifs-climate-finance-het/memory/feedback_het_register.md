@@ -40,3 +40,5 @@ draft — author: "I don't recognise my voice"). The author's short declaratives
 are the cure for pole (2), but keep them plain and concrete — do not tip into the
 slogan-y hammer-beats of pole (1). When a draft is rejected on voice, the
 procedure is: read `docs/style-anchor-v205.md`, rewrite, re-run the prose ratchet.
+
+**Merged from `feedback_letter_voice_flags.md` (2026-09-25):** Recurring flags: A-not-B antithesis cadence (keep at most ~3 that carry argument), stacked -ly adverbs, engineering metaphors ('load-bearing'), 'cashes out'. Letters in first person singular.

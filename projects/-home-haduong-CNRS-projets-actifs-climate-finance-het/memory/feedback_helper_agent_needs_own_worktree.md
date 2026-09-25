@@ -13,3 +13,5 @@ Launch every helper agent that touches git with `isolation: "worktree"`. Without
 **Why:** the worktree guard pins Bash to one tree per session and its children; `EnterWorktree(path=…)` inside the child did not re-root Bash.
 
 **How to apply:** read-only reviewers too, if they run git. To merge an agent's PR from the orchestrator, see [[reference_merge_from_foreign_worktree]].
+
+**Merged from `reference_merge_from_foreign_worktree.md` (2026-09-25):** To merge an agent's PR: in your own worktree git switch --ignore-other-worktrees <branch> && git merge --ff-only origin/<branch>, run erg-pr-merge -C <own worktree> <PR>, then git switch --detach origin/main (staying on the branch leaves the agent's tree looking dirty and blocks worktree-gc).

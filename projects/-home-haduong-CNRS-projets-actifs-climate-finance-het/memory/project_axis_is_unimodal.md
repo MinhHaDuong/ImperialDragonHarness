@@ -49,3 +49,7 @@ Consequences for the writing:
 Do not cite ΔBIC alone as evidence of bimodality anywhere in this project.
 Related: [[feedback_verify_vars_file_provenance]], and ticket 0344 (Phase-2
 tables stale against the corpus, found by the same byte-compare).
+
+**Merged from `feedback_kmeans_instability.md` (2026-09-25):** KMeans cluster IDs reshuffle with small corpus changes (a wrong caption reached a submitted manuscript): never hardcode ID→theme maps.
+
+**Merged from `feedback_multispace_comparison.md` (2026-09-25):** When clustering shows no structure, change the representation (lexical, citation) before the method: traditions are citation communities, not conceptual clusters (author's suggestion).
