@@ -1,0 +1,8 @@
+# label|expected close IDs (comma-separated, or -)|PR body (literal \n is a newline)
+open-path|0001|**Ticket:** tickets/0001-fixture.erg
+closed-path|0002|**Ticket:** tickets/closed/0002-fixture.erg
+bold-label|0003|**Ticket**: tickets/0003-fixture.erg
+plain-label|0004|Ticket: tickets/0004-fixture.erg
+multiple|0005,0006|**Ticket:** tickets/0005-fixture.erg\nTicket: tickets/0006-fixture.erg
+no-claim-at-all|-|The release notes contain no ticket reference.
+prose-only|-|The release notes link to tickets/0007-fixture.erg but do not claim it.

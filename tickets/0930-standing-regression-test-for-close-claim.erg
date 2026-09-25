@@ -8,6 +8,7 @@ Author: claude
 2026-09-16T06:58Z claude note Scope widened to three copies; check-close-claims.sh shares the defect
 
 2026-09-23T20:10Z Minh Ha-Duong note blocker 0929 closed — Blocked-by removed.
+2026-09-25T11:38Z codex note Scope decision: no cross-repository assertion against git-erg's tickets/erg-github. A test here cannot assume that checkout; tests/fixtures/close-claim-grammar.tsv is the portable fixture table for this repository's two consumers, and git-erg should run its own helper against the same table when it imports or mirrors it.
 --- body ---
 ## Context
 
