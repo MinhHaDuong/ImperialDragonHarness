@@ -54,3 +54,5 @@ Related: [[feedback_split_contract_needs_parity]],
 [[feedback_guard_the_class_not_the_stale_value]],
 [[feedback_red_test_the_guard_you_wrote]],
 [[feedback_renderer_placeholder_exit_zero]].
+
+**Merged from `feedback_split_contract_needs_parity` (2026-09-25):** Ticket 0357: splitting one contract into two parallel structures (DOC_VARS / DOC_VARS_FILE) needs a same-commit parity assertion — the two divergence directions are asymmetric (a missing entry in one throws a loud KeyError; the mirror direction silently never writes the output and the build exits 0), so assert set(A) == set(B) and red-test by dropping an entry from each side in turn.

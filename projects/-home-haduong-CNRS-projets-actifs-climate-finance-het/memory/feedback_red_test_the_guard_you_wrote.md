@@ -78,3 +78,5 @@ Scope prose checks to a structural unit the author controls (paragraph,
 section, list item), never to a character or line window. The tell that this
 mistake is live: your test data is a single synthetic line and the real target
 is a wrapped paragraph.
+
+**Merged from `feedback_pin_test_mutation_teeth` (2026-09-25):** Ticket 0228: a regression PIN has no natural red step since it already passes on current behavior — mutate the guarded mechanism itself (e.g. disable the relevant call in a synthetic fixture), confirm it fails, then revert. Separately: quantify a suspected inefficiency by measurement before refining a guard's granularity — an assumed 95-test over-sweep turned out to be ~85% already-excluded heavy-compute tests, leaving only ~12 genuinely recoverable, not worth a fragile per-test detector.

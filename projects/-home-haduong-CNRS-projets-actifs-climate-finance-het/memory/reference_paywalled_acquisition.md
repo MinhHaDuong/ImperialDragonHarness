@@ -55,3 +55,13 @@ upstream `hanhan6688/DoiHarvest` — push to the `fork` remote): fetcher convent
 `SOURCE_ORDER`. Added `fetch_ezproxy.py` (PR #5, headless — works only for
 cooperative publishers). A parallel session added Zotero-dedup, SciDB/Anna's
 Archive, and `--isbn`. Harness rule for the gate: ImperialDragonHarness PR #443.
+
+**Merged from `feedback_telechargements_scratch` (2026-09-25):** Treat the downloads directory as scratch, not safe storage: as soon as a downloaded file is identified, copy it to its durable home (pool dir, project data dir, Zotero staging), verify by checksum, then delete the scratch copy — never reference a downloads path from config or a ticket.
+
+**Merged from `feedback_user_pulls_land_in_downloads` (2026-09-25):** When the author says he pulled a paper himself, look in the downloads dir (ls -lat), confirm with pdftotext against the bib title, then stage into the worktree's docs/articles/<bibkey>.pdf.
+
+**Merged from `project_doifetch_sync` (2026-09-25):** DOIfetch lives outside the repo (~/CNRS/code/DOIfetch): copy new papers/ PDFs into docs/articles/, regenerate docs/missing_references.txt with scripts/qa_missing_references.py, copy it to DOIfetch/references/.
+
+**Merged from `reference_cookie_replay_fetch` (2026-09-25):** Bot-walled sites (oecd.org): replay the author's Firefox cookies (cf_clearance) with a matching Firefox UA, 2-3 s pacing.
+
+**Merged from `reference_padme_downloads_dir` (2026-09-25):** Resolve the downloads dir with xdg-user-dir DOWNLOAD (padme: ~/Téléchargements).
