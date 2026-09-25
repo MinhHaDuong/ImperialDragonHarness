@@ -42,7 +42,6 @@
 ### Machines
 
 - [Machine padme](reference_machine_padme.md)
-- [Data direction](feedback_data_direction.md)
 - [Longrunning jobs](feedback_longrunning_jobs.md)
 
 ### Credentials
@@ -51,7 +50,6 @@
 
 ### Manuscripts and R&R
 
-- [0171 conclusion rebuild](project_0171_conclusion_rebuild.md)
 - [Version increment planning](feedback_version_increment_planning.md)
 - [Paper ceiling growth imaginary](project_paper_ceiling_growth_imaginary.md)
 - [Paper instrument circulation](project_paper_instrument_circulation.md)
@@ -123,7 +121,6 @@
 
 ### Build and pipeline
 
-- [Make corpus](feedback_make_corpus.md)
 - [Verify makefile pathrefactor with make n](feedback_verify_makefile_pathrefactor_with_make_n.md)
 - [make -B on a ruleless target exits 0](feedback_make_B_no_rule_exits_zero.md)
 - [Hardcoded secondary path survives input gate](feedback_hardcoded_secondary_path_survives_input_gate.md)
@@ -140,20 +137,12 @@
 ### Data and DVC
 
 - [Dvc locks](feedback_dvc_locks.md)
-- [Corpus rerun byte compare](feedback_corpus_rerun_byte_compare.md)
-- [Dropna before merge](feedback_dropna_before_merge.md)
-- [or "" does not catch NaN](feedback_or_empty_does_not_catch_nan.md)
 - [YAML quoting for queries](feedback_yaml_quoting.md)
-- [Human labels never in regenerable files](feedback_human_labels_never_in_regenerable_files.md)
 
 ### Analysis
 
-- [Axis is unimodal](project_axis_is_unimodal.md)
-- [Kmeans instability](feedback_kmeans_instability.md)
-- [Multispace comparison](feedback_multispace_comparison.md)
 - [Caps force pruning not compression](feedback_caps_force_pruning_not_compression.md)
 
 ### JETP
 
-- [DVC objects pushed from padme; capture from a padme worktree; full make check runs on padme](project_jetp_dvc_push_from_padme.md)
 - [Name vocabulary values by their distinguishing axis, ≤2 words; "everything is http"](feedback_name_values_by_their_distinguishing_axis.md)
