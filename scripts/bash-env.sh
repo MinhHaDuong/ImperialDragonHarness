@@ -4,7 +4,8 @@
 # $PWD/.env is project-level and UNTRUSTED. An agent, a cloned repo, or any
 # project write can place it. It is never sourced: this loader strict-parses
 # KEY=VALUE, assigns values literally, and refuses names that can alter shell,
-# process, interpreter, Git, pager, or harness-guard behaviour. Bad lines are
+# process, interpreter, Git, pager, harness-guard behaviour, or carry likely
+# credentials. Bad lines are
 # skipped rather than made fatal. CRLF is tolerated and a 256 KiB cap keeps a
 # pathological file from taxing every subprocess.
 #
@@ -26,6 +27,13 @@ esac
 # Return success when NAME must never be exported from an untrusted project
 # .env. The case block is the authoritative policy enumeration.
 _be_is_protected_name() {
+    # Match whole underscore-delimited segments only. Report the name, never
+    # the value; the loader runs in every shell and may receive live secrets.
+    case "_${1}_" in
+        *_TOKEN_*|*_PASSWORD_*|*_PASSWD_*|*_SECRET_*|*_APIKEY_*|*_API_KEY_*)
+            printf 'bash-env: refusing credential-shaped project .env name: %s\n' "$1" >&2
+            return 0 ;;
+    esac
     case "$1" in
         *GUARD_*|_be_*) return 0 ;;
         PATH|BASH_ENV|ENV|SHELLOPTS|BASHOPTS|IFS|\
@@ -80,9 +88,8 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
                         _be_val="${_be_val:1:${#_be_val}-2}"
                     fi
                 fi
-                # Refused silently: a warning here printed on every subprocess
-                # and prefixed hook messages (~2,400 lines in two days, ticket
-                # 0976) without ever changing an action.
+                # Critical shell/process names remain silent (ticket 0976).
+                # Credential-shaped names report a names-only warning above.
                 _be_is_protected_name "$_be_key" && continue
                 export "$_be_key=$_be_val"
             done < "$PWD/.env"
