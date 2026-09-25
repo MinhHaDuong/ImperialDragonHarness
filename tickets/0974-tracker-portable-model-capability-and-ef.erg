@@ -2,11 +2,11 @@
 Title: Tracker: portable model capability and effort policy
 Created: 2026-09-24
 Author: claude
-Blocked-by: 0975
 
 --- log ---
 2026-09-24T14:49Z claude created
 
+2026-09-25T13:59Z Minh Ha-Duong note blocker 0975 closed — Blocked-by removed.
 --- body ---
 ## Context
 `docs/portable-model-capability-policy.md` (PR #1002) replaces concrete Claude
