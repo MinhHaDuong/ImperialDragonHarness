@@ -13,3 +13,5 @@ Every executor brief states the scoped gates AND forbids the rest: targeted test
 **Why:** listing the wanted gates is not enough — hunt's contract calls the full `make check` for any diff under `scripts/`, so two parallel executors both launched the full suite on doudou (author: "Watch your subagents. Both launched the full pytest").
 
 **How to apply:** paste these rules into every Agent prompt that runs code; see [[feedback_gate_proportionate_to_risk]].
+
+**Merged from `feedback_no_shared_env_sync_during_sibling_agent` (2026-09-25):** Why: the shared /data env has no per-worktree isolation; a sync mid-run flipped the openalex-corpus path dep and crashed a sibling's testmon (0213 raid).

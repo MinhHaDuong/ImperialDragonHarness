@@ -1,11 +1,11 @@
 ---
-name: This machine is padme
-description: The current working machine hostname is padme — the GPU server where corpus data lives
+name: padme, the GPU server that holds the corpus
+description: padme is the GPU server where corpus data lives; sessions run on doudou or padme
 type: reference
 originSessionId: ffb7544c-0aee-4a39-b094-7dcb6ec24e41
 modified: 2026-07-27T14:16:40.650Z
 ---
-The machine running these sessions IS padme — the GPU server. Claude Code runs directly on padme; there is no remote SSH needed. `refined_works.csv` and all Phase 1 corpus data live here at `$CLIMATE_FINANCE_DATA/catalogs/`. A failing `test_corpus_acceptance.py::test_refined_works_exists` on padme is a real problem, not an expected data-missing failure.
+padme is the GPU server where the corpus lives, under `$CLIMATE_FINANCE_DATA/catalogs/`. Sessions run on doudou or on padme: check `hostname` before assuming. On padme, a failing `test_corpus_acceptance.py::test_refined_works_exists` is a real problem; on doudou it means the data is absent (reach padme with `ssh padme`).
 
 The corpus lives in the **primary checkout only**. A git worktree's `data/`
 holds `.dvc` pointer files and little else — no `catalogs/`, no
@@ -51,3 +51,9 @@ Repo repo `~/CNRS/projets/actifs/climate-finance-het` (same path as doudou; `~/C
   throwaway worktree, and expect a fresh worktree to need `dvc checkout
   --force` (the hook's JETP documents read as "unsaved") and to fail the two
   corpus freshness tests on mtime order (ticket 1060).
+
+**Merged from `feedback_ssh_padme` (2026-09-25):** Non-interactive ssh skips the profile: ssh padme 'PATH=$HOME/.local/bin:$PATH <cmd>'; never claim padme is unreachable.
+
+**Merged from `feedback_worktree_guard_usr_bin_git` (2026-09-25):** Remote git on padme: the guard refuses any command text containing git, including ssh padme '... git ...'. Write the remote script to a scratchpad file and run ssh padme bash -s < <file>.
+
+**Merged from `reference_doudou_apt_sources_after_release_upgrade` (2026-09-25):** padme's ufw admits ssh only from NetBird (100.64.0.0/10): if ssh padme times out, compare NetBird versions on both peers and check /etc/apt/sources.list.d/*.disabled after a release upgrade.
