@@ -11,6 +11,13 @@ user-invocable: true
 
 Run after the branch has been merged. Do not skip steps.
 
+The runtime gives the absolute path of the `SKILL.md` it loaded. Use that path
+where the snippets say `<loaded-roar-SKILL.md>`. Resolve its directory
+physically: Claude Code can load the canonical directory directly, while Codex
+and Pi may load a symlink under `.agents/skills`. The resolved directory holds
+roar's helpers; its grandparent is the IDH checkout. Keep the project working
+directory unchanged.
+
 ## Non-git projects
 
 When the working directory is not a git repository (manuscripts, data
@@ -58,6 +65,8 @@ default branch — there are no remote branches nor merge requests to inspect.
    Substitute `<name>` with the project's own directory name — the leading dash
    of a `~/.claude/projects/` slug is part of it and stays in the record:
    ```bash
+   ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+   ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
    SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
    # Which reference to enumerate up to. /roar normally runs from the worktree
    # of the branch just merged, and that worktree sits on the branch tip —
@@ -77,7 +86,7 @@ default branch — there are no remote branches nor merge requests to inspect.
        REASON="no sentinel yet — first roar in this checkout"
    elif ! git merge-base --is-ancestor "$(cat "$SENTINEL")" "$UNTIL"; then
        REASON="sentinel is not an ancestor of $UNTIL — history rewritten"
-   elif ! ROWS="$(~/.claude/skills/roar/enumerate-merges.py "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
+   elif ! ROWS="$("$ROAR_DIR/enumerate-merges.py" "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
        ROWS=""
        REASON="enumeration FAILED — per-merge-request attribution lost, investigate"
    elif [ -z "$ROWS" ]; then
@@ -86,13 +95,13 @@ default branch — there are no remote branches nor merge requests to inspect.
    if [ -n "$ROWS" ]; then
        # Per-PR path: one telemetry-equivalent record per merged PR.
        printf '%s\n' "$ROWS" | while IFS= read -r row; do
-           printf '%s\n' "$row" | ~/.claude/skills/roar/log-celebration
+           printf '%s\n' "$row" | "$ROAR_DIR/log-celebration"
        done
    else
        # Aggregate fallback — always says WHY, so a swallowed failure cannot
        # pass for a legitimate degradation (they produce the same one record).
        echo "roar telemetry: aggregate fallback — $REASON" >&2
-       echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | ~/.claude/skills/roar/log-celebration
+       echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | "$ROAR_DIR/log-celebration"
    fi
    # Sentinel = the reference just enumerated, not HEAD: a branch worktree's
    # HEAD is below it, and the next roar would re-enumerate the same merges.
@@ -163,7 +172,9 @@ default branch — there are no remote branches nor merge requests to inspect.
    every recently merged PR actually ran** — not only this session's:
 
    ```bash
-   ~/.claude/skills/roar/check-close-claims.sh --days 7 || true
+   ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+   ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+   "$ROAR_DIR/check-close-claims.sh" --days 7 || true
    ```
 
    A PR body's `**Ticket:**` line is executed by `erg-pr-merge`, not by the
@@ -189,13 +200,16 @@ default branch — there are no remote branches nor merge requests to inspect.
 9. **Exit worktree** (if in one):
     a. Preflight from inside the worktree:
        ```bash
-       ~/.claude/scripts/worktree-exit-preflight.sh
+       ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+       ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+       IDH_ROOT="$(cd -P "$ROAR_DIR/../.." && pwd -P)"
+       "$IDH_ROOT/scripts/worktree-exit-preflight.sh"
        ```
        Removes only `.panel/` and `build/panel-head/` review scratch first,
        then refuses (exit 1) on every other uncommitted/untracked file —
        including a fresh ticket draft `tickets/erg new` wrote but never
        committed. It is the only gate before removal. If it blocks, commit
-       (or `~/.claude/scripts/worktree-salvage.sh`) and re-run. See tickets
+       (or `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run. See tickets
        0174 and 0948.
     b. Call `ExitWorktree` with action `remove`. When the pre-check
        (`git merge-base --is-ancestor HEAD origin/main`) has already

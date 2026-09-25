@@ -159,7 +159,7 @@ def test_skill_md_has_push_or_restore_contract():
     # fine" followed by an unconditional probe) must stay removed.
     assert "leave the checkout on the branch is fine" not in content
     restore = content.find("switch main")
-    probe = content.find("check-primary-checkout.sh ~/.claude")
+    probe = content.find('"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.claude')
     assert restore != -1, "exit does not restore the primary to main"
     assert probe != -1, "exit does not confirm with the checkout probe"
     assert restore < probe, "exit must switch back to main BEFORE running the probe"
@@ -204,7 +204,7 @@ def test_skill_md_delete_removes_provenance():
     """Ticket 0241: a DELETE must drop its provenance record, else deleted
     entries keep counting toward the promotion frequency gate."""
     content = (DREAM_DIR / "SKILL.md").read_text()
-    assert "provenance.py remove" in content, "DELETE does not clean provenance"
+    assert '"$IDH_ROOT/skills/dream/provenance.py" remove' in content, "DELETE does not clean provenance"
 
 
 def test_commit_py_has_rollback_subcommand():

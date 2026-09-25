@@ -15,6 +15,8 @@ background: false
 
 # Review PR prose $ARGUMENTS — simulated peer review panel
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 > **TASK DIRECTIVE — execute now.** You are running `/review-pr-prose` on PR
 > `$ARGUMENTS` (a PR number, optionally followed by `worktree=<path>`). This
 > file is your operating procedure, not reference documentation: start the
@@ -64,9 +66,9 @@ in the posted review and leave it unresolved for the next round.
 
 ## Setup
 
-Before reading or posting a review, set `review_tree` to the absolute `worktree=<path>` argument when present; only when absent, resolve it from the current cwd with `git rev-parse --show-toplevel`. Then run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$review_tree"`. Use `git -C "$review_tree"` for every diff and checkout read; a shell `cd` in one tool call does not persist into another. The helper checks the requested PR's head commit and base against this checkout and exits nonzero with `REVIEW-ANCHOR:` for a wrong HEAD, missing base, or empty diff. Stop and report that reason on any failure; no empty changed-file list may yield an approving review. Carry the helper's HEAD and changed-file roster into every reviewer prompt. Re-run it before posting to catch branch motion during review.
+Before reading or posting a review, set `review_tree` to the absolute `worktree=<path>` argument when present; only when absent, resolve it from the current cwd with `git rev-parse --show-toplevel`. Then run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$review_tree"`. Use `git -C "$review_tree"` for every diff and checkout read; a shell `cd` in one tool call does not persist into another. The helper checks the requested PR's head commit and base against this checkout and exits nonzero with `REVIEW-ANCHOR:` for a wrong HEAD, missing base, or empty diff. Stop and report that reason on any failure; no empty changed-file list may yield an approving review. Carry the helper's HEAD and changed-file roster into every reviewer prompt. Re-run it before posting to catch branch motion during review.
 
-1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate? Run `python3 ~/.claude/scripts/prose_predicate.py <file>` from the merge request's checkout — the predicate reads the disk (manifest walk-up, `\documentclass` sniff), so the paths must exist under the cwd; it refuses a missing path (exit 2, no verdict) rather than guessing, and a refusal is a cwd error to fix, never an answer. It prints `prose` for a manuscript: a file with a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists. What is the target venue?
+1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate? Run `python3 "$IDH_ROOT/scripts/prose_predicate.py" <file>` from the merge request's checkout — the predicate reads the disk (manifest walk-up, `\documentclass` sniff), so the paths must exist under the cwd; it refuses a missing path (exit 2, no verdict) rather than guessing, and a refusal is a cwd error to fix, never an answer. It prints `prose` for a manuscript: a file with a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists. What is the target venue?
 2. Read the diff of the merge request.
 3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it.
 

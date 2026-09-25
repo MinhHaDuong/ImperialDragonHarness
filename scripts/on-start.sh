@@ -32,7 +32,7 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
 fi
 
 # Check shell-init.sh is sourced in the user's shell config
-_shell_init="$HOME/.claude/scripts/shell-init.sh"
+_shell_init="$_script_dir/shell-init.sh"
 if ! grep -qlF "shell-init.sh" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
     echo "SETUP REMINDER: shell-init.sh is not sourced in your shell config. Add this line to ~/.bashrc or ~/.zshrc:"
     echo "  [ -f \"$_shell_init\" ] && source \"$_shell_init\""

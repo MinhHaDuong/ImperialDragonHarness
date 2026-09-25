@@ -10,6 +10,8 @@ effort: high
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 A raid does not redefine skills. It calls `/hunt`,
 `/review-pr`, `/roar`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
@@ -316,12 +318,13 @@ For each eligible PR, sequentially within the wave:
    (`.claude/worktrees/agent-<id>`). Do not check out, `cd`, or `EnterWorktree`
    into it, and do not delete and re-checkout the branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `~/.claude/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
-   bare. This atomically closes the ticket and merges via GitHub API. The bare
-   form (no `cd` prefix) prefix-matches the standing allow rule
-   `Bash(~/.claude/skills/merge/erg-pr-merge:*)` from any cwd, where a
-   `cd <path> && …` prefix would fall through to the auto-mode classifier
-   (ticket 0344).
+4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`.
+   This atomically closes the ticket and merges via GitHub API.
+   <!-- harness-extension-point -->
+   In Claude Code, the standing allow rule matches the bare
+   `~/.claude/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
+   spelling. Use that spelling there while the projection exists. A
+   `cd <path> && …` prefix misses the rule (ticket 0344).
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
@@ -403,7 +406,7 @@ relaunching: `{ISO8601} claude bump circuit-breaker — {reason}`.
 survives the deletion:
 
 ```bash
-~/.claude/scripts/worktree-salvage.sh <worktree-path>
+"$IDH_ROOT/scripts/worktree-salvage.sh" <worktree-path>
 ```
 
 This commits everything on the agent's branch and pushes it. Nothing enforces
@@ -420,7 +423,7 @@ Salvage is the FIRST step of any restart, not an afterthought.
 the executor's worktree (compare status snapshots; an already-dirty tree does
 not prove recent progress). The ordinary stall window is 10 minutes since
 the latest of these. During a declared project gate, check the executor's
-worktree with `python3 "${IDH_HOME:-$HOME/.claude}/scripts/raid-breaker.py" --worktree <path>
+worktree with `python3 "$IDH_ROOT/scripts/raid-breaker.py" --worktree <path>
 --last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
 `/hunt` runs the gate through `raid-gate.py`, whose short-lived heartbeat is
 keyed to this worktree. Another session's gate cannot excuse this executor,

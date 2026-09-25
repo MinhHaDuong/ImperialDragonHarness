@@ -462,4 +462,4 @@ def test_healthcheck_documents_the_temp_check():
 
 def test_molt_wires_the_sweep():
     text = (REPO_ROOT / "skills" / "molt" / "SKILL.md").read_text()
-    assert "session_scratch.py --sweep" in text
+    assert '"$IDH_ROOT/scripts/session_scratch.py" --sweep' in text

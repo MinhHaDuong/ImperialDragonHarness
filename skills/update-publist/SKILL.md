@@ -8,6 +8,8 @@ argument-hint: "<pdf-path> [--hal-only] [--page-only]"
 
 # Update publication list
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Two independent steps, either runnable alone via flags (`--page-only`
 runs Step 1 only; `--hal-only` runs Step 2 only). Both are
 outward-facing and irreversible once completed — every mutation requires
@@ -73,7 +75,7 @@ This directory is NOT a git repo. It deploys over FTP.
 
 Credentials: `HAL_ID` and `HAL_PASSWORD` live in `~/.config/keys/hal.env` and
 are resolved **at point of use**, one variable per call, by
-`~/.claude/skills/update-publist/resolve_hal_credentials.sh` — see § 2c, which
+`"$IDH_ROOT/skills/update-publist/resolve_hal_credentials.sh"` — see § 2c, which
 is the only place in this skill that runs it.
 
 The ambient environment is **no longer consulted**: a `HAL_ID` or
@@ -163,7 +165,7 @@ Resolve the two credentials immediately before building `$TMPCONFIG`, into
 shell variables that go into that chmod-600 file and nowhere else:
 
 ```
-RESOLVE=~/.claude/skills/update-publist/resolve_hal_credentials.sh
+RESOLVE="$IDH_ROOT/skills/update-publist/resolve_hal_credentials.sh"
 HAL_ID_VALUE="$("$RESOLVE" HAL_ID)" || exit $?
 HAL_PASSWORD_VALUE="$("$RESOLVE" HAL_PASSWORD)" || exit $?
 ```

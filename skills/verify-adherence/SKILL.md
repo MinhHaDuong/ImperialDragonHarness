@@ -15,6 +15,8 @@ background: false
 
 # Verify adherence — $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 > **TASK DIRECTIVE — execute now.** You are running `/verify-adherence` on
 > `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).
 > This file is your operating procedure, not reference documentation: begin
@@ -161,7 +163,7 @@ Runs only when the caller supplies `trace=<path>` alongside the branch argument
 phase silently.
 
 ```bash
-python3 ~/.claude/scripts/trace-path-scan.py --trace <path> [--worktree-root <path>] --json
+python3 "$IDH_ROOT/scripts/trace-path-scan.py" --trace <path> [--worktree-root <path>] --json
 ```
 
 The scan is pure Python, zero LLM tokens. Pass `--worktree-root` (the caller's

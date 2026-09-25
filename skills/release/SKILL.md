@@ -7,6 +7,8 @@ argument-hint: "[new-tag-name]"
 
 # Release $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Encode the release checklist as a repeatable flow: run audits autonomously,
 pause at the human-only step (GPG signing), then verify and summarise. The
 skill **never signs** a tag — that is the human's sole responsibility.
@@ -93,7 +95,7 @@ explicit human go-ahead.
   file is present):
 
   ```bash
-  ~/.claude/skills/release/rewrite-download-url README.md <tag>
+  "$IDH_ROOT/skills/release/rewrite-download-url" README.md <tag>
   ```
 
   The helper rewrites the tag-like segment inside raw-download / release URLs

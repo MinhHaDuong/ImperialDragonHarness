@@ -8,13 +8,15 @@ argument-hint: "<pdf-path> [--models openai/gpt-5.5,mistralai/mistral-large-2512
 
 # External peer review $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Send a manuscript PDF to real external models (OpenAI + Mistral, via one
 OpenRouter key) under reviewer personas, then read the reviews back and present
 a cross-reviewer synthesis. This is **complementary** to `/review-pr-prose`:
 that skill runs a *simulated* in-harness panel; this one solicits *real
 external* frontier-model reviews.
 
-The bundled script is `~/.claude/skills/external-peer-review/peer_review.py`.
+The bundled script is `"$IDH_ROOT/skills/external-peer-review/peer_review.py"`.
 
 ## Steps
 
@@ -48,7 +50,7 @@ The bundled script is `~/.claude/skills/external-peer-review/peer_review.py`.
    Run a single model×persona to confirm prompt assembly, that a review comes
    back non-empty, and that the input mode works:
    ```
-   python ~/.claude/skills/external-peer-review/peer_review.py <pdf> \
+   python "$IDH_ROOT/skills/external-peer-review/peer_review.py" <pdf> \
        --models openai/gpt-5.5 --personas grinchy --out-dir <out>
    ```
    Inspect the written `review_*.md` for quality before launching the rest.
@@ -61,7 +63,7 @@ The bundled script is `~/.claude/skills/external-peer-review/peer_review.py`.
 5. **Run the rest in the background.** Launch the full set in the background so
    the long calls do not block:
    ```
-   python ~/.claude/skills/external-peer-review/peer_review.py <pdf> \
+   python "$IDH_ROOT/skills/external-peer-review/peer_review.py" <pdf> \
        --models openai/gpt-5.5,mistralai/mistral-large-2512 \
        --personas grinchy,student --out-dir <out>
    ```

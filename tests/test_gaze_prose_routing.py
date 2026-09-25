@@ -166,7 +166,7 @@ def test_agent_b_is_handed_the_resolved_axes():
     marker = "**Agent B — built-in review**"
     assert marker in text, "gaze Agent B clause moved — update this test"
     clause = text.split(marker)[1].split("**Agent C — PR review**")[0]
-    assert "prose_predicate.py --axes" in clause, (
+    assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in clause, (
         "Agent B must be handed the resolved axes, not left to infer them"
     )
     assert "review-<pr-number>" in clause, (

@@ -7,6 +7,8 @@ user-invocable: true
 
 # Lair — end-of-day wrap-up
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Run when the user ends a work session ("done for today", "let's stop", "wrap up").
 
 ## Steps
@@ -15,12 +17,12 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 1. **Housekeeping** — run `/molt` (git sync, healthcheck, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
-3. **Log session metrics** — run `~/.claude/skills/lair/log-agent-metrics` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
+3. **Log session metrics** — run `"$IDH_ROOT/skills/lair/log-agent-metrics"` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
 4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
 6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
 7. **Exit worktree** — if in a worktree:
-    a. Preflight from inside the worktree: `~/.claude/scripts/worktree-exit-preflight.sh` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state; closes the ExitWorktree gap, tickets 0174 and 0948). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
+    a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state; closes the ExitWorktree gap, tickets 0174 and 0948). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
     b. Call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
 8. **Hygiene sweep**:
    - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions — ticket 0355). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
@@ -30,7 +32,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
 10. **Refresh STATE.md** on a throwaway branch, landed through the normal PR gate (main is branch-protected — there is no direct-push-to-main path, and STATE.md is not special-cased; rules/git.md):
     a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
-    b. Run `python3 "$HARNESS_DIR/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
+    b. Run `python3 "$IDH_ROOT/scripts/refresh-STATE.py"` to regenerate `## Status` and bump `Last updated:`. Then hand-edit remaining sections (blockers, next actions, milestones) — no changelog.
     c. Prune: delete items checked off before this session.
     d. Commit, push the branch, open a merge request (`Ticket: none`), then **land it yourself** — a STATE refresh is the agent's own output with no blast radius, and handing the author a merge to perform is what this step exists to avoid. Which mechanism lands it is a per-repo fact: **read it from the forge, never assume it.**
        - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.

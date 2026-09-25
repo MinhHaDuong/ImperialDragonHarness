@@ -18,6 +18,8 @@ background: true
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 > **TASK DIRECTIVE — execute now.** You are running `/gaze` on PR `$ARGUMENTS`.
 > This file is your operating procedure, not reference documentation: begin at
 > phase 1 immediately. If `$ARGUMENTS` does not contain a PR number, STOP and
@@ -193,7 +195,7 @@ if [ -d "$review_tree" ]; then
         rm -rf -- "$review_tree/build/panel-head"
     fi
     rmdir -- "$review_tree/.panel" 2>/dev/null || true
-    if ! "${IDH_HOME:-$HOME/.claude}/scripts/worktree-exit-preflight.sh" "$review_tree"; then
+    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" "$review_tree"; then
         echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
         exit 1
     fi
@@ -208,7 +210,7 @@ fi
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
-- First run `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.
+- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.
 - Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
   Before classifying, check the PR label, PR body, and linked ticket body for
   `review:standard`. An explicit request selects the **full** tier even when
@@ -357,12 +359,12 @@ the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup
 summary; it runs on the **small** and **full** tiers. This is a built-in slash command
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
 embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
-same containment rails, whose prompt first runs `python3 "${IDH_HOME:-$HOME/.claude}/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
+same containment rails, whose prompt first runs `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
 them.** `/review` checks prose against a house rulebook, and told nothing it
 picks one by inference — on a manuscript merge request it read
 `rules/doctype/book.md` where the project manifest declares `techreport`
 (audit of 2026-08-17, MR 136). Before spawning, run
-`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py --axes <changed files>`
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --axes <changed files>`
 and carry its lines verbatim into the wrap prompt. Same cwd anchoring and same
 refusal semantics as the routing call below — this reads the disk too. Note
 what the two calls settle: routing picks *which panel* reviews the diff, the
@@ -401,7 +403,7 @@ If a launched perspective is still missing at the bounded collection deadline,
 name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
 perspective report: <name>`, and use `dissent: unavailable` there too.
 **Width-gate:** run Agent C at every tier. For round-1 code diffs, read
-`${IDH_HOME:-$HOME/.claude}/skills/review-pr/panel-width.json` and apply its
+`$IDH_ROOT/skills/review-pr/panel-width.json` and apply its
 `max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat
 --no-renames origin/<base>...HEAD` in the review worktree. A diff within both
 limits and with no pipeline path gets Correctness only. A binary count, missing
@@ -429,7 +431,7 @@ Otherwise route by the shared prose predicate, anchored in the review
 worktree — the predicate reads the disk (manifest walk-up, `\documentclass`
 sniff), so a parked cwd would return a plausible, wrong verdict, the failure
 mode this ticket exists to close. Run
-`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 ~/.claude/scripts/prose_predicate.py <changed files>`
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" <changed files>`
 — it prints `prose` when any changed file resolves to a `doctype` (from the
 project's `.claude/rules-map.toml` manifest, else the `\documentclass`
 sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
@@ -453,7 +455,7 @@ raises a concern or low confidence, add the other four perspectives and
 collect their reports before synthesis. An explicit `review:standard` request
 also forces all five code perspectives. Synthesize: preserve dissent verbatim,
 dedupe, and run the project's declared gate. With `.idh-checks.json`, use
-`python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
+`python3 "$IDH_ROOT/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
 into the review; without a map, run `make check`. A scoped pass is not a full
 gate claim. Every non-blocker (minor) finding **must** carry exactly one tag
 prefix — `verifiable:` (a reproducible failing assertion is attached),
@@ -481,7 +483,7 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 **small** and **full** tiers.
 
 **Prose-skip:** when the diff routed prose (the same
-`~/.claude/scripts/prose_predicate.py` verdict the phase 2–4 panel choice used), skip
+`"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
 phase line. Motive: this phase may commit to the PR branch, and `rules/git.md`
 § Prose workpackages forbids autonomous edits to a manuscript — an autonomous
@@ -609,7 +611,7 @@ The subagent spawned on REROLL receives:
   violations, per-exit-criterion gaps).
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
 - TDD discipline still applies: add a failing test for any behavioural fix before coding.
-- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "${IDH_HOME:-$HOME/.claude}/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 
 Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 6.
 
@@ -683,7 +685,7 @@ This section is the panel-extension contract (ticket 0205).
 **When seats fire.** Automatically, on **small**- and **full**-tier CODE
 reviews — the decorrelation evidence concentrates ensemble value on
 substantive multi-file code changes. Skip on the **tiny** tier and on prose
-panels — the same `~/.claude/scripts/prose_predicate.py` verdict the phase
+panels — the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase
 2–4 panel choice used; a LaTeX manuscript never qualifies for external
 code-review seats. Empty roster or `/reviewers` unavailable →
 skip silently: the panel is fail-open and never blocks a gaze run.
@@ -704,7 +706,7 @@ Whenever the reviewed checkout is not `~/.claude`, invoke as
 ```bash
 REVIEWERS_REPO=<path-to-the-reviewed-checkout> \
 REVIEWERS_PR_BRANCH=<head-branch> \
-  ~/.claude/skills/reviewers/reviewers.sh request <pr>
+  "$IDH_ROOT/skills/reviewers/reviewers.sh" request <pr>
 ```
 
 `REVIEWERS_PR_BRANCH` is optional and skips the forge lookup; supply it when

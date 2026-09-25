@@ -8,13 +8,15 @@ argument-hint: "--old-ref <tag/branch/commit> [--new-ref HEAD] --main-tex <path/
 
 # Track-changes PDF $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Render a revision-marked PDF of a LaTeX manuscript: insertions and deletions
 between two git refs highlighted, so the author (or a journal editor) can read
 and annotate exactly what changed. This mechanizes the review doctrine "the
 review interface for prose is the recompiled PDF and latexdiff between tags" —
 the diff is authored from the git history, never marked up by hand.
 
-The bundled script is `~/.claude/skills/track-changes-pdf/track_changes_pdf.py`.
+The bundled script is `"$IDH_ROOT/skills/track-changes-pdf/track_changes_pdf.py"`.
 
 ## When to use it
 
@@ -46,7 +48,7 @@ The bundled script is `~/.claude/skills/track-changes-pdf/track_changes_pdf.py`.
 
 3. **Run the helper.**
    ```
-   python ~/.claude/skills/track-changes-pdf/track_changes_pdf.py \
+   python "$IDH_ROOT/skills/track-changes-pdf/track_changes_pdf.py" \
        --repo . --old-ref v1-submitted --new-ref HEAD \
        --main-tex manuscript/main.tex --output revision-marked.pdf
    ```

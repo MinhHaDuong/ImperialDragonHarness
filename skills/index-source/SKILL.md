@@ -8,6 +8,8 @@ argument-hint: "<url>..."
 
 # index-source
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Given one or more URLs, produce a correct Zotero entry for each — right item
 type, real author/date/title, identifiers, page count — with the document
 itself archived as an attachment. The probe script is the mechanical half; you
@@ -19,7 +21,7 @@ staging, never the home (see `rules/edm.md`).
 
 ## Happy path
 
-1. **Probe.** `python3 ~/.claude/skills/index-source/scripts/probe-url.py <url>...`
+1. **Probe.** `python3 "$IDH_ROOT/skills/index-source/scripts/probe-url.py" <url>...`
    stages each document in `docs/` and prints a JSON record per URL:
    `staged_path`, `mime`, `page_count` (PDFs), `meta` (title/date/authors/
    publication/publisher), `identifiers` (doi/arxiv/isbn), `suggested_ris_type`,
@@ -34,11 +36,11 @@ staging, never the home (see `rules/edm.md`).
 5. **Clean the metadata.** Real byline (personal authors `Last, First`;
    institutions verbatim with a trailing comma so they aren't reordered), full
    date, publication/publisher. Reports **get a page count** (`numPages`).
-6. **Dedupe.** `python3 ~/.claude/scripts/zotero-import.py match --title "<refined title>" [--doi D]`
+6. **Dedupe.** `python3 "$IDH_ROOT/scripts/zotero-import.py" match --title "<refined title>" [--doi D]`
    — warn and ask before importing a likely duplicate. The user's own works are
    usually already in Zotero; check before adding.
 7. **Write + import.** Build the entries JSON and
-   `python3 ~/.claude/scripts/zotero-import.py write --out <file>.ris --entries-json '<json>'`,
+   `python3 "$IDH_ROOT/scripts/zotero-import.py" write --out <file>.ris --entries-json '<json>'`,
    then `xdg-open` (or `setsid -f zotero`) the RIS. Attachments archive in Zotero
    (`attach_pdf: true`, `pdf: <staged_path>` — works for HTML snapshots too).
 8. **Update the `.bib` (staging).** Optionally append a biblatex entry to the
@@ -68,10 +70,10 @@ substitution in the entry.
 
 ## Helper scripts
 
-- `~/.claude/skills/index-source/scripts/probe-url.py <url>... [--staging-dir docs] [--timeout 60]` — fetch +
+- `"$IDH_ROOT/skills/index-source/scripts/probe-url.py" <url>... [--staging-dir docs] [--timeout 60]` — fetch +
   stage + metadata. Stdlib only (no install). Uses `pdfinfo`/`pdftotext` for PDF
   page count and first-page text when available.
-- `~/.claude/scripts/zotero-import.py` (global) — `match` (dedupe vs the Zotero
+- `"$IDH_ROOT/scripts/zotero-import.py"` (global) — `match` (dedupe vs the Zotero
   DB) and `write` (RIS + `L1` attachment, `numPages`→page count on report types).
 
 ## Output to the user

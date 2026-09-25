@@ -8,6 +8,8 @@ argument-hint: "<decision-letter> <reviewer-comments>... [--release-dir <paper-r
 
 # Ingest decision letter $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Take a journal's **Revise-and-Resubmit** decision letter plus each reviewer's
 comments, archive them where they will not be lost, parse them into a structured
 **remark ledger**, and produce a **coverage check** that maps every remark to the
@@ -15,7 +17,7 @@ ticket(s) addressing it — flagging uncovered remarks and orphan tickets. This 
 the *inverse* of `external-peer-review` / `review-pr-prose`: those review **our**
 manuscript; this ingests **the journal's** review of it.
 
-The bundled helper is `~/.claude/skills/ingest-decision-letter/ingest_letter.py`.
+The bundled helper is `"$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py"`.
 It is pure I/O — it never calls a model. You (the model) read the extracted text
 and assign categories and ticket mappings; the script does the deterministic,
 re-runnable work: extract, archive, segment, dedupe, coverage.
@@ -44,7 +46,7 @@ single source of truth; never send the author back to a mailbox to re-find them.
    `release/<date description>/` per submission; editorial replies file into the
    release subdir they answer, as tracked text. Copy the sources there:
    ```
-   ~/.claude/skills/ingest-decision-letter/ingest_letter.py archive \
+   "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" archive \
        decision.pdf reviewer1.txt reviewer2.txt \
        --into <paper-repo>/release/<date>/
    ```
@@ -57,9 +59,9 @@ single source of truth; never send the author back to a mailbox to re-find them.
    (`R1-01`, `R1-02`, …) and source line locations. Re-running on the same input
    yields the same ids, so the ledger is a stable anchor.
    ```
-   ~/.claude/skills/ingest-decision-letter/ingest_letter.py segment \
+   "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" segment \
        reviewer1.txt --reviewer R1 >  ledger.jsonl
-   ~/.claude/skills/ingest-decision-letter/ingest_letter.py segment \
+   "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" segment \
        reviewer2.txt --reviewer R2 >> ledger.jsonl
    ```
    The segmenter is a deterministic first pass (it splits on enumeration markers,
@@ -74,7 +76,7 @@ single source of truth; never send the author back to a mailbox to re-find them.
    56 remarks). `dedupe` folds duplicates and any record you tagged with
    `atomic_of` into its parent, so the distinct-remark count is deterministic:
    ```
-   ~/.claude/skills/ingest-decision-letter/ingest_letter.py dedupe \
+   "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" dedupe \
        ledger.jsonl > ledger.dedup.jsonl
    ```
    Distinct remarks are the records whose `atomic_of` is null; folded atomics
@@ -88,7 +90,7 @@ single source of truth; never send the author back to a mailbox to re-find them.
 6. **Coverage check — one deterministic pass.** Cross-check the ledger against the
    tickets that exist for this round:
    ```
-   ~/.claude/skills/ingest-decision-letter/ingest_letter.py coverage \
+   "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" coverage \
        ledger.dedup.jsonl --tickets-dir tickets/
    ```
    The report lists, and the command exits non-zero on, any of:

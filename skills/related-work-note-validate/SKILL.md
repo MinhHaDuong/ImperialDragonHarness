@@ -8,6 +8,8 @@ argument-hint: "<note-file-path>"
 
 # Related-work-note validator
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Re-resolve every identifier in the note's Bibliography. Flag entries
 with no DOI, URL, or eprint as unverifiable. Append a single provenance
 bullet to the `## Methods` section. Print a one-line verdict to stdout.
@@ -36,7 +38,7 @@ multiple are present. Entries with none of these → unverifiable.
 ## Step 1 — run the validator script (exactly one Bash call)
 
 ```
-python3 ~/.claude/scripts/validate-refs.py <note-file>
+python3 "$IDH_ROOT/scripts/validate-refs.py" <note-file>
 ```
 
 The script:
