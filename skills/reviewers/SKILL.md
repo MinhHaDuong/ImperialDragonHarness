@@ -6,6 +6,8 @@ user-invocable: true
 argument-hint: "<subcommand> [args]"
 ---
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Manage the external reviewer panel for `/gaze`. Each seat is a sandboxed
 CI-style reviewer job (ticket 0205, "review is CI"): `request` runs the
 0217 seat-runner once per roster seat — one OS-sandboxed container per
@@ -74,7 +76,7 @@ artifact — `audition` reads it, never edits it. Schema in its header.
 
 ## Dependencies
 
-- `~/.claude/scripts/seat-runner.sh` (ticket 0217) — the
+- `"$IDH_ROOT/scripts/seat-runner.sh"` (ticket 0217) — the
   sandboxed seat execution mechanism `request` invokes. Override with
   `SEAT_RUNNER` for testing.
 - `tickets/erg` — `scorecard` appends the trial log line.

@@ -10,6 +10,8 @@ argument-hint:
 
 # Repo healthcheck
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Run a healthcheck on the current repository. Report results concisely — one line per check, flag anything abnormal.
 
 This skill is user-level and must **gracefully degrade**: each check runs only if its prerequisites are present. Missing prerequisites yield a `skip` status with a one-line reason, never a fail.
@@ -19,7 +21,7 @@ This skill is user-level and must **gracefully degrade**: each check runs only i
 First, run the mechanical probe to collect structured state:
 
 ```bash
-python3 ~/.claude/scripts/project-state.py "$(git rev-parse --show-toplevel)" --tests
+python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --tests
 ```
 
 Parse the JSON output. Use its fields to populate checks 1–12 below without re-running git commands — the probe covers everything through check 10 and check 12; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.

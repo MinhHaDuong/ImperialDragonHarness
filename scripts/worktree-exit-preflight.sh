@@ -63,7 +63,7 @@ Commit (and push) anything you mean to keep before calling ExitWorktree. For
 ticket drafts filed during /roar sweeps, commit the new tickets/NNNN-*.erg
 (erg new writes it; you must commit it). For genuine WIP, salvage:
 
-  ~/.claude/scripts/worktree-salvage.sh "$path"
+  "$(cd -P "$(dirname "$0")" && pwd -P)/worktree-salvage.sh" "$path"
 
 See ticket 0174.
 EOF

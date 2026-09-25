@@ -41,6 +41,7 @@ import os
 import re
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -273,6 +274,42 @@ def status(harness: str, skill: str) -> dict:
 # --- install / uninstall ------------------------------------------------
 
 
+def relocation_target(harness: str, skill: str, old_root: Path) -> Path | None:
+    """Preflight one projection for an explicit checkout move.
+
+    Return the link to replace, or None when it is absent/already current.
+    Compare the link text rather than resolving it, so a moved-away checkout
+    can still be identified without adopting an arbitrary dangling link.
+    """
+    target = target_path(harness, skill)
+    source = canonical_source(skill)
+    if not old_root.is_absolute() or old_root == REPO.resolve():
+        raise Refusal("--from must name a different absolute checkout path")
+    if not os.path.lexists(target) or _is_canonical(target, skill):
+        return None
+    expected = old_root / "skills" / skill
+    if not target.is_symlink() or Path(os.readlink(target)) != expected:
+        raise Refusal(
+            f"{target} does not point to the declared old source {expected}; refusing to retarget"
+        )
+    if source == expected:
+        raise Refusal("old and new skill paths are identical")
+    return target
+
+
+def retarget_link(target: Path, source: Path) -> None:
+    """Replace a verified projection atomically, with no absent-link window."""
+    temporary = target.with_name(f".{target.name}.idh-{uuid.uuid4().hex}")
+    try:
+        temporary.symlink_to(source, target_is_directory=True)
+        os.replace(temporary, target)
+    except OSError as exc:
+        raise Refusal(f"could not retarget {target}: {exc}") from exc
+    finally:
+        if os.path.lexists(temporary):
+            temporary.unlink()
+
+
 def install(harness: str, skill: str, version: str | None = None) -> str:
     source = canonical_source(skill)
     target = target_path(harness, skill)
@@ -408,12 +445,16 @@ def known_skills() -> list[str]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("install", "uninstall", "status"):
+    for name in ("install", "uninstall", "status", "relocate"):
         action = commands.add_parser(name)
         action.add_argument("type", choices=("skill",))
         action.add_argument("skills", nargs="*" if name == "status" else "+")
         action.add_argument("--to", choices=HARNESSES)
         if name == "install":
+            action.add_argument("--version", help="use this version instead of probing the CLI")
+        if name == "relocate":
+            action.add_argument("--from", dest="old_root", type=Path, required=True,
+                                help="absolute path of the old checkout")
             action.add_argument("--version", help="use this version instead of probing the CLI")
     check = commands.add_parser("check", help="probe a harness version")
     check.add_argument("type", choices=("harness",))
@@ -432,11 +473,27 @@ def main(argv: list[str] | None = None) -> int:
             skills = args.skills or known_skills()
             for skill in skills:
                 canonical_source(skill)
-            if args.command == "install":
+            if args.command in ("install", "relocate"):
                 # Refuse an absent or below-floor CLI before creating any link.
                 versions = {
                     harness: check_version(harness, args.version) for harness in targets
                 }
+            if args.command == "relocate":
+                old_root = args.old_root
+                # Codex and Pi share a projection; check everything before
+                # replacing any link, then write each physical target once.
+                moves = {}
+                for skill in skills:
+                    for harness in targets:
+                        target = relocation_target(harness, skill, old_root)
+                        if target is not None:
+                            moves[target] = canonical_source(skill)
+                for target, source in moves.items():
+                    retarget_link(target, source)
+                    print(f"retargeted {target} -> {source}")
+                if not moves:
+                    print("no old skill links to retarget")
+                return 0
             for skill in skills:
                 for harness in targets:
                     if args.command == "install":

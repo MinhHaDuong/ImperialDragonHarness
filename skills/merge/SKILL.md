@@ -7,21 +7,24 @@ argument-hint: "[-C path] [pr-number]"
 
 # Merge $ARGUMENTS
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Run:
 ```bash
-~/.claude/skills/merge/erg-pr-merge $ARGUMENTS
+"$IDH_ROOT/skills/merge/erg-pr-merge" $ARGUMENTS
 ```
 
 **Cross-repo prerequisite**: the script operates on the checkout it runs in,
 with the PR branch checked out. Point it at a checkout in one of two ways:
 
 - **`-C PATH` (preferred for agents)** — the script cds into `PATH` before any
-  git/gh/erg call. The canonical agent invocation is the bare form
-  `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N`, which prefix-matches the
-  standing allow rule `Bash(~/.claude/skills/merge/erg-pr-merge:*)` from any cwd.
-  A `cd WORKTREE && …` prefix does **not** match that rule (the command text no
-  longer starts with the script path), so it falls through to the stochastic
-  auto-mode classifier — use `-C` instead of a `cd` prefix.
+  git/gh/erg call. The portable invocation is
+  `"$IDH_ROOT/skills/merge/erg-pr-merge" -C WORKTREE N`.
+  <!-- harness-extension-point -->
+  In Claude Code, the existing standing allow rule matches only the bare
+  `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N` spelling. Use that
+  spelling there while the projection exists. A `cd WORKTREE && …` prefix
+  misses the rule; use `-C` instead.
 - **Implicit cwd** — with no `-C`, the script uses the current directory, so the
   caller must `cd <project-path> && git fetch origin` and check out the PR branch
   before the call.
@@ -128,7 +131,7 @@ claim immediately: the ticket must be in `tickets/closed/` with a `Closed:`
 header. After a merge wave, run the wider sweep from the updated base checkout:
 
 ```bash
-bash ~/.claude/skills/roar/check-close-claims.sh --days 7 --limit 40
+bash "$IDH_ROOT/skills/roar/check-close-claims.sh" --days 7 --limit 40
 ```
 
 It reports how many merged PRs it examined, how many close claims it parsed,
@@ -159,12 +162,12 @@ branch and PR.
 ## After the merge lands
 
 The script itself polls for the merge to land and then runs
-`~/.claude/scripts/sync-local-main.sh` on the base branch (rules/git.md
+`"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch (rules/git.md
 § Local main syncs eagerly) — no manual sync step. Two outputs still need
 action:
 
 - "Merge queued but not yet landed" — the bounded poll ran out (slow CI).
-  Confirm the PR reaches MERGED, then run `~/.claude/scripts/sync-local-main.sh`.
+  Confirm the PR reaches MERGED, then run `"$IDH_ROOT/scripts/sync-local-main.sh"`.
 - "left untouched" in the sync report — dirty overlap or divergence where the
   base branch is checked out; report it to the caller rather than forcing.
 

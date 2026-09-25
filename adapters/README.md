@@ -20,6 +20,7 @@ the prose.
     bin/idh status skill perch roar --to codex
     bin/idh install skill perch            # all three harnesses
     bin/idh uninstall skill perch --to codex
+    bin/idh relocate skill perch --from /old/checkout
     bin/idh check harness pi
 
 The object argument names a directory under `skills/` whose `SKILL.md` has
@@ -97,3 +98,17 @@ so the pre-experiment Claude state is restored by construction.
 one perch — so each names both harnesses in what it reports. A link left
 dangling by moving the checkout is reported as `dangling` and removed on
 request, rather than sitting there as an entry nothing can clean up.
+
+### Moving the canonical checkout
+
+After moving the repository, run `bin/idh relocate skill <names> --from
+<old-absolute-checkout-path>` **from the permanent new checkout**. It checks
+every requested target before writing, then atomically retargets only symlinks
+whose text exactly names `<old>/skills/<name>`. A link from another checkout or
+an unmanaged directory is refused. Codex and Pi share one target; the command
+updates it once. Missing or already current links need no retargeting. Run
+`bin/idh install skill <names>` afterward to create any missing Claude Code
+projections. For the planned `~/.claude` → `~/.idh` move, the old Claude Code
+directories will disappear with the checkout, while the neutral links remain
+and need retargeting. No skill depends on `bin/idh` being on `PATH` at runtime:
+helper commands resolve from the loaded skill file.

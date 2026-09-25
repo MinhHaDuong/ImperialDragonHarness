@@ -38,10 +38,10 @@ integration-tier.
 import json
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -49,8 +49,6 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ROAR_DIR = REPO_ROOT / "skills" / "roar"
 SKILL_MD = ROAR_DIR / "SKILL.md"
-ENUMERATE = ROAR_DIR / "enumerate-merges.py"
-LOG_CELEBRATION = ROAR_DIR / "log-celebration"
 
 # A real project directory name from ~/.claude/projects/. The leading dash is
 # the actual directory name and stays in the record (ticket 0500 Invariants).
@@ -178,14 +176,12 @@ def step2_snippet() -> str:
     return hits[0]
 
 
-def render_snippet(project=DASH_PROJECT, enumerate_cmd=None) -> str:
+def render_snippet(project=DASH_PROJECT, enumerate_cmd=None, skill_md=SKILL_MD) -> str:
     """Substitute the snippet's placeholders the way a running agent does."""
     s = step2_snippet()
-    s = s.replace(
-        "~/.claude/skills/roar/enumerate-merges.py",
-        enumerate_cmd or f"{sys.executable} {ENUMERATE}",
-    )
-    s = s.replace("~/.claude/skills/roar/log-celebration", str(LOG_CELEBRATION))
+    s = s.replace('"<loaded-roar-SKILL.md>"', shlex.quote(str(skill_md)))
+    if enumerate_cmd:
+        s = s.replace('"$ROAR_DIR/enumerate-merges.py"', shlex.quote(enumerate_cmd))
     s = s.replace("<name>", project)
     s = s.replace("<branch>", "aggregate")
     s = s.replace("<n>", "0")
@@ -196,11 +192,11 @@ def render_snippet(project=DASH_PROJECT, enumerate_cmd=None) -> str:
     return s
 
 
-def run_step2(cwd, telemetry_dir, project=DASH_PROJECT, enumerate_cmd=None):
+def run_step2(cwd, telemetry_dir, project=DASH_PROJECT, enumerate_cmd=None, skill_md=SKILL_MD):
     env = dict(os.environ)
     env["CLAUDE_TELEMETRY_DIR"] = str(telemetry_dir)
     return run(
-        ["bash", "-c", render_snippet(project=project, enumerate_cmd=enumerate_cmd)],
+        ["bash", "-c", render_snippet(project=project, enumerate_cmd=enumerate_cmd, skill_md=skill_md)],
         cwd=str(cwd),
         check=False,
         env=env,
@@ -244,6 +240,17 @@ def test_step2_writes_one_record_per_merge_request(repo, tmp_path):
     assert {r["branch"] for r in got} == {"feat-1", "feat-2", "feat-3"}
     assert {r["project"] for r in got} == {DASH_PROJECT}, "project name mangled"
     assert [r for r in got if r["ticket"] == 500], "ticket attribution lost"
+
+
+def test_step2_follows_a_runtime_skill_symlink(repo, tmp_path):
+    """A neutral skills projection still finds both co-located helpers."""
+    projected = tmp_path / "profile with spaces" / ".agents" / "skills" / "roar"
+    projected.parent.mkdir(parents=True)
+    projected.symlink_to(ROAR_DIR, target_is_directory=True)
+    telemetry = tmp_path / "telemetry"
+    write_sentinel(repo, base_sha(repo))
+    res = run_step2(repo, telemetry, skill_md=projected / "SKILL.md")
+    assert len(records(telemetry)) == K_MERGES, f"{res.stdout}\n{res.stderr}"
 
 
 def test_step2_from_a_branch_worktree_still_writes_one_record_per_merge(

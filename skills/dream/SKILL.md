@@ -6,6 +6,8 @@ user-invocable: true
 
 # Dream — memory consolidation
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Consolidates and deduplicates memory for one project using mem0 classifier + Park reflection. Claude does all reasoning inline; scripts handle only file I/O and git.
 
 ## Invocation
@@ -23,7 +25,7 @@ Consolidates and deduplicates memory for one project using mem0 classifier + Par
 
 If `--rollback <hash>` is present, run:
 ```
-python3 ~/.claude/skills/dream/commit.py rollback <hash>
+python3 "$IDH_ROOT/skills/dream/commit.py" rollback <hash>
 ```
 Then stop.
 
@@ -32,7 +34,7 @@ Then stop.
 **1. Read the memory index.**
 
 ```bash
-python3 ~/.claude/skills/dream/read-index.py <project>
+python3 "$IDH_ROOT/skills/dream/read-index.py" <project>
 ```
 
 Output is JSON: `{project, memory_dir, entries[]}` where each entry has `filename`, `title`, `desc`, `content`, `path`.
@@ -101,7 +103,7 @@ Then drop the entry's provenance record for this project — otherwise the
 deleted entry keeps counting toward the promotion frequency gate (ticket 0241):
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py remove <entry_slug> <project>
+python3 "$IDH_ROOT/skills/dream/provenance.py" remove <entry_slug> <project>
 ```
 
 **6. Rewrite MEMORY.md.**
@@ -150,7 +152,7 @@ the pointer exists is their whole job.
 For each surviving entry (NOOP, ADD, UPDATE), record its presence in this project's consolidation:
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py record <entry_slug> <project>
+python3 "$IDH_ROOT/skills/dream/provenance.py" record <entry_slug> <project>
 ```
 
 `<entry_slug>` is the entry's filename without extension (e.g. `feedback_vim`). This tracks which projects have seen each entry, enabling the promotion pass.
@@ -167,7 +169,7 @@ supports — i.e. the consolidation would have classified its lesson NOOP or
 UPDATE were it still project-local — refresh its confirmation:
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py confirm <slug>
+python3 "$IDH_ROOT/skills/dream/provenance.py" confirm <slug>
 ```
 
 This resets only the decay clock; it does not re-add the project to the entry's
@@ -183,7 +185,7 @@ branch + PR). Before committing, ensure `~/.claude` is on a branch, not main:
 ```bash
 git -C ~/.claude rev-parse --abbrev-ref HEAD   # must NOT print "main"
 # if it does: git -C ~/.claude switch -c dream-consolidate-$(date +%F)
-python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
+python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
 ```
 
 Do **not** push yet. The run continues into the promotion pass, where step 12
@@ -207,7 +209,7 @@ Runs after consolidation. Evaluates whether any project-level entries have earne
 **9. List promotion candidates.**
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py candidates
+python3 "$IDH_ROOT/skills/dream/provenance.py" candidates
 ```
 
 Stdout is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed, machine-scoped records excluded) that are not yet promoted. Stderr reports `raw=` and `canonical=` candidate counts so an alias flood is visible without breaking JSON consumers. The alias table maps known machine paths to `machine:<host>`; these are hosts, not projects. If empty, skip to step 13.
@@ -232,7 +234,7 @@ For each candidate that passes all three gates:
 a. Write the context-independent reformulation to `~/.claude/memory/<slug>.md`.
 b. Mark promoted in provenance:
 ```bash
-python3 ~/.claude/skills/dream/provenance.py promote <slug>
+python3 "$IDH_ROOT/skills/dream/provenance.py" promote <slug>
 ```
 c. Overwrite the project-level entry with a tombstone:
 ```
@@ -253,7 +255,7 @@ here, the correct recovery is `git switch` back to the existing branch, not a
 new one.
 
 ```bash
-python3 ~/.claude/skills/dream/commit.py commit <project> <n_before> <n_after>
+python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
 ```
 
 ### Decay pass
@@ -263,7 +265,7 @@ Runs after the promotion pass. Flags stale harness-level entries for review.
 **13. Check for stale harness entries.**
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py decay
+python3 "$IDH_ROOT/skills/dream/provenance.py" decay
 ```
 
 Output is JSON: promoted entries whose `last_confirmed` date is >90 days ago. For each flagged entry, print:
@@ -304,7 +306,7 @@ fi
 # the PR (once the push lands) carries the consolidation for review.
 git -C ~/.claude switch main
 # Confirm the checkout is not stranded before exiting (must be silent, exit 0):
-~/.claude/scripts/check-primary-checkout.sh ~/.claude
+"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.claude
 ```
 
 If `--dry-run`: skip this step — no branch or commit was made, so the primary was
@@ -335,7 +337,7 @@ see. 308 of 949 live bodies were in that state on 2026-09-10 — everything
 written before v2 introduced the store. To repair:
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py backfill --root ~/.claude
+python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root ~/.claude
 ```
 
 It is idempotent, and it takes each entry's dates from git history rather than
@@ -348,7 +350,7 @@ counts need no new writes to the bodies — which is what an in-file access log
 would cost, on the very files parallel sessions read.
 
 ```bash
-python3 ~/.claude/skills/dream/provenance.py usage --root ~/.claude
+python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root ~/.claude
 ```
 
 It writes `access_count` and `last_accessed` per entry. Treat both as a

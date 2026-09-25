@@ -9,6 +9,8 @@ argument-hint:
 
 # Molt — repo housekeeping
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Run full repo housekeeping and act on every finding.
 
 ## Steps
@@ -62,14 +64,14 @@ Run full repo housekeeping and act on every finding.
    the fresh binary: a violation that survives the refresh is real and may be
    ticketed; one that does not was a stale-binary artifact and is dropped.
 
-1. **Git phase.** `Bash(~/.claude/scripts/housekeeping-git.sh)` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
+1. **Git phase.** Run `"$IDH_ROOT/scripts/housekeeping-git.sh"` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
 
 1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of
    dead trees, never an active session's. Remove any registered worktree on an
    upstream-gone branch — regardless of path or name, including ones outside
    `.claude/worktrees/` (intact dirs that `git worktree prune` misses):
    ```bash
-   ~/.claude/scripts/worktree-gc.sh
+   "$IDH_ROOT/scripts/worktree-gc.sh"
    ```
    The script enforces the active-session rails itself (ticket 0355 — on
    2026-07-13 a rail-less GC removed two live sessions' base worktrees, whose
@@ -103,7 +105,7 @@ Run full repo housekeeping and act on every finding.
    reboot; ticket 0854).
 
    ```bash
-   python3 ~/.claude/scripts/session_scratch.py --sweep
+   python3 "$IDH_ROOT/scripts/session_scratch.py" --sweep
    ```
 
    The script owns the liveness rails and never removes a directory whose
@@ -129,9 +131,9 @@ Run full repo housekeeping and act on every finding.
    ```bash
    if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
      if [ -f .zotero-reconcile.json ]; then
-       python3 ~/.claude/scripts/zotero-import.py reconcile . --apply --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero-import.py" reconcile . --apply --out /tmp/zotero-reconcile.json
      else
-       python3 ~/.claude/scripts/zotero-import.py reconcile . --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero-import.py" reconcile . --out /tmp/zotero-reconcile.json
      fi
    fi
    ```

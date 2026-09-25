@@ -8,6 +8,8 @@ argument-hint: "<note-file-path> [<refs-bib-path>] [--dry-run]"
 
 # Bibliography merge
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+
 Merge the ```bibtex fence from a `related-work-note`'s Bibliography
 section into a local `refs.bib`. Dedupe against existing entries,
 flag conflicts, append new ones, report everything.
@@ -50,7 +52,7 @@ If neither exists, abort with: `ERROR: no refs.bib found`.
 **Step 2 — run the deduplication script (one Bash call)**
 
 ```
-python3 ~/.claude/scripts/bib-merge.py <note-file> <refs.bib> [--dry-run]
+python3 "$IDH_ROOT/scripts/bib-merge.py" <note-file> <refs.bib> [--dry-run]
 ```
 
 The script:

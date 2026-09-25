@@ -172,6 +172,41 @@ def test_a_clean_profile_does_not_discover_perch(home):
     assert perch.status("pi", "perch")["installed"] is False
 
 
+def test_relocate_retargets_only_declared_old_checkout(home):
+    old = home / "old checkout"
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(old / "skills" / "perch", target_is_directory=True)
+    assert perch.status("codex", "perch")["projection"] == "dangling"
+    assert perch.main(["relocate", "skill", "perch", "--from", str(old),
+                       "--to", "codex", "--version", "99.0.0"]) == 0
+    assert target.resolve() == (REPO / "skills" / "perch").resolve()
+    assert perch.status("pi", "perch")["installed"] is True
+
+
+def test_relocate_refuses_unrelated_link_without_changing_it(home):
+    old = home / "old checkout"
+    other = home / "other checkout"
+    target = home / ".agents" / "skills" / "perch"
+    target.parent.mkdir(parents=True)
+    target.symlink_to(other / "skills" / "perch", target_is_directory=True)
+    assert perch.main(["relocate", "skill", "perch", "--from", str(old),
+                       "--to", "pi", "--version", "99.0.0"]) == 2
+    assert Path(os.readlink(target)) == other / "skills" / "perch"
+
+
+def test_relocate_preflights_all_skills_before_writing(home):
+    old = home / "old checkout"
+    other = home / "other checkout"
+    root = home / ".agents" / "skills"
+    root.mkdir(parents=True)
+    (root / "perch").symlink_to(old / "skills" / "perch", target_is_directory=True)
+    (root / "roar").symlink_to(other / "skills" / "roar", target_is_directory=True)
+    assert perch.main(["relocate", "skill", "perch", "roar", "--from", str(old),
+                       "--to", "codex", "--version", "99.0.0"]) == 2
+    assert Path(os.readlink(root / "perch")) == old / "skills" / "perch"
+
+
 @pytest.mark.parametrize("harness", ("codex", "pi"))
 def test_install_creates_the_neutral_home(home, harness):
     perch.install(harness, "perch", version="99.0.0")
