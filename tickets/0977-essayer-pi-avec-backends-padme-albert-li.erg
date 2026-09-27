@@ -1,0 +1,63 @@
+%erg 0.1
+Title: Essayer Pi avec backends padme, Albert, LIaaS et HumaNum
+Created: 2026-09-27
+Author: minh
+
+--- log ---
+2026-09-27T09:03Z minh created
+
+--- body ---
+
+## Context
+
+Pi 0.87.1 est installé sur doudou (`~/.local/bin/pi`). Sa configuration
+(`~/.pi/agent/`) ne connaît aujourd'hui que deux fournisseurs : `padme`
+(Qwen 3.8 27B servi en local, API `openai-completions`, joint par NetBird
+avec repli LAN) comme défaut, et `openrouter`. Albert, LIaaS et HumaNum ne
+sont ni déclarés dans `models.json` ni présents dans `~/.config/keys/`.
+
+L'enjeu : disposer de backends souverains (padme en local, Albert pour
+l'État, HumaNum et LIaaS pour l'ESR) utilisables par Pi, donc par les sièges
+externes du panel de relecture (0540) et par l'adaptateur Pi (0924). Ce
+ticket est un essai : il mesure, il ne câble rien dans le harnais.
+
+Points à établir, pas à supposer : l'URL et le type d'API de chaque service
+(OpenAI-compatible ou non), le mode d'obtention de l'accès (compte, jeton,
+réseau RENATER/VPN requis), les modèles offerts, leur fenêtre de contexte,
+et le support du tool-calling dont Pi a besoin pour agir.
+
+## Relevant files
+
+- `~/.pi/agent/models.json`, `~/.pi/agent/settings.json` — hors dépôt.
+- `~/.config/keys/` — un `.env` par service ajouté (jamais affiché).
+- `docs/2026-09-16-runtime-capability-survey.md` — ligne Pi à compléter.
+- `tickets/0937-a-keystore-diverging-between-machines-is.erg` — les
+  nouvelles clés doivent exister sur doudou et padme.
+
+## Actions
+
+1. Pour chacun des quatre backends, identifier endpoint, API, modèles et
+   procédure d'accès ; obtenir les accès manquants (étape auteur possible).
+2. Déclarer chaque fournisseur dans `models.json`, clé lue depuis
+   `~/.config/keys/`.
+3. Smoke test identique sur chaque backend : une invite simple, puis une
+   tâche avec appel d'outil (lecture d'un fichier du dépôt) en
+   `pi --print` ou équivalent headless.
+4. Consigner les résultats dans un court rapport sous `docs/`.
+
+## Test
+
+Positif témoin : le smoke test passe d'abord sur `padme`, déjà configuré,
+avant de conclure quoi que ce soit d'un échec ailleurs. Témoin négatif :
+une clé volontairement fausse doit produire une erreur visible, pas une
+réponse vide.
+
+## Exit criteria
+
+- [ ] Tableau par backend : endpoint, API, modèles, contexte, tool-calling
+      (oui / non / non testé), latence indicative, conditions d'accès.
+- [ ] Au moins padme passe le smoke test avec appel d'outil.
+- [ ] Chaque backend inaccessible porte la raison observée (pas d'accès,
+      API incompatible, réseau), pas un simple « échec ».
+- [ ] Aucune clé en clair dans le dépôt ni dans le rapport.
+- [ ] Recommandation : quels backends déclarer comme sièges dans 0540.
