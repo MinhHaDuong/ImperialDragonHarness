@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Pi reroute sans avertissement vers openrouter quand la resolution provider/modele echoue
+Created: 2026-09-28
+Author: claude
+
+--- log ---
+2026-09-28T06:15Z claude created from essai 0977
+
+--- body ---
+
+## Context
+
+Observé pendant l'essai 0977 (docs/2026-09-28-essai-pi-backends-souverains.md) :
+`pi --print --provider ilaas` avec un identifiant de modèle non résolvable a
+servi la requête via `openrouter/auto` — vérifié en `--mode json`
+(`"provider":"openrouter"`) — sans aucun avertissement. La même requête avec
+un identifiant résolvable échoue proprement et visiblement (`401`) sur
+llm.ilaas.fr. Une défaillance d'authentification est donc visible, mais une
+défaillance de résolution de modèle ne l'est pas : Pi bascule silencieusement
+vers un backend par défaut commercial.
+
+Pour le harnais, c'est une panne de garantie de souveraineté : une invite
+destinée à un backend souverain (padme, Albert, ILaaS) peut partir vers
+OpenRouter pendant que l'écran affiche une réponse normale. Toute utilisation
+de sièges souverains (ticket successeur de 0540) ou de l'adaptateur Pi (0924)
+hérite ce risque tant que le comportement n'est pas caractérisé et gardé.
+
+## Relevant files
+
+- `~/.pi/agent/models.json` — hors dépôt ; les identifiants de modèles
+  déclarés doivent rester résolvables (discipline de configuration)
+- `docs/2026-09-28-essai-pi-backends-souverains.md` — protocole de reproduction
+- `tickets/0923-*.erg`, `tickets/0924-*.erg` — pilotes d'adaptateurs runtimes
+  concernés en aval
+
+## Actions
+
+1. Caractériser précisément le déclencheur dans Pi 0.87.1 : résolution de
+   modèle, résolution de fournisseur, ou les deux ; vérifier si un
+   `--provider` explicite est une garde ou un simple indice. Reproduire avec
+   des identifiants cassés variés (barres obliques, inconnus, vides).
+2. Vérifier les versions ultérieures de Pi : le comportement peut être un
+   défaut corrigé en amont ; le dépôt earendil-works/pi est la référence.
+3. Décider la mitigation harnais : garder les identifiés résolvables par
+   construction (contrôle de cohérence de models.json au healthcheck),
+   vérifier `"provider"` en `--mode json` dans tout essai automatisé, et
+   documenter la règle. Un signalement amont est une action séparée,
+   possible, hors dépôt.
+
+## Test
+
+Positif : `pi --print --mode json --provider <souverain> --model <id résolvable>`
+montre le fournisseur demandé. Négatif : casser volontairement un identifiant
+et prouver que le contrôle choisi détecte le reroutage (ou que Pi refuse),
+au lieu de le laisser silencieux.
+
+## Exit criteria
+
+- [ ] Déclencheur caractérisé et version(s) concernées notées
+- [ ] Mitigation retenue, testée, documentée (contrôle ou règle)
+- [ ] Les pilotes 0923/0924 portent la référence croisée

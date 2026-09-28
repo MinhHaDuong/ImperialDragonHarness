@@ -2,11 +2,15 @@
 Title: Essayer Pi avec backends padme, Albert, LIaaS et HumaNum
 Created: 2026-09-27
 Author: minh
+Closed: Essai livre: padme smoke+tool PASS, albert/ilaas etablis (401/403 visibles, cles = etapes auteur), humanum sans API d'inference; rapport docs/2026-09-28-essai-pi-backends-souverains.md; hazard Pi file en 0979
 
 --- log ---
 2026-09-27T09:03Z minh created
 
 2026-09-28T05:52Z claude The cited panel consumer 0540 is closed as Stale (author, 2026-09-25); this ticket's motivation now rests on the Pi adapter (0924) and any successor panel ticket.
+2026-09-28T06:08Z claude Essai complete. padme: smoke 14s, tool-call 4s, probe.txt read exactly (positive control PASS). Albert and ILaaS: endpoints established (albert.api.etalab.gouv.fr/v1, llm.ilaas.fr/v1), OpenAI-compatible, wrong keys produce visible 401/403 (negative controls PASS), no real keys yet. HumaNum: no inference API, reserved GPU infrastructure, not a Pi backend today. Real name is ILaaS, not LIaaS.
+2026-09-28T06:08Z claude Providers albert and ilaas declared in ~/.pi/agent/models.json with placeholder keys and comments pointing to ~/.config/keys/*.env (author steps: Albert jeton via ProConnect, ILaaS cle via consortium); backup models.json.bak-20260928. Observed Pi hazard: unresolved model id silently reroutes to openrouter/auto — filed as 0979. Report: docs/2026-09-28-essai-pi-backends-souverains.md. Recommendation for seats (0540 successor): padme now; albert after key + proxy; ilaas after key; huma-num no.
+2026-09-28T06:08Z Minh Ha-Duong closed — Essai livre: padme smoke+tool PASS, albert/ilaas etablis (401/403 visibles, cles = etapes auteur), humanum sans API d'inference; rapport docs/2026-09-28-essai-pi-backends-souverains.md; hazard Pi file en 0979
 --- body ---
 
 ## Context
@@ -55,10 +59,10 @@ réponse vide.
 
 ## Exit criteria
 
-- [ ] Tableau par backend : endpoint, API, modèles, contexte, tool-calling
+- [x] Tableau par backend : endpoint, API, modèles, contexte, tool-calling
       (oui / non / non testé), latence indicative, conditions d'accès.
-- [ ] Au moins padme passe le smoke test avec appel d'outil.
-- [ ] Chaque backend inaccessible porte la raison observée (pas d'accès,
+- [x] Au moins padme passe le smoke test avec appel d'outil.
+- [x] Chaque backend inaccessible porte la raison observée (pas d'accès,
       API incompatible, réseau), pas un simple « échec ».
-- [ ] Aucune clé en clair dans le dépôt ni dans le rapport.
-- [ ] Recommandation : quels backends déclarer comme sièges dans 0540.
+- [x] Aucune clé en clair dans le dépôt ni dans le rapport.
+- [x] Recommandation : quels backends déclarer comme sièges dans 0540.
