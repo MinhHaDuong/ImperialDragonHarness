@@ -4,15 +4,19 @@ set -euo pipefail
 # name — including ones outside .claude/worktrees/, e.g. a stranded /tmp
 # worktree) when ALL safety rails pass: the tree is clean (no uncommitted
 # changes), its branch is upstream-gone (merged + remote-deleted), it is
-# not the worktree this script is invoked from, it is not locked, and no
-# live process has its cwd inside it. The last two rails exist because
-# "branch merged + tree clean" is the NORMAL state of a live session between
-# turns, not proof of abandonment: on 2026-07-13 this script removed two
-# worktrees that were live sessions' base cwds (their checked-out branches
-# had merged and deleteBranchOnMerge pruned the remotes), stranding those
-# sessions in unregistered husk dirs where git resolves to the primary
-# checkout (ticket 0355). A lock is an in-use marker (molt's active-session
-# guard reads it that way) — never unlock-and-remove. A live process cwd
+# not the worktree this script is invoked from, it is not locked (a lock
+# whose recorded pid is live — no pid recorded, or no live pid — stays
+# untouched; only a dead-pid harness lock is unlocked so the rails can
+# proceed), and no live process has its cwd inside it. The last two rails
+# exist because "branch merged + tree clean" is the NORMAL state of a live
+# session between turns, not proof of abandonment: on 2026-07-13 this
+# script removed two worktrees that were live sessions' base cwds (their
+# checked-out branches had merged and deleteBranchOnMerge pruned the
+# remotes), stranding those sessions in unregistered husk dirs where git
+# resolves to the primary checkout (ticket 0355). A lock is an in-use
+# marker (molt's active-session guard reads it that way) — never
+# unlock-and-remove blindly; a dead-pid lock is the one stale-marker
+# exception (2026-09-28, see the lock rail in flush()). A live process cwd
 # inside the tree is an active session: the claude CLI holds its cwd at the
 # session base for the session's life. `git worktree remove` only detaches
 # the worktree — branches and commits survive — and we never rm -rf, so a
@@ -45,8 +49,9 @@ done
 path=""
 branch=""
 locked_flag=0
+lock_reason=""
 
-reset() { path=""; branch=""; locked_flag=0; }
+reset() { path=""; branch=""; locked_flag=0; lock_reason=""; }
 
 report_wip() {
     local tree="$1" base="$2" status
@@ -97,13 +102,36 @@ flush() {
                 ;;
         esac
     done
-    # A locked worktree is in use by definition — the lock is the in-use
+    # A locked worktree is in use by default — the lock is the in-use
     # marker molt's active-session guard reads. Never unlock-and-remove
-    # (the pre-0355 behavior, which defeated the marker); skip + report.
+    # blindly (the pre-0355 behavior, which defeated the marker). But the
+    # harness's own locks carry the owning session's pid in the reason
+    # ("claude <name> (pid <N> ...)"), and a lock whose pid is dead is a
+    # stale marker, not an active session: unlock it so the remaining rails
+    # decide (2026-09-28: a locked tree under a pid dead for days held the
+    # last on-disk copy of purged T2 memory; the lock blocked every GC
+    # pass). A lock with no recorded pid is an opaque in-use marker: skip.
     if [ "$locked_flag" -eq 1 ]; then
-        echo "worktree-gc: skip $base (locked — treated as in use)"
-        skipped_locked=$((skipped_locked + 1))
-        reset; return
+        local lock_pid=""
+        if [[ "$lock_reason" =~ \(pid\ ([0-9]+) ]]; then
+            lock_pid="${BASH_REMATCH[1]}"
+        fi
+        if [ -z "$lock_pid" ]; then
+            echo "worktree-gc: skip $base (locked — treated as in use)"
+            skipped_locked=$((skipped_locked + 1))
+            reset; return
+        fi
+        if ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
+            echo "worktree-gc: skip $base (locked, pid $lock_pid live — active session)"
+            skipped_locked=$((skipped_locked + 1))
+            reset; return
+        fi
+        if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
+            echo "worktree-gc: skip $base (lock pid $lock_pid dead, unlock failed)" >&2
+            skipped_locked=$((skipped_locked + 1))
+            reset; return
+        fi
+        echo "worktree-gc: unlocked $base (lock pid $lock_pid dead — stale marker)"
     fi
     # Only a gone, inactive, unlocked tree reaches this point. The review
     # commands own these two scratch paths; clear them before the WIP check,
@@ -151,7 +179,14 @@ while IFS= read -r line; do
                 *) branch="$rest" ;;
             esac
             ;;
-        "locked"|"locked "*) locked_flag=1 ;;
+        "locked")
+            locked_flag=1
+            lock_reason=""
+            ;;
+        "locked "*)
+            locked_flag=1
+            lock_reason="${line#locked }"
+            ;;
         "") flush ;;
     esac
 done < <(git -C "$repo" worktree list --porcelain)

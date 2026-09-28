@@ -17,11 +17,19 @@ THRESHOLD_HOURS = 12.0
 # recomputes its own list anyway.
 SCRATCH_ORPHAN_SAMPLE = 20
 
+# Budgets for run(): git/erg porcelain probes are subsecond, but a test suite
+# is not (check-fast: ~805 tests, ~2 min on this machine). The 30 s default
+# fit the probes and silently timed out every --tests run, reporting
+# "fail"/"timeout" for suites that pass (2026-09-28 healthcheck); test runs
+# pass their own budget.
+PROBE_TIMEOUT = 30
+TEST_TIMEOUT = 300
 
-def run(args, cwd):
+
+def run(args, cwd, timeout=PROBE_TIMEOUT):
     try:
         return subprocess.run(
-            args, capture_output=True, text=True, check=False, cwd=cwd, timeout=30
+            args, capture_output=True, text=True, check=False, cwd=cwd, timeout=timeout
         )
     except subprocess.TimeoutExpired:
         import sys
@@ -259,7 +267,7 @@ def test_state(project):
                 "status": "skip",
                 "detail": "no test target in Makefile",
             }
-        r = run(["make", target], project)
+        r = run(["make", target], project, timeout=TEST_TIMEOUT)
         return {
             "runner": "make",
             "status": "pass" if r.returncode == 0 else "fail",
@@ -272,7 +280,7 @@ def test_state(project):
 
     if (project / "pyproject.toml").exists() or (project / "setup.py").exists():
         try:
-            r = run(["pytest", "--tb=no", "-q"], project)
+            r = run(["pytest", "--tb=no", "-q"], project, timeout=TEST_TIMEOUT)
             last_line = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""
             return {
                 "runner": "pytest",
@@ -284,7 +292,7 @@ def test_state(project):
 
     if (project / "package.json").exists():
         try:
-            r = run(["npm", "test"], project)
+            r = run(["npm", "test"], project, timeout=TEST_TIMEOUT)
             return {
                 "runner": "npm",
                 "status": "pass" if r.returncode == 0 else "fail",

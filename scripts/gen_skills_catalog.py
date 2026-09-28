@@ -24,6 +24,13 @@ def catalog_lines(root: str = ".") -> list[str]:
     instead of forking python to re-split printed stdout."""
     catalog = []
     for skill_file in sorted((Path(root) / "skills").glob("*/SKILL.md")):
+        # Private skills are symlinked into skills/ (gitignored): the runtime
+        # discovers them, but repo files carry NO pointers to them — the
+        # published catalog included their descriptions, which carry T2
+        # topology (personal cloud endpoints, machine names), until this
+        # skip (2026-09-28). Anything symlinked here is private by design.
+        if skill_file.parent.is_symlink():
+            continue
         try:
             meta = skill_frontmatter.load(skill_file)
         except skill_frontmatter.FrontmatterError as exc:
