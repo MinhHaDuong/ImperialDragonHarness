@@ -112,3 +112,44 @@ projections. For the planned `~/.claude` → `~/.idh` move, the old Claude Code
 directories will disappear with the checkout, while the neutral links remain
 and need retargeting. No skill depends on `bin/idh` being on `PATH` at runtime:
 helper commands resolve from the loaded skill file.
+
+## The loaded-skill path seam (ticket 0803)
+
+A script-backed skill needs one fact the body cannot know at authoring time:
+where the harness is installed. The seam is the smallest contract that
+resolves it, and it adds **no configuration field at all** — the runtime
+already supplies the missing fact.
+
+The contract, measured 2026-09-28 on all three pilot runtimes:
+
+1. The runtime supplies the **absolute projected path** of the SKILL.md it
+   loaded — Claude Code in its skill injection, Pi in the
+   `<available_skills><location>` block of its preamble, Codex in its
+   context skill list (Codex names the path but not the body, so the model
+   reads the file itself: one extra tool call, same fact).
+2. The body substitutes that path and derives the installation root with
+   `cd -P` — through the projected symlink, two levels up:
+
+   ```bash
+   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+   ```
+
+3. Bundled scripts live under `$IDH_ROOT/scripts/` and are read in place.
+   No build step, no second copy, no `IDH_HOME` — zero of the three runtimes
+   needed it, so per the 0803 gate it does not exist.
+
+`healthcheck` is the proof slice: `bin/idh install skill healthcheck` makes
+it discoverable everywhere, and its `project-state.py` probe runs through
+Claude Code, Codex and Pi against the live repository. The deterministic
+half is `tests/test_skill_seam.py`: the derivation is pinned against
+space-containing roots, quote-containing roots, nested symlinks and
+dangling projections (empty root plus stderr, never a plausible wrong
+root), and a ratchet holds every seam-bearing body to the same
+runtime-supplied-path derivation — one line for most skills, two for
+`roar`, which needs its own skill directory first.
+
+Adversarial-root findings worth knowing before you "simplify" the line:
+the idiom's nested quoting survives a double quote in the installation
+root (observed, pinned), and a dangling projection fails visibly at the
+first downstream use rather than resolving to a wrong root. Both behaviors
+are tests, not comments.

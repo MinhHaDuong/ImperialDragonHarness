@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "canonical_sources": {
-    "perch": "skills/perch/SKILL.md"
+    "perch": "skills/perch/SKILL.md",
+    "healthcheck": "skills/healthcheck/SKILL.md"
   },
   "versions": [
     {
@@ -314,6 +315,71 @@
       "evidence_kind": "manual-smoke",
       "test": "MANUAL, author's own account only. After `bin/idh install skill perch --to pi`, run /skill:perch in a Pi session with one finished and one open item. Record the prompt, the CLI version, the date, the headings observed, and `git status --short` before and after.",
       "result": "pending"
+    },
+    {
+      "id": "healthcheck-seam-derives-root-from-runtime-supplied-path",
+      "slice": "healthcheck",
+      "harness": "all",
+      "harness_version": "claude 2.1.283, codex 0.157.0, pi 0.87.1",
+      "assertion": "The skill body derives the installation root from the loaded-skill path the runtime supplies (cd -P through the projected symlink, two levels up); no IDH_HOME, no config field, no hard-coded root.",
+      "source_concept": "where the harness is installed and how a skill finds a bundled script",
+      "native_expression": "IDH_ROOT=\"$(cd -P \"$(dirname \"<loaded-SKILL.md>\")/../..\" && pwd -P)\"; scripts under $IDH_ROOT/scripts/",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_skill_seam.py::test_every_seam_body_derives_from_the_runtime_supplied_path",
+      "result": "pass"
+    },
+    {
+      "id": "healthcheck-seam-survives-adversarial-roots",
+      "slice": "healthcheck",
+      "harness": "all",
+      "harness_version": "bash (runtime-independent)",
+      "assertion": "The derivation resolves a space-containing root, a quote-containing root and nested symlinks; a dangling projection fails with an empty root and a stderr message, never a plausible wrong root.",
+      "source_concept": "installation root shapes the seam must tolerate",
+      "native_expression": "the cd -P idiom itself",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_skill_seam.py::test_resolves_a_space_containing_root",
+      "result": "pass"
+    },
+    {
+      "id": "healthcheck-each-runtime-supplies-the-loaded-path",
+      "slice": "healthcheck",
+      "harness": "all",
+      "harness_version": "claude 2.1.283, codex 0.157.0, pi 0.87.1",
+      "assertion": "Each runtime natively supplies the loaded skill's projected path: Claude Code in its skill injection, Pi in the <available_skills><location> block, Codex in its context skill list (the model reads the body itself, one extra tool call).",
+      "source_concept": "the runtime tells the model where the loaded skill lives",
+      "native_expression": "claude: skill injection; pi: <location> in <available_skills>; codex: context skill list with file paths",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "MANUAL. Clean HOME per runtime (temp dir), skills root symlinked to a relocated harness tree, a probe skill carrying the seam: pi --print answers PROBE-OK root=<tree>; codex exec answers the same; claude --print answers the same. Red control: a body hardcoding a root that does not exist answers RED-CONFIRMED with the observed error. Executed 2026-09-28; transcript fields in ticket 0803 log.",
+      "result": "pending"
+    },
+    {
+      "id": "healthcheck-probe-runs-through-all-three-runtimes",
+      "slice": "healthcheck",
+      "harness": "all",
+      "harness_version": "claude 2.1.283, codex 0.158.0, pi 0.87.1",
+      "assertion": "The real project-state.py is located and executed through the seam by all three runtimes on the live repository, returning the same fields (git.branch main, git.clean true, tests.status skip without --tests).",
+      "source_concept": "one canonical bundled probe, three runtimes",
+      "native_expression": "python3 \"$IDH_ROOT/scripts/project-state.py\" \"$(git rev-parse --show-toplevel)\"",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "MANUAL. bin/idh install skill healthcheck, then the data-collection step through each runtime: pi --print (padme), codex exec, claude --print, all reporting git.branch/git.clean/tests.status from the probe JSON. Executed 2026-09-28; values in ticket 0803 log.",
+      "result": "pending"
+    },
+    {
+      "id": "healthcheck-slice-adds-no-config-field",
+      "slice": "healthcheck",
+      "harness": "all",
+      "harness_version": "n/a",
+      "assertion": "The slice introduces zero configuration values: no versioned default, no user/machine value, no secret, no ephemeral state. Ownership/precedence documentation is therefore vacuously satisfied; nothing was relocated.",
+      "source_concept": "config classification for values the slice introduces or consumes",
+      "native_expression": "none - the contract is the runtime-supplied loaded path plus the cd -P idiom already in the body",
+      "disposition": "shared",
+      "evidence_kind": "documentation",
+      "test": "ticket 0803 action 4, recorded in the ticket log 2026-09-28",
+      "result": "pass"
     }
   ]
 }
