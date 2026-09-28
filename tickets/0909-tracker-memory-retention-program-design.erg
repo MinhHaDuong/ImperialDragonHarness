@@ -17,6 +17,7 @@ Blocked-by: 0916
 2026-09-16T15:55Z claude note author settled where the canonical roots live: the harness project's own memory and the collective memory both stay central in ~/.idh, separated from each other. Recorded in the body with its consequence, that step 3 alone does not close the disjoint-roots row and the relocation out of ~/.claude is the remaining half
 2026-09-16T16:05Z claude note ran the three relocation probes with positive controls: the runtime follows a symlinked rules/ and a symlinked CLAUDE.md, both confirmed. The memory probe's own control did not fire, so it is recorded as an invalid probe rather than a negative, with the experiment that would settle it named
 2026-09-16T16:21Z claude note round 1 review: section sign restored to the corpus spelling, and the blast-radius figure reconciled -- the named directories account for 94 of about 104, the rest sit in no single category. Siblings 0920 and 0923 still assert the store cannot leave ~/.claude, which this decision reverses; they need a cross-reference before either is picked up
+2026-09-28T05:49Z claude The relocation out of ~/.claude — the remaining half of the disjoint-roots row — is now ticketed as 0978, child of this tracker.
 --- body ---
 
 ## Context

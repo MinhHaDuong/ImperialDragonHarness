@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Make IDH harness-agnostic through core, config and adapters
+Title: Make IDH runtime-agnostic through core, config and adapters
 Created: 2026-08-28
 Author: Codex
 Blocked-by: 0810
@@ -12,6 +12,7 @@ Blocked-by: 0810
 2026-08-28T13:57Z Codex reconciled reviews by reducing ten speculative children to four evidence-producing vertical slices and removing generator-first work
 2026-08-28T14:22Z panel approved revised family 5/5 after dependency, guard, evidence, versioning and deployment corrections
 
+2026-09-28T05:49Z claude Author directives recorded in the amendment: Mistral Vibe (probed 2.25.8, ~/.vibe) becomes the fourth target runtime; 'harness' now names IDH only and hosts are 'runtimes'; pilot slices 0803/0809 stay three-runtime, 0810's gate covers four.
 --- body ---
 ## Context
 
@@ -21,11 +22,12 @@ slash-command references, environment variables and absolute paths all assume th
 host. The Five Claws, ticket discipline, safety invariants and verification gates are
 more general than that implementation.
 
-This tracker tests a smaller architecture: a harness-neutral **core**, explicit user and
-machine **config**, and thin **adapters** for the Claude Code CLI, Codex CLI, and the Pi
-coding-agent CLI distributed at `pi.dev` (the `~/.pi/agent` product). The three adapters are
-early targets so that the core cannot merely encode assumptions shared by two similar
-harnesses. Claude Code remains the live reference installation while the experiment runs.
+This tracker tests a smaller architecture: a runtime-neutral **core**, explicit user and
+machine **config**, and thin **adapters** for the Claude Code CLI, Codex CLI, the Pi
+coding-agent CLI distributed at `pi.dev` (the `~/.pi/agent` product), and the Mistral Vibe
+CLI (config home `~/.vibe`; see the 2026-09-28 amendment below). The four adapters are
+early targets so that the core cannot merely encode assumptions shared by similar
+runtimes. Claude Code remains the live reference installation while the experiment runs.
 
 This is an evidence-gathering programme, not a request for a generator, a workflow DSL or
 a bulk rewrite of 37 skills. Each child ports one observable vertical slice by hand. Only
@@ -54,6 +56,33 @@ schema or adapter generator in the ratified first phase.
 
 `0800` is blocked by the final integration child so `erg ready` never offers the tracker
 itself as executable work.
+
+## Amendment, 2026-09-28
+
+Two author directives recorded after the round-2 ratification:
+
+**Fourth target runtime: Mistral Vibe.** The author now uses the Mistral Vibe CLI
+(probed 2.25.8; config home `~/.vibe`, user-level skills roots `~/.vibe/skills` and
+`~/.agents/skills`). The neutral `~/.agents/skills` root that `0802` established for
+Codex and Pi already serves Vibe — the pilot's `perch` skill is visible there — so the
+skills-plane finding extends to the fourth target without new work. Vibe also natively
+consumes the Agent Plugins 1.0 format, skills and MCP servers per the v1 scope plus
+Vibe-specific extensions (`ai.mistral.vibe`) that cover hooks, knowledge and agents.
+That is a new fact against `0810`'s recorded landscape: one of the four targets reads
+the open standard directly, and its extension demonstrates one vendor's answer to the
+hooks question the standard defers.
+
+Scope consequence: the ratified pilot slices stay three-runtime experiments as
+designed — `0803` and `0809` are not expanded retroactively. Vibe enters at `0810`'s
+evidence gate: its inventory, probes and go/no-go must cover four runtimes, and any
+Vibe-specific porting slice follows that decision rather than preceding it.
+
+**Nomenclature: runtime, not harness.** "Harness" names IDH itself; the host CLIs —
+Claude Code, Codex, Pi, Vibe — are **runtimes**. The title and context above use the
+amended vocabulary; the recorded reviews and the 2026-08-28 author decision keep their
+original wording as history, superseded prospectively by this amendment. The memory
+cluster already speaks this dialect (`0923` pilots one runtime adapter, `0924` ports
+the remaining target runtimes), so the two programmes now share one word for the host.
 
 ## Review protocol
 

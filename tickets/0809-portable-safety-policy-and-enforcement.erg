@@ -9,6 +9,7 @@ Author: Codex
 
 2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
 2026-09-24T16:16Z Codex note Rebased after 0976 removed guard-commit-on-main.sh; the surviving guard-destructive-bash.sh dirty-reset case is the enforcing portability pilot.
+2026-09-28T05:49Z claude 0800 amendment adds Vibe as fourth target; this slice stays three-runtime as ratified, Vibe is covered at 0810's gate.
 --- body ---
 ## Context
 
