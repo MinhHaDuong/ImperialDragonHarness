@@ -70,12 +70,12 @@ fi
 # --- personal-data-guard ---
 # Tier-2 personal data (access topology, credential inventories) must not be
 # committed to this public repo — it lives in ~/.config/harness/private/.
-# See CLAUDE.md "Personal data tiers".
+# See docs/2026-09-28-personal-data-tiers.md.
 if [ "${ALLOW_PERSONAL_DATA:-}" != "1" ]; then
     staged=$(git diff --cached --diff-filter=d --name-only 2>/dev/null || true)
     if [ -n "$staged" ]; then
         if ! ./scripts/check-personal-data.sh $staged; then
-            echo "ERROR: tier-2 personal data staged — move it to ~/.config/harness/private/ (see CLAUDE.md 'Personal data tiers')." >&2
+            echo "ERROR: tier-2 personal data staged — move it to ~/.config/harness/private/ (see docs/2026-09-28-personal-data-tiers.md)." >&2
             echo "Deliberate cases only: ALLOW_PERSONAL_DATA=1 git commit ..." >&2
             exit 1
         fi
