@@ -73,3 +73,40 @@ ticket successeur éventuel :
 Les étapes auteur restantes : jeton Albert via ProConnect, clé ILaaS via
 l'établissement, puis remplacer les clés factices dans `models.json` et
 énumérer les modèles via `GET /v1/models`.
+
+## Addendum 2026-09-28 : activation d'Albert
+
+Le jeton Albert est arrivé (ProConnect, `~/.config/keys/albert.env`). Mesures
+d'activation, mêmes protocoles que l'essai :
+
+- **Catalogue** : `GET /v1/models` avec la clé révèle 7 modèles de génération
+  de texte + 1 OCR, tous open-weights servis par la DINUM. Ids vérifiés (champ
+  `id`, pas les alias) : `gpt-oss-120b` (ctx 131072),
+  `qwen3-coder-30b-a3b-instruct` (ctx 262144),
+  `mistral-small-3-2-24b-instruct-2506` (ctx 128000, texte+image),
+  `deepseek-v4-flash-0731` (ctx 131072), `gemma-4-31b-it` (ctx 262144,
+  texte+image), `ministral-3-8b-instruct-2512` (ctx 262144),
+  `lightonocr-2-1b` (OCR). Pas de « albert-large » : l'attendante d'origine
+  était fausse, d'où la règle « vérifier via /v1/models ».
+- **Déclaration** : 4 modèles déclarés dans `~/.pi/agent/models.json`
+  (gpt-oss-120b, qwen3-coder, mistral-small-3.2, deepseek-v4-flash), clé
+  collée depuis `~/.config/keys/albert.env`, sauvegarde
+  `models.json.bak-20260928-albert`.
+- **Smoke simple** (gpt-oss-120b) : `17*23` → `391`, **1 s**, fournisseur
+  `albert` vérifié en `--mode json`.
+- **Tool-calling, par modèle** :
+  - `gpt-oss-120b` : **PASS** — appel `read` propre, toolResult exact
+    (`ALBERT-ACTIVATION-0977`), réponse finale exacte, 2 s.
+  - `qwen3-coder-30b-a3b-instruct` : **FAIL** — le modèle émet l'appel
+    d'outil comme texte littéral (`<function=read>...`), aucun outil ne
+    s'exécute. C'est exactement la panne que la doc officielle adresse avec
+    le proxy llm-proxy ; le caveat est donc **par modèle**, pas global.
+- **Conséquence sièges** : Albert est un siège souverain pleinement viable
+  dès maintenant via `gpt-oss-120b` (le plus grand modèle général du
+  catalogue). Pour les modèles qui émettent leurs appels en texte
+  (qwen3-coder), passer par llm-proxy ou ne pas les déclarer sièges.
+- **Incident à consigner** : le fichier de clé utilise un nom à traits
+  d'union (`ALBERT-API-KEY`), non sourçable en shell ; une tentative de
+  `source` a échoué et **a affiché la clé dans le journal d'une session
+  d'agent**. Rotation recommandée après usage, et renommer la variable en
+  `ALBERT_API_KEY`.
