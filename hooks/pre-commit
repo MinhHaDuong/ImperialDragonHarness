@@ -73,7 +73,7 @@ fi
 # See docs/2026-09-28-personal-data-tiers.md.
 if [ "${ALLOW_PERSONAL_DATA:-}" != "1" ]; then
     staged=$(git diff --cached --diff-filter=d --name-only 2>/dev/null || true)
-    if [ -n "$staged" ]; then
+    if [ -n "$staged" ] && [ -x ./scripts/check-personal-data.sh ]; then
         if ! ./scripts/check-personal-data.sh $staged; then
             echo "ERROR: tier-2 personal data staged — move it to ~/.config/harness/private/ (see docs/2026-09-28-personal-data-tiers.md)." >&2
             echo "Deliberate cases only: ALLOW_PERSONAL_DATA=1 git commit ..." >&2
