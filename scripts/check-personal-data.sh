@@ -26,11 +26,22 @@ PATTERN="${HOSTS_PAT}|${BARE_HOSTS_PAT}|${ALIAS_PAT}|${KEYRING_PAT}|${NET_PAT}|$
 fail=0
 for target in "${TARGETS[@]}"; do
     [ -e "$target" ] || { echo "WARN: $target not found" >&2; continue; }
+    # Explicit files are always scanned; directories inside a git work tree
+    # are scanned over TRACKED files only (git-ignored local session
+    # transcripts and caches under projects/ are not committable data).
+    if [ -f "$target" ]; then
+        matches=$(grep -InE "$PATTERN" "$target" 2>/dev/null || true)
+    elif git rev-parse --is-inside-work-tree >/dev/null 2>&1 && \
+         [ -n "$(git ls-files -- "$target" 2>/dev/null | head -1)" ]; then
+        matches=$(git ls-files -z -- "$target" | xargs -0 -r grep -InE "$PATTERN" 2>/dev/null || true)
+    else
+        matches=$(grep -rnIE "$PATTERN" "$target" 2>/dev/null || true)
+    fi
     while IFS= read -r match; do
         [ -z "$match" ] && continue
         echo "FAIL [tier-2 personal data]: $match"
         fail=1
-    done < <(grep -rnIE "$PATTERN" "$target" 2>/dev/null || true)
+    done <<< "$matches"
 done
 
 if [ "$fail" -eq 0 ]; then
