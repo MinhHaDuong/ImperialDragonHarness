@@ -1,6 +1,6 @@
 ---
 name: biblio-saturation
-description: "Saturation bibliographic search by independent web-search subagents — adjudicate factual register lines and adversarially stress a novelty claim until every search angle runs dry. Fleets of finders on disjoint angles (fields, languages, gray literature, citation graph, lateral vocabularies), adversarial judging of every candidate, completeness critic before declaring saturation."
+description: "Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: 'register file path + novelty claim location, e.g. "conception/registre-verification-p1.md, claim = ligne 1"'
