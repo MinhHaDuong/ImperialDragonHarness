@@ -2,7 +2,6 @@
 Title: Evaluate the three-slice pilot and prove safe deployment
 Created: 2026-08-28
 Author: Codex
-Blocked-by: 0809
 
 --- log ---
 2026-08-28T12:57Z Codex created final integration child of 0800
@@ -14,6 +13,7 @@ Blocked-by: 0809
 2026-09-16T16:22Z claude note round 1 review: the layer scorecard now reconciles against its own enumeration -- MCP config was being scored as one of the five without being one of them -- the day-one client list is hedged to the source that actually carries it, and the section matches the document's em-dash convention
 2026-09-28T05:49Z claude 0800 amendment adds Mistral Vibe as a fourth target runtime: the inventory, probes and go/no-go (Actions 1-8) now cover four runtimes. New fact for Action 8: Vibe 2.25.8 natively consumes Agent Plugins 1.0 (skills, MCP) plus its ai.mistral.vibe extensions covering hooks, knowledge and agents.
 2026-09-28T07:47Z Minh Ha-Duong note blocker 0803 closed — Blocked-by removed.
+2026-09-28T08:14Z Minh Ha-Duong note blocker 0809 closed — Blocked-by removed.
 --- body ---
 ## Context
 
