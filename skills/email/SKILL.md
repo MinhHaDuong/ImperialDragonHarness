@@ -8,6 +8,14 @@ user-invocable: true
 
 There is no mail connector. All mail lives on disk in maildir-style layouts and is read with `bash` + `read_file`.
 
+## Accounts and mail flow
+
+- **Professional**: minh.ha-duong@cnrs.fr — Evolution IMAP `imap.cnrs.fr:993` (login minh.ha-duong@ods.services); sends via `smtp.partage.renater.fr:587`. This is the French-UI account in the Evolution cache.
+- **Personal**: minh.haduong@gmail.com — received by Gmail, which redirects everything to the ouvaton server (Received chain shows google → ouvaton.org, `Delivered-To: minh@haduong.com`).
+- **Ouvaton mailbox**: minh@haduong.com — Evolution IMAP `imap.ouvaton.coop:993`; msmtp sends as this address via `smtp.ouvaton.coop:465`.
+- Legacy accounts (ha-duong.minh@orange.fr, haduong@centre-cired.fr) exist in Evolution sources but are stale in the cache.
+- **Flow**: mail is archived locally and deleted from the CNRS and ouvaton servers — the local archives are the primary history for those accounts. Google servers keep a copy of all personal mail.
+
 ## Locations
 
 - **Live mail** — Evolution cache, sharded maildirs:
@@ -25,7 +33,7 @@ There is no mail connector. All mail lives on disk in maildir-style layouts and 
 - Extract overview fields: `grep -E '^(Date|From|To|Cc|Subject):'`.
 - Vietnamese subjects are often MIME base64 (`=?utf-8?B?...?=`); decode with `base64 -d`.
 - Body may be HTML-only; strip tags if the user wants plain text.
-- Newst-first listing by file mtime: `find <dir> -type f -printf '%T@ %p\n' | sort -rn`.
+- Newest-first listing by file mtime: `find <dir> -type f -printf '%T@ %p\n' | sort -rn`.
 
 ## Sending
 
