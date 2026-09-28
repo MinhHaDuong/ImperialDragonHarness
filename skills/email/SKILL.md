@@ -54,5 +54,5 @@ CLI transport is `msmtp`, configured in `~/.msmtprc`:
 - Local mail stores are read-only for the agent: never move, delete, or modify files under `~/.mail/` or the Evolution cache. Sending goes through msmtp only, never by writing into mail stores.
 - When the user says "latest mail" without a folder, read the live INBOX of every active account tree, not just one.
 - The cache shows only what Evolution has already fetched; there is no way for the agent to trigger a sync. If Evolution has not run recently, say the local view may be stale instead of asserting a mailbox is empty.
-- The Google copy of personal mail is NOT accessible from this machine. "Absent locally" is not "does not exist" for personal mail.
+- The Google copy of personal mail is the fallback when the local archives miss a message. If a personal mail is absent locally, offer to search the Gmail archives; if the session has no Gmail connector or API access, say exactly that — "I cannot reach Gmail from here" — instead of reporting "not found".
 - Mail content is confidential: never pass it to external services (web search, third-party model APIs, paste sites) unless the user explicitly asks for that specific content to go there.
