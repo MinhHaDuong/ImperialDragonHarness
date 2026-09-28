@@ -7,7 +7,7 @@ metadata:
   originSessionId: 05268d5e-7c10-4f67-83a9-b1e407896bd3
 ---
 
-`~/CNRS/html` — BibLaTeX→HTML generator for the homepage publication list (relates to AEDIST ticket 0670-rehome-publications). **Git root is `src/`**, not the parent; `~/CNRS/html/` itself is the untracked FTP deploy tree (assets `files/`, `images/` ~1.5GB, the parent Makefile, and the generated `index.html` at the deploy root all untracked — 0012's pivot would bring them under git). **No git remote — local, direct-to-master** (ratified: only the 0012 layout pivot uses a branch). Deploy: `make sync` (FTP via `~/.netrc`, ouvaton.coop).
+`~/CNRS/html` — BibLaTeX→HTML generator for the homepage publication list (relates to AEDIST ticket 0670-rehome-publications). **Git root is `src/`**, not the parent; `~/CNRS/html/` itself is the untracked FTP deploy tree (assets `files/`, `images/` ~1.5GB, the parent Makefile, and the generated `index.html` at the deploy root all untracked — 0012's pivot would bring them under git). **No git remote — local, direct-to-master** (ratified: only the 0012 layout pivot uses a branch). Deploy: `make sync` (FTP; credentials are local, tier-2).
 
 Run tests with `rtk proxy python3 -m pytest` from `src/` (a bare `pytest` or `python3 -m pytest` is mangled by the rtk hook; the pipx `pytest` has a broken interpreter). Tooling installed: tidy 5.8 (HTML5-aware), linkchecker, qrencode.
 

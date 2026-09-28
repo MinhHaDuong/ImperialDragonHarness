@@ -13,10 +13,10 @@ Dossier de paiement des vacations « Introduction aux Enjeux Environnementaux »
 
 Services déclarés : 2 groupes TD × 8 séances × 2 h = 32 h TD, du 22/01 au 07/05/2026, + correction de 45 copies d'examen mutualisé.
 
-**Cumul** : la loi a changé — le CNRS ne délivre plus d'autorisation de cumul pour l'enseignement (art. L. 411-3-1 code de la recherche) : simple déclaration. Déclaration #588579 déposée sur la plateforme CNRS le 2026-06-04 (48 HeTD × 43,49 € = 2 087,52 € brut, du 22/01 au 07/05/2026). Capture en ruban : `pièces/8 - Déclaration de cumul CNRS.pdf`. L'Annexe 1 papier est probablement caduque.
+**Cumul** : la loi a changé — le CNRS ne délivre plus d'autorisation de cumul pour l'enseignement (art. L. 411-3-1 code de la recherche) : simple déclaration. Déclaration déposée sur la plateforme CNRS le 2026-06-04 (montants : dossier local, tier-2). Capture en ruban : `pièces/8 - Déclaration de cumul CNRS.pdf`. L'Annexe 1 papier est probablement caduque.
 
 **Finalisation (2026-06-04 soir)** : Annexe 1 alignée à 48 h TD ; note « Services assurés » (2×16 h TD + 45 copies) en petit italique ; le PDF du formulaire ne contient que les 2 premières pages (le docx garde tout). Lettre explicative du régime déclaratif (`Lettre régime déclaratif cumul.pdf/.docx`) signée, renvoyant à la pièce 8.
 
 **En attente** : réponse de R. Chevalier (volume 48 h et acceptation du régime déclaratif) ; envoi du dossier complet.
 
-Sources des données : bulletin de paie 2025-12 (`~/perso/comptes/Retraite/Bulletins_de_paye_CNRS/`), CNI et carte vitale (`~/perso/facsimili/État civil Goloa/`), signature `~/perso/facsimili/Signature bleue.jpg`.
+Sources des données (chemins locaux vers pièces d'état civil et de paie) : tier-2, dans `~/.config/harness/private/`.

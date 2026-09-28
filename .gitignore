@@ -13,6 +13,12 @@
 !.github/**
 !skills/
 !skills/**
+
+# Private skills live in the local overlay (~/.config/harness/private/),
+# never in this public repo — ignore their symlinks.
+skills/email
+skills/infrastructure
+skills/directory
 !scripts/
 !scripts/**
 !bin/

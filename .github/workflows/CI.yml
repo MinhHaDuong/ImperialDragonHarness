@@ -118,6 +118,39 @@ jobs:
           fi
           echo "OK: guard ignores substring matches"
 
+  personal-data-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: No tier-2 personal data (access topology) in the tree
+        run: bash scripts/check-personal-data.sh
+      - name: Self-test — guard must catch a deliberate violation
+        run: |
+          tmp=$(mktemp -d)
+          v="ods"
+          echo "Login: minh.ha-duong@${v}.services" > "$tmp/x.md"
+          if bash scripts/check-personal-data.sh "$tmp/x.md"; then
+            echo "FAIL: personal-data-guard did not catch the deliberate violation"
+            exit 1
+          fi
+          echo "OK: deliberate violation caught"
+      - name: Self-test — guard must not false-positive on msmtp.log
+        run: |
+          tmp=$(mktemp -d)
+          echo 'check ~/.msmtp.log for delivery errors' > "$tmp/y.md"
+          if ! bash scripts/check-personal-data.sh "$tmp/y.md"; then
+            echo "FAIL: false positive on msmtp.log mention"
+            exit 1
+          fi
+          echo "OK: no false positive"
+      - name: Self-test — guard must not flag its own pattern file or CI fixtures
+        run: |
+          if ! bash scripts/check-personal-data.sh scripts/check-personal-data.sh .github/workflows/CI.yml; then
+            echo "FAIL: guard flags itself"
+            exit 1
+          fi
+          echo "OK: no self-match"
+
   pipefail-guard:
     runs-on: ubuntu-latest
     steps:
