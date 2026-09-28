@@ -209,3 +209,5 @@ Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs 
 ## Why not a plugin?
 
 Because it's **my** harness. IDH is my personal Claude config, cloned to `~/.claude` on every machine I use. The plugin system exists for shareable, redistributable tooling — that's not this. Fork the repo if you want your own.
+
+That answer covers the *packaging* axis — installing into another Claude Code user's setup. The *portability* axis is separate and measured, not presumed: `adapters/` carries thin native glue that makes two skills (`perch`, `healthcheck`) discoverable and one enforcing guard (the dirty-reset block) active on Claude Code, Codex and Pi, with Mistral Vibe probed as the fourth target and not yet ported. No full-harness parity is claimed — hooks beyond the guard, permissions, settings and rules remain Claude-native. What is supported, per runtime and with its evidence, lives in `adapters/pilot-support.json`; how to operate it lives in `docs/adapter-operations.md`.

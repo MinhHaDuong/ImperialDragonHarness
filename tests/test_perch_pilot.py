@@ -527,7 +527,12 @@ def test_manual_only_assertions_are_marked_pending_and_named():
 
 def test_every_harness_has_a_version_policy_and_an_invocation():
     inventory = perch.inventory()
-    assert {p["harness"] for p in inventory["versions"]} == set(perch.HARNESSES)
+    # The installer's harnesses are a subset of the inventory's roster: the
+    # 2026-09-28 amendment to 0800 added Vibe to the inventory (version probe
+    # only, no porting slice), and the installer does not manage Vibe yet.
+    roster = {p["harness"] for p in inventory["versions"]}
+    assert set(perch.HARNESSES) <= roster
+    assert roster == {"claude", "codex", "pi", "vibe"}
     invocations = {
         entry["harness"]: entry["native_expression"]
         for entry in inventory["assertions"]

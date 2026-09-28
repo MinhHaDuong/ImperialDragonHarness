@@ -2,7 +2,7 @@
 Title: Make IDH runtime-agnostic through core, config and adapters
 Created: 2026-08-28
 Author: Codex
-Blocked-by: 0810
+Closed: Tracker closed with 0810's gate passed: three slices hand-ported and proven (perch, path seam, dirty-reset guard) on Claude Code, Codex and Pi; Vibe probed as the fourth target; decision recorded (stop, thin adapters); no speculative machinery built at any point
 
 --- log ---
 2026-08-28T12:57Z Codex created family after author directive to make IDH more agnostic and have Codex plus Claude reimagine the work
@@ -13,6 +13,9 @@ Blocked-by: 0810
 2026-08-28T14:22Z panel approved revised family 5/5 after dependency, guard, evidence, versioning and deployment corrections
 
 2026-09-28T05:49Z claude Author directives recorded in the amendment: Mistral Vibe (probed 2.25.8, ~/.vibe) becomes the fourth target runtime; 'harness' now names IDH only and hosts are 'runtimes'; pilot slices 0803/0809 stay three-runtime, 0810's gate covers four.
+2026-09-28T09:03Z Minh Ha-Duong note blocker 0810 closed — Blocked-by removed.
+2026-09-28T09:03Z claude Epic closed. All four children done: 0802 (perch, #938), 0803 (path/config seam, #1040), 0809 (dirty-reset guard, #1042), 0810 (gate, this PR). Slice-level checks passed on Claude Code, Codex and Pi with the evidence in adapters/pilot-support.json; Vibe probed (2.25.8) and named the next manual slice by 0810's recorded decision; documentation names its exclusions and claims no whole-harness parity. The recorded decision: stop - thin hand-written adapters, the two existing installers as the only shared tooling, no IR/compiler/lifecycle schema; reopen triggers (Agent Plugins scope, Anthropic joining) unchanged.
+2026-09-28T09:03Z Minh Ha-Duong closed — Tracker closed with 0810's gate passed: three slices hand-ported and proven (perch, path seam, dirty-reset guard) on Claude Code, Codex and Pi; Vibe probed as the fourth target; decision recorded (stop, thin adapters); no speculative machinery built at any point
 --- body ---
 ## Context
 
@@ -286,6 +289,6 @@ No panel blocker remains.
 
 - [x] Original Imagine reviews and the author's reconciliation are recorded
 - [x] Revised panel review finds no blocking design or safety defect
-- [ ] Children `0802`, `0803`, `0809` and `0810` are closed or explicitly rejected
-- [ ] Claude Code, Codex and Pi pass the declared slice-level checks
-- [ ] Documentation names exclusions and avoids claiming whole-harness parity
+- [x] Children `0802`, `0803`, `0809` and `0810` are closed or explicitly rejected
+- [x] Claude Code, Codex and Pi pass the declared slice-level checks
+- [x] Documentation names exclusions and avoids claiming whole-harness parity
