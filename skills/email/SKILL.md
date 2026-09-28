@@ -1,6 +1,6 @@
 ---
 name: email
-description: "Read local mail: live Evolution cache and ~/.mail archives. Load when the user asks to read, search, summarize, or reply-draft their email/inbox, or mentions mail messages."
+description: "Read local mail (Evolution cache, ~/.mail archives) and send via msmtp CLI. Load when the user asks to read, search, summarize, reply-draft, or send their email/inbox, or mentions mail messages."
 user-invocable: true
 ---
 
@@ -27,9 +27,20 @@ There is no mail connector. All mail lives on disk in maildir-style layouts and 
 - Body may be HTML-only; strip tags if the user wants plain text.
 - Newst-first listing by file mtime: `find <dir> -type f -printf '%T@ %p\n' | sort -rn`.
 
+## Sending
+
+CLI transport is `msmtp`, configured in `~/.msmtprc`:
+
+- Default account `ouvaton`: `smtp.ouvaton.coop`, port 465 (implicit TLS), auth on, `from minh@haduong.com`.
+- `~/.msmtprc` contains credentials: never read, display, or edit that file; msmtp reads it itself. Same for `~/.msmtp.log` — it records sends, check it for delivery errors.
+- Send a drafted message (recipients taken from To/Cc/Bcc headers): `msmtp -t < draft.eml`
+- Send body text to one address: `printf 'body' | msmtp dest@example.com`
+- Sending is an external, hard-to-undo effect: always show the user the full draft (headers + body) and get explicit confirmation before running msmtp.
+- Sent messages are stored server-side (IMAP Sent) and appear in the Evolution cache only after sync — do not expect them in local files immediately.
+
 ## Conventions
 
 - Present inbox summaries as a table: date, from, subject.
 - Decode encoded subjects before showing them; note spam-looking messages instead of quoting their content.
-- Mail is read-only for the agent: never move, delete, or modify files under `~/.mail/` or the Evolution cache.
+- Local mail stores are read-only for the agent: never move, delete, or modify files under `~/.mail/` or the Evolution cache. Sending goes through msmtp only, never by writing into mail stores.
 - When the user says "latest mail" without a folder, read the live INBOX first.
