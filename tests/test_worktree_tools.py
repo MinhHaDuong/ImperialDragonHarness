@@ -591,6 +591,48 @@ def test_gc_skips_locked_gone_worktree(origin):
 
 
 @pytest.mark.integration
+def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
+    """A harness lock records the owning session's pid in its reason; a lock
+    whose pid is dead is a stale in-use marker, not an active session — the
+    GC unlocks it and lets the rails decide (2026-09-28: a dead-pid lock had
+    frozen a worktree holding the last on-disk copy of purged T2 memory)."""
+    remote, primary = origin
+    dead = subprocess.Popen(["true"])
+    dead.wait()  # pid exists no more (no live process holds it)
+    wt = make_agent_worktree(primary, "agent-dead-lock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason",
+        f"claude session agent-dead-lock (pid {dead.pid} start 1)")
+    make_branch_gone(remote, primary, "agent-dead-lock")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert f"unlocked agent-dead-lock (lock pid {dead.pid} dead" in res.stdout
+    assert "removed agent-dead-lock" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+@pytest.mark.integration
+def test_gc_keeps_live_pid_locked_worktree(origin):
+    """The pid half of the lock rail: a harness lock whose recorded pid is
+    live is an active session — skipped in place, never unlocked."""
+    remote, primary = origin
+    live = subprocess.Popen(["sleep", "30"])
+    try:
+        wt = make_agent_worktree(primary, "agent-live-lock", dirty=False)
+        git(primary, "worktree", "lock", str(wt), "--reason",
+            f"claude session agent-live-lock (pid {live.pid} start 1)")
+        make_branch_gone(remote, primary, "agent-live-lock")
+
+        res = _gc(primary)
+        assert res.returncode == 0
+        assert f"skip agent-live-lock (locked, pid {live.pid} live" in res.stdout
+        assert str(wt) in _worktree_paths(primary)
+    finally:
+        live.kill()
+        live.wait()
+
+
+@pytest.mark.integration
 def test_gc_skips_live_process_cwd_worktree(origin):
     """A clean worktree on a gone branch whose dir is a live process's cwd is
     an ACTIVE session's base, not an abandoned tree — the exact state the

@@ -29,7 +29,7 @@ def _cp(stdout="", returncode=0, stderr=""):
 
 def _patch_run(monkeypatch, responder):
     """responder(args) -> CompletedProcess; args is the command list."""
-    monkeypatch.setattr(ps, "run", lambda args, cwd: responder(args))
+    monkeypatch.setattr(ps, "run", lambda args, cwd, timeout=30: responder(args))
 
 
 # ── git_state ────────────────────────────────────────────────────────────────

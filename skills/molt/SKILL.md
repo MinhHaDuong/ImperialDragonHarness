@@ -77,7 +77,8 @@ Run full repo housekeeping and act on every finding.
    2026-07-13 a rail-less GC removed two live sessions' base worktrees, whose
    merged-and-pruned branches read `[gone]` while sessions still sat in them):
    it skips any worktree that is a live process's cwd, any locked worktree
-   (lock = in use, mirroring step 0's marker — never unlock-and-remove), any
+   (lock = in use, mirroring step 0; only a dead-pid harness lock is
+   unlocked, so the rails decide), any
    tree with uncommitted changes other than `.panel/` and `build/panel-head/`
    review scratch, and the one it runs from. After the live/lock checks it
    purges only those two scratch paths, then reports and retains every other
