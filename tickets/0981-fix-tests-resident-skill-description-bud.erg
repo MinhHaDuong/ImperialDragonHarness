@@ -1,0 +1,30 @@
+%erg 0.1
+Title: Fix tests: resident skill-description budget regression
+Created: 2026-09-28
+Author: codex
+
+--- log ---
+2026-09-28T17:08Z codex created
+
+--- body ---
+
+## Context
+
+The 2026-09-28 LAIR run on clean main (267ab6bb) ran `make check` outside the
+Codex sandbox. The full suite finished with 1 failure and 1,113 passes:
+`tests/test_resident_census.py::test_channel_budgets` measured 7,291 characters
+of resident skill names and descriptions against the 7,000-character cap. This
+is a standing CI gate, not a flaky runtime probe. The sandbox run had unrelated
+`BASH_ENV` startup failures; its failing test passed outside the sandbox.
+
+## Action
+
+Trim skill descriptions while preserving the cues needed to select each skill.
+Regenerate the README skills catalog and inspect the changed descriptions as a
+set; keep the existing budget rather than raising it to absorb drift.
+
+## Exit criteria
+
+- [ ] Resident skill descriptions total at most 7,000 characters.
+- [ ] The README skills catalog is in sync with the descriptions.
+- [ ] `make check` passes.
