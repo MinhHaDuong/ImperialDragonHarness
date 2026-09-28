@@ -9445,6 +9445,15 @@
       "last_confirmed": "2026-09-28T13:55:32Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_privacy_session_2026-09-28": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-28T13:56:09Z",
+      "last_confirmed": "2026-09-28T13:56:09Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
