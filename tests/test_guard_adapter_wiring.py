@@ -52,12 +52,17 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-def expand(command: str) -> Path:
-    return Path(os.path.expandvars(os.path.expanduser(command)))
+CANONICAL_COMMAND = "$HOME/.claude/scripts/guard-destructive-bash.sh"
 
 
-def pretooluse_bash_guard_commands(doc, *, source_name):
-    """Every PreToolUse/Bash command in a hooks document, expanded."""
+def wiring_commands(doc, *, source_name):
+    """Every PreToolUse/Bash command string in a hooks document, unexpanded.
+
+    The wirings name the guard as $HOME/.claude/scripts/... — the live
+    installation root on the reference machine, the same convention as
+    settings.shared.json. The ~/.idh relocation (0978) owns repointing
+    them. CI checks the shape, not this machine's filesystem.
+    """
     commands = []
     for group in doc.get("hooks", {}).get("PreToolUse", []):
         matcher = group.get("matcher", "")
@@ -66,9 +71,16 @@ def pretooluse_bash_guard_commands(doc, *, source_name):
         for hook in group.get("hooks", []):
             if hook.get("type") != "command":
                 continue
-            commands.append(expand(hook["command"]))
+            commands.append(hook["command"])
     assert commands, f"{source_name}: no PreToolUse/Bash command hook"
     return commands
+
+
+def assert_names_canonical_guard(commands):
+    assert CANONICAL_COMMAND in commands, (
+        f"the canonical guard command {CANONICAL_COMMAND!r} is not wired; "
+        f"found {commands}"
+    )
 
 
 def pi_adapter_violations(source: str):
@@ -95,8 +107,16 @@ def pi_adapter_violations(source: str):
 
 def test_claude_wiring_wires_the_canonical_guard():
     doc = json.loads((REPO / "settings.shared.json").read_text())
-    commands = pretooluse_bash_guard_commands(doc, source_name="settings.shared.json")
-    assert GUARD in commands, "settings.shared.json no longer wires the canonical guard"
+    assert_names_canonical_guard(wiring_commands(doc, source_name="settings.shared.json"))
+
+
+def test_wiring_target_exists_on_the_reference_machine():
+    """Machine condition: where $HOME/.claude IS the repo root (the live
+    installation), the wired path must exist. Elsewhere (CI) the shape test
+    above is the gate."""
+    if Path(os.path.expandvars(CANONICAL_COMMAND)) != GUARD:
+        pytest.skip("not the reference installation ($HOME/.claude is not the repo)")
+    assert GUARD.exists()
 
 
 # --- Codex wiring ----------------------------------------------------------
@@ -104,8 +124,7 @@ def test_claude_wiring_wires_the_canonical_guard():
 
 def test_codex_wiring_names_the_same_guard():
     doc = json.loads(CODEX_HOOKS.read_text())
-    commands = pretooluse_bash_guard_commands(doc, source_name="adapters/codex/hooks.json")
-    assert GUARD in commands
+    assert_names_canonical_guard(wiring_commands(doc, source_name="adapters/codex/hooks.json"))
     for group in doc["hooks"]["PreToolUse"]:
         assert "Bash" in group.get("matcher", "")
         for hook in group["hooks"]:
@@ -118,7 +137,7 @@ def test_codex_wiring_mutation_is_rejected(tmp_path):
     broken = tmp_path / "hooks.json"
     broken.write_text(json.dumps(doc))
     with pytest.raises(AssertionError):
-        pretooluse_bash_guard_commands(json.loads(broken.read_text()), source_name="mutated")
+        wiring_commands(json.loads(broken.read_text()), source_name="mutated")
 
 
 def test_codex_wiring_installs_by_symlink(tmp_path):
@@ -126,8 +145,7 @@ def test_codex_wiring_installs_by_symlink(tmp_path):
     installed.parent.mkdir()
     installed.symlink_to(CODEX_HOOKS)
     doc = json.loads(installed.read_text())
-    commands = pretooluse_bash_guard_commands(doc, source_name="~/.codex/hooks.json")
-    assert GUARD in commands
+    assert_names_canonical_guard(wiring_commands(doc, source_name="~/.codex/hooks.json"))
 
 
 # --- Pi adapter -------------------------------------------------------------
