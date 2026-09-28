@@ -12,7 +12,13 @@ else
     TARGETS=("$@")
 fi
 
-PATTERN='(imap|smtp)\.(cnrs\.fr|ouvaton\.coop|centre-cired\.fr|orange\.fr)|ods\.services|secret-tool lookup e-source-uid'
+# Patterns are built by adjacent-string concatenation so that this file (and
+# the CI fixtures that exercise it) never contains the literal T2 strings and
+# does not flag itself.
+HOSTS_PAT='(imap|smtp)\.(cnrs''\.fr|ouvaton''\.coop|centre-cired''\.fr|orange''\.fr)'
+ALIAS_PAT='ods''\.services'
+KEYRING_PAT='secret-tool'' lookup'' e-source-uid'
+PATTERN="${HOSTS_PAT}|${ALIAS_PAT}|${KEYRING_PAT}"
 
 fail=0
 for target in "${TARGETS[@]}"; do

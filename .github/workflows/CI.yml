@@ -127,7 +127,8 @@ jobs:
       - name: Self-test — guard must catch a deliberate violation
         run: |
           tmp=$(mktemp -d)
-          echo 'Login: minh.ha-duong@ods.services' > "$tmp/x.md"
+          v="ods"
+          echo "Login: minh.ha-duong@${v}.services" > "$tmp/x.md"
           if bash scripts/check-personal-data.sh "$tmp/x.md"; then
             echo "FAIL: personal-data-guard did not catch the deliberate violation"
             exit 1
@@ -142,6 +143,13 @@ jobs:
             exit 1
           fi
           echo "OK: no false positive"
+      - name: Self-test — guard must not flag its own pattern file or CI fixtures
+        run: |
+          if ! bash scripts/check-personal-data.sh scripts/check-personal-data.sh .github/workflows/CI.yml; then
+            echo "FAIL: guard flags itself"
+            exit 1
+          fi
+          echo "OK: no self-match"
 
   pipefail-guard:
     runs-on: ubuntu-latest
