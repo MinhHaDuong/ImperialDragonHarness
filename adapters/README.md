@@ -153,3 +153,48 @@ the idiom's nested quoting survives a double quote in the installation
 root (observed, pinned), and a dangling projection fails visibly at the
 first downstream use rather than resolving to a wrong root. Both behaviors
 are tests, not comments.
+
+## The dirty-reset guard through three runtimes (ticket 0809)
+
+One canonical decision — `scripts/guard-destructive-bash.sh` blocks
+`git reset --hard` over uncommitted changes to tracked files, exit 2 with
+the reason on stderr — carried by three thin wirings. The guard owns the
+decision; adapters only normalize input and carry it. Portability did not
+turn enforcement into advice:
+
+- **Claude Code**: the existing `PreToolUse(Bash)` hook in
+  `settings.shared.json`, unchanged.
+- **Codex**: `codex/hooks.json` — Codex's PreToolUse payload carries
+  `tool_input.command` and its block contract accepts exit 2 with the
+  reason on stderr, so the same script runs byte-identical. Install:
+  symlink to `~/.codex/hooks.json`, then review and trust once via
+  `/hooks`. **Trust is part of the boundary**: Codex skips non-managed
+  hooks until their exact definition is trusted (hash-recorded), so an
+  untrusted guard silently does not run — Git-mutating Codex use without
+  a trusted guard is outside the enforcing profile. Headless one-offs
+  pass `--dangerously-bypass-hook-trust` explicitly.
+- **Pi**: `pi/extensions/idh-guard.ts` — a `tool_call` handler that maps
+  the bash event to the guard's payload and translates exit codes into
+  Pi's `{ block, reason }`. It catches its own errors so the guard's
+  fail-open doctrine is carried, not Pi's handler fail-safe (which would
+  block on any breakage). Install: symlink into
+  `~/.pi/agent/extensions/`.
+
+**Refusal rule (binding for 0810's profiles):** a Git-mutating runtime
+profile may not activate without its enforcing boundary — Claude: the
+wired hook; Codex: the *trusted* hook; Pi: the installed extension.
+Read-only use stays available; instructions and post-hoc warnings are
+not enforcement. Codex's own docs say some specialized tool paths opt
+out of the hook path: tool hooks are a guardrail, not a complete
+boundary, and the inventory says so.
+
+The wirings' guard paths live in the config plane (`settings.shared.json`,
+`codex/hooks.json` use `$HOME/.claude/scripts/...`), where no
+runtime-supplied path exists — unlike the skills seam, there is no loaded
+body to derive a root from. The `~/.idh` relocation (0978) owns repointing
+every one of them.
+
+Weakening is tested, not warned about: `tests/test_guard_adapter_wiring.py`
+rejects removal of the event mapping, the block result, the exit semantics
+or the seam from the Pi adapter by a separate named check each, and pins
+the Codex and Claude wirings to the canonical script.

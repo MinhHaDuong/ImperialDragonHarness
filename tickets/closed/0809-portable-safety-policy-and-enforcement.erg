@@ -1,0 +1,87 @@
+%erg 0.1
+Title: Port the surviving dirty-reset guard through three adapters
+Created: 2026-08-28
+Author: Codex
+Closed: Slice complete: the canonical dirty-reset guard blocked live through claude --print, codex exec and pi --print on a dirty fixture (clean fixture allowed); Codex byte-identical via hooks.json (trust = boundary, author step /hooks); Pi adapter normalizes and carries the decision (realpath seam); canary clean; mutation matrix rejects weakening independently; refusal rule recorded for 0810
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+2026-08-28T14:08Z Codex folded lifecycle and capability questions into one enforcing safety experiment
+
+2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
+2026-09-24T16:16Z Codex note Rebased after 0976 removed guard-commit-on-main.sh; the surviving guard-destructive-bash.sh dirty-reset case is the enforcing portability pilot.
+2026-09-28T05:49Z claude 0800 amendment adds Vibe as fourth target; this slice stays three-runtime as ratified, Vibe is covered at 0810's gate.
+2026-09-28T08:05Z claude Action 1 recorded: the guard's behavior contract is its header plus tests/test_guard_destructive_bash.py, unchanged: payload tool_input.command + cwd, decision = dirty tracked files at the reset target (cd/git -C resolved, launchers/VAR= skipped, heredocs dropped, quoted text is text), exit 0/2, fail-open documented (unparseable payload, missing python3, bash -c/eval nesting out of scope).
+2026-09-28T08:05Z claude Action 2 established, all three runtimes have native pre-action blocking: Claude PreToolUse (existing), Codex PreToolUse (same payload field tool_input.command, same exit-2-with-stderr deny; hooks.json wiring, hash-recorded trust, --dangerously-bypass-hook-trust for headless), Pi tool_call handler returning {block, reason} (handler failure blocks as fail-safe - the adapter narrows that to carry the guard's fail-open doctrine). Actions 3-4: one decision contract, zero changes to the guard; Codex needs no normalization (byte-identical script); Pi adapter normalizes the event to the guard payload and translates exit codes; located through the realpath seam, no hard-coded root.
+2026-09-28T08:05Z claude Live smokes, 2026-09-28, dirty fixture (M tracked.txt): claude --print blocked with the guard's advice relayed, fixture intact; codex exec --dangerously-bypass-hook-trust blocked with 'Command blocked by PreToolUse hook: BLOCKED: git reset --hard would discard uncommitted changes to tracked files in /tmp/0809-fixture...'; pi --print (padme) blocked with the guard's options relayed, fixture intact. Clean fixture through pi: ALLOWED, reset ran as a no-op (no over-blocking). Canary CANARY-0809-zx9 in a quoted segment of a blocked compound command: 0 occurrences in the guard's stdout and stderr (local-probe test). Installed on this machine: ~/.codex/hooks.json and ~/.pi/agent/extensions/idh-guard.ts, both symlinks to the canonical tree; Codex persistent trust remains an author step via /hooks (headless used --dangerously-bypass-hook-trust). Adversarial matrix: tests/test_guard_adapter_wiring.py, 11 tests - wiring ratchets (claude/codex/pi), three independent mutation checks on the Pi adapter (event mapping, block result, exit semantics) plus the seam and hard-coded-root guards, fixture-home install resolutions, canary local-probe.
+2026-09-28T08:14Z Minh Ha-Duong closed — Slice complete: the canonical dirty-reset guard blocked live through claude --print, codex exec and pi --print on a dirty fixture (clean fixture allowed); Codex byte-identical via hooks.json (trust = boundary, author step /hooks); Pi adapter normalizes and carries the decision (realpath seam); canary clean; mutation matrix rejects weakening independently; refusal rule recorded for 0810
+--- body ---
+## Context
+
+`scripts/guard-destructive-bash.sh` is the surviving deterministic enforcing hook after
+0976. Its `git reset --hard` over tracked dirty files case had a measured true positive.
+Porting this one guard tests whether Claude Code, Codex and Pi adapters can
+intercept an action, normalize enough input and preserve a blocking decision. This ticket
+does not create a general lifecycle schema, capability resolver or full policy catalog.
+
+## Relevant files
+
+- `scripts/guard-destructive-bash.sh` — current Claude hook and behavior baseline
+- `settings.shared.json` — existing Claude wiring
+- `rules/git.md` — normative commit/worktree policy
+- tests for `guard-destructive-bash.sh` — current behavior contract
+
+## Actions
+
+1. Record the current allowed/blocked cases, payload fields, exit semantics and known
+   parser gaps, including nested shells and fail-open malformed input.
+2. Establish which command forms and target-directory resolution each adapter can
+   actually intercept. Close relevant bypasses or explicitly refuse activation for
+   unsupported mutation paths; do not describe the current fail-open hook as fail-closed.
+3. Keep one decision contract for dirty tracked files at the reset target; add only
+   adapter-specific input normalization and blocking-result translation.
+4. Wire it through native pre-action enforcement in Claude Code, Codex and Pi where the
+   harness provides a blocking mechanism.
+5. Define refusal at the adapter-profile boundary: if Git-mutating shell access is enabled
+   without reliable pre-action blocking, the enforcing profile cannot activate. Read-only
+   slices may remain available only in an explicitly named reduced profile that makes no IDH
+   safety claim; instructions or post-hoc warnings are not enforcement.
+6. Add adversarial adapter tests that remove or weaken the guard wiring and must fail.
+7. Add a canary value and prove neither normalization nor diagnostics leak it.
+8. Extend `adapters/pilot-support.json` with tested enforcement and refusal assertions.
+
+## Test
+
+- Replay clean, dirty, quoted-text, malformed and cwd-less fixtures through all
+  three adapters, including `git -C`, Git options, wrappers and compound commands. Mutation-
+  test removal of the event mapping, block result and exit semantics independently.
+
+## Verification
+
+- [x] Existing safe Claude cases remain unchanged; every claimed enforcing path blocks
+      a dirty tracked target and handles missing or untrusted context explicitly
+- [x] Codex and Pi block the same forbidden cases (live smokes 2026-09-28); Codex
+      trust is part of the boundary (untrusted hook silently skipped, author step /hooks)
+- [x] No Git-mutating adapter profile activates without the required enforcing boundary
+      (rule recorded in adapters/README.md and the inventory, binding for 0810; profiles
+      do not exist yet by design)
+- [x] Adapter weakening and missing-hook positive controls fail distinctly
+      (test_pi_adapter_mutation_fails_distinctly, test_codex_wiring_mutation_is_rejected)
+- [x] Canary scans cover arguments, diagnostics and logs
+      (CANARY-0809-zx9: 0 occurrences in guard stdout/stderr, local-probe test)
+- [x] `make check` passes (static gates + check-fast locally; full gate in CI on the slice PR)
+
+## Invariants
+
+- Portability cannot turn enforcement into advice.
+- The guard owns the decision; adapters only normalize input and carry the decision.
+- An unsupported adapter is safer than a silently weakened one.
+- Stopping after this ticket leaves existing Claude enforcement intact.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [x] One canonical guard is exercised through Claude Code, Codex and Pi
+- [x] The one silent path found - Codex skipping an untrusted hook - is recorded in
+      the inventory with trust as part of the boundary; Codex tool-hook opt-outs noted
+- [x] No generalized policy catalog, lifecycle IR or capability resolver was introduced

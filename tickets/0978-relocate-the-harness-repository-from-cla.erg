@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-28T05:49Z claude created child of 0909
 
+2026-09-28T08:05Z claude Config-plane note from 0809: the guard wirings (settings.shared.json, live settings.json, adapters/codex/hooks.json) name the guard as $HOME/.claude/scripts/guard-destructive-bash.sh - unlike the skills seam there is no runtime-supplied path here, so the relocation owns repointing all of them; adapters/README.md records the list.
 --- body ---
 
 ## Context

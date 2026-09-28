@@ -2,7 +2,8 @@
   "schema_version": 1,
   "canonical_sources": {
     "perch": "skills/perch/SKILL.md",
-    "healthcheck": "skills/healthcheck/SKILL.md"
+    "healthcheck": "skills/healthcheck/SKILL.md",
+    "dirty-reset-guard": "scripts/guard-destructive-bash.sh"
   },
   "versions": [
     {
@@ -379,6 +380,110 @@
       "disposition": "shared",
       "evidence_kind": "documentation",
       "test": "ticket 0803 action 4, recorded in the ticket log 2026-09-28",
+      "result": "pass"
+    },
+    {
+      "id": "claude-wiring-unchanged-by-the-slice",
+      "slice": "dirty-reset-guard",
+      "harness": "claude",
+      "harness_version": "claude 2.1.283",
+      "assertion": "The live PreToolUse(Bash) wiring in settings.shared.json still names the canonical guard; the slice changed nothing on the Claude side.",
+      "source_concept": "the existing reference enforcement",
+      "native_expression": "PreToolUse matcher Bash -> $HOME/.claude/scripts/guard-destructive-bash.sh",
+      "disposition": "harness-specific",
+      "evidence_kind": "static-test",
+      "test": "tests/test_guard_adapter_wiring.py::test_claude_wiring_wires_the_canonical_guard",
+      "result": "pass"
+    },
+    {
+      "id": "codex-pretooluse-runs-the-same-guard",
+      "slice": "dirty-reset-guard",
+      "harness": "codex",
+      "harness_version": "codex 0.158.0",
+      "assertion": "Codex PreToolUse carries tool_input.command and accepts exit 2 with the reason on stderr, so adapters/codex/hooks.json wires the canonical script byte-identical, no normalization layer.",
+      "source_concept": "a pre-action interception point with a blocking decision",
+      "native_expression": "hooks.json PreToolUse matcher ^Bash$; deny by exit 2 + stderr",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_guard_adapter_wiring.py::test_codex_wiring_names_the_same_guard",
+      "result": "pass"
+    },
+    {
+      "id": "codex-untrusted-hook-is-skipped-until-trusted",
+      "slice": "dirty-reset-guard",
+      "harness": "codex",
+      "harness_version": "codex 0.158.0",
+      "assertion": "Codex skips non-managed hooks until their exact definition is reviewed and trusted (hash-recorded; /hooks), so an untrusted guard silently does not run. Trust is therefore part of the enforcing boundary: Git-mutating Codex use without a trusted guard is outside the enforcing profile. Headless one-offs pass --dangerously-bypass-hook-trust explicitly.",
+      "source_concept": "activation of enforcement requires an explicit trust step",
+      "native_expression": "hook trust recorded per hash; /hooks browser; --dangerously-bypass-hook-trust",
+      "disposition": "harness-specific",
+      "evidence_kind": "documentation",
+      "test": "https://developers.openai.com/codex/hooks (Review and trust hooks); observed 2026-09-28: the block smoke ran with --dangerously-bypass-hook-trust, persistent trust is an author step via /hooks",
+      "result": "pass"
+    },
+    {
+      "id": "pi-toolcall-adapter-carries-the-decision",
+      "slice": "dirty-reset-guard",
+      "harness": "pi",
+      "harness_version": "pi 0.87.1",
+      "assertion": "The Pi adapter (adapters/pi/extensions/idh-guard.ts) maps the bash tool_call event to the guard's payload, blocks on exit 2 with the guard's own stderr reason, and carries the guard's fail-open doctrine on infra failure instead of Pi's handler fail-safe; it locates the guard through the realpath seam, never a hard-coded root.",
+      "source_concept": "normalize the runtime's tool event into the guard's input; translate the exit code into the runtime's block result",
+      "native_expression": "pi.on('tool_call') -> spawnSync(bash guard, JSON payload) -> {block, reason}",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_guard_adapter_wiring.py::test_pi_adapter_carries_the_contract",
+      "result": "pass"
+    },
+    {
+      "id": "pi-adapter-weakening-detected-independently",
+      "slice": "dirty-reset-guard",
+      "harness": "pi",
+      "harness_version": "pi 0.87.1",
+      "assertion": "Removing the event mapping, the block result, the exit semantics or the seam from the adapter is rejected by a separate named check each, so one weakening cannot hide behind another.",
+      "source_concept": "adversarial adapter tests that remove or weaken the guard wiring",
+      "native_expression": "the mutation matrix over the adapter source",
+      "disposition": "shared",
+      "evidence_kind": "static-test",
+      "test": "tests/test_guard_adapter_wiring.py::test_pi_adapter_mutation_fails_distinctly",
+      "result": "pass"
+    },
+    {
+      "id": "dirty-reset-blocked-through-three-runtimes",
+      "slice": "dirty-reset-guard",
+      "harness": "all",
+      "harness_version": "claude 2.1.283, codex 0.158.0, pi 0.87.1",
+      "assertion": "On a dirty fixture (a modified tracked file), claude --print, codex exec (--dangerously-bypass-hook-trust) and pi --print each refuse git reset --hard with the guard's own message, and the fixture stays dirty; on a clean fixture the reset runs (Pi adapter observed: allowed through, no over-blocking).",
+      "source_concept": "the same forbidden case, blocked by every runtime",
+      "native_expression": "the three live block transcripts, 2026-09-28",
+      "disposition": "manual-only",
+      "evidence_kind": "manual-smoke",
+      "test": "MANUAL. Dirty fixture /tmp/0809-fixture (M tracked.txt): claude --print, codex exec --dangerously-bypass-hook-trust, pi --print (padme) each asked to run git reset --hard. All three blocked with the canonical message; fixture intact. Clean fixture /tmp/0809-clean-fixture through pi: allowed, reset ran as a no-op. Transcripts in ticket 0809 log.",
+      "result": "pending"
+    },
+    {
+      "id": "guard-diagnostics-do-not-leak-command-text",
+      "slice": "dirty-reset-guard",
+      "harness": "all",
+      "harness_version": "bash (runtime-independent)",
+      "assertion": "A canary planted in a quoted segment of a blocked compound command appears in neither the guard's stdout nor stderr; the decision names the target directory, never the command text.",
+      "source_concept": "normalization and diagnostics must not echo command content",
+      "native_expression": "the guard's BLOCKED message shape",
+      "disposition": "shared",
+      "evidence_kind": "local-probe",
+      "test": "tests/test_guard_adapter_wiring.py::test_guard_diagnostics_do_not_leak_command_text",
+      "result": "pass"
+    },
+    {
+      "id": "refusal-boundary-for-git-mutating-profiles",
+      "slice": "dirty-reset-guard",
+      "harness": "all",
+      "harness_version": "n/a",
+      "assertion": "The slice's boundary rule, binding for 0810's profiles: a Git-mutating runtime profile may not activate without its enforcing boundary (Claude: the wired hook; Codex: the trusted hook; Pi: the installed extension). Read-only use stays available; instructions or post-hoc warnings are not enforcement. Known Codex limitation recorded per its own docs: some specialized tool paths opt out of the hook path, so tool hooks are a guardrail, not a complete boundary.",
+      "source_concept": "refusal at the adapter-profile boundary",
+      "native_expression": "activation checklist per runtime; recorded for 0810 to enforce when profiles exist",
+      "disposition": "shared",
+      "evidence_kind": "documentation",
+      "test": "ticket 0809 action 5, recorded in the ticket log and adapters/README.md",
       "result": "pass"
     }
   ]
