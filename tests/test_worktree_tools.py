@@ -590,6 +590,7 @@ def test_gc_skips_locked_gone_worktree(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+@pytest.mark.integration
 def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     """A harness lock records the owning session's pid in its reason; a lock
     whose pid is dead is a stale in-use marker, not an active session — the
@@ -610,6 +611,7 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
+@pytest.mark.integration
 def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""
