@@ -9401,33 +9401,6 @@
       "promoted": false,
       "backfilled": true
     },
-    "feedback-chiffrer-l-enjeu-avant-de-prioriser": {
-      "projects": [
-        "-home-haduong-perso-immobilier-2026-09-24-TGICr-teil-109694"
-      ],
-      "first_seen": "2026-09-24T13:57:16Z",
-      "last_confirmed": "2026-09-24T13:57:16Z",
-      "promoted": false,
-      "backfilled": true
-    },
-    "feedback-image-evidence-resolution": {
-      "projects": [
-        "-home-haduong-perso-immobilier-2026-09-24-TGICr-teil-109694"
-      ],
-      "first_seen": "2026-09-24T13:57:16Z",
-      "last_confirmed": "2026-09-24T13:57:16Z",
-      "promoted": false,
-      "backfilled": true
-    },
-    "project-cachan-109694": {
-      "projects": [
-        "-home-haduong-perso-immobilier-2026-09-24-TGICr-teil-109694"
-      ],
-      "first_seen": "2026-09-24T13:57:16Z",
-      "last_confirmed": "2026-09-24T13:57:16Z",
-      "promoted": false,
-      "backfilled": true
-    },
     "feedback_mocks_use_real_values": {
       "projects": [
         "-home-haduong-CNRS-projets-actifs-climate-finance-het"
@@ -9461,6 +9434,15 @@
       ],
       "first_seen": "2026-09-28T06:13:14Z",
       "last_confirmed": "2026-09-28T06:13:14Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_iati_transaction_direction": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-28T13:55:32Z",
+      "last_confirmed": "2026-09-28T13:55:32Z",
       "promoted": false,
       "backfilled": true
     }
