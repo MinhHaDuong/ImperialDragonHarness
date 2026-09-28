@@ -11,10 +11,12 @@ set -euo pipefail
 # `git checkout -- file`. So the hook asks the one question that separates the
 # harmful case from the harmless one: would this reset discard tracked changes?
 #
-# The target tree is where the reset acts: the payload's cwd, moved by any
-# `cd DIR` earlier in the same command line and by `git -C DIR`. Only
-# uncommitted changes to tracked files count (`--untracked-files=no`), because
-# `reset --hard` leaves untracked files alone. A tree git cannot read allows:
+# The target tree is where the reset acts: the payload's cwd, moved by
+# linear `cd DIR` / `git -C DIR` forms in the simple command list
+# (subshells, conditionals and pipelines are not modeled), and by
+# `git -C DIR`. The protected condition is detected tracked modifications
+# (`--untracked-files=no`): the guard does not claim to protect untracked
+# files or every effect of `reset --hard`. A tree git cannot read allows:
 # the reset would fail there on its own.
 #
 # The command is tokenised with shlex after heredoc bodies are dropped, so

@@ -52,16 +52,18 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-CANONICAL_COMMAND = "$HOME/.claude/scripts/guard-destructive-bash.sh"
+CANONICAL_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
 
 
 def wiring_commands(doc, *, source_name):
     """Every PreToolUse/Bash command string in a hooks document, unexpanded.
 
-    The wirings name the guard as $HOME/.claude/scripts/... — the live
-    installation root on the reference machine, the same convention as
-    settings.shared.json. The ~/.idh relocation (0978) owns repointing
-    them. CI checks the shape, not this machine's filesystem.
+    The invariant is the SCRIPT PATH, not its spelling: an adapter may wrap
+    or quote the invocation (Codex runs it as `bash "$HOME/..."` per the
+    third-party review, 2026-09-28) — that is adapter-local normalization,
+    and the guard still owns the decision. The ~/.idh relocation (0978)
+    owns repointing the path. CI checks the shape, not this machine's
+    filesystem.
     """
     commands = []
     for group in doc.get("hooks", {}).get("PreToolUse", []):
@@ -77,8 +79,8 @@ def wiring_commands(doc, *, source_name):
 
 
 def assert_names_canonical_guard(commands):
-    assert CANONICAL_COMMAND in commands, (
-        f"the canonical guard command {CANONICAL_COMMAND!r} is not wired; "
+    assert any(CANONICAL_SCRIPT in c for c in commands), (
+        f"the canonical guard script {CANONICAL_SCRIPT!r} is not wired; "
         f"found {commands}"
     )
 
@@ -114,7 +116,7 @@ def test_wiring_target_exists_on_the_reference_machine():
     """Machine condition: where $HOME/.claude IS the repo root (the live
     installation), the wired path must exist. Elsewhere (CI) the shape test
     above is the gate."""
-    if Path(os.path.expandvars(CANONICAL_COMMAND)) != GUARD:
+    if Path(os.path.expandvars(CANONICAL_SCRIPT)) != GUARD:
         pytest.skip("not the reference installation ($HOME/.claude is not the repo)")
     assert GUARD.exists()
 
@@ -128,7 +130,9 @@ def test_codex_wiring_names_the_same_guard():
     for group in doc["hooks"]["PreToolUse"]:
         assert "Bash" in group.get("matcher", "")
         for hook in group["hooks"]:
-            assert hook.get("timeout", 0) <= 5, "guard hook timeout above 5s"
+            # Bounded above the guard's per-git 4s worst case (a slow repo
+            # check must fit) and below a stall-every-call hazard.
+            assert 4 < hook.get("timeout", 0) <= 10, "guard hook timeout out of the 5-10s band"
 
 
 def test_codex_wiring_mutation_is_rejected(tmp_path):

@@ -34,6 +34,15 @@ cd ~/.claude            # the harness checkout
 ./adapters/install-wirings.sh install
 ```
 
+Preflight the guard itself before trusting the wiring (a missing or
+broken script fails open, so verify it fires):
+
+```bash
+cd /some/dirty-repo
+echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash ~/.claude/scripts/guard-destructive-bash.sh; echo "exit=$?"
+# expect: the BLOCKED message and exit=2
+```
+
 Then, once, inside Codex: run `/hooks`, review and **trust** the guard
 hook. Codex skips non-managed hooks until their exact definition is
 trusted; an untrusted guard silently does not run, so trust is part of the
@@ -88,6 +97,20 @@ nothing retargets it behind your back.
 - Codex skips untrusted hooks (hash-recorded trust via `/hooks`) and some
   specialized tool paths opt out of the hook path: the guard is a
   guardrail, not a complete boundary.
+- Codex hook trust authenticates the **hook definition**, not the script it
+  invokes: a changed `guard-destructive-bash.sh` does not untrust the hook.
+  The script's integrity is the harness checkout's business (git + CI), and
+  the persistent `/hooks` trust path is documentation-only evidence — the
+  2026-09-28 smoke used `--dangerously-bypass-hook-trust`.
+- **Hook timeout is fail-open** (measured 2026-09-28: a hook sleeping past
+  its timeout does not block the command). The wiring budget is 8s; the
+  guard's per-`git` subprocess timeout is 4s, so one slow repo check fits
+  and a pathological multi-target line can still exceed the budget and
+  let the command through. The guard has no internal global deadline —
+  a residual risk recorded here rather than fixed in this slice.
+- The guard is fail-open on: an unparseable payload, missing `python3`,
+  and commands nested in `bash -c`/`eval`. A seatbelt for the common
+  linear shape, not a sandbox.
 - The Pi adapter carries the guard's fail-open doctrine: if the guard
   script or python3 is missing, Pi's bash calls are allowed, not bricked.
 - No full-harness parity is claimed: skills are read-in-place Markdown,
