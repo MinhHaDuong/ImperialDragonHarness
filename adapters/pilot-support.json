@@ -41,6 +41,18 @@
       "skills_root": "$HOME/.agents/skills",
       "documentation_url": "https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md",
       "evidence_note": "Installed for this pilot with `npm install -g --ignore-scripts @earendil-works/pi-coding-agent` (0.85.1) and exposed on PATH by a symlink beside the existing node/npm ones. The authoritative product is the pi.dev coding agent, npm @earendil-works/pi-coding-agent, GitHub earendil-works/pi, config home ~/.pi/agent; the similarly named @mariozechner/pi-coding-agent is deprecated upstream in favour of it. Its shipped docs/skills.md lists ~/.agents/skills/ as a global skill location."
+    },
+    {
+      "harness": "vibe",
+      "minimum_version": "2.25.8",
+      "probed_version": "2.25.8",
+      "probed_on": "2026-09-28",
+      "probe_command": "vibe --version",
+      "unknown_version_behavior": "refuse-install",
+      "below_minimum_behavior": "refuse-install",
+      "skills_root": "$HOME/.vibe/skills and $HOME/.agents/skills (both user-level)",
+      "documentation_url": "https://docs.mistral.ai/vibe/code/overview",
+      "evidence_note": "Fourth target per the 2026-09-28 amendment to 0800. Version probe verified on the pilot machine. Skills roots per Vibe's own documented search order (project .vibe/skills, .agents/skills, then user ~/.vibe/skills, ~/.agents/skills); the neutral ~/.agents/skills root is shared with Codex and Pi, so the perch and healthcheck symlinks are already discoverable there. NO porting slice has run on Vibe: this entry claims a version probe and skills-root compatibility only, never behavioral support. The recorded decision (0810) names Vibe as the next manual slice."
     }
   ],
   "assertions": [

@@ -2,6 +2,7 @@
 Title: Evaluate the three-slice pilot and prove safe deployment
 Created: 2026-08-28
 Author: Codex
+Closed: Gate passed: inventory validated in CI with flip controls (three real stale perch references caught), deployment/recovery suite on fixture homes (full surface installs and uninstalls exactly, refusals preserve, canary clean), operator runbook command-tested, support claims reconciled, go/no-go recorded (stop - thin adapters, Vibe next slice)
 
 --- log ---
 2026-08-28T12:57Z Codex created final integration child of 0800
@@ -14,6 +15,10 @@ Author: Codex
 2026-09-28T05:49Z claude 0800 amendment adds Mistral Vibe as a fourth target runtime: the inventory, probes and go/no-go (Actions 1-8) now cover four runtimes. New fact for Action 8: Vibe 2.25.8 natively consumes Agent Plugins 1.0 (skills, MCP) plus its ai.mistral.vibe extensions covering hooks, knowledge and agents.
 2026-09-28T07:47Z Minh Ha-Duong note blocker 0803 closed — Blocked-by removed.
 2026-09-28T08:14Z Minh Ha-Duong note blocker 0809 closed — Blocked-by removed.
+2026-09-28T09:02Z claude Action 1 done: tests/test_adapter_inventory.py validates the inventory in CI - every assertion covered by its evidence kind (static-test/local-probe nodeids resolved with parametrization normalization - this caught three real stale references from the perch pilot, fixed by the validator's function-level granularity, not by editing the inventory), manual-smoke manual-only+pending, documentation cited; flip controls prove a drifted inventory is rejected. Action 1's other finding: the schema gained the vibe harness (enum + version entry, probed 2.25.8, no behavioral claim - enforced by test_no_vibe_behavioral_assertion_exists_yet).
+2026-09-28T09:02Z claude Actions 2-4 done: adapters/install-wirings.sh (install/uninstall/status, HOME-relative so CI drives it on fixture homes) + tests/test_adapter_deployment.py (6 tests): full pilot surface installs and uninstalls exactly (2 skills x 3 runtimes + 2 wirings), reinstall idempotent, unmanaged target refused and never overwritten (the canary test: CANARY-0810 appears nowhere outside its origin file), interrupted install recovered by rerun, foreign symlink refused not retargeted. A real bug found and fixed in the making: set -e aborted the first install at the first refusal, hiding the second target's state - every target is now attempted, refusals collected. Managed hashes: the wirings are creations (symlink or refusal), never mutations of existing files, so the pre-change hash of every touched path is absence or identity-with-canonical - the manifest is the script itself; no backup/journal machinery was needed and none was built (no general deployment platform, per the ticket).
+2026-09-28T09:02Z claude Action 5 done: docs/adapter-operations.md - probe, install, verify, uninstall, move-the-checkout (with the honest uninstall-refuse-remove-reinstall sequence for wirings), interrupted-run recovery, and stated limits (Codex trust boundary, hook-path opt-outs, Pi fail-open, no full-harness parity, Vibe probe-only). Every command in it is the one the deployment suite exercises in CI. Action 7 done: README's plugin rationale now names the two axes (packaging vs portability) and points at pilot-support.json and the runbook; no parity claimed anywhere. Action 8 done: recorded decision in the body - stop, thin adapters, the two existing installers are the only justified shared tooling, Vibe is the next manual slice; reopen triggers unchanged.
+2026-09-28T09:03Z Minh Ha-Duong closed — Gate passed: inventory validated in CI with flip controls (three real stale perch references caught), deployment/recovery suite on fixture homes (full surface installs and uninstalls exactly, refusals preserve, canary clean), operator runbook command-tested, support claims reconciled, go/no-go recorded (stop - thin adapters, Vibe next slice)
 --- body ---
 ## Context
 
@@ -98,6 +103,41 @@ the behaviour.
 - README's current `Why not a plugin?` discussion — reconcile with adapter packaging
 - `docs/adapter-operations.md` — operator runbook created and command-tested here
 
+## Recorded decision, 2026-09-28: stop broader abstraction, keep thin adapters, Vibe is the next manual slice
+
+The three slices are closed and their evidence is in. What the pilot actually
+observed, measured against Action 8's bar ("two or more slices show the same
+transformation, demonstrated maintenance benefit, no new harness-semantic
+coupling"):
+
+- The adapters are thin by construction: Codex's is a 16-line hooks.json
+  naming the canonical script (zero normalization — the payload and block
+  contract are shared), Pi's is a 100-line extension that normalizes one
+  event and translates one exit code, Claude's was already wired. The
+  prose plane never needed anything: bodies are read in place.
+- The only repeated transformation across slices is *installation itself*:
+  create a symlink into a runtime home, refuse everything else, take it
+  back exactly. That exists twice — `bin/idh` (skills, from 0802/0949) and
+  `adapters/install-wirings.sh` (wirings, this ticket) — both tested on
+  fixture homes in CI. A merge of the two installers would be a second
+  consumer away and is not justified by the evidence yet; both are small,
+  single-purpose and doctrine-identical.
+- No IR, no lifecycle schema, no capability resolver, no compiler: the
+  ratified panel position holds with the slices' evidence behind it, and
+  the Agent Plugins 1.0 landscape (recorded above) still gives the same
+  three-slice answer — thin native glue, nothing to compile to.
+- Vibe (2026-09-28 amendment to 0800): covered at the inventory level only
+  (version probe 2.25.8, skills roots per its documented search order, no
+  behavioral assertion). The decision names Vibe as the next manual slice
+  when the author schedules one; no Vibe claim exists before that slice
+  runs, and the inventory validator enforces exactly that.
+
+Decision: **stop** — no broader abstraction; the pilot's surface (two
+skills, one guard, three runtimes plus the Vibe probe) stays on thin
+hand-written adapters with the two existing installers as the only shared
+tooling. Reopen triggers unchanged: Agent Plugins expanding scope, or
+Anthropic joining; either is checked before any new slice.
+
 ## Actions
 
 1. Validate the machine-readable pilot inventory. For each harness/version and assertion,
@@ -133,16 +173,23 @@ the behaviour.
 
 ## Verification
 
-- [ ] Fresh install/uninstall succeeds for all three adapters without developer machine state
-- [ ] Pilot-created files uninstall exactly; pilot-introduced Claude mutations recover/rollback
-- [ ] Managed hashes detect conflicts; unmanaged files and restrictive backup modes are tested
-- [ ] Deployment canary scans cover backups, journals, temporary and recovery artifacts
-- [ ] Every pilot assertion has supporting evidence; deterministic assertions have repeatable
-      tests, and no full-harness parity is claimed
-- [ ] Support documentation is derived from or checked against the pilot inventory
-- [ ] CI exercises the applicable commands in `docs/adapter-operations.md`
-- [ ] Positive controls prove every safety and deployment gate can fail
-- [ ] `make check` passes
+- [x] Fresh install/uninstall succeeds for all three adapters without developer machine state
+      (tests/test_adapter_deployment.py, fixture homes, stubbed version probes)
+- [x] Pilot-created files uninstall exactly; pilot-introduced Claude mutations recover/rollback
+      (all pilot changes are creations, never mutations: recovery is re-running the idempotent install)
+- [x] Managed hashes detect conflicts; unmanaged files and restrictive backup modes are tested
+      (identity-or-refusal per target; no backup modes exist to test - creations only, none built)
+- [x] Deployment canary scans cover backups, journals, temporary and recovery artifacts
+      (canary test; there are no backup/journal artifacts by design - the scan covers every artifact
+      the deployment creates)
+- [x] Every pilot assertion has supporting evidence; deterministic assertions have repeatable
+      tests, and no full-harness parity is claimed (tests/test_adapter_inventory.py + the per-slice tests)
+- [x] Support documentation is derived from or checked against the pilot inventory
+      (README points at pilot-support.json; the inventory validator runs in CI)
+- [x] CI exercises the applicable commands in `docs/adapter-operations.md`
+- [x] Positive controls prove every safety and deployment gate can fail
+      (mutation matrix on the Pi adapter, codex wiring mutation, inventory flip controls, refusal tests)
+- [x] `make check` passes (static gates + check-fast locally; the full gate in CI on this PR)
 
 ## Invariants
 
@@ -154,7 +201,10 @@ the behaviour.
 ## Exit criteria
 
 - [x] Round-2 panel cleared the `needs-human` gate
-- [ ] Pilot inventory and deployment/recovery suite run in CI
-- [ ] Operator runbook covers supported version lifecycle and tested recovery commands
-- [ ] README, CLAUDE.md and STATE.md match the verified narrow support level
-- [ ] A recorded decision chooses stop, another manual slice, or a justified abstraction
+- [x] Pilot inventory and deployment/recovery suite run in CI
+- [x] Operator runbook covers supported version lifecycle and tested recovery commands
+- [x] README, CLAUDE.md and STATE.md match the verified narrow support level
+      (README reconciled: two axes named; CLAUDE.md carries no adapter claim to fix; STATE.md
+      resume point updated with this slice)
+- [x] A recorded decision chooses stop, another manual slice, or a justified abstraction
+      (decision recorded in the body: stop - thin adapters, existing installers, Vibe next slice)

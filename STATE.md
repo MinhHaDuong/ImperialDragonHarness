@@ -1,29 +1,28 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-28T06:31Z
+Last updated: 2026-09-28T09:03Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-28T06:31Z · as of 95cf190d -->
+<!-- generated 2026-09-28T09:03Z · as of feff02e5 -->
 
-**Tickets:** 20 ready · 21 blocked — `erg ready tickets/` for full list
+**Tickets:** 19 ready · 19 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  95cf190d Merge pull request #1033 from MinhHaDuong/housekeeping-20260928
-  f88262a6 Merge pull request #1032 from MinhHaDuong/memory-followup-20260924
-  8ea9db08 Merge pull request #1031 from MinhHaDuong/tickets/0977-essai-pi-backends
+  feff02e5 Merge pull request #1044 from MinhHaDuong/personal-data-tracked-only-20260928
+  e5bca18a Merge pull request #1043 from MinhHaDuong/tickets/0810-unblock
+  024d57ae Merge pull request #1042 from MinhHaDuong/tickets/0809-guard-adapters
 
 ## Resume point
-**2026-09-28.** 0977 essai run to completion and closed (#1031): padme passes the tool-call smoke test; Albert and ILaaS declared in `~/.pi/agent/models.json` awaiting author keys (ProConnect / consortium); HumaNum has no inference API; Pi's silent reroute to `openrouter/auto` on model-resolution failure filed as **0979**. 0800 amended (#1030): Mistral Vibe is the fourth target runtime, "runtime" is the word for hosts, and the `~/.idh` relocation is ticketed as **0978** (child of 0909). Stranded 2026-09-24 memory lessons landed (#1032).
+**2026-09-28.** The portability epic (0800) is closed: 0803 (path/config seam, #1040), 0809 (dirty-reset guard through three runtimes, #1042) and 0810 (gate: inventory validation, deployment suite, runbook, go/no-go, this PR). Decision recorded: stop broader abstraction — thin adapters, `bin/idh` + `adapters/install-wirings.sh` the only shared tooling, Vibe probed (2.25.8) as the next manual slice when scheduled. Earlier today: 0977 essai closed (#1031, Pi backends measured), Albert activated (gpt-oss-120b passes tool calls), 0978 filed (~/.idh relocation), 0979 filed (Pi silent reroute).
 
 Owed to the author, outside any diff:
-- **Rotate** the six values a plain `bash -x` exposed (`~/.codex/auth.json` holds its own OpenAI key) — and the Albert key: its original hyphenated env name broke sourcing and echoed it into an agent session log on 2026-09-28 (renamed `ALBERT_API_KEY` since; rotation deferred by the author to October 2026).
-- **ILaaS key**: clé consortium → `~/.config/keys/ilaas.env`, then replace the placeholder in `~/.pi/agent/models.json` and enumerate ids via `GET /v1/models`. Albert is done: activated 2026-09-28, `gpt-oss-120b` passes tool calls (1–2 s), `qwen3-coder` emits calls as text — use gpt-oss-120b or llm-proxy (0977 addendum).
-- `scripts/projects.json`: **kept** — zero readers (0941) but a candidate mapping input for 0920's project-memory; delete after 0920 if unconsumed.
-- Live `settings.json` re-alignment: the specific deleted-script wiring is gone (checked 2026-09-28); the drift class remains 0886's to reconcile.
+- **Codex hook trust**: open codex, /hooks, trust the dirty-reset guard once — until then Codex runs without the guard.
+- **ILaaS key**: cle consortium -> ~/.config/keys/ilaas.env, then models.json (0977 report).
+- **Rotate** the six bash -x values and the Albert key (deferred to October 2026).
 
 ## Blockers
 (none)
