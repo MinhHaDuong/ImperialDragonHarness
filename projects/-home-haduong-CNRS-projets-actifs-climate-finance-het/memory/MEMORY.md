@@ -146,5 +146,6 @@
 
 ### JETP
 
+- [IATI transaction direction is part of the mapping](feedback_iati_transaction_direction.md)
 - [Name vocabulary values by their distinguishing axis, ≤2 words; "everything is http"](feedback_name_values_by_their_distinguishing_axis.md)
 - [Unpublished: no URL compat before go-live](feedback_observatory_unpublished_no_url_compat.md)
