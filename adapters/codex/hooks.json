@@ -1,5 +1,5 @@
 {
-  "description": "IDH dirty-reset guard wiring (ticket 0809). The same canonical script as the Claude Code PreToolUse wiring in settings.shared.json: Codex's PreToolUse payload carries tool_input.command and its block contract accepts exit 2 with the reason on stderr, so the guard runs byte-identical. Install: symlink this file to ~/.codex/hooks.json, then review and trust it once via /hooks (headless one-offs: --dangerously-bypass-hook-trust).",
+  "description": "IDH dirty-reset guard wiring (ticket 0809, reviewed by two third-party seats 2026-09-28). The same canonical script as the Claude Code PreToolUse wiring in settings.shared.json: Codex's PreToolUse payload carries tool_input.command and its block contract accepts exit 2 with the reason on stderr, so the guard runs unchanged. The command is quoted per the official example and invoked through bash so the exec bit is not a dependency. Scope: this wires the ONE dirty-reset guard; it is not a general Git-mutation boundary. Install: symlink this file to ~/.codex/hooks.json, verify the guard script exists and answers exit 2 on a fixture (docs/adapter-operations.md), then review and trust it once via /hooks (headless one-offs: --dangerously-bypass-hook-trust). Codex hook trust authenticates the hook definition, not the script it invokes; the script's integrity is the harness checkout's business.",
   "hooks": {
     "PreToolUse": [
       {
@@ -7,8 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/scripts/guard-destructive-bash.sh",
-            "timeout": 5,
+            "command": "bash \"$HOME/.claude/scripts/guard-destructive-bash.sh\"",
+            "timeout": 8,
             "statusMessage": "Checking dirty-reset guard"
           }
         ]

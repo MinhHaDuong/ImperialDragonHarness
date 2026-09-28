@@ -78,5 +78,8 @@ reviewers:
     status: advisory
     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
     endpoint: https://openrouter.ai/api/v1
-    model: openai/deepseek/deepseek-v4-flash
+    # 2026-09-28: deepseek-v4-flash retired upstream; moved to v4.1-flash,
+    # a reasoning model - budget its tokens generously or it burns out in
+    # reasoning with no content (observed on the codex-hook review).
+    model: openai/deepseek/deepseek-v4.1-flash
     credential-env: OPENROUTER_API_KEY_IDH
