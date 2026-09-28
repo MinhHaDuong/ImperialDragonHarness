@@ -20,8 +20,8 @@ There is no mail connector. All mail lives on disk in maildir-style layouts and 
 
 - **Live mail** — Evolution cache, sharded maildirs:
   `~/.cache/evolution/mail/<account-hash>/folders/<Folder>/cur/<2-hex>/<uid>`
-  - The `<account-hash>` directory is not stable across account reconfigurations. Pick the hash whose `folders/` subdirectories actually contain files (check `find ... -type f | wc -l`); empty trees are stale accounts.
-  - Folders observed: `INBOX`, `Sent` (`Éléments envoyés` for the French account), `Archive`, `Drafts`, `Trash`, `Junk`.
+  - Several account trees exist; the `<account-hash>` is not stable across account reconfigurations. More than one tree can be active at a time (CNRS and ouvaton both are) — when searching live mail, iterate over ALL trees whose `folders/` contain files (`find ... -type f | wc -l` per tree), not just one.
+  - Folders observed: `INBOX`, `Sent` (`Éléments envoyés` for the CNRS account), `Archive`, `Drafts`, `Trash`, `Junk`.
 - **Archives** — `~/.mail/` (Evolution/Thunderbird-style maildir):
   - `Archives/cur/` — 88k+ historical messages (`.eml` files)
   - `Junk/cur/`, `Trash/cur/`, `Unsent Messages/`
@@ -39,16 +39,16 @@ There is no mail connector. All mail lives on disk in maildir-style layouts and 
 
 CLI transport is `msmtp`, configured in `~/.msmtprc`:
 
-- Default account `ouvaton`: `smtp.ouvaton.coop`, port 465 (implicit TLS), auth on, `from minh@haduong.com`.
+- Only the personal identity is wired for CLI sending: default account `ouvaton`, `smtp.ouvaton.coop:465` (implicit TLS), auth on, `from minh@haduong.com`. There is no CNRS account in msmtp — never send professional mail (minh.ha-duong@cnrs.fr) via CLI; CNRS mail is sent from Evolution, whose SMTP is `smtp.partage.renater.fr:587`.
 - `~/.msmtprc` contains credentials: never read, display, or edit that file; msmtp reads it itself. Same for `~/.msmtp.log` — it records sends, check it for delivery errors.
 - Send a drafted message (recipients taken from To/Cc/Bcc headers): `msmtp -t < draft.eml`
 - Send body text to one address: `printf 'body' | msmtp dest@example.com`
 - Sending is an external, hard-to-undo effect: always show the user the full draft (headers + body) and get explicit confirmation before running msmtp.
-- Sent messages are stored server-side (IMAP Sent) and appear in the Evolution cache only after sync — do not expect them in local files immediately.
+- msmtp does NOT save a copy to the IMAP Sent folder — messages sent via CLI leave no trace server-side. To keep a copy, add `Bcc: minh@haduong.com` to the draft (the redirection then delivers it back to the ouvaton INBOX).
 
 ## Conventions
 
 - Present inbox summaries as a table: date, from, subject.
 - Decode encoded subjects before showing them; note spam-looking messages instead of quoting their content.
 - Local mail stores are read-only for the agent: never move, delete, or modify files under `~/.mail/` or the Evolution cache. Sending goes through msmtp only, never by writing into mail stores.
-- When the user says "latest mail" without a folder, read the live INBOX first.
+- When the user says "latest mail" without a folder, read the live INBOX of every active account tree, not just one.
