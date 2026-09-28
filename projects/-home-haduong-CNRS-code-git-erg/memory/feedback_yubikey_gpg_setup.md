@@ -11,7 +11,7 @@ Install `scdaemon` first (`sudo apt install scdaemon`) — GPG silently fails wi
 
 During `gpg --card-edit` → `generate`: answer **n** to off-card backup. Answering **o** (yes) triggers a passphrase prompt for the backup key; if cancelled, the key is partially written to the YubiKey but no local stub is created. Recovery: re-run `generate`, say **n** to backup, say **o** to replace existing keys.
 
-Change both PINs before generating (factory defaults are documented by Yubico). PIN state, serial number, and key details are tier-2 personal data — they live in `~/.config/harness/private/mail.md`, not in this repo.
+Change both PINs before generating (factory defaults are documented by Yubico). PIN state, serial number, and key details are tier-2 personal data — they live in `~/.config/harness/private/keys.md`, not in this repo.
 
 **Why:** partial key write on first attempt caused confusion; the recovery path is non-obvious.
 **How to apply:** if GPG card-edit generate fails mid-way, check card-status — keys may be on the hardware already. Re-run generate with replace=yes rather than starting over.

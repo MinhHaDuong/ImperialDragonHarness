@@ -11,8 +11,9 @@ credentials mirrored from Evolution's keyring into `~/.config/keys/netrc`
 professional account, for both IMAP (read) and SMTP (send).
 
 Hosts, ports, login aliases, and the keyring-extraction procedure are tier-2
-personal data and live in `~/.config/harness/private/mail.md` — not in this
-public repo. Read that file for the exact endpoints and command lines
+personal data and live in the private mail skill,
+`~/.config/harness/private/skills/email/SKILL.md` — not in this public repo.
+Read that file for the exact endpoints and command lines
 (`curl -s --netrc --url imaps://<host>/ -X 'STATUS INBOX ...'` for status,
 `imaps://<host>/INBOX;UID=N` for a message, `--mail-from/--mail-rcpt/-T` for
 sending). Verified 2026-09-15: IMAP STATUS and SMTP `235 Authentication
