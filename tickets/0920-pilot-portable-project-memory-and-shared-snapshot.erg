@@ -13,6 +13,7 @@ Blocked-by: 0915
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: owns the v7 disjoint-roots row. The plan's 'move out of ~/.claude' was unachievable — the repo is ~/.claude — so the two moves are named against the declared native root instead. The loader half of the withdrawal test moves to 0921.
 
+2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 --- body ---
 
 ## Context

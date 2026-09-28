@@ -1,0 +1,63 @@
+%erg 0.1
+Title: Relocate the harness repository from ~/.claude to ~/.idh
+Created: 2026-09-28
+Author: claude
+
+--- log ---
+2026-09-28T05:49Z claude created child of 0909
+
+--- body ---
+
+## Context
+
+The author ruled on 2026-09-16 (recorded in 0909's body, "The canonical roots live in
+`~/.idh`") that the harness project's own memory and the collective memory both stay
+central in `~/.idh`, separated from each other. The v7 §12.1 disjoint-roots row stays
+red until the repository itself leaves `~/.claude`, which is Claude Code's native config
+and memory root. 0909 names the relocation as "the remaining half" of that row and
+assigns it to the memory programme — but it never received its own ticket; this is it.
+
+The 2026-09-28 amendment to 0800 sharpens the case: the repository being one runtime's
+config directory is Claude-shaped, and every added target runtime (Codex, Pi, Vibe)
+multiplies the ambiguity. Relocation makes `~/.idh` no runtime's native root.
+
+Existing probes (0909 log, 2026-09-16): Claude Code follows a symlinked `rules/` and a
+symlinked `CLAUDE.md`, both confirmed with positive controls. The memory probe's own
+control did not fire, so it is recorded as an invalid probe rather than a negative;
+the experiment that would settle it is named there.
+
+## Relevant files
+
+- `README.md`, `CLAUDE.md`, `STATE.md` — installation and location claims
+- `scripts/path_utils.py` and the `IDH_ROOT` from-loaded-skill seam (ad33697b; 0803's
+  territory) — what already tolerates a relocated root
+- `tickets/0909-*.erg` — the ruling and the disjoint-roots row this closes
+- `tickets/0920-*.erg`, `tickets/0923-*.erg` — siblings that still assert the store
+  cannot leave `~/.claude`
+
+## Actions
+
+1. Decide the mechanism for Claude Code, which requires `~/.claude`: whole-directory
+   symlink `~/.claude -> ~/.idh`, per-entry symlinks, or a projection. Extend the 0909
+   probes with positive controls to hooks, `settings.json`, skills, commands and
+   plugins before choosing; record what the runtime demonstrably follows.
+2. Enumerate every tracked file and doc that names `~/.claude` as the canonical
+   location before moving anything.
+3. Execute the move with the repository clean and no other work in flight; document a
+   tested rollback (restore the pointer).
+4. Verify each runtime still finds the harness; record per-runtime evidence.
+5. Update STATE.md's standing red row and the siblings' premise (0920, 0923).
+
+## Test
+
+Positive control: a fresh Claude Code session after the move loads hooks, skills,
+`CLAUDE.md` and memory exactly as before. Negative control: breaking the pointer
+produces a visible failure, not a silent fall-back to defaults.
+
+## Exit criteria
+
+- [ ] The repository lives at `~/.idh`; `~/.claude` is a documented pointer that
+      Claude Code demonstrably follows
+- [ ] `make check` and the full suite pass after the move
+- [ ] No tracked file names `~/.claude` as the canonical location without saying why
+- [ ] The disjoint-roots row in 0909 turns green or carries its remaining condition
