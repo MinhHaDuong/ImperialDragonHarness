@@ -2,10 +2,12 @@
 Title: Fix tests: resident skill-description budget regression
 Created: 2026-09-28
 Author: codex
+Closed: resident skill descriptions trimmed to 6,823 chars; make check 1,114 passed
 
 --- log ---
 2026-09-28T17:08Z codex created
 
+2026-09-28T17:13Z Minh Ha-Duong closed — resident skill descriptions trimmed to 6,823 chars; make check 1,114 passed
 --- body ---
 
 ## Context
