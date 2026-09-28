@@ -19,4 +19,4 @@ Services déclarés : 2 groupes TD × 8 séances × 2 h = 32 h TD, du 22/01 au 0
 
 **En attente** : réponse de R. Chevalier (volume 48 h et acceptation du régime déclaratif) ; envoi du dossier complet.
 
-Sources des données : bulletin de paie 2025-12 (`~/perso/comptes/Retraite/Bulletins_de_paye_CNRS/`), CNI et carte vitale (`~/perso/facsimili/État civil Goloa/`), signature `~/perso/facsimili/Signature bleue.jpg`.
+Sources des données (chemins locaux vers pièces d'état civil et de paie) : tier-2, dans `~/.config/harness/private/`.

@@ -67,6 +67,22 @@ if [ -n "$skills_changed" ]; then
 fi
 # --- skills-catalog-guard ---
 
+# --- personal-data-guard ---
+# Tier-2 personal data (access topology, credential inventories) must not be
+# committed to this public repo — it lives in ~/.config/harness/private/.
+# See CLAUDE.md "Personal data tiers".
+if [ "${ALLOW_PERSONAL_DATA:-}" != "1" ]; then
+    staged=$(git diff --cached --diff-filter=d --name-only 2>/dev/null || true)
+    if [ -n "$staged" ]; then
+        if ! ./scripts/check-personal-data.sh $staged; then
+            echo "ERROR: tier-2 personal data staged — move it to ~/.config/harness/private/ (see CLAUDE.md 'Personal data tiers')." >&2
+            echo "Deliberate cases only: ALLOW_PERSONAL_DATA=1 git commit ..." >&2
+            exit 1
+        fi
+    fi
+fi
+# --- personal-data-guard ---
+
 # --- git-erg: begin managed block ---
 # Pre-commit hook fragment for git-erg ticket validation.
 # The install script appends this between "# --- git-erg ---" markers,

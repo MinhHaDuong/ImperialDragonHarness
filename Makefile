@@ -1,4 +1,4 @@
-.PHONY: resident-budget skills-catalog adapter-hooks check-adapter-hooks check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check check-fast check-tests lint
+.PHONY: resident-budget skills-catalog adapter-hooks check-adapter-hooks check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check check-fast check-tests lint
 
 skills-catalog:
 	./scripts/update-skills-catalog.py
@@ -42,6 +42,9 @@ check-agnostic-tickets:
 check-agnostic-skills:
 	./scripts/check-agnostic.sh skills
 
+check-personal-data:
+	bash scripts/check-personal-data.sh
+
 check-agnostic-scripts:
 	./scripts/check-agnostic.sh scripts
 
@@ -52,4 +55,4 @@ check-agnostic-rules:
 check-tests:
 	python3 -m pytest tests/
 
-check: check-skills-drift check-adapter-hooks check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-tests
+check: check-skills-drift check-adapter-hooks check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
