@@ -1,0 +1,72 @@
+%erg 0.1
+Title: Port healthcheck through config and a minimal path seam
+Created: 2026-08-28
+Author: Codex
+Closed: Slice complete: seam measured through claude/codex/pi (runtime-supplied path + cd -P idiom, no IDH_HOME, zero config values), healthcheck ported via bin/idh and probe run through all three runtimes, adversarial roots pinned in tests/test_skill_seam.py, pilot-support.json extended, canary clean
+
+--- log ---
+2026-08-28T12:57Z Codex created child of 0800
+2026-08-28T14:08Z Codex narrowed a repository-wide path API to the seam demonstrated by healthcheck
+
+2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
+2026-09-28T05:49Z claude 0800 amendment adds Vibe as fourth target; this slice stays three-runtime as ratified, Vibe is covered at 0810's gate.
+2026-09-28T07:42Z claude Action 1 recorded. Claude behavior: the skill body carries the seam (ad33697b) and Claude Code supplies the loaded skill's absolute path in its injection. The blocking assumption was the historical hard-coded ~/.claude script path; instructive red: that hardcode still WORKS on the reference machine only because the canonical tree IS ~/.claude today — the exact trap the ~/.idh relocation (0978) will spring. A body hardcoding a nonexistent root answers RED-CONFIRMED [Errno 2] (captured, Pi clean profile).
+2026-09-28T07:42Z claude Action 2 decided: the minimal contract is the runtime-supplied loaded-skill path + the cd -P derivation already in the body. All three runtimes supply it natively (claude: skill injection; pi: <available_skills><location>; codex: context skill list with paths, body read by the model). IDH_HOME was needed by zero of three, so it does not exist. Action 4: the slice introduces no config value of any class — nothing relocated, no secret, no ephemeral state; the seam works under temporary HOME, spaces, quote-containing roots and nested symlinks (pinned in tests/test_skill_seam.py, 8 tests; the quote case resolves correctly, observed twice).
+2026-09-28T07:42Z claude Action 3 done: bin/idh install skill healthcheck (claude already discoverable, codex symlink created, pi discoverable); the real project-state.py then ran through all three runtimes on the live repo, each reporting git.branch=main, git.clean=true, tests.status=skip (probe without --tests): pi --print on padme, codex exec, claude --print. Clean-profile positives: a probe skill in a relocated harness tree answered PROBE-OK root=<tree> through pi 0.87.1, codex 0.157.0 and claude 2.1.283. Canary: 557 artifacts (outputs, session logs, adapter files of the three temp homes) scanned in-memory against the copied codex/claude credentials — 0 leaks; temp homes removed. Action 6: pilot-support.json extended (canonical_sources.healthcheck + 5 assertions: 2 static-test pass, 2 manual-smoke manual-only pending per the pilot convention, 1 documentation pass); schema validates; seam documented in adapters/README.md.
+2026-09-28T07:47Z Minh Ha-Duong closed — Slice complete: seam measured through claude/codex/pi (runtime-supplied path + cd -P idiom, no IDH_HOME, zero config values), healthcheck ported via bin/idh and probe run through all three runtimes, adversarial roots pinned in tests/test_skill_seam.py, pilot-support.json extended, canary clean
+--- body ---
+## Context
+
+`skills/healthcheck/SKILL.md` invokes `~/.claude/scripts/project-state.py`. Porting it is a
+concrete test of **config**: where the harness is installed and how a skill locates a bundled
+script. This ticket introduces only the path/config seam the three adapters actually need.
+It does not inventory or migrate every path in the repository.
+
+## Relevant files
+
+- `skills/healthcheck/SKILL.md` — canonical script-backed workflow
+- `scripts/project-state.py` — bundled probe invoked by the skill
+- `scripts/path_utils.py` and `scripts/bash-env.sh` — existing utilities to reuse if needed
+- `adapters/pilot-support.schema.json` and `adapters/pilot-support.json` — schema owned by
+  `0802`; this ticket extends it with the healthcheck assertions
+
+## Actions
+
+1. Record the existing Claude behavior and the exact path assumption that blocks Codex or Pi.
+2. Define the smallest configuration contract that resolves the bundled probe. Prefer a
+   native adapter base-directory facility; add `IDH_HOME` only if at least two adapters need it.
+3. Hand-port `healthcheck` to Claude Code, Codex and Pi using the contract from step 2.
+4. Classify only values introduced or consumed by this slice: versioned portable defaults,
+   explicit user/machine values, secrets, and ephemeral state. Do not relocate unrelated
+   config, secrets or state. Curated `memory/` remains tracked.
+5. Test missing, malformed, symlinked and space-containing roots before any mutation.
+6. Extend `adapters/pilot-support.json` with observed commonality and one-off adapter behavior.
+
+## Test
+
+- First add only the native discovery glue to clean Codex and Pi profiles while retaining the
+  old hard-coded script path; capture the expected path failure, then make it pass with the
+  minimal seam.
+- Use a canary secret to prove it does not appear in argv, stdout, stderr, logs or adapter files.
+
+## Verification
+
+- [x] All three adapters locate and run the same `project-state.py`
+- [x] Any new config field has documented ownership, default and precedence (vacuous: the slice adds none)
+- [x] The slice works under temporary HOME, spaces and symlinked installation paths
+- [x] Canary scans cover argv, stdout, stderr, logs and tracked outputs
+- [x] `make check` passes (static gates + check-fast locally; the full gate with the padme remote suites runs in CI on the slice PR)
+
+## Invariants
+
+- The live Claude default remains `~/.claude` and needs no build step.
+- Path/config changes never expose `.env`, widen permissions or promote ignored files.
+- Curated tracked memory and ephemeral runtime state remain distinct.
+- Stopping after this ticket leaves the Claude-only harness no worse than before.
+
+## Exit criteria
+
+- [x] Round-2 panel cleared the `needs-human` gate
+- [x] `healthcheck` works through Claude Code, Codex and Pi adapters
+- [x] The minimal config/path seam is tested and documented
+- [x] No repository-wide path API or synthetic profile product was added speculatively
