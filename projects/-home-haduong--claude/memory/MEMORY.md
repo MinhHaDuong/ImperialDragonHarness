@@ -131,3 +131,4 @@
 - [Path-scoped rules miss CLI-driven work](feedback_path_scoped_rules_miss_bash_driven_work.md)
 - [A denied merge clears on evidence, not persistence](feedback_merge_permission_needs_review_and_author_words.md)
 - [rtk: three escapes that do not move](feedback_rtk_escapes_that_do_not_move.md)
+- [Branch races, borrowed hooks, and excludes that lose to negations](feedback_privacy_session_2026-09-28.md)
