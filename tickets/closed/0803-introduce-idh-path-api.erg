@@ -2,6 +2,7 @@
 Title: Port healthcheck through config and a minimal path seam
 Created: 2026-08-28
 Author: Codex
+Closed: Slice complete: seam measured through claude/codex/pi (runtime-supplied path + cd -P idiom, no IDH_HOME, zero config values), healthcheck ported via bin/idh and probe run through all three runtimes, adversarial roots pinned in tests/test_skill_seam.py, pilot-support.json extended, canary clean
 
 --- log ---
 2026-08-28T12:57Z Codex created child of 0800
@@ -12,6 +13,7 @@ Author: Codex
 2026-09-28T07:42Z claude Action 1 recorded. Claude behavior: the skill body carries the seam (ad33697b) and Claude Code supplies the loaded skill's absolute path in its injection. The blocking assumption was the historical hard-coded ~/.claude script path; instructive red: that hardcode still WORKS on the reference machine only because the canonical tree IS ~/.claude today — the exact trap the ~/.idh relocation (0978) will spring. A body hardcoding a nonexistent root answers RED-CONFIRMED [Errno 2] (captured, Pi clean profile).
 2026-09-28T07:42Z claude Action 2 decided: the minimal contract is the runtime-supplied loaded-skill path + the cd -P derivation already in the body. All three runtimes supply it natively (claude: skill injection; pi: <available_skills><location>; codex: context skill list with paths, body read by the model). IDH_HOME was needed by zero of three, so it does not exist. Action 4: the slice introduces no config value of any class — nothing relocated, no secret, no ephemeral state; the seam works under temporary HOME, spaces, quote-containing roots and nested symlinks (pinned in tests/test_skill_seam.py, 8 tests; the quote case resolves correctly, observed twice).
 2026-09-28T07:42Z claude Action 3 done: bin/idh install skill healthcheck (claude already discoverable, codex symlink created, pi discoverable); the real project-state.py then ran through all three runtimes on the live repo, each reporting git.branch=main, git.clean=true, tests.status=skip (probe without --tests): pi --print on padme, codex exec, claude --print. Clean-profile positives: a probe skill in a relocated harness tree answered PROBE-OK root=<tree> through pi 0.87.1, codex 0.157.0 and claude 2.1.283. Canary: 557 artifacts (outputs, session logs, adapter files of the three temp homes) scanned in-memory against the copied codex/claude credentials — 0 leaks; temp homes removed. Action 6: pilot-support.json extended (canonical_sources.healthcheck + 5 assertions: 2 static-test pass, 2 manual-smoke manual-only pending per the pilot convention, 1 documentation pass); schema validates; seam documented in adapters/README.md.
+2026-09-28T07:47Z Minh Ha-Duong closed — Slice complete: seam measured through claude/codex/pi (runtime-supplied path + cd -P idiom, no IDH_HOME, zero config values), healthcheck ported via bin/idh and probe run through all three runtimes, adversarial roots pinned in tests/test_skill_seam.py, pilot-support.json extended, canary clean
 --- body ---
 ## Context
 
