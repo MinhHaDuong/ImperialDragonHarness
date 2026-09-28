@@ -1,0 +1,63 @@
+%erg 0.1
+Title: Audit reviewer seats across local CLI runtimes and model effort settings
+Created: 2026-09-28
+Author: Minh Ha-Duong
+
+--- log ---
+2026-09-28T06:41Z Minh Ha-Duong created
+
+--- body ---
+
+## Context
+
+The local machine has five possible reviewer runtimes: Mistral Vibe, Claude
+Code, Pi, Aider and Codex. A runtime can expose several models and reasoning
+effort settings, so counting CLI names is not a measure of independent review
+coverage. The existing panel in `skills/reviewers/panel.yml` and its
+`scripts/seat-runner.sh` execute sandboxed seats (see [[0205]]); the IDH
+runtime-adapter programme [[0800]] covers Claude Code, Codex, Pi and Vibe.
+This ticket audits the reviewer-seat choices across all five without
+expanding the active roster by assumption.
+
+On PR #1541 of climate-finance-het (2026-09-28), Vibe 2.25.8 was invoked
+directly with `--agent ask -p` for a read-only review. It attempted a repo
+write that the sandbox denied, then exited 0 after a partial reply rather
+than returning findings. This is a concrete completion and containment probe,
+not evidence that the runtime cannot review when configured correctly.
+
+## Actions
+
+1. Inventory the installed versions and callable reviewer modes for all five
+   runtimes on doudou and padme. For each, record available model selectors,
+   effort/reasoning controls, credential source by *name only*, and whether
+   output can be made non-interactive and machine-readable. Distinguish CLI
+   runtime, model provider and model: the same model through two CLIs is not
+   two independent reviewers.
+2. Compare each candidate mode with the existing seat-runner contract:
+   read-only OS sandbox, scoped credentials, bounded cost/turns/time, no PR
+   mutation, explicit non-zero/partial-result handling, and normalized
+   `verifiable:` / `consider:` findings with file:line evidence. Reproduce
+   and diagnose the Vibe partial-reply case.
+3. Run bounded, read-only smoke probes on one frozen public PR diff for each
+   viable runtime/model/effort combination chosen from the inventory (not the
+   full Cartesian product). Record whether the seat actually reads the diff,
+   returns a complete review, and leaves the checkout unchanged; compare
+   latency, cost and distinct verified findings. Use the existing audition
+   board when a candidate merits a broader trial.
+4. Recommend a roster of at most four complementary advisory seats, or
+   explain why the present roster should stay. Place implementation gaps in
+   scoped follow-up tickets; do not silently promote a candidate to required.
+
+## Evidence and exit criteria
+
+- [ ] A versioned matrix names Vibe, Claude Code, Pi, Aider and Codex, their
+      tested model/effort configurations, launch commands, host, limits,
+      credential *variable names*, and pass/fail reasons.
+- [ ] Each viable candidate has a reproducible, sandboxed smoke result with
+      normalized findings or an explicit failure, plus a clean-worktree check.
+- [ ] The Vibe PR #1541 partial reply is classified with a reproducer and a
+      completion check that would reject an exit-0 non-review.
+- [ ] The roster recommendation cites independence and cost/latency evidence
+      and identifies the owner ticket for every gap left open.
+- [ ] `erg check tickets` passes; no credential value or private PR content is
+      committed to the audit artifacts.
