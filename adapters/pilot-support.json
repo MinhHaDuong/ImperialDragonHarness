@@ -425,7 +425,7 @@
       "slice": "dirty-reset-guard",
       "harness": "codex",
       "harness_version": "codex 0.158.0",
-      "assertion": "Codex skips non-managed hooks until their exact definition is reviewed and trusted (hash-recorded; /hooks), so an untrusted guard silently does not run - trust is part of the enforcing boundary for the one wired dirty-reset guard. Trust authenticates the hook definition, NOT the script it invokes; the persistent /hooks path is documentation-only evidence (the 2026-09-28 smoke used --dangerously-bypass-hook-trust).",
+      "assertion": "Codex skips non-managed hooks until their exact definition is reviewed and trusted (hash-recorded in config.toml [hooks.state]; the startup dialog or /hooks). Measured 2026-09-28: after the author's trust, codex exec without any bypass flag blocks a dirty reset; and a STALE trusted_hash (status Modified) makes the hook silently skipped in exec - observed live, the guard did not fire until re-trusted. Trust authenticates the hook definition, NOT the script it invokes.",
       "source_concept": "activation of enforcement requires an explicit trust step",
       "native_expression": "hook trust recorded per hash; /hooks browser; --dangerously-bypass-hook-trust",
       "disposition": "harness-specific",

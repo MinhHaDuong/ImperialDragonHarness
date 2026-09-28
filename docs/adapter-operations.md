@@ -99,9 +99,15 @@ nothing retargets it behind your back.
   guardrail, not a complete boundary.
 - Codex hook trust authenticates the **hook definition**, not the script it
   invokes: a changed `guard-destructive-bash.sh` does not untrust the hook.
-  The script's integrity is the harness checkout's business (git + CI), and
-  the persistent `/hooks` trust path is documentation-only evidence — the
-  2026-09-28 smoke used `--dangerously-bypass-hook-trust`.
+  The script's integrity is the harness checkout's business (git + CI).
+  Trust is recorded as `[hooks.state."<hooks.json>:pre_tool_use:0:0"]
+  trusted_hash` in `~/.codex/config.toml` — never through the symlink into
+  the repo file (measured 2026-09-28). **A stale hash (status Modified) is
+  silently skipped in `codex exec`** — observed live: the guard did not fire
+  until the trust was re-recorded. After a recorded trust, `codex exec`
+  without any bypass flag blocks a dirty reset (verified on the fixture).
+  Re-trust after touching `hooks.json`, and preflight the guard before
+  relying on it.
 - **Hook timeout is fail-open** (measured 2026-09-28: a hook sleeping past
   its timeout does not block the command). The wiring budget is 8s; the
   guard's per-`git` subprocess timeout is 4s, so one slow repo check fits

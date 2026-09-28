@@ -60,3 +60,20 @@ Verdict of record: the Codex hook wiring is approved with findings, the
 findings are dispositioned above, and the two survive-as-documentation
 items (trust scope, timeout fail-open) live in the runbook the operator
 actually reads.
+
+## Postscript, same day: the author's trust, exercised and measured
+
+The author approved the hook. Codex's startup review dialog ("Trust all
+and continue" — our guard was the one hook pending) was driven over a real
+pty, the trust landed in `~/.codex/config.toml` under
+`[hooks.state]` with a `trusted_hash`, and `codex exec` **without any
+bypass flag** then blocked a dirty reset on the fixture.
+
+Finding 7 of this review ("the persistent /hooks trust path was never
+exercised empirically") is closed. And the exercise surfaced a sharper
+version of finding 1: the first trust attempt recorded a hash that a
+later session computed differently, the mismatching status (Modified) made
+the hook **silently skipped in exec** — no warning, no block, the reset
+would have run. The runbook now carries both facts: trust is
+hash-recorded per definition, and a stale hash silently disables the
+guard. Preflight before relying on it.
