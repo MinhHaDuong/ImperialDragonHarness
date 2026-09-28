@@ -1,6 +1,6 @@
 ---
 name: reference-nextcloud-tasks
-description: "Accès CalDAV à la liste de tâches Nextcloud de l'auteur (serveur, compte, où est le secret, quelle liste)"
+description: "How to work with the author's Nextcloud tasks and contacts over CalDAV/CardDAV — behavior and pitfalls; access details are private (tier-2)"
 metadata: 
   node_type: memory
   type: reference
@@ -8,30 +8,22 @@ metadata:
   modified: 2026-08-10T18:53:40.649Z
 ---
 
-Liste de tâches Nextcloud de l'auteur, accessible en CalDAV depuis doudou :
+The author's task list and address books live on a personal Nextcloud instance,
+reachable over CalDAV/CardDAV from doudou. Server URL, account, credential
+location, and endpoints are tier-2 personal data — they are deliberately NOT
+recorded here.
 
-- Serveur : `https://nx11797.your-storageshare.de` (Hetzner Storage Share)
-- Compte : `Admin` ; app-password dans le trousseau GNOME (schema
-  `org.qt.keychain`, attribut
-  `user=Admin_app-password:https://nx11797.your-storageshare.de/:0`,
-  valeur encodée base64) — lisible via `secretstorage`, ne jamais l'afficher.
-  **Deux items du trousseau matchent ce préfixe ; seul le premier est valide**
-  (le second donne 401) — itérer et s'arrêter au premier qui s'authentifie,
-  avec fallback `raw.decode()` si le base64 ne décode pas en UTF-8.
-- Liste acceptant les VTODO : « Personnel » →
-  `/remote.php/dav/calendars/Admin/personal/`
-  (l'autre calendrier, anniversaires, n'accepte que VEVENT).
-- Créer une tâche : PUT d'un VTODO sur
-  `.../personal/<uuid>.ics` (HTTP 201). Vérifié 2026-08-10 (rappel
-  « Envoyer les dossiers du livre », DUE 2026-09-01).
-- Nextcloud n'émet pas de notification fiable sur les VALARM de VTODO ;
-  pour un vrai rappel, doubler d'un email (msmtp configuré sur doudou,
-  compte ouvaton, from minh@haduong.com) ou d'un cron.
+Behavioral knowledge that does not depend on the specifics:
 
-CardDAV (mêmes identifiants) — carnets d'adresses :
-- Actif : « Contacts » → `/remote.php/dav/addressbooks/users/Admin/contacts-propre/`
-  (~1 850 fiches). Archive figée 2026-02 : `.../contacts/` (~2 100 fiches) — ne pas modifier.
-- Recherche : REPORT `addressbook-query` avec `prop-filter name="FN"` ;
-  création/fusion : PUT/DELETE de `.vcf` individuels. Vérifié 2026-08-10.
-- Avant toute mutation de masse : backup intégral
-  (`~/.local/state/carnet/*.vcf`, passe de dédoublonnage 2026-08-10).
+- The tasks instance accepts VTODO on one calendar only; the other calendar
+  (birthdays) accepts only VEVENT. Create a task with a PUT of a VTODO on
+  `.../<list>/<uuid>.ics` (expect HTTP 201). Verified 2026-08-10.
+- Nextcloud does not reliably notify on VTODO VALARMs; for a real reminder,
+  double the task with an email or a cron.
+- CardDAV: search via REPORT `addressbook-query` with `prop-filter name="FN"`;
+  create/merge via PUT/DELETE of individual `.vcf`. Before any mass mutation,
+  take a full backup first (a dedup pass ran 2026-08-10).
+- Two keyring items may match the credential's lookup prefix while only the
+  first is valid (the second gives 401) — iterate and stop at the first that
+  authenticates, with a `raw.decode()` fallback if the stored value does not
+  decode as expected. Never display the credential.

@@ -3,12 +3,22 @@
 The harness is a PUBLIC repo. Personal information is managed in three tiers:
 
 - **T1 — semi-public identifiers** (contact addresses, ORCID, homepage, public
-  key IDs): allowed in the repo.
+  key IDs, institutional contacts of professional correspondents): allowed in
+  the repo.
 - **T2 — access topology and administrative references** (mail/IMAP/SMTP hosts
   and ports, login aliases, credential-file locations and inventories,
-  keyring-extraction procedures, local identity-document paths): never
-  committed. Write them to `~/.config/harness/private/` (mode 700, outside the
-  repo) and reference that path.
+  keyring-extraction procedures, personal cloud endpoints, network/firewall
+  posture of personal machines, FTP deploy credentials, local
+  identity-document paths): never committed. Write them to
+  `~/.config/harness/private/` (mode 700, outside the repo); the runtime
+  discovers the private skills by symlink — repo files carry NO pointers to
+  them, and .gitignore excludes the symlinks.
+- **T2+ — financial and real-estate dossiers, third-party private identities**
+  (property addresses, auction/bidding ceilings, personal amounts, and the
+  names/addresses of private third parties — notaries, syndics, occupants,
+  agents): never committed, not even as pointers. The private `directory`
+  skill holds who-is-who data; in repo memory, redact such names as
+  `[tiers — directory skill]` or drop the memory entirely.
 - **T3 — secrets** (passwords, keys, tokens): never in the repo, never in
   agent-visible text; keystore only.
 

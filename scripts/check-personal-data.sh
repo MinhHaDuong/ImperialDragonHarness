@@ -16,9 +16,12 @@ fi
 # the CI fixtures that exercise it) never contains the literal T2 strings and
 # does not flag itself.
 HOSTS_PAT='(imap|smtp)\.(cnrs''\.fr|ouvaton''\.coop|centre-cired''\.fr|orange''\.fr)'
+BARE_HOSTS_PAT='ouvaton''\.coop|your-storageshare''\.de'
 ALIAS_PAT='ods''\.services'
-KEYRING_PAT='secret-tool'' lookup'' e-source-uid'
-PATTERN="${HOSTS_PAT}|${ALIAS_PAT}|${KEYRING_PAT}"
+KEYRING_PAT='secret-tool'' lookup'' e-source-uid|app-password'' at'' .*keychain'
+NET_PAT='ufw.*Net''Bird|Net''Bird.*ufw'
+NAMES_PAT='Aristide''-Briand|109''694|cdim''-immo|Me'' MOROT|Me'' Orhon|Mme'' Xiao'
+PATTERN="${HOSTS_PAT}|${BARE_HOSTS_PAT}|${ALIAS_PAT}|${KEYRING_PAT}|${NET_PAT}|${NAMES_PAT}"
 
 fail=0
 for target in "${TARGETS[@]}"; do

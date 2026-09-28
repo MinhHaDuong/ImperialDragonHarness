@@ -46,14 +46,10 @@ Repo repo `~/CNRS/projets/actifs/climate-finance-het` (same path as doudou; `~/C
   cron or `sudo loginctl enable-linger haduong` (ticket 1141).
 - `.env` sets `PYTEST_WORKERS=16` (full suite 2 min 21 s vs 4 min 33 s at 4;
   24 is slower). doudou stays at the default 4.
-- `~/.config/keys/archive.env` (Internet Archive S3 keys) copied from doudou.
 - The primary checkout may sit on another session's branch; run probes in a
   throwaway worktree, and expect a fresh worktree to need `dvc checkout
   --force` (the hook's JETP documents read as "unsaved") and to fail the two
   corpus freshness tests on mtime order (ticket 1060).
 
-**Merged from `feedback_ssh_padme` (2026-09-25):** Non-interactive ssh skips the profile: ssh padme 'PATH=$HOME/.local/bin:$PATH <cmd>'; never claim padme is unreachable.
 
-**Merged from `feedback_worktree_guard_usr_bin_git` (2026-09-25):** Remote git on padme: the guard refuses any command text containing git, including ssh padme '... git ...'. Write the remote script to a scratchpad file and run ssh padme bash -s < <file>.
 
-**Merged from `reference_doudou_apt_sources_after_release_upgrade` (2026-09-25):** padme's ufw admits ssh only from NetBird (100.64.0.0/10): if ssh padme times out, compare NetBird versions on both peers and check /etc/apt/sources.list.d/*.disabled after a release upgrade.
