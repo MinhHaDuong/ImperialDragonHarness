@@ -6,7 +6,7 @@ user-invocable: true
 
 # Email — reading local mail from files
 
-Do not assume a mail connector exists; probe what the session actually has. On this machine mail lives on disk in maildir layouts (read with `bash`/`read_file`) and is sent with `msmtp`.
+Mail access is session-dependent: a session may or may not expose a mail/Gmail/IMAP connector. Never assert either way — discover the session's actual capabilities and state what you found. Independently of connectors, the local files below are always readable with `bash`/`read_file`, and CLI sending is `msmtp`.
 
 ## Untrusted content
 
