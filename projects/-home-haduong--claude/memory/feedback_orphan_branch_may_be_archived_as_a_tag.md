@@ -2,7 +2,10 @@
 name: orphan-branch-may-be-archived-as-a-tag
 description: "A local branch with a gone upstream and unmerged commits is not necessarily the only copy — this repo archives triaged branches as archive/<branch> tags, and the tag decides whether deleting is safe"
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: a95acc0c-93a7-40c6-a5da-918792871fb3
+  modified: 2026-09-24T16:17:47.062Z
 ---
 
 A local branch whose upstream is `gone` and whose commits are **not** ancestors
@@ -36,6 +39,27 @@ report which tag holds it. Absence of a tag keeps the old rule intact — do not
 delete, because then the local branch really may be the only copy (`t0802-perch-adapters`
 in that same sweep had a closed PR, a live remote branch, and no archive tag,
 so it was left alone).
+
+**Absence of a tag is not the end of the check — trace the ticket forward.**
+`t0802-perch-adapters` resurfaced in a `/molt` sweep on 2026-09-24, still with
+no tag, its PR (#780) still closed not merged. Rather than leaving it flagged
+again, read what actually closed its ticket: the successor PR's own diff. Its
+current `adapters/perch.py` docstring opened with "Ticket 0802, second
+attempt... Three decisions, each one a defect of PR #780 turned around" — the
+rewrite names the rejected branch and its defect (an assertion where the fix
+needed a creation) in the code itself, not just the PR body. The same pattern
+closed `origin/t0425-typo-fine-finition` the same day: PR #984's body says
+outright "The archived `archive/t0425-typo-fine-finition` commit was used as a
+blueprint" and states why its design was rejected. A branch that fails both the
+ancestor probe and the tag check is not automatically "leave for review" — find
+the PR that actually closed the ticket (the ticket's `Closed:` header names it)
+and read its body and diff for an explicit supersession statement. Tag and
+delete once found; the report gets a reason, not a shrug. `t-orphan-process-detection`
+is the same shape one layer up: no successor branch at all, because the
+author's own PR comment (WONTMERGE) named exactly what was salvaged (one
+memory note) and what replaced the approach (a `PreToolUse` guard, not the
+rejected detector) — reading PR comments, not just merged diffs, closes cases
+a diff search alone would still flag as ambiguous.
 
 Two smaller things the same episode settled:
 

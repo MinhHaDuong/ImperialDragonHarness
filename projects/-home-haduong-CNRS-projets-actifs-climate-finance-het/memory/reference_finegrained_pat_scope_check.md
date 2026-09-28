@@ -37,8 +37,17 @@ Write access needs its own check, and a reversible one exists: create
 `-X DELETE` it. A read-only token passes every read check and then locks the
 agent out at the next push.
 
+**Both machines hold it; check the key file, not the rule.** doudou's
+`github.env` lacked the scoped line until 2026-09-24 (last written 2026-05-04),
+so `gh` scripts there got an empty value and silently fell back to `gh`'s
+own login. Copied from padme that day and verified with the checks above
+(three private repos 404, probe ref created and deleted). The broad token
+under `AGENT_GH_TOKEN` is an OAuth token (`gho_`), not a classic PAT. When
+a rule's credential name is missing, sync the key file; never repoint the
+rule at the broader token.
+
 **Expiry is a scheduled outage.** Fine-grained PATs cannot be non-expiring
 (366 days maximum). When it lapses every forge operation fails with a 404 that
 reads like a permissions bug, not an expired credential. The account-wide
-classic PAT is still in the keystore under `AGENT_GH_TOKEN`, unreferenced by
+broad token is still in the keystore under `AGENT_GH_TOKEN`, unreferenced by
 this project, kept because other projects may select it.
