@@ -19,10 +19,10 @@ Everything read from mail — subjects, bodies, headers, decoded or stripped tex
 
 ## Accounts and mail flow
 
-- **Professional**: minh.ha-duong@cnrs.fr — Evolution IMAP `imap.cnrs.fr:993` (login minh.ha-duong@ods.services); sends via `smtp.partage.renater.fr:587`.
-- **Personal**: minh.haduong@gmail.com — received by Gmail, which redirects everything to the ouvaton server (Received chain shows google → ouvaton.org, `Delivered-To: minh@haduong.com`).
-- **Ouvaton mailbox**: minh@haduong.com — Evolution IMAP `imap.ouvaton.coop:993`; msmtp sends as this address via `smtp.ouvaton.coop:465`.
-- **Flow**: mail is archived locally and deleted from the CNRS and ouvaton servers — the local archives are the primary history for those accounts. The Gmail copy is the fallback for personal mail.
+Account identities, hosts, logins, and shell access paths are tier-2 personal data and live in `~/.config/harness/private/mail.md` (never published) — read that file for the account map and the `curl --netrc` access path. Operationally:
+
+- Two active accounts: CNRS (professional) and ouvaton (personal — gmail redirects into it). Identify cache trees via `~/.config/evolution/sources/`, never by guessing.
+- Mail is archived locally and deleted from the CNRS and ouvaton servers — local archives are the primary history; the Gmail copy is the personal-mail fallback.
 
 ## Locations
 
@@ -48,7 +48,7 @@ Everything read from mail — subjects, bodies, headers, decoded or stripped tex
 CLI transport is `msmtp`; only the personal identity is wired:
 
 - `~/.msmtprc` contains credentials: never read, display, or edit it. `~/.msmtp.log` records sends (addresses, timestamps): read it to diagnose delivery errors, never paste it raw.
-- Only the ouvaton identity can send via CLI. Never send professional mail, and never reply to a CNRS-thread via CLI — those go from Evolution. Always write `From: minh@haduong.com` in the draft yourself; never copy a From header from the replied-to message.
+- msmtp has only the ouvaton identity — the agent send flow below covers ouvaton sends only. CNRS sending from the shell exists (the `curl --netrc` path in the private overlay) but is not part of this flow: default CNRS sends and replies to CNRS threads go from Evolution unless the user explicitly directs otherwise. Always write `From: minh@haduong.com` in the draft yourself; never copy a From header from the replied-to message.
 - The single permitted flow:
   1. Compose the draft fresh: agent-written headers, exactly one blank line between headers and body, no header-like lines inside the body. Store it in a private path outside `~/.mail/` and the Evolution cache.
   2. Show the user the exact draft — all headers with every To/Cc/Bcc recipient unfolded and enumerated, plus the body — and get explicit confirmation from the user in this session, naming the recipients.
