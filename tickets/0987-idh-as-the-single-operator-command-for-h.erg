@@ -8,6 +8,7 @@ Author: claude
 
 2026-09-29T12:59Z claude note Roar 2026-09-29: scripts/bashrc-loader.sh has a start marker but no end marker, so an in-place update must guess where the block ends. Replacing to EOF dropped padme's trailing zotero alias today (restored from backup). idh install must replace the block between explicit begin/end markers and verify the lines outside it are unchanged.
 2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; bin/install-cron dropped from exit criterion 2 (strict subset).
+2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files and line references verified (test_mammoth_audit.py:138, test_projection_validator.py:218, test_idh_pointer_hooks.py:121); projections.json holds exactly two installer fields naming install-wirings.sh; docs/adapter-operations.md has 7 mentions; systemd/ holds the two idh-mammoth-audit units. Two PRs only, so no Phase 5.0 coordination PR.
 --- body ---
 
 ## Context

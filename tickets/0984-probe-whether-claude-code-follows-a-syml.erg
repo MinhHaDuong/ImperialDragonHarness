@@ -7,6 +7,7 @@ Author: claude
 2026-09-29T08:27Z claude created child of 0978
 
 2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; cwd-key probe moves into the disposable HOME.
+2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files exist; new files (scripts/probe-memory-symlink.sh, tests/test_probe_memory_symlink.py) do not; touches no file 0987 edits. WARN: if the probe script needs a tests/test_idh_root_literals.py allowlist entry, that file is also edited by 0987; rebase at merge.
 --- body ---
 
 ## Context
