@@ -224,15 +224,26 @@ def test_sync_fast_forwards_or_names_the_blocking_file(tmp_path, machine):
     assert r.returncode == 0, r.stdout + r.stderr
     assert (local / "notes.md").read_text() == "incoming\n"
 
-    # The script moves main by ref when HEAD is elsewhere; HEAD itself stays behind.
+    # HEAD on another branch, origin/HEAD unset: the script moves main by ref,
+    # and success is judged on main, the branch it syncs.
     _git(local, "switch", "-q", "-c", "side")
+    _git(local, "remote", "set-head", "origin", "--delete")
     (upstream / "more.md").write_text("more\n")
     _git(upstream, "add", "more.md")
     _git(upstream, "commit", "-qm", "more")
     _git(upstream, "push", "-q", "origin", "HEAD:main")
     r = sync()
+    assert r.returncode == 0, r.stdout + r.stderr
+    main = subprocess.run(["git", "-C", str(local), "rev-parse", "main", "origin/main"],
+                          capture_output=True, text=True, check=True).stdout.split()
+    assert main[0] == main[1]
+
+    script = local / "scripts" / "sync-local-main.sh"
+    script.chmod(0o644)  # not executable: a named error, not a traceback
+    r = sync()
     assert r.returncode == 1
-    assert "HEAD still 1 commit(s) behind origin/main" in r.stderr
+    assert "idh sync: cannot run" in r.stderr and "Traceback" not in r.stderr
+    script.chmod(0o755)
 
     origin.rename(tmp_path / "gone.git")  # offline: a skipped sync is not a success
     r = sync()
@@ -314,7 +325,7 @@ def test_failed_replace_leaves_bashrc_byte_identical(tmp_path, monkeypatch, caps
     assert lifecycle.install_loader() == 1
     assert "simulated crash" in capsys.readouterr().err
     assert bashrc.read_bytes() == b"alias keep=me\r\n"
-    assert not list(home.glob(".bashrc.idh-tmp-*")), "temp file left behind"
+    assert not list(home.glob("*idh-tmp-*")), "temp file left behind"
 
 
 @pytest.mark.parametrize("shape", ["read-only", "directory"])
@@ -376,3 +387,42 @@ def test_symlinked_bashrc_is_rewritten_at_its_target(machine):
     assert idh("install").returncode == 0
     assert (home / ".bashrc").is_symlink()
     assert real.read_text() == "alias a=b\n" + LOADER
+
+
+@pytest.mark.parametrize("failing_call", [1, 2], ids=["backup-fsync", "temp-fsync"])
+def test_failed_write_leaves_no_copy_of_bashrc(tmp_path, monkeypatch, failing_call):
+    """A partial copy of ~/.bashrc may hold secrets: nothing is left behind."""
+    home = tmp_path / "home"
+    home.mkdir()
+    bashrc = home / ".bashrc"
+    bashrc.write_bytes(b"export SECRET=x\n")
+    lifecycle = _lifecycle(monkeypatch, home)
+    real_fsync, calls = lifecycle.os.fsync, []
+
+    def fsync(fd):
+        calls.append(fd)
+        if len(calls) == failing_call:
+            raise OSError("simulated disk error")
+        return real_fsync(fd)
+
+    monkeypatch.setattr(lifecycle.os, "fsync", fsync)
+    assert lifecycle.install_loader() == 1
+    assert bashrc.read_bytes() == b"export SECRET=x\n"
+    assert not list(home.glob("*idh-tmp-*"))
+    if failing_call == 1:
+        assert not list(home.glob(".bashrc.idh-bak-*")), "partial backup left"
+
+
+def test_short_writes_still_yield_complete_files(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    bashrc = home / ".bashrc"
+    bashrc.write_bytes(b"alias keep=me\n")
+    lifecycle = _lifecycle(monkeypatch, home)
+    real_write = lifecycle.os.write
+    monkeypatch.setattr(lifecycle.os, "write", lambda fd, data: real_write(fd, bytes(data[:10])))
+    assert lifecycle.install_loader() == 0
+    monkeypatch.undo()
+    assert bashrc.read_text() == "alias keep=me\n" + LOADER
+    (backup,) = home.glob(".bashrc.idh-bak-*")
+    assert backup.read_bytes() == b"alias keep=me\n"

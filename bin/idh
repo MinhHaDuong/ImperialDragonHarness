@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Manage the harness on this machine (ticket 0987); project skills (0802).
 
-idh install | check [RUNTIME] | status | sync   the machine (adapters/lifecycle.py)
-idh install|uninstall|status|relocate skill ...  and  idh check harness X   (adapters/perch.py)
+idh install           links from adapters/projections.json, ~/.bashrc loader, timer
+idh check [RUNTIME]   every manifest entry (or one runtime's); names each culprit
+idh status            installed vs declared, timer state, distance to origin
+idh sync              scripts/sync-local-main.sh: fast-forwards the local default
+                      branch (main); exit 0 only when it equals origin's, whatever
+                      branch HEAD is on; otherwise names what blocks it
+idh install|uninstall|status|relocate skill ...  and  idh check harness X  (perch.py)
 """
 
 import sys
@@ -12,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "adapters"))
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if args[:1] in (["-h"], ["--help"]):
+        print(__doc__)
     if args in (["install"], ["status"], ["sync"]) or (
         args[:1] == ["check"] and args[1:2] != ["harness"]
     ):

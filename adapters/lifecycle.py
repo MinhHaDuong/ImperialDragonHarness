@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -98,37 +99,52 @@ def _span(text: bytes):
     return start, stop
 
 
-def _create(path: Path, data: bytes, mode: int) -> None:
-    """Write a NEW file with exactly `mode` (never wider than its source) and
-    fsync it; O_EXCL, so an existing file is never overwritten."""
-    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
+def _fill(fd: int, data: bytes, mode: int) -> None:
+    """Set `mode` (the source's, never wider), write every byte, fsync."""
+    os.fchmod(fd, mode)
+    view = memoryview(data)
+    while view:  # os.write may write less than asked
+        view = view[os.write(fd, view):]
+    os.fsync(fd)
+
+
+def _write_new(path: Path, fd: int, data: bytes, mode: int) -> None:
+    """Fill a freshly created file; on any failure remove it, since a
+    partial copy of ~/.bashrc may hold secrets."""
     try:
-        os.fchmod(fd, mode)
-        os.write(fd, data)
-        os.fsync(fd)
-    finally:
-        os.close(fd)
+        try:
+            _fill(fd, data, mode)
+        finally:
+            os.close(fd)
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
 
 
 def _backup(dest: Path, data: bytes, mode: int) -> Path:
+    """O_EXCL with a counter: two installs in one second keep both copies."""
     stem = dest.with_name(f"{dest.name}.idh-bak-{time.strftime('%Y%m%dT%H%M%S')}")
     for n in range(1000):
         path = stem if n == 0 else stem.with_name(f"{stem.name}.{n}")
         try:
-            _create(path, data, mode)
-            return path
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             continue
+        _write_new(path, fd, data, mode)
+        return path
     raise FileExistsError(f"no free backup name beside {stem}")
 
 
 def _replace(dest: Path, data: bytes, mode: int) -> None:
-    """Atomic rewrite: a same-directory temp file, fsynced, renamed over."""
-    tmp = dest.with_name(f".{dest.name}.idh-tmp-{os.getpid()}")
-    _create(tmp, data, mode)
+    """Atomic rewrite: a unique 0600 temp file beside dest, filled, renamed
+    over; any failure removes the temp file."""
+    prefix = "." + dest.name.lstrip(".") + ".idh-tmp-"  # hidden, never "..bashrc"
+    fd, name = tempfile.mkstemp(dir=dest.parent, prefix=prefix)
+    tmp = Path(name)
+    _write_new(tmp, fd, data, mode)
     try:
         os.replace(tmp, dest)
-    except OSError:
+    except BaseException:
         tmp.unlink(missing_ok=True)
         raise
 
@@ -227,23 +243,34 @@ def distance():
 
 
 def sync() -> int:
-    """sync-local-main.sh unchanged: it fast-forwards, or names what blocks."""
-    run = subprocess.run([str(REPO / "scripts" / "sync-local-main.sh"), str(REPO)],
-                         capture_output=True, text=True)
+    """Run sync-local-main.sh unchanged; it fast-forwards the local default
+    branch (main) or names what blocks it. Success means that branch now
+    equals its origin counterpart, whatever branch HEAD is on."""
+    script = REPO / "scripts" / "sync-local-main.sh"
+    try:
+        run = subprocess.run([str(script), str(REPO)], capture_output=True, text=True)
+    except OSError as exc:
+        print(f"idh sync: cannot run {script}: {exc}", file=sys.stderr)
+        return 1
     print(run.stdout, end="")
     # The script always exits 0 (it serves hooks); its words carry the verdict.
     if any(w in run.stdout for w in ("skipped", "left untouched", "refused", "could not")):
         print("idh sync: the checkout was not synced (see above)", file=sys.stderr)
         return 1
-    # Measure what the script synced, origin's default branch, against the
-    # checked-out HEAD: the harness runs from HEAD.
-    default = _git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
-    behind = default and _git("rev-list", "--count", f"HEAD..{default}")
-    if not behind:
-        print("idh sync: cannot tell how far HEAD is from origin", file=sys.stderr)
+    # The branch the script chose: origin/HEAD's, else main, else master.
+    head = _git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    if head:
+        branch = head.split("/", 1)[1]
+    else:
+        has_main = _git("show-ref", "--verify", "--quiet", "refs/heads/main") is not None
+        branch = "main" if has_main else "master"
+    behind = _git("rev-list", "--count", f"refs/heads/{branch}..refs/remotes/origin/{branch}")
+    if behind is None:
+        print(f"idh sync: cannot compare {branch} with origin/{branch}", file=sys.stderr)
         return 1
     if behind != "0":
-        print(f"idh sync: HEAD still {behind} commit(s) behind {default}", file=sys.stderr)
+        print(f"idh sync: {branch} still {behind} commit(s) behind origin/{branch}",
+              file=sys.stderr)
         return 1
     return 0
 
