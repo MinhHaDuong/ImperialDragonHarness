@@ -28,7 +28,10 @@ in the child's environment only: never on argv, written to disk or printed. No k
 probe exits "could not look: no API key"; it never copies a credential file.
 The rig's `.claude.json` is a minimal file (an empty `projects` object, mode
 600), never a copy of the live one, which carries MCP servers and account data.
-Sentinels are random per run and never printed.
+Sentinels are random per run and never printed. Proxy and CA variables
+(HTTPS_PROXY and friends) pass through when set, so an inherited HTTPS proxy
+is trusted with the API key exactly as the parent session trusts it: it sees
+the authenticated requests.
 """
 
 import argparse
@@ -201,23 +204,42 @@ PASSTHROUGH = (
 )
 
 
-def _launch(rig_home: Path, cwd: Path, pwd: Path, key: str) -> Launch:
-    """One headless session with a minimal environment: no parent-session variables leak in.
-
-    --strict-mcp-config with no config starts no MCP server at all. The child
-    runs in its own process group, so a timeout kills everything it spawned.
-    `pwd` only sets the PWD variable, which is what a shell `cd` (link) or
-    `cd -P` (target) would hand over; getcwd() is physical either way.
-    """
+def _child_env(rig_home: Path, pwd: Path | None = None) -> dict:
+    """The allowlisted environment every `claude` child gets: nothing else leaks in."""
     env = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
         "HOME": str(rig_home),
         "TERM": "dumb",
         "LANG": "C.UTF-8",
-        "PWD": str(pwd),
         **{k: os.environ[k] for k in PASSTHROUGH if k in os.environ},
-        "ANTHROPIC_API_KEY": key,
     }
+    if pwd is not None:
+        env["PWD"] = str(pwd)
+    return env
+
+
+def _kill_group(proc: subprocess.Popen) -> None:
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def _launch(rig_home: Path, cwd: Path, pwd: Path, key: str) -> Launch:
+    """One headless session with a minimal environment: no parent-session variables leak in.
+
+    --strict-mcp-config with no config starts no MCP server at all. The child
+    runs in its own process group. A timeout, a signal turned into SystemExit, or
+    Ctrl-C kills that whole group before the rig is removed, so no `claude`
+    outlives the run with the key in its environment. `pwd` only sets the PWD
+    variable, which is what a shell `cd` (link) or `cd -P` (target) would hand
+    over; getcwd() is physical either way.
+    """
+    env = {**_child_env(rig_home, pwd), "ANTHROPIC_API_KEY": key}
     try:
         proc = subprocess.Popen(
             ["claude", "-p", PROMPT, "--model", MODEL, "--strict-mcp-config"],
@@ -234,9 +256,11 @@ def _launch(rig_home: Path, cwd: Path, pwd: Path, key: str) -> Launch:
     try:
         out, _ = proc.communicate(timeout=_timeout())
     except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, signal.SIGKILL)
-        proc.communicate()
+        _kill_group(proc)
         return Launch("", "timeout")
+    except BaseException:
+        _kill_group(proc)
+        raise
     return Launch(out, f"exit {proc.returncode}")
 
 
@@ -312,12 +336,21 @@ def _cwd_key_confirmed(base: Path, live_home: Path, logical: bool, key: str) -> 
 
 
 def _version() -> str:
-    try:
-        return subprocess.run(
-            ["claude", "--version"], capture_output=True, text=True, timeout=30
-        ).stdout.strip()
-    except (OSError, subprocess.TimeoutExpired):
-        return "unknown"
+    """`claude --version` in a throwaway HOME with the allowlisted env and no key:
+    even this call is not launched against the real HOME."""
+    with tempfile.TemporaryDirectory(prefix="probe-0984-version-") as h:
+        try:
+            return subprocess.run(
+                ["claude", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=h,
+                env=_child_env(Path(h)),
+                stdin=subprocess.DEVNULL,
+            ).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            return "unknown"
 
 
 def _memory_case(base: Path, mode: str, live_home: Path, key: str):

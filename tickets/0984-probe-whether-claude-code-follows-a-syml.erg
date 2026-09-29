@@ -12,6 +12,7 @@ Author: claude
 2026-09-29T13:39Z claude note Review round 1 fixes: a failed or timed-out launch now reads 'launch failed', never 'not loaded'; MCP servers off (--strict-mcp-config); SIGTERM still cleans the rig; live .claude.json keys checked too. Re-run on 2.1.284: same verdict.
 2026-09-29T13:44Z claude note Author directives on PR #1061 applied: credentials-file fallback removed (no key means could-not-look); rig .claude.json is minimal, not a copy; key resolved through the keystore reader, child env only; launch exit code and timeout recorded, and a negative needs one retry that agrees. Live re-run on claude 2.1.284: control loaded, symlink loaded, cwd key physical for both $PWD forms, no live HOME entries.
 2026-09-29T14:03Z claude note Correction to the 13:39Z entry: a failed or timed-out launch prints 'could not look (<status>)', not 'launch failed'. Round-2 review fixes: repository env variables stripped when the rig creates its repos, any keystore failure maps to no-key, timeouts kill the child's process group, SIGHUP cleans the rig too, proxy and CA variables pass through, argparse entry point; Verdict reworded (tagged-entries scope, PWD-only launches, repo-root mechanism labelled as observed, run count). Live re-run on claude 2.1.284: same verdict, live HOME tagged entries none.
+2026-09-29T14:16Z claude note Run tally (all on claude 2.1.284, all the same table): the script ran seven times, namely twice before the 13:26Z note, once after the label rename, and once each after review round 1, the author directives, review round 2 and review round 3. The gated live test (IDH_LIVE_PROBE=1, which runs the whole probe and asserts the control) ran four times: before 13:26Z, after the directives, after round 2 and after round 3. Round-3 fixes: the whole child group is killed on any interrupt, not only on timeout; the version query runs in a throwaway HOME with the allowlisted env and no key; the docstring says an inherited HTTPS proxy sees the key.
 --- body ---
 
 ## Context
@@ -115,12 +116,13 @@ verdict only for the `~/.claude` manifest row.
 ## Verdict (claude 2.1.284, 2026-09-29)
 
 Probe: `scripts/probe-memory-symlink.py`. The offline tests and a live test gated on
-`IDH_LIVE_PROBE=1` are in `tests/test_probe_memory_symlink.py`. Nine live runs gave the
-same table: six of the script and three of the gated test. The last script run and the
-last test run came after both review rounds and the author directives, which brought the
-minimal `.claude.json`, no MCP servers, the keystore-resolved key, process-group timeouts,
-and "could not look" for any launch that was not clean. Every result was a positive from
-a clean exit-0 launch, so no negative ever needed its confirming retry.
+`IDH_LIVE_PROBE=1` are in `tests/test_probe_memory_symlink.py`. Seven script runs and four
+gated-test runs all gave the same table; the log's run-tally note lists them. The last
+of each came after all three review rounds and the author directives. Those brought the
+minimal `.claude.json`, no MCP servers, the keystore-resolved key, and a process-group
+kill on timeout or interrupt. They also made any launch that was not clean read "could
+not look". Every result was a positive from a clean exit-0 launch, so no negative ever
+needed its confirming retry.
 
 - **Why the 2026-09-28 control never fired (observed while building the probe, not
   measured by the script).** An exploratory disposable-HOME session asked for its

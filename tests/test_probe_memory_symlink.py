@@ -9,9 +9,11 @@ skipped unless IDH_LIVE_PROBE=1 (network, Anthropic auth, a few haiku calls).
 
 import importlib.util
 import os
+import signal
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -270,3 +272,136 @@ def test_cwd_key_none_needs_a_retry_that_agrees(
 def test_live_probe_control_fires():
     report = pm.run_probe()
     assert report["control"] == "loaded", report
+
+
+# --- round-2/3 hardening, each fix pinned ----------------------------------
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    # A zombie still answers kill(0); it holds no environment and runs nothing.
+    try:
+        return Path(f"/proc/{pid}/stat").read_text().split()[2] != "Z"
+    except OSError:
+        return False
+
+
+@pytest.fixture
+def sleeping_claude(tmp_path):
+    """A fake `claude` that records its pid and a grandchild's, then sleeps."""
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    pids = tmp_path / "pids"
+    fake = bindir / "claude"
+    fake.write_text(
+        f"#!/bin/sh\necho $$ > {pids}\nsleep 60 &\necho $! >> {pids}\nwait\n"
+    )
+    fake.chmod(0o755)
+    return bindir, pids
+
+
+def _wait_for_pids(pids: Path, n: int = 2) -> list[int]:
+    for _ in range(200):
+        if pids.exists():
+            got = [int(x) for x in pids.read_text().split()]
+            if len(got) >= n:
+                return got
+        time.sleep(0.05)
+    pytest.fail("the fake claude never recorded its pids")
+
+
+def _wait_dead(pid_list: list[int]) -> list[int]:
+    for _ in range(100):
+        alive = [p for p in pid_list if _alive(p)]
+        if not alive:
+            return []
+        time.sleep(0.05)
+    return alive
+
+
+@pytest.mark.integration
+def test_timeout_kills_the_whole_child_group(tmp_path, sleeping_claude, monkeypatch):
+    bindir, pids = sleeping_claude
+    monkeypatch.setenv("PATH", f"{bindir}:{os.environ['PATH']}")
+    monkeypatch.setenv("PROBE_TIMEOUT", "1")
+    launch = pm._launch(tmp_path, cwd=tmp_path, pwd=tmp_path, key="k")
+    assert launch.status == "timeout"
+    assert _wait_dead(_wait_for_pids(pids)) == []
+
+
+@pytest.mark.integration
+def test_sigterm_kills_the_child_group_before_exit(tmp_path, sleeping_claude):
+    """The probe gets SIGTERM mid-launch; afterwards no child of the group is alive."""
+    bindir, pids = sleeping_claude
+    driver = tmp_path / "driver.py"
+    driver.write_text(
+        "import importlib.util, signal, sys\n"
+        "from pathlib import Path\n"
+        f"spec = importlib.util.spec_from_file_location('pm', {str(SCRIPT)!r})\n"
+        "pm = importlib.util.module_from_spec(spec); spec.loader.exec_module(pm)\n"
+        "signal.signal(signal.SIGTERM, lambda n, f: sys.exit(128 + n))\n"
+        f"h = Path({str(tmp_path)!r})\n"
+        "pm._launch(h, cwd=h, pwd=h, key='k')\n"
+    )
+    env = {
+        **os.environ,
+        "PATH": f"{bindir}:{os.environ['PATH']}",
+        "PROBE_TIMEOUT": "60",
+    }
+    proc = subprocess.Popen([sys.executable, str(driver)], env=env)
+    got = _wait_for_pids(pids)
+    proc.send_signal(signal.SIGTERM)
+    assert proc.wait(timeout=20) == 128 + signal.SIGTERM
+    assert _wait_dead(got) == []
+
+
+def test_version_runs_outside_the_real_home_without_the_key(monkeypatch):
+    seen = {}
+
+    def fake_run(cmd, *a, **kw):
+        seen.update(cmd=cmd, env=kw.get("env"), cwd=kw.get("cwd"))
+        return subprocess.CompletedProcess(cmd, 0, "9.9.9 (fake)\n", "")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "must-not-pass")
+    monkeypatch.setattr(pm.subprocess, "run", fake_run)
+    assert pm._version() == "9.9.9 (fake)"
+    env = seen["env"]
+    assert env is not None, "the parent env was inherited whole"
+    assert env["HOME"] != str(Path.home()) and env["HOME"] == seen["cwd"]
+    assert "ANTHROPIC_API_KEY" not in env
+    assert set(env) <= {"PATH", "HOME", "TERM", "LANG", *pm.PASSTHROUGH}
+
+
+def test_child_env_passes_proxy_and_nothing_else(monkeypatch, tmp_path):
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.setenv("GIT_DIR", "/nowhere")
+    env = pm._child_env(tmp_path, tmp_path)
+    assert env["HTTPS_PROXY"] == "http://proxy.invalid:3128"
+    assert "CLAUDECODE" not in env and "GIT_DIR" not in env
+
+
+def test_rig_repo_ignores_an_inherited_git_dir(tmp_path, live, monkeypatch):
+    elsewhere = tmp_path / "elsewhere.git"
+    monkeypatch.setenv("GIT_DIR", str(elsewhere))
+    rig = pm.build_rig(tmp_path / "rig", "SENT-G", mode="real", live_home=live)
+    assert (rig.work / ".git").is_dir()
+    assert not elsewhere.exists()
+
+
+def test_any_keystore_failure_means_no_key(monkeypatch, key_file):
+    def broken():
+        raise SyntaxError("peer_review.py does not parse")
+
+    monkeypatch.setattr(pm, "_keystore", broken)
+    assert pm.resolve_api_key(key_file) is None
+
+
+def test_entry_point_has_argparse_help(capsys):
+    with pytest.raises(SystemExit) as e:
+        pm.main(["--help"])
+    assert e.value.code == 0
+    assert "usage:" in capsys.readouterr().out
