@@ -7,7 +7,6 @@ its argv: nothing touches the developer's HOME, ~/.bashrc or systemd.
 """
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
