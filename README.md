@@ -79,34 +79,47 @@ dividing by 4, which understated every channel by about 45%.
 
 ## Installation
 
-1. Clone the repo as your `~/.claude` directory:
-   ```bash
-   git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
-   ```
-   Then create the harness pointer `~/.idh` (ticket 0982):
-   ```bash
-   ln -s "$HOME/.claude" "$HOME/.idh"
-   ```
-   Harness wiring (hooks, `BASH_ENV`, shell init, timers, the Codex and Pi
-   adapters) names the checkout as `~/.idh`. Paths that are Claude Code's own
-   native root (`~/.claude/projects/`, `~/.claude/settings.json`) keep their
-   `~/.claude` spelling. The pointer lets the checkout later leave `~/.claude`
-   (tracker 0978) without chasing callers.
+On a new machine, two commands, then a new shell:
+```bash
+git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
+~/.claude/bin/idh install
+```
 
-2. Create `~/.idh/.env` with your API keys (this file is gitignored):
-   ```
-   ANTHROPIC_API_KEY=sk-...
-   OPENAI_API_KEY=sk-...
-   ```
+`idh install` (ticket 0987) sets up everything declared in
+`adapters/projections.json` and nothing else:
 
-3. Install the dev dependencies (PyYAML is needed by `make skills-catalog` and the pre-commit hook, pytest by every `make` test gate):
-   ```bash
-   pip install --user -r ~/.idh/requirements-dev.txt
-   ```
-   On a PEP 668 externally-managed Python (Debian 12+, Ubuntu 23.04+), install into a venv or via `pipx` instead.
+- the links: the harness pointer `~/.idh`, the Codex and Pi guard links, the
+  shared skills, and `~/.local/bin/idh` itself;
+- the loader block `scripts/bashrc-loader.sh`, written into `~/.bashrc`
+  between its `>>>` and `<<<` marker lines. The previous file is kept as
+  `~/.bashrc.idh-bak`, and every byte outside the markers is verified
+  unchanged. An old block without markers is refused with the manual step;
+  zsh users copy the block into `~/.zshrc` by hand;
+- the monthly audit timer, when `systemctl` is present.
 
-4. Copy the loader block `scripts/bashrc-loader.sh` verbatim, from its `>>>` marker line to its `<<<` marker line, into your `~/.bashrc` (or `~/.zshrc`); do not source it from the checkout.
-   It sources `scripts/shell-init.sh`, which wraps `claude`, `codex` and `pi`: before each launch, `scripts/validate-projections.py` checks every link declared in `adapters/projections.json` and refuses to start, naming the culprit and its repair, when one is missing, dangling or foreign (ticket 0983). If the checkout itself is unreachable, the loader's stubs refuse instead of letting the runtimes start without their guards. The bypass is explicit and logged: `IDH_SKIP_VALIDATE=1 codex ...` appends to `~/.local/state/idh/validate-bypass.log`. The `claude` wrapper also skips permission prompts and auto-names each session after the current git repo. The wrappers live in the harness, so they update on every pull. They guard interactive shells only: systemd units, scripts and headless callers that exec a runtime by absolute path, through `env`, or from a non-interactive shell bypass them. `idh install` creates the Codex and Pi guard links; without them their launch is refused because the guard link is MISSING.
+It never overwrites: a real file or a foreign link where a link belongs is
+named, left alone, and makes the run exit non-zero. Rerunning it is safe.
+Day to day: `idh check [RUNTIME]` names each broken link with its repair,
+`idh status` shows installed vs declared and the distance to origin, and
+`idh sync` fast-forwards the checkout or names the files in the way.
+
+Harness wiring (hooks, `BASH_ENV`, shell init, timers, the Codex and Pi
+adapters) names the checkout as `~/.idh` (ticket 0982). Paths that are Claude
+Code's own native root (`~/.claude/projects/`, `~/.claude/settings.json`) keep
+their `~/.claude` spelling. The pointer lets the checkout later leave
+`~/.claude` (tracker 0978) without chasing callers. Hooks and skills call
+scripts by path, never through `idh`.
+
+The loader sources `scripts/shell-init.sh`, which wraps `claude`, `codex` and `pi`: before each launch, `scripts/validate-projections.py` checks every link declared in `adapters/projections.json` and refuses to start, naming the culprit and its repair, when one is missing, dangling or foreign (ticket 0983). If the checkout itself is unreachable, the loader's stubs refuse instead of letting the runtimes start without their guards. The bypass is explicit and logged: `IDH_SKIP_VALIDATE=1 codex ...` appends to `~/.local/state/idh/validate-bypass.log`. The `claude` wrapper also skips permission prompts and auto-names each session after the current git repo. The wrappers live in the harness, so they update on every pull. They guard interactive shells only: systemd units, scripts and headless callers that exec a runtime by absolute path, through `env`, or from a non-interactive shell bypass them.
+
+Two optional extras:
+
+- API keys in `~/.idh/.env` (gitignored), one `NAME=value` line each, e.g.
+  `ANTHROPIC_API_KEY=sk-...`.
+- The dev dependencies (PyYAML for `make skills-catalog` and the pre-commit
+  hook, pytest for every `make` test gate):
+  `pip install --user -r ~/.idh/requirements-dev.txt`. On a PEP 668
+  externally-managed Python (Debian 12+, Ubuntu 23.04+), use a venv or `pipx`.
 
 Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 
