@@ -1,4 +1,4 @@
-"""Harness lifecycle on one machine: `idh install | check` (ticket 0987).
+"""Harness lifecycle on one machine: `idh install | check | status | sync` (0987).
 
 The operator's command, not the runtimes': hooks and skills keep calling
 scripts by path. adapters/projections.json is the one list of links, so
@@ -152,11 +152,62 @@ def install() -> int:
     return install_links(root()) | install_loader() | install_timers()
 
 
+def _git(*args):
+    r = subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def distance():
+    """(ahead, behind) of HEAD against its upstream, as of the last fetch."""
+    counts = _git("rev-list", "--left-right", "--count", "HEAD...@{upstream}")
+    return tuple(int(n) for n in counts.split()) if counts else None
+
+
+def sync() -> int:
+    """sync-local-main.sh unchanged: it fast-forwards, or names what blocks."""
+    subprocess.run([str(REPO / "scripts" / "sync-local-main.sh"), str(REPO)])
+    gap = distance()
+    if gap is None:
+        print("idh sync: no upstream to compare with", file=sys.stderr)
+        return 1
+    if gap[1]:
+        print(f"idh sync: still {gap[1]} commit(s) behind upstream", file=sys.stderr)
+        return 1
+    return 0
+
+
+def status() -> int:
+    """Installed vs declared, timer state, distance to origin."""
+    base, listed, tally = root(), entries(), {"ok": 0, "absent": 0, "broken": 0}
+    for entry in listed:
+        path, target = V.expand(entry["path"], base), V.expand(entry["target"], base)
+        problem = V.check_entry(entry, base)
+        if problem:
+            state = problem[0]
+        else:
+            state = "ok" if path.is_symlink() or path.exists() else "absent"
+        tally["broken" if problem else state] += 1
+        print(f"{state:8} {path} -> {target}")
+    timer = "no systemctl"
+    if shutil.which("systemctl"):
+        run = subprocess.run(["systemctl", "--user", "is-enabled", TIMER],
+                             capture_output=True, text=True)
+        timer = run.stdout.strip() or "unknown"
+    print(f"timer    {TIMER}: {timer}")
+    gap = distance()
+    print("origin   no upstream" if gap is None
+          else f"origin   ahead {gap[0]}, behind {gap[1]} (as of the last fetch)")
+    print(f"declared {len(listed)}, " + ", ".join(f"{k} {n}" for k, n in tally.items()))
+    return 1 if tally["broken"] else 0
+
+
 def main(argv) -> int:
     command, *rest = argv
     try:
         if command == "check":
             return check(*rest[:1])
+        if command in ("sync", "status"):
+            return globals()[command]()
         return install()
     except V.ManifestError as exc:
         print(f"idh: adapters/projections.json is unusable: {exc}", file=sys.stderr)

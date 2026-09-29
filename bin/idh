@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Manage the harness on this machine (ticket 0987); project skills (0802).
 
-idh install | check [RUNTIME]          links, loader block, timers (adapters/lifecycle.py)
+idh install | check [RUNTIME] | status | sync   the machine (adapters/lifecycle.py)
 idh install|uninstall|status|relocate skill ...  and  idh check harness X   (adapters/perch.py)
 """
 
@@ -12,7 +12,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "adapters"))
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if args == ["install"] or (args[:1] == ["check"] and args[1:2] != ["harness"]):
+    if args in (["install"], ["status"], ["sync"]) or (
+        args[:1] == ["check"] and args[1:2] != ["harness"]
+    ):
         from lifecycle import main
     else:
         from perch import main

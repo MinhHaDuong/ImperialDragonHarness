@@ -149,3 +149,76 @@ def test_legacy_loader_is_refused_not_guessed(machine, legacy):
     assert r.returncode == 1
     assert "remove the old harness loader block" in r.stderr
     assert bashrc.read_text() == legacy + "alias zotero=z\n"
+
+
+def test_status_reports_installed_vs_declared(machine):
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    r = idh("status")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"declared {len(MANIFEST)}, ok " in r.stdout
+    assert f"ok       {home / '.codex' / 'hooks.json'} -> " in r.stdout
+    assert "timer    idh-mammoth-audit.timer:" in r.stdout
+    assert "origin   " in r.stdout
+
+    hooks = home / ".codex" / "hooks.json"
+    hooks.unlink()
+    r = idh("status")
+    assert r.returncode == 1
+    assert f"MISSING  {hooks} -> " in r.stdout
+    assert "broken 1" in r.stdout
+
+
+SYNC_FILES = (
+    "bin/idh",
+    "adapters/lifecycle.py",
+    "adapters/projections.json",
+    "scripts/validate-projections.py",
+    "scripts/sync-local-main.sh",
+)
+
+
+def _git(cwd, *args):
+    subprocess.run(
+        ["git", "-C", str(cwd), "-c", "user.name=t", "-c", "user.email=t@t",
+         "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main", *args],
+        check=True, capture_output=True, text=True,
+    )
+
+
+def test_sync_fast_forwards_or_names_the_blocking_file(tmp_path, machine):
+    """The padme case: an untracked file where an incoming one lands."""
+    origin, upstream, local = tmp_path / "origin.git", tmp_path / "up", tmp_path / "local"
+    _git(tmp_path, "init", "-q", "--bare", str(origin))
+    _git(tmp_path, "clone", "-q", str(origin), str(upstream))
+    for rel in SYNC_FILES:
+        (upstream / rel).parent.mkdir(parents=True, exist_ok=True)
+        (upstream / rel).write_bytes((REPO / rel).read_bytes())
+        (upstream / rel).chmod((REPO / rel).stat().st_mode)
+    _git(upstream, "add", "-A")
+    _git(upstream, "commit", "-qm", "base")
+    _git(upstream, "push", "-q", "origin", "HEAD:main")
+    _git(tmp_path, "clone", "-q", str(origin), str(local))
+
+    (upstream / "notes.md").write_text("incoming\n")
+    _git(upstream, "add", "notes.md")
+    _git(upstream, "commit", "-qm", "notes")
+    _git(upstream, "push", "-q", "origin", "HEAD:main")
+    (local / "notes.md").write_text("mine, untracked\n")
+
+    def sync():
+        return subprocess.run(
+            [sys.executable, str(local / "bin" / "idh"), "sync"],
+            env=machine["env"], capture_output=True, text=True, timeout=60,
+        )
+
+    r = sync()
+    assert r.returncode == 1
+    assert "notes.md" in r.stdout
+    assert "still 1 commit(s) behind" in r.stderr
+    assert (local / "notes.md").read_text() == "mine, untracked\n"
+
+    (local / "notes.md").unlink()  # positive control: the blocker gone, sync lands
+    r = sync()
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (local / "notes.md").read_text() == "incoming\n"
