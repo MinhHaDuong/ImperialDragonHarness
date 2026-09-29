@@ -1,0 +1,68 @@
+%erg 0.1
+Title: idh as the single operator command for harness lifecycle
+Created: 2026-09-29
+Author: claude
+
+--- log ---
+2026-09-29T12:39Z claude created child of 0978; author decision 2026-09-29: idh is the one command the author types to manage the harness on a machine, not a dispatcher for the harness's own scripts
+
+--- body ---
+
+## Context
+
+`bin/idh` exists (`adapters/perch.py`, 512 lines, ticket 0802) with `install`,
+`uninstall`, `status`, `relocate` and `check` — but only for skill discovery.
+It is not on PATH, not documented in the README, and called by path from two
+scripts. Every other lifecycle job has its own entry point:
+
+| Job | Today |
+|---|---|
+| Skills visible to each runtime | `idh install/uninstall/status` |
+| Hooks, settings, config links | `adapters/install-wirings.sh` |
+| Pre-launch link check | `scripts/validate-projections.py` (0983) |
+| `~/.bashrc` loader block | copied by hand from `scripts/bashrc-loader.sh` |
+| Timers | `bin/install-cron`, `scripts/install-mammoth-audit-timer.sh`, `claude-refresh` unit |
+| Checkout update | `scripts/sync-local-main.sh`, `claude-harness-pull` |
+| Relocation | none yet (0985/0986) |
+
+`install-wirings.sh` and `adapters/projections.json` keep two separate lists of
+links, which can drift.
+
+## Decision (author, 2026-09-29)
+
+Three layers, each with one job:
+
+1. **The author, managing a machine** — `idh install | check | status | sync | relocate`.
+   Installed by `~/.idh/bin/idh install`, which also links itself into
+   `~/.local/bin/idh`. On a new host: clone, then that one command.
+2. **The runtimes (hooks, skills, gates)** — keep calling scripts by direct path
+   under `~/.idh/scripts/`. Not routed through `idh`: that would add a single
+   point of failure and startup cost to every hook.
+3. **The rescue path** — the refusing stubs in the `~/.bashrc` loader block and
+   the printed `ln -sfn` repairs. Must work when `~/.idh` itself is broken, so it
+   never depends on `idh`.
+
+Optional: git-style dispatch (`idh foo` runs `scripts/idh-foo`) for occasional
+manual scripts; author convenience only.
+
+## Constraints
+
+- A merge, not a new layer (harness cool-down): each old entry point is deleted as
+  its job moves into `idh`. If the first pass does not shrink the total, stop and
+  report.
+- `projections.json` is the one list: `idh install` creates exactly what `idh check`
+  verifies.
+- Codex hooks: an untrusted or changed definition silently runs no guard; any
+  change to `adapters/codex/hooks.json` needs a `/hooks` re-trust and a fresh
+  `codex exec` block probe in the same step.
+- Read what the existing `idh relocate` does before extending it.
+
+## Exit criteria
+
+- [ ] `~/.idh/bin/idh install` on a disposable HOME installs skills, wirings, the loader block and timers from `projections.json`, and links `~/.local/bin/idh`; `idh check` passes right after (positive control), and fails with a named culprit after one planted broken link (negative control)
+- [ ] `install-wirings.sh`, `bin/install-cron`, the timer installer and the manual loader copy are removed or reduced to a one-line call to `idh`; net line count of the replaced entry points goes down
+- [ ] `idh sync` fast-forwards the checkout and, when it cannot, names the blocking files (the padme case of 2026-09-29)
+- [ ] `idh status` reports installed vs declared and distance to origin
+- [ ] README installation section is the two-command bootstrap
+- [ ] Hooks and skills still call scripts by path; no hook routes through `idh`
+- [ ] `make check` passes
