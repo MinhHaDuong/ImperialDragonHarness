@@ -92,7 +92,7 @@ git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
   shared skills, and `~/.local/bin/idh` itself;
 - the loader block `scripts/bashrc-loader.sh`, written into `~/.bashrc`
   between its `>>>` and `<<<` marker lines. The previous file is kept as
-  `~/.bashrc.idh-bak`, and every byte outside the markers is verified
+  `~/.bashrc.idh-bak-<timestamp>`, and every byte outside the markers is verified
   unchanged. An old block without markers is refused with the manual step;
   zsh users copy the block into `~/.zshrc` by hand;
 - the monthly audit timer, when `systemctl` is present.
