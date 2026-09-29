@@ -53,7 +53,7 @@ ALLOWED = [
      "describes where the checkout sits until 0986"),
     ("adapters/README.md", "| Claude Code | `$HOME/.claude/skills` |",
      "Claude Code's personal-skills scan root"),
-    ("adapters/README.md", "For the planned `~/.claude` → `~/.idh` move",
+    ("adapters/README.md", "For the `~/.claude` → `~/.idh` move (0986",
      "names the move itself"),
     ("adapters/claude-code/README.md", "the harness repository *is* `~/.claude`",
      "plugin discovery happens under Claude Code's native skills root"),

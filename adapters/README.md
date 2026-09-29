@@ -108,7 +108,7 @@ whose text exactly names `<old>/skills/<name>`. A link from another checkout or
 an unmanaged directory is refused. Codex and Pi share one target; the command
 updates it once. Missing or already current links need no retargeting. Run
 `bin/idh install skill <names>` afterward to create any missing Claude Code
-projections. For the planned `~/.claude` → `~/.idh` move, the old Claude Code
+projections. For the `~/.claude` → `~/.idh` move (0986, by hand: `docs/idh-cutover-checklist.md`), the old Claude Code
 directories will disappear with the checkout, while the neutral links remain
 and need retargeting. No skill depends on `bin/idh` being on `PATH` at runtime:
 helper commands resolve from the loaded skill file.
