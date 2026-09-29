@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
 
+2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; cwd-key probe moves into the disposable HOME.
 --- body ---
 
 ## Context
@@ -26,3 +27,24 @@ orphaning `-home-haduong--claude/` (this project's memory) and the 6 path-keyed 
 - [ ] The same sentinel is tested through a symlinked `projects/X/memory/`; verdict recorded with the runtime version
 - [ ] The cwd-key question is settled: which path key a session in a symlinked vs real `~/.idh` uses, and the chosen remedy (rename, link, or re-key `~/.claude.json`)
 - [ ] Fallback decided if links are not followed (leave `projects/` in place, project only top-level entries)
+
+## Imagine annotation (raid 2026-09-29)
+
+Simplest path, exit criteria unchanged:
+- **Memory through a link** stays a live disposable-HOME experiment, positive
+  control first: the 2026-09-28 real-file control never fired, so no shortcut.
+- **The cwd key is mostly settled by inspection.** `projects/<slug>` is the cwd
+  with `/` and `.` turned into `-` (`/home/haduong/.claude` gives
+  `-home-haduong--claude`); `~/.claude.json`'s `projects` object keys by the raw
+  absolute path. The one open fact is physical versus logical cwd: does a session
+  launched from `~/.idh` (a symlink to `~/.claude`) key under the resolved or the
+  typed path.
+
+Constraint from the Blind-Spot pass: **that launch must not run against the live
+home.** From the real `~/.idh` it would create `projects/-home-haduong--idh/`, add
+a `~/.claude.json` entry and open a session with the live hooks. Run it in the
+disposable HOME with its own `~/.idh` symlink and a copy of `~/.claude.json`, and
+list any entries the probe created.
+
+Coupling: 0987 treats the manifest's `~/.claude` entry as provisional until this
+ticket reports; if memory links are not followed, 0985 re-derives it.

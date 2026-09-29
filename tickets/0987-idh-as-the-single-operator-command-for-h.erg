@@ -7,6 +7,7 @@ Author: claude
 2026-09-29T12:39Z claude created child of 0978; author decision 2026-09-29: idh is the one command the author types to manage the harness on a machine, not a dispatcher for the harness's own scripts
 
 2026-09-29T12:59Z claude note Roar 2026-09-29: scripts/bashrc-loader.sh has a start marker but no end marker, so an in-place update must guess where the block ends. Replacing to EOF dropped padme's trailing zotero alias today (restored from backup). idh install must replace the block between explicit begin/end markers and verify the lines outside it are unchanged.
+2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; bin/install-cron dropped from exit criterion 2 (strict subset).
 --- body ---
 
 ## Context
@@ -61,9 +62,47 @@ manual scripts; author convenience only.
 ## Exit criteria
 
 - [ ] `~/.idh/bin/idh install` on a disposable HOME installs skills, wirings, the loader block and timers from `projections.json`, and links `~/.local/bin/idh`; `idh check` passes right after (positive control), and fails with a named culprit after one planted broken link (negative control)
-- [ ] `install-wirings.sh`, `bin/install-cron`, the timer installer and the manual loader copy are removed or reduced to a one-line call to `idh`; net line count of the replaced entry points goes down
+- [ ] `install-wirings.sh`, the timer installer and the manual loader copy are removed or reduced to a one-line call to `idh`; net line count of the replaced entry points goes down (`bin/install-cron` dropped from scope by the 2026-09-29 raid Imagine pass: it installs the `bin/snapshot` telemetry cron, has no callers, and is not part of harness install)
 - [ ] `idh sync` fast-forwards the checkout and, when it cannot, names the blocking files (the padme case of 2026-09-29)
 - [ ] `idh status` reports installed vs declared and distance to origin
 - [ ] README installation section is the two-command bootstrap
 - [ ] Hooks and skills still call scripts by path; no hook routes through `idh`
 - [ ] `make check` passes
+
+## Imagine annotation (raid 2026-09-29)
+
+Not monster-shaped: about 136 lines absorbed (`adapters/install-wirings.sh` 120,
+`scripts/install-mammoth-audit-timer.sh` 16); the doc and test propagation is the
+ordinary multiplier, not a dependency chain.
+
+Simplest path:
+1. Give `scripts/bashrc-loader.sh` an explicit END marker; `idh install` splices
+   between the markers and proves the lines outside are byte-identical to a backup
+   (see the 2026-09-29 log note on padme).
+2. `idh install` creates each `projections.json` entry from its structured fields
+   (`mkdir -p` + `os.symlink`), reusing `validate-projections.py`'s read side.
+3. `idh check` wraps `scripts/validate-projections.py`, all runtimes by default.
+4. `idh sync` wraps `scripts/sync-local-main.sh` unchanged; `idh status` is new
+   but small (installed vs declared, distance to origin).
+5. Delete `install-wirings.sh` and the timer installer once absorbed.
+
+Out of scope, stated so it cannot creep in: extending `idh relocate` (today it
+retargets skill links only; the full move is 0985/0986); the `idh foo` dispatch;
+`bin/install-cron`.
+
+Constraints from the Blind-Spot pass:
+- **Never execute manifest text.** The repair strings contain the free-form
+  `installer` field, and the checkout auto-pulls from origin. `idh install` acts
+  on structured fields only, never `sh -c` on a string.
+- **The `~/.claude` manifest entry is provisional until 0984 reports.** If native
+  memory is not followed through links, 0985 re-derives it; 0987 must not bake in
+  today's meaning.
+- **Rewrite the `installer` fields** that name `install-wirings.sh` in the same
+  commit that deletes it, so no refusal prints a dead repair.
+- **Systemd units:** on doudou, `claude-telemetry-prune.service` (hardcodes
+  `%h/.claude/telemetry`) and `claude-refresh.timer` name `.claude`; padme has
+  none; no crontab on either host. The plan states which units `idh install`
+  owns; ones it does not own are listed for 0985/0986.
+- **padme runs Python 3.12.3** (doudou 3.14.4); `validate-projections.py` and
+  `adapters/perch.py` byte-compile there. New code stays 3.12-compatible, with a
+  test run under 3.12 if available.
