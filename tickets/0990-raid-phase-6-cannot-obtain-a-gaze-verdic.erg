@@ -21,9 +21,10 @@ review verdict from either run:
   did not run. Verdict ESCALATE.
 - **PR #1060** (16 files): `/gaze` stopped at its 15-file size breaker
   (`skills/gaze/SKILL.md`, `circuit_breaker: un-reviewable`) before reviewing
-  anything. Nothing in raid Phases 3-4 had compared the planned PR's file count
-  with that breaker, although an ordinary ticket with its docs and tests reached
-  16 files.
+  anything. The raid's monster-ticket check (Phase 1) sizes the ticket, not the
+  planned PR; nothing in Phases 3-4 compared the planned PR's file count with
+  that breaker, although an ordinary ticket with its docs and tests reached 16
+  files.
 
 Both PRs merged on author decisions, backed by three `/review-pr` rounds from
 `/hunt`, and for #1060 a targeted review of the unreviewed range. The raid's own
@@ -39,7 +40,7 @@ Two defects, one contract:
 
 ## Exit criteria
 
-- [ ] A raid's Phase 6 yields a real `/gaze` verdict (panel ran, gate ran) for a PR under the size breaker, demonstrated on a fixture PR; or the raid skill states the launch shape that does (for example `/gaze` run by the orchestrator itself, or a headless `claude -p "/gaze N"` session), with the reason
+- [ ] The raid skill prescribes a Phase 6 launch shape that yields a real `/gaze` verdict (panel ran, gate ran) for a PR under the size breaker — for example `/gaze` run by the orchestrator itself, or a headless `claude -p "/gaze N"` session — with the reason, and one observed run recorded in the log
 - [ ] Raid Phase 4 (or Phase 3) flags a planned PR whose file count reaches the `/gaze` breaker, and proposes the split before execution
-- [ ] A `/gaze` that cannot run its battery says so in one line naming the cause (guard, missing Agent tool, depth), distinct from a review finding
+- [ ] A `/gaze` that cannot run its battery says so in one line naming the cause (guard, missing Agent tool, depth), distinct from a review finding (coordinate with 0853 action 2c, which owns the NOT-RUN signal for the cwd pin)
 - [ ] `make check` passes

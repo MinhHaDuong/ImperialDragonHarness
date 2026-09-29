@@ -6,7 +6,7 @@ Author: claude
 --- log ---
 2026-09-04T07:41Z claude created
 
-2026-09-29T15:50Z claude note 2026-09-29 raid 0984/0987, PR #1061: /gaze launched from a raid background agent hit this defect again — the isolation guard blocked every git command and write aimed at the review worktree, two of three review agents stopped, verdict ESCALATE (PANEL-INTEGRITY: DEGRADED). Raid-level contract filed separately (see the new ticket from the same raid).
+2026-09-29T15:50Z claude note 2026-09-29 raid 0984/0987, PR #1061: /gaze launched from a raid background agent hit this defect again — the isolation guard blocked every git command and write aimed at the review worktree, two of three review agents stopped, verdict ESCALATE (PANEL-INTEGRITY: DEGRADED). Raid-level contract filed separately as 0990.
 --- body ---
 ## Context
 
