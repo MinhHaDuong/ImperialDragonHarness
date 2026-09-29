@@ -492,7 +492,7 @@ _BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[
 # that freed `/memory` for the built-in, so the bare pattern would no longer
 # reach it — but the anchor stays: `.claude/memory/` still has to be told apart
 # from every other `memory/` segment on a path.
-_MEM_PATH = re.compile(r"(?:projects/[^/\s\"]+|\.claude)/memory/([A-Za-z0-9_.-]+)\.md")
+_MEM_PATH = re.compile(r"(?:projects/[^/\s\"]+|\.claude|\.idh)/memory/([A-Za-z0-9_.-]+)\.md")
 
 
 def usage(args):

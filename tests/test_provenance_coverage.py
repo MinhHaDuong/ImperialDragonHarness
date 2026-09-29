@@ -98,6 +98,8 @@ def test_usage_path_pattern_ignores_the_memory_skill():
         "/home/x/.claude/projects/-home-x-proj/memory/feedback_a.md"
     ).group(1) == "feedback_a"
     assert provenance._MEM_PATH.search("/home/x/.claude/memory/reference_b.md").group(1) == "reference_b"
+    # Reads through the ~/.idh pointer count too (ticket 0982).
+    assert provenance._MEM_PATH.search("/home/x/.idh/memory/reference_c.md").group(1) == "reference_c"
 
 
 def test_backfill_is_idempotent_and_keeps_the_decay_clock(tmp_path, monkeypatch):
