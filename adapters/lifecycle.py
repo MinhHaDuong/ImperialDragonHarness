@@ -70,8 +70,62 @@ def check(runtime=None) -> int:
     return 1 if failures else 0
 
 
+BEGIN, END = "# >>> Imperial Dragon Harness loader", "# <<< Imperial Dragon Harness loader"
+
+
+def _span(text: str):
+    """(start, end) offsets of the marked block, None when absent; raises
+    ValueError on a begin marker with no end marker after it."""
+    start = text.find(BEGIN)
+    if start < 0:
+        return None
+    end = text.find(END, start)
+    if end < 0:
+        raise ValueError("begin marker without an end marker")
+    stop = text.find("\n", end)
+    return start, len(text) if stop < 0 else stop + 1
+
+
+def install_loader() -> int:
+    """Splice scripts/bashrc-loader.sh into ~/.bashrc between its markers,
+    proving every byte outside them unchanged (padme, 2026-09-29)."""
+    rc_file = Path(os.environ["HOME"]) / ".bashrc"
+    block = (REPO / "scripts" / "bashrc-loader.sh").read_text()
+    old = rc_file.read_text() if rc_file.exists() else ""
+    manual = (f"  remove the old harness loader block from {rc_file} by hand "
+              f"(it ends at `|| _idh_stubs`), then rerun idh install")
+    try:
+        span = _span(old)
+    except ValueError as exc:
+        print(f"idh: loader NOT installed: {rc_file}: {exc}\n{manual}", file=sys.stderr)
+        return 1
+    base = old
+    if span is None:
+        if "_idh_refuse" in old or "_idh_unreachable" in old:
+            print(f"idh: loader NOT installed: {rc_file} holds a pre-marker "
+                  f"loader block\n{manual}", file=sys.stderr)
+            return 1
+        base += "\n" if old and not old.endswith("\n") else ""
+        span = (len(base), len(base))
+    if base[span[0]:span[1]] == block:
+        return 0
+    backup = rc_file.with_name(".bashrc.idh-bak")
+    backup.write_text(old)
+    outside = (base[: span[0]], base[span[1]:])
+    rc_file.write_text(outside[0] + block + outside[1])
+    new = rc_file.read_text()
+    kept = _span(new)
+    if kept is None or (new[: kept[0]], new[kept[1]:]) != outside:
+        rc_file.write_text(old)
+        print(f"idh: loader splice altered lines outside the markers; {rc_file} "
+              f"restored from {backup}", file=sys.stderr)
+        return 1
+    print(f"installed: loader block in {rc_file} (previous copy: {backup})")
+    return 0
+
+
 def install() -> int:
-    return install_links(root())
+    return install_links(root()) | install_loader()
 
 
 def main(argv) -> int:

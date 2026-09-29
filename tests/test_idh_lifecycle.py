@@ -98,3 +98,53 @@ def test_install_is_idempotent_and_refuses_foreign_files(machine):
 def test_skill_subcommands_still_reach_perch(machine):
     r = machine["idh"]("check", "harness", "pi", "--version", "0.99.0")
     assert "pi:" in r.stdout + r.stderr
+
+
+LOADER = (REPO / "scripts" / "bashrc-loader.sh").read_text()
+
+
+def test_loader_file_is_delimited_by_its_markers():
+    lines = LOADER.splitlines()
+    assert lines[0].startswith("# >>> Imperial Dragon Harness loader")
+    assert lines[-1].startswith("# <<< Imperial Dragon Harness loader")
+
+
+def test_loader_splice_keeps_every_user_line(machine):
+    """The padme case: a user alias AFTER the block must survive the update."""
+    home, idh = machine["home"], machine["idh"]
+    bashrc = home / ".bashrc"
+    stale = LOADER.replace("_idh_stubs\n", "_idh_stubs  # stale\n", 1)
+    before, after = "export EDITOR=vi\n", "alias zotero='zotero --no-remote'\n"
+    bashrc.write_text(before + stale + after)
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert bashrc.read_text() == before + LOADER + after
+    assert (home / ".bashrc.idh-bak").read_text() == before + stale + after
+
+    snapshot = bashrc.stat().st_mtime_ns
+    assert idh("install").returncode == 0
+    assert bashrc.stat().st_mtime_ns == snapshot, "a rerun rewrote ~/.bashrc"
+
+
+def test_loader_is_appended_when_absent(machine):
+    home, idh = machine["home"], machine["idh"]
+    bashrc = home / ".bashrc"
+    bashrc.write_text("alias ll='ls -l'")  # no final newline
+    assert idh("install").returncode == 0
+    assert bashrc.read_text() == "alias ll='ls -l'\n" + LOADER
+
+
+@pytest.mark.parametrize(
+    "legacy",
+    [LOADER.split("\n", 1)[1].rsplit("# <<<", 1)[0],  # pre-marker block
+     LOADER.rsplit("# <<<", 1)[0]],  # begin marker, end marker lost
+    ids=["pre-marker", "no-end-marker"],
+)
+def test_legacy_loader_is_refused_not_guessed(machine, legacy):
+    home, idh = machine["home"], machine["idh"]
+    bashrc = home / ".bashrc"
+    bashrc.write_text(legacy + "alias zotero=z\n")
+    r = idh("install")
+    assert r.returncode == 1
+    assert "remove the old harness loader block" in r.stderr
+    assert bashrc.read_text() == legacy + "alias zotero=z\n"
