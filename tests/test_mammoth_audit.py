@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 import shlex
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -134,8 +135,10 @@ def test_installed_service_can_run_with_custom_xdg_bin(tmp_path):
         "XDG_BIN_HOME": str(fake_home / "custom bin"),
         "PATH": str(commands) + os.pathsep + os.environ["PATH"],
     }
+    # `idh install` owns the timer (ticket 0987); stubbed systemctl, fixture HOME.
     subprocess.run(
-        [str(SCRIPTS / "install-mammoth-audit-timer.sh")], check=True, env=env
+        [sys.executable, str(SCRIPTS.parent / "bin" / "idh"), "install"],
+        check=True, env=env,
     )
     service = fake_home / "config/systemd/user/idh-mammoth-audit.service"
     command = next(

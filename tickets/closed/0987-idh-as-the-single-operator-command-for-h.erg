@@ -2,6 +2,7 @@
 Title: idh as the single operator command for harness lifecycle
 Created: 2026-09-29
 Author: claude
+Closed: autoclosed — PR #1060
 
 --- log ---
 2026-09-29T12:39Z claude created child of 0978; author decision 2026-09-29: idh is the one command the author types to manage the harness on a machine, not a dispatcher for the harness's own scripts
@@ -9,6 +10,8 @@ Author: claude
 2026-09-29T12:59Z claude note Roar 2026-09-29: scripts/bashrc-loader.sh has a start marker but no end marker, so an in-place update must guess where the block ends. Replacing to EOF dropped padme's trailing zotero alias today (restored from backup). idh install must replace the block between explicit begin/end markers and verify the lines outside it are unchanged.
 2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; bin/install-cron dropped from exit criterion 2 (strict subset).
 2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files and line references verified (test_mammoth_audit.py:138, test_projection_validator.py:218, test_idh_pointer_hooks.py:121); projections.json holds exactly two installer fields naming install-wirings.sh; docs/adapter-operations.md has 7 mentions; systemd/ holds the two idh-mammoth-audit units. Two PRs only, so no Phase 5.0 coordination PR.
+2026-09-29T13:34Z claude note Author decision 2026-09-29 at the step-5 gate (net +56 source lines): Accept growth. The added lines are safety the deleted scripts lacked; criterion 2 reworded accordingly.
+2026-09-29T14:45Z Minh Ha-Duong closed — autoclosed — PR #1060
 --- body ---
 
 ## Context
@@ -63,7 +66,7 @@ manual scripts; author convenience only.
 ## Exit criteria
 
 - [ ] `~/.idh/bin/idh install` on a disposable HOME installs skills, wirings, the loader block and timers from `projections.json`, and links `~/.local/bin/idh`; `idh check` passes right after (positive control), and fails with a named culprit after one planted broken link (negative control)
-- [ ] `install-wirings.sh`, the timer installer and the manual loader copy are removed or reduced to a one-line call to `idh`; net line count of the replaced entry points goes down (`bin/install-cron` dropped from scope by the 2026-09-29 raid Imagine pass: it installs the `bin/snapshot` telemetry cron, has no callers, and is not part of harness install)
+- [ ] `install-wirings.sh`, the timer installer and the manual loader copy are removed or reduced to a one-line call to `idh`; source growth is limited to safety the deleted scripts lacked (marker-bounded, byte-verified bashrc splice; refusal to overwrite real files or foreign links; no execution of manifest text), measured and stated in the PR (`bin/install-cron` dropped from scope by the 2026-09-29 raid Imagine pass: it installs the `bin/snapshot` telemetry cron, has no callers, and is not part of harness install)
 - [ ] `idh sync` fast-forwards the checkout and, when it cannot, names the blocking files (the padme case of 2026-09-29)
 - [ ] `idh status` reports installed vs declared and distance to origin
 - [ ] README installation section is the two-command bootstrap

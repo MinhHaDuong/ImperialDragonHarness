@@ -1,6 +1,8 @@
-# Imperial Dragon Harness loader for ~/.bashrc (ticket 0983).
+# >>> Imperial Dragon Harness loader >>>  (tickets 0983, 0987)
 #
-# Copy this block VERBATIM into ~/.bashrc; do not source it from the checkout.
+# `idh install` writes this block into ~/.bashrc and later replaces exactly
+# the lines from the >>> marker to the <<< marker; do not source it from the
+# checkout, and keep your own lines outside the markers.
 # It must work when the checkout is unreachable or broken, which is exactly
 # when a bare `source ~/.idh/...` line would leave claude, codex and pi
 # running unwrapped, their guards gone without a word.
@@ -53,3 +55,4 @@ _idh_stubs
 unset _IDH_WRAPPERS
 [ -r "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"
 [ "${_IDH_WRAPPERS:-}" = 1 ] || _idh_stubs
+# <<< Imperial Dragon Harness loader <<<

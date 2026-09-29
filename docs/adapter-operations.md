@@ -4,23 +4,26 @@ Operator commands for the IDH pilot surface on Claude Code, Codex and Pi
 (tickets 0802, 0803, 0809, 0810). Mistral Vibe is a probed fourth target
 with no porting slice yet; nothing here claims Vibe behavior.
 
-The pilot creates exactly four things on a machine, in two planes:
+The pilot surface is four links, in two planes:
 
 | Plane | Paths | Managed by |
 |---|---|---|
 | skills | `~/.agents/skills/{perch,healthcheck}` (+ a Claude Code projection when the repo is not `~/.claude`) | `bin/idh` |
-| wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `adapters/install-wirings.sh` |
+| wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `idh install` (from `adapters/projections.json`) |
 
 Every one of these paths is also declared in `adapters/projections.json`.
+`idh install` also creates that manifest's other entries (the `~/.idh`
+pointer, the `~/.local/bin` launchers), the `~/.bashrc` loader block and the
+audit timer (README § Installation).
 Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
 (`scripts/shell-init.sh`, loaded by the `scripts/bashrc-loader.sh` block in
 `~/.bashrc`) run `scripts/validate-projections.py`. A missing, dangling or
 foreign entry refuses the launch and prints the culprit and the repair. The
 bypass is `IDH_SKIP_VALIDATE=1`, and each use is logged (ticket 0983). Check a
-runtime by hand with `python3 ~/.idh/scripts/validate-projections.py codex`.
+runtime by hand with `idh check codex`, or every entry with `idh check`.
 
 Both managers share one doctrine: a target that already resolves to the
-canonical file is success ("already discoverable"); anything else at the
+canonical file is success, left as it is; anything else at the
 target is refused — never overwritten, never deleted. Interrupted installs
 are recovered by re-running the same command; installs are idempotent.
 
@@ -37,9 +40,7 @@ refuses rather than passes.
 ## Install (fresh machine)
 
 ```bash
-cd ~/.idh               # the harness checkout, through its pointer (README Installation)
-./bin/idh install skill perch healthcheck
-./adapters/install-wirings.sh install
+~/.idh/bin/idh install  # links from adapters/projections.json, loader block, timer
 ```
 
 Preflight the guard itself before trusting the wiring (a missing or
@@ -59,36 +60,42 @@ enforcing boundary, not a formality.
 ## Verify
 
 ```bash
-./bin/idh status skill perch --to codex
-./adapters/install-wirings.sh status
+idh check                          # every manifest entry; names each culprit
+~/.idh/bin/idh status skill perch --to codex
 ```
 
-## Uninstall (exact removal)
+## Uninstall
 
 ```bash
-./adapters/install-wirings.sh uninstall
-./bin/idh uninstall skill perch healthcheck
+~/.idh/bin/idh uninstall skill perch healthcheck
+rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status` shows both `ok`
 ```
 
-Removal takes back exactly what install created and prunes only the
-directories it emptied. Unmanaged files — an existing `~/.codex/hooks.json`
-of your own, anything else living in `~/.agents/skills` — survive
-untouched; the exit code reports any refusal.
+Skill removal takes back exactly what install created and prunes only the
+directories it emptied; unmanaged files in `~/.agents/skills` survive. The
+two wiring links are removed by hand: `idh install` never deletes anything.
+The rest of what it wrote is removed by hand too:
+
+- the loader block: delete from the `# >>> Imperial Dragon Harness loader`
+  line to the `# <<< Imperial Dragon Harness loader` line in `~/.bashrc`;
+- the backups `~/.bashrc.idh-bak-*`, one per changing install, with the
+  mode of the file they copy: they may hold whatever `~/.bashrc` held;
+- the timer: `systemctl --user disable --now idh-mammoth-audit.timer`, then
+  remove `idh-mammoth-audit.{service,timer}` from `~/.config/systemd/user/`.
 
 ## Move the checkout
 
 ```bash
 # from the NEW checkout:
 ./bin/idh relocate skill perch healthcheck --from /old/absolute/path
-./adapters/install-wirings.sh uninstall   # refuses the now-foreign links
-rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # only the two
-# foreign links, after the refusal confirmed they are ours
-./adapters/install-wirings.sh install
+./bin/idh check          # names the wiring links left dangling by the move
+rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # only those two
+./bin/idh install
 ```
 
 Skills links are retargeted atomically by `relocate`; wiring links are
 dangling after a move and are refused (never silently retargeted), so the
-honest sequence is uninstall-refuse, remove the two known links, reinstall.
+honest sequence is check, remove the two known links, reinstall.
 For the `~/.claude` → `~/.idh` relocation (tracker 0978), step A (0982)
 repointed the Claude Code guard path in `settings.shared.json` to
 `$HOME/.idh/scripts/...`, behind a check that exits 2 when the pointer is
@@ -96,7 +103,7 @@ missing. `codex/hooks.json` keeps its trusted `$HOME/.claude/scripts/...`
 spelling on purpose: Codex trust pins the hook definition, and an edited
 definition silently stops running until someone re-trusts it via `/hooks`.
 The cutover (0986) repoints it together with that re-trust. Links that
-`install-wirings.sh` finds retargeted through `~/.idh` count as its own.
+`idh install` finds retargeted through `~/.idh` count as its own.
 
 ## Interrupted run / recovery
 

@@ -215,7 +215,7 @@ def test_missing_guard_on_a_fresh_machine_gets_a_repair_that_works(world, runtim
     shutil.rmtree(world["home"] / rel)
     r = validate(world, runtime)
     assert r.returncode == 1 and "MISSING:" in r.stderr
-    assert "install-wirings.sh" in r.stderr  # the managed alternative
+    assert "/bin/idh" in r.stderr  # the managed alternative: idh install
     run_repair(world, r.stderr)
     assert validate(world, runtime).returncode == 0
 
