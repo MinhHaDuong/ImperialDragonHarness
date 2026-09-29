@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.idh/scripts/on-start.sh",
+            "command": "[ -d \"$HOME/.idh/scripts\" ] || { echo \"IDH: the ~/.idh pointer is missing, so on-start.sh cannot run; see README Installation (ticket 0982)\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-start.sh\"",
             "timeout": 30
           }
         ]
@@ -86,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.idh/scripts/on-end.sh",
+            "command": "[ -d \"$HOME/.idh/scripts\" ] || { echo \"IDH: the ~/.idh pointer is missing, so on-end.sh cannot run; see README Installation (ticket 0982)\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-end.sh\"",
             "timeout": 10
           }
         ]
@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.idh/scripts/guard-destructive-bash.sh",
+            "command": "[ -d \"$HOME/.idh/scripts\" ] || { echo \"IDH: the ~/.idh pointer is missing, so guard-destructive-bash.sh cannot run; see README Installation (ticket 0982)\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/guard-destructive-bash.sh\"",
             "timeout": 5
           }
         ]

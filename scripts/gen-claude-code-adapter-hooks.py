@@ -28,10 +28,17 @@ LAUNCHER = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook"'
 HARNESS_SCRIPT = re.compile(
     r"^(?:python3\s+)?\$HOME/\.idh/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
 )
+# The fail-loud form settings.shared.json uses (ticket 0982): refuse with
+# exit 2 when the ~/.idh pointer is missing, else exec the script. The plugin
+# launcher resolves its own root, so it drops the pointer check.
+POINTER_CHECKED = re.compile(
+    r'^\[ -d "\$HOME/\.idh/scripts" \] \|\| \{ [^{}]* exit 2; \}; exec '
+    r'(?P<python>python3\s+)?"\$HOME/\.idh/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$'
+)
 
 
 def translate(command: str) -> str:
-    m = HARNESS_SCRIPT.match(command.strip())
+    m = POINTER_CHECKED.match(command.strip()) or HARNESS_SCRIPT.match(command.strip())
     if not m:
         return command
     return f"{LAUNCHER} {m.group('name')}{m.group('rest') or ''}"
