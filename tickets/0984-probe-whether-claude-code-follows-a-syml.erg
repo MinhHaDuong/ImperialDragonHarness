@@ -35,8 +35,8 @@ Simplest path, exit criteria unchanged:
 - **Memory through a link** stays a live disposable-HOME experiment, positive
   control first: the 2026-09-28 real-file control never fired, so no shortcut.
 - **The cwd key is mostly settled by inspection.** `projects/<slug>` is the cwd
-  with `/` and `.` turned into `-` (`/home/haduong/.claude` gives
-  `-home-haduong--claude`); `~/.claude.json`'s `projects` object keys by the raw
+  with `/` and `.` turned into `-` (`/srv/x/.claude` gives
+  `-srv-x--claude`); `~/.claude.json`'s `projects` object keys by the raw
   absolute path. The one open fact is physical versus logical cwd: does a session
   launched from `~/.idh` (a symlink to `~/.claude`) key under the resolved or the
   typed path.
@@ -78,7 +78,7 @@ ticket reports; if memory links are not followed, 0985 re-derives it.
 ## First test (raid plan)
 
 `tests/test_probe_memory_symlink.py`, offline half, written before the script:
-- `slug_for`: `/home/haduong/.claude` gives `-home-haduong--claude`, `/tmp/a.b/c`
+- `slug_for`: `/srv/x/.claude` gives `-srv-x--claude`, `/tmp/a.b/c`
   gives `-tmp-a-b-c` (a `/`-only replacement fails on the dots).
 - `build_rig`: `.claude.json` is a byte-identical copy; sentinel in a real file; in
   symlink mode `memory` is a link whose target holds the sentinel.
