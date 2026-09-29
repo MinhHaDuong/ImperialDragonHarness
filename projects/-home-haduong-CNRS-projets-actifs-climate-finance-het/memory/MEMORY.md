@@ -30,10 +30,14 @@
 - [Settled debates to brief](feedback_settled_debates_to_brief.md)
 - [No tool for single use](feedback_no_tool_for_single_use.md)
 - [No heavy deps](feedback_no_heavy_deps.md)
+- [Check for an existing library](feedback_check_for_existing_library.md) — periodic "is this done better in a lib?" audit; JETP documents moved to Zotero
 - [Fix root cause](feedback_fix_root_cause.md)
 - [Arch not linecount](feedback_arch_not_linecount.md)
 - [Purpose built over llm](feedback_purpose_built_over_llm.md)
 - [Mocks shown for approval use real values, never inventions](feedback_mocks_use_real_values.md)
+- [The author is not the checker](feedback_author_is_not_the_checker.md) — cross-model panel, stance per row, confidence served sorted
+- [Skeptical advisor before any new guard](feedback_skeptical_advisor_before_new_guard.md) — fixes not guards; build-time asserts loud, never blocking
+- [Pool every source raw and screen once with one rule; never add records screened by one rule to a corpus filtered by another](feedback_single_standard_pooled_screen.md)
 
 ### Worktrees
 
@@ -43,6 +47,7 @@
 
 - [Machine padme](reference_machine_padme.md)
 - [Longrunning jobs](feedback_longrunning_jobs.md)
+- [OpenAlex API: 1 USD/day budget, language and country filter traps, pkill -f self-kill over ssh](reference_openalex_budget_and_filters.md)
 
 ### Credentials
 
@@ -56,11 +61,13 @@
 - [Paper instrument circulation](project_paper_instrument_circulation.md)
 - [Aitells scope manuscript vs crossdoc](feedback_aitells_scope_manuscript_vs_crossdoc.md)
 - [Prose coupling multiple detection paths](feedback_prose_coupling_multiple_detection_paths.md)
+- [REL harvest state on 2026-09-29: archive, tickets 1650-1656, what is not done](project_rel_harvest_2026_09_29.md)
 
 ### Citations and sources
 
 - [Read before cite](feedback_read_before_cite.md)
 - [Paywalled acquisition](reference_paywalled_acquisition.md)
+- [Zotero group capabilities](reference_zotero_group_capabilities.md) — RW key covers all groups, unlimited storage, no API group creation, PublicClosed for files
 
 ### Rendering and formats
 
@@ -87,12 +94,13 @@
 - [Escalate check merge after note](feedback_escalate_check_merge_after_note.md)
 - [Executor briefs forbid the full suite and /tmp venvs — hunt runs make check on scripts/ diffs](feedback_agent_briefs_scoped_gates.md)
 - [Agent timeout refactor](feedback_agent_timeout_refactor.md)
-- [gate proportionate](feedback_gate_proportionate_to_risk.md)
+- [gate proportionate: size the gate to the PR; a docs-only PR gets no raw pytest and no whole fast tier (10 s target)](feedback_gate_proportionate_to_risk.md)
 - [pilot](project_proportionate_verify_pilot.md)
 
 ### Guards
 
 - [Negative guard false positive check](feedback_negative_guard_false_positive_check.md)
+- [A dead recipe check makes a green run meaningless](feedback_dead_recipe_check_makes_green_meaningless.md)
 - [Check the detector first](feedback_check_the_detector_first.md)
 - [Guard the class not the stale value](feedback_guard_the_class_not_the_stale_value.md)
 - [Red test the guard you wrote](feedback_red_test_the_guard_you_wrote.md)
@@ -131,6 +139,7 @@
 - [Run the chain reveals what reading code cannot](feedback_run_the_chain_reveals_what_reading_code_cannot.md)
 - [Read which target the error names](feedback_read_which_target_the_error_names.md)
 - [Pipe masks exit code](feedback_pipe_masks_exit_code.md)
+- [numba/dcor cold-cache race under parallel pytest](reference_numba_dcor_cold_cache_race.md) — pre-warm fixed the gates; lazy imports under make -j not covered
 - [Isolated venv proves installability](feedback_isolated_venv_proves_installability.md)
 - [Ruff fix breaks reexport facades](feedback_ruff_fix_breaks_reexport_facades.md)
 - [Realf release rules](reference_realf_release_rules.md)
@@ -149,3 +158,4 @@
 - [IATI transaction direction is part of the mapping](feedback_iati_transaction_direction.md)
 - [Name vocabulary values by their distinguishing axis, ≤2 words; "everything is http"](feedback_name_values_by_their_distinguishing_axis.md)
 - [Unpublished: no URL compat before go-live](feedback_observatory_unpublished_no_url_compat.md)
+- [Milestone ladder M1a to M4 (2026-09-29): definitions in 0725; old "M2" = live monitoring](project_jetp_milestone_ladder.md)
