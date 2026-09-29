@@ -78,10 +78,13 @@ The rest of what it wrote is removed by hand too:
 
 - the loader block: delete from the `# >>> Imperial Dragon Harness loader`
   line to the `# <<< Imperial Dragon Harness loader` line in `~/.bashrc`;
-- the backups `~/.bashrc.idh-bak-*`, one per changing install, with the
-  mode of the file they copy: they may hold whatever `~/.bashrc` held;
+- the backups `.bashrc.idh-bak-*`, one per changing install, with the
+  mode of the file they copy: they may hold whatever `~/.bashrc` held. They
+  sit beside the real file, so beside the link's target when `~/.bashrc` is
+  a symlink;
 - the timer: `systemctl --user disable --now idh-mammoth-audit.timer`, then
-  remove `idh-mammoth-audit.{service,timer}` from `~/.config/systemd/user/`.
+  remove `idh-mammoth-audit.{service,timer}` from
+  `${XDG_CONFIG_HOME:-~/.config}/systemd/user/`.
 
 ## Move the checkout
 
