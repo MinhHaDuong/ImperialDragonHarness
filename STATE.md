@@ -1,33 +1,36 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-09-28T17:13Z
+Last updated: 2026-09-29T15:59Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research: code and prose, day and night, across projects and machines. The harness itself is the deliverable.
 
 ## Status
-<!-- generated 2026-09-28T17:13Z · as of 0bcbb35d -->
+<!-- generated 2026-09-29T15:59Z · as of 89481ce4 -->
 
-**Tickets:** 19 ready · 19 blocked — `erg ready tickets/` for full list
+**Tickets:** 22 ready · 20 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  0bcbb35d skills: trim resident descriptions to restore budget
-  9fc31285 state: record relocation pause and resident-budget failure
-  267ab6bb Merge pull request #1049 from MinhHaDuong/memory-privacy-session-20260928
+  89481ce4 Merge pull request #1062 from MinhHaDuong/t-gaze-raid-ticket
+  c5cd8906 Merge pull request #1060 from MinhHaDuong/t0987-idh-lifecycle
+  8735512f Merge pull request #1061 from MinhHaDuong/t0984-probe-memory-symlink
 
 ## Resume point
-**2026-09-28.** The author deferred migration 0978 today. Disposable-home probes: Claude follows per-entry links for instructions, rules, settings, hooks, plugins, skills and commands; native memory remains unproved, and broken links silently drop instructions and hooks. A fixture rollback restored bytes and links after 23 crash points and partial writes. Read-only split census: `projects/` holds 1,271 tracked memory files (1.8 MiB) and 17,409 native runtime files (5.15 GiB); `skills/` also mixes three private links and `synced/` with tracked skills. No live data moved. The portability epic 0800 is closed; thin adapters remain the chosen scope. `make check`: 1,114 passed after the resident skills budget fix (0981).
+**2026-09-29.** The relocation (tracker 0978) is split into controlled-risk steps, and everything before the move itself has landed. 0982 points every consumer at `~/.idh`, a symlink to `~/.claude` on doudou and padme, with no bytes moved. 0983 makes `claude`, `codex` and `pi` refuse to launch, naming the culprit and the repair, when a link they depend on is broken. 0984 settled the memory question on Claude Code 2.1.284: memory loads through a symlinked folder, and a session keys its memory folder by the resolved path, so the cutover renames the folder and re-keys `~/.claude.json` (now a 0986 exit criterion). 0987 made `idh` the one operator command (`install`, `check`, `status`, `sync`), deleting `install-wirings.sh` and the timer installer; the author accepted +216 source lines of safety. Both hosts carry the marked `~/.bashrc` loader block; padme's pull is unblocked and its Codex guard re-trusted and probed live. `make check` is green in CI and fresh worktrees; in the primary checkout 15 tests fail because they read its untracked private-skill links (0989, fix in flight).
 
 Owed to the author, outside any diff:
 - **ILaaS key**: cle consortium -> ~/.config/keys/ilaas.env, then models.json (0977 report).
 - **Rotate** the six bash -x values and the Albert key (deferred to October 2026).
 
 ## Blockers
-- **0978** (now a tracker, split 2026-09-29): only the live cutover 0986 needs a quiet window; 0982 (repoint consumers to `~/.idh`, no move), 0983 (launch-time link validator) and 0984 (memory and cwd-key probe) are ready now, and 0985 rehearses the move.
+- **0989**: the idh tests read the primary checkout's untracked private overlay links, so `make check` there is red (CI and worktrees green). Fix in flight.
+- **0986** (live cutover) needs a quiet window the author schedules: no Claude, Codex or Pi session running, timers paused.
 
 ## Next actions
-- **Memory v7** (tracker 0909): foundations 0911, 0917 are ready. Relocation: start 0982/0983/0984 (safe, no data moves); 0985 then 0986 in a quiet window. Re-read 0920/0923 before starting them.
+- **Relocation** (tracker 0978): 0985, the disposable-HOME rehearsal of the cutover and its rollback, is unblocked and should run through `idh`; then 0986. `idh install` has not yet been run for real on either host (it would add the `~/.local/bin` links and enable the mammoth-audit timer).
+- **Harness defects from 2026-09-29**: 0988 (session memory lands uncommitted in the checkout and silently stalls host pulls; doudou's primary checkout holds such files now) and 0990 (raid Phase 6 cannot obtain a `/gaze` verdict from a background agent; see also 0853).
+- **Memory v7** (tracker 0909): foundations 0911, 0917 are ready. Re-read 0920/0923 before starting them; their premise changes with 0984's verdict.
 - **Portable model policy** (tracker 0974): Phase 0 is 0975.
 - **Open defects worth a slot**: 0875 (hermeticity guard blind to script-path spawns), 0879 (gate writes malformed log lines), 0979 (Pi silent reroute to openrouter).
 - **Watch**: re-open 0062 (Firecracker) when agents run against secret-bearing projects; lift the merge-review gate into the harness when a second consumer project grows one (0900).
