@@ -18,7 +18,7 @@ the repository, before touching the live one. Extends the 2026-09-28 rollback pr
 (23 crash points) from fixture to full shape.
 
 Traps the rehearsal must cover: every worktree's `.git` file holds an absolute
-`gitdir: /home/haduong/.claude/.git/worktrees/...` (needs `git worktree repair`); the
+`gitdir: $HOME/.claude/.git/worktrees/...` (needs `git worktree repair`); the
 cwd-keyed project memory and `~/.claude.json` entries (0984's remedy); the per-entry links
 one level down in `projects/*/memory`; the systemd timers, especially `claude-refresh`
 which pulls `~/.claude` daily.
