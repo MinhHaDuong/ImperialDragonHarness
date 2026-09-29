@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
 
+2026-09-29T10:47Z claude note Out-of-repo, both machines: ~/.bashrc harness line replaced by the scripts/bashrc-loader.sh block; prior content backed up in ~/.local/state/idh-0983-backup/bashrc.<host>. First padme install was a parse error (alias codex='codex --approve-for-me' expanded inside codex() {), restored from backup within minutes and reinstalled with the function-keyword form. Live check 2026-09-29: validator exits 0 for claude, codex and pi on doudou's real HOME. Padme has no ~/.codex/hooks.json nor ~/.pi idh-guard link: once this merges, codex and pi there are refused until adapters/install-wirings.sh install runs (the refusal names the repair and the bypass).
 --- body ---
 
 ## Context
