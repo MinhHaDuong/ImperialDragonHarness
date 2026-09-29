@@ -52,7 +52,8 @@ def _checkout(root: Path) -> Path:
 def world(tmp_path, monkeypatch):
     """A healthy install: HOME whose projections all resolve into the checkout."""
     root = _checkout(tmp_path / "checkout")
-    home = tmp_path / "home"
+    # A space in HOME: every printed repair must survive being pasted.
+    home = tmp_path / "my home"
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("XDG_STATE_HOME", raising=False)
@@ -101,6 +102,28 @@ def validate(world, runtime):
 # --- the manifest --------------------------------------------------------
 
 
+def repair_command(stderr: str, n: int = 0) -> str:
+    """The n-th printed repair, as the author would paste it."""
+    lines = [
+        ln.split("repair: ", 1)[1] for ln in stderr.splitlines() if "repair: " in ln
+    ]
+    return lines[n].split("   (", 1)[0]
+
+
+def run_repair(world, stderr: str, n: int = 0):
+    """Paste the printed repair into a plain shell; it must succeed as printed."""
+    r = subprocess.run(
+        ["bash", "--norc", "-c", repair_command(stderr, n)],
+        env=_env(world),
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, (repair_command(stderr, n), r.stderr)
+
+
+# --- the manifest --------------------------------------------------------
+
+
 def test_manifest_declares_the_pointer_and_one_guard_per_runtime():
     required = {
         (e["path"], rt)
@@ -117,7 +140,15 @@ def test_manifest_declares_the_pointer_and_one_guard_per_runtime():
 
 def test_manifest_entries_are_well_formed():
     for e in MANIFEST["entries"]:
-        assert set(e) == {"path", "target", "runtimes", "required", "why"}, e
+        assert {"path", "target", "runtimes", "required", "why"} <= set(e), e
+        assert set(e) <= {
+            "path",
+            "target",
+            "runtimes",
+            "required",
+            "why",
+            "installer",
+        }, e
         for spec in (e["path"], e["target"]):
             assert spec.startswith(("~/", "$IDH_ROOT")), spec
         assert set(e["runtimes"]) <= set(RUNTIMES)
@@ -132,26 +163,37 @@ def test_healthy_home_validates(world, runtime):
     assert (r.returncode, r.stderr) == (0, "")
 
 
-def test_success_records_the_checkout_for_later_repairs(world):
+def test_validation_writes_no_state(world):
+    """No state file: nothing a later launch could trip on (dropped last-good-root)."""
     assert validate(world, "claude").returncode == 0
-    recorded = world["home"] / ".local" / "state" / "idh" / "last-good-root"
-    assert recorded.read_text().strip() == str(world["root"].resolve())
+    assert not (world["home"] / ".local").exists()
 
 
-def test_dangling_guard_link_names_culprit_and_repair(world):
+def test_unset_home_refuses_with_a_message_not_a_traceback(world, monkeypatch):
+    monkeypatch.delenv("HOME")
+    r = validate(world, "codex")
+    assert r.returncode == 1
+    assert "HOME is unset" in r.stderr and "IDH_SKIP_VALIDATE=1 codex" in r.stderr
+
+
+@pytest.mark.integration
+def test_dangling_guard_link_names_culprit_and_a_working_repair(world):
     link = world["home"] / ".codex" / "hooks.json"
     link.unlink()
     link.symlink_to(world["tmp"] / "gone" / "hooks.json")
     r = validate(world, "codex")
     assert r.returncode == 1
     assert f"DANGLING: {link}" in r.stderr
+    assert "IDH_SKIP_VALIDATE=1 codex" in r.stderr
     # The repair links through the pointer, as 0982 wired it, so it survives
     # the 0986 cutover instead of pinning today's resolved checkout.
-    idh = world["home"] / ".idh"
-    assert f"repair: ln -sfn {idh}/adapters/codex/hooks.json {link}" in r.stderr
-    assert "IDH_SKIP_VALIDATE=1 codex" in r.stderr
+    assert f"{world['home'] / '.idh'}/adapters/codex/hooks.json" in repair_command(
+        r.stderr
+    )
     # Scoped per runtime: Claude Code does not read the Codex hook.
     assert validate(world, "claude").returncode == 0
+    run_repair(world, r.stderr)
+    assert validate(world, "codex").returncode == 0
 
 
 def test_foreign_link_is_refused(world):
@@ -165,11 +207,16 @@ def test_foreign_link_is_refused(world):
     assert f"FOREIGN: {link} resolves to {other}" in r.stderr
 
 
-def test_missing_required_entry_is_refused(world):
-    (world["home"] / ".pi" / "agent" / "extensions" / "idh-guard.ts").unlink()
-    r = validate(world, "pi")
-    assert r.returncode == 1
-    assert "MISSING:" in r.stderr and "idh-guard.ts" in r.stderr
+@pytest.mark.integration
+@pytest.mark.parametrize("runtime,rel", [("codex", ".codex"), ("pi", ".pi")])
+def test_missing_guard_on_a_fresh_machine_gets_a_repair_that_works(world, runtime, rel):
+    """No ~/.codex at all: a bare `ln -sfn` would fail, so the repair creates the parent."""
+    shutil.rmtree(world["home"] / rel)
+    r = validate(world, runtime)
+    assert r.returncode == 1 and "MISSING:" in r.stderr
+    assert "install-wirings.sh" in r.stderr  # the managed alternative
+    run_repair(world, r.stderr)
+    assert validate(world, runtime).returncode == 0
 
 
 def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
@@ -206,15 +253,21 @@ def test_unknown_runtime_is_a_usage_error(world):
 # --- the shell wrappers --------------------------------------------------
 
 
-def launch(world, runtime, init="shell-init.sh", **extra):
-    script = f'source "{world["root"]}/scripts/{init}"\n{runtime} --version'
+def launch(world, runtime, init="shell-init.sh", pre="", cwd=None, env=None, **extra):
+    script = f'{pre}\nsource "{world["root"]}/scripts/{init}"\n{runtime} --version'
     return subprocess.run(
         ["bash", "--norc", "-c", script],
-        env=_env(world, **extra),
-        cwd=world["tmp"],
+        env=env if env is not None else _env(world, **extra),
+        cwd=cwd or world["tmp"],
         capture_output=True,
         text=True,
     )
+
+
+def bypass_log(world) -> str:
+    return (
+        world["home"] / ".local" / "state" / "idh" / "validate-bypass.log"
+    ).read_text()
 
 
 @pytest.mark.integration
@@ -250,21 +303,49 @@ def test_bypass_is_explicit_and_logged(world):
     (world["home"] / ".codex" / "hooks.json").unlink()
     r = launch(world, "codex", IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and "LAUNCHED codex" in r.stdout
-    assert "IDH_SKIP_VALIDATE=1" in r.stderr
-    log = (
-        world["home"] / ".local" / "state" / "idh" / "validate-bypass.log"
-    ).read_text()
-    assert " codex bypass cwd=" in log
+    assert "IDH_SKIP_VALIDATE=1" in r.stderr and "(logged to " in r.stderr
+    assert " codex bypass cwd=" in bypass_log(world)
     # Any other value is not a bypass.
     r = launch(world, "codex", IDH_SKIP_VALIDATE="yes")
     assert r.returncode != 0 and "LAUNCHED" not in r.stdout
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
+def test_an_unwritable_bypass_log_is_reported_not_claimed(world, init):
+    if init == "bashrc-loader.sh":
+        (world["home"] / ".idh").unlink()
+    (world["home"] / ".local").write_text("a file where the state dir should be\n")
+    r = launch(world, "pi", init=init, IDH_SKIP_VALIDATE="1")
+    assert r.returncode == 0 and "LAUNCHED pi" in r.stdout
+    assert "could not log to" in r.stderr and "(logged to" not in r.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
+def test_a_newline_in_the_cwd_cannot_forge_a_log_line(world, init):
+    if init == "bashrc-loader.sh":
+        (world["home"] / ".idh").unlink()
+    evil = world["tmp"] / "x\n2026-01-01T00:00Z claude bypass cwd=forged"
+    evil.mkdir()
+    r = launch(world, "pi", init=init, cwd=evil, IDH_SKIP_VALIDATE="1")
+    assert r.returncode == 0
+    lines = bypass_log(world).splitlines()
+    assert len(lines) == 1 and "\\n2026-01-01" in lines[0]
+
+
+@pytest.mark.integration
+def test_unset_home_in_the_wrapper_refuses_with_a_message(world):
+    env = {"PATH": f"{world['fakebin']}:/usr/bin:/bin"}
+    r = launch(world, "codex", pre="unset HOME", env=env)
+    assert r.returncode != 0 and "LAUNCHED" not in r.stdout
+    assert "HOME is unset" in r.stderr
+
+
+@pytest.mark.integration
 @pytest.mark.parametrize("runtime", RUNTIMES)
 def test_pointer_removed_after_sourcing_still_refuses(world, runtime):
     """The wrapper outlives ~/.idh in a running shell and must not fall through."""
-    assert validate(world, runtime).returncode == 0  # records last-good-root
     script = (
         f'source "{world["home"]}/.idh/scripts/shell-init.sh"\n'
         f'rm "{world["home"]}/.idh"\n{runtime} --version'
@@ -276,7 +357,8 @@ def test_pointer_removed_after_sourcing_still_refuses(world, runtime):
         text=True,
     )
     assert r.returncode != 0 and "LAUNCHED" not in r.stdout
-    assert f"repair: ln -sfn {world['root'].resolve()} {world['home']}/.idh" in r.stderr
+    run_repair(world, r.stderr)
+    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
 
 
 @pytest.mark.integration
@@ -288,19 +370,19 @@ def test_bashrc_loader_sources_the_wrappers_when_reachable(world):
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime", RUNTIMES)
 def test_bashrc_loader_refuses_when_the_harness_is_unreachable(world, runtime):
-    assert validate(world, runtime).returncode == 0  # records last-good-root
     (world["home"] / ".idh").unlink()
-    r = launch(world, runtime, init="bashrc-loader.sh")
+    # Under `set -e` too: a refusal must print its message, never exit silently.
+    r = launch(world, runtime, init="bashrc-loader.sh", pre="set -e")
     assert r.returncode != 0 and "LAUNCHED" not in r.stdout
-    assert f"repair: ln -sfn {world['root'].resolve()} {world['home']}/.idh" in r.stderr
+    assert "is unreachable" in r.stderr
     assert f"IDH_SKIP_VALIDATE=1 {runtime}" in r.stderr
+    run_repair(world, r.stderr)
+    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
 
+    (world["home"] / ".idh").unlink()
     r = launch(world, runtime, init="bashrc-loader.sh", IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
-    log = (
-        world["home"] / ".local" / "state" / "idh" / "validate-bypass.log"
-    ).read_text()
-    assert "(harness unreachable)" in log
+    assert "(harness unreachable)" in bypass_log(world)
 
 
 @pytest.mark.integration

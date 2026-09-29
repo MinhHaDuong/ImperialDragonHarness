@@ -12,12 +12,19 @@
 #
 # Bypass, explicit and logged: IDH_SKIP_VALIDATE=1 <runtime> ...
 
+# _idh_bypass_log RUNTIME [NOTE] — record an explicit bypass, and say so.
+# Newlines in $PWD are escaped so a directory name cannot forge a log line;
+# a failed write is reported as such, never as "logged".
 _idh_bypass_log() {
-  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh"
-  mkdir -p "$dir" 2>/dev/null
-  printf '%s %s bypass cwd=%s\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$1" "$PWD" \
-    >>"$dir/validate-bypass.log" 2>/dev/null
-  echo "idh: IDH_SKIP_VALIDATE=1, launching $1 without the projection check (logged to $dir/validate-bypass.log)" >&2
+  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd="${PWD//$'\n'/\\n}" how
+  if mkdir -p "$dir" 2>/dev/null &&
+    printf '%s %s bypass cwd=%s%s\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$1" "$cwd" "${2:+ ($2)}" \
+      >>"$dir/validate-bypass.log" 2>/dev/null; then
+    how="logged to $dir/validate-bypass.log"
+  else
+    how="could not log to $dir/validate-bypass.log"
+  fi
+  echo "idh: IDH_SKIP_VALIDATE=1, launching $1 without the projection check ($how)" >&2
 }
 
 # _idh_preflight RUNTIME — 0 when the launch may proceed.
@@ -26,13 +33,16 @@ _idh_preflight() {
     _idh_bypass_log "$1"
     return 0
   fi
+  if [ -z "${HOME:-}" ]; then
+    echo "idh: refusing to launch $1: HOME is unset, so no projection can be checked. Set HOME, or launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
+    return 1
+  fi
   local v="$HOME/.idh/scripts/validate-projections.py"
   if [ ! -f "$v" ]; then
-    # ~/.idh vanished after this shell sourced the wrappers.
-    local hint
-    hint=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/idh/last-good-root" 2>/dev/null)
+    # ~/.idh vanished after this shell sourced the wrappers. The checkout sits
+    # at ~/.claude until the 0986 cutover, which updates this repair.
     echo "idh: refusing to launch $1: $v is unreachable, so $HOME/.idh no longer resolves to the harness checkout." >&2
-    echo "  repair: ln -sfn ${hint:-/path/to/harness-checkout} $HOME/.idh" >&2
+    printf '  repair: ln -sfn %q %q\n' "$HOME/.claude" "$HOME/.idh" >&2
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
     return 1
   fi

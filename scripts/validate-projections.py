@@ -15,11 +15,7 @@ required entry that is absent is itself a failure.
 Usage: validate-projections.py RUNTIME [--root DIR] [--manifest FILE]
 Exit 0: every entry for RUNTIME resolves to its target. Exit 1: at least one
 is missing, dangling or foreign; each culprit is named on stderr with the
-exact repair. Exit 2: usage error.
-
-On success the resolved checkout is recorded in
-${XDG_STATE_HOME:-~/.local/state}/idh/last-good-root, so the ~/.bashrc
-loader can name the exact repair when ~/.idh itself has gone.
+exact repair (or HOME is unset). Exit 2: usage error.
 """
 
 import argparse
@@ -34,13 +30,6 @@ from pathlib import Path
 DEFAULT_ROOT = Path(os.path.abspath(__file__)).parent.parent
 
 
-def state_dir() -> Path:
-    base = os.environ.get("XDG_STATE_HOME") or os.path.join(
-        os.environ["HOME"], ".local", "state"
-    )
-    return Path(base) / "idh"
-
-
 def expand(spec: str, root: Path) -> Path:
     """Expand a manifest spec. A bare $IDH_ROOT is the resolved checkout (the
     pointer's own target); $IDH_ROOT/<rel> keeps the root as spelled."""
@@ -51,6 +40,16 @@ def expand(spec: str, root: Path) -> Path:
     if spec == "~" or spec.startswith("~/"):
         return Path(os.environ["HOME"] + spec[1:])
     raise ValueError(f"manifest spec must start with ~ or $IDH_ROOT: {spec!r}")
+
+
+def expand_words(command: str, root: Path) -> str:
+    """Expand the leading ~ / $IDH_ROOT spec of each word of an installer command."""
+    words = []
+    for word in command.split():
+        if word.startswith(("~/", "$IDH_ROOT")):
+            word = shlex.quote(str(expand(word, root)))
+        words.append(word)
+    return " ".join(words)
 
 
 def resolved(path: Path):
@@ -77,7 +76,11 @@ def check_entry(entry: dict, root: Path):
     if not path.is_symlink() and not path.exists():
         if not entry.get("required", False):
             return None
-        return ("MISSING", f"{path} does not exist", prefix + link)
+        # The parent may be absent too (~/.codex, ~/.pi/agent/extensions).
+        repair = f"mkdir -p {shlex.quote(str(path.parent))} && {link}"
+        if entry.get("installer"):
+            repair += f"   (or: {expand_words(entry['installer'], root)})"
+        return ("MISSING", f"{path} does not exist", prefix + repair)
 
     real = resolved(path)
     if real is None:
@@ -114,23 +117,20 @@ def load_entries(manifest: Path, runtime: str):
     return [e for e in entries if runtime in e["runtimes"]]
 
 
-def record_good_root(root: Path) -> None:
-    try:
-        d = state_dir()
-        d.mkdir(parents=True, exist_ok=True)
-        f = d / "last-good-root"
-        if not f.exists() or f.read_text().strip() != str(root):
-            f.write_text(f"{root}\n")
-    except OSError:
-        pass  # a hint for a later repair message, never a reason to refuse
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("runtime")
     ap.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     ap.add_argument("--manifest", type=Path)
     args = ap.parse_args(argv)
+    if not os.environ.get("HOME"):
+        print(
+            f"idh: refusing to launch {args.runtime}: HOME is unset, so no projection "
+            f"can be checked. Set HOME, or launch anyway (logged): "
+            f"IDH_SKIP_VALIDATE=1 {args.runtime} ...",
+            file=sys.stderr,
+        )
+        return 1
     root = args.root.absolute()
     manifest = args.manifest or root / "adapters" / "projections.json"
 
@@ -141,7 +141,6 @@ def main(argv=None) -> int:
             failures.append((entry, problem))
 
     if not failures:
-        record_good_root(root.resolve())
         return 0
 
     err = sys.stderr

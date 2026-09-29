@@ -13,17 +13,23 @@ if [ -f "$HOME/.idh/scripts/shell-init.sh" ]; then
   source "$HOME/.idh/scripts/shell-init.sh"
 else
   _idh_unreachable() {
-    local rt="$1" st="${XDG_STATE_HOME:-$HOME/.local/state}/idh" hint; shift
+    local rt="$1" st="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd="${PWD//$'\n'/\\n}" how; shift
     if [ "${IDH_SKIP_VALIDATE:-}" = 1 ]; then
-      mkdir -p "$st" 2>/dev/null
-      printf '%s %s bypass cwd=%s (harness unreachable)\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$rt" "$PWD" >>"$st/validate-bypass.log" 2>/dev/null
-      echo "idh: IDH_SKIP_VALIDATE=1, launching $rt with NO harness (logged to $st/validate-bypass.log)" >&2
+      if mkdir -p "$st" 2>/dev/null &&
+        printf '%s %s bypass cwd=%s (harness unreachable)\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$rt" "$cwd" \
+          >>"$st/validate-bypass.log" 2>/dev/null; then
+        how="logged to $st/validate-bypass.log"
+      else
+        how="could not log to $st/validate-bypass.log"
+      fi
+      echo "idh: IDH_SKIP_VALIDATE=1, launching $rt with NO harness ($how)" >&2
       command "$rt" "$@"
       return
     fi
-    hint=$(cat "$st/last-good-root" 2>/dev/null)
+    # The checkout sits at ~/.claude until the 0986 cutover, which updates
+    # this repair (and asks for the installed copy to be refreshed).
     echo "idh: refusing to launch $rt: $HOME/.idh/scripts/shell-init.sh is unreachable, so $HOME/.idh does not resolve to the harness checkout." >&2
-    echo "  repair: ln -sfn ${hint:-/path/to/harness-checkout} $HOME/.idh   (then open a new shell)" >&2
+    printf '  repair: ln -sfn %q %q   (then open a new shell)\n' "$HOME/.claude" "$HOME/.idh" >&2
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $rt ..." >&2
     return 1
   }
