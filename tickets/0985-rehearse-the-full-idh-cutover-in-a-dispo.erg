@@ -29,3 +29,7 @@ which pulls `~/.claude` daily.
 - [ ] In the disposable HOME: after cutover, the 0983 validator passes and a fresh session loads hooks, skills, CLAUDE.md and memory (0984 sentinel); after rollback, bytes and link targets match the pre-state
 - [ ] Worktrees survive (repair tested), timers are paused and resumed by the script
 - [ ] A checklist for the live window is written, including the quiet-window preconditions
+
+Carried over from 0983 (PR #1055 review):
+
+- [ ] The rehearsal rewrites the projection manifest (`adapters/projections.json`) for the post-cutover layout and runs the validator before the first launch; the unrewritten manifest must be shown to refuse (it encodes `~/.claude` as the checkout)

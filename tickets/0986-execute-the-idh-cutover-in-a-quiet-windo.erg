@@ -31,3 +31,7 @@ Carried over from 0982 (PR #1054 review):
 - [ ] Repoint `adapters/codex/hooks.json` to `$HOME/.idh`, re-trust it via Codex `/hooks` in the same window (an untrusted definition silently runs no guard), then show with a fresh `codex exec` probe that the guard blocks
 - [ ] Rewrite the README lines that still say the harness "lives as `~/.claude`" / is cloned as `~/.claude`
 - [ ] Close or explicitly accept the residual ratchet spellings in `tests/test_idh_root_literals.py` (`$HOMEDIR/.claude`, `Path(home) / ".claude"`, `$HOME/./.claude`, f-strings)
+
+Carried over from 0983 (PR #1055 review):
+
+- [ ] The projection manifest is rewritten for the post-cutover layout in the same window, and the validator passes before the first launch. `adapters/projections.json` encodes today's layout (`~/.claude` is the checkout, `~/.idh` points at it); left unchanged it refuses every launch after the move. Also update the `ln -sfn "$HOME/.claude" "$HOME/.idh"` repair text in `scripts/shell-init.sh` and `scripts/bashrc-loader.sh`, and refresh the loader block installed in `~/.bashrc` on doudou and padme
