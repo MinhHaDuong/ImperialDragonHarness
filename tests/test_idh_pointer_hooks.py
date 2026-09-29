@@ -1,13 +1,16 @@
-"""Harness hooks fail loud when the ~/.idh pointer is missing (ticket 0982).
+"""Harness hooks fail loud when their script is unreachable (ticket 0982).
 
-A hook command that names a missing script exits 127, which Claude Code
-treats as non-blocking: the destructive-bash guard would vanish without a
-word. Each pointer-dependent hook in settings.shared.json therefore checks
-the pointer first and exits 2 with a message, which blocks a PreToolUse call
+A hook command whose script is missing exits 127, or 126 when it is not
+executable; Claude Code treats both as non-blocking, so the destructive-bash
+guard would vanish without a word. Each pointer-dependent hook in
+settings.shared.json therefore tests `-x` on the exact script it runs and
+otherwise exits 2 with the repair command, which blocks a PreToolUse call
 and surfaces on SessionStart/SessionEnd.
 """
 
+import importlib.util
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -38,27 +41,80 @@ def test_every_pointer_hook_is_found():
 
 
 @pytest.mark.parametrize("event,command", POINTER_HOOKS)
-def test_hook_checks_the_pointer_before_running(event, command):
-    assert command.startswith('[ -d "$HOME/.idh/scripts" ] || {'), command
+def test_hook_checks_the_exact_script_before_running(event, command):
+    script = command.rsplit('exec "', 1)[1].split('"', 1)[0]
+    assert command.startswith(f'[ -x "{script}" ] || {{'), command
 
 
 def _guard_input(cwd: Path) -> str:
     return json.dumps({"tool_input": {"command": "git reset --hard"}, "cwd": str(cwd)})
 
 
-@pytest.mark.parametrize("event,command", POINTER_HOOKS)
-def test_missing_pointer_exits_2_with_a_message(tmp_path, event, command):
-    home = tmp_path / "home"
-    home.mkdir()
-    result = subprocess.run(
+def _run(command: str, home: Path, cwd: Path):
+    return subprocess.run(
         ["sh", "-c", command],
         env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
-        input=_guard_input(tmp_path),
+        input=_guard_input(cwd),
         capture_output=True,
         text=True,
     )
+
+
+def _assert_loud(result, home: Path):
     assert result.returncode == 2
-    assert "~/.idh pointer is missing" in result.stderr
+    assert "repair it from a plain terminal outside Claude/Codex" in result.stderr
+    assert f"ln -s {home}/.claude {home}/.idh" in result.stderr
+
+
+@pytest.mark.parametrize("event,command", POINTER_HOOKS)
+def test_missing_pointer_exits_2_with_the_repair(tmp_path, event, command):
+    home = tmp_path / "home"
+    home.mkdir()
+    _assert_loud(_run(command, home, tmp_path), home)
+
+
+@pytest.mark.parametrize("event,command", POINTER_HOOKS)
+def test_missing_script_under_a_present_pointer_exits_2(tmp_path, event, command):
+    """A scripts dir without the target: a -d check would exec and exit 127."""
+    home = tmp_path / "home"
+    (home / ".idh" / "scripts").mkdir(parents=True)
+    _assert_loud(_run(command, home, tmp_path), home)
+
+
+@pytest.mark.parametrize("event,command", POINTER_HOOKS)
+def test_non_executable_script_exits_2(tmp_path, event, command):
+    """A present but non-executable script would otherwise exit 126."""
+    home = tmp_path / "home"
+    scripts = home / ".idh" / "scripts"
+    scripts.mkdir(parents=True)
+    name = command.rsplit("/scripts/", 1)[1].split('"', 1)[0]
+    (scripts / name).write_text("#!/bin/sh\nexit 0\n")
+    os.chmod(scripts / name, 0o644)
+    _assert_loud(_run(command, home, tmp_path), home)
+
+
+def _generator():
+    path = REPO / "scripts" / "gen-claude-code-adapter-hooks.py"
+    spec = importlib.util.spec_from_file_location("gen_hooks", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_generator_translates_only_the_exact_checked_form():
+    gen = _generator()
+    for _, command in POINTER_HOOKS:
+        assert gen.translate(command).startswith(gen.LAUNCHER), command
+    smuggled = (
+        '[ -x "$HOME/.idh/scripts/x.sh" ] || { touch /tmp/pwn; echo "m" >&2; exit 2; }; '
+        'exec "$HOME/.idh/scripts/x.sh"'
+    )
+    assert gen.translate(smuggled) == smuggled
+    substituted = (
+        '[ -x "$HOME/.idh/scripts/x.sh" ] || { echo "$(touch /tmp/pwn)" >&2; exit 2; }; '
+        'exec "$HOME/.idh/scripts/x.sh"'
+    )
+    assert gen.translate(substituted) == substituted
 
 
 def test_wiring_links_through_the_pointer_stay_managed(tmp_path):
@@ -114,4 +170,4 @@ def test_present_pointer_runs_the_guard(tmp_path):
     )
     assert result.returncode == 2
     assert "BLOCKED" in result.stderr
-    assert "pointer is missing" not in result.stderr
+    assert "plain terminal" not in result.stderr

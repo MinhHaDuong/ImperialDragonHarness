@@ -31,9 +31,13 @@ HARNESS_SCRIPT = re.compile(
 # The fail-loud form settings.shared.json uses (ticket 0982): refuse with
 # exit 2 when the ~/.idh pointer is missing, else exec the script. The plugin
 # launcher resolves its own root, so it drops the pointer check.
+# Exactly `[ -x SCRIPT ] || { echo "MSG" >&2; exit 2; }; exec SCRIPT [args]`:
+# anything else in the prefix fails to match and is left untranslated, so the
+# drift check reports it instead of silently dropping it from the plugin.
 POINTER_CHECKED = re.compile(
-    r'^\[ -d "\$HOME/\.idh/scripts" \] \|\| \{ [^{}]* exit 2; \}; exec '
-    r'(?P<python>python3\s+)?"\$HOME/\.idh/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$'
+    r'^\[ -x "\$HOME/\.idh/scripts/(?P<name>[\w.-]+)" \] '
+    r'\|\| \{ echo "(?:[^"`$\\]|\$HOME\b)*" >&2; exit 2; \}; '
+    r'exec "\$HOME/\.idh/scripts/(?P=name)"(?P<rest>\s.*)?$'
 )
 
 

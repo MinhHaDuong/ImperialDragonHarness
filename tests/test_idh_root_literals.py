@@ -6,9 +6,12 @@ so the later cutover (0986) moves bytes without chasing callers. Paths that are
 Claude Code's own native root stay spelled `~/.claude` on purpose; each such
 spelling is either a native-root path (NATIVE) or a reviewed line (ALLOWED).
 
-Every home-rooted spelling counts: `~/`, `$HOME/`, `${HOME}/`, systemd `%h/`
-and an absolute `/home/<user>/` prefix. A guard wired to one spelling is not a
-guard.
+Covered spellings: `~/`, `$HOME/` and `${HOME}/` (quoted or not), systemd
+`%h/`, an absolute `/home/<user>/` prefix, and the pathlib/os.path forms
+`Path.home() / ".claude"`, `.joinpath(".claude")`, `os.path.join(<home>,
+".claude")`. A guard wired to one spelling is not a guard, but this list is not
+every spelling either: `$HOMEDIR/.claude`, `Path(home) / ".claude"`,
+`$HOME/./.claude` and f-strings still pass (carried over to 0986).
 """
 
 import re
@@ -81,6 +84,8 @@ ALLOWED = [
      "probes Claude Code's native plugin discovery"),
     ("scripts/on-start.sh", "`~/.claude/rules/**.md` into the system prompt",
      "the runtime loads rules from its native root"),
+    ("settings.shared.json", "outside Claude/Codex: ln -s $HOME/.claude $HOME/.idh",
+     "the fail-loud message names the repair command, which must name the checkout"),
     ("settings.shared.json", '"Edit(~/.claude/skills/hunt/**)"',
      "transition alias: sessions still reach the checkout as ~/.claude until 0986"),
     ("settings.shared.json", '"Edit(~/.claude/tickets/*.erg)"',
