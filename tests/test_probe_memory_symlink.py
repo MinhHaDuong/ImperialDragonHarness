@@ -2,12 +2,15 @@
 
 The offline half pins the pieces the live probe's verdict rests on: the
 project-slug rule, the disposable-HOME rig, the refusal to build it over the
-real HOME, and the sentinel detector. The live half runs the probe itself and
-is skipped unless IDH_LIVE_PROBE=1 (network, Anthropic auth, a few haiku calls).
+real HOME, the sentinel detector, the launch-failure and retry rules, and the
+secret hygiene of the API key. The live half runs the probe itself and is
+skipped unless IDH_LIVE_PROBE=1 (network, Anthropic auth, a few haiku calls).
 """
 
 import importlib.util
 import os
+import stat
+import subprocess
 import sys
 from pathlib import Path
 
@@ -34,10 +37,10 @@ def test_slug_for(path, slug):
 
 @pytest.fixture
 def live(tmp_path):
-    """A stand-in for the live HOME, holding a .claude.json to copy."""
+    """A stand-in for the live HOME, holding a .claude.json the rig must NOT copy."""
     home = tmp_path / "live"
     home.mkdir()
-    (home / ".claude.json").write_bytes(b'{"projects": {"/a": {}}}\n')
+    (home / ".claude.json").write_text('{"projects": {"/a": {}}, "mcpServers": {"x": {}}}\n')
     return home
 
 
@@ -45,9 +48,11 @@ def _mem(rig):
     return rig.home / ".claude" / "projects" / pm.slug_for(rig.work) / "memory"
 
 
-def test_build_rig_copies_claude_json_byte_identical(tmp_path, live):
+def test_build_rig_writes_a_minimal_private_claude_json(tmp_path, live):
     rig = pm.build_rig(tmp_path / "rig", "SENT-1", mode="real", live_home=live)
-    assert (rig.home / ".claude.json").read_bytes() == (live / ".claude.json").read_bytes()
+    cj = rig.home / ".claude.json"
+    assert cj.read_text().strip() == '{"projects": {}}'
+    assert stat.S_IMODE(cj.stat().st_mode) == 0o600
 
 
 def test_build_rig_real_mode_writes_sentinel_in_a_real_file(tmp_path, live):
@@ -88,6 +93,103 @@ def test_detect_loaded_false_without_sentinel():
 
 def test_detect_loaded_false_on_echoed_prompt():
     assert not pm.detect_loaded(pm.PROMPT + "\nNONE\n", "SENT-8")
+
+
+@pytest.mark.parametrize(
+    "launch, expected",
+    [
+        (pm.Launch("", "timeout"), "could not look (timeout)"),
+        (pm.Launch("SENT-9\n", "exit 1"), "could not look (exit 1)"),
+        (pm.Launch("", "exit 0"), "could not look (exit 0)"),
+        (pm.Launch("NONE\n", "exit 0"), "not loaded"),
+        (pm.Launch("SENT-9\n", "exit 0"), "loaded"),
+    ],
+)
+def test_verdict_separates_a_failed_launch_from_a_negative(launch, expected):
+    # A timeout or rate limit must not read as "links are not followed".
+    assert pm.verdict(launch, "SENT-9") == expected
+
+
+@pytest.mark.parametrize(
+    "results, expected",
+    [
+        (["loaded"], "loaded"),
+        (["not loaded", "not loaded"], "not loaded (retry agrees)"),
+        (["not loaded", "loaded"], "inconclusive (retry: loaded)"),
+        (["could not look (timeout)"], "could not look (timeout)"),
+    ],
+)
+def test_a_negative_needs_a_retry_that_agrees(results, expected):
+    it = iter(results)
+    assert pm.confirm_negative(lambda: next(it)) == expected
+
+
+def test_bad_timeout_env_does_not_break_import(monkeypatch):
+    monkeypatch.setenv("PROBE_TIMEOUT", "soon")
+    assert pm._timeout() == 150
+
+
+# --- API key hygiene -------------------------------------------------------
+
+KEY_SENTINEL = "sk-probe-test KEYSENTINEL-5e1f"  # a space: a hand-rolled parse truncates it
+
+
+@pytest.fixture
+def key_file(tmp_path):
+    f = tmp_path / "keys" / "anthropic.env"
+    f.parent.mkdir()
+    f.write_text(f'# test provider\nANTHROPIC_API_KEY="{KEY_SENTINEL}"\n')
+    return f
+
+
+def test_resolve_api_key_reads_the_sourced_value(key_file):
+    assert pm.resolve_api_key(key_file) == KEY_SENTINEL
+
+
+@pytest.mark.parametrize("content", [None, "OTHER_KEY=x\n"])
+def test_no_key_refuses_without_launching_or_copying(tmp_path, live, monkeypatch, content):
+    kf = tmp_path / "missing.env"
+    if content is not None:
+        kf.write_text(content)
+    monkeypatch.setattr(pm, "_launch", lambda *a, **k: pytest.fail("launched without a key"))
+    before = sorted(p.name for p in live.rglob("*"))
+    r = pm.run_probe(live_home=live, key_file=kf)
+    assert r["control"] == "could not look: no API key"
+    assert sorted(p.name for p in live.rglob("*")) == before
+
+
+@pytest.mark.integration
+def test_key_reaches_the_child_env_only_never_output(tmp_path, key_file, monkeypatch, capsys):
+    """Whole probe against a fake `claude`: it answers with whichever memory its
+    physical git root keys to, and records the env and argv it was handed."""
+    fake_home = tmp_path / "fakehome"
+    fake_home.mkdir()
+    monkeypatch.setenv("HOME", str(fake_home))
+    monkeypatch.setattr(pm, "KEY_FILE", key_file)
+    monkeypatch.setattr(pm.shutil, "which", lambda name: "/fake/claude")
+    real_run = subprocess.run
+    calls = []
+
+    def fake_run(cmd, *a, **kw):
+        if cmd[0] != "claude":
+            return real_run(cmd, *a, **kw)
+        if "--version" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "0.0.0 (fake)\n", "")
+        calls.append((list(cmd), dict(kw["env"])))
+        cwd = Path(kw["cwd"]).resolve()
+        mem = Path(kw["env"]["HOME"]) / ".claude" / "projects" / pm.slug_for(cwd) / "memory" / "MEMORY.md"
+        out = mem.read_text() if mem.exists() else "NONE\n"
+        return subprocess.CompletedProcess(cmd, 0, out, "")
+
+    monkeypatch.setattr(pm.subprocess, "run", fake_run)
+    assert pm.main() == 0
+    out, err = capsys.readouterr()
+    assert calls, "the fake claude was never launched"
+    for argv, env in calls:
+        assert env["ANTHROPIC_API_KEY"] == KEY_SENTINEL
+        assert not any("KEYSENTINEL" in a for a in argv)
+    assert "KEYSENTINEL" not in out + err
+    assert "control   memory in a real file    loaded" in out
 
 
 @pytest.mark.slow
