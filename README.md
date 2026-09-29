@@ -105,11 +105,8 @@ dividing by 4, which understated every channel by about 45%.
    ```
    On a PEP 668 externally-managed Python (Debian 12+, Ubuntu 23.04+), install into a venv or via `pipx` instead.
 
-4. Add one line to your `~/.bashrc` (or `~/.zshrc`) to source the harness shell init:
-   ```bash
-   [ -f "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"
-   ```
-   This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
+4. Copy the loader block `scripts/bashrc-loader.sh` verbatim into your `~/.bashrc` (or `~/.zshrc`); do not source it from the checkout.
+   It sources `scripts/shell-init.sh`, which wraps `claude`, `codex` and `pi`: before each launch, `scripts/validate-projections.py` checks every link declared in `adapters/projections.json` and refuses to start, naming the culprit and its repair, when one is missing, dangling or foreign (ticket 0983). If the checkout itself is unreachable, the loader's stubs refuse instead of letting the runtimes start without their guards. The bypass is explicit and logged: `IDH_SKIP_VALIDATE=1 codex ...` appends to `~/.local/state/idh/validate-bypass.log`. The `claude` wrapper also skips permission prompts and auto-names each session after the current git repo. The wrappers live in the harness, so they update on every pull.
 
 Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 

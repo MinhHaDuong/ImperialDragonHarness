@@ -31,11 +31,11 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     "$_script_dir/prompt-project-coherence.sh" "$CLAUDE_PROJECT_DIR" || true
 fi
 
-# Check shell-init.sh is sourced in the user's shell config
-_shell_init="$_script_dir/shell-init.sh"
-if ! grep -qlF "shell-init.sh" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
-    echo "SETUP REMINDER: shell-init.sh is not sourced in your shell config. Add this line to ~/.bashrc or ~/.zshrc:"
-    echo "  [ -f \"$_shell_init\" ] && source \"$_shell_init\""
+# Check the harness loader (ticket 0983) is in the user's shell config: it
+# sources shell-init.sh when the checkout is reachable and refuses to launch
+# the runtimes when it is not. A bare `source` line would skip silently.
+if ! grep -qlF "_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
+    echo "SETUP REMINDER: the harness loader is not in your shell config. Copy $_script_dir/bashrc-loader.sh verbatim into ~/.bashrc (replacing any bare shell-init.sh source line)."
 fi
 
 # The harness-rules index is NOT cat-ed here: the runtime already loads every

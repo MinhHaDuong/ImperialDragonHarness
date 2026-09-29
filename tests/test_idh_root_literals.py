@@ -78,6 +78,8 @@ ALLOWED = [
      "Claude Code's native expression of the skill"),
     ("adapters/pilot-support.json", "personal skills live in ~/.claude/skills/",
      "quotes Claude Code's documentation"),
+    ("adapters/projections.json", '"path": "~/.claude",',
+     "the launch validator asserts Claude Code's native root resolves to the checkout (0983)"),
     ("scripts/adapter-claude-code-activate.sh", "repository *is* ~/.claude",
      "plugin discovery happens under Claude Code's native skills root"),
     ("scripts/probe-plugin-hook-loading.sh", "a plugin at $HOME/.claude/skills/",
