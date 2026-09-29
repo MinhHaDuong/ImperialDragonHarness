@@ -75,6 +75,14 @@ scratch directory and run `bash <file>`. One plain invocation passes where the
 inline version does not. Filenames matter too: a loop over files whose *names*
 contain `git` can trip refusal 1 on its own.
 
+**Not only git commands.** On 2026-09-29 (climate-finance-het, JETP Zotero
+session) the guard also refused commands that name no git at all, because an
+operand was computed at runtime: `erg validate tickets/151[012]-*.erg` (a
+glob), and `sed -n … $f` inside a `for f in …` loop. The same calls passed with
+literal filenames, or from a script file. This session hit about eight
+refusals before settling on script files, despite this note existing: read it
+on the first refusal.
+
 **How to apply:** reach for `\git` on the *first* refusal rather than retrying
 the same command reworded, which never helps. When the message mentions `-C` or
 the shared checkout, skip straight to a script file. Cost of not knowing this:

@@ -8,3 +8,4 @@
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md)
 - [git in a worktree session](reference_git_in_a_worktree_session.md)
 - [Branch-cleanup incidents](reference_branch_cleanup_incidents.md)
+- [Rules come from memory consolidation](feedback_rules_come_from_memory_consolidation.md)
