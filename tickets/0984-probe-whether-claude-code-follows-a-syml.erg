@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Probe whether Claude Code follows a symlinked project memory dir
+Created: 2026-09-29
+Author: claude
+
+--- log ---
+2026-09-29T08:27Z claude created child of 0978
+
+--- body ---
+
+## Context
+
+Step C of 0978, the one real unknown. `projects/` mixes 58 tracked `*/memory/` dirs
+(1,271 files, 1.8 MiB) with 17,409 native runtime files (5.15 GiB). The 2026-09-28 probe
+could not tell whether native project memory loads through a link: the real-file control
+itself did not load MEMORY.md, so the probe was invalid, not negative.
+
+Second question, independent of links: Claude Code keys project memory by cwd. Once the
+repository lives at `~/.idh`, the harness's own sessions look in `projects/-home-haduong--idh/`,
+orphaning `-home-haduong--claude/` (this project's memory) and the 6 path-keyed entries in
+`~/.claude.json` (trust, allowed tools, MCP).
+
+## Exit criteria
+
+- [ ] A real-file control in a disposable HOME demonstrably loads a sentinel from project MEMORY.md (the control fires first)
+- [ ] The same sentinel is tested through a symlinked `projects/X/memory/`; verdict recorded with the runtime version
+- [ ] The cwd-key question is settled: which path key a session in a symlinked vs real `~/.idh` uses, and the chosen remedy (rename, link, or re-key `~/.claude.json`)
+- [ ] Fallback decided if links are not followed (leave `projects/` in place, project only top-level entries)

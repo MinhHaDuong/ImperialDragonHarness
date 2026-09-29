@@ -24,10 +24,10 @@ Owed to the author, outside any diff:
 - **Rotate** the six bash -x values and the Albert key (deferred to October 2026).
 
 ## Blockers
-- **0978:** memory control and visible broken-link check remain open; wait for the other Codex sessions to exit before preparing the live data split.
+- **0978** (now a tracker, split 2026-09-29): only the live cutover 0986 needs a quiet window; 0982 (repoint consumers to `~/.idh`, no move), 0983 (launch-time link validator) and 0984 (memory and cwd-key probe) are ready now, and 0985 rehearses the move.
 
 ## Next actions
-- **Memory v7** (tracker 0909): foundations 0911, 0917 are ready. Prepare the 0978 native/canonical split and startup validator after the quiet window; schedule the actual move another day. Re-read 0920/0923 before starting them.
+- **Memory v7** (tracker 0909): foundations 0911, 0917 are ready. Relocation: start 0982/0983/0984 (safe, no data moves); 0985 then 0986 in a quiet window. Re-read 0920/0923 before starting them.
 - **Portable model policy** (tracker 0974): Phase 0 is 0975.
 - **Open defects worth a slot**: 0875 (hermeticity guard blind to script-path spawns), 0879 (gate writes malformed log lines), 0979 (Pi silent reroute to openrouter).
 - **Watch**: re-open 0062 (Firecracker) when agents run against secret-bearing projects; lift the merge-review gate into the harness when a second consumer project grows one (0900).
