@@ -11,7 +11,8 @@
 # unreadable, broken or a pre-0983 copy leaves (or restores) the stubs.
 # Bypass, explicit and logged:  IDH_SKIP_VALIDATE=1 claude ...
 _idh_refuse() {
-  local rt="$1" st="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd="${PWD//$'\n'/\\n}" how; shift
+  local rt="$1" st="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd how; shift
+  printf -v cwd '%q' "$PWD"
   if [ "${IDH_SKIP_VALIDATE:-}" = 1 ]; then
     if mkdir -p "$st" 2>/dev/null &&
       printf '%s %s bypass cwd=%s (harness not loaded)\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$rt" "$cwd" \
@@ -28,6 +29,9 @@ _idh_refuse() {
   if [ -r "$init" ]; then
     echo "idh: refusing to launch $rt: $init loaded but did not define the harness wrappers (empty, broken or an old copy)." >&2
     printf '  repair: bash -n %q   (shows a syntax error), then bring a current copy: git -C %q pull --ff-only; open a new shell\n' "$init" "$HOME/.idh" >&2
+  elif [ -e "$init" ]; then
+    echo "idh: refusing to launch $rt: $init exists but is unreadable." >&2
+    printf '  repair: chmod u+r %q   (then open a new shell)\n' "$init" >&2
   else
     # The checkout sits at ~/.claude until the 0986 cutover, which updates
     # this repair (and asks for the installed copy to be refreshed).

@@ -31,10 +31,13 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     "$_script_dir/prompt-project-coherence.sh" "$CLAUDE_PROJECT_DIR" || true
 fi
 
-# Check the harness loader (ticket 0983) is in the user's shell config: it
-# sources shell-init.sh when the checkout is reachable and refuses to launch
-# the runtimes when it is not. A bare `source` line would skip silently.
-if ! grep -qlF "_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
+# Check the harness loader (ticket 0983) is in the user's shell config: its
+# refusing stubs stay in place unless shell-init.sh loads fully, so a missing
+# or broken checkout cannot leave the runtimes unwrapped. A bare `source`
+# line would skip silently. `_idh_refuse` marks the current block;
+# `_idh_unreachable` marks the round-1 block still installed until the
+# post-merge refresh (tests/test_projection_validator.py pins both).
+if ! grep -qlE "_idh_refuse|_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
     echo "SETUP REMINDER: the harness loader is not in your shell config. Copy $_script_dir/bashrc-loader.sh verbatim into ~/.bashrc (replacing any bare shell-init.sh source line)."
 fi
 

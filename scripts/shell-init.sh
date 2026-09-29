@@ -13,10 +13,12 @@
 # Bypass, explicit and logged: IDH_SKIP_VALIDATE=1 <runtime> ...
 
 # _idh_bypass_log RUNTIME [NOTE] — record an explicit bypass, and say so.
-# Newlines in $PWD are escaped so a directory name cannot forge a log line;
+# $PWD is printf %q escaped (every control character, not only newlines), so
+# a directory name can neither forge a log line nor inject terminal escapes;
 # a failed write is reported as such, never as "logged".
 _idh_bypass_log() {
-  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd="${PWD//$'\n'/\\n}" how
+  local dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh" cwd how
+  printf -v cwd '%q' "$PWD"
   if mkdir -p "$dir" 2>/dev/null &&
     printf '%s %s bypass cwd=%s%s\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$1" "$cwd" "${2:+ ($2)}" \
       >>"$dir/validate-bypass.log" 2>/dev/null; then

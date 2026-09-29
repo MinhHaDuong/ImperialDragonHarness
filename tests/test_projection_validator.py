@@ -486,3 +486,68 @@ def test_corrupt_manifest_is_a_one_line_refusal(world, corrupt):
     assert r.returncode == 1
     assert len(r.stderr.strip().splitlines()) == 1, r.stderr
     assert "unusable" in r.stderr and "repair:" in r.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
+def test_control_characters_in_the_cwd_never_reach_the_log_raw(world, init):
+    if init == "bashrc-loader.sh":
+        (world["home"] / ".idh").unlink()
+    odd = world["tmp"] / "a\rb\x1b[31mc\x07d"
+    odd.mkdir()
+    r = launch(world, "pi", init=init, cwd=odd, IDH_SKIP_VALIDATE="1")
+    assert r.returncode == 0
+    log = bypass_log(world)
+    assert not any(ch in log for ch in "\r\x1b\x07"), repr(log)
+    assert len(log.splitlines()) == 1
+
+
+@pytest.mark.integration
+def test_an_unreadable_shell_init_gets_the_chmod_repair_not_ln(world):
+    init = world["root"] / "scripts" / "shell-init.sh"
+    init.chmod(0o000)
+    try:
+        if os.access(init, os.R_OK):
+            pytest.skip("running as a user who can read mode-000 files")
+        r = launch(world, "codex", init="bashrc-loader.sh")
+    finally:
+        init.chmod(0o644)
+    assert r.returncode != 0 and "LAUNCHED" not in r.stdout
+    assert "exists but is unreadable" in r.stderr
+    assert "repair: chmod u+r" in r.stderr and "ln -sfn" not in r.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "bashrc,reminded",
+    [
+        ("", True),
+        (
+            '[ -f "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"\n',
+            True,
+        ),
+        ((REPO / "scripts" / "bashrc-loader.sh").read_text(), False),
+        (
+            "_idh_unreachable() { :; }  # the round-1 block, until the post-merge refresh\n",
+            False,
+        ),
+    ],
+    ids=["none", "bare-source-line", "current-loader", "round-1-loader"],
+)
+def test_session_start_reminds_only_when_the_loader_is_absent(
+    tmp_path, bashrc, reminded
+):
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".bashrc").write_text(bashrc)
+    r = subprocess.run(
+        ["bash", str(REPO / "scripts" / "on-start.sh")],
+        env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        input="{}",
+    )
+    assert ("harness loader is not in your shell config" in r.stdout) is reminded, (
+        r.stdout
+    )
