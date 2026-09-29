@@ -8,6 +8,7 @@ Blocked-by: 0985
 2026-09-29T08:27Z claude created child of 0978
 
 2026-09-29T09:11Z claude note Five exit criteria carried over from 0982 / PR #1054 review: permission-through-symlink probe, drop the dual permission aliases, Codex hooks.json repoint + /hooks re-trust + fresh codex exec probe, README 'lives as ~/.claude' rewrite, residual ratchet spellings.
+2026-09-29T19:06Z claude note 0985 delivers the move as idh relocate harness --live (rollback: --rollback --live); it rewrites adapters/projections.json, renames the harness project slug and re-keys ~/.claude.json itself, so those three carried-over criteria become checks. Run docs/idh-cutover-checklist.md; its preconditions include a same-day scripts/rehearse-cutover.py --session and a first real idh install.
 --- body ---
 
 ## Context
