@@ -39,6 +39,13 @@
       "why": "the operator's command on PATH (ticket 0987)"
     },
     {
+      "path": "~/.local/bin/idh-mammoth-audit",
+      "target": "$IDH_ROOT/bin/mammoth-audit",
+      "runtimes": [],
+      "required": true,
+      "why": "the fixed ExecStart of systemd/idh-mammoth-audit.service"
+    },
+    {
       "path": "~/.agents/skills/perch",
       "target": "$IDH_ROOT/skills/perch",
       "runtimes": ["codex", "pi"],

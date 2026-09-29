@@ -62,6 +62,8 @@ def test_install_then_check_round_trip_and_planted_break(machine):
         target = expand(entry["target"], home)
         assert path.resolve() == target.resolve(), (path, target)
     assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
+    assert "--user enable --now idh-mammoth-audit.timer" in machine["log"].read_text()
+    assert (home / ".bashrc").read_text() == (REPO / "scripts" / "bashrc-loader.sh").read_text()
 
     # Negative control: one planted broken link, one named culprit.
     hooks = home / ".codex" / "hooks.json"

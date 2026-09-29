@@ -10,6 +10,8 @@ built from the structured `path`/`target` fields only; the free-form
 
 import importlib.util
 import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -124,8 +126,30 @@ def install_loader() -> int:
     return 0
 
 
+TIMER = "idh-mammoth-audit.timer"
+
+
+def install_timers() -> int:
+    """Install the one unit pair versioned in systemd/. claude-refresh and
+    claude-telemetry-prune are not ours yet (0985/0986)."""
+    if not shutil.which("systemctl"):
+        print("timers skipped: no systemctl on PATH")
+        return 0
+    config = os.environ.get("XDG_CONFIG_HOME") or Path(os.environ["HOME"]) / ".config"
+    units = Path(config) / "systemd" / "user"
+    units.mkdir(parents=True, exist_ok=True)
+    for unit in ("idh-mammoth-audit.service", TIMER):
+        shutil.copyfile(REPO / "systemd" / unit, units / unit)
+    for argv in (["daemon-reload"], ["enable", "--now", TIMER]):
+        if subprocess.run(["systemctl", "--user", *argv]).returncode:
+            print(f"idh: systemctl --user {' '.join(argv)} failed", file=sys.stderr)
+            return 1
+    print(f"enabled: {TIMER}")
+    return 0
+
+
 def install() -> int:
-    return install_links(root()) | install_loader()
+    return install_links(root()) | install_loader() | install_timers()
 
 
 def main(argv) -> int:

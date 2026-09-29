@@ -110,13 +110,13 @@ dividing by 4, which understated every channel by about 45%.
 
 Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
 
-### Optional: monthly unused-skill audit
+### Monthly unused-skill audit
 
-Run `scripts/install-mammoth-audit-timer.sh` from the installed checkout to
-enable the user timer (first day of each month, 08:00 local time, with up to
-five minutes of jitter). Rerun the installer after changing its service or
-timer files: systemd uses installed copies. The launcher is installed at
-`~/.local/bin/idh-mammoth-audit`, matching the service's fixed executable path.
+`idh install` enables the user timer when `systemctl` is present (first day of
+each month, 08:00 local time, with up to five minutes of jitter). Rerun it
+after changing the service or timer files: systemd uses installed copies. The
+launcher is linked at `~/.local/bin/idh-mammoth-audit`, matching the service's
+fixed executable path.
 
 Run `bin/mammoth-audit` for an immediate census. The aggregate report is
 `${XDG_STATE_HOME:-~/.local/state}/imperial-dragon-harness/mammoth-audit.json`;
