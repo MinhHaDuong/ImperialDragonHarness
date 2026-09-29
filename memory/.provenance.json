@@ -9454,6 +9454,33 @@
       "last_confirmed": "2026-09-28T13:56:09Z",
       "promoted": false,
       "backfilled": true
+    },
+    "reference_review_panel_models": {
+      "projects": [
+        "-home-haduong"
+      ],
+      "first_seen": "2026-09-29T12:49:43Z",
+      "last_confirmed": "2026-09-29T12:49:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_pr_close_claim_syntax": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-29T12:49:43Z",
+      "last_confirmed": "2026-09-29T12:49:43Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_erg_log_closed_ticket_needs_dir": {
+      "projects": [
+        "-home-haduong-CNRS-code-search-works-for-zotero"
+      ],
+      "first_seen": "2026-09-29T12:49:43Z",
+      "last_confirmed": "2026-09-29T12:49:43Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
