@@ -7,6 +7,9 @@ idh status            installed vs declared, timer state, distance to origin
 idh sync              scripts/sync-local-main.sh: fast-forwards the local default
                       branch (main); exit 0 only when it equals origin's, whatever
                       branch HEAD is on; otherwise names what blocks it
+idh relocate harness [--rollback] [--live]
+                      move the checkout out of the native root to ~/.idh, or back
+                      (adapters/cutover.py, ticket 0985)
 idh install|uninstall|status|relocate skill ...  and  idh check harness X  (perch.py)
 """
 
@@ -19,7 +22,11 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if args[:1] in (["-h"], ["--help"]):
         print(__doc__)
-    if args in (["install"], ["status"], ["sync"]) or (
+    if args[:2] == ["relocate", "harness"]:
+        from cutover import main
+
+        args = args[2:]
+    elif args in (["install"], ["status"], ["sync"]) or (
         args[:1] == ["check"] and args[1:2] != ["harness"]
     ):
         from lifecycle import main

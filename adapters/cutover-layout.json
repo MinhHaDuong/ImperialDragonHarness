@@ -1,0 +1,18 @@
+{
+  "_comment": "The .idh cutover's classification of the checkout (ticket 0985; run by `idh relocate harness`, adapters/cutover.py). Names are relative to HOME (`native_root`, `checkout`) or to the checkout's top level (the lists; `*` globs allowed). Every top-level entry of the checkout must be tracked by git, listed in `keep`, or listed in `native`; anything else is refused before the first mutation, so an unclassified file never moves by guess. `keep` stays with the checkout because the harness addresses it repo-relative or through ~/.idh (.env is UV_ENV_FILE's ~/.idh/.env). `native` is Claude Code's own state, or a file a script addresses under the native root: it moves to the new real native root. `projects` is mixed and split one level down: projects/<slug>/memory stays tracked in the checkout and is linked back; every other child moves. `claude_links` are the harness entries Claude Code reads from its native root, linked there one by one (CLAUDE.md imports RTK.md and tickets/AGENTS.md by relative path). `timers` are the user timers paused for the window when active.",
+  "native_root": ".claude",
+  "checkout": ".idh",
+  "claude_links": ["CLAUDE.md", "RTK.md", "rules", "skills", "agents", "commands", "tickets"],
+  "keep": [".claude", ".env", ".worktrees", "worktrees", ".agents", ".codex", ".pytest_cache", ".ruff_cache"],
+  "native": [
+    ".credentials.json", ".last-cleanup", ".last-pull", ".last-update-result.json",
+    "backups", "beat-log.jsonl", "cache", "daemon", "daemon-auth-*", "daemon.log",
+    "debug", "downloads", "feedback", "file-history", "gh-pr-status-cache.json",
+    "history.jsonl", "ide", "jobs", "keybindings.json", "logs",
+    "nightbeat-supervisor-journal.jsonl", "paste-cache", "plans", "plugins", "policy-limits.json*", "remote-settings.json",
+    "session-env", "sessions", "settings.json", "settings.json.bak.*",
+    "settings.local.json", "shell-snapshots", "state", "stats-cache.json", "statsig",
+    "tasks", "telemetry", "todos"
+  ],
+  "timers": ["claude-refresh.timer", "claude-telemetry-prune.timer", "idh-mammoth-audit.timer"]
+}
