@@ -2,6 +2,7 @@
 Title: Rehearse the full .idh cutover in a disposable HOME
 Created: 2026-09-29
 Author: claude
+Closed: autoclosed — PR #1067
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
@@ -14,6 +15,7 @@ Author: claude
 2026-09-29T19:06Z claude note Rehearsal PASS (scripts/rehearse-cutover.py --session, claude 2.1.284): run A cutover, rerun, rollback on a clone of the repo with the live census as empty placeholders (42 top-level names, 200 slugs); 11770 paths byte/mode/link-identical after rollback. Run B: sessions after the cutover saw CLAUDE.md, its RTK.md import, a rule, a skill and a SessionStart hook from an unrelated repo (memory absent there, negative control) and the harness memory from ~/.idh. The rollback after a real session stopped on runtime files the layout did not classify (policy-limits.json*, remote-settings.json); both now classified native.
 2026-09-29T19:06Z claude note Mechanism: idh relocate harness [--rollback] (adapters/cutover.py, layout in adapters/cutover-layout.json), per the 12:39Z note; the two directions are two commands of one module. Live-window checklist: docs/idh-cutover-checklist.md. Crash points: tests/test_idh_cutover.py hard-exits before every mutation of both directions; each is finished by a rerun or undone by a rollback.
 2026-09-29T19:25Z claude note Author decision 2026-09-29: the cutover state machine is disproportionate for a one-off move (two blockers in rollback code that runs once, PR #1067 review round 1); redirected to a manual runbook plus tar-snapshot rollback. The cutover module, its rehearsal driver and its tests are deleted in the same PR; the rehearsal findings (both run-B sentinel sessions passed on 2.1.284; policy-limits.json* and remote-settings.json are Claude runtime files; git worktree repair leaves a .git file that still resolves through the restored ~/.idh link untouched) live on as runbook text. Exit criteria reworded.
+2026-09-29T19:36Z Minh Ha-Duong closed — autoclosed — PR #1067
 --- body ---
 
 ## Context

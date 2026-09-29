@@ -2,13 +2,13 @@
 Title: Execute the .idh cutover in a quiet window
 Created: 2026-09-29
 Author: claude
-Blocked-by: 0985
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
 
 2026-09-29T09:11Z claude note Five exit criteria carried over from 0982 / PR #1054 review: permission-through-symlink probe, drop the dual permission aliases, Codex hooks.json repoint + /hooks re-trust + fresh codex exec probe, README 'lives as ~/.claude' rewrite, residual ratchet spellings.
 2026-09-29T19:25Z claude note 0985 closes with a runbook, not a script (author decision 2026-09-29): the move is manual by docs/idh-cutover-checklist.md with a tar-snapshot rollback. Criteria added: runbook, snapshot, the three timers. The manifest rewrite, slug rename and ~/.claude.json re-key are runbook steps 6, 8 and 9.
+2026-09-29T19:36Z Minh Ha-Duong note blocker 0985 closed — Blocked-by removed.
 --- body ---
 
 ## Context
