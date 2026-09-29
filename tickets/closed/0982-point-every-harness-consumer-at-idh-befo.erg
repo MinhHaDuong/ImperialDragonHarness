@@ -2,6 +2,7 @@
 Title: Point every harness consumer at ~/.idh before any move
 Created: 2026-09-29
 Author: claude
+Closed: autoclosed — PR #1054
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
@@ -10,6 +11,7 @@ Author: claude
 2026-09-29T08:42Z claude note Fresh-session probes 2026-09-29 (doudou, new settings): Claude Code headless -- SessionStart hook ok, PreToolUse guard blocked git reset --hard (exit 2), CLAUDE.md loaded; Codex exec -- the guard blocked the reset, perch skill visible; Pi -p -- the guard blocked the reset, the full skills list loaded from ~/.idh/skills. Interactive bash sources shell-init via ~/.idh (claude is a function).
 2026-09-29T09:03Z claude note Review round 1 follow-up. Claude Code hooks in settings.shared.json (and doudou's live settings.json) now check the pointer first: with ~/.idh missing they exit 2 with a message instead of exiting 127, which would have been non-blocking (tests/test_idh_pointer_hooks.py). Padme already has ~/.idh (see the entry above). Codex probe: an edited hooks.json definition is untrusted, and Codex then runs no guard and gives no warning. So adapters/codex/hooks.json keeps its trusted $HOME/.claude spelling (allowlisted), and 0986 must repoint it together with a /hooks re-trust. A dangling ~/.codex/hooks.json or ~/.pi idh-guard.ts link, if ~/.idh were removed, drops those guards silently; this is 0983's launch-time validator scope.
 2026-09-29T09:11Z claude note Round 2: hook wrappers now test -x on the exact script (a present ~/.idh/scripts without the target exited 127, a non-executable one 126, both non-blocking), and the message gives the repair command to run from a plain terminal outside Claude/Codex. Exit criterion 2 names the Codex exception, owner 0986.
+2026-09-29T10:35Z Minh Ha-Duong closed — autoclosed — PR #1054
 --- body ---
 
 ## Context
