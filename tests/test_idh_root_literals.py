@@ -118,7 +118,7 @@ def offending_literals(root: Path, allowed=ALLOWED):
 
 def test_live_wiring_names_the_harness_as_idh():
     found = offending_literals(REPO)
-    assert not found, "\n".join(f"{r}:{n}: {l}" for r, n, l in found)
+    assert not found, "\n".join(f"{r}:{n}: {text}" for r, n, text in found)
 
 
 def test_every_allowlist_entry_still_matches_a_line():
