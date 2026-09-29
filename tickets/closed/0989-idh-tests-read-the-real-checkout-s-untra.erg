@@ -2,10 +2,12 @@
 Title: idh tests read the real checkout's untracked private overlay links
 Created: 2026-09-29
 Author: claude
+Closed: autoclosed — PR #1064
 
 --- log ---
 2026-09-29T15:48Z claude created
 
+2026-09-29T16:03Z Minh Ha-Duong closed — autoclosed — PR #1064
 --- body ---
 ## Context
 After PR #1060, `make check` in the primary checkout (on main) fails 15 tests
