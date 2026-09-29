@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -45,17 +46,23 @@ def report(kind, detail, repair) -> None:
     print(f"  {kind}: {detail}\n    repair: {repair}", file=sys.stderr)
 
 
-def install_links(base: Path) -> int:
+def install_links() -> int:
     """Create each absent entry; leave correct ones; refuse anything else."""
     rc = 0
     for entry in entries():
+        base = root()  # re-read: once ~/.idh exists, later links go through it
         path, target = V.expand(entry["path"], base), V.expand(entry["target"], base)
-        if not path.is_symlink() and not path.exists():
-            if not entry["required"] and V.resolved(target) is None:
-                continue  # optional, and nothing to point at on this machine
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.symlink_to(target)
-            print(f"installed: {path} -> {target}")
+        try:
+            if not path.is_symlink() and not path.exists():
+                if not entry["required"] and V.resolved(target) is None:
+                    continue  # optional, and nothing to point at on this machine
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(target)
+                print(f"installed: {path} -> {target}")
+                continue
+        except OSError as exc:  # e.g. a regular file where a parent dir belongs
+            report("REFUSED", f"{path}: {exc}", "inspect the path, then rerun idh install")
+            rc = 1
             continue
         problem = V.check_entry(entry, base)
         if problem:
@@ -72,30 +79,34 @@ def check(runtime=None) -> int:
     return 1 if failures else 0
 
 
-BEGIN, END = "# >>> Imperial Dragon Harness loader", "# <<< Imperial Dragon Harness loader"
+BEGIN, END = b"# >>> Imperial Dragon Harness loader", b"# <<< Imperial Dragon Harness loader"
 
 
-def _span(text: str):
-    """(start, end) offsets of the marked block, None when absent; raises
-    ValueError on a begin marker with no end marker after it."""
+def _span(text: bytes):
+    """(start, end) offsets of the one marked block, None when absent; raises
+    ValueError when the markers do not delimit exactly one block."""
     start = text.find(BEGIN)
     if start < 0:
         return None
     end = text.find(END, start)
     if end < 0:
         raise ValueError("begin marker without an end marker")
-    stop = text.find("\n", end)
-    return start, len(text) if stop < 0 else stop + 1
+    stop = text.find(b"\n", end)
+    stop = len(text) if stop < 0 else stop + 1
+    if text.find(BEGIN, stop) >= 0:
+        raise ValueError("more than one loader block")
+    return start, stop
 
 
 def install_loader() -> int:
     """Splice scripts/bashrc-loader.sh into ~/.bashrc between its markers,
-    proving every byte outside them unchanged (padme, 2026-09-29)."""
+    proving every byte outside them unchanged (padme, 2026-09-29). Bytes, not
+    text: CRLF and non-UTF-8 lines must survive as they are."""
     rc_file = Path(os.environ["HOME"]) / ".bashrc"
-    block = (REPO / "scripts" / "bashrc-loader.sh").read_text()
-    old = rc_file.read_text() if rc_file.exists() else ""
-    manual = (f"  remove the old harness loader block from {rc_file} by hand "
-              f"(it ends at `|| _idh_stubs`), then rerun idh install")
+    block = (REPO / "scripts" / "bashrc-loader.sh").read_bytes()
+    old = rc_file.read_bytes() if rc_file.exists() else b""
+    manual = (f"  remove the old harness loader block(s) from {rc_file} by hand "
+              f"(each ends at `|| _idh_stubs`), then rerun idh install")
     try:
         span = _span(old)
     except ValueError as exc:
@@ -103,22 +114,22 @@ def install_loader() -> int:
         return 1
     base = old
     if span is None:
-        if "_idh_refuse" in old or "_idh_unreachable" in old:
+        if b"_idh_refuse" in old or b"_idh_unreachable" in old:
             print(f"idh: loader NOT installed: {rc_file} holds a pre-marker "
                   f"loader block\n{manual}", file=sys.stderr)
             return 1
-        base += "\n" if old and not old.endswith("\n") else ""
+        base += b"\n" if old and not old.endswith(b"\n") else b""
         span = (len(base), len(base))
     if base[span[0]:span[1]] == block:
         return 0
-    backup = rc_file.with_name(".bashrc.idh-bak")
-    backup.write_text(old)
+    backup = rc_file.with_name(f".bashrc.idh-bak-{time.strftime('%Y%m%dT%H%M%S')}")
+    backup.write_bytes(old)
     outside = (base[: span[0]], base[span[1]:])
-    rc_file.write_text(outside[0] + block + outside[1])
-    new = rc_file.read_text()
+    rc_file.write_bytes(outside[0] + block + outside[1])
+    new = rc_file.read_bytes()
     kept = _span(new)
     if kept is None or (new[: kept[0]], new[kept[1]:]) != outside:
-        rc_file.write_text(old)
+        rc_file.write_bytes(old)
         print(f"idh: loader splice altered lines outside the markers; {rc_file} "
               f"restored from {backup}", file=sys.stderr)
         return 1
@@ -149,7 +160,7 @@ def install_timers() -> int:
 
 
 def install() -> int:
-    return install_links(root()) | install_loader() | install_timers()
+    return install_links() | install_loader() | install_timers()
 
 
 def _git(*args):
@@ -165,7 +176,13 @@ def distance():
 
 def sync() -> int:
     """sync-local-main.sh unchanged: it fast-forwards, or names what blocks."""
-    subprocess.run([str(REPO / "scripts" / "sync-local-main.sh"), str(REPO)])
+    run = subprocess.run([str(REPO / "scripts" / "sync-local-main.sh"), str(REPO)],
+                         capture_output=True, text=True)
+    print(run.stdout, end="")
+    # The script always exits 0 (it serves hooks); its words carry the verdict.
+    if any(w in run.stdout for w in ("skipped", "left untouched", "refused", "could not")):
+        print("idh sync: the checkout was not synced (see above)", file=sys.stderr)
+        return 1
     gap = distance()
     if gap is None:
         print("idh sync: no upstream to compare with", file=sys.stderr)

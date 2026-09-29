@@ -120,7 +120,8 @@ def test_loader_splice_keeps_every_user_line(machine):
     r = idh("install")
     assert r.returncode == 0, r.stdout + r.stderr
     assert bashrc.read_text() == before + LOADER + after
-    assert (home / ".bashrc.idh-bak").read_text() == before + stale + after
+    (backup,) = home.glob(".bashrc.idh-bak-*")
+    assert backup.read_text() == before + stale + after
 
     snapshot = bashrc.stat().st_mtime_ns
     assert idh("install").returncode == 0
@@ -215,10 +216,50 @@ def test_sync_fast_forwards_or_names_the_blocking_file(tmp_path, machine):
     r = sync()
     assert r.returncode == 1
     assert "notes.md" in r.stdout
-    assert "still 1 commit(s) behind" in r.stderr
+    assert "not synced" in r.stderr
     assert (local / "notes.md").read_text() == "mine, untracked\n"
 
     (local / "notes.md").unlink()  # positive control: the blocker gone, sync lands
     r = sync()
     assert r.returncode == 0, r.stdout + r.stderr
     assert (local / "notes.md").read_text() == "incoming\n"
+
+    origin.rename(tmp_path / "gone.git")  # offline: a skipped sync is not a success
+    r = sync()
+    assert r.returncode == 1
+    assert "not synced" in r.stderr
+
+
+def test_loader_splice_keeps_crlf_and_non_utf8_bytes(machine):
+    home, idh = machine["home"], machine["idh"]
+    bashrc = home / ".bashrc"
+    before, after = b"export A=1\r\n# caf\xe9 latin-1\r\n", b"alias z=zotero\r\n"
+    bashrc.write_bytes(before + after)
+    assert idh("install").returncode == 0
+    assert bashrc.read_bytes() == before + after + LOADER.encode()
+    stale = bashrc.read_bytes().replace(b"_idh_stubs\n", b"_idh_stubs  # stale\n", 1)
+    bashrc.write_bytes(stale)
+    assert idh("install").returncode == 0
+    assert bashrc.read_bytes() == before + after + LOADER.encode()
+
+
+def test_two_loader_blocks_are_refused(machine):
+    home, idh = machine["home"], machine["idh"]
+    bashrc = home / ".bashrc"
+    bashrc.write_text(LOADER + "alias a=b\n" + LOADER)
+    r = idh("install")
+    assert r.returncode == 1
+    assert "more than one loader block" in r.stderr
+    assert bashrc.read_text() == LOADER + "alias a=b\n" + LOADER
+
+
+def test_links_go_through_the_pointer_and_a_blocked_parent_is_named(machine):
+    home, idh = machine["home"], machine["idh"]
+    (home / ".pi").write_text("a file where a directory belongs\n")
+    r = idh("install")
+    assert r.returncode == 1
+    assert f"REFUSED: {home / '.pi' / 'agent' / 'extensions' / 'idh-guard.ts'}" in r.stderr
+    # The run went on: the loader and the other links are in place.
+    assert (home / ".bashrc").read_text() == LOADER
+    hooks = home / ".codex" / "hooks.json"
+    assert str(hooks.readlink()).startswith(str(home / ".idh")), hooks.readlink()

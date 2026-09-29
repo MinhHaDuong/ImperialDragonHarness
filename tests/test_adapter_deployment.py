@@ -1,6 +1,6 @@
 """Fresh install of the whole pilot surface (tickets 0810, 0987).
 
-The pilot creates exactly four things on a machine, in two planes:
+The pilot surface is four links, in two planes:
 
 - skills plane (0802/0803): ``~/.agents/skills/{perch,healthcheck}`` and,
   when the repository is not ``~/.claude`` itself, a Claude Code projection
@@ -59,7 +59,7 @@ def home(tmp_path, monkeypatch):
 
 def wirings():
     """The link half of `idh install`; the loader and timers are tested apart."""
-    return lifecycle.install_links(lifecycle.root())
+    return lifecycle.install_links()
 
 
 def test_full_pilot_surface_installs_and_skills_uninstall(home):
