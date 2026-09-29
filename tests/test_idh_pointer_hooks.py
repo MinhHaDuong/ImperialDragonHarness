@@ -117,36 +117,6 @@ def test_generator_translates_only_the_exact_checked_form():
     assert gen.translate(substituted) == substituted
 
 
-def test_wiring_links_through_the_pointer_stay_managed(tmp_path):
-    """install-wirings.sh treats a link retargeted through ~/.idh as its own."""
-    home = tmp_path / "home"
-    (home / ".codex").mkdir(parents=True)
-    (home / ".idh").symlink_to(REPO, target_is_directory=True)
-    link = home / ".codex" / "hooks.json"
-    link.symlink_to(home / ".idh" / "adapters" / "codex" / "hooks.json")
-    wirings = REPO / "adapters" / "install-wirings.sh"
-    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
-
-    def run(mode):
-        return subprocess.run(["bash", str(wirings), mode], env=env, capture_output=True, text=True)
-
-    installed = run("install")
-    assert installed.returncode == 0, installed.stderr
-    assert f"already discoverable: {link}" in installed.stdout
-    removed = run("uninstall")
-    assert removed.returncode == 0, removed.stderr
-    assert not link.is_symlink()
-
-    # Negative control: a link to some other file is still refused.
-    link.parent.mkdir(parents=True, exist_ok=True)
-    other = tmp_path / "other.json"
-    other.write_text("{}")
-    link.symlink_to(other)
-    refused = run("install")
-    assert refused.returncode == 1
-    assert "REFUSED" in refused.stderr
-
-
 def test_present_pointer_runs_the_guard(tmp_path):
     """Positive control: with the pointer in place the real guard decides."""
     home = tmp_path / "home"

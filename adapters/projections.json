@@ -21,7 +21,7 @@
       "runtimes": ["codex"],
       "required": true,
       "why": "the Codex destructive-bash guard; a dangling link runs no guard and gives no warning",
-      "installer": "bash $IDH_ROOT/adapters/install-wirings.sh install"
+      "installer": "$IDH_ROOT/bin/idh install"
     },
     {
       "path": "~/.pi/agent/extensions/idh-guard.ts",
@@ -29,7 +29,7 @@
       "runtimes": ["pi"],
       "required": true,
       "why": "the Pi destructive-bash guard; a dangling link drops the extension silently",
-      "installer": "bash $IDH_ROOT/adapters/install-wirings.sh install"
+      "installer": "$IDH_ROOT/bin/idh install"
     },
     {
       "path": "~/.local/bin/idh",

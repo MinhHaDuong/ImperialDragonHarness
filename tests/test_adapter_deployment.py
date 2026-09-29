@@ -1,4 +1,4 @@
-"""Fresh install/uninstall of the whole pilot surface (ticket 0810).
+"""Fresh install of the whole pilot surface (tickets 0810, 0987).
 
 The pilot creates exactly four things on a machine, in two planes:
 
@@ -6,47 +6,44 @@ The pilot creates exactly four things on a machine, in two planes:
   when the repository is not ``~/.claude`` itself, a Claude Code projection
   — all via ``bin/idh``;
 - wiring plane (0809): ``~/.codex/hooks.json`` and
-  ``~/.pi/agent/extensions/idh-guard.ts`` — via
-  ``adapters/install-wirings.sh``.
+  ``~/.pi/agent/extensions/idh-guard.ts`` — via ``idh install``
+  (``adapters/lifecycle.py``, ticket 0987), from adapters/projections.json.
 
 This module proves, in fixture homes (no developer machine state, no live
 credentials, no CLIs — version probes are stubbed as in the perch tests):
 
-- a fresh install creates exactly the managed surface and nothing else;
-- re-install is idempotent ("already discoverable" is success, not error);
-- an unmanaged target is REFUSED — its content survives untouched, the
-  other targets still report their own state, and the exit code says
-  something refused. Activation never overwrites the only recoverable copy;
-- uninstall takes back exactly what install created, pruning the
-  directories it emptied, leaving unmanaged files alone;
+- a fresh install creates the managed surface;
+- re-install is idempotent (a correct link is success, not error);
+- an unmanaged target is refused — its content survives untouched, the
+  other targets still install, and the exit code says something refused.
+  Activation never overwrites the only recoverable copy;
+- skill uninstall takes back what skill install created;
 - an interrupted install (partial surface) is recovered by re-running it;
 - a canary planted in an unmanaged config value appears nowhere else — no
-  install artifact, journal or diagnostic carries command or config text.
+  install artifact or diagnostic carries config text.
 """
 
 import importlib.util
 import json
-import os
-import subprocess
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-WIRINGS = REPO / "adapters" / "install-wirings.sh"
 CANARY = "CANARY-0810-qv7-only-in-its-origin"
 
 pytestmark = pytest.mark.integration
 
 
-def _module():
-    spec = importlib.util.spec_from_file_location("perch", REPO / "adapters" / "perch.py")
+def _module(name):
+    spec = importlib.util.spec_from_file_location(name, REPO / "adapters" / f"{name}.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-perch = _module()
+perch = _module("perch")
+lifecycle = _module("lifecycle")
 
 
 @pytest.fixture
@@ -60,79 +57,58 @@ def home(tmp_path, monkeypatch):
     return root
 
 
-def wirings(home, *args):
-    return subprocess.run(
-        ["bash", str(WIRINGS), *args],
-        capture_output=True, text=True, timeout=30,
-        env={**os.environ, "HOME": str(home)},
-    )
+def wirings():
+    """The link half of `idh install`; the loader and timers are tested apart."""
+    return lifecycle.install_links(lifecycle.root())
 
 
-def skills(home, skill):
-    for harness in ("claude", "codex", "pi"):
-        perch.install(harness, skill)
-
-
-def unskills(home, skill):
-    for harness in ("claude", "codex", "pi"):
-        perch.uninstall(harness, skill)
-
-
-def test_full_pilot_surface_installs_and_uninstalls_exactly(home):
-    skills(home, "perch")
-    skills(home, "healthcheck")
-    r = wirings(home, "install")
-    assert r.returncode == 0, r.stderr
+def test_full_pilot_surface_installs_and_skills_uninstall(home):
+    # Links first: ~/.claude becomes the checkout, as on a real machine.
+    assert wirings() == 0
+    for skill in ("perch", "healthcheck"):
+        for harness in ("claude", "codex", "pi"):
+            perch.install(harness, skill)
     managed = [
         home / ".agents" / "skills" / "perch",
         home / ".agents" / "skills" / "healthcheck",
-        home / ".claude" / "skills" / "perch",
-        home / ".claude" / "skills" / "healthcheck",
         home / ".codex" / "hooks.json",
         home / ".pi" / "agent" / "extensions" / "idh-guard.ts",
     ]
     for path in managed:
         assert path.is_symlink(), f"missing managed path: {path}"
+    assert (home / ".claude" / "skills" / "perch").resolve() == REPO / "skills" / "perch"
     assert json.loads((home / ".codex" / "hooks.json").read_text())["hooks"]["PreToolUse"]
 
-    unskills(home, "perch")
-    unskills(home, "healthcheck")
-    r = wirings(home, "uninstall")
-    assert r.returncode == 0, r.stderr
-    for path in managed:
-        assert not path.exists() and not path.is_symlink(), f"left behind: {path}"
-    # Only directories the install emptied are pruned; $HOME survives.
-    assert home.is_dir()
+    for skill in ("perch", "healthcheck"):
+        for harness in ("claude", "codex", "pi"):
+            perch.uninstall(harness, skill)
+    assert not (home / ".agents" / "skills" / "perch").is_symlink()
+    assert (REPO / "skills" / "perch" / "SKILL.md").is_file(), "canonical source touched"
 
 
-def test_reinstall_is_idempotent(home):
-    assert wirings(home, "install").returncode == 0
-    r = wirings(home, "install")
-    assert r.returncode == 0, r.stderr
-    assert "already discoverable" in r.stdout
+def test_reinstall_is_idempotent(home, capsys):
+    assert wirings() == 0
+    capsys.readouterr()
+    assert wirings() == 0
+    assert "installed:" not in capsys.readouterr().out
 
 
-def test_unmanaged_target_is_refused_and_never_overwritten(home):
+def test_unmanaged_target_is_refused_and_never_overwritten(home, capsys):
     codex = home / ".codex" / "hooks.json"
     codex.parent.mkdir(parents=True)
     codex.write_text(f'{{"hooks": {{}}, "note": "{CANARY}"}}')
     before = codex.read_text()
 
-    r = wirings(home, "install")
-    assert r.returncode == 1
-    assert "REFUSED" in r.stderr
+    assert wirings() == 1
+    assert f"FOREIGN: {codex} is a real file" in capsys.readouterr().err
     assert codex.read_text() == before, "the only copy was overwritten"
-    # The other target still installed and is reported honestly.
+    # The other target still installed.
     assert (home / ".pi" / "agent" / "extensions" / "idh-guard.ts").is_symlink()
 
-    r = wirings(home, "uninstall")
-    assert r.returncode == 1
-    assert codex.read_text() == before, "an unmanaged file was removed or altered"
-    assert not (home / ".pi").exists(), "the managed wiring was not taken back"
-
-    # The canary appears nowhere outside its origin file.
+    # The canary appears nowhere outside its origin file (links into the
+    # checkout are not followed: they are the repository, not install output).
     for path in home.rglob("*"):
-        if path.is_file() and path != codex:
+        if path.is_file() and not path.is_symlink() and path != codex:
             assert CANARY not in path.read_text(errors="replace"), f"canary leaked: {path}"
 
 
@@ -141,25 +117,32 @@ def test_interrupted_install_is_recovered_by_rerunning(home):
     target = home / ".pi" / "agent" / "extensions" / "idh-guard.ts"
     target.parent.mkdir(parents=True)
     target.symlink_to(REPO / "adapters" / "pi" / "extensions" / "idh-guard.ts")
-    r = wirings(home, "install")
-    assert r.returncode == 0, r.stderr
+    assert wirings() == 0
     assert (home / ".codex" / "hooks.json").is_symlink()
 
 
-def test_foreign_symlink_is_refused_not_silently_retargeted(home):
+def test_foreign_symlink_is_refused_not_silently_retargeted(home, capsys):
     foreign = home / ".codex" / "hooks.json"
     foreign.parent.mkdir(parents=True)
     foreign.symlink_to("/somewhere/else/hooks.json")
-    r = wirings(home, "install")
-    assert r.returncode == 1
-    assert "REFUSED" in r.stderr
+    assert wirings() == 1
+    assert f"DANGLING: {foreign}" in capsys.readouterr().err
     assert foreign.readlink() == Path("/somewhere/else/hooks.json")
 
 
-def test_status_reports_each_target(home):
-    r = wirings(home, "status")
-    assert r.returncode == 0
-    assert "not installed" in r.stdout
-    wirings(home, "install")
-    r = wirings(home, "status")
-    assert "codex:" in r.stdout and "pi:" in r.stdout
+def test_link_through_the_pointer_counts_as_ours(home, capsys):
+    """A wiring link retargeted through ~/.idh (0982) is accepted; another
+    file behind the same path is still refused (negative control)."""
+    (home / ".idh").symlink_to(REPO, target_is_directory=True)
+    link = home / ".codex" / "hooks.json"
+    link.parent.mkdir(parents=True)
+    link.symlink_to(home / ".idh" / "adapters" / "codex" / "hooks.json")
+    assert wirings() == 0
+    assert link.readlink() == home / ".idh" / "adapters" / "codex" / "hooks.json"
+
+    link.unlink()
+    other = home / "other.json"
+    other.write_text("{}")
+    link.symlink_to(other)
+    assert wirings() == 1
+    assert f"FOREIGN: {link} resolves to {other}" in capsys.readouterr().err
