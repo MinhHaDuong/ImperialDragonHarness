@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Rehearse the full .idh cutover in a disposable HOME
+Created: 2026-09-29
+Author: claude
+Blocked-by: 0982
+Blocked-by: 0983
+Blocked-by: 0984
+
+--- log ---
+2026-09-29T08:27Z claude created child of 0978
+
+--- body ---
+
+## Context
+
+Step D of 0978. Run the whole cutover end to end in a disposable HOME seeded with a copy of
+the repository, before touching the live one. Extends the 2026-09-28 rollback prototype
+(23 crash points) from fixture to full shape.
+
+Traps the rehearsal must cover: every worktree's `.git` file holds an absolute
+`gitdir: $HOME/.claude/.git/worktrees/...` (needs `git worktree repair`); the
+cwd-keyed project memory and `~/.claude.json` entries (0984's remedy); the per-entry links
+one level down in `projects/*/memory`; the systemd timers, especially `claude-refresh`
+which pulls `~/.claude` daily.
+
+## Exit criteria
+
+- [ ] One script performs the cutover and one the rollback; both idempotent, both refuse on a dirty tree or a foreign file
+- [ ] In the disposable HOME: after cutover, the 0983 validator passes and a fresh session loads hooks, skills, CLAUDE.md and memory (0984 sentinel); after rollback, bytes and link targets match the pre-state
+- [ ] Worktrees survive (repair tested), timers are paused and resumed by the script
+- [ ] A checklist for the live window is written, including the quiet-window preconditions

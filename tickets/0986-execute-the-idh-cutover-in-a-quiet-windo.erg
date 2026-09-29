@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Execute the .idh cutover in a quiet window
+Created: 2026-09-29
+Author: claude
+Blocked-by: 0985
+
+--- log ---
+2026-09-29T08:27Z claude created child of 0978
+
+--- body ---
+
+## Context
+
+Step E of 0978: the live move, with the rehearsed scripts from 0985. Requires a quiet
+window: no Claude, Codex or Pi session running, timers paused, repository clean, no open
+PRs whose worktrees would need repair mid-flight. Author schedules the window.
+
+## Exit criteria
+
+- [ ] The repository lives at `~/.idh`; `~/.claude` holds the documented per-entry projection
+- [ ] The 0983 validator passes; a fresh Claude, Codex and Pi session each load hooks, skills, instructions and memory (positive control)
+- [ ] Breaking one link makes the launch refuse (negative control, live)
+- [ ] `make check` and the full suite pass from `~/.idh`; padme updated or its deferral recorded
+- [ ] 0978's exit criteria re-checked; STATE's disjoint-roots row and 0920/0923 premises updated
