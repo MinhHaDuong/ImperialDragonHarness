@@ -74,7 +74,7 @@ def check_entry(entry: dict, root: Path):
         prefix = ""
 
     if not path.is_symlink() and not path.exists():
-        if not entry.get("required", False):
+        if not entry["required"]:
             return None
         # The parent may be absent too (~/.codex, ~/.pi/agent/extensions).
         repair = f"mkdir -p {shlex.quote(str(path.parent))} && {link}"
@@ -105,9 +105,30 @@ def check_entry(entry: dict, root: Path):
     )
 
 
+FIELDS = ("path", "target", "runtimes", "required", "why")
+
+
+class ManifestError(Exception):
+    pass
+
+
 def load_entries(manifest: Path, runtime: str):
-    data = json.loads(manifest.read_text())
-    entries = data["entries"]
+    try:
+        entries = json.loads(manifest.read_text())["entries"]
+        for e in entries:
+            missing = [f for f in FIELDS if f not in e]
+            if missing:
+                raise ManifestError(
+                    f"entry {e.get('path', '?')!r} lacks {', '.join(missing)}"
+                )
+            if not isinstance(e["required"], bool):
+                raise ManifestError(
+                    f"entry {e['path']!r}: required must be true or false"
+                )
+    except ManifestError:
+        raise
+    except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
+        raise ManifestError(f"{type(exc).__name__}: {exc}") from exc
     runtimes = {r for e in entries for r in e["runtimes"]}
     if runtime not in runtimes:
         raise SystemExit(
@@ -134,8 +155,19 @@ def main(argv=None) -> int:
     root = args.root.absolute()
     manifest = args.manifest or root / "adapters" / "projections.json"
 
+    try:
+        entries = load_entries(manifest, args.runtime)
+    except ManifestError as exc:
+        print(
+            f"idh: refusing to launch {args.runtime}: manifest {manifest} is unusable "
+            f"({exc}); repair: restore adapters/projections.json in the harness "
+            f"checkout {shlex.quote(str(root))}. To launch anyway (logged): "
+            f"IDH_SKIP_VALIDATE=1 {args.runtime} ...",
+            file=sys.stderr,
+        )
+        return 1
     failures = []
-    for entry in load_entries(manifest, args.runtime):
+    for entry in entries:
         problem = check_entry(entry, root)
         if problem:
             failures.append((entry, problem))

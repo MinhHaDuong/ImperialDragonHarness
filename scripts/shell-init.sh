@@ -46,6 +46,12 @@ _idh_preflight() {
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
     return 1
   fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "idh: refusing to launch $1: python3 is not on PATH, so the projection check cannot run." >&2
+    echo "  repair: install python3 (e.g. sudo apt install python3), or fix PATH=$PATH" >&2
+    echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
+    return 1
+  fi
   python3 "$v" "$1"
 }
 
@@ -70,3 +76,7 @@ function pi {
   _idh_preflight pi || return
   command pi "$@"
 }
+
+# Last line on purpose: the ~/.bashrc loader keeps its refusing stubs unless
+# this file ran to the end (scripts/bashrc-loader.sh).
+_IDH_WRAPPERS=1

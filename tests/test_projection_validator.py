@@ -9,6 +9,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -382,7 +383,7 @@ def test_bashrc_loader_refuses_when_the_harness_is_unreachable(world, runtime):
     (world["home"] / ".idh").unlink()
     r = launch(world, runtime, init="bashrc-loader.sh", IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
-    assert "(harness unreachable)" in bypass_log(world)
+    assert "(harness not loaded)" in bypass_log(world)
 
 
 @pytest.mark.integration
@@ -409,3 +410,79 @@ def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreacha
     assert "syntax error" not in r.stderr, r.stderr
     assert r.stdout.startswith("function\n"), r.stdout
     assert "LAUNCHED codex --approve-for-me --version" in r.stdout
+
+
+BROKEN_INIT = {
+    "empty": "",
+    "syntax error": 'function codex {\n  command codex "$@"\n\nif then fi\n',
+    # A pre-0983 copy: it defines claude without any check, and nothing else.
+    "old copy": 'claude() {\n  command claude --dangerously-skip-permissions "$@"\n}\n',
+}
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("interactive", [False, True])
+@pytest.mark.parametrize("case", [*BROKEN_INIT, "syntax error mid-file", "unreadable"])
+@pytest.mark.parametrize("runtime", RUNTIMES)
+def test_loader_fails_closed_on_a_broken_shell_init(world, case, runtime, interactive):
+    """Round-2 red team: `[ -f init ] && source init` launched codex bare (rc 0)."""
+    init = world["root"] / "scripts" / "shell-init.sh"
+    if case == "unreadable":
+        init.chmod(0o000)
+        if os.access(init, os.R_OK):
+            pytest.skip("running as a user who can read mode-000 files")
+    elif case == "syntax error mid-file":
+        # The real file with one broken line in the middle: bash may carry on
+        # past it and still reach the _IDH_WRAPPERS marker on the last line.
+        text = init.read_text()
+        cut = text.index("_idh_preflight() {")
+        init.write_text(
+            text[:cut]
+            + "if then fi\n"
+            + text[cut:].replace("_idh_preflight() {", "_idh_preflight() { (", 1)
+        )
+    else:
+        init.write_text(BROKEN_INIT[case])
+    flags = ["--norc", "-i"] if interactive else ["--norc"]
+    script = f'source "{world["root"]}/scripts/bashrc-loader.sh"\n{runtime} --version'
+    r = subprocess.run(
+        ["bash", *flags, "-c", script],
+        env=_env(world),
+        cwd=world["tmp"],
+        capture_output=True,
+        text=True,
+    )
+    init.chmod(0o644)
+    assert r.returncode != 0 and "LAUNCHED" not in r.stdout, (r.stdout, r.stderr)
+    assert f"refusing to launch {runtime}" in r.stderr
+    assert "repair: " in r.stderr
+
+
+@pytest.mark.integration
+def test_missing_python3_refuses_with_a_repair(world):
+    bare = world["tmp"] / "bare-bin"
+    bare.mkdir()
+    for tool in ("bash", "dirname", "basename"):
+        (bare / tool).symlink_to(shutil.which(tool))
+    env = {"HOME": str(world["home"]), "PATH": f"{world['fakebin']}:{bare}"}
+    r = launch(world, "codex", env=env)
+    assert r.returncode != 0 and "LAUNCHED" not in r.stdout
+    assert "python3 is not on PATH" in r.stderr
+    assert "repair: install python3" in r.stderr
+
+
+@pytest.mark.parametrize(
+    "corrupt",
+    [
+        "{not json",
+        '{"entries": 3}',
+        '{"entries": [{"path": "~/.idh", "target": "$IDH_ROOT", "runtimes": ["codex"],'
+        ' "why": "no required key"}]}',
+    ],
+)
+def test_corrupt_manifest_is_a_one_line_refusal(world, corrupt):
+    (world["root"] / "adapters" / "projections.json").write_text(corrupt)
+    r = validate(world, "codex")
+    assert r.returncode == 1
+    assert len(r.stderr.strip().splitlines()) == 1, r.stderr
+    assert "unusable" in r.stderr and "repair:" in r.stderr

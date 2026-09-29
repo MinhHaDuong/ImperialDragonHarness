@@ -11,6 +11,14 @@ The pilot creates exactly four things on a machine, in two planes:
 | skills | `~/.agents/skills/{perch,healthcheck}` (+ a Claude Code projection when the repo is not `~/.claude`) | `bin/idh` |
 | wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `adapters/install-wirings.sh` |
 
+Every one of these paths is also declared in `adapters/projections.json`.
+Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
+(`scripts/shell-init.sh`, loaded by the `scripts/bashrc-loader.sh` block in
+`~/.bashrc`) run `scripts/validate-projections.py`. A missing, dangling or
+foreign entry refuses the launch and prints the culprit and the repair. The
+bypass is `IDH_SKIP_VALIDATE=1`, and each use is logged (ticket 0983). Check a
+runtime by hand with `python3 ~/.idh/scripts/validate-projections.py codex`.
+
 Both managers share one doctrine: a target that already resolves to the
 canonical file is success ("already discoverable"); anything else at the
 target is refused — never overwritten, never deleted. Interrupted installs
