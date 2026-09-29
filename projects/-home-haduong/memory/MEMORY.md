@@ -34,3 +34,4 @@
 - [erg-pr-merge: don't pre-close a ticket before its PR](feedback_erg_pr_merge_dont_preclose_ticket.md)
 - [cadens / realf.hypotheses.org split](project_cadens_realf_split.md)
 - [IMACLIM collaboration with Ghersi](project_imaclim_ghersi_collaboration.md)
+- [Review panel models](reference_review_panel_models.md) — local Qwen needs ≥32k max_tokens (thinks ~10k on a small diff); Codex luna/terra/sol ids; 2026-09-24 panel strengths

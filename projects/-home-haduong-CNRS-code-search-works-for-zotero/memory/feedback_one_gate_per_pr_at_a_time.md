@@ -38,3 +38,10 @@ have the branch owner write one log line stating the objective timeline with
 comment timestamps, reduce the PR body's review history to a pointer at the
 ticket log, then request one fresh gate on the tip. Related:
 [[reconcile-seats-against-synthesis]], [[executor-gate-loop-stall]].
+
+**Addendum 2026-09-22 (raid 810):** the second gate came from my own finisher
+agent: resumed with "rerun the panel once", it invoked `/gaze` while my gaze
+fork on the same PR was still live. Two batteries ran on #607 concurrently,
+both overshot the 1 800 s ceiling and ESCALATEd on time. A resumed executor
+is a lane; tell it explicitly whether a gate is already in flight and who owns
+it before asking for a re-review.

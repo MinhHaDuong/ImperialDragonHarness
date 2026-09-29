@@ -145,3 +145,5 @@
 - [Gate fork returns without verdict](feedback_gate_fork_returns_without_verdict.md) — a fork's return text is not a verdict; read the PR page back before merging, re-run when empty
 - [gaze cost on a doc-only PR](feedback_gaze_cost_on_doc_only_pr.md) — an hour and twelve agents for no code; make check + /verify-gate is the path for governance-only diffs
 - [Clean room before live install](feedback_clean_room_before_live_install.md) — sitter ladder unit→smoke→Menagerie→clone→dogfood; clone rung before every live install, no release before he uses it
+- [erg log on a closed ticket needs DIR](reference_erg_log_closed_ticket_needs_dir.md) — by ID and by path it says "no ticket found"; pass `tickets/closed`.
+- [PR close-claim syntax](feedback_pr_close_claim_syntax.md) — `Ticket: tickets/NNNN-slug.erg` verbatim; `**Ticket:** NNNN` bounces erg-pr-merge.
