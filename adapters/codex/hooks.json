@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.idh/scripts/guard-destructive-bash.sh\"",
+            "command": "bash \"$HOME/.claude/scripts/guard-destructive-bash.sh\"",
             "timeout": 8,
             "statusMessage": "Checking dirty-reset guard"
           }

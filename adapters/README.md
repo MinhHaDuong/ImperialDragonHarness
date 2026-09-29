@@ -189,10 +189,13 @@ out of the hook path: tool hooks are a guardrail, not a complete
 boundary, and the inventory says so.
 
 The wirings' guard paths live in the config plane (`settings.shared.json`,
-`codex/hooks.json` use `$HOME/.idh/scripts/...`), where no
-runtime-supplied path exists — unlike the skills seam, there is no loaded
-body to derive a root from. Step A of the `~/.idh` relocation (0982) repointed
-every one of them to the `~/.idh` pointer.
+`codex/hooks.json`), where no runtime-supplied path exists — unlike the
+skills seam, there is no loaded body to derive a root from. Step A of the
+`~/.idh` relocation (0982) repointed the Claude Code wiring to
+`$HOME/.idh/scripts/...`, behind a check that exits 2 when the pointer is
+missing. The Codex wiring keeps its trusted spelling until the cutover
+(0986), because Codex trust pins the hook definition and an edit silently
+disables the guard until it is re-trusted.
 
 Weakening is tested, not warned about: `tests/test_guard_adapter_wiring.py`
 rejects removal of the event mapping, the block result, the exit semantics

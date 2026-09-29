@@ -23,9 +23,16 @@ REPO = Path(__file__).resolve().parent.parent
 # Where live wiring lives: scripts, hooks, adapters, settings, units, skills.
 SCOPES = ("scripts", "bin", "hooks", "adapters", "systemd", "skills", "settings.shared.json")
 
-LITERAL = re.compile(r"(?:~|\$HOME|\$\{HOME\}|%h|/home/[A-Za-z0-9_.-]+)/\.claude(?![\w.-])(\S*)")
-# The pathlib spelling: Path.home() / ".claude" [/ "segment"].
-PY_LITERAL = re.compile(r"""home\(\)\s*/\s*["']\.claude["'](?:\s*/\s*["']([\w.-]+)["'])?""")
+LITERAL = re.compile(
+    r"""(?:~|"?\$HOME"?|"?\$\{HOME\}"?|%h|/home/[A-Za-z0-9_.-]+)/\.claude(?![\w.-])(\S*)"""
+)
+# The Python spellings: Path.home() / ".claude", Path.home().joinpath(".claude"),
+# os.path.join(<home>, ".claude"), each with an optional next segment.
+_HOME_EXPR = r"""(?:[\w.]*\.)?(?:home\(\)|expanduser\(\s*["']~["']\s*\)|environ\[\s*["']HOME["']\s*\]|\bhome\b|\bHOME\b)"""
+PY_LITERAL = re.compile(
+    r"(?:" + _HOME_EXPR + r"""\s*/\s*|home\(\)\.joinpath\(\s*|path\.join\(\s*""" + _HOME_EXPR
+    + r"""\s*,\s*)["']\.claude["'](?:\s*(?:/|,)\s*["']([\w.-]+)["'])?"""
+)
 
 # Claude Code's native root: the runtime reads these at ~/.claude by design.
 NATIVE = re.compile(
@@ -55,6 +62,9 @@ ALLOWED = [
      "Claude Code's personal-skills scan root"),
     ("adapters/perch.py", "``$HOME/.claude`` is that harness's",
      "Claude Code's personal-skills scan root"),
+    ("adapters/codex/hooks.json", '"command": "bash \\"$HOME/.claude/scripts/guard-destructive-bash.sh\\""',
+     "Codex hook trust pins the definition's hash; an edit silently disables the guard "
+     "until re-trusted, so 0986 repoints it together with a /hooks re-trust"),
     ("adapters/perch.py", 'return _home() / ".claude" / "skills" / skill',
      "Claude Code's personal-skills scan root"),
     ("adapters/pilot-support.json", '"skills_root": "$HOME/.claude/skills"',
@@ -139,6 +149,10 @@ def test_every_allowlist_entry_still_matches_a_line():
         "git -C ~/.claude status",
         'ROOT = Path.home() / ".claude"',
         "base = Path.home() / '.claude' / 'memory'",
+        'cat "$HOME"/.claude/STATE.md',
+        'root = Path.home().joinpath(".claude")',
+        'root = os.path.join(os.path.expanduser("~"), ".claude")',
+        'root = os.path.join(home, ".claude", "scripts")',
     ],
 )
 def test_positive_control_fires_on_a_planted_literal(tmp_path, planted):
@@ -157,6 +171,7 @@ def test_positive_control_fires_on_a_planted_literal(tmp_path, planted):
         "cd <project>/.claude/worktrees/x",
         'd = Path.home() / ".claude" / "projects"',
         'rules = project / ".claude" / "rules"',
+        'root = os.path.join(home, ".claude", "projects")',
     ],
 )
 def test_native_root_and_idh_spellings_pass(tmp_path, native):
