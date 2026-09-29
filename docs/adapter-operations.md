@@ -23,7 +23,7 @@ bypass is `IDH_SKIP_VALIDATE=1`, and each use is logged (ticket 0983). Check a
 runtime by hand with `idh check codex`, or every entry with `idh check`.
 
 Both managers share one doctrine: a target that already resolves to the
-canonical file is success ("already discoverable"); anything else at the
+canonical file is success, left as it is; anything else at the
 target is refused — never overwritten, never deleted. Interrupted installs
 are recovered by re-running the same command; installs are idempotent.
 
@@ -68,7 +68,7 @@ idh check                          # every manifest entry; names each culprit
 
 ```bash
 ~/.idh/bin/idh uninstall skill perch healthcheck
-rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh check` shows they are ours
+rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status` shows both `ok`
 ```
 
 Skill removal takes back exactly what install created and prunes only the
