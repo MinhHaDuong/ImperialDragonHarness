@@ -106,3 +106,70 @@ Constraints from the Blind-Spot pass:
 - **padme runs Python 3.12.3** (doudou 3.14.4); `validate-projections.py` and
   `adapters/perch.py` byte-compile there. New code stays 3.12-compatible, with a
   test run under 3.12 if available.
+
+## Actions (raid plan 2026-09-29)
+
+Decisions: new `adapters/lifecycle.py` (stdlib, Python 3.12-compatible) reusing
+`scripts/validate-projections.py` via importlib; `perch.py` is not grown, `bin/idh`
+routes `install` (no args), `check [runtime]`, `status`, `sync` to lifecycle and
+falls back to perch for `install skill X` and the rest. Units owned: only
+`idh-mammoth-audit.{service,timer}`, the one pair versioned in `systemd/`;
+`claude-refresh` and `claude-telemetry-prune` live only in `~/.config/systemd/user`
+(telemetry-prune hardcodes `%h/.claude/telemetry`) and are listed for 0985/0986.
+Links come from `path`/`target` only; `installer` is display text, never executed.
+
+Commits, one change each:
+1. Begin/end markers in `scripts/bashrc-loader.sh`; update the README copy step,
+   the `on-start.sh` reminder and the marker assertions in
+   `tests/test_projection_validator.py`, `tests/test_idh_root_literals.py`.
+2. `lifecycle.py` install/check (red test first): per entry, skip if correct,
+   create if absent, refuse and name a real file or foreign link (continue, exit
+   non-zero); optional entries only when the target exists; link
+   `~/.local/bin/idh`. `check` calls `check_entry` per runtime, all by default.
+   Nothing special-cases `~/.claude`.
+3. Bashrc block: back up to `~/.bashrc.idh-bak`, splice between the markers,
+   assert the bytes outside equal the backup's (restore and exit 1 on mismatch);
+   refuse a legacy start marker with no end marker and print the manual step;
+   append when no block; a rerun is a no-op. Tests include trailing user lines
+   surviving (the padme alias case).
+4. Timers: fold the mammoth installer into lifecycle (`systemctl` by argv list;
+   "timers skipped" when absent); repoint `tests/test_mammoth_audit.py`; delete
+   `scripts/install-mammoth-audit-timer.sh`; README.
+5. Wirings: rewrite the two `installer` fields to `idh install`; repoint
+   `tests/test_adapter_deployment.py`, `tests/test_idh_pointer_hooks.py` and the
+   validator assertion; delete `adapters/install-wirings.sh`; fix
+   `docs/adapter-operations.md`. Keep wiring uninstall only if something beyond
+   tests needs it.
+   **Line-budget gate here:** `git diff --stat main` over source files (not tests
+   or docs). If the net is not down, stop and report, as the constraint says.
+6. `sync` runs `scripts/sync-local-main.sh` unchanged, relays its output (it names
+   blocking files) and exits non-zero if still behind (`rev-list --count`);
+   `status` prints `ok|MISSING|DANGLING|FOREIGN path -> target` per entry, timer
+   state, ahead/behind origin, `declared N, ok M`, exit 1 if anything is broken.
+7. README install section: the two commands. No `hooks.json` change, so no
+   Codex re-trust.
+8. `make check`; py_compile under 3.12 if available (absent on doudou; say so).
+
+## First test (raid plan)
+
+`tests/test_idh_lifecycle.py::test_install_then_check_round_trip_and_planted_break`:
+disposable HOME in `tmp_path`, PATH `tmp/bin:/usr/bin:/bin` with a `systemctl`
+stub logging argv. Asserts: install exits 0; `check` exits 0 (positive control);
+every required entry is a symlink resolving to its declared target (the expected
+set comes from the manifest, not from what install created); `~/.local/bin/idh`
+resolves to `bin/idh`; the stub logged `--user enable --now idh-mammoth-audit.timer`;
+retargeting `~/.codex/hooks.json` to `/nonexistent` makes `check` exit 1 naming
+exactly that path, one culprit line. Avoid: comparing install output with check
+output, or asserting only "block present" for the splice.
+
+## Dependencies (raid plan)
+
+Steps 1-2 before 3-6; 5 needs 2. Nothing waits on 0984: `~/.claude` stays one
+generic manifest row. Rebase at each gate (0985/0986 touch `projections.json`).
+
+## Line budget (raid plan)
+
+Removed: `install-wirings.sh` 120 + `install-mammoth-audit-timer.sh` 16 = 136.
+Estimated `lifecycle.py` about 160, so the net is likely NOT down on source alone
+(about 40% odds of a drop); offsets are dropping wiring uninstall/status (~45) and
+a shorter deployment test. The step-5 gate decides.

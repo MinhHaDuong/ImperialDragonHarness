@@ -48,3 +48,47 @@ list any entries the probe created.
 
 Coupling: 0987 treats the manifest's `~/.claude` entry as provisional until this
 ticket reports; if memory links are not followed, 0985 re-derives it.
+
+## Actions (raid plan 2026-09-29)
+
+1. `scripts/probe-memory-symlink.sh`, modelled on `scripts/probe-plugin-hook-loading.sh`:
+   `ROOT=$(mktemp -d)` (mode 700, trap removes it), `H=$ROOT/home`, every launch
+   under `env HOME="$H"`; refuse if `$H` equals the real `$HOME`.
+2. Disposable HOME: copy `~/.claude.json` and record its `projects` keys; an empty
+   `$H/.claude/` (no hooks, CLAUDE.md or settings). Auth: first a token exported from
+   `~/.config/keys/` at run time, never printed; else copy
+   `~/.claude/.credentials.json` into `$H/.claude/` (600), deleted by the trap. Record
+   which method worked, never the credential.
+3. Positive control first: real file `$H/.claude/projects/<slug>/memory/MEMORY.md`
+   with a fresh sentinel; `claude -p "Reply with the exact sentinel string from your
+   project memory, or NONE" --model haiku` from the matching cwd. If it prints NONE,
+   exit 1 "probe could not look" and try variants (cwd created first, trust state,
+   index line); if none fires, the ticket is blocked, never reported negative.
+4. Symlink case: move the memory dir aside, link `projects/<slug>/memory` to it, new
+   sentinel, same prompt. Record the verdict and `claude --version`.
+5. cwd key: `$H/.idh -> $H/.claude`; launch from `cd $H/.idh` (logical) and
+   `cd -P $H/.idh` (physical); diff `$H/.claude/projects` and the `.claude.json`
+   `projects` keys before and after each. Recommend rename, link or re-key; state
+   the fallback (leave `projects/` in place, project only top-level entries; 0985
+   re-derives the manifest's `~/.claude` entry).
+6. Evidence: the script prints a table (control, symlink, cwd key, created
+   entries); verdict, version and created entries go in this log, sentinel-free.
+
+## First test (raid plan)
+
+`tests/test_probe_memory_symlink.py`, offline half, written before the script:
+- `slug_for`: `/home/haduong/.claude` gives `-home-haduong--claude`, `/tmp/a.b/c`
+  gives `-tmp-a-b-c` (a `/`-only replacement fails on the dots).
+- `build_rig`: `.claude.json` is a byte-identical copy; sentinel in a real file; in
+  symlink mode `memory` is a link whose target holds the sentinel.
+- `build_rig` raises when handed the real `$HOME` (the unchanged-live-listing check
+  alone would pass for a rig that writes nowhere, so it only counts with this one).
+- `detect_loaded`: true on stdout with the sentinel; false without it, and false on
+  stdout that only echoes the prompt.
+- The live probe is `@pytest.mark.live`, skipped unless `IDH_LIVE_PROBE=1`.
+
+## Dependencies (raid plan)
+
+Network, Anthropic auth, `claude` CLI (2.1.284 here; the verdict is
+version-specific), a few haiku calls. No dependency on 0987; 0987 waits on this
+verdict only for the `~/.claude` manifest row.
