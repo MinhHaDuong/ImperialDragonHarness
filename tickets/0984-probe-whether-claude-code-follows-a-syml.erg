@@ -8,6 +8,7 @@ Author: claude
 
 2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; cwd-key probe moves into the disposable HOME.
 2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files exist; new files (scripts/probe-memory-symlink.sh, tests/test_probe_memory_symlink.py) do not; touches no file 0987 edits. WARN: if the probe script needs a tests/test_idh_root_literals.py allowlist entry, that file is also edited by 0987; rebase at merge.
+2026-09-29T13:26Z claude note Live probe, claude 2.1.284, disposable HOME (api-key auth), run twice with identical results: control loaded; symlinked projects/<slug>/memory loaded; cwd key is physical (launch via ~/.idh -> ~/.claude keys memory and transcripts under slug(~/.claude), whatever $PWD says); headless -p added no .claude.json projects keys; live HOME entries created: none. Remedy and fallback in body § Verdict.
 --- body ---
 
 ## Context
@@ -24,10 +25,10 @@ orphaning `-home-haduong--claude/` (this project's memory) and the 6 path-keyed 
 
 ## Exit criteria
 
-- [ ] A real-file control in a disposable HOME demonstrably loads a sentinel from project MEMORY.md (the control fires first)
-- [ ] The same sentinel is tested through a symlinked `projects/X/memory/`; verdict recorded with the runtime version
-- [ ] The cwd-key question is settled: which path key a session in a symlinked vs real `~/.idh` uses, and the chosen remedy (rename, link, or re-key `~/.claude.json`)
-- [ ] Fallback decided if links are not followed (leave `projects/` in place, project only top-level entries)
+- [x] A real-file control in a disposable HOME demonstrably loads a sentinel from project MEMORY.md (the control fires first)
+- [x] The same sentinel is tested through a symlinked `projects/X/memory/`; verdict recorded with the runtime version
+- [x] The cwd-key question is settled: which path key a session in a symlinked vs real `~/.idh` uses, and the chosen remedy (rename, link, or re-key `~/.claude.json`)
+- [x] Fallback decided if links are not followed (leave `projects/` in place, project only top-level entries)
 
 ## Imagine annotation (raid 2026-09-29)
 
@@ -93,3 +94,40 @@ ticket reports; if memory links are not followed, 0985 re-derives it.
 Network, Anthropic auth, `claude` CLI (2.1.284 here; the verdict is
 version-specific), a few haiku calls. No dependency on 0987; 0987 waits on this
 verdict only for the `~/.claude` manifest row.
+
+## Verdict (claude 2.1.284, 2026-09-29)
+
+Probe: `scripts/probe-memory-symlink.py` (offline tests plus a live test gated on
+`IDH_LIVE_PROBE=1` in `tests/test_probe_memory_symlink.py`). Two live runs, same table.
+
+- **Why the 2026-09-28 control never fired.** Auto memory keys on the session's
+  git root, not the bare cwd. A work dir with no repository of its own inherits an
+  ancestor's `.git`; here an empty `/tmp/.git` made every `/tmp` probe key under
+  `projects/-tmp/`. The rig now makes each work dir its own git root; the control
+  loads.
+- **Symlinked memory: followed.** With `projects/<slug>/memory` a symlink to a
+  directory elsewhere, the sentinel loads.
+- **cwd key: physical.** Launched from `~/.idh -> ~/.claude`, with `$PWD` either
+  the link (`cd`) or the target (`cd -P`), memory and the transcript directory both
+  key on `slug(~/.claude)`. The link name never appears. Headless `-p` added no
+  `projects` key to `.claude.json` in either case, so the probe does not show how an
+  interactive session keys trust; since the memory and transcript keys resolve the
+  link, assume trust does too.
+- **Remedy at the 0986 cutover.** The key follows where the checkout physically
+  lives. While `~/.idh` is a link to `~/.claude`, nothing changes. Once the
+  checkout physically moves to `~/.idh`, sessions key on `slug(~/.idh)`. So: rename
+  `projects/<slug(~/.claude)>` to `projects/<slug(~/.idh)>` in the same step as
+  the move, and re-key the path-keyed `~/.claude.json` entries to the new path. A
+  link cannot keep the old key, because the runtime resolves it. A per-directory
+  `memory` link would work (links are followed), but a rename keeps one copy.
+- **Fallback: not needed on 2.1.284.** Links are followed, so `projects/*/memory/`
+  can be projected by link. If a later runtime stops following them, leave
+  `projects/` in place, project only top-level entries, and 0985 re-derives the
+  manifest's `~/.claude` entry. Re-run the probe after a runtime upgrade before
+  relying on this.
+
+Deviations from the raid plan: the probe is Python (`.py`, not `.sh`) because the
+First test imports `slug_for`, `build_rig` and `detect_loaded`. The live test carries
+the existing `slow` marker plus a skip unless `IDH_LIVE_PROBE=1`, so no new
+`live` marker is registered. Auth used the api key from the keys directory; the
+credentials-file copy is a fallback that this run did not use.
