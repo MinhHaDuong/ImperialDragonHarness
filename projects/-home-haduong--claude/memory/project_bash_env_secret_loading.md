@@ -29,7 +29,7 @@ Selection is EXPLICIT/VERBOSE — no suffix-stripping convention. `SRC`/`DST` ea
 
 **How to apply:**
 - `settings.json` → `env.BASH_ENV` → `scripts/bash-env.sh`
-- `bash-env.sh` must NOT have `set -euo pipefail` (it's sourced, not executed — flags would propagate into the calling shell); excluded from the `pipefail-guard` CI check alongside `shell-init.sh`.
+- `bash-env.sh` must NOT have `set -euo pipefail` (it's sourced, not executed — flags would propagate into the calling shell); excluded from the `pipefail-guard` CI check alongside `shell-init.sh` and `bashrc-loader.sh`.
 - Never write secrets back to `CLAUDE_ENV_FILE` in hooks.
 - Tests: `tests/test_bash_env_project_env_parse.sh`, `tests/test_bash_env_keys_selection.sh`, `tests/test_bash_env_keys_selection_explicit.sh`, `tests/test_bash_env_keys_protect_critical_names.sh`, `tests/test_bash_env_robustness.sh` (auto-run by `tests/test_bash_suites.py`).
 
