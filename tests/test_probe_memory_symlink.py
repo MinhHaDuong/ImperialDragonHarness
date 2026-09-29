@@ -40,7 +40,9 @@ def live(tmp_path):
     """A stand-in for the live HOME, holding a .claude.json the rig must NOT copy."""
     home = tmp_path / "live"
     home.mkdir()
-    (home / ".claude.json").write_text('{"projects": {"/a": {}}, "mcpServers": {"x": {}}}\n')
+    (home / ".claude.json").write_text(
+        '{"projects": {"/a": {}}, "mcpServers": {"x": {}}}\n'
+    )
     return home
 
 
@@ -131,7 +133,9 @@ def test_bad_timeout_env_does_not_break_import(monkeypatch):
 
 # --- API key hygiene -------------------------------------------------------
 
-KEY_SENTINEL = "sk-probe-test KEYSENTINEL-5e1f"  # a space: a hand-rolled parse truncates it
+KEY_SENTINEL = (
+    "sk-probe-test KEYSENTINEL-5e1f"  # a space: a hand-rolled parse truncates it
+)
 
 
 @pytest.fixture
@@ -147,11 +151,15 @@ def test_resolve_api_key_reads_the_sourced_value(key_file):
 
 
 @pytest.mark.parametrize("content", [None, "OTHER_KEY=x\n"])
-def test_no_key_refuses_without_launching_or_copying(tmp_path, live, monkeypatch, content):
+def test_no_key_refuses_without_launching_or_copying(
+    tmp_path, live, monkeypatch, content
+):
     kf = tmp_path / "missing.env"
     if content is not None:
         kf.write_text(content)
-    monkeypatch.setattr(pm, "_launch", lambda *a, **k: pytest.fail("launched without a key"))
+    monkeypatch.setattr(
+        pm, "_launch", lambda *a, **k: pytest.fail("launched without a key")
+    )
     before = sorted(p.name for p in live.rglob("*"))
     r = pm.run_probe(live_home=live, key_file=kf)
     assert r["control"] == "could not look: no API key"
@@ -159,30 +167,58 @@ def test_no_key_refuses_without_launching_or_copying(tmp_path, live, monkeypatch
 
 
 @pytest.mark.integration
-def test_key_reaches_the_child_env_only_never_output(tmp_path, key_file, monkeypatch, capsys):
+def test_key_reaches_the_child_env_only_never_output(
+    tmp_path, key_file, monkeypatch, capsys
+):
     """Whole probe against a fake `claude`: it answers with whichever memory its
-    physical git root keys to, and records the env and argv it was handed."""
+    physical cwd keys to, and records the env and argv it was handed."""
     fake_home = tmp_path / "fakehome"
     fake_home.mkdir()
+    rigs = tmp_path / "rigs"
+    rigs.mkdir()
     monkeypatch.setenv("HOME", str(fake_home))
     monkeypatch.setattr(pm, "KEY_FILE", key_file)
     monkeypatch.setattr(pm.shutil, "which", lambda name: "/fake/claude")
+    monkeypatch.setattr(pm.tempfile, "tempdir", str(rigs))
     real_run = subprocess.run
     calls = []
 
     def fake_run(cmd, *a, **kw):
-        if cmd[0] != "claude":
-            return real_run(cmd, *a, **kw)
-        if "--version" in cmd:
+        if cmd[0] == "claude":
             return subprocess.CompletedProcess(cmd, 0, "0.0.0 (fake)\n", "")
-        calls.append((list(cmd), dict(kw["env"])))
-        cwd = Path(kw["cwd"]).resolve()
-        mem = Path(kw["env"]["HOME"]) / ".claude" / "projects" / pm.slug_for(cwd) / "memory" / "MEMORY.md"
-        out = mem.read_text() if mem.exists() else "NONE\n"
-        return subprocess.CompletedProcess(cmd, 0, out, "")
+        return real_run(cmd, *a, **kw)
+
+    class FakePopen:
+        def __init__(self, cmd, **kw):
+            calls.append((list(cmd), dict(kw["env"])))
+            cwd = Path(kw["cwd"]).resolve()
+            home = Path(kw["env"]["HOME"])
+            mem = (
+                home
+                / ".claude"
+                / "projects"
+                / pm.slug_for(cwd)
+                / "memory"
+                / "MEMORY.md"
+            )
+            self.out = mem.read_text() if mem.exists() else "NONE\n"
+            self.returncode = 0
+            self.pid = -1
+
+        def communicate(self, timeout=None):
+            return self.out, ""
+
+    real_popen = subprocess.Popen
+
+    def fake_popen(cmd, *a, **kw):
+        # Only `claude` is faked; bash (the keystore reader) and git run for real.
+        if cmd[0] == "claude":
+            return FakePopen(cmd, **kw)
+        return real_popen(cmd, *a, **kw)
 
     monkeypatch.setattr(pm.subprocess, "run", fake_run)
-    assert pm.main() == 0
+    monkeypatch.setattr(pm.subprocess, "Popen", fake_popen)
+    assert pm.main([]) == 0
     out, err = capsys.readouterr()
     assert calls, "the fake claude was never launched"
     for argv, env in calls:
@@ -190,10 +226,47 @@ def test_key_reaches_the_child_env_only_never_output(tmp_path, key_file, monkeyp
         assert not any("KEYSENTINEL" in a for a in argv)
     assert "KEYSENTINEL" not in out + err
     assert "control   memory in a real file    loaded" in out
+    assert "symlink   memory dir is a link     loaded" in out
+    assert out.count("memory=slug(target)") == 2
+    last = out.strip().splitlines()[-1].split()
+    assert last[:4] == ["live", "HOME", "tagged", "entries"] and last[-1] == "none"
+    assert not list(rigs.iterdir()), "the rig outlived the run"
+
+
+def test_rig_is_removed_when_a_case_raises(tmp_path, key_file, live, monkeypatch):
+    rigs = tmp_path / "rigs"
+    rigs.mkdir()
+    monkeypatch.setattr(pm.tempfile, "tempdir", str(rigs))
+    monkeypatch.setattr(pm, "_version", lambda: "fake")
+
+    def boom(*a, **k):
+        raise SystemExit(143)  # what the SIGTERM handler raises
+
+    monkeypatch.setattr(pm, "_memory_case", boom)
+    with pytest.raises(SystemExit):
+        pm.run_probe(live_home=live, key_file=key_file)
+    assert not list(rigs.iterdir())
+
+
+@pytest.mark.parametrize(
+    "second, expected",
+    [
+        (["none"], ["none (retry agrees)"]),
+        (["slug(target)"], ["inconclusive (retry: slug(target))"]),
+    ],
+)
+def test_cwd_key_none_needs_a_retry_that_agrees(
+    tmp_path, live, monkeypatch, second, expected
+):
+    results = iter([{"memory": ["none"]}, {"memory": second}])
+    monkeypatch.setattr(pm, "_cwd_key_case", lambda *a, **k: next(results))
+    assert pm._cwd_key_confirmed(tmp_path, live, True, "k")["memory"] == expected
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(os.environ.get("IDH_LIVE_PROBE") != "1", reason="live probe: set IDH_LIVE_PROBE=1")
+@pytest.mark.skipif(
+    os.environ.get("IDH_LIVE_PROBE") != "1", reason="live probe: set IDH_LIVE_PROBE=1"
+)
 def test_live_probe_control_fires():
     report = pm.run_probe()
     assert report["control"] == "loaded", report
