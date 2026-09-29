@@ -27,3 +27,16 @@ the prefix. Distinguish this from a pure *expansion-logic* equality check
 (`assert expand("~/foo") == Path.home()/"foo"`), which is hermetic by
 construction because both sides share `Path.home()` and never touch the disk —
 that pattern is fine (see `tests/test_beat.py::TestLoadProjects`).
+
+**The other half: the checkout itself (2026-09-29, ticket 0989).** Faking
+`HOME` is not enough when the code under test also reads the *checkout* it runs
+from. The idh tests pointed `HOME` at a tmp dir but kept the real repo as
+`$IDH_ROOT`; the author's primary checkout holds untracked private-skill
+symlinks into `~/.config/harness/private/`, so manifest entries resolved into
+the real home on one side and the tmp home on the other: 13 failures there,
+green in CI and every fresh worktree. Fix: `tests/tracked_tree.py` copies the
+tracked files once per session and the tests run from that copy. Positive
+control: plant untracked links in a scratch clone; old tests fail, new pass.
+Several other tests still fake `HOME` while loading code from the real checkout
+(`test_perch_*`, `test_skill_seam`, `test_projection_validator`, …); they pass
+today, so they were reported, not ticketed.
