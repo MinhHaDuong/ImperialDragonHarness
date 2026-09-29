@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Point every harness consumer at ~/.idh before any move
+Created: 2026-09-29
+Author: claude
+Closed: autoclosed — PR #1054
+
+--- log ---
+2026-09-29T08:27Z claude created child of 0978
+
+2026-09-29T08:42Z claude note Pointer: ~/.idh -> $HOME/.claude (absolute symlink) created on doudou and padme. Repo wiring repointed; ratchet tests/test_idh_root_literals.py with planted-literal positive controls. Out-of-repo, doudou: ~/.bashrc shell-init, claude-refresh.service (daemon-reload only, timer untouched), ~/.codex/config.toml (added a ~/.idh trust entry, kept the old one), ~/.codex/hooks.json link, ~/.pi/agent/settings.json skills root, ~/.pi idh-guard.ts link, ~/.agents/skills perch+healthcheck links, live ~/.claude/settings.json hooks/statusline/env plus ~/.idh permission aliases. Unchanged by design: claude-telemetry-prune (Claude Code's native telemetry dir), cadens-harvest (names no harness path), aedist settings.local.json (its rule names skills/celebrate, which no longer exists). Padme: ~/.bashrc, claude-harness-pull/nightbeat/nightbeat-supervisor/night-sweep units, settings.json hooks/env, codex trust, ~/.agents/skills/perch link. Backups of prior content in ~/.local/state/idh-0982-backup/ on each machine.
+2026-09-29T08:42Z claude note Fresh-session probes 2026-09-29 (doudou, new settings): Claude Code headless -- SessionStart hook ok, PreToolUse guard blocked git reset --hard (exit 2), CLAUDE.md loaded; Codex exec -- the guard blocked the reset, perch skill visible; Pi -p -- the guard blocked the reset, the full skills list loaded from ~/.idh/skills. Interactive bash sources shell-init via ~/.idh (claude is a function).
+2026-09-29T09:03Z claude note Review round 1 follow-up. Claude Code hooks in settings.shared.json (and doudou's live settings.json) now check the pointer first: with ~/.idh missing they exit 2 with a message instead of exiting 127, which would have been non-blocking (tests/test_idh_pointer_hooks.py). Padme already has ~/.idh (see the entry above). Codex probe: an edited hooks.json definition is untrusted, and Codex then runs no guard and gives no warning. So adapters/codex/hooks.json keeps its trusted $HOME/.claude spelling (allowlisted), and 0986 must repoint it together with a /hooks re-trust. A dangling ~/.codex/hooks.json or ~/.pi idh-guard.ts link, if ~/.idh were removed, drops those guards silently; this is 0983's launch-time validator scope.
+2026-09-29T09:11Z claude note Round 2: hook wrappers now test -x on the exact script (a present ~/.idh/scripts without the target exited 127, a non-executable one 126, both non-blocking), and the message gives the repair command to run from a plain terminal outside Claude/Codex. Exit criterion 2 names the Codex exception, owner 0986.
+2026-09-29T10:35Z Minh Ha-Duong closed — autoclosed — PR #1054
+--- body ---
+
+## Context
+
+Step A of the 0978 relocation, sequenced in controlled-risk steps (author, 2026-09-29).
+Create `~/.idh -> ~/.claude` and repoint every live consumer to `~/.idh` (or `$IDH_ROOT`)
+while the bytes stay where they are. Both paths resolve to the same files, so nothing can
+break and no quiet window is needed; the later cutover (0986) then becomes local.
+
+Census 2026-09-29: 263 of 2,171 tracked files name `~/.claude` literally (mostly tickets and
+memory prose). Live wiring in the repo: `settings.shared.json`, `adapters/codex/hooks.json`,
+`adapters/pilot-support.json`, `scripts/bash-env.sh`, `scripts/on-start.sh`,
+`scripts/projects.json`, `scripts/adapter-claude-code-activate.sh`,
+`scripts/check-primary-checkout.sh`, `scripts/check-agnostic.sh`, `bin/`, `skills/`, `tests/`.
+Outside the repo: `~/.bashrc:159` (shell-init), systemd user units `claude-refresh`,
+`cadens-harvest`, `claude-telemetry-prune`, `~/.codex/config.toml`, `~/.codex/hooks.json`,
+`~/.pi/agent/settings.json`, `aedist/.claude/settings.local.json`, and padme (unchecked).
+
+Out of scope: paths that are Claude Code's native root on purpose (`~/.claude/projects/`,
+`~/.claude/settings.json` as the runtime reads it) stay spelled `~/.claude`, with a reason.
+
+## Exit criteria
+
+- [ ] `~/.idh` exists as a pointer to the current checkout; installation documented
+- [ ] Every live consumer in and out of the repo names `~/.idh` or `$IDH_ROOT`; the out-of-repo list above is recorded with per-item evidence (padme included). Named exception: `adapters/codex/hooks.json` keeps its trusted `$HOME/.claude` spelling, because Codex trust pins the definition and an edit silently runs no guard; owner 0986 (repoint + `/hooks` re-trust)
+- [ ] A ratchet test fails on a new literal `~/.claude/` in scripts, hooks, adapters or settings outside an allowlist of native-root paths; its positive control fires on a planted literal
+- [ ] A fresh Claude, Codex and Pi session each load hooks and instructions as before
+- [ ] `make check` passes

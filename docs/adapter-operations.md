@@ -29,7 +29,7 @@ refuses rather than passes.
 ## Install (fresh machine)
 
 ```bash
-cd ~/.claude            # the harness checkout
+cd ~/.idh               # the harness checkout, through its pointer (README Installation)
 ./bin/idh install skill perch healthcheck
 ./adapters/install-wirings.sh install
 ```
@@ -39,7 +39,7 @@ broken script fails open, so verify it fires):
 
 ```bash
 cd /some/dirty-repo
-echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash ~/.claude/scripts/guard-destructive-bash.sh; echo "exit=$?"
+echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash ~/.idh/scripts/guard-destructive-bash.sh; echo "exit=$?"
 # expect: the BLOCKED message and exit=2
 ```
 
@@ -81,9 +81,14 @@ rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # only the two
 Skills links are retargeted atomically by `relocate`; wiring links are
 dangling after a move and are refused (never silently retargeted), so the
 honest sequence is uninstall-refuse, remove the two known links, reinstall.
-The `~/.claude` → `~/.idh` relocation (ticket 0978) additionally owns
-repointing the config-plane guard paths in `settings.shared.json` and
-`codex/hooks.json` (`$HOME/.claude/scripts/...`).
+For the `~/.claude` → `~/.idh` relocation (tracker 0978), step A (0982)
+repointed the Claude Code guard path in `settings.shared.json` to
+`$HOME/.idh/scripts/...`, behind a check that exits 2 when the pointer is
+missing. `codex/hooks.json` keeps its trusted `$HOME/.claude/scripts/...`
+spelling on purpose: Codex trust pins the hook definition, and an edited
+definition silently stops running until someone re-trusts it via `/hooks`.
+The cutover (0986) repoints it together with that re-trust. Links that
+`install-wirings.sh` finds retargeted through `~/.idh` count as its own.
 
 ## Interrupted run / recovery
 

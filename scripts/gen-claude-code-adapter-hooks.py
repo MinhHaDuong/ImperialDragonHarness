@@ -24,14 +24,25 @@ SHARED = REPO / "settings.shared.json"
 DERIVED = REPO / "adapters" / "claude-code" / "hooks" / "hooks.json"
 
 LAUNCHER = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook"'
-# `$HOME/.claude/scripts/x.sh a` and `python3 $HOME/.claude/scripts/x.py a`
+# `$HOME/.idh/scripts/x.sh a` and `python3 $HOME/.idh/scripts/x.py a`
 HARNESS_SCRIPT = re.compile(
-    r"^(?:python3\s+)?\$HOME/\.claude/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
+    r"^(?:python3\s+)?\$HOME/\.idh/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
+)
+# The fail-loud form settings.shared.json uses (ticket 0982): refuse with
+# exit 2 when the ~/.idh pointer is missing, else exec the script. The plugin
+# launcher resolves its own root, so it drops the pointer check.
+# Exactly `[ -x SCRIPT ] || { echo "MSG" >&2; exit 2; }; exec SCRIPT [args]`:
+# anything else in the prefix fails to match and is left untranslated, so the
+# drift check reports it instead of silently dropping it from the plugin.
+POINTER_CHECKED = re.compile(
+    r'^\[ -x "\$HOME/\.idh/scripts/(?P<name>[\w.-]+)" \] '
+    r'\|\| \{ echo "(?:[^"`$\\]|\$HOME\b)*" >&2; exit 2; \}; '
+    r'exec "\$HOME/\.idh/scripts/(?P=name)"(?P<rest>\s.*)?$'
 )
 
 
 def translate(command: str) -> str:
-    m = HARNESS_SCRIPT.match(command.strip())
+    m = POINTER_CHECKED.match(command.strip()) or HARNESS_SCRIPT.match(command.strip())
     if not m:
         return command
     return f"{LAUNCHER} {m.group('name')}{m.group('rest') or ''}"

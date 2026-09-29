@@ -194,7 +194,7 @@ def test_skill_md_has_push_or_restore_contract():
     # fine" followed by an unconditional probe) must stay removed.
     assert "leave the checkout on the branch is fine" not in content
     restore = content.find("switch main")
-    probe = content.find('"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.claude')
+    probe = content.find('"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.idh')
     assert restore != -1, "exit does not restore the primary to main"
     assert probe != -1, "exit does not confirm with the checkout probe"
     assert restore < probe, "exit must switch back to main BEFORE running the probe"
@@ -286,6 +286,7 @@ def test_commit_leading_dash_project(tmp_path):
     memory = idh / "projects" / project / "memory"
     memory.mkdir(parents=True)
     (memory / "MEMORY.md").write_text("## Entries\n")
+    (home / ".idh").symlink_to(idh, target_is_directory=True)  # ticket 0982
     subprocess.run(["git", "init", "-b", "main", str(idh)], capture_output=True)
     for k, v in (
         ("user.email", "t@example.com"),
@@ -318,6 +319,8 @@ def provenance_env(tmp_path):
     """Set up a fake HOME with harness memory dir for provenance tests."""
     memory_dir = tmp_path / ".claude" / "memory"
     memory_dir.mkdir(parents=True)
+    # The installed shape (ticket 0982): ~/.idh points at the checkout.
+    (tmp_path / ".idh").symlink_to(tmp_path / ".claude", target_is_directory=True)
     return tmp_path
 
 

@@ -52,7 +52,12 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-CANONICAL_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
+CANONICAL_SCRIPT = "$HOME/.idh/scripts/guard-destructive-bash.sh"
+# Codex hook trust pins a hash of the hook definition: editing the command
+# silently disables the guard until someone re-trusts it via /hooks (probed
+# 2026-09-29, ticket 0982). The Codex wiring therefore keeps its trusted
+# spelling until the cutover (0986) repoints it together with a re-trust.
+CODEX_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
 
 
 def wiring_commands(doc, *, source_name):
@@ -78,10 +83,9 @@ def wiring_commands(doc, *, source_name):
     return commands
 
 
-def assert_names_canonical_guard(commands):
-    assert any(CANONICAL_SCRIPT in c for c in commands), (
-        f"the canonical guard script {CANONICAL_SCRIPT!r} is not wired; "
-        f"found {commands}"
+def assert_names_canonical_guard(commands, script=CANONICAL_SCRIPT):
+    assert any(script in c for c in commands), (
+        f"the canonical guard script {script!r} is not wired; found {commands}"
     )
 
 
@@ -113,11 +117,11 @@ def test_claude_wiring_wires_the_canonical_guard():
 
 
 def test_wiring_target_exists_on_the_reference_machine():
-    """Machine condition: where $HOME/.claude IS the repo root (the live
+    """Machine condition: where $HOME/.idh resolves to the repo root (the live
     installation), the wired path must exist. Elsewhere (CI) the shape test
     above is the gate."""
-    if Path(os.path.expandvars(CANONICAL_SCRIPT)) != GUARD:
-        pytest.skip("not the reference installation ($HOME/.claude is not the repo)")
+    if Path(os.path.expandvars(CANONICAL_SCRIPT)).resolve() != GUARD.resolve():
+        pytest.skip("not the reference installation ($HOME/.idh is not this checkout)")
     assert GUARD.exists()
 
 
@@ -126,7 +130,7 @@ def test_wiring_target_exists_on_the_reference_machine():
 
 def test_codex_wiring_names_the_same_guard():
     doc = json.loads(CODEX_HOOKS.read_text())
-    assert_names_canonical_guard(wiring_commands(doc, source_name="adapters/codex/hooks.json"))
+    assert_names_canonical_guard(wiring_commands(doc, source_name="adapters/codex/hooks.json"), CODEX_SCRIPT)
     for group in doc["hooks"]["PreToolUse"]:
         assert "Bash" in group.get("matcher", "")
         for hook in group["hooks"]:
@@ -149,7 +153,7 @@ def test_codex_wiring_installs_by_symlink(tmp_path):
     installed.parent.mkdir()
     installed.symlink_to(CODEX_HOOKS)
     doc = json.loads(installed.read_text())
-    assert_names_canonical_guard(wiring_commands(doc, source_name="~/.codex/hooks.json"))
+    assert_names_canonical_guard(wiring_commands(doc, source_name="~/.codex/hooks.json"), CODEX_SCRIPT)
 
 
 # --- Pi adapter -------------------------------------------------------------

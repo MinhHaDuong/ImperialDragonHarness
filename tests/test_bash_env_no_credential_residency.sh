@@ -12,6 +12,9 @@ trap '[ -z "$child" ] || kill "$child" 2>/dev/null || true; rm -rf "$TMP"' EXIT
 H="$TMP/home"
 P="$TMP/project"
 mkdir -p "$H/.claude" "$P"
+# The installed shape (ticket 0982): ~/.idh points at the checkout, so the
+# sentinels are reachable through both spellings a loader regression could use.
+ln -s "$H/.claude" "$H/.idh"
 cat > "$H/.claude/.env" <<'EOF'
 ANTHROPIC_API_KEY=fake-anthropic-0945
 OPENAI_API_KEY=fake-openai-0945

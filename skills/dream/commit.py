@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 MEMORY_BASE = Path.home() / ".claude" / "projects"
-IDH_BASE = Path.home() / ".claude"
+IDH_BASE = Path.home() / ".idh"
 
 
 def main():

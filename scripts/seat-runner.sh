@@ -386,7 +386,7 @@ echo "seat-runner: containment self-test..." >&2
 PROBE=$(run_seat --no-cred bash -c '
     echo SANDBOX-ALIVE
     touch /repo/PWNED 2>/dev/null && echo WRITE-ALLOWED || echo WRITE-BLOCKED
-    cat '"$HOMEDIR"'/.ssh/id_* '"$HOMEDIR"'/.claude/scripts/bash-env.sh \
+    cat '"$HOMEDIR"'/.ssh/id_* '"$HOMEDIR"'/.claude/scripts/bash-env.sh '"$HOMEDIR"'/.idh/scripts/bash-env.sh \
         '"$HOMEDIR"'/.local/share/keyrings/* '"$HOMEDIR"'/.local/share/kwalletd/* 2>/dev/null \
         | grep -q . && echo SECRET-READ || echo SECRET-BLOCKED
     if ls '"$HOMEDIR"'/.local/share 2>/dev/null | grep -qvx uv; then echo LOCAL-OVERMOUNTED; else echo LOCAL-SCOPED; fi

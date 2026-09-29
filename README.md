@@ -83,8 +83,17 @@ dividing by 4, which understated every channel by about 45%.
    ```bash
    git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
    ```
+   Then create the harness pointer `~/.idh` (ticket 0982):
+   ```bash
+   ln -s "$HOME/.claude" "$HOME/.idh"
+   ```
+   Harness wiring (hooks, `BASH_ENV`, shell init, timers, the Codex and Pi
+   adapters) names the checkout as `~/.idh`. Paths that are Claude Code's own
+   native root (`~/.claude/projects/`, `~/.claude/settings.json`) keep their
+   `~/.claude` spelling. The pointer lets the checkout later leave `~/.claude`
+   (tracker 0978) without chasing callers.
 
-2. Create `~/.claude/.env` with your API keys (this file is gitignored):
+2. Create `~/.idh/.env` with your API keys (this file is gitignored):
    ```
    ANTHROPIC_API_KEY=sk-...
    OPENAI_API_KEY=sk-...
@@ -92,13 +101,13 @@ dividing by 4, which understated every channel by about 45%.
 
 3. Install the dev dependencies (PyYAML is needed by `make skills-catalog` and the pre-commit hook, pytest by every `make` test gate):
    ```bash
-   pip install --user -r ~/.claude/requirements-dev.txt
+   pip install --user -r ~/.idh/requirements-dev.txt
    ```
    On a PEP 668 externally-managed Python (Debian 12+, Ubuntu 23.04+), install into a venv or via `pipx` instead.
 
 4. Add one line to your `~/.bashrc` (or `~/.zshrc`) to source the harness shell init:
    ```bash
-   [ -f "$HOME/.claude/scripts/shell-init.sh" ] && source "$HOME/.claude/scripts/shell-init.sh"
+   [ -f "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"
    ```
    This installs a `claude` wrapper that skips permission prompts and auto-names each session after the current git repo. The script lives in the harness, so it updates on every pull.
 
@@ -182,7 +191,7 @@ Description=Pull ImperialDragonHarness updates
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/git -C %h/.claude pull --ff-only --quiet
+ExecStart=/usr/bin/git -C %h/.idh pull --ff-only --quiet
 EOF
 
 cat > ~/.config/systemd/user/claude-harness-pull.timer << 'EOF'

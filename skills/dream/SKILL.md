@@ -74,7 +74,7 @@ of the step-14 PR body; do not write a separate free-form summary for the PR.
 - Counts, **derived mechanically** — never recalled from the run:
   - `before` = index lines in MEMORY.md at the branch base:
     ```bash
-    git -C ~/.claude show <base>:<MEMORY.md path> | grep -c '^- \['
+    git -C ~/.idh show <base>:<MEMORY.md path> | grep -c '^- \['
     ```
   - `after` = index lines in the working copy:
     ```bash
@@ -84,7 +84,7 @@ of the step-14 PR body; do not write a separate free-form summary for the PR.
     `NOOP + UPDATE + DELETE` must equal `before`, and `NOOP + UPDATE + ADD`
     must equal `after`. If either fails, recount before reporting.
 - The ADD list = the exact output of
-  `git -C ~/.claude diff --name-only --diff-filter=A`, never a narrative sample.
+  `git -C ~/.idh diff --name-only --diff-filter=A`, never a narrative sample.
 
 If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
 
@@ -164,7 +164,7 @@ python3 "$IDH_ROOT/skills/dream/provenance.py" record <entry_slug> <project>
 A promoted entry's project-level copy is a tombstone, so step 7's `record` never
 fires for it again and its `last_confirmed` would freeze — decay-flagging it at
 90 days no matter how relevant it remains (ticket 0224). For each harness-level
-entry (in `~/.claude/memory/`) that this project's surviving content still
+entry (in `~/.idh/memory/`) that this project's surviving content still
 supports — i.e. the consolidation would have classified its lesson NOOP or
 UPDATE were it still project-local — refresh its confirmation:
 
@@ -178,13 +178,13 @@ those decay-flag is the intended signal for human review.
 
 **8. Commit.**
 
-`commit.py` commits into `~/.claude` directly. The `~/.claude` pre-commit hook
+`commit.py` commits into `~/.idh` directly. The `~/.idh` pre-commit hook
 **refuses a commit on `main` in the primary checkout** (everything lands via
-branch + PR). Before committing, ensure `~/.claude` is on a branch, not main:
+branch + PR). Before committing, ensure `~/.idh` is on a branch, not main:
 
 ```bash
-git -C ~/.claude rev-parse --abbrev-ref HEAD   # must NOT print "main"
-# if it does: git -C ~/.claude switch -c dream-consolidate-$(date +%F)
+git -C ~/.idh rev-parse --abbrev-ref HEAD   # must NOT print "main"
+# if it does: git -C ~/.idh switch -c dream-consolidate-$(date +%F)
 python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
 ```
 
@@ -196,8 +196,8 @@ exists for deliberate cases only — do not use it to bypass the branch-and-PR f
 during a routine dream.
 
 **Why not run dream in a worktree?** Evaluated (0247) and rejected: `commit.py`
-and the promotion pass hardcode `~/.claude` (`git -C ~/.claude add/commit`, and
-promotions write to `~/.claude/memory/`), so a worktree run would still commit
+and the promotion pass hardcode `~/.idh` (`git -C ~/.idh add/commit`, and
+promotions write to `~/.idh/memory/`), so a worktree run would still commit
 onto the *primary* checkout's current branch — worktree isolation would not
 apply. The push-or-restore contract (step 14) addresses the stranding without
 that refactor. Revisit if `commit.py` is parameterized by repo dir.
@@ -231,7 +231,7 @@ Log each gate evaluation with one line of reasoning per candidate.
 
 For each candidate that passes all three gates:
 
-a. Write the context-independent reformulation to `~/.claude/memory/<slug>.md`.
+a. Write the context-independent reformulation to `~/.idh/memory/<slug>.md`.
 b. Mark promoted in provenance:
 ```bash
 python3 "$IDH_ROOT/skills/dream/provenance.py" promote <slug>
@@ -239,7 +239,7 @@ python3 "$IDH_ROOT/skills/dream/provenance.py" promote <slug>
 c. Overwrite the project-level entry with a tombstone:
 ```
 # PROMOTED <ISO timestamp>: <title>
-# Now at: ~/.claude/memory/<slug>.md
+# Now at: ~/.idh/memory/<slug>.md
 # Original content preserved in git history.
 ```
 
@@ -298,15 +298,15 @@ free-form summary prose (tickets 0241, 0275: PR #359 and PR #471 shipped
 improvised bodies that mismatched their diffs).
 
 ```bash
-branch="$(git -C ~/.claude branch --show-current)"
-if git -C ~/.claude push -u origin "$branch"; then
+branch="$(git -C ~/.idh branch --show-current)"
+if git -C ~/.idh push -u origin "$branch"; then
   : # open the PR (forge command) — it carries the step-8 + step-12 commits
 fi
 # Always switch back to main — success or failure. The branch keeps every commit;
 # the PR (once the push lands) carries the consolidation for review.
-git -C ~/.claude switch main
+git -C ~/.idh switch main
 # Confirm the checkout is not stranded before exiting (must be silent, exit 0):
-"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.claude
+"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.idh
 ```
 
 If `--dry-run`: skip this step — no branch or commit was made, so the primary was
@@ -337,7 +337,7 @@ see. 308 of 949 live bodies were in that state on 2026-09-10 — everything
 written before v2 introduced the store. To repair:
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root ~/.claude
+python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root ~/.idh
 ```
 
 It is idempotent, and it takes each entry's dates from git history rather than
@@ -350,7 +350,7 @@ counts need no new writes to the bodies — which is what an in-file access log
 would cost, on the very files parallel sessions read.
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root ~/.claude
+python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root ~/.idh
 ```
 
 It writes `access_count` and `last_accessed` per entry. Treat both as a
@@ -361,7 +361,7 @@ that evicts on this number evicts the entries that worked best.
 
 ## v2 features (ticket 0165)
 
-- Harness-level memory tier (`~/.claude/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
+- Harness-level memory tier (`~/.idh/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
 - Provenance tracking (`.provenance.json`) — cross-project entry history
 - Harness decay (90-day unconfirmed entries flagged for review)
 - Dry-run mode covers promotion candidates and decay flags

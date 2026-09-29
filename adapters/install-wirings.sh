@@ -35,10 +35,21 @@ PI_TARGET="$HOME/.pi/agent/extensions/idh-guard.ts"
 
 ensure_parent() { mkdir -p "$(dirname "$1")"; }
 
+# A link is ours when its text names the canonical file, or when it reaches
+# that file through the ~/.idh pointer (ticket 0982 retargets links there;
+# the text differs, the file is the same). A dangling link never matches.
+is_ours() {
+  local target="$1" canonical="$2" resolved
+  [[ -L "$target" ]] || return 1
+  [[ "$(readlink "$target")" == "$canonical" ]] && return 0
+  resolved="$(readlink -e "$target" 2>/dev/null)" || return 1
+  [[ "$resolved" == "$(readlink -e "$canonical" 2>/dev/null)" ]]
+}
+
 place() {
   local canonical="$1" target="$2"
   if [[ -e "$target" || -L "$target" ]]; then
-    if [[ -L "$target" && "$(readlink "$target")" == "$canonical" ]]; then
+    if is_ours "$target" "$canonical"; then
       echo "already discoverable: $target -> $canonical"
       return 0
     fi
@@ -56,7 +67,7 @@ remove() {
     echo "absent: $target"
     return 0
   fi
-  if [[ -L "$target" && "$(readlink "$target")" == "$3" ]]; then
+  if is_ours "$target" "$3"; then
     rm "$target"
     echo "removed: $target"
     # Take back every directory the removal left empty, never a non-empty one.

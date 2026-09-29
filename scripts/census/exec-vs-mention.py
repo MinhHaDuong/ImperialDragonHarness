@@ -13,7 +13,7 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path.home() / ".claude"
+ROOT = Path.home() / ".idh"
 SCRIPTS = {p.name for p in (ROOT / "scripts").iterdir() if p.is_file()}
 STEMS = {s.rsplit(".", 1)[0]: s for s in SCRIPTS if s.endswith(".py")}
 
@@ -64,7 +64,7 @@ def classify(cmd: str, execd: dict, inspect: dict, day: str, proj: str, exec_pro
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--projects", default=str(ROOT / "projects"))
+    ap.add_argument("--projects", default=str(Path.home() / ".claude" / "projects"))
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     execd = defaultdict(Counter)
