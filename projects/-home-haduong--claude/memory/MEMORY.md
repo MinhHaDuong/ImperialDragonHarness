@@ -136,3 +136,6 @@
 - [An inline secret persists in an allow rule](feedback_inline_secret_persists_in_allow_rule.md)
 - [In `ssh host bash -s`, stdin is the script](feedback_remote_probe_stdin_is_the_script.md)
 - [Hand delegates literal paths](feedback_hand_delegates_literal_paths.md)
+- [A raid's Phase 6 /gaze escalates from an agent](feedback_raid_gaze_escalates_from_an_agent.md)
+- [Adjacent Blocked-by lines conflict across sibling PRs](feedback_adjacent_blocked_by_lines_conflict.md)
+- [Bare pytest is a pipx install without PyYAML](feedback_pipx_pytest_looks_flaky.md)
