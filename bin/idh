@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
-"""Install and inspect canonical IDH skills across supported runtimes."""
+"""Manage the harness on this machine (ticket 0987); project skills (0802).
+
+idh install | check [RUNTIME]          links, loader block, timers (adapters/lifecycle.py)
+idh install|uninstall|status|relocate skill ...  and  idh check harness X   (adapters/perch.py)
+"""
 
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "adapters"))
-from perch import main  # noqa: E402
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    args = sys.argv[1:]
+    if args == ["install"] or (args[:1] == ["check"] and args[1:2] != ["harness"]):
+        from lifecycle import main
+    else:
+        from perch import main
+
+        args = None
+    raise SystemExit(main(args))

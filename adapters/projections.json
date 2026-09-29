@@ -1,5 +1,5 @@
 {
-  "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list and nothing else: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
+  "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list and nothing else: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `runtimes: []` marks an operator-only entry: `idh check` verifies it, no launch waits on it. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
   "entries": [
     {
       "path": "~/.idh",
@@ -30,6 +30,13 @@
       "required": true,
       "why": "the Pi destructive-bash guard; a dangling link drops the extension silently",
       "installer": "bash $IDH_ROOT/adapters/install-wirings.sh install"
+    },
+    {
+      "path": "~/.local/bin/idh",
+      "target": "$IDH_ROOT/bin/idh",
+      "runtimes": [],
+      "required": true,
+      "why": "the operator's command on PATH (ticket 0987)"
     },
     {
       "path": "~/.agents/skills/perch",

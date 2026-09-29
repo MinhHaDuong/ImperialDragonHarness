@@ -130,6 +130,8 @@ def load_entries(manifest: Path, runtime: str):
     except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
         raise ManifestError(f"{type(exc).__name__}: {exc}") from exc
     runtimes = {r for e in entries for r in e["runtimes"]}
+    if runtime is None:  # `idh check`: every entry, operator-only ones included
+        return entries
     if runtime not in runtimes:
         raise SystemExit(
             f"validate-projections: unknown runtime {runtime!r} (manifest declares: "

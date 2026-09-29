@@ -1,0 +1,100 @@
+"""`idh install | check` on a disposable HOME (ticket 0987).
+
+The expected link set comes from adapters/projections.json, never from what
+install happened to create, so an entry install forgets is a failure here.
+Every run uses a fixture HOME and a PATH whose `systemctl` is a stub that logs
+its argv: nothing touches the developer's HOME, ~/.bashrc or systemd.
+"""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[1]
+IDH = REPO / "bin" / "idh"
+MANIFEST = json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
+
+pytestmark = pytest.mark.integration
+
+
+def expand(spec: str, home: Path) -> Path:
+    if spec.startswith("$IDH_ROOT"):
+        return Path(str(REPO) + spec[len("$IDH_ROOT"):])
+    return Path(str(home) + spec[1:])
+
+
+@pytest.fixture
+def machine(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "systemctl.log"
+    stub = bin_dir / "systemctl"
+    stub.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\n')
+    stub.chmod(0o755)
+    env = {"HOME": str(home), "PATH": f"{bin_dir}:/usr/bin:/bin"}
+
+    def idh(*args):
+        return subprocess.run(
+            [sys.executable, str(IDH), *args], env=env, capture_output=True, text=True, timeout=60
+        )
+
+    return {"home": home, "idh": idh, "log": log, "env": env}
+
+
+def test_install_then_check_round_trip_and_planted_break(machine):
+    home, idh = machine["home"], machine["idh"]
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+
+    r = idh("check")  # positive control
+    assert r.returncode == 0, r.stdout + r.stderr
+
+    for entry in MANIFEST:
+        if not entry["required"]:
+            continue
+        path = expand(entry["path"], home)
+        target = expand(entry["target"], home)
+        assert path.resolve() == target.resolve(), (path, target)
+    assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
+
+    # Negative control: one planted broken link, one named culprit.
+    hooks = home / ".codex" / "hooks.json"
+    hooks.unlink()
+    hooks.symlink_to("/nonexistent")
+    r = idh("check")
+    assert r.returncode == 1
+    culprits = [
+        line for line in (r.stdout + r.stderr).splitlines()
+        if line.lstrip().startswith(("MISSING:", "DANGLING:", "FOREIGN:"))
+    ]
+    assert culprits == [f"  DANGLING: {hooks} -> /nonexistent resolves to nothing"], culprits
+
+
+def test_install_is_idempotent_and_refuses_foreign_files(machine):
+    home, idh = machine["home"], machine["idh"]
+    hooks = home / ".codex" / "hooks.json"
+    hooks.parent.mkdir(parents=True)
+    hooks.write_text('{"mine": true}')
+    r = idh("install")
+    assert r.returncode == 1
+    assert f"FOREIGN: {hooks} is a real file" in r.stdout + r.stderr
+    assert hooks.read_text() == '{"mine": true}', "the only copy was overwritten"
+    # The other entries still installed.
+    assert (home / ".pi" / "agent" / "extensions" / "idh-guard.ts").is_symlink()
+
+    hooks.unlink()
+    assert idh("install").returncode == 0
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "installed:" not in r.stdout
+
+
+def test_skill_subcommands_still_reach_perch(machine):
+    r = machine["idh"]("check", "harness", "pi", "--version", "0.99.0")
+    assert "pi:" in r.stdout + r.stderr
