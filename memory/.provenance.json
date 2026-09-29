@@ -9481,6 +9481,42 @@
       "last_confirmed": "2026-09-29T12:49:43Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_config_block_needs_an_end_marker": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-29T13:01:46Z",
+      "last_confirmed": "2026-09-29T13:01:46Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_hand_delegates_literal_paths": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-29T13:01:46Z",
+      "last_confirmed": "2026-09-29T13:01:46Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_inline_secret_persists_in_allow_rule": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-29T13:01:46Z",
+      "last_confirmed": "2026-09-29T13:01:46Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_remote_probe_stdin_is_the_script": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-09-29T13:01:46Z",
+      "last_confirmed": "2026-09-29T13:01:46Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
