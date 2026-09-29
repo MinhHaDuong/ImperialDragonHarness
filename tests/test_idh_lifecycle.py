@@ -12,8 +12,11 @@ import sys
 from pathlib import Path
 
 import pytest
+from tracked_tree import tracked_checkout
 
-REPO = Path(__file__).resolve().parents[1]
+# The tracked tree, not this checkout: untracked links here (the private
+# overlay) would reach $IDH_ROOT and fail the run on one machine only (0989).
+REPO = tracked_checkout()
 IDH = REPO / "bin" / "idh"
 MANIFEST = json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
 

@@ -1,0 +1,35 @@
+%erg 0.1
+Title: idh tests read the real checkout's untracked private overlay links
+Created: 2026-09-29
+Author: claude
+Closed: autoclosed — PR #1064
+
+--- log ---
+2026-09-29T15:48Z claude created
+
+2026-09-29T16:03Z Minh Ha-Duong closed — autoclosed — PR #1064
+--- body ---
+## Context
+After PR #1060, `make check` in the primary checkout (on main) fails 15 tests
+in tests/test_adapter_deployment.py and tests/test_idh_lifecycle.py; the same
+code passes in a fresh worktree and in CI.
+
+Cause: the primary checkout carries UNTRACKED symlinks
+skills/{email,infrastructure,directory} -> ~/.config/harness/private/skills/<name>
+(the private overlay). adapters/projections.json declares optional entries
+`$IDH_ROOT/skills/<name>` -> `~/.config/harness/private/skills/<name>`. The
+fixtures rewrite HOME to a tmp dir (moving the `~` target) but keep
+`$IDH_ROOT` = the real checkout, so the path side resolves through the real
+private link while the target side points into the tmp HOME: FOREIGN, and
+`idh install` / `idh check` exit 1. Where the links are absent the optional
+entries are skipped and the tests pass. The real installation is fine; this
+is a test-hermeticity defect only.
+
+## Exit criteria
+- [ ] Tests that run bin/idh or adapters/{lifecycle,perch}.py run them from a
+      copy of the TRACKED tree (tests/tracked_tree.py), so untracked content
+      of the checkout they run from cannot reach them
+- [ ] Nothing is read from the real HOME (no link to ~/.config/harness/private)
+- [ ] Positive control: untracked overlay links planted in a worktree turn the
+      old fixtures red and leave the new ones green
+- [ ] `make check` passes
