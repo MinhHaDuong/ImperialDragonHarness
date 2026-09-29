@@ -98,42 +98,89 @@ def _span(text: bytes):
     return start, stop
 
 
+def _create(path: Path, data: bytes, mode: int) -> None:
+    """Write a NEW file with exactly `mode` (never wider than its source) and
+    fsync it; O_EXCL, so an existing file is never overwritten."""
+    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode)
+    try:
+        os.fchmod(fd, mode)
+        os.write(fd, data)
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _backup(dest: Path, data: bytes, mode: int) -> Path:
+    stem = dest.with_name(f"{dest.name}.idh-bak-{time.strftime('%Y%m%dT%H%M%S')}")
+    for n in range(1000):
+        path = stem if n == 0 else stem.with_name(f"{stem.name}.{n}")
+        try:
+            _create(path, data, mode)
+            return path
+        except FileExistsError:
+            continue
+    raise FileExistsError(f"no free backup name beside {stem}")
+
+
+def _replace(dest: Path, data: bytes, mode: int) -> None:
+    """Atomic rewrite: a same-directory temp file, fsynced, renamed over."""
+    tmp = dest.with_name(f".{dest.name}.idh-tmp-{os.getpid()}")
+    _create(tmp, data, mode)
+    try:
+        os.replace(tmp, dest)
+    except OSError:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
 def install_loader() -> int:
     """Splice scripts/bashrc-loader.sh into ~/.bashrc between its markers,
     proving every byte outside them unchanged (padme, 2026-09-29). Bytes, not
-    text: CRLF and non-UTF-8 lines must survive as they are."""
+    text: CRLF and non-UTF-8 lines must survive as they are. A symlinked
+    ~/.bashrc is rewritten at its target."""
     rc_file = Path(os.environ["HOME"]) / ".bashrc"
+    try:
+        return _splice(Path(os.path.realpath(rc_file)))
+    except OSError as exc:
+        print(f"idh: loader NOT installed: {exc}", file=sys.stderr)
+        return 1
+
+
+def _splice(dest: Path) -> int:
     block = (REPO / "scripts" / "bashrc-loader.sh").read_bytes()
-    old = rc_file.read_bytes() if rc_file.exists() else b""
-    manual = (f"  remove the old harness loader block(s) from {rc_file} by hand "
+    exists = dest.exists() or dest.is_symlink()
+    if exists and not os.access(dest, os.W_OK):
+        raise PermissionError(f"{dest} is not writable; left as it is")
+    old = dest.read_bytes() if exists else b""
+    mode = dest.stat().st_mode & 0o7777 if exists else 0o600
+    manual = (f"  remove the old harness loader block(s) from {dest} by hand "
               f"(each ends at `|| _idh_stubs`), then rerun idh install")
     try:
         span = _span(old)
     except ValueError as exc:
-        print(f"idh: loader NOT installed: {rc_file}: {exc}\n{manual}", file=sys.stderr)
+        print(f"idh: loader NOT installed: {dest}: {exc}\n{manual}", file=sys.stderr)
         return 1
     base = old
     if span is None:
         if b"_idh_refuse" in old or b"_idh_unreachable" in old:
-            print(f"idh: loader NOT installed: {rc_file} holds a pre-marker "
+            print(f"idh: loader NOT installed: {dest} holds a pre-marker "
                   f"loader block\n{manual}", file=sys.stderr)
             return 1
         base += b"\n" if old and not old.endswith(b"\n") else b""
         span = (len(base), len(base))
     if base[span[0]:span[1]] == block:
         return 0
-    backup = rc_file.with_name(f".bashrc.idh-bak-{time.strftime('%Y%m%dT%H%M%S')}")
-    backup.write_bytes(old)
+    backup = _backup(dest, old, mode) if exists else None
     outside = (base[: span[0]], base[span[1]:])
-    rc_file.write_bytes(outside[0] + block + outside[1])
-    new = rc_file.read_bytes()
+    _replace(dest, outside[0] + block + outside[1], mode)
+    new = dest.read_bytes()
     kept = _span(new)
     if kept is None or (new[: kept[0]], new[kept[1]:]) != outside:
-        rc_file.write_bytes(old)
-        print(f"idh: loader splice altered lines outside the markers; {rc_file} "
-              f"restored from {backup}", file=sys.stderr)
+        _replace(dest, old, mode)
+        print(f"idh: loader splice altered lines outside the markers; {dest} "
+              f"restored (copy: {backup})", file=sys.stderr)
         return 1
-    print(f"installed: loader block in {rc_file} (previous copy: {backup})")
+    print(f"installed: loader block in {dest} (previous copy: {backup})")
     return 0
 
 
@@ -148,18 +195,23 @@ def install_timers() -> int:
         return 0
     config = os.environ.get("XDG_CONFIG_HOME") or Path(os.environ["HOME"]) / ".config"
     units = Path(config) / "systemd" / "user"
-    units.mkdir(parents=True, exist_ok=True)
-    for unit in ("idh-mammoth-audit.service", TIMER):
-        shutil.copyfile(REPO / "systemd" / unit, units / unit)
-    for argv in (["daemon-reload"], ["enable", "--now", TIMER]):
-        if subprocess.run(["systemctl", "--user", *argv]).returncode:
-            print(f"idh: systemctl --user {' '.join(argv)} failed", file=sys.stderr)
-            return 1
+    try:
+        units.mkdir(parents=True, exist_ok=True)
+        for unit in ("idh-mammoth-audit.service", TIMER):
+            shutil.copyfile(REPO / "systemd" / unit, units / unit)
+        for argv in (["daemon-reload"], ["enable", "--now", TIMER]):
+            if subprocess.run(["systemctl", "--user", *argv]).returncode:
+                raise OSError(f"systemctl --user {' '.join(argv)} failed")
+    except OSError as exc:
+        print(f"idh: timer NOT enabled: {exc}", file=sys.stderr)
+        return 1
     print(f"enabled: {TIMER}")
     return 0
 
 
 def install() -> int:
+    # Every step runs whatever the others return (`|` on ints evaluates all
+    # three); the exit code is non-zero when any refused.
     return install_links() | install_loader() | install_timers()
 
 
@@ -183,12 +235,15 @@ def sync() -> int:
     if any(w in run.stdout for w in ("skipped", "left untouched", "refused", "could not")):
         print("idh sync: the checkout was not synced (see above)", file=sys.stderr)
         return 1
-    gap = distance()
-    if gap is None:
-        print("idh sync: no upstream to compare with", file=sys.stderr)
+    # Measure what the script synced, origin's default branch, against the
+    # checked-out HEAD: the harness runs from HEAD.
+    default = _git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    behind = default and _git("rev-list", "--count", f"HEAD..{default}")
+    if not behind:
+        print("idh sync: cannot tell how far HEAD is from origin", file=sys.stderr)
         return 1
-    if gap[1]:
-        print(f"idh sync: still {gap[1]} commit(s) behind upstream", file=sys.stderr)
+    if behind != "0":
+        print(f"idh sync: HEAD still {behind} commit(s) behind {default}", file=sys.stderr)
         return 1
     return 0
 
@@ -219,13 +274,14 @@ def status() -> int:
 
 
 def main(argv) -> int:
-    command, *rest = argv
+    command, *rest = argv or [""]
     try:
         if command == "check":
             return check(*rest[:1])
-        if command in ("sync", "status"):
+        if command in ("install", "sync", "status") and not rest:
             return globals()[command]()
-        return install()
     except V.ManifestError as exc:
         print(f"idh: adapters/projections.json is unusable: {exc}", file=sys.stderr)
         return 1
+    print(f"idh: unknown command {' '.join(argv)!r}", file=sys.stderr)
+    return 2
