@@ -105,7 +105,8 @@ repointed the Claude Code guard path in `settings.shared.json` to
 missing. `codex/hooks.json` keeps its trusted `$HOME/.claude/scripts/...`
 spelling on purpose: Codex trust pins the hook definition, and an edited
 definition silently stops running until someone re-trusts it via `/hooks`.
-The cutover (0986) repoints it together with that re-trust. Links that
+The cutover (0986) repoints it together with that re-trust; the move itself
+is manual, by the runbook in `docs/idh-cutover-checklist.md`. Links that
 `idh install` finds retargeted through `~/.idh` count as its own.
 
 ## Interrupted run / recovery

@@ -100,7 +100,7 @@
       "slice": "perch",
       "harness": "claude",
       "harness_version": "2.1.273",
-      "assertion": "In this installation the harness checkout is $HOME/.claude, so the canonical directory already is the one Claude Code scans. Install reports it discoverable and creates nothing; where the repository lives elsewhere it creates a symlink instead.",
+      "assertion": "In this installation the harness checkout is $HOME/.claude until the 0986 cutover (runbook: docs/idh-cutover-checklist.md), so the canonical directory already is the one Claude Code scans. Install reports it discoverable and creates nothing; where the repository lives elsewhere it creates a symlink instead.",
       "source_concept": "skill discovery",
       "native_expression": "$HOME/.claude/skills/perch",
       "disposition": "harness-specific",
