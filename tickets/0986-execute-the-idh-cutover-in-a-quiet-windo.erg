@@ -8,17 +8,21 @@ Blocked-by: 0985
 2026-09-29T08:27Z claude created child of 0978
 
 2026-09-29T09:11Z claude note Five exit criteria carried over from 0982 / PR #1054 review: permission-through-symlink probe, drop the dual permission aliases, Codex hooks.json repoint + /hooks re-trust + fresh codex exec probe, README 'lives as ~/.claude' rewrite, residual ratchet spellings.
-2026-09-29T19:06Z claude note 0985 delivers the move as idh relocate harness --live (rollback: --rollback --live); it rewrites adapters/projections.json, renames the harness project slug and re-keys ~/.claude.json itself, so those three carried-over criteria become checks. Run docs/idh-cutover-checklist.md; its preconditions include a same-day scripts/rehearse-cutover.py --session and a first real idh install.
+2026-09-29T19:25Z claude note 0985 closes with a runbook, not a script (author decision 2026-09-29): the move is manual by docs/idh-cutover-checklist.md with a tar-snapshot rollback. Criteria added: runbook, snapshot, the three timers. The manifest rewrite, slug rename and ~/.claude.json re-key are runbook steps 6, 8 and 9.
 --- body ---
 
 ## Context
 
-Step E of 0978: the live move, with the rehearsed scripts from 0985. Requires a quiet
+Step E of 0978: the live move, by hand, following the runbook from 0985
+(`docs/idh-cutover-checklist.md`; the scripted cutover was dropped, author 2026-09-29). Requires a quiet
 window: no Claude, Codex or Pi session running, timers paused, repository clean, no open
 PRs whose worktrees would need repair mid-flight. Author schedules the window.
 
 ## Exit criteria
 
+- [ ] The move follows `docs/idh-cutover-checklist.md` step by step; deviations are logged here
+- [ ] A tar snapshot of `~/.claude`, `~/.claude.json` and `~/.idh` is taken before the first mutation and verified readable; rollback is restoring it
+- [ ] `claude-refresh.timer`, `idh-mammoth-audit.timer` and `claude-telemetry-prune.timer` are paused for the window and the active ones resumed after
 - [ ] The repository lives at `~/.idh`; `~/.claude` holds the documented per-entry projection
 - [ ] The 0983 validator passes; a fresh Claude, Codex and Pi session each load hooks, skills, instructions and memory (positive control)
 - [ ] Breaking one link makes the launch refuse (negative control, live)

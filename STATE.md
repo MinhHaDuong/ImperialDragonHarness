@@ -27,7 +27,7 @@ Owed to the author, outside any diff:
 - **0986** (live cutover) needs a quiet window the author schedules: no Claude, Codex or Pi session running, timers paused.
 
 ## Next actions
-- **Relocation** (tracker 0978): 0985, the disposable-HOME rehearsal of the cutover and its rollback, is unblocked and should run through `idh`; then 0986. `idh install` has not yet been run for real on either host (it would add the `~/.local/bin` links and enable the mammoth-audit timer).
+- **Relocation** (tracker 0978): 0985 settled the method. The move is done by hand, following the runbook `docs/idh-cutover-checklist.md`, and rollback means restoring a tar snapshot. The author dropped the scripted cutover as disproportionate for a one-off (2026-09-29). Next is 0986. `idh install` has not yet been run for real on either host (it would add the `~/.local/bin` links and enable the mammoth-audit timer).
 - **Harness defects from 2026-09-29**: 0988 (session memory lands uncommitted in the checkout and silently stalls host pulls; doudou's primary checkout holds such files now) and 0990 (raid Phase 6 cannot obtain a `/gaze` verdict from a background agent; see also 0853).
 - **Memory v7** (tracker 0909): foundations 0911, 0917 are ready. Re-read 0920/0923 before starting them; their premise changes with 0984's verdict.
 - **Portable model policy** (tracker 0974): Phase 0 is 0975.

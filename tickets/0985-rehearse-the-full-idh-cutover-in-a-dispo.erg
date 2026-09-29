@@ -13,6 +13,7 @@ Author: claude
 2026-09-29T14:45Z Minh Ha-Duong note blocker 0987 closed — Blocked-by removed.
 2026-09-29T19:06Z claude note Rehearsal PASS (scripts/rehearse-cutover.py --session, claude 2.1.284): run A cutover, rerun, rollback on a clone of the repo with the live census as empty placeholders (42 top-level names, 200 slugs); 11770 paths byte/mode/link-identical after rollback. Run B: sessions after the cutover saw CLAUDE.md, its RTK.md import, a rule, a skill and a SessionStart hook from an unrelated repo (memory absent there, negative control) and the harness memory from ~/.idh. The rollback after a real session stopped on runtime files the layout did not classify (policy-limits.json*, remote-settings.json); both now classified native.
 2026-09-29T19:06Z claude note Mechanism: idh relocate harness [--rollback] (adapters/cutover.py, layout in adapters/cutover-layout.json), per the 12:39Z note; the two directions are two commands of one module. Live-window checklist: docs/idh-cutover-checklist.md. Crash points: tests/test_idh_cutover.py hard-exits before every mutation of both directions; each is finished by a rerun or undone by a rollback.
+2026-09-29T19:25Z claude note Author decision 2026-09-29: the cutover state machine is disproportionate for a one-off move (two blockers in rollback code that runs once, PR #1067 review round 1); redirected to a manual runbook plus tar-snapshot rollback. The cutover module, its rehearsal driver and its tests are deleted in the same PR; the rehearsal findings (both run-B sentinel sessions passed on 2.1.284; policy-limits.json* and remote-settings.json are Claude runtime files; git worktree repair leaves a .git file that still resolves through the restored ~/.idh link untouched) live on as runbook text. Exit criteria reworded.
 --- body ---
 
 ## Context
@@ -29,11 +30,15 @@ which pulls `~/.claude` daily.
 
 ## Exit criteria
 
-- [x] One script performs the cutover and one the rollback; both idempotent, both refuse on a dirty tree or a foreign file
-- [x] In the disposable HOME: after cutover, the 0983 validator passes and a fresh session loads hooks, skills, CLAUDE.md and memory (0984 sentinel); after rollback, bytes and link targets match the pre-state
-- [x] Worktrees survive (repair tested), timers are paused and resumed by the script
-- [x] A checklist for the live window is written, including the quiet-window preconditions
+Reworded 2026-09-29 by author decision (PR #1067): a manual runbook with a tar-snapshot
+rollback replaces the two scripts and the crash-point rehearsal.
 
-Carried over from 0983 (PR #1055 review):
+- [x] A runbook for the live window is written (`docs/idh-cutover-checklist.md`), covering: quiet-window preconditions (no sessions, clean tree, no worktree needed mid-flight); a tar snapshot of `~/.claude`, `~/.claude.json` and `~/.idh` taken first; pausing and resuming `claude-refresh.timer`, `idh-mammoth-audit.timer` and `claude-telemetry-prune.timer`; the move, the per-entry links, `git worktree repair`, the `projects/<slug>` rename and the `~/.claude.json` re-key
+- [x] Rollback is restoring that snapshot, and the runbook says how
+- [x] The runbook includes a census of `~/.claude/.git/worktrees` for stale registrations before the move
+- [x] Verification is named: `idh check`, the validator before the first launch (the unrewritten manifest refusing as the expected control), a fresh session per runtime, and the negative control
+- [x] The findings of the abandoned scripted attempt are carried as warnings: slug look-alikes, `projects/` keys in `~/.claude.json`, `XDG_STATE_HOME`, the three `git status` entries of the memory rename, refusing before mutating
 
-- [x] The rehearsal rewrites the projection manifest (`adapters/projections.json`) for the post-cutover layout and runs the validator before the first launch; the unrewritten manifest must be shown to refuse (it encodes `~/.claude` as the checkout)
+Superseded (no longer required): one cutover and one rollback script, idempotent, with a
+disposable-HOME crash-point rehearsal; the scripted manifest rewrite (it moves to runbook
+step 9 and stays in 0986's criteria).
