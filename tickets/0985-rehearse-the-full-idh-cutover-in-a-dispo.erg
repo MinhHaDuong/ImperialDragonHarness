@@ -3,12 +3,14 @@ Title: Rehearse the full .idh cutover in a disposable HOME
 Created: 2026-09-29
 Author: claude
 Blocked-by: 0984
+Blocked-by: 0987
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
 
 2026-09-29T10:35Z Minh Ha-Duong note blocker 0982 closed — Blocked-by removed.
 2026-09-29T12:38Z Minh Ha-Duong note blocker 0983 closed — Blocked-by removed.
+2026-09-29T12:39Z claude note Now also blocked by 0987: the rehearsal should run through idh install/check/relocate, not the separate scripts (author, 2026-09-29).
 --- body ---
 
 ## Context
