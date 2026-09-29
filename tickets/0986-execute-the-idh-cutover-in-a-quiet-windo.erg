@@ -35,3 +35,7 @@ Carried over from 0982 (PR #1054 review):
 Carried over from 0983 (PR #1055 review):
 
 - [ ] The projection manifest is rewritten for the post-cutover layout in the same window, and the validator passes before the first launch. `adapters/projections.json` encodes today's layout (`~/.claude` is the checkout, `~/.idh` points at it); left unchanged it refuses every launch after the move. Also update the `ln -sfn "$HOME/.claude" "$HOME/.idh"` repair text in `scripts/shell-init.sh` and `scripts/bashrc-loader.sh`, and refresh the loader block installed in `~/.bashrc` on doudou and padme
+
+Carried over from 0984 (PR #1061 review):
+
+- [ ] In the same step as the physical move, rename `projects/<slug(~/.claude)>` to `projects/<slug(~/.idh)>` and re-key the path-keyed `~/.claude.json` entries to the new path. On claude 2.1.284 the memory and transcript keys resolve a symlinked cwd to its target, so no link can keep the old key (0984 § Verdict); re-run `scripts/probe-memory-symlink.py` first if the runtime changed

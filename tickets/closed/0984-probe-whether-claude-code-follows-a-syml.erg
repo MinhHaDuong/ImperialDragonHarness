@@ -1,0 +1,173 @@
+%erg 0.1
+Title: Probe whether Claude Code follows a symlinked project memory dir
+Created: 2026-09-29
+Author: claude
+Closed: autoclosed — PR #1061
+
+--- log ---
+2026-09-29T08:27Z claude created child of 0978
+
+2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; cwd-key probe moves into the disposable HOME.
+2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files exist; new files (scripts/probe-memory-symlink.sh, tests/test_probe_memory_symlink.py) do not; touches no file 0987 edits. WARN: if the probe script needs a tests/test_idh_root_literals.py allowlist entry, that file is also edited by 0987; rebase at merge.
+2026-09-29T13:26Z claude note Live probe, claude 2.1.284, disposable HOME (api-key auth), run twice with identical results: control loaded; symlinked projects/<slug>/memory loaded; cwd key is physical (launch via ~/.idh -> ~/.claude keys memory and transcripts under slug(~/.claude), whatever $PWD says); headless -p added no .claude.json projects keys; live HOME entries created: none. Remedy and fallback in body § Verdict.
+2026-09-29T13:39Z claude note Review round 1 fixes: a failed or timed-out launch now reads 'launch failed', never 'not loaded'; MCP servers off (--strict-mcp-config); SIGTERM still cleans the rig; live .claude.json keys checked too. Re-run on 2.1.284: same verdict.
+2026-09-29T13:44Z claude note Author directives on PR #1061 applied: credentials-file fallback removed (no key means could-not-look); rig .claude.json is minimal, not a copy; key resolved through the keystore reader, child env only; launch exit code and timeout recorded, and a negative needs one retry that agrees. Live re-run on claude 2.1.284: control loaded, symlink loaded, cwd key physical for both $PWD forms, no live HOME entries.
+2026-09-29T14:03Z claude note Correction to the 13:39Z entry: a failed or timed-out launch prints 'could not look (<status>)', not 'launch failed'. Round-2 review fixes: repository env variables stripped when the rig creates its repos, any keystore failure maps to no-key, timeouts kill the child's process group, SIGHUP cleans the rig too, proxy and CA variables pass through, argparse entry point; Verdict reworded (tagged-entries scope, PWD-only launches, repo-root mechanism labelled as observed, run count). Live re-run on claude 2.1.284: same verdict, live HOME tagged entries none.
+2026-09-29T14:16Z claude note Run tally (all on claude 2.1.284, all the same table): the script ran seven times, namely twice before the 13:26Z note, once after the label rename, and once each after review round 1, the author directives, review round 2 and review round 3. The gated live test (IDH_LIVE_PROBE=1, which runs the whole probe and asserts the control) ran four times: before 13:26Z, after the directives, after round 2 and after round 3. Round-3 fixes: the whole child group is killed on any interrupt, not only on timeout; the version query runs in a throwaway HOME with the allowlisted env and no key; the docstring says an inherited HTTPS proxy sees the key.
+2026-09-29T14:41Z Minh Ha-Duong closed — autoclosed — PR #1061
+--- body ---
+
+## Context
+
+Step C of 0978, the one real unknown. `projects/` mixes 58 tracked `*/memory/` dirs
+(1,271 files, 1.8 MiB) with 17,409 native runtime files (5.15 GiB). The 2026-09-28 probe
+could not tell whether native project memory loads through a link: the real-file control
+itself did not load MEMORY.md, so the probe was invalid, not negative.
+
+Second question, independent of links: Claude Code keys project memory by cwd. Once the
+repository lives at `~/.idh`, the harness's own sessions look in `projects/-home-haduong--idh/`,
+orphaning `-home-haduong--claude/` (this project's memory) and the 6 path-keyed entries in
+`~/.claude.json` (trust, allowed tools, MCP).
+
+## Exit criteria
+
+- [x] A real-file control in a disposable HOME demonstrably loads a sentinel from project MEMORY.md (the control fires first)
+- [x] The same sentinel is tested through a symlinked `projects/X/memory/`; verdict recorded with the runtime version
+- [x] The cwd-key question is settled: which path key a session in a symlinked vs real `~/.idh` uses, and the chosen remedy (rename, link, or re-key `~/.claude.json`)
+- [x] Fallback decided if links are not followed (leave `projects/` in place, project only top-level entries)
+
+## Imagine annotation (raid 2026-09-29)
+
+Simplest path, exit criteria unchanged:
+- **Memory through a link** stays a live disposable-HOME experiment, positive
+  control first: the 2026-09-28 real-file control never fired, so no shortcut.
+- **The cwd key is mostly settled by inspection.** `projects/<slug>` is the cwd
+  with `/` and `.` turned into `-` (`/srv/x/.claude` gives
+  `-srv-x--claude`); `~/.claude.json`'s `projects` object keys by the raw
+  absolute path. The one open fact is physical versus logical cwd: does a session
+  launched from `~/.idh` (a symlink to `~/.claude`) key under the resolved or the
+  typed path.
+
+Constraint from the Blind-Spot pass: **that launch must not run against the live
+home.** From the real `~/.idh` it would create `projects/-home-haduong--idh/`, add
+a `~/.claude.json` entry and open a session with the live hooks. Run it in the
+disposable HOME with its own `~/.idh` symlink and a copy of `~/.claude.json`, and
+list any entries the probe created. (Superseded by an author directive on PR #1061:
+the rig writes a minimal `.claude.json` and never copies the live one; see Actions 2.)
+
+Coupling: 0987 treats the manifest's `~/.claude` entry as provisional until this
+ticket reports; if memory links are not followed, 0985 re-derives it.
+
+## Actions (raid plan 2026-09-29)
+
+1. `scripts/probe-memory-symlink.sh` (landed as `.py`, see § Verdict), modelled on `scripts/probe-plugin-hook-loading.sh`:
+   `ROOT=$(mktemp -d)` (mode 700, trap removes it), `H=$ROOT/home`, every launch
+   under `env HOME="$H"`; refuse if `$H` equals the real `$HOME`.
+2. Disposable HOME: a minimal `.claude.json` (an empty `projects` object, mode 600),
+   never a copy of the live one, which carries MCP servers and account data; an empty
+   `$H/.claude/` (no hooks, CLAUDE.md or settings). Auth (amended by author directive
+   on PR #1061): `ANTHROPIC_API_KEY` resolved from `~/.config/keys/` through the
+   harness keystore reader (`_keystore_value`, skills/external-peer-review/peer_review.py),
+   passed only in the child's env, never on argv, on disk or printed. No key means
+   exit "could not look: no API key", never a verdict. Never copy a credentials file:
+   the probe session could refresh the token and sign out the live session, and a
+   SIGKILL would leave a live credential in /tmp.
+3. Positive control first: real file `$H/.claude/projects/<slug>/memory/MEMORY.md`
+   with a fresh sentinel; `claude -p "Reply with the exact sentinel string from your
+   project memory, or NONE" --model haiku` from the matching cwd. If it prints NONE,
+   exit 1 "probe could not look" and try variants (cwd created first, trust state,
+   index line); if none fires, the ticket is blocked, never reported negative.
+4. Symlink case: move the memory dir aside, link `projects/<slug>/memory` to it, new
+   sentinel, same prompt. Record the verdict and `claude --version`.
+5. cwd key: `$H/.idh -> $H/.claude`; launch from `cd $H/.idh` (logical) and
+   `cd -P $H/.idh` (physical); diff `$H/.claude/projects` and the `.claude.json`
+   `projects` keys before and after each. Recommend rename, link or re-key; state
+   the fallback (leave `projects/` in place, project only top-level entries; 0985
+   re-derives the manifest's `~/.claude` entry).
+6. Evidence: the script prints a table (control, symlink, cwd key, created
+   entries); verdict, version and created entries go in this log, sentinel-free.
+
+As landed, steps 3-6 differ as follows (§ Verdict has the reasons). The prompt asks for
+"the exact project codeword from your memory, or NONE". The control fired once each
+work dir became its own git root, so no other variant was needed. The symlink case builds
+a fresh rig whose `memory` links to a store elsewhere, rather than moving a dir aside. The
+cwd-key launches set only the PWD variable to the link or to the target; no shell `cd` runs.
+A launch that is not clean reads "could not look", and a negative counts only when one
+retry agrees.
+
+## First test (raid plan)
+
+`tests/test_probe_memory_symlink.py`, offline half, written before the script:
+- `slug_for`: `/srv/x/.claude` gives `-srv-x--claude`, `/tmp/a.b/c`
+  gives `-tmp-a-b-c` (a `/`-only replacement fails on the dots).
+- `build_rig`: `.claude.json` is minimal (`{"projects": {}}`, mode 600); sentinel in a real file; in
+  symlink mode `memory` is a link whose target holds the sentinel.
+- `build_rig` raises when handed the real `$HOME` (the unchanged-live-listing check
+  alone would pass for a rig that writes nowhere, so it only counts with this one).
+- `detect_loaded`: true on stdout with the sentinel; false without it, and false on
+  stdout that only echoes the prompt.
+- The live probe is `@pytest.mark.live`, skipped unless `IDH_LIVE_PROBE=1`. (As
+  landed: the existing `slow` marker plus that skip; see § Verdict.)
+
+## Dependencies (raid plan)
+
+Network, Anthropic auth, `claude` CLI (2.1.284 here; the verdict is
+version-specific), a few haiku calls. No dependency on 0987; 0987 waits on this
+verdict only for the `~/.claude` manifest row.
+
+## Verdict (claude 2.1.284, 2026-09-29)
+
+Probe: `scripts/probe-memory-symlink.py`. The offline tests and a live test gated on
+`IDH_LIVE_PROBE=1` are in `tests/test_probe_memory_symlink.py`. Seven script runs and four
+gated-test runs all gave the same table; the log's run-tally note lists them. The last
+of each came after all three review rounds and the author directives. Those brought the
+minimal `.claude.json`, no MCP servers, the keystore-resolved key, and a process-group
+kill on timeout or interrupt. They also made any launch that was not clean read "could
+not look". Every result was a positive from a clean exit-0 launch, so no negative ever
+needed its confirming retry.
+
+- **Why the 2026-09-28 control never fired (observed while building the probe, not
+  measured by the script).** An exploratory disposable-HOME session asked for its
+  memory directory. It reported `projects/-tmp/memory/`, not the slug of its cwd,
+  and an empty `/tmp/.git` exists on this host. After `git init` in the work dir,
+  the session reported the cwd's slug and the control loaded. So auto memory keys
+  on the git root, and a work dir without a repository of its own inherits an
+  ancestor's `.git`. The rig makes each work dir its own git root.
+- **Symlinked memory: followed.** With `projects/<slug>/memory` a symlink to a
+  directory elsewhere, the sentinel loads.
+- **cwd key: resolved, never the link name.** The launch runs in `<home>/.idh`,
+  a link to `<home>/.claude`, which is a git repository like the live checkout. The
+  PWD variable is set to either the link or the target (what a shell `cd` or `cd -P`
+  would hand over; no shell runs). In both cases memory and the transcript directory
+  key on `slug(target)`. `getcwd()` is physical either way, so the transcript key
+  follows the physical cwd. For memory, the probe cannot tell the physical cwd from
+  the git root's real path, because in this layout they coincide. The remedy is the
+  same in both readings. Headless `-p` added no `projects` key to `.claude.json` in
+  either case, so the probe does not show how an interactive session keys trust.
+  Since the memory and transcript keys resolve the link, assume trust does too
+  (inferred, not measured).
+- **Remedy at the 0986 cutover.** The key follows where the checkout physically
+  lives. While `~/.idh` is a link to `~/.claude`, nothing changes. Once the
+  checkout physically moves to `~/.idh`, sessions key on `slug(~/.idh)`. So: rename
+  `projects/<slug(~/.claude)>` to `projects/<slug(~/.idh)>` in the same step as
+  the move, and re-key the path-keyed `~/.claude.json` entries to the new path. A
+  link cannot keep the old key, because the runtime resolves it. A per-directory
+  `memory` link would work (links are followed), but a rename keeps one copy.
+- **Fallback: not needed on 2.1.284.** Links are followed, so `projects/*/memory/`
+  can be projected by link. If a later runtime stops following them, leave
+  `projects/` in place, project only top-level entries, and 0985 re-derives the
+  manifest's `~/.claude` entry. Re-run the probe after a runtime upgrade before
+  relying on this.
+- **Live HOME.** "Live HOME tagged entries: none" covers only live `projects/` names
+  and `~/.claude.json` project keys that carry the run's temp-dir tag. That is where a
+  leak through the rig would land. It does not diff the rest of the live tree.
+
+Deviations from the raid plan:
+- The probe is Python (`.py`, not `.sh`) because the first test imports `slug_for`,
+  `build_rig` and `detect_loaded`.
+- The live test carries the existing `slow` marker plus a skip unless
+  `IDH_LIVE_PROBE=1`, so no new `live` marker is registered.
+- The planned credentials-file fallback was removed at the author's direction. Auth
+  is the keystore-resolved API key only.
+- The table prints with `print()`, not logging, because the table is the probe's
+  product.

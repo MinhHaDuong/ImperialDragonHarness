@@ -11,6 +11,7 @@ Author: claude
 2026-09-28T17:08Z codex note Disposable rollback prototype restored bytes and symlink targets after hard exits at 23 mutation checkpoints, plus partial staging/settings/link writes; foreign files and links were refused before mutation. Read-only live census: projects/ contains 1,271 tracked memory files (1.8 MiB) and 17,409 native runtime files (5.15 GiB); skills/ contains three private links and synced/ beside the tracked skills. Author deferred live migration today; other Codex sessions remain active. Next: prepare the native/canonical split and validator in a quiet window; do not treat the fixture rollback as a live migration proof.
 2026-09-29T08:28Z claude note Split into controlled-risk children (author, 2026-09-29): 0982 repoint consumers to ~/.idh with no move, 0983 launch-time link validator, 0984 native memory and cwd-key probe, 0985 disposable-HOME rehearsal, 0986 live cutover. 0978 is now the tracker.
 2026-09-29T13:01Z claude note padme 2026-09-29: pull unblocked (PR #1057), install-wirings run, final loader block installed; author re-trusted Codex hooks via /hooks; live probe: codex exec asked to git reset --hard over uncommitted work was refused by the PreToolUse guard and the work survived.
+2026-09-29T14:03Z claude note 0984 reports (PR #1061): on claude 2.1.284 a symlinked projects/<slug>/memory loads, and memory and transcripts key on the resolved checkout path, never the link name. Step C is answered; the rename and re-key remedy is carried into 0986's exit criteria.
 --- body ---
 
 ## Context
