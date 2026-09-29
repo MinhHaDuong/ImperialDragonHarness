@@ -1,108 +1,127 @@
-# The `.idh` cutover: checklist for the live window
+# The `.idh` cutover: runbook for the live window
 
-Ticket 0986 runs this; ticket 0985 rehearsed it. The mechanism is
-`idh relocate harness` (`adapters/cutover.py`), with the classification it acts
-on in `adapters/cutover-layout.json`. The rehearsal is
-`scripts/rehearse-cutover.py`, and the crash-point tests are in
-`tests/test_idh_cutover.py`.
+Ticket 0986 follows this runbook by hand in one quiet window. Rollback means
+restoring the snapshot taken in step 2. There is no cutover script: the author
+judged a resumable state machine disproportionate for a one-off move
+(2026-09-29, PR #1067). The findings of that attempt appear below as warnings.
 
-## What the command does
+**Before:** the checkout is `~/.claude`, and `~/.idh` is a link to it.
+**After:** the checkout is `~/.idh`. `~/.claude` is a real directory that holds
+Claude Code's own state, plus one link per harness entry the runtime reads.
 
-Before the window, the checkout is `~/.claude` and `~/.idh` is a link to it.
-Afterwards the checkout is `~/.idh`, and `~/.claude` is a real directory that
-holds Claude Code's own state plus one link per harness entry the runtime reads
-(`CLAUDE.md`, `RTK.md`, `rules`, `skills`, `agents`, `commands`, `tickets`).
-In `projects/`, each tracked `<slug>/memory` stays in the checkout and gets a
-link back from the native root. Every other file under `projects/` moves to the
-native root. `projects/<slug(~/.claude)>` and its worktree slugs are renamed to
-`<slug(~/.idh)>`, since Claude Code keys memory by the resolved path (0984). The
-path-keyed `projects` entries of `~/.claude.json` are re-keyed the same way.
-`adapters/projections.json` is rewritten for the per-entry layout. `idh install`
-then creates the links and `idh check` verifies them. Worktrees are repaired, and
-the active timers among `claude-refresh`, `claude-telemetry-prune` and
-`idh-mammoth-audit` are paused for the move, then resumed.
+Every command runs from a plain terminal, never from inside Claude, Codex or Pi.
+`U=$HOME` stands for the account's home throughout.
 
-The plan and the pre-state (manifest and `~/.claude.json` bytes, active timers,
-the `~/.idh` link text) are journalled in `~/.local/state/idh/cutover/` before
-anything moves. Both directions are idempotent, and a crash at any step is
-finished by rerunning either direction.
+## Steps
 
-## Preconditions (quiet window)
+1. **Preconditions.**
+   - The window is quiet: `pgrep -a -x claude; pgrep -a -x codex; pgrep -a -x pi` prints nothing.
+   - The tree is clean: `git -C ~/.claude status --porcelain` prints nothing, and session memory is committed (0988).
+   - No open PR still needs its worktree mid-flight.
+   - `claude --version` is still 2.1.284, or `scripts/probe-memory-symlink.py` has been re-run (0984).
+   - The 0986 permission-through-symlink probe is recorded.
+   - `idh install && idh check` pass. This will be the first real run on the host.
 
-- [ ] No Claude, Codex or Pi session is running on this host, this one included:
-      run everything below from a plain terminal. `pgrep -a -x claude; pgrep -a -x codex; pgrep -a -x pi`
-      prints nothing.
-- [ ] No open PR still needs its worktree. Worktrees move with the checkout and are
-      repaired, but a session inside one would lose its cwd.
-- [ ] `git -C ~/.claude status --porcelain` prints nothing, and session memory is
-      committed (0988). The command refuses a dirty tree anyway.
-- [ ] A filesystem snapshot of `$HOME`, or at least a copy of `~/.claude.json`,
-      exists and has been checked for readability.
-- [ ] `idh install` then `idh check` pass today. Neither has run for real before
-      (STATE, 2026-09-29). Every manifest link must be spelled through `~/.idh`,
-      because the command refuses a declared link whose text names `~/.claude/…`.
-- [ ] Nothing outside the manifest links into the old root:
-      `find ~ -xdev -path ~/.claude -prune -o -lname '*/.claude/*' -print` prints
-      only paths you have decided about. The preflight checks manifest entries only.
-- [ ] Every top-level name in `~/.claude` is tracked, `keep` or `native` in
-      `adapters/cutover-layout.json`; the command refuses the rest by name. Decide
-      about the writers of the four names classified native by default:
-      `.last-pull`, `beat-log.jsonl`, `nightbeat-supervisor-journal.jsonl` and
-      `gh-pr-status-cache.json`. A file a script writes as `~/.idh/<name>` belongs
-      in `keep`.
-- [ ] Run the rehearsal the same day, against today's census:
-      `python3 ~/.claude/scripts/rehearse-cutover.py --session` ends in
-      `rehearsal: PASS`. The census is read from the live native root as names only.
-- [ ] `claude --version` is still 2.1.284, or `scripts/probe-memory-symlink.py` has
-      been re-run on the new version (0984).
-- [ ] The 0986 permission-through-symlink probe has been recorded.
+2. **Snapshot. This is the rollback.**
+   ```bash
+   snap=~/idh-cutover-$(date +%Y%m%dT%H%M).tar
+   tar -C ~ --one-file-system -cpf "$snap" .claude .claude.json .idh && tar -tf "$snap" | wc -l
+   ```
+   Check the free space first, because `projects/` alone is several GiB. The
+   snapshot holds credentials and `~/.claude.json`: keep it mode 600, and delete it
+   once the window has been accepted.
 
-## The move
+3. **Pause the timers.**
+   ```bash
+   systemctl --user stop claude-refresh.timer idh-mammoth-audit.timer claude-telemetry-prune.timer
+   ```
+   Note which of them were active (`systemctl --user list-timers --all`). A
+   `.service` still running from one of them must finish first.
 
-1. `~/.idh/bin/idh relocate harness --live`
-   - Without `--live` it refuses the real HOME, and with it outside the real HOME.
-   - It prints `paused:`, `moved:`, `split:`, `rewrote:`, `re-keyed:`,
-     `repaired:`, then the output of `idh install` and `idh check`, then `resumed:`.
-   - If `idh install` or `idh check` fails, timers stay paused and the command
-     exits 1. Repair and rerun, or roll back.
-2. Before the first launch, `python3 ~/.idh/scripts/validate-projections.py claude`
-   exits 0 (likewise `codex` and `pi`). A launch through the shell wrappers runs
-   the same check.
-3. Positive controls (0986): a fresh Claude, Codex and Pi session each load hooks,
-   skills, instructions and memory. Negative control: break one link, and the
-   launch refuses with the culprit named.
-4. `git -C ~/.idh status` shows exactly two changes: `adapters/projections.json`
-   and the renamed `projects/<slug>/memory`. Commit them on a branch and open a PR
-   only after the controls pass.
-5. `systemctl --user list-timers` shows the paused timers back.
-6. The rest of 0986: the `ln -sfn` repair texts in `scripts/shell-init.sh` and
-   `scripts/bashrc-loader.sh` (then `idh install` refreshes the `~/.bashrc`
-   block), the dual permission aliases, Codex `hooks.json` with its `/hooks`
-   re-trust and a fresh `codex exec` probe, and the README lines. On padme, do it
-   or record the deferral.
+4. **Take a worktree census.**
+   `git -C ~/.claude worktree list --porcelain` and `git -C ~/.claude worktree prune --dry-run -v`.
+   A registration whose path is gone, or whose path now holds an ordinary clone
+   (its `.git` is a directory, not a file), makes `git worktree repair` fail at
+   step 7. Remove such registrations now with `git worktree prune` or
+   `git worktree remove`.
+
+5. **Move the checkout, then rebuild the native root.**
+   ```bash
+   rm ~/.idh && mv ~/.claude ~/.idh && mkdir ~/.claude && chmod --reference=~/.idh ~/.claude
+   ```
+   - What stays in `~/.idh`: every tracked top-level entry (`git -C ~/.idh ls-files | cut -d/ -f1 | sort -u`), plus `.git .claude .env .worktrees worktrees .agents .codex .pytest_cache .ruff_cache`.
+     - `.env` stays because `UV_ENV_FILE` names it as `~/.idh/.env`.
+   - What moves back with `mv ~/.idh/<name> ~/.claude/`: every other top-level name. These are Claude Code's own state (`.credentials.json`, `history.jsonl`, `settings.json`, `sessions`, `plugins`, `backups` and the like).
+     - List the names and read the list before moving anything. An unfamiliar name is a question, not a default.
+     - Decide first about `.last-pull`, `beat-log.jsonl`, `nightbeat-supervisor-journal.jsonl` and `gh-pr-status-cache.json`: find who writes them and under which path.
+   - Then link the harness entries: `for n in CLAUDE.md RTK.md rules skills agents commands tickets; do ln -s ~/.idh/$n ~/.claude/$n; done`.
+     - `CLAUDE.md` imports `RTK.md` and `tickets/AGENTS.md` by relative path.
+     - No link is made for `scripts`, `bin` or `adapters`, so a residual `~/.claude/scripts/...` spelling breaks here, visibly (0986's ratchet list).
+
+6. **Split `projects/` and rename the harness slug.**
+   - `mv ~/.idh/projects ~/.claude/projects`.
+   - Rename the harness's own slug. `slug(path)` turns every non-alphanumeric character into `-`. Rename exactly `-home-<user>--claude` to `-home-<user>--idh`, and each harness worktree slug `-home-<user>--claude--claude-worktrees-<name>` to `-home-<user>--idh--claude-worktrees-<name>`.
+   - For every `~/.claude/projects/<slug>/memory` that git tracks (`git -C ~/.idh ls-tree -d --name-only HEAD projects/` before the move), bring it back into the checkout and link it:
+     ```bash
+     mkdir -p ~/.idh/projects/<slug>
+     mv ~/.claude/projects/<slug>/memory ~/.idh/projects/<slug>/memory
+     ln -s ~/.idh/projects/<slug>/memory ~/.claude/projects/<slug>/memory
+     ```
+   - Memory is followed through the link, and keyed by the resolved path (0984).
+
+7. **Repair the worktrees.** `git -C ~/.idh worktree repair <each worktree path>`.
+   - Give each path as it is now: a path under `~/.claude/.claude/worktrees/` becomes `~/.idh/.claude/worktrees/`.
+   - `git worktree list` must show nothing prunable.
+
+8. **Re-key `~/.claude.json`.** Only the `projects` keys change, and only for paths that moved with the checkout. The snippet prints the mapping. Read it, then rerun with `APPLY=1` to write:
+   ```bash
+   python3 - ${APPLY:+--apply} <<'EOF'
+   import json, os, sys
+   home = os.environ["HOME"]; old, new = f"{home}/.claude", f"{home}/.idh"
+   moved = {".claude", ".worktrees", "worktrees"}  # checkout subtrees that hold session cwds
+   p = f"{home}/.claude.json"; d = json.load(open(p)); keys = d["projects"]
+   m = {k: new + k[len(old):] for k in keys
+        if k == old or (k.startswith(old + "/") and k[len(old) + 1:].split("/")[0] in moved)}
+   assert not set(m.values()) & set(keys), "a new key already exists: merge by hand"
+   for k, v in m.items(): print(k, "->", v)
+   if "--apply" in sys.argv:
+       d["projects"] = {m.get(k, k): v for k, v in keys.items()}
+       tmp = p + ".tmp"; open(tmp, "w").write(json.dumps(d, indent=2) + "\n")
+       os.chmod(tmp, 0o600); os.replace(tmp, p)
+   EOF
+   ```
+
+9. **Manifest and checks.**
+   - Commit the rewritten `adapters/projections.json`, prepared on a branch before the window. It replaces the whole-root `~/.claude` entry with one entry per link from steps 5 and 6.
+   - The unrewritten manifest must refuse: `validate-projections.py claude` names `~/.claude` as FOREIGN. That refusal is the expected control.
+   - Then `idh check`, and `python3 ~/.idh/scripts/validate-projections.py claude|codex|pi`, pass before the first launch.
+   - Positive control: a fresh Claude, Codex and Pi session each load hooks, skills, instructions and memory.
+   - Negative control: break one link, and the launch refuses, naming it.
+
+10. **Resume the timers** that were active in step 3 (`systemctl --user start …`), then finish 0986's remaining criteria:
+    - the `ln -sfn` repair texts in `scripts/shell-init.sh`, `scripts/bashrc-loader.sh` and the three hooks of `settings.shared.json` and the live `settings.json`;
+    - the dual permission aliases;
+    - Codex `hooks.json` with its `/hooks` re-trust and a fresh `codex exec` probe;
+    - the README lines;
+    - padme, or its recorded deferral.
 
 ## Rollback
 
-- `~/.idh/bin/idh relocate harness --rollback --live`. If a crash left no
-  `~/.idh` (it fell between dropping the link and the move), run
-  `python3 ~/.claude/bin/idh relocate harness --rollback --live`.
-- The manifest and `~/.claude.json` get their pre-cutover bytes back when nothing
-  has touched them since the cutover. If a session rewrote `~/.claude.json`, only
-  the re-keyed entries are restored, and the command says so.
-- Native files created since the cutover move back into the checkout. A new
-  top-level name that `cutover-layout.json` does not classify stops the rollback
-  with its name (the rehearsal found `policy-limits.json*` and
-  `remote-settings.json` this way). Classify it, then rerun.
-- If step 4's commit has landed, revert it after the rollback.
-- The journal is kept as `~/.local/state/idh/cutover.rolled-back-<time>`.
+Stop the three timers, then run:
 
-## Known limits
+```bash
+mv ~/.idh ~/.idh.failed && mv ~/.claude ~/.claude.failed
+tar -C ~ -xpf "$snap"
+```
 
-- The slug rename works by prefix: every slug equal to `slug(~/.claude)` or
-  starting with it plus `-` is renamed. That includes the rare session started
-  under a native directory, such as `~/.claude/projects/x`.
-- Only the `projects` keys of `~/.claude.json` are re-keyed. A key under a native
-  entry (such as `~/.claude/projects/...`) is left alone.
-- The native root keeps no link to `scripts/`, `bin/` or `adapters/`, so a
-  residual `~/.claude/scripts/...` spelling (0986's ratchet list) breaks at the
-  cutover. It is not silently kept alive.
+Then resume the timers, and run `idh check` from `~/.claude`. Delete the
+`.failed` copies once the restored layout is verified. Anything written after
+the snapshot is lost, which is why the window must be quiet.
+
+## Warnings carried from the abandoned cutover script (PR #1067 review)
+
+- **Slug look-alikes.** Slugs map `/`, `.` and `-` alike. A prefix rule such as "every slug starting with `-home-<user>--claude`" would also rename the store of `~/.claude-backup` (`-home-<user>--claude-backup`). Rename exact names only.
+- **`projects/` is not native but mixed.** A rule of the form "re-key every `~/.claude.json` key under the checkout except native entries" also rewrites keys under `~/.claude/projects/...`. The snippet in step 8 therefore re-keys only an explicit set of moved subtrees.
+- **`XDG_STATE_HOME` and `XDG_CONFIG_HOME`.** Any helper run in the window or in a rehearsal must derive its paths from `HOME`. A shell that exports these variables otherwise sends state to the live directories, even under a disposable HOME.
+- **`git status` after the memory rename shows three entries, not two**: the deletion under the old slug, the untracked directory under the new slug, and the modified manifest. Commit them together.
+- **A rollback must refuse before it changes anything.** If you script any part of this, run the checks before the first mutation, including stopping the timers.
