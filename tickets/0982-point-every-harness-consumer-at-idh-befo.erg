@@ -6,6 +6,8 @@ Author: claude
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
 
+2026-09-29T08:42Z claude note Pointer: ~/.idh -> /home/haduong/.claude created on doudou and padme. Repo wiring repointed; ratchet tests/test_idh_root_literals.py with planted-literal positive controls. Out-of-repo, doudou: ~/.bashrc shell-init, claude-refresh.service (daemon-reload only, timer untouched), ~/.codex/config.toml (added a ~/.idh trust entry, kept the old one), ~/.codex/hooks.json link, ~/.pi/agent/settings.json skills root, ~/.pi idh-guard.ts link, ~/.agents/skills perch+healthcheck links, live ~/.claude/settings.json hooks/statusline/env plus ~/.idh permission aliases. Unchanged by design: claude-telemetry-prune (Claude Code's native telemetry dir), cadens-harvest (names no harness path), aedist settings.local.json (its rule names skills/celebrate, which no longer exists). Padme: ~/.bashrc, claude-harness-pull/nightbeat/nightbeat-supervisor/night-sweep units, settings.json hooks/env, codex trust, ~/.agents/skills/perch link. Backups of prior content in ~/.local/state/idh-0982-backup/ on each machine.
+2026-09-29T08:42Z claude note Fresh-session probes 2026-09-29 (doudou, new settings): Claude Code headless -- SessionStart hook ok, PreToolUse guard blocked git reset --hard (exit 2), CLAUDE.md loaded; Codex exec -- the guard blocked the reset, perch skill visible; Pi -p -- the guard blocked the reset, the full skills list loaded from ~/.idh/skills. Interactive bash sources shell-init via ~/.idh (claude is a function).
 --- body ---
 
 ## Context
