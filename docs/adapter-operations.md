@@ -74,6 +74,14 @@ rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status
 Skill removal takes back exactly what install created and prunes only the
 directories it emptied; unmanaged files in `~/.agents/skills` survive. The
 two wiring links are removed by hand: `idh install` never deletes anything.
+The rest of what it wrote is removed by hand too:
+
+- the loader block: delete from the `# >>> Imperial Dragon Harness loader`
+  line to the `# <<< Imperial Dragon Harness loader` line in `~/.bashrc`;
+- the backups `~/.bashrc.idh-bak-*`, one per changing install, with the
+  mode of the file they copy: they may hold whatever `~/.bashrc` held;
+- the timer: `systemctl --user disable --now idh-mammoth-audit.timer`, then
+  remove `idh-mammoth-audit.{service,timer}` from `~/.config/systemd/user/`.
 
 ## Move the checkout
 
