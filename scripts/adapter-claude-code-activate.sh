@@ -19,10 +19,12 @@
 # you what to remove and stops.
 set -euo pipefail
 
-HARNESS_DIR="${HARNESS_DIR:-$HOME/.claude}"
+HARNESS_DIR="${HARNESS_DIR:-$HOME/.idh}"
 LINK="$HARNESS_DIR/skills/claude-code"
 TARGET_REL="../adapters/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
+# While ~/.idh points at the checkout (0982), this is Claude Code's live file;
+# the cutover (0986) must re-derive it from the runtime's native root.
 LIVE="$HARNESS_DIR/settings.json"
 CANONICAL="$HARNESS_DIR/settings.shared.json"
 

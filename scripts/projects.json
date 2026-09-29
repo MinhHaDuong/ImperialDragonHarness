@@ -1,5 +1,5 @@
 [
-  { "name": "harness", "path": "~/.claude" },
+  { "name": "harness", "path": "~/.idh" },
   { "name": "git-erg", "path": "~/CNRS/code/git-erg" },
   { "name": "chemin-de-voix", "path": "~/CNRS/projets/actifs/chemin-de-voix" },
   { "name": "padme", "path": "~/CNRS/projets/actifs/padme" },

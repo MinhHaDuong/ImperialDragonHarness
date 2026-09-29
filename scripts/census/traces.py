@@ -15,7 +15,7 @@ from pathlib import Path
 
 TS = re.compile(rb'"timestamp":"(\d{4})-(\d\d)-(\d\d)T')
 
-ROOT = Path.home() / ".claude"
+ROOT = Path.home() / ".idh"
 
 
 def inventory(root: Path):
@@ -59,7 +59,7 @@ GUARD_KEYS = {
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--projects", default=str(ROOT / "projects"))
+    ap.add_argument("--projects", default=str(Path.home() / ".claude" / "projects"))
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 

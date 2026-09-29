@@ -24,9 +24,9 @@ SHARED = REPO / "settings.shared.json"
 DERIVED = REPO / "adapters" / "claude-code" / "hooks" / "hooks.json"
 
 LAUNCHER = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook"'
-# `$HOME/.claude/scripts/x.sh a` and `python3 $HOME/.claude/scripts/x.py a`
+# `$HOME/.idh/scripts/x.sh a` and `python3 $HOME/.idh/scripts/x.py a`
 HARNESS_SCRIPT = re.compile(
-    r"^(?:python3\s+)?\$HOME/\.claude/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
+    r"^(?:python3\s+)?\$HOME/\.idh/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
 )
 
 

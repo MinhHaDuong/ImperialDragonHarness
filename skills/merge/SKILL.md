@@ -22,7 +22,7 @@ with the PR branch checked out. Point it at a checkout in one of two ways:
   `"$IDH_ROOT/skills/merge/erg-pr-merge" -C WORKTREE N`.
   <!-- harness-extension-point -->
   In Claude Code, the existing standing allow rule matches only the bare
-  `~/.claude/skills/merge/erg-pr-merge -C WORKTREE N` spelling. Use that
+  `~/.idh/skills/merge/erg-pr-merge -C WORKTREE N` spelling. Use that
   spelling there while the projection exists. A `cd WORKTREE && …` prefix
   misses the rule; use `-C` instead.
 - **Implicit cwd** — with no `-C`, the script uses the current directory, so the

@@ -10,7 +10,7 @@
 # pathological file from taxing every subprocess.
 #
 # Credential consumers resolve values from ~/.config/keys at their point of
-# use. This loader does not source ~/.claude/.env, does not read provider files,
+# use. This loader does not source the checkout-root .env, does not read provider files,
 # and refuses the retired KEYS name in a project .env. A consuming project's
 # Python pipeline may still implement its own KEYS mechanism through
 # python-dotenv; it is independent of this loader, not an agreeing apply path.
@@ -48,14 +48,14 @@ _be_is_protected_name() {
 }
 
 # Skip the project parse when $PWD/.env is the harness's former user-level
-# ~/.claude/.env. The file is no longer sourced, and treating it as an
-# untrusted project file merely because the checkout lives at ~/.claude would
+# .env at the checkout root (~/.idh/.env). The file is no longer sourced, and treating it as an
+# untrusted project file merely because the checkout lives at ~/.idh would
 # be a surprising second interpretation of the same installation file.
 if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
     # Guard realpath failures so sourcing under an already-active `set -e`
     # still reaches the end of this file.
     _be_proj="$(realpath "$PWD/.env" 2>/dev/null || true)"
-    _be_user="$(realpath "$HOME/.claude/.env" 2>/dev/null || true)"
+    _be_user="$(realpath "$HOME/.idh/.env" 2>/dev/null || true)"
     if [ "$_be_proj" != "$_be_user" ]; then
         _be_cap=262144
         _be_size="$(wc -c < "$PWD/.env" 2>/dev/null || echo 0)"

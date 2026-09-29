@@ -11,11 +11,11 @@
 # Prints a STRANDED: reason to stdout and exits 1 otherwise.
 #
 # Usage: check-primary-checkout.sh [REPO_DIR] [DEFAULT_BRANCH]
-#   REPO_DIR        defaults to $HOME/.claude
+#   REPO_DIR        defaults to $HOME/.idh
 #   DEFAULT_BRANCH  defaults to main
 set -euo pipefail
 
-REPO="${1:-$HOME/.claude}"
+REPO="${1:-$HOME/.idh}"
 DEFAULT_BRANCH="${2:-main}"
 
 if ! git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then

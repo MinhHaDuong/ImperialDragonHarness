@@ -3,7 +3,7 @@
 Provenance tracking and promotion/decay helpers for /dream v2.
 Pure I/O — no LLM calls, no Anthropic imports.
 
-Manages ~/.claude/memory/.provenance.json which tracks:
+Manages ~/.idh/memory/.provenance.json which tracks:
 - Per-entry metadata: originating projects, first_seen, last_confirmed
 - Promotion status
 - Decay candidates (>90 days unconfirmed)
@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-HARNESS_MEMORY = Path.home() / ".claude" / "memory"
+HARNESS_MEMORY = Path.home() / ".idh" / "memory"
 PROVENANCE_PATH = HARNESS_MEMORY / ".provenance.json"
 PROVENANCE_LOCK = HARNESS_MEMORY / ".provenance.lock"
 PROJECT_ALIASES_PATH = HARNESS_MEMORY / ".project-aliases.json"
@@ -614,7 +614,7 @@ def main():
     show_p = sub.add_parser("show", help="Show full provenance data.")
     show_p.set_defaults(func=show)
 
-    default_root = str(Path.home() / ".claude")
+    default_root = str(Path.home() / ".idh")
     backfill_p = sub.add_parser(
         "backfill", help="Record every live memory body the store never saw."
     )

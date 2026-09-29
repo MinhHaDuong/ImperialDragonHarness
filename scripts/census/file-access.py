@@ -11,7 +11,7 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path.home() / ".claude"
+ROOT = Path.home() / ".idh"
 TS = re.compile(rb'"timestamp":"(\d{4}-\d\d-\d\d)T')
 TU = re.compile(
     rb'"type":\s*"tool_use"\s*,\s*"id":\s*"[^"]+"\s*,\s*"name":\s*"(Read|Edit|Write|NotebookEdit|MultiEdit)"\s*,'
@@ -23,7 +23,7 @@ SKILL = re.compile(r"skills/([A-Za-z0-9_-]+)/")
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--projects", default=str(ROOT / "projects"))
+    ap.add_argument("--projects", default=str(Path.home() / ".claude" / "projects"))
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 

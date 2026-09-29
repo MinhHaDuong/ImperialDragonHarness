@@ -9,15 +9,15 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 OLD_HELPER = re.compile(
-    r"~/.claude/(?:skills|scripts)/|\$\{IDH_HOME:-\$HOME/\.claude\}/(?:skills|scripts)/"
-    r"|\$\{?HOME\}?/\.claude/(?:skills|scripts)/"
+    r"~/\.(?:claude|idh)/(?:skills|scripts)/|\$\{IDH_HOME:-\$HOME/\.claude\}/(?:skills|scripts)/"
+    r"|\$\{?HOME\}?/\.(?:claude|idh)/(?:skills|scripts)/"
 )
 
 
 def test_skill_bodies_use_the_loaded_skill_for_helper_paths():
     exceptions = {
-        "merge": "~/.claude/skills/merge/erg-pr-merge",
-        "raid": "~/.claude/skills/merge/erg-pr-merge",
+        "merge": "~/.idh/skills/merge/erg-pr-merge",
+        "raid": "~/.idh/skills/merge/erg-pr-merge",
     }
     for skill in sorted(SKILLS.glob("*/SKILL.md")):
         body = skill.read_text()

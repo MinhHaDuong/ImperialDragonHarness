@@ -15,7 +15,7 @@ fi
 # Patterns checked everywhere (skills + tickets + scripts).
 # Use class-level patterns — never hardcode a specific username, path, or project name.
 GLOBAL_PATTERNS=(
-    '/home/[a-z]'   # any absolute home path (use ~/.claude or $HOME instead)
+    '/home/[a-z]'   # any absolute home path (use ~/.idh or $HOME instead)
     '/Users/[A-Z]'  # macOS equivalent
 )
 
@@ -43,7 +43,7 @@ SKILL_PATTERNS=(
     'uv[[:space:]]\+run[[:space:]]\+\(python3\?[[:space:]]\+-m[[:space:]]\+\)\?pytest\b'  # stack-specific test runner
     '\bgh '           # GitHub CLI; skills must be forge-agnostic
     'github\.com'     # GitHub URL; skills must be forge-agnostic
-    '\(^\|[^.~/]\)scripts/[A-Za-z0-9_-]\+\.\(sh\|py\)'  # repo-relative script path; use ~/.claude/scripts/ or $HARNESS_DIR
+    '\(^\|[^.~/]\)scripts/[A-Za-z0-9_-]\+\.\(sh\|py\)'  # repo-relative script path; use ~/.idh/scripts/ or $HARNESS_DIR
 )
 
 fail=0

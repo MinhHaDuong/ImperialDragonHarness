@@ -310,7 +310,7 @@ _keystore_file_for() {  # $1 validated variable name
 }
 
 # Read ONE variable out of a trusted provider file. Same isolation idiom as
-# ~/.claude/scripts/bash-env.sh's selection path, for the same reasons: `env -i` drops
+# ~/.idh/scripts/bash-env.sh's selection path, for the same reasons: `env -i` drops
 # BASH_ENV (so this `bash -c` cannot re-source the harness env script and
 # fork-bomb) and clears the environment (so the lookup can only resolve a name
 # the provider file itself defines — no ambient variable is smuggled in). `set
@@ -318,7 +318,7 @@ _keystore_file_for() {  # $1 validated variable name
 # VALUE is captured as a string and printed literally, never eval'd; the file's
 # other variables die with the subshell. Sourcing the provider file, on the
 # other hand, executes its entire content — `.` is not a parser, it is the
-# shell — so a provider file is trusted code, exactly as ~/.claude/scripts/
+# shell — so a provider file is trusted code, exactly as ~/.idh/scripts/
 # bash-env.sh trusts the same files for the same reason. Reaching that
 # execution requires prior write access to the keystore, which is the trust
 # boundary this design already assumes; the isolation above bounds what such

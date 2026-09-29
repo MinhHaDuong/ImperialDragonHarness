@@ -52,7 +52,7 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-CANONICAL_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
+CANONICAL_SCRIPT = "$HOME/.idh/scripts/guard-destructive-bash.sh"
 
 
 def wiring_commands(doc, *, source_name):
@@ -113,11 +113,11 @@ def test_claude_wiring_wires_the_canonical_guard():
 
 
 def test_wiring_target_exists_on_the_reference_machine():
-    """Machine condition: where $HOME/.claude IS the repo root (the live
+    """Machine condition: where $HOME/.idh resolves to the repo root (the live
     installation), the wired path must exist. Elsewhere (CI) the shape test
     above is the gate."""
-    if Path(os.path.expandvars(CANONICAL_SCRIPT)) != GUARD:
-        pytest.skip("not the reference installation ($HOME/.claude is not the repo)")
+    if Path(os.path.expandvars(CANONICAL_SCRIPT)).resolve() != GUARD.resolve():
+        pytest.skip("not the reference installation ($HOME/.idh is not this checkout)")
     assert GUARD.exists()
 
 

@@ -25,7 +25,7 @@ CC_ONLY = {
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default=str(Path.home() / ".claude"))
+    ap.add_argument("--root", default=str(Path.home() / ".idh"))
     ap.add_argument("--report", required=True)
     a = ap.parse_args()
     R = Path(a.root)

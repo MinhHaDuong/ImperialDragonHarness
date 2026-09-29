@@ -28,7 +28,7 @@ set -euo pipefail
 die() { echo "erg-pr-merge: $*" >&2; exit 1; }
 
 # ── Step -1: optional -C PATH (must land before any git/gh/erg call) ──
-# The standing allow rule `Bash(~/.claude/skills/merge/erg-pr-merge:*)` matches
+# The standing allow rule `Bash(~/.idh/skills/merge/erg-pr-merge:*)` matches
 # only the BARE invocation; a `cd X && …` prefix falls through to the stochastic
 # auto-mode classifier. -C lets the bare form target an arbitrary checkout from
 # any cwd. The cd MUST precede every git/gh/erg call so no half-cd state exists —

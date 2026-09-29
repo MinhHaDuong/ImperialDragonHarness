@@ -322,7 +322,7 @@ For each eligible PR, sequentially within the wave:
    This atomically closes the ticket and merges via GitHub API.
    <!-- harness-extension-point -->
    In Claude Code, the standing allow rule matches the bare
-   `~/.claude/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
+   `~/.idh/skills/merge/erg-pr-merge -C <worktree-path> <pr-number>`
    spelling. Use that spelling there while the projection exists. A
    `cd <path> && …` prefix misses the rule (ticket 0344).
 5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
