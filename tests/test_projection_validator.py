@@ -301,3 +301,29 @@ def test_bashrc_loader_refuses_when_the_harness_is_unreachable(world, runtime):
         world["home"] / ".local" / "state" / "idh" / "validate-bypass.log"
     ).read_text()
     assert "(harness unreachable)" in log
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("unreachable", [False, True])
+def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreachable):
+    """An alias codex='codex --flag' defined before the loader (a real ~/.bash_aliases)
+    once made `codex() {` a syntax error, leaving every runtime unwrapped."""
+    if unreachable:
+        (world["home"] / ".idh").unlink()
+    script = (
+        "shopt -s expand_aliases\n"
+        "alias codex='codex --approve-for-me'\n"
+        f'source "{world["root"]}/scripts/bashrc-loader.sh"\n'
+        "type -t claude\n"
+        "codex --version\n"
+    )
+    r = subprocess.run(
+        ["bash", "--norc", "-c", script],
+        env=_env(world, IDH_SKIP_VALIDATE="1"),
+        cwd=world["tmp"],
+        capture_output=True,
+        text=True,
+    )
+    assert "syntax error" not in r.stderr, r.stderr
+    assert r.stdout.startswith("function\n"), r.stdout
+    assert "LAUNCHED codex --approve-for-me --version" in r.stdout

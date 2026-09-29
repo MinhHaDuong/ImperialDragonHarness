@@ -39,7 +39,11 @@ _idh_preflight() {
   python3 "$v" "$1"
 }
 
-claude() {
+# `function NAME {`, never `NAME() {`: an alias of the same name (e.g.
+# alias codex='codex --approve-for-me') is expanded inside `NAME()` and makes
+# this file a syntax error. The alias still applies at the prompt, then calls
+# the wrapper.
+function claude {
   _idh_preflight claude || return
   local name top
   top=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)
@@ -47,12 +51,12 @@ claude() {
   command claude --dangerously-skip-permissions --name "$name" "$@"
 }
 
-codex() {
+function codex {
   _idh_preflight codex || return
   command codex "$@"
 }
 
-pi() {
+function pi {
   _idh_preflight pi || return
   command pi "$@"
 }

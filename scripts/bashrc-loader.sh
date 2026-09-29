@@ -27,7 +27,10 @@ else
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $rt ..." >&2
     return 1
   }
-  claude() { _idh_unreachable claude "$@"; }
-  codex() { _idh_unreachable codex "$@"; }
-  pi() { _idh_unreachable pi "$@"; }
+  # `function NAME {`, never `NAME() {`: a user alias of the same name (say
+  # alias codex='codex --flag') would be expanded inside `NAME()` and turn the
+  # whole if-block into a syntax error. The alias still applies at the prompt.
+  function claude { _idh_unreachable claude "$@"; }
+  function codex { _idh_unreachable codex "$@"; }
+  function pi { _idh_unreachable pi "$@"; }
 fi
