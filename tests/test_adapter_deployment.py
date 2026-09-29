@@ -28,8 +28,11 @@ import json
 from pathlib import Path
 
 import pytest
+from tracked_tree import tracked_checkout
 
-REPO = Path(__file__).resolve().parents[1]
+# The tracked tree, not this checkout: untracked links here (the private
+# overlay) would reach $IDH_ROOT and fail the run on one machine only (0989).
+REPO = tracked_checkout()
 CANARY = "CANARY-0810-qv7-only-in-its-origin"
 
 pytestmark = pytest.mark.integration
