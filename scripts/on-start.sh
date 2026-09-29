@@ -38,7 +38,7 @@ fi
 # `_idh_unreachable` marks the round-1 block still installed until the
 # post-merge refresh (tests/test_projection_validator.py pins both).
 if ! grep -qlE "_idh_refuse|_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
-    echo "SETUP REMINDER: the harness loader is not in your shell config. Run ~/.idh/bin/idh install (it writes $_script_dir/bashrc-loader.sh into ~/.bashrc; remove any bare shell-init.sh source line)."
+    echo "SETUP REMINDER: the harness loader is not in your shell config. Run ${_script_dir%/scripts}/bin/idh install (it writes $_script_dir/bashrc-loader.sh into ~/.bashrc; remove any bare shell-init.sh source line)."
 fi
 
 # The harness-rules index is NOT cat-ed here: the runtime already loads every

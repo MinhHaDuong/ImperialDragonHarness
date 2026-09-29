@@ -4,7 +4,7 @@ Operator commands for the IDH pilot surface on Claude Code, Codex and Pi
 (tickets 0802, 0803, 0809, 0810). Mistral Vibe is a probed fourth target
 with no porting slice yet; nothing here claims Vibe behavior.
 
-The pilot creates exactly four things on a machine, in two planes:
+The pilot surface is four links, in two planes:
 
 | Plane | Paths | Managed by |
 |---|---|---|
@@ -12,6 +12,9 @@ The pilot creates exactly four things on a machine, in two planes:
 | wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `idh install` (from `adapters/projections.json`) |
 
 Every one of these paths is also declared in `adapters/projections.json`.
+`idh install` also creates that manifest's other entries (the `~/.idh`
+pointer, the `~/.local/bin` launchers), the `~/.bashrc` loader block and the
+audit timer (README § Installation).
 Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
 (`scripts/shell-init.sh`, loaded by the `scripts/bashrc-loader.sh` block in
 `~/.bashrc`) run `scripts/validate-projections.py`. A missing, dangling or
