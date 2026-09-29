@@ -132,3 +132,7 @@
 - [A denied merge clears on evidence, not persistence](feedback_merge_permission_needs_review_and_author_words.md)
 - [rtk: three escapes that do not move](feedback_rtk_escapes_that_do_not_move.md)
 - [Branch races, borrowed hooks, and excludes that lose to negations](feedback_privacy_session_2026-09-28.md)
+- [A managed dotfile block needs an end marker](feedback_config_block_needs_an_end_marker.md)
+- [An inline secret persists in an allow rule](feedback_inline_secret_persists_in_allow_rule.md)
+- [In `ssh host bash -s`, stdin is the script](feedback_remote_probe_stdin_is_the_script.md)
+- [Hand delegates literal paths](feedback_hand_delegates_literal_paths.md)

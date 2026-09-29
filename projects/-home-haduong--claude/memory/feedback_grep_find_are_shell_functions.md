@@ -32,6 +32,13 @@ from an inference into a measurement. During PR #925 the cross-check reproduced
 exactly (4 / 0 / 0 both ways), so it confirmed rather than corrected — which is
 the outcome to expect most of the time and is not a reason to skip it.
 
+**It happened, 2026-09-29:** a credential sweep with the `grep` function
+reported `~/.claude: 0` files while the same token was provably present in two
+session transcripts under `~/.claude/projects/` — ignored by `.gitignore`, so
+ripgrep never read them. `/usr/bin/grep -RlF` found both. The inconsistency
+with an earlier hit is what exposed it; a sweep without that cross-check would
+have closed on the false zero.
+
 This is the same shape as [[feedback_rtk_rewrites_git_output]] but a different
 mechanism, and reading that entry as covering `grep` is precisely the error to
 avoid: rtk is not the only thing between a typed command and the binary that

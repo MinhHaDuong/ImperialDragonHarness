@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Session memory lands uncommitted and silently stalls host harness pulls
+Created: 2026-09-29
+Author: claude
+
+--- log ---
+2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
+
+--- body ---
+
+## Context
+
+Claude Code writes native project memory into `projects/*/memory/` inside the
+harness checkout, the same tree the nightly pull fast-forwards. Nothing commits
+those writes. When an incoming commit touches the same path, the pull refuses
+and keeps refusing, with no signal a person sees.
+
+Observed 2026-09-29: padme's `claude-harness-pull` had failed every night since
+2026-09-24 on 3 new and 1 edited memory notes plus two index lines, leaving the
+host 134 commits behind — including the destructive-bash guard wiring. Rescued
+by PR #1057 (3-way merge, union of index conflicts), byte-verified before the
+local copies were discarded. The same afternoon doudou's primary checkout held
+3 modified and 4 new memory files from other live sessions.
+
+`idh sync` (0987) will name the blocking files, which makes the stall visible
+but does not prevent it. The 0978 native/canonical split changes where memory
+lives, not whether it is committed.
+
+## Options
+
+1. Pull tolerates memory: rebase/autostash only `projects/*/memory/`, or merge
+   with a union driver for `MEMORY.md` (index files are append-mostly).
+2. Memory writes land as commits: a SessionEnd step (or `/lair`) commits and
+   opens a memory-only PR, as the 2026-09-29 rescue did by hand.
+3. Memory leaves the pulled tree (the 0978 split), with its own sync.
+
+## Exit criteria
+
+- [ ] A host whose sessions wrote memory since the last pull still fast-forwards the harness the next night, in a disposable-HOME reproduction of the padme case (positive control: today's script refuses)
+- [ ] No memory note is lost or duplicated across the reproduction (byte comparison of the note set before and after)
+- [ ] A pull that still cannot proceed is reported where the author sees it (session start or `idh status`), not only in a journal
+- [ ] `make check` passes

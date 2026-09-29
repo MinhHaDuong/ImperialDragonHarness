@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-29T12:39Z claude created child of 0978; author decision 2026-09-29: idh is the one command the author types to manage the harness on a machine, not a dispatcher for the harness's own scripts
 
+2026-09-29T12:59Z claude note Roar 2026-09-29: scripts/bashrc-loader.sh has a start marker but no end marker, so an in-place update must guess where the block ends. Replacing to EOF dropped padme's trailing zotero alias today (restored from backup). idh install must replace the block between explicit begin/end markers and verify the lines outside it are unchanged.
 --- body ---
 
 ## Context
