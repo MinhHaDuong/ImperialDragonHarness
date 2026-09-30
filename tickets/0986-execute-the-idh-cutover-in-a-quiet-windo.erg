@@ -9,6 +9,8 @@ Author: claude
 2026-09-29T09:11Z claude note Five exit criteria carried over from 0982 / PR #1054 review: permission-through-symlink probe, drop the dual permission aliases, Codex hooks.json repoint + /hooks re-trust + fresh codex exec probe, README 'lives as ~/.claude' rewrite, residual ratchet spellings.
 2026-09-29T19:25Z claude note 0985 closes with a runbook, not a script (author decision 2026-09-29): the move is manual by docs/idh-cutover-checklist.md with a tar-snapshot rollback. Criteria added: runbook, snapshot, the three timers. The manifest rewrite, slug rename and ~/.claude.json re-key are runbook steps 6, 8 and 9.
 2026-09-29T19:36Z Minh Ha-Duong note blocker 0985 closed — Blocked-by removed.
+2026-09-30T07:06Z codex note Preserved 2.1.285 probes from eae84b51: symlinked project memory loads and uses the resolved cwd key; after the move, Edit(~/.idh/...) grants real-path edits, while ~/.claude symlink paths are denied. Write(path) rules did not grant edits.
+2026-09-30T09:32Z vibe note Branch t0986-step1 (worktree idh-prep-step1) retired with the live move it prepared, superseded by the additive native-registration strategy adopted in PR #1070. Its four commits are archived at tag archive/t0986-step1. The per-entry projection design is not carried forward: the plugin adapter (0887) carries hooks, skills, agents and commands, and permissions stay in the live settings fragment. The entry above is preserved verbatim from the retired branch's ticket log (commit 90970798).
 --- body ---
 
 ## Context
