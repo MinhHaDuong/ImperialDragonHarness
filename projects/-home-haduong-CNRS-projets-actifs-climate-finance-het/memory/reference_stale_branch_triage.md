@@ -32,3 +32,9 @@ A finished journal's `submission/*` branch becomes tags (`docs/revision-runbook.
 the pre-push hook blocks its deletion, bypassed once with `--no-verify` on the
 author's go-ahead. Related: [[reference_branch_cleanup_incidents]],
 [[feedback_diff_fully_before_deleting_a_fork]].
+
+Run a branch/worktree audit from the primary checkout, not an `explore-*`
+worktree: the isolation guard refuses any git naming another worktree (and the
+rtk rewrite trips it too), so the audit stalls. Use `/usr/bin/git -C <primary>`
+and a script file for loops. A `.claude/worktrees/<name>` dir with no `.git`
+is a husk `worktree-gc` reports but never removes; `rm -rf` needs the author.
