@@ -79,14 +79,18 @@ dividing by 4, which understated every channel by about 45%.
 
 ## Installation
 
-On a new machine, two commands, then a new shell:
+Clone IDH into its own checkout:
 ```bash
-git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
-~/.claude/bin/idh install
+git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.idh
 ```
 
-`idh install` (ticket 0987) sets up everything declared in
-`adapters/projections.json` and nothing else:
+For an existing agent profile, follow the [additive installation strategy](docs/idh-install-strategy.md).
+Register reviewed IDH skills through each runtime's native mechanism. Keep
+existing `~/.claude`, `~/.agents`, and skills directories in place.
+
+The current `idh install` is legacy all-runtime host setup, not a safe
+skills-only install. It has no dry run or runtime selector. It sets up declared
+links across runtimes, edits the shell loader, and enables a timer:
 
 - the links: the harness pointer `~/.idh`, the Codex and Pi guard links, the
   shared skills, and `~/.local/bin/idh` itself;
@@ -225,8 +229,13 @@ systemctl --user enable --now claude-harness-pull.timer
 
 Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/`. A weekly run and a morning report used to drive this from the nightbeat, removed in ticket 0882 — the proposal is now something you ask for.
 
-## Why not a plugin?
+## Runtime support
 
-Because it's **my** harness. IDH is my personal Claude config, cloned to `~/.claude` on every machine I use. The plugin system exists for shareable, redistributable tooling — that's not this. Fork the repo if you want your own.
-
-That answer covers the *packaging* axis — installing into another Claude Code user's setup. The *portability* axis is separate and measured, not presumed: `adapters/` carries thin native glue that makes two skills (`perch`, `healthcheck`) discoverable and one enforcing guard (the dirty-reset block) active on Claude Code, Codex and Pi, with Mistral Vibe probed as the fourth target and not yet ported. No full-harness parity is claimed — hooks beyond the guard, permissions, settings and rules remain Claude-native. What is supported, per runtime and with its evidence, lives in `adapters/pilot-support.json`; how to operate it lives in `docs/adapter-operations.md`.
+IDH is personal configuration intended for a separate `~/.idh` checkout.
+Native plugins and packages allow it to coexist with other configuration. The
+[installation strategy](docs/idh-install-strategy.md) uses those mechanisms.
+Portability is measured, not presumed: `adapters/` currently has pilot
+evidence for two skills (`perch`, `healthcheck`) and one guard across Claude
+Code, Codex and Pi. Mistral Vibe has a version and skill-path probe but no
+behavioral port yet. See `adapters/pilot-support.json` and
+`docs/adapter-operations.md` for the current evidence.
