@@ -18,5 +18,11 @@ addresses protects nobody and adds code and prose to maintain.
 
 **How to apply:** refer to pages only by their current names and addresses;
 don't report redirects or old names; don't add aliases when renaming pages
-before go-live. Once 0915 makes the site public, addresses become a
-compatibility surface. Related: [[project_jetp_three_stages_m1a]].
+before go-live.
+
+Update 2026-09-30: GitHub Pages is on and the site is live at
+minhhaduong.github.io/climate-finance-het (gh-pages branch, published by
+`make jetp-observatory-publish JETP_PAGES_REF=origin/main`). The author rules it
+still counts as unpublished: "only advertised through a private mail, so obscure
+it does not count." The no-compat rule holds until the author announces it;
+`gh-pages` is the live site, never a stale branch to sweep. Related: [[project_jetp_three_stages_m1a]].
