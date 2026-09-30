@@ -121,6 +121,7 @@
 - [Merge conflict all hunks](feedback_merge_conflict_all_hunks.md)
 - [Stale branch helper duplicates main](feedback_stale_branch_helper_duplicates_main.md)
 - [Diff fully before deleting a fork](feedback_diff_fully_before_deleting_a_fork.md)
+- [Stale branch triage](reference_stale_branch_triage.md) — unmerged ≠ unsafe: cherry, PR fate, deleted paths, refs/pull survive; hunt the stranded author decision
 - [File relocation move surface](project_file_relocation_move_surface.md)
 
 ### Forge (gh)
