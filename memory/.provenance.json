@@ -9641,6 +9641,15 @@
       "last_confirmed": "2026-09-29T19:41:51Z",
       "promoted": true,
       "backfilled": true
+    },
+    "reference_stale_branch_triage": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-09-30T07:30:10Z",
+      "last_confirmed": "2026-09-30T07:30:10Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
