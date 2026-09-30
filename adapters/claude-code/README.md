@@ -8,7 +8,7 @@ the measurements, is `tickets/0887-*.erg`.
 
 Nothing here loads until `scripts/adapter-claude-code-activate.sh` creates the
 symlink `skills/claude-code -> ../adapters/claude-code`. That is deliberate.
-On the reference machine the harness repository *is* `~/.claude`, so a plugin
+The native `~/.claude/skills` link points into the harness checkout, so a plugin
 directory reachable under `skills/` is auto-discovered on the next session —
 while the live `settings.json` still carries its own copy of the same hooks.
 Both firing means every guard runs twice. The symlink is the switch, and the

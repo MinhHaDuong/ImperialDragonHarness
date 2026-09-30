@@ -278,15 +278,21 @@ def test_read_index_help_still_works(tmp_path):
 
 
 @pytest.mark.integration
-def test_commit_leading_dash_project(tmp_path):
+@pytest.mark.parametrize("relocated", [False, True])
+def test_commit_leading_dash_project(tmp_path, relocated):
     """commit.py's `commit` verb takes the project as its first positional."""
     home = tmp_path
-    idh = home / ".claude"
-    project = "-home-haduong--claude"
+    idh = home / (".idh" if relocated else ".claude")
+    project = "-home-haduong--idh" if relocated else "-home-haduong--claude"
     memory = idh / "projects" / project / "memory"
     memory.mkdir(parents=True)
     (memory / "MEMORY.md").write_text("## Entries\n")
-    (home / ".idh").symlink_to(idh, target_is_directory=True)  # ticket 0982
+    if relocated:
+        native = home / ".claude" / "projects" / project
+        native.mkdir(parents=True)
+        (native / "memory").symlink_to(memory, target_is_directory=True)
+    else:
+        (home / ".idh").symlink_to(idh, target_is_directory=True)
     subprocess.run(["git", "init", "-b", "main", str(idh)], capture_output=True)
     for k, v in (
         ("user.email", "t@example.com"),

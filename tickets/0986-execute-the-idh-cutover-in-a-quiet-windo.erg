@@ -9,38 +9,21 @@ Author: claude
 2026-09-29T09:11Z claude note Five exit criteria carried over from 0982 / PR #1054 review: permission-through-symlink probe, drop the dual permission aliases, Codex hooks.json repoint + /hooks re-trust + fresh codex exec probe, README 'lives as ~/.claude' rewrite, residual ratchet spellings.
 2026-09-29T19:25Z claude note 0985 closes with a runbook, not a script (author decision 2026-09-29): the move is manual by docs/idh-cutover-checklist.md with a tar-snapshot rollback. Criteria added: runbook, snapshot, the three timers. The manifest rewrite, slug rename and ~/.claude.json re-key are runbook steps 6, 8 and 9.
 2026-09-29T19:36Z Minh Ha-Duong note blocker 0985 closed — Blocked-by removed.
+2026-09-30T06:50Z codex note Cutover prep simplified: abandoned paste block and literal ratchet removed; branch t0986-step1 holds the necessary path fixes and a short operator note. Live move remains for a quiet window.
 --- body ---
 
-## Context
+## Intent
 
-Step E of 0978: the live move, by hand, following the runbook from 0985
-(`docs/idh-cutover-checklist.md`; the scripted cutover was dropped, author 2026-09-29). Requires a quiet
-window: no Claude, Codex or Pi session running, timers paused, repository clean, no open
-PRs whose worktrees would need repair mid-flight. Author schedules the window.
+Move the checkout from `~/.claude` to `~/.idh` in a quiet window. Keep Claude
+Code's native state at `~/.claude`, with links to the harness entries it reads.
+The short procedure is `docs/idh-cutover-checklist.md`.
 
-## Exit criteria
+## Done when
 
-- [ ] The move follows `docs/idh-cutover-checklist.md` step by step; deviations are logged here
-- [ ] A tar snapshot of `~/.claude`, `~/.claude.json` and `~/.idh` is taken before the first mutation and verified readable; rollback is restoring it
-- [ ] `claude-refresh.timer`, `idh-mammoth-audit.timer` and `claude-telemetry-prune.timer` are paused for the window and the active ones resumed after
-- [ ] The repository lives at `~/.idh`; `~/.claude` holds the documented per-entry projection
-- [ ] The 0983 validator passes; a fresh Claude, Codex and Pi session each load hooks, skills, instructions and memory (positive control)
-- [ ] Breaking one link makes the launch refuse (negative control, live)
-- [ ] `make check` and the full suite pass from `~/.idh`; padme updated or its deferral recorded
-- [ ] 0978's exit criteria re-checked; STATE's disjoint-roots row and 0920/0923 premises updated
-
-Carried over from 0982 (PR #1054 review):
-
-- [ ] Before the cutover, probe whether Claude Code permission rules match a path reached through the `~/.idh` symlink; record the result
-- [ ] Drop the dual `~/.claude`/`~/.idh` permission aliases in `settings.shared.json` (and the live file), keeping the spelling the probe supports
-- [ ] Repoint `adapters/codex/hooks.json` to `$HOME/.idh`, re-trust it via Codex `/hooks` in the same window (an untrusted definition silently runs no guard), then show with a fresh `codex exec` probe that the guard blocks
-- [ ] Rewrite the README lines that still say the harness "lives as `~/.claude`" / is cloned as `~/.claude`
-- [ ] Close or explicitly accept the residual ratchet spellings in `tests/test_idh_root_literals.py` (`$HOMEDIR/.claude`, `Path(home) / ".claude"`, `$HOME/./.claude`, f-strings)
-
-Carried over from 0983 (PR #1055 review):
-
-- [ ] The projection manifest is rewritten for the post-cutover layout in the same window, and the validator passes before the first launch. `adapters/projections.json` encodes today's layout (`~/.claude` is the checkout, `~/.idh` points at it); left unchanged it refuses every launch after the move. Also update the `ln -sfn "$HOME/.claude" "$HOME/.idh"` repair text in `scripts/shell-init.sh` and `scripts/bashrc-loader.sh`, and refresh the loader block installed in `~/.bashrc` on doudou and padme
-
-Carried over from 0984 (PR #1061 review):
-
-- [ ] In the same step as the physical move, rename `projects/<slug(~/.claude)>` to `projects/<slug(~/.idh)>` and re-key the path-keyed `~/.claude.json` entries to the new path. On claude 2.1.284 the memory and transcript keys resolve a symlinked cwd to its target, so no link can keep the old key (0984 § Verdict); re-run `scripts/probe-memory-symlink.py` first if the runtime changed
+- [ ] Snapshot verified; checkout, native state, memory links and path-keyed
+      project entries moved; Git worktrees repaired.
+- [ ] The prepared wiring passes `idh check` and `make check`; fresh Claude,
+      Codex and Pi launches find their harness pieces. Codex `/hooks` re-trusted
+      and the dirty-reset guard probed.
+- [ ] Timers restored; second host updated or its deferral recorded; tracker
+      0978 and STATE reflect the observed result.

@@ -4,7 +4,8 @@ Casual people get shit done. Real humans ride the Imperial Dragon Harness.
 They `/raid` tickets to bring back PR, they `/hunt` one down to the branch,
 they `/perch` to orient midchat.
 
-A Claude Code harness for Minh Ha-Duong's research workflow. Lives as `~/.claude`.
+A personal harness for research work. The checkout lives at `~/.idh`;
+Claude Code keeps its own state in `~/.claude`.
 
 ## The Five Claws
 
@@ -21,7 +22,7 @@ Every task passes through five phases:
 ## Structure
 
 ```
-ImperialDragonHarness/          # cloned as ~/.claude
+ImperialDragonHarness/          # cloned as ~/.idh
 ├── rules/                  # Doctrine — loaded by the runtime itself, see below
 ├── skills/                 # Slash commands — auto-generated catalog below
 ├── scripts/                # Hook implementations, guards, shell init
@@ -81,8 +82,8 @@ dividing by 4, which understated every channel by about 45%.
 
 On a new machine, two commands, then a new shell:
 ```bash
-git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.claude
-~/.claude/bin/idh install
+git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.idh
+~/.idh/bin/idh install
 ```
 
 `idh install` (ticket 0987) sets up everything declared in
@@ -227,6 +228,6 @@ Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs 
 
 ## Why not a plugin?
 
-Because it's **my** harness. IDH is my personal Claude config, cloned to `~/.claude` on every machine I use. The plugin system exists for shareable, redistributable tooling — that's not this. Fork the repo if you want your own.
+Because it's **my** harness. IDH is my personal configuration, cloned to `~/.idh` on every machine I use. The plugin system exists for shareable, redistributable tooling — that's not this. Fork the repo if you want your own.
 
 That answer covers the *packaging* axis — installing into another Claude Code user's setup. The *portability* axis is separate and measured, not presumed: `adapters/` carries thin native glue that makes two skills (`perch`, `healthcheck`) discoverable and one enforcing guard (the dirty-reset block) active on Claude Code, Codex and Pi, with Mistral Vibe probed as the fourth target and not yet ported. No full-harness parity is claimed — hooks beyond the guard, permissions, settings and rules remain Claude-native. What is supported, per runtime and with its evidence, lives in `adapters/pilot-support.json`; how to operate it lives in `docs/adapter-operations.md`.

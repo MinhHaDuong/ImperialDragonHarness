@@ -19,6 +19,15 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = json.loads((REPO / "adapters" / "projections.json").read_text())
 RUNTIMES = ("claude", "codex", "pi")
+CLAUDE_LINKS = (
+    "CLAUDE.md",
+    "RTK.md",
+    "rules",
+    "skills",
+    "agents",
+    "commands",
+    "tickets",
+)
 
 
 def _load_validator():
@@ -46,6 +55,11 @@ def _checkout(root: Path) -> Path:
         shutil.copy2(REPO / rel, root / rel)
     for skill in ("perch", "healthcheck"):
         (root / "skills" / skill).mkdir(parents=True)
+    for name in CLAUDE_LINKS:  # the per-entry projections into ~/.claude (0986)
+        if name.endswith(".md"):
+            (root / name).write_text("")
+        else:
+            (root / name).mkdir(exist_ok=True)
     return root
 
 
@@ -59,7 +73,11 @@ def world(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("XDG_STATE_HOME", raising=False)
     (home / ".idh").symlink_to(root, target_is_directory=True)
-    (home / ".claude").symlink_to(root, target_is_directory=True)
+    # Post-cutover layout (0986): ~/.claude is Claude Code's own real root,
+    # holding one link per harness entry. Memory links are optional entries.
+    (home / ".claude").mkdir()
+    for name in CLAUDE_LINKS:
+        (home / ".claude" / name).symlink_to(home / ".idh" / name)
     for rel, target in (
         (".codex/hooks.json", "adapters/codex/hooks.json"),
         (".pi/agent/extensions/idh-guard.ts", "adapters/pi/extensions/idh-guard.ts"),
@@ -134,7 +152,11 @@ def test_manifest_declares_the_pointer_and_one_guard_per_runtime():
     }
     for rt in RUNTIMES:
         assert ("~/.idh", rt) in required
-    assert ("~/.claude", "claude") in required
+    # Post-cutover (0986): ~/.claude is Claude Code's own root, not the checkout;
+    # the harness reaches it through one link per entry.
+    assert ("~/.claude", "claude") not in required
+    for n in CLAUDE_LINKS:
+        assert (f"~/.claude/{n}", "claude") in required
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
 
@@ -230,8 +252,8 @@ def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
 
 
 def test_foreign_real_directory_is_never_overwritten_blind(world):
-    (world["home"] / ".claude").unlink()
-    (world["home"] / ".claude").mkdir()
+    (world["home"] / ".claude" / "rules").unlink()
+    (world["home"] / ".claude" / "rules").mkdir()
     r = validate(world, "claude")
     assert r.returncode == 1
     assert "is a real directory" in r.stderr
@@ -284,7 +306,7 @@ def test_negative_control_healthy_home_launches_unchanged(world, runtime):
 @pytest.mark.parametrize(
     "runtime,rel",
     [
-        ("claude", ".claude"),
+        ("claude", ".claude/rules"),
         ("codex", ".codex/hooks.json"),
         ("pi", ".pi/agent/extensions/idh-guard.ts"),
     ],
@@ -358,8 +380,8 @@ def test_pointer_removed_after_sourcing_still_refuses(world, runtime):
         text=True,
     )
     assert r.returncode != 0 and "LAUNCHED" not in r.stdout
-    run_repair(world, r.stderr)
-    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
+    assert "restore the checkout at" in r.stderr
+    assert str(world["home"] / ".idh") in r.stderr
 
 
 @pytest.mark.integration
@@ -377,10 +399,9 @@ def test_bashrc_loader_refuses_when_the_harness_is_unreachable(world, runtime):
     assert r.returncode != 0 and "LAUNCHED" not in r.stdout
     assert "is unreachable" in r.stderr
     assert f"IDH_SKIP_VALIDATE=1 {runtime}" in r.stderr
-    run_repair(world, r.stderr)
-    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
+    assert "restore the checkout at" in r.stderr
+    assert str(world["home"] / ".idh") in r.stderr
 
-    (world["home"] / ".idh").unlink()
     r = launch(world, runtime, init="bashrc-loader.sh", IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
     assert "(harness not loaded)" in bypass_log(world)

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Switch the Claude Code adapter plugin on or off.
 #
-# Ticket 0887. The adapter ships inert on purpose. On this machine the harness
-# repository *is* ~/.claude, so a plugin directory reachable under skills/ is
-# auto-discovered on the next session -- while the live settings.json still
+# Ticket 0887. The adapter ships inert on purpose. Its plugin directory is
+# reachable through ~/.claude/skills/ and auto-discovered next session while
+# the live settings.json still
 # carries its own copy of the same hooks. Both sources firing means every guard
 # runs twice, on-start.sh backgrounds its git sync twice, and the log lines
 # double. The symlink this script creates is therefore the switch, and the
@@ -23,9 +23,7 @@ HARNESS_DIR="${HARNESS_DIR:-$HOME/.idh}"
 LINK="$HARNESS_DIR/skills/claude-code"
 TARGET_REL="../adapters/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
-# While ~/.idh points at the checkout (0982), this is Claude Code's live file;
-# the cutover (0986) must re-derive it from the runtime's native root.
-LIVE="$HARNESS_DIR/settings.json"
+LIVE="$HOME/.claude/settings.json"
 CANONICAL="$HARNESS_DIR/settings.shared.json"
 
 inspect_live_hooks() {

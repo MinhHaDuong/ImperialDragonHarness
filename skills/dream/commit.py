@@ -9,7 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-MEMORY_BASE = Path.home() / ".claude" / "projects"
 IDH_BASE = Path.home() / ".idh"
 
 
@@ -40,7 +39,7 @@ def main():
     args = parser.parse_args(tokens)
 
     if args.cmd == "commit":
-        memory_dir = MEMORY_BASE / args.project / "memory"
+        memory_dir = IDH_BASE / "projects" / args.project / "memory"
         harness_memory_dir = IDH_BASE / "memory"
         message = (
             f"dream: consolidate {args.project} memory ({args.n_before}→{args.n_after})"

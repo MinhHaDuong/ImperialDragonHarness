@@ -62,8 +62,7 @@ def _run(command: str, home: Path, cwd: Path):
 
 def _assert_loud(result, home: Path):
     assert result.returncode == 2
-    assert "repair it from a plain terminal outside Claude/Codex" in result.stderr
-    assert f"ln -s {home}/.claude {home}/.idh" in result.stderr
+    assert "Restore the checkout at ~/.idh from a plain terminal outside Claude/Codex" in result.stderr
 
 
 @pytest.mark.parametrize("event,command", POINTER_HOOKS)

@@ -173,7 +173,12 @@ def _activation_tree(tmp_path: Path) -> Path:
     (root / "adapters").mkdir(parents=True)
     shutil.copytree(ADAPTER, root / "adapters" / "claude-code")
     (root / "skills").mkdir()
+    (tmp_path / ".claude").mkdir()
     return root
+
+
+def _native_settings(root: Path) -> Path:
+    return root.parent / ".claude" / "settings.json"
 
 
 def _run_activator(root: Path, *args: str) -> subprocess.CompletedProcess:
@@ -182,7 +187,7 @@ def _run_activator(root: Path, *args: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         cwd=root,
-        env={**os.environ, "HARNESS_DIR": str(root)},
+        env={**os.environ, "HOME": str(root.parent), "HARNESS_DIR": str(root)},
     )
 
 
@@ -195,7 +200,7 @@ def _write_canonical_settings(root: Path) -> dict:
 @pytest.mark.integration
 def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
     root = _activation_tree(tmp_path)
-    live = root / "settings.json"
+    live = _native_settings(root)
     link = root / "skills" / "claude-code"
 
     live.write_text('{"hooks": {"PreToolUse": []}}')
@@ -223,7 +228,7 @@ def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
 @pytest.mark.parametrize("contents", ["{ malformed", "[]", "42", "null", '"text"'])
 def test_unknown_live_config_refuses_activation_and_status(tmp_path, contents):
     root = _activation_tree(tmp_path)
-    (root / "settings.json").write_text(contents)
+    (_native_settings(root)).write_text(contents)
 
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
@@ -239,7 +244,7 @@ def test_unknown_live_config_refuses_activation_and_status(tmp_path, contents):
 def test_unreadable_live_config_refuses_activation_and_status(tmp_path):
     """/proc/self/mem raises OSError on read even when pytest runs as root."""
     root = _activation_tree(tmp_path)
-    (root / "settings.json").symlink_to("/proc/self/mem")
+    (_native_settings(root)).symlink_to("/proc/self/mem")
 
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
@@ -255,7 +260,7 @@ def test_unreadable_live_config_refuses_activation_and_status(tmp_path):
 @pytest.mark.parametrize("kind", ["directory", "dangling"])
 def test_nonregular_live_config_is_unknown(tmp_path, kind):
     root = _activation_tree(tmp_path)
-    live = root / "settings.json"
+    live = _native_settings(root)
     if kind == "directory":
         live.mkdir()
     else:
@@ -275,7 +280,7 @@ def test_nonregular_live_config_is_unknown(tmp_path, kind):
 def test_revert_waits_for_live_hooks_to_be_restored(tmp_path):
     root = _activation_tree(tmp_path)
     canonical = _write_canonical_settings(root)
-    live = root / "settings.json"
+    live = _native_settings(root)
     link = root / "skills" / "claude-code"
     live.write_text("{}")
 
@@ -311,7 +316,7 @@ def test_revert_waits_for_live_hooks_to_be_restored(tmp_path):
 def test_revert_refuses_incomplete_live_hook_sets(tmp_path, live_config):
     root = _activation_tree(tmp_path)
     _write_canonical_settings(root)
-    live = root / "settings.json"
+    live = _native_settings(root)
     link = root / "skills" / "claude-code"
     live.write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
@@ -364,7 +369,7 @@ def _remove_adapter_component(root: Path, component: str) -> None:
 @pytest.mark.parametrize("component", ["target", *REQUIRED_ADAPTER_COMPONENTS])
 def test_activation_refuses_an_incomplete_adapter_payload(tmp_path, component):
     root = _activation_tree(tmp_path)
-    (root / "settings.json").write_text("{}")
+    (_native_settings(root)).write_text("{}")
     _remove_adapter_component(root, component)
 
     result = _run_activator(root, "activate")
@@ -379,7 +384,7 @@ def test_activation_refuses_an_incomplete_adapter_payload(tmp_path, component):
 def test_missing_adapter_payload_makes_an_existing_link_unknown(tmp_path, component):
     root = _activation_tree(tmp_path)
     link = root / "skills" / "claude-code"
-    (root / "settings.json").write_text("{}")
+    (_native_settings(root)).write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
     _remove_adapter_component(root, component)
 

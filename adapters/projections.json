@@ -4,21 +4,83 @@
     {
       "path": "~/.idh",
       "target": "$IDH_ROOT",
-      "runtimes": ["claude", "codex", "pi"],
+      "runtimes": [
+        "claude",
+        "codex",
+        "pi"
+      ],
       "required": true,
       "why": "every hook, extension and skills root names the harness as ~/.idh (ticket 0982)"
     },
     {
-      "path": "~/.claude",
-      "target": "$IDH_ROOT",
-      "runtimes": ["claude"],
+      "path": "~/.claude/CLAUDE.md",
+      "target": "$IDH_ROOT/CLAUDE.md",
+      "runtimes": [
+        "claude"
+      ],
       "required": true,
-      "why": "Claude Code reads instructions, rules, skills and settings from its native root"
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/RTK.md",
+      "target": "$IDH_ROOT/RTK.md",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/rules",
+      "target": "$IDH_ROOT/rules",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/skills",
+      "target": "$IDH_ROOT/skills",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/agents",
+      "target": "$IDH_ROOT/agents",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/commands",
+      "target": "$IDH_ROOT/commands",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
+    },
+    {
+      "path": "~/.claude/tickets",
+      "target": "$IDH_ROOT/tickets",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Claude Code reads this harness entry from its native root"
     },
     {
       "path": "~/.codex/hooks.json",
       "target": "$IDH_ROOT/adapters/codex/hooks.json",
-      "runtimes": ["codex"],
+      "runtimes": [
+        "codex"
+      ],
       "required": true,
       "why": "the Codex destructive-bash guard; a dangling link runs no guard and gives no warning",
       "installer": "$IDH_ROOT/bin/idh install"
@@ -26,7 +88,9 @@
     {
       "path": "~/.pi/agent/extensions/idh-guard.ts",
       "target": "$IDH_ROOT/adapters/pi/extensions/idh-guard.ts",
-      "runtimes": ["pi"],
+      "runtimes": [
+        "pi"
+      ],
       "required": true,
       "why": "the Pi destructive-bash guard; a dangling link drops the extension silently",
       "installer": "$IDH_ROOT/bin/idh install"
@@ -48,56 +112,77 @@
     {
       "path": "~/.agents/skills/perch",
       "target": "$IDH_ROOT/skills/perch",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "shared Agent Skills root, installed by bin/idh"
     },
     {
       "path": "~/.agents/skills/healthcheck",
       "target": "$IDH_ROOT/skills/healthcheck",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "shared Agent Skills root, installed by bin/idh"
     },
     {
       "path": "$IDH_ROOT/skills/email",
       "target": "~/.config/harness/private/skills/email",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "$IDH_ROOT/skills/infrastructure",
       "target": "~/.config/harness/private/skills/infrastructure",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "$IDH_ROOT/skills/directory",
       "target": "~/.config/harness/private/skills/directory",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "~/.agents/skills/email",
       "target": "~/.config/harness/private/skills/email",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
     },
     {
       "path": "~/.agents/skills/infrastructure",
       "target": "~/.config/harness/private/skills/infrastructure",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
     },
     {
       "path": "~/.agents/skills/directory",
       "target": "~/.config/harness/private/skills/directory",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
     }

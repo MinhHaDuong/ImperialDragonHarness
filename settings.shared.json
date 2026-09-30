@@ -21,12 +21,8 @@
       "Bash(git push *)",
       "Bash(gh repo *)",
       "Bash(gh api *)",
-      "Edit(~/.claude/skills/hunt/**)",
-      "Edit(~/.claude/tickets/*.erg)",
-      "Write(~/.claude/tickets/*.erg)",
       "Edit(~/.idh/skills/hunt/**)",
       "Edit(~/.idh/tickets/*.erg)",
-      "Write(~/.idh/tickets/*.erg)",
       "Bash(uv sync *)",
       "Bash(git merge *)",
       "WebFetch(domain:tracingkieu.net)",
@@ -57,7 +53,6 @@
       "Read(//home/haduong/CNRS/papiers/actif/AEDIST-technical-report/**)",
       "Bash(rtk git *)",
       "Bash(rtk grep *)",
-      "Bash(~/.claude/skills/merge/erg-pr-merge:*)",
       "Bash(~/.idh/skills/merge/erg-pr-merge:*)"
     ],
     "defaultMode": "auto",
@@ -74,7 +69,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -x \"$HOME/.idh/scripts/on-start.sh\" ] || { echo \"IDH: ~/.idh/scripts/on-start.sh is missing or not executable, so this hook cannot run. If the ~/.idh pointer is missing, repair it from a plain terminal outside Claude/Codex: ln -s $HOME/.claude $HOME/.idh\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-start.sh\"",
+            "command": "[ -x \"$HOME/.idh/scripts/on-start.sh\" ] || { echo \"IDH: ~/.idh/scripts/on-start.sh is missing or not executable, so this hook cannot run. Restore the checkout at ~/.idh from a plain terminal outside Claude/Codex, then relaunch\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-start.sh\"",
             "timeout": 30
           }
         ]
@@ -86,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -x \"$HOME/.idh/scripts/on-end.sh\" ] || { echo \"IDH: ~/.idh/scripts/on-end.sh is missing or not executable, so this hook cannot run. If the ~/.idh pointer is missing, repair it from a plain terminal outside Claude/Codex: ln -s $HOME/.claude $HOME/.idh\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-end.sh\"",
+            "command": "[ -x \"$HOME/.idh/scripts/on-end.sh\" ] || { echo \"IDH: ~/.idh/scripts/on-end.sh is missing or not executable, so this hook cannot run. Restore the checkout at ~/.idh from a plain terminal outside Claude/Codex, then relaunch\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/on-end.sh\"",
             "timeout": 10
           }
         ]
@@ -98,7 +93,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -x \"$HOME/.idh/scripts/guard-destructive-bash.sh\" ] || { echo \"IDH: ~/.idh/scripts/guard-destructive-bash.sh is missing or not executable, so this hook cannot run. If the ~/.idh pointer is missing, repair it from a plain terminal outside Claude/Codex: ln -s $HOME/.claude $HOME/.idh\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/guard-destructive-bash.sh\"",
+            "command": "[ -x \"$HOME/.idh/scripts/guard-destructive-bash.sh\" ] || { echo \"IDH: ~/.idh/scripts/guard-destructive-bash.sh is missing or not executable, so this hook cannot run. Restore the checkout at ~/.idh from a plain terminal outside Claude/Codex, then relaunch\" >&2; exit 2; }; exec \"$HOME/.idh/scripts/guard-destructive-bash.sh\"",
             "timeout": 5
           }
         ]

@@ -35,10 +35,8 @@ _idh_refuse() {
     echo "idh: refusing to launch $rt: $init exists but is unreadable." >&2
     printf '  repair: chmod u+r %q   (then open a new shell)\n' "$init" >&2
   else
-    # The checkout sits at ~/.claude until the 0986 cutover, which updates
-    # this repair (and asks for the installed copy to be refreshed).
     echo "idh: refusing to launch $rt: $init is unreachable, so $HOME/.idh does not resolve to the harness checkout." >&2
-    printf '  repair: ln -sfn %q %q   (then open a new shell)\n' "$HOME/.claude" "$HOME/.idh" >&2
+    printf '  repair: restore the checkout at %q, then open a new shell\n' "$HOME/.idh" >&2
   fi
   echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $rt ..." >&2
   return 1

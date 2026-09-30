@@ -41,10 +41,9 @@ _idh_preflight() {
   fi
   local v="$HOME/.idh/scripts/validate-projections.py"
   if [ ! -f "$v" ]; then
-    # ~/.idh vanished after this shell sourced the wrappers. The checkout sits
-    # at ~/.claude until the 0986 cutover, which updates this repair.
+    # ~/.idh vanished after this shell sourced the wrappers.
     echo "idh: refusing to launch $1: $v is unreachable, so $HOME/.idh no longer resolves to the harness checkout." >&2
-    printf '  repair: ln -sfn %q %q\n' "$HOME/.claude" "$HOME/.idh" >&2
+    printf '  repair: restore the checkout at %q, then relaunch\n' "$HOME/.idh" >&2
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
     return 1
   fi

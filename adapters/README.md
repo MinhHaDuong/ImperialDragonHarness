@@ -41,10 +41,8 @@ the body stays canonical and live. Editing the prose needs no build step and
 no reinstall.
 
 **Claude Code does not read that directory.** It scans `$HOME/.claude/skills`
-only. On the reference machine the harness repository *is* `$HOME/.claude`, so
-the canonical directory already is the one Claude Code discovers: `install
-claude` reports it and creates nothing. Where the repository lives elsewhere,
-it creates the link. Either way there is no second perch and nothing under
+only. The `~/.claude/skills` link points into the `~/.idh` checkout, so
+Claude Code discovers the canonical directory. There is no second perch and nothing under
 `skills/` changes, which is what makes removing the experiment a no-op for
 Claude.
 
