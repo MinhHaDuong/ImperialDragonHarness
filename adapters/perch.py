@@ -20,11 +20,9 @@ refused two of the three CLIs installed nine days later. A minimum plus a probe
 widens with upstream instead. Unknown, unparseable or absent: refuse, never
 silently accept.
 
-**A target that already resolves to the canonical source is success.** In this
-installation the harness repository *is* ``$HOME/.claude``, so
-``$HOME/.claude/skills/perch`` and the canonical source are the same directory.
-That is the goal state for Claude Code, reached with nothing installed; PR #780
-read it as a collision and refused its own skill as an unmanaged entry.
+**A target that already resolves to the canonical source is success.** The
+Claude Code skills root can contain a link to this repository's skill beside
+unrelated skills. PR #780 read an already discoverable target as a collision.
 
 The perch pilot established the directory contract. This CLI names the skill
 to project; it does not transform or copy its body. Usage::

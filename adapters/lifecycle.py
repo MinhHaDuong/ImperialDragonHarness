@@ -1,8 +1,8 @@
 """Harness lifecycle on one machine: `idh install | check | status | sync` (0987).
 
 The operator's command, not the runtimes': hooks and skills keep calling
-scripts by path. adapters/projections.json is the one list of links, so
-install creates exactly what check verifies, and the launch validator
+scripts by path. The manifest and checkout skill directories name the links,
+so install creates exactly what check verifies, and the launch validator
 (scripts/validate-projections.py) supplies the per-entry verdict. Links are
 built from the structured `path`/`target` fields only; the free-form
 `installer` text is display, never executed. Stdlib only, Python 3.12.

@@ -34,8 +34,9 @@ repeat those probes if the installed version changes.
    top-level entry with `git -C ~/.idh ls-files`; classify unfamiliar entries
    before moving them. Keep the checkout, `.git`, `.env`, and its worktrees in
    `~/.idh`. Move `projects/` back to `~/.claude/projects/`. Link `CLAUDE.md`,
-   `RTK.md`, `rules`, `skills`, `agents`, `commands`, and `tickets` from
-   `~/.claude` to `~/.idh`. For each tracked `projects/<slug>/memory`, move its
+   `RTK.md`, `rules`, `agents`, `commands`, and `tickets` from
+   `~/.claude` to `~/.idh`; `idh install` links individual skills. For each
+   tracked `projects/<slug>/memory`, move its
    directory into `~/.idh/projects/<slug>/memory` and link it back from the
    native `projects/` directory. Rename only the exact harness slug from
    `-home-<user>--claude` to `-home-<user>--idh`, including its worktree slugs.

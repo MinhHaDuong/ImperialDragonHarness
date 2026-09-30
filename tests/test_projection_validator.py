@@ -23,7 +23,6 @@ CLAUDE_LINKS = (
     "CLAUDE.md",
     "RTK.md",
     "rules",
-    "skills",
     "agents",
     "commands",
     "tickets",
@@ -78,6 +77,11 @@ def world(tmp_path, monkeypatch):
     (home / ".claude").mkdir()
     for name in CLAUDE_LINKS:
         (home / ".claude" / name).symlink_to(home / ".idh" / name)
+    (home / ".claude" / "skills").mkdir()
+    for skill in ("perch", "healthcheck"):
+        (home / ".claude" / "skills" / skill).symlink_to(
+            home / ".idh" / "skills" / skill
+        )
     for rel, target in (
         (".codex/hooks.json", "adapters/codex/hooks.json"),
         (".pi/agent/extensions/idh-guard.ts", "adapters/pi/extensions/idh-guard.ts"),
@@ -157,6 +161,9 @@ def test_manifest_declares_the_pointer_and_one_guard_per_runtime():
     assert ("~/.claude", "claude") not in required
     for n in CLAUDE_LINKS:
         assert (f"~/.claude/{n}", "claude") in required
+    assert ("~/.claude/skills", "claude") not in required
+    skill_entries = VALIDATOR.load_entries(REPO / "adapters" / "projections.json", "claude")
+    assert any(e["path"] == "~/.claude/skills/perch" for e in skill_entries)
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
 

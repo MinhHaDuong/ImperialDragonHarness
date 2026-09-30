@@ -20,8 +20,7 @@
 set -euo pipefail
 
 HARNESS_DIR="${HARNESS_DIR:-$HOME/.idh}"
-LINK="$HARNESS_DIR/skills/claude-code"
-TARGET_REL="../adapters/claude-code"
+LINK="$HOME/.claude/skills/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
 LIVE="$HOME/.claude/settings.json"
 CANONICAL="$HARNESS_DIR/settings.shared.json"
@@ -191,8 +190,9 @@ MSG
         ;;
       absent) ;;
     esac
-    ln -s "$TARGET_REL" "$LINK"
-    echo "adapter: ACTIVE — $LINK -> $TARGET_REL"
+    mkdir -p "${LINK%/*}"
+    ln -s "$TARGET_ABS" "$LINK"
+    echo "adapter: ACTIVE — $LINK -> $TARGET_ABS"
     echo "The hooks now come from the plugin. Start a new session and confirm a guard fires;"
     echo "reading this message is not evidence that it does. Revert with --revert."
     ;;

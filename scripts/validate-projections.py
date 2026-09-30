@@ -8,9 +8,9 @@ extension. No hook can report that, because the hook vanishes with the link.
 So the check runs in the shell, before the runtime starts: the wrappers in
 scripts/shell-init.sh call this script and launch only on exit 0.
 
-The expected projections come from one declared manifest,
-adapters/projections.json, never from a glob of what happens to exist: a
-required entry that is absent is itself a failure.
+The expected projections come from adapters/projections.json and the
+checkout's skill directories, never from what happens to exist in the
+runtime's destination: a missing installed skill is a failure.
 
 Usage: validate-projections.py RUNTIME [--root DIR] [--manifest FILE]
 Exit 0: every entry for RUNTIME resolves to its target. Exit 1: at least one
@@ -115,6 +115,23 @@ class ManifestError(Exception):
 def load_entries(manifest: Path, runtime: str):
     try:
         entries = json.loads(manifest.read_text())["entries"]
+        if not isinstance(entries, list):
+            raise ManifestError("entries must be a list")
+        # Claude Code's skills root belongs to the user. Project each IDH
+        # skill individually so unrelated native skills remain untouched.
+        skills = manifest.parent.parent / "skills"
+        if skills.is_dir():
+            entries.extend(
+                {
+                    "path": f"~/.claude/skills/{source.name}",
+                    "target": f"$IDH_ROOT/skills/{source.name}",
+                    "runtimes": ["claude"],
+                    "required": True,
+                    "why": "IDH skill projected into Claude Code's shared skills root",
+                }
+                for source in sorted(skills.iterdir())
+                if (source / "SKILL.md").is_file()
+            )
         for e in entries:
             missing = [f for f in FIELDS if f not in e]
             if missing:

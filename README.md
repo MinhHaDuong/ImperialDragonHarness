@@ -86,11 +86,12 @@ git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.idh
 ~/.idh/bin/idh install
 ```
 
-`idh install` (ticket 0987) sets up everything declared in
-`adapters/projections.json` and nothing else:
+`idh install` sets up the declared links and projects each IDH skill into
+Claude Code's existing `~/.claude/skills` directory:
 
 - the links: the harness pointer `~/.idh`, the Codex and Pi guard links, the
-  shared skills, and `~/.local/bin/idh` itself;
+  shared skills, and `~/.local/bin/idh` itself. Unrelated Claude Code skills
+  stay in place; a same-name entry is reported and left untouched;
 - the loader block `scripts/bashrc-loader.sh`, written into `~/.bashrc`
   between its `>>>` and `<<<` marker lines. The previous file is kept as
   `~/.bashrc.idh-bak-<timestamp>`, and every byte outside the markers is verified

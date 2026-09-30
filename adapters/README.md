@@ -41,10 +41,9 @@ the body stays canonical and live. Editing the prose needs no build step and
 no reinstall.
 
 **Claude Code does not read that directory.** It scans `$HOME/.claude/skills`
-only. The `~/.claude/skills` link points into the `~/.idh` checkout, so
-Claude Code discovers the canonical directory. There is no second perch and nothing under
-`skills/` changes, which is what makes removing the experiment a no-op for
-Claude.
+only. `idh install` links each IDH skill inside the existing
+`~/.claude/skills` directory. Other skills stay there untouched; a same-name
+entry is a visible conflict. The canonical body remains in `~/.idh/skills`.
 
 | | skills root | invocation |
 |---|---|---|

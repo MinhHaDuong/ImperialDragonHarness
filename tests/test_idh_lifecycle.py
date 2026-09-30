@@ -99,6 +99,29 @@ def test_install_is_idempotent_and_refuses_foreign_files(machine):
     assert "installed:" not in r.stdout
 
 
+def test_install_keeps_unrelated_claude_skills(machine):
+    home, idh = machine["home"], machine["idh"]
+    foreign = home / ".claude" / "skills" / "foreign"
+    foreign.mkdir(parents=True)
+    (foreign / "SKILL.md").write_text("owned by the user\n")
+
+    assert idh("install").returncode == 0
+    assert (foreign / "SKILL.md").read_text() == "owned by the user\n"
+    assert (home / ".claude" / "skills" / "perch").resolve() == (REPO / "skills" / "perch").resolve()
+
+
+def test_install_refuses_same_name_claude_skill_without_overwriting(machine):
+    home, idh = machine["home"], machine["idh"]
+    existing = home / ".claude" / "skills" / "perch"
+    existing.mkdir(parents=True)
+    (existing / "SKILL.md").write_text("existing copy\n")
+
+    result = idh("install")
+    assert result.returncode == 1
+    assert "FOREIGN" in result.stderr and str(existing) in result.stderr
+    assert (existing / "SKILL.md").read_text() == "existing copy\n"
+
+
 def test_skill_subcommands_still_reach_perch(machine):
     r = machine["idh"]("check", "harness", "pi", "--version", "0.99.0")
     assert "pi:" in r.stdout + r.stderr
@@ -160,7 +183,8 @@ def test_status_reports_installed_vs_declared(machine):
     assert idh("install").returncode == 0
     r = idh("status")
     assert r.returncode == 0, r.stdout + r.stderr
-    assert f"declared {len(MANIFEST)}, ok " in r.stdout
+    skill_count = sum((p / "SKILL.md").is_file() for p in (REPO / "skills").iterdir())
+    assert f"declared {len(MANIFEST) + skill_count}, ok " in r.stdout
     assert f"ok       {home / '.codex' / 'hooks.json'} -> " in r.stdout
     assert "timer    idh-mammoth-audit.timer:" in r.stdout
     assert "origin   " in r.stdout

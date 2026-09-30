@@ -127,8 +127,9 @@ def test_launcher_resolves_the_harness_root(tmp_path, through_symlink):
     """
     root = _tree(tmp_path, "PROBE-RAN")
     if through_symlink:
-        (root / "skills" / "claude-code").symlink_to("../adapters/claude-code")
-        entry = root / "skills" / "claude-code" / "bin" / "idh-hook"
+        _native_plugin(root).parent.mkdir(parents=True)
+        _native_plugin(root).symlink_to(root / "adapters" / "claude-code")
+        entry = _native_plugin(root) / "bin" / "idh-hook"
     else:
         entry = root / "adapters" / "claude-code" / "bin" / "idh-hook"
 
@@ -173,12 +174,16 @@ def _activation_tree(tmp_path: Path) -> Path:
     (root / "adapters").mkdir(parents=True)
     shutil.copytree(ADAPTER, root / "adapters" / "claude-code")
     (root / "skills").mkdir()
-    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "skills").mkdir(parents=True)
     return root
 
 
 def _native_settings(root: Path) -> Path:
     return root.parent / ".claude" / "settings.json"
+
+
+def _native_plugin(root: Path) -> Path:
+    return root.parent / ".claude" / "skills" / "claude-code"
 
 
 def _run_activator(root: Path, *args: str) -> subprocess.CompletedProcess:
@@ -201,7 +206,7 @@ def _write_canonical_settings(root: Path) -> dict:
 def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
     root = _activation_tree(tmp_path)
     live = _native_settings(root)
-    link = root / "skills" / "claude-code"
+    link = _native_plugin(root)
 
     live.write_text('{"hooks": {"PreToolUse": []}}')
     status = _run_activator(root, "--status")
@@ -221,7 +226,7 @@ def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
     absent = _run_activator(root, "activate")
     assert absent.returncode == 0, absent.stderr
     assert link.is_symlink()
-    assert link.readlink() == Path("../adapters/claude-code")
+    assert link.readlink() == root / "adapters" / "claude-code"
 
 
 @pytest.mark.integration
@@ -233,7 +238,7 @@ def test_unknown_live_config_refuses_activation_and_status(tmp_path, contents):
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_native_plugin(root)).exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -249,7 +254,7 @@ def test_unreadable_live_config_refuses_activation_and_status(tmp_path):
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_native_plugin(root)).exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -269,7 +274,7 @@ def test_nonregular_live_config_is_unknown(tmp_path, kind):
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_native_plugin(root)).exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -281,7 +286,7 @@ def test_revert_waits_for_live_hooks_to_be_restored(tmp_path):
     root = _activation_tree(tmp_path)
     canonical = _write_canonical_settings(root)
     live = _native_settings(root)
-    link = root / "skills" / "claude-code"
+    link = _native_plugin(root)
     live.write_text("{}")
 
     activated = _run_activator(root, "activate")
@@ -317,7 +322,7 @@ def test_revert_refuses_incomplete_live_hook_sets(tmp_path, live_config):
     root = _activation_tree(tmp_path)
     _write_canonical_settings(root)
     live = _native_settings(root)
-    link = root / "skills" / "claude-code"
+    link = _native_plugin(root)
     live.write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
 
@@ -333,7 +338,7 @@ def test_revert_refuses_incomplete_live_hook_sets(tmp_path, live_config):
 @pytest.mark.parametrize("kind", ["foreign", "dangling", "directory"])
 def test_adapter_commands_refuse_unmanaged_link_paths(tmp_path, kind):
     root = _activation_tree(tmp_path)
-    link = root / "skills" / "claude-code"
+    link = _native_plugin(root)
     if kind == "foreign":
         foreign = root / "foreign-plugin"
         foreign.mkdir()
@@ -376,14 +381,14 @@ def test_activation_refuses_an_incomplete_adapter_payload(tmp_path, component):
 
     assert result.returncode == 1
     assert "adapter payload is incomplete" in result.stderr
-    assert not (root / "skills" / "claude-code").is_symlink()
+    assert not (_native_plugin(root)).is_symlink()
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("component", ["target", *REQUIRED_ADAPTER_COMPONENTS])
 def test_missing_adapter_payload_makes_an_existing_link_unknown(tmp_path, component):
     root = _activation_tree(tmp_path)
-    link = root / "skills" / "claude-code"
+    link = _native_plugin(root)
     (_native_settings(root)).write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
     _remove_adapter_component(root, component)

@@ -1,5 +1,5 @@
 {
-  "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list and nothing else: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `runtimes: []` marks an operator-only entry: `idh check` verifies it, no launch waits on it. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
+  "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list plus the checkout skill directories: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `runtimes: []` marks an operator-only entry: `idh check` verifies it, no launch waits on it. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
   "entries": [
     {
       "path": "~/.idh",
@@ -33,15 +33,6 @@
     {
       "path": "~/.claude/rules",
       "target": "$IDH_ROOT/rules",
-      "runtimes": [
-        "claude"
-      ],
-      "required": true,
-      "why": "Claude Code reads this harness entry from its native root"
-    },
-    {
-      "path": "~/.claude/skills",
-      "target": "$IDH_ROOT/skills",
       "runtimes": [
         "claude"
       ],
