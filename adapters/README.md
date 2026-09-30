@@ -3,6 +3,10 @@
 Native glue for harnesses other than the one this repository is checked out
 into. Two unrelated things live here today:
 
+The [installation strategy](../docs/idh-install-strategy.md) makes native,
+additive registration the target. The commands below describe the current
+link-based pilot and do not constitute a fresh install recipe.
+
 - `claude-code/` — the harness's hook wiring as a Claude Code plugin (ticket
   0887). Its own README is next to it.
 - `perch.py` and `bin/idh` — the multi-harness skill installer, generalized

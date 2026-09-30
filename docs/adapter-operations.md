@@ -37,7 +37,12 @@ claude --version && codex --version && pi --version && vibe --version
 Support is a floor plus a probe, never an allowlist. An unreadable version
 refuses rather than passes.
 
-## Install (fresh machine)
+## Existing installer
+
+For a fresh, coexisting install, follow
+[the installation strategy](idh-install-strategy.md). The command below is the
+older all-runtime host setup; it is not a skills-only install and has no dry
+run or runtime selector.
 
 ```bash
 ~/.idh/bin/idh install  # links from adapters/projections.json, loader block, timer
