@@ -29,6 +29,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [coding-python.md](./coding-python.md) | `**/*.py` | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | `**/*.sh` | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 | [prose/_all.md](./prose/_all.md) | `**/*.tex` `**/*.qmd` `**/*.md` `**/*.txt` | Universal prose rules: LLMism guards, Elements of Style. |
+| [doctype/article.md](./doctype/article.md) | `**/*.tex` | Article conventions: Shapiro's question test, Head's introduction order, argument-led sections, standalone tables. |
 | [doctype/techreport.md](./doctype/techreport.md) | `**/*.tex` | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
@@ -45,8 +46,8 @@ harness `CLAUDE.md`, reached in projects via their `AGENTS.md` pointer.
 
 ## Axis model
 
-`paths:` is coarse where the axis is not a path: any `.tex` edit brings all
-three doctypes and both languages. The review skills resolve the one that
+`paths:` is coarse where the axis is not a path: any `.tex` edit brings every
+doctype and both languages. The review skills resolve the one that
 applies with `scripts/prose_predicate.py --axes`, which prints each file's
 doctype and language so a reviewer reads the declared rulebook instead of
 guessing it.
