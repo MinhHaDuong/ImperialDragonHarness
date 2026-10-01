@@ -2,11 +2,15 @@
 Title: Session memory lands uncommitted and silently stalls host harness pulls
 Created: 2026-09-29
 Author: claude
+Blocked-by: 0920
 
 --- log ---
 2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
 
 2026-10-01T19:03Z MinhHaDuong codex note Removed the obsolete 0978 coupling: 0999 portability does not decide whether session memory remains in the pulled tree.
+2026-10-01T19:37Z MinhHaDuong codex note Author chose automatic factual experience capture and commit at roar time, in a dated project-specific pool; explicitly includes near misses and unexpectedly easy successes. Interpretation and rule/knowledge proposals are excluded from roar. Integration mechanics remain open.
+2026-10-01T20:25Z MinhHaDuong codex note Author simplified the target to repository Markdown and AGENTS.md across Claude, Codex, Pi and Vibe: no embedding model, database or MCP memory dependency. Proposed short MEMORY.md, consolidated topics, factual journal and versioned DREAM.md; weekly isolated dreaming produces a branch/PR, including crystallisation proposals. Prior capture-at-roar decision remains. Detailed migration and sync acceptance remain open.
+2026-10-01T20:37Z MinhHaDuong codex note V8 is now written; capture depends on the repository pilot 0920. Architecture and implementation plan realigned; runtime delivery remains open.
 --- body ---
 
 ## Context
@@ -27,7 +31,71 @@ local copies were discarded. The same afternoon doudou's primary checkout held
 but does not prevent it. The portable `~/.agents` clone contract in 0999
 changes how the checkout is found, not whether memory writes are committed.
 
-## Options
+## Author decision: capture at roar
+
+At roar time, automatically save and commit significant factual episodes to a
+project-specific experience pool, ordered by date. These are souvenirs of what
+happened, not extracted lessons. If no significant episode occurred, write
+nothing. Roar must not propose rules or interpreted memories.
+
+Capture both positive and negative significant experiences. Capture relevant
+novelty, an evidenced expectation contradicted by observation,
+material consequences for the task, or an actual conflict between prescribed
+procedure and circumstances. Include near misses, prevented harm and
+unexpectedly easy successes as well as failures and costly rework. Neither
+positive nor negative outcomes receive automatic priority; significance is the
+selection criterion. Record
+specific context, event, observed outcome and evidence; do not invent agent
+emotions or turn an episode into a general prescription. Selection requires
+relevance judgment, but the saved account remains factual.
+
+This is a literature-informed operational definition, not a psychological
+consensus definition or a calibrated threshold. Research distinguishes novelty
+from surprise and connects memory selection to priority and goals:
+
+- Novelty and expectations: https://pmc.ncbi.nlm.nih.gov/articles/PMC8024513/
+- Novelty versus surprise: https://pmc.ncbi.nlm.nih.gov/articles/PMC3858647/
+- Arousal and priority: https://pmc.ncbi.nlm.nih.gov/articles/PMC3110019/
+- Autobiographical memory and goals: https://pubmed.ncbi.nlm.nih.gov/10789197/
+
+Rule tension and observable task cost are engineering translations of these
+mechanisms. Later editorial work may interpret experiences; it is separate
+from roar capture. V8 fixes the journal layout under memory/journal/AAAA/ and the separation
+between factual capture and topics; tracker 0909 owns integrated delivery.
+
+Automatic local commits alone do not establish safe integration or preserve
+fast-forward pulls: branch ownership, concurrent writes and cross-host sync
+remain implementation questions. This decision is not a runtime change.
+
+## Author direction: repository Markdown first
+
+The shared cross-runtime contract is repository Markdown and AGENTS.md, with
+no memory server, MCP dependency, embeddings or database. AGENTS.md points to
+memory/MEMORY.md and relevant memory/topics/ bodies. Reading is instructed,
+not claimed to be mechanically guaranteed across runtimes.
+
+The proposed layout adds memory/journal/ dated factual experiences (roughly
+300 words when needed), a short MEMORY.md index (roughly 100 lines), topics/
+consolidated knowledge and a versioned DREAM.md consolidation prompt. The
+earlier per-year, append-only journal decision is retained; for the
+archival step, v8 records processing in dream reports without moving the
+append-only source accounts or breaking their links.
+
+A weekly systemd timer invokes one runtime non-interactively in an isolated
+branch/checkout. Dreaming groups experiences, updates topics and the index,
+and imports runtime-native memory as attributed source material. Native notes
+are not authoritative project knowledge. Proposed crystallisation into
+AGENTS.md, runbooks, tests or issues belongs in the reviewed dreaming PR,
+never in roar capture. Adopted decisions retain their canonical records;
+journal entries may reference them without becoming a parallel ledger.
+
+The v8 design and tracker 0909 implementation train now record this direction.
+This is not a deployed timer or a completed runtime change.
+Project journal capture must still be committed and safely integrated without
+dirtying or diverging the checkout used for harness pulls. Repository audience
+and any private companion store need a concrete project-specific arrangement.
+
+## Earlier options (capture trigger now settled)
 
 1. Pull tolerates memory: rebase/autostash only `projects/*/memory/`, or merge
    with a union driver for `MEMORY.md` (index files are append-mostly).

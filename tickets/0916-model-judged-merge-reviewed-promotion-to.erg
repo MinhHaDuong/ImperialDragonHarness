@@ -1,8 +1,8 @@
 %erg 0.1
-Title: Review generalisations while preserving particular observations
+Title: Version the v8 dreaming prompt and source-preserving editorial workflow
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0923
+Blocked-by: 0920
 
 --- log ---
 2026-09-10T16:24Z claude created
@@ -10,44 +10,28 @@ Blocked-by: 0923
 
 2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
-
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: retain the audience-appropriate text of native notes actually used in a report or versioned appendix; fingerprints alone are not retrievable sources.
 --- body ---
 
 ## Context
 
-Replace the old merge-and-tombstone contract. Scope expansion preserves identity; a broader synthesis gets a new UUID and generalizes references; supersession is a separate explicit withdrawal decision.
+Livrer un modèle versionné et un DREAM.md pilote pour grouper les épisodes, mettre à jour thèmes/index et produire un rapport avec sources et propositions. Le rêve peut ne dériver aucune leçon ; les jugements causaux restent distincts des faits.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Relevant files
+## Actions et vérification
 
-Dreaming skill; manually supplied proposals (optional automated discovery in 0912); library schema/admission; existing shared-change review process.
-
-## Actions
-
-1. Provide a reviewed editorial workflow that considers evidence, conditions, exceptions and usefulness, with no-change as a first-class result. Manual agent-led review suffices for the base; automated model-assisted generalisation is an optional strong-host extension, not a prerequisite for closure or harvesting.
-2. Record accepted synthesis and its rationale with source revisions and reviewer identity; record model/prompt identity when a model is used. Retain particulars active unless an explicit independent supersession/retraction is justified.
-3. Route shared semantic changes through the existing review process. Do not infer decision authority from recurrence or a model-authored field.
-4. Compile accepted changes independently of pending proposals; protect against changed source revisions at integration.
-
-## Test
-
-Mechanical fixtures verify UUID/relationship/lifecycle invariants through the common mutation path. The base must be exercisable with recorded manual judgments and no model service. Behavioural cases cover genuine synthesis, lexical false positives, a repeated observation warranting no action and a useful local exception. Do not make guaranteed model judgment a deterministic gate.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Accepted generalisation retains sources and resolvable provenance.
-- [ ] No occurrence threshold or straddling-tier rule automatically retires content.
-- [ ] Conflicting edits are reported; no unreviewed shared semantic change lands.
+- [ ] Deux passages ne réimportent pas les mêmes révisions comme nouvelles ; une correction est réexaminée.
+- [ ] Cas positifs/négatifs liés, exceptions et contradictions préservées.
+- [ ] Journal non déplacé ni réécrit ; traitement consigné dans les rapports acceptés.
+- [ ] Sources natives attribuées et texte utilisé conservé dans un rapport ou une annexe versionnée ; absence signalée ; hypothèses et décisions canoniques distinguées.
+- [ ] Rapport référence source/prompt/révisions et runtime/modèle ; connaissance proposée soumise à PR.

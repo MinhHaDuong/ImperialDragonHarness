@@ -1,8 +1,7 @@
 %erg 0.1
-Title: Roll out portable memory and retire replaced machinery
+Title: Roll out v8 Markdown memory and retire replaced mechanisms
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0924
 Blocked-by: 0918
 
 --- log ---
@@ -11,45 +10,26 @@ Blocked-by: 0918
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
-
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 --- body ---
 
 ## Context
 
-Move cleanup after replacement paths work. This ticket now owns staged rollout and removal of obsolete code/prose, not an independent harness-tier budget or early destructive cleanup.
+Migrer progressivement par projet après évaluation. Adapter les skills hérités et supprimer les anciennes voies seulement après couverture réelle des consommateurs. Chaque dépôt garde sa revue habituelle.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Relevant files
+## Actions et vérification
 
-Existing `projects/*/memory/`, shared/IDH roots; legacy memory/dream skills and readers; resident budget tests; validated pilot migration tooling.
-
-## Actions
-
-1. Before broad activation or retiring a working path, inspect 0918 results against the predeclared acceptance margins. Unmet margins require remediation or an explicitly recorded scope/risk decision; a green mechanical smoke alone is insufficient.
-2. Inventory each target project and audience; batch migration using the proven identity/date mapping. Keep unrelated external repositories behind their own normal PR processes.
-3. Record each batch and language/provenance exceptions. Do not automatically translate quotations or copy private data into a shared repository.
-4. Retire legacy decay/TTL/confirmation, duplicate index writers and obsolete promotion rules only after their consumers have migrated.
-5. Replace discovery with the common loader/knowledge-hint path and check no legacy reader treats an index as canonical storage.
-
-## Test
-
-Replay pilot migration on representative batch fixtures; compare identity/source coverage and relative links. Prove replacement consumer works before removing its old path; exercise a deliberately missed consumer.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Rollout batches and exceptions recorded with reversible mappings.
-- [ ] No two canonical writers or automatic destructive promotion remain.
-- [ ] Old machinery retired only where replacement coverage is verified; no ticket closes on grep emptiness alone.
+- [ ] Lots, correspondances de sources et exceptions enregistrés ; rollback possible.
+- [ ] Pas de TTL destructif, promotion automatique ou second index writer dans les voies migrées.
+- [ ] Anciennes voies retirées après preuve de remplacement, pas sur grep vide seul.
+- [ ] Conservation des souvenirs et audience vérifiées ; limites runtime déclarées.

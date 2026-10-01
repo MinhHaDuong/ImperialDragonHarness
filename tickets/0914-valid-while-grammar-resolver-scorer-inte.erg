@@ -2,51 +2,25 @@
 Title: Extend applicability predicates only for demonstrated needs
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0923
 Label: deferred
 
 --- log ---
 2026-09-10T16:24Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
-
+2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
 --- body ---
 
-## Context
+## Superseded by v8 — do not dispatch
 
-Optional follow-up. Core UUID lifecycle and basic applicability already belong to 0911/0921. No broad grammar is needed before the travelling project works.
+Grammaire de prédicats hors du dispositif Markdown v8.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
-
-## Relevant files
-
-Library predicate interface; actual adapter misses; `docs/2026-09-10-valid-while-coverage-ledger.md`.
-
-## Actions
-
-1. Identify an observed scope/filtering failure requiring a new operator before implementing it.
-2. Add a bounded closed-grammar operator with explicit roots, costs and false/unknown semantics; never execute memory-authored shell.
-3. Keep unknown distinct from true. Retraction/supersession cannot revive when an environmental predicate changes.
-4. Record the operator decision and consumer evidence; retain no-change/deferred if there is no demonstrated need.
-
-## Test
-
-Operator fixtures cover true, false, unknown, malformed input and resource bounds in a relocated checkout. An inactive body remains inactive even when the condition becomes true.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+La décision de simplification de l’auteur du 2026-10-01 remplace le périmètre
+v7. Voir le [plan v8](../docs/2026-09-11-memory-implementation-plan.md).
+L’ancien corps reste dans Git et le plan v7 conservé. Ce ticket est différé,
+pas implémenté ni clôturé. Toute réactivation exige un périmètre nouvellement
+autorisé ; retirer le label ne suffit pas à rétablir les anciennes obligations.
 
 ## Exit criteria
 
-- [ ] Any extension justified by a concrete consumer failure and validated offline.
-- [ ] No slug supersedes field, universal write-time truth requirement or automatic lifecycle revival.
-- [ ] Not a prerequisite for core completion.
+- [ ] Décision explicite de clôture comme supersédé ou de réactivation avec nouveau périmètre.

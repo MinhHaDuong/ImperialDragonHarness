@@ -1,8 +1,8 @@
 %erg 0.1
-Title: Pilot one runtime adapter and offline container delivery
+Title: Demonstrate the v8 Markdown workflow in one runtime
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0922
+Blocked-by: 0910
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -14,47 +14,27 @@ Blocked-by: 0922
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 2026-10-01T19:03Z MinhHaDuong codex note Rebased adapter acceptance on 0999's resolved-checkout contract; no adapter may infer the canonical store from a fixed home path.
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 --- body ---
 
 ## Context
 
-The first acceptance milestone is one project, one small shared snapshot and one adapter. Select the first runtime based on accessible representative execution evidence; record the choice rather than promising all runtimes at once.
+Choisir et justifier le premier runtime accessible. Vérifier en session réelle les instructions communes, lecture à la demande, capture factuelle committée et résultat de rêve relisible. Le choix ne privilégie pas durablement ce runtime.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Relevant files
+## Actions et vérification
 
-Library/CLI from 0911–0922; selected runtime integration points; the current `settings.shared.json` hook surface. The 0976 cleanup removed the old `UserPromptSubmit` hint hook and `rules/knowledge-hints.md`; any task-trigger delivery must be implemented and tested by this adapter.
-
-## Actions
-
-1. Implement a thin event/delivery adapter with one owner per component and no duplicated memory policy.
-2. Protect canonical bodies from native writers. Disclose uncontrollable native-memory interference; no three-mode configuration or importer.
-3. Trigger task recall once the task is sufficiently clear and before its first relevant consequential action; refresh on material task or constraint changes without requiring a user recall request. Record supported start/task/pre-action/resume/child/compaction boundaries and a small delivery record outside model summaries. Rebuild bundles and reset duplicate suppression according to context retained after compaction, not everything ever sent.
-4. Run in a disposable offline clone. Test logical bundle replacement and cumulative cost where old injected text cannot be removed.
-
-## Test
-
-Live smoke verifies actual delivered context, not just a required sentence in a skill, and is read from a runtime-side surface the adapter does not write. Include the miswired-delivery control — disconnect the delivery path, or point it at an empty view — and require the smoke to go red; an adapter that records "delivered" while injecting nothing must not pass. Inject, compact where supported, retract and resume: verify correction delivery and no stale re-injection. Show explicit reduced guarantees for unavailable hooks. Verify pre-action recall and material-task-change refresh, including repeated changes within bounded active allocation and measured cumulative transcript cost.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] One runtime demonstrates orientation, recent supplement and task recall end to end.
-- [ ] Fresh clone needs no original home directory or shared service.
-- [ ] Ownership, boundaries, budget accounting and limitations documented from evidence.
-- [ ] v7 §12.1 disjoint-roots row: the adapter declares its runtime's native memory root, a test asserts it disjoint from the canonical root against that declared value rather than a hardcoded one, and a fixture writes a foreign line into the generated view, runs a load, and asserts the canonical store byte-identical with the foreign line discarded and reported — no model in the loop.
-- [ ] The adapter obtains the canonical store from 0999's resolved checkout contract; it does not infer it from `~/.agents` or from the runtime's profile. **0920 clears the row** by the logical moves named in its action 1.
-- [ ] The live smoke carries a negative control: delivery disconnected, or pointed at an empty view, turns it red. Without it the smoke cannot fail, and 0924's parity check would inherit that.
-- [ ] The smoke asserts delivery against a named runtime-side surface the adapter does not author — the transcript, or hook output captured by the runtime — per component and with its token count. The adapter's own delivery record is evidence, not the observation surface.
+- [ ] Version, conditions de confiance, mécanisme AGENTS.md/compatibilité et preuves enregistrés.
+- [ ] Index et thème pertinent lus avant action ; journal récent trouvable sans rêve.
+- [ ] Positif/négatif/quasi-accident capturés ; routine sans entrée artificielle ; aucune promotion à roar.
+- [ ] Note native contradictoire testée et limite honnêtement décrite.
+- [ ] Clone à chemin arbitraire fonctionne ; un mot témoin seul ne vaut pas preuve d’adhérence.
