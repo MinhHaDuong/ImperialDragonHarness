@@ -3,6 +3,8 @@
 Read this only when the runtime selects the bundled OpenRouter helper.
 These transport details do not determine reviewer discovery or routing.
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute entrypoint path supplied by the runtime, not this reference file's path.
+
 The bundled script is `"$IDH_ROOT/skills/external-peer-review/peer_review.py"`.
 
 ## Steps
