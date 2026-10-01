@@ -18,5 +18,6 @@ they impose no empirical template.
 - **Claim about three contributions, each relative to a named antecedent** — that is what referees judge.
 - **The road-map is one paragraph naming landmarks**, not a list of section numbers.
 - **Write the introduction first and revise it at every pass**: it is the contract the body must honour.
+- **Write for a careful robot** (Shapiro): linear, explicit, plain; every term defined before use, no step left to inference.
 - **Sections follow the argument, not IMRaD**: periods, authors or controversies are legitimate units.
 - **Tables stand alone**: a title stating the content, units, sources and sample in the notes, consistent decimals, plain-language labels rather than variable codes.
