@@ -139,3 +139,6 @@
 - [A raid's Phase 6 /gaze escalates from an agent](feedback_raid_gaze_escalates_from_an_agent.md)
 - [Adjacent Blocked-by lines conflict across sibling PRs](feedback_adjacent_blocked_by_lines_conflict.md)
 - [Bare pytest is a pipx install without PyYAML](feedback_pipx_pytest_looks_flaky.md)
+- [An import is a merge, not a copy](feedback_import_is_a_merge_not_a_copy.md)
+- [claude.ai skill sync is off](reference_claudeai_skill_sync_off.md)
+- [Snake-case index tokenizes dense](reference_snake_case_index_tokenizes_dense.md)
