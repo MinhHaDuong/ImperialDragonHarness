@@ -14,6 +14,9 @@ Label: deferred
 The body below records a legacy-system finding. Its prescribed EU scoring and
 purge mechanics are not requirements of v8. Reassess under rollout 0913 after
 the pilot, preserving sources and avoiding a new ranking subsystem.
+Ticket 0934 retires provenance.py and its dedicated coverage test after finding
+no current consumers. The historical assertions below are not active gates;
+the provenance store and all memory sources remain preserved.
 
 ## Context
 

@@ -32,7 +32,7 @@ for the repository.
 - `adapters/lifecycle.py`, `adapters/projections.json` — installation and validation
 - `scripts/bashrc-loader.sh`, `scripts/shell-init.sh` — portable shell entry points
 - `adapters/codex/hooks.json` — hook resolution through its installed symlink
-- `skills/dream/provenance.py`, `skills/dream/read-index.py` — remaining fixed roots
+- `skills/dream/read-index.py` — legacy helper retained, excluded from dream v8
 - `README.md`, `STATE.md`, `ROADMAP.md`, `docs/idh-install-strategy.md` — installation contract and priorities
 
 ## Progress
@@ -57,10 +57,10 @@ integration tracker, not the close claim for PR #1091.
   unsafe removal guidance and missed predecessor registration; fixes passed
   the final gate and PR #1091 merged. Child 1003 is closed. Installation/relocation fixtures preserve independent
   profiles; author live smoke covers Claude/Codex/Pi clean and dirty controls.
-- 1002 — dream/provenance helpers and storage-contract defects, extracted to
-  handoff-portable-memory for the other memory session. These changes are
-  unapproved and not part of #1091. The independent-profile commit failure
-  and portable provenance read-count gap remain explicitly open.
+- 1002 — legacy helper handoff, closed WONTDO in PR #1099: superseded by
+  memory v8. Its extracted patch stays historical and unapproved, not part of
+  #1091 or a v8 implementation. 0934 retires provenance.py after verifying no
+  current executable consumers; memory stores and source history are preserved.
 
 The author requested removal of all migration-specific controls: historical
 pointer/path-spelling ratchets and old-layout tests are removed from the
@@ -71,8 +71,8 @@ No real runtime profile is deployed and no memory data is migrated here.
 
 1. Runtime registration landed through closed child 1003 in PR #1091, with
    smoke/trust limitations recorded and profile content preserved.
-2. Complete child 1002 in the memory session without silently deciding 0988's
-   ownership policy. Store reconciliation remains 0934.
+2. Child 1002 is WONTDO; do not implement its legacy helper contract or reconcile
+   its store. 0988 retains safe v8 capture/integration; 0913 retains rollout.
 3. Review integration across both children before closing this parent.
 4. Native packaging, runtime selection/dry-run and opt-in shell integration
    remain follow-on design work, not acceptance claims for child 1003.
