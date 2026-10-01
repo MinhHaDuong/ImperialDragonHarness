@@ -10,6 +10,7 @@ Author: codex
 2026-10-01T19:16Z MinhHaDuong note Documentation and migration-ticket sweep complete locally on docs-portable-agents-plan; 112 relevant tests, 511-ticket corpus validation and whitespace checks pass. Full installation, relocation and runtime smoke acceptance remain open.
 2026-10-01T19:59Z codex note Implementation isolated in PR #1091 (draft). Fresh clone, arbitrary-path and relocation fixtures pass; make check passed 1295 tests with 3 skips; live Claude/Codex/Pi clean reset and dirty guard controls pass. No runtime profile deployment or tracker closure claimed.
 2026-10-01T20:39Z codex bump verify-reroll — round 1: independent-profile dream commit fails; unsafe merged-hook deletion and shipped Codex predecessor migration unresolved. Split/ownership direction required before merge.
+2026-10-01T21:23Z codex note Child 1003 closed and archived by merged PR #1091 (8af5cd16); final gate round 2 approved. Child 1002 remains open; parent integration is pending.
 --- body ---
 
 ## Context
@@ -53,8 +54,8 @@ integration tracker, not the close claim for PR #1091.
 
 - 1003 — runtime registration, installed entry points, guard wiring and safe
   operator documentation in PR #1091. The first independent gate found
-  unsafe removal guidance and missed predecessor registration; fixes are
-  under re-review. Installation/relocation fixtures preserve independent
+  unsafe removal guidance and missed predecessor registration; fixes passed
+  the final gate and PR #1091 merged. Child 1003 is closed. Installation/relocation fixtures preserve independent
   profiles; author live smoke covers Claude/Codex/Pi clean and dirty controls.
 - 1002 — dream/provenance helpers and storage-contract defects, extracted to
   handoff-portable-memory for the other memory session. These changes are
@@ -68,8 +69,8 @@ No real runtime profile is deployed and no memory data is migrated here.
 
 ## Remaining work
 
-1. Land reviewed runtime registration through child 1003, retaining precise
-   smoke/trust limitations and preserved profile content.
+1. Runtime registration landed through closed child 1003 in PR #1091, with
+   smoke/trust limitations recorded and profile content preserved.
 2. Complete child 1002 in the memory session without silently deciding 0988's
    ownership policy. Store reconciliation remains 0934.
 3. Review integration across both children before closing this parent.
