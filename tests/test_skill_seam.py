@@ -51,8 +51,14 @@ def run_idiom(projected_skill_path):
         SEAM_LINE.replace("<loaded-SKILL.md>", projected_skill_path)
         + '\necho "$IDH_ROOT"\n'
     )
+    # LC_ALL=C: the dangling-projection test matches bash's English
+    # "No such file" diagnostic, which a localized shell translates.
     return subprocess.run(
-        ["bash", "-c", script], capture_output=True, text=True, timeout=10
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        env={**os.environ, "LC_ALL": "C"},
     )
 
 
