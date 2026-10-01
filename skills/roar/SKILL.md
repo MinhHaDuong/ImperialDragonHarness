@@ -145,7 +145,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    `git ls-tree -r --name-only origin/main -- <dir>` and read with
    `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
- File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+ Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 4. **Report related findings** from the sweep. Do not turn experiences into
    unsolicited standing tests, rule proposals or crystallisation tickets.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
@@ -158,8 +158,8 @@ default branch — there are no remote branches nor merge requests to inspect.
    Routine completion alone does not require an entry. Keep it factual, without
    judgment, inferred lessons, rule proposals or interpreted memories.
 
-   Resolve the project repository first. After a merged task, create a fresh
-   project capture branch/worktree before writing. Capture only there or in its
+   Resolve the project repository first. Use the single
+   wrap-up branch/worktree described below. Capture only there or in its
    explicitly configured private companion; never in the harness because the
    loaded skill lives there. Commit only the capture files, preserve unrelated
    changes, and follow the project's branch/integration policy. A refused write
@@ -167,6 +167,23 @@ default branch — there are no remote branches nor merge requests to inspect.
    harness or a native memory directory. An unintegrated capture branch must be
    preserved and reported before worktree cleanup. Do not invoke memory-sweep
    to derive lessons or propose rules during roar.
+
+## Bundle and fast track
+
+Roar creates **at most one project branch/worktree** for all wrap-up changes:
+follow-up tickets, project documentation and factual journal capture. Reuse a
+suitable existing unmerged branch when available. Otherwise create one wrap-up
+branch after the task merge. Do not create separate ticket, docs or memory PRs.
+Start this branch before the first write; all writes stay inside the project.
+
+After completing the ticket checks in steps 7–8, commit the complete bundle,
+push it and open **one PR**. Fast-track it through the
+project's required checks and enable auto-merge using its supported merge
+method. This is standing authorization for roar's bounded wrap-up bundle;
+no further confirmation is needed. Do not bypass failing checks or protected
+branch requirements. The periodic dream remains a separate reviewed workflow.
+A failed check or submission leaves the one branch preserved and reported.
+Wait for confirmed integration before cleaning up that worktree.
 
 ## Close and clean up
 

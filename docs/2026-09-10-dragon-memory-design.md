@@ -284,3 +284,11 @@ des sources et un pilote. Elle enchaîne capture sûre, prompt et timer, preuve 
 les quatre runtimes, évaluation et migration progressive.
 Les anciennes fonctions de classement, TTL destructif, promotion automatique et
 écriture concurrente d’index sont retirées seulement après remplacement vérifié.
+
+## Clarification opérationnelle : une seule branche roar
+
+Roar crée au plus une branche de clôture pour tous ses changements : tickets,
+documentation et expérience factuelle. Une seule PR regroupe le tout, passe les
+contrôles requis et reçoit l’auto-merge sans nouvelle confirmation. Aucun
+contournement de contrôle ; en cas d’échec, la branche est conservée et signalée.
+Le rêve périodique conserve sa PR distincte pour relecture.
