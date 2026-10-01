@@ -676,20 +676,24 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
 ## External reviewer panel
 
-The external, decorrelated reviewer panel — sandboxed CI-style seats over
-agnostic CLI reviewers — is managed by the `/reviewers` skill, not inlined
-here; seat execution is the 0217 seat-runner. See `skills/reviewers/SKILL.md`.
-This section is the panel-extension contract (ticket 0205).
+Request external, decorrelated reviewers through the active runtime. It discovers
+who is available and chooses the route (local or remote agents, llama.cpp, or a
+model gateway). `/reviewers` describes the needs and offers optional helpers;
+no fixed roster or gateway is required. See `skills/reviewers/SKILL.md`.
+The helper-specific instructions below apply only when that helper is selected.
 
 **When seats fire.** Automatically, on **small**- and **full**-tier CODE
 reviews — the decorrelation evidence concentrates ensemble value on
 substantive multi-file code changes. Skip on the **tiny** tier and on prose
 panels — the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase
 2–4 panel choice used; a LaTeX manuscript never qualifies for external
-code-review seats. Empty roster or `/reviewers` unavailable →
-skip silently: the panel is fail-open and never blocks a gaze run.
+code-review seats. No suitable external reviewer available → record that limitation; the
+optional panel is fail-open and does not block a gaze run. An empty helper
+roster alone does not mean the runtime has no other reviewers.
 
-**How.** At the phase 2–4 reviewer-battery launch, also invoke
+**How.** Discover and route external reviews concurrently with phases 2–4;
+collect their evidence and integrity status before phase 6. If the runtime
+chooses the bundled helper, invoke
 `/reviewers request <pr>` as a background *shell* job (a Bash call, not an
 agent launch, so the fork-orphan contract does not apply): the sandboxed
 seats (~30–120 s) run concurrently with the internal reviewer battery and

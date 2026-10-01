@@ -23,4 +23,12 @@ delegates the choice explicitly to the runtime. When independent verification is
 requested, choose a reviewer decorrelated from the producer when available and
 report any limitation.
 
+External reviewer discovery and routing also belong to the active runtime.
+Request independent reviewers with the required expertise, capability class,
+and access to the review material; let the runtime find who is available and
+route between llama.cpp on Padmé, OpenRouter, other local agents, or agents on
+another host. These are possible resources, not a mandatory roster or preference
+order. Use existing helpers when useful; do not require one gateway or transport.
+Record the reviewer identity, route, evidence, and any unavailable perspective.
+
 Project instructions and ticket conventions: [CLAUDE.md](CLAUDE.md).

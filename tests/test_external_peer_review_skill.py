@@ -31,9 +31,9 @@ def test_bundled_script_exists():
 
 
 def test_documents_balance_gate_and_text_fallback():
-    assert "$0.50" in skill_text(), "must document the OpenRouter $0.50 files gate"
-    assert "--text" in skill_text(), "must document the text-mode fallback flag"
-    assert "402" in skill_text(), "must document the HTTP 402 automatic fallback"
+    assert "$0.50" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the OpenRouter $0.50 files gate"
+    assert "--text" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the text-mode fallback flag"
+    assert "402" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the HTTP 402 automatic fallback"
 
 
 def test_documents_smoke_test_one_before_blasting():
