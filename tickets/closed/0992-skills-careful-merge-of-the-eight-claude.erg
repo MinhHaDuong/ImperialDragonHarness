@@ -2,10 +2,12 @@
 Title: skills: careful merge of the eight claude.ai academic skills (tracker)
 Created: 2026-10-01
 Author: HDMX-coding-agent
+Closed: all six children merged (PRs 1078-1083); integration review: union sweep clean with positive control, 11 cross-references resolve, check-fast 853 passed, lint green, skills channel 6694/7000
 
 --- log ---
 2026-10-01T07:03Z HDMX-coding-agent created
 
+2026-10-01T07:45Z HDMX-coding-agent closed — all six children merged (PRs 1078-1083); integration review: union sweep clean with positive control, 11 cross-references resolve, check-fast 853 passed, lint green, skills channel 6694/7000
 --- body ---
 ## Context
 

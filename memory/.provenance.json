@@ -9686,6 +9686,33 @@
       "last_confirmed": "2026-10-01T05:50:55Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_import_is_a_merge_not_a_copy": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-10-01T07:45:37Z",
+      "last_confirmed": "2026-10-01T07:45:37Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_claudeai_skill_sync_off": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-10-01T07:45:37Z",
+      "last_confirmed": "2026-10-01T07:45:37Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_snake_case_index_tokenizes_dense": {
+      "projects": [
+        "-home-haduong--claude"
+      ],
+      "first_seen": "2026-10-01T07:45:37Z",
+      "last_confirmed": "2026-10-01T07:45:37Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
