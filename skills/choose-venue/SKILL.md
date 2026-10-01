@@ -19,7 +19,8 @@ peer reviewed; scope fit (would the editor or programme committee send it out,
 or desk-reject?); diamond OA, then low APC only when an institutional agreement
 (Couperin) covers it; presence on the author's evaluation lists; not
 predatory (check DOAJ). Flag any MDPI venue with its reputational cost in the
-author's community; never recommend one silently.
+author's community; never recommend one silently. Fit beats prestige: an
+impact factor or a famous name never outranks scope fit, word limit or language.
 
 ## 1. Characterize the piece
 
