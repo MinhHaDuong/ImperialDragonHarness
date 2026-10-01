@@ -8,11 +8,11 @@ the measurements, is `tickets/0887-*.erg`.
 
 Nothing here loads until `scripts/adapter-claude-code-activate.sh` creates the
 symlink `skills/claude-code -> ../adapters/claude-code`. That is deliberate.
-On the reference machine the harness repository *is* `~/.claude`, so a plugin
-directory reachable under `skills/` is auto-discovered on the next session —
-while the live `settings.json` still carries its own copy of the same hooks.
-Both firing means every guard runs twice. The symlink is the switch, and the
-switch refuses to close while the live file would double-fire.
+The activation script was built for the earlier profile-based checkout and
+creates its switch under the repository's `skills/`. With the reference clone
+at `~/.agents`, Claude needs explicit registration in its own profile; ticket
+0999 owns that adaptation. Before activation, ensure the live settings and
+plugin do not both register the same hooks.
 
 ## Why a plugin at all
 
@@ -48,7 +48,7 @@ sit at the same depth. On the guard layer a wrong resolution fails open in
 silence. The launcher resolves its own real location instead, and a missing
 target exits 1 — loud, and never 2, which is Claude Code's "deny the call".
 
-## Cut-over, and back
+## Legacy activation and rollback
 
     scripts/adapter-claude-code-activate.sh --status
     scripts/adapter-claude-code-activate.sh            # after clearing the live hooks

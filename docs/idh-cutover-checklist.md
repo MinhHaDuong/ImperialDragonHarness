@@ -1,15 +1,11 @@
-# The old move is retired
+# Retired cutover
 
-The plan to move the live checkout out of `~/.claude` and reconstruct Claude
-Code's profile is retired. Leave the existing `~/.claude` profile in place.
-The installation direction is a separate clone at `~/.idh`, registered
-additively with each runtime as described in
-[idh-install-strategy.md](idh-install-strategy.md).
+The live checkout move and Claude profile reconstruction were retired.
+Tickets 0978 and 0986 are closed WONTDO.
 
-On this machine, `~/.idh` is still a symlink to the old checkout. Removing
-that symlink is a separate, simple step before cloning. It must not remove or
-move the directory it points to. The current `idh install` is not the command
-for that fresh installation; it still performs all-runtime host setup.
+The current plan is a portable clone at `~/.agents`, registered additively
+with each runtime. Follow [idh-install-strategy.md](idh-install-strategy.md)
+and ticket 0999.
 
-The Claude Code 2.1.285 probes and the old cutover findings remain in ticket
-0985 for reference. No live migration has been performed by this document.
+Historical probes and rollback findings remain in the closed tickets
+0984–0986 and Git history. This document prescribes no migration operations.

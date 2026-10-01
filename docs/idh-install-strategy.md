@@ -1,40 +1,58 @@
-# Install IDH alongside existing agent configuration
+# Portable installation
 
-Clone the repository to `~/.idh`. Do not replace `~/.claude`, `~/.agents`, or
-any runtime's `skills` directory. Each runtime should register IDH through its
-own additive mechanism, and only for skills and wiring reviewed for that
-runtime.
+The reference clone lives at `~/.agents`. Use an absent destination when
+cloning; inspect an existing skills directory or checkout first.
 
-| Runtime | Target installation mechanism |
+```bash
+git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.agents
+cd ~/.agents
+```
+
+The checkout may live elsewhere. Helpers derive its root from the real
+location of the loaded skill, script or installed adapter, or accept an
+explicit root. Runtime-owned paths remain adapter destinations. Ticket 0999
+owns implementation and verification of this contract.
+
+## Register resources
+
+Register resources reviewed for the selected runtime. Preserve existing
+profiles and resolve same-name resource conflicts explicitly.
+
+| Runtime | Target registration |
 |---|---|
-| Claude Code | A native plugin containing the reviewed skills and Claude hooks. Keep the user's `~/.claude` profile. |
-| Codex | A local plugin containing the reviewed skills and Codex hooks, registered through a personal marketplace. |
-| Pi | A Pi package loaded from the local IDH checkout, with an explicit resource list. |
-| Mistral Vibe Code | Add `~/.idh/skills` to `skill_paths` in `~/.vibe/config.toml`, after reviewing which skills work in Vibe. |
+| Claude Code | Native plugin for reviewed skills and hooks; settings remain in the user's profile. |
+| Codex | Local plugin registered through a personal marketplace. |
+| Pi | Local package with an explicit resource list. |
+| Mistral Vibe Code | Add the checkout's `skills/` path to `skill_paths` after reviewing compatibility. |
 
-For a skills-only installation, none of these paths needs a link replacing a
-shared directory, a shell loader, or a timer. A same-name skill in an existing
-installation needs an explicit choice; installation must not silently take it
-over. Keep host-level setup, such as shell integration and scheduled audits,
-separate and opt-in.
+These are installation targets. The measured pilot covers two skills and
+one guard across Claude Code, Codex and Pi; Vibe has a discovery probe.
+See `adapters/pilot-support.json` for evidence.
 
-This is the target design, not a claim that all four packages exist today.
-The current `idh install` is a legacy all-runtime host setup: it creates
-declared links, edits `~/.bashrc`, and enables a timer when systemd is
-available. It has no dry run or target selector. `idh check` and `idh status`
-are read-only diagnostics, not an install plan. Do not use `idh install` as a
-fresh skills-only install while the installer is being split.
+At the reference location, Codex and Pi already scan `~/.agents/skills`.
+Installation must recognize canonical directories in place and avoid links
+from a directory to itself.
 
-Implementation sequence:
+## Existing installer
 
-1. Make a read-only install plan that lists exact actions and conflicts, with
-   a selected runtime. Preflight all selected actions before writing.
-2. Package and probe one portable skill in each runtime's native mechanism.
-   Extend the package only as more skills pass a runtime review.
-3. Put shell setup and timers behind separate explicit commands. Retire the
-   legacy all-runtime default once native registration covers its useful work.
+`./bin/idh install skill <name> --to <runtime>` is the pilot skill installer.
+It checks conflicts and versions before linking reviewed skills.
 
-References: [Claude Code plugins](https://code.claude.com/docs/en/plugins),
-[Codex local plugins](https://developers.openai.com/plugins/build/plugins),
-[Pi packages](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/packages.md),
-[Vibe skill paths](https://docs.mistral.ai/vibe/code/cli/skills).
+The bare `./bin/idh install` is legacy all-runtime host setup. It creates
+manifest links, edits `~/.bashrc` and enables a timer; it has no dry run or
+runtime selector. The manifest still expects the Claude profile to resolve
+to the repository and requires the legacy `~/.idh` pointer, so it is not yet
+a general fresh-install recipe.
+`./bin/idh check` and `./bin/idh status` are read-only diagnostics.
+
+## Remaining work
+
+1. Resolve checkout paths portably across all consumers.
+2. Preflight selected-runtime registration and list exact actions and conflicts.
+3. Package reviewed resources through native runtime mechanisms.
+4. Keep shell integration and timers separate and opt-in.
+5. Verify an arbitrary checkout location, relocation and runtime smoke tests.
+
+[ROADMAP](../ROADMAP.md) tracks priorities; [adapter operations](adapter-operations.md)
+covers the pilot. The old cutover is archived in
+[idh-cutover-checklist.md](idh-cutover-checklist.md).

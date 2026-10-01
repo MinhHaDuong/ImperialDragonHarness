@@ -4,7 +4,9 @@ Casual people get shit done. Real humans ride the Imperial Dragon Harness.
 They `/raid` tickets to bring back PR, they `/hunt` one down to the branch,
 they `/perch` to orient midchat.
 
-A Claude Code harness for Minh Ha-Duong's research workflow. Lives as `~/.claude`.
+A personal harness for AI-assisted research across Claude Code, Codex and Pi.
+The reference checkout is `~/.agents`; adapters connect each runtime to the
+same skills, rules and tools. Portability work is tracked in ticket 0999.
 
 ## The Five Claws
 
@@ -21,130 +23,85 @@ Every task passes through five phases:
 ## Structure
 
 ```
-ImperialDragonHarness/          # cloned as ~/.claude
+ImperialDragonHarness/          # reference clone: ~/.agents
 ├── rules/                  # Doctrine — loaded by the runtime itself, see below
 ├── skills/                 # Slash commands — auto-generated catalog below
 ├── scripts/                # Hook implementations, guards, shell init
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
 ├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
-├── memory/                 # Cross-project lessons, injected at session start
+├── memory/                 # Shared lessons in the current layout
 ├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory-sweep
 ├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
 ```
 
-Directory contents are not enumerated here: `ls` answers that, and a hand-kept
-listing drifts — this one claimed five rule files when there were nineteen, and
-named one that no longer exists.
+See [ROADMAP.md](ROADMAP.md) for priorities and [STATE.md](STATE.md) for the
+current resume point.
 
 ## Rules
 
-`~/.claude/rules/**.md` is read by the runtime, not by a hook, and the
-frontmatter decides how:
+Claude Code reads registered rules from `~/.claude/rules/**.md`. Its
+frontmatter controls when they load:
 
 | Frontmatter | Loading | What it costs |
 |---|---|---|
 | no `paths:` | in the system prompt of **every session, every project** | paid on every conversation |
 | `paths: ["**/*.py"]` | only when the session touches a matching file | paid on use |
 
-So a rule needs no description anywhere: an unscoped one is already in front of
-the reader, and a scoped one is named in [`rules/README.md`](rules/README.md)
-precisely because it is not. That index is one screen, and it is the single
-source of truth on when each conditional rule applies.
+[rules/README.md](rules/README.md) indexes conditional rules and explains
+loading. Each adapter must provide equivalent delivery or document its limits.
 
-The auto-loaded rules cost ~12 800 tokens per session, and they are one of five
-resident channels: `CLAUDE.md` and its `@` imports, what the SessionStart hook
-prints, the project memory index, and the frontmatter card of every skill and
-subagent are all in front of the model before the first question too — about
-28 000 tokens in all. `make resident-budget` reports the census;
-`tests/test_resident_census.py` caps each channel and
-`tests/test_rules_resident_budget.py` keeps the rules-specific rules. Trimming
-a body lowers a cap, growing one has to argue for a raise.
-
-At startup, a project with local `CLAUDE.md`, `AGENTS.md`, `.claude/rules/`,
-or project skills gets a short coherence prompt. The session checks applicable
-local directives against harness rules and skill descriptions, then reports
-concrete conflicts, repeated procedures, and stale references. Projects with
-no local directives get no prompt.
-
-A runtime without this auto-load — the Pi and Codex adapters — must inject that
-set itself; that is the real work behind tickets 0800 and 0572.
-
-The figures above are characters divided by 2.8, a ratio derived from
-`/context`, not a token measurement: the arithmetic and its provenance are in
-`scripts/resident_census.py`. The earlier ~8 800 recorded here came from
-dividing by 4, which understated every channel by about 45%.
+Run `make resident-budget` for the current startup-context census. The estimate
+uses characters divided by 2.8; tests cap the resident channels. This avoids
+keeping stale token totals in the README.
 
 ## Installation
 
-Clone IDH into its own checkout:
+Clone into an absent destination:
+
 ```bash
-git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.idh
+git clone https://github.com/MinhHaDuong/ImperialDragonHarness.git ~/.agents
+cd ~/.agents
 ```
 
-For an existing agent profile, follow the [additive installation strategy](docs/idh-install-strategy.md).
-Register reviewed IDH skills through each runtime's native mechanism. Keep
-existing `~/.claude`, `~/.agents`, and skills directories in place.
+If `~/.agents` already exists, inspect it first. Other checkout locations are
+supported by the intended portable root contract: helpers resolve the checkout
+from their loaded file or an explicit root argument.
 
-The current `idh install` is legacy all-runtime host setup, not a safe
-skills-only install. It has no dry run or runtime selector. It sets up declared
-links across runtimes, edits the shell loader, and enables a timer:
+Follow the [installation guide](docs/idh-install-strategy.md) to register
+reviewed resources with each runtime. It distinguishes the target design
+from the existing installer and pilot support.
 
-- the links: the harness pointer `~/.idh`, the Codex and Pi guard links, the
-  shared skills, and `~/.local/bin/idh` itself;
-- the loader block `scripts/bashrc-loader.sh`, written into `~/.bashrc`
-  between its `>>>` and `<<<` marker lines. The previous file is kept as
-  `~/.bashrc.idh-bak-<timestamp>`, and every byte outside the markers is verified
-  unchanged. An old block without markers is refused with the manual step;
-  zsh users copy the block into `~/.zshrc` by hand;
-- the monthly audit timer, when `systemctl` is present.
+The current `./bin/idh install` creates manifest links, edits the shell loader
+and enables an audit timer. Review its manifest before using it: the legacy
+layout still couples the Claude profile to the checkout. Ticket 0999 tracks
+portable installation and additive registration.
 
-It never overwrites: a real file or a foreign link where a link belongs is
-named, left alone, and makes the run exit non-zero. Rerunning it is safe.
-Day to day: `idh check [RUNTIME]` names each broken link with its repair,
-`idh status` shows installed vs declared and the distance to origin, and
-`idh sync` fast-forwards the checkout or names the files in the way.
+For an existing installation:
 
-Harness wiring (hooks, `BASH_ENV`, shell init, timers, the Codex and Pi
-adapters) names the checkout as `~/.idh` (ticket 0982). Paths that are Claude
-Code's own native root (`~/.claude/projects/`, `~/.claude/settings.json`) keep
-their `~/.claude` spelling. The pointer lets the checkout later leave
-`~/.claude` (tracker 0978) without chasing callers. Hooks and skills call
-scripts by path, never through `idh`.
+- `./bin/idh check [RUNTIME]` reports broken manifest entries.
+- `./bin/idh status` reports installation and repository state.
+- `./bin/idh sync` fast-forwards or names the changes preventing it.
 
-The loader sources `scripts/shell-init.sh`, which wraps `claude`, `codex` and `pi`: before each launch, `scripts/validate-projections.py` checks every link declared in `adapters/projections.json` and refuses to start, naming the culprit and its repair, when one is missing, dangling or foreign (ticket 0983). If the checkout itself is unreachable, the loader's stubs refuse instead of letting the runtimes start without their guards. The bypass is explicit and logged: `IDH_SKIP_VALIDATE=1 codex ...` appends to `~/.local/state/idh/validate-bypass.log`. The `claude` wrapper also skips permission prompts and auto-names each session after the current git repo. The wrappers live in the harness, so they update on every pull. They guard interactive shells only: systemd units, scripts and headless callers that exec a runtime by absolute path, through `env`, or from a non-interactive shell bypass them.
+The [operations runbook](docs/adapter-operations.md) covers guard trust,
+verification, removal and recovery. The [adapter reference](adapters/README.md)
+records the loaded-skill path contract and measured runtime behavior.
 
-Two optional extras:
+## Development
 
-- API keys in `~/.idh/.env` (gitignored), one `NAME=value` line each, e.g.
-  `ANTHROPIC_API_KEY=sk-...`.
-- The dev dependencies (PyYAML for `make skills-catalog` and the pre-commit
-  hook, pytest for every `make` test gate):
-  `pip install --user -r ~/.idh/requirements-dev.txt`. On a PEP 668
-  externally-managed Python (Debian 12+, Ubuntu 23.04+), use a venv or `pipx`.
+Run checks from the checkout:
 
-Skills are available as `/roar`, `/gaze`, `/molt`, etc. Hooks fire automatically via `settings.json`.
+```bash
+make check-fast       # fast development loop
+make lint             # adherence checks
+make check            # full gate
+make resident-budget  # report startup context cost
+```
 
-### Monthly unused-skill audit
-
-`idh install` enables the user timer when `systemctl` is present (first day of
-each month, 08:00 local time, with up to five minutes of jitter). Rerun it
-after changing the service or timer files: systemd uses installed copies. The
-launcher is linked at `~/.local/bin/idh-mammoth-audit`, matching the service's
-fixed executable path.
-
-Run `bin/mammoth-audit` for an immediate census. The aggregate report is
-`${XDG_STATE_HOME:-~/.local/state}/imperial-dragon-harness/mammoth-audit.json`;
-`--output` selects another file. Only local Claude traces are observed. An
-unused, unreferenced skill is a review candidate even after a recent edit;
-missing traces produce an indeterminate result. References from unused skills
-also protect their dependencies, conservatively. Nothing is removed by the audit.
-
-Inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
-and failures with `journalctl --user -u idh-mammoth-audit.service`. Disable the
-schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
+Development dependencies are listed in `requirements-dev.txt`. Credentials
+belong in the external keystore and are resolved by task-specific tools.
 
 ## Skills Catalog
 
@@ -197,49 +154,10 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 
 The preferred ticket system is [git-erg](https://github.com/MinhHaDuong/git-erg), an offline `tickets/` directory that lives inside each project's git repo. Install it per-project following its README. When git-erg is available, use it. Fall back to GitHub issues or any other forge when needed (e.g., for cross-team coordination).
 
-### Optional: daily auto-update via systemd
-
-To keep the harness up to date without a network hit on every session start:
-
-```bash
-# Create the service and timer
-mkdir -p ~/.config/systemd/user
-
-cat > ~/.config/systemd/user/claude-harness-pull.service << 'EOF'
-[Unit]
-Description=Pull ImperialDragonHarness updates
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/git -C %h/.idh pull --ff-only --quiet
-EOF
-
-cat > ~/.config/systemd/user/claude-harness-pull.timer << 'EOF'
-[Unit]
-Description=Daily pull of ImperialDragonHarness
-
-[Timer]
-OnCalendar=daily
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-# Enable and start
-systemctl --user daemon-reload
-systemctl --user enable --now claude-harness-pull.timer
-```
-
-## Permissions
-
-Run `/fewer-permission-prompts` to propose an allowlist diff per project. Diffs are never auto-applied; review them at `~/.claude/telemetry/permission-diffs/`. A weekly run and a morning report used to drive this from the nightbeat, removed in ticket 0882 — the proposal is now something you ask for.
-
 ## Runtime support
 
-IDH is personal configuration intended for a separate `~/.idh` checkout.
-Native plugins and packages allow it to coexist with other configuration. The
-[installation strategy](docs/idh-install-strategy.md) uses those mechanisms.
+The reference clone lives at `~/.agents`. The installation strategy uses
+native registration to coexist with runtime-owned configuration.
 Portability is measured, not presumed: `adapters/` currently has pilot
 evidence for two skills (`perch`, `healthcheck`) and one guard across Claude
 Code, Codex and Pi. Mistral Vibe has a version and skill-path probe but no
