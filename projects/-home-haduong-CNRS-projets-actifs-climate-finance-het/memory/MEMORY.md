@@ -61,7 +61,6 @@
 - [Paper instrument circulation](project_paper_instrument_circulation.md)
 - [Aitells scope manuscript vs crossdoc](feedback_aitells_scope_manuscript_vs_crossdoc.md)
 - [Prose coupling multiple detection paths](feedback_prose_coupling_multiple_detection_paths.md)
-- [REL harvest state on 2026-09-29: archive, tickets 1650-1656, what is not done](project_rel_harvest_2026_09_29.md)
 
 ### Citations and sources
 
@@ -95,7 +94,6 @@
 - [Executor briefs forbid the full suite and /tmp venvs — hunt runs make check on scripts/ diffs](feedback_agent_briefs_scoped_gates.md)
 - [Agent timeout refactor](feedback_agent_timeout_refactor.md)
 - [gate proportionate: size the gate to the PR; a docs-only PR gets no raw pytest and no whole fast tier (10 s target)](feedback_gate_proportionate_to_risk.md)
-- [pilot](project_proportionate_verify_pilot.md)
 
 ### Guards
 
