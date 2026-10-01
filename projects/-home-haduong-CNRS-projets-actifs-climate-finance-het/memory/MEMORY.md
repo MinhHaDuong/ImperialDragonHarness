@@ -35,7 +35,9 @@
 - [Arch not linecount](feedback_arch_not_linecount.md)
 - [Purpose built over llm](feedback_purpose_built_over_llm.md)
 - [Mocks shown for approval use real values, never inventions](feedback_mocks_use_real_values.md)
-- [The author is not the checker](feedback_author_is_not_the_checker.md) — cross-model panel, stance per row, confidence served sorted
+- [The author is not the checker](feedback_author_is_not_the_checker.md) — cross-model panel, stance per row, confidence served sorted; never offer an author audit sample (recurred 2026-09-30)
+- [Merge reviews critically](feedback_merge_reviews_critically.md) — design by committee: serves a requirement or goes, cut before adding, word budget
+- [External reviewer brief goes stale](feedback_external_brief_stale.md) — refresh with current decisions; check for empty reviews
 - [Skeptical advisor before any new guard](feedback_skeptical_advisor_before_new_guard.md) — fixes not guards; build-time asserts loud, never blocking
 - [Pool every source raw and screen once with one rule; never add records screened by one rule to a corpus filtered by another](feedback_single_standard_pooled_screen.md)
 
@@ -46,6 +48,7 @@
 ### Machines
 
 - [Machine padme](reference_machine_padme.md)
+- [padme backup](reference_padme_backup.md) — nightly restic to Hetzner; broken symlink found and fixed 2026-09-30
 - [Longrunning jobs](feedback_longrunning_jobs.md)
 - [OpenAlex API: 1 USD/day budget, language and country filter traps, pkill -f self-kill over ssh](reference_openalex_budget_and_filters.md)
 
@@ -157,4 +160,5 @@
 - [IATI transaction direction is part of the mapping](feedback_iati_transaction_direction.md)
 - [Name vocabulary values by their distinguishing axis, ≤2 words; "everything is http"](feedback_name_values_by_their_distinguishing_axis.md)
 - [Unpublished: no URL compat before go-live](feedback_observatory_unpublished_no_url_compat.md)
+- [JETP Observer spec v1 accepted 2026-09-30](project_jetp_spec_v1.md) — tag jetp-spec-v1; follow-ups 1702, 1703, 1712, 1791; legal review only at go-live
 - [Milestone ladder M1a to M4 (2026-09-29): definitions in 0725; old "M2" = live monitoring](project_jetp_milestone_ladder.md)
