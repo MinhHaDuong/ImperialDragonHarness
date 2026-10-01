@@ -2,8 +2,6 @@
 Title: Pilot repository-owned Markdown experiences and consolidated topics
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0911
-Blocked-by: 0917
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -15,6 +13,8 @@ Blocked-by: 0917
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 2026-10-01T19:03Z MinhHaDuong codex note Rebased the disjoint-roots action on 0999: resolve the checkout portably, with ~/.agents only the reference clone.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T21:30Z MinhHaDuong note blocker 0911 closed — Blocked-by removed.
+2026-10-01T21:30Z MinhHaDuong note blocker 0917 closed — Blocked-by removed.
 2026-10-01T22:05Z MinhHaDuong note blocker 0999 closed — Blocked-by removed.
 --- body ---
 

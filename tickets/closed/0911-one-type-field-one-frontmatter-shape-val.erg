@@ -2,6 +2,7 @@
 Title: Define the v8 Markdown memory convention and templates
 Created: 2026-09-10
 Author: claude
+Closed: Implemented documentary v8 convention and templates; links and index bound verified
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -15,14 +16,16 @@ Author: claude
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
+2026-10-01T21:30Z codex note Templates in docs/memory-v8/templates and convention in docs/memory-v8/README.md; relative links and 100-line bound verified; documentary only.
+2026-10-01T21:30Z MinhHaDuong closed — Implemented documentary v8 convention and templates; links and index bound verified
 --- body ---
 
 ## Context
 
 Définir les modèles de AGENTS.md, MEMORY.md et journal/AAAA/ dans les ressources documentaires du harness. Préparer la section de lecture commune et le gabarit factuel ; aucun package hoard ni grammaire de prédicats.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification
@@ -33,9 +36,17 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Modèles courts avec liens relatifs et instructions de lecture à la demande.
-- [ ] Capture : nouveauté, surprise attestée, conséquence ou conflit de procédure ; positif/négatif, sans jugement ni prescription.
-- [ ] Journal append-only, collisions de noms et corrections documentées.
-- [ ] Aucun comportement live prétendu modifié par les modèles.
+- [x] Modèles courts avec liens relatifs et instructions de lecture à la demande.
+- [x] Capture : nouveauté, surprise attestée, conséquence ou conflit de procédure ; positif/négatif, sans jugement ni prescription.
+- [x] Journal append-only, collisions de noms et corrections documentées.
+- [x] Aucun comportement live prétendu modifié par les modèles.
 
-- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
+- [x] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
+
+## Delivery evidence
+
+Templates in docs/memory-v8/templates and convention in docs/memory-v8/README.md; relative links and 100-line bound verified; documentary only.
+
+Verification: make check-fast (853 passed); make lint (93 passed with writable
+Ruff cache); catalog, adapter, agnostic and personal-data checks passed.
+No pilot/runtime activation or live behavior claim.
