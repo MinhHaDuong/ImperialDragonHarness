@@ -8,7 +8,7 @@ Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
 
 | Workstream | Next work | Completion evidence |
 |---|---|---|
-| Portable installation — 0999 | Registration child 1003 landed in #1091; legacy handoff 1002 is WONTDO and 0934 retires the unused provenance helper; integration review, native packaging and opt-in host setup remain | Fresh/relocated registration, preserved profiles and runtime smoke; integration review with v8 pilot |
+| Portable installation — 0999 | Complete; parent closed after integration review in #1104. Native packaging and opt-in host setup are future design work | Fresh/relocated registration, preserved profiles and runtime smoke landed in #1091; integration review recorded in #1104 |
 | Memory v8 — 0909 | Convention 0911, inventory 0917, pilot 0920; then capture 0988 and dreaming 0916/0910 | Repository Markdown, preserved factual journal, reviewed dream suggested by lair after five new experiences and four-runtime evidence |
 | Host sync — 0988 | Implement project journal commits and safe integration after the pilot | Sessions preserve notes and the harness continues to update |
 | Runtime policy — 0974 | Apply the adopted semantic model/effort policy | Runtime mappings and capability limits are tested |

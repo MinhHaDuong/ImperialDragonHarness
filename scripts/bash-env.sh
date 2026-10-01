@@ -47,19 +47,23 @@ _be_is_protected_name() {
     return 1
 }
 
+# BASH_ENV is sourced before Bash necessarily initializes PWD, so fall back to
+# the process cwd rather than silently skipping project configuration.
+_be_cwd="${PWD:-$(pwd -P 2>/dev/null || true)}"
+
 # Skip the project parse when $PWD/.env is the harness's former user-level
 # .env at the checkout root (resolved from this script). The file is no longer sourced, and treating it as an
 # untrusted project file merely because the checkout moves would
 # be a surprising second interpretation of the same installation file.
-if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
+if [ -n "$_be_cwd" ] && [ -f "$_be_cwd/.env" ]; then
     # Guard realpath failures so sourcing under an already-active `set -e`
     # still reaches the end of this file.
-    _be_proj="$(realpath "$PWD/.env" 2>/dev/null || true)"
+    _be_proj="$(realpath "$_be_cwd/.env" 2>/dev/null || true)"
     _be_self="$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null || true)"
     _be_user="$(realpath "$(dirname -- "$_be_self")/../.env" 2>/dev/null || true)"
     if [ "$_be_proj" != "$_be_user" ]; then
         _be_cap=262144
-        _be_size="$(wc -c < "$PWD/.env" 2>/dev/null || echo 0)"
+        _be_size="$(wc -c < "$_be_cwd/.env" 2>/dev/null || echo 0)"
         if [ "${_be_size:-0}" -gt "$_be_cap" ]; then
             printf 'bash-env: project .env exceeds size cap (%s > %s bytes), skipping\n' \
                 "$_be_size" "$_be_cap" >&2
@@ -93,7 +97,7 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
                 # Credential-shaped names report a names-only warning above.
                 _be_is_protected_name "$_be_key" && continue
                 export "$_be_key=$_be_val"
-            done < "$PWD/.env"
+            done < "$_be_cwd/.env"
             unset _be_self _be_line _be_trim _be_key _be_val _be_first _be_last
         fi
         unset _be_cap _be_size
@@ -106,4 +110,4 @@ unset -f _be_is_protected_name 2>/dev/null || true
 # Must stay last: restore the caller's xtrace setting without returning a
 # failing status when xtrace was initially off.
 [ "${_be_had_xtrace:-0}" = 1 ] && set -x
-unset _be_had_xtrace
+unset _be_had_xtrace _be_cwd

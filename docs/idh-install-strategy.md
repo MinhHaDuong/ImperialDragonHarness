@@ -10,11 +10,12 @@ cd ~/.agents
 
 The checkout may live elsewhere. Helpers derive its root from the real
 location of the loaded skill, script or installed adapter, or accept an
-explicit root. Runtime-owned paths remain adapter destinations. Ticket 0999
-tracks integration: registration 1003 landed in #1091; legacy helper handoff
-1002 is WONTDO and unused provenance.py is retired under 0934, preserving data.
-Memory ownership/sync remain 0988's separate v8 work; installation
-does not certify a working dream storage contract.
+explicit root. Runtime-owned paths remain adapter destinations. Tracker 0999
+closed after integration review in #1104: registration 1003 landed in #1091,
+legacy helper handoff 1002 is WONTDO, and unused provenance.py was retired
+under 0934 while preserving data. Memory ownership/sync remain v8 work tracked
+by 0920 and 0988; installation does not certify a working dream storage
+contract.
 
 ## Register resources
 

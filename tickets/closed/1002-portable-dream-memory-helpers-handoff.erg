@@ -2,12 +2,14 @@
 Title: Portable dream memory helpers handoff
 Created: 2026-10-01
 Author: codex
-Closed: WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
+Closed: WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0913.
 
 --- log ---
 2026-10-01T20:45Z codex created Child of 0999 extracted from PR 1091 by author direction; owned by the parallel memory workstream.
 
 2026-10-01T21:27Z MinhHaDuong closed — WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
+2026-10-01T22:25Z codex note Updated follow-up disposition: 0934 retired in PR #1101 and parent 0999 closed in PR #1104.
+2026-10-02T00:00Z codex reconciled closure metadata: 0934's retirement is complete; preserved store data was not reconciled and is not an outstanding 0934 deliverable.
 --- body ---
 ## Context
 ## Disposition — WONTDO, superseded by memory v8
@@ -18,9 +20,10 @@ sources. The current dream procedure explicitly excludes these legacy helpers;
 repairing their native-store commits and harness-tier counters is not v8 work.
 The handoff patch remains historical and unapproved; do not cherry-pick it as a
 v8 implementation. No implementation exit criterion below is claimed satisfied.
-Safe capture and integration remain in 0988; defects in legacy tools with live
-consumers remain in 0934; eventual retirement belongs to 0913. Parent 0999 still
-requires its integration review and is not closed by this disposition.
+Project-local v8 capture and integration remain in 0988 after pilot 0920;
+legacy provenance machinery was retired in PR #1101 under 0934, preserving
+stored data and source history. Parent 0999 closed after integration review in
+PR #1104. Eventual v8 rollout remains tracked by 0913.
 
 ## Historical context
 Preserve the dream/provenance changes originally at PR 1091 tip 6014c42f
@@ -59,5 +62,7 @@ read/edit/commit or fail-before-mutation contract, comparing note bytes.
 - [ ] Independent-profile commit and isolation regression tests pass with no lost or stale memory notes.
 - [ ] Full make check passes; helper documentation accurately states supported storage and remaining limitations.
 
-0934 store reconciliation and 0988 ownership/sync remain separate. No
-Blocked-by dependency on the parent tracker or runtime child is asserted.
+0934 retired the legacy provenance machinery without reconciling preserved
+store data; that data reconciliation is not claimed or outstanding under this
+WONTDO handoff. 0988 ownership/sync remains separate. No Blocked-by dependency
+on the parent tracker or runtime child is asserted.

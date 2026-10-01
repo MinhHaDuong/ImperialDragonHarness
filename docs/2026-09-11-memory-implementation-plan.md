@@ -22,7 +22,7 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 |---|---|---|
 | 0911 | Convention Markdown et modèles de capture/lecture | — |
 | 0917 | Inventaire et provenance des sources existantes | — |
-| 0920 | Un projet pilote, index, thèmes, journal annuel | 0911, 0917, 0999 |
+| 0920 | Un projet pilote, index, thèmes, journal annuel | 0911, 0917 |
 | 0988 | Capture factuelle à roar, commit et intégration sûrs | 0920 |
 | 0916 | Prompt DREAM.md et consolidation avec sources conservées | 0920 |
 | 0910 | Suggestion finale lair au seuil de 5, puis rêve distinct et PR | 0916, 0988 |
@@ -37,8 +37,9 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 différé pendant la transition ; 0913 réévaluera ses constats utiles après le
 pilote, sans réintroduire automatiquement son mécanisme.
 
-0999 garde l’installation portable et l’enregistrement des runtimes. 0934 retire
-le helper partagé `provenance.py` et ses tests dédiés : aucun workflow actuel
+0999 a suivi l’installation portable et l’enregistrement des runtimes, puis a
+été fermé après revue d’intégration (#1104). 0934 a retiré le helper partagé
+`provenance.py` et ses tests dédiés : aucun workflow actuel
 ne l’appelle et dream v8 exclut ces helpers. Le store et les sources sont
 conservés sans réconciliation. Les autres helpers hérités restent en place ;
 0988 garde l’intégration sûre et 0913 le déploiement progressif de v8.

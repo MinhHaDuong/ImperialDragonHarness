@@ -24,8 +24,9 @@ Same-name resource conflicts are refused; unrelated content is preserved.
 
 The measured runtime pilot covers perch, healthcheck and the dirty-reset
 guard. Installing or discovering the whole catalog does not certify every
-skill's workflow. Dream/memory helpers are separate work under 1002; memory
-ownership and synchronization belong to 0988.
+skill's workflow. The legacy helper handoff 1002 is WONTDO. Project-local v8
+memory is tracked by 0911/0917, the pilot 0920, and integration 0988 after the
+pilot.
 
 Before interactive launches, the shell wrappers validate the selected
 runtime's registrations. Broken required resources refuse the launch and
