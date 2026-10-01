@@ -31,7 +31,6 @@
 - [No tool for single use](feedback_no_tool_for_single_use.md)
 - [No heavy deps](feedback_no_heavy_deps.md)
 - [Check for an existing library](feedback_check_for_existing_library.md) — periodic "is this done better in a lib?" audit; JETP documents moved to Zotero
-- [Fix root cause](feedback_fix_root_cause.md)
 - [Arch not linecount](feedback_arch_not_linecount.md)
 - [Purpose built over llm](feedback_purpose_built_over_llm.md)
 - [Mocks shown for approval use real values, never inventions](feedback_mocks_use_real_values.md)
@@ -78,7 +77,6 @@
 - [pdftotext grep line breaks](feedback_pdftotext_grep_linebreaks.md)
 - [No markdown inside a fenced block](feedback_no_md_in_md.md)
 - [Render oracle for generated markup](feedback_render_oracle_for_generated_markup.md)
-- [Render harness logs getElementById lookups; probe only "main" for injection](feedback_render_harness_elements_false_positive.md)
 
 ### Tickets
 
@@ -95,7 +93,6 @@
 - [ESCALATE: circuit-breaker-only may merge on evidence; a real design call stops for the author](feedback_escalate_procedural_vs_substantive.md)
 - [Escalate check merge after note](feedback_escalate_check_merge_after_note.md)
 - [Executor briefs forbid the full suite and /tmp venvs — hunt runs make check on scripts/ diffs](feedback_agent_briefs_scoped_gates.md)
-- [Agent timeout refactor](feedback_agent_timeout_refactor.md)
 - [gate proportionate: size the gate to the PR; a docs-only PR gets no raw pytest and no whole fast tier (10 s target)](feedback_gate_proportionate_to_risk.md)
 
 ### Guards
@@ -113,8 +110,6 @@
 - [Assert on written artifact](feedback_assert_on_written_artifact.md)
 - [Nullable blank passes the schema](feedback_nullable_blank_passes_the_schema.md)
 - [Single seed determinism blind](feedback_single_seed_determinism_blind.md)
-- [Singleton test isolation](feedback_singleton_test_isolation.md)
-- [Circuit breaker shared](feedback_circuit_breaker_shared.md)
 
 ### Git and merges
 
@@ -139,7 +134,6 @@
 - [Stale by construction needs cause check](feedback_stale_by_construction_needs_cause_check.md)
 - [Enumerate from the surface not the diff](feedback_enumerate_from_the_surface_not_the_diff.md)
 - [Run the chain reveals what reading code cannot](feedback_run_the_chain_reveals_what_reading_code_cannot.md)
-- [Read which target the error names](feedback_read_which_target_the_error_names.md)
 - [Pipe masks exit code](feedback_pipe_masks_exit_code.md)
 - [numba/dcor cold-cache race under parallel pytest](reference_numba_dcor_cold_cache_race.md) — pre-warm fixed the gates; lazy imports under make -j not covered
 - [Isolated venv proves installability](feedback_isolated_venv_proves_installability.md)
