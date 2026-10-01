@@ -161,7 +161,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    Resolve the project repository first. Use the single
    wrap-up branch/worktree described below. Capture only there or in its
    explicitly configured private companion; never in the harness because the
-   loaded skill lives there. Commit only the capture files, preserve unrelated
+   loaded skill lives there. Include the capture in the single wrap-up bundle, preserve unrelated
    changes, and follow the project's branch/integration policy. A refused write
    or failed commit remains a visible pending capture; do not switch to the
    harness or a native memory directory. An unintegrated capture branch must be
