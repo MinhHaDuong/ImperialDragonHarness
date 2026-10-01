@@ -21,10 +21,8 @@ with the PR branch checked out. Point it at a checkout in one of two ways:
   git/gh/erg call. The portable invocation is
   `"$IDH_ROOT/skills/merge/erg-pr-merge" -C WORKTREE N`.
   <!-- harness-extension-point -->
-  In Claude Code, the existing standing allow rule matches only the bare
-  `~/.idh/skills/merge/erg-pr-merge -C WORKTREE N` spelling. Use that
-  spelling there while the projection exists. A `cd WORKTREE && …` prefix
-  misses the rule; use `-C` instead.
+  Use the loaded skill's resolved checkout path; runtime permission rules
+  must authorize that path explicitly rather than depend on a retired alias.
 - **Implicit cwd** — with no `-C`, the script uses the current directory, so the
   caller must `cd <project-path> && git fetch origin` and check out the PR branch
   before the call.

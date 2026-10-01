@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.claude/scripts/guard-destructive-bash.sh\"",
+            "command": "[ -x \"$HOME/.local/bin/idh-hook\" ] || { echo \"IDH: hook launcher missing; run <checkout>/bin/idh install from a plain terminal\" >&2; exit 2; }; exec \"$HOME/.local/bin/idh-hook\" guard-destructive-bash.sh",
             "timeout": 8,
             "statusMessage": "Checking dirty-reset guard"
           }

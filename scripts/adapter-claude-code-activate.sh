@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Switch the Claude Code adapter plugin on or off.
 #
-# Ticket 0887. The adapter ships inert on purpose. On this machine the harness
-# repository *is* ~/.claude, so a plugin directory reachable under skills/ is
+# Ticket 0887. The adapter ships inert on purpose. The harness and runtime profile are independent. A plugin directory
+# registered under the runtime's skills/ is
 # auto-discovered on the next session -- while the live settings.json still
 # carries its own copy of the same hooks. Both sources firing means every guard
 # runs twice, on-start.sh backgrounds its git sync twice, and the log lines
@@ -19,13 +19,13 @@
 # you what to remove and stops.
 set -euo pipefail
 
-HARNESS_DIR="${HARNESS_DIR:-$HOME/.idh}"
-LINK="$HARNESS_DIR/skills/claude-code"
-TARGET_REL="../adapters/claude-code"
+ROOT=$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)
+HARNESS_DIR="${HARNESS_DIR:-$ROOT}"
+LINK="$HOME/.claude/skills/claude-code"
+TARGET_REL="$HARNESS_DIR/adapters/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
-# While ~/.idh points at the checkout (0982), this is Claude Code's live file;
-# the cutover (0986) must re-derive it from the runtime's native root.
-LIVE="$HARNESS_DIR/settings.json"
+# Configuration belongs to the runtime profile.
+LIVE="$HOME/.claude/settings.json"
 CANONICAL="$HARNESS_DIR/settings.shared.json"
 
 inspect_live_hooks() {
@@ -193,6 +193,7 @@ MSG
         ;;
       absent) ;;
     esac
+    mkdir -p -- "$(dirname -- "$LINK")"
     ln -s "$TARGET_REL" "$LINK"
     echo "adapter: ACTIVE — $LINK -> $TARGET_REL"
     echo "The hooks now come from the plugin. Start a new session and confirm a guard fires;"

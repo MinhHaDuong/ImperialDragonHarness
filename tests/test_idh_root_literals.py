@@ -1,17 +1,15 @@
-"""Live wiring names the harness as ~/.idh, never as ~/.claude (ticket 0982).
+"""Reject canonical repository paths spelled as Claude runtime paths.
 
-Step A of the 0978 relocation: `~/.idh` is a pointer to the checkout, and every
-consumer that means "the harness repository" spells it `~/.idh` (or `$IDH_ROOT`),
-so the later cutover (0986) moves bytes without chasing callers. Paths that are
-Claude Code's own native root stay spelled `~/.claude` on purpose; each such
-spelling is either a native-root path (NATIVE) or a reviewed line (ALLOWED).
+This ratchet predates the portable checkout contract (0999). It covers
+Claude-native literals; fixed ~/.idh defaults are additional portability
+work tracked by 0999. Native paths and reviewed exceptions remain explicit.
 
 Covered spellings: `~/`, `$HOME/` and `${HOME}/` (quoted or not), systemd
 `%h/`, an absolute `/home/<user>/` prefix, and the pathlib/os.path forms
 `Path.home() / ".claude"`, `.joinpath(".claude")`, `os.path.join(<home>,
 ".claude")`. A guard wired to one spelling is not a guard, but this list is not
 every spelling either: `$HOMEDIR/.claude`, `Path(home) / ".claude"`,
-`$HOME/./.claude` and f-strings still pass (carried over to 0986).
+`$HOME/./.claude` and f-strings still pass (residual coverage tracked by 0999).
 """
 
 import re
@@ -49,58 +47,24 @@ ALLOWED = [
      "explains why the plugin cannot hard-code the native root"),
     ("adapters/README.md", "It scans `$HOME/.claude/skills`",
      "Claude Code's personal-skills scan root"),
-
     ("adapters/README.md", "| Claude Code | `$HOME/.claude/skills` |",
      "Claude Code's personal-skills scan root"),
-
-
     ("adapters/claude-code/README.md", "a plugin under `$HOME/.claude/skills/<name>/`",
      "measured Claude Code plugin discovery path"),
-    ("adapters/perch.py", "installation the harness repository *is* ``$HOME/.claude``",
-     "Claude Code's personal-skills scan root; the checkout still sits there until 0986"),
-    ("adapters/perch.py", "``$HOME/.claude/skills/perch`` and the canonical source",
-     "Claude Code's personal-skills scan root"),
-    ("adapters/perch.py", "``$HOME/.claude`` is that harness's",
-     "Claude Code's personal-skills scan root"),
-    ("adapters/codex/hooks.json", '"command": "bash \\"$HOME/.claude/scripts/guard-destructive-bash.sh\\""',
-     "Codex hook trust pins the definition's hash; an edit silently disables the guard "
-     "until re-trusted, so 0986 repoints it together with a /hooks re-trust"),
     ("adapters/perch.py", 'return _home() / ".claude" / "skills" / skill',
      "Claude Code's personal-skills scan root"),
     ("adapters/pilot-support.json", '"skills_root": "$HOME/.claude/skills"',
      "Claude Code's personal-skills scan root"),
     ("adapters/pilot-support.json", "the harness checkout is $HOME/.claude",
-     "states where Claude Code scans skills; true until 0986"),
+     "historical measured pilot layout, not an installation requirement"),
     ("adapters/pilot-support.json", '"native_expression": "$HOME/.claude/skills/perch',
      "Claude Code's native expression of the skill"),
     ("adapters/pilot-support.json", "personal skills live in ~/.claude/skills/",
      "quotes Claude Code's documentation"),
-    ("adapters/projections.json", '"path": "~/.claude",',
-     "the launch validator asserts Claude Code's native root resolves to the checkout (0983)"),
-    ("scripts/bashrc-loader.sh", "# The checkout sits at ~/.claude until the 0986 cutover",
-     "names where the checkout is today, for the repair below; 0986 updates it"),
-    ("scripts/bashrc-loader.sh", """%q   (then open a new shell)\\n' "$HOME/.claude" "$HOME/.idh\"""",
-     "the fail-loud repair must name the checkout, as settings.shared.json does"),
-    ("scripts/shell-init.sh", "# at ~/.claude until the 0986 cutover",
-     "names where the checkout is today, for the repair below; 0986 updates it"),
-    ("scripts/shell-init.sh", """%q\\n' "$HOME/.claude" "$HOME/.idh\"""",
-     "the fail-loud repair must name the checkout, as settings.shared.json does"),
-    ("scripts/adapter-claude-code-activate.sh", "repository *is* ~/.claude",
-     "plugin discovery happens under Claude Code's native skills root"),
-    ("scripts/probe-plugin-hook-loading.sh", "a plugin at $HOME/.claude/skills/",
-     "probes Claude Code's native plugin discovery"),
-    ("scripts/on-start.sh", "`~/.claude/rules/**.md` into the system prompt",
-     "the runtime loads rules from its native root"),
-    ("settings.shared.json", "outside Claude/Codex: ln -s $HOME/.claude $HOME/.idh",
-     "the fail-loud message names the repair command, which must name the checkout"),
-    ("settings.shared.json", '"Edit(~/.claude/skills/hunt/**)"',
-     "transition alias: sessions still reach the checkout as ~/.claude until 0986"),
-    ("settings.shared.json", '"Edit(~/.claude/tickets/*.erg)"',
-     "transition alias until 0986"),
-    ("settings.shared.json", '"Write(~/.claude/tickets/*.erg)"',
-     "transition alias until 0986"),
-    ("settings.shared.json", '"Bash(~/.claude/skills/merge/erg-pr-merge:*)"',
-     "transition alias until 0986"),
+    ("adapters/projections.json", '"path": "~/.claude/', "Runtime-owned registration destinations"),
+    ("scripts/adapter-claude-code-activate.sh", 'LINK="$HOME/.claude/skills/', "Native plugin discovery"),
+    ("scripts/on-start.sh", "`~/.claude/rules/**.md` into the system prompt", "Native rules loader"),
+    ("scripts/probe-plugin-hook-loading.sh", "a plugin at $HOME/.claude/skills/", "Native plugin discovery"),
     ("skills/roar/SKILL.md", "of a `~/.claude/projects/` slug",
      "native project store"),
 ]

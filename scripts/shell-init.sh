@@ -12,6 +12,9 @@
 #
 # Bypass, explicit and logged: IDH_SKIP_VALIDATE=1 <runtime> ...
 
+# Resolve the checkout from this sourced file instead of a fixed home path.
+_IDH_ROOT="$(cd -P -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+
 # _idh_bypass_log RUNTIME [NOTE] — record an explicit bypass, and say so.
 # $PWD is printf %q escaped (every control character, not only newlines), so
 # a directory name can neither forge a log line nor inject terminal escapes;
@@ -39,12 +42,10 @@ _idh_preflight() {
     echo "idh: refusing to launch $1: HOME is unset, so no projection can be checked. Set HOME, or launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
     return 1
   fi
-  local v="$HOME/.idh/scripts/validate-projections.py"
+  local v="$_IDH_ROOT/scripts/validate-projections.py"
   if [ ! -f "$v" ]; then
-    # ~/.idh vanished after this shell sourced the wrappers. The checkout sits
-    # at ~/.claude until the 0986 cutover, which updates this repair.
-    echo "idh: refusing to launch $1: $v is unreachable, so $HOME/.idh no longer resolves to the harness checkout." >&2
-    printf '  repair: ln -sfn %q %q\n' "$HOME/.claude" "$HOME/.idh" >&2
+    echo "idh: refusing to launch $1: $v is unreachable; the loaded harness checkout moved or was removed." >&2
+    echo "  repair: reinstall the loader from the current checkout, then open a new shell" >&2
     echo "  To launch anyway (logged): IDH_SKIP_VALIDATE=1 $1 ..." >&2
     return 1
   fi
@@ -64,7 +65,7 @@ _idh_preflight() {
 function claude {
   _idh_preflight claude || return
   local name top
-  top=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)
+  top=$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || :)
   name=$(basename "${top:-$PWD}")
   command claude --dangerously-skip-permissions --name "$name" "$@"
 }

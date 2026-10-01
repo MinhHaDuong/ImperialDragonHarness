@@ -74,7 +74,6 @@ def test_full_pilot_surface_installs_and_skills_uninstall(home):
     managed = [
         home / ".agents" / "skills" / "perch",
         home / ".agents" / "skills" / "healthcheck",
-        home / ".codex" / "hooks.json",
         home / ".pi" / "agent" / "extensions" / "idh-guard.ts",
     ]
     for path in managed:
@@ -99,11 +98,11 @@ def test_reinstall_is_idempotent(home, capsys):
 def test_unmanaged_target_is_refused_and_never_overwritten(home, capsys):
     codex = home / ".codex" / "hooks.json"
     codex.parent.mkdir(parents=True)
-    codex.write_text(f'{{"hooks": {{}}, "note": "{CANARY}"}}')
+    codex.write_text(f'{{"hooks": [], "note": "{CANARY}"}}')
     before = codex.read_text()
 
     assert wirings() == 1
-    assert f"FOREIGN: {codex} is a real file" in capsys.readouterr().err
+    assert f"REFUSED: {codex}" in capsys.readouterr().err
     assert codex.read_text() == before, "the only copy was overwritten"
     # The other target still installed.
     assert (home / ".pi" / "agent" / "extensions" / "idh-guard.ts").is_symlink()
@@ -121,7 +120,7 @@ def test_interrupted_install_is_recovered_by_rerunning(home):
     target.parent.mkdir(parents=True)
     target.symlink_to(REPO / "adapters" / "pi" / "extensions" / "idh-guard.ts")
     assert wirings() == 0
-    assert (home / ".codex" / "hooks.json").is_symlink()
+    assert (home / ".codex" / "hooks.json").is_file()
 
 
 def test_foreign_symlink_is_refused_not_silently_retargeted(home, capsys):
@@ -129,7 +128,7 @@ def test_foreign_symlink_is_refused_not_silently_retargeted(home, capsys):
     foreign.parent.mkdir(parents=True)
     foreign.symlink_to("/somewhere/else/hooks.json")
     assert wirings() == 1
-    assert f"DANGLING: {foreign}" in capsys.readouterr().err
+    assert f"MISSING: {foreign}" in capsys.readouterr().err
     assert foreign.readlink() == Path("/somewhere/else/hooks.json")
 
 
@@ -148,4 +147,4 @@ def test_link_through_the_pointer_counts_as_ours(home, capsys):
     other.write_text("{}")
     link.symlink_to(other)
     assert wirings() == 1
-    assert f"FOREIGN: {link} resolves to {other}" in capsys.readouterr().err
+    assert f"MISSING: {link}" in capsys.readouterr().err

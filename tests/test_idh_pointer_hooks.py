@@ -27,7 +27,7 @@ def _pointer_hooks():
     for event, blocks in SHARED["hooks"].items():
         for block in blocks:
             for hook in block.get("hooks", []):
-                if "$HOME/.idh" in hook.get("command", ""):
+                if "$HOME/.local/bin/idh-hook" in hook.get("command", ""):
                     out.append((event, hook["command"]))
     return out
 
@@ -42,7 +42,7 @@ def test_every_pointer_hook_is_found():
 
 @pytest.mark.parametrize("event,command", POINTER_HOOKS)
 def test_hook_checks_the_exact_script_before_running(event, command):
-    script = command.rsplit('exec "', 1)[1].split('"', 1)[0]
+    script = "$HOME/.local/bin/idh-hook"
     assert command.startswith(f'[ -x "{script}" ] || {{'), command
 
 
@@ -62,8 +62,7 @@ def _run(command: str, home: Path, cwd: Path):
 
 def _assert_loud(result, home: Path):
     assert result.returncode == 2
-    assert "repair it from a plain terminal outside Claude/Codex" in result.stderr
-    assert f"ln -s {home}/.claude {home}/.idh" in result.stderr
+    assert "run <checkout>/bin/idh install from a plain terminal" in result.stderr
 
 
 @pytest.mark.parametrize("event,command", POINTER_HOOKS)
@@ -77,7 +76,7 @@ def test_missing_pointer_exits_2_with_the_repair(tmp_path, event, command):
 def test_missing_script_under_a_present_pointer_exits_2(tmp_path, event, command):
     """A scripts dir without the target: a -d check would exec and exit 127."""
     home = tmp_path / "home"
-    (home / ".idh" / "scripts").mkdir(parents=True)
+    (home / ".local" / "bin").mkdir(parents=True)
     _assert_loud(_run(command, home, tmp_path), home)
 
 
@@ -85,9 +84,9 @@ def test_missing_script_under_a_present_pointer_exits_2(tmp_path, event, command
 def test_non_executable_script_exits_2(tmp_path, event, command):
     """A present but non-executable script would otherwise exit 126."""
     home = tmp_path / "home"
-    scripts = home / ".idh" / "scripts"
+    scripts = home / ".local" / "bin"
     scripts.mkdir(parents=True)
-    name = command.rsplit("/scripts/", 1)[1].split('"', 1)[0]
+    name = "idh-hook"
     (scripts / name).write_text("#!/bin/sh\nexit 0\n")
     os.chmod(scripts / name, 0o644)
     _assert_loud(_run(command, home, tmp_path), home)
@@ -121,7 +120,8 @@ def test_present_pointer_runs_the_guard(tmp_path):
     """Positive control: with the pointer in place the real guard decides."""
     home = tmp_path / "home"
     home.mkdir()
-    (home / ".idh").symlink_to(REPO, target_is_directory=True)
+    (home / ".local/bin").mkdir(parents=True)
+    (home / ".local/bin/idh-hook").symlink_to(REPO / "adapters/claude-code/bin/idh-hook")
     repo = tmp_path / "repo"
     repo.mkdir()
     git = ["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t"]

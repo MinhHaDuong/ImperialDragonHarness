@@ -401,7 +401,7 @@
       "harness_version": "claude 2.1.283",
       "assertion": "The live PreToolUse(Bash) wiring in settings.shared.json still names the canonical guard; the slice changed nothing on the Claude side.",
       "source_concept": "the existing reference enforcement",
-      "native_expression": "PreToolUse matcher Bash -> $HOME/.idh/scripts/guard-destructive-bash.sh",
+      "native_expression": "PreToolUse matcher Bash -> installed idh-hook launcher -> canonical guard",
       "disposition": "harness-specific",
       "evidence_kind": "static-test",
       "test": "tests/test_guard_adapter_wiring.py::test_claude_wiring_wires_the_canonical_guard",

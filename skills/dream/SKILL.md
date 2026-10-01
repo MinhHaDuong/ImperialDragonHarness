@@ -25,7 +25,7 @@ Consolidates and deduplicates memory for one project using mem0 classifier + Par
 
 If `--rollback <hash>` is present, run:
 ```
-python3 "$IDH_ROOT/skills/dream/commit.py" rollback <hash>
+python3 "$IDH_ROOT/skills/dream/commit.py" rollback --root "$IDH_ROOT" <hash>
 ```
 Then stop.
 
@@ -74,7 +74,7 @@ of the step-14 PR body; do not write a separate free-form summary for the PR.
 - Counts, **derived mechanically** — never recalled from the run:
   - `before` = index lines in MEMORY.md at the branch base:
     ```bash
-    git -C ~/.idh show <base>:<MEMORY.md path> | grep -c '^- \['
+    git -C "$IDH_ROOT" show <base>:<MEMORY.md path> | grep -c '^- \['
     ```
   - `after` = index lines in the working copy:
     ```bash
@@ -84,7 +84,7 @@ of the step-14 PR body; do not write a separate free-form summary for the PR.
     `NOOP + UPDATE + DELETE` must equal `before`, and `NOOP + UPDATE + ADD`
     must equal `after`. If either fails, recount before reporting.
 - The ADD list = the exact output of
-  `git -C ~/.idh diff --name-only --diff-filter=A`, never a narrative sample.
+  `git -C "$IDH_ROOT" diff --name-only --diff-filter=A`, never a narrative sample.
 
 If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
 
@@ -103,7 +103,7 @@ Then drop the entry's provenance record for this project — otherwise the
 deleted entry keeps counting toward the promotion frequency gate (ticket 0241):
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" remove <entry_slug> <project>
+python3 "$IDH_ROOT/skills/dream/provenance.py" remove --root "$IDH_ROOT" <entry_slug> <project>
 ```
 
 **6. Rewrite MEMORY.md.**
@@ -152,7 +152,7 @@ the pointer exists is their whole job.
 For each surviving entry (NOOP, ADD, UPDATE), record its presence in this project's consolidation:
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" record <entry_slug> <project>
+python3 "$IDH_ROOT/skills/dream/provenance.py" record --root "$IDH_ROOT" <entry_slug> <project>
 ```
 
 `<entry_slug>` is the entry's filename without extension (e.g. `feedback_vim`). This tracks which projects have seen each entry, enabling the promotion pass.
@@ -164,12 +164,12 @@ python3 "$IDH_ROOT/skills/dream/provenance.py" record <entry_slug> <project>
 A promoted entry's project-level copy is a tombstone, so step 7's `record` never
 fires for it again and its `last_confirmed` would freeze — decay-flagging it at
 90 days no matter how relevant it remains (ticket 0224). For each harness-level
-entry (in `~/.idh/memory/`) that this project's surviving content still
+entry (in `$IDH_ROOT/memory/`) that this project's surviving content still
 supports — i.e. the consolidation would have classified its lesson NOOP or
 UPDATE were it still project-local — refresh its confirmation:
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" confirm <slug>
+python3 "$IDH_ROOT/skills/dream/provenance.py" confirm --root "$IDH_ROOT" <slug>
 ```
 
 This resets only the decay clock; it does not re-add the project to the entry's
@@ -178,14 +178,14 @@ those decay-flag is the intended signal for human review.
 
 **8. Commit.**
 
-`commit.py` commits into `~/.idh` directly. The `~/.idh` pre-commit hook
+`commit.py` commits into its resolved checkout. The harness pre-commit hook
 **refuses a commit on `main` in the primary checkout** (everything lands via
-branch + PR). Before committing, ensure `~/.idh` is on a branch, not main:
+branch + PR). Before committing, ensure the selected checkout is on a branch, not main:
 
 ```bash
-git -C ~/.idh rev-parse --abbrev-ref HEAD   # must NOT print "main"
-# if it does: git -C ~/.idh switch -c dream-consolidate-$(date +%F)
-python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
+git -C "$IDH_ROOT" rev-parse --abbrev-ref HEAD   # must NOT print "main"
+# if it does: git -C "$IDH_ROOT" switch -c dream-consolidate-$(date +%F)
+python3 "$IDH_ROOT/skills/dream/commit.py" commit --root "$IDH_ROOT" <project> <n_before> <n_after>
 ```
 
 Do **not** push yet. The run continues into the promotion pass, where step 12
@@ -195,12 +195,11 @@ no earlier step leaves an uncovered exit window. The override `ALLOW_MAIN_COMMIT
 exists for deliberate cases only — do not use it to bypass the branch-and-PR flow
 during a routine dream.
 
-**Why not run dream in a worktree?** Evaluated (0247) and rejected: `commit.py`
-and the promotion pass hardcode `~/.idh` (`git -C ~/.idh add/commit`, and
-promotions write to `~/.idh/memory/`), so a worktree run would still commit
-onto the *primary* checkout's current branch — worktree isolation would not
-apply. The push-or-restore contract (step 14) addresses the stranding without
-that refactor. Revisit if `commit.py` is parameterized by repo dir.
+**Checkout scope.** The helpers resolve their checkout from their own real
+location; pass `--root "$IDH_ROOT"` when selecting a different checkout.
+The platform may still refuse memory writes inside worktree sessions; that
+restriction is independent of helper path resolution. Keep the branch + PR
+and push-or-restore contract above for the primary checkout.
 
 ### Promotion pass
 
@@ -209,7 +208,7 @@ Runs after consolidation. Evaluates whether any project-level entries have earne
 **9. List promotion candidates.**
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" candidates
+python3 "$IDH_ROOT/skills/dream/provenance.py" candidates --root "$IDH_ROOT"
 ```
 
 Stdout is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed, machine-scoped records excluded) that are not yet promoted. Stderr reports `raw=` and `canonical=` candidate counts so an alias flood is visible without breaking JSON consumers. The alias table maps known machine paths to `machine:<host>`; these are hosts, not projects. If empty, skip to step 13.
@@ -231,15 +230,15 @@ Log each gate evaluation with one line of reasoning per candidate.
 
 For each candidate that passes all three gates:
 
-a. Write the context-independent reformulation to `~/.idh/memory/<slug>.md`.
+a. Write the context-independent reformulation to `$IDH_ROOT/memory/<slug>.md`.
 b. Mark promoted in provenance:
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" promote <slug>
+python3 "$IDH_ROOT/skills/dream/provenance.py" promote --root "$IDH_ROOT" <slug>
 ```
 c. Overwrite the project-level entry with a tombstone:
 ```
 # PROMOTED <ISO timestamp>: <title>
-# Now at: ~/.idh/memory/<slug>.md
+# Now at: $IDH_ROOT/memory/<slug>.md
 # Original content preserved in git history.
 ```
 
@@ -255,7 +254,7 @@ here, the correct recovery is `git switch` back to the existing branch, not a
 new one.
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
+python3 "$IDH_ROOT/skills/dream/commit.py" commit --root "$IDH_ROOT" <project> <n_before> <n_after>
 ```
 
 ### Decay pass
@@ -265,7 +264,7 @@ Runs after the promotion pass. Flags stale harness-level entries for review.
 **13. Check for stale harness entries.**
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" decay
+python3 "$IDH_ROOT/skills/dream/provenance.py" decay --root "$IDH_ROOT"
 ```
 
 Output is JSON: promoted entries whose `last_confirmed` date is >90 days ago. For each flagged entry, print:
@@ -298,15 +297,15 @@ free-form summary prose (tickets 0241, 0275: PR #359 and PR #471 shipped
 improvised bodies that mismatched their diffs).
 
 ```bash
-branch="$(git -C ~/.idh branch --show-current)"
-if git -C ~/.idh push -u origin "$branch"; then
+branch="$(git -C "$IDH_ROOT" branch --show-current)"
+if git -C "$IDH_ROOT" push -u origin "$branch"; then
   : # open the PR (forge command) — it carries the step-8 + step-12 commits
 fi
 # Always switch back to main — success or failure. The branch keeps every commit;
 # the PR (once the push lands) carries the consolidation for review.
-git -C ~/.idh switch main
+git -C "$IDH_ROOT" switch main
 # Confirm the checkout is not stranded before exiting (must be silent, exit 0):
-"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.idh
+"$IDH_ROOT/scripts/check-primary-checkout.sh" "$IDH_ROOT"
 ```
 
 If `--dry-run`: skip this step — no branch or commit was made, so the primary was
@@ -337,7 +336,7 @@ see. 308 of 949 live bodies were in that state on 2026-09-10 — everything
 written before v2 introduced the store. To repair:
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root ~/.idh
+python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root "$IDH_ROOT"
 ```
 
 It is idempotent, and it takes each entry's dates from git history rather than
@@ -350,7 +349,7 @@ counts need no new writes to the bodies — which is what an in-file access log
 would cost, on the very files parallel sessions read.
 
 ```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root ~/.idh
+python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root "$IDH_ROOT"
 ```
 
 It writes `access_count` and `last_accessed` per entry. Treat both as a
@@ -361,7 +360,7 @@ that evicts on this number evicts the entries that worked best.
 
 ## v2 features (ticket 0165)
 
-- Harness-level memory tier (`~/.idh/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
+- Harness-level memory tier (`$IDH_ROOT/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
 - Provenance tracking (`.provenance.json`) — cross-project entry history
 - Harness decay (90-day unconfirmed entries flagged for review)
 - Dry-run mode covers promotion candidates and decay flags

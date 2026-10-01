@@ -15,19 +15,10 @@ OLD_HELPER = re.compile(
 
 
 def test_skill_bodies_use_the_loaded_skill_for_helper_paths():
-    exceptions = {
-        "merge": "~/.idh/skills/merge/erg-pr-merge",
-        "raid": "~/.idh/skills/merge/erg-pr-merge",
-    }
     for skill in sorted(SKILLS.glob("*/SKILL.md")):
         body = skill.read_text()
         old = OLD_HELPER.findall(body)
-        if skill.parent.name in exceptions:
-            assert len(old) == 1, skill
-            assert exceptions[skill.parent.name] in body
-            assert "harness-extension-point" in body
-        else:
-            assert not old, skill
+        assert not old, skill
         if "$IDH_ROOT/" in body and skill.parent.name != "roar":
             assert 'IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"' in body, skill
 

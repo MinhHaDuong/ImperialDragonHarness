@@ -19,15 +19,15 @@ exact repair (or HOME is unset). Exit 2: usage error.
 """
 
 import argparse
+import functools
+import importlib.util
 import json
 import os
 import shlex
 import sys
 from pathlib import Path
 
-# Spelled as invoked (~/.idh/scripts/... keeps ~/.idh), so a repair names the
-# pointer rather than whatever it happens to resolve to today.
-DEFAULT_ROOT = Path(os.path.abspath(__file__)).parent.parent
+DEFAULT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def expand(spec: str, root: Path) -> Path:
@@ -61,10 +61,77 @@ def resolved(path: Path):
     return real
 
 
+def managed_hooks(document):
+    """Only harness hooks are registered; RTK is owned by its installer."""
+    return {
+        event: [b for b in blocks if not any(
+            h.get("command") == "rtk hook claude" for h in b.get("hooks", [])
+        )]
+        for event, blocks in document.get("hooks", {}).items()
+    }
+
+
+@functools.lru_cache(maxsize=1)
+def _translator():
+    path = Path(__file__).resolve().with_name("gen-claude-code-adapter-hooks.py")
+    spec = importlib.util.spec_from_file_location("harness_hook_commands", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.translate
+
+
+def hook_identity(block):
+    normalized = json.loads(json.dumps(block))
+    for hook in normalized.get("hooks", []):
+        if "command" in hook:
+            hook["command"] = _translator()(hook["command"])
+    return normalized
+
+
+def merge_hooks(actual, wanted):
+    if not isinstance(actual, dict):
+        raise ValueError("configuration must be an object")
+    hooks = actual.setdefault("hooks", {})
+    if not isinstance(hooks, dict):
+        raise ValueError("hooks must be an object")
+    for event, blocks in managed_hooks(wanted).items():
+        current = hooks.setdefault(event, [])
+        if not isinstance(current, list):
+            raise ValueError(f"{event} hooks must be a list")
+        for block in blocks:
+            identity = hook_identity(block)
+            updated, found = [], False
+            for existing in current:
+                if hook_identity(existing) == identity:
+                    # Replace only an exact recognized predecessor, keeping
+                    # matcher, timeout, and other hook semantics identical.
+                    if not found:
+                        updated.append(block)
+                        found = True
+                else:
+                    updated.append(existing)
+            if not found:
+                updated.append(block)
+            current[:] = updated
+    return actual
+
+
 def check_entry(entry: dict, root: Path):
     """Return None when the entry is healthy, else (kind, detail, repair)."""
     path = expand(entry["path"], root)
     target = expand(entry["target"], root)
+    if entry.get("registration") == "hooks":
+        try:
+            actual = json.loads(path.read_text())
+            wanted = json.loads(target.read_text())
+            merged = merge_hooks(json.loads(json.dumps(actual)), wanted)
+            if merged == actual:
+                return None
+            reason = "harness hooks missing"
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            reason = str(exc)
+        return ("MISSING", f"{path}: {reason}",
+                f"{shlex.quote(str(root / 'bin/idh'))} install")
     q_path, q_target = shlex.quote(str(path)), shlex.quote(str(target))
     link = f"ln -sfn {q_target} {q_path}"
     real_target = resolved(target)
@@ -112,7 +179,7 @@ class ManifestError(Exception):
     pass
 
 
-def load_entries(manifest: Path, runtime: str):
+def load_entries(manifest: Path, runtime: str, root=None):
     try:
         entries = json.loads(manifest.read_text())["entries"]
         for e in entries:
@@ -129,6 +196,28 @@ def load_entries(manifest: Path, runtime: str):
         raise
     except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
         raise ManifestError(f"{type(exc).__name__}: {exc}") from exc
+    expanded = []
+    root = root or manifest.resolve().parent.parent
+    for entry in entries:
+        if entry.get("children"):
+            source = expand(entry["target"], root)
+            if not source.is_dir():
+                raise ManifestError(f"registration source {source} is missing")
+            children = source.rglob("*.md") if entry["children"] == "markdown" else source.iterdir()
+            for child in sorted(children):
+                if child.name.startswith(".") or child.name == "__pycache__":
+                    continue
+                if not child.is_dir() and child.suffix != ".md":
+                    continue
+                item = dict(entry)
+                item.pop("children")
+                suffix = child.relative_to(source).as_posix()
+                item["path"] += "/" + suffix
+                item["target"] += "/" + suffix
+                expanded.append(item)
+        else:
+            expanded.append(entry)
+    entries = list({e["path"]: e for e in expanded}.values())
     runtimes = {r for e in entries for r in e["runtimes"]}
     if runtime is None:  # `idh check`: every entry, operator-only ones included
         return entries
@@ -158,7 +247,7 @@ def main(argv=None) -> int:
     manifest = args.manifest or root / "adapters" / "projections.json"
 
     try:
-        entries = load_entries(manifest, args.runtime)
+        entries = load_entries(manifest, args.runtime, root)
     except ManifestError as exc:
         print(
             f"idh: refusing to launch {args.runtime}: manifest {manifest} is unusable "

@@ -52,7 +52,7 @@ def load_corpus(R: Path) -> dict[str, str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default=str(Path.home() / ".idh"))
+    ap.add_argument("--root", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     R = Path(a.root)

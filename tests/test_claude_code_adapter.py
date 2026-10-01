@@ -168,11 +168,15 @@ def test_a_python_target_needs_no_execute_bit(tmp_path):
 # --- activation ------------------------------------------------------------
 
 
+def _profile(root):
+    return root.parent / "runtime-home/.claude"
+
+
 def _activation_tree(tmp_path: Path) -> Path:
     root = tmp_path / "harness"
     (root / "adapters").mkdir(parents=True)
     shutil.copytree(ADAPTER, root / "adapters" / "claude-code")
-    (root / "skills").mkdir()
+    (_profile(root) / "skills").mkdir(parents=True)
     return root
 
 
@@ -182,7 +186,7 @@ def _run_activator(root: Path, *args: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         cwd=root,
-        env={**os.environ, "HARNESS_DIR": str(root)},
+        env={**os.environ, "HARNESS_DIR": str(root), "HOME": str(root.parent / "runtime-home")},
     )
 
 
@@ -195,8 +199,8 @@ def _write_canonical_settings(root: Path) -> dict:
 @pytest.mark.integration
 def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
     root = _activation_tree(tmp_path)
-    live = root / "settings.json"
-    link = root / "skills" / "claude-code"
+    live = _profile(root) / "settings.json"
+    link = _profile(root) / "skills" / "claude-code"
 
     live.write_text('{"hooks": {"PreToolUse": []}}')
     status = _run_activator(root, "--status")
@@ -216,19 +220,19 @@ def test_activation_refuses_live_hooks_and_allows_known_absence(tmp_path):
     absent = _run_activator(root, "activate")
     assert absent.returncode == 0, absent.stderr
     assert link.is_symlink()
-    assert link.readlink() == Path("../adapters/claude-code")
+    assert link.resolve() == root / "adapters/claude-code"
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("contents", ["{ malformed", "[]", "42", "null", '"text"'])
 def test_unknown_live_config_refuses_activation_and_status(tmp_path, contents):
     root = _activation_tree(tmp_path)
-    (root / "settings.json").write_text(contents)
+    (_profile(root) / "settings.json").write_text(contents)
 
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_profile(root) / "skills" / "claude-code").exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -239,12 +243,12 @@ def test_unknown_live_config_refuses_activation_and_status(tmp_path, contents):
 def test_unreadable_live_config_refuses_activation_and_status(tmp_path):
     """/proc/self/mem raises OSError on read even when pytest runs as root."""
     root = _activation_tree(tmp_path)
-    (root / "settings.json").symlink_to("/proc/self/mem")
+    (_profile(root) / "settings.json").symlink_to("/proc/self/mem")
 
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_profile(root) / "skills" / "claude-code").exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -255,7 +259,7 @@ def test_unreadable_live_config_refuses_activation_and_status(tmp_path):
 @pytest.mark.parametrize("kind", ["directory", "dangling"])
 def test_nonregular_live_config_is_unknown(tmp_path, kind):
     root = _activation_tree(tmp_path)
-    live = root / "settings.json"
+    live = _profile(root) / "settings.json"
     if kind == "directory":
         live.mkdir()
     else:
@@ -264,7 +268,7 @@ def test_nonregular_live_config_is_unknown(tmp_path, kind):
     activation = _run_activator(root, "activate")
     assert activation.returncode == 1
     assert "cannot determine whether" in activation.stderr
-    assert not (root / "skills" / "claude-code").exists()
+    assert not (_profile(root) / "skills" / "claude-code").exists()
 
     status = _run_activator(root, "--status")
     assert status.returncode == 1
@@ -275,8 +279,8 @@ def test_nonregular_live_config_is_unknown(tmp_path, kind):
 def test_revert_waits_for_live_hooks_to_be_restored(tmp_path):
     root = _activation_tree(tmp_path)
     canonical = _write_canonical_settings(root)
-    live = root / "settings.json"
-    link = root / "skills" / "claude-code"
+    live = _profile(root) / "settings.json"
+    link = _profile(root) / "skills" / "claude-code"
     live.write_text("{}")
 
     activated = _run_activator(root, "activate")
@@ -311,8 +315,8 @@ def test_revert_waits_for_live_hooks_to_be_restored(tmp_path):
 def test_revert_refuses_incomplete_live_hook_sets(tmp_path, live_config):
     root = _activation_tree(tmp_path)
     _write_canonical_settings(root)
-    live = root / "settings.json"
-    link = root / "skills" / "claude-code"
+    live = _profile(root) / "settings.json"
+    link = _profile(root) / "skills" / "claude-code"
     live.write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
 
@@ -328,7 +332,7 @@ def test_revert_refuses_incomplete_live_hook_sets(tmp_path, live_config):
 @pytest.mark.parametrize("kind", ["foreign", "dangling", "directory"])
 def test_adapter_commands_refuse_unmanaged_link_paths(tmp_path, kind):
     root = _activation_tree(tmp_path)
-    link = root / "skills" / "claude-code"
+    link = _profile(root) / "skills" / "claude-code"
     if kind == "foreign":
         foreign = root / "foreign-plugin"
         foreign.mkdir()
@@ -364,22 +368,22 @@ def _remove_adapter_component(root: Path, component: str) -> None:
 @pytest.mark.parametrize("component", ["target", *REQUIRED_ADAPTER_COMPONENTS])
 def test_activation_refuses_an_incomplete_adapter_payload(tmp_path, component):
     root = _activation_tree(tmp_path)
-    (root / "settings.json").write_text("{}")
+    (_profile(root) / "settings.json").write_text("{}")
     _remove_adapter_component(root, component)
 
     result = _run_activator(root, "activate")
 
     assert result.returncode == 1
     assert "adapter payload is incomplete" in result.stderr
-    assert not (root / "skills" / "claude-code").is_symlink()
+    assert not (_profile(root) / "skills" / "claude-code").is_symlink()
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("component", ["target", *REQUIRED_ADAPTER_COMPONENTS])
 def test_missing_adapter_payload_makes_an_existing_link_unknown(tmp_path, component):
     root = _activation_tree(tmp_path)
-    link = root / "skills" / "claude-code"
-    (root / "settings.json").write_text("{}")
+    link = _profile(root) / "skills" / "claude-code"
+    (_profile(root) / "settings.json").write_text("{}")
     assert _run_activator(root, "activate").returncode == 0
     _remove_adapter_component(root, component)
 

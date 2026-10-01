@@ -52,12 +52,13 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-CANONICAL_SCRIPT = "$HOME/.idh/scripts/guard-destructive-bash.sh"
+CANONICAL_SCRIPT = '"$HOME/.local/bin/idh-hook" guard-destructive-bash.sh'
 # Codex hook trust pins a hash of the hook definition: editing the command
 # silently disables the guard until someone re-trusts it via /hooks (probed
-# 2026-09-29, ticket 0982). The Codex wiring therefore keeps its trusted
-# spelling until the cutover (0986) repoints it together with a re-trust.
-CODEX_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
+# 2026-09-29, ticket 0982). During the cutover (0986), the Codex wiring was
+# changed to derive the checkout from the installed hooks.json symlink so it
+# remains valid without a fixed ~/.claude or ~/.idh repository path.
+CODEX_SCRIPT = CANONICAL_SCRIPT
 
 
 def wiring_commands(doc, *, source_name):

@@ -701,7 +701,7 @@ finish well inside its wall time. Before phase 6, run
 **Reviewing a PR outside this harness — pass `REVIEWERS_REPO`.** The seats
 read *this harness* by default, so a PR in another repository fails with an
 unknown pathspec: the head branch does not exist where the seats are looking.
-Whenever the reviewed checkout is not `~/.idh`, invoke as
+Whenever the reviewed checkout differs from the helper's resolved harness checkout, invoke as
 
 ```bash
 REVIEWERS_REPO=<path-to-the-reviewed-checkout> \

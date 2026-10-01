@@ -48,14 +48,15 @@ _be_is_protected_name() {
 }
 
 # Skip the project parse when $PWD/.env is the harness's former user-level
-# .env at the checkout root (~/.idh/.env). The file is no longer sourced, and treating it as an
-# untrusted project file merely because the checkout lives at ~/.idh would
+# .env at the checkout root (resolved from this script). The file is no longer sourced, and treating it as an
+# untrusted project file merely because the checkout moves would
 # be a surprising second interpretation of the same installation file.
 if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
     # Guard realpath failures so sourcing under an already-active `set -e`
     # still reaches the end of this file.
     _be_proj="$(realpath "$PWD/.env" 2>/dev/null || true)"
-    _be_user="$(realpath "$HOME/.idh/.env" 2>/dev/null || true)"
+    _be_self="$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null || true)"
+    _be_user="$(realpath "$(dirname -- "$_be_self")/../.env" 2>/dev/null || true)"
     if [ "$_be_proj" != "$_be_user" ]; then
         _be_cap=262144
         _be_size="$(wc -c < "$PWD/.env" 2>/dev/null || echo 0)"
@@ -93,7 +94,7 @@ if [ -n "${PWD:-}" ] && [ -f "$PWD/.env" ]; then
                 _be_is_protected_name "$_be_key" && continue
                 export "$_be_key=$_be_val"
             done < "$PWD/.env"
-            unset _be_line _be_trim _be_key _be_val _be_first _be_last
+            unset _be_self _be_line _be_trim _be_key _be_val _be_first _be_last
         fi
         unset _be_cap _be_size
     fi

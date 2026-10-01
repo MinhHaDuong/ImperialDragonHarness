@@ -15,7 +15,7 @@ from pathlib import Path
 
 TS = re.compile(rb'"timestamp":"(\d{4})-(\d\d)-(\d\d)T')
 
-ROOT = Path.home() / ".idh"
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def inventory(root: Path):
