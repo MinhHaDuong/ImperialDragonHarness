@@ -1,19 +1,19 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-01T19:52Z
+Last updated: 2026-10-01T20:48Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-01T19:52Z · as of 8fce5703 -->
+<!-- generated 2026-10-01T20:48Z · as of 9e89ba58 -->
 
-**Tickets:** 22 ready · 19 blocked — `erg ready tickets/` for full list
+**Tickets:** 21 ready · 21 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
-**In flight:** 1 open PR, oldest #1090 0d · CI main: in progress
+**In flight:** 2 open PRs (1 draft), oldest #1091 0d · CI main: success
 **Recent (first-parent):**
-  8fce5703 docs: preserve checkout commands after guard test changes directory
-  8c610d07 docs: simplify guides around portable agents checkout
+  9e89ba58 docs(memory): adopt Markdown-first v8 and replace the delivery train
+  16b2bd70 Merge pull request #1090 from MinhHaDuong/docs-portable-agents
   9cff8d73 Merge pull request #1089 from MinhHaDuong/plan-portable-agents
 
 ## Resume point

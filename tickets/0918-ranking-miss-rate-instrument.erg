@@ -13,6 +13,7 @@ Blocked-by: 0925
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: acceptance margins must land on a named surface in a commit preceding the first trial run, so 'predeclared' is a fact Git can show.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: commit the evaluation protocol before acceptance trials; earlier exploratory smokes are not retroactively counted as predeclared trials.
 --- body ---
 
 ## Context
@@ -31,7 +32,7 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Protocole et critères fixés avant essais, versions et dénominateurs enregistrés.
+- [ ] Protocole et critères commités avant les essais d’acceptation, distincts des smokes exploratoires antérieurs ; versions et dénominateurs enregistrés.
 - [ ] Résultats sur quatre runtimes, positifs/négatifs/near misses et cas sans événement.
 - [ ] Sources natives contradictoires et conseils retirés réellement éprouvés.
 - [ ] Verdict de rollout explicite ; marges non inventées après un exemple réussi.

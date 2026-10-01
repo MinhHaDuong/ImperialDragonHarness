@@ -195,6 +195,10 @@ branche non fusionnée ne prouve pas un traitement accepté. Au passage suivant,
 consulter les rapports fusionnés pour éviter de réingérer les mêmes révisions ;
 une source modifiée appelle un nouvel examen.
 
+Conserver le texte des notes natives effectivement utilisées, adapté à l’audience,
+dans le rapport ou une annexe versionnée. Une empreinte seule ne permet pas
+de retrouver une note que le runtime aura ensuite réécrite.
+
 Il n’y a ni compteur de répétitions prescriptif ni base de relations séparée.
 Les connexions utiles habitent les thèmes ; Git conserve leur évolution. Les
 rapports donnent la provenance du passage, y compris runtime/modèle et commit
@@ -261,6 +265,10 @@ ni désactiver les anciennes voies avant d’avoir vérifié le remplacement.
 | Retrait d’un conseil et cristallisation | Index cohérent, règle proposée soumise à revue, sources accessibles |
 | Note native contradictoire ou absente | Contradiction ou limite signalée, pas de certification silencieuse |
 | Timer interrompu ou intégration refusée | Travail sauvegardé et statut visible, aucun succès fictif |
+
+Les premiers smokes sont exploratoires. Le protocole d’évaluation de 0918 est
+commité avant ses essais d’acceptation ; les smokes antérieurs ne sont pas
+comptés rétroactivement comme essais préspécifiés.
 
 Les jugements de pertinence et l’adhérence aux instructions se mesurent sur des
 scénarios répétés, avec les omissions et coûts observés. Un mot témoin seul ne
