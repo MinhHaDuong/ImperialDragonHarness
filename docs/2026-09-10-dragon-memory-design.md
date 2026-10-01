@@ -131,11 +131,12 @@ Ces travaux sur l’humain ne valident pas les seuils ni le comportement d’un 
 
 L’écriture a lieu dans une branche de travail autorisée du dépôt du projet,
 pas dans la mémoire native ni dans le checkout partagé qui sert aux pulls du
-harness. Seuls les fichiers de capture sont inclus dans le commit correspondant ;
-les changements voisins d’une autre tâche ne doivent pas être embarqués.
+harness. Le commit regroupe les fichiers de clôture roar : capture, tickets et docs.
+Les changements voisins d’une autre tâche ne doivent pas être embarqués.
 
-Dans un workflow où roar suit la fusion, créer une branche de capture dédiée,
-commiter les épisodes et utiliser le processus normal de PR/intégration. Ne pas
+Dans un workflow où roar suit la fusion, créer au plus une branche de clôture unique,
+commiter ensemble épisodes, tickets et docs, puis une PR en auto-merge après
+les contrôles requis. Ne pas
 ajouter les souvenirs à une branche déjà fusionnée puis la supprimer. L’agent
 porte les opérations de sauvegarde et d’intégration, sans demander à l’auteur
 de commiter manuellement les souvenirs. Une approbation éventuellement exigée
