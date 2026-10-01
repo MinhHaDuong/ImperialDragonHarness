@@ -57,6 +57,7 @@ author with a recommendation.
 ## 4. Finish and record
 
 - Blind review: in the source, self-citations in the third person,
-  acknowledgments and identifying project names removed; then `/pdf-finish`
+  acknowledgments, identifying project names and identifying figure content
+  (logos, maps, screenshots) removed; then `/pdf-finish`
   builds the anonymous variant and sweeps it, metadata included.
 - Once sent: `/submission-event submitted`.
