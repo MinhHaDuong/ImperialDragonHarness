@@ -9,6 +9,13 @@ predecessor v6, the reviews, the provider study notes and the measurement
 notes. Drafts v0 through v5 were retired from the tree; see *Superseded
 drafts* below.
 
+## Current guides
+
+- [Installation](idh-install-strategy.md): portable checkout and runtime registration.
+- [Operations](adapter-operations.md): existing pilot verification and recovery.
+- [Roadmap](../ROADMAP.md): priorities; [STATE](../STATE.md): current resume point.
+- [Retired cutover](idh-cutover-checklist.md): historical pointers only.
+
 ## References
 
 | File | What |

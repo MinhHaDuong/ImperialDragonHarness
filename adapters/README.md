@@ -1,7 +1,7 @@
 # adapters/
 
-Native glue for harnesses other than the one this repository is checked out
-into. Two unrelated things live here today:
+Runtime registration and delivery adapters for the portable harness checkout.
+The reference clone is `~/.agents`; runtime profiles remain independently owned.
 
 The [installation strategy](../docs/idh-install-strategy.md) makes native,
 additive registration the target. The commands below describe the current
@@ -45,12 +45,9 @@ the body stays canonical and live. Editing the prose needs no build step and
 no reinstall.
 
 **Claude Code does not read that directory.** It scans `$HOME/.claude/skills`
-only. On the reference machine the harness repository *is* `$HOME/.claude`, so
-the canonical directory already is the one Claude Code discovers: `install
-claude` reports it and creates nothing. Where the repository lives elsewhere,
-it creates the link. Either way there is no second perch and nothing under
-`skills/` changes, which is what makes removing the experiment a no-op for
-Claude.
+only. With the reference clone at `~/.agents`, Claude needs a projection or native
+plugin registration. Codex and Pi discover the canonical skills in place;
+an installer must recognize that case without creating a self-link.
 
 | | skills root | invocation |
 |---|---|---|
@@ -112,10 +109,9 @@ whose text exactly names `<old>/skills/<name>`. A link from another checkout or
 an unmanaged directory is refused. Codex and Pi share one target; the command
 updates it once. Missing or already current links need no retargeting. Run
 `bin/idh install skill <names>` afterward to create any missing Claude Code
-projections. For the `~/.claude` → `~/.idh` move (0986, by hand: `docs/idh-cutover-checklist.md`), the old Claude Code
-directories will disappear with the checkout, while the neutral links remain
-and need retargeting. No skill depends on `bin/idh` being on `PATH` at runtime:
-helper commands resolve from the loaded skill file.
+projections. Moving a checkout requires updating installed links and checking every runtime.
+Ticket 0999 covers portable registration. Helper commands resolve from the
+loaded skill file.
 
 ## The loaded-skill path seam (ticket 0803)
 
@@ -192,16 +188,14 @@ not enforcement. Codex's own docs say some specialized tool paths opt
 out of the hook path: tool hooks are a guardrail, not a complete
 boundary, and the inventory says so.
 
-The wirings' guard paths live in the config plane (`settings.shared.json`,
-`codex/hooks.json`), where no runtime-supplied path exists — unlike the
-skills seam, there is no loaded body to derive a root from. Step A of the
-`~/.idh` relocation (0982) repointed the Claude Code wiring to
-`$HOME/.idh/scripts/...`, behind a check that exits 2 when the pointer is
-missing. The Codex wiring keeps its trusted spelling until the cutover
-(0986), because Codex trust pins the hook definition and an edit silently
-disables the guard until it is re-trusted.
+Ticket 0999's target is to derive the Codex hook's checkout from the real
+location of its installed `hooks.json` symlink. That change is still local
+implementation work; the committed hook names the legacy checkout path.
+Changing its definition requires re-trusting it through `/hooks`. Claude's
+tracked settings also contain a legacy fixed repository path. The plugin
+launcher already resolves its own real location.
 
-Weakening is tested, not warned about: `tests/test_guard_adapter_wiring.py`
+Weakening is tested: `tests/test_guard_adapter_wiring.py`
 rejects removal of the event mapping, the block result, the exit semantics
 or the seam from the Pi adapter by a separate named check each, and pins
 the Codex and Claude wirings to the canonical script.

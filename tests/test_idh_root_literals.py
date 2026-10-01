@@ -49,14 +49,11 @@ ALLOWED = [
      "explains why the plugin cannot hard-code the native root"),
     ("adapters/README.md", "It scans `$HOME/.claude/skills`",
      "Claude Code's personal-skills scan root"),
-    ("adapters/README.md", "the harness repository *is* `$HOME/.claude`",
-     "describes where the checkout sits until 0986"),
+
     ("adapters/README.md", "| Claude Code | `$HOME/.claude/skills` |",
      "Claude Code's personal-skills scan root"),
-    ("adapters/README.md", "For the `~/.claude` → `~/.idh` move (0986",
-     "names the move itself"),
-    ("adapters/claude-code/README.md", "the harness repository *is* `~/.claude`",
-     "plugin discovery happens under Claude Code's native skills root"),
+
+
     ("adapters/claude-code/README.md", "a plugin under `$HOME/.claude/skills/<name>/`",
      "measured Claude Code plugin discovery path"),
     ("adapters/perch.py", "installation the harness repository *is* ``$HOME/.claude``",

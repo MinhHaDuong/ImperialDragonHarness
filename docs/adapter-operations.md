@@ -4,6 +4,13 @@ Operator commands for the IDH pilot surface on Claude Code, Codex and Pi
 (tickets 0802, 0803, 0809, 0810). Mistral Vibe is a probed fourth target
 with no porting slice yet; nothing here claims Vibe behavior.
 
+Start from the harness checkout and retain its absolute path for commands
+that run after changing into a test repository:
+
+```bash
+IDH_ROOT="$(pwd -P)"
+```
+
 The pilot surface is four links, in two planes:
 
 | Plane | Paths | Managed by |
@@ -12,9 +19,10 @@ The pilot surface is four links, in two planes:
 | wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `idh install` (from `adapters/projections.json`) |
 
 Every one of these paths is also declared in `adapters/projections.json`.
-`idh install` also creates that manifest's other entries (the `~/.idh`
-pointer, the `~/.local/bin` launchers), the `~/.bashrc` loader block and the
-audit timer (README § Installation).
+The bare `idh install` also creates launcher links, the shell loader and an
+audit timer. Its manifest still expects the Claude profile to resolve to the
+checkout and requires the legacy `~/.idh` pointer. Review it before applying;
+portable registration is tracked in 0999.
 Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
 (`scripts/shell-init.sh`, loaded by the `scripts/bashrc-loader.sh` block in
 `~/.bashrc`) run `scripts/validate-projections.py`. A missing, dangling or
@@ -27,11 +35,19 @@ canonical file is success, left as it is; anything else at the
 target is refused — never overwritten, never deleted. Interrupted installs
 are recovered by re-running the same command; installs are idempotent.
 
+## Scheduled audit
+
+The legacy installer enables `idh-mammoth-audit.timer` monthly and installs
+copies of its service and timer. Run `./bin/mammoth-audit` for an immediate
+census; inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
+and failures with `journalctl --user -u idh-mammoth-audit.service`.
+The audit reports candidates and does not remove skills.
+
 ## Probe versions
 
 ```bash
 claude --version && codex --version && pi --version && vibe --version
-./bin/idh check harness claude   # also: codex, pi
+"$IDH_ROOT/bin/idh" check harness claude   # also: codex, pi
 ```
 
 Support is a floor plus a probe, never an allowlist. An unreadable version
@@ -45,7 +61,7 @@ older all-runtime host setup; it is not a skills-only install and has no dry
 run or runtime selector.
 
 ```bash
-~/.idh/bin/idh install  # links from adapters/projections.json, loader block, timer
+"$IDH_ROOT/bin/idh" install  # links from adapters/projections.json, loader block, timer
 ```
 
 Preflight the guard itself before trusting the wiring (a missing or
@@ -53,7 +69,7 @@ broken script fails open, so verify it fires):
 
 ```bash
 cd /some/dirty-repo
-echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash ~/.idh/scripts/guard-destructive-bash.sh; echo "exit=$?"
+echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash "$IDH_ROOT/scripts/guard-destructive-bash.sh"; echo "exit=$?"
 # expect: the BLOCKED message and exit=2
 ```
 
@@ -65,14 +81,14 @@ enforcing boundary, not a formality.
 ## Verify
 
 ```bash
-idh check                          # every manifest entry; names each culprit
-~/.idh/bin/idh status skill perch --to codex
+"$IDH_ROOT/bin/idh" check             # every manifest entry; names each culprit
+"$IDH_ROOT/bin/idh" status skill perch --to codex
 ```
 
 ## Uninstall
 
 ```bash
-~/.idh/bin/idh uninstall skill perch healthcheck
+"$IDH_ROOT/bin/idh" uninstall skill perch healthcheck
 rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status` shows both `ok`
 ```
 
@@ -91,7 +107,7 @@ The rest of what it wrote is removed by hand too:
   remove `idh-mammoth-audit.{service,timer}` from
   `${XDG_CONFIG_HOME:-~/.config}/systemd/user/`.
 
-## Move the checkout
+## Legacy relocation commands
 
 ```bash
 # from the NEW checkout:
@@ -104,15 +120,10 @@ rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # only those two
 Skills links are retargeted atomically by `relocate`; wiring links are
 dangling after a move and are refused (never silently retargeted), so the
 honest sequence is check, remove the two known links, reinstall.
-For the `~/.claude` → `~/.idh` relocation (tracker 0978), step A (0982)
-repointed the Claude Code guard path in `settings.shared.json` to
-`$HOME/.idh/scripts/...`, behind a check that exits 2 when the pointer is
-missing. `codex/hooks.json` keeps its trusted `$HOME/.claude/scripts/...`
-spelling on purpose: Codex trust pins the hook definition, and an edited
-definition silently stops running until someone re-trusts it via `/hooks`.
-The cutover (0986) repoints it together with that re-trust; the move itself
-is manual, by the runbook in `docs/idh-cutover-checklist.md`. Links that
-`idh install` finds retargeted through `~/.idh` count as its own.
+The retired live cutover is recorded in closed tickets 0978 and 0986.
+For the current portable-clone plan, follow ticket 0999 and the installation
+guide. Re-trust the Codex hook whenever its definition changes; then verify
+that it actually blocks a dirty reset in a disposable repository.
 
 ## Interrupted run / recovery
 
@@ -148,7 +159,6 @@ nothing retargets it behind your back.
   linear shape, not a sandbox.
 - The Pi adapter carries the guard's fail-open doctrine: if the guard
   script or python3 is missing, Pi's bash calls are allowed, not bricked.
-- No full-harness parity is claimed: skills are read-in-place Markdown,
-  one enforcing guard is wired, everything else (hooks, permissions,
-  settings, rules) remains Claude-native.
+- Full runtime parity is still pending. The pilot covers two skills and one
+  guard; other components need their own registration and delivery evidence.
 - Mistral Vibe: version probe and skills-root compatibility only.

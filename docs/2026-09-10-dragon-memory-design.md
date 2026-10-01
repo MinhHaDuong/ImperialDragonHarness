@@ -788,10 +788,11 @@ non-empty. §10.3 already states this discipline for the store: "Positive contro
 must distinguish an empty store from a broken walker." It applies here too.
 
 A row that cannot yet be met is recorded as **known red** with its reason, never
-omitted and never softened into a claim. One is red today: the disjoint-roots
-row below cannot pass while IDH's own canonical store sits inside `~/.claude`,
-which is a runtime's native memory root. §13.1 step 3 moves it; until then the
-row is red and the protection is documented, not enforced.
+omitted and never softened into a claim. The disjoint-roots row remains unverified until its fixtures pass. The
+2026-10-01 location decision is a portable clone, default `~/.agents` (0999).
+Canonical roots are resolved from that checkout and compared against each
+adapter's declared native root. Ticket 0920 owns the store separation;
+changing the clone's location alone does not prove native-writer isolation.
 
 | Fixture | Required result |
 |---|---|
