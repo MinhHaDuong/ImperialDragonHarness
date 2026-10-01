@@ -73,7 +73,8 @@ No real runtime profile is deployed and no memory data is migrated here.
    smoke/trust limitations recorded and profile content preserved.
 2. Child 1002 is WONTDO; do not implement its legacy helper contract or reconcile
    its store. 0988 retains safe v8 capture/integration; 0913 retains rollout.
-3. Review integration across both children before closing this parent.
+3. Review integration across registration and the memory v8 pilot before closing
+   this parent; the WONTDO child is not an implementation prerequisite.
 4. Native packaging, runtime selection/dry-run and opt-in shell integration
    remain follow-on design work, not acceptance claims for child 1003.
 
