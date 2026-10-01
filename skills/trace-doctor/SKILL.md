@@ -8,8 +8,6 @@ model-level: standard
 
 Requested effort: `effort: standard`.
 
-Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
-
 # Trace Doctor $ARGUMENTS
 
 Survey the session-trace corpus, interpret the numbers against the settled

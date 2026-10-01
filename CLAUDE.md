@@ -1,5 +1,7 @@
 # Imperial Dragon Harness
 
+For agent selection, follow the profiles at the start of `AGENTS.md`. The active runtime chooses agents and models on the fly.
+
 Never display API keys, tokens, passwords, or any credentials in chat text — not even partially, not even in "here's what I found" summaries.
 
 Current status, blockers, next actions: `STATE.md`.

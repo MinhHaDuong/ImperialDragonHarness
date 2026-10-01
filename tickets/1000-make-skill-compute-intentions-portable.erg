@@ -14,6 +14,7 @@ advisors are role intentions; runtime configuration supplies identities.
 Related tracker: 0974 (this slice does not close that broader program).
 
 ## Exit criteria
+- [ ] Harness AGENTS.md opens with requested profiles and runtime selection guidance.
 - [ ] Skill Markdown and frontmatter contain no concrete model choices.
 - [ ] Worker/advisor guidance and effort use the portable vocabulary.
 - [ ] Runtime model mappings remain separate from skill instructions.

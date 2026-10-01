@@ -6,8 +6,6 @@ user-invocable: true
 argument-hint: "<research question, abstract, notes or draft>"
 ---
 
-Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
-
 # Critical literature review
 
 Map a field as a historian of economic thought would: construct the object,

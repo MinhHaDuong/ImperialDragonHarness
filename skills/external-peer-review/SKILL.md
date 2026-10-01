@@ -6,8 +6,6 @@ disable-model-invocation: false
 argument-hint: "<pdf-path> [--models <resolved-advisor-models>] [--personas grinchy,student] [--text]"
 ---
 
-Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
-
 # External peer review $ARGUMENTS
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.

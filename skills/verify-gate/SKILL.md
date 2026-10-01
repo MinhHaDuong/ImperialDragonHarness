@@ -13,8 +13,6 @@ model-level: standard
 background: false
 ---
 
-Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
-
 # Verify gate — PR $ARGUMENTS
 
 > **TASK DIRECTIVE — execute now.** You are running `/verify-gate` on PR
