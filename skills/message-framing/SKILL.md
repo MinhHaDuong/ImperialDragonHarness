@@ -30,6 +30,8 @@ the next, and nothing here is worth delegating.
    audience accept the premise, does it break a constraint, would a peer
    already say it (a truism is not a contribution), can the source carry it.
    Recommend one, with the runner-up and why it lost; the author decides.
+   When the author's own intuitive message fails a test, ask "who else
+   says this?" before arguing against it.
 4. **Validate** the chosen sentence:
    - *Dispute test*: someone competent could disagree. Nobody could → too vague.
    - *Substitution test*: if the piece were replaced by this sentence, its
