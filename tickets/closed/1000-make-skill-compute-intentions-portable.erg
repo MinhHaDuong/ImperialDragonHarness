@@ -2,10 +2,12 @@
 Title: Make skill compute intentions portable
 Created: 2026-10-01
 Author: MinhHaDuong
+Closed: autoclosed — PR #1092
 
 --- log ---
 2026-10-01T20:32Z MinhHaDuong created
 
+2026-10-01T20:44Z MinhHaDuong closed — autoclosed — PR #1092
 --- body ---
 ## Context
 User directive: skills must be portable and name roles, capability classes and
