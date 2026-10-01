@@ -1,0 +1,68 @@
+%erg 0.1
+Title: dream: tombstone purge, rule-dedup audit and reasoned expected-utility ranking
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T06:08Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+A manual sweep of the climate-finance-het memory pool on 2026-10-01 (PR #1073
+and this PR) did by hand three things `/dream` and `/memory-sweep` should own.
+
+1. **Tombstones never leave.** `/dream` step 8 overwrites a DELETE entry with a
+   `# DELETED … Reason:` stub and keeps the file. The pool had 309 files for
+   103 live entries: 206 stubs, none indexed, content already in git history.
+   `provenance.py` reads the stub head (line ~362) and promotion uses
+   `# PROMOTED` stubs for the decay clock, so purging must keep what
+   provenance needs (it can record the retirement itself).
+2. **Dedup against rules and skills was an audit, not a step.** Three
+   decorrelated classifier agents (one per ~100 files) each gave
+   KEEP / RETIRE_STALE / RETIRE_DUP / MERGE with evidence: a quoted rule line,
+   or a ticket's Closed state checked in `tickets/closed/`. Live result: no
+   memory fully restated by a rule, 12 partial overlaps kept, 2 overtaken
+   project notes retired after verifying their content lives in tickets.
+3. **No utility ranking.** The `/memory-sweep` caps (5 feedback, 3 project)
+   sit far below a real pool (231 feedback files before the sweep) and were not
+   applied. A reasoned expected utility worked instead: for each memory,
+   EU = p × B, where p (0–1) is the chance it changes an agent's action in the
+   next ~3 months, judged from STATE, open tickets and recent log, and lowered
+   when a rule already does the job; B (1–5) is the cost avoided (5 = data
+   loss, wrong number in a deliverable, credential leak, repeated author
+   correction). Each score carries a ≤20-word rationale. Distribution: min 0.03,
+   median 0.30, max 2.75. The tail split into three groups, and EU alone
+   misranks two of them:
+   - generic advice, B = 1: retire (6 culled in this PR);
+   - rare but costly (credential, backup, HAL password traps): keep; at
+     ~90 index bytes each, insurance is cheap;
+   - research ideas (paper seeds): EU is the wrong metric; move to tickets or
+     notes, out of working memory.
+   The scorer under-weighted author preferences (B = 1 for a stated
+   preference ignores that it repeats a correction): floor B at 3 for user
+   preference memories.
+
+`access_count` in `.provenance.json` exists for 8 of 101 live entries, so it
+cannot yet serve as p: absence there is not evidence of non-use.
+
+The index cost is structural: ~90 bytes per entry, 40% filenames and 36%
+titles; only 11 of 101 had hooks. Only fewer entries shrink it.
+
+## Exit criteria
+
+- [ ] `/dream` removes a DELETE tombstone instead of keeping it (or purges
+      stubs older than one run), with provenance recording the retirement;
+      `tests/test_provenance_coverage.py` still passes.
+- [ ] `/dream` dedup step names the covering rule or skill line for each
+      RETIRE_DUP, and checks Closed state before retiring a project note.
+- [ ] `/dream` (or `/memory-sweep`) produces a reasoned EU table (p, B,
+      rationale) and proposes the tail by group: retire generic B = 1, keep
+      rare high-B, relocate research notes; user-preference memories floored
+      at B = 3.
+- [ ] `/memory-sweep` list caps replaced by the EU tail rule, or removed.
+- [ ] A memory without a `description:` frontmatter line is flagged
+      (`feedback_iati_transaction_direction` in climate-finance-het had none).
+- [ ] Related: 0988 (session memory lands uncommitted); here the four
+      uncommitted memories also lacked provenance records and failed
+      `pytest-guard` until `provenance.py backfill` ran.
