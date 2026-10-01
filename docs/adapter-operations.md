@@ -4,6 +4,13 @@ Operator commands for the IDH pilot surface on Claude Code, Codex and Pi
 (tickets 0802, 0803, 0809, 0810). Mistral Vibe is a probed fourth target
 with no porting slice yet; nothing here claims Vibe behavior.
 
+Start from the harness checkout and retain its absolute path for commands
+that run after changing into a test repository:
+
+```bash
+IDH_ROOT="$(pwd -P)"
+```
+
 The pilot surface is four links, in two planes:
 
 | Plane | Paths | Managed by |
@@ -40,7 +47,7 @@ The audit reports candidates and does not remove skills.
 
 ```bash
 claude --version && codex --version && pi --version && vibe --version
-./bin/idh check harness claude   # also: codex, pi
+"$IDH_ROOT/bin/idh" check harness claude   # also: codex, pi
 ```
 
 Support is a floor plus a probe, never an allowlist. An unreadable version
@@ -54,14 +61,13 @@ older all-runtime host setup; it is not a skills-only install and has no dry
 run or runtime selector.
 
 ```bash
-./bin/idh install  # links from adapters/projections.json, loader block, timer
+"$IDH_ROOT/bin/idh" install  # links from adapters/projections.json, loader block, timer
 ```
 
 Preflight the guard itself before trusting the wiring (a missing or
 broken script fails open, so verify it fires):
 
 ```bash
-IDH_ROOT="$PWD"  # run from the harness checkout before changing directory
 cd /some/dirty-repo
 echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash "$IDH_ROOT/scripts/guard-destructive-bash.sh"; echo "exit=$?"
 # expect: the BLOCKED message and exit=2
@@ -75,14 +81,14 @@ enforcing boundary, not a formality.
 ## Verify
 
 ```bash
-idh check                          # every manifest entry; names each culprit
-./bin/idh status skill perch --to codex
+"$IDH_ROOT/bin/idh" check             # every manifest entry; names each culprit
+"$IDH_ROOT/bin/idh" status skill perch --to codex
 ```
 
 ## Uninstall
 
 ```bash
-./bin/idh uninstall skill perch healthcheck
+"$IDH_ROOT/bin/idh" uninstall skill perch healthcheck
 rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status` shows both `ok`
 ```
 

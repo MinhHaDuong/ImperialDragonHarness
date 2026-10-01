@@ -30,6 +30,8 @@ one guard across Claude Code, Codex and Pi; Vibe has a discovery probe.
 See `adapters/pilot-support.json` for evidence.
 
 At the reference location, Codex and Pi already scan `~/.agents/skills`.
+Cloning there exposes the entire skill catalog to discovery immediately;
+discovery alone does not certify each skill's runtime compatibility.
 Installation must recognize canonical directories in place and avoid links
 from a directory to itself.
 
