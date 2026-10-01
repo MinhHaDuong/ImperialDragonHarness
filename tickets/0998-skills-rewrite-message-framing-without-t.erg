@@ -1,0 +1,16 @@
+%erg 0.1
+Title: skills: rewrite message-framing without the AMAP instance
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T07:03Z HDMX-coding-agent created
+
+--- body ---
+Parent: 0992.
+
+## Scope
+
+Keep message-framing as the single upstream for slides, abstracts and articles. Rewrite to under ~90 lines (from 318): replace the AMAP case with one short neutral example, drop the five generic framing patterns and emoji anti-pattern lists. slides (0994) and conference-submission-prep (0996) point to it.
+
+Common exit criteria for every child: the body follows `rules/authoring-skills.md` (size, pointer-and-payload split, doctrine in rules and procedure in skills, `model:` pinned on any fan-out, concurrency declared on multi-item steps); no instance-specific material (AMAP talk, one-off scripts); `make skills-catalog` regenerated; `make check-fast`, `make lint`, `make check-agnostic-skills`, `make check-skills-drift` pass; skills resident channel stays under its budget (`tests/test_resident_census.py`). Originals as synced from claude.ai, for reference: the import commit of PR #1075 (8b9691f1) and git history.
