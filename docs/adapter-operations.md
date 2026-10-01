@@ -19,8 +19,7 @@ The pilot surface is four links, in two planes:
 | wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `idh install` (from `adapters/projections.json`) |
 
 Every one of these paths is also declared in `adapters/projections.json`.
-The bare `idh install` also creates launcher links, the shell loader and an
-audit timer. Its manifest still expects the Claude profile to resolve to the
+The bare `idh install` also creates launcher links and the shell loader. Its manifest still expects the Claude profile to resolve to the
 checkout and requires the legacy `~/.idh` pointer. Review it before applying;
 portable registration is tracked in 0999.
 Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
@@ -35,13 +34,11 @@ canonical file is success, left as it is; anything else at the
 target is refused — never overwritten, never deleted. Interrupted installs
 are recovered by re-running the same command; installs are idempotent.
 
-## Scheduled audit
+## Manual audit
 
-The legacy installer enables `idh-mammoth-audit.timer` monthly and installs
-copies of its service and timer. Run `./bin/mammoth-audit` for an immediate
-census; inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
-and failures with `journalctl --user -u idh-mammoth-audit.service`.
-The audit reports candidates and does not remove skills.
+Run `./bin/mammoth-audit` for an immediate census. The audit reports candidates
+and does not remove skills. The harness installs no scheduler; recurring runs
+can be arranged externally with the host's available facilities.
 
 ## Probe versions
 
@@ -61,7 +58,7 @@ older all-runtime host setup; it is not a skills-only install and has no dry
 run or runtime selector.
 
 ```bash
-"$IDH_ROOT/bin/idh" install  # links from adapters/projections.json, loader block, timer
+"$IDH_ROOT/bin/idh" install  # links from adapters/projections.json, loader block
 ```
 
 Preflight the guard itself before trusting the wiring (a missing or
@@ -102,10 +99,7 @@ The rest of what it wrote is removed by hand too:
 - the backups `.bashrc.idh-bak-*`, one per changing install, with the
   mode of the file they copy: they may hold whatever `~/.bashrc` held. They
   sit beside the real file, so beside the link's target when `~/.bashrc` is
-  a symlink;
-- the timer: `systemctl --user disable --now idh-mammoth-audit.timer`, then
-  remove `idh-mammoth-audit.{service,timer}` from
-  `${XDG_CONFIG_HOME:-~/.config}/systemd/user/`.
+  a symlink.
 
 ## Legacy relocation commands
 

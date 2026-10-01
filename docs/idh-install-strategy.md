@@ -41,7 +41,7 @@ from a directory to itself.
 It checks conflicts and versions before linking reviewed skills.
 
 The bare `./bin/idh install` is legacy all-runtime host setup. It creates
-manifest links, edits `~/.bashrc` and enables a timer; it has no dry run or
+manifest links and edits `~/.bashrc`; it has no dry run or
 runtime selector. The manifest still expects the Claude profile to resolve
 to the repository and requires the legacy `~/.idh` pointer, so it is not yet
 a general fresh-install recipe.
@@ -52,7 +52,7 @@ a general fresh-install recipe.
 1. Resolve checkout paths portably across all consumers.
 2. Preflight selected-runtime registration and list exact actions and conflicts.
 3. Package reviewed resources through native runtime mechanisms.
-4. Keep shell integration and timers separate and opt-in.
+4. Keep shell integration opt-in; leave scheduling to the host.
 5. Verify an arbitrary checkout location, relocation and runtime smoke tests.
 
 [ROADMAP](../ROADMAP.md) tracks priorities; [adapter operations](adapter-operations.md)

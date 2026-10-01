@@ -2,8 +2,8 @@
 
 The expected link set comes from adapters/projections.json, never from what
 install happened to create, so an entry install forgets is a failure here.
-Every run uses a fixture HOME and a PATH whose `systemctl` is a stub that logs
-its argv: nothing touches the developer's HOME, ~/.bashrc or systemd.
+Every run uses a fixture HOME. A failing systemctl sentinel verifies that
+installation and status do not call a host scheduler.
 """
 
 import json
@@ -37,7 +37,7 @@ def machine(tmp_path):
     bin_dir.mkdir()
     log = tmp_path / "systemctl.log"
     stub = bin_dir / "systemctl"
-    stub.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\n')
+    stub.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\nexit 1\n')
     stub.chmod(0o755)
     env = {"HOME": str(home), "PATH": f"{bin_dir}:/usr/bin:/bin"}
 
@@ -64,7 +64,7 @@ def test_install_then_check_round_trip_and_planted_break(machine):
         target = expand(entry["target"], home)
         assert path.resolve() == target.resolve(), (path, target)
     assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
-    assert "--user enable --now idh-mammoth-audit.timer" in machine["log"].read_text()
+    assert not machine["log"].exists()
     assert (home / ".bashrc").read_text() == (REPO / "scripts" / "bashrc-loader.sh").read_text()
 
     # Negative control: one planted broken link, one named culprit.
@@ -162,7 +162,7 @@ def test_status_reports_installed_vs_declared(machine):
     assert r.returncode == 0, r.stdout + r.stderr
     assert f"declared {len(MANIFEST)}, ok " in r.stdout
     assert f"ok       {home / '.codex' / 'hooks.json'} -> " in r.stdout
-    assert "timer    idh-mammoth-audit.timer:" in r.stdout
+    assert not machine["log"].exists()
     assert "origin   " in r.stdout
 
     hooks = home / ".codex" / "hooks.json"
@@ -344,19 +344,9 @@ def test_unusable_bashrc_is_named_and_the_rest_still_runs(machine, shape):
     assert r.returncode == 1
     assert "idh: loader NOT installed:" in r.stderr and "Traceback" not in r.stderr
     assert (home / ".codex" / "hooks.json").is_symlink()
-    assert "enable --now" in machine["log"].read_text()
+    assert not machine["log"].exists()
     if shape == "read-only":
         assert bashrc.read_text() == "alias a=b\n"
-
-
-def test_failing_systemctl_is_named_not_a_traceback(machine):
-    stub = Path(machine["env"]["PATH"].split(":")[0]) / "systemctl"
-    stub.write_text("#!/bin/sh\necho 'Failed to connect to bus' >&2\nexit 1\n")
-    r = machine["idh"]("install")
-    assert r.returncode == 1
-    assert "idh: timer NOT enabled: systemctl --user daemon-reload failed" in r.stderr
-    assert "Traceback" not in r.stderr
-    assert (machine["home"] / ".bashrc").read_text() == LOADER
 
 
 def test_unknown_command_never_installs(tmp_path, monkeypatch, capsys):

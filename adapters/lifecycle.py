@@ -10,7 +10,6 @@ built from the structured `path`/`target` fields only; the free-form
 
 import importlib.util
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -200,35 +199,10 @@ def _splice(dest: Path) -> int:
     return 0
 
 
-TIMER = "idh-mammoth-audit.timer"
-
-
-def install_timers() -> int:
-    """Install the one unit pair versioned in systemd/. claude-refresh and
-    claude-telemetry-prune are not ours yet (0985/0986)."""
-    if not shutil.which("systemctl"):
-        print("timers skipped: no systemctl on PATH")
-        return 0
-    config = os.environ.get("XDG_CONFIG_HOME") or Path(os.environ["HOME"]) / ".config"
-    units = Path(config) / "systemd" / "user"
-    try:
-        units.mkdir(parents=True, exist_ok=True)
-        for unit in ("idh-mammoth-audit.service", TIMER):
-            shutil.copyfile(REPO / "systemd" / unit, units / unit)
-        for argv in (["daemon-reload"], ["enable", "--now", TIMER]):
-            if subprocess.run(["systemctl", "--user", *argv]).returncode:
-                raise OSError(f"systemctl --user {' '.join(argv)} failed")
-    except OSError as exc:
-        print(f"idh: timer NOT enabled: {exc}", file=sys.stderr)
-        return 1
-    print(f"enabled: {TIMER}")
-    return 0
-
 
 def install() -> int:
-    # Every step runs whatever the others return (`|` on ints evaluates all
-    # three); the exit code is non-zero when any refused.
-    return install_links() | install_loader() | install_timers()
+    # Both steps run; the exit code is non-zero when either refuses.
+    return install_links() | install_loader()
 
 
 def _git(*args):
@@ -276,7 +250,7 @@ def sync() -> int:
 
 
 def status() -> int:
-    """Installed vs declared, timer state, distance to origin."""
+    """Installed vs declared, distance to origin."""
     base, listed, tally = root(), entries(), {"ok": 0, "absent": 0, "broken": 0}
     for entry in listed:
         path, target = V.expand(entry["path"], base), V.expand(entry["target"], base)
@@ -287,12 +261,6 @@ def status() -> int:
             state = "ok" if path.is_symlink() or path.exists() else "absent"
         tally["broken" if problem else state] += 1
         print(f"{state:8} {path} -> {target}")
-    timer = "no systemctl"
-    if shutil.which("systemctl"):
-        run = subprocess.run(["systemctl", "--user", "is-enabled", TIMER],
-                             capture_output=True, text=True)
-        timer = run.stdout.strip() or "unknown"
-    print(f"timer    {TIMER}: {timer}")
     gap = distance()
     print("origin   no upstream" if gap is None
           else f"origin   ahead {gap[0]}, behind {gap[1]} (as of the last fetch)")

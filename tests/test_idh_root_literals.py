@@ -24,7 +24,7 @@ pytestmark = pytest.mark.adherence
 REPO = Path(__file__).resolve().parent.parent
 
 # Where live wiring lives: scripts, hooks, adapters, settings, units, skills.
-SCOPES = ("scripts", "bin", "hooks", "adapters", "systemd", "skills", "settings.shared.json")
+SCOPES = ("scripts", "bin", "hooks", "adapters", "skills", "settings.shared.json")
 
 LITERAL = re.compile(
     r"""(?:~|"?\$HOME"?|"?\$\{HOME\}"?|%h|/home/[A-Za-z0-9_.-]+)/\.claude(?![\w.-])(\S*)"""
