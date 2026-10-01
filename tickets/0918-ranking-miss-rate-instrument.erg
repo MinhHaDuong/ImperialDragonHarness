@@ -3,7 +3,6 @@ Title: Evaluate v8 capture, recall and consolidation before rollout
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0924
-Blocked-by: 0925
 
 --- log ---
 2026-09-10T16:34Z claude created
@@ -14,11 +13,12 @@ Blocked-by: 0925
 2026-09-11T08:45Z claude note After the Fable plan review: acceptance margins must land on a named surface in a commit preceding the first trial run, so 'predeclared' is a fact Git can show.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: commit the evaluation protocol before acceptance trials; earlier exploratory smokes are not retroactively counted as predeclared trials.
+2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
 --- body ---
 
 ## Context
 
-Fixer un protocole de scénarios répétés avant essais : lecture pré-action, rappel d’épisodes récents, capture sélective, contradictions et cristallisation amendée. Mesurer omissions, utilité et coût, sans confondre accès aux fichiers avec obéissance.
+Fixer un protocole de scénarios répétés avant essais : lecture pré-action, rappel d’épisodes récents, capture sélective, contradictions et absence de proposition de règles. Mesurer omissions, utilité et coût, sans confondre accès aux fichiers avec obéissance.
 
 Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
 [plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).

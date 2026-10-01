@@ -145,26 +145,45 @@ default branch — there are no remote branches nor merge requests to inspect.
    `git ls-tree -r --name-only origin/main -- <dir>` and read with
    `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
- File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
-4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
+ Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+4. **Report related findings** from the sweep. Do not turn experiences into
+   unsolicited standing tests, rule proposals or crystallisation tickets.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
-6. **Save persistent memory**: durable lessons from this task. No sweep here — sweeps happen at `/lair`.
+6. **Capture significant project experiences**, if any, before removing the
+   worktree. Write and commit an append-only entry under the project's
+   `memory/journal/YYYY/YYYY-MM-DD-<slug>.md`. Record context, observable events,
+   outcome and decisions already made, with references. Include positive and
+   negative experiences: novelty, surprise, a consequential failure or success,
+   a near miss, or a departure from an existing principle are candidate signals.
+   Routine completion alone does not require an entry. Keep it factual, without
+   judgment, inferred lessons, rule proposals or interpreted memories.
 
-   **In a worktree session, this write is refused — defer it until after step 9.** The platform-native Edit/Write guard tied to the session's tracked worktree refuses it and has no memory exemption (`rules/workflow.md` § Worktree paths). Reflect and decide *what* to save here; perform the write once step 9 has returned the session to the primary checkout. The failure is silent in the losing direction: a denied write reads like "memory is unavailable in this context", the natural response is to put the lesson in the final message instead, and after step 9 removes the worktree nothing distinguishes a lost lesson from a session that had none (ticket 0880, observed 2026-09-08 — three entries survived only because the write was retried after the exit, which nothing had asked for).
+   Resolve the project repository first. Use the single
+   wrap-up branch/worktree described below. Capture only there or in its
+   explicitly configured private companion; never in the harness because the
+   loaded skill lives there. Commit only the capture files, preserve unrelated
+   changes, and follow the project's branch/integration policy. A refused write
+   or failed commit remains a visible pending capture; do not switch to the
+   harness or a native memory directory. An unintegrated capture branch must be
+   preserved and reported before worktree cleanup. Do not invoke memory-sweep
+   to derive lessons or propose rules during roar.
 
-   **In a BACKGROUND session, step 9 does not unblock it either — use a fresh
-   worktree and its own PR.** You do not need to know your own mode to apply
-   this: the discriminator is the refusal itself. If the post-step-9 write into
-   the primary checkout is denied for *isolation* rather than for the worktree
-   path, you are in this case. Leaving the worktree returns the session to the
-   shared checkout, where a second guard (background-job isolation) refuses the
-   very write this step just deferred, with its own unrelated message: "this
-   background session hasn't isolated its changes yet". Following the paragraph
-   above therefore reproduces the loss it exists to prevent. The working path is
-   `EnterWorktree` on a new name, write the memory there, commit, push, open and
-   merge a memory-only PR. Interactive sessions are unaffected and keep using
-   the deferral above. (Observed 2026-09-10, this repo, on a /roar that had just
-   merged its own PR.)
+## Bundle and fast track
+
+Roar creates **at most one project branch/worktree** for all wrap-up changes:
+follow-up tickets, project documentation and factual journal capture. Reuse a
+suitable existing unmerged branch when available. Otherwise create one wrap-up
+branch after the task merge. Do not create separate ticket, docs or memory PRs.
+Start this branch before the first write; all writes stay inside the project.
+
+After completing the ticket checks in steps 7–8, commit the complete bundle,
+push it and open **one PR**. Fast-track it through the
+project's required checks and enable auto-merge using its supported merge
+method. This is standing authorization for roar's bounded wrap-up bundle;
+no further confirmation is needed. Do not bypass failing checks or protected
+branch requirements. The periodic dream remains a separate reviewed workflow.
+A failed check or submission leaves the one branch preserved and reported.
+Wait for confirmed integration before cleaning up that worktree.
 
 ## Close and clean up
 
@@ -208,12 +227,16 @@ default branch — there are no remote branches nor merge requests to inspect.
        Removes only `.panel/` and `build/panel-head/` review scratch first,
        then refuses (exit 1) on every other uncommitted/untracked file —
        including a fresh ticket draft `tickets/erg new` wrote but never
-       committed. It is the only gate before removal. If it blocks, commit
+       committed. This cleanliness gate does not prove commits are integrated. If it blocks, commit
        (or `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run. See tickets
        0174 and 0948.
-    b. Call `ExitWorktree` with action `remove`. When the pre-check
-       (`git merge-base --is-ancestor HEAD origin/main`) has already
-       passed, the worktree branch is fully merged — ExitWorktree's
+    b. Immediately before removal, fetch the project integration branch and
+       re-run `git merge-base --is-ancestor HEAD origin/main` on the current
+       HEAD, after any capture commit. If fetch or ancestry verification fails,
+       preserve the worktree and branch (`action: "keep"`) and report pending
+       integration. An earlier pre-capture check is not sufficient. Only then
+       call `ExitWorktree` with action `remove`. With this refreshed check,
+       the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
        stale local main — it can even name a branch that no longer
        exists (a parallel session's hygiene pruned it post-merge;
@@ -303,7 +326,8 @@ default branch — there are no remote branches nor merge requests to inspect.
     - No-forge repo: only check that local branches are merged into the
       default branch; there are no remote branches nor merge requests, and
       every ancestry probe compares against the local default branch.
-11. **Offer** to improve workflow rules if lessons were learned.
+11. **Report** the completed work and any pending factual capture. Do not offer
+    rule changes or interpreted memories.
 
 Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
 belongs to housekeeping (`/molt`), not here: roar exits and disposes of its

@@ -1,65 +1,27 @@
 ---
 name: memory-sweep
-description: "Write, update, or sweep persistent memory. Enforces list caps, TTLs, and staleness criteria."
+description: "Review a project's repository memory for stale or contradictory claims."
 disable-model-invocation: false
 user-invocable: true
 ---
 
-# Memory — persistent memory management
+# Memory sweep — project memory maintenance
 
-Persistent memory lives at `$CLAUDE_MEMORY_DIR/MEMORY.md`.
+Resolve the project repository and read its AGENTS.md and `memory/MEMORY.md`.
+If the destination or convention is unavailable, report it and stop. Do not
+write to the installed harness, another project, or a native memory directory.
 
-## When to run
+Review relevant `memory/topics/` against source episodes, current documentation
+and user corrections. Mark or revise stale and contradicted claims, preserve
+provenance and update the index so it points to current themes. Existing rules
+can be referenced; do not create, propose or edit rules, AGENTS.md or skills.
+Crystallisation requires a separate explicit user request with its destination.
 
-- During `/roar` (save only, no sweep)
-- During `/lair` (full sweep: stale check + rule cross-reference)
-- After a user correction (save feedback immediately)
-- After discovering a project quirk
+Journal entries remain append-only. Add a dated correction rather than changing
+or deleting an experience. Do not apply destructive TTLs to the journal or turn
+list caps into rule promotions. Never store credentials.
 
-## Procedure
-
-1. Check the entry against policy:
-   - Is it something to remember? (not derivable from code/git/docs)
-   - Does it fit within list caps?
-   - Does it have a TTL?
-2. For sweeps: scan every entry against staleness criteria.
-3. **Cross-reference against rules and skills**: if covered, delete the memory. If the rule is worth codifying but missing, add it to the appropriate rule file and delete the memory.
-4. For `project_*.md` files: delete if complete or superseded.
-
-## What to remember
-
-- User preferences and workflow corrections
-- Machine-specific configuration (paths, API keys, remote machines)
-- Naming conventions and project quirks not obvious from code
-
-## What NOT to remember
-
-- Anything derivable from code, git history, or other docs
-- Ephemeral task state (use STATE.md or git commits)
-- Content already in README, STATE, rules, or skills
-
-## List size limits
-
-| Section type | Cap |
-|---|---|
-| Feedback entries | 5 — older feedback should be distilled into rule changes |
-| Project-state entries | 3 — stale project state belongs in git history |
-| Named scripts or output files | 10 |
-
-## Time limits (TTL)
-
-| Memory type | TTL | Action on expiry |
-|---|---|---|
-| "X needed" / "X blocked" | 14 days | File ticket or delete |
-| Performance benchmarks | 60 days | Re-run or delete |
-| Remote machine config | 90 days | Confirm or delete |
-
-No TTL (stable until contradicted): workflow preferences, feedback, naming conventions, architectural decisions.
-
-## Staleness criteria
-
-An entry is stale if:
-- It references a file that no longer exists
-- It describes a state marked resolved elsewhere
-- Its TTL has elapsed without confirmation
-- A newer entry in the same section contradicts it
+Commit only the reviewed memory changes on a project branch and follow its
+integration policy. Preserve unrelated changes and report failed writes or
+commits. During roar, use its factual capture step instead of this sweep; do
+not derive lessons from task wrap-up.

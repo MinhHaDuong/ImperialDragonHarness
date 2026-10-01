@@ -11,6 +11,8 @@ Blocked-by: 0920
 2026-10-01T19:37Z MinhHaDuong codex note Author chose automatic factual experience capture and commit at roar time, in a dated project-specific pool; explicitly includes near misses and unexpectedly easy successes. Interpretation and rule/knowledge proposals are excluded from roar. Integration mechanics remain open.
 2026-10-01T20:25Z MinhHaDuong codex note Author simplified the target to repository Markdown and AGENTS.md across Claude, Codex, Pi and Vibe: no embedding model, database or MCP memory dependency. Proposed short MEMORY.md, consolidated topics, factual journal and versioned DREAM.md; weekly isolated dreaming produces a branch/PR, including crystallisation proposals. Prior capture-at-roar decision remains. Detailed migration and sync acceptance remain open.
 2026-10-01T20:37Z MinhHaDuong codex note V8 is now written; capture depends on the repository pilot 0920. Architecture and implementation plan realigned; runtime delivery remains open.
+2026-10-01T22:00Z codex note Explicit author boundary: project-local outputs only, no automatic rule proposals in roar or dream.
+2026-10-01T21:12Z codex note Author requires at most one roar branch and one bundled PR for tickets/docs/factual capture, with fast-track auto-merge after required checks.
 --- body ---
 
 ## Context
@@ -84,9 +86,9 @@ append-only source accounts or breaking their links.
 A weekly systemd timer invokes one runtime non-interactively in an isolated
 branch/checkout. Dreaming groups experiences, updates topics and the index,
 and imports runtime-native memory as attributed source material. Native notes
-are not authoritative project knowledge. Proposed crystallisation into
-AGENTS.md, runbooks, tests or issues belongs in the reviewed dreaming PR,
-never in roar capture. Adopted decisions retain their canonical records;
+are not authoritative project knowledge. Neither roar nor dream proposes crystallisation into
+AGENTS.md, runbooks, tests or issues. That requires a separate explicit user
+request with its destination; project outputs never go into the harness. Adopted decisions retain their canonical records;
 journal entries may reference them without becoming a parallel ledger.
 
 The v8 design and tracker 0909 implementation train now record this direction.
@@ -110,3 +112,5 @@ and any private companion store need a concrete project-specific arrangement.
 - [ ] No memory note is lost or duplicated across the reproduction (byte comparison of the note set before and after)
 - [ ] A pull that still cannot proceed is reported where the author sees it (session start or `idh status`), not only in a journal
 - [ ] `make check` passes
+
+- [ ] Roar crée au plus une branche et une PR regroupant tickets, docs et journal ; auto-merge après contrôles, branche préservée si échec.

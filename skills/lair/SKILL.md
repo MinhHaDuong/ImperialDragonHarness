@@ -42,4 +42,4 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
        <!-- harness-extension-point -->
        Current-generation spelling: `gh api repos/<owner>/<repo> --jq .allow_auto_merge` to read it, `gh pr merge <N> --auto --merge` to arm it.
     e. After the PR merges, delete the throwaway branch (local and remote).
-11. **Memory consolidation** — run `/dream <project>` where `<project>` is the current project directory name. This delegates to the autonomous consolidation skill (includes staleness check, dedup, and Park reflection).
+11. **Memory consolidation** — run `/dream <project-repository>` with the current project’s repository path. Consolidate only its memory; do not write into the harness or propose rules.
