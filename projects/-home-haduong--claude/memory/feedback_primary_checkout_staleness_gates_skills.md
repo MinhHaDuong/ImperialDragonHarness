@@ -27,7 +27,6 @@ a manually-synced replica (daily timer + ad-hoc pulls).
 **How to apply:** when a raid/PR changes skill text, fast-forward the
 primary checkout immediately after merge and re-check
 `git -C ~/.claude status`/`log origin/main..main` for divergence before
-attributing behavior to the new text. Related: [[feedback_beat_checkout_model]],
-[[feedback_rogue_agent_pattern]] (a 0229 execute agent also pre-closed its
+attributing behavior to the new text. Related: [[feedback_rogue_agent_pattern]] (a 0229 execute agent also pre-closed its
 ticket on the branch — add "do not close the ticket; erg-pr-merge closes at
 merge time" to execute-agent prompts).
