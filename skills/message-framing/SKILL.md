@@ -1,318 +1,79 @@
 ---
 name: message-framing
-description: "Frame the central message of a talk, article, pitch or report before drafting it."
+description: "Frame the central message of a talk, abstract or article before drafting it."
 ---
 
-# Message Framing
-
-Extract and frame the central message for any communication by analyzing context, audience, and strategic purpose.
-
-## Core Principle
-
-**One communication = one central message only.**
-
-Not a comprehensive summary. Not multiple points. One clear, strategic message that serves the communication's purpose.
-
-## When to Use This Skill
-
-Use message-framing when:
-- Starting a presentation, article, pitch, or speech without clear focus
-- User has content but asks "what should I emphasize?"
-- Multiple possible angles exist and prioritization is needed
-- Clarifying purpose before creating slides, documents, or speeches
-- User says "I want to talk about X but I'm not sure what to focus on"
-
-## Process Overview
-
-1. Analyze communication context
-2. Identify candidate messages
-3. Select optimal message through strategic filtering
-4. Validate message serves purpose
-
-## Step 1: Analyze Communication Context
-
-### Questions to Ask Progressively
-
-Don't overwhelm with all questions at once. Start with 2-3 most critical, follow up based on responses.
-
-**Context questions:**
-- What is the **format**? (duration, medium, sequencing)
-- What is the **function**? (inform, convince, motivate, report, open discussion)
-- Who is the **audience**? (expertise, expectations, heterogeneity)
-- What are **implicit constraints**? (things to avoid, political sensitivities, timing)
-
-**Content questions:**
-- What source material exists? (article, report, draft, research)
-- What does the user already think is important?
-- What outcomes does the user want?
-
-### Example Context Analysis (AMAP case)
-
-**Format**: 15min opening + 15min discussion at General Assembly  
-**Function**: Fill time during late arrivals, motivate members, give meaning  
-**Audience**: AMAP members, non-specialists, heterogeneous backgrounds  
-**Constraints**: Don't spoil AG agenda, don't create conflict  
-
-**Source**: 6-page article about climate and local agriculture  
-**User intuition**: "Climate is important for agriculture"  
-**Desired outcome**: Members feel good about their participation
-
----
-
-## Step 2: Identify Candidate Messages
-
-### Extraction Method
-
-From source content, identify 3-5 distinct possible messages. Each should be:
-- **Substantive** (not vague like "climate matters")
-- **Actionable** or attitude-shaping
-- **Complete** (self-contained idea)
-
-### Filtering Criteria
-
-A good candidate message:
-- Can be stated in one sentence
-- Is NOT a topic (❌ "climate and agriculture") 
-- IS a claim (✓ "local agriculture already aligns with climate solutions")
-- Differentiates this communication from others on the same topic
-
-### Example Candidate Messages (AMAP case)
-
-Source: 6-page article on climate, agriculture, AMAP practices
-
-**Candidate 1**: "Climate change is creating agricultural instability"  
-**Candidate 2**: "Science recommends diversified local agriculture for climate"  
-**Candidate 3**: "What we already do in AMAP aligns with climate recommendations"  
-**Candidate 4**: "AMAPs should do more on climate action"  
-**Candidate 5**: "Individual food choices have significant climate impact"
-
----
-
-## Step 3: Select Optimal Message
-
-### Strategic Filtering Questions
-
-For each candidate message, ask:
-
-**1. Function alignment**
-- Does this message serve the stated function?
-- *Example*: "AMAPs should do more" = critical → doesn't motivate → bad fit for opening
-
-**2. Audience appropriateness**
-- Will this resonate or alienate?
-- Does it match expertise level?
-- *Example*: "Instability metric analysis" = too technical for heterogeneous group
-
-**3. Constraint compatibility**
-- Does this violate implicit constraints?
-- *Example*: "You're not doing enough" = creates conflict → violates constraint
-
-**4. Differentiation**
-- What makes THIS message unique vs obvious/generic?
-- *Example*: "Climate important" = generic, everyone says this
-
-**5. Actionability**
-- Does this empower the audience?
-- *Example*: "What you do already works" = empowering ✓
-
-### Selection Decision Matrix
-
-| Message | Function ✓ | Audience ✓ | Constraints ✓ | Different ✓ | Actionable ✓ | **Score** |
-|---------|-----------|-----------|--------------|------------|-------------|-----------|
-| Candidate 1 | Problem framing | ✓ | ✓ | ✗ Generic | ✗ Passive | 2/5 |
-| Candidate 2 | Educational | ✓ | ✗ Preachy | ✓ | ✗ External | 2/5 |
-| **Candidate 3** | **Motivating** | **✓** | **✓** | **✓ Recognition** | **✓ Empowering** | **5/5** ✓ |
-| Candidate 4 | Critical | ✗ Demotivating | ✗ Conflict | ✓ | ✗ Guilt | 1/5 |
-| Candidate 5 | Educational | ✓ | ✓ | ✗ Generic | ~ Partial | 3/5 |
-
-**Selected message**: "What we already do in AMAP aligns with climate recommendations"
-
-**Why this works**:
-- Motivating without being preachy
-- Values existing practice (recognition)
-- Non-conflictual
-- Differentiates from typical climate doom messaging
-- Empowers audience ("you're already part of the solution")
-
----
-
-## Step 4: Validate Message
-
-### Validation Checks
-
-Before finalizing, verify:
-
-**1. One-sentence test**
-- Can you state the message in one clear sentence?
-- If it takes a paragraph → not focused enough
-
-**2. Substitution test**
-- If you replaced your communication with just this one sentence, would the purpose be served?
-- If no → wrong message
-
-**3. Memorability test**
-- Will the audience remember THIS specific message tomorrow?
-- Generic messages fail this test
-
-**4. Controversy test**
-- Is this message different enough that someone could disagree?
-- If it's so generic nobody could disagree → too vague
-
-**5. Source alignment test**
-- Does the source content actually support this message?
-- Check: don't claim source says X when it doesn't
-
-### Validation Example (AMAP case)
-
-**Message**: "What we already do in AMAP aligns with climate recommendations"
-
-✓ One-sentence test: Clear single sentence  
-✓ Substitution test: If AG opened with just this sentence, members would feel motivated  
-✓ Memorability test: Specific claim people can remember  
-✓ Controversy test: Some might disagree ("AMAPs should do MORE") → good sign  
-✓ Source alignment: Article explicitly demonstrates AMAP practices match IPCC recommendations
-
-**Status**: Validated ✓
-
----
-
-## Common Framing Patterns
-
-### Pattern 1: Recognition Message
-"What you're already doing works / matters / aligns"
-- **Use when**: Motivating existing practitioners
-- **Avoid when**: Trying to create urgency for change
-
-### Pattern 2: Gap Message  
-"There's a difference between X and Y that matters"
-- **Use when**: Revealing non-obvious distinction
-- **Avoid when**: Audience already knows the gap
-
-### Pattern 3: Reframing Message
-"The problem isn't X, it's Y"
-- **Use when**: Challenging conventional wisdom
-- **Avoid when**: Audience lacks context for reframe
-
-### Pattern 4: Opportunity Message
-"Here's what becomes possible if we Z"
-- **Use when**: Proposing action or change
-- **Avoid when**: Audience has no agency
-
-### Pattern 5: Evidence Message
-"Data shows [surprising finding]"
-- **Use when**: Technical audience, data-driven decision
-- **Avoid when**: Emotional or values-based context
-
----
-
-## Anti-Patterns to Avoid
-
-### ❌ Multiple Messages Disguised as One
-
-**Bad**: "Climate affects agriculture AND local food systems are resilient AND policy needs to change"
-
-This is 3 messages. Pick one.
-
-**Fix**: Choose which of the three is most strategic for this context.
-
----
-
-### ❌ Topic Masquerading as Message
-
-**Bad**: "My message is about sustainable agriculture"
-
-That's a topic, not a message.
-
-**Fix**: "Sustainable agriculture is already happening in X" (claim about the topic)
-
----
-
-### ❌ Generic Truism
-
-**Bad**: "Climate change is important and we should care"
-
-Everyone already agrees. Not distinctive.
-
-**Fix**: Add specificity: "Local food systems reduce climate impact more than dietary changes"
-
----
-
-### ❌ Message Nobody Can Act On
-
-**Bad**: "Global agricultural systems need transformation"
-
-Audience: 50 local AMAP members. They can't transform global systems.
-
-**Fix**: "Our local food choices contribute to agricultural transformation"
-
----
-
-### ❌ Burying the Message in Complexity
-
-**Bad**: "Given the multifaceted nature of climate impacts on agricultural systems, and considering socio-economic factors, we might consider that..."
-
-Get to the point.
-
-**Fix**: "Climate disrupts farming. Diverse local systems handle this better."
-
----
-
-## Outputs and Next Steps
-
-### Deliverable
-
-**Single sentence** expressing the framed message, plus:
-- 2-3 sentence rationale explaining strategic choice
-- Confirmation it serves stated purpose
-
-**Example output**:
-> **Message**: "What we already do in AMAP aligns with climate science recommendations"
->
-> **Rationale**: This message motivates without preaching, values existing practice, and differentiates from typical climate doom messaging. It serves the opening function by making members feel good about their participation while anchoring the AG in a meaningful context.
-
-### What Comes Next
-
-Depending on user's goal:
-- **Creating presentation**: Use text-to-slides skill for slide architecture
-- **Writing article**: Structure content around this message
-- **Giving speech**: Build narrative that leads to and reinforces this message
-- **Pitching idea**: Frame pitch deck around this central claim
-
----
-
-## Context-Specific Guidance
-
-### For Academic Presentations
-- Message = your paper's novel contribution, not the topic
-- Test: "What will they cite you for saying?"
-
-### For Business Pitches  
-- Message = your unique value proposition, not "we're great"
-- Test: "Why should they pick you vs alternatives?"
-
-### For Policy Briefs
-- Message = the specific action you want, not the problem description
-- Test: "What decision should this influence?"
-
-### For Motivational Talks
-- Message = the belief or behavior change you want, not inspiration generally
-- Test: "What will they think/do differently tomorrow?"
-
----
-
-## Troubleshooting
-
-**Problem**: User says "I have multiple important points"  
-**Solution**: They're not all equally important for THIS communication. Help prioritize. Other points can be supporting evidence for the main message.
-
-**Problem**: "My message is complicated, needs nuance"  
-**Solution**: The message itself must be simple. Nuance comes in the elaboration. Test: If they had 30 seconds, what's the ONE thing?
-
-**Problem**: Source content doesn't clearly support any focused message  
-**Solution**: Either: (a) message isn't in the content, need different source, or (b) help user see the implicit message in their own material through questioning.
-
-**Problem**: User's intuitive message is bad (generic/unmemorable)  
-**Solution**: Don't reject directly. Ask strategic questions: "Who else says this?" "What's different about YOUR take?" Guide them to specificity.
-
-**Problem**: Multiple stakeholders with different priorities  
-**Solution**: Messages can't satisfy everyone equally. Optimize for primary audience/purpose. Others are constraints, not co-equal goals.
+# Message framing
+
+The single upstream step for slides, abstracts and articles: settle **one
+claim** the piece exists to deliver, before any structure or prose. Downstream
+skills assume it is settled and send the author back here when it is not.
+
+**One piece, one message.** A message is a claim someone could dispute, stated
+in one sentence — not a topic, not a summary, not three findings joined by
+"and". Everything else in the piece is evidence for it or goes.
+
+## The pass, in order
+
+Run it sequentially, in one conversation with the author: each step narrows
+the next, and nothing here is worth delegating.
+
+1. **Context.** Ask two or three questions at a time, not a questionnaire:
+   format (talk length, abstract word limit, article type), function (inform,
+   convince, report, open a discussion), audience (expertise, what they already
+   believe), constraints (what must not be said or spoiled). Read the source
+   material first so the questions are ones only the author can answer.
+2. **Candidates.** Draft three to five candidate messages from the source, each
+   a one-sentence claim. Reject topics outright ("the history of X" names a
+   field, not a message).
+3. **Select.** Weigh each candidate on: does it serve the function, will this
+   audience accept the premise, does it break a constraint, would a peer
+   already say it (a truism is not a contribution), can the source carry it.
+   Recommend one, with the runner-up and why it lost; the author decides.
+   When the author's own intuitive message fails a test, ask "who else
+   says this?" before arguing against it.
+4. **Validate** the chosen sentence:
+   - *Dispute test*: someone competent could disagree. Nobody could → too vague.
+   - *Substitution test*: if the piece were replaced by this sentence, its
+     purpose would still be served.
+   - *Citation test* (abstracts, articles): it is what the piece would be cited
+     for saying.
+   - *Source test*: the material supports it as stated. A message the evidence
+     does not carry is reframed or dropped, never stretched.
+
+When the author has "several equally important points", the others become
+supporting evidence or another piece. When the material supports no focused
+claim, say so: the message is not there yet, and drafting will not find it.
+
+## Illustrative example (invented)
+
+*Not a real case; no figures.* An author has a working paper on how a policy
+term entered an international negotiation's vocabulary, and a 20-minute slot
+at a history of economic thought conference, audience of historians of
+economics, not climate specialists.
+
+- "The history of the term in negotiations" — a topic; rejected.
+- "Economists shaped the term" — a truism this audience expects; weak.
+- "The term was defined by accounting conventions before economists theorised
+  it" — disputable, differentiating, supported by the paper's archival
+  chapter. **Selected.**
+- "The negotiations failed because the term was vague" — the source does not
+  establish causation; fails the source test.
+
+## Output
+
+```
+Message: <one sentence>
+Rationale: <two or three sentences: why this claim, for this audience and function>
+Runner-up: <sentence> — <why it lost>
+Next: <downstream step>
+```
+
+## Downstream
+
+- Talk → `/slides` (slide titles build toward the message; doctrine in
+  `rules/doctype/slides.md`).
+- Conference abstract → `/conference-submission-prep`; a slot-limited abstract
+  over budget → `/cut-prose`.
+- Article → `rules/doctype/article.md` (the introduction states the message as
+  the contribution).
