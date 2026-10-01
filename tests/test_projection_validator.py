@@ -44,14 +44,12 @@ def _checkout(root: Path) -> Path:
         "adapters/pi/extensions/idh-guard.ts",
         "adapters/claude-code/bin/idh-hook",
         "scripts/bash-env.sh",
-        "CLAUDE.md",
+        "AGENTS.md",
         "RTK.md",
         "tickets/AGENTS.md",
         "settings.shared.json",
         "bin/idh",
         "adapters/lifecycle.py",
-        "systemd/idh-mammoth-audit.service",
-        "systemd/idh-mammoth-audit.timer",
     ):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(REPO / rel, root / rel)

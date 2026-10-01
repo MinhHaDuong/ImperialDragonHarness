@@ -2,11 +2,19 @@
 Title: dream: tombstone purge, rule-dedup audit and reasoned expected-utility ranking
 Created: 2026-10-01
 Author: HDMX-coding-agent
+Label: deferred
 
 --- log ---
 2026-10-01T06:08Z HDMX-coding-agent created
 
+2026-10-01T20:37Z MinhHaDuong codex note Deferred during v8 transition: do not implement legacy EU-ranking/purge machinery before the Markdown pilot. Reassess useful migration findings under 0913; no implementation or closure claimed.
 --- body ---
+## V8 transition hold
+
+The body below records a legacy-system finding. Its prescribed EU scoring and
+purge mechanics are not requirements of v8. Reassess under rollout 0913 after
+the pilot, preserving sources and avoiding a new ranking subsystem.
+
 ## Context
 
 A manual sweep of the climate-finance-het memory pool on 2026-10-01 (PR #1073

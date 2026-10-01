@@ -32,7 +32,7 @@
     },
     {
       "path": "~/.claude/CLAUDE.md",
-      "target": "$IDH_ROOT/CLAUDE.md",
+      "target": "$IDH_ROOT/AGENTS.md",
       "runtimes": [
         "claude"
       ],
@@ -72,7 +72,7 @@
       "target": "$IDH_ROOT/bin/mammoth-audit",
       "runtimes": [],
       "required": true,
-      "why": "the fixed ExecStart of systemd/idh-mammoth-audit.service"
+      "why": "manual audit launcher available on PATH"
     },
     {
       "path": "$IDH_ROOT/skills/email",

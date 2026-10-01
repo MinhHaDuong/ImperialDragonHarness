@@ -76,12 +76,11 @@ Follow the [installation guide](docs/idh-install-strategy.md) to register
 reviewed resources with each runtime. It distinguishes current additive
 registration from future native packaging and measured pilot support.
 
-The current `./bin/idh install` creates manifest links, edits the shell loader
-and enables an audit timer. It merges harness hooks into Claude/Codex settings
+The current `./bin/idh install` creates manifest links and edits the shell loader. It merges harness hooks into Claude/Codex settings
 and links individual resources, preserving unrelated profile content. No
 repository pointer or whole-profile alias is required. Same-name conflicts
 are refused. Review these host-wide actions: there is no dry run or runtime
-selector, and shell/timer integration is not opt-in. Tracker 0999 remains
+selector, and shell integration is not opt-in; scheduling is left to the host. Tracker 0999 remains
 open; 1003 owns registration and 1002 the separate memory-helper work.
 
 For an existing installation:

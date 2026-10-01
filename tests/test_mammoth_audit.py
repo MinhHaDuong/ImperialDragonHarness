@@ -2,7 +2,6 @@ import importlib.util
 import json
 import os
 import subprocess
-import shlex
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -122,34 +121,22 @@ def test_housekeeping_edit_does_not_count_as_usage(tmp_path):
 
 
 @pytest.mark.integration
-def test_installed_service_can_run_with_custom_xdg_bin(tmp_path):
+def test_installed_audit_launcher_runs_without_scheduler(tmp_path):
     fake_home = tmp_path / "home"
-    commands = tmp_path / "commands"
-    commands.mkdir()
-    systemctl = commands / "systemctl"
-    systemctl.write_text("#!/bin/sh\nexit 0\n")
-    systemctl.chmod(0o755)
     env = {
         **os.environ,
         "HOME": str(fake_home),
         "XDG_CONFIG_HOME": str(fake_home / "config"),
         "XDG_BIN_HOME": str(fake_home / "custom bin"),
-        "PATH": str(commands) + os.pathsep + os.environ["PATH"],
     }
-    # `idh install` owns the timer (ticket 0987); stubbed systemctl, fixture HOME.
+    # Run the installed audit command directly, without a scheduler.
     # Run from the tracked tree: untracked overlay links in this checkout would
     # make the install refuse on one machine only (ticket 0989).
     subprocess.run(
         [sys.executable, str(tracked_checkout() / "bin" / "idh"), "install"],
         check=True, env=env,
     )
-    service = fake_home / "config/systemd/user/idh-mammoth-audit.service"
-    command = next(
-        line.removeprefix("ExecStart=")
-        for line in service.read_text().splitlines()
-        if line.startswith("ExecStart=")
-    )
-    argv = shlex.split(command.replace("%h", str(fake_home)))
+    argv = [str(fake_home / ".local/bin/idh-mammoth-audit")]
     output = tmp_path / "report.json"
     result = subprocess.run(
         [

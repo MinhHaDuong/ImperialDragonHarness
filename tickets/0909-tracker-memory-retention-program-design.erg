@@ -1,12 +1,10 @@
 %erg 0.1
-Title: Tracker: implement the adopted memory design v7
+Title: Tracker: deliver repository Markdown memory v8
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0913
-Blocked-by: 0918
+Blocked-by: 0988
 Blocked-by: 0925
-Blocked-by: 0916
-Blocked-by: 0999
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -20,117 +18,27 @@ Blocked-by: 0999
 2026-09-16T16:21Z claude note round 1 review: section sign restored to the corpus spelling, and the blast-radius figure reconciled -- the named directories account for 94 of about 104, the rest sit in no single category. Siblings 0920 and 0923 still assert the store cannot leave ~/.claude, which this decision reverses; they need a cross-reference before either is picked up
 2026-09-28T05:49Z claude The relocation out of ~/.claude — the remaining half of the disjoint-roots row — is now ticketed as 0978, child of this tracker.
 2026-10-01T19:03Z MinhHaDuong codex note Author decision: the reference clone is ~/.agents and the repository must remain portable; 0999 replaces the ~/.idh relocation premise.
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 --- body ---
 
 ## Context
 
-Design v6 was adopted by PR #903. The former v4 train is superseded by the
-[implementation plan](../docs/2026-09-11-memory-implementation-plan.md).
-This tracker closes only after the core implementation union is reviewed.
-Its dependencies deliberately keep it out of the ready queue until then.
+Intégrer la convention, le pilote, capture à roar, rêve hebdomadaire, preuves sur quatre runtimes, cristallisation et migration progressive. V8 remplace v7 par décision de l’auteur du 2026-10-01 ; le plan v8 est la carte de livraison.
 
-The architecture is one internal Python library with thin CLI/adapters,
-project-owned bodies plus a bounded shared snapshot, UUID lifecycle and
-orientation/recent/task delivery. Rediscovery is only an opportunity for
-generalisation; keep particulars unless explicitly withdrawn. Canonical
-decisions stay in existing records. One ownership contract and optimistic Git
-concurrency replace runtime modes and global locks.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Current location decision, 2026-10-01: portable clone, default `~/.agents`
+## Actions et vérification
 
-The harness project's memory and the bounded shared snapshot stay inside the
-harness repository, separated from each other. The reference clone lives at
-`~/.agents`, but consumers derive the checkout from their loaded file or accept
-an explicit root; the literal path is not part of the memory contract.
-
-Runtime-native memory and configuration roots remain outside the canonical
-store and are adapter destinations only. The disjoint-roots fixture therefore
-compares the resolved checkout with each adapter's declared native root rather
-than hard-coding `~/.agents`, `~/.idh` or `~/.claude`. Ticket 0999 owns this
-portable installation contract. The older `~/.idh` ruling and its relocation
-tracker 0978 are superseded.
-
-Historical probes from 2026-09-16 still establish that Claude Code follows a
-symlinked `rules/` directory and `CLAUDE.md`; they are evidence about adapter
-capability, not a reason to give the repository a second canonical pathname.
-
-Those three probes were run on 2026-09-16, each with a positive control in a
-disposable `HOME` before the symlinked case, and the apparatus itself smoke-
-tested before either. Results:
-
-| Layer | Control (real file) | Test (symlink) |
-|---|---|---|
-| `rules/` | codeword returned | codeword returned |
-| `CLAUDE.md` | codeword returned | codeword returned |
-| `projects/<slug>/memory/` | **control did not fire** | control did not fire |
-
-**Two of three clear the relocation.** The runtime reads a symlinked `rules/`
-directory and a symlinked `CLAUDE.md` and loads both into the session. Neither
-constrains the layout.
-
-**The third is an invalid probe, not a negative result.** The control placed a
-real `MEMORY.md` at `projects/<slug>/memory/` in a disposable home and the
-codeword did not come back, so the probe cannot distinguish "the symlink is not
-followed" from "this is not the channel memory arrives through". Recorded as
-unknown. The cause is not established; the disposable home carried no
-`settings.json` and no project context, either of which may gate the load. IDH
-injects nothing here -- no hook in `settings.shared.json` or `hooks/` mentions
-memory -- so the loader is the runtime's own.
-
-The experiment that would settle it: repeat the control inside a real project
-checkout with the harness's own settings present, changing one variable at a
-time until the control fires, and only then introduce the symlink. Until that
-control fires, this row stays open and the relocation should not assume either
-answer for the memory layer.
-
-## Relevant files
-
-- `docs/2026-09-10-dragon-memory-design.md` — adopted v7, not edited by this plan
-- `docs/2026-09-11-memory-implementation-plan.md` — exact ticket/dependency map
-- Tickets 0908, 0910–0919 and 0920–0925 — implementation and optional experiments
-
-## Actions
-
-1. Foundation: 0911 and 0917; then legacy compatibility 0908 and admission 0915.
-2. Pilot: 0920 → 0910 → 0921 → 0922 → 0923. First acceptance is one project,
-   a small shared snapshot and one runtime in a disposable offline clone.
-3. Expand through 0924 and 0918 → 0913, with measured readiness before broad activation/retirement. In parallel, develop
-   manual editorial review through 0923 → 0916 and independent harvesting through 0923 → 0925. Base editorial workflows can use manual judgments; model-assisted automation is optional.
-4. Keep 0912 (automated candidate discovery), 0914 (predicate extensions) and 0919 (quality annotation experiment)
-   deferred and outside the core closure gate. Reactivate only on evidence.
-5. Rerun the relevant 0918 behavioural scenarios on the completed union, adding accepted generalisation/local-exception and harvested-then-amended-procedure cases once 0916/0925 exist. Check their predeclared margins; early pilot results alone cannot certify these later features.
-6. Review the merged union, actual adapter capabilities, migration coverage and
-   evaluation results. Record any authorised scope changes; do not quietly omit
-   a core child or pretend optional work was implemented.
-
-## Test
-
-The integration assessment must exercise active/inactive identity, generalisation
-without source retirement, fixed available snapshots, G/C loading, recent writes,
-lexical recall, canonical-owner routing, native-writer isolation and optimistic
-conflicts. Behavioural judgments use repeated scenarios, not deterministic
-semantic assertions. All substantive fixtures need a known failing control.
-
-## Verification
-
-- [ ] Every core child has a merged completion or an explicitly recorded scope decision.
-- [ ] Applicable checks pass on the union; actual runtime smoke evidence is read.
-- [ ] First-runtime evaluation and remaining-runtime capability declarations agree.
-- [ ] No stale ticket demands mandatory residency, automatic promotion or a new ledger.
-
-## Invariants
-
-- This planning amendment closes no implementation work and writes no runtime code.
-- Existing IDs and log entries remain; historical scope is available in Git.
-- Decisions are not made by memory scores; shared semantic changes are reviewed.
-- Optional experiments do not block a useful or complete baseline.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Foundation, portable pilot, all target adapters, rollout and editorial/harvesting
-      work are integrated and reviewed together.
-- [ ] Evaluation records behaviour and cost, including limitations; budget proposals
-      are not silently promoted to policy.
-- [ ] The implementation plan and v7 accurately describe the delivered contract, or
-      any deviation is explicitly adopted through the normal decision process.
-- [ ] Final integration review is recorded and only then this tracker is closed.
+- [ ] Tous les livrables actifs du plan ont une réalisation vérifiée ou une décision de périmètre explicite.
+- [ ] Résultat intégré vérifié : sources, corrections, rappels récents, connaissances retirées et procédures amendées.
+- [ ] 0988 prouve conservation, intégration et mise à jour du harness sans pull bloqué par la capture.
+- [ ] Évaluation relue, coûts et limites explicites ; conception et plan décrivent le livré.
+- [ ] Revue d’intégration enregistrée avant clôture ; cette réécriture ne clôt rien.

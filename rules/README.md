@@ -38,7 +38,6 @@ it was 942 words while shipping full copies of what it summarised.
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
 | [edm.md](./edm.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
-| [systemd-units.md](./systemd-units.md) | `**/*.service`, `**/*.timer`, `**/systemd/**` | What PID 1 reads at boot lives on the root filesystem: install units as real copies, never symlinks into a late-mounted volume; `is-enabled` lies after a `daemon-reload`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
 Not a rules file, nor loaded here: `tickets/AGENTS.md` — `@`-imported by the

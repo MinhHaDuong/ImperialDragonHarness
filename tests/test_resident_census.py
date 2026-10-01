@@ -2,7 +2,7 @@
 
 ``test_rules_resident_budget.py`` capped the auto-loaded rule bodies. Measured
 against ``/context`` on 2026-09-10, that was 54% of what a session actually
-carried: ``CLAUDE.md`` and its ``@`` imports, the file the SessionStart hook
+carried: ``AGENTS.md`` and its ``@`` imports, the file the SessionStart hook
 prints, the project memory index, and the resident frontmatter of every skill
 and subagent were all outside it. A ratchet on the watched half is an
 invitation for the growth to happen in the other half.
@@ -40,7 +40,7 @@ BUDGETS = {
     # the erg-shipped asset, 8005 chars where the asset is 2356. Restored
     # byte-for-byte, the chain is 4041. At 10500 this gate could no longer
     # fail on anything the chain could plausibly do.
-    "import": 4300,  # CLAUDE.md + tickets/AGENTS.md + RTK.md
+    "import": 4300,  # canonical harness instructions and supporting references
     # Both lowered 2026-09-10 by the title-only index pass: the index line is a
     # title and a link, the trailing hook having been a third copy of a sentence
     # the body already carries as `name:` and `description:`. 47 indexes went

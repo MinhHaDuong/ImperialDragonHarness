@@ -25,7 +25,6 @@ ACTIVE_ROOTS = (
     "rules",
     "scripts",
     "skills",
-    "systemd",
 )
 
 
@@ -119,6 +118,7 @@ def tracked_active_files(repo: Path) -> list[Path]:
         str(repo),
         "ls-files",
         *ACTIVE_ROOTS,
+        "AGENTS.md",
         "CLAUDE.md",
         "settings.shared.json",
     ]

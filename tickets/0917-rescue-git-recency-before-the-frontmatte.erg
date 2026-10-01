@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Preserve a pre-migration baseline and qualified memory dates
+Title: Inventory legacy memory sources and preserve qualified provenance
 Created: 2026-09-10
 Author: claude
 
@@ -7,43 +7,26 @@ Author: claude
 2026-09-10T16:34Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
-
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 --- body ---
 
 ## Context
 
-Keep this evidence preparation before the migration, but remove the false claim that one new commit destroys retained Git history. A later log query can start from the preserved pre-migration revision. First Git appearance is not necessarily real creation, and last touch is not necessarily semantic freshness.
+Inventorier les notes existantes du harness et les sources natives disponibles pour un projet pilote. Garder première apparition Git distincte de création réelle et modification mécanique distincte de fraîcheur sémantique.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Relevant files
+## Actions et vérification
 
-`memory/.provenance.json`; existing `projects/*/memory/` and `memory/` bodies; Git history at the captured baseline.
-
-## Actions
-
-1. Record the baseline commit and per-body original path/blob identity before rewriting or moving files.
-2. Extract first observable Git appearance and last relevant touch, recording meaning and uncertainty. Preserve existing first_seen/last_confirmed separately.
-3. List undatable bodies, imports and renames requiring qualification. Specify how shallow consumers use exported provenance without needing full history.
-
-## Test
-
-Create a fixture repository with initial content, later edit and mechanical migration. Verify dates can still be queried at the baseline after migration; distinguish absent history from zero age.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Baseline revision and mapping are durable, documented and reproducible.
-- [ ] Dates retain their actual meaning; uncertain or absent dates are reported.
-- [ ] No body text is rewritten and no claim of irreversible history loss remains.
+- [ ] Inventaire avec origine, audience, révision et incertitudes.
+- [ ] Sources et notes inactives conservées ; aucun import aveugle de secrets.
+- [ ] Les notes natives interprétées ne sont pas converties en épisodes factuels inventés.
+- [ ] Aucune migration générale ni réécriture linguistique dans cet inventaire.

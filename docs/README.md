@@ -4,8 +4,8 @@ Reference materials and review records for the Imperial Dragon Harness.
 
 **Dragon memory design — the authoritative document is
 [`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),
-currently v7.** Everything else in that family is a frozen record: the
-predecessor v6, the reviews, the provider study notes and the measurement
+currently v8.** Everything else in that family is a frozen record: the
+predecessors v6 and v7, the reviews, the provider study notes and the measurement
 notes. Drafts v0 through v5 were retired from the tree; see *Superseded
 drafts* below.
 
@@ -26,11 +26,13 @@ drafts* below.
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
 | `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
-| `2026-09-11-memory-implementation-plan.md` | V6 implementation train: dependencies, pilot milestone, rollout and deferred experiments |
+| `2026-09-11-memory-implementation-plan.md` | V8 delivery plan: Markdown pilot, factual capture, weekly dreaming and four-runtime evidence |
 | `2026-09-24-rules-coherence-audit.md` | Harness ↔ project directive coherence audit of eleven repos: findings, in-flight PR check, ranked preconisations (tracker 0956) |
-| `2026-09-10-dragon-memory-design.md` | **Authoritative** design for the harness memory system — always the current version, v7 today |
-| `2026-09-10-dragon-memory-design-v6.md` | Frozen v6 — the predecessor the open memory tickets (0908–0925) were written against |
-| `2026-09-10-dragon-memory-design-nomenclature.md` | Settled nomenclature for the memory system — the vocabulary v7 and the open tickets use |
+| `2026-09-10-dragon-memory-design.md` | **Authoritative** design for the harness memory system — always the current version, v8 today |
+| `2026-09-10-dragon-memory-design-v7.md` | Frozen v7 before the Markdown-first v8 |
+| `2026-09-11-memory-implementation-plan-v7.md` | Frozen v7 implementation train |
+| `2026-09-10-dragon-memory-design-v6.md` | Frozen v6 — historical predecessor |
+| `2026-09-10-dragon-memory-design-nomenclature.md` | Historical v7 nomenclature; the hoard CLI is superseded by v8 |
 | `2026-09-10-dragon-memory-design-review-fable-acceptance.md` | **Non-normative** acceptance review of v6 — accept with four §12.1 conditions, all closed by v7 |
 | `2026-09-10-portable-agent-memory-calibration.md` | Calibration note for the memory tier: what the literature fixes, what it declines to fix, and the local measurement to run |
 | `2026-09-10-memoire-agent-fable.md` | **Non-normative study report** by Fable — agent memory: state of the art and a proposal for IDH, suggested and not adopted (French) |

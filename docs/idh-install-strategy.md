@@ -43,7 +43,7 @@ from a directory to itself.
 It checks conflicts and versions before linking reviewed skills.
 
 The bare `./bin/idh install` is all-runtime host setup. It creates
-manifest links, edits `~/.bashrc` and enables a timer; it has no dry run or
+manifest links and edits `~/.bashrc`; it has no dry run or
 runtime selector. It merges required hooks into existing Claude/Codex
 configuration and links individual rules, skills, instructions, launchers and
 the Pi extension without replacing profile directories or requiring a
@@ -60,7 +60,7 @@ receipt-owned links are refreshed and foreign replacements are refused.
 1. Finish the separate dream/memory-helper contract (1002).
 2. Preflight selected-runtime registration and list exact actions and conflicts.
 3. Package reviewed resources through native runtime mechanisms.
-4. Keep shell integration and timers separate and opt-in.
+4. Keep shell integration opt-in; leave scheduling to the host.
 5. Maintain arbitrary-location, relocation and runtime smoke evidence;
    registration fixtures do not certify every discovered skill's behavior.
 

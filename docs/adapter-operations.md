@@ -18,8 +18,8 @@ IDH_ROOT="$(pwd -P)"
 Host installation registers individual rules, skills, instructions and
 launchers, merges required hooks into Claude/Codex configuration, and links
 the Pi guard extension. Runtime profiles remain independently owned.
-It also edits the shell loader and enables an audit timer: review these
-host-wide actions before running it. There is no dry run or runtime selector.
+It also edits the shell loader: review these host-wide actions before
+running it. Scheduling is left to the host. There is no dry run or runtime selector.
 Same-name resource conflicts are refused; unrelated content is preserved.
 
 The measured runtime pilot covers perch, healthcheck and the dirty-reset
@@ -95,14 +95,11 @@ Other host integration is removed explicitly:
 - Delete only the marked Imperial Dragon Harness loader block in `~/.bashrc`.
 - Inspect installer backups before discarding them; they can contain private
   shell configuration.
-- Disable `idh-mammoth-audit.timer` with
-  `systemctl --user disable --now idh-mammoth-audit.timer`, then remove only
-  its service/timer files under the user systemd configuration.
 
 ## Audit and recovery
 
 `./bin/mammoth-audit` reports candidates without removing skills.
-Inspect its timer with `systemctl --user list-timers idh-mammoth-audit.timer`.
+The harness installs no scheduler; arrange recurring runs externally.
 An interrupted install can leave partial registration; rerun install and
 check from the current checkout. Only unchanged receipt-owned links are
 refreshed, and runtime configuration changes are backed up.

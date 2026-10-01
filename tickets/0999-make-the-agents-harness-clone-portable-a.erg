@@ -73,7 +73,7 @@ No real runtime profile is deployed and no memory data is migrated here.
 2. Complete child 1002 in the memory session without silently deciding 0988's
    ownership policy. Store reconciliation remains 0934.
 3. Review integration across both children before closing this parent.
-4. Native packaging, runtime selection/dry-run and opt-in shell/timer setup
+4. Native packaging, runtime selection/dry-run and opt-in shell integration
    remain follow-on design work, not acceptance claims for child 1003.
 
 ## Actions
