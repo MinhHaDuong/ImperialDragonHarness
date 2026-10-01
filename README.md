@@ -152,7 +152,6 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 
 | Command | Description |
 |---------|-------------|
-| `/applied-econ-writing` | Structure and draft applied economics papers (environmental, development) following Shapiro, Head, Bellemare and J-PAL. |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/conference-submission-prep` | Prepare an SSH conference submission: CFP analysis, format, fit, anonymization, reviewer expectations. |
