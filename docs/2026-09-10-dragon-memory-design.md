@@ -178,7 +178,16 @@ DREAM a trois fonctions principales sur les thèmes consolidés et l’index :
   en conservant sources, conditions, exceptions et contradictions non résolues.
 - **Refreshing** : actualiser le contexte devenu ancien mais toujours pertinent.
 
-Le rapport trace ces opérations. Le journal brut reste append-only ; supprimer
+DREAM porte une attention particulière à la cohérence des mémoires référencées
+par l’index, entre elles et avec les règles applicables du harnais. Il compare
+les affirmations, périmètres, conditions et exceptions ; une mémoire ne peut
+supplanter une règle. Il corrige ou retire les affirmations consolidées en
+conflit lorsque les sources et l’autorité sont claires. Sinon, il signale
+explicitement la contradiction sans la présenter comme un conseil établi.
+Les règles sont lues, jamais modifiées ; les expériences factuelles restent
+conservées même lorsqu’elles relatent une dérogation.
+
+Le rapport trace ces opérations et les contradictions restantes. Le journal brut reste append-only ; supprimer
 une affirmation consolidée ne supprime jamais l’expérience source. DREAM vérifie
 la limite de 100 lignes de l’index avant commit.
 
@@ -258,7 +267,7 @@ public n’est pas un espace privé. Le clone public reste utilisable avec les
 connaissances publiques, sans accès au compagnon.
 
 Les sources historiques restent accessibles sans runtime ni installation du
-harness. La semaine de retard du rêve n’empêche pas une recherche dans le journal.
+harness. L’attente du prochain rêve n’empêche pas une recherche dans le journal.
 Une interruption du rêve conserve les commits utiles et rend l’échec visible
 au prochain contrôle ; un job qui n’a pas pu lire ses sources ne rapporte pas
 un passage réussi sans changement.

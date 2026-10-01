@@ -28,6 +28,21 @@ The raw journal stays append-only. Pruning a consolidated claim never deletes
 its source experience. `memory/MEMORY.md` has **at most 100 lines**, counting
 headings and blank lines. Keep details in topics rather than expanding the index.
 
+## Coherence across indexed memories and harness rules
+
+Pay particular attention to coherence among all memories referenced by the
+index, not just duplicate wording. Compare their claims, scope, conditions and
+exceptions with each other and with applicable harness rules, read as authority
+sources. Refreshing, merging or pruning must not leave contradictory current
+advice in another indexed topic.
+
+A memory cannot override a harness rule. Correct or withdraw conflicting
+consolidated claims when the evidence and applicable rule are clear. Preserve
+the factual episode and explain the change in the report. If scope, authority or
+evidence is ambiguous, mark the conflict explicitly and avoid presenting either
+claim as settled advice. Reading harness rules never authorizes editing them.
+Do not infer a new rule from a repeated experience or manufacture agreement.
+
 ## Procedure
 
 1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted dream reports
@@ -44,7 +59,8 @@ headings and blank lines. Keep details in topics rather than expanding the index
    unresolved questions, runtime/model and prompt revision. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
    the project's audience. A fingerprint alone cannot preserve a mutable note.
-5. Check links, provenance, the diff and the index line count. Reduce the
+5. Check coherence across all indexed memories and applicable harness rules,
+   links, provenance, the diff and the index line count. Reduce the
    index if it exceeds 100 lines before committing. Commit only memory outputs on the
    project branch and submit a PR following its integration policy. Do not
    merge automatically. Preserve and report the branch if submission fails.

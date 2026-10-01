@@ -21,6 +21,9 @@ Journal entries remain append-only. Add a dated correction rather than changing
 or deleting an experience. Do not apply destructive TTLs to the journal or turn
 list caps into rule promotions. Never store credentials.
 
+Check that `memory/MEMORY.md` has at most 100 lines, including headings and
+blank lines; move detail into topics before committing if needed.
+
 Commit only the reviewed memory changes on a project branch and follow its
 integration policy. Preserve unrelated changes and report failed writes or
 commits. During roar, use its factual capture step instead of this sweep; do

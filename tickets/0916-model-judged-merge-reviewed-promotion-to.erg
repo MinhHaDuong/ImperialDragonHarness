@@ -14,6 +14,7 @@ Blocked-by: 0920
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: retain the audience-appropriate text of native notes actually used in a report or versioned appendix; fingerprints alone are not retrievable sources.
 2026-10-01T22:00Z codex note Dream consolidates project memory only; no rule proposals or harness writes.
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
+2026-10-01T21:28Z codex note Author requires coherence among indexed memories and with applicable harness rules, without modifying those rules.
 --- body ---
 
 ## Context
@@ -42,3 +43,5 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 - [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
 - [ ] Pruning retire les informations périmées/non pertinentes/remplacées ; merging réunit les doublons ; refreshing actualise le contexte encore pertinent, sources et exceptions conservées.
+
+- [ ] Cohérence vérifiée entre toutes les mémoires indexées et les règles applicables du harnais ; conflits corrigés ou signalés, règles et journal brut inchangés.
