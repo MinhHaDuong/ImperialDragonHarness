@@ -5,7 +5,7 @@ The reference clone is `~/.agents`; runtime profiles remain independently owned.
 
 The [installation strategy](../docs/idh-install-strategy.md) makes native,
 additive registration the target. The commands below describe the current
-link-based pilot and do not constitute a fresh install recipe.
+skills-only pilot. Host registration is described in the installation guide.
 
 - `claude-code/` — the harness's hook wiring as a Claude Code plugin (ticket
   0887). Its own README is next to it.
@@ -167,7 +167,7 @@ turn enforcement into advice:
 - **Codex**: `codex/hooks.json` — Codex's PreToolUse payload carries
   `tool_input.command` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical. Install:
-  symlink to `~/.codex/hooks.json`, then review and trust once via
+  run `bin/idh install` to merge into `~/.codex/hooks.json`, then review and trust via
   `/hooks`. **Trust is part of the boundary**: Codex skips non-managed
   hooks until their exact definition is trusted (hash-recorded), so an
   untrusted guard silently does not run — Git-mutating Codex use without

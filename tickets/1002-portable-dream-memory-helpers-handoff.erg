@@ -1,0 +1,48 @@
+%erg 0.1
+Title: Portable dream memory helpers handoff
+Created: 2026-10-01
+Author: codex
+
+--- log ---
+2026-10-01T20:45Z codex created Child of 0999 extracted from PR 1091 by author direction; owned by the parallel memory workstream.
+
+--- body ---
+## Context
+Preserve the dream/provenance changes originally at PR 1091 tip 6014c42f
+without merging them as runtime-registration work. The other session owns
+memory design. No real memory data is moved, reconciled or synchronized here.
+The handoff branch is handoff-portable-memory, commit 5ff0a2e5; its changes
+are unapproved. The other session can cherry-pick that commit or reuse the
+patch; it contains only the five extracted helper/procedure/test files.
+Do not merge that branch without resolving the findings below.
+
+## Relevant files
+skills/dream/SKILL.md, skills/dream/commit.py, skills/dream/provenance.py,
+scripts/check-primary-checkout.sh, tests/test_dream.py.
+
+## Findings to resolve
+commit.py selects the resolved Git checkout but stages native
+$HOME/.claude/projects/<project>/memory outside that repository: a separate
+profile fixture exits 1 with "outside repository" after dream has edited
+memory. The existing test uses the superseded profile-as-checkout layout.
+read-index.py still reads native memory; merely staging checkout/projects
+would commit stale data unless those edits are reconciled by an approved
+versioning contract. Do not silently choose 0988's ownership option.
+The provenance usage matcher misses .agents/memory and arbitrary root names.
+Root isolation itself is verified by a red/green projected-script fixture.
+
+## Test
+Use independent native and checkout-owned stores in disposable HOME.
+Exercise every provenance command through a projected script and explicit
+root; assert the primary store is unchanged. Exercise dream's complete
+read/edit/commit or fail-before-mutation contract, comparing note bytes.
+
+## Exit criteria
+- [ ] Every provenance command accepts an explicit root and defaults to its own real checkout, never the primary alias.
+- [ ] Dream's documented versioning contract works with independently owned runtime profiles, or rejects unsupported storage before any mutation; no ownership policy or data migration is implied.
+- [ ] Read counts recognize the selected portable harness tier and retain native/project controls.
+- [ ] Independent-profile commit and isolation regression tests pass with no lost or stale memory notes.
+- [ ] Full make check passes; helper documentation accurately states supported storage and remaining limitations.
+
+0934 store reconciliation and 0988 ownership/sync remain separate. No
+Blocked-by dependency on the parent tracker or runtime child is asserted.

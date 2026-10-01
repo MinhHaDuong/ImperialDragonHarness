@@ -194,7 +194,7 @@ def test_skill_md_has_push_or_restore_contract():
     # fine" followed by an unconditional probe) must stay removed.
     assert "leave the checkout on the branch is fine" not in content
     restore = content.find("switch main")
-    probe = content.find('"$IDH_ROOT/scripts/check-primary-checkout.sh" "$IDH_ROOT"')
+    probe = content.find('"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.idh')
     assert restore != -1, "exit does not restore the primary to main"
     assert probe != -1, "exit does not confirm with the checkout probe"
     assert restore < probe, "exit must switch back to main BEFORE running the probe"
@@ -294,7 +294,7 @@ def test_commit_leading_dash_project(tmp_path):
         ("commit.gpgsign", "false"),
     ):
         subprocess.run(["git", "-C", str(idh), "config", k, v], capture_output=True)
-    result = _run(COMMIT_PY, "commit", "--root", str(idh), project, "5", "3", home=home)
+    result = _run(COMMIT_PY, "commit", project, "5", "3", home=home)
     assert result.returncode == 0, result.stderr
     log = subprocess.run(
         ["git", "-C", str(idh), "log", "--format=%s", "-1"],
@@ -329,7 +329,7 @@ def _run_provenance(*args, home, extra_env=None):
     if extra_env:
         env.update(extra_env)
     return subprocess.run(
-        [sys.executable, str(PROVENANCE_PY), *args[:1], *([] if args == ("--help",) else ["--root", str(home / ".claude")]), *args[1:]],
+        [sys.executable, str(PROVENANCE_PY), *args],
         capture_output=True,
         text=True,
         env=env,
@@ -855,30 +855,3 @@ def test_provenance_candidates_survives_wrong_shape_alias_table(
     assert "alias" in result.stderr.lower()  # warned, not silent
     slugs = [c["slug"] for c in json.loads(result.stdout)]
     assert slugs == ["feedback_vim"]  # gate still works, aliases treated empty
-
-
-@pytest.mark.integration
-def test_provenance_default_follows_projected_script_not_home_pointer(tmp_path):
-    import shutil
-
-    primary = tmp_path / "primary"
-    primary.mkdir()
-    (primary / "memory").mkdir()
-    store = primary / "memory/.provenance.json"
-    store.write_text('{"entries": {}}')
-    home = tmp_path / "home"
-    home.mkdir()
-    (home / ".idh").symlink_to(primary)
-    other = tmp_path / "arbitrary worktree"
-    script = other / "skills/dream/provenance.py"
-    script.parent.mkdir(parents=True)
-    shutil.copy2(PROVENANCE_PY, script)
-    projected = home / "projected-provenance.py"
-    projected.symlink_to(script)
-    before = store.read_bytes()
-    result = subprocess.run([sys.executable, str(projected), "record", "isolated", "-project"],
-                            env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
-                            capture_output=True, text=True)
-    assert result.returncode == 0, result.stderr
-    assert store.read_bytes() == before, "wrote into the primary checkout"
-    assert "isolated" in json.loads((other / "memory/.provenance.json").read_text())["entries"]

@@ -64,11 +64,6 @@ def _commands():
     ]
 
 
-def test_no_command_names_the_home_path_the_adapter_exists_to_remove():
-    assert [c for c in _commands() if "$HOME/.claude" in c] == []
-    # Nor the ~/.idh pointer (ticket 0982): the launcher resolves its own root.
-    assert [c for c in _commands() if "$HOME/.idh" in c] == []
-
 
 def test_every_launched_script_exists():
     missing = []

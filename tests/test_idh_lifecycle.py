@@ -148,22 +148,6 @@ def test_loader_is_appended_when_absent(machine):
     assert bashrc.read_text() == "alias ll='ls -l'\n" + LOADER
 
 
-@pytest.mark.parametrize(
-    "legacy",
-    [LOADER.split("\n", 1)[1].rsplit("# <<<", 1)[0],  # pre-marker block
-     LOADER.rsplit("# <<<", 1)[0]],  # begin marker, end marker lost
-    ids=["pre-marker", "no-end-marker"],
-)
-def test_legacy_loader_is_refused_not_guessed(machine, legacy):
-    home, idh = machine["home"], machine["idh"]
-    bashrc = home / ".bashrc"
-    bashrc.write_text(legacy + "alias zotero=z\n")
-    r = idh("install")
-    assert r.returncode == 1
-    assert "remove the old harness loader block" in r.stderr
-    assert bashrc.read_text() == legacy + "alias zotero=z\n"
-
-
 def test_status_reports_installed_vs_declared(machine):
     home, idh = machine["home"], machine["idh"]
     assert idh("install").returncode == 0
@@ -476,7 +460,6 @@ def test_independent_profiles_survive_install_and_relocation(tmp_path, location)
     result = run(sys.executable, str(checkout / "bin/idh"), "install")
     assert result.returncode == 0, result.stdout + result.stderr
     assert native.is_dir() and not native.is_symlink()
-    assert not (home / ".idh").exists()
     merged = json.loads(settings.read_text())
     assert merged["theme"] == "mine" and merged["env"]["USER_FLAG"] == "kept"
     assert original["hooks"]["PreToolUse"][0] in merged["hooks"]["PreToolUse"]
@@ -512,53 +495,3 @@ def test_relocation_does_not_replace_a_modified_registered_link(machine):
     result = idh("install")
     assert result.returncode == 1 and "FOREIGN:" in result.stderr
     assert link.resolve() == foreign
-
-
-def test_legacy_template_symlink_is_owned_and_relocated(machine, tmp_path):
-    import shutil
-
-    checkout = tmp_path / "old checkout"
-    shutil.copytree(REPO, checkout, symlinks=True)
-    template = checkout / "adapters/codex/hooks.json"
-    before = template.read_bytes()
-    hooks = machine["home"] / ".codex/hooks.json"
-    hooks.parent.mkdir()
-    hooks.symlink_to(template)
-
-    def install(root):
-        return subprocess.run([sys.executable, str(root / "bin/idh"), "install"],
-                              env=machine["env"], capture_output=True, text=True)
-
-    result = install(checkout)
-    assert result.returncode == 0, result.stderr
-    moved = tmp_path / "moved checkout"
-    checkout.rename(moved)
-    result = install(moved)
-    assert result.returncode == 0, result.stderr
-    assert hooks.resolve() == moved / "adapters/codex/hooks.json"
-    assert hooks.read_bytes() == before, "registration edited its tracked template"
-
-
-def test_legacy_settings_migrate_once_without_removing_custom_hooks(machine):
-    home = machine["home"]
-    source = Path(__file__).resolve().parents[1]
-    old = json.loads(subprocess.check_output(["git", "-C", str(source), "show", "HEAD:settings.shared.json"]))
-    custom = {"matcher": "Bash", "hooks": [{"type": "command", "command": "echo USER-HOOK"}]}
-    old["hooks"]["PreToolUse"].append(custom)
-    old["env"] = {"BASH_ENV": str(home / ".idh/scripts/bash-env.sh"),
-                  "UV_ENV_FILE": str(home / ".idh/.env"), "USER_FLAG": "preserved"}
-    settings = home / ".claude/settings.json"
-    settings.parent.mkdir()
-    settings.write_text(json.dumps(old))
-    result = machine["idh"]("install")
-    assert result.returncode == 0, result.stderr
-    new = json.loads(settings.read_text())
-    assert custom in new["hooks"]["PreToolUse"]
-    assert new["env"]["USER_FLAG"] == "preserved"
-    assert "UV_ENV_FILE" not in new["env"]
-    assert new["env"]["BASH_ENV"] == str(home / ".local/lib/idh/bash-env.sh")
-    assert len(new["hooks"]["PreToolUse"]) == len(old["hooks"]["PreToolUse"])
-    assert "$HOME/.idh/scripts/" not in json.dumps(new["hooks"])
-    before = settings.read_bytes()
-    assert machine["idh"]("install").returncode == 0
-    assert settings.read_bytes() == before

@@ -1,164 +1,118 @@
 # Adapter operations runbook
 
-Operator commands for the IDH pilot surface on Claude Code, Codex and Pi
-(tickets 0802, 0803, 0809, 0810). Mistral Vibe is a probed fourth target
-with no porting slice yet; nothing here claims Vibe behavior.
-
-Start from the harness checkout and retain its absolute path for commands
-that run after changing into a test repository:
+Run from the harness checkout and retain its absolute path for commands
+that change directory:
 
 ```bash
 IDH_ROOT="$(pwd -P)"
 ```
 
-The pilot surface is four links, in two planes:
-
-| Plane | Paths | Managed by |
-|---|---|---|
-| skills | `~/.agents/skills/{perch,healthcheck}` (+ a Claude Code projection when the repo is not `~/.claude`) | `bin/idh` |
-| wirings | `~/.codex/hooks.json`, `~/.pi/agent/extensions/idh-guard.ts` | `idh install` (from `adapters/projections.json`) |
-
-Every one of these paths is also declared in `adapters/projections.json`.
-The bare `idh install` also creates launcher links, the shell loader and an
-audit timer. Its manifest still expects the Claude profile to resolve to the
-checkout and requires the legacy `~/.idh` pointer. Review it before applying;
-portable registration is tracked in 0999.
-Before each interactive launch of `claude`, `codex` or `pi`, the shell wrappers
-(`scripts/shell-init.sh`, loaded by the `scripts/bashrc-loader.sh` block in
-`~/.bashrc`) run `scripts/validate-projections.py`. A missing, dangling or
-foreign entry refuses the launch and prints the culprit and the repair. The
-bypass is `IDH_SKIP_VALIDATE=1`, and each use is logged (ticket 0983). Check a
-runtime by hand with `idh check codex`, or every entry with `idh check`.
-
-Both managers share one doctrine: a target that already resolves to the
-canonical file is success, left as it is; anything else at the
-target is refused — never overwritten, never deleted. Interrupted installs
-are recovered by re-running the same command; installs are idempotent.
-
-## Scheduled audit
-
-The legacy installer enables `idh-mammoth-audit.timer` monthly and installs
-copies of its service and timer. Run `./bin/mammoth-audit` for an immediate
-census; inspect scheduling with `systemctl --user list-timers idh-mammoth-audit.timer`
-and failures with `journalctl --user -u idh-mammoth-audit.service`.
-The audit reports candidates and does not remove skills.
-
-## Probe versions
+## Install and verify
 
 ```bash
-claude --version && codex --version && pi --version && vibe --version
-"$IDH_ROOT/bin/idh" check harness claude   # also: codex, pi
+"$IDH_ROOT/bin/idh" install
+"$IDH_ROOT/bin/idh" check
+"$IDH_ROOT/bin/idh" status
 ```
 
-Support is a floor plus a probe, never an allowlist. An unreadable version
-refuses rather than passes.
+Host installation registers individual rules, skills, instructions and
+launchers, merges required hooks into Claude/Codex configuration, and links
+the Pi guard extension. Runtime profiles remain independently owned.
+It also edits the shell loader and enables an audit timer: review these
+host-wide actions before running it. There is no dry run or runtime selector.
+Same-name resource conflicts are refused; unrelated content is preserved.
 
-## Existing installer
+The measured runtime pilot covers perch, healthcheck and the dirty-reset
+guard. Installing or discovering the whole catalog does not certify every
+skill's workflow. Dream/memory helpers are separate work under 1002; memory
+ownership and synchronization belong to 0988.
 
-For a fresh, coexisting install, follow
-[the installation strategy](idh-install-strategy.md). The command below is the
-older all-runtime host setup; it is not a skills-only install and has no dry
-run or runtime selector.
+Before interactive launches, the shell wrappers validate the selected
+runtime's registrations. Broken required resources refuse the launch and
+name the repair. `IDH_SKIP_VALIDATE=1` is an explicit, logged bypass.
+
+## Guard smoke and trust
+
+Use a disposable repository with a committed file, then edit that file.
+Keep the absolute checkout path when changing into it:
 
 ```bash
-"$IDH_ROOT/bin/idh" install  # links from adapters/projections.json, loader block, timer
+cd /some/disposable-dirty-repo
+echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}' |
+  bash "$IDH_ROOT/scripts/guard-destructive-bash.sh"
+echo "exit=$?"  # expect BLOCKED and exit=2; a clean control exits=0
 ```
 
-Preflight the guard itself before trusting the wiring (a missing or
-broken script fails open, so verify it fires):
+Inside Codex, run `/hooks`, review and trust the installed definition.
+Untrusted or modified definitions are silently skipped in headless use.
+Re-trust whenever the definition changes, then probe the dirty control again.
+Invocation-local trust bypass is smoke-test evidence only, not persistent
+deployment. Claude/Codex/Pi guard controls recorded for PR1091 used temporary
+profiles and did not deploy into the user's live profiles.
+
+## Move the checkout
+
+From the permanent new checkout:
 
 ```bash
-cd /some/dirty-repo
-echo '{"tool_input":{"command":"git reset --hard"},"cwd":"'$PWD'"}'   | bash "$IDH_ROOT/scripts/guard-destructive-bash.sh"; echo "exit=$?"
-# expect: the BLOCKED message and exit=2
-```
-
-Then, once, inside Codex: run `/hooks`, review and **trust** the guard
-hook. Codex skips non-managed hooks until their exact definition is
-trusted; an untrusted guard silently does not run, so trust is part of the
-enforcing boundary, not a formality.
-
-## Verify
-
-```bash
-"$IDH_ROOT/bin/idh" check             # every manifest entry; names each culprit
-"$IDH_ROOT/bin/idh" status skill perch --to codex
-```
-
-## Uninstall
-
-```bash
-"$IDH_ROOT/bin/idh" uninstall skill perch healthcheck
-rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # after `idh status` shows both `ok`
-```
-
-Skill removal takes back exactly what install created and prunes only the
-directories it emptied; unmanaged files in `~/.agents/skills` survive. The
-two wiring links are removed by hand: `idh install` never deletes anything.
-The rest of what it wrote is removed by hand too:
-
-- the loader block: delete from the `# >>> Imperial Dragon Harness loader`
-  line to the `# <<< Imperial Dragon Harness loader` line in `~/.bashrc`;
-- the backups `.bashrc.idh-bak-*`, one per changing install, with the
-  mode of the file they copy: they may hold whatever `~/.bashrc` held. They
-  sit beside the real file, so beside the link's target when `~/.bashrc` is
-  a symlink;
-- the timer: `systemctl --user disable --now idh-mammoth-audit.timer`, then
-  remove `idh-mammoth-audit.{service,timer}` from
-  `${XDG_CONFIG_HOME:-~/.config}/systemd/user/`.
-
-## Legacy relocation commands
-
-```bash
-# from the NEW checkout:
-./bin/idh relocate skill perch healthcheck --from /old/absolute/path
-./bin/idh check          # names the wiring links left dangling by the move
-rm ~/.codex/hooks.json ~/.pi/agent/extensions/idh-guard.ts   # only those two
 ./bin/idh install
+./bin/idh check
 ```
 
-Skills links are retargeted atomically by `relocate`; wiring links are
-dangling after a move and are refused (never silently retargeted), so the
-honest sequence is check, remove the two known links, reinstall.
-The retired live cutover is recorded in closed tickets 0978 and 0986.
-For the current portable-clone plan, follow ticket 0999 and the installation
-guide. Re-trust the Codex hook whenever its definition changes; then verify
-that it actually blocks a dirty reset in a disposable repository.
+Explicit reinstallation atomically refreshes links whose text still matches
+the installer receipt at
+`${XDG_STATE_HOME:-$HOME/.local/state}/idh/links.json`.
+Modified or foreign links are refused. If a refused link needs repair,
+inspect its ownership and resolve that single conflict explicitly.
+Do not remove a runtime configuration file to repair registration:
+hook JSON is normally a regular user-owned file containing merged hooks.
 
-## Interrupted run / recovery
+The older skills-only `idh relocate skill <names> --from <old-path>` command
+is for links made by that installer. It neither owns nor replaces runtime
+settings. Re-run host install afterward and refresh Codex trust if needed.
 
-Any interruption leaves a partial surface at worst — every command is
-idempotent, refuses instead of overwriting, and reports per target. Recover
-by re-running install. A dangling or foreign symlink is reported as such;
-nothing retargets it behind your back.
+## Remove registrations
 
-## Limits, stated rather than papered over
+`idh uninstall skill <names>` removes only the skill installer's managed
+links, never canonical skills or unmanaged directories. There is no host
+uninstall command.
 
-- Codex skips untrusted hooks (hash-recorded trust via `/hooks`) and some
-  specialized tool paths opt out of the hook path: the guard is a
-  guardrail, not a complete boundary.
-- Codex hook trust authenticates the **hook definition**, not the script it
-  invokes: a changed `guard-destructive-bash.sh` does not untrust the hook.
-  The script's integrity is the harness checkout's business (git + CI).
-  Trust is recorded as `[hooks.state."<hooks.json>:pre_tool_use:0:0"]
-  trusted_hash` in `~/.codex/config.toml` — never through the symlink into
-  the repo file (measured 2026-09-28). **A stale hash (status Modified) is
-  silently skipped in `codex exec`** — observed live: the guard did not fire
-  until the trust was re-recorded. After a recorded trust, `codex exec`
-  without any bypass flag blocks a dirty reset (verified on the fixture).
-  Re-trust after touching `hooks.json`, and preflight the guard before
-  relying on it.
-- **Hook timeout is fail-open** (measured 2026-09-28: a hook sleeping past
-  its timeout does not block the command). The wiring budget is 8s; the
-  guard's per-`git` subprocess timeout is 4s, so one slow repo check fits
-  and a pathological multi-target line can still exceed the budget and
-  let the command through. The guard has no internal global deadline —
-  a residual risk recorded here rather than fixed in this slice.
-- The guard is fail-open on: an unparseable payload, missing `python3`,
-  and commands nested in `bash -c`/`eval`. A seatbelt for the common
-  linear shape, not a sandbox.
-- The Pi adapter carries the guard's fail-open doctrine: if the guard
-  script or python3 is missing, Pi's bash calls are allowed, not bricked.
-- Full runtime parity is still pending. The pilot covers two skills and one
-  guard; other components need their own registration and delivery evidence.
-- Mistral Vibe: version probe and skills-root compatibility only.
+For hook removal, back up the live Claude/Codex JSON and edit only the exact
+harness hook blocks identified by the checkout templates. Keep unrelated
+hooks, events, metadata and permissions. Remove installer-owned environment
+or status-line entries only after confirming their exact values. Never
+delete `~/.codex/hooks.json` merely because status says `ok`: that proves
+registration is present, not exclusive ownership.
+
+For individual resource symlinks (including the Pi extension), inspect the
+link text and its receipt before removing the verified link. Leave regular
+files, canonical resources and foreign replacements alone.
+Remove or disable the loader block before intentionally removing required
+registrations; otherwise its launch checks correctly refuse the runtime.
+
+Other host integration is removed explicitly:
+
+- Delete only the marked Imperial Dragon Harness loader block in `~/.bashrc`.
+- Inspect installer backups before discarding them; they can contain private
+  shell configuration.
+- Disable `idh-mammoth-audit.timer` with
+  `systemctl --user disable --now idh-mammoth-audit.timer`, then remove only
+  its service/timer files under the user systemd configuration.
+
+## Audit and recovery
+
+`./bin/mammoth-audit` reports candidates without removing skills.
+Inspect its timer with `systemctl --user list-timers idh-mammoth-audit.timer`.
+An interrupted install can leave partial registration; rerun install and
+check from the current checkout. Only unchanged receipt-owned links are
+refreshed, and runtime configuration changes are backed up.
+
+## Limits
+
+- The dirty-reset guard is a guardrail, not a Git-mutation sandbox. Unparseable
+  payloads, missing Python, nested shell commands and hook timeouts can fail open.
+- Codex trust covers the hook definition, not the invoked script's integrity.
+  The checkout and CI own that integrity; a changed definition needs renewed trust.
+- Pi preserves the guard's fail-open behavior if its script or Python is missing.
+- Full runtime parity and native packaging remain separate work. Vibe has only
+  a version/discovery probe, not an enforcing registration slice.

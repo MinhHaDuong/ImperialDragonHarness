@@ -73,7 +73,6 @@ def world(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("XDG_STATE_HOME", raising=False)
-    (home / ".idh").symlink_to(root, target_is_directory=True)
     for entry in VALIDATOR.load_entries(root / "adapters/projections.json", None):
         if not entry["required"] and not VALIDATOR.expand(entry["target"], root).exists():
             continue
@@ -148,15 +147,13 @@ def run_repair(world, stderr: str, n: int = 0):
 # --- the manifest --------------------------------------------------------
 
 
-def test_manifest_declares_one_guard_per_runtime_without_a_checkout_pointer():
+def test_manifest_declares_one_guard_per_runtime():
     required = {
         (e["path"], rt)
         for e in MANIFEST["entries"]
         if e["required"]
         for rt in e["runtimes"]
     }
-    assert not any(path == "~/.idh" for path, _ in required)
-    assert ("~/.claude", "claude") not in required
     assert ("~/.claude/CLAUDE.md", "claude") in required
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
@@ -338,8 +335,6 @@ def test_bypass_is_explicit_and_logged(world):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_an_unwritable_bypass_log_is_reported_not_claimed(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
     (world["home"] / ".local/state").write_text("a file where the state dir should be\n")
     r = launch(world, "pi", init=init, IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and "LAUNCHED pi" in r.stdout
@@ -349,8 +344,6 @@ def test_an_unwritable_bypass_log_is_reported_not_claimed(world, init):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_a_newline_in_the_cwd_cannot_forge_a_log_line(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
     evil = world["tmp"] / "x\n2026-01-01T00:00Z claude bypass cwd=forged"
     evil.mkdir()
     r = launch(world, "pi", init=init, cwd=evil, IDH_SKIP_VALIDATE="1")
@@ -368,23 +361,6 @@ def test_unset_home_in_the_wrapper_refuses_with_a_message(world):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("runtime", RUNTIMES)
-def test_pointer_removed_after_sourcing_keeps_using_the_resolved_checkout(world, runtime):
-    """Once sourced, the wrapper uses its physical checkout rather than a pointer."""
-    script = (
-        f'source "{world["home"]}/.idh/scripts/shell-init.sh"\n'
-        f'rm "{world["home"]}/.idh"\n{runtime} --version'
-    )
-    r = subprocess.run(
-        ["bash", "--norc", "-c", script],
-        env=_env(world),
-        capture_output=True,
-        text=True,
-    )
-    assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
-
-
-@pytest.mark.integration
 def test_bashrc_loader_sources_the_wrappers_when_reachable(world):
     r = launch(world, "pi", init="bashrc-loader.sh")
     assert r.returncode == 0 and "LAUNCHED pi" in r.stdout
@@ -392,20 +368,16 @@ def test_bashrc_loader_sources_the_wrappers_when_reachable(world):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime", RUNTIMES)
-def test_bashrc_loader_direct_source_does_not_need_the_pointer(world, runtime):
-    (world["home"] / ".idh").unlink()
+def test_bashrc_loader_direct_source_works_under_errexit(world, runtime):
     # Directly sourced from the checkout, including under `set -e`.
     r = launch(world, runtime, init="bashrc-loader.sh", pre="set -e")
     assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("unreachable", [False, True])
-def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreachable):
+def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world):
     """An alias codex='codex --flag' defined before the loader (a real ~/.bash_aliases)
     once made `codex() {` a syntax error, leaving every runtime unwrapped."""
-    if unreachable:
-        (world["home"] / ".idh").unlink()
     script = (
         "shopt -s expand_aliases\n"
         "alias codex='codex --approve-for-me'\n"
@@ -428,8 +400,8 @@ def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreacha
 BROKEN_INIT = {
     "empty": "",
     "syntax error": 'function codex {\n  command codex "$@"\n\nif then fi\n',
-    # A pre-0983 copy: it defines claude without any check, and nothing else.
-    "old copy": 'claude() {\n  command claude --dangerously-skip-permissions "$@"\n}\n',
+    # Incomplete wrappers must not leave any runtime unprotected.
+    "incomplete wrappers": 'claude() {\n  command claude --dangerously-skip-permissions "$@"\n}\n',
 }
 
 
@@ -489,7 +461,7 @@ def test_missing_python3_refuses_with_a_repair(world):
     [
         "{not json",
         '{"entries": 3}',
-        '{"entries": [{"path": "~/.idh", "target": "$IDH_ROOT", "runtimes": ["codex"],'
+        '{"entries": [{"path": "~/.local/bin/idh", "target": "$IDH_ROOT", "runtimes": ["codex"],'
         ' "why": "no required key"}]}',
     ],
 )
@@ -504,8 +476,6 @@ def test_corrupt_manifest_is_a_one_line_refusal(world, corrupt):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_control_characters_in_the_cwd_never_reach_the_log_raw(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
     odd = world["tmp"] / "a\rb\x1b[31mc\x07d"
     odd.mkdir()
     r = launch(world, "pi", init=init, cwd=odd, IDH_SKIP_VALIDATE="1")
@@ -535,17 +505,9 @@ def test_an_unreadable_shell_init_gets_the_chmod_repair_not_ln(world):
     "bashrc,reminded",
     [
         ("", True),
-        (
-            '[ -f "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"\n',
-            True,
-        ),
         ((REPO / "scripts" / "bashrc-loader.sh").read_text(), False),
-        (
-            "_idh_unreachable() { :; }  # the round-1 block, until the post-merge refresh\n",
-            False,
-        ),
     ],
-    ids=["none", "bare-source-line", "current-loader", "round-1-loader"],
+    ids=["none", "current-loader"],
 )
 def test_session_start_reminds_only_when_the_loader_is_absent(
     tmp_path, bashrc, reminded

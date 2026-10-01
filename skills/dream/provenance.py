@@ -3,7 +3,7 @@
 Provenance tracking and promotion/decay helpers for /dream v2.
 Pure I/O — no LLM calls, no Anthropic imports.
 
-Manages the resolved checkout's memory/.provenance.json which tracks:
+Manages ~/.idh/memory/.provenance.json which tracks:
 - Per-entry metadata: originating projects, first_seen, last_confirmed
 - Promotion status
 - Decay candidates (>90 days unconfirmed)
@@ -22,8 +22,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-CHECKOUT = Path(__file__).resolve().parents[2]
-HARNESS_MEMORY = CHECKOUT / "memory"
+HARNESS_MEMORY = Path.home() / ".idh" / "memory"
 PROVENANCE_PATH = HARNESS_MEMORY / ".provenance.json"
 PROVENANCE_LOCK = HARNESS_MEMORY / ".provenance.lock"
 PROJECT_ALIASES_PATH = HARNESS_MEMORY / ".project-aliases.json"
@@ -336,7 +335,15 @@ def decay(args):
 
 
 def _retarget(root: Path) -> None:
-    """Resolve every store path once for all commands, including worktrees."""
+    """Point the module at another checkout.
+
+    Every path here is a module global resolved from ``Path.home()``, which is
+    why `/dream` cannot run in a worktree (SKILL.md step 8): its writes would
+    land on the primary checkout's current branch. `backfill` and `usage` both
+    read the whole corpus and write one file, so they take ``--root`` and
+    retarget instead — a worktree session can then run them against its own
+    copy and land the result through its branch.
+    """
     global HARNESS_MEMORY, PROVENANCE_PATH, PROVENANCE_LOCK
     global PROJECT_ALIASES_PATH, PROJECTS_BASE
     HARNESS_MEMORY = root / "memory"
@@ -607,7 +614,7 @@ def main():
     show_p = sub.add_parser("show", help="Show full provenance data.")
     show_p.set_defaults(func=show)
 
-    default_root = str(CHECKOUT)
+    default_root = str(Path.home() / ".idh")
     backfill_p = sub.add_parser(
         "backfill", help="Record every live memory body the store never saw."
     )
@@ -625,9 +632,6 @@ def main():
     )
     usage_p.add_argument("--dry-run", action="store_true", help="Report without writing")
     usage_p.set_defaults(func=usage)
-
-    for command in (record_p, remove_p, candidates_p, promote_p, confirm_p, decay_p, show_p):
-        command.add_argument("--root", default=default_root, help="Harness checkout to act on")
 
     # Production project keys are directory slugs that begin with '-'
     # (e.g. -home-haduong-CNRS-...). Without a '--' separator argparse
@@ -648,23 +652,9 @@ def main():
         and "--" not in tokens
         and not wants_help
     ):
-        # Keep --root options before the separator for leading-dash project keys.
-        position = 1
-        if "--root" in tokens:
-            index = tokens.index("--root")
-            option = tokens[index:index + 2]
-            del tokens[index:index + 2]
-            tokens[1:1] = option
-            position = 3
-        elif any(t.startswith("--root=") for t in tokens):
-            index = next(i for i, t in enumerate(tokens) if t.startswith("--root="))
-            option = tokens.pop(index)
-            tokens.insert(1, option)
-            position = 2
-        tokens.insert(position, "--")
+        tokens.insert(1, "--")
 
     args = parser.parse_args(tokens)
-    _retarget(Path(args.root).expanduser().resolve())
     args.func(args)
 
 

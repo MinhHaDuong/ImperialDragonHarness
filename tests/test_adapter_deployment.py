@@ -130,21 +130,3 @@ def test_foreign_symlink_is_refused_not_silently_retargeted(home, capsys):
     assert wirings() == 1
     assert f"MISSING: {foreign}" in capsys.readouterr().err
     assert foreign.readlink() == Path("/somewhere/else/hooks.json")
-
-
-def test_link_through_the_pointer_counts_as_ours(home, capsys):
-    """A wiring link retargeted through ~/.idh (0982) is accepted; another
-    file behind the same path is still refused (negative control)."""
-    (home / ".idh").symlink_to(REPO, target_is_directory=True)
-    link = home / ".codex" / "hooks.json"
-    link.parent.mkdir(parents=True)
-    link.symlink_to(home / ".idh" / "adapters" / "codex" / "hooks.json")
-    assert wirings() == 0
-    assert link.readlink() == home / ".idh" / "adapters" / "codex" / "hooks.json"
-
-    link.unlink()
-    other = home / "other.json"
-    other.write_text("{}")
-    link.symlink_to(other)
-    assert wirings() == 1
-    assert f"MISSING: {link}" in capsys.readouterr().err

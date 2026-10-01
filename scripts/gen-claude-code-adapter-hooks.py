@@ -52,7 +52,7 @@ def translate(command: str) -> str:
         command.strip(),
     )
     legacy_codex = re.match(
-        r'^bash "\$HOME/\.idh/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$',
+        r'^bash "\$HOME/\.(?:idh|claude)/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$',
         command.strip(),
     )
     m = portable.match(command.strip()) or bare_launcher or legacy_codex or POINTER_CHECKED.match(command.strip()) or HARNESS_SCRIPT.match(command.strip())
