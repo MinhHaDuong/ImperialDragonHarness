@@ -31,8 +31,7 @@ DEFAULT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def expand(spec: str, root: Path) -> Path:
-    """Expand a manifest spec. A bare $IDH_ROOT is the resolved checkout (the
-    pointer's own target); $IDH_ROOT/<rel> keeps the root as spelled."""
+    """Expand a manifest spec using the selected checkout root."""
     if spec == "$IDH_ROOT":
         return root.resolve()
     if spec.startswith("$IDH_ROOT/"):
@@ -133,7 +132,11 @@ def check_entry(entry: dict, root: Path):
         return ("MISSING", f"{path}: {reason}",
                 f"{shlex.quote(str(root / 'bin/idh'))} install")
     q_path, q_target = shlex.quote(str(path)), shlex.quote(str(target))
-    link = f"ln -sfn {q_target} {q_path}"
+    link = f"ln -s {q_target} {q_path}"
+    inspect = (
+        f"inspect {q_path} and preserve its contents; resolve ownership explicitly, "
+        f"then rerun {shlex.quote(str(root / 'bin/idh'))} install"
+    )
     real_target = resolved(target)
     if real_target is None:
         prefix = f"restore {q_target} (the expected target is gone), then "
@@ -154,21 +157,22 @@ def check_entry(entry: dict, root: Path):
         return (
             "DANGLING",
             f"{path} -> {os.readlink(path)} resolves to nothing",
-            prefix + link,
+            prefix + inspect,
         )
 
     if real_target is not None and real == real_target:
+        if entry["path"].startswith("~/.local/bin/") and not os.access(path, os.X_OK):
+            return ("UNUSABLE", f"{path} is not executable", f"restore executable mode on {q_target}")
         return None
 
     if path.is_symlink():
-        return ("FOREIGN", f"{path} resolves to {real}, not {target}", prefix + link)
-    # A real file or directory where the harness is expected: never overwrite
-    # it blind; move it aside, then link.
-    aside = shlex.quote(f"{path}.pre-idh")
+        return ("FOREIGN", f"{path} resolves to {real}, not {target}", prefix + inspect)
+    # Existing user resources need an explicit ownership decision, not a
+    # command that replaces them or overwrites a fixed backup path.
     return (
         "FOREIGN",
         f"{path} is a real {'directory' if path.is_dir() else 'file'}, not {target}",
-        prefix + f"inspect it, then: mv {q_path} {aside} && ln -s {q_target} {q_path}",
+        prefix + inspect,
     )
 
 

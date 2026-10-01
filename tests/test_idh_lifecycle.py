@@ -495,3 +495,15 @@ def test_relocation_does_not_replace_a_modified_registered_link(machine):
     result = idh("install")
     assert result.returncode == 1 and "FOREIGN:" in result.stderr
     assert link.resolve() == foreign
+
+
+def test_preexisting_hook_link_is_not_claimed_by_install(machine):
+    home, idh = machine["home"], machine["idh"]
+    hooks = home / ".codex/hooks.json"
+    hooks.parent.mkdir()
+    hooks.symlink_to(REPO / "adapters/codex/hooks.json")
+    before = hooks.readlink()
+    assert idh("install").returncode == 0
+    receipt = json.loads((home / ".local/state/idh/links.json").read_text())
+    assert str(hooks) not in receipt
+    assert hooks.readlink() == before

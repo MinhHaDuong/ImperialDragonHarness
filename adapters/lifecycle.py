@@ -75,8 +75,6 @@ def install_links() -> int:
                     print(f"installed: {path} -> {target}")
             if entry.get("registration") == "hooks":
                 rc |= register_settings(entry, path, target)
-                if path.is_symlink() and V.resolved(path) == V.resolved(target) and V.resolved(target):
-                    owned[str(path)] = os.readlink(path)
                 continue
             if not path.is_symlink() and not path.exists():
                 if not entry["required"] and V.resolved(target) is None:

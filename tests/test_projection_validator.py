@@ -81,6 +81,8 @@ def world(tmp_path, monkeypatch):
         if not target.exists():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("fixture")
+            if entry["path"].startswith("~/.local/bin/"):
+                target.chmod(0o755)
         if link == target:
             continue
         link.parent.mkdir(parents=True, exist_ok=True)
@@ -200,7 +202,7 @@ def test_unset_home_refuses_with_a_message_not_a_traceback(world, monkeypatch):
 
 
 @pytest.mark.integration
-def test_dangling_guard_link_names_culprit_and_a_working_repair(world):
+def test_dangling_guard_link_names_culprit_without_overwriting_it(world):
     link = world["home"] / ".local/bin/idh-hook"
     link.unlink()
     link.symlink_to(world["tmp"] / "gone" / "idh-hook")
@@ -208,12 +210,11 @@ def test_dangling_guard_link_names_culprit_and_a_working_repair(world):
     assert r.returncode == 1
     assert f"DANGLING: {link}" in r.stderr
     assert "IDH_SKIP_VALIDATE=1 codex" in r.stderr
-    # The repair targets the checkout discovered from the validator itself.
-    assert f"{world['root']}/adapters/claude-code/bin/idh-hook" in repair_command(r.stderr)
+    assert "inspect " in repair_command(r.stderr)
+    assert "ln -sf" not in repair_command(r.stderr)
+    assert link.readlink() == world["tmp"] / "gone" / "idh-hook"
     # Scoped per runtime: Claude Code does not read the Codex hook.
     assert validate(world, "pi").returncode == 0
-    run_repair(world, r.stderr)
-    assert validate(world, "codex").returncode == 0
 
 
 def test_foreign_link_is_refused(world):
@@ -225,12 +226,22 @@ def test_foreign_link_is_refused(world):
     r = validate(world, "pi")
     assert r.returncode == 1
     assert f"FOREIGN: {link} resolves to {other}" in r.stderr
+    assert "inspect " in repair_command(r.stderr) and "ln -sf" not in r.stderr
+    assert link.readlink() == other
+
+
+def test_non_executable_installed_launcher_is_reported(world):
+    target = world["root"] / "adapters/claude-code/bin/idh-hook"
+    target.chmod(0o644)
+    r = validate(world, "codex")
+    assert r.returncode == 1 and "UNUSABLE:" in r.stderr
+    assert "not executable" in r.stderr
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime,rel", [("codex", ".codex"), ("pi", ".pi")])
 def test_missing_guard_on_a_fresh_machine_gets_a_repair_that_works(world, runtime, rel):
-    """No ~/.codex at all: a bare `ln -sfn` would fail, so the repair creates the parent."""
+    """Fresh registration creates missing parent directories without replacing links."""
     shutil.rmtree(world["home"] / rel)
     r = validate(world, runtime)
     assert r.returncode == 1 and "MISSING:" in r.stderr
@@ -256,7 +267,7 @@ def test_foreign_real_directory_is_never_overwritten_blind(world):
     r = validate(world, "claude")
     assert r.returncode == 1
     assert "is a real directory" in r.stderr
-    assert "mv " in r.stderr and ".pre-idh" in r.stderr
+    assert "inspect " in r.stderr and "mv " not in r.stderr
 
 
 def test_unlisted_links_are_not_consulted(world):

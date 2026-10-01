@@ -40,8 +40,8 @@ second-object test but is not yet installed by this change.
 `$HOME/.agents/skills` is not a name this installer invents. It is the user-level
 [Agent Skills](https://agentskills.io/specification) root that **Codex** and
 **Pi** each document and each scan, and both follow a symlinked skill
-directory — so `install skill perch` points it at `skills/perch` in this repository and
-the body stays canonical and live. Editing the prose needs no build step and
+directory — so `install skill perch` recognizes canonical skills in place or
+links them from another checkout. The body stays canonical and live. Editing the prose needs no build step and
 no reinstall.
 
 **Claude Code does not read that directory.** It scans `$HOME/.claude/skills`
@@ -163,7 +163,7 @@ decision; adapters only normalize input and carry it. Portability did not
 turn enforcement into advice:
 
 - **Claude Code**: the existing `PreToolUse(Bash)` hook in
-  `settings.shared.json`, unchanged.
+  `settings.shared.json`, registered through the installed launcher.
 - **Codex**: `codex/hooks.json` — Codex's PreToolUse payload carries
   `tool_input.command` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical. Install:
@@ -188,12 +188,12 @@ not enforcement. Codex's own docs say some specialized tool paths opt
 out of the hook path: tool hooks are a guardrail, not a complete
 boundary, and the inventory says so.
 
-Ticket 0999's target is to derive the Codex hook's checkout from the real
-location of its installed `hooks.json` symlink. That change is still local
-implementation work; the committed hook names the legacy checkout path.
-Changing its definition requires re-trusting it through `/hooks`. Claude's
-tracked settings also contain a legacy fixed repository path. The plugin
-launcher already resolves its own real location.
+The installed `idh-hook` launcher resolves its own real checkout location;
+Claude and Codex hook definitions invoke that launcher. Host installation
+merges required hooks into existing runtime configuration rather than owning
+the profile. Changing a Codex definition requires renewed trust through
+`/hooks`. Ticket 1001 covers this registration slice; dream/memory helpers
+remain separate work under 1002 and parent tracker 0999 stays open.
 
 Weakening is tested: `tests/test_guard_adapter_wiring.py`
 rejects removal of the event mapping, the block result, the exit semantics
