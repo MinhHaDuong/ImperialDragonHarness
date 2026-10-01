@@ -146,7 +146,8 @@ default branch — there are no remote branches nor merge requests to inspect.
    `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
  File tickets for all instances found: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then COMMIT it — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
-4. **Guard against regression**: if the sweep above was juicy — multiple instances of the same anti-pattern — the bug has a class shape. File a follow-up ticket for a standing regression test covering the class. Do not auto-write the test, do not bundle it into the fix PR. If the sweep found nothing, move on silently. /gaze is a per-PR gate; a standing test is what catches the class coming back in an unrelated future PR.
+4. **Report related findings** from the sweep. Do not turn experiences into
+   unsolicited standing tests, rule proposals or crystallisation tickets.
 5. **Update project docs** if pipeline, data contract, or methodology changed.
 6. **Capture significant project experiences**, if any, before removing the
    worktree. Write and commit an append-only entry under the project's
@@ -157,7 +158,8 @@ default branch — there are no remote branches nor merge requests to inspect.
    Routine completion alone does not require an entry. Keep it factual, without
    judgment, inferred lessons, rule proposals or interpreted memories.
 
-   Resolve the project repository first. Capture only in its worktree or its
+   Resolve the project repository first. After a merged task, create a fresh
+   project capture branch/worktree before writing. Capture only there or in its
    explicitly configured private companion; never in the harness because the
    loaded skill lives there. Commit only the capture files, preserve unrelated
    changes, and follow the project's branch/integration policy. A refused write
@@ -208,12 +210,16 @@ default branch — there are no remote branches nor merge requests to inspect.
        Removes only `.panel/` and `build/panel-head/` review scratch first,
        then refuses (exit 1) on every other uncommitted/untracked file —
        including a fresh ticket draft `tickets/erg new` wrote but never
-       committed. It is the only gate before removal. If it blocks, commit
+       committed. This cleanliness gate does not prove commits are integrated. If it blocks, commit
        (or `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run. See tickets
        0174 and 0948.
-    b. Call `ExitWorktree` with action `remove`. When the pre-check
-       (`git merge-base --is-ancestor HEAD origin/main`) has already
-       passed, the worktree branch is fully merged — ExitWorktree's
+    b. Immediately before removal, fetch the project integration branch and
+       re-run `git merge-base --is-ancestor HEAD origin/main` on the current
+       HEAD, after any capture commit. If fetch or ancestry verification fails,
+       preserve the worktree and branch (`action: "keep"`) and report pending
+       integration. An earlier pre-capture check is not sufficient. Only then
+       call `ExitWorktree` with action `remove`. With this refreshed check,
+       the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
        stale local main — it can even name a branch that no longer
        exists (a parallel session's hygiene pruned it post-merge;

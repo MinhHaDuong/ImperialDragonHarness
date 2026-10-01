@@ -30,12 +30,16 @@ ImperialDragonHarness/          # reference clone: ~/.agents
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
 ├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
-├── memory/                 # Shared lessons in the current layout
-├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory-sweep
+├── memory/                 # Legacy corpus; no new project outputs
+├── projects/<slug>/memory/ # Legacy corpus pending migration
 ├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
 ```
+
+Project memory is written in each project’s own repository, never into this
+installation. Roar captures facts; dream consolidates memory without proposing
+rules. Crystallisation requires a separate explicit user request.
 
 See [ROADMAP.md](ROADMAP.md) for priorities and [STATE.md](STATE.md) for the
 current resume point.
