@@ -74,8 +74,7 @@ Follow the [installation guide](docs/idh-install-strategy.md) to register
 reviewed resources with each runtime. It distinguishes the target design
 from the existing installer and pilot support.
 
-The current `./bin/idh install` creates manifest links, edits the shell loader
-and enables an audit timer. Review its manifest before using it: the legacy
+The current `./bin/idh install` creates manifest links and edits the shell loader. Review its manifest before using it: the legacy
 layout still couples the Claude profile to the checkout. Ticket 0999 tracks
 portable installation and additive registration.
 

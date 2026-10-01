@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Manage the harness on this machine (ticket 0987); project skills (0802).
 
-idh install           links from adapters/projections.json, ~/.bashrc loader, timer
+idh install           links from adapters/projections.json, ~/.bashrc loader
 idh check [RUNTIME]   every manifest entry (or one runtime's); names each culprit
-idh status            installed vs declared, timer state, distance to origin
+idh status            installed vs declared, distance to origin
 idh sync              scripts/sync-local-main.sh: fast-forwards the local default
                       branch (main); exit 0 only when it equals origin's, whatever
                       branch HEAD is on; otherwise names what blocks it

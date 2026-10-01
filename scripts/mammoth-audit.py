@@ -25,7 +25,6 @@ ACTIVE_ROOTS = (
     "rules",
     "scripts",
     "skills",
-    "systemd",
 )
 
 
