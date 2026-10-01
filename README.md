@@ -73,8 +73,9 @@ cd ~/.agents
 If `~/.agents` already exists, inspect it first. Other checkout locations are
 supported by the portable registration contract: entry points resolve the
 checkout from their real location or an explicit root argument. Dream/memory
-helper portability remains separate work (1002); check its storage limitations
-before consolidating independently owned runtime memory.
+uses project-local Markdown in v8, not the retired shared-store provenance
+helper. The old helper handoff 1002 is closed WONTDO; safe capture and
+integration remain in 0988 after the pilot.
 
 Follow the [installation guide](docs/idh-install-strategy.md) to register
 reviewed resources with each runtime. It distinguishes current additive
@@ -85,7 +86,8 @@ and links individual resources, preserving unrelated profile content. No
 repository pointer or whole-profile alias is required. Same-name conflicts
 are refused. Review these host-wide actions: there is no dry run or runtime
 selector, and shell integration is not opt-in; scheduling is left to the host. Tracker 0999 remains
-open; 1003 owns registration and 1002 the separate memory-helper work.
+open for integration review; 1003's registration landed in #1091. The obsolete
+provenance helper and dedicated tests are retired under 0934, with data preserved.
 
 For an existing installation:
 

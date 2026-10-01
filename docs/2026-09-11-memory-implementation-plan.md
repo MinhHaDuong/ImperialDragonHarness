@@ -37,9 +37,11 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 différé pendant la transition ; 0913 réévaluera ses constats utiles après le
 pilote, sans réintroduire automatiquement son mécanisme.
 
-0999 garde l’installation portable et l’enregistrement des runtimes. 0934 garde
-la correction des outils hérités tant qu’ils ont des consommateurs ; leur
-retrait éventuel se décide après le pilote, sans confondre ce défaut avec 0988.
+0999 garde l’installation portable et l’enregistrement des runtimes. 0934 retire
+le helper partagé `provenance.py` et ses tests dédiés : aucun workflow actuel
+ne l’appelle et dream v8 exclut ces helpers. Le store et les sources sont
+conservés sans réconciliation. Les autres helpers hérités restent en place ;
+0988 garde l’intégration sûre et 0913 le déploiement progressif de v8.
 
 ## Périmètres abandonnés ou différés
 

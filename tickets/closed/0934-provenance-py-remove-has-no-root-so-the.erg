@@ -2,6 +2,7 @@
 Title: provenance.py subcommands hardcode the primary checkout, so /dream's documented steps write outside the worktree
 Created: 2026-09-16
 Author: Integration Test
+Closed: WONTDO — legacy repair superseded by memory v8; unused provenance helper and dedicated tests retired, source data preserved
 
 --- log ---
 2026-09-16T08:58Z Integration Test created
@@ -9,7 +10,36 @@ Author: Integration Test
 
 2026-09-16T09:38Z claude note Review measured the stale-slug count independently: 55 of 119 resolve under current project keys, 90 via the two-entry .project-aliases.json, the residual 29 entangled with the deferred 451-slug re-link. Body softened from an asserted 119 to a measured range.
 2026-10-01T19:04Z MinhHaDuong codex note Rebased on 0999: every provenance command must use the portable resolved checkout; ~/.idh is no longer an acceptable default.
+2026-10-01T21:34Z MinhHaDuong closed — WONTDO — legacy repair superseded by memory v8; unused provenance helper and dedicated tests retired, source data preserved
 --- body ---
+## Disposition — retired, superseded by memory v8
+
+The author requested retirement on 2026-10-01. Current dream explicitly forbids
+legacy shared/native-store helpers and cross-project promotion. An audit of
+tracked skills, scripts, adapters, build and CI entry points found no active
+caller of provenance.py: only its dedicated tests invoke/import it. The existing
+record and two-project candidate tests passed as positive controls before removal.
+Dynamic skill projection and census walkers enumerate files; they do not invoke
+this helper. Historical design documents and native notes remain attributed
+sources, not current execution instructions.
+
+Remove provenance.py, its dedicated coverage gate and its section in
+test_dream.py. Preserve read-index/commit helpers and their tests, the provenance
+store, alias table, native notes and all source history. No reconciliation,
+promotion-count repair, data migration or new migration guard is claimed.
+The old implementation criteria below are superseded, not satisfied by a repair.
+
+## Exit criteria
+
+- No tracked current workflow, build or CI entry point requires provenance.py.
+- The obsolete executable and dedicated tests are removed; other dream helpers
+  and all memory sources/stores are unchanged.
+- Current implementation/tracker text records this retirement without closing
+  0999 or claiming memory v8 rollout complete.
+- Full make check and make lint pass.
+
+## Historical defect and repair proposal
+
 ## Context
 
 `skills/dream/provenance.py` resolves its paths from module globals:
@@ -92,7 +122,7 @@ reaching the defect.
 - No skill gains a per-repo CONFIG block.
 - `tests/test_provenance_coverage.py` keeps passing.
 
-## Exit criteria
+## Superseded repair exit criteria (historical, not claimed)
 
 - [ ] Following `SKILL.md` from a worktree cannot write to the primary checkout.
 - [ ] The 119 stale slugs no longer inflate the promotion gate.
