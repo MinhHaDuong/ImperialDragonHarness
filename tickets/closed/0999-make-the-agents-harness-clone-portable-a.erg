@@ -2,6 +2,7 @@
 Title: Make the ~/.agents harness clone portable across runtimes
 Created: 2026-10-01
 Author: codex
+Closed: integration complete: #1091 registration, #1099 WONTDO, #1101 retirement; 0920 pilot proceeds separately
 
 --- log ---
 2026-10-01T19:02Z codex created
@@ -11,6 +12,7 @@ Author: codex
 2026-10-01T19:59Z codex note Implementation isolated in PR #1091 (draft). Fresh clone, arbitrary-path and relocation fixtures pass; make check passed 1295 tests with 3 skips; live Claude/Codex/Pi clean reset and dirty guard controls pass. No runtime profile deployment or tracker closure claimed.
 2026-10-01T20:39Z codex bump verify-reroll — round 1: independent-profile dream commit fails; unsafe merged-hook deletion and shipped Codex predecessor migration unresolved. Split/ownership direction required before merge.
 2026-10-01T21:23Z codex note Child 1003 closed and archived by merged PR #1091 (8af5cd16); final gate round 2 approved. Child 1002 remains open; parent integration is pending.
+2026-10-01T22:05Z MinhHaDuong closed — integration complete: #1091 registration, #1099 WONTDO, #1101 retirement; 0920 pilot proceeds separately
 --- body ---
 
 ## Context
@@ -37,8 +39,8 @@ for the repository.
 
 ## Progress
 
-Planning and documentation landed in PRs #1089/#1090. This parent is now an
-integration tracker, not the close claim for PR #1091.
+Planning and documentation landed in PRs #1089/#1090. Registration landed
+through PR #1091 and the integration review is complete.
 
 - [x] README, STATE and ROADMAP describe the portable `~/.agents` clone.
 - [x] Installation, operations and adapter guides distinguish the target
@@ -73,8 +75,12 @@ No real runtime profile is deployed and no memory data is migrated here.
    smoke/trust limitations recorded and profile content preserved.
 2. Child 1002 is WONTDO; do not implement its legacy helper contract or reconcile
    its store. 0988 retains safe v8 capture/integration; 0913 retains rollout.
-3. Review integration across registration and the memory v8 pilot before closing
-   this parent; the WONTDO child is not an implementation prerequisite.
+3. Integration review is complete: registration landed in PR #1091, child 1002
+   was closed WONTDO in PR #1099, and 0934's obsolete provenance helper was
+   retired in PR #1101. The full suite passed (1225 passed, 2 skipped) against
+   the integrated mainline. The memory v8 pilot tracked by 0920 is downstream
+   work, not a prerequisite for this parent; 0988 and 0913 remain separate
+   follow-on work.
 4. Native packaging, runtime selection/dry-run and opt-in shell integration
    remain follow-on design work, not acceptance claims for child 1003.
 
@@ -101,8 +107,8 @@ must make the test fail.
 
 ## Exit criteria
 
-- [ ] A fresh clone at `~/.agents` installs supported adapters without a `~/.idh` pointer.
-- [ ] The same tests pass from an arbitrary checkout path and after that checkout moves.
-- [ ] Runtime profiles remain independently owned and existing unrelated content is preserved.
-- [ ] No current code or documentation describes `~/.idh` or `~/.claude` as the repository's canonical location.
-- [ ] `make check` passes and live smoke tests cover Claude, Codex and Pi registration.
+- [x] A fresh clone at `~/.agents` installs supported adapters without a `~/.idh` pointer.
+- [x] The same tests pass from an arbitrary checkout path and after that checkout moves.
+- [x] Runtime profiles remain independently owned and existing unrelated content is preserved.
+- [x] No current code or documentation describes `~/.idh` or `~/.claude` as the repository's canonical location.
+- [x] `make check` passes and live smoke tests cover Claude, Codex and Pi registration.
