@@ -2,13 +2,14 @@
 Title: Portable dream memory helpers handoff
 Created: 2026-10-01
 Author: codex
-Closed: WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
+Closed: WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0913.
 
 --- log ---
 2026-10-01T20:45Z codex created Child of 0999 extracted from PR 1091 by author direction; owned by the parallel memory workstream.
 
 2026-10-01T21:27Z MinhHaDuong closed — WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
 2026-10-01T22:25Z codex note Updated follow-up disposition: 0934 retired in PR #1101 and parent 0999 closed in PR #1104.
+2026-10-02T00:00Z codex reconciled closure metadata: 0934's retirement is complete; preserved store data was not reconciled and is not an outstanding 0934 deliverable.
 --- body ---
 ## Context
 ## Disposition — WONTDO, superseded by memory v8
@@ -61,5 +62,7 @@ read/edit/commit or fail-before-mutation contract, comparing note bytes.
 - [ ] Independent-profile commit and isolation regression tests pass with no lost or stale memory notes.
 - [ ] Full make check passes; helper documentation accurately states supported storage and remaining limitations.
 
-0934 store reconciliation and 0988 ownership/sync remain separate. No
-Blocked-by dependency on the parent tracker or runtime child is asserted.
+0934 retired the legacy provenance machinery without reconciling preserved
+store data; that data reconciliation is not claimed or outstanding under this
+WONTDO handoff. 0988 ownership/sync remains separate. No Blocked-by dependency
+on the parent tracker or runtime child is asserted.

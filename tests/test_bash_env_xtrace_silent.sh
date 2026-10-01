@@ -25,6 +25,13 @@ trace_of() {
         bash -x -c ':' 2>&1 >/dev/null ) || true
 }
 
+# Bash initializes PWD in a fresh process, so deliberately clear it from a
+# BASH_ENV shim immediately before sourcing the loader to exercise its fallback.
+cat > "$TMP/unset-pwd-loader.sh" <<EOF
+unset PWD
+. "$LOADER"
+EOF
+
 # Positive control: same already-expanded export shape, without the guard.
 cat > "$TMP/unguarded.sh" <<'EOF'
 project_pwd="${PWD:-$(pwd -P)}"
@@ -34,7 +41,11 @@ while IFS= read -r line; do
     export "$key=$value"
 done < "$project_pwd/.env"
 EOF
-n="$(trace_of "$TMP/unguarded.sh" | grep -c "$SENTINEL" || true)"
+cat > "$TMP/unset-pwd-unguarded.sh" <<EOF
+unset PWD
+. "$TMP/unguarded.sh"
+EOF
+n="$(trace_of "$TMP/unset-pwd-unguarded.sh" | grep -c "$SENTINEL" || true)"
 if [ "$n" -gt 0 ]; then
     report "0. positive control: unguarded export leaks" PASS "($n traced lines)"
 else
@@ -42,7 +53,7 @@ else
         "probe is BLIND — the result below is worthless"
 fi
 
-real_trace="$(trace_of "$LOADER")"
+real_trace="$(trace_of "$TMP/unset-pwd-loader.sh")"
 if grep -q "$SENTINEL" <<<"$real_trace"; then
     report "1. project .env value is silent under -x" FAIL "sentinel in trace"
 else
@@ -50,7 +61,7 @@ else
 fi
 
 # Non-vacuity: absence from the trace matters only if the value was loaded.
-loaded="$(cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$LOADER" \
+loaded="$(cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$TMP/unset-pwd-loader.sh" \
     bash -c '[ "$SENTINEL_PROJECT" = "$1" ] && printf loaded' _ "$SENTINEL" \
     2>/dev/null)" || true
 if [ "$loaded" = loaded ]; then
@@ -60,7 +71,7 @@ else
         "fixture did not load — case 1 proves nothing"
 fi
 
-n=$(( $(cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$LOADER" \
+n=$(( $(cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$TMP/unset-pwd-loader.sh" \
     bash -x -c 'echo caller-marker >/dev/null' 2>&1 | \
     grep -c 'caller-marker' || true) ))
 if [ "$n" -gt 0 ]; then
@@ -69,7 +80,7 @@ else
     report "3. xtrace restored for the calling script" FAIL "caller's trace lost"
 fi
 
-if (cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$LOADER" \
+if (cd "$PROJECT" && env -i HOME="$H" PATH="$PATH" BASH_ENV="$TMP/unset-pwd-loader.sh" \
         bash -c 'case "$-" in *x*) exit 1 ;; esac; exit 0'); then
     report "4. xtrace stays off when caller had it off" PASS
 else
