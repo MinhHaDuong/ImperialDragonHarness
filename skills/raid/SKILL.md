@@ -5,10 +5,11 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: '[ticket-ids or "all open"]'
 model-level: standard
-effort: intensive
 ---
 
-Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+Requested effort: `effort: intensive`.
+
+Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
@@ -21,10 +22,10 @@ and enforcing invariants.
 ## Model policy (rightsizing)
 
 Declare a role, `model-level`, and semantic `effort` for every launch.
-Use the runtime adapter to resolve these intentions into supported launch or
-agent-profile settings; skill frontmatter does not configure spawned children.
-Do not silently inherit an expensive caller configuration. If the adapter cannot
-resolve a requested level, report the limitation or use its explicit fallback.
+Let the active runtime choose agents and concrete models on the fly from these
+intentions and its available capabilities. Skill frontmatter does not configure
+spawned children. Favor cheaper workers for broad fan-out and reserve the smartest
+advisor class for difficult judgments; no fixed runtime profile is required.
 
 - **Workers and mechanical helpers:** cheaper worker class,
   `model-level: cheap`, `effort: economy`. Keep mechanical verdicts concise.
@@ -224,7 +225,7 @@ Group tickets into waves:
 - Wave N+1: depends on Wave N results
 
 For each wave, launch agents with `isolation: "worktree"` and `model-level: strong`
-(per § Model policy — the coders; effort is the session effort, run at `high`).
+(per § Model policy — coding workers; `effort: standard`, resolved through the active runtime).
 
 The execute-agent contract's FIRST action is mechanical. The agent invokes the
 hunt skill with the ticket ID:

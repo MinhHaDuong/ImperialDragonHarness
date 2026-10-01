@@ -3,7 +3,10 @@
 import re
 from pathlib import Path
 
-from scripts.model_policy import EFFORTS, MODEL_LEVELS
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from model_policy import EFFORTS, MODEL_LEVELS  # noqa: E402
 
 SKILLS = Path(__file__).resolve().parents[1] / 'skills'
 FANOUT_SIGNAL = re.compile(
@@ -12,7 +15,7 @@ FANOUT_SIGNAL = re.compile(
 )
 MODEL_LEVEL = re.compile(r'model-level\s*:\s*(auto|cheap|standard|strong|frontier)\b')
 CONCRETE_MODEL = re.compile(
-    r'\b(?:sonnet|opus|haiku|fable)\b|\b(?:claude-(?:opus|sonnet|haiku|fable)|(?:gpt|gemini|mistral-large|deepseek)-[0-9])[\w.-]*',
+    r'\b(?:sonnet|opus|haiku|fable)\b|\b(?:claude-(?:opus|sonnet|haiku|fable)|(?:gpt|gemini|mistral-large|deepseek)-[a-z0-9])[\w.-]*',
     re.IGNORECASE,
 )
 
@@ -56,7 +59,7 @@ def test_skill_compute_frontmatter_is_semantic():
 
 
 def test_model_identity_scanner_controls():
-    for name in ['sonnet', 'claude-opus-4', 'openai/gpt-5.5', 'gemini-2.5-pro']:
+    for name in ['sonnet', 'claude-opus-4', 'openai/gpt-5.5', 'gemini-2.5-pro', 'deepseek-chat', 'gpt-oss-120b', 'gemini-pro']:
         assert CONCRETE_MODEL.search(name)
     for role in ['cheaper worker', 'smartest advisor', 'model-level: frontier', 'Scopus']:
         assert not CONCRETE_MODEL.search(role)

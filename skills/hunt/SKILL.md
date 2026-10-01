@@ -6,7 +6,7 @@ user-invocable: true
 argument-hint: "<ticket-id> [inline]"
 ---
 
-Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
 
 # Hunt — begin work on ticket $ARGUMENTS
 
@@ -61,7 +61,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      agent. Not a raid — for a single ticket its orchestrator and review panels
      cost more than the ticket returns. Launch with `isolation: "worktree"` and
      `model-level: strong` (coding worker class; `effort: standard`; resolve both
-     intentions through the runtime adapter). The agent's FIRST action is mechanical:
+     intentions through the active runtime). The agent's FIRST action is mechanical:
      ```
      Skill(skill: "hunt", args: "$ARGUMENTS")
      ```

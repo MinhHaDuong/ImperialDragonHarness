@@ -4,10 +4,11 @@ description: "Monthly survey of Claude Code session-trace economics — cost cen
 user-invocable: true
 argument-hint: "[--days N]"
 model-level: standard
-effort: standard
 ---
 
-Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+Requested effort: `effort: standard`.
+
+Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
 
 # Trace Doctor $ARGUMENTS
 

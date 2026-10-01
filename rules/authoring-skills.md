@@ -15,8 +15,9 @@ tests are the gate, this is why.
   `effort: economy|standard|intensive`. Cheaper workers favor `cheap/economy`;
   the smartest advisor uses `frontier`, with effort chosen for the task.
   Concrete model IDs and provider controls belong to runtime configuration.
-  Declare intentions for spawned children as well as the skill itself; resolve
-  them through the runtime adapter rather than assuming inheritance.
+  Declare intentions for spawned children as well as the skill itself. Let the
+  active runtime determine agents and concrete models on the fly; do not
+  require fixed profiles or a runtime-specific implementation in skills.
 - **Name capabilities, not the tool that provides them.** "Schedule a wake-up",
   not a timer-tool name; "delegate to a subagent", not an agent-tool name;
   "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub"; never

@@ -1,7 +1,6 @@
 """Runtime mappings resolve portable intentions independently of skill text."""
 
 import importlib.util
-import re
 from pathlib import Path
 
 import pytest

@@ -50,10 +50,10 @@ def test_documents_complementary_to_simulated_panel():
     )
 
 
-def test_first_sentence_names_real_external_models():
+def test_first_sentence_names_external_review_capability():
     """Discoverability: plain searchable keywords in the opening sentence."""
     first = skill_text().split("description:", 1)[1].split("\n", 1)[0].lower()
-    for kw in ("peer review", "openai", "mistral"):
+    for kw in ("peer review", "external", "frontier"):
         assert kw in first, f"first sentence should mention {kw!r}"
 
 

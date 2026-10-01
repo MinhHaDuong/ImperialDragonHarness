@@ -16,7 +16,7 @@ model-level: standard
 background: true
 ---
 
-Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+Compute settings express role, capability class, and effort intentions. The active runtime chooses agents and concrete models on the fly for this skill and each child launch, using its available capabilities. Do not require a fixed agent profile or pass semantic values as concrete model IDs.
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
 
@@ -561,7 +561,7 @@ breaker.
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
   `model-level: strong` (coding worker class; `effort: standard`; resolve both
-  intentions through the runtime adapter), waited for by polling
+  intentions through the active runtime), waited for by polling
   the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
