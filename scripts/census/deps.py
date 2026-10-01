@@ -35,7 +35,7 @@ def load_corpus(R: Path) -> dict[str, str]:
                     corpus[f"{sub}:{p.relative_to(d)}"] = p.read_text(errors="replace")
                 except (UnicodeDecodeError, OSError):
                     pass
-    for f in ("CLAUDE.md", "README.md", "Makefile", "settings.json", "STATE.md", "RTK.md"):
+    for f in ("AGENTS.md", "CLAUDE.md", "README.md", "Makefile", "settings.json", "STATE.md", "RTK.md"):
         p = R / f
         if p.exists():
             corpus[f"root:{f}"] = p.read_text(errors="replace")

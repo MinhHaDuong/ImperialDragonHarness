@@ -9,7 +9,7 @@ model, and only one was watched:
 
 * **auto-load** — the runtime walks ``rules/**.md`` and keeps every body whose
   frontmatter declares no ``paths:``.
-* **import** — ``CLAUDE.md`` and, transitively, every ``@path`` line in it.
+* **import** — ``AGENTS.md`` and, transitively, every ``@path`` line in it.
 * **hook** — ``scripts/on-start.sh`` prints files, and hook stdout is context.
 
 Two more are resident but not files-in-full: a skill and a subagent contribute
@@ -137,7 +137,7 @@ def rules_entries(root: Path) -> list[Entry]:
 
 
 def import_entries(
-    root: Path, starts: tuple[str, ...] = ("CLAUDE.md",), channel: str = "import"
+    root: Path, starts: tuple[str, ...] = ("AGENTS.md",), channel: str = "import"
 ) -> list[Entry]:
     """The start files and everything their ``@`` lines pull in, transitively."""
     out: list[Entry] = []
