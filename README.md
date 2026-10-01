@@ -30,7 +30,7 @@ ImperialDragonHarness/          # cloned as ~/.claude
 ├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
 ├── memory/                 # Cross-project lessons, injected at session start
 ├── projects/<slug>/memory/ # Per-repo memory, written by /dream and /memory-sweep
-├── commands/ bin/ hooks/   # Guidance docs, PATH utilities, git hooks
+├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
 ```
@@ -155,8 +155,8 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 | `/applied-econ-writing` | Structure and draft applied economics papers (environmental, development) following Shapiro, Head, Bellemare and J-PAL. |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
+| `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | `/conference-submission-prep` | Prepare an SSH conference submission: CFP analysis, format, fit, anonymization, reviewer expectations. |
-| `/conference-targeting` | Find and prioritize conferences for a finished piece of research: discovery, CFP fit, format, strategy. |
 | `/critical-lit-review` | Critical literature review for history of economics and STS: scoping, consultation table, corpus analysis, report. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Ranks the removable passages against the coverage ledger, cuts them entire, then condenses the survivors until the budget is met. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
