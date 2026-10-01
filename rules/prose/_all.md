@@ -56,5 +56,5 @@ These are the tics that mark text as machine-written. Cut them.
 
 This is a seed. Grow it deliberately — add a guard only when you have seen the
 defect in real drafts, and keep each entry one line so the loaded body stays
-small. Document-type conventions (techreport, slides, book) and language norms
+small. Document-type conventions (article, techreport, slides, book) and language norms
 (fr, en) live in `rules/doctype/` and `rules/lang/`, not here.

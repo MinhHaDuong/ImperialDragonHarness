@@ -3,7 +3,7 @@
 The axis resolver (`scripts/prose_predicate.py`) tells reviewers a file's
 doctype and lang; a body must exist for each value it can name. Two ratchets:
 
-1. Coverage — the in-use doctype values (techreport, slides, book) and the
+1. Coverage — the in-use doctype values (article, techreport, slides, book) and the
    documented langs (fr, en) each have a rule body, indexed in rules/README.md.
 2. Reachability — every rules/doctype/*.md and rules/lang/*.md file corresponds
    to a value the resolver can actually emit; an orphan file that can never
@@ -37,7 +37,7 @@ inj = _load()
 # project's manifest introduces a new lang.
 DOCUMENTED_LANGS = {"fr", "en"}
 
-REQUIRED_DOCTYPES = {"techreport", "slides", "book"}
+REQUIRED_DOCTYPES = {"article", "techreport", "slides", "book"}
 
 # Composability budget: format (~3k) + doctype + lang + prose/_all (~3k) must
 # stay small together, so each axis body stays small.
