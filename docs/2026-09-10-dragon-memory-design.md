@@ -288,7 +288,7 @@ ni désactiver les anciennes voies avant d’avoir vérifié le remplacement.
 | Deux passages et une source corrigée | Anciennes sources pas réimportées comme nouvelles ; correction réexaminée |
 | Retrait d’une affirmation et frontière d’autorité | Index cohérent, sources accessibles, aucune proposition de règle ni écriture dans le harnais |
 | Note native contradictoire ou absente | Contradiction ou limite signalée, pas de certification silencieuse |
-| Timer interrompu ou intégration refusée | Travail sauvegardé et statut visible, aucun succès fictif |
+| Rêve interrompu ou intégration refusée | Travail sauvegardé et statut visible, aucun succès fictif |
 
 Les premiers smokes sont exploratoires. Le protocole d’évaluation de 0918 est
 commité avant ses essais d’acceptation ; les smokes antérieurs ne sont pas
