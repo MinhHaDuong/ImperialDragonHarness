@@ -1,0 +1,94 @@
+%erg 0.1
+Title: Make the ~/.agents harness clone portable across runtimes
+Created: 2026-10-01
+Author: codex
+
+--- log ---
+2026-10-01T19:02Z codex created
+
+2026-10-01T19:03Z MinhHaDuong codex note Created as the replacement for 0978/0986 by author decision: clone at ~/.agents, resolve the checkout portably, keep runtime profiles independently owned.
+2026-10-01T19:16Z MinhHaDuong note Documentation and migration-ticket sweep complete locally on docs-portable-agents-plan; 112 relevant tests, 511-ticket corpus validation and whitespace checks pass. Full installation, relocation and runtime smoke acceptance remain open.
+--- body ---
+
+## Context
+
+The adopted installation is a clone at `~/.agents`, not a repository hidden
+inside one runtime's profile and not a second canonical `~/.idh` pointer. The
+path is the reference installation location, not an API: tracked code must keep
+working when the checkout is cloned elsewhere, moved, or reached through an
+installed symlink.
+
+This supersedes 0978 and 0986. Their `~/.claude` to `~/.idh` migration,
+projection manifest and quiet-window cutover are historical. Runtime-owned
+profiles such as `~/.claude` and `~/.codex` remain runtime state; adapters may
+register links or native plugins there, but they do not become alternate names
+for the repository.
+
+## Relevant files
+
+- `adapters/lifecycle.py`, `adapters/projections.json` — installation and validation
+- `scripts/bashrc-loader.sh`, `scripts/shell-init.sh` — portable shell entry points
+- `adapters/codex/hooks.json` — hook resolution through its installed symlink
+- `skills/dream/provenance.py`, `skills/dream/read-index.py` — remaining fixed roots
+- `README.md`, `STATE.md`, `ROADMAP.md`, `docs/idh-install-strategy.md` — installation contract and priorities
+
+## Progress
+
+Documentation and ticket planning updated locally on `docs-portable-agents-plan`;
+changes are uncommitted, with no merge or deployment claimed.
+
+- [x] README, STATE and ROADMAP describe the portable `~/.agents` clone.
+- [x] Installation, operations and adapter guides distinguish the target
+      registration contract from the legacy installer's actual limitations.
+- [x] Current memory design and implementation plan use the resolved checkout
+      contract; historical cutover guidance points to closed tickets.
+- [x] Superseded trackers 0978/0986 closed WONTDO; surviving tickets
+      0909, 0920, 0923, 0934 and 0988 rebased on this tracker.
+- [x] Documentation verification: 112 relevant tests passed; `erg check`
+      passed for 511 tickets; `git diff --check` passed.
+
+Existing local implementation changes resolve lifecycle and shell entry points
+from the checkout and the Codex guard from its installed symlink. The fast
+suite passed 853 tests with one skip. This is partial implementation evidence,
+not completion of the acceptance criteria below.
+
+## Remaining work
+
+1. Remove the manifest requirement that `~/.claude` resolve to the checkout;
+   implement additive registration with independently owned runtime profiles.
+2. Remove fixed repository paths in Claude settings and memory tools (0934),
+   then inventory other entry points, timers and test exceptions.
+3. Verify fresh installation, arbitrary-location clones and relocation through
+   installed links, including the canonical skills already present at `~/.agents`.
+4. Run the full gate and fresh Claude, Codex and Pi registration/guard smoke
+   tests. Re-trust the changed Codex hook definition before its live probe.
+5. Land the reviewed changes through the normal branch/PR workflow.
+
+## Actions
+
+1. Make every harness-owned entry point derive the checkout from its own real
+   location or an explicit root argument; never require `~/.idh` as a pointer.
+2. Treat `~/.agents` as the documented default clone and runtime profile paths
+   as adapter destinations only.
+3. Inventory and remove canonical-path assumptions from code, tests and current
+   documentation. Preserve runtime-native paths only where the runtime itself
+   owns that path.
+4. Define additive, idempotent registration for each supported runtime without
+   replacing or owning the runtime's whole profile directory.
+5. Verify the same checkout in a second arbitrary absolute location and through
+   installed adapter links.
+
+## Test
+
+Run lifecycle, projection, shell-loader and adapter fixtures with a checkout
+whose path is neither `~/.agents`, `~/.idh` nor `~/.claude`. Move that fixture
+and rerun through the installed links. A hard-coded canonical repository path
+must make the test fail.
+
+## Exit criteria
+
+- [ ] A fresh clone at `~/.agents` installs supported adapters without a `~/.idh` pointer.
+- [ ] The same tests pass from an arbitrary checkout path and after that checkout moves.
+- [ ] Runtime profiles remain independently owned and existing unrelated content is preserved.
+- [ ] No current code or documentation describes `~/.idh` or `~/.claude` as the repository's canonical location.
+- [ ] `make check` passes and live smoke tests cover Claude, Codex and Pi registration.

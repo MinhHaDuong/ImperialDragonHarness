@@ -14,6 +14,7 @@ Blocked-by: 0915
 2026-09-11T08:45Z claude note After the Fable plan review: owns the v7 disjoint-roots row. The plan's 'move out of ~/.claude' was unachievable — the repo is ~/.claude — so the two moves are named against the declared native root instead. The loader half of the withdrawal test moves to 0921.
 
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
+2026-10-01T19:03Z MinhHaDuong codex note Rebased the disjoint-roots action on 0999: resolve the checkout portably, with ~/.agents only the reference clone.
 --- body ---
 
 ## Context
@@ -28,7 +29,7 @@ Baseline/mapping from 0917; legacy import from 0908; schema/admission package; o
 
 ## Actions
 
-1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge. **This ticket owns the v7 §12.1 disjoint-roots row.** IDH's repository *is* the runtime's home (`README` lines 7 and 77), so the store cannot leave `~/.claude`; what moves is its position relative to the runtime's *declared* native root, which today is `~/.claude/projects/<slug>/memory/` (`provenance.py` `PROJECTS_BASE`). Perform both moves inside the harness repository — `memory/` → `memory-shared/`, and `projects/-home-haduong--claude/memory/` → `memory/` — and repoint every existing reader that hard-codes the old paths (`HARNESS_MEMORY` in `skills/dream/provenance.py`, `skills/dream/read-index.py`, the resident census).
+1. Select and document a representative pilot and corpus revision; separate IDH project memory from shared knowledge. **This ticket owns the v7 §12.1 disjoint-roots row.** The reference repository is cloned at `~/.agents`, outside runtime-owned profiles, but its path is not an API. Perform the two logical moves inside the resolved checkout — shared `memory/` → `memory-shared/`, and the harness project's legacy runtime-owned body → repository `memory/` — then repoint every reader through the portable root contract from 0999. Do not encode the current home directory or project slug in the new layout.
 2. Assign UUIDs once and preserve a durable old-path-to-UUID mapping; migrate explicit lifecycle, scope, dates and relative navigation. Preserve source text unless a separately reviewed correction is necessary.
 3. Fix a bounded available shared candidate set before ranking. Commit readable replicas with UUID, source revision and hash; never copy credentials or private traces indiscriminately.
 4. Implement reusable bounded snapshot selection/refresh for every publication, invoked by dreaming and consumed by 0910. Include referenced shared bodies plus the bounded candidate selection; resolve dependencies or report them unavailable. Reconcile live/shared replicas by UUID and proven revision ancestry: accept verified successors, report divergence, never use timestamps as winners. Retain source revisions/refresh date, validate hashes and propagate known withdrawals even when replacement bodies are outside the set. Refreshed successors remain recent until explicitly processed. Treat uncached sources as unavailable, not refill candidates; document offline staleness. Replicas are not independently editable; propose changes upstream or create a distinct local observation.
@@ -36,7 +37,7 @@ Baseline/mapping from 0917; legacy import from 0908; schema/admission package; o
 
 ## Test
 
-Relocate a fresh pilot clone without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, verified-successor versus divergent refresh, missing referenced dependencies, retained particulars and idempotent rerun without new UUIDs. Refresh a stale shared replica after an upstream withdrawal with an uncached replacement: the withdrawal survives export and is present in the committed snapshot and manifest after refresh, with the uncached replacement reported unavailable; offline readers explicitly cannot know unseen upstream changes. Whether that withdrawal is *effective at the next supported load* is 0921's test, not this one — there is no loader at this position.
+Relocate a fresh pilot clone to a path other than `~/.agents`, without the originating home directory. Verify plain Markdown navigation, inactive notices, identity-preserving replicas, verified-successor versus divergent refresh, missing referenced dependencies, retained particulars and idempotent rerun without new UUIDs. Refresh a stale shared replica after an upstream withdrawal with an uncached replacement: the withdrawal survives export and is present in the committed snapshot and manifest after refresh, with the uncached replacement reported unavailable; offline readers explicitly cannot know unseen upstream changes. Whether that withdrawal is *effective at the next supported load* is 0921's test, not this one — there is no loader at this position.
 
 ## Verification
 

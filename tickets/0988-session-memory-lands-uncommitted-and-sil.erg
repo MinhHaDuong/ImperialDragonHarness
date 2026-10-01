@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
 
+2026-10-01T19:03Z MinhHaDuong codex note Removed the obsolete 0978 coupling: 0999 portability does not decide whether session memory remains in the pulled tree.
 --- body ---
 
 ## Context
@@ -23,8 +24,8 @@ local copies were discarded. The same afternoon doudou's primary checkout held
 3 modified and 4 new memory files from other live sessions.
 
 `idh sync` (0987) will name the blocking files, which makes the stall visible
-but does not prevent it. The 0978 native/canonical split changes where memory
-lives, not whether it is committed.
+but does not prevent it. The portable `~/.agents` clone contract in 0999
+changes how the checkout is found, not whether memory writes are committed.
 
 ## Options
 
@@ -32,7 +33,8 @@ lives, not whether it is committed.
    with a union driver for `MEMORY.md` (index files are append-mostly).
 2. Memory writes land as commits: a SessionEnd step (or `/lair`) commits and
    opens a memory-only PR, as the 2026-09-29 rescue did by hand.
-3. Memory leaves the pulled tree (the 0978 split), with its own sync.
+3. Memory leaves the pulled tree, with its own sync. This is a memory ownership
+   decision, not part of the repository portability work in 0999.
 
 ## Exit criteria
 
