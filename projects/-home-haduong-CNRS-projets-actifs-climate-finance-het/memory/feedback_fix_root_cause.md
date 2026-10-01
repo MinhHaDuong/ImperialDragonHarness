@@ -10,7 +10,7 @@ Three progressively wrong approaches before getting it right:
 
 2. **PR #409 v1** (archive scripts to scripts/archive/) — hid offending files to make hygiene tests pass instead of fixing the scripts. User caught this — the feedback_fix_not_hide memory already existed but was ignored.
 
-3. **PRs #433-435 v1** (god module splits to 799 lines) — technically passed the test but didn't improve architecture. Shaved lines instead of finding real seams.
+3. **PRs #433-435 v1** — shaved god modules to 799 lines instead of finding seams; see [[feedback_arch_not_linecount]].
 
 **Why:** The pattern is taking the shortest path to green tests rather than understanding why the test exists. Each test encodes a quality intention — understand the intention, not just the threshold.
 
