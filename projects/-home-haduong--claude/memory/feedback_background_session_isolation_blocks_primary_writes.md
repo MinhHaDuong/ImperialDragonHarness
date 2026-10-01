@@ -9,9 +9,14 @@ Two different guards refuse a primary-checkout write, in two different contexts,
 with two different messages. Confusing them makes a documented remedy fail.
 
 - **Inside a worktree session**: "Edit the worktree copy of this file instead of
-  the shared-checkout path" — the path guard, recorded in
-  [[feedback_memory_writes_bypass_worktree_gate]]. Remedy: write the worktree
-  copy, land it via the branch's PR.
+  the shared-checkout path" — a platform path guard (observed 2026-07-15). It
+  overrides the `projects/*/memory/*` carve-out in
+  `scripts/pretooluse-worktree-path-guard.sh`, so that exemption is not to be
+  trusted. Remedy: write the worktree copy, land it via the branch's PR. An
+  interactive session that never called `EnterWorktree` wrote the primary
+  memory path with no guard firing (2026-07-24): the gate keys on an active
+  worktree session, not on the memory path — such writes still owe a branch
+  and a PR, since main is protected.
 - **In a BACKGROUND session, outside any worktree**: "This background session
   hasn't isolated its changes yet. Call EnterWorktree first" — a separate
   isolation guard that keys on the *session kind*, not on the path. Observed

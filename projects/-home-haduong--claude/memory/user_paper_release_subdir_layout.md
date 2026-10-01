@@ -29,4 +29,4 @@ top of the paper dir, and **not** in a new folder of their own.
 
 Recorded as a fact to apply with judgment, not a hard rule
 ([[feedback_dont_codify_hard_rules]]). Inferred from real practice on request
-(IDH 0264 discussion, 2026-07-10). Related: [[feedback_rr_intake_is_laborious]].
+(IDH 0264 discussion, 2026-07-10). Related: the `ingest-decision-letter` skill, which archives journal artifacts to `release/`.
