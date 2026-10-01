@@ -16,4 +16,4 @@ When new records are harvested for a review, pool them with the raw catalogue an
 - Judgments (labels, adjudications, model votes) go in their own append-only table keyed by work and stage, never in a regenerable flag column; the review's view is derived by join (ticket 1655). `refined_works` stays pinned for the other deliverables.
 - Old flags stay as information beside the new label; they do not filter.
 - A PRISMA flow is simplest with one pool and one screen: state the automation tools, their versions, prompts and agreement with the reference judge.
-- See [[project_rel_harvest_2026_09_29]] and [[feedback_check_for_existing_library]].
+- See tickets 1655 and 1656 (archive path, sentinel classes) and [[feedback_check_for_existing_library]].

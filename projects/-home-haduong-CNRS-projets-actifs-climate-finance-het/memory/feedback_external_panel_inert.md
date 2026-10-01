@@ -5,15 +5,13 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 69fadc0c-d582-4ce1-adea-c507e9c40443
-  modified: 2026-09-14
+  modified: 2026-10-01
 ---
 
-Use DeepSeek V4 through OpenRouter for the external reviewer and Terra as a local/session reviewer; exclude Luna (user preference, 2026-09-14; stable until contradicted). Copilot credits were unavailable in this session: this is temporary, not a permanent prohibition. Recheck that availability after 2026-09-28.
+Use DeepSeek V4 through OpenRouter for the external reviewer and Terra as a local/session reviewer; exclude Luna (user preference, 2026-09-14; stable until contradicted).
 
-For this project, use a temporary roster with `credential-env: OPENROUTER_API_KEY`, the alias selected by the project's default-deny `KEYS=` configuration. Set `REVIEWERS_REPO` to the target project worktree; `REPO_ROOT` does not configure the reviewer runner. Disable fallback to the sibling project's IDH credential. Never source the entire provider credential file, and do not alter shared credentials or the shared roster for a project-specific run.
+For this project, use a temporary roster with `credential-env: OPENROUTER_API_KEY`, the alias selected by the project's default-deny `KEYS=` configuration. Set `REVIEWERS_REPO` to the target project worktree: without it reviewers.sh reviews the harness repo, and `REPO_ROOT` does nothing. Disable fallback to the sibling project's IDH credential. Never source the entire provider credential file, and do not alter shared credentials or the shared roster for a project-specific run.
 
-The historical July 2026 panel failure was caused by a roster naming the unselected IDH credential and by the runner resolving its own harness repository. The old claim that harvest silently reports success when no seat ran is stale: current harvest reports seat status. Read that status and distinguish successful review from preflight failure; an unavailable seat is not a clean review.
+Harvest reports seat status: read it, and distinguish a successful review from a preflight failure. An unavailable seat is not a clean review; before trusting an empty harvest, confirm a seat ran (findings file present, .err absent).
 
-Calibrate reviewer findings against the actual reviewed tree. During PR #1365, DeepSeek's review at `da77` ran but its two findings were false positives. The final `73f` review failed preflight on reasoning-parameter incompatibility and supplied no successful final external review. Terra found the real frozen-baseline overwrite bug and reviewed its fix. These observations do not establish permanent model quality rankings. Recheck runner/model compatibility before reuse; compatibility observation expires 2026-09-28.
-
-**Merged from `feedback_gaze_external_seats_fail_open` (2026-09-25):** reviewers.sh reviews the harness repo unless REVIEWERS_REPO=<project worktree> is set (REPO_ROOT does nothing). Before trusting an empty harvest, confirm a seat ran (findings file present, .err absent).
+Calibrate reviewer findings against the actual reviewed tree, and recheck runner/model compatibility before reuse. On PR #1365 DeepSeek's two findings were false positives and Terra found the real bug; one PR does not rank models.

@@ -9650,6 +9650,42 @@
       "last_confirmed": "2026-09-30T07:30:10Z",
       "promoted": false,
       "backfilled": true
+    },
+    "feedback_external_brief_stale": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-10-01T05:50:55Z",
+      "last_confirmed": "2026-10-01T05:50:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "feedback_merge_reviews_critically": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-10-01T05:50:55Z",
+      "last_confirmed": "2026-10-01T05:50:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "project_jetp_spec_v1": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-10-01T05:50:55Z",
+      "last_confirmed": "2026-10-01T05:50:55Z",
+      "promoted": false,
+      "backfilled": true
+    },
+    "reference_padme_backup": {
+      "projects": [
+        "-home-haduong-CNRS-projets-actifs-climate-finance-het"
+      ],
+      "first_seen": "2026-10-01T05:50:55Z",
+      "last_confirmed": "2026-10-01T05:50:55Z",
+      "promoted": false,
+      "backfilled": true
     }
   }
 }
