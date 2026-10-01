@@ -54,6 +54,19 @@ template cannot enforce:
   the extraction kept the equations.
 - **HET register**: the author is a historian of economic thought; write for an
   informed reader in that field, not for a general audience.
+- **Anchor what you claim.** Every main finding and every naturalized
+  assumption cites a numbered quotation [Qn] from Key quotations. A note
+  drafted by a model reaches `status: quotes verified` only after each quotation
+  is matched verbatim on its stated page of the text; until then it stays
+  `draft`. The author's revision makes it `author revised`, the authoritative
+  version.
+- **Open access and reproducibility** are recorded, not guessed: `open_access`
+  from the copy actually used or from Unpaywall/OpenAlex; for an empirical work,
+  look for a replication package (journal supplement, repository, author page),
+  record whether it was accessed, and what verification was attempted and at
+  what effort, even if the answer is "not attempted".
+- **Length by tier**: full for the deep-read tier, short for the skim tier
+  (see the template).
 
 ## 4. Store it
 
@@ -63,6 +76,9 @@ template cannot enforce:
    DOI or Zotero item key in the note's metadata block so the two link up.
 3. When a `critical-lit-review` run delegated the note, also leave the path in
    the run's working directory it named.
+4. When the note belongs to a project corpus (`work_key` set) and the project
+   keeps a coding dataset, append the frontmatter there as one record keyed by
+   `work_key`, so syntheses query the dataset rather than parse notes.
 
 ## Output to the user
 
