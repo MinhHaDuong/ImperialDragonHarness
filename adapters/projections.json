@@ -2,31 +2,60 @@
   "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list and nothing else: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `runtimes: []` marks an operator-only entry: `idh check` verifies it, no launch waits on it. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
   "entries": [
     {
-      "path": "~/.idh",
-      "target": "$IDH_ROOT",
-      "runtimes": ["claude", "codex", "pi"],
+      "path": "~/.claude/settings.json",
+      "target": "$IDH_ROOT/settings.shared.json",
+      "runtimes": [
+        "claude"
+      ],
       "required": true,
-      "why": "every hook, extension and skills root names the harness as ~/.idh (ticket 0982)"
+      "registration": "hooks",
+      "why": "Additive Claude hooks in independently owned settings"
     },
     {
-      "path": "~/.claude",
-      "target": "$IDH_ROOT",
-      "runtimes": ["claude"],
+      "path": "~/.local/bin/idh-hook",
+      "target": "$IDH_ROOT/adapters/claude-code/bin/idh-hook",
+      "runtimes": [
+        "claude",
+        "codex"
+      ],
       "required": true,
-      "why": "Claude Code reads instructions, rules, skills and settings from its native root"
+      "why": "Portable Claude hook launcher"
+    },
+    {
+      "path": "~/.local/lib/idh/bash-env.sh",
+      "target": "$IDH_ROOT/scripts/bash-env.sh",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Portable Bash environment loader"
+    },
+    {
+      "path": "~/.claude/CLAUDE.md",
+      "target": "$IDH_ROOT/AGENTS.md",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Personal harness instructions"
     },
     {
       "path": "~/.codex/hooks.json",
       "target": "$IDH_ROOT/adapters/codex/hooks.json",
-      "runtimes": ["codex"],
+      "runtimes": [
+        "codex"
+      ],
       "required": true,
       "why": "the Codex destructive-bash guard; a dangling link runs no guard and gives no warning",
-      "installer": "$IDH_ROOT/bin/idh install"
+      "installer": "$IDH_ROOT/bin/idh install",
+      "registration": "hooks"
     },
     {
       "path": "~/.pi/agent/extensions/idh-guard.ts",
       "target": "$IDH_ROOT/adapters/pi/extensions/idh-guard.ts",
-      "runtimes": ["pi"],
+      "runtimes": [
+        "pi"
+      ],
       "required": true,
       "why": "the Pi destructive-bash guard; a dangling link drops the extension silently",
       "installer": "$IDH_ROOT/bin/idh install"
@@ -46,60 +75,129 @@
       "why": "manual audit launcher available on PATH"
     },
     {
-      "path": "~/.agents/skills/perch",
-      "target": "$IDH_ROOT/skills/perch",
-      "runtimes": ["codex", "pi"],
-      "required": false,
-      "why": "shared Agent Skills root, installed by bin/idh"
-    },
-    {
-      "path": "~/.agents/skills/healthcheck",
-      "target": "$IDH_ROOT/skills/healthcheck",
-      "runtimes": ["codex", "pi"],
-      "required": false,
-      "why": "shared Agent Skills root, installed by bin/idh"
-    },
-    {
       "path": "$IDH_ROOT/skills/email",
       "target": "~/.config/harness/private/skills/email",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "$IDH_ROOT/skills/infrastructure",
       "target": "~/.config/harness/private/skills/infrastructure",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "$IDH_ROOT/skills/directory",
       "target": "~/.config/harness/private/skills/directory",
-      "runtimes": ["claude"],
+      "runtimes": [
+        "claude"
+      ],
       "required": false,
       "why": "private skill overlay linked into the checkout"
     },
     {
       "path": "~/.agents/skills/email",
       "target": "~/.config/harness/private/skills/email",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
     },
     {
       "path": "~/.agents/skills/infrastructure",
       "target": "~/.config/harness/private/skills/infrastructure",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
     },
     {
       "path": "~/.agents/skills/directory",
       "target": "~/.config/harness/private/skills/directory",
-      "runtimes": ["codex", "pi"],
+      "runtimes": [
+        "codex",
+        "pi"
+      ],
       "required": false,
       "why": "private skill overlay in the shared Agent Skills root"
+    },
+    {
+      "path": "~/.claude/rules",
+      "target": "$IDH_ROOT/rules",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "children": "markdown",
+      "why": "Additive harness registration; unrelated children remain owned by the runtime"
+    },
+    {
+      "path": "~/.claude/agents",
+      "target": "$IDH_ROOT/agents",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "children": "markdown",
+      "why": "Additive harness registration; unrelated children remain owned by the runtime"
+    },
+    {
+      "path": "~/.claude/skills",
+      "target": "$IDH_ROOT/skills",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "children": true,
+      "why": "Additive harness registration; unrelated children remain owned by the runtime"
+    },
+    {
+      "path": "~/.agents/skills",
+      "target": "$IDH_ROOT/skills",
+      "runtimes": [
+        "codex"
+      ],
+      "required": true,
+      "children": true,
+      "why": "Additive harness registration; unrelated children remain owned by the runtime"
+    },
+    {
+      "path": "~/.pi/agent/skills",
+      "target": "$IDH_ROOT/skills",
+      "runtimes": [
+        "pi"
+      ],
+      "required": true,
+      "children": true,
+      "why": "Additive harness registration; unrelated children remain owned by the runtime"
+    },
+    {
+      "path": "~/.claude/RTK.md",
+      "target": "$IDH_ROOT/RTK.md",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Relative imports of the harness instructions"
+    },
+    {
+      "path": "~/.claude/tickets/AGENTS.md",
+      "target": "$IDH_ROOT/tickets/AGENTS.md",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "Relative imports of the harness instructions"
     }
   ]
 }

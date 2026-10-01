@@ -11,7 +11,9 @@ cd ~/.agents
 The checkout may live elsewhere. Helpers derive its root from the real
 location of the loaded skill, script or installed adapter, or accept an
 explicit root. Runtime-owned paths remain adapter destinations. Ticket 0999
-owns implementation and verification of this contract.
+tracks integration: 1003 owns runtime registration and 1002 dream/memory
+helpers. Memory ownership/sync remain 0988's separate work; installation
+does not certify a working dream storage contract.
 
 ## Register resources
 
@@ -35,25 +37,32 @@ discovery alone does not certify each skill's runtime compatibility.
 Installation must recognize canonical directories in place and avoid links
 from a directory to itself.
 
-## Existing installer
+## Current installer
 
 `./bin/idh install skill <name> --to <runtime>` is the pilot skill installer.
 It checks conflicts and versions before linking reviewed skills.
 
-The bare `./bin/idh install` is legacy all-runtime host setup. It creates
+The bare `./bin/idh install` is all-runtime host setup. It creates
 manifest links and edits `~/.bashrc`; it has no dry run or
-runtime selector. The manifest still expects the Claude profile to resolve
-to the repository and requires the legacy `~/.idh` pointer, so it is not yet
-a general fresh-install recipe.
+runtime selector. It merges required hooks into existing Claude/Codex
+configuration and links individual rules, skills, instructions, launchers and
+the Pi extension without replacing profile directories or requiring a
+repository pointer. Unrelated content survives; same-name resource conflicts
+are refused and must be resolved explicitly, never deleted blindly.
+At `~/.agents`, canonical skills are recognized in place, not self-linked.
+Run `./bin/idh install` only after reviewing these host-wide actions.
+After moving a checkout, run its `./bin/idh install` again: unchanged
+receipt-owned links are refreshed and foreign replacements are refused.
 `./bin/idh check` and `./bin/idh status` are read-only diagnostics.
 
 ## Remaining work
 
-1. Resolve checkout paths portably across all consumers.
+1. Finish the separate dream/memory-helper contract (1002).
 2. Preflight selected-runtime registration and list exact actions and conflicts.
 3. Package reviewed resources through native runtime mechanisms.
 4. Keep shell integration opt-in; leave scheduling to the host.
-5. Verify an arbitrary checkout location, relocation and runtime smoke tests.
+5. Maintain arbitrary-location, relocation and runtime smoke evidence;
+   registration fixtures do not certify every discovered skill's behavior.
 
 [ROADMAP](../ROADMAP.md) tracks priorities; [adapter operations](adapter-operations.md)
 covers the pilot. The old cutover is archived in

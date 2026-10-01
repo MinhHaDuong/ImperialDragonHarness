@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Portable runtime registration and safe operations
+Created: 2026-10-01
+Author: codex
+Closed: autoclosed — PR #1091
+
+--- log ---
+2026-10-01T20:45Z codex created Child of 0999 after author-approved PR 1091 split; memory work belongs to the other session.
+2026-10-01T21:08Z codex note Renumbered to 1003 after concurrent memory design PR1093 independently allocated and closed 1001. Original allocation preserved in history; no memory-design ticket changed.
+
+2026-10-01T21:15Z MinhHaDuong closed — autoclosed — PR #1091
+--- body ---
+## Context
+Parent tracker 0999 spans runtime registration and memory-helper portability.
+PR 1091 now owns only registration, launch protection, mechanical consumers
+and safe operator documentation. Memory helpers are extracted to 1002;
+0988 retains the separate memory ownership/synchronization decision.
+
+## Relevant files
+adapters/lifecycle.py, adapters/projections.json, scripts/validate-projections.py,
+scripts/gen-claude-code-adapter-hooks.py, shell entry points, tests/test_idh_lifecycle.py,
+README.md, docs/idh-install-strategy.md, docs/adapter-operations.md, adapters/README.md.
+
+## Test
+Install with independent runtime profiles in disposable HOME at ~/.agents
+and an arbitrary space-containing checkout. Preserve user content, move the
+checkout and re-register through installed launchers. Start from the exact
+shipped legacy Codex guard and retain an unrelated hook: one portable guard
+must replace the predecessor and installation must be idempotent. The author
+removed migration-specific tests/ratchets; predecessor repair is verified
+by a one-off behavioral probe, not a persistent old-layout test corpus.
+
+## Exit criteria
+- [ ] Fresh and arbitrary-path installation and explicit relocation/re-registration pass without a ~/.idh pointer or whole-profile repository alias.
+- [ ] Runtime settings, unrelated hooks, skills, rules and extensions are preserved; modified/foreign registered links are not overwritten.
+- [ ] Exact shipped Claude and Codex hook predecessors migrate once, preserving unrelated hooks and semantics.
+- [ ] Current registration docs match the installer, explain receipt-owned relocation and do not delete merged user configuration during removal or recovery.
+- [ ] Full make check and make lint pass; Claude, Codex and Pi registration/guard smoke evidence is recorded with its limitations.
+
+This child does not certify dream/provenance portability, memory ownership,
+store reconciliation, native plugin parity or opt-in shell integration.
+0999 remains open until integration review after both children are complete.

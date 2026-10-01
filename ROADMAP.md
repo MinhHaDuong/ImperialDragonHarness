@@ -8,7 +8,7 @@ Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
 
 | Workstream | Next work | Completion evidence |
 |---|---|---|
-| Portable installation — 0999 | Resolve remaining fixed paths; register resources additively; separate shell and timer setup | Fresh and relocated clones pass checks; runtime smoke tests demonstrate loading and guards |
+| Portable installation — 0999 | Registration child 1003 in #1091; dream helpers child 1002 in the memory session; native packaging and opt-in host setup remain | Fresh/relocated registration, preserved profiles and runtime smoke; separate memory-helper and integration reviews |
 | Memory v8 — 0909 | Convention 0911, inventory 0917, pilot 0920; then capture 0988 and dreaming 0916/0910 | Repository Markdown, preserved factual journal, reviewed weekly dreaming and four-runtime evidence |
 | Host sync — 0988 | Implement project journal commits and safe integration after the pilot | Sessions preserve notes and the harness continues to update |
 | Runtime policy — 0974 | Apply the adopted semantic model/effort policy | Runtime mappings and capability limits are tested |

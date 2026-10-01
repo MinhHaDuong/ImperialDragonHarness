@@ -36,14 +36,27 @@ VALIDATOR = _load_validator()
 def _checkout(root: Path) -> Path:
     for rel in (
         "scripts/validate-projections.py",
+        "scripts/gen-claude-code-adapter-hooks.py",
         "scripts/shell-init.sh",
         "scripts/bashrc-loader.sh",
         "adapters/projections.json",
         "adapters/codex/hooks.json",
         "adapters/pi/extensions/idh-guard.ts",
+        "adapters/claude-code/bin/idh-hook",
+        "scripts/bash-env.sh",
+        "AGENTS.md",
+        "RTK.md",
+        "tickets/AGENTS.md",
+        "settings.shared.json",
+        "bin/idh",
+        "adapters/lifecycle.py",
     ):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(REPO / rel, root / rel)
+    (root / "rules").mkdir()
+    (root / "rules/workflow.md").write_text("rules")
+    (root / "agents").mkdir()
+    (root / "agents/helper.md").write_text("agent")
     for skill in ("perch", "healthcheck"):
         (root / "skills" / skill).mkdir(parents=True)
     return root
@@ -58,18 +71,27 @@ def world(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("XDG_STATE_HOME", raising=False)
-    (home / ".idh").symlink_to(root, target_is_directory=True)
-    (home / ".claude").symlink_to(root, target_is_directory=True)
-    for rel, target in (
-        (".codex/hooks.json", "adapters/codex/hooks.json"),
-        (".pi/agent/extensions/idh-guard.ts", "adapters/pi/extensions/idh-guard.ts"),
-        (".agents/skills/perch", "skills/perch"),
-    ):
-        link = home / rel
+    for entry in VALIDATOR.load_entries(root / "adapters/projections.json", None):
+        if not entry["required"] and not VALIDATOR.expand(entry["target"], root).exists():
+            continue
+        link = VALIDATOR.expand(entry["path"], root)
+        target = VALIDATOR.expand(entry["target"], root)
+        if not target.exists():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("fixture")
+            if entry["path"].startswith("~/.local/bin/"):
+                target.chmod(0o755)
+        if link == target:
+            continue
         link.parent.mkdir(parents=True, exist_ok=True)
-        link.symlink_to(home / ".idh" / target)
+        if entry.get("registration"):
+            link.write_text(json.dumps(VALIDATOR.merge_hooks({}, json.loads(target.read_text()))))
+        elif not link.exists():
+            link.symlink_to(target)
     fakebin = tmp_path / "fakebin"
     fakebin.mkdir()
+    (fakebin / "systemctl").write_text("#!/bin/sh\nexit 0\n")
+    (fakebin / "systemctl").chmod(0o755)
     for rt in RUNTIMES:
         exe = fakebin / rt
         exe.write_text(f'#!/bin/sh\necho "LAUNCHED {rt} $*"\n')
@@ -93,7 +115,7 @@ def validate(world, runtime):
     err = io.StringIO()
     with contextlib.redirect_stderr(err):
         try:
-            rc = VALIDATOR.main([runtime, "--root", str(world["home"] / ".idh")])
+            rc = VALIDATOR.main([runtime, "--root", str(world["root"])])
         except SystemExit as exc:
             print(exc, file=err)
             rc = 2
@@ -125,16 +147,14 @@ def run_repair(world, stderr: str, n: int = 0):
 # --- the manifest --------------------------------------------------------
 
 
-def test_manifest_declares_the_pointer_and_one_guard_per_runtime():
+def test_manifest_declares_one_guard_per_runtime():
     required = {
         (e["path"], rt)
         for e in MANIFEST["entries"]
         if e["required"]
         for rt in e["runtimes"]
     }
-    for rt in RUNTIMES:
-        assert ("~/.idh", rt) in required
-    assert ("~/.claude", "claude") in required
+    assert ("~/.claude/CLAUDE.md", "claude") in required
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
 
@@ -149,6 +169,8 @@ def test_manifest_entries_are_well_formed():
             "required",
             "why",
             "installer",
+            "children",
+            "registration",
         }, e
         for spec in (e["path"], e["target"]):
             assert spec.startswith(("~/", "$IDH_ROOT")), spec
@@ -167,7 +189,7 @@ def test_healthy_home_validates(world, runtime):
 def test_validation_writes_no_state(world):
     """No state file: nothing a later launch could trip on (dropped last-good-root)."""
     assert validate(world, "claude").returncode == 0
-    assert not (world["home"] / ".local").exists()
+    assert not (world["home"] / ".local/state").exists()
 
 
 def test_unset_home_refuses_with_a_message_not_a_traceback(world, monkeypatch):
@@ -178,23 +200,19 @@ def test_unset_home_refuses_with_a_message_not_a_traceback(world, monkeypatch):
 
 
 @pytest.mark.integration
-def test_dangling_guard_link_names_culprit_and_a_working_repair(world):
-    link = world["home"] / ".codex" / "hooks.json"
+def test_dangling_guard_link_names_culprit_without_overwriting_it(world):
+    link = world["home"] / ".local/bin/idh-hook"
     link.unlink()
-    link.symlink_to(world["tmp"] / "gone" / "hooks.json")
+    link.symlink_to(world["tmp"] / "gone" / "idh-hook")
     r = validate(world, "codex")
     assert r.returncode == 1
     assert f"DANGLING: {link}" in r.stderr
     assert "IDH_SKIP_VALIDATE=1 codex" in r.stderr
-    # The repair links through the pointer, as 0982 wired it, so it survives
-    # the 0986 cutover instead of pinning today's resolved checkout.
-    assert f"{world['home'] / '.idh'}/adapters/codex/hooks.json" in repair_command(
-        r.stderr
-    )
+    assert "inspect " in repair_command(r.stderr)
+    assert "ln -sf" not in repair_command(r.stderr)
+    assert link.readlink() == world["tmp"] / "gone" / "idh-hook"
     # Scoped per runtime: Claude Code does not read the Codex hook.
-    assert validate(world, "claude").returncode == 0
-    run_repair(world, r.stderr)
-    assert validate(world, "codex").returncode == 0
+    assert validate(world, "pi").returncode == 0
 
 
 def test_foreign_link_is_refused(world):
@@ -206,36 +224,48 @@ def test_foreign_link_is_refused(world):
     r = validate(world, "pi")
     assert r.returncode == 1
     assert f"FOREIGN: {link} resolves to {other}" in r.stderr
+    assert "inspect " in repair_command(r.stderr) and "ln -sf" not in r.stderr
+    assert link.readlink() == other
+
+
+def test_non_executable_installed_launcher_is_reported(world):
+    target = world["root"] / "adapters/claude-code/bin/idh-hook"
+    target.chmod(0o644)
+    r = validate(world, "codex")
+    assert r.returncode == 1 and "UNUSABLE:" in r.stderr
+    assert "not executable" in r.stderr
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime,rel", [("codex", ".codex"), ("pi", ".pi")])
 def test_missing_guard_on_a_fresh_machine_gets_a_repair_that_works(world, runtime, rel):
-    """No ~/.codex at all: a bare `ln -sfn` would fail, so the repair creates the parent."""
+    """Fresh registration creates missing parent directories without replacing links."""
     shutil.rmtree(world["home"] / rel)
     r = validate(world, runtime)
     assert r.returncode == 1 and "MISSING:" in r.stderr
     assert "/bin/idh" in r.stderr  # the managed alternative: idh install
-    run_repair(world, r.stderr)
+    for n in range(r.stderr.count("    repair:")):
+        run_repair(world, r.stderr, n)
     assert validate(world, runtime).returncode == 0
 
 
 def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
     link = world["home"] / ".agents" / "skills" / "perch"
+    # A required canonical skill must remain registered.
     link.unlink()
-    assert validate(world, "codex").returncode == 0
+    assert validate(world, "codex").returncode == 1
     link.symlink_to(world["tmp"] / "nowhere")
     r = validate(world, "codex")
     assert r.returncode == 1 and f"DANGLING: {link}" in r.stderr
 
 
 def test_foreign_real_directory_is_never_overwritten_blind(world):
-    (world["home"] / ".claude").unlink()
-    (world["home"] / ".claude").mkdir()
+    (world["home"] / ".claude/CLAUDE.md").unlink()
+    (world["home"] / ".claude/CLAUDE.md").mkdir()
     r = validate(world, "claude")
     assert r.returncode == 1
     assert "is a real directory" in r.stderr
-    assert "mv " in r.stderr and ".pre-idh" in r.stderr
+    assert "inspect " in r.stderr and "mv " not in r.stderr
 
 
 def test_unlisted_links_are_not_consulted(world):
@@ -284,8 +314,8 @@ def test_negative_control_healthy_home_launches_unchanged(world, runtime):
 @pytest.mark.parametrize(
     "runtime,rel",
     [
-        ("claude", ".claude"),
-        ("codex", ".codex/hooks.json"),
+        ("claude", ".claude/CLAUDE.md"),
+        ("codex", ".local/bin/idh-hook"),
         ("pi", ".pi/agent/extensions/idh-guard.ts"),
     ],
 )
@@ -314,9 +344,7 @@ def test_bypass_is_explicit_and_logged(world):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_an_unwritable_bypass_log_is_reported_not_claimed(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
-    (world["home"] / ".local").write_text("a file where the state dir should be\n")
+    (world["home"] / ".local/state").write_text("a file where the state dir should be\n")
     r = launch(world, "pi", init=init, IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and "LAUNCHED pi" in r.stdout
     assert "could not log to" in r.stderr and "(logged to" not in r.stderr
@@ -325,8 +353,6 @@ def test_an_unwritable_bypass_log_is_reported_not_claimed(world, init):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_a_newline_in_the_cwd_cannot_forge_a_log_line(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
     evil = world["tmp"] / "x\n2026-01-01T00:00Z claude bypass cwd=forged"
     evil.mkdir()
     r = launch(world, "pi", init=init, cwd=evil, IDH_SKIP_VALIDATE="1")
@@ -344,25 +370,6 @@ def test_unset_home_in_the_wrapper_refuses_with_a_message(world):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("runtime", RUNTIMES)
-def test_pointer_removed_after_sourcing_still_refuses(world, runtime):
-    """The wrapper outlives ~/.idh in a running shell and must not fall through."""
-    script = (
-        f'source "{world["home"]}/.idh/scripts/shell-init.sh"\n'
-        f'rm "{world["home"]}/.idh"\n{runtime} --version'
-    )
-    r = subprocess.run(
-        ["bash", "--norc", "-c", script],
-        env=_env(world),
-        capture_output=True,
-        text=True,
-    )
-    assert r.returncode != 0 and "LAUNCHED" not in r.stdout
-    run_repair(world, r.stderr)
-    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
-
-
-@pytest.mark.integration
 def test_bashrc_loader_sources_the_wrappers_when_reachable(world):
     r = launch(world, "pi", init="bashrc-loader.sh")
     assert r.returncode == 0 and "LAUNCHED pi" in r.stdout
@@ -370,29 +377,16 @@ def test_bashrc_loader_sources_the_wrappers_when_reachable(world):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime", RUNTIMES)
-def test_bashrc_loader_refuses_when_the_harness_is_unreachable(world, runtime):
-    (world["home"] / ".idh").unlink()
-    # Under `set -e` too: a refusal must print its message, never exit silently.
+def test_bashrc_loader_direct_source_works_under_errexit(world, runtime):
+    # Directly sourced from the checkout, including under `set -e`.
     r = launch(world, runtime, init="bashrc-loader.sh", pre="set -e")
-    assert r.returncode != 0 and "LAUNCHED" not in r.stdout
-    assert "is unreachable" in r.stderr
-    assert f"IDH_SKIP_VALIDATE=1 {runtime}" in r.stderr
-    run_repair(world, r.stderr)
-    assert (world["home"] / ".idh").resolve() == world["root"].resolve()
-
-    (world["home"] / ".idh").unlink()
-    r = launch(world, runtime, init="bashrc-loader.sh", IDH_SKIP_VALIDATE="1")
     assert r.returncode == 0 and f"LAUNCHED {runtime}" in r.stdout
-    assert "(harness not loaded)" in bypass_log(world)
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("unreachable", [False, True])
-def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreachable):
+def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world):
     """An alias codex='codex --flag' defined before the loader (a real ~/.bash_aliases)
     once made `codex() {` a syntax error, leaving every runtime unwrapped."""
-    if unreachable:
-        (world["home"] / ".idh").unlink()
     script = (
         "shopt -s expand_aliases\n"
         "alias codex='codex --approve-for-me'\n"
@@ -415,8 +409,8 @@ def test_a_same_name_alias_neither_breaks_the_loader_nor_is_lost(world, unreacha
 BROKEN_INIT = {
     "empty": "",
     "syntax error": 'function codex {\n  command codex "$@"\n\nif then fi\n',
-    # A pre-0983 copy: it defines claude without any check, and nothing else.
-    "old copy": 'claude() {\n  command claude --dangerously-skip-permissions "$@"\n}\n',
+    # Incomplete wrappers must not leave any runtime unprotected.
+    "incomplete wrappers": 'claude() {\n  command claude --dangerously-skip-permissions "$@"\n}\n',
 }
 
 
@@ -462,7 +456,7 @@ def test_loader_fails_closed_on_a_broken_shell_init(world, case, runtime, intera
 def test_missing_python3_refuses_with_a_repair(world):
     bare = world["tmp"] / "bare-bin"
     bare.mkdir()
-    for tool in ("bash", "dirname", "basename"):
+    for tool in ("bash", "dirname", "basename", "readlink"):
         (bare / tool).symlink_to(shutil.which(tool))
     env = {"HOME": str(world["home"]), "PATH": f"{world['fakebin']}:{bare}"}
     r = launch(world, "codex", env=env)
@@ -476,7 +470,7 @@ def test_missing_python3_refuses_with_a_repair(world):
     [
         "{not json",
         '{"entries": 3}',
-        '{"entries": [{"path": "~/.idh", "target": "$IDH_ROOT", "runtimes": ["codex"],'
+        '{"entries": [{"path": "~/.local/bin/idh", "target": "$IDH_ROOT", "runtimes": ["codex"],'
         ' "why": "no required key"}]}',
     ],
 )
@@ -491,8 +485,6 @@ def test_corrupt_manifest_is_a_one_line_refusal(world, corrupt):
 @pytest.mark.integration
 @pytest.mark.parametrize("init", ["shell-init.sh", "bashrc-loader.sh"])
 def test_control_characters_in_the_cwd_never_reach_the_log_raw(world, init):
-    if init == "bashrc-loader.sh":
-        (world["home"] / ".idh").unlink()
     odd = world["tmp"] / "a\rb\x1b[31mc\x07d"
     odd.mkdir()
     r = launch(world, "pi", init=init, cwd=odd, IDH_SKIP_VALIDATE="1")
@@ -522,17 +514,9 @@ def test_an_unreadable_shell_init_gets_the_chmod_repair_not_ln(world):
     "bashrc,reminded",
     [
         ("", True),
-        (
-            '[ -f "$HOME/.idh/scripts/shell-init.sh" ] && source "$HOME/.idh/scripts/shell-init.sh"\n',
-            True,
-        ),
         ((REPO / "scripts" / "bashrc-loader.sh").read_text(), False),
-        (
-            "_idh_unreachable() { :; }  # the round-1 block, until the post-merge refresh\n",
-            False,
-        ),
     ],
-    ids=["none", "bare-source-line", "current-loader", "round-1-loader"],
+    ids=["none", "current-loader"],
 )
 def test_session_start_reminds_only_when_the_loader_is_absent(
     tmp_path, bashrc, reminded

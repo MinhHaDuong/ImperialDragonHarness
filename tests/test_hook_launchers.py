@@ -1,12 +1,4 @@
-"""Harness hooks fail loud when their script is unreachable (ticket 0982).
-
-A hook command whose script is missing exits 127, or 126 when it is not
-executable; Claude Code treats both as non-blocking, so the destructive-bash
-guard would vanish without a word. Each pointer-dependent hook in
-settings.shared.json therefore tests `-x` on the exact script it runs and
-otherwise exits 2 with the repair command, which blocks a PreToolUse call
-and surfaces on SessionStart/SessionEnd.
-"""
+"""Installed hook launchers report missing executables and run the guard."""
 
 import importlib.util
 import json
@@ -22,27 +14,27 @@ REPO = Path(__file__).resolve().parent.parent
 SHARED = json.loads((REPO / "settings.shared.json").read_text())
 
 
-def _pointer_hooks():
+def _launcher_hooks():
     out = []
     for event, blocks in SHARED["hooks"].items():
         for block in blocks:
             for hook in block.get("hooks", []):
-                if "$HOME/.idh" in hook.get("command", ""):
+                if "$HOME/.local/bin/idh-hook" in hook.get("command", ""):
                     out.append((event, hook["command"]))
     return out
 
 
-POINTER_HOOKS = _pointer_hooks()
+LAUNCHER_HOOKS = _launcher_hooks()
 
 
-def test_every_pointer_hook_is_found():
-    events = {event for event, _ in POINTER_HOOKS}
+def test_every_launcher_hook_is_found():
+    events = {event for event, _ in LAUNCHER_HOOKS}
     assert {"SessionStart", "SessionEnd", "PreToolUse"} <= events
 
 
-@pytest.mark.parametrize("event,command", POINTER_HOOKS)
+@pytest.mark.parametrize("event,command", LAUNCHER_HOOKS)
 def test_hook_checks_the_exact_script_before_running(event, command):
-    script = command.rsplit('exec "', 1)[1].split('"', 1)[0]
+    script = "$HOME/.local/bin/idh-hook"
     assert command.startswith(f'[ -x "{script}" ] || {{'), command
 
 
@@ -62,32 +54,31 @@ def _run(command: str, home: Path, cwd: Path):
 
 def _assert_loud(result, home: Path):
     assert result.returncode == 2
-    assert "repair it from a plain terminal outside Claude/Codex" in result.stderr
-    assert f"ln -s {home}/.claude {home}/.idh" in result.stderr
+    assert "run <checkout>/bin/idh install from a plain terminal" in result.stderr
 
 
-@pytest.mark.parametrize("event,command", POINTER_HOOKS)
-def test_missing_pointer_exits_2_with_the_repair(tmp_path, event, command):
+@pytest.mark.parametrize("event,command", LAUNCHER_HOOKS)
+def test_missing_launcher_exits_2_with_the_repair(tmp_path, event, command):
     home = tmp_path / "home"
     home.mkdir()
     _assert_loud(_run(command, home, tmp_path), home)
 
 
-@pytest.mark.parametrize("event,command", POINTER_HOOKS)
-def test_missing_script_under_a_present_pointer_exits_2(tmp_path, event, command):
+@pytest.mark.parametrize("event,command", LAUNCHER_HOOKS)
+def test_missing_launcher_under_an_existing_bin_dir_exits_2(tmp_path, event, command):
     """A scripts dir without the target: a -d check would exec and exit 127."""
     home = tmp_path / "home"
-    (home / ".idh" / "scripts").mkdir(parents=True)
+    (home / ".local" / "bin").mkdir(parents=True)
     _assert_loud(_run(command, home, tmp_path), home)
 
 
-@pytest.mark.parametrize("event,command", POINTER_HOOKS)
+@pytest.mark.parametrize("event,command", LAUNCHER_HOOKS)
 def test_non_executable_script_exits_2(tmp_path, event, command):
     """A present but non-executable script would otherwise exit 126."""
     home = tmp_path / "home"
-    scripts = home / ".idh" / "scripts"
+    scripts = home / ".local" / "bin"
     scripts.mkdir(parents=True)
-    name = command.rsplit("/scripts/", 1)[1].split('"', 1)[0]
+    name = "idh-hook"
     (scripts / name).write_text("#!/bin/sh\nexit 0\n")
     os.chmod(scripts / name, 0o644)
     _assert_loud(_run(command, home, tmp_path), home)
@@ -103,25 +94,26 @@ def _generator():
 
 def test_generator_translates_only_the_exact_checked_form():
     gen = _generator()
-    for _, command in POINTER_HOOKS:
+    for _, command in LAUNCHER_HOOKS:
         assert gen.translate(command).startswith(gen.LAUNCHER), command
     smuggled = (
-        '[ -x "$HOME/.idh/scripts/x.sh" ] || { touch /tmp/pwn; echo "m" >&2; exit 2; }; '
-        'exec "$HOME/.idh/scripts/x.sh"'
+        '[ -x "$HOME/.local/bin/idh-hook" ] || { touch /tmp/pwn; echo "m" >&2; exit 2; }; '
+        'exec "$HOME/.local/bin/idh-hook" x.sh'
     )
     assert gen.translate(smuggled) == smuggled
     substituted = (
-        '[ -x "$HOME/.idh/scripts/x.sh" ] || { echo "$(touch /tmp/pwn)" >&2; exit 2; }; '
-        'exec "$HOME/.idh/scripts/x.sh"'
+        '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "$(touch /tmp/pwn)" >&2; exit 2; }; '
+        'exec "$HOME/.local/bin/idh-hook" x.sh'
     )
     assert gen.translate(substituted) == substituted
 
 
-def test_present_pointer_runs_the_guard(tmp_path):
-    """Positive control: with the pointer in place the real guard decides."""
+def test_installed_launcher_runs_the_guard(tmp_path):
+    """Positive control: the installed launcher runs the real guard."""
     home = tmp_path / "home"
     home.mkdir()
-    (home / ".idh").symlink_to(REPO, target_is_directory=True)
+    (home / ".local/bin").mkdir(parents=True)
+    (home / ".local/bin/idh-hook").symlink_to(REPO / "adapters/claude-code/bin/idh-hook")
     repo = tmp_path / "repo"
     repo.mkdir()
     git = ["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t"]
@@ -130,7 +122,7 @@ def test_present_pointer_runs_the_guard(tmp_path):
                    check=True)
     (repo / "f.txt").write_text("dirty\n")
     subprocess.run([*git[:3], "add", "f.txt"], check=True)
-    (command,) = [c for e, c in POINTER_HOOKS if e == "PreToolUse"]
+    (command,) = [c for e, c in LAUNCHER_HOOKS if e == "PreToolUse"]
     result = subprocess.run(
         ["sh", "-c", command],
         env={"HOME": str(home), "PATH": "/usr/bin:/bin"},

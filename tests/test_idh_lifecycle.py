@@ -2,10 +2,11 @@
 
 The expected link set comes from adapters/projections.json, never from what
 install happened to create, so an entry install forgets is a failure here.
-Every run uses a fixture HOME. A failing systemctl sentinel verifies that
-installation and status do not call a host scheduler.
+Every run uses disposable HOME. A failing systemctl sentinel proves that
+installation and status leave host scheduling alone.
 """
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -18,7 +19,10 @@ from tracked_tree import tracked_checkout
 # overlay) would reach $IDH_ROOT and fail the run on one machine only (0989).
 REPO = tracked_checkout()
 IDH = REPO / "bin" / "idh"
-MANIFEST = json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
+spec = importlib.util.spec_from_file_location("projections", REPO / "scripts/validate-projections.py")
+validator = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(validator)
+MANIFEST = validator.load_entries(REPO / "adapters/projections.json", None)
 
 pytestmark = pytest.mark.integration
 
@@ -62,7 +66,12 @@ def test_install_then_check_round_trip_and_planted_break(machine):
             continue
         path = expand(entry["path"], home)
         target = expand(entry["target"], home)
-        assert path.resolve() == target.resolve(), (path, target)
+        if entry.get("registration"):
+            actual = json.loads(path.read_text())
+            wanted = json.loads(target.read_text())
+            assert validator.merge_hooks(json.loads(json.dumps(actual)), wanted) == actual
+        else:
+            assert path.resolve() == target.resolve(), (path, target)
     assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
     assert not machine["log"].exists()
     assert (home / ".bashrc").read_text() == (REPO / "scripts" / "bashrc-loader.sh").read_text()
@@ -77,18 +86,18 @@ def test_install_then_check_round_trip_and_planted_break(machine):
         line for line in (r.stdout + r.stderr).splitlines()
         if line.lstrip().startswith(("MISSING:", "DANGLING:", "FOREIGN:"))
     ]
-    assert culprits == [f"  DANGLING: {hooks} -> /nonexistent resolves to nothing"], culprits
+    assert len(culprits) == 1 and str(hooks) in culprits[0], culprits
 
 
 def test_install_is_idempotent_and_refuses_foreign_files(machine):
     home, idh = machine["home"], machine["idh"]
     hooks = home / ".codex" / "hooks.json"
     hooks.parent.mkdir(parents=True)
-    hooks.write_text('{"mine": true}')
+    hooks.write_text('{not-json')
     r = idh("install")
     assert r.returncode == 1
-    assert f"FOREIGN: {hooks} is a real file" in r.stdout + r.stderr
-    assert hooks.read_text() == '{"mine": true}', "the only copy was overwritten"
+    assert f"REFUSED: {hooks}" in r.stdout + r.stderr
+    assert hooks.read_text() == '{not-json', "the only copy was overwritten"
     # The other entries still installed.
     assert (home / ".pi" / "agent" / "extensions" / "idh-guard.ts").is_symlink()
 
@@ -137,22 +146,6 @@ def test_loader_is_appended_when_absent(machine):
     bashrc.write_text("alias ll='ls -l'")  # no final newline
     assert idh("install").returncode == 0
     assert bashrc.read_text() == "alias ll='ls -l'\n" + LOADER
-
-
-@pytest.mark.parametrize(
-    "legacy",
-    [LOADER.split("\n", 1)[1].rsplit("# <<<", 1)[0],  # pre-marker block
-     LOADER.rsplit("# <<<", 1)[0]],  # begin marker, end marker lost
-    ids=["pre-marker", "no-end-marker"],
-)
-def test_legacy_loader_is_refused_not_guessed(machine, legacy):
-    home, idh = machine["home"], machine["idh"]
-    bashrc = home / ".bashrc"
-    bashrc.write_text(legacy + "alias zotero=z\n")
-    r = idh("install")
-    assert r.returncode == 1
-    assert "remove the old harness loader block" in r.stderr
-    assert bashrc.read_text() == legacy + "alias zotero=z\n"
 
 
 def test_status_reports_installed_vs_declared(machine):
@@ -277,7 +270,7 @@ def test_two_loader_blocks_are_refused(machine):
     assert bashrc.read_text() == LOADER + "alias a=b\n" + LOADER
 
 
-def test_links_go_through_the_pointer_and_a_blocked_parent_is_named(machine):
+def test_links_target_the_checkout_and_a_blocked_parent_is_named(machine):
     home, idh = machine["home"], machine["idh"]
     (home / ".pi").write_text("a file where a directory belongs\n")
     r = idh("install")
@@ -286,7 +279,7 @@ def test_links_go_through_the_pointer_and_a_blocked_parent_is_named(machine):
     # The run went on: the loader and the other links are in place.
     assert (home / ".bashrc").read_text() == LOADER
     hooks = home / ".codex" / "hooks.json"
-    assert str(hooks.readlink()).startswith(str(home / ".idh")), hooks.readlink()
+    assert json.loads(hooks.read_text())["hooks"] == json.loads((REPO / "adapters/codex/hooks.json").read_text())["hooks"]
 
 
 def _lifecycle(monkeypatch, home):
@@ -343,10 +336,11 @@ def test_unusable_bashrc_is_named_and_the_rest_still_runs(machine, shape):
     r = idh("install")
     assert r.returncode == 1
     assert "idh: loader NOT installed:" in r.stderr and "Traceback" not in r.stderr
-    assert (home / ".codex" / "hooks.json").is_symlink()
+    assert (home / ".codex" / "hooks.json").is_file()
     assert not machine["log"].exists()
     if shape == "read-only":
         assert bashrc.read_text() == "alias a=b\n"
+
 
 
 def test_unknown_command_never_installs(tmp_path, monkeypatch, capsys):
@@ -419,3 +413,88 @@ def test_short_writes_still_yield_complete_files(tmp_path, monkeypatch):
     assert bashrc.read_text() == "alias keep=me\n" + LOADER
     (backup,) = home.glob(".bashrc.idh-bak-*")
     assert backup.read_bytes() == b"alias keep=me\n"
+
+
+@pytest.mark.parametrize("location", ["default", "arbitrary"])
+def test_independent_profiles_survive_install_and_relocation(tmp_path, location):
+    import shutil
+
+    home = tmp_path / "home"
+    home.mkdir()
+    checkout = home / ".agents" if location == "default" else tmp_path / "a different checkout"
+    shutil.copytree(REPO, checkout, symlinks=True)
+    native = home / ".claude"
+    native.mkdir()
+    original = {"theme": "mine", "env": {"USER_FLAG": "kept"},
+                "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
+                    {"type": "command", "command": "echo USER-HOOK"}]}]}}
+    settings = native / "settings.json"
+    settings.write_text(json.dumps(original))
+    for rel in (".claude/rules/mine.md", ".claude/skills/custom/SKILL.md",
+                ".codex/notes", ".pi/agent/extensions/custom.ts", ".claude/rules/doctype/user.md"):
+        dest = home / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text("user-owned")
+    codex = home / ".codex/hooks.json"
+    codex.write_text(json.dumps({"description": "my hooks", "hooks": original["hooks"]}))
+    fakebin = tmp_path / "bin"
+    fakebin.mkdir()
+    for name in ("systemctl", "claude", "codex", "pi"):
+        script = fakebin / name
+        script.write_text(f'#!/bin/sh\necho "RUNTIME {name}"\n')
+        script.chmod(0o755)
+    env = {"HOME": str(home), "PATH": f"{home}/.local/bin:{fakebin}:/usr/bin:/bin"}
+
+    def run(*args):
+        return subprocess.run(args, env=env, capture_output=True, text=True, timeout=60)
+
+    result = run(sys.executable, str(checkout / "bin/idh"), "install")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert native.is_dir() and not native.is_symlink()
+    merged = json.loads(settings.read_text())
+    assert merged["theme"] == "mine" and merged["env"]["USER_FLAG"] == "kept"
+    assert original["hooks"]["PreToolUse"][0] in merged["hooks"]["PreToolUse"]
+    assert json.loads(codex.read_text())["description"] == "my hooks"
+    before = settings.read_bytes(), codex.read_bytes()
+    assert run("idh", "install").returncode == 0
+    assert before == (settings.read_bytes(), codex.read_bytes())
+
+    moved = tmp_path / "deeper" / "relocated harness"
+    moved.parent.mkdir()
+    checkout.rename(moved)
+    # A move changes path topology; reinstall refreshes only recorded links.
+    result = run(sys.executable, str(moved / "bin/idh"), "install")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert run("idh", "check").returncode == 0
+    for runtime in ("claude", "codex", "pi"):
+        result = run("bash", "--norc", "-c", f'source "$HOME/.bashrc"; {runtime} --version')
+        assert result.returncode == 0 and f"RUNTIME {runtime}" in result.stdout, result.stderr
+    for rel in (".claude/rules/mine.md", ".claude/skills/custom/SKILL.md",
+                ".codex/notes", ".pi/agent/extensions/custom.ts", ".claude/rules/doctype/user.md"):
+        assert (home / rel).read_text() == "user-owned"
+    assert before == (settings.read_bytes(), codex.read_bytes())
+
+
+def test_relocation_does_not_replace_a_modified_registered_link(machine):
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    link = home / ".pi/agent/extensions/idh-guard.ts"
+    link.unlink()
+    foreign = home / "foreign.ts"
+    foreign.write_text("user-owned")
+    link.symlink_to(foreign)
+    result = idh("install")
+    assert result.returncode == 1 and "FOREIGN:" in result.stderr
+    assert link.resolve() == foreign
+
+
+def test_preexisting_hook_link_is_not_claimed_by_install(machine):
+    home, idh = machine["home"], machine["idh"]
+    hooks = home / ".codex/hooks.json"
+    hooks.parent.mkdir()
+    hooks.symlink_to(REPO / "adapters/codex/hooks.json")
+    before = hooks.readlink()
+    assert idh("install").returncode == 0
+    receipt = json.loads((home / ".local/state/idh/links.json").read_text())
+    assert str(hooks) not in receipt
+    assert hooks.readlink() == before

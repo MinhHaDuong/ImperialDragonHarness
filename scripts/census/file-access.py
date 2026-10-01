@@ -11,7 +11,7 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path.home() / ".idh"
+ROOT = Path(__file__).resolve().parents[2]
 TS = re.compile(rb'"timestamp":"(\d{4}-\d\d-\d\d)T')
 TU = re.compile(
     rb'"type":\s*"tool_use"\s*,\s*"id":\s*"[^"]+"\s*,\s*"name":\s*"(Read|Edit|Write|NotebookEdit|MultiEdit)"\s*,'

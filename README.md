@@ -71,16 +71,21 @@ cd ~/.agents
 ```
 
 If `~/.agents` already exists, inspect it first. Other checkout locations are
-supported by the intended portable root contract: helpers resolve the checkout
-from their loaded file or an explicit root argument.
+supported by the portable registration contract: entry points resolve the
+checkout from their real location or an explicit root argument. Dream/memory
+helper portability remains separate work (1002); check its storage limitations
+before consolidating independently owned runtime memory.
 
 Follow the [installation guide](docs/idh-install-strategy.md) to register
-reviewed resources with each runtime. It distinguishes the target design
-from the existing installer and pilot support.
+reviewed resources with each runtime. It distinguishes current additive
+registration from future native packaging and measured pilot support.
 
-The current `./bin/idh install` creates manifest links and edits the shell loader. Review its manifest before using it: the legacy
-layout still couples the Claude profile to the checkout. Ticket 0999 tracks
-portable installation and additive registration.
+The current `./bin/idh install` creates manifest links and edits the shell loader. It merges harness hooks into Claude/Codex settings
+and links individual resources, preserving unrelated profile content. No
+repository pointer or whole-profile alias is required. Same-name conflicts
+are refused. Review these host-wide actions: there is no dry run or runtime
+selector, and shell integration is not opt-in; scheduling is left to the host. Tracker 0999 remains
+open; 1003 owns registration and 1002 the separate memory-helper work.
 
 For an existing installation:
 

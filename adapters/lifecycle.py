@@ -9,6 +9,7 @@ built from the structured `path`/`target` fields only; the free-form
 """
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -32,10 +33,8 @@ V = _validator()
 
 
 def root() -> Path:
-    """The checkout spelled ~/.idh when the pointer reaches it, so links stay
-    relocatable; the resolved checkout otherwise (first install)."""
-    pointer = Path(os.environ["HOME"]) / ".idh"
-    return pointer if V.resolved(pointer) == REPO else REPO
+    """Return the checkout containing this module, independent of install path."""
+    return REPO
 
 
 def entries(runtime=None):
@@ -49,15 +48,39 @@ def report(kind, detail, repair) -> None:
 def install_links() -> int:
     """Create each absent entry; leave correct ones; refuse anything else."""
     rc = 0
+    receipt = Path(os.environ.get("XDG_STATE_HOME") or Path(os.environ["HOME"]) / ".local/state") / "idh/links.json"
+    try:
+        owned = json.loads(receipt.read_text()) if receipt.exists() else {}
+        if not isinstance(owned, dict):
+            raise ValueError("link receipt must be an object")
+    except (OSError, ValueError) as exc:
+        report("REFUSED", f"{receipt}: {exc}", "inspect the link receipt")
+        return 1
     for entry in entries():
-        base = root()  # re-read: once ~/.idh exists, later links go through it
+        base = root()
         path, target = V.expand(entry["path"], base), V.expand(entry["target"], base)
         try:
+            # Only an unchanged link created by a previous install can be
+            # refreshed after relocation. Foreign links remain untouched.
+            if path.is_symlink() and owned.get(str(path)) == os.readlink(path):
+                if V.check_entry(entry, base):
+                    replacement = path.with_name(path.name + ".idh-link-tmp")
+                    replacement.symlink_to(os.path.relpath(target, path.parent))
+                    try:
+                        os.replace(replacement, path)
+                    finally:
+                        replacement.unlink(missing_ok=True)
+                    owned[str(path)] = os.readlink(path)
+                    print(f"installed: {path} -> {target}")
+            if entry.get("registration") == "hooks":
+                rc |= register_settings(entry, path, target)
+                continue
             if not path.is_symlink() and not path.exists():
                 if not entry["required"] and V.resolved(target) is None:
                     continue  # optional, and nothing to point at on this machine
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.symlink_to(target)
+                path.symlink_to(os.path.relpath(target, path.parent))
+                owned[str(path)] = os.readlink(path)
                 print(f"installed: {path} -> {target}")
                 continue
         except OSError as exc:  # e.g. a regular file where a parent dir belongs
@@ -68,7 +91,58 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
+    try:
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
+    except OSError as exc:
+        report("REFUSED", f"{receipt}: {exc}", "make the state directory writable and rerun install")
+        rc = 1
     return rc
+
+
+def register_settings(entry, path, target) -> int:
+    """Merge hook registrations without replacing runtime configuration."""
+    try:
+        if path.is_symlink():
+            # A legacy link to the exact template is already registered. Never
+            # write through it: that would edit the checkout or a foreign file.
+            problem = V.check_entry(entry, root())
+            if problem:
+                report(*problem)
+                return 1
+            return 0
+        if path.exists() and not os.access(path, os.W_OK):
+            raise PermissionError(f"{path} is not writable; left as it is")
+        old = path.read_bytes() if path.exists() else b"{}"
+        actual = json.loads(old)
+        wanted = json.loads(target.read_text())
+        V.merge_hooks(actual, wanted)
+        if "claude" in entry["runtimes"]:
+            status = actual.get("statusLine")
+            if status == {"type": "command", "command": "$HOME/.idh/scripts/statusline.sh"}:
+                actual["statusLine"] = wanted["statusLine"]
+            actual.setdefault("statusLine", wanted["statusLine"])
+            env = actual.setdefault("env", {})
+            if not isinstance(env, dict):
+                raise ValueError("env must be an object")
+            home = Path(os.environ["HOME"])
+            if env.get("BASH_ENV") in (str(home / ".idh/scripts/bash-env.sh"), "$HOME/.idh/scripts/bash-env.sh"):
+                env.pop("BASH_ENV")
+            if env.get("UV_ENV_FILE") == str(home / ".idh/.env"):
+                env.pop("UV_ENV_FILE")
+            env.setdefault("BASH_ENV", str(home / ".local/lib/idh/bash-env.sh"))
+        if json.loads(old) == actual:
+            return 0
+        path.parent.mkdir(parents=True, exist_ok=True)
+        mode = path.stat().st_mode & 0o7777 if path.exists() else 0o600
+        if path.exists():
+            _backup(path, old, mode)
+        _replace(path, (json.dumps(actual, indent=2) + "\n").encode(), mode)
+        print(f"installed: runtime hooks in {path}")
+        return 0
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
+        report("REFUSED", f"{path}: {exc}", "inspect runtime settings, then rerun idh install")
+        return 1
 
 
 def check(runtime=None) -> int:

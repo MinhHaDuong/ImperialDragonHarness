@@ -37,7 +37,6 @@ manual-smoke assertions in ``adapters/pilot-support.json``.
 """
 
 import json
-import os
 import subprocess
 from pathlib import Path
 
@@ -52,12 +51,9 @@ CODEX_HOOKS = REPO / "adapters" / "codex" / "hooks.json"
 # --- shared contract helpers ----------------------------------------------
 
 
-CANONICAL_SCRIPT = "$HOME/.idh/scripts/guard-destructive-bash.sh"
-# Codex hook trust pins a hash of the hook definition: editing the command
-# silently disables the guard until someone re-trusts it via /hooks (probed
-# 2026-09-29, ticket 0982). The Codex wiring therefore keeps its trusted
-# spelling until the cutover (0986) repoints it together with a re-trust.
-CODEX_SCRIPT = "$HOME/.claude/scripts/guard-destructive-bash.sh"
+CANONICAL_SCRIPT = '"$HOME/.local/bin/idh-hook" guard-destructive-bash.sh'
+# Codex hook trust pins the definition; re-trust a changed definition via /hooks.
+CODEX_SCRIPT = CANONICAL_SCRIPT
 
 
 def wiring_commands(doc, *, source_name):
@@ -66,9 +62,7 @@ def wiring_commands(doc, *, source_name):
     The invariant is the SCRIPT PATH, not its spelling: an adapter may wrap
     or quote the invocation (Codex runs it as `bash "$HOME/..."` per the
     third-party review, 2026-09-28) — that is adapter-local normalization,
-    and the guard still owns the decision. The ~/.idh relocation (0978)
-    owns repointing the path. CI checks the shape, not this machine's
-    filesystem.
+    and the guard still owns the decision. CI checks the wiring contract.
     """
     commands = []
     for group in doc.get("hooks", {}).get("PreToolUse", []):
@@ -103,8 +97,6 @@ def pi_adapter_violations(source: str):
         violations.append("fail-open")
     if "realpathSync" not in source:
         violations.append("seam")
-    if "/home/" in source or "$HOME" in source or "~/.claude" in source:
-        violations.append("hardcoded-root")
     return violations
 
 
@@ -114,15 +106,6 @@ def pi_adapter_violations(source: str):
 def test_claude_wiring_wires_the_canonical_guard():
     doc = json.loads((REPO / "settings.shared.json").read_text())
     assert_names_canonical_guard(wiring_commands(doc, source_name="settings.shared.json"))
-
-
-def test_wiring_target_exists_on_the_reference_machine():
-    """Machine condition: where $HOME/.idh resolves to the repo root (the live
-    installation), the wired path must exist. Elsewhere (CI) the shape test
-    above is the gate."""
-    if Path(os.path.expandvars(CANONICAL_SCRIPT)).resolve() != GUARD.resolve():
-        pytest.skip("not the reference installation ($HOME/.idh is not this checkout)")
-    assert GUARD.exists()
 
 
 # --- Codex wiring ----------------------------------------------------------

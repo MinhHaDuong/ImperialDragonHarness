@@ -42,7 +42,20 @@ POINTER_CHECKED = re.compile(
 
 
 def translate(command: str) -> str:
-    m = POINTER_CHECKED.match(command.strip()) or HARNESS_SCRIPT.match(command.strip())
+    portable = re.compile(
+        r'^\[ -x "\$HOME/\.local/bin/idh-hook" \] '
+        r'\|\| \{ echo "[^"`$\\]*" >&2; exit 2; \}; '
+        r'exec "\$HOME/\.local/bin/idh-hook" (?P<name>[\w.-]+)(?P<rest>\s.*)?$'
+    )
+    bare_launcher = re.match(
+        r'^"\$HOME/\.local/bin/idh-hook" (?P<name>[\w.-]+)(?P<rest>\s.*)?$',
+        command.strip(),
+    )
+    legacy_codex = re.match(
+        r'^bash "\$HOME/\.(?:idh|claude)/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$',
+        command.strip(),
+    )
+    m = portable.match(command.strip()) or bare_launcher or legacy_codex or POINTER_CHECKED.match(command.strip()) or HARNESS_SCRIPT.match(command.strip())
     if not m:
         return command
     return f"{LAUNCHER} {m.group('name')}{m.group('rest') or ''}"

@@ -20,11 +20,9 @@ refused two of the three CLIs installed nine days later. A minimum plus a probe
 widens with upstream instead. Unknown, unparseable or absent: refuse, never
 silently accept.
 
-**A target that already resolves to the canonical source is success.** In this
-installation the harness repository *is* ``$HOME/.claude``, so
-``$HOME/.claude/skills/perch`` and the canonical source are the same directory.
-That is the goal state for Claude Code, reached with nothing installed; PR #780
-read it as a collision and refused its own skill as an unmanaged entry.
+**A target that already resolves to the canonical source is success.** This
+also covers the default clone at the shared skills root: source directories
+already present there need no projection. Runtime profiles remain independent.
 
 The perch pilot established the directory contract. This CLI names the skill
 to project; it does not transform or copy its body. Usage::
@@ -359,8 +357,8 @@ def prune_root(harness: str, skill: str) -> Path:
     """The highest directory uninstall may remove for this harness.
 
     For Codex and Pi that is the neutral home, which install may have created.
-    For Claude Code it is the skills root: ``$HOME/.claude`` is that harness's
-    own configuration directory and never this pilot's to remove.
+    For Claude Code it is the skills root; the runtime profile is independently
+    owned and never this pilot's to remove.
     """
     if harness in NEUTRAL_HARNESSES:
         return neutral_home()

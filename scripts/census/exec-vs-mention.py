@@ -13,7 +13,7 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-ROOT = Path.home() / ".idh"
+ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = {p.name for p in (ROOT / "scripts").iterdir() if p.is_file()}
 STEMS = {s.rsplit(".", 1)[0]: s for s in SCRIPTS if s.endswith(".py")}
 

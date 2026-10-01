@@ -8,6 +8,8 @@ Author: codex
 
 2026-10-01T19:03Z MinhHaDuong codex note Created as the replacement for 0978/0986 by author decision: clone at ~/.agents, resolve the checkout portably, keep runtime profiles independently owned.
 2026-10-01T19:16Z MinhHaDuong note Documentation and migration-ticket sweep complete locally on docs-portable-agents-plan; 112 relevant tests, 511-ticket corpus validation and whitespace checks pass. Full installation, relocation and runtime smoke acceptance remain open.
+2026-10-01T19:59Z codex note Implementation isolated in PR #1091 (draft). Fresh clone, arbitrary-path and relocation fixtures pass; make check passed 1295 tests with 3 skips; live Claude/Codex/Pi clean reset and dirty guard controls pass. No runtime profile deployment or tracker closure claimed.
+2026-10-01T20:39Z codex bump verify-reroll — round 1: independent-profile dream commit fails; unsafe merged-hook deletion and shipped Codex predecessor migration unresolved. Split/ownership direction required before merge.
 --- body ---
 
 ## Context
@@ -34,8 +36,8 @@ for the repository.
 
 ## Progress
 
-Documentation and ticket planning updated locally on `docs-portable-agents-plan`;
-changes are uncommitted, with no merge or deployment claimed.
+Planning and documentation landed in PRs #1089/#1090. This parent is now an
+integration tracker, not the close claim for PR #1091.
 
 - [x] README, STATE and ROADMAP describe the portable `~/.agents` clone.
 - [x] Installation, operations and adapter guides distinguish the target
@@ -47,22 +49,32 @@ changes are uncommitted, with no merge or deployment claimed.
 - [x] Documentation verification: 112 relevant tests passed; `erg check`
       passed for 511 tickets; `git diff --check` passed.
 
-Existing local implementation changes resolve lifecycle and shell entry points
-from the checkout and the Codex guard from its installed symlink. The fast
-suite passed 853 tests with one skip. This is partial implementation evidence,
-not completion of the acceptance criteria below.
+## Children and review boundaries
+
+- 1003 — runtime registration, installed entry points, guard wiring and safe
+  operator documentation in PR #1091. The first independent gate found
+  unsafe removal guidance and missed predecessor registration; fixes are
+  under re-review. Installation/relocation fixtures preserve independent
+  profiles; author live smoke covers Claude/Codex/Pi clean and dirty controls.
+- 1002 — dream/provenance helpers and storage-contract defects, extracted to
+  handoff-portable-memory for the other memory session. These changes are
+  unapproved and not part of #1091. The independent-profile commit failure
+  and portable provenance read-count gap remain explicitly open.
+
+The author requested removal of all migration-specific controls: historical
+pointer/path-spelling ratchets and old-layout tests are removed from the
+registration slice. Current functional installation and guard tests remain.
+No real runtime profile is deployed and no memory data is migrated here.
 
 ## Remaining work
 
-1. Remove the manifest requirement that `~/.claude` resolve to the checkout;
-   implement additive registration with independently owned runtime profiles.
-2. Remove fixed repository paths in Claude settings and memory tools (0934),
-   then inventory other entry points, timers and test exceptions.
-3. Verify fresh installation, arbitrary-location clones and relocation through
-   installed links, including the canonical skills already present at `~/.agents`.
-4. Run the full gate and fresh Claude, Codex and Pi registration/guard smoke
-   tests. Re-trust the changed Codex hook definition before its live probe.
-5. Land the reviewed changes through the normal branch/PR workflow.
+1. Land reviewed runtime registration through child 1003, retaining precise
+   smoke/trust limitations and preserved profile content.
+2. Complete child 1002 in the memory session without silently deciding 0988's
+   ownership policy. Store reconciliation remains 0934.
+3. Review integration across both children before closing this parent.
+4. Native packaging, runtime selection/dry-run and opt-in shell integration
+   remain follow-on design work, not acceptance claims for child 1003.
 
 ## Actions
 
