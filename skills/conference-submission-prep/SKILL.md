@@ -1,109 +1,62 @@
 ---
 name: conference-submission-prep
-description: "Prepare an SSH conference submission: CFP analysis, format, fit, anonymization, reviewer expectations."
+description: "Prepare a humanities and social sciences conference submission from its call for papers."
 ---
 
-# Conference Submission Preparation
+# Conference submission preparation
 
-Transform research materials into conference-ready submissions by acting as an academic sparring partner for editorial compliance, not content generation.
+Editorial sparring, not content generation: the author owns the
+contribution; this pass makes it fit what the call asks for and how it will
+be read. It does not judge scientific merit.
 
-## Core Principle
+**Upstream.** Venue chosen with `/choose-venue`; central message framed with
+`/message-framing`. If either is missing, do it first: a call cannot be
+answered by a submission that does not yet know its one claim.
 
-This skill explicates implicit community norms, not scientific contributions. The user defines the research contribution; the agent ensures it meets submission requirements.
+The steps run sequentially: each consumes the previous one's output.
 
-## Workflow
+## 1. Read the call
 
-### 1. CFP Analysis
+- **Submission types** offered (paper, short paper, poster, panel, other),
+  and which one the project's maturity supports. Recommend one.
+- **Explicit requirements**: deadline with its timezone, length, file format,
+  citation style, required sections, blind or open review.
+- **Review criteria**, when stated. They are the scoring sheet for step 3.
+- **Implicit expectations**: what this community counts as a contribution
+  (archival finding, interpretation, method, synthesis). Read past programmes
+  when the call is silent.
 
-When provided a CFP (Call for Papers):
-- Identify submission types (long paper, short paper, poster, demo, others)
-- Extract explicit requirements (deadline, format, word count, anonymization, others)
-- Surface implicit expectations (what counts as a "contribution" for this venue)
-- Identify stated review criteria when available
-- Recommend appropriate submission type based on project maturity
+Say so when the fit is poor. A modest, well-positioned contribution beats an
+overreaching one.
 
-**Key insight**: A "poster abstract" is often not a summary of the poster, but a self-contained short paper evaluated independently.
+## 2. Write the abstract as a paper
 
-### 2. Fit Assessment
+**A poster abstract is a standalone short paper**, not a summary of the
+poster: reviewers score it alone, often without ever seeing the poster. The
+same holds for most conference abstracts. It covers, explicitly:
 
-Evaluate alignment between:
-- Project scope and conference themes
-- Contribution type and venue expectations
-- Author's goals and realistic outcomes
+1. the question or problem, and why it matters to this audience;
+2. the approach: sources, corpus, method;
+3. the findings or the argument's result;
+4. the significance: what changes in the field if it holds.
 
-Be direct about mismatches. A well-positioned modest contribution beats an overreaching one.
+Self-contained, no tables or figures unless the call invites them, claims no
+larger than the evidence, the contribution type named.
 
-Typical issues to flag:
-- Scientific contribution unclear
-- Overly broad framing relative to format
-- Misalignment between claims and evidence
-- Submission type suboptimal for acceptance probability
+Length over budget: `/cut-prose`. Citations: only those that carry the
+argument, in the venue's style; a new reference goes through
+`/related-work-note`, then `/bib-merge`.
 
-### 3. Content Structuring
+## 3. Review before sending
 
-For abstracts, ensure explicit coverage of:
-- Research question or problem
-- Approach or method
-- Key results or findings
-- Significance or implications
+Run `/review-pr-prose` on the submission's merge request, or
+`/external-peer-review` on its PDF, and give the reviewers the call's
+criteria from step 1. Resolve convergent findings; report the rest to the
+author with a recommendation.
 
-Reduce excessive detail, tables and figures. Prioritize conceptually salient elements over exhaustive description.
+## 4. Finish and record
 
-### 4. Reference Integration
-
-- Add citations in-text per venue style (Chicago, APA, etc.)
-- Include only references that strengthen the argument
-- Prioritize foundational works and direct precedents
-- Verify self-citations are appropriately framed
-
-### 5. Format Compliance
-
-Check against CFP requirements:
-- Word/page count within limits
-- Required sections present
-- Citation style correct
-- File format specified
-
-### 6. Anonymization (if double-blind)
-
-- Remove author names and affiliations
-- Convert self-citations to third person
-- Remove identifying project names if needed
-- Check acknowledgments section
-- Check document metadata (PDF/DOCX properties)
-
-### 7. Critical Review Simulation
-
-Simulate three complementary reviewer roles as a standard step of the workflow.
-All reviews must be demanding but fair: critical, explicit, and proportionate to the submission type and venue expectations.
-Each criticism should be accompanied by three plausible revision alternatives, each with an estimated likelihood of satisfying reviewer expectations.
-
-- Reviewer A (Editorial Gatekeeper)
-  - Focus: compliance, clarity, and format
-  - Typical concern: "Does this submission meet the basic expectations of the venue?"
-  - Flags risks of desk rejection or formal mismatch
-
-- Reviewer B (Contribution-Oriented Evaluator)
-  - Focus: positioning and contribution type
-  - Typical concern: "What is the contribution here, and is it appropriate for this conference?"
-  - Flags overstatement, underspecification, or unclear novelty
-
-- Reviewer C (Risk-Averse Evaluator)
-  - Focus: evaluative vulnerabilities
-  - Typical concern: "Where could this submission be negatively interpreted or contested?"
-  - Flags ambiguities, implicit assumptions, and fragile claims
-
-Cross-check feedback across the three roles and highlight convergent issues.
-
-This review focuses on editorial clarity, positioning, and evaluative plausibility, not on judging scientific validity.
-
-## What This Skill Does NOT Do
-
-- Generate original research content
-- Judge scientific merit
-- Guarantee acceptance
-- Replace domain expertise
-
-## References
-
-See `references/submission-checklist.md` for a detailed pre-submission verification list.
+- Blind review: in the source, self-citations in the third person,
+  acknowledgments and identifying project names removed; then `/pdf-finish`
+  builds the anonymous variant and sweeps it, metadata included.
+- Once sent: `/submission-event submitted`.
