@@ -1,7 +1,7 @@
 """Portable model intentions and the Phase 0 Claude Code translation.
 
-This module is a dry-run contract. Live skill and agent pins remain authoritative
-until later migration phases. Claude Agent launches accept model tokens but no
+This module is a historical dry-run contract, not a live skill launcher.
+Portable skills express intentions; the active runtime chooses agents on the fly. Claude Agent launches accept model tokens but no
 effort argument; effort can be pinned on an agent definition instead.
 """
 

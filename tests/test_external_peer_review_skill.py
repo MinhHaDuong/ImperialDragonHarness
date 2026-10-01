@@ -31,9 +31,9 @@ def test_bundled_script_exists():
 
 
 def test_documents_balance_gate_and_text_fallback():
-    assert "$0.50" in skill_text(), "must document the OpenRouter $0.50 files gate"
-    assert "--text" in skill_text(), "must document the text-mode fallback flag"
-    assert "402" in skill_text(), "must document the HTTP 402 automatic fallback"
+    assert "$0.50" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the OpenRouter $0.50 files gate"
+    assert "--text" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the text-mode fallback flag"
+    assert "402" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the HTTP 402 automatic fallback"
 
 
 def test_documents_smoke_test_one_before_blasting():
@@ -50,10 +50,10 @@ def test_documents_complementary_to_simulated_panel():
     )
 
 
-def test_first_sentence_names_real_external_models():
+def test_first_sentence_names_external_review_capability():
     """Discoverability: plain searchable keywords in the opening sentence."""
     first = skill_text().split("description:", 1)[1].split("\n", 1)[0].lower()
-    for kw in ("peer review", "openai", "mistral"):
+    for kw in ("peer review", "external", "frontier"):
         assert kw in first, f"first sentence should mention {kw!r}"
 
 

@@ -1,147 +1,65 @@
-"""Fan-out skills pin a per-invocation model — the rightsizing ratchet (ticket 0235).
-
-The lesson 0235 paid for: a skill's `model:` frontmatter does NOT propagate to
-agents it spawns (an Agent-tool child resolves to the session model; a Workflow
-`agent()` inherits the session model). So the only reliable rightsizing lever is
-the **per-invocation `model`** on each launch — frontmatter is decorative for
-fan-out. This test makes that discipline enforceable instead of conventional:
-
-1. Every SKILL.md that launches a fan-out names a per-invocation model in its
-   BODY (not just frontmatter).
-2. No full `claude-<id>` model id leaks into a SKILL.md body — per-invocation
-   pins must use the short Agent enum token (`sonnet|opus|haiku|fable`); the full
-   id is valid only in frontmatter (a different code path).
-
-A third lens once scanned Workflow `.js` skills, with a small JS lexer, so that
-every `agent()` call pinned a model. Ticket 0881 removed `maw-audit` and
-`test-audit-llm`, the only two such skills, leaving that lens with no subject —
-a scan over an empty corpus is green whatever the truth, so it was removed with
-them rather than left to pass vacuously. Restore it from git history alongside
-the first workflow skill that returns.
-
-See memory feedback_subagent_model_effort_levers.
-"""
+"""Portable skills declare compute intentions; runtime configuration names models."""
 
 import re
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
-SKILLS = REPO / "skills"
+import sys
 
-# The Agent-launch `model` enum (and the Workflow agent() model tokens).
-# Fable 5 removed 2026-06-13 (blocked by government order); restored 2026-07-15:
-# block lifted — a live probe (Agent pinned model:fable) resolved to
-# claude-fable-5, and the author confirmed the restoration. Historical Fable
-# runs stay cost-accounted in scripts/trace-*.py (analytics over past data at
-# Fable's 2x rate). Rightsizing doctrine still governs where fable may be
-# pinned: top-tier singletons, never bulk fan-out. The MODEL_PIN regex below
-# already recognized fable — it now validates instead of rejecting.
-VALID_MODELS = {"sonnet", "opus", "haiku", "fable"}
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from model_policy import EFFORTS, MODEL_LEVELS  # noqa: E402
 
-# A per-invocation model pin in prose or code: `model: sonnet`, `model="opus"`,
-# backtick-wrapped, quoted, etc. Captures the tier token.
-MODEL_PIN = re.compile(
-    r"""model\s*[:=]\s*['"`]?(sonnet|opus|haiku|fable)\b""", re.IGNORECASE
-)
-
-# A full model id used where a short token belongs (the claude-fable-5 bug).
-FULL_ID_PIN = re.compile(r"""model\s*[:=]\s*['"`]?claude-[\w.-]+""", re.IGNORECASE)
-
-# Imperative fan-out launch phrasing — "launch/spawn/spin ... agent(s)",
-# "background agents", "agents ... in parallel". Deliberately NOT triggered by
-# bare "fan-out" or "parallel agents", which appear descriptively (e.g. scry
-# reporting parallel-fanout cost as a risk signal it scans for).
+SKILLS = Path(__file__).resolve().parents[1] / 'skills'
 FANOUT_SIGNAL = re.compile(
-    r"(launch|spawn|spin)[^.\n]{0,40}\bagents?\b"
-    r"|background agents?"
-    r"|agents?[^.\n]{0,25}\bin parallel\b",
+    r'(launch|spawn|spin)[^.\n]{0,40}\bagents?\b|background agents?'
+    r'|agents?[^.\n]{0,25}\bin parallel\b', re.IGNORECASE,
+)
+MODEL_LEVEL = re.compile(r'model-level\s*:\s*(auto|cheap|standard|strong|frontier)\b')
+CONCRETE_MODEL = re.compile(
+    r'\b(?:sonnet|opus|haiku|fable)\b|\b(?:claude-(?:opus|sonnet|haiku|fable)|(?:gpt|gemini|mistral-large|deepseek)-[a-z0-9])[\w.-]*',
     re.IGNORECASE,
 )
 
-# Fan-out SKILL.md skills that intentionally do NOT carry a per-invocation model
-# pin in their body — the documented escape hatch. Keep empty; add a name only
-# with a one-line reason, never to silence a real gap.
-SKILL_BODY_ALLOWLIST: dict[str, str] = {}
+
+def skill_files():
+    files = sorted(SKILLS.glob('*/SKILL.md'))
+    assert files, 'no skills found'
+    return files
 
 
-def _body(md_text: str) -> str:
-    """Return the SKILL.md content after the YAML frontmatter block."""
-    parts = md_text.split("---", 2)
-    return parts[2] if len(parts) >= 3 else md_text
+def test_fanout_skill_bodies_declare_model_level():
+    for path in skill_files():
+        body = path.read_text().split('---', 2)[-1]
+        if FANOUT_SIGNAL.search(body):
+            assert MODEL_LEVEL.search(body), f'{path}: fan-out lacks capability intent'
 
 
-def _skill_md_files():
-    return sorted(SKILLS.glob("*/SKILL.md"))
+def test_portable_skill_instructions_do_not_name_models():
+    files = sorted(SKILLS.rglob('*.md'))
+    assert files
+    for path in files:
+        text = path.read_text()
+        assert not CONCRETE_MODEL.search(text), f'{path}: concrete model in portable instructions'
+        if path.name == 'SKILL.md':
+            fm = text.split('---', 2)[1]
+            assert not re.search(r'^model:', fm, re.MULTILINE), f'{path}: use model-level'
 
 
-
-# --- sanity: the scanner actually finds something (no vacuous green) ---
-
-
-def test_corpus_is_non_empty():
-    assert _skill_md_files(), "no SKILL.md files found"
-
-
-# --- 1. Fan-out SKILL.md: body names a per-invocation model ---
-
-def test_fanout_skill_bodies_pin_model():
-    offenders = []
-    for md in _skill_md_files():
-        name = md.parent.name
-        if name in SKILL_BODY_ALLOWLIST:
-            continue
-        body = _body(md.read_text())
-        if FANOUT_SIGNAL.search(body) and not MODEL_PIN.search(body):
-            offenders.append(name)
-    assert not offenders, (
-        "fan-out skills whose body launches agents but pins no per-invocation "
-        "model (frontmatter model: does NOT propagate to children — 0235); pin "
-        "each launch or add to SKILL_BODY_ALLOWLIST with a reason:\n"
-        + "\n".join(sorted(offenders))
-    )
+def test_skill_compute_frontmatter_is_semantic():
+    forked = []
+    for path in skill_files():
+        fm = path.read_text().split('---', 2)[1]
+        for field, values in [('model-level', MODEL_LEVELS), ('effort', EFFORTS)]:
+            match = re.search(rf'^{field}:\s*(\S+)\s*$', fm, re.MULTILINE)
+            if match:
+                assert match.group(1) in values, f'{path}: invalid {field}'
+        if re.search(r'^context:\s*fork\s*$', fm, re.MULTILINE):
+            forked.append(path)
+            assert MODEL_LEVEL.search(fm), f'{path}: fork lacks capability intent'
+    assert forked, 'no forked skills found'
 
 
-# --- 2. No full model id in a SKILL.md body (the claude-fable-5 bug) ---
-
-def test_no_full_model_id_in_skill_bodies():
-    offenders = []
-    for md in _skill_md_files():
-        for line in _body(md.read_text()).splitlines():
-            if FULL_ID_PIN.search(line):
-                offenders.append(f"{md.parent.name}: {line.strip()[:90]}")
-    assert not offenders, (
-        "per-invocation model pins in a SKILL.md body must use the short Agent "
-        "enum token (sonnet|opus|haiku|fable), not a full claude-<id> "
-        "(valid only in frontmatter, a different code path — 0235):\n"
-        + "\n".join(offenders)
-    )
-
-
-FRONTMATTER_MODEL = re.compile(r"^model:\s*['\"]?(\S+?)['\"]?\s*$", re.MULTILINE)
-
-
-def _frontmatter(md_text: str) -> str:
-    parts = md_text.split("---", 2)
-    return parts[1] if md_text.startswith("---") and len(parts) == 3 else ""
-
-
-def test_forked_skills_pin_their_own_model():
-    """A `context: fork` skill runs as its own agent, and THAT agent does honour
-    frontmatter `model:` — measured 2026-09-23 on Claude Code 2.1.280: a forked
-    probe pinned `model: haiku` ran as claude-haiku-4-5 under a Sonnet parent,
-    its unpinned twin inherited claude-sonnet-5. Unpinned, a fork inherits its
-    caller's model, so a gate forked from an Opus executor runs at Opus: the
-    ticket-0820 executor's /verify-adherence fork spent 38 Opus turns, 26 of
-    them Bash. The 0235 lesson (frontmatter does not reach spawned children)
-    still holds; this is the fork itself."""
-    forked, unpinned = [], []
-    for path in _skill_md_files():
-        fm = _frontmatter(path.read_text(encoding="utf-8"))
-        if not re.search(r"^context:\s*fork\s*$", fm, re.MULTILINE):
-            continue
-        forked.append(path)
-        m = FRONTMATTER_MODEL.search(fm)
-        if not m or m.group(1) not in VALID_MODELS:
-            unpinned.append(str(path.relative_to(REPO)))
-    assert forked, "no context: fork skill found — the scan has no subject"
-    assert not unpinned, f"forked skills without a valid frontmatter model: {unpinned}"
+def test_model_identity_scanner_controls():
+    for name in ['sonnet', 'claude-opus-4', 'openai/gpt-5.5', 'gemini-2.5-pro', 'deepseek-chat', 'gpt-oss-120b', 'gemini-pro']:
+        assert CONCRETE_MODEL.search(name)
+    for role in ['cheaper worker', 'smartest advisor', 'model-level: frontier', 'Scopus']:
+        assert not CONCRETE_MODEL.search(role)

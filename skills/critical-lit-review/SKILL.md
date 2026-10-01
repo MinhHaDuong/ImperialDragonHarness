@@ -76,7 +76,7 @@ publications. Usually fifteen to twenty-five.
 Delegate each to `reading-note`; do not write notes inline. Launch the
 readers **parallel-background, in batches of at most 8**: the notes are
 independent of one another, and the batch bounds coordination overhead.
-Pin the standard tier, `model: sonnet`, on every launch: a note is bulk
+Pin the standard tier, `model-level: standard`, on every launch: a note is bulk
 interpretive work, and the synthesis below stays with the coordinating
 session. Each brief carries the
 citation, the staged full text or Zotero item, the scoping document, and why

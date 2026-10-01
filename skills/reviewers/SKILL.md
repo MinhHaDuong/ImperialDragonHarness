@@ -8,12 +8,17 @@ argument-hint: "<subcommand> [args]"
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-Manage the external reviewer panel for `/gaze`. Each seat is a sandboxed
-CI-style reviewer job (ticket 0205, "review is CI"): `request` runs the
-0217 seat-runner once per roster seat — one OS-sandboxed container per
-seat — and `harvest` normalizes every seat's findings to the gate's
-contract shape. Containment comes from the seat-runner's sandbox, not from
-this skill. All I/O routes through `skills/reviewers/reviewers.sh`.
+Describe the external reviewer needs for `/gaze`, then let the active runtime
+find available independent reviewers and route requests. Possible resources
+include llama.cpp on Padmé, OpenRouter, other local agents, and agents on another
+host. No fixed roster, provider, or transport is mandatory. Record who actually
+reviewed, what material they received, their findings, and missing perspectives.
+
+The subcommands below manage the bundled seat-runner helper when the runtime
+chooses it. Its configured seats are sandboxed CI-style reviewer jobs; containment
+comes from that helper's sandbox. These helpers are optional routes, not the
+runtime's complete catalogue of available reviewers. Other routes must preserve
+the same finding evidence and panel-integrity information for the gate.
 
 ## Subcommands
 
@@ -48,7 +53,7 @@ paths keep printing usage to stderr and exiting 1.
 
 ## Configuration
 
-`skills/reviewers/panel.yml` is the single roster file (schema in its
+`skills/reviewers/panel.yml` is the bundled helper's roster file (schema in its
 header). No secrets in config — a seat names its credential *variable*, and
 the value is resolved at run time (see **Seat credentials** in
 `references/request.md`).
