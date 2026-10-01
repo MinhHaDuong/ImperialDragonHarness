@@ -9,9 +9,7 @@ argument-hint: "<paper-or-abstract> [journal|conference]"
 # Choosing a venue
 
 Journal mode is the default; conference mode when the author asks for a talk,
-poster or conference paper. Was `commands/choose-journal.md` and
-`skills/conference-targeting/` (ticket 0995). Preparing the submission itself
-is `/conference-submission-prep` or `/pdf-finish`; recording it,
+poster or conference paper. Preparing the submission itself is `/conference-submission-prep` or `/pdf-finish`; recording it,
 `/submission-event`.
 
 ## Values, both modes
