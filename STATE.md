@@ -24,8 +24,8 @@ Planning and documentation landed in PRs #1089/#1090. PR #1091 now owns runtime 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for workstreams and `erg ready tickets/` for executable tickets.
 Finish registration child 1003 in #1091; memory-helper handoff 1002 stays with the memory session. Native packaging and opt-in shell integration remain; scheduling is external.
-Memory v8 is drafted: repository Markdown, factual roar capture and weekly dreaming.
-Start with 0911/0917, then pilot 0920; capture 0988 and prompt/timer 0916/0910 follow.
+Memory v8 is drafted: repository Markdown, factual roar capture and dream suggested by lair after five new experiences.
+Start with 0911/0917, then pilot 0920; capture 0988 and prompt/follow-up suggestion 0916/0910 follow.
 The old library/compiler/loader train is superseded; runtime behaviour is unchanged.
 
 ## Author actions

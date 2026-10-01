@@ -13,6 +13,8 @@ Blocked-by: 0920
 2026-10-01T20:37Z MinhHaDuong codex note V8 is now written; capture depends on the repository pilot 0920. Architecture and implementation plan realigned; runtime delivery remains open.
 2026-10-01T22:00Z codex note Explicit author boundary: project-local outputs only, no automatic rule proposals in roar or dream.
 2026-10-01T21:12Z codex note Author requires at most one roar branch and one bundled PR for tickets/docs/factual capture, with fast-track auto-merge after required checks.
+2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
+2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 --- body ---
 
 ## Context
@@ -77,14 +79,15 @@ memory/MEMORY.md and relevant memory/topics/ bodies. Reading is instructed,
 not claimed to be mechanically guaranteed across runtimes.
 
 The proposed layout adds memory/journal/ dated factual experiences (roughly
-300 words when needed), a short MEMORY.md index (roughly 100 lines), topics/
+300 words when needed), a short MEMORY.md index (maximum 100 lines), topics/
 consolidated knowledge and a versioned DREAM.md consolidation prompt. The
 earlier per-year, append-only journal decision is retained; for the
 archival step, v8 records processing in dream reports without moving the
 append-only source accounts or breaking their links.
 
-A weekly systemd timer invokes one runtime non-interactively in an isolated
-branch/checkout. Dreaming groups experiences, updates topics and the index,
+Lair finishes its work and suggests dream in its conclusion after 5 new
+experiences. It neither waits nor invokes dream. A separate dream invocation
+uses an isolated branch/checkout. No timer. Dreaming groups experiences, updates topics and the index,
 and imports runtime-native memory as attributed source material. Native notes
 are not authoritative project knowledge. Neither roar nor dream proposes crystallisation into
 AGENTS.md, runbooks, tests or issues. That requires a separate explicit user
@@ -92,7 +95,7 @@ request with its destination; project outputs never go into the harness. Adopted
 journal entries may reference them without becoming a parallel ledger.
 
 The v8 design and tracker 0909 implementation train now record this direction.
-This is not a deployed timer or a completed runtime change.
+The pilot and runtime verification remain open.
 Project journal capture must still be committed and safely integrated without
 dirtying or diverging the checkout used for harness pulls. Repository audience
 and any private companion store need a concrete project-specific arrangement.
@@ -114,3 +117,5 @@ and any private companion store need a concrete project-specific arrangement.
 - [ ] `make check` passes
 
 - [ ] Roar crée au plus une branche et une PR regroupant tickets, docs et journal ; auto-merge après contrôles, branche préservée si échec.
+
+- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
