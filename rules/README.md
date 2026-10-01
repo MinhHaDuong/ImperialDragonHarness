@@ -31,7 +31,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [prose/_all.md](./prose/_all.md) | `**/*.tex` `**/*.qmd` `**/*.md` `**/*.txt` | Universal prose rules: LLMism guards, Elements of Style. |
 | [doctype/article.md](./doctype/article.md) | `**/*.tex` | Article conventions: Shapiro's question test, Head's introduction order, argument-led sections, standalone tables. |
 | [doctype/techreport.md](./doctype/techreport.md) | `**/*.tex` | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
-| [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions: one idea per slide, takeaway titles, fragments not paragraphs. |
+| [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions, any format (beamer default): one message, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |
 | [lang/fr.md](./lang/fr.md) | prose files | French language norms: guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
