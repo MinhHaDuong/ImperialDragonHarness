@@ -2,6 +2,7 @@
 Title: Relocate the harness repository from ~/.claude to ~/.idh
 Created: 2026-09-28
 Author: claude
+Closed: won't do — superseded by the portable ~/.agents clone strategy
 
 --- log ---
 2026-09-28T05:49Z claude created child of 0909
@@ -12,6 +13,7 @@ Author: claude
 2026-09-29T08:28Z claude note Split into controlled-risk children (author, 2026-09-29): 0982 repoint consumers to ~/.idh with no move, 0983 launch-time link validator, 0984 native memory and cwd-key probe, 0985 disposable-HOME rehearsal, 0986 live cutover. 0978 is now the tracker.
 2026-09-29T13:01Z claude note padme 2026-09-29: pull unblocked (PR #1057), install-wirings run, final loader block installed; author re-trusted Codex hooks via /hooks; live probe: codex exec asked to git reset --hard over uncommitted work was refused by the PreToolUse guard and the work survived.
 2026-09-29T14:03Z claude note 0984 reports (PR #1061): on claude 2.1.284 a symlinked projects/<slug>/memory loads, and memory and transcripts key on the resolved checkout path, never the link name. Step C is answered; the rename and re-key remedy is carried into 0986's exit criteria.
+2026-10-01T19:02Z MinhHaDuong closed — won't do — superseded by the portable ~/.agents clone strategy
 --- body ---
 
 ## Context

@@ -2,6 +2,7 @@
 Title: Execute the .idh cutover in a quiet window
 Created: 2026-09-29
 Author: claude
+Closed: won't do — superseded by the additive native-registration strategy adopted in PR #1070
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
@@ -11,6 +12,7 @@ Author: claude
 2026-09-29T19:36Z Minh Ha-Duong note blocker 0985 closed — Blocked-by removed.
 2026-09-30T07:06Z codex note Preserved 2.1.285 probes from eae84b51: symlinked project memory loads and uses the resolved cwd key; after the move, Edit(~/.idh/...) grants real-path edits, while ~/.claude symlink paths are denied. Write(path) rules did not grant edits.
 2026-09-30T09:32Z vibe note Branch t0986-step1 (worktree idh-prep-step1) retired with the live move it prepared, superseded by the additive native-registration strategy adopted in PR #1070. Its four commits are archived at tag archive/t0986-step1. The per-entry projection design is not carried forward: the plugin adapter (0887) carries hooks, skills, agents and commands, and permissions stay in the live settings fragment. The entry above is preserved verbatim from the retired branch's ticket log (commit 90970798).
+2026-10-01T19:00Z MinhHaDuong closed — won't do — superseded by the additive native-registration strategy adopted in PR #1070
 --- body ---
 
 ## Context

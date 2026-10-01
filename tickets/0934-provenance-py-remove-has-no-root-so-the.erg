@@ -8,13 +8,14 @@ Author: Integration Test
 2026-09-16T09:02Z claude note Surfaced by a memory sweep that skipped the documented `remove` call rather than write into the primary checkout. Verified and widened: the defect is seven of nine subcommands, not `remove` alone, and it hits /dream's ADD path as well as its DELETE path.
 
 2026-09-16T09:38Z claude note Review measured the stale-slug count independently: 55 of 119 resolve under current project keys, 90 via the two-entry .project-aliases.json, the residual 29 entangled with the deferred 451-slug re-link. Body softened from an asserted 119 to a measured range.
+2026-10-01T19:04Z MinhHaDuong codex note Rebased on 0999: every provenance command must use the portable resolved checkout; ~/.idh is no longer an acceptable default.
 --- body ---
 ## Context
 
 `skills/dream/provenance.py` resolves its paths from module globals:
 
 ```python
-HARNESS_MEMORY = Path.home() / ".claude" / "memory"
+HARNESS_MEMORY = Path.home() / ".idh" / "memory"
 PROJECTS_BASE  = Path.home() / ".claude" / "projects"
 ```
 
@@ -62,6 +63,8 @@ until the re-link is decided. Do not treat 119 as measured.
 
 1. Give every subcommand that reads or writes the store the same `--root` that
    `backfill` and `usage` already have, resolved once rather than per command.
+   Its default comes from 0999's checkout-resolution seam, never `~/.idh`,
+   `~/.agents` or the runtime's profile path.
 2. Update `SKILL.md` lines 99 and 148 to pass it, so the documented procedure is
    the safe one rather than a trap the careful agent has to notice.
 3. Reconcile the store: drop the 119 tombstoned slugs. Decide separately whether
@@ -84,8 +87,8 @@ reaching the defect.
 
 ## Invariants
 
-- `/dream` keeps working unchanged from the primary checkout, where the default
-  root is already right.
+- `/dream` keeps working from the reference `~/.agents` clone and from an
+  arbitrary worktree without depending on either path's spelling.
 - No skill gains a per-repo CONFIG block.
 - `tests/test_provenance_coverage.py` keeps passing.
 
