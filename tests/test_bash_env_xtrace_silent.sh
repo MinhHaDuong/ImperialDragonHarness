@@ -27,11 +27,12 @@ trace_of() {
 
 # Positive control: same already-expanded export shape, without the guard.
 cat > "$TMP/unguarded.sh" <<'EOF'
+project_pwd="${PWD:-$(pwd -P)}"
 while IFS= read -r line; do
     key="${line%%=*}"
     value="${line#*=}"
     export "$key=$value"
-done < "$PWD/.env"
+done < "$project_pwd/.env"
 EOF
 n="$(trace_of "$TMP/unguarded.sh" | grep -c "$SENTINEL" || true)"
 if [ "$n" -gt 0 ]; then

@@ -9,12 +9,14 @@ Closed: autoclosed — PR #1091
 2026-10-01T21:08Z codex note Renumbered to 1003 after concurrent memory design PR1093 independently allocated and closed 1001. Original allocation preserved in history; no memory-design ticket changed.
 
 2026-10-01T21:15Z MinhHaDuong closed — autoclosed — PR #1091
+2026-10-01T22:25Z codex note Parent 0999 integration review completed and the 0920 pilot is downstream, not a prerequisite.
 --- body ---
 ## Context
 Parent tracker 0999 spans runtime registration and memory-helper portability.
-PR 1091 now owns only registration, launch protection, mechanical consumers
-and safe operator documentation. Memory helpers are extracted to 1002;
-0988 retains the separate memory ownership/synchronization decision.
+PR 1091 owns registration, launch protection, mechanical consumers and safe
+operator documentation. The extracted legacy memory-helper handoff 1002 was
+later closed WONTDO; 0988 retains the separate memory ownership/synchronization
+decision for v8.
 
 ## Relevant files
 adapters/lifecycle.py, adapters/projections.json, scripts/validate-projections.py,
@@ -39,4 +41,6 @@ by a one-off behavioral probe, not a persistent old-layout test corpus.
 
 This child does not certify dream/provenance portability, memory ownership,
 store reconciliation, native plugin parity or opt-in shell integration.
-0999 remains open until integration review after both children are complete.
+Parent 0999 closed after integration review in PR #1104. The memory v8 pilot
+0920 is downstream work, not an acceptance prerequisite for this registration
+child.

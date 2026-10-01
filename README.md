@@ -6,7 +6,8 @@ they `/perch` to orient midchat.
 
 A personal harness for AI-assisted research across Claude Code, Codex and Pi.
 The reference checkout is `~/.agents`; adapters connect each runtime to the
-same skills, rules and tools. Portability work is tracked in ticket 0999.
+same skills, rules and tools. Portable installation was tracked in ticket 0999;
+the integration review is complete.
 
 ## The Five Claws
 
@@ -85,9 +86,10 @@ The current `./bin/idh install` creates manifest links and edits the shell loade
 and links individual resources, preserving unrelated profile content. No
 repository pointer or whole-profile alias is required. Same-name conflicts
 are refused. Review these host-wide actions: there is no dry run or runtime
-selector, and shell integration is not opt-in; scheduling is left to the host. Tracker 0999 remains
-open for integration review; 1003's registration landed in #1091. The obsolete
-provenance helper and dedicated tests are retired under 0934, with data preserved.
+selector, and shell integration is not opt-in; scheduling is left to the host.
+Registration landed in #1091, and tracker 0999 closed after integration review
+in #1104. The legacy helper handoff 1002 is WONTDO; unused provenance machinery
+and its dedicated tests were retired under 0934, with data preserved.
 
 For an existing installation:
 

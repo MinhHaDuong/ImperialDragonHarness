@@ -193,8 +193,9 @@ Claude and Codex hook definitions invoke that launcher. Host installation
 merges required hooks into existing runtime configuration rather than owning
 the profile. Changing a Codex definition requires renewed trust through
 `/hooks`. Ticket 1003's registration slice landed in #1091; legacy helper
-handoff 1002 is WONTDO and 0934 retires unused provenance.py without altering
-source data. V8 capture/integration remain in 0988; parent 0999 stays open.
+handoff 1002 is WONTDO and 0934 retired unused provenance.py without altering
+source data. V8 capture/integration remain in 0988 after pilot 0920; parent
+0999 closed after integration review in #1104.
 
 Weakening is tested: `tests/test_guard_adapter_wiring.py`
 rejects removal of the event mapping, the block result, the exit semantics
