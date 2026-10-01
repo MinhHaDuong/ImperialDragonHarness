@@ -16,6 +16,7 @@ PIN = re.compile(r"\bmodel\s*[:=]\s*['\"`]?\b(sonnet|opus|haiku|fable)\b", re.I)
 # All present skill-body launch pins, in source order. A new, removed, or changed
 # pin must be reviewed here. The semantic level is independent of the live text.
 BODY_LEVELS = {
+    "critical-lit-review": ("standard",),
     "gaze": ("standard", "standard", "strong"),
     "hunt": ("strong",),
     "raid": ("standard", "cheap", "standard", "strong", "standard",

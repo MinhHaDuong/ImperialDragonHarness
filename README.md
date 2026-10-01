@@ -156,7 +156,7 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
-| `/critical-lit-review` | Critical literature review for history of economics and STS: scoping, consultation table, corpus analysis, report. |
+| `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Ranks the removable passages against the coverage ledger, cuts them entire, then condenses the survivors until the budget is met. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
 | `/external-peer-review` | Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict. |
@@ -173,7 +173,7 @@ schedule with `systemctl --user disable --now idh-mammoth-audit.timer`.
 | `/pdf-finish` | Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Automates pagination through header knobs, verifies the result with a scripted text sweep rather than by eye, and treats each named variant as a reproducible transform layer. Keyword: finition. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
-| `/reading-note` | Academic reading note (note de lecture) from a DOI or citation, with Zotero RDF export. |
+| `/reading-note` | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
 | `/related-work-note` | Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
