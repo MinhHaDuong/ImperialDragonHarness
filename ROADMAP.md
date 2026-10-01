@@ -8,7 +8,7 @@ Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
 
 | Workstream | Next work | Completion evidence |
 |---|---|---|
-| Portable installation — 0999 | Registration child 1001 in #1091; dream helpers child 1002 in the memory session; native packaging and opt-in host setup remain | Fresh/relocated registration, preserved profiles and runtime smoke; separate memory-helper and integration reviews |
+| Portable installation — 0999 | Registration child 1003 in #1091; dream helpers child 1002 in the memory session; native packaging and opt-in host setup remain | Fresh/relocated registration, preserved profiles and runtime smoke; separate memory-helper and integration reviews |
 | Memory v7 — 0909 | Foundations 0911/0917, then pilot 0920–0923; root defect 0934 | Offline pilot, separate canonical/native stores and verified delivery before rollout |
 | Host sync — 0988 | Decide memory-write ownership and surface blocked pulls | Sessions preserve notes and the harness continues to update |
 | Runtime policy — 0974 | Apply the adopted semantic model/effort policy | Runtime mappings and capability limits are tested |

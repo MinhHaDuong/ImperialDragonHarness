@@ -5,6 +5,7 @@ Author: codex
 
 --- log ---
 2026-10-01T20:45Z codex created Child of 0999 after author-approved PR 1091 split; memory work belongs to the other session.
+2026-10-01T21:08Z codex note Renumbered to 1003 after concurrent memory design PR1093 independently allocated and closed 1001. Original allocation preserved in history; no memory-design ticket changed.
 
 --- body ---
 ## Context

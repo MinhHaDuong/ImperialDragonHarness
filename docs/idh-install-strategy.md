@@ -11,7 +11,7 @@ cd ~/.agents
 The checkout may live elsewhere. Helpers derive its root from the real
 location of the loaded skill, script or installed adapter, or accept an
 explicit root. Runtime-owned paths remain adapter destinations. Ticket 0999
-tracks integration: 1001 owns runtime registration and 1002 dream/memory
+tracks integration: 1003 owns runtime registration and 1002 dream/memory
 helpers. Memory ownership/sync remain 0988's separate work; installation
 does not certify a working dream storage contract.
 

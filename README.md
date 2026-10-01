@@ -82,7 +82,7 @@ and links individual resources, preserving unrelated profile content. No
 repository pointer or whole-profile alias is required. Same-name conflicts
 are refused. Review these host-wide actions: there is no dry run or runtime
 selector, and shell/timer integration is not opt-in. Tracker 0999 remains
-open; 1001 owns registration and 1002 the separate memory-helper work.
+open; 1003 owns registration and 1002 the separate memory-helper work.
 
 For an existing installation:
 

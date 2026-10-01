@@ -192,7 +192,7 @@ The installed `idh-hook` launcher resolves its own real checkout location;
 Claude and Codex hook definitions invoke that launcher. Host installation
 merges required hooks into existing runtime configuration rather than owning
 the profile. Changing a Codex definition requires renewed trust through
-`/hooks`. Ticket 1001 covers this registration slice; dream/memory helpers
+`/hooks`. Ticket 1003 covers this registration slice; dream/memory helpers
 remain separate work under 1002 and parent tracker 0999 stays open.
 
 Weakening is tested: `tests/test_guard_adapter_wiring.py`

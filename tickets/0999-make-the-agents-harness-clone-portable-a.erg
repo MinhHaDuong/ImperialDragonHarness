@@ -51,7 +51,7 @@ integration tracker, not the close claim for PR #1091.
 
 ## Children and review boundaries
 
-- 1001 — runtime registration, installed entry points, guard wiring and safe
+- 1003 — runtime registration, installed entry points, guard wiring and safe
   operator documentation in PR #1091. The first independent gate found
   unsafe removal guidance and missed predecessor registration; fixes are
   under re-review. Installation/relocation fixtures preserve independent
@@ -68,13 +68,13 @@ No real runtime profile is deployed and no memory data is migrated here.
 
 ## Remaining work
 
-1. Land reviewed runtime registration through child 1001, retaining precise
+1. Land reviewed runtime registration through child 1003, retaining precise
    smoke/trust limitations and preserved profile content.
 2. Complete child 1002 in the memory session without silently deciding 0988's
    ownership policy. Store reconciliation remains 0934.
 3. Review integration across both children before closing this parent.
 4. Native packaging, runtime selection/dry-run and opt-in shell/timer setup
-   remain follow-on design work, not acceptance claims for child 1001.
+   remain follow-on design work, not acceptance claims for child 1003.
 
 ## Actions
 
