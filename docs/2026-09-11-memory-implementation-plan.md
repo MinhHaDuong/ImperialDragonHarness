@@ -1,216 +1,87 @@
-# Memory implementation plan
+# Plan de livraison de la mémoire v8
 
-**Publication date:** 11 September 2026  
-**Préparé par ChatGPT prompté par Ha-Duong Minh**; realigned to v7 by Claude on
-the same prompting  
-**Phase:** Plan — no runtime implementation in this change  
-**Design baseline:** [v7](./2026-09-10-dragon-memory-design.md). v6 was adopted in
-[PR #903](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/903) at
-`a68fd1ed` and is [frozen](./2026-09-10-dragon-memory-design-v6.md); v7 closes
-the four conditions of the
-[acceptance review](./2026-09-10-dragon-memory-design-review-fable-acceptance.md)
-and settles the [nomenclature](./2026-09-10-dragon-memory-design-nomenclature.md).
-The architecture is unchanged, so no ticket's scope moves; four acceptance
-obligations gain an owner, and the names the train writes are now fixed.
+**Date :** 1 octobre 2026. **Phase :** plan, aucune activation de runtime.
+**Contrat :** [conception v8](2026-09-10-dragon-memory-design.md).
+**Historique :** [plan v7](2026-09-11-memory-implementation-plan-v7.md).
 
-## Executive summary
+## Premier jalon
 
-Retain ticket identities and append their scope-change history. The v4 train
-cannot be dispatched unchanged: it promises mandatory residency, destructive
-promotion and compulsory subjective annotations that v6 rejects. This plan
-reuses its useful seams and adds six bounded delivery workpackages, 0920–0925.
+Un dépôt pilote possède un journal factuel commité, des thèmes avec provenance,
+un index court et un prompt DREAM.md. Un passage hebdomadaire isolé produit une
+branche et une PR. Les quatre runtimes peuvent lire les mêmes fichiers et
+rechercher le journal avec leurs outils ordinaires.
 
-The first usable milestone is one project, one small shared snapshot and one
-runtime adapter operating from a disposable offline clone. It does not wait for
-all adapters, corpus-wide migration, model annotations, embeddings or a broad
-predicate grammar.
+Aucun package hoard, schéma exécutable, compilateur, embedding, base de données,
+MCP, snapshot partagé obligatoire ou budget par canal ne précède ce jalon.
+Les IDs et logs restent stables ; les fichiers des tickets gardent leur ancien
+slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 
-One internal Python library owns memory mechanics. A thin CLI and thin runtime
-adapters reuse it. Editorial dreaming and compilation are distinct responsibilities;
-pending synthesis proposals do not block publishing accepted bodies. Concurrency
-uses Git isolation and optimistic revision checks.
+## Tickets et dépendances
 
-## Contents
-
-1. [Ticket map](#ticket-map)
-2. [Execution order and milestones](#execution-order-and-milestones)
-3. [Scope changes from the previous train](#scope-changes-from-the-previous-train)
-4. [Design coverage and acceptance gates](#design-coverage-and-acceptance-gates)
-5. [Validation and adoption](#validation-and-adoption)
-
-## Ticket map
-
-Existing ticket filenames remain stable despite revised titles, preserving links.
-The following table is the scheduling contract; `Blocked-by` headers mirror it.
-
-| ID | Deliverable | Depends on | Place in programme |
-|---|---|---|---|
-| 0911 | Minimal schema, internal library and thin CLI boundary | — | Foundation |
-| 0917 | Baseline and qualified historical provenance | — | Foundation |
-| 0908 | Legacy inactive-marker import | 0911 | Pilot prerequisite |
-| 0915 | Canonical-owner routing and validated admission | 0911 | Pilot prerequisite |
-| 0920 | One portable project and bounded shared snapshot | 0917, 0908, 0915 | Pilot |
-| 0910 | Deterministic compiler and coherent publication | 0920 | Pilot |
-| 0921 | Loader, recent revisions and optimistic integration | 0910 | Pilot |
-| 0922 | Lexical task recall and knowledge-hint integration | 0921 | Pilot |
-| 0923 | First runtime adapter and offline live smoke | 0922 | First usable milestone |
-| 0924 | Remaining Codex/Pi/Claude Code adapters | 0923 | Broader delivery |
-| 0918 | Channel-attributed behavioural evaluation and calibration | 0923 | Parallel measurement |
-| 0912 | Automated candidate discovery without prescribed outcomes | 0923; deferred | Optional, not closure gate |
-| 0913 | Staged rollout and retirement of replaced machinery | 0924, 0918 | Broader delivery |
-| 0916 | Manual editorial review/apply contract, sources retained | 0923 | Editorial support |
-| 0925 | Harvesting through existing governance | 0923 | Editorial support |
-| 0909 | Union/integration review and programme closure | 0913, 0918, 0925, 0916 | Tracker, final gate |
-| 0914 | Additional predicates for demonstrated failures | 0923; deferred | Optional, not closure gate |
-| 0919 | Sample-based quality annotation experiment | 0918; deferred | Optional, not closure gate |
-
-The tracker is blocked until its final integration work is meaningful; it must
-not appear as an independent coding task. The optional tickets retain the
-repository's `deferred` label, which suppresses dispatch even after their
-prerequisites land. They require new evidence and explicit reactivation, not
-automatic scheduling because the baseline is complete.
-
-## Execution order and milestones
-
-**Foundation.** Start 0911 and 0917 independently. Schema and the core library
-must precede semantic migration. Preserve a baseline before bulk edits, but
-do not claim that a later commit destroys retained Git history. Distinguish
-first observable Git appearance from real creation and mechanical touch from
-semantic freshness.
-
-**First usable milestone.** Complete 0908/0915, then 0920 → 0910 → 0921 →
-0922 → 0923. Use fixture corpora while building, and one representative project
-for live evidence. The pilot keeps particular observations, readable inactive
-records and a committed shared snapshot. Admission, publication and recall must
-work without model services.
-
-The first runtime is chosen and justified in 0923 from accessible representative
-execution evidence. Remaining runtimes use the same contract; the choice does
-not grant permanent privilege or permit runtime policy forks.
-
-**Expansion.** After 0923, remaining adapters, initial behavioural evaluation
-and manual editorial review/harvesting may proceed independently. Broad migration
-and cleanup follow verified adapter coverage and 0918 evaluation against
-predeclared margins. Unmet margins need remediation or an explicit scope/risk
-decision before broad activation or retirement; do not delete the old path before
-its replacement works for its consumers. Migration of another repository uses
-that repository's normal branch/review process.
-
-**Editorial work.** Candidate groups are opportunities, not instructions to
-merge. A generalisation gets a new UUID and source relations; unchanged scope
-expansion preserves identity; supersession is a separate withdrawal. Shared
-changes follow existing review. Harvested procedures go through normal adoption,
-with evidence preserved and old prescriptions explicitly qualified. Harvesting
-can start directly from particular lessons after 0923, without waiting for
-candidate grouping or generalisation. The core editorial workflow supports
-manual judgments; automated/model-assisted generalisation remains optional.
-
-**Closure.** Tracker 0909 reviews the union of the three branches of work:
-delivery/rollout, evaluation, and editorial/harvesting. All core descendants
-must be completed or explicitly re-scoped through a recorded decision before
-closure. Rerun relevant evaluation on the integrated result, including later
-generalisation and harvesting scenarios; pilot measurements cannot certify
-features that did not yet exist. Optional predicates and subjective backfill do
-not block it.
-
-## Scope changes from the previous train
-
-- **0908** becomes compatibility import. No generalisation retires a particular
-  merely because a similar shared body exists.
-- **0911** owns schema and package foundation. The migration moves to 0920/0913,
-  and generated views belong to 0910. Correct the contradictory flat-`type`
-  test. No compulsory pair of schema libraries without a dependency assessment.
-- **0910** compiles a combined available pool and records inputs. It drops
-  mandatory residency, tier quotas and dependency on broad predicate machinery.
-- **0913** moves behind working consumers. Cleanup is not a prerequisite that
-  removes the old discovery path before the new one exists.
-- **0914** becomes optional predicate extension. Lifecycle and UUID references
-  are baseline work, and unknown applicability is never relabelled true.
-- **0915** owns actual admission mechanics, not a survey that can declare
-  scoring-only enforcement sufficient. Routing correctness remains judgment.
-- **0912/0916** separate optional automated discovery from core manual review/apply.
-  Defer 0912; 0916 accepts manually supplied proposals and does not depend on it.
-  Remove predetermined promotion direction, automatic tombstoning, an eternal
-  rejected-pair ledger and a run lock as the concurrency model.
-- **0917** preserves useful provenance without false expiry urgency.
-- **0918** measures actual delivered context and task outcomes. Successful
-  below-cut recall is not automatically a ranking failure.
-- **0919** is an evidence-driven optional sample experiment. Missing subjective
-  annotations never make every existing body unrankable.
-
-## Design coverage and acceptance gates
-
-These are acceptance responsibilities within the existing train, not additional
-subsystems. Each owner supplies failing controls and reviewable evidence.
-
-**The four v7 gates.** v7 rewrote §12.1 so that every row names a mechanism whose
-removal makes it fail. Four rows are new or newly deterministic, and each needs
-an owner in this train rather than a new workpackage:
-
-| V7 §12.1 gate | Owner | Note |
+| Ticket | Livraison v8 | Prérequis |
 |---|---|---|
-| Predicate with an operator outside the closed subset, a path outside its declared root, or a payload with a side effect if interpreted → rejected at entry, *unknown* at evaluation, sentinel verifiably absent | 0915, with the grammar **and evaluator** from 0911 | The sentinel is the positive control separating "did not execute" from "did not look". It must exist before the first `shared-snapshot/` is committed in 0920, because a replica carries predicates authored in another project |
-| Same UUID, accepted revision in C differs from the revision ranked in G → G's text never rendered | 0921 | This is the invariant the whole G/C construction exists for; three neighbouring rows each miss it |
-| Adapter's declared native memory root disjoint from the canonical root; foreign line in the generated view discarded and reported, no model in the loop | 0923, parity 0924 | Acceptance remains unverified. **0920 clears it** using separate project and shared stores in the resolved checkout; **0999** supplies the portable root and registration contract. The reference clone is `~/.agents`. Compare canonical roots with each adapter's declared native root and test an arbitrary checkout location. |
-| Compiler never creates, modifies or moves a canonical body; processed manifest excludes uncommitted bodies and unmerged branches | 0910 |
-| §8 growth monitoring — body-count growth, consolidation duration and unresolved backlog, exposed as `hoard weigh` | 0910 | Replaces two absence-shaped rows that no removable mechanism could fail |
+| 0911 | Convention Markdown et modèles de capture/lecture | — |
+| 0917 | Inventaire et provenance des sources existantes | — |
+| 0920 | Un projet pilote, index, thèmes, journal annuel | 0911, 0917, 0999 |
+| 0988 | Capture factuelle à roar, commit et intégration sûrs | 0920 |
+| 0916 | Prompt DREAM.md et consolidation avec sources conservées | 0920 |
+| 0910 | Timer hebdomadaire, exécution isolée et PR de rêve | 0916, 0988 |
+| 0923 | Premier smoke de lecture/capture/rêve, runtime choisi et déclaré | 0910 |
+| 0924 | Preuves sur les trois autres runtimes, dont Vibe | 0923 |
+| 0925 | Cristallisation proposée et revue | 0916 |
+| 0918 | Évaluation de lecture, rappel, capture et consolidation | 0924, 0925 |
+| 0913 | Migration progressive et retrait des mécanismes remplacés | 0918 |
+| 0909 | Revue du résultat intégré et clôture du programme | 0913, 0988, 0925 |
 
-**Names are settled.** v7 §17 fixes what this train writes, so 0911 adopts rather
-than chooses: the internal package and its CLI are `hoard`; a project's memory
-root is `memory/` in its own repository and the shared store is `memory-shared/`
-at harness level, with `shared-snapshot/` unchanged under `memory/`. The verbs
-are `assay` (§5 admission and routing), `reckon` (§6.1/§7.3 catalogue and ranked
-manifest), `seal` (§10.1 snapshot and handover), `sift` (§6.3 task recall),
-`shed --by` (§4.3 supersession), `disown` (§4.3 retraction) and `weigh` (§8
-growth monitoring). `shed` without `--by` must not parse and `disown` must take
-no successor: §4.3's malformed call is unwritable, not rejected afterwards.
+0991, qui prescrit un scoring EU et une purge dans l’ancien rêve, est aussi
+différé pendant la transition ; 0913 réévaluera ses constats utiles après le
+pilote, sans réintroduire automatiquement son mécanisme.
 
-| V6 contract | Owner | Evidence required |
-|---|---|---|
-| UUID/lifecycle, project identity and minimal bounded applicability grammar | 0911; admission 0915 | Conflicts, invalid operators and true/false/unknown fixtures |
-| Portable snapshot and recurring refresh | 0920; publication 0910; loading 0921 | Verified ancestry, divergent replicas, dependency gaps, withdrawals and coherent snapshot/view handover |
-| Reproducible coherent publication | 0910 | Explicit dreaming acknowledgement; compiler-only republishing cannot clear Recent; rendered cost and interrupted handover |
-| Admission and later lifecycle edits | 0915; history 0922 | Audience/scope judgment, atomic status/move/link repair, redirects excluded from ordinary recall |
-| Current withdrawals, recent freshness and backlog | 0921 | Withdrawal before selection; aged entries remain provisional/searchable |
-| Damaged or absent publication | 0921; recall 0922 | Validated local browse/search survives; broken enumeration cannot pass as empty success |
-| Proactive recall and material task changes | 0923; parity 0924 | Actual pre-action delivery, refresh, compaction recovery and cumulative cost |
-| Behavioural readiness before broad rollout | 0918 → 0913 | Predeclared margins, repeated matched tasks and an explicit rollout verdict |
-| Editorial changes and harvesting on the completed system | 0916/0925; final 0909 | Preserved local exceptions and current procedure followed after later amendment |
+0999 garde l’installation portable et l’enregistrement des runtimes. 0934 garde
+la correction des outils hérités tant qu’ils ont des consommateurs ; leur
+retrait éventuel se décide après le pilote, sans confondre ce défaut avec 0988.
 
-Core editorial workflows are part of programme closure, while automated model
-integration, individual proposals and changes remain optional. Manual reviewed
-judgments and no-change passes suffice for the base. Harvesting is independent
-of generalisation. Automated candidate discovery (0912), extra predicates (0914)
-and quality annotations (0919) are deferred, outside closure requirements.
+## Périmètres abandonnés ou différés
 
-## Validation and adoption
+Les tickets 0908, 0912, 0914, 0915, 0919, 0921 et 0922 sont marqués `deferred`
+et supersédés par v8, pas déclarés implémentés. Leur ancien périmètre reste dans
+Git et le plan historique. Ils ne bloquent pas la livraison et ne doivent pas
+être exécutés contre v7. Toute réactivation exige une nouvelle décision :
 
-Each implementation ticket carries context, relevant files, actions, focused
-fixtures, verification, invariants and exit criteria. Tests must expose a real
-failure: empty enumeration, unobserved delivery or a missing measurement cannot
-pass as success. Classifying decisions, judging equivalence and agent adherence
-remain behavioural evaluations, not deterministic promises.
+- 0908 : import des marqueurs inactifs couvert par inventaire/pilote si nécessaire.
+- 0912 : découverte automatisée distincte couverte par le rêve éditorial.
+- 0914/0915 : grammaire de prédicats et admission exécutable abandonnées.
+- 0919 : annotations de qualité systématiques abandonnées.
+- 0921 : loader orientation/recent et overlay G/C abandonnés.
+- 0922 : moteur de rappel dédié abandonné ; lecture et rg/grep dans la convention.
 
-The first smoke must demonstrate all three delivery components in one offline
-pilot, rather than merely checking skill wording. Additional runtime smokes
-verify native-memory isolation, context boundaries and declared limitations.
-Record model/runtime versions, denominators, uncertainty and cost for behavioural
-comparisons. Set numeric acceptance margins before trials; do not invent them
-from a single passing run.
+## Ordre et preuves
 
-Token figures 1,500 / 500 / 2,000 remain proposed calibration inputs, not newly
-ratified defaults. No third-party component is licence-cleared by this plan.
-0911 owns the small build/reuse assessment of the MemU patterns identified in
-the companion comparison before implementing equivalents. Record the actual
-revision, licence and obligations before copying, adapting or
-depending on a component. Reuse existing knowledge-hint mechanisms and canonical
-decision records; introduce no new memory governance database.
+1. Écrire les modèles, inventorier les corpus et choisir un pilote et son audience.
+2. Mettre en place le dossier versionné sans effacer les anciens récits.
+3. Réviser roar pour capturer et commiter seulement des faits significatifs,
+   positifs et négatifs ; prouver intégration et absence de pull bloqué.
+4. Livrer le prompt et le timer : sources attribuées, rapports de traitement,
+   branche isolée et PR, aucune fusion automatique de connaissance proposée.
+5. Vérifier les quatre runtimes avec leurs versions et limites réelles, puis
+   la cristallisation et les scénarios comportementaux avant élargissement.
+6. Migrer par projets, retirer seulement les anciennes voies remplacées et
+   revoir l’ensemble intégré avant de fermer 0909.
 
-This planning PR changes handoff tickets and this plan only. It does not close
-implementation tickets, change runtime behaviour or revise the adopted
-architecture. Preserve existing ticket logs; Git retains the former scope.
+Les répétitions de scénario servent à mesurer les oublis et les effets des
+mémoires natives contradictoires. Fixer protocole et critères avant les essais,
+puis enregistrer résultats, coûts, omissions et limites. Les vérifications
+mécaniques portent sur sources, liens, commits, timer, intégration et visibilité
+des échecs ; elles ne certifient pas la qualité sémantique.
 
-Before merging the planning PR, recheck allocated IDs 0920–0925 against current
-main and open-PR changed files. The initial scan found no open PRs and used
-merged PR #900 as a positive control for ticket-file enumeration. Allocation
-remains optimistic; on a real collision, follow `tickets/AGENTS.md` recovery.
+## Limites de cette révision
+
+Le journal reste append-only dans journal/AAAA/. Les entrées traitées sont
+référencées dans les rapports de rêve fusionnés, pas déplacées. Un modèle de
+300 mots et un index d’environ 100 lignes sont des repères éditoriaux.
+Un compagnon privé demande sa propre convention d’accès et de versionnement.
+Les sources natives absentes sont signalées, pas supposées vides.
+
+Cette révision conserve l’état local de travail antérieur et ne modifie pas
+les skills roar/dream, les profils des runtimes ou les timers. Elle n’annonce
+aucun test live ni clôture de ticket d’implémentation.

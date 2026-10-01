@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Publish the Markdown-first memory v8 design and realign delivery
+Created: 2026-10-01
+Author: Codex
+
+--- log ---
+2026-10-01T20:42Z Codex created
+
+--- body ---
+
+## Context
+
+The author requested the v8 rewrite, a PR, an independent Astra review with
+"simple, portable, efficace", and merge. Publish the repository-Markdown
+architecture and its delivery plan, preserving v7 and current implementation
+state. This ticket owns the planning change only; it does not close 0909 or
+claim any capture, timer or runtime deployment.
+
+## Exit criteria
+
+- [ ] The current design is v8: repository Markdown/Git, factual positive and negative roar capture, annual append-only journal, weekly dreaming and reviewed crystallisation; no mandatory embedding, database, MCP or hoard implementation.
+- [ ] V7 design and implementation plan are preserved as historical snapshots.
+- [ ] The active delivery plan and ticket dependencies agree; obsolete work is held, existing logs preserved, and implementation tickets remain open.
+- [ ] Docs index, ROADMAP and STATE point to v8 without claiming runtime deployment; unrelated portability/model work is excluded.
+- [ ] Applicable checks pass and independent Astra review findings are dispositioned against the final diff before merge.

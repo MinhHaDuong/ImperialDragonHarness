@@ -3,7 +3,6 @@ Title: Propose consolidation candidates without prescribing outcomes
 Created: 2026-09-10
 Author: claude
 Label: deferred
-Blocked-by: 0923
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -11,44 +10,19 @@ Blocked-by: 0923
 
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
-
+2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
 --- body ---
 
-## Context
+## Superseded by v8 — do not dispatch
 
-After useful delivery exists, optionally automate candidate discovery on the strong host. This deferred extension is not required for the manual editorial workflow or programme closure. Candidate grouping is not generalisation, and rediscovery creates only an opportunity.
+Groupement éditorial couvert par 0916 ; moteur de découverte séparé abandonné.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
-
-## Relevant files
-
-Dreaming skill; library corpus reader; pilot/available shared inputs; review/provenance conventions.
-
-## Actions
-
-1. Propose lexical candidate groups and possible contradictions with source UUID/revisions. Do not prescribe harness-copy survival or project-copy retirement.
-2. Hand candidates to the same review/apply contract used by manual proposals in 0916; empty output or no change is valid. A false-positive fixture may be proposed but must never be represented as already judged equivalent.
-3. Record useful operational diagnostics without a new mandatory rejection database. If dismissed candidates need suppression, use existing review provenance keyed by source revisions, not an eternal pair ban.
-4. Keep editorial analysis separate from publication; perform no canonical writes in this ticket.
-
-## Test
-
-Known related observations are surfaced; differently scoped near-matches retain their distinct evidence. Repeating a discovery changes no lifecycle or scope. Pending/rejected proposals cannot block compiler output.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+La décision de simplification de l’auteur du 2026-10-01 remplace le périmètre
+v7. Voir le [plan v8](../docs/2026-09-11-memory-implementation-plan.md).
+L’ancien corps reste dans Git et le plan v7 conservé. Ce ticket est différé,
+pas implémenté ni clôturé. Toute réactivation exige un périmètre nouvellement
+autorisé ; retirer le label ne suffit pas à rétablir les anciennes obligations.
 
 ## Exit criteria
 
-- [ ] Candidate interface is reviewable and UUID/revision-addressed.
-- [ ] No synthesis, automatic scope expansion, tombstoning or lock-based global coordination.
-- [ ] No embedding or quality-backfill prerequisite.
+- [ ] Décision explicite de clôture comme supersédé ou de réactivation avec nouveau périmètre.

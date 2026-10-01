@@ -1,8 +1,9 @@
 %erg 0.1
-Title: Compile accepted memory into reproducible publication views
+Title: Schedule isolated weekly dreaming and publish a reviewable branch
 Created: 2026-09-10
 Author: claude
-Blocked-by: 0920
+Blocked-by: 0916
+Blocked-by: 0988
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -11,47 +12,26 @@ Blocked-by: 0920
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note Owns the two v7 compiler invariants and, after the Fable plan review, §8 growth monitoring (`hoard weigh`) — it was unowned across the whole train.
-
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 --- body ---
 
 ## Context
 
-Own deterministic compilation, not editorial dreaming. Compile the fixed available local/shared pool into a complete catalogue, default orientation and full static candidate order. Pending proposals do not block publication.
+Configurer un timer systemd hebdomadaire sur un hôte pilote. Invoquer un runtime non interactif avec le DREAM.md du projet dans un checkout isolé. Sauvegarder le résultat en commits et ouvrir une PR par le workflow normal ; pas de compilateur ou manifest G/C.
 
-Design baseline: v7. v6 was merged by PR #903 and is frozen at `docs/2026-09-10-dragon-memory-design-v6.md`; v7 closes the acceptance review's four §12.1 conditions and settles the nomenclature, leaving the architecture and this ticket's scope unchanged. See `docs/2026-09-10-dragon-memory-design.md`, `docs/2026-09-10-dragon-memory-design-nomenclature.md` and `docs/2026-09-11-memory-implementation-plan.md`. This planning change implements nothing and closes no work.
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
-## Relevant files
+## Actions et vérification
 
-Internal package/CLI from 0911; pilot inputs from 0920; `skills/dream/read-index.py`; `tests/test_resident_census.py`.
-
-## Actions
-
-1. Deduplicate available replicas by UUID and compile index.md, MEMORY.md and a manifest containing processed revisions, available candidates, policy/context/time inputs and hashes. Take the processed UUID/revision set as an explicit dreaming acknowledgement; compiler-only republishing preserves it, never inferring processing from enumeration, copying or selection. New/current revisions remain recent until acknowledged. Acknowledgement does not require accepting a pending synthesis proposal.
-2. Use explicit simple ranking defaults and stable tie-breaking; no mandatory entries, independent tier quotas, compulsory quality backfill or prerequisite broad predicate grammar.
-3. Count the complete rendered payload (headings, labels, links and identifiers), not body text alone. Record schema/generator/policy versions and fixed budget profiles; processed revisions include below-cut bodies. Support configurable budgets with declared token estimates; 1500/500/2000 remains a calibration proposal, not silently adopted production policy.
-4. Publish a coherent generation atomically after optimistic expected-revision checks. A rejected stale publication must not overwrite newer accepted changes. Package the refreshed snapshot and views as one generation; record upstream revision and refresh date.
-
-## Test
-
-Over-budget fixture distinguishes complete catalogue and bounded orientation. Repeat fixed inputs for identical output; change policy/context input explicitly. Inject interrupted publication and conflicting revision; ensure coherent old/new output and rejection respectively. Add a memory, republish without a dreaming acknowledgement, and verify it remains recent; acknowledging it later marks it processed even when it is below the orientation cut.
-
-## Verification
-
-- [ ] Run the focused fixtures and show they detect the relevant failure.
-- [ ] Run applicable repository checks; record commands, results and limitations.
-- [ ] Confirm the implementation matches this scope and v7, including explicit capability limits.
-
-## Invariants
-
-- Canonical bodies and provenance remain reviewable; memory cannot override decisions.
-- No mandatory residency, automatic generalisation, new native-memory modes or policy duplication.
-- Use the common library and normal Git integration; no runtime implementation is part of the planning PR.
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Generation reproducible for recorded inputs and available set.
-- [ ] Below-cut bodies retained and discoverable; default index is not the store.
-- [ ] Pending semantic review does not block compilation; no mixed-generation handover.
-- [ ] v7 §12.1 compiler invariants: the body set is byte-identical before and after `reckon` and `seal`, and the processed manifest excludes an uncommitted body and an unmerged branch. These replace the two absence-shaped rows that no removable mechanism could fail.
-- [ ] Divergence and any supersession cycle are named in the report's structured `conflicts` field, with a positive control requiring it non-empty when the condition holds.
-- [ ] §8 growth monitoring has an owner here, exposed as `hoard weigh`: the manifest records body-count growth, compilation duration and unresolved backlog — the three quantities §8 names. Positive control: a fixture corpus over a declared threshold makes the report non-empty. Without this the train closes with a `weigh` verb that reports nothing, while §8's refusal of a deletion cap rests on monitoring.
+- [ ] Timer et commande versionnés, runtime/hôte déclarés, pas de lancement chevauchant sur le même checkout.
+- [ ] Passage hors ligne avec sources disponibles produit une branche durable ; source absente explicitement signalée.
+- [ ] Interruption ou refus d’intégration conserve le travail et expose un échec visible.
+- [ ] Aucune fusion automatique des propositions ; pas d’écriture dans le checkout partagé utilisé pour les pulls.
