@@ -13,6 +13,21 @@ convention or prompt is missing, report what is missing and stop. Do not create
 a replacement store in the harness or use the legacy helper scripts: those
 helpers target the old shared/native store and are not this workflow.
 
+## Three main functions
+
+Apply these to consolidated `memory/topics/` and the index:
+
+- **Pruning:** remove outdated, irrelevant or superseded information from the
+  current memory. Record the reason and retained source references in the report.
+- **Merging:** combine duplicate or overlapping entries into one accurate record,
+  preserving source links, conditions, exceptions and unresolved contradictions.
+- **Refreshing:** update stale context that remains relevant using current
+  evidence; flag uncertainty when it cannot be verified.
+
+The raw journal stays append-only. Pruning a consolidated claim never deletes
+its source experience. `memory/MEMORY.md` has **at most 100 lines**, counting
+headings and blank lines. Keep details in topics rather than expanding the index.
+
 ## Procedure
 
 1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted dream reports
@@ -22,20 +37,20 @@ helpers target the old shared/native store and are not this workflow.
 2. In dry-run mode, report candidate thematic updates and contradictions, then
    stop without writes, branches or commits. Do not propose rules.
 3. For a writing run, use an isolated project checkout and dedicated branch;
-   leave the primary checkout and unrelated changes alone. Consolidate themes,
-   conditions, exceptions and contradictions into `memory/topics/`. Link source
+   leave the primary checkout and unrelated changes alone. Apply pruning, merging and refreshing to `memory/topics/`. Link source
    episodes; distinguish hypotheses from supported observations. Update the
-   short `memory/MEMORY.md` index. Never rewrite, move or delete journal entries.
+   `memory/MEMORY.md` index within its 100-line maximum. Never rewrite, move or delete journal entries.
 4. Write a report in `memory/dreams/` listing sources and revisions, changes,
    unresolved questions, runtime/model and prompt revision. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
    the project's audience. A fingerprint alone cannot preserve a mutable note.
-5. Check links, provenance and the diff. Commit only memory outputs on the
+5. Check links, provenance, the diff and the index line count. Reduce the
+   index if it exceeds 100 lines before committing. Commit only memory outputs on the
    project branch and submit a PR following its integration policy. Do not
    merge automatically. Preserve and report the branch if submission fails.
    Only accepted reports count as completed processing on subsequent runs.
 
-## Authority and scheduling
+## Authority and invocation
 
 Dream writes only `memory/MEMORY.md`, `memory/topics/` and `memory/dreams/`
 within the project or its explicitly configured private companion. It does not
@@ -44,6 +59,8 @@ propose promotions, or write cross-project provenance into the harness.
 Crystallisation requires a separate explicit user request naming its scope and
 destination. A useful pattern or a reviewed memory PR is not that request.
 
-A periodic invocation uses this same boundary and an isolated project checkout.
-This skill does not install a timer. Missing paths or permissions are visible
+Lair completes its work and suggests dream in its conclusion after 5 or more
+new experiences. It neither waits nor launches dream. Dream runs when explicitly
+invoked as a separate follow-up.
+There is no timer or automatic periodic launch. Use an isolated project checkout. Missing paths or permissions are visible
 failures; never fall back to the harness or restore/change its primary branch.

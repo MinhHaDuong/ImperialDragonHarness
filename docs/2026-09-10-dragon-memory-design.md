@@ -32,7 +32,7 @@ La consolidation peut ne produire aucune leçon ; elle ne doit pas en inventer.
 AGENTS.md                         # instructions courtes et règles adoptées
 CLAUDE.md -> AGENTS.md             # compatibilité si nécessaire
 memory/
-  MEMORY.md                       # index court, environ 100 lignes
+  MEMORY.md                       # index, maximum 100 lignes
   DREAM.md                        # prompt de consolidation versionné
   topics/
     <theme>.md                    # connaissances consolidées avec sources
@@ -55,9 +55,10 @@ Le chemin conservé et l’historique Git suffisent à identifier une expérienc
 il n’y a pas d’obligation de UUID ou de schéma exécutable.
 
 `MEMORY.md` pointe vers les thèmes utiles et le journal récent. Il ne contient
-ni le corpus entier ni une copie des instructions. Environ 100 lignes et 300 mots
-par expérience sont des repères éditoriaux, pas des seuils validés ou des quotas
-à remplir. Un épisode simple peut tenir en quelques phrases.
+ni le corpus entier ni une copie des instructions. Il fait **100 lignes maximum**,
+titres et lignes vides compris. Les détails vont dans les thèmes. Environ 300 mots
+par expérience reste un repère éditorial ; un épisode simple peut tenir en
+quelques phrases.
 
 ## 3. Lecture commune aux runtimes
 
@@ -158,12 +159,28 @@ Ticket 0988 porte la preuve que la capture et l’intégration préservent les n
 et laissent le harness se mettre à jour, ainsi que le signal visible d’un échec.
 Le déplacement du checkout sous 0999 ne suffit pas à remplir cette obligation.
 
-## 6. Rêve hebdomadaire et connexions
+## 6. Rêve proposé par lair et connexions
 
-Un timer systemd hebdomadaire lance un seul runtime non interactif disponible
-sur l’hôte, avec `memory/DREAM.md`. La commande et son runtime sont configurés
-pour cet hôte ; ils ne deviennent pas une dépendance des trois autres lecteurs.
-Le timer travaille dans un checkout isolé et sur une branche dédiée.
+Lair termine tout son travail puis compte les expériences nouvelles non couvertes
+par un rapport de rêve accepté. À partir de **5 nouvelles expériences**, sa
+conclusion suggère : « N nouvelles expériences depuis le dernier rêve accepté.
+Follow-up suggéré : `/dream <projet>` ». Il termine sans question, attente ni
+lancement. Sous le seuil, aucune suggestion. Aucun timer. Les expériences
+restent en attente jusqu’au traitement accepté.
+
+DREAM est une invocation distincte. Il exécute `memory/DREAM.md` dans un checkout
+isolé sur une branche dédiée ; les autres runtimes peuvent lire le résultat.
+
+DREAM a trois fonctions principales sur les thèmes consolidés et l’index :
+
+- **Pruning** : retirer les informations périmées, non pertinentes ou remplacées.
+- **Merging** : réunir les entrées dupliquées ou qui se recouvrent en un récit exact,
+  en conservant sources, conditions, exceptions et contradictions non résolues.
+- **Refreshing** : actualiser le contexte devenu ancien mais toujours pertinent.
+
+Le rapport trace ces opérations. Le journal brut reste append-only ; supprimer
+une affirmation consolidée ne supprime jamais l’expérience source. DREAM vérifie
+la limite de 100 lignes de l’index avant commit.
 
 Le prompt lui demande de :
 
@@ -242,7 +259,7 @@ connaissances publiques, sans accès au compagnon.
 
 Les sources historiques restent accessibles sans runtime ni installation du
 harness. La semaine de retard du rêve n’empêche pas une recherche dans le journal.
-Une interruption du timer conserve les commits utiles et rend l’échec visible
+Une interruption du rêve conserve les commits utiles et rend l’échec visible
 au prochain contrôle ; un job qui n’a pas pu lire ses sources ne rapporte pas
 un passage réussi sans changement.
 
@@ -278,10 +295,11 @@ de conservation des sources et de synchronisation restent mécaniques.
 La v7 et son plan sont conservés comme documents historiques. Les tickets
 gardent leurs identités et logs ; le plan v8 indique les périmètres remplacés.
 Aucune réussite des anciennes épreuves n’est présumée transférable à la nouvelle
-architecture. Cette réécriture n’active ni timer ni nouveau comportement de roar.
+architecture. Les corrections des skills appliquent les consignes de capture et de proposition ;
+le pilote et ses preuves restent à livrer.
 
 La livraison commence par la convention et les modèles de fichiers, l’inventaire
-des sources et un pilote. Elle enchaîne capture sûre, prompt et timer, preuve sur
+des sources et un pilote. Elle enchaîne capture sûre, prompt et proposition lair, preuve sur
 les quatre runtimes, évaluation et migration progressive.
 Les anciennes fonctions de classement, TTL destructif, promotion automatique et
 écriture concurrente d’index sont retirées seulement après remplacement vérifié.
@@ -292,4 +310,4 @@ Roar crée au plus une branche de clôture pour tous ses changements : tickets,
 documentation et expérience factuelle. Une seule PR regroupe le tout, passe les
 contrôles requis et reçoit l’auto-merge sans nouvelle confirmation. Aucun
 contournement de contrôle ; en cas d’échec, la branche est conservée et signalée.
-Le rêve périodique conserve sa PR distincte pour relecture.
+Le rêve proposé par lair conserve sa PR distincte pour relecture.

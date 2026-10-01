@@ -42,4 +42,11 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
        <!-- harness-extension-point -->
        Current-generation spelling: `gh api repos/<owner>/<repo> --jq .allow_auto_merge` to read it, `gh pr merge <N> --auto --merge` to arm it.
     e. After the PR merges, delete the throwaway branch (local and remote).
-11. **Memory consolidation** — run `/dream <project-repository>` with the current project’s repository path. Consolidate only its memory; do not write into the harness or propose rules.
+11. **Suggest a dream in the conclusion when relevant.** After completing
+    all lair work, count journal experiences not yet covered by an accepted
+    report in `memory/dreams/`. An unmerged report does not mark experiences
+    processed. With **5 or more new experiences**, include in the final summary:
+    “N nouvelles expériences depuis le dernier rêve accepté. Follow-up suggéré :
+    `/dream <project-repository>`.” Then finish. Do not ask a question, wait for
+    a response, launch dream or mark the experiences processed. Below the
+    threshold, omit this suggestion. No timer or automatic invocation.

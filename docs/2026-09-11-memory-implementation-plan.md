@@ -7,7 +7,7 @@
 ## Premier jalon
 
 Un dépôt pilote possède un journal factuel commité, des thèmes avec provenance,
-un index court et un prompt DREAM.md. Un passage hebdomadaire isolé produit une
+un index de 100 lignes maximum et un prompt DREAM.md. Un rêve suggéré par lair puis invoqué séparément produit une
 branche et une PR. Les quatre runtimes peuvent lire les mêmes fichiers et
 rechercher le journal avec leurs outils ordinaires.
 
@@ -25,7 +25,7 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 | 0920 | Un projet pilote, index, thèmes, journal annuel | 0911, 0917, 0999 |
 | 0988 | Capture factuelle à roar, commit et intégration sûrs | 0920 |
 | 0916 | Prompt DREAM.md et consolidation avec sources conservées | 0920 |
-| 0910 | Timer hebdomadaire, exécution isolée et PR de rêve | 0916, 0988 |
+| 0910 | Suggestion finale lair au seuil de 5, puis rêve distinct et PR | 0916, 0988 |
 | 0923 | Premier smoke de lecture/capture/rêve, runtime choisi et déclaré | 0910 |
 | 0924 | Preuves sur les trois autres runtimes, dont Vibe | 0923 |
 | 0925 | Différé : cristallisation sur demande explicite seulement | Hors livraison automatique |
@@ -61,7 +61,7 @@ Git et le plan historique. Ils ne bloquent pas la livraison et ne doivent pas
 2. Mettre en place le dossier versionné sans effacer les anciens récits.
 3. Réviser roar pour capturer et commiter seulement des faits significatifs,
    positifs et négatifs ; prouver intégration et absence de pull bloqué.
-4. Livrer le prompt et le timer : sources attribuées, rapports de traitement,
+4. Livrer le prompt et la proposition lair : sources attribuées, rapports de traitement,
    branche isolée et PR, aucune fusion automatique de connaissance proposée.
 5. Vérifier les quatre runtimes avec leurs versions et limites réelles, puis
    les scénarios comportementaux et la frontière d’écriture avant élargissement.
@@ -71,19 +71,20 @@ Git et le plan historique. Ils ne bloquent pas la livraison et ne doivent pas
 Les répétitions de scénario servent à mesurer les oublis et les effets des
 mémoires natives contradictoires. Fixer protocole et critères avant les essais,
 puis enregistrer résultats, coûts, omissions et limites. Les vérifications
-mécaniques portent sur sources, liens, commits, timer, intégration et visibilité
+mécaniques portent sur sources, liens, commits, seuil, suggestion finale, intégration et visibilité
 des échecs ; elles ne certifient pas la qualité sémantique.
 
 ## Limites de cette révision
 
 Le journal reste append-only dans journal/AAAA/. Les entrées traitées sont
 référencées dans les rapports de rêve fusionnés, pas déplacées. Un modèle de
-300 mots et un index d’environ 100 lignes sont des repères éditoriaux.
+300 mots par expérience est un repère éditorial ; l’index a une limite stricte
+de 100 lignes, titres et lignes vides compris.
 Un compagnon privé demande sa propre convention d’accès et de versionnement.
 Les sources natives absentes sont signalées, pas supposées vides.
 
 La réécriture initiale v8 conservait les skills existants. La clarification
-ci-dessous corrige leurs instructions ; les profils et timers restent inchangés.
+ci-dessous corrige leurs instructions ; les profils restent inchangés.
 Aucun test live ni clôture de ticket d’implémentation n’est annoncé.
 
 ## Frontière d’autorité — clarification du 1 octobre 2026
@@ -92,4 +93,11 @@ Les sorties d’un projet restent dans son dépôt ou son compagnon privé expli
 Roar ne propose aucune règle ; dream ne propose ni ne réalise de cristallisation.
 0925 est différé et ne bloque plus le programme. Une demande explicite future
 ouvre une tâche distincte. Les instructions actuelles roar/dream/memory-sweep
-sont corrigées dès cette clarification ; les timers et le pilote restent à livrer.
+sont corrigées dès cette clarification ; la proposition lair et le pilote restent à éprouver.
+
+Lair termine puis suggère dream en conclusion à partir de 5 nouvelles
+expériences. Il n’attend ni ne lance rien ; dream est un follow-up distinct.
+Le seuil de 5 est choisi par l’auteur.
+
+DREAM consolide par pruning, merging et refreshing des thèmes et de l’index.
+Le journal reste append-only ; les sources et motifs des retraits sont tracés.

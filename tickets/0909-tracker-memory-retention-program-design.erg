@@ -19,11 +19,12 @@ Blocked-by: 0988
 2026-10-01T19:03Z MinhHaDuong codex note Author decision: the reference clone is ~/.agents and the repository must remain portable; 0999 replaces the ~/.idh relocation premise.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
+2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
 --- body ---
 
 ## Context
 
-Intégrer la convention, le pilote, capture à roar, rêve hebdomadaire, preuves sur quatre runtimes, migration progressive et frontière d’autorité. V8 remplace v7 par décision de l’auteur du 2026-10-01 ; le plan v8 est la carte de livraison.
+Intégrer la convention, le pilote, capture à roar, rêve suggéré en conclusion de lair et invoqué séparément, preuves sur quatre runtimes, migration progressive et frontière d’autorité. V8 remplace v7 par décision de l’auteur du 2026-10-01 ; le plan v8 est la carte de livraison.
 
 Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
 [plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).

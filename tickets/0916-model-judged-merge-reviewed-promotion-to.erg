@@ -13,6 +13,7 @@ Blocked-by: 0920
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: retain the audience-appropriate text of native notes actually used in a report or versioned appendix; fingerprints alone are not retrievable sources.
 2026-10-01T22:00Z codex note Dream consolidates project memory only; no rule proposals or harness writes.
+2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 --- body ---
 
 ## Context
@@ -38,3 +39,6 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Rapport référence source/prompt/révisions et runtime/modèle ; connaissance proposée soumise à PR.
 
 - [ ] Aucune règle proposée ou modifiée, aucune sortie de projet écrite dans le harnais.
+
+- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
+- [ ] Pruning retire les informations périmées/non pertinentes/remplacées ; merging réunit les doublons ; refreshing actualise le contexte encore pertinent, sources et exceptions conservées.

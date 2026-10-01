@@ -14,6 +14,7 @@ Author: claude
 2026-09-16T10:27Z claude note Recorded the author's open question on who writes the shared store: v7 settles where project memory lives but not who publishes to memory-shared. Options, costs and a recommendation are in the body; the decision is the author's and sits above this ticket.
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 --- body ---
 
 ## Context
@@ -36,3 +37,5 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Capture : nouveauté, surprise attestée, conséquence ou conflit de procédure ; positif/négatif, sans jugement ni prescription.
 - [ ] Journal append-only, collisions de noms et corrections documentées.
 - [ ] Aucun comportement live prétendu modifié par les modèles.
+
+- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
