@@ -1,0 +1,16 @@
+%erg 0.1
+Title: skills: retire applied-econ-writing into a rules/doctype/article.md
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T07:03Z HDMX-coding-agent created
+
+--- body ---
+Parent: 0992.
+
+## Scope
+
+Author decision "Retire + article rule": create path-scoped `rules/doctype/article.md` with Head's introduction formula and Shapiro's question criteria (and the table checklist if it fits the register); drop applied-micro identification, J-PAL grant material, the decision tree and the journal-selection section. Delete `skills/applied-econ-writing/`. Respect the HET register: the rule must not impose applied-micro templates on history-of-economics manuscripts.
+
+Common exit criteria for every child: the body follows `rules/authoring-skills.md` (size, pointer-and-payload split, doctrine in rules and procedure in skills, `model:` pinned on any fan-out, concurrency declared on multi-item steps); no instance-specific material (AMAP talk, one-off scripts); `make skills-catalog` regenerated; `make check-fast`, `make lint`, `make check-agnostic-skills`, `make check-skills-drift` pass; skills resident channel stays under its budget (`tests/test_resident_census.py`). Originals as synced from claude.ai, for reference: the import commit of PR #1075 (8b9691f1) and git history.

@@ -1,0 +1,16 @@
+%erg 0.1
+Title: skills: slim conference-submission-prep to its core and delegate
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T07:03Z HDMX-coding-agent created
+
+--- body ---
+Parent: 0992.
+
+## Scope
+
+Keep the distinct core: CFP analysis, "a poster abstract is a standalone short paper", abstract structure; spell out "humanities and social sciences" (not "SSH") in the description. Delegate: anonymization and metadata to pdf-finish; word limits to cut-prose; the "submitted" event to submission-event; citations to bib-merge / related-work-note. Reviewer simulation: point to review-pr-prose / external-peer-review rather than an unpinned inline panel. Venue choice points to choose-venue (0995).
+
+Common exit criteria for every child: the body follows `rules/authoring-skills.md` (size, pointer-and-payload split, doctrine in rules and procedure in skills, `model:` pinned on any fan-out, concurrency declared on multi-item steps); no instance-specific material (AMAP talk, one-off scripts); `make skills-catalog` regenerated; `make check-fast`, `make lint`, `make check-agnostic-skills`, `make check-skills-drift` pass; skills resident channel stays under its budget (`tests/test_resident_census.py`). Originals as synced from claude.ai, for reference: the import commit of PR #1075 (8b9691f1) and git history.

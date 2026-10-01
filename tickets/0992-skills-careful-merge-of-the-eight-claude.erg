@@ -1,0 +1,33 @@
+%erg 0.1
+Title: skills: careful merge of the eight claude.ai academic skills (tracker)
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T07:03Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+PR #1075 imported eight skills the author had uploaded to claude.ai. The author judged it "a dump, not a careful merge": bodies were copied wholesale and only adjusted to pass gates. The claude.ai uploads were deleted by the author on 2026-10-01 and `syncClaudeAiSkills` is false, so the harness copies are the single source.
+
+A read-only audit (2026-10-01) compared each against harness skills and rules. Findings: three of the imports are the largest bodies in the tree after gaze (critical-lit-review 1257 lines, slides-review 777, text-to-slides 388); reading-note's RDF export contradicts zotero-import; critical-lit-review carries a second reading-note template, unshipped scripts, heavy deps (BERTopic) and an iterative screen that contradicts the single pooled screen practice; slides-review restates `rules/doctype/slides.md`; conference-targeting repeats `commands/choose-journal.md` without its diamond-OA filter; applied-econ-writing is applied-micro doctrine outside the author's field; trigger collisions on "where to submit", "literature review", "submission", "review my slides".
+
+## Author decisions (2026-10-01, verbatim choices)
+
+- Slides toolchain: "Beamer default" — follow rules/doctype/slides.md; ODP via LibreOffice conversion; no python-pptx/odfpy until a talk needs them.
+- applied-econ-writing: "Retire + article rule" — rules/doctype/article.md with Head's intro formula and Shapiro's question criteria; drop applied-micro identification, J-PAL grants, journal selection.
+- Venue: "choose-venue skill" — one skill, journal mode default, conference mode from conference-targeting; diamond-OA values apply to both; retires the command and conference-targeting.
+- critical-lit-review: "Drop both" — search defers to biblio-saturation; retire search_istex.py/download_pdfs.py (ISTEX stays the edm.md full-text step); drop computational corpus analysis.
+- Defaults taken without asking: bodies in English with French trigger words; a reading note is stored as its own Zotero Document item through index-source; one child ticket and one PR per verdict.
+
+## Children
+
+0993 reading-note + critical-lit-review · 0994 slides · 0995 choose-venue · 0996 conference-submission-prep · 0997 applied-econ-writing → article rule · 0998 message-framing
+
+Children touch README.md (generated catalog): merge serially and regenerate the catalog on each rebase, never hand-merge it.
+
+## Exit criteria
+
+- [ ] All six children closed.
+- [ ] Integration review: no trigger collision left among the resulting skills and existing ones; every cross-reference between them resolves.

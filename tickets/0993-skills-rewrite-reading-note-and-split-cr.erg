@@ -1,0 +1,17 @@
+%erg 0.1
+Title: skills: rewrite reading-note and split critical-lit-review into a slim core
+Created: 2026-10-01
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-01T07:03Z HDMX-coding-agent created
+
+--- body ---
+Parent: 0992.
+
+## Scope
+
+- reading-note: keep (critical reading of one whole work, distinct from related-work-note's one-paragraph defence). Rewrite to ~80 lines + one reference. Drop `scripts/fetch_article.py` and `scripts/generate_zotero_rdf.py`: identifier lookup and Zotero intake go through zotero-import / index-source (zotero-import:13, Web API first, RIS fallback). Storage per edm.md: the note is its own Zotero Document item via index-source. Metadata from `pdftotext -f 1 -l 1`, page-number discipline per edm.md. Cut the version header, rate-limit notes, scripted user interaction. Absorb critical-lit-review's `references/reading_note_template.md`: one template only.
+- critical-lit-review: keep the distinct core as a ~150-line body: object construction, actor mapping, silent controversies / naturalized assumptions, history-of-economics positioning. Search defers to biblio-saturation; full-text acquisition follows edm.md. Retire `scripts/` (search_istex.py, download_pdfs.py, README) and the computational corpus analysis (BERTopic etc.; author decision "Drop both"). Fix the "reading-notes" skill name; fan-out to reading-note declares concurrency and pins `model:`. Report length follows `rules/doctype/techreport.md` and cut-prose, no hard-coded word range.
+
+Common exit criteria for every child: the body follows `rules/authoring-skills.md` (size, pointer-and-payload split, doctrine in rules and procedure in skills, `model:` pinned on any fan-out, concurrency declared on multi-item steps); no instance-specific material (AMAP talk, one-off scripts); `make skills-catalog` regenerated; `make check-fast`, `make lint`, `make check-agnostic-skills`, `make check-skills-drift` pass; skills resident channel stays under its budget (`tests/test_resident_census.py`). Originals as synced from claude.ai, for reference: the import commit of PR #1075 (8b9691f1) and git history.
