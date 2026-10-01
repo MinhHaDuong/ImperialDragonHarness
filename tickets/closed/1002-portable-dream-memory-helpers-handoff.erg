@@ -2,12 +2,27 @@
 Title: Portable dream memory helpers handoff
 Created: 2026-10-01
 Author: codex
+Closed: WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
 
 --- log ---
 2026-10-01T20:45Z codex created Child of 0999 extracted from PR 1091 by author direction; owned by the parallel memory workstream.
 
+2026-10-01T21:27Z MinhHaDuong closed — WONTDO — superseded by memory v8; author decision. Remaining concerns: 0988, 0934, 0913.
 --- body ---
 ## Context
+## Disposition — WONTDO, superseded by memory v8
+
+The author explicitly closed this legacy helper handoff on 2026-10-01.
+Memory v8 uses project-local Markdown and treats native notes only as attributed
+sources. The current dream procedure explicitly excludes these legacy helpers;
+repairing their native-store commits and harness-tier counters is not v8 work.
+The handoff patch remains historical and unapproved; do not cherry-pick it as a
+v8 implementation. No implementation exit criterion below is claimed satisfied.
+Safe capture and integration remain in 0988; defects in legacy tools with live
+consumers remain in 0934; eventual retirement belongs to 0913. Parent 0999 still
+requires its integration review and is not closed by this disposition.
+
+## Historical context
 Preserve the dream/provenance changes originally at PR 1091 tip 6014c42f
 without merging them as runtime-registration work. The other session owns
 memory design. No real memory data is moved, reconciled or synchronized here.
