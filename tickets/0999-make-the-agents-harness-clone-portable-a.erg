@@ -8,6 +8,7 @@ Author: codex
 
 2026-10-01T19:03Z MinhHaDuong codex note Created as the replacement for 0978/0986 by author decision: clone at ~/.agents, resolve the checkout portably, keep runtime profiles independently owned.
 2026-10-01T19:16Z MinhHaDuong note Documentation and migration-ticket sweep complete locally on docs-portable-agents-plan; 112 relevant tests, 511-ticket corpus validation and whitespace checks pass. Full installation, relocation and runtime smoke acceptance remain open.
+2026-10-01T19:59Z codex note Implementation isolated in PR #1091 (draft). Fresh clone, arbitrary-path and relocation fixtures pass; make check passed 1295 tests with 3 skips; live Claude/Codex/Pi clean reset and dirty guard controls pass. No runtime profile deployment or tracker closure claimed.
 --- body ---
 
 ## Context
@@ -51,6 +52,16 @@ Existing local implementation changes resolve lifecycle and shell entry points
 from the checkout and the Codex guard from its installed symlink. The fast
 suite passed 853 tests with one skip. This is partial implementation evidence,
 not completion of the acceptance criteria below.
+
+Implementation is staged in [PR #1091](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1091), separately from the merged planning and documentation PRs #1089/#1090:
+
+- Checkout-derived lifecycle, shell, hook and census entry points; no required repository pointer.
+- Additive runtime registration and exact legacy-hook migration preserve unrelated profile content. Explicit re-registration after a move refreshes only unchanged installer-owned links.
+- All nine provenance commands accept `--root`; the default follows the invoked script's real checkout. The original primary-checkout write is reproduced by a red/green isolation test. Store reconciliation remains 0934's separate work.
+- Real fresh Git clone at disposable `~/.agents`, arbitrary-location fixtures and relocation through installed links pass. Live Claude 2.1.286, Codex 0.159.3 and Pi 0.87.1 execute clean resets and block dirty ones.
+- `make check`: 1,295 passed, three skipped outside sandbox restrictions. Codex smoke used vetted invocation-local hook-trust bypass; persistent hook trust must still be refreshed when deploying the changed definition.
+
+Independent review and merge remain outstanding. The tracker stays open until the reviewed implementation lands.
 
 ## Remaining work
 
