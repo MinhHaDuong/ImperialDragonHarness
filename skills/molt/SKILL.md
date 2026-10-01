@@ -1,11 +1,12 @@
 ---
 name: molt
-model: sonnet
-effort: low
+model-level: standard
 description: "Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
 user-invocable: true
 argument-hint:
 ---
+
+Requested effort: `effort: economy`.
 
 # Molt — repo housekeeping
 

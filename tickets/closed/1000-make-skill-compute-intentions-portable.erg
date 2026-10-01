@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Make skill compute intentions portable
+Created: 2026-10-01
+Author: MinhHaDuong
+Closed: autoclosed — PR #1092
+
+--- log ---
+2026-10-01T20:32Z MinhHaDuong created
+
+2026-10-01T20:44Z MinhHaDuong closed — autoclosed — PR #1092
+--- body ---
+## Context
+User directive: skills must be portable and name roles, capability classes and
+semantic effort rather than concrete models. Cheaper workers and smartest
+advisors are role intentions; runtime configuration supplies identities.
+Related tracker: 0974 (this slice does not close that broader program).
+
+## Exit criteria
+- [ ] External reviewer discovery and routing are delegated to the runtime; helpers are optional.
+- [ ] Harness AGENTS.md opens with requested profiles and runtime selection guidance.
+- [ ] Skill Markdown and frontmatter contain no concrete model choices.
+- [ ] Worker/advisor guidance and effort use the portable vocabulary.
+- [ ] Runtime model mappings remain separate from skill instructions.
+- [ ] Portability regression checks reject named models and invalid controls.
+- [ ] Review findings are resolved and the full gate passes, with any independently
+      reproduced baseline failures documented.

@@ -1,6 +1,6 @@
 # Portable model and effort policy
 
-**Status:** design note / migration proposal  
+**Status:** policy / staged runtime migration
 **Date:** 2026-09-24
 
 ## Decision
@@ -40,7 +40,22 @@ duplicate responsibilities better owned by runtimes and model gateways.
 IDH needs only enough abstraction to prevent accidental expensive inheritance
 and to communicate intentional rightsizing.
 
-## Current-state audit
+## Implemented skill boundary (2026-10-01)
+
+Portable skill Markdown now declares roles, semantic capability levels and
+effort. The active runtime determines agents and concrete models on the fly,
+using its available capabilities. Skills do not require fixed agent profiles,
+native model pins, or a harness-owned runtime translation layer.
+
+Semantic effort stays in skill prose, because native skill frontmatter parsers
+may interpret `effort` as a provider enum. Skill controls communicate intent;
+they do not claim to enforce a particular native launch configuration.
+The broader migration remains tracked by ticket 0974.
+
+The audit below records the pre-migration state; its named skill pins are
+historical, not instructions for current skills.
+
+## Historical current-state audit
 
 ### The organizational architecture is already right
 

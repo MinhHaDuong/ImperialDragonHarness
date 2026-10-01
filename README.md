@@ -121,7 +121,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Ranks the removable passages against the coverage ledger, cuts them entire, then condenses the survivors until the budget is met. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
 | `/dream` | Autonomous nightly memory consolidation for one project. |
-| `/external-peer-review` | Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict. |
+| `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |

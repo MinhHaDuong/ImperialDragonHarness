@@ -5,7 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number>"
 context: fork
-model: sonnet
+model-level: standard
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
 # This matches the Claude Code 2.1.218 default; pinned explicitly so a future
@@ -326,7 +326,7 @@ re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Pin every
 read-only reviewer to
-**`model: sonnet`** — reviewers stay below the coder tier (`rules/workflow.md`
+**`model-level: standard`** — reviewers stay below the coder tier (`rules/workflow.md`
 § Delegation), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
@@ -503,7 +503,7 @@ or its HEAD cannot be read, ESCALATE without posting an approval.
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
 Agent (waited for by polling its written verdict artifact),
-**`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
+**`model-level: standard`** (a reviewer, below the coder tier), cwd **pinned to**
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`); never
 `isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
@@ -558,9 +558,8 @@ breaker.
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
-  `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
-  reviewer's sonnet; effort is not an Agent launch param and this definition
-  pins none, so it tracks the session effort), waited for by polling
+  `model-level: strong` (coding worker class; `effort: standard`; resolve both
+  intentions through the active runtime), waited for by polling
   the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
@@ -677,20 +676,24 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
 ## External reviewer panel
 
-The external, decorrelated reviewer panel — sandboxed CI-style seats over
-agnostic CLI reviewers — is managed by the `/reviewers` skill, not inlined
-here; seat execution is the 0217 seat-runner. See `skills/reviewers/SKILL.md`.
-This section is the panel-extension contract (ticket 0205).
+Request external, decorrelated reviewers through the active runtime. It discovers
+who is available and chooses the route (local or remote agents, llama.cpp, or a
+model gateway). `/reviewers` describes the needs and offers optional helpers;
+no fixed roster or gateway is required. See `skills/reviewers/SKILL.md`.
+The helper-specific instructions below apply only when that helper is selected.
 
 **When seats fire.** Automatically, on **small**- and **full**-tier CODE
 reviews — the decorrelation evidence concentrates ensemble value on
 substantive multi-file code changes. Skip on the **tiny** tier and on prose
 panels — the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase
 2–4 panel choice used; a LaTeX manuscript never qualifies for external
-code-review seats. Empty roster or `/reviewers` unavailable →
-skip silently: the panel is fail-open and never blocks a gaze run.
+code-review seats. No suitable external reviewer available → record that limitation; the
+optional panel is fail-open and does not block a gaze run. An empty helper
+roster alone does not mean the runtime has no other reviewers.
 
-**How.** At the phase 2–4 reviewer-battery launch, also invoke
+**How.** Discover and route external reviews concurrently with phases 2–4;
+collect their evidence and integrity status before phase 6. If the runtime
+chooses the bundled helper, invoke
 `/reviewers request <pr>` as a background *shell* job (a Bash call, not an
 agent launch, so the fork-orphan contract does not apply): the sandboxed
 seats (~30–120 s) run concurrently with the internal reviewer battery and
