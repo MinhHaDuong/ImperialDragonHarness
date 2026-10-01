@@ -75,3 +75,9 @@ an ignored directory or a branch in a public repository is insufficient.
 Unavailable native sources are unknown, not empty. Interpreted native notes stay
 attributed notes, never reconstructed factual journal entries. See the
 [source inventory](source-inventory.md) before selecting pilot material.
+
+## Legacy retirement
+
+The native/shared-store DREAM helpers are retired. See the
+[retirement record](legacy-retirement.md). Their source observations and metadata
+remain historical material, not active memory machinery.

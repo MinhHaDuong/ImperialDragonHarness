@@ -3,11 +3,13 @@ Title: dream: tombstone purge, rule-dedup audit and reasoned expected-utility ra
 Created: 2026-10-01
 Author: HDMX-coding-agent
 Label: deferred
+Closed: WONTDO: legacy scoring, purge and rule machinery abandoned under v8
 
 --- log ---
 2026-10-01T06:08Z HDMX-coding-agent created
 
 2026-10-01T20:37Z MinhHaDuong codex note Deferred during v8 transition: do not implement legacy EU-ranking/purge machinery before the Markdown pilot. Reassess useful migration findings under 0913; no implementation or closure claimed.
+2026-10-01T21:35Z MinhHaDuong closed — WONTDO: legacy scoring, purge and rule machinery abandoned under v8
 --- body ---
 ## V8 transition hold
 
