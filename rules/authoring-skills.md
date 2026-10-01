@@ -10,6 +10,13 @@ Loaded when you edit a skill. These rules are enforced by
 `tests/test_skill_descriptions.py` and `tests/test_skill_frontmatter.py`; the
 tests are the gate, this is why.
 
+- **Skills name roles, capability classes, and effort levels, never models.**
+  Use `model-level: auto|cheap|standard|strong|frontier` and
+  `effort: economy|standard|intensive`. Cheaper workers favor `cheap/economy`;
+  the smartest advisor uses `frontier`, with effort chosen for the task.
+  Concrete model IDs and provider controls belong to runtime configuration.
+  Declare intentions for spawned children as well as the skill itself; resolve
+  them through the runtime adapter rather than assuming inheritance.
 - **Name capabilities, not the tool that provides them.** "Schedule a wake-up",
   not a timer-tool name; "delegate to a subagent", not an agent-tool name;
   "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub"; never

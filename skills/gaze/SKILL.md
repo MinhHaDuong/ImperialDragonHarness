@@ -5,7 +5,7 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number>"
 context: fork
-model: sonnet
+model-level: standard
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
 # This matches the Claude Code 2.1.218 default; pinned explicitly so a future
@@ -15,6 +15,8 @@ model: sonnet
 # message, never from backgrounding a phase this skill must wait on.
 background: true
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
 
@@ -326,7 +328,7 @@ re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Pin every
 read-only reviewer to
-**`model: sonnet`** — reviewers stay below the coder tier (`rules/workflow.md`
+**`model-level: standard`** — reviewers stay below the coder tier (`rules/workflow.md`
 § Delegation), and an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
 
@@ -503,7 +505,7 @@ or its HEAD cannot be read, ESCALATE without posting an approval.
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
 Agent (waited for by polling its written verdict artifact),
-**`model: sonnet`** (a reviewer, below the coder tier), cwd **pinned to**
+**`model-level: standard`** (a reviewer, below the coder tier), cwd **pinned to**
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`); never
 `isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
@@ -558,9 +560,8 @@ breaker.
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"`,
-  `model: opus` (a mutator/coder — top available tier where it earns its keep, not the
-  reviewer's sonnet; effort is not an Agent launch param and this definition
-  pins none, so it tracks the session effort), waited for by polling
+  `model-level: strong` (coding worker class; `effort: standard`; resolve both
+  intentions through the runtime adapter), waited for by polling
   the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in

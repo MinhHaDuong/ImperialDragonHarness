@@ -5,13 +5,15 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<branch> [worktree=<path>] [trace=<path>]"
 context: fork
-model: sonnet
+model-level: standard
 # Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
 # output. Claude Code 2.1.218 made `context: fork` skills background by default;
 # a fork cannot wait on a background completion, so the default would orphan
 # this phase — ticket 0250.
 background: false
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # Verify adherence — $ARGUMENTS
 
@@ -198,7 +200,7 @@ in practice.
 
 Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
 concerns not covered by phases 1–2. Spin **one** subagent, pinned to
-**`model: sonnet`** (a reviewer, below the coder tier — rules/workflow.md; left
+**`model-level: standard`** (a reviewer, below the coder tier — rules/workflow.md; left
 unpinned it inherits the session model and runs at top tier), with:
 
 - The diff.

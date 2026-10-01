@@ -6,6 +6,8 @@ user-invocable: true
 argument-hint: "<ticket-id> [inline]"
 ---
 
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+
 # Hunt — begin work on ticket $ARGUMENTS
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
@@ -58,8 +60,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      interactive session: hand the ticket to ONE background worktree-isolated
      agent. Not a raid — for a single ticket its orchestrator and review panels
      cost more than the ticket returns. Launch with `isolation: "worktree"` and
-     `model: opus` (raid § Model policy, where coders keep the top tier; effort is
-     the session effort, run at `high`). The agent's FIRST action is mechanical:
+     `model-level: strong` (coding worker class; `effort: standard`; resolve both
+     intentions through the runtime adapter). The agent's FIRST action is mechanical:
      ```
      Skill(skill: "hunt", args: "$ARGUMENTS")
      ```

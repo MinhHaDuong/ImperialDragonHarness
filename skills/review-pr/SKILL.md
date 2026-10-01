@@ -5,13 +5,15 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
-model: sonnet
+model-level: standard
 # Foreground: /gaze runs this as phase 4 (Agent C) and blocks on its structured
 # output. Claude Code 2.1.218 made `context: fork` skills background by default;
 # a fork cannot wait on a background completion, so the default would orphan
 # this phase — ticket 0250. Standalone use is unaffected.
 background: false
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # Review PR $ARGUMENTS — multi-perspective agent review
 
@@ -35,7 +37,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > PR while the intended target sat unreviewed).
 
 Spin multiple agents in parallel, each with a distinct perspective. Run all
-agents in fresh contexts, each pinned to **`model: sonnet`** — reviewers stay
+agents in fresh contexts, each pinned to **`model-level: standard`** — reviewers stay
 below the coder tier (`rules/workflow.md` § Delegation), and an
 unpinned Agent inherits the session model, so on a top-tier session this fan-out
 silently becomes a top-model wave.

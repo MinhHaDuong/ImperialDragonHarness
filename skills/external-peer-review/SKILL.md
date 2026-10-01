@@ -1,17 +1,19 @@
 ---
 name: external-peer-review
-description: "Send a manuscript PDF to external frontier models (OpenAI + Mistral via OpenRouter) for peer review; synthesize convergent findings into one verdict."
+description: "Send a manuscript PDF to external frontier models (independent providers via the configured gateway) for peer review; synthesize convergent findings into one verdict."
 user-invocable: true
 disable-model-invocation: false
-argument-hint: "<pdf-path> [--models openai/gpt-5.5,mistralai/mistral-large-2512] [--personas grinchy,student] [--text]"
+argument-hint: "<pdf-path> [--models <resolved-advisor-models>] [--personas grinchy,student] [--text]"
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # External peer review $ARGUMENTS
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-Send a manuscript PDF to real external models (OpenAI + Mistral, via one
-OpenRouter key) under reviewer personas, then read the reviews back and present
+Send a manuscript PDF to real external models (independent providers, via the configured
+OpenRouter gateway) under reviewer personas, then read the reviews back and present
 a cross-reviewer synthesis. This is **complementary** to `/review-pr-prose`:
 that skill runs a *simulated* in-harness panel; this one solicits *real
 external* frontier-model reviews.
@@ -41,17 +43,22 @@ The bundled script is `"$IDH_ROOT/skills/external-peer-review/peer_review.py"`.
    value is accepted. Resolution failure names the variable and the file probed
    and stops; never echo the value.
 
-3. **Pick models and personas.** Defaults: models
-   `openai/gpt-5.5,mistralai/mistral-large-2512`, personas `grinchy,student`
-   (four combos). Any OpenRouter model id is accepted. Personas are an
-   extensible dict in the script — adding one is a single entry.
+3. **Resolve advisor roles and personas.** Request two independent smartest
+   advisor models (`model-level: frontier`, `effort: intensive`) from runtime
+   configuration, preferably from different providers. Pass their resolved IDs
+   explicitly with `--models`; do not rely on the helper's concrete defaults.
+   If no mapping is available, ask for runtime configuration. Default personas
+   are `grinchy,student` (four combinations). Personas are extensible in the script.
+
+Set `ADVISOR_MODEL` to the first resolved ID and `ADVISOR_MODELS` to the
+   comma-separated pair in the shell used for the commands below.
 
 4. **Smoke-test ONE combo first** (project rule: test one before blasting).
    Run a single model×persona to confirm prompt assembly, that a review comes
    back non-empty, and that the input mode works:
    ```
    python "$IDH_ROOT/skills/external-peer-review/peer_review.py" <pdf> \
-       --models openai/gpt-5.5 --personas grinchy --out-dir <out>
+       --models "$ADVISOR_MODEL" --personas grinchy --out-dir <out>
    ```
    Inspect the written `review_*.md` for quality before launching the rest.
    - **Balance gate:** PDF-file mode (the default, via the `file-parser`
@@ -64,7 +71,7 @@ The bundled script is `"$IDH_ROOT/skills/external-peer-review/peer_review.py"`.
    the long calls do not block:
    ```
    python "$IDH_ROOT/skills/external-peer-review/peer_review.py" <pdf> \
-       --models openai/gpt-5.5,mistralai/mistral-large-2512 \
+       --models "$ADVISOR_MODELS" \
        --personas grinchy,student --out-dir <out>
    ```
    Combos run concurrently; one failing combo is reported and the others

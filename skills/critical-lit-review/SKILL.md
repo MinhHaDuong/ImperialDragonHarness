@@ -6,6 +6,8 @@ user-invocable: true
 argument-hint: "<research question, abstract, notes or draft>"
 ---
 
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+
 # Critical literature review
 
 Map a field as a historian of economic thought would: construct the object,
@@ -76,7 +78,7 @@ publications. Usually fifteen to twenty-five.
 Delegate each to `reading-note`; do not write notes inline. Launch the
 readers **parallel-background, in batches of at most 8**: the notes are
 independent of one another, and the batch bounds coordination overhead.
-Pin the standard tier, `model: sonnet`, on every launch: a note is bulk
+Pin the standard tier, `model-level: standard`, on every launch: a note is bulk
 interpretive work, and the synthesis below stays with the coordinating
 session. Each brief carries the
 citation, the staged full text or Zotero item, the scoping document, and why

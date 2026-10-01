@@ -4,9 +4,11 @@ description: "Work through multiple tickets autonomously: pick targets, implemen
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[ticket-ids or "all open"]'
-model: claude-sonnet-5
-effort: high
+model-level: standard
+effort: intensive
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
@@ -18,43 +20,26 @@ and enforcing invariants.
 
 ## Model policy (rightsizing)
 
-A raid fans out N concurrent agents — the cost lever is the **per-invocation
-`model`** on each Agent launch (the Agent `model` enum is `sonnet|opus|haiku|fable`),
-NOT this skill's frontmatter. A skill's `model:` frontmatter is not in
-the subagent inheritance chain, so an unpinned launch silently runs at whatever
-the session model is; left unpinned on a top-tier session that is the runaway
-"top-model × N-wide" wave. **Effort is not an Agent launch parameter**, and
-these coders are spawned from definitions that pin none, so they run at the
-*session* effort; set it (`high` is the sweet spot) before running a raid, and
-never rely on `max`. An agent *definition* can carry `effort:` to pin one child
-tier (`rules/claude-code.md`), which is the lever if a wave ever needs its own.
-The frontmatter pins the orchestrator itself to Sonnet: the 2026-07 trace
-census (H7) measured top-tier raid mains at ≈4.7× the cost curve while Sonnet
-mains sit on it, and the orchestrator only sequences waves — the coders keep
-their own pins below. Every launch below pins `model` explicitly:
+Declare a role, `model-level`, and semantic `effort` for every launch.
+Use the runtime adapter to resolve these intentions into supported launch or
+agent-profile settings; skill frontmatter does not configure spawned children.
+Do not silently inherit an expensive caller configuration. If the adapter cannot
+resolve a requested level, report the limitation or use its explicit fallback.
 
-- **Imagine / Blind-Spot / Plan / integration-review** agents (read-only judgement — scope
-  reasoning, omitted-frame detection, test design, cross-PR composition) → `model: sonnet`.
-  Reviewers stay below the coder tier (rules/workflow.md § Delegation).
-- **Verify-feasibility** agents (Phase 4) split by task: mechanical existence
-  checks (do these paths/lines/signatures exist) → `model: haiku`; the cross-ticket
-  conflict and cross-cutting-registry scan that gates the Phase 5.0 coordination PR
-  → `model: sonnet` (pattern recognition across N plans, not lookup — a missed
-  registry conflict cost a resurrection agent for 3 of 4 merges). Haiku
-  launches must demand a ONE-LINE verdict, never a multi-section report —
-  haiku ends its turn on process narration instead of emitting long
-  structured final messages (two truncated returns, raid 557 2026-06-12);
-  if the check needs a structured report, run the greps inline or use sonnet.
-- **Execute** agents (Phase 5, worktree-isolated coders doing the real change) →
-  `model: opus`. Top available tier — Fable 5 is blocked by government order, do
-  not pin it; its effort is the session effort (run the raid at `high` for the
-  opus/high sweet spot).
-- **Per-ticket `/gaze`** (Phase 6) → `/gaze` pins its own reviewer models; do not
-  override.
+- **Workers and mechanical helpers:** cheaper worker class,
+  `model-level: cheap`, `effort: economy`. Keep mechanical verdicts concise.
+- **Planning, review, and orchestration:** competent worker class,
+  `model-level: standard`, `effort: standard`. Promote difficult cross-ticket
+  judgment to `model-level: strong` when needed.
+- **Execute:** coding worker class, `model-level: strong`, `effort: standard`
+  for difficult repository mutations; use a cheaper class for bounded tasks.
+- **Advisor:** smartest available advisor class, `model-level: frontier`,
+  `effort: intensive`, for exceptional decisions and hard-tail escalation.
+- **Per-ticket `/gaze`:** respect that skill's declared reviewer intentions.
 
-Never launch a raid agent without an explicit `model`. If a future role genuinely
-needs a different tier, pin it at that call site with a one-line rationale — don't
-lift the default.
+Choose the least expensive class adequate for the responsibility. Raise the
+capability class before requesting intensive effort. Model identities and
+provider-specific effort controls belong to runtime configuration.
 
 ## Balance rule
 
@@ -122,7 +107,7 @@ Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to
 ## Phase 2: Imagine (parallel)
 
 For each ticket, launch an agent (background, no isolation needed — read-only;
-`model: sonnet` per § Model policy):
+`model-level: standard` per § Model policy):
 - Read ticket + STATE.md + surrounding code
 - Reimagine: why now, why this scope, what's the simplest path
 - **Antipattern scan (scope).** YAGNI (search the package registry —
@@ -134,7 +119,7 @@ Wait for all.
 ### Blind-Spot pass (cross-ticket)
 
 Before committing the reimagined tickets, launch **one** additional read-only
-agent (`model: sonnet` per § Model policy) over the original tickets **and all
+agent (`model-level: standard` per § Model policy) over the original tickets **and all
 Imagine outputs together**. Its job is not to review implementation quality or
 repeat the per-ticket critique. It challenges the *search space the Imagine
 team considered*: what important thing did the whole team fail to look for?
@@ -185,7 +170,7 @@ agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 
-For each reimagined ticket, launch an agent (background; `model: sonnet` per
+For each reimagined ticket, launch an agent (background; `model-level: standard` per
 § Model policy):
 - Read ticket + actual source code
 - Write Actions, first test, dependencies
@@ -200,8 +185,8 @@ the execute agent prompt and the agent creates the file as its first step.
 
 ## Phase 4: Verify feasibility
 
-Launch agents by cluster to cross-check plans (`model: haiku` for the mechanical
-existence checks — paths/lines/signatures; `model: sonnet` for the cross-ticket
+Launch agents by cluster to cross-check plans (`model-level: cheap` for the mechanical
+existence checks — paths/lines/signatures; `model-level: standard` for the cross-ticket
 conflict and cross-cutting-registry scan, which is judgement across N plans, not
 lookup — missing it cost a resurrection agent for 3 of 4 merges, see § Phase 5.0
 below):
@@ -238,7 +223,7 @@ Group tickets into waves:
 - Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
 
-For each wave, launch agents with `isolation: "worktree"` and `model: opus`
+For each wave, launch agents with `isolation: "worktree"` and `model-level: strong`
 (per § Model policy — the coders; effort is the session effort, run at `high`).
 
 The execute-agent contract's FIRST action is mechanical. The agent invokes the
@@ -269,7 +254,7 @@ max-concurrent-agents cap (see `rules/claude-code.md` § Subagent levers). Phase
 stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
-subagent (read-only; `model: sonnet` per § Model policy) to check:
+subagent (read-only; `model-level: standard` per § Model policy) to check:
 - Do the merged/merge-pending PRs compose without contradiction?
 - Does `make check` still pass if we imagine them all merged?
 - Are there testing gaps visible only at wave granularity (e.g., two PRs touching the

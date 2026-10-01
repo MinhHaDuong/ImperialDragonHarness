@@ -5,6 +5,8 @@ user-invocable: true
 argument-hint: "[new-tag-name]"
 ---
 
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
+
 # Release $ARGUMENTS
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
@@ -47,7 +49,7 @@ skill **never signs** a tag — that is the human's sole responsibility.
 ## 2. Parallel audits
 
 Launch **three background agents in parallel** (single message, all as
-background agents), each pinned to **`model: sonnet`** — these are read-and-audit
+background agents), each pinned to **`model-level: standard`** — these are read-and-audit
 reviewers (security, UX, doc/test coherence), so they stay below the coder tier
 (`rules/workflow.md` § Delegation); left unpinned they inherit
 the session model and silently run the fan-out at top tier. Wait for all to

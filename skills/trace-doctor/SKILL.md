@@ -3,9 +3,11 @@ name: trace-doctor
 description: "Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings."
 user-invocable: true
 argument-hint: "[--days N]"
-model: sonnet
-effort: medium
+model-level: standard
+effort: standard
 ---
+
+Compute settings are portable intentions. Resolve `model-level` and `effort` through runtime configuration before execution, including each child launch; do not pass semantic values as concrete model IDs. Report unsupported settings or use an explicitly configured fallback.
 
 # Trace Doctor $ARGUMENTS
 
