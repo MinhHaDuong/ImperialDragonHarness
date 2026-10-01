@@ -1,8 +1,8 @@
 %erg 0.1
-Title: Propose crystallisation through the reviewed dreaming PR
+Title: Deferred crystallisation only on explicit author request
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0916
+Label: deferred
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -11,25 +11,18 @@ Blocked-by: 0916
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: adds a positive exit criterion; the three existing ones were absence-shaped and met by harvesting nothing.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
 --- body ---
 
 ## Context
 
-Le rêve propose, dans sa PR, des changements à AGENTS.md, docs/runbooks/, tests ou issues, motivés par les épisodes et leurs exceptions. Respecter les registres de décisions et les autorisations externes du projet.
+L’auteur interdit les promotions et propositions de règles automatiques.
+Roar capture des faits ; dream consolide uniquement la mémoire du projet.
+Ce ticket est différé, hors du chemin de livraison v8. Ne pas l’exécuter sur
+la seule base d’un rêve ou d’une PR mémoire acceptée.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
-Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
+## Réactivation
 
-## Actions et vérification
-
-Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
-preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
-exécuter les checks applicables au diff. Aucun package hoard requis.
-
-## Exit criteria
-
-- [ ] Proposition relisible, preuves et exceptions explicites, aucune adoption par simple génération.
-- [ ] Après acceptation, une procédure amendée remplace le conseil ancien dans thème/index.
-- [ ] Sources conservées après cristallisation ; AGENTS.md court, détails dans les fichiers naturels.
-- [ ] Roar reste pure capture ; aucune règle proposée à ce stade.
+Une demande explicite de l’auteur doit préciser la destination et le périmètre
+d’une tâche distincte. Aucun projet ne peut écrire dans le harnais pour y
+promouvoir ses expériences. Les sources restent conservées.

@@ -1,374 +1,49 @@
 ---
 name: dream
-description: "Autonomous nightly memory consolidation for one project."
+description: "Consolidate one project's repository memory without proposing rules."
 user-invocable: true
 ---
 
-# Dream — memory consolidation
-
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
-
-Consolidates and deduplicates memory for one project using mem0 classifier + Park reflection. Claude does all reasoning inline; scripts handle only file I/O and git.
-
-## Invocation
-
-```
-/dream <project> [--dry-run]
-/dream <project> --rollback <commit-hash>
-```
-
-`<project>` is the directory name under `~/.claude/projects/` (e.g. `-home-haduong--claude`).
-
-## Steps
-
-### Rollback mode
-
-If `--rollback <hash>` is present, run:
-```
-python3 "$IDH_ROOT/skills/dream/commit.py" rollback <hash>
-```
-Then stop.
-
-### Consolidation
-
-**1. Read the memory index.**
-
-```bash
-python3 "$IDH_ROOT/skills/dream/read-index.py" <project>
-```
-
-Output is JSON: `{project, memory_dir, entries[]}` where each entry has `filename`, `title`, `desc`, `content`, `path`.
-
-The reader is fail-loud: any line that looks like a memory pointer but cannot
-be parsed returns non-zero with `{error, entries: []}`. Stop on that result and
-repair the index/parser before classification; never continue to step 6 with a
-partial entry set.
-
-If `entries` is empty, log "No memory entries found" and stop.
-
-**2. Classify each entry.**
-
-For each entry, read its `content` and the content of semantically related entries (look for keyword overlap in titles and descriptions). Then decide:
-
-- **NOOP** — already accurate and not redundant with another entry.
-- **ADD** — genuinely new information with no semantic equivalent (rare; most entries were already classified when written).
-- **UPDATE** — should be merged into or superseded by another entry.
-- **DELETE** — contradicted by a more recent entry, or fully stale.
-
-Rules:
-- Preserve entries that document evolution ("use vim" → "use emacs"): keep both unless one is explicitly obsolete.
-- Only DELETE if the entry is genuinely misleading or already captured elsewhere.
-- Log each decision with one line of reasoning.
-
-**3. Reflect on survivors.**
-
-From entries classified NOOP, ADD, or UPDATE: extract 5 high-level insights that capture patterns, recurring themes, or important lessons. Each insight: 1–2 sentences. These go into the regenerated index as context above the entry list.
-
-**4. Report.**
-
-Print a summary table — the **decision table**. This table is the SOLE source
-of the step-14 PR body; do not write a separate free-form summary for the PR.
-
-- Each filename → decision (NOOP / ADD / UPDATE / DELETE) + one-line reason.
-- The 5 extracted insights.
-- Counts, **derived mechanically** — never recalled from the run:
-  - `before` = index lines in MEMORY.md at the branch base:
-    ```bash
-    git -C ~/.idh show <base>:<MEMORY.md path> | grep -c '^- \['
-    ```
-  - `after` = index lines in the working copy:
-    ```bash
-    grep -c '^- \[' <memory_dir>/MEMORY.md
-    ```
-  - Reconciliation identity — self-check before reporting:
-    `NOOP + UPDATE + DELETE` must equal `before`, and `NOOP + UPDATE + ADD`
-    must equal `after`. If either fails, recount before reporting.
-- The ADD list = the exact output of
-  `git -C ~/.idh diff --name-only --diff-filter=A`, never a narrative sample.
-
-If `--dry-run`: **skip write/commit steps (5, 6, 7, 8, 11, 12) but still run the read-only promotion pass (9–10) and decay pass (13) and print their reports.** Then stop.
-
-**5. Apply deletions.**
-
-For each DELETE entry, overwrite its file with a tombstone:
-```
-# DELETED <ISO timestamp>: <title>
-# Reason: <one-line reason>
-# Original content preserved in git history.
-```
-
-Use the Edit or Write tool. Never use `rm`.
-
-Then drop the entry's provenance record for this project — otherwise the
-deleted entry keeps counting toward the promotion frequency gate (ticket 0241):
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" remove <entry_slug> <project>
-```
-
-**6. Rewrite MEMORY.md.**
-
-Write a new `MEMORY.md` at `<memory_dir>/MEMORY.md` with this structure:
-
-```markdown
-## Key insights
-
-- <insight 1>
-- <insight 2>
-...
-
-## Entries
-
-- [<title>](<filename>)
-...
-```
-
-Include only surviving entries (NOOP, ADD, UPDATE). Keep the index under 200 lines.
-
-**The index line is a title and a link — no trailing description.** The index is
-resident in every session of its project; the body is not. The hook was a third
-copy of a sentence the body already carries twice, as `name:` and as
-`description:`, and the only copy paid for unconditionally. Dropping it took the
-46 indexes from 198 636 to 111 021 chars (2026-09-10).
-
-**The index is the only door.** No recall channel fires on this runtime —
-measured over 5 753 traces, with a positive control: every appearance of a body
-or of its `description:` is a session opening the file itself, never an
-injection. So an entry dropped from an index is not demoted, it is unreachable.
-Never shorten this index by unlisting an entry: shorten it by moving the entry
-to a second-level index that a resident line names.
-
-What survives has to do the whole job, so **the title states the lesson**:
-`Fetch before each sibling merge, then grep-verify the union`, not
-`feedback_fetch_before_sibling_merge.md` and not `Sibling merges`. A title that
-is the filename, or a bare slug, leaves the entry unreadable once the hook is
-gone — 139 entries were in exactly that state. Take the title from the body's
-`name:` when it is already a sentence; write one from its `description:` when
-it is not. Reference and pointer entries may keep a noun label, since knowing
-the pointer exists is their whole job.
-
-**7. Record provenance.**
-
-For each surviving entry (NOOP, ADD, UPDATE), record its presence in this project's consolidation:
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" record <entry_slug> <project>
-```
-
-`<entry_slug>` is the entry's filename without extension (e.g. `feedback_vim`). This tracks which projects have seen each entry, enabling the promotion pass.
-
-**Slug identity (v2 simplification)**: entries are keyed by filename. If the same lesson appears under different filenames in different projects, Claude should assign the same slug during consolidation to enable cross-project frequency counting. A semantic slug-matching system is deferred to v3.
-
-**7b. Confirm still-relevant promoted entries.**
-
-A promoted entry's project-level copy is a tombstone, so step 7's `record` never
-fires for it again and its `last_confirmed` would freeze — decay-flagging it at
-90 days no matter how relevant it remains (ticket 0224). For each harness-level
-entry (in `~/.idh/memory/`) that this project's surviving content still
-supports — i.e. the consolidation would have classified its lesson NOOP or
-UPDATE were it still project-local — refresh its confirmation:
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" confirm <slug>
-```
-
-This resets only the decay clock; it does not re-add the project to the entry's
-origin list. Skip entries the project's content no longer supports — letting
-those decay-flag is the intended signal for human review.
-
-**8. Commit.**
-
-`commit.py` commits into `~/.idh` directly. The `~/.idh` pre-commit hook
-**refuses a commit on `main` in the primary checkout** (everything lands via
-branch + PR). Before committing, ensure `~/.idh` is on a branch, not main:
-
-```bash
-git -C ~/.idh rev-parse --abbrev-ref HEAD   # must NOT print "main"
-# if it does: git -C ~/.idh switch -c dream-consolidate-$(date +%F)
-python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
-```
-
-Do **not** push yet. The run continues into the promotion pass, where step 12
-adds a *second* commit on this same branch. The single push + PR + return-to-main
-happens once at the end (**step 14, Exit**), so the PR carries every commit and
-no earlier step leaves an uncovered exit window. The override `ALLOW_MAIN_COMMIT=1`
-exists for deliberate cases only — do not use it to bypass the branch-and-PR flow
-during a routine dream.
-
-**Why not run dream in a worktree?** Evaluated (0247) and rejected: `commit.py`
-and the promotion pass hardcode `~/.idh` (`git -C ~/.idh add/commit`, and
-promotions write to `~/.idh/memory/`), so a worktree run would still commit
-onto the *primary* checkout's current branch — worktree isolation would not
-apply. The push-or-restore contract (step 14) addresses the stranding without
-that refactor. Revisit if `commit.py` is parameterized by repo dir.
-
-### Promotion pass
-
-Runs after consolidation. Evaluates whether any project-level entries have earned harness-level status.
-
-**9. List promotion candidates.**
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" candidates
-```
-
-Stdout is JSON: entries seen in >=2 distinct canonical projects (path aliases collapsed, machine-scoped records excluded) that are not yet promoted. Stderr reports `raw=` and `canonical=` candidate counts so an alias flood is visible without breaking JSON consumers. The alias table maps known machine paths to `machine:<host>`; these are hosts, not projects. If empty, skip to step 13.
-
-**10. Evaluate each candidate against three gates (all required).**
-
-For each candidate, Claude evaluates inline:
-
-- **Frequency gate** (mechanical, already passed): entry appears in >=2 distinct canonical project consolidations (path aliases collapsed — see `provenance.py` / `memory/.project-aliases.json`).
-- **Cost gate** (Claude judgment): would missing this entry cost >500 tokens to re-derive per session, OR does missing it risk correctness/security failures? If neither, the entry fails.
-- **Context-independence gate** (Claude judgment): apply the three-part test from the research note:
-  1. Entity stripping: remove project-specific entities. Does the lesson retain meaning?
-  2. Reformulation: rewrite in domain-neutral terms. Is it still actionable?
-  3. Counterfactual transfer: would this have prevented a known failure in a different project?
-
-Log each gate evaluation with one line of reasoning per candidate.
-
-**11. Apply approved promotions.**
-
-For each candidate that passes all three gates:
-
-a. Write the context-independent reformulation to `~/.idh/memory/<slug>.md`.
-b. Mark promoted in provenance:
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" promote <slug>
-```
-c. Overwrite the project-level entry with a tombstone:
-```
-# PROMOTED <ISO timestamp>: <title>
-# Now at: ~/.idh/memory/<slug>.md
-# Original content preserved in git history.
-```
-
-If `--dry-run`: print candidates, gate evaluations, and proposed promotions without writing anything.
-
-**12. Commit promotions.**
-
-The run is still on the `dream-consolidate-<date>` branch created in step 8 —
-the checkout is not restored until step 14 — so commit directly. Do **not**
-re-create the branch (a second `git switch -c dream-consolidate-$(date +%F)`
-would collide with step 8's same-day name); if you somehow find yourself on main
-here, the correct recovery is `git switch` back to the existing branch, not a
-new one.
-
-```bash
-python3 "$IDH_ROOT/skills/dream/commit.py" commit <project> <n_before> <n_after>
-```
-
-### Decay pass
-
-Runs after the promotion pass. Flags stale harness-level entries for review.
-
-**13. Check for stale harness entries.**
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" decay
-```
-
-Output is JSON: promoted entries whose `last_confirmed` date is >90 days ago. For each flagged entry, print:
-
-- Entry slug and title
-- Last confirmed date and age in days
-- Originating projects
-
-These entries need human review: confirm (update `last_confirmed`), demote back to project level, or delete.
-
-If `--dry-run`: print the decay report without taking any action.
-
-### Exit — push-or-restore (unconditional)
-
-**14. Push, open the PR, and return the primary to main.**
-
-This is the run's only push and its only checkout restore, placed after every
-commit (steps 8 and 12) so the PR carries the whole consolidation and no earlier
-step leaves an uncovered exit window. Branching in step 8 moved the primary off
-main; a run that died anywhere before here would strand it (ticket 0247: the
-daily-pull timer cannot update the checkout and beat's dirty-tree pre-flight
-blocks every cycle for days, while orphaned memory entries accumulate invisibly
-under the gitignore whitelist). So the exit switches the primary **back to main
-whether the push succeeds or fails** — every commit lives on the branch, so the
-only damage a mid-run death does is the checkout *position*, which this restores.
-
-The PR body is the step-4 **decision table** verbatim: the per-decision counts,
-the filename-to-decision list, and the `--diff-filter=A` ADD list, never
-free-form summary prose (tickets 0241, 0275: PR #359 and PR #471 shipped
-improvised bodies that mismatched their diffs).
-
-```bash
-branch="$(git -C ~/.idh branch --show-current)"
-if git -C ~/.idh push -u origin "$branch"; then
-  : # open the PR (forge command) — it carries the step-8 + step-12 commits
-fi
-# Always switch back to main — success or failure. The branch keeps every commit;
-# the PR (once the push lands) carries the consolidation for review.
-git -C ~/.idh switch main
-# Confirm the checkout is not stranded before exiting (must be silent, exit 0):
-"$IDH_ROOT/scripts/check-primary-checkout.sh" ~/.idh
-```
-
-If `--dry-run`: skip this step — no branch or commit was made, so the primary was
-never moved off main.
-
-## Schedule recipe
-
-One entry per project:
-
-```
-0 2 * * * /dream <project>
-```
-
-To inspect consolidation history:
-```bash
-git log --grep='^dream: consolidate' --oneline
-```
-
-## Store maintenance
-
-Two corpus-wide commands. Neither belongs in a per-project run — both read the
-whole tree, so calling them once per project would do the same work forty times.
-
-**Coverage.** Promotion, decay and dedup all iterate `.provenance.json`. An
-entry the store never saw is invisible to all three at once, and invisible in
-the way that reads as health: each pass reports success over the entries it can
-see. 308 of 949 live bodies were in that state on 2026-09-10 — everything
-written before v2 introduced the store. To repair:
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" backfill --root ~/.idh
-```
-
-It is idempotent, and it takes each entry's dates from git history rather than
-from the clock. Stamping `now` would reset every decay clock at the moment the
-clock is first wired up, which is the one outcome that leaves the store worse
-than the gap it closes. `tests/test_provenance_coverage.py` keeps the gap shut.
-
-**Observed use.** Session traces are already an append-only access log, so read
-counts need no new writes to the bodies — which is what an in-file access log
-would cost, on the very files parallel sessions read.
-
-```bash
-python3 "$IDH_ROOT/skills/dream/provenance.py" usage --root ~/.idh
-```
-
-It writes `access_count` and `last_accessed` per entry. Treat both as a
-**secondary** signal, for two reasons that do not go away: the count is
-machine-local and traces are prunable, so it is a floor; and it counts *opens*,
-while an entry whose index title carried the lesson is never opened. A ranking
-that evicts on this number evicts the entries that worked best.
-
-## v2 features (ticket 0165)
-
-- Harness-level memory tier (`~/.idh/memory/`) + earned promotion (three-gate: frequency, cost, context-independence)
-- Provenance tracking (`.provenance.json`) — cross-project entry history
-- Harness decay (90-day unconfirmed entries flagged for review)
-- Dry-run mode covers promotion candidates and decay flags
-
-## v3 roadmap
-
-- Importance-weighted trigger (SCM pattern)
-- Temporal-hierarchical reflection (TiMem) for multi-session horizons
-- Link updates after UPDATE/DELETE passes (A-MEM)
-- Bi-temporal metadata (Graphiti pattern) for richer decay
+# Dream — project memory consolidation
+
+Use `/dream <project-repository> [--dry-run]`. The project repository is the
+write destination; the installed skill directory is never a destination.
+Read its AGENTS.md and versioned `memory/DREAM.md`. If the repository, memory
+convention or prompt is missing, report what is missing and stop. Do not create
+a replacement store in the harness or use the legacy helper scripts: those
+helpers target the old shared/native store and are not this workflow.
+
+## Procedure
+
+1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted dream reports
+   and new entries in `journal/YYYY/`. Read native notes only as attributed
+   sources when available; report unavailable sources. Native notes are not the
+   canonical reference or a write destination.
+2. In dry-run mode, report candidate thematic updates and contradictions, then
+   stop without writes, branches or commits. Do not propose rules.
+3. For a writing run, use an isolated project checkout and dedicated branch;
+   leave the primary checkout and unrelated changes alone. Consolidate themes,
+   conditions, exceptions and contradictions into `memory/topics/`. Link source
+   episodes; distinguish hypotheses from supported observations. Update the
+   short `memory/MEMORY.md` index. Never rewrite, move or delete journal entries.
+4. Write a report in `memory/dreams/` listing sources and revisions, changes,
+   unresolved questions, runtime/model and prompt revision. Preserve the text of
+   native notes actually used in the report or a versioned appendix, adapted to
+   the project's audience. A fingerprint alone cannot preserve a mutable note.
+5. Check links, provenance and the diff. Commit only memory outputs on the
+   project branch and submit a PR following its integration policy. Do not
+   merge automatically. Preserve and report the branch if submission fails.
+   Only accepted reports count as completed processing on subsequent runs.
+
+## Authority and scheduling
+
+Dream writes only `memory/MEMORY.md`, `memory/topics/` and `memory/dreams/`
+within the project or its explicitly configured private companion. It does not
+modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,
+propose promotions, or write cross-project provenance into the harness.
+Crystallisation requires a separate explicit user request naming its scope and
+destination. A useful pattern or a reviewed memory PR is not that request.
+
+A periodic invocation uses this same boundary and an isolated project checkout.
+This skill does not install a timer. Missing paths or permissions are visible
+failures; never fall back to the harness or restore/change its primary branch.

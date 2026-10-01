@@ -28,10 +28,10 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 | 0910 | Timer hebdomadaire, exécution isolée et PR de rêve | 0916, 0988 |
 | 0923 | Premier smoke de lecture/capture/rêve, runtime choisi et déclaré | 0910 |
 | 0924 | Preuves sur les trois autres runtimes, dont Vibe | 0923 |
-| 0925 | Cristallisation proposée et revue | 0916 |
-| 0918 | Évaluation de lecture, rappel, capture et consolidation | 0924, 0925 |
+| 0925 | Différé : cristallisation sur demande explicite seulement | Hors livraison automatique |
+| 0918 | Évaluation de lecture, rappel, capture et consolidation | 0924 |
 | 0913 | Migration progressive et retrait des mécanismes remplacés | 0918 |
-| 0909 | Revue du résultat intégré et clôture du programme | 0913, 0988, 0925 |
+| 0909 | Revue du résultat intégré et clôture du programme | 0913, 0988 |
 
 0991, qui prescrit un scoring EU et une purge dans l’ancien rêve, est aussi
 différé pendant la transition ; 0913 réévaluera ses constats utiles après le
@@ -64,7 +64,7 @@ Git et le plan historique. Ils ne bloquent pas la livraison et ne doivent pas
 4. Livrer le prompt et le timer : sources attribuées, rapports de traitement,
    branche isolée et PR, aucune fusion automatique de connaissance proposée.
 5. Vérifier les quatre runtimes avec leurs versions et limites réelles, puis
-   la cristallisation et les scénarios comportementaux avant élargissement.
+   les scénarios comportementaux et la frontière d’écriture avant élargissement.
 6. Migrer par projets, retirer seulement les anciennes voies remplacées et
    revoir l’ensemble intégré avant de fermer 0909.
 
@@ -82,6 +82,14 @@ référencées dans les rapports de rêve fusionnés, pas déplacées. Un modèl
 Un compagnon privé demande sa propre convention d’accès et de versionnement.
 Les sources natives absentes sont signalées, pas supposées vides.
 
-Cette révision conserve l’état local de travail antérieur et ne modifie pas
-les skills roar/dream, les profils des runtimes ou les timers. Elle n’annonce
-aucun test live ni clôture de ticket d’implémentation.
+La réécriture initiale v8 conservait les skills existants. La clarification
+ci-dessous corrige leurs instructions ; les profils et timers restent inchangés.
+Aucun test live ni clôture de ticket d’implémentation n’est annoncé.
+
+## Frontière d’autorité — clarification du 1 octobre 2026
+
+Les sorties d’un projet restent dans son dépôt ou son compagnon privé explicite.
+Roar ne propose aucune règle ; dream ne propose ni ne réalise de cristallisation.
+0925 est différé et ne bloque plus le programme. Une demande explicite future
+ouvre une tâche distincte. Les instructions actuelles roar/dream/memory-sweep
+sont corrigées dès cette clarification ; les timers et le pilote restent à livrer.

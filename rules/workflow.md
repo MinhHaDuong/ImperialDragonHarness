@@ -51,9 +51,11 @@ for an intentional primary-repo mutation. Everything lands via branch + PR —
 STATE, tickets, config, memory included. On `main` with source or data to
 change, stop and switch to a branch (prose exception: `git.md`).
 
-**Memory writes are refused inside a worktree session** by a platform guard
-the harness exemption does not reach, and the refusal reads like "memory is
-unavailable". Write memory after leaving the worktree (`/roar` step 6).
+**Project memory:** write only in the assigned project's worktree or explicit
+private companion, never the installed harness. A refused write stays pending;
+do not retry outside the project. Roar captures facts; dream consolidates local
+memory. Neither proposes rules or edits AGENTS.md. Crystallisation requires a
+separate explicit user request with its destination.
 
 **Parked-cwd trap.** After entering, check `basename "$(git rev-parse --show-toplevel)"` is the
 expected project: worktree creation resolves the repo from the session base

@@ -23,7 +23,7 @@ n’est nécessaire. La recherche lexicale suffit au premier dispositif ; une
 insuffisance observée pourra motiver une décision ultérieure.
 
 Le circuit est : **capture factuelle → consolidation → revue → connaissance
-acceptée → cristallisation éventuelle**. La capture n’interprète pas l’expérience.
+acceptée**. La capture n’interprète pas l’expérience.
 La consolidation peut ne produire aucune leçon ; elle ne doit pas en inventer.
 
 ## 2. Convention dans chaque dépôt
@@ -40,7 +40,7 @@ memory/
     AAAA/
       AAAA-MM-JJ-<slug>.md         # expériences factuelles, append-only
   dreams/
-    AAAA-MM-JJ-<slug>.md           # rapports de traitement et propositions
+    AAAA-MM-JJ-<slug>.md           # rapports de traitement et provenance
 ```
 
 Chaque projet possède son dossier. Les notes propres au harness restent sa
@@ -174,7 +174,7 @@ Le prompt lui demande de :
    rechercher les contradictions et conserver les conditions et exceptions.
 5. Mettre à jour `topics/` et `MEMORY.md` lorsque l’évidence le justifie.
 6. Écrire un rapport listant les sources examinées, leur révision, les jugements
-   éditoriaux, les questions non résolues et les propositions de cristallisation.
+   éditoriaux, les questions non résolues, sans proposition de règles.
 7. Commiter le résultat sur la branche et ouvrir une PR pour relecture.
 
 Un thème peut seulement relier des expériences partageant une caractéristique,
@@ -206,22 +206,19 @@ du prompt. La prose d’un rêve n’est pas supposée reproductible à l’iden
 
 ## 7. Cristallisation et autorité
 
-Le rêve peut proposer dans sa PR une règle courte dans AGENTS.md, une procédure
-dans `docs/runbooks/`, un test ou une issue. La proposition explique le problème,
-les sources, les exceptions et l’intérêt de changer le contrat courant.
-Une issue externe n’est ouverte qu’en respectant les autorisations du projet ;
-la PR peut d’abord en contenir le texte proposé.
+Les projets écrivent uniquement dans leur dépôt ou leur compagnon privé
+explicitement configuré. Le harnais fournit des conventions et des outils ;
+il ne reçoit ni leurs souvenirs, ni leurs thèmes, ni leurs promotions. Son
+propre travail peut avoir une mémoire locale lorsqu’il est le projet assigné.
 
-L’auteur relit la PR. Une règle proposée ne gouverne pas avant acceptation.
-La mémoire ne remplace pas les décisions, instructions ou procédures canoniques.
-Une connaissance n’est pas effacée seulement parce qu’une règle en a été tirée :
-le thème peut conserver le contexte et pointer vers la procédure désormais
-adoptée, sans maintenir une prescription concurrente.
+Roar capture les faits. Le rêve consolide les thèmes et l’index. Aucun des deux
+ne propose de règles, ne modifie AGENTS.md, ne crée de procédure, test ou issue
+de cristallisation, même si une expérience semble générale ou répétée.
 
-AGENTS.md reste court. Les procédures détaillées et les preuves vont dans leurs
-fichiers naturels. Le rêve n’élargit pas automatiquement la portée d’un souvenir
-local à tous les projets. V8 n’instaure pas un nouveau store partagé : la réutilisation
-entre projets passe par les artefacts et la revue ordinaires du harness.
+Toute cristallisation demande une instruction explicite de l’auteur dans une
+tâche séparée, avec destination et périmètre. Accepter une PR de mémoire ne
+vaut pas autoriser des règles. Les thèmes peuvent citer des décisions déjà
+adoptées, sans produire de prescription concurrente. AGENTS.md reste court.
 
 ## 8. Mémoire native, confidentialité et limites
 
@@ -262,7 +259,7 @@ ni désactiver les anciennes voies avant d’avoir vérifié le remplacement.
 | Capture après fusion et sessions concurrentes | Sources conservées, branche durable, pas de pull du harness bloqué par la capture |
 | Rêve avec cas similaires aux résultats opposés | Sources et exceptions conservées ; hypothèses distinguées des faits |
 | Deux passages et une source corrigée | Anciennes sources pas réimportées comme nouvelles ; correction réexaminée |
-| Retrait d’un conseil et cristallisation | Index cohérent, règle proposée soumise à revue, sources accessibles |
+| Retrait d’une affirmation et frontière d’autorité | Index cohérent, sources accessibles, aucune proposition de règle ni écriture dans le harnais |
 | Note native contradictoire ou absente | Contradiction ou limite signalée, pas de certification silencieuse |
 | Timer interrompu ou intégration refusée | Travail sauvegardé et statut visible, aucun succès fictif |
 
@@ -284,6 +281,6 @@ architecture. Cette réécriture n’active ni timer ni nouveau comportement de 
 
 La livraison commence par la convention et les modèles de fichiers, l’inventaire
 des sources et un pilote. Elle enchaîne capture sûre, prompt et timer, preuve sur
-les quatre runtimes, évaluation, cristallisation et migration progressive.
+les quatre runtimes, évaluation et migration progressive.
 Les anciennes fonctions de classement, TTL destructif, promotion automatique et
 écriture concurrente d’index sont retirées seulement après remplacement vérifié.

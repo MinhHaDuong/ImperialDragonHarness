@@ -59,3 +59,19 @@ This check is run in CI to catch forgotten regeneration before merge.
 
 For ticket operations, read and follow [tickets/AGENTS.md](tickets/AGENTS.md).
 For shell tooling conventions, read and follow [RTK.md](RTK.md).
+
+## Project memory boundary
+
+Project experiences and consolidated memories belong only in that project's
+repository, or its explicitly configured private companion. Loading a harness
+skill does not authorize writing into the harness, its shared memory, or another
+project. Resolve the project repository before writing; stop and report an
+unavailable destination instead of falling back to the harness or native store.
+When the harness itself is the explicitly assigned project, its own project
+memory follows the same convention.
+
+Roar records significant facts only. Dream consolidates project memory only.
+Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into
+instructions. Crystallisation is a separate task requiring an explicit user
+request, including the intended destination. Repetition, general usefulness and
+acceptance of a memory PR do not grant that authorization.

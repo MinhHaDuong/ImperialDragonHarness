@@ -12,11 +12,12 @@ Blocked-by: 0920
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: retain the audience-appropriate text of native notes actually used in a report or versioned appendix; fingerprints alone are not retrievable sources.
+2026-10-01T22:00Z codex note Dream consolidates project memory only; no rule proposals or harness writes.
 --- body ---
 
 ## Context
 
-Livrer un modèle versionné et un DREAM.md pilote pour grouper les épisodes, mettre à jour thèmes/index et produire un rapport avec sources et propositions. Le rêve peut ne dériver aucune leçon ; les jugements causaux restent distincts des faits.
+Livrer un modèle versionné et un DREAM.md pilote pour grouper les épisodes, mettre à jour thèmes/index et produire un rapport avec sources, changements thématiques et questions ouvertes. Le rêve peut ne dériver aucune leçon ; les jugements causaux restent distincts des faits.
 
 Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
 [plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
@@ -35,3 +36,5 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Journal non déplacé ni réécrit ; traitement consigné dans les rapports acceptés.
 - [ ] Sources natives attribuées et texte utilisé conservé dans un rapport ou une annexe versionnée ; absence signalée ; hypothèses et décisions canoniques distinguées.
 - [ ] Rapport référence source/prompt/révisions et runtime/modèle ; connaissance proposée soumise à PR.
+
+- [ ] Aucune règle proposée ou modifiée, aucune sortie de projet écrite dans le harnais.
