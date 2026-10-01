@@ -22,7 +22,9 @@ talk. Read-only: change the deck only when asked.
 3. **Rank.** *Critical* — blocks understanding: no message, illegible text,
    a wrong number. *Important* — the audience will notice: layout drift,
    bullet walls, decorative images. *Polish* — sharper wording, spacing.
-   Separate what the doctrine requires from taste, and defer on taste.
+   Separate what the doctrine requires from taste, and defer on taste. An
+   inherited or template-bound deck is reviewed within its template, not
+   restyled.
 4. **Report.** Critical first; per issue: slides affected, the problem, the
    concrete fix. Give polish only when nothing above it remains or when
    asked. A strong deck gets a one-line verdict, not a manufactured list.

@@ -22,4 +22,4 @@ ODP or PPTX a LibreOffice conversion of its PDF. Language norms live in
 - **Text over a photograph sits on a dark band** (black, 40–50 % opacity); never rely on the image being dark enough.
 - **One layout, declared once in the preamble**: same title position, fonts and sizes on every slide. Consistency beats originality.
 - **Overlays reveal, they do not animate.** Use `\pause` to stage an argument, never for decoration.
-- **Count against the slot**: about one slide per one to two minutes; a staged build counts once.
+- **Count against the slot**: about one slide per two to three minutes; a staged build counts once.
