@@ -1,8 +1,8 @@
 # Memory v8 pilot declaration (ticket 0920)
 
 Activated 2026-10-02 by the author's batched decisions, recorded in the 0920
-ticket log. This document declares the pilot's audience and companion policy
-for author review. Its only runtime change is the SessionStart index injection
+ticket log. This document declares the pilot's audience and private-material
+policy for author review. Its only runtime change is the SessionStart index injection
 becoming project-scoped (see Rollback below).
 
 ## Pilot project
@@ -34,8 +34,10 @@ working tree. The key lives in `~/.config/keys` outside the repository,
 is never tracked and is not named by repository content. Without the key
 an entry is existing but unreadable; DREAM skips `.age` files and reports
 the skipped count rather than treating them as empty. Filenames of
-encrypted entries remain public metadata. Nothing currently awaits that
-audience.
+encrypted entries remain public metadata, and ciphertext-at-rest means a
+future key leak decrypts everything ever pushed, retroactively — the
+policy holds only as long as the key stays secret. Nothing currently
+awaits that audience.
 
 ## Rollback and old-path correspondence
 
