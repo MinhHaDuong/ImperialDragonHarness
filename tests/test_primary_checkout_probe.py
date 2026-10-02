@@ -97,3 +97,42 @@ def test_probe_flags_non_git_dir(tmp_path):
     assert res.returncode != 0
     # Message goes to stdout, consistent with the other STRANDED reasons.
     assert "STRANDED" in res.stdout
+
+
+def _install_probe(repo):
+    """Copy the probe into the temp checkout's scripts/ and commit it.
+
+    The no-argument default must resolve to *this* checkout (the one
+    containing the script), so the probe under test lives there, not at the
+    harness's PROBE path.
+    """
+    d = repo / "scripts"
+    d.mkdir()
+    installed = d / "check-primary-checkout.sh"
+    installed.write_text(PROBE.read_text())
+    installed.chmod(0o755)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "install probe")
+    return installed
+
+
+@pytest.mark.integration
+def test_probe_no_arg_defaults_to_own_checkout(repo, tmp_path):
+    # Run with no REPO_DIR from a cwd OUTSIDE the repo: a regression to a
+    # fixed home path (retired ~/.idh layout) or to the caller's cwd would
+    # probe a tree that is not a repo here and exit 1.
+    probe = _install_probe(repo)
+    res = subprocess.run([str(probe)], capture_output=True, text=True,
+                         env=child_env(), cwd=tmp_path)
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert res.stdout.strip() == ""
+
+
+@pytest.mark.integration
+def test_probe_no_arg_flags_off_main(repo, tmp_path):
+    probe = _install_probe(repo)
+    _git(repo, "switch", "-qc", "dream-consolidate-2026-07-10")
+    res = subprocess.run([str(probe)], capture_output=True, text=True,
+                         env=child_env(), cwd=tmp_path)
+    assert res.returncode != 0
+    assert "STRANDED" in res.stdout
