@@ -142,7 +142,12 @@ fi
 # when it needed attention (ticket 0277). Plant the control arm's refusal as
 # that report and run a real session start against the host.
 printf '%s\n' "$CONTROL_OUT" > "$HOST/.git/sync-local-main.last"
-START_OUT=$(CLAUDE_PROJECT_DIR="$HOST" bash "$ONSTART")
+# `env -i` (ticket 0875): a plain `bash FILE` child inherits BASH_ENV and
+# re-runs the project .env loader inside the very hook whose report-surfacing
+# is under test here. HOME and PATH are the hook's whole contract above its
+# stdout cutoff; CLAUDE_PROJECT_DIR is the fixture host, passed explicitly
+# as before.
+START_OUT=$(env -i HOME="$HOME" PATH="$PATH" CLAUDE_PROJECT_DIR="$HOST" bash "$ONSTART")
 if printf '%s\n' "$START_OUT" | grep -q "Local-main sync (previous session start)" \
    && printf '%s\n' "$START_OUT" | grep -q "left untouched"; then
     _pass "session start surfaces the unresolvable pull"

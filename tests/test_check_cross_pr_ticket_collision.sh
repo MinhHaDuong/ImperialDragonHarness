@@ -27,6 +27,12 @@
 #       -> exit 0; the old path on the base tip is the PR's own file, not a
 #       rival claimant.
 set -euo pipefail
+# Hermetic children (ticket 0875): the checker is exercised as
+# `bash "$SCRIPT"` against a stubbed gh, and such a child inherits BASH_ENV —
+# re-running the project .env loader inside the very process whose collision
+# verdicts are under test. Nothing here reads project .env values, so clear
+# the loader suite-wide (tests/test_bash_tests_are_hermetic.sh).
+export BASH_ENV=
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
 SCRIPT="$REPO_ROOT/scripts/check-cross-pr-ticket-collision.sh"

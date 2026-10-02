@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Pre-flight UNKNOWN is transient; CONFLICTING and exhausted UNKNOWN refuse.
 set -euo pipefail
+# Hermetic children (ticket 0875): each case runs the merge driver as
+# `bash "$ROOT/skills/merge/erg-pr-merge"`, and such a child inherits BASH_ENV —
+# re-running the project .env loader inside the very process whose preflight
+# verdicts are under test. Nothing here reads project .env values, so clear
+# the loader suite-wide (tests/test_bash_tests_are_hermetic.sh).
+export BASH_ENV=
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT

@@ -32,7 +32,7 @@
 # runtime. So the coverage is stated here rather than implied.
 #
 # What it does look at, and why each step exists (each is pinned by a static
-# negative control in section (0c)–(0k) below, which fails against the naive
+# negative control in section (0c)–(0p) below, which fails against the naive
 # implementation and passes against this one):
 #
 #   * Heredoc BODIES are excluded before anything else. Their text is data, so
@@ -51,15 +51,27 @@
 #     because they execute. `out="$(bash -c …)"` really does spawn a child.
 #   * A spawn's hermeticity is judged from ITS OWN command prefix — the text
 #     between the nearest preceding separator (`;` `&&` `||` `|` `&` `(` `)`
-#     `{` `}` or line start) and the `bash` token — never from the whole
+#     or line start) and the `bash` token — never from the whole
 #     logical line. An `env -i` sitting elsewhere on the line launders nothing,
-#     and a line with N spawns yields N independent verdicts.
+#     and a line with N spawns yields N independent verdicts. `{` and `}` are
+#     NOT separators: they open parameter expansions (`${ARR[@]}`), so
+#     treating them as command boundaries would cut an `env -i` prefix at an
+#     array expansion (control 0o) — brace GROUPS always carry a `;` or
+#     newline that already delimits.
 #   * The suite-wide `export BASH_ENV=` exemption is matched against the
-#     STRIPPED logical lines, so the spelling only counts where it executes.
+#     STRIPPED logical lines, so the spelling only counts where it executes —
+#     parsed in the same read pass that scans the file. No second tool re-reads
+#     the raw \001-delimited stream: a cross-tool byte contract there is what
+#     made the same file BAD on one CI runner and EXEMPT on another (0875).
 #   * The spawn shape covers `bash -c`, `bash -lc`, `bash -ec`, long options
 #     before it (`bash --posix -c`), an absolute path (`/bin/bash -c`), the
 #     `$BASH` / `$SHELL` variable forms, and one level of `eval`/`su`/`sudo`/
-#     `ssh`/`xargs` quoting (their quoted argument is re-read as code).
+#     `ssh`/`xargs` quoting (their quoted argument is re-read as code). The
+#     SCRIPT-PATH shape (`bash FILE`, no `-c` — the normal hook invocation,
+#     ticket 0875) is detected too, on the quote-unwrapped stream gated by the
+#     interpreter appearing as code outside quotes, so a quoted path
+#     (`bash "$HOOK"`) survives the quote stripping while quoted DATA naming
+#     a path does not (control 0p).
 #
 # BLIND SPOTS — shapes this scanner does NOT detect. Listed so a reader knows
 # what a PASS is worth; none is closed by pretending otherwise:
@@ -72,9 +84,22 @@
 #     behind two levels of quoting (`eval "eval \"bash -c …\""`).
 #   * `bash --rcfile FILE -c …` and other option forms where a long option
 #     takes a SEPARATE argument word before `-c`.
-#   * A script written by a heredoc and later executed. `bash FILE` takes a
-#     script path, not a command string, and is out of this guard's scope by
-#     design — but such a child does still inherit BASH_ENV.
+#   * A script written by a heredoc and later executed. `bash FILE` where FILE
+#     is computed at runtime is out of scope, but such a child does still
+#     inherit BASH_ENV — as does `bash -x FILE` (options before the path are
+#     still not parsed).
+#   * In the script-path shape, the FILE token must look like a path: it
+#     starts with `$`, `~`, or carries a `/`. A BARE FILENAME (`bash probe.sh`)
+#     is missed — a reader of "carries a /" must not expect otherwise.
+#   * The interpreter spelled as a RELATIVE path (`./bash FILE`, `bin/bash
+#     FILE`) is missed: the recognised program forms are the literal `bash`,
+#     an ABSOLUTE path ending in `bash`, `$BASH` and `$SHELL`. A QUOTED program
+#     (`"bash" FILE`) is missed too — the gate needs the interpreter as code
+#     outside quotes.
+#   * Unquoted inert prose naming a script path (`echo run bash /tmp/x.sh now`)
+#     reads as code on the unwrapped stream and is reported — the same safe
+#     direction as the `bash -c` false alarms below; quoting is what separates
+#     data from code here.
 #   * `env -i` reached indirectly (a helper function that spawns hermetically
 #     on the caller's behalf) is reported as non-hermetic. That is the safe
 #     direction — a false alarm, not a miss — and is fixed by inlining the
@@ -96,6 +121,8 @@ SELF="$(basename "${BASH_SOURCE[0]}")"
 fail=0
 checked=0
 spawners=0
+judged=0
+exempt=0
 
 # Field separator for the logical-line stream, and the separator sentinel used
 # when slicing a spawn's own command prefix. Both are control characters that
@@ -242,8 +269,28 @@ _logical_lines() {
 # A child shell running a COMMAND STRING. Covers `bash -c`, clustered short
 # flags (`-lc`, `-ec`), long options before it (`bash --posix -c`), an absolute
 # path (`/bin/bash -c`), and the `$BASH` / `$SHELL` variable forms. Other
-# `bash …` forms take a script path and are out of scope (see BLIND SPOTS).
+# `bash …` forms take a script path and are covered by _SCRIPT_SPAWN_RE below.
 _SPAWN_RE='(^|[^[:alnum:]_./-])((/[^[:space:]]*/)?bash|\$\{?(BASH|SHELL)\}?)([[:space:]]+-[^[:space:]]+)*[[:space:]]+-[a-zA-Z]*c([[:space:]]|$)'
+
+# A child shell running a SCRIPT PATH — `bash FILE` with no `-c` (ticket 0875:
+# the normal hook-invocation shape the pre-0875 scanner could not see at all).
+# The token after the program must be a PATH and not an option: it either starts
+# with `$` (a variable holding the path), or it carries a `/` (a relative,
+# `./`, or absolute path). Options before the path (`bash -x FILE`) stay out of
+# scope, exactly as before. Matched against the QUOTE-UNWRAPPED stream only,
+# and only through the gate below: the dominant real shape is `bash "$HOOK"`,
+# and the code stream drops quoted content, so the path would otherwise vanish
+# before the regex ever ran — but the unwrapped stream also carries quoted
+# DATA, so a line is scanned only when its CODE stream names the interpreter.
+_SCRIPT_SPAWN_RE='(^|[^[:alnum:]_./=-])((/[^[:space:]]*/)?bash|\$\{?(BASH|SHELL)\}?)[[:space:]]+(\$[^[:space:]]*|[^[:space:]-][^[:space:]]*/[^[:space:]]*|~[^[:space:]]*)'
+
+# The gate for _SCRIPT_SPAWN_RE: the interpreter named as CODE — at a word
+# boundary outside quotes (`=` is not one: `SHELL=/bin/bash` is an assignment
+# value, not a command), or an exec-wrapper whose quoted argument re-enters as
+# code. Inert quoted text (`echo "docs: run bash /tmp/foo.sh"`, a grep
+# pattern, an assignment value) has no interpreter in its code stream and is
+# never scanned (control 0p).
+_SCRIPT_GATE_RE='(^|[^[:alnum:]_./=-])((/[^[:space:]]*/)?bash|\$\{?(BASH|SHELL)\}?)'
 
 # Wrappers that EXECUTE their quoted argument. On a line containing one, the
 # quote-unwrapped variant is scanned instead, so `eval "bash -c …"` is seen.
@@ -256,8 +303,8 @@ _EXEC_RE='(^|[^[:alnum:]_])(eval|su|sudo|ssh|xargs)([[:space:]]|$)'
 _line_spawn_verdicts() {
     _LV_TOTAL=0
     _LV_BAD=0
-    local rest="$1" m before tmp seg
-    while [[ "$rest" =~ $_SPAWN_RE ]]; do
+    local re="$2" rest="$1" m before tmp seg
+    while [[ "$rest" =~ $re ]]; do
         m="${BASH_REMATCH[0]}"
         # Text before this spawn, plus the boundary character the match ate.
         before="${rest%%"$m"*}${BASH_REMATCH[1]}"
@@ -268,8 +315,6 @@ _line_spawn_verdicts() {
         tmp="${tmp//"&"/$SEP}"
         tmp="${tmp//"("/$SEP}"
         tmp="${tmp//")"/$SEP}"
-        tmp="${tmp//"{"/$SEP}"
-        tmp="${tmp//"}"/$SEP}"
         seg="${tmp##*"$SEP"}"
         _LV_TOTAL=$((_LV_TOTAL + 1))
         if [[ "$seg" != *"env -i"* && "$seg" != *"env --ignore-environment"* ]]; then
@@ -282,34 +327,68 @@ _line_spawn_verdicts() {
 # One file, one verdict: EXEMPT | "OK <n>" | "BAD <linenos>" | NONE |
 # UNTERMINATED (the heredoc heuristic lost track — the file was NOT fully read).
 _file_verdict() {
-    local f="$1" ll lineno s u scanned bad spawns last
+    local f="$1" ll lineno s u scanned bad spawns last line_total line_bad exempt
     ll="$(_logical_lines "$f")"
 
     if printf '%s\n' "$ll" | grep -qE -- '^-1'"$LL"; then
         printf 'UNTERMINATED\n'
         return 0
     fi
-    if printf '%s\n' "$ll" | grep -qE -- "$LL"'[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*'"$LL"; then
-        printf 'EXEMPT\n'
-        return 0
-    fi
 
     bad=""
     spawns=0
     last=""
+    exempt=0
     while IFS="$LL" read -r lineno s u; do
         [ -n "$lineno" ] || continue
+        # Suite-wide exemption, matched on the CODE field of the stripped
+        # logical line — parsed in THIS read loop, the same pass that scans
+        # the spawns. It used to be a second tool (grep -E over the raw
+        # \001-delimited stream); that cross-tool byte contract is what
+        # diverged between CI runners (0875: same bytes, same script, BAD on
+        # one runner image, EXEMPT on another), so the exemption now lives in
+        # one implementation only. Heredoc bodies never reach a field here,
+        # so an `export BASH_ENV=` inside one still does not exempt (0d).
+        if [[ "$s" =~ ^[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*$ ]]; then
+            exempt=1
+            break
+        fi
         scanned="$s"
         [[ "$s" =~ $_EXEC_RE ]] && scanned="$u"
-        [[ "$scanned" =~ $_SPAWN_RE ]] || continue
-        _line_spawn_verdicts "$scanned"
-        spawns=$((spawns + _LV_TOTAL))
-        if [ "$_LV_BAD" -gt 0 ] && [ "$lineno" != "$last" ]; then
+        line_total=0
+        line_bad=0
+        # Command-string form (`bash -c …`) on the code stream — or on the
+        # unwrapped one when an exec-wrapper quotes it.
+        if [[ "$scanned" =~ $_SPAWN_RE ]]; then
+            _line_spawn_verdicts "$scanned" "$_SPAWN_RE"
+            line_total=$((_LV_TOTAL + line_total))
+            line_bad=$((_LV_BAD + line_bad))
+        fi
+        # Script-path form (`bash FILE`) on the UNWRAPPED stream, gated on the
+        # interpreter being named as code outside quotes (or an exec-wrapper
+        # re-entering as code): the path is usually quoted, and quoted content
+        # is absent from the code stream, but the unwrapped stream also carries
+        # quoted data (control 0p). The two shapes are near-mutually-exclusive:
+        # the script-path token must not start with `-`, and the command-string
+        # form must end in a `-c` flag. A `bash FILE -c …` shape can satisfy
+        # both (the `-c` lands in the code stream once the quoted FILE drops
+        # out) and counts twice — the safe direction, and rarer than rare.
+        if [[ "$s" =~ $_SCRIPT_GATE_RE || "$s" =~ $_EXEC_RE ]] && [[ "$u" =~ $_SCRIPT_SPAWN_RE ]]; then
+            _line_spawn_verdicts "$u" "$_SCRIPT_SPAWN_RE"
+            line_total=$((_LV_TOTAL + line_total))
+            line_bad=$((_LV_BAD + line_bad))
+        fi
+        spawns=$((spawns + line_total))
+        if [ "$line_bad" -gt 0 ] && [ "$lineno" != "$last" ]; then
             bad="${bad:+$bad,}$lineno"
             last="$lineno"
         fi
     done <<< "$ll"
 
+    if [ "$exempt" -eq 1 ]; then
+        printf 'EXEMPT\n'
+        return 0
+    fi
     if [ -n "$bad" ]; then
         printf 'BAD %s\n' "$bad"
     elif [ "$spawns" -gt 0 ]; then
@@ -319,12 +398,16 @@ _file_verdict() {
     fi
 }
 
-# --- (0c)-(0k) static negative controls -----------------------------------------
+# --- (0c)-(0p) static negative controls -----------------------------------------
 # The runtime probes above prove the ENFORCED IDIOM works. These prove the
 # DETECTOR works, which is a separate claim and the one that rotted: every
 # fixture below is a real non-hermetic spawn that the pre-2026-09-07 scanner
 # reported as clean (0c-0h), plus the false alarm it raised on inert heredoc
-# text (0i), plus the two accepted shapes it must not start rejecting (0j, 0k).
+# text (0i), plus the two accepted shapes it must not start rejecting (0j, 0k),
+# plus the script-path class the pre-0875 scanner could not see at all — both
+# its leak (0l) and its accepted remedy (0m) — plus the silence that must stay
+# silent (0n), plus the expansion-prefix and inert-data shapes the 0875
+# widening must not start rejecting (0o, 0p).
 # Fixtures live in a mktemp dir, never under tests/, so they are not themselves
 # discovered as suites. They contain no secret and no real credential.
 _FIXDIR="$(mktemp -d)"
@@ -426,6 +509,59 @@ FIXTURE
 _expect_verdict 0k "EXEMPT" suite_exempt.sh \
     "a real suite-wide 'export BASH_ENV=' is still accepted"
 
+# (0l)-(0n) close the 0875 gap: the SCRIPT-PATH form (`bash FILE`, no -c). The
+# pre-0875 scanner could not see it at all, so both (0l) and (0m) FAIL against
+# that scanner — (0l) is the positive control the ticket demands: a script-path
+# spawn without 'env -i' must be BAD, not an invisible SKIP.
+_fixture script_leaky.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+bash "$HOOK_DIR/probe.sh"
+FIXTURE
+_expect_verdict 0l "BAD 3" script_leaky.sh \
+    "a script-path spawn (bash FILE, no -c) is seen and judged non-hermetic"
+
+_fixture script_hermetic.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+env -i HOME=/tmp PATH="$PATH" bash "$HOOK_DIR/probe.sh"
+FIXTURE
+_expect_verdict 0m "OK 1" script_hermetic.sh \
+    "the 'env -i' idiom covers the script-path form too"
+
+_fixture no_spawn.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "nothing to spawn here"
+FIXTURE
+_expect_verdict 0n "NONE" no_spawn.sh \
+    "a file with no bash child stays NONE — the widening turns no silence into noise"
+
+# (0o) pins the 0875 widening against its own collateral: a parameter
+# expansion (`${ARR[@]+…}`) between `env -i` and the spawn is NOT a command
+# boundary, so the prefix judgement must keep seeing the `env -i`.
+_fixture array_env_prefix.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+env -i HOME=/tmp PATH="$PATH" ${H_ENV[@]+"${H_ENV[@]}"} bash "$HOOK_DIR/probe.sh"
+FIXTURE
+_expect_verdict 0o "OK 1" array_env_prefix.sh \
+    "an array expansion between 'env -i' and the spawn does not cut the prefix"
+
+# (0p) pins the boundary of the 0875 widening: the unwrapped stream carries
+# quoted DATA as well as quoted CODE, and inert text naming a script path must
+# not be reported. The code stream gates the unwrapped scan (see the scanner
+# contract): a real invocation names the interpreter as code, outside quotes.
+_fixture script_inert_quoted.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "docs: run bash /tmp/foo.sh for help"
+grep -q "bash ./hook.sh" out.txt
+env HOME=/tmp SHELL="/bin/bash" ./run.sh
+FIXTURE
+_expect_verdict 0p "NONE" script_inert_quoted.sh \
+    "inert quoted text naming a script path is data, not a spawn"
+
 # --- the scan ------------------------------------------------------------------
 for f in "$TESTS_DIR"/test_*.sh; do
     b="$(basename "$f")"
@@ -440,15 +576,31 @@ for f in "$TESTS_DIR"/test_*.sh; do
             ;;
         EXEMPT)
             spawners=$((spawners + 1))
+            exempt=$((exempt + 1))
             echo "PASS: $b (clears BASH_ENV suite-wide)"
             ;;
         "BAD "*)
             spawners=$((spawners + 1))
-            echo "FAIL: $b — non-hermetic bash child spawn at line(s) ${verdict#BAD } (needs 'env -i' or a suite-wide 'export BASH_ENV=')" >&2
+            # Failure diagnostic (0875 CI divergence): a suite that looks
+            # exempt yet lands BAD means the exemption pattern never reached
+            # the verdict's read loop. raw-export-line reads the FILE;
+            # stream-exempt-token is an INDEPENDENT re-check of the logical
+            # stream by grep — the tool the verdict no longer trusts — so a
+            # disagreement between the two names the diverging layer in one
+            # read of the log. Names and numbers only.
+            diag_raw=0
+            if grep -qE '^[[:space:]]*export[[:space:]]+BASH_ENV=' "$f"; then diag_raw=1; fi
+            diag_tok=0
+            diag_ll="$(_logical_lines "$f")"
+            if printf '%s\n' "$diag_ll" | grep -qE -- "$LL"'[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*'"$LL"; then diag_tok=1; fi
+            diag_stream_lines=$(printf '%s\n' "$diag_ll" | wc -l)
+            diag_file_lines=$(wc -l < "$f")
+            echo "FAIL: $b — non-hermetic bash child spawn at line(s) ${verdict#BAD } (needs 'env -i' or a suite-wide 'export BASH_ENV=') [diagnostic: raw-export-line=$diag_raw stream-exempt-token=$diag_tok stream-lines=$diag_stream_lines file-lines=$diag_file_lines]" >&2
             fail=$((fail + 1))
             ;;
         "OK "*)
             spawners=$((spawners + 1))
+            judged=$((judged + ${verdict#OK }))
             echo "PASS: $b (${verdict#OK } hermetic spawn(s))"
             ;;
         *)
@@ -469,4 +621,8 @@ if [ "$fail" -ne 0 ]; then
     echo "GUARD FAILED: $fail of $checked shell suite(s) spawn bash children non-hermetically" >&2
     exit 1
 fi
-echo "OK: all $checked shell suite(s) spawn bash children hermetically ($spawners spawner(s))"
+# The verdict line must not read files-read as coverage (ticket 0875): the
+# first number is what was READ, the second what was actually EXAMINED. A
+# suite-wide exemption skips its spawns, so those appear in neither count's
+# denominator silently — the exempt count keeps that visible.
+echo "OK: $checked shell suite(s) read — $judged bash child spawn(s) examined, all hermetic ($spawners spawner file(s), $exempt suite-wide exempt)"

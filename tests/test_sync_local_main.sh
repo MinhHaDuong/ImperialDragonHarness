@@ -4,6 +4,14 @@
 # what moved and, just as important, what was left untouched.
 set -euo pipefail
 
+# Hermetic children (ticket 0875): every case here runs the script under test
+# as `bash "$SYNC"`, and such a child inherits BASH_ENV — re-running the
+# project .env loader inside the very process whose sync behaviour is under
+# test, where an ambient value could mask it. Nothing in this suite reads
+# project .env values, so clear the loader suite-wide
+# (tests/test_bash_tests_are_hermetic.sh) rather than annotate 20+ spawns.
+export BASH_ENV=
+
 cd "$(dirname "$0")/.."
 SYNC="$PWD/scripts/sync-local-main.sh"
 fail=0

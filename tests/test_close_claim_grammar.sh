@@ -8,6 +8,13 @@
 # from git history and must fail there, keeping this a live red regression.
 set -euo pipefail
 
+# Hermetic children (ticket 0875): the driver and detector are exercised as
+# `bash "$script"` / `bash "$CHECKER"`, and such children inherit BASH_ENV —
+# re-running the project .env loader inside the very processes under test.
+# Nothing here reads project .env values, so clear the loader suite-wide
+# (tests/test_bash_tests_are_hermetic.sh).
+export BASH_ENV=
+
 cd "$(dirname "$0")/.."
 ROOT=$PWD
 FIXTURES="$ROOT/tests/fixtures/close-claim-grammar.tsv"
