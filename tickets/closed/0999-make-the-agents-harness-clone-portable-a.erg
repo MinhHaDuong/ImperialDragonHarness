@@ -13,6 +13,7 @@ Closed: integration complete: #1091 registration, #1099 WONTDO, #1101 retirement
 2026-10-01T20:39Z codex bump verify-reroll — round 1: independent-profile dream commit fails; unsafe merged-hook deletion and shipped Codex predecessor migration unresolved. Split/ownership direction required before merge.
 2026-10-01T21:23Z codex note Child 1003 closed and archived by merged PR #1091 (8af5cd16); final gate round 2 approved. Child 1002 remains open; parent integration is pending.
 2026-10-01T22:05Z MinhHaDuong closed — integration complete: #1091 registration, #1099 WONTDO, #1101 retirement; 0920 pilot proceeds separately
+2026-10-02T06:27Z vibe note PR #1102 subsequently deleted the remaining legacy dream helpers (commit.py, read-index.py) under the author-directed memory v8 retirement; this closure record is otherwise unchanged.
 --- body ---
 
 ## Context

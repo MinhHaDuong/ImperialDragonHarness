@@ -11,6 +11,7 @@ drafts* below.
 
 ## Current guides
 
+- [Memory v8 templates and source inventory](memory-v8/README.md): documentary foundation; no runtime activation.
 - [Installation](idh-install-strategy.md): portable checkout and runtime registration.
 - [Operations](adapter-operations.md): existing pilot verification and recovery.
 - [Roadmap](../ROADMAP.md): priorities; [STATE](../STATE.md): current resume point.
@@ -26,7 +27,7 @@ drafts* below.
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
 | `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
-| `2026-09-11-memory-implementation-plan.md` | V8 delivery plan: Markdown pilot, factual capture, weekly dreaming and four-runtime evidence |
+| `2026-09-11-memory-implementation-plan.md` | V8 delivery plan: Markdown pilot, factual capture, separately invoked dreaming and four-runtime evidence |
 | `2026-09-24-rules-coherence-audit.md` | Harness ↔ project directive coherence audit of eleven repos: findings, in-flight PR check, ranked preconisations (tracker 0956) |
 | `2026-09-10-dragon-memory-design.md` | **Authoritative** design for the harness memory system — always the current version, v8 today |
 | `2026-09-10-dragon-memory-design-v7.md` | Frozen v7 before the Markdown-first v8 |

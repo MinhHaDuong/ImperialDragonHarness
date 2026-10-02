@@ -1,9 +1,13 @@
 ---
 name: feedback_rules_come_from_memory_consolidation
-description: Never propose writing a rule straight from a session lesson; record it as memory, and rules emerge from consolidating memories (/dream)
+description: RETIRED LEGACY — historical author feedback superseded by v8; not current advice
 metadata:
   type: feedback
 ---
+
+> RETIRED LEGACY — superseded by memory v8 and the author's 2026-10-01
+> direction. Historical source only; none of the advice below governs current
+> work. Roar captures facts; DREAM consolidates memory without rule promotion.
 
 When a session surfaces a lesson that looks rule-shaped, save or update a memory
 entry, and do not offer to edit `~/.claude/rules/` or project `.claude/rules/`

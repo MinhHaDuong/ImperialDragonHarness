@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Inventory legacy memory sources and preserve qualified provenance
+Created: 2026-09-10
+Author: claude
+Closed: Inventoried legacy sources with exact qualified provenance; no migration or source rewriting
+
+--- log ---
+2026-09-10T16:34Z claude created
+2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T21:30Z codex note Inventory in docs/memory-v8/source-inventory.md and source-revisions.tsv; 1095 exact blob revisions checked; sources preserved; native metadata only.
+2026-10-01T21:30Z MinhHaDuong closed — Inventoried legacy sources with exact qualified provenance; no migration or source rewriting
+--- body ---
+
+## Context
+
+Inventorier les notes existantes du harness et les sources natives disponibles pour un projet pilote. Garder première apparition Git distincte de création réelle et modification mécanique distincte de fraîcheur sémantique.
+
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
+
+## Actions et vérification
+
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
+
+## Exit criteria
+
+- [x] Inventaire avec origine, audience, révision et incertitudes.
+- [x] Sources et notes inactives conservées ; aucun import aveugle de secrets.
+- [x] Les notes natives interprétées ne sont pas converties en épisodes factuels inventés.
+- [x] Aucune migration générale ni réécriture linguistique dans cet inventaire.
+
+## Delivery evidence
+
+Inventory in docs/memory-v8/source-inventory.md and source-revisions.tsv; 1095 exact blob revisions checked; sources preserved; native metadata only.
+
+Verification: make check-fast (853 passed); make lint (93 passed with writable
+Ruff cache); catalog, adapter, agnostic and personal-data checks passed.
+No pilot/runtime activation or live behavior claim.
