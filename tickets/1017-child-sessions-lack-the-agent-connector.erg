@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-02T11:05Z reviewer created
 
 2026-10-02T11:30Z reviewer MinhHaDuong note Keep the documented pattern runtime-portable: define a runtime-neutral detached-seat contract (headless non-interactive CLI per seat, prompt embedding the seat contract, worktree-pinned cwd, read-only rails, artifact polling) with per-runtime substitution examples, not a claude-only recipe
+2026-10-02T11:37Z reviewer MinhHaDuong note Generalize the seat beyond local CLI processes: a seat is any reviewer agent by transport (detached CLI, GitHub Copilot review, remote agent on another host). Express seat requests in agent-profile terms (capability class, effort) per AGENTS.md and let the route resolve the concrete model; when a transport cannot honor the requested profile (e.g. a fixed-model review bot), record the limitation instead of silently substituting
 --- body ---
 ## Context
 
