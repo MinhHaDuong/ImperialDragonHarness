@@ -50,6 +50,7 @@ candidate pairs in the client before merging; no report row authorizes a merge.
 decoy, a trashed parent, and repeated attachments under one parent. It checks
 links, HTML escaping and that generating a report leaves the SQLite bytes
 unchanged. A live read-only run against the 2026-09-24 database snapshot yielded
-269 groups from 8,697 hashed attachments in My Library. The report contains all
-269 groups and links for every parent. The author still needs to arbitrate a
-sample before any merge work or closure of ticket 0485.
+269 groups from 8,697 hashed attachments in My Library; the 2026-10-02 live run
+at closure yielded 266. The author arbitrated a sample on 2026-10-02 and ticket
+0485 closed. The remaining clusters are merged by hand in the client (select
+both parents, right-click → Merge n Items) — see STATE.md Author actions.

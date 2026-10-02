@@ -168,7 +168,7 @@ PDFs and HTML sources stay in Zotero + project `docs/` staging per
 [zotero.md](../rules/zotero.md), unchanged. Extraction (`pdftotext` → paragraph
 segmentation → filter headers/captions/tables → role-tag → co-author check)
 is a one-time-per-source script; the corpus is derived data, not the source
-of record, and follows the same retention discipline as other EDM staging —
+of record, and follows the same retention discipline as other Zotero-management staging —
 purge or re-derive rather than treat as permanent.
 
 ### Counter-examples — two sourcing methods, not interchangeable

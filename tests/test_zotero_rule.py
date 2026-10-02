@@ -26,9 +26,9 @@ def test_readme_indexes_zotero_rule():
     Until 2026-09-09 this asserted an index-table *row*. The table now names
     only the conditional rules — the ones an agent does not already have —
     because the runtime loads every unscoped body in full, and describing a
-    body it ships is paying for it twice. zotero.md is unscoped, so the index
-    declares it in the resident list instead; discoverability is unchanged,
-    the duplicate description is gone.
+    body it ships is paying for it twice. zotero.md is scoped (`paths:`
+    frontmatter), so the index declares it in the conditional table;
+    discoverability is unchanged, the duplicate description is gone.
     """
     readme = (RULES / "README.md").read_text(encoding="utf-8")
     assert re.search(r"^\|\s*\[zotero\.md\]", readme, re.M) or "`zotero.md`" in readme, (

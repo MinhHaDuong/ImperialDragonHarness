@@ -1,20 +1,20 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-02T11:29Z
+Last updated: 2026-10-02T11:44Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-02T11:29Z · as of 1cd9eb9b -->
+<!-- generated 2026-10-02T11:44Z · as of b7e422f0 -->
 
-**Tickets:** 13 ready · 17 blocked — `erg ready tickets/` for full list
+**Tickets:** 14 ready · 17 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0879 La porte ecrit des lignes de journal malformees…
-**In flight:** 1 open PR, oldest #1142 0d · CI main: success
+**In flight:** 1 open PR, oldest #1143 0d · CI main: success
 **Recent (first-parent):**
-  1cd9eb9b Merge pull request #1141 from MinhHaDuong/roar-1015-2026-10-02
-  e811002b Merge pull request #1138 from MinhHaDuong/t1015-unterminated-sentinel
-  8ce12f69 Merge pull request #1140 from MinhHaDuong/roar-wrap-2026-10-02-raid-853-937-979-1014
+  b7e422f0 tickets: file 1018 — zotero skill consolidation, one zotero skill with verbs
+  741bc61e tickets: close 0485 — dedup-report live-validated, sample arbitrated, residue to author actions
+  65737ba9 rules: edm.md renamed zotero.md — Zotero management, EDM acronym retired
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Tracker 0999 recorded portable installation and runtime registration, and closed after integration review. The old relocation and cutover tickets 0978 and 0986 are closed WONTDO.
