@@ -76,7 +76,7 @@ Pass 1 writes:
 
 Re-examined sources (git blob revisions):
 
-- memory/MEMORY.md blob c49356b3798ae405e06fb55d15df7b31fbc4384b
+- memory/MEMORY.md blob b4ce4268ec10e39e496d31deebc9f69da59be571
 - memory/topics/zotero-library.md blob 21ab3f6cb69bbf7331024fd36e859f07d2e7ce58
 - memory/topics/subagent-model-effort-levers.md blob beb3a1960e146ba6df711820729fc9a986e78c5f
 - memory/topics/git-worktree-session-guards.md blob b4428fa1c2e040f03bd5dbc9107992df87bec1c1

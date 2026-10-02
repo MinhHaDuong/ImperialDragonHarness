@@ -30,5 +30,5 @@ v8 repository memory. Pilot and audience: [pilot.md](../docs/memory-v8/pilot.md)
 - [git in a worktree session](reference_git_in_a_worktree_session.md)
 - [Branch-cleanup incidents](reference_branch_cleanup_incidents.md)
 
-Search the journal for older or unprocessed experiences; the legacy index
-stays in Git history, every linked path still linked above.
+Search the journal for older or unprocessed experiences. The legacy index
+stays in Git history; every linked path is still linked above.
