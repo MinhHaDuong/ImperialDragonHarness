@@ -2,7 +2,6 @@
 Title: Attribution record template and roar step-6 capture
 Created: 2026-10-02
 Author: MinhHaDuong
-Blocked-by: 1004
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -12,8 +11,9 @@ Blocked-by: 1004
 
 Child of tickets/1004. The attribution record (spec §4) is the coaching
 system's only capture: one journal entry per reviewed merge, fixed
-grep-able lines, findings anchored basename:line, model versions pinned,
-writer included.
+grep-able lines, findings anchored repo-relative `path:line`, full model
+ids pinned verbatim, attempt status recorded, writer line for
+stratification.
 
 ## Actions
 
@@ -22,13 +22,16 @@ writer included.
    fact lines.
 2. Extend roar step 6: when the merged PR was reviewed, write the
    attribution entry under the project's memory/journal/, including
-   writer line (runtime, model, effort), one reviewer line per reviewer
-   with findings and anchors, and `defects-confirmed-post-merge: none`
-   initially.
+   writer line (runtime, full model id, effort), one reviewer line per
+   reviewer with attempt status (ran|failed|skipped), findings with
+   repo-relative path:line anchors and adopted flags. No initial
+   defect-confirmed placeholder: those are append-only event lines
+   written by the 1006 hook.
 3. Fail-loud capture: a reviewed PR whose record cannot name its
-   reviewers is reported, never filled in from memory (spec §4.6).
-4. Tests: template parses with a fixed-line reader; anchors normalize
-   basename:line; version fields present.
+   reviewers is reported, never filled in from memory (spec §4.8).
+4. Tests: template parses with a fixed-line reader; anchors are unique
+   repo-relative path:line; full model id and status fields present;
+   adopted findings parse as pre-merge defect labels.
 
 ## Exit criteria
 

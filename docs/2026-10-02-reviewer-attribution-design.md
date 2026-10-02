@@ -69,7 +69,8 @@ Three data planes, separated; two thin skills over one shared substrate.
 ```
 FLIGHT DATA → attribution records      project repo memory/journal/
               (facts, append-only)      YYYY/YYYY-MM-DD-review-attribution-prNNNN.md
-GROUND TRUTH → defects-confirmed lines (inside the same records; backfilled)
+GROUND TRUTH → defect labels: adopted findings (pre-merge)
+              + defect-confirmed event lines (post-merge, backfilled)
 DECISIONS    → roster + promote/drop    author-owned, manual
 
 SHARED SUBSTRATE  docs/spec (this file) + scripts: contract shape,
@@ -92,19 +93,20 @@ precedent is verify-gate being its own skill inside the gaze loop.
 
 A dedicated journal-entry kind written by roar step 6 whenever the merged PR
 was reviewed. Fixed grep-able lines carry the facts; prose is allowed only
-for context. Findings carry anchors normalized `basename:line` (the board's
-existing convention) so cross-reviewer matching is mechanical.
+for context. Findings carry repository-relative `path:line` anchors (the
+frozen board's basename convention is narrower and stays board-only) so
+the join across reviewers is mechanical and unique.
 
 ```
 memory/journal/2026/2026-10-02-review-attribution-pr1102.md
 
 kind: review-attribution
 pr: 1102 · merged 2026-10-02 · project: .agents
-writer: runtime=vibe · model=<model-id> · effort=standard
-reviewer: seat=<name-or-role> · runtime=<id> · model=<model-id>
-  finding: verifiable · <basename>:<line> · adopted: yes|no
-  finding: consider · <basename>:<line> · adopted: yes|no
-defects-confirmed-post-merge: none | <basename>:<line> ...
+writer: runtime=vibe · model=<full-model-id> · effort=standard
+reviewer: seat=<name-or-role> · runtime=<id> · model=<full-model-id> · status: ran|failed|skipped
+  finding: verifiable · <repo-relative-path>:<line> · adopted: yes|no
+  finding: consider · <repo-relative-path>:<line> · adopted: yes|no
+defect-confirmed: <repo-relative-path>:<line> · source: post-merge-fix · pr: <n>
 ```
 
 Rules:
@@ -112,19 +114,35 @@ Rules:
 1. **Fixed lines for facts.** Named fields at fixed positions; the schema-drift
    lesson (§1.2) makes this non-negotiable. A read surface must never parse
    prose.
-2. **Version pinning is load-bearing.** Model ids are recorded at review time;
-   upstream models are silently retired (deepseek-v4-flash incident), so a
-   record without a version is unusable for re-audition.
-3. **The writer is part of the pair.** Decorrelation is reviewer-vs-writer;
-   the writer line makes that measurable.
-4. **Anchored findings are the join key.** Same basename:line across two
-   reviewer lines = shared catch; exactly one = unique catch; anchored by
-   nobody but later confirmed = panel-miss defect.
-5. **Project-local.** Records live in the project's repository (or its
+2. **Version pinning is load-bearing.** `model=` is the full, verbatim,
+   provider-qualified model id as the provider pinned it at review time
+   (provider aliases silently move upstream); `model-version=` is added
+   whenever the provider exposes an explicit revision. A record without
+   this is unusable for re-audition (deepseek-v4-flash incident).
+3. **The writer is a stratification variable, not a pair member.** The
+   writer emits no findings on its own diff, so writer-reviewer
+   *concordance* is incomputable; the writer line enables per-writer
+   stratification of reviewer performance instead.
+4. **Anchored findings are the join key.** Anchors are repository-relative
+   paths with line numbers — unique within a PR. (The frozen board keeps
+   basename normalization for forge-agnosticism, with its collision caveat
+   noted there; project records have no reason to accept it.) Same
+   path:line across two reviewer lines = shared catch; exactly one =
+   unique catch.
+5. **Two defect-label sources, both confirmed.** A reviewer finding with
+   `adopted: yes` is a confirmed pre-merge defect — the common case, since a
+   caught defect is fixed before merge. A `defect-confirmed` event line is a
+   post-merge miss, append-only, repeatable (zero lines when none yet). A
+   game is defect-bearing if either source labels it.
+6. **Attempt status is an observation, whatever the outcome.** `status:`
+   is required on every reviewer line — a failed or skipped reviewer is a
+   recorded fact (the harvest `status=ok` lesson), and the read surfaces'
+   run-failure rates derive from it.
+7. **Project-local.** Records live in the project's repository (or its
    explicitly configured private companion), per the harness memory boundary —
    never in the harness, never in a native memory directory, never in
    machine-local telemetry.
-6. **Fail-loud capture.** A reviewed PR whose record cannot name its
+8. **Fail-loud capture.** A reviewed PR whose record cannot name its
    reviewers is a defect to report, not an omission to fill in from memory.
 
 ## 5. The coaching loop
@@ -135,7 +153,7 @@ Rules:
 3. **After merge, when a fix lands:** roar step 3's sweep ("review the fix
    just completed — grep for the same anti-pattern") gains one hook: a
    post-merge fix on lines a past review covered backfills
-   `defects-confirmed-post-merge` in that PR's attribution record. This is
+   a `defect-confirmed` event line in that PR's attribution record. This is
    the only source of the pair table's "neither" cell and the only thing
    that makes a game defect-bearing; without it correlation estimates skew
    optimistic.
@@ -151,24 +169,33 @@ Rules:
 A scores-style query over all attribution records of a project:
 
 - **Scores:** per seat, labeled-game catch rate with credible intervals;
-  noise rate; run-failure rate.
-- **Correlation:** pairwise concordance table (both / unique-to-A /
-  unique-to-B / neither), including writer-reviewer pairs; Jaccard
-  catch-overlap and shared-hallucination rate. Conditions on defect-bearing
-  games only (§1.1's base-rate discipline).
+  noise rate; run-failure rate (from the `status:` field of rule §4.6).
+  A catch is a confirmed defect label attributed to that seat — an adopted
+  finding (pre-merge) or a defect-confirmed event matching its anchor.
+- **Correlation:** reviewer-pairwise concordance table (both / unique-to-A /
+  unique-to-B / neither), conditioned on defect-bearing games only
+  (§1.1's base-rate discipline); Jaccard catch-overlap and
+  shared-hallucination rate. The writer is a stratification variable
+  (§4.3), not a pair member.
 - **Marginal coverage:** unique-catch rate of seat B given seat A already
   plays — the squad-management quantity; raw catch rate overstates it.
 
-## 7. Statistics policy (pre-registered)
+## 7. Statistics policy (pre-registered, values fixed)
 
-- Per seat: Beta-Binomial credible intervals on labeled-game catch rate;
-  eliminate when the noise or hallucination upper bound crosses threshold
-  (the ling-flash 459/478 verdict was correct and is the template);
-  promote only when the catch-rate lower bound beats the incumbent's upper
-  bound on the same labeled board.
-- Report correlation always; act on it only when intervals are narrow enough
-  to matter (≈60 labeled games per pair for fine distinctions; 10 per seat
-  resolves only extreme gaps).
+Fixed before implementation so post-hoc choices cannot reverse a verdict:
+
+- **Prior and intervals:** Beta-Binomial with Jeffreys prior Beta(1/2, 1/2)
+  per rate; report 90% credible intervals.
+- **Eliminate** a seat when, over at least 10 labeled games, the 90% CrI
+  upper bound of its false-finding share (hallucinations + noise findings
+  ÷ findings emitted) exceeds 0.5 — the ling-flash 459/478 verdict is the
+  template — or its run-failure rate upper bound exceeds 0.5.
+- **Promote** a candidate only when its labeled-game catch-rate 90% lower
+  bound exceeds the incumbent's 90% upper bound on the same labeled board,
+  and its false-finding share upper bound is below 0.5.
+- Report correlation always; act on it only when intervals justify it
+  (≈60 labeled games per pair for fine distinctions; 10 per seat resolves
+  only extreme gaps).
 - Estimates are valid only per recorded model version; a model change
   splits the history (§4.2).
 
@@ -178,13 +205,13 @@ Kept as the portable discovery surface the harness constitution requires
 ("let the runtime find who is available and route"). It stops managing
 seats and trials.
 
-| Keep | Drop (replaced by) |
-|---|---|
-| Needs-description + contract prose | panel.yml roster governance (author roster) |
-| Seat-runner + sandbox, as replay tool | scorecard/scores/trial machinery (§6) |
-| Benchmark board + replay logic | audition promotion logic (§7) |
-| Padmé / OpenRouter route docs | gaze auto request/harvest wiring |
-| Fail-open semantics for live routes | CLAUDE_TELEMETRY-style write seams |
+| Keep in `reviewers` | Move to the coaching skill | Drop (replaced by) |
+|---|---|---|
+| Needs-description + contract prose | seat-runner + sandbox (replay tool) | panel.yml roster governance (author roster) |
+| Padmé / OpenRouter live route docs | benchmark board + replay logic | scorecard/scores/trial machinery (§6) |
+| Fail-open semantics for live routes | — | audition promotion logic (§7) |
+| | | gaze auto request/harvest wiring |
+| | | CLAUDE_TELEMETRY-style write seams |
 
 Its SKILL.md scope statement changes from "manages seats" to "offers
 external routes and board replay; coaching lives in attribution".
