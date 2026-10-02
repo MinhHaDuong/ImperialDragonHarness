@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Zotero skill consolidation: one zotero skill with verbs, backend zotero.py
+Created: 2026-10-02
+Author: claude
+
+--- log ---
+2026-10-02T13:55Z claude created — design agreed with the author in session; target state recorded in docs/zotero-integration.md (Skills and Principles sections, revised 2026-10-02)
+
+--- body ---
+## Context
+
+The Zotero skill surface ships today as two skills — `zotero-import` (file
+intake with `import`/`enrichment`/`backfill` modes, `audit`, `reconcile`) and
+`index-source` (URL intake) — both driving `scripts/zotero-import.py` (ten
+subcommands: `inject`, `enrich`, `probe`, `match`, `dedup-report`, `write`,
+`sync-index`, `audit`, `reconcile`, `attach`). The agreed architecture
+(docs/zotero-integration.md, revised 2026-10-02) is one skill named `zotero`
+with verbs as arguments — harness precedent: the `reviewers` skill. Narrowness
+is the domain, not the verb count. A URL is an input to `import`, not a
+separate verb or skill.
+
+## Target surface
+
+    zotero import <pdf-or-url>... | enrich | audit | reconcile | dedup-report | attach
+
+`attach` is declared, created on first need (YAGNI). The command surface
+mirrors the backend subcommands.
+
+## Actions
+
+1. Rename skill `zotero-import` → `zotero`; the SKILL.md body becomes the verb
+   router, keeping the per-mode reference files (`references/import.md`,
+   `references/enrichment.md`, `references/backfill.md`,
+   `references/helper-script.md`) and the shared discipline sections
+   (identifier-hypothesis, page-on-the-page, safety contract).
+2. Absorb `index-source` as the `import` verb's URL input; move its
+   `scripts/probe-url.py` under the consolidated skill. `index-source` is
+   deprecated, not renamed.
+3. Rename the backend `scripts/zotero-import.py` → `scripts/zotero.py`; keep
+   subcommand names as the verbs. Update the run lines in
+   `docs/zotero-dedup-report.md` and the skill reference files.
+4. Update the two skills' naming sites: `rules/zotero.md` ("`/zotero-import`
+   and `/index-source` name this file", "Two skills implement this workflow"),
+   `rules/README.md` row, and cross-references in `critical-lit-review`,
+   `reading-note`, `docs/zotero-integration.md`.
+5. Regenerate the skills catalog (`make skills-catalog`).
+
+## Downstream note
+
+`livre-milliards-climat` vendors `index-source` under the harness name
+(docs/2026-09-24-rules-coherence-audit.md, already flagged needs-human); it
+drifts when this lands. Record, do not reach into the project.
+
+## Exit criteria
+
+- [ ] One skill `zotero` in the catalog; `zotero-import` and `index-source`
+      gone from it; `make check-skills-drift` passes
+- [ ] `scripts/zotero.py` answers every verb; no stale
+      `zotero-import.py` references in live docs (ticket history and
+      `projects/` memory untouched — records, not live pointers)
+- [ ] `rules/zotero.md` and `rules/README.md` name the consolidated skill
+- [ ] `docs/zotero-dedup-report.md` run line regenerates the report via the
+      new path
+- [ ] Full test suite passes
+
+## Test
+
+- A PDF argument and a URL argument both route through the `import` verb.
+- `zotero.py dedup-report` reproduces the 0485 report byte-for-byte modulo
+  the library's own changes (read-only, WAL refusal, group exclusion intact).
