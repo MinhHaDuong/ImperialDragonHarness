@@ -25,6 +25,9 @@ and tickets/0205 is closed with its integration-review note.
 ## Children
 
 - tickets/1005 — attribution record template + roar step-6 capture
+  (blocked-by 0909: the memory v8 rollout defines the journal the records
+  live in — author sequencing decision, coaching revamp comes AFTER the
+  memory revamp; 1008 stays independent, it seeds the frozen board)
 - tickets/1006 — post-merge defect backfill hook in roar step-3 sweep
   (blocked-by 1005)
 - tickets/1007 — read surfaces: scores, correlation, marginal coverage;
