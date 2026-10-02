@@ -1,0 +1,157 @@
+%erg 0.1
+Title: Ground-truth seeding: mine and backfill defect anchors (absorbs 0356)
+Created: 2026-10-02
+Author: MinhHaDuong
+Closed: autoclosed — PR #1121
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+2026-10-02T08:05Z MinhHaDuong note absorbs tickets/0356 (cross-project PR benchmark, mined-defect sample) — 0356 was filed for exactly this label bottleneck; its challenger-vs-squad criterion maps onto the 1007 correlation and marginal-coverage surfaces
+
+2026-10-02T09:18Z MinhHaDuong note round-2 fix: removed pr 21 (blame-move artifact, defect predates PR) and pr 258 (formatting revert, not defect repair) from the board per gate REROLL
+2026-10-02T09:24Z MinhHaDuong closed — autoclosed — PR #1121
+--- body ---
+## Context
+
+Child of tickets/1004. The statistics policy (spec §7) is idle without
+defect-bearing games. The audition board's `defects:` anchors are empty on
+all 10 entries, so UVER is pinned at 0 by construction; the live trial's
+diffs were mostly clean and gate-cleared.
+
+## Actions
+
+1. Backfill `defects:` anchors on the frozen board
+   (skills/reviewers/benchmark-board.yml) from confirmed panel misses:
+   post-merge fixes, follow-up tickets, later-found regressions.
+2. Mine defect-bearing merged PRs across projects (the 0356 sample):
+   PRs whose defect was confirmed post-merge become new labeled board
+   entries — same frozen base/head SHA discipline.
+3. Ten labeled defect-bearing games per seat resolve a 50%-vs-0% catch
+   gap (Fisher p ≈ 0.03); ~60 per pair for fine distinctions (spec §7).
+   Seed toward the coarse bar first.
+
+## Exit criteria
+
+- [ ] All board entries carry a populated or explicitly-empty defects
+      set, with the empty case justified per entry
+- [ ] At least 10 defect-bearing games exist for the primary incumbent
+      seat (openrouter-frontier successor) to be ranked against
+
+2026-10-02T08:37Z claude note Raid Imagine + Blind-Spot pass 2026-10-02: annotation appended; premise confirmed at HEAD 108c3cd7 (board unchanged, 1008 unblocked by PR #1115); mining narrowed to a manual pass over this repo's history first, cross-project replay machinery split to a follow-up.
+
+## Imagine annotation (raid 2026-10-02)
+
+Premise holds at HEAD 108c3cd7: all 10 board entries still carry empty
+`defects:`, nothing on the board or classifier changed since creation, and
+1008 is the only ready child of 1004 (unblocked by PR #1115).
+
+Simplest path, exit criteria unchanged:
+
+- **Backfill of the frozen 10 is a justification exercise, not discovery.**
+  Sweep PRs 570-603 for confirmed misses (citing tickets, later fix commits
+  touching their lines); expected honest outcome is explicitly-empty defects
+  with a per-entry justification. Nearest signals do not attach: 0324 closed
+  via PR #567 before the board PRs; 0333's #584 incident was ruled UNCONFIRMED.
+- **Criterion 2 is met by appending mined defect-bearing entries from THIS
+  repo's history** (post-merge fix commits, revert-following fixes, follow-up
+  tickets citing merged PRs, projects/**/memory incident records naming this
+  repo's PRs), keeping the single-repo invariant the audition consumer relies
+  on. Prefer code-heavy diffs; the incumbent seat reviews code.
+- **NARROWING (allowed):** manual/agent-assisted mining with a mechanical
+  prefilter, no committed scripted pipeline. 0356's classifier, challenger-
+  vs-squad mode and stopping rules are 1007/coaching-skill scope.
+- **Anchor rule (pre-registered):** defect anchors are `basename:LINE` in the
+  head SHA's file version, mapped back from the confirming fix commit;
+  degrade to `basename:*` when the line mapping is not mechanical. Every
+  anchor carries recorded confirming evidence (fix commit SHA or citing
+  ticket) in the PR body, not in the YAML comments (agnostic-gate literals).
+
+Constraints from the Blind-Spot pass (all verified against the tree):
+
+1. **Cross-project entries are unreplayable today.** `audition` hard-codes
+   `--repo "$REPO_ROOT"` (reviewers.sh:713) and the board schema has no repo
+   field; foreign SHAs would fail-loud on every replay. Cross-project mining
+   therefore does NOT append to the shipped board: if this repo's history
+   yields fewer than 10, the shortfall is recorded with candidate evidence
+   and replay machinery goes to a follow-up ticket (repo field + seat-runner
+   repo resolution), never into this ticket's board edit.
+2. **Board size is test-asserted**: tests/test_reviewers_audition.sh asserts
+   `board=10MR` on the shipped board; extending the board must update that
+   assertion. Historical 10MR scorecards stay comparable by size-matching
+   (SLOW gate peers match on board size).
+3. **`pr` is the only entry key** (reviewers.sh:707) — appended entries must
+   not duplicate a PR number already on the board.
+4. **The incumbent has never played any board** — no audition scorecard
+   exists for the primary OpenRouter seat. Criterion 2 ships labeled games;
+   the incumbent's replay run over the extended board (model id pinned) is a
+   separate activity, filed as a follow-up, not exit criteria here.
+
+2026-10-02T08:52Z claude note Raid Plan pass 2026-10-02: plan annotation appended; first test is tests/test_benchmark_board.sh (board-data integrity, red on the >=10 defect-bearing floor); test_reviewers_audition.sh board-size assertion goes dynamic; no dependencies.
+
+## Plan annotation (raid 2026-10-02)
+
+### Actions
+
+1. Sweep the frozen 10 (justification, not discovery). Per board PR (570, 572,
+   573, 575, 580, 584, 588, 599, 602, 603): find its merge commit MC
+   (`git log --merges --format='%H %s' | grep '#<PR> '`), base=MC^1, head=MC^2;
+   grep tickets/ and memory/ for citations; list post-merge commits touching
+   the PR's changed files and filter fix-ish subjects; adjudicate each
+   candidate with the CONFIRMED rule below before populating `defects:`.
+   Known negatives stay empty: PR 584's 0333 incident ruled UNCONFIRMED;
+   0324/#567 predates the board.
+2. CONFIRMED rule: a defect is confirmed iff (a) a fix commit F merged on main
+   strictly after MC whose fixed pre-image lines blame to a commit I with
+   `git merge-base --is-ancestor I head && ! --is-ancestor I base`, or (b) a
+   closed follow-up ticket citing the PR whose fix passes (a).
+3. Empty defects carry a justification comment on its own line ABOVE the
+   `defects:` key (never inline — reviewers.sh `fv()` would parse it into the
+   anchor field), containing the token `none confirmed`, phrased to pass
+   check-agnostic.sh (no forge URLs, no repo-relative script paths, no
+   absolute home paths).
+4. Mine >=10 defect-bearing merged PRs from THIS repo's history: `fix`-subject
+   commits with blame-based introduction attribution; closed tickets citing
+   merged PRs; memory incident records. Accept only merge-commit PRs, code-
+   heavy diffs, pr not already on the board, CONFIRMED defects. Shortfall is
+   recorded honestly; cross-project machinery goes to a follow-up ticket.
+5. Anchor rule (pre-registered): head-SHA `basename:LINE` (direct line
+   transfer when the file is untouched between head and fix^, else
+   blame-mapped, else degrade to `basename:*`). Confirming evidence (fix SHA
+   or citing ticket) recorded in the implementing PR body, not the YAML.
+6. Append entries after PR 603 in the same scalar format; populate `panel:`
+   from gate-verdict comments when accessible, else record the gap in the PR
+   body; pr values unique.
+7. Update tests/test_reviewers_audition.sh: replace the hard-coded
+   `board=10MR` assertion with the dynamic count (`grep -cE '^[[:space:]]*-
+   [[:space:]]*pr:'`) and tighten the board-size floor.
+8. Gates: new test file + `make check` (check-agnostic, check-personal-data,
+   check-skills-drift, check-tests).
+
+### First test (red before the board edit)
+
+New `tests/test_benchmark_board.sh`, auto-discovered by
+tests/test_bash_suites.py:
+- (a) every entry block has a `defects:` key; empty value requires a
+  `none confirmed` justification comment in the block;
+- (b) anchors verified against git history: basename present in
+  `git diff --name-only base...head`; line-precise anchors blame inside the
+  PR (ancestry vs base/head) — oracle independent of the YAML;
+- (c) pr values unique;
+- (d) RED driver: entries with non-empty `defects:` >= 10 (exit criterion 2).
+(a)-(c) are regression guards passing today; (d) goes green only when labeled
+entries land. Do not land (d) without (b) — the count alone is satisfiable by
+fabrication; the pair is not.
+
+### Dependencies
+
+None (1008 unblocked by PR #1115; single-repo invariant kept).
+
+### Antipattern scan (tautology)
+
+(a),(b),(c) each catch distinct failure classes (dropped key / fabricated or
+drifted anchor / findings-file overwrite via duplicate pr); the board-size
+re-assertion is derived from the file, not a new literal. (d) alone would be
+tautology-prone; paired with (b) it is not.
+
+2026-10-02T09:02Z claude note Raid feasibility verdict 2026-10-02: PASS on all 10 mechanical checks (reviewers.sh pr-key and hard-coded repo root, fv() inline-comment corruption, board=10MR assertion at test line 211 with count var n at 185, auto-discovered sh suites, agnostic-literal patterns simulated clean on the proposed comment wording, PR-603 SHAs match, 90 non-PR merge subjects all back-merges, only two code consumers of the board, Makefile check target composition). No cross-cutting registry: single PR, no shared allowlist edits. Nuances recorded: memory journal is thin as a defect-mining source; agnostic gate forbids only literal github.com among forge domains.
+2026-10-02T10:55Z claude note Execute raid pass: CONFIRMED-rule sweep over this repo's history (fix commits whose removed pre-image lines blame into a merged PR) populated 4 frozen entries (572, 575, 588, 599) with defect anchors, left 6 explicitly empty with per-entry justification (603, 602, 584, 580, 573, 570), and appended 15 mined defect-bearing entries (21, 214, 258, 292, 302, 305, 316, 564, 589, 627, 718, 811, 812, 942, 956); board now 25 entries, 19 defect-bearing (criterion 2 met with margin). Every anchor verified against git history by tests/test_benchmark_board.sh (b); confirming evidence (fix commit per anchor) recorded in the seeding merge request body. No shortfall: cross-project replay machinery not needed; no follow-up ticket filed.
