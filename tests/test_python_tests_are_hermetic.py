@@ -21,7 +21,7 @@ Accepted shapes, all already in the tree:
   * a fresh env dict built from scratch (`tests/test_on_end_hook.py`) — an
     explicit `env=` replaces the whole inherited environment, so nothing leaks;
   * an env that derives from `os.environ` but visibly clears `BASH_ENV`
-    (`{**child_env(), "BASH_ENV": ""}` or an equivalent filter);
+    (`{**os.environ, "BASH_ENV": ""}` or an equivalent filter);
   * `env -i` / `env --ignore-environment` as the command's first words.
 
 It reports FILE NAMES and LINE NUMBERS only — never the offending text, never
@@ -37,9 +37,9 @@ HOW IT LOOKS, AND WHAT IT STILL CANNOT SEE
 Unlike the shell guard (a textual scanner over a language that resolves
 commands at runtime), this one parses real syntax with `ast`, so comments,
 docstrings, and quoted strings are invisible to it by construction —
-`(0c)`–`(0e)` below pin that against a naive `grep` implementation, and an
+controls c16/c17 below pin that against a naive `grep` implementation, and an
 unparseable file fails LOUDLY rather than being reported clean (a file the
-guard cannot read is a file it did not check; `(0f)`).
+guard cannot read is a file it did not check; control c18).
 
 What is judged, per CALL NODE:
   * `subprocess.run|Popen|call|check_call|check_output|getoutput|
@@ -60,8 +60,15 @@ What is judged, per CALL NODE:
   * a wholesale env counts as clearing `BASH_ENV` only when the mention is in
     a NEUTRALIZING POSITION: a dict key mapping to an empty-string constant
     (`{**os.environ, "BASH_ENV": ""}` or `dict(os.environ, BASH_ENV="")`), or
-    a `k != "BASH_ENV"` comprehension filter. A `"BASH_ENV"` constant in any
-    other position launders nothing.
+    a `k != "BASH_ENV"` comprehension filter on the comprehension's KEY
+    variable. A `"BASH_ENV"` constant in any other position launders
+    nothing;
+  * clearing is judged BRANCH-AWARE and ORDER-AWARE, symmetric with the
+    wholesale match: a clearing written in one `if`/`else` or boolean arm
+    does not neutralize an inherited mapping in the other arm (and `None`
+    in any arm is inheritance, spelled out); in a `|` merge chain only the
+    LAST term to decide `BASH_ENV` counts — a wholesale term after the
+    clearing key cancels it, a clearing key after the wholesale term wins.
 
 BLIND SPOTS — shapes this scanner does NOT detect. Listed so a reader knows
 what a PASS is worth; none is closed by pretending otherwise:
@@ -69,9 +76,17 @@ what a PASS is worth; none is closed by pretending otherwise:
     judges the call site, so `env = os.environ.copy()` earlier in the
     function, or a helper returning `os.environ` verbatim, defeats it.
     Chasing assignments is dataflow analysis, not a hygiene ratchet; the
-    remedy is review — five converted suites already assign their env to a
+    remedy is review — eight converted suites already assign their env to a
     local first, so acceptance rests on reading those assignments, not on
     this scan.
+  * Runtime spellings of the inherited mapping that no name-based match can
+    see: the walrus (`x := os.environ`), `getattr(os, "environ")`,
+    `importlib.import_module("os").environ`, `__import__("os").environ`,
+    and `copy.deepcopy(os.environ)`. Accepted and disclosed per the 0940
+    re-scope ruling — the detector matches names, not object identity.
+  * `os.system(…)` and `os.popen(…)` — shell-outs outside the subprocess
+    module. Zero uses in the test tree; `subprocess` is the only spawn API
+    this repo's tests use.
   * `subprocess.run(cmd, **kwargs)` with `env` arriving through `**kwargs`.
   * A spawn function reached through a variable (`r = subprocess.run; r(…)`),
     or any second-order aliasing the import scan does not bind.
@@ -198,15 +213,16 @@ class _Scanner:
                     return self._wholesale(generator.iter.func.value)
         return False
 
-    def _clears_bash_env(self, node: ast.expr) -> bool:
-        """The env expression visibly empties or filters out `BASH_ENV`.
+    def _term_clears(self, term: ast.expr) -> bool:
+        """The term visibly empties or filters out `BASH_ENV`.
 
         Only two mention positions neutralize: a dict key mapping to an
         empty-string constant (a dict-literal entry or a `dict(…)` keyword),
-        and a `k != "BASH_ENV"` comprehension filter. A `"BASH_ENV"` constant
-        anywhere else — as a value, inside a nested call — launders nothing.
+        and a comprehension filter whose KEY variable is compared against
+        `"BASH_ENV"`. A `"BASH_ENV"` constant anywhere else — as a value, or
+        on the wrong side of the comparison — launders nothing.
         """
-        for n in ast.walk(node):
+        for n in _walk_term(term):
             if isinstance(n, ast.Dict):
                 for key, value in zip(n.keys, n.values):
                     if (
@@ -229,22 +245,111 @@ class _Scanner:
                     ):
                         return True
             elif isinstance(n, ast.DictComp):
-                for generator in n.generators:
-                    for cond in generator.ifs:
-                        if (
-                            isinstance(cond, ast.Compare)
-                            and any(
-                                isinstance(op, (ast.NotEq, ast.NotIn))
-                                for op in cond.ops
-                            )
-                            and any(
-                                isinstance(side, ast.Constant)
-                                and side.value == "BASH_ENV"
-                                for side in [cond.left, *cond.comparators]
-                            )
-                        ):
-                            return True
+                if self._comp_filters_bash_env(n):
+                    return True
         return False
+
+    def _comp_filters_bash_env(self, comp: ast.DictComp) -> bool:
+        """`k != "BASH_ENV"` — the KEY variable is the comparand.
+
+        A filter on the comprehension's VALUE (`v != "BASH_ENV"`) tests the
+        wrong half of the mapping: the loader's entry rides through under its
+        own key.
+        """
+        for generator in comp.generators:
+            if not (
+                isinstance(generator.target, ast.Tuple) and generator.target.elts
+            ):
+                continue
+            key_var = generator.target.elts[0]
+            if not isinstance(key_var, ast.Name):
+                continue
+            for cond in generator.ifs:
+                if not (
+                    isinstance(cond, ast.Compare)
+                    and isinstance(cond.left, ast.Name)
+                    and cond.left.id == key_var.id
+                    and any(
+                        isinstance(op, (ast.NotEq, ast.NotIn)) for op in cond.ops
+                    )
+                ):
+                    continue
+                if any(
+                    isinstance(n, ast.Constant) and n.value == "BASH_ENV"
+                    for comparator in cond.comparators
+                    for n in ast.walk(comparator)
+                ):
+                    return True
+        return False
+
+    def _term_sets_bash_env(self, term: ast.expr) -> bool:
+        """The term assigns the BASH_ENV key (including filtering it out)."""
+        for n in _walk_term(term):
+            if isinstance(n, ast.Dict):
+                if any(
+                    isinstance(key, ast.Constant) and key.value == "BASH_ENV"
+                    for key in n.keys
+                ):
+                    return True
+            elif (
+                isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Name)
+                and n.func.id == "dict"
+            ):
+                if any(kw.arg == "BASH_ENV" for kw in n.keywords):
+                    return True
+            elif isinstance(n, ast.DictComp):
+                if self._comp_filters_bash_env(n):
+                    return True
+        return False
+
+    def _env_hermetic(self, value: ast.expr) -> bool:
+        """Every possible RESULT of the env expression must be hermetic.
+
+        Branch-aware by symmetry with `_wholesale`: a clearing written in one
+        `if`/`else` or boolean-operator arm does not neutralize an inherited
+        mapping in the other arm, and an arm that is `None` is the same
+        inheritance spelled out.
+        """
+        if isinstance(value, ast.IfExp):
+            return self._env_hermetic(value.body) and self._env_hermetic(
+                value.orelse
+            )
+        if isinstance(value, ast.BoolOp):
+            return all(self._env_hermetic(v) for v in value.values)
+        if isinstance(value, ast.Constant) and value.value is None:
+            return False
+        if isinstance(value, ast.BinOp) and isinstance(value.op, ast.BitOr):
+            return self._chain_hermetic(value)
+        return not (self._wholesale(value) and not self._term_clears(value))
+
+    def _chain_hermetic(self, node: ast.BinOp) -> bool:
+        """A `|` merge chain: the LAST term to decide `BASH_ENV` wins.
+
+        `dict | dict` merges right over left, so `{"BASH_ENV": ""} |
+        {**os.environ}` re-propagates the ambient loader — a clearing
+        cancelled by a later wholesale term is no clearing at all. Evaluation
+        is left to right: `BASH_ENV`'s fate is decided by the last term that
+        sets it explicitly, or carries it wholesale.
+        """
+        terms: list[ast.expr] = []
+        _flatten_or(node, terms)
+        any_wholesale = False
+        cleared = False
+        for term in terms:
+            if isinstance(term, (ast.IfExp, ast.BoolOp)):
+                if not self._env_hermetic(term):
+                    return False
+                if self._wholesale(term):
+                    any_wholesale = True
+                    cleared = False
+                continue
+            if self._term_sets_bash_env(term):
+                cleared = self._term_clears(term)
+            elif self._wholesale(term):
+                any_wholesale = True
+                cleared = False
+        return (not any_wholesale) or cleared
 
     def is_spawn_call(self, node: ast.expr) -> bool:
         if not isinstance(node, ast.Call):
@@ -263,12 +368,33 @@ class _Scanner:
         env = next((k for k in call.keywords if k.arg == "env"), None)
         if env is None:
             return False  # no env= -> the child inherits os.environ verbatim
-        value = env.value
-        if isinstance(value, ast.Constant) and value.value is None:
-            return False  # env=None is the same inheritance, spelled out
-        if self._wholesale(value) and not self._clears_bash_env(value):
-            return False
-        return True
+        return self._env_hermetic(env.value)
+
+
+def _walk_term(node: ast.expr):
+    """Nodes of a merge term, NOT descending into conditional sub-expressions.
+
+    An `if`/`else` or boolean operator inside a term evaluates to one of its
+    own branches; those are judged by `_env_hermetic` separately, so a
+    clearing written inside one must not be read as this term's property.
+    """
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        yield n
+        for child in ast.iter_child_nodes(n):
+            if isinstance(child, (ast.IfExp, ast.BoolOp)):
+                continue
+            stack.append(child)
+
+
+def _flatten_or(node: ast.expr, terms: list) -> None:
+    """Left-assoc operands of a `|` chain, in evaluation order."""
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+        _flatten_or(node.left, terms)
+        _flatten_or(node.right, terms)
+    else:
+        terms.append(node)
 
 
 def _command_words(call: ast.Call) -> list:
@@ -327,8 +453,9 @@ def test_python_suites_spawn_hermetic_children():
         "subprocess spawns that hand BASH_ENV to the child (the loader "
         "re-enters at child startup): "
         + ", ".join(offenders)
-        + " — pass env=child_env(), or an env that clears BASH_ENV "
-        "(see tests/child_env.py)"
+        + " — pass env=child_env() (or an `env -i` command), or an env "
+        "that clears BASH_ENV; the remedy is the same for every spawn API, "
+        "getoutput included (see tests/child_env.py)"
     )
 
 
@@ -522,6 +649,47 @@ _CONTROLS: list[tuple[str, str, str]] = [
         "BAD",
         "import subprocess\n"
         "subprocess.getstatusoutput(\"bash -c 'true'\")\n",
+    ),
+    # --- final-cycle controls: implementation bugs of the guard's own rule ---
+    # The clearing verdict must be branch-aware and order-aware, and the
+    # comprehension filter must test the key variable — each of these shapes
+    # is a wholesale env that the flat clearing walk cleared wrongly.
+    (
+        "c29_bad_clearing_only_in_one_branch",
+        "BAD",
+        "import os, subprocess\n"
+        "flag = True\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "    env={**os.environ, 'BASH_ENV': ''} if flag else os.environ.copy())\n",
+    ),
+    (
+        "c30_bad_none_in_a_conditional_arm",
+        "BAD",
+        "import subprocess\n"
+        "flag = True\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env=None if flag else None)\n",
+    ),
+    (
+        "c31_bad_wholesale_term_cancels_the_clearing",
+        "BAD",
+        "import os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "    env={**os.environ, 'BASH_ENV': ''} | {**os.environ})\n",
+    ),
+    (
+        "c32_ok_rightmost_clearing_term_wins",
+        "OK",
+        "import os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env=os.environ | {'BASH_ENV': ''})\n",
+    ),
+    (
+        "c33_bad_value_side_comprehension_filter",
+        "BAD",
+        "import os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "    env={k: v for k, v in os.environ.items() if v != 'BASH_ENV'})\n",
     ),
 ]
 

@@ -7,7 +7,6 @@ gate when it landed, so a regression back to the unconditional cat passed
 the whole suite; this module is that regression test.
 """
 
-import os
 import subprocess
 from pathlib import Path
 
@@ -23,7 +22,7 @@ SENTINEL = "Search the journal for older or unprocessed experiences."
 
 
 def hook_stdout(project_dir):
-    env = os.environ.copy()
+    env = child_env()
     if project_dir is None:
         env.pop("CLAUDE_PROJECT_DIR", None)
     else:
