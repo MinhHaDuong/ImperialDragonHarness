@@ -26,8 +26,8 @@ Closed: autoclosed — PR #1127
 
 Lair termine tout son travail, compte les expériences non couvertes par un rapport accepté et suggère dream en conclusion à partir de 5 nouvelles expériences. Il ne pose pas de question, n’attend pas et ne lance rien. Aucun timer. Dream est une invocation distincte utilisant le DREAM.md du projet dans un checkout isolé. Sauvegarder le résultat en commits et ouvrir une PR par le workflow normal ; pas de compilateur ou manifest G/C.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification
