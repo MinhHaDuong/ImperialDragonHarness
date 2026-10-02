@@ -40,13 +40,24 @@ BUDGETS = {
     # the erg-shipped asset, 8005 chars where the asset is 2356. Restored
     # byte-for-byte, the chain is 4041. At 10500 this gate could no longer
     # fail on anything the chain could plausibly do.
-    "import": 4300,  # canonical harness instructions and supporting references
+    # Raised 2026-10-02 (ticket 0920): the v8 pilot merges the 0911 reading
+    # section into AGENTS.md, as the adopted convention requires. The section
+    # was trimmed against this gate; the abridgement is stated in
+    # docs/memory-v8/pilot.md, with the template as the reference, so the
+    # budget moves to the measured value plus thin headroom instead.
+    "import": 4500,  # canonical harness instructions and supporting references
     # Both lowered 2026-09-10 by the title-only index pass: the index line is a
     # title and a link, the trailing hook having been a third copy of a sentence
     # the body already carries as `name:` and `description:`. 47 indexes went
     # 198 636 -> 111 021 chars; the largest 26 531 -> 14 061, and the harness
     # index 950 -> 367. Lowering these is the deliverable of that pass.
-    "hook": 500,  # memory/MEMORY.md, printed by scripts/on-start.sh
+    # Raised 2026-10-02 (ticket 0920): the v8 pilot index links the real
+    # topic, journal and reference surface, so it can no longer fit the
+    # legacy 500-char stub (measured 2007 chars at the close of 0920,
+    # headroom 93). In exchange the hook channel stopped being
+    # cross-project: scripts/on-start.sh now injects it only into sessions
+    # whose project is this harness repository, so no other session pays it.
+    "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start.sh
     "memory": 14500,  # the largest per-project index; only one is resident
     "skills": 7000,  # name + description of every SKILL.md
     "agents": 800,  # name + description of every agents/*.md

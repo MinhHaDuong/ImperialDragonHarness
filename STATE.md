@@ -22,7 +22,7 @@ Planning and documentation landed in PRs #1089/#1090. Runtime registration, laun
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for workstreams and `erg ready tickets/` for executable tickets.
-Convention 0911 and inventory 0917 are delivered in #1102; pilot 0920 is next. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
+Convention 0911 and inventory 0917 are delivered in #1102; the v8 pilot 0920 is delivered in #1109. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
 Memory v8 is drafted: repository Markdown, factual roar capture and dream suggested by lair after five new experiences. Native packaging and opt-in shell integration remain follow-on design; scheduling is external.
 The old library/compiler/loader train is superseded; runtime behaviour is unchanged.
 

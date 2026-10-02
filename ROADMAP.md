@@ -9,7 +9,7 @@ Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
 | Workstream | Next work | Completion evidence |
 |---|---|---|
 | Portable installation — 0999 | Complete; parent closed after integration review in #1104. Native packaging and opt-in host setup are future design work | Fresh/relocated registration, preserved profiles and runtime smoke landed in #1091; integration review recorded in #1104 |
-| Memory v8 — 0909 | Convention 0911 and inventory 0917 delivered in #1102; pilot 0920, then capture 0988 and dreaming 0916/0910 | Repository Markdown, preserved factual journal, reviewed dream suggested by lair after five new experiences and four-runtime evidence |
+| Memory v8 — 0909 | Convention 0911 and inventory 0917 delivered in #1102; pilot 0920 delivered in #1109; next capture 0988 and dreaming 0916/0910 | Repository Markdown, preserved factual journal, reviewed dream suggested by lair after five new experiences and four-runtime evidence |
 | Host sync — 0988 | Implement project journal commits and safe integration after the pilot | Sessions preserve notes and the harness continues to update |
 | Runtime policy — 0974 | Apply the adopted semantic model/effort policy | Runtime mappings and capability limits are tested |
 | Verification workflow | Resolve 0853/0990 background review, 0875/0940 hermeticity and 0879 log defects | Reproductions fail before fixes and pass afterward |

@@ -39,6 +39,19 @@ Current status, blockers, next actions: `STATE.md`.
 
 Tickets: `tickets/*.erg`. GitHub Issues are for cross-repo coordination only.
 
+## Project memory
+
+Read [memory/MEMORY.md](memory/MEMORY.md) at task start when it exists. Open
+relevant themes before acting; search themes and the journal with `rg` or
+`grep` when recall is needed, and again if the task changes materially.
+Missing memory does not block work; report a known incomplete installation.
+
+At roar, commit significant facts here or in the explicit private companion;
+preserve journal entries and link corrections from new entries. Do not derive
+lessons, propose rules, or write into the harness for another project; DREAM
+separately prunes, merges and refreshes themes, preserving sources. MEMORY.md
+is at most 100 lines; no automatic rule proposals or timer.
+
 ## Skills Catalog
 
 The skills catalog in `README.md` is auto-generated from `skills/*/SKILL.md` frontmatter.
