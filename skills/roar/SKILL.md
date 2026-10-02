@@ -159,9 +159,16 @@ default branch — there are no remote branches nor merge requests to inspect.
    judgment, inferred lessons, rule proposals or interpreted memories.
 
    Resolve the project repository first. Use the single
-   wrap-up branch/worktree described below. Capture only there or in its
-   explicitly configured private companion; never in the harness because the
-   loaded skill lives there. Include the capture in the single wrap-up bundle, preserve unrelated
+   wrap-up branch/worktree described below. Capture only there; never in the
+   harness because the loaded skill lives there. There is no private companion
+   store — the encrypted-in-repo policy (author decision 2026-10-02, PR #1112)
+   supersedes it: judge the audience at capture, before the first byte is
+   written, and material not cleared for the repository's public audience
+   enters that same repository as age ciphertext through the project's pinned
+   capture mechanism (in the harness, `$IDH_ROOT/scripts/memory-capture.sh`, which pins
+   the encrypt command, the per-project key under ~/.config/keys/memory/ and
+   the judgment point; plaintext never lands in the working tree). Include the
+   capture in the single wrap-up bundle, preserve unrelated
    changes, and follow the project's branch/integration policy. A refused write
    or failed commit remains a visible pending capture; do not switch to the
    harness or a native memory directory. An unintegrated capture branch must be

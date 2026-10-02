@@ -2,6 +2,7 @@
 Title: Session memory lands uncommitted and silently stalls host harness pulls
 Created: 2026-09-29
 Author: claude
+Closed: pinned capture helper + reproduction suite
 
 --- log ---
 2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
@@ -17,6 +18,7 @@ Author: claude
 2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
 2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): capture commits uncleared material in the same repository as age ciphertext from birth (.age suffix); plaintext never lands in the working tree, and the key in ~/.config/keys is never tracked or named by repository content. Filenames of encrypted entries remain public metadata.
 2026-10-02T08:02Z MinhHaDuong note External review of PR #1112 (openrouter-frontier seat, gpt-5.6-luna via OpenRouter, 10.6s; diff ff9465b8..fbd1b0a1) raised a consider finding owned here: the encrypted-in-repo policy names age and ~/.config/keys but does not pin the exact encrypt/decrypt command, the key filename, or the per-project key-selection mechanism; capture implementation must define them. Filed at the author's direction.
+2026-10-02T08:19Z MinhHaDuong closed — pinned capture helper + reproduction suite
 --- body ---
 
 ## Context
@@ -113,11 +115,20 @@ and any private companion store need a concrete project-specific arrangement.
 
 ## Exit criteria
 
-- [ ] A host whose sessions wrote memory since the last pull still fast-forwards the harness the next night, in a disposable-HOME reproduction of the padme case (positive control: today's script refuses)
-- [ ] No memory note is lost or duplicated across the reproduction (byte comparison of the note set before and after)
-- [ ] A pull that still cannot proceed is reported where the author sees it (session start or `idh status`), not only in a journal
-- [ ] `make check` passes
+- [x] A host whose sessions wrote memory since the last pull still fast-forwards the harness the next night, in a disposable-HOME reproduction of the padme case (positive control: today's script refuses) — tests/test_memory_stall_reproduction.sh: control arm refuses via scripts/sync-local-main.sh (the repo side of padme's claude-harness-pull unit, per closed 0987), treatment arm fast-forwards after roar-capture integration
+- [x] No memory note is lost or duplicated across the reproduction (byte comparison of the note set before and after) — same suite: sha256 note-set snapshots, byte-identical in both arms
+- [x] A pull that still cannot proceed is reported where the author sees it (session start or `idh status`), not only in a journal — same suite: the refusal surfaces through scripts/on-start.sh's session-start report echo
+- [x] `make check` passes
 
-- [ ] Roar crée au plus une branche et une PR regroupant tickets, docs et journal ; auto-merge après contrôles, branche préservée si échec.
+- [x] Roar crée au plus une branche et une PR regroupant tickets, docs et journal ; auto-merge après contrôles, branche préservée si échec. — skills/roar/SKILL.md § Bundle and fast track (pre-existing); this close lands in one bundled PR
 
-- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
+- [x] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides comprises. — 30 lines at this close; the index is untouched by capture (dream owns it)
+
+Delivered: scripts/memory-capture.sh pins the capture mechanics the 08:02Z
+review finding required — encrypt/decrypt commands, the per-project key
+(~/.config/keys/memory/<sha256[:16] of the normalized origin URL>.age,
+derived, never named by repository content) and the audience judgment point
+(at capture, before the first byte; plaintext never in the tree). The roar
+private-companion clause is reconciled with the encrypted-in-repo policy in
+skills/roar/SKILL.md step 6, and the pins are recorded in
+docs/memory-v8/README.md § Audience and source handling and pilot.md.

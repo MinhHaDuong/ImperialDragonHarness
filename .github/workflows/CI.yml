@@ -277,6 +277,13 @@ jobs:
       # tests/test_bash_suites.py; several of them build their payloads with jq.
       - name: Ensure jq is available
         run: jq --version
+      # The memory-capture suites (ticket 0988) exercise the pinned age
+      # encrypt/decrypt commands for real; on a host without age they skip.
+      - name: Ensure age is available
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+          age --version && age-keygen --version
       - name: Run test suite with coverage
         # Coverage is reported (term-missing) but not yet gated. Add
         # --cov-fail-under=<N> here to ratchet once the baseline is raised.
