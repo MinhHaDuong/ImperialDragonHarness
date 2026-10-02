@@ -1,33 +1,29 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-02T11:44Z
+Last updated: 2026-10-02T12:31Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-02T11:44Z · as of b7e422f0 -->
+<!-- generated 2026-10-02T12:31Z · as of 071b88c8 -->
 
-**Tickets:** 14 ready · 17 blocked — `erg ready tickets/` for full list
+**Tickets:** 16 ready · 15 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0879 La porte ecrit des lignes de journal malformees…
-**In flight:** 1 open PR, oldest #1143 0d · CI main: success
+**In flight:** no open PRs · CI main: in progress
 **Recent (first-parent):**
-  b7e422f0 tickets: file 1018 — zotero skill consolidation, one zotero skill with verbs
-  741bc61e tickets: close 0485 — dedup-report live-validated, sample arbitrated, residue to author actions
-  65737ba9 rules: edm.md renamed zotero.md — Zotero management, EDM acronym retired
+  071b88c8 Merge pull request #1150 from MinhHaDuong/t1022-pi-local-rerun
+  6cc7c6e4 Merge pull request #1149 from MinhHaDuong/roadmap-refresh-2026-10-02
+  7cca68c5 Merge pull request #1148 from MinhHaDuong/roar-1143-2026-10-02
 
 ## Resume point
-The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Tracker 0999 recorded portable installation and runtime registration, and closed after integration review. The old relocation and cutover tickets 0978 and 0986 are closed WONTDO.
-Academic skills are integrated: reading-note, critical-lit-review, slides, choose-venue, conference-submission-prep and message-framing. Claude.ai skill sync is off.
-Planning and documentation landed in PRs #1089/#1090. Runtime registration, launch guards and safe operator docs landed in PR #1091 (child 1003). Child 1002 was closed WONTDO in #1099; its extracted legacy helper patch remains historical and unapproved. PR #1101 retired obsolete 0934 provenance machinery while preserving memory data and source history. Parent 0999's integration review is complete and it closed in #1104; the memory v8 pilot is downstream, not a prerequisite. PR #1102 delivers the v8 convention and inventory (0911/0917) and deletes the remaining legacy dream helpers.
+The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
+Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 0913 holds the per-project migration.
+The Zotero interface architecture landed in #1143: principles, per-skill transports, the one-`zotero` verb surface as target state, `rules/zotero.md` (EDM acronym retired), and 0485 closed on a live-validated hash-dedup report with the author's sample arbitration. Zotero follow-ups: 1018 (consolidation), 1020 (`~/.idh` sweep). Roadmap refreshed from the open set in #1149.
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for workstreams and `erg ready tickets/` for executable tickets.
-Convention 0911 and inventory 0917 are delivered in #1102; the v8 pilot 0920 is delivered in #1109. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
-Memory v8 is drafted: repository Markdown, factual roar capture and dream suggested by lair after five new experiences. Native packaging and opt-in shell integration remain follow-on design; scheduling is external.
-The old library/compiler/loader train is superseded; runtime behaviour is unchanged.
-
-The primary checkout is clean and based on `origin/main`. The mixed local delta from `docs-portable-agents-plan` is preserved, unpushed, in `wip-reconcile-snapshot-2026-10-02`; it includes stale/retired helper, test and ticket edits and must be selectively reconciled before reuse.
+See [ROADMAP.md](ROADMAP.md) for the eight trains. After memory 0913: attribution 1004→1009 (gated on 0913), runtime policy 0974/0938 (+1017/0980/1021), verification 0990/0205/0902/0879, Claude adapter 0887/0888, raid annotations 1016, then Zotero 1018 with the 1020 rider.
+The primary checkout is clean and based on `origin/main`.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).

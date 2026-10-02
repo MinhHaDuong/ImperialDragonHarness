@@ -31,8 +31,8 @@ ImperialDragonHarness/          # reference clone: ~/.agents
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
 ├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
-├── memory/                 # Legacy corpus; no new project outputs
-├── projects/<slug>/memory/ # Legacy corpus pending migration
+├── memory/                 # The harness's own v8 memory (journal, topics, dreams)
+├── projects/<slug>/memory/ # Legacy corpus pending migration (0913)
 ├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 └── docs/                   # Reference material (not loaded)
@@ -76,7 +76,7 @@ supported by the portable registration contract: entry points resolve the
 checkout from their real location or an explicit root argument. Dream/memory
 uses project-local Markdown in v8, not the retired shared-store provenance
 helper. The old helper handoff 1002 is closed WONTDO; safe capture and
-integration remain in 0988 after the pilot.
+integration landed in 0988 (pinned helper + reproduction suite).
 
 Follow the [installation guide](docs/idh-install-strategy.md) to register
 reviewed resources with each runtime. It distinguishes current additive
