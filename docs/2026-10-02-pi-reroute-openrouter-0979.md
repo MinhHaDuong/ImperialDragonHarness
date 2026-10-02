@@ -3,9 +3,11 @@
 2026-10-02, Pi 0.87.1 (installée) et 1.0.0 (installation temporaire hors
 dépôt), `pi --print --mode json`. Suite de l'essai 0977
 ([2026-09-28-essai-pi-backends-souverains.md](2026-09-28-essai-pi-backends-souverains.md)) :
-l'essai a observé un reroutage silencieux vers openrouter quand
-l'identifiant de modèle ne se résolvait pas ; ce document caractérise le
-déclencheur précis et retient la mitigation harnais. Ticket
+l'essai a observé un reroutage silencieux vers openrouter avec un
+identifiant de modèle non vide et non résolvable sous `--provider ilaas` ; ce
+document caractérise un déclencheur reproduit sur padme (voie `--model`
+vide/absent) et retient la mitigation harnais. Le déclencheur de 0977 reste
+non réconcilié (voir § Portée). Ticket
 [tickets/0979-pi-reroute-sans-avertissement-vers-openr.erg](../tickets/0979-pi-reroute-sans-avertissement-vers-openr.erg).
 
 ## Méthode
@@ -53,18 +55,17 @@ priorité 1 teste `cliProvider && cliModel` — si l'identifiant de modèle est
 vide ou absent, **la paire CLI entière est sautée, `--provider` compris**, et
 Pi retombe sur la priorité « premier modèle disponible avec une clé valide ».
 Aujourd'hui ce repli tombe sur huggingface (jeton présent dans
-l'environnement) ; au moment de l'essai 0977 il est tombé sur
-`"provider":"openrouter"` (openrouter/auto). La destination du repli dépend
-donc des fournisseurs authentifiés sur la machine — le danger n'est pas
-openrouter en particulier mais n'importe quel fournisseur non souverain
-authentifié.
+l'environnement). La destination du repli dépend donc des fournisseurs
+authentifiés sur la machine — le danger n'est pas openrouter en particulier
+mais n'importe quel fournisseur non souverain authentifié.
 
 Le `--provider` explicite n'est ni une garde ni un simple indice dans le cas
 vide : il n'est tout simplement pas lu. En revanche, un nom de fournisseur
 inconnu **est** une garde (erreur visible, exit 1), et un identifiant de
 modèle inconnu avec fournisseur explicite **reste** sur le fournisseur
-demandé, avec un avertissement stderr — le reroutage inter-fournisseurs de
-0.87.1 se produit uniquement par la voie vide/absente.
+demandé, avec un avertissement stderr — dans les variantes testées (padme,
+une configuration machine), le reroutage inter-fournisseurs de 0.87.1 ne se
+produit que par la voie vide/absente.
 
 ## Versions
 
@@ -78,12 +79,23 @@ demandé, avec un avertissement stderr — le reroutage inter-fournisseurs de
   `Using custom model id` avec fournisseur préservé. La chaîne de repli
   « premier modèle avec clé valide » existe toujours dans la source amont
   (`model-resolver.ts`, priorité 4) au 2026-10-02 : la garde ne tient qu'à
-  l'exigence du `--model`. Aucun signalement amont trouvé sur ce comportement
-  dans les tickets du dépôt `earendil-works/pi` consultés au 2026-10-02.
-- L'essai 0977 (2026-09-28) observait le même mécanisme aboutir à
-  `"provider":"openrouter"` ; la reproduction du jour aboutit à huggingface —
-  même déclencheur, destination différente selon l'authentification
-  disponible.
+  l'exigence du `--model`. Le comportement est signalé en amont :
+  `earendil-works/pi#10236` (« `--provider <name>` does not restrict model
+  resolution, silently running a different provider », ouvert le 2026-09-30,
+  fermé), et les notes de version 1.0.0 indiquent : « Fixed `--provider`
+  without `--model` being silently ignored and running the default model from
+  another provider; it now fails with an error (#10236) ».
+
+## Portée
+
+Constat limité à ce qui a été testé : voie `--model` vide/absent, backend
+padme, une configuration machine. L'essai 0977 (2026-09-28) a observé
+`"provider":"openrouter"` avec un identifiant **non vide** non résolvable sous
+`--provider ilaas` ; ce déclencheur reste **non réconcilié** avec le tableau
+ci-dessus, où un identifiant non vide inconnu reste sur le fournisseur
+demandé. ILaaS n'a pas été testé (clés en attente), et rien ne montre que le
+`--model` de 0977 était vide : le déclencheur de 0977 n'est pas reproduit.
+La règle d'assertion de fournisseur couvre les deux cas.
 
 ## Sévérité
 
@@ -105,6 +117,9 @@ réponse, et les identifiants déclarés dans la config Pi vivante doivent
 rester résolvables. Aucun site d'appel `pi --print` n'existe aujourd'hui dans
 le code du harnais (vérifié par grep lors du raid 2026-10-02) : la règle est
 une garde documentée, pas un enrobé (wrapper).
+
+La règle de résolvabilité est de l'hygiène ; c'est la règle d'assertion de
+fournisseur qui garde contre le reroutage, quel qu'en soit le déclencheur.
 
 Le contrôle de cohérence de `models.json` au healthcheck a été rejeté comme
 mauvaise couche : `~/.pi/agent/models.json` est machine-local, hors du dépôt,

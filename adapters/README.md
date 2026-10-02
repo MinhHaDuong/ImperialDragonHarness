@@ -179,6 +179,8 @@ turn enforcement into advice:
   fail-open doctrine is carried, not Pi's handler fail-safe (which would
   block on any breakage). Install: symlink into
   `~/.pi/agent/extensions/`.
+  Any future `pi --print` driver must assert the served provider:
+  [pi/README.md](pi/README.md) (ticket 0979).
 
 **Refusal rule (binding for 0810's profiles):** a Git-mutating runtime
 profile may not activate without its enforcing boundary — Claude: the

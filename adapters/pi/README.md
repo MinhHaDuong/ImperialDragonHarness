@@ -1,16 +1,22 @@
-# pi adapter — provider-assertion rule
+# pi adapter — provider-assertion rule for `pi --print` drivers
 
 Pi is a coding-agent runtime the harness can drive with
 `pi --print --mode json`. Characterized on 0.87.1 (ticket 0979,
-[docs/2026-10-02-pi-reroute-openrouter-0979.md](../../docs/2026-10-02-pi-reroute-openrouter-0979.md)):
-when model resolution comes up empty — an empty or absent `--model` — Pi
-silently discards the explicit `--provider` and serves the request through
+[docs/2026-10-02-pi-reroute-openrouter-0979.md](../../docs/2026-10-02-pi-reroute-openrouter-0979.md)),
+on padme only, one machine configuration: with an empty or absent `--model`,
+Pi silently discards the explicit `--provider` and serves the request through
 the first provider with a valid key on the machine (huggingface in the
-2026-10-02 reproduction, openrouter in essai 0977). Exit 0, a normal-looking
-answer, no warning on stderr or in the JSON stream. An unknown provider name
-errors visibly, and an unknown model id with an explicit provider stays on
-that provider with a stderr warning — the cross-provider reroute is the
-empty/absent-model path.
+2026-10-02 reproduction). Exit 0, a normal-looking answer, no warning on
+stderr or in the JSON stream. In the same tests an unknown provider name
+errors visibly, and an unknown non-empty model id with an explicit provider
+stays on that provider with a stderr warning. Upstream fixed the empty/absent
+path in 1.0.0 (earendil-works/pi#10236).
+
+Essai 0977 observed a silent reroute to openrouter with a **non-empty**
+unresolvable id under `--provider ilaas`. That trigger is unreconciled with
+the characterization above: ilaas was not tested (keys pending), and nothing
+shows 0977's `--model` was empty. The rule below guards both cases, since it
+checks the served provider whatever the trigger.
 
 ## Rule: assert the served provider, never the requested one
 
@@ -26,7 +32,7 @@ answer**. Concretely:
   failed and assume the prompt content has egressed to the fallback provider —
   potentially uncleared material leaving the sovereign perimeter.
 - Always pass both flags together, non-empty: `--provider <sovereign> --model
-  <id>`; an empty `--model` is the characterized reroute trigger on 0.87.1
+  <id>`; an empty `--model` is the reroute trigger characterized on 0.87.1
   (Pi 1.0.0 rejects the combination visibly).
 
 ## Rule: keep declared model ids resolvable
@@ -39,9 +45,11 @@ unresolvable id leaves the sovereign backend usable only through warnings.
 
 ## Scope today
 
-No `pi --print` call sites exist in harness code today (grep-verified in the
-raid log, 2026-10-02), so this file is a documentation guard for the adapter
-pilots (tickets 0923 and 0924): when a runtime adapter for Pi is wired, the
+The Pi adapter ships the bash guard extension
+(`extensions/idh-guard.ts`, ticket 0809); it does not drive Pi. No
+`pi --print` call sites exist in harness code today (grep-verified in the
+raid log, 2026-10-02), so this rule is a documentation guard for the adapter
+pilots (tickets 0923 and 0924): when a `pi --print` driver is wired, the
 provider assertion above is part of its contract, not an optional check.
 
 Relevant ticket: [0979](../../tickets/0979-pi-reroute-sans-avertissement-vers-openr.erg)

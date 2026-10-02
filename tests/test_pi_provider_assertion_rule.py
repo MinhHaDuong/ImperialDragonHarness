@@ -1,8 +1,10 @@
 """Pi adapter provider-assertion rule pins (ticket 0979).
 
-Pi 0.87.1 can reroute a request to a different provider than the one
-requested when model resolution fails — silently, with a normal-looking
-answer on screen (essai 0977, docs/2026-09-28-essai-pi-backends-souverains.md).
+Pi 0.87.1 reroutes a request to a different provider than the one
+requested when ``--model`` is empty or absent — the explicit ``--provider``
+is discarded silently, with a normal-looking answer on screen (characterized
+on padme; essai 0977's non-empty-id observation under ilaas stays
+unreconciled, docs/2026-09-28-essai-pi-backends-souverains.md).
 The harness mitigation is a documented rule, not code: every Pi run
 targeting a sovereign backend must verify ``"provider"`` in ``--mode json``
 output equals the requested provider before trusting the answer, and model
@@ -18,6 +20,10 @@ fail the moment the docs stop saying what they must.
 
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.adherence
+
 REPO = Path(__file__).resolve().parents[1]
 
 
@@ -27,6 +33,13 @@ def test_pi_adapter_pins_provider_assertion_rule():
     assert "--mode json" in readme
     assert "0979" in readme
     assert "2026-10-02-pi-reroute-openrouter-0979" in readme
+    assert "must verify" in readme
+    assert "turn_end.message.provider" in readme
+    assert "## Rule: keep declared model ids resolvable" in readme
+    # Scope: the Pi adapter exists (bash guard); only a pi --print driver is unwired.
+    assert "idh-guard.ts" in readme
+    # The 0977 trigger is recorded as unreconciled, not claimed reproduced.
+    assert "unreconciled" in readme
 
 
 def test_pi_characterization_doc_records_trigger_and_versions():
@@ -34,6 +47,10 @@ def test_pi_characterization_doc_records_trigger_and_versions():
     assert "0.87.1" in doc
     assert "openrouter" in doc.lower()
     assert "uncleared" in doc.lower() or "egress" in doc.lower()
+    assert "--provider requires --model" in doc
+    assert '--model ""' in doc
+    assert "#10236" in doc
+    assert "non réconcilié" in doc
 
 
 def test_pi_adapter_tickets_carry_cross_reference():
