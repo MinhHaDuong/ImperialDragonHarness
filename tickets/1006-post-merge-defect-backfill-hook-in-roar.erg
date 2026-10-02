@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Post-merge defect backfill hook in roar step-3 sweep
+Created: 2026-10-02
+Author: MinhHaDuong
+Blocked-by: 1005
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/1004, blocked by 1005 (records must exist to backfill).
+The `defect-confirmed` event line (spec §4.5, §5.3) is a post-merge miss
+label; adopted findings are the pre-merge labels. Post-merge events are
+the only source of the pair table's "neither" cell; without them,
+correlation estimates skew optimistic and the labeled corpus stays
+one-sided (the audition board's structural zero).
+
+## Actions
+
+1. Extend roar step 3's sweep ("review the fix just completed — grep for
+   the same anti-pattern") with one hook: when the fix touches lines a
+   past PR's review covered, append a `defect-confirmed` event line to
+   that PR's attribution record: repo-relative path:line anchor, source,
+   referencing PR. Zero-or-more event lines per record; no initial
+   placeholder, no mutation of existing lines (append-only).
+2. Backfill is factual; roar never re-judges the original review.
+3. Tests: a simulated post-merge fix appends the event line to the
+   referenced record and nothing else; a fix with no covered past review
+   is a no-op; repeated fixes append repeated events.
+
+## Exit criteria
+
+- [ ] A post-merge fix backfills the original PR's attribution record
+- [ ] Backfilled records are visible to the 1007 read surfaces as
+      defect-bearing games

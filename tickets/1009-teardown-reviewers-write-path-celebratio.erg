@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Teardown: reviewers write path, celebration telemetry, ticket dispositions
+Created: 2026-10-02
+Author: MinhHaDuong
+Blocked-by: 1005
+Blocked-by: 1006
+Blocked-by: 1007
+Blocked-by: 1008
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/1004, blocked by 1005 (capture lands before teardown —
+no recording gap). Spec §8-§10 is authoritative for what dies and what
+survives.
+
+## Actions
+
+1. Thin the reviewers skill to descriptor only (spec §8): keep
+   needs-description, Padmé/OpenRouter live route docs, fail-open live
+   semantics; move seat-runner, benchmark board and replay logic to the
+   separate coaching skill; drop panel.yml roster governance,
+   scorecard/scores/trial machinery, gaze auto request/harvest wiring.
+   Rewrite its scope statement: offers external routes; coaching and
+   board replay live in the coaching skill and attribution.
+2. Celebrations teardown (spec §9): delete roar step 2, the roar-last-sha
+   sentinel, log-celebration, both telemetry tests, the
+   CLAUDE_TELEMETRY_DIR seam. enumerate-merges.py migrates to 1007 first.
+   Leave events.jsonl and permission-diffs/ untouched. Optional one-time
+   archive of celebrations.jsonl (only exact roar-run timestamps are
+   unrecoverable).
+3. Ticket dispositions: close 0980 WONTDO (seat-each-runtime premise
+   dropped); close 0356 (absorbed by 1008); close 0205 with
+   integration-review note cross-referencing 1004 and the spec; one
+   annotation log line on each closed trial ticket
+   (0206/0207/0217/0208/0346/0348/0353) pointing at the spec;
+   scorecards are historical evidence, never deleted.
+4. Rewrite the rules/workflow.md decorrelation rule off the seat
+   mechanism (keep the gradient: sibling tier minimum, different
+   vendor/harness stronger, most-decorrelated available for the risk).
+
+## Exit criteria
+
+- [ ] Reviewers skill passes its reduced test suite; no roster/trial
+      machinery remains
+- [ ] Celebration telemetry no longer written; grep clean for
+      log-celebration and the sentinel
+- [ ] 0980 and 0205 closed with reasons; closed trial tickets annotated
+- [ ] No capture gap: attribution records exist for every merge reviewed
+      after 1005 landed

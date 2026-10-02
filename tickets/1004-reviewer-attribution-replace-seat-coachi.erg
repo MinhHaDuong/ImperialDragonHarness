@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Reviewer attribution: replace seat coaching with attribution records (tracker)
+Created: 2026-10-02
+Author: MinhHaDuong
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+2026-10-02T08:05Z MinhHaDuong note approved design (author, 2026-10-02 session): coaching by attribution, defer to runtime harnesses, roar captures reviewer facts, ex-post offline ranking; spec at docs/2026-10-02-reviewer-attribution-design.md; supersedes 0205's seat-runner panel contract (0205 closes at teardown with integration-review note)
+
+--- body ---
+## Context
+
+The 0205 external-reviewer panel trial review (2026-10-02) found: empty
+defect anchors make the audition payoff structurally zero; agent-authored
+scorecards drift out of the parser; the seat-runner assumption blocks
+runtime portability; decorrelation was never measured. The approved
+redesign replaces seat execution with attribution capture. Spec:
+docs/2026-10-02-reviewer-attribution-design.md — the single source of
+truth for the record contract, skill split, statistics policy and
+teardown.
+
+TRACKING TICKET — stays open until all children merge, the teardown lands
+and tickets/0205 is closed with its integration-review note.
+
+## Children
+
+- tickets/1005 — attribution record template + roar step-6 capture
+- tickets/1006 — post-merge defect backfill hook in roar step-3 sweep
+  (blocked-by 1005)
+- tickets/1007 — read surfaces: scores, correlation, marginal coverage;
+  migrates enumerate-merges.py (blocked-by 1005)
+- tickets/1008 — ground-truth seeding, absorbs tickets/0356
+- tickets/1009 — teardown: reviewers write path, celebration telemetry,
+  ticket dispositions (blocked-by 1005 — capture lands before teardown)
+
+## Ordering
+
+Capture first (1005), then 1006/1007/1008 in any order, teardown (1009)
+last: a teardown-first sequencing creates a recording gap.
+
+## Exit criteria
+
+- [ ] 1005-1008 merged; attribution records capture writer/reviewer/
+      findings/defects facts on every reviewed merge
+- [ ] 1009 landed: reviewers skill thinned to descriptor+replay,
+      celebration telemetry deleted, 0980 closed WONTDO, closed trial
+      tickets annotated
+- [ ] 0205 closed with integration-review note cross-referencing this
+      tracker and the spec

@@ -22,6 +22,7 @@ Author: MinhHaDuong
 2026-07-15T06:11Z Minh Ha-Duong note author reframe (2026-07-15) — squad-management model recorded in the body; the promote/drop endpoint becomes continuous squad management
 2026-09-23T17:17Z Minh Ha-Duong note blocker 0207 closed — Blocked-by removed.
 2026-09-23T19:30Z Codex note Roster audit: 0207's local Padmé qwen3.8-27b seat completed the required five-PR/three-project trial, but had zero verified catches and four noisy reviews; it remains on demand and is not promoted. The older qwen3.6 prototype sentence below is historical evidence, not a current seat recommendation. The panel contract and continuous squad-management work in this ticket remain open.
+2026-10-02T08:01Z MinhHaDuong note design successor filed: tickets/1004 replaces the seat-runner panel contract with reviewer-attribution capture (spec docs/2026-10-02-reviewer-attribution-design.md); this tracker closes at 1009's integration-review note; recorded trial verdicts stand
 --- body ---
 ## Context
 
