@@ -2,10 +2,12 @@
 Title: La garde d'hermeticite ne voit pas les spawns par chemin de script, et annonce quand meme 29 suites sur 29
 Created: 2026-09-07
 Author: claude
+Closed: autoclosed — PR #1133
 
 --- log ---
 2026-09-07T04:05Z claude created balayage roar apres 0874 ; trouve independamment par la phase 5 de la porte sur PR 818, qui l'a etabli en retirant -i d'une copie et en observant SKIP plutot que BAD
 2026-09-07T04:05Z claude note bump verify-reroll — round 1: la table sous-estimait la classe (six fichiers annonces, seize reels)
+2026-10-02T10:38Z reviewer closed — autoclosed — PR #1133
 --- body ---
 ## Context
 
