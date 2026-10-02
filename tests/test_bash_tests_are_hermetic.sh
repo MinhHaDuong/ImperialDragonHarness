@@ -365,8 +365,9 @@ _file_verdict() {
             # read loop before the UNTERMINATED sentinel, silently flipping an
             # exempt-but-unread file to EXEMPT — a clean verdict on a file the
             # scanner never finished reading (1015, control 0q). The loop runs
-            # on; the exempt flag wins at the verdict, so scanning an exempt
-            # file's remaining lines changes nothing else.
+            # on: the sentinel returns first if it appears, and otherwise the
+            # exempt flag decides once the loop ends, so scanning an exempt
+            # file's remaining lines changes no verdict.
         fi
         scanned="$s"
         [[ "$s" =~ $_EXEC_RE ]] && scanned="$u"
