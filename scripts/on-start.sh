@@ -48,11 +48,19 @@ fi
 # auto-load is what must inject it — that is the adapter's job, not this
 # hook's (tickets 0800, 0802).
 
-# Inject harness-level memory into every Claude Code session, including
-# unrelated projects — a legacy channel pending retirement under memory v8
-# (no cross-project pooling or rule promotion). Kept tight; the resident
-# census budgets this file.
-cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
+# Inject the harness memory index only into sessions whose project is this
+# harness repository (or one of its worktrees). Until the v8 pilot (ticket
+# 0920) this cat-ed the index into every Claude Code session, including
+# unrelated projects — cross-project pooling that v8's project-local scope
+# retires here; another project's memory belongs to its own AGENTS.md.
+# Still budgeted by the resident census (hook channel).
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+    _mem_gcd=$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _mem_gcd=""
+    _mem_harness=$(git -C "$_script_dir/.." rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _mem_harness=""
+    if [ -n "$_mem_gcd" ] && [ "$_mem_gcd" = "$_mem_harness" ]; then
+        cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
+    fi
+fi
 
 # Surface the previous session start's local-main sync report when it needed
 # attention (dirty overlap, divergence, refusal). A clean fast-forward — and a

@@ -3,9 +3,9 @@
 These are documentary resources for tickets 0911 and 0917, based on the
 [current design](../2026-09-10-dragon-memory-design.md) and
 [delivery plan](../2026-09-11-memory-implementation-plan.md). They install no
-runtime behavior. The harness is the candidate pilot because its assigned work
-already has repository memory; activation and audience verification belong to
-0920. Do not copy another project's memories into it.
+runtime behavior. The harness is the pilot; activation and audience are
+declared in the [pilot declaration](pilot.md) (ticket 0920). Do not copy
+another project's memories into it.
 
 ## Adopting the convention
 

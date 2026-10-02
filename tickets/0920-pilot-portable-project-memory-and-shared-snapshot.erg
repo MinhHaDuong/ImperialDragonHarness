@@ -16,6 +16,7 @@ Author: codex
 2026-10-01T21:30Z MinhHaDuong note blocker 0911 closed — Blocked-by removed.
 2026-10-01T21:30Z MinhHaDuong note blocker 0917 closed — Blocked-by removed.
 2026-10-01T22:05Z MinhHaDuong note blocker 0999 closed — Blocked-by removed.
+2026-10-02T06:47Z MinhHaDuong decision Batched decision list answered, hunt resumed detached. (1) Pilot project: the harness repository itself (~/.agents), per the candidate named in docs/memory-v8/source-inventory.md. (2) Audience: public repository for themes and journal, plus a declared versioned private companion store with a local pointer for material not cleared for the public audience; the companion carries its own access and versioning convention, a public branch is never private storage, and the concrete companion arrangement is proposed in the PR for author review without invented content. (3) Initial sources: only the memory/ root sources inventoried in docs/memory-v8/source-inventory.md (the 10 tracked files under its Pilot sources scope); no pooling of projects/* exports; each imported source keeps provenance, its original text stays accessible, and originals are not rewritten. DREAM.md versioning belongs to 0916, not this ticket.
 --- body ---
 
 ## Context
