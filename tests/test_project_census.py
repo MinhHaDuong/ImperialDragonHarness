@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 pytestmark = pytest.mark.adherence
 
 REPO = Path(__file__).resolve().parents[1]
@@ -98,6 +100,7 @@ def _run_hook(project: Path) -> str:
     return subprocess.run(
         ["bash", str(HOOK), str(project)],
         capture_output=True, text=True, timeout=30, check=True,
+        env=child_env(),
     ).stdout
 
 

@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parent.parent
@@ -34,6 +36,7 @@ def _run(*files: str) -> subprocess.CompletedProcess:
         [sys.executable, str(CLI), *files],
         capture_output=True,
         text=True,
+        env=child_env(),
     )
 
 

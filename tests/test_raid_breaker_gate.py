@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 spec = importlib.util.spec_from_file_location("raid_gate_state", SCRIPTS / "raid_gate_state.py")
@@ -34,7 +36,7 @@ def test_gate_heartbeat_is_tied_to_its_worktree(tmp_path: Path) -> None:
     (own / "Makefile").write_text("check:\n\t@sleep 1\n")
     process = subprocess.Popen(
         [sys.executable, str(SCRIPTS / "raid-gate.py"), "--", "make", "check"],
-        cwd=own, stdout=subprocess.DEVNULL,
+        cwd=own, stdout=subprocess.DEVNULL, env=child_env(),
     )
     try:
         for _ in range(40):

@@ -24,6 +24,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 # adherence: this is the lint gate, selected by `make lint`. integration: it
 # spawns subprocesses, which the marker-hygiene lens (scripts/test-quality.py)
 # requires to be declared; both tiers exclude it from `make check-fast`.
@@ -60,7 +62,8 @@ def _ruff() -> str:
 
 
 def test_ruff_version_satisfies_pinned_range():
-    out = subprocess.run([_ruff(), "--version"], capture_output=True, text=True)
+    out = subprocess.run([_ruff(), "--version"], capture_output=True, text=True,
+                         env=child_env())
     # A binary that exists but cannot run (stale pipx shim after a Python
     # upgrade, rules/coding-python.md) must not read as version drift.
     assert out.returncode == 0, f"ruff --version failed: {out.stderr.strip()}"
@@ -78,7 +81,7 @@ def test_ruff():
     # nested `uv run`. stderr included: ruff reports a broken .ruff.toml
     # there, with nothing on stdout.
     result = subprocess.run([_ruff(), "check", "."], capture_output=True,
-                            text=True, cwd=REPO)
+                            text=True, cwd=REPO, env=child_env())
     assert result.returncode == 0, result.stdout + result.stderr
 
 

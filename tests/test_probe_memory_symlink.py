@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "probe-memory-symlink.py"
 spec = importlib.util.spec_from_file_location("probe_memory_symlink", SCRIPT)
 pm = importlib.util.module_from_spec(spec)
@@ -347,7 +349,7 @@ def test_sigterm_kills_the_child_group_before_exit(tmp_path, sleeping_claude):
         "pm._launch(h, cwd=h, pwd=h, key='k')\n"
     )
     env = {
-        **os.environ,
+        **child_env(),
         "PATH": f"{bindir}:{os.environ['PATH']}",
         "PROBE_TIMEOUT": "60",
     }

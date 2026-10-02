@@ -19,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 TESTS_DIR = Path(__file__).resolve().parent
 SH_SUITES = sorted(TESTS_DIR.glob("test_*.sh"))
 
@@ -33,6 +35,7 @@ def test_shell_suite(script: Path):
         capture_output=True,
         text=True,
         timeout=120,
+        env=child_env(),
     )
     if result.returncode != 0:
         sys.stdout.write(result.stdout)

@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 
 pytestmark = pytest.mark.integration
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,15 +53,20 @@ def test_harness_worktree_does_not_prompt(tmp_path):
     scripts.mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/prompt-project-coherence.sh", scripts)
     (harness / "CLAUDE.md").write_text("# Harness instructions\n")
-    subprocess.run(["git", "init", "-b", "main", str(harness)], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(harness), "config", "user.email", "test@example.com"], check=True)
-    subprocess.run(["git", "-C", str(harness), "config", "user.name", "Test"], check=True)
-    subprocess.run(["git", "-C", str(harness), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(harness), "commit", "-m", "fixture"], check=True, capture_output=True)
+    subprocess.run(["git", "init", "-b", "main", str(harness)], check=True,
+                   capture_output=True, env=child_env())
+    subprocess.run(["git", "-C", str(harness), "config", "user.email", "test@example.com"],
+                   check=True, env=child_env())
+    subprocess.run(["git", "-C", str(harness), "config", "user.name", "Test"],
+                   check=True, env=child_env())
+    subprocess.run(["git", "-C", str(harness), "add", "."], check=True, env=child_env())
+    subprocess.run(["git", "-C", str(harness), "commit", "-m", "fixture"], check=True,
+                   capture_output=True, env=child_env())
     linked = tmp_path / "linked"
-    subprocess.run(["git", "-C", str(harness), "worktree", "add", "-b", "linked", str(linked)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(harness), "worktree", "add", "-b", "linked", str(linked)],
+                   check=True, capture_output=True, env=child_env())
     result = subprocess.run(["bash", str(scripts / "prompt-project-coherence.sh"), str(linked)],
-                            check=True, capture_output=True, text=True)
+                            check=True, capture_output=True, text=True, env=child_env())
     assert result.stdout == ""
 
 

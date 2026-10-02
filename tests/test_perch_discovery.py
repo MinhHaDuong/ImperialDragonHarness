@@ -27,12 +27,13 @@ Integration tier: subprocesses, and each probe takes seconds.
 
 import importlib.util
 import json
-import os
 import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 
 REPO = Path(__file__).resolve().parent.parent
 TIMEOUT = 120
@@ -73,7 +74,7 @@ def profile(tmp_path, monkeypatch):
 
 
 def _env(home: Path, **extra: str) -> dict[str, str]:
-    env = dict(os.environ)
+    env = dict(child_env())
     env["HOME"] = str(home)
     env.update(extra)
     return env
@@ -218,7 +219,7 @@ def test_the_cli_reports_a_refusal_as_one_line_and_exit_two(tmp_path):
         capture_output=True,
         text=True,
         timeout=TIMEOUT,
-        env={**os.environ, "PERCH_CODEX_BIN": str(mute)},
+        env={**child_env(), "PERCH_CODEX_BIN": str(mute)},
     )
     assert done.returncode == 2, done
     assert done.stderr.startswith("idh: ")

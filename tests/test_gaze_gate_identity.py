@@ -9,6 +9,8 @@ import subprocess
 
 import pytest
 
+from child_env import child_env
+
 
 ROOT = Path(__file__).resolve().parent.parent
 GAZE = ROOT / "skills/gaze/SKILL.md"
@@ -52,7 +54,7 @@ def test_denied_worktree_add_stops_without_fallback(tmp_path):
         '*) exit 99;; esac\n'
     )
     fake_git.chmod(0o755)
-    env = os.environ | {"PATH": f"{bin_dir}:{os.environ['PATH']}", "IDH_HOME": str(ROOT)}
+    env = child_env() | {"PATH": f"{bin_dir}:{os.environ['PATH']}", "IDH_HOME": str(ROOT)}
     result = subprocess.run(["bash", "-c", shell], env=env, text=True, capture_output=True)
     assert result.returncode != 0
     assert "gaze: cannot create isolated review worktree" in result.stderr

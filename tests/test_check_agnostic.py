@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 SCRIPT = Path(__file__).parent.parent / "scripts" / "check-agnostic.sh"
 
 # A synthetic ticket body carrying a hardcoded home path (the forbidden pattern).
@@ -33,6 +35,7 @@ def _run(target):
         ["bash", str(SCRIPT), str(target)],
         capture_output=True,
         text=True,
+        env=child_env(),
     )
 
 
@@ -43,6 +46,7 @@ def _run_no_args(cwd):
         cwd=str(cwd),
         capture_output=True,
         text=True,
+        env=child_env(),
     )
 
 

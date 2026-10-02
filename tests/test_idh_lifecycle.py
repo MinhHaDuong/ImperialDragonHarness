@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 from tracked_tree import tracked_checkout
 
 # The tracked tree, not this checkout: untracked links here (the private
@@ -179,7 +181,7 @@ def _git(cwd, *args):
     subprocess.run(
         ["git", "-C", str(cwd), "-c", "user.name=t", "-c", "user.email=t@t",
          "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main", *args],
-        check=True, capture_output=True, text=True,
+        check=True, capture_output=True, text=True, env=child_env(),
     )
 
 
@@ -231,7 +233,8 @@ def test_sync_fast_forwards_or_names_the_blocking_file(tmp_path, machine):
     r = sync()
     assert r.returncode == 0, r.stdout + r.stderr
     main = subprocess.run(["git", "-C", str(local), "rev-parse", "main", "origin/main"],
-                          capture_output=True, text=True, check=True).stdout.split()
+                          capture_output=True, text=True, check=True,
+                          env=child_env()).stdout.split()
     assert main[0] == main[1]
 
     script = local / "scripts" / "sync-local-main.sh"

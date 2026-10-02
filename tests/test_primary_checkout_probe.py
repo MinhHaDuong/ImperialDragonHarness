@@ -10,11 +10,14 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 PROBE = Path(__file__).parent.parent / "scripts" / "check-primary-checkout.sh"
 
 
 def _git(repo, *args):
-    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), *args], check=True,
+                   capture_output=True, env=child_env())
 
 
 @pytest.fixture
@@ -32,7 +35,8 @@ def repo(tmp_path):
 
 
 def _run(repo):
-    return subprocess.run([str(PROBE), str(repo)], capture_output=True, text=True)
+    return subprocess.run([str(PROBE), str(repo)], capture_output=True, text=True,
+                          env=child_env())
 
 
 @pytest.mark.integration
@@ -76,7 +80,8 @@ def test_probe_flags_untracked_new_file(repo):
 @pytest.mark.integration
 def test_probe_flags_detached_head(repo):
     head = subprocess.run(
-        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True,
+        text=True, env=child_env()
     ).stdout.strip()
     _git(repo, "checkout", "-q", head)  # detach HEAD
     res = _run(repo)
@@ -87,7 +92,8 @@ def test_probe_flags_detached_head(repo):
 def test_probe_flags_non_git_dir(tmp_path):
     plain = tmp_path / "plain"
     plain.mkdir()
-    res = subprocess.run([str(PROBE), str(plain)], capture_output=True, text=True)
+    res = subprocess.run([str(PROBE), str(plain)], capture_output=True,
+                          text=True, env=child_env())
     assert res.returncode != 0
     # Message goes to stdout, consistent with the other STRANDED reasons.
     assert "STRANDED" in res.stdout

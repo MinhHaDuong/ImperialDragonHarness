@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 SKILL_DIR = REPO / "skills" / "ingest-decision-letter"
 SCRIPT = SKILL_DIR / "ingest_letter.py"
@@ -272,13 +274,13 @@ def test_cli_end_to_end_segment_dedupe_coverage(tmp_path):
             out = subprocess.run(
                 [sys.executable, str(SCRIPT), "segment", str(FIX / src),
                  "--reviewer", rev],
-                capture_output=True, text=True, check=True,
+                capture_output=True, text=True, check=True, env=child_env(),
             )
             fh.write(out.stdout)
 
     dd = subprocess.run(
         [sys.executable, str(SCRIPT), "dedupe", str(ledger)],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True, check=True, env=child_env(),
     )
     dedup = tmp_path / "ledger.dedup.jsonl"
     dedup.write_text(dd.stdout)
@@ -288,7 +290,7 @@ def test_cli_end_to_end_segment_dedupe_coverage(tmp_path):
     cov = subprocess.run(
         [sys.executable, str(SCRIPT), "coverage", str(dedup),
          "--tickets", "0301,0302"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=child_env(),
     )
     assert cov.returncode == 1, "unmapped ledger is not covered"
     assert '"orphan_tickets"' in cov.stdout

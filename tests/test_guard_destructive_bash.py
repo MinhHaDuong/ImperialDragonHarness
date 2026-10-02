@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 HOOK = REPO / "scripts" / "guard-destructive-bash.sh"
 
@@ -28,7 +30,7 @@ def _git(cwd: Path, *args: str) -> None:
     subprocess.run(
         ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.hooksPath=/dev/null",
          "-C", str(cwd), *args],
-        check=True, capture_output=True,
+        check=True, capture_output=True, env=child_env(),
     )
 
 
@@ -50,7 +52,7 @@ def _run(command: str, cwd: Path | str) -> subprocess.CompletedProcess:
     payload = {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)}
     return subprocess.run(
         ["bash", str(HOOK)], input=json.dumps(payload), capture_output=True, text=True,
-        cwd=REPO, timeout=30,
+        cwd=REPO, timeout=30, env=child_env(),
     )
 
 
@@ -140,7 +142,8 @@ def test_command_after_heredoc_is_still_checked(trees):
 
 @pytest.mark.parametrize("stdin", ["not json{", "{}", '{"tool_input": {}}'])
 def test_unreadable_payload_allows(stdin):
-    res = subprocess.run(["bash", str(HOOK)], input=stdin, capture_output=True, text=True)
+    res = subprocess.run(["bash", str(HOOK)], input=stdin, capture_output=True,
+                         text=True, env=child_env())
     assert res.returncode == 0
 
 

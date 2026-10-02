@@ -22,6 +22,8 @@ import json
 import subprocess
 from pathlib import Path
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 INVENTORY = REPO / "adapters" / "pilot-support.json"
 
@@ -37,6 +39,7 @@ def collect_nodeids():
     out = subprocess.run(
         ["python3", "-m", "pytest", "tests/", "--collect-only", "-q"],
         capture_output=True, text=True, timeout=120, check=True,
+        env=child_env(),
     ).stdout
     return {
         line.split("::", 1)[0] + "::" + line.split("::", 1)[1].split()[0].split("[", 1)[0]

@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 SKILL_DIR = REPO / "skills" / "track-changes-pdf"
 SKILL = SKILL_DIR / "SKILL.md"
@@ -170,7 +172,7 @@ def _make_two_ref_repo(root: Path) -> None:
     """A tiny LaTeX manuscript committed at two refs, one sentence changed."""
     def git(*args):
         subprocess.run(["git", "-C", str(root), *args], check=True,
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env=child_env())
 
     root.mkdir(parents=True, exist_ok=True)
     git("init", "-q")

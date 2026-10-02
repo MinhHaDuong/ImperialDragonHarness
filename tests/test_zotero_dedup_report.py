@@ -9,6 +9,8 @@ import sys
 
 import pytest
 
+from child_env import child_env
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "zotero-import.py"
@@ -87,7 +89,8 @@ def test_cli_report_is_escaped_linked_and_read_only(tmp_path):
     out = tmp_path / "report.html"
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db),
-         "--out", str(out)], capture_output=True, text=True, check=True)
+         "--out", str(out)], capture_output=True, text=True, check=True,
+        env=child_env())
     body = out.read_text()
     assert "1 candidate groups" in result.stdout
     assert "zotero://select/library/items/PARENT10" in body
@@ -112,6 +115,6 @@ def test_cli_refuses_nonempty_wal_snapshot(tmp_path):
     Path(str(db) + "-wal").write_bytes(b"pending")
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db)],
-        capture_output=True, text=True)
+        capture_output=True, text=True, env=child_env())
     assert result.returncode != 0
     assert "pending WAL writes" in result.stderr
