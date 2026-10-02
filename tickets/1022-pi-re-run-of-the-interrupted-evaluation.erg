@@ -1,0 +1,81 @@
+%erg 0.1
+Title: pi re-run of the interrupted evaluation cells on the local provider
+Created: 2026-10-02
+Author: reviewer
+
+--- log ---
+2026-10-02T12:12Z reviewer created
+
+--- body ---
+## Context
+
+The memory v8 acceptance trial (ticket 0918, evidence
+docs/memory-v8/evaluation-results.md) recorded five fail cells and one
+absent cell on the Pi leg, all caused by one external interruption: the
+provider (huggingface, moonshotai/Kimi-K2.6) depleted its monthly
+included credits mid-session at 11:13Z on 2026-10-02, before the session
+could write its captures, verdicts or the deliberate-absence attestation.
+S9.pi was recorded absent-with-cause because the planted CLAUDE.md was
+never delivered — pi loads the clone's AGENTS.md as project instructions
+(the project-directory loader takes the first of AGENTS.override.md,
+AGENTS.md, AGENTS.MD, CLAUDE.md, CLAUDE.MD; the original plant therefore
+missed its target channel).
+
+0913 (standing rollout workpackage) gates on the recorded blockers; the
+S9.codex blocker was downgraded by ticket 1019 (channel closed, re-trial
+passed). The pi re-run is the remaining recorded blocker.
+
+## Author decision (2026-10-02, handed off by the orchestrator)
+
+Re-run the interrupted pi cells on the local provider — llama.cpp on
+Padme at http://100.93.160.120:8080/v1, serving qwen3.8-27b
+(Q4_K_M, 27.3B params, n_ctx 131072), health verified; pi's provider
+entry "padme" in ~/.pi/agent/models.json points at this server. Per the
+protocol's version discipline this is a changed input in force: the cell
+verdicts are for pi-with-qwen3.8-27b, named as such, never presented as
+re-runs under the trial's metered Kimi-K2.6. A weaker model failing a
+cell is a fail, recorded, not smoothed.
+
+## Scope
+
+Re-run under the predeclared margins of
+docs/memory-v8/evaluation-protocol.md (unchanged revision 0a0714eacb7c):
+
+- S3.pi — positive, negative and near-miss capture opportunities, the
+  same real events as the original leg (retired read-index helper
+  invocation; occupied-slug capture refusal; native-delivery probe),
+  same uncoached capture prompts.
+- S4.pi — the routine relocated-clone test; no artificial entry; the
+  session's own record must attest the deliberate absence.
+- S9.pi — the contradictory native note, with the delivery channel
+  corrected: first establish pi's actual native instruction channels
+  beyond the project AGENTS.md (read-only inspection of ~/.pi/agent
+  surfaces and pi's own loader), plant the note in a channel pi really
+  loads if one exists, else record the channel map honestly and the
+  cell as absent-with-cause. The same uncoached recall prompt as the
+  original trial.
+
+Discipline: disposable locations only (session-dir, pi home, clone),
+deleted after evidence recording; no real native surface touched; no
+credentials read or exposed; primary checkout and local main never
+touched; the closed acceptance ledger (evaluation-results.md) is not
+edited; journal append-only; MEMORY.md at most 100 lines; no rule
+proposals.
+
+## Exit criteria
+
+- [ ] The interrupted cells are re-run on the local provider under the
+      protocol's margins, with versions recorded from pi's own session
+      header and the server's /v1/models metadata — never the model's
+      self-description — and the model id pi presents in its session
+      header recorded.
+- [ ] A dated evidence doc in docs/ (evaluation-results shape) records
+      per-cell verdicts for pi-with-qwen3.8-27b, the changed input
+      declared, stream citations, and the corrected S9.pi channel map;
+      the closed acceptance ledger is not edited.
+- [ ] 0913's log carries one line: cells re-run on the local provider,
+      verdict per cell, blockers remaining if any.
+- [ ] A shape-pinning test covers the evidence doc where mechanically
+      pinnable.
+- [ ] make check-fast, make lint, erg check pass; verify-adherence run;
+      PR merges the ticket closed with a Ticket-ref to 0913.
