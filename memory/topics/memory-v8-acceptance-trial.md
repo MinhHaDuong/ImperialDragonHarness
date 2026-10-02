@@ -10,7 +10,11 @@ samples, not runtime certifications; each fact is dated and sourced below.
 The relocated-clone readability proof caught the freshly merged evaluation
 protocol's directory links post-merge: CI's pytest-guard failed where the
 pre-merge local gate had passed, the fix pointed the references at concrete
-files, and the entry records its cause attribution as uncertain.
+files, and the original entry's muddled cause ("not yet on main in earlier
+rounds") was later withdrawn by a correction entry — the gate ran before
+the document was committed, and the proof clones committed HEAD, so an
+untracked file was invisible to it; the withdrawal is traceable to the
+original entry, which stands unchanged.
 
 Detached launches: on Claude Code 2.1.286 and Vibe CLI 2.25.8, a flag with
 an optional value (--allowedTools, --trust) silently consumed the positional
@@ -53,7 +57,7 @@ as single-sample evidence; no runtime is certified by these observations.
 
 ## Sources and exceptions
 
-- [Relocated-clone proof caught the protocol post-merge](../journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md)
+- [Relocated-clone proof caught the protocol post-merge](../journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — its cause claim withdrawn by [the withdrawal entry](../journal/2026/2026-10-02-memory-v8-0918-withdrawn-claim-local-gate-cause.md); original unchanged.
 - [Detached flags consumed positional prompts](../journal/2026/2026-10-02-memory-v8-0918-detached-flags-consume-positional-prompt.md) — exception: Codex unaffected.
 - [Concurrent detached Claude sessions](../journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md) — launcher error, recorded as such.
 - [Background launch without cwd](../journal/2026/2026-10-02-memory-v8-0918-background-launch-without-cwd.md)
