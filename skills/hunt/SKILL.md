@@ -67,9 +67,13 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      `skills/hunt/SKILL.md` is the single live execution contract and the loader
      supplies it fresh on every run (mirrors raid Phase 5). Instruct the agent to
      push its branch and open a merge request as hunt's flow dictates. Then report
-     the handoff and end the turn: the interactive session stays at decision
-     altitude instead of accumulating the executor's test dumps, diffs, and review
-     rounds, which measured 5.4x the cost of the same contract run detached.
+     the handoff. Block on the runner with bounded `agent.wait` slices when the
+     author is hands-off or the runtime's notifications cannot wake the parent
+     turn; a client interrupt cancels the watch, not the runner — re-attach and
+     wait again. Otherwise end the turn and say a prompt retrieves the result:
+     the interactive session stays at decision altitude instead of accumulating
+     the executor's test dumps, diffs, and review rounds, which measured 5.4x the
+     cost of the same contract run detached.
 3. Enter the ticket's **own** worktree, or confirm the spawner already gave you one.
    A worktree is **owned** when either its basename is `t$ARGUMENTS` or begins with
    `t$ARGUMENTS-` (the collision-resistant suffixed form — see the `EnterWorktree`
