@@ -43,3 +43,11 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] 0988 prouve conservation, intégration et mise à jour du harness sans pull bloqué par la capture.
 - [ ] Évaluation relue, coûts et limites explicites ; conception et plan décrivent le livré.
 - [ ] Revue d’intégration enregistrée avant clôture ; cette réécriture ne clôt rien.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0909 Imagine annotation (tracker)
+PREMISE: Holds. Framing matches the tree: v8 plan is the delivery map; Blocked-by 0913 alone; superseded premises logged (0978/0986 WONTDO, 0999 closed #1104). Every regime claim verified: pilot #1109, policy #1112, capture #1117 (stall reproduction with positive control), DREAM v8-r1 + pilot dream #1119, lair step 11 prose #1097, hunt blocking #1124.
+REIMAGINE: One linear chain from closable, head free. Closed: 0911/0917 #1102, 0920 #1109, 0988 #1117, 0916 #1119. Scoped out: 0925 + 0908/0912/0914/0915/0919/0921/0922 deferred per plan. Remaining: 0910 -> 0923 -> 0924 -> 0918 -> 0913 -> 0909. 0910 is the unblocked entry point. Tracker adds no deliverables; it is a verification-and-closure gate: execute the chain, then a recorded integration review before closure.
+ANTIPATTERNS: one minor hit — 0910's exit criteria last realigned at v7; criterion 2 ("Passage hors ligne...branche durable") carries v7-era phrasing, re-readable in v8 terms (durable dream branch; unavailable sources unknown, not empty). No rewording warranted; the 0910 pickup note should record the v8 reading before implementation so a worker doesn't reconstruct a v7 offline-capture path.
+EXIT-CRITERIA: 1 OPEN (5 open, rest done or scoped); 2 OPEN, surfaces coherent (MEMORY.md 34/100, DREAM.md v8-r1, pilot dream, journal, topics with provenance; roar/lair/dream amended); 3 MET (0988 closed #1117, blocker removal logged); 4 OPEN (0918's protocol absent); 5 OPEN — correctly so (gate holds, no review recorded, closure blocked).

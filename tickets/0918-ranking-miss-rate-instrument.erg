@@ -36,3 +36,15 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Résultats sur quatre runtimes, positifs/négatifs/near misses et cas sans événement.
 - [ ] Sources natives contradictoires et conseils retirés réellement éprouvés.
 - [ ] Verdict de rollout explicite ; marges non inventées après un exemple réussi.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0918 Imagine annotation
+PREMISE: Holds, stronger than when filed. Regime merges complete the machinery 0918 measures; Astra clarification codified in design §9:293-295. Blocker chain intact (0918 <- 0924 <- 0923). STATE.md stale but tree is current. Cosmetic: filename slug "ranking-miss-rate-instrument" is pre-realignment residue; title/body are the v8 evaluation; renaming is orchestrator's call.
+REIMAGINE: Single acceptance-gate ticket. First deliverable + ordering constraint: predeclared protocol — one Markdown document (e.g. docs/memory-v8/evaluation-protocol.md) enumerating scenarios from design §9's ten-row table, with versions, denominators, pass/fail margins, committed in its own PR before the first acceptance run (Git shows the predeclaration as fact). Trial evidence reuses existing surfaces: journal entries = capture evidence, memory/dreams/ reports = consolidation evidence, commit hashes = obedience evidence. No new instrumentation.
+ANTIPATTERNS: YAGNI slug-residue scope (keep protocol observational Markdown, no numeric scorer); tautological verification (route the verdict through an independent seat per reviewers/verify-gate pattern; keep mechanical checks scripted); premature abstraction (no runtime-adapter framework; record loading differences as prose).
+EXIT-CRITERIA: none met by merged work — pilot dream/captures are exploratory smokes, explicitly not counted per design §9. 1 protocol absent; 2 no trial evidence (0923/0924 open); 3 no contradicting-native-note trial; 4 no rollout verdict recorded.
+
+## Raid blind-spot finding (2026-10-02) — orchestrator disposition
+
+- F4 (review machinery redesigned mid-raid): at wave pickup, re-read the reviewer-attribution state on current main (tracker 1004, docs/2026-10-02-reviewer-attribution-design.md, teardown 1009); the independent-verdict route follows whatever contract is live on main at that time. AUTHOR DECISION PENDING on sequencing.

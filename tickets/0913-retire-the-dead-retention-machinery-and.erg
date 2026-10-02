@@ -34,3 +34,15 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Pas de TTL destructif, promotion automatique ou second index writer dans les voies migrées.
 - [ ] Anciennes voies retirées après preuve de remplacement, pas sur grep vide seul.
 - [ ] Conservation des souvenirs et audience vérifiées ; limites runtime déclarées.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0913 Imagine annotation
+PREMISE: Holds, one expected narrowing already on the ticket. Gate real (Blocked-by 0918; chain 0910-0923-0924-0918 fully open). "Migrer progressivement par projet après évaluation" survives the regime: pilot.md scopes #1109 to this repository (no global rollout; 0913 retains rollout); legacy-retirement.md leaves 0913 open for per-project rollout, replacement evidence, audience checks, runtime limits. The one voided premise element — retire native/shared-store DREAM helpers only after consumer coverage — superseded by author direction (RETIRE LEGACY 2026-10-01) and executed in #1102; already logged. Residual scope: migration and retirement in adopting projects, not the harness.
+REIMAGINE: "Ready when the gate clears", not now-now. Harness already migrated (#1109 pilot, #1112 audience policy, #1117 capture). Residual: per active project — merge reading section into its AGENTS.md, establish memory/ layout, declare audience per encrypted-in-repo policy, retire that project's old paths on replacement evidence. Simplest path: one branch/PR per active project per plan step 6; dormant/superseded exports (~45 in projects/) get a one-line disposition record (historical evidence), not a fake migration.
+ANTIPATTERNS: YAGNI on dormant exports (scope to projects with active sessions; disposition record for the rest — execution choice, not rewording). No premature abstraction (ticket/plan forbid second index writers, promotion, TTL, compat shims). No tautological verification (criterion 3's "pas sur grep vide seul" blocks it; #1102's audit shape is right).
+EXIT-CRITERIA: 1 open (pilot baseline done: source-revisions.tsv, pilot.md rollback; per-project lots open, gated on 0918); 2 satisfied in the migrated path (no TTL, lair only suggests, on-start single reader project-scoped, capture sole journal writer) — re-check per project; 3 partially done — harness complete (#1102 helpers retired with consumer audit; #1109 cross-project injection retired), per-project open; 4 partially done (pilot audience declared, .age skip reported; other projects open). Verdict: keep as-is, blocked.
+
+## Raid blind-spot finding (2026-10-02) — orchestrator disposition
+
+- F3 (per-machine keys, cross-machine unreadability): AUTHOR DECISION PENDING — accept per-machine keys with declared cross-machine unreadability (citing 0937's refusal to sync secrets), or open a sync decision. The 0909 integration review must record the chosen story either way.

@@ -32,3 +32,15 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] AGENTS.md source unique ; éventuel CLAUDE.md relatif n’ajoute pas de contenu divergent.
 - [ ] Lecture thématique, recherche du journal et capture effective vérifiées sur chacun.
 - [ ] Aucun besoin de synchroniser les quatre profils natifs pour lire la mémoire commune.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0924 Imagine annotation
+PREMISE: Holds, two load-bearing caveats. Contract frozen by regime merges (#1102 convention, #1109 pilot, #1117 capture, #1119 dream v8-r1) — a stable runtime-agnostic target. Caveats: 0923 still open (0924 blocked); capture leg changed shape since realignment — "capture effective" now means the runtime's shell runs the pinned age commands and reaches ~/.config/keys/memory/<sha256[:16]>; a runtime without age or sandboxed HOME fails private capture (new observable, unchanged intent). Dream leg must name prompt v8-r1.
+REIMAGINE: Per runtime, one real session against a disposable clone; reuse the rig discipline of scripts/probe-memory-symlink.py (sentinel, control-first, "could not look" != negative, disposable HOME) and bin/idh status/check harness for discovery; one dated evidence doc per runtime in docs/, same shape as the capability survey. Sequence: close 0923 first — its criteria are a one-runtime subset.
+ANTIPATTERNS: YAGNI runtime plumbing (adapters/ already exist; verification is read-only observation + evidence docs; only a probe script if loading can't be observed, cloned from the existing rig pattern); tautological verification ("reading" proven by restating what it was handed — each runtime needs an evidence channel independent of the agent's own claim); premature abstraction four-runtime framework (four hand-written evidence docs, no framework).
+EXIT-CRITERIA: 1 NOT met (survey is documentary, pre-realignment); 2 structurally met in-repo (AGENTS.md single source; no CLAUDE.md in-tree) — runtime-loading half unverified; 3 NOT met (one runtime only); 4 substance in tree (#1102, #1109) but per-runtime observation pending.
+
+## Raid blind-spot finding (2026-10-02) — orchestrator disposition
+
+- F5 (who drives the foreign runtimes): before this wave, one detached-executor probe runs claude -p, codex exec, and pi headless with a trivial prompt, records exit codes and roster check; any failure escalates this wave to an interactive session. All four runtimes plus age verified installed and credentialed on this host (claude 2.1.286, codex 0.159.3, pi 0.87.1, age 1.3.2).

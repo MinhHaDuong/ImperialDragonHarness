@@ -37,3 +37,11 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Passage hors ligne avec sources disponibles produit une branche durable ; source absente explicitement signalée.
 - [ ] Interruption ou refus d’intégration conserve le travail et expose un échec visible.
 - [ ] Aucune fusion automatique des propositions ; pas d’écriture dans le checkout partagé utilisé pour les pulls.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0910 Imagine annotation
+PREMISE: Weakened — core behavior already merged. skills/lair/SKILL.md step 11 (PR #1097, 2026-10-01) implements the scope verbatim: count journal experiences not covered by an accepted report in memory/dreams/, suggest /dream at 5+, no question/waiting/invocation/timer. skills/dream/SKILL.md (reconciled #1119) states the mirror. Residue reserved for 0910 by docs/memory-v8/README.md:69 "Counting and live validation remain under 0910/0916": step 11 is prose with no counting helper, no test pinning it, no live-run evidence.
+REIMAGINE: Why now: pilot live (#1109), seven real journal entries, first accepted dream report — threshold exercisable against real data. Simplest path: (a) adherence test pinning step 11's negative semantics (no question/waiting/invocation/timer) in the pattern of tests/test_lair_state_via_pr.py; (b) inline counting one-liner in step 11 — journal entry blob ids vs accepted reports' ledgers (DREAM.md v8-r1 requires `<path> blob <40-hex>` per report); (c) one live lair run as validation evidence. No library, no new skill.
+ANTIPATTERNS: YAGNI counting script (data exists in report ledgers — inline shell comparison, not scripts/ entry); premature abstraction configurable threshold (hardcode 5); tautological test risk (pin negative semantics, not the string "5").
+EXIT-CRITERIA: criterion 1 substantively met by #1097 (counting unvalidated); criteria 2-4 substantively met by #1119. Decision point: close citing #1097+#1119, or deliver the README-reserved live validation delta (test + counting + live run). No scope substitution either way.

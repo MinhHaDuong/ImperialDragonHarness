@@ -38,3 +38,16 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Positif/négatif/quasi-accident capturés ; routine sans entrée artificielle ; aucune promotion à roar.
 - [ ] Note native contradictoire testée et limite honnêtement décrite.
 - [ ] Clone à chemin arbitraire fonctionne ; un mot témoin seul ne vaut pas preuve d’adhérence.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0923 Imagine annotation
+PREMISE: Weakened but not voided. Pilot setup merges already demonstrated reading-before-action (#1109 AGENTS.md v8 section), readable dream result (#1119 two-pass report with blob-revision proof), capture pinning (#1117). First runtime de facto chosen: Vibe CLI per pilot declaration. Uncovered legs: miswired-delivery negative control; native-note contradiction test (first dream: "No native note was used"); private/age capture path unexercised on real material; arbitrary-path clone live. It is now a smoke of the unexercised legs, not a first-ever demonstration. 0923 stays Blocked-by 0910 until 0910 lands.
+REIMAGINE: One evidence-recording session in the already-justified runtime: (a) record read-before-action with blob revisions as the first dream models; (b) one capture through scripts/memory-capture.sh — ideally one public and one private entry, finally exercising the age path on real material; (c) plant a contradictory native note, report the honest limit; (d) clone to an arbitrary path, verify memory resolution per 0999 contract; (e) miswired-delivery negative control.
+ANTIPATTERNS: YAGNI "adapter" as code (v8 needs no adapter — AGENTS.md section + optional CLAUDE.md symlink; call the work "runtime smoke"); YAGNI capture helper (use scripts/memory-capture.sh, don't wrap); premature abstraction runtime-compat matrix from n=1 (journal entries only; 0913 retains rollout). No tautological verification found.
+EXIT-CRITERIA: criterion 1 largely met (#1109 pilot.md + #1112 trust + #1119 proof); criterion 2 met in substance by #1119 — orchestrator decision whether "met in substance" is accepted or re-performed in the smoke (materially changes scope); criteria 3-5 NOT met (deliberate captures, native-note test, arbitrary-path clone).
+
+## Raid blind-spot findings (2026-10-02) — orchestrator disposition
+
+- F1 (stale tree / 1014): each wave branches from current origin/main at pickup; before first private capture, read tickets/1014 (key-derivation colon collision, reviewer-attribution programme) and record the ordering decision; this repo's origin URL carries no port so the real key is unaffected — proceed with the collision explicitly noted in the evidence. 0910's live count pins against a named commit of main.
+- F2 (age path on real material vacuous): AUTHOR DECISION PENDING — synthetic probe entry vs deferral.
