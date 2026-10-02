@@ -79,7 +79,10 @@ as single-sample evidence; no runtime is certified by these observations.
 - Vibe probe entries: [read-index helper absent](../journal/2026/2026-10-02-t0918-trial-read-index-helper-absent.md), [smoke slug collision](../journal/2026/2026-10-02-t0918-trial-smoke-slug-collision.md), [native AGENTS.md injection](../journal/2026/2026-10-02-t0918-trial-vibe-native-agents-injection.md), [aborted-session read-index](../journal/2026/2026-10-02-skills-dream-read-index-not-found.md).
 - [Pi leg interrupted by credit depletion](../journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md) — external limit, not a capture decision.
 - [Pi loaded AGENTS.md, not the planted CLAUDE.md](../journal/2026/2026-10-02-memory-v8-0918-pi-loaded-agents-not-planted-claude-md.md) — the S9-pi probe missed its target; delivery channel confirmed.
-- Provenance: [evaluation protocol](../../docs/memory-v8/evaluation-protocol.md) and [results](../../docs/memory-v8/evaluation-results.md); the pre-trial smokes
+- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+  Trial provenance: [evaluation protocol](../../docs/memory-v8/evaluation-protocol.md)
+  and [results](../../docs/memory-v8/evaluation-results.md); the pre-trial smokes
   ([0923](../journal/2026/2026-10-02-memory-v8-smoke.md),
   [0924](../journal/2026/2026-10-02-memory-v8-runtimes-verified.md)) are
   excluded from the acceptance margins by the protocol.
