@@ -339,3 +339,21 @@ def test_only_the_orchestrator_runs_backgrounded():
             f"{p.relative_to(REPO)}: background={value}, expected {expected} "
             "(only the gaze orchestrator is backgrounded)"
         )
+
+
+def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
+    """Ticket 0853: a read-only reviewer/gate agent must never reach a
+    working-tree overwrite, and must refuse (NOT-RUN) when the review
+    worktree is unreachable rather than silently falling back to the
+    session cwd. Both the phase 2–4 battery and the phase 6 gate carry
+    the portable git -C reach contract, the destructive-checkout ban,
+    and the NOT-RUN refusal themselves (not by reference "as above")."""
+    norm = _normalize(VERIFY)
+    battery = norm.split("### 2–4.", 1)[1].split("### 5.", 1)[0]
+    gate = norm.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
+    for name, sec in (("phases 2-4", battery), ("phase 6", gate)):
+        assert "git checkout <ref> --" in sec, f"{name}: no destructive-checkout ban"
+        assert "git show <ref>:<path>" in sec, f"{name}: no read-only alternative named"
+        assert "NOT-RUN" in sec, f"{name}: no refusal on unreachable review tree"
+    assert "never falls back to the session cwd" in battery
+    assert 'git -C "$primary_root' in battery
