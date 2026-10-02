@@ -2,6 +2,7 @@
 Title: Verify the common Markdown contract across all four runtimes
 Created: 2026-09-11
 Author: codex
+Closed: delivered by the three-runtime evidence PR — Claude Code, Codex and Pi each ran one real session against a disposable clone: AGENTS.md loaded natively in all three, index/theme read before action with transcript-quoted evidence channels, journal search with ordinary tools, public capture through scripts/memory-capture.sh, no native-profile sync; versions and limits recorded in the evidence docs
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -11,6 +12,7 @@ Author: codex
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-02T10:14Z MinhHaDuong note blocker 0923 closed — Blocked-by removed.
 2026-10-02T10:24Z claude note Detached hunt pickup (raid-0909 Wave 3, branch from origin/main 87ee07a8). Blind-spot F5 probe passed before any session work: claude -p, codex exec --skip-git-repo-check and pi -p --no-session each answered a trivial prompt with exit 0 and verified output from this detached executor; no runtime leg stopped or escalated. Codex note: exec requires a trusted/git directory or --skip-git-repo-check, and reads stdin when piped.
+2026-10-02T10:38Z reviewer closed — delivered by the three-runtime evidence PR — Claude Code, Codex and Pi each ran one real session against a disposable clone: AGENTS.md loaded natively in all three, index/theme read before action with transcript-quoted evidence channels, journal search with ordinary tools, public capture through scripts/memory-capture.sh, no native-profile sync; versions and limits recorded in the evidence docs
 --- body ---
 
 ## Context
@@ -29,10 +31,10 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Preuves et versions pour les quatre runtimes, avec limites et omissions observées.
-- [ ] AGENTS.md source unique ; éventuel CLAUDE.md relatif n’ajoute pas de contenu divergent.
-- [ ] Lecture thématique, recherche du journal et capture effective vérifiées sur chacun.
-- [ ] Aucun besoin de synchroniser les quatre profils natifs pour lire la mémoire commune.
+- [x] Preuves et versions pour les quatre runtimes, avec limites et omissions observées.
+- [x] AGENTS.md source unique ; éventuel CLAUDE.md relatif n’ajoute pas de contenu divergent.
+- [x] Lecture thématique, recherche du journal et capture effective vérifiées sur chacun.
+- [x] Aucun besoin de synchroniser les quatre profils natifs pour lire la mémoire commune.
 
 ## Raid annotation (2026-10-02, imagine pass)
 
