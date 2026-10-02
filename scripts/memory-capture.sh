@@ -47,7 +47,8 @@ usage() {
 
 # The per-project key path: sha256[:16] of the normalized origin URL, under
 # ~/.config/keys/memory/. Normalization strips scheme, user and default ports
-# (22/443/80), converts the scp-like git@host:path form, drops a .git suffix
+# (22/443/80), converts the scp-like [user@]host:path form (on the raw URL,
+# before the scheme strip, so ssh://host:2222/ never matches), drops a .git suffix
 # and lowercases, so every transport of the same project derives one key; a
 # non-default port stays and makes the identity distinct. Created on first use.
 project_key() {
@@ -55,12 +56,12 @@ project_key() {
     url=$(git -C "$repo" remote get-url origin 2>/dev/null) \
         || die "private capture needs an origin remote to derive the project key"
     norm=$(printf '%s' "$url" \
-        | sed -e 's|^\([a-z+]*://\)git@||' -e 's|^[a-z+]*://||' \
+        | sed -e 's|^\(\([^/@:]*@\)\{0,1\}[^/@:]*\):\([^/]\)|\1/\3|' \
+              -e 's|^\([a-z+]*://\)git@||' -e 's|^[a-z+]*://||' \
               -e 's|^\([^/]*\)@||' -e 's|^git@||' \
               -e 's|^\([^/:]*\):22/|\1/|' \
               -e 's|^\([^/:]*\):443/|\1/|' \
-              -e 's|^\([^/:]*\):80/|\1/|' \
-              -e 's|:\([^/]\)|/\1|' -e 's|\.git$||' \
+              -e 's|^\([^/:]*\):80/|\1/|' -e 's|\.git$||' \
               | tr '[:upper:]' '[:lower:]')
     keydir=$HOME/.config/keys/memory
     mkdir -p "$keydir"
