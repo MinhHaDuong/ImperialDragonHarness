@@ -10,6 +10,7 @@ Author: codex
 2026-09-16T06:48Z claude note Pi capability declaration recorded at docs/2026-09-16-runtime-capability-survey.md: subagent definitions (third-party extension, md+YAML, inherit_context) and 36 lifecycle events covering all five hook classes this harness registers. Documentation only, no smoke evidence; Codex hooks still unverified.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-02T10:14Z MinhHaDuong note blocker 0923 closed — Blocked-by removed.
+2026-10-02T10:24Z claude note Detached hunt pickup (raid-0909 Wave 3, branch from origin/main 87ee07a8). Blind-spot F5 probe passed before any session work: claude -p, codex exec --skip-git-repo-check and pi -p --no-session each answered a trivial prompt with exit 0 and verified output from this detached executor; no runtime leg stopped or escalated. Codex note: exec requires a trusted/git directory or --skip-git-repo-check, and reads stdin when piped.
 --- body ---
 
 ## Context
@@ -32,3 +33,11 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] AGENTS.md source unique ; éventuel CLAUDE.md relatif n’ajoute pas de contenu divergent.
 - [ ] Lecture thématique, recherche du journal et capture effective vérifiées sur chacun.
 - [ ] Aucun besoin de synchroniser les quatre profils natifs pour lire la mémoire commune.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+- PREMISE: contract frozen (#1102 convention, #1109 pilot, #1117 capture, #1119 dream v8-r1) — a stable runtime-agnostic target. Capture leg shape: 'capture effective' means the runtime's shell runs the pinned age commands and reaches ~/.config/keys/memory/<sha256[:16]>; a sandboxed HOME is a new observable to record, not a failure to hide. Dream leg names prompt v8-r1.
+- DELIVERABLES: per runtime, ONE real session against a disposable clone (disposable HOME where the runtime's isolation requires): verify (1) the runtime loads AGENTS.md and reads the memory index/theme before action, with an evidence channel INDEPENDENT of the agent's own claim (access trace, behavior tied to a specific theme, observed rg journal hit); (2) journal search works with the runtime's ordinary tools; (3) a public capture through scripts/memory-capture.sh as roar step 6 prescribes, clearly marked smoke evidence — public only, the private/.age leg is deferred by author decision F2 (recorded on 0923); (4) no native-profile sync needed to read the common memory; (5) AGENTS.md is the single source — no divergent CLAUDE.md content. One dated evidence doc per runtime in docs/, capability-survey shape; versions and limits recorded.
+- ANTIPATTERNS: no runtime plumbing or adapter extensions; no four-runtime framework — four hand-written evidence docs; no restating-what-it-was-handed proofs — independent evidence channels only.
+
+Sequencing note (author decision F4): the reviewer-attribution programme is sequenced after this raid; do not touch roar step 6, the reviewers write path, or seat-runner surfaces.
