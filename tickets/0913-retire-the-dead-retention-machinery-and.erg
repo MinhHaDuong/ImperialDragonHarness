@@ -15,6 +15,8 @@ Author: claude
 2026-10-02T11:19Z reviewer note blocker 0918 closed — Blocked-by removed.
 2026-10-02T11:34Z MinhHaDuong note SCOPE DECISION (author, 2026-10-02, on the predeclared No-rollout verdict from PR #1142): 0913 stays open as the standing rollout workpackage, gated on the recorded blockers — codex's native-note conflict-surfacing behavior (S9, external to this repo) and the pi re-run (S3/S4, provider credits). No rollout proceeds under this tracker.
 2026-10-02T11:59Z reviewer note S9.codex blocker downgraded to 'channel closed, re-trial passed' (ticket 1019, evidence: docs/memory-v8/2026-10-02-s9-codex-retrial-closed-channel.md); rollout condition now standing: adopting hosts carry no user-level ~/.codex/AGENTS.md, one-line preflight
+2026-10-02T12:26Z reviewer note pi re-run blocker resolved (ticket 1022, evidence: docs/memory-v8/2026-10-02-pi-rerun-local-provider.md): S3.negative/S3.near-miss/S3.positive/S4/S9.pi re-run on the local provider (padme, qwen3.8-27b) — pass/pass/pass/no-event/pass for pi-with-qwen3.8-27b under the declared changed input; with 1019's S9.codex closure, no acceptance-trial blocker remains recorded on this gate; the original ledger verdicts stand unchanged
+
 --- body ---
 
 ## Context

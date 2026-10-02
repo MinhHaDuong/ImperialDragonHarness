@@ -1,0 +1,99 @@
+%erg 0.1
+Title: pi re-run of the interrupted evaluation cells on the local provider
+Created: 2026-10-02
+Author: reviewer
+Closed: pi re-run of the interrupted evaluation cells on the local provider: S3.negative/S3.near-miss/S3.positive/S4/S9.pi re-run under the protocol's unchanged margins as pi-with-qwen3.8-27b (provider padme, local llama.cpp on Padme) — pass/pass/pass/no-event/pass; the corrected S9 channel (global agent-dir instruction file) delivered the plant and the session signalled the contradiction without certifying it; evidence in docs/memory-v8/2026-10-02-pi-rerun-local-provider.md; the closed acceptance ledger is not edited; 0913's acceptance-trial gate carries no remaining recorded blocker
+
+--- log ---
+2026-10-02T12:12Z reviewer created
+2026-10-02T12:26Z reviewer note channel map established from pi's own loader plus a disposable probe: per-directory first-match (AGENTS.override.md > AGENTS.md > AGENTS.MD > CLAUDE.md > CLAUDE.MD) plus a global agent-dir channel (PI_CODING_AGENT_DIR); the original CLAUDE.md plant was shadowed by the clone's AGENTS.md; this run's plant went to the disposable pi home's global channel, delivery verified in the trial session's system context
+2026-10-02T12:26Z reviewer note trial session ran (pi 0.87.1, provider padme, modelId qwen3.8-27b per session header, thinking off; 38 events; the original eight-step prompt verbatim, sha256 439a4c18): read-before-action held; steps 3-5 reproduced the original leg's events; one factual capture committed (e79e6c61); cells pass/pass/pass/no-event/pass
+2026-10-02T12:26Z reviewer closed — see the Closed: header; disposable locations deleted after evidence recording
+
+--- body ---
+## Context
+
+The memory v8 acceptance trial (ticket 0918, evidence
+docs/memory-v8/evaluation-results.md) recorded five fail cells and one
+absent cell on the Pi leg, all caused by one external interruption: the
+provider (huggingface, moonshotai/Kimi-K2.6) depleted its monthly
+included credits mid-session at 11:13Z on 2026-10-02, before the session
+could write its captures, verdicts or the deliberate-absence attestation.
+S9.pi was recorded absent-with-cause because the planted CLAUDE.md was
+never delivered — pi loads the clone's AGENTS.md as project instructions
+(the project-directory loader takes the first of AGENTS.override.md,
+AGENTS.md, AGENTS.MD, CLAUDE.md, CLAUDE.MD; the original plant therefore
+missed its target channel).
+
+0913 (standing rollout workpackage) gates on the recorded blockers; the
+S9.codex blocker was downgraded by ticket 1019 (channel closed, re-trial
+passed). The pi re-run is the remaining recorded blocker.
+
+## Author decision (2026-10-02, handed off by the orchestrator)
+
+Re-run the interrupted pi cells on the local provider — llama.cpp on
+Padme at http://100.93.160.120:8080/v1, serving qwen3.8-27b
+(Q4_K_M, 27.3B params, n_ctx 131072), health verified; pi's provider
+entry "padme" in ~/.pi/agent/models.json points at this server. Per the
+protocol's version discipline this is a changed input in force: the cell
+verdicts are for pi-with-qwen3.8-27b, named as such, never presented as
+re-runs under the trial's metered Kimi-K2.6. A weaker model failing a
+cell is a fail, recorded, not smoothed.
+
+## Scope
+
+Re-run under the predeclared margins of
+docs/memory-v8/evaluation-protocol.md (unchanged revision 0a0714eacb7c):
+
+- S3.pi — positive, negative and near-miss capture opportunities, the
+  same real events as the original leg (retired read-index helper
+  invocation; occupied-slug capture refusal; native-delivery probe),
+  same uncoached capture prompts.
+- S4.pi — the routine relocated-clone test; no artificial entry; the
+  session's own record must attest the deliberate absence.
+- S9.pi — the contradictory native note, with the delivery channel
+  corrected: first establish pi's actual native instruction channels
+  beyond the project AGENTS.md (read-only inspection of ~/.pi/agent
+  surfaces and pi's own loader), plant the note in a channel pi really
+  loads if one exists, else record the channel map honestly and the
+  cell as absent-with-cause. The same uncoached recall prompt as the
+  original trial.
+
+Discipline: disposable locations only (session-dir, pi home, clone),
+deleted after evidence recording; no real native surface touched; no
+credentials read or exposed; primary checkout and local main never
+touched; the closed acceptance ledger (evaluation-results.md) is not
+edited; journal append-only; MEMORY.md at most 100 lines; no rule
+proposals.
+
+## Exit criteria
+
+- [x] The interrupted cells are re-run on the local provider under the
+      protocol's margins, with versions recorded from pi's own session
+      header and the server's /v1/models metadata — never the model's
+      self-description — and the model id pi presents in its session
+      header recorded
+  — pi 0.87.1; session header model_change: provider padme, modelId
+    qwen3.8-27b, thinking off; server /v1/models: owned_by llamacpp,
+    n_ctx 131072, n_params 27320697856, Q4_K_M; protocol blob 0a0714eacb7c
+    unchanged; session JSONL sha256 d75cb397341cc936, deleted after recording.
+- [x] A dated evidence doc in docs/ (evaluation-results shape) records
+      per-cell verdicts for pi-with-qwen3.8-27b, the changed input
+      declared, stream citations, and the corrected S9.pi channel map;
+      the closed acceptance ledger is not edited
+  — docs/memory-v8/2026-10-02-pi-rerun-local-provider.md; the session's
+    capture committed on the trial branch (e79e6c61);
+    evaluation-results.md untouched in this diff (pinned by the new test).
+- [x] 0913's log carries one line: cells re-run on the local provider,
+      verdict per cell, blockers remaining if any
+  — Log entry of 2026-10-02T12:26Z: pass/pass/pass/no-event/pass for
+    pi-with-qwen3.8-27b; with 1019's S9.codex closure, no acceptance-trial
+    blocker remains recorded on the gate.
+- [x] A shape-pinning test covers the evidence doc where mechanically
+      pinnable
+  — tests/test_memory_v8_pi_rerun_local.py, including that the closed
+    ledger still carries the original pi fails and absent.
+- [x] make check-fast, make lint, erg check pass; verify-adherence run;
+      PR merges the ticket closed with a Ticket-ref to 0913
+  — results recorded on the PR; the external seat and gate follow before
+    merge.
