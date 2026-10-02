@@ -2,7 +2,6 @@
 Title: Session memory lands uncommitted and silently stalls host harness pulls
 Created: 2026-09-29
 Author: claude
-Blocked-by: 0920
 
 --- log ---
 2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
@@ -15,6 +14,7 @@ Blocked-by: 0920
 2026-10-01T21:12Z codex note Author requires at most one roar branch and one bundled PR for tickets/docs/factual capture, with fast-track auto-merge after required checks.
 2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
+2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
 --- body ---
 
 ## Context
