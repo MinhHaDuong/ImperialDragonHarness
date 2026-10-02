@@ -10,6 +10,7 @@ Author: Minh Ha-Duong
 2026-09-23T19:30Z Codex note Roster audit: 0392 changed panel width for tiny/small diffs, and 0901 capped unreviewable PRs, but gaze still has no path-risk band from prose_predicate.py. The core proposal remains open. The requested fortnight of post-0901 measurement cannot yet be complete on 2026-09-23; calibrate after enough runs rather than treating blocker removal as finished evidence.
 2026-10-02T18:41Z reviewer note raid 2026-10-02 — phases 2-3: reimagined (Imagine + Blind-Spot passes); drift guard: proceed, exit criteria preserved verbatim
 2026-10-02T19:46Z reviewer note raid — phase 4 feasibility: WARN→PASS with R9 (fork-blocking launch-paragraph ratchet); Phase 5.0 not triggered
+2026-10-02T23:33Z reviewer bump verify-reroll — round 1: both panel verifiable: minors unresolved at tip 88d84a5f (docstring registry claim; breaker-precedence sentence vs layout)
 --- body ---
 ## Context
 
