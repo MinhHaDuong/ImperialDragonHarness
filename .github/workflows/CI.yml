@@ -288,5 +288,5 @@ jobs:
         # Coverage is reported (term-missing) but not yet gated. Add
         # --cov-fail-under=<N> here to ratchet once the baseline is raised.
         run: |
-          python3 -m pytest tests/ -v \
+          python3 -m pytest tests/ -v -n 4 \
             --cov=scripts --cov-report=term-missing

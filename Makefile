@@ -52,7 +52,10 @@ check-agnostic-rules:
 	./scripts/check-agnostic.sh rules
 
 # Full gate (coding-python.md): the whole suite, integration + slow included.
+# -n 4 per the 1011 worker-safety audit: three parallel trials reproduced
+# the serial pass/skip counts exactly, 81s -> 38.6s. check-fast and lint are
+# deliberately serial (both sit at the pytest boot+collection floor).
 check-tests:
-	python3 -m pytest tests/
+	python3 -m pytest tests/ -n 4
 
 check: check-skills-drift check-adapter-hooks check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
