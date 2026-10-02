@@ -74,14 +74,17 @@ Uncleared material lives in the project repository as `.age` ciphertext. Dream
 uses the same pinned age commands and the same per-project key as capture —
 decrypt with `age -d -i <key>`, re-encrypt with
 `age -r <recipient> -o <entry>.age` — and never writes plaintext to the
-working tree. Without the key, skip `.age` entries and record the skipped
-count: they are existing but unreadable, not empty. The versioned
+working tree. Re-encryption writes a sibling temporary ciphertext and
+atomically replaces the original only after success; `age -o` overwrites an
+existing destination silently, so writing in place could destroy the
+original mid-write. Without the key, skip `.age` entries and record the
+skipped count: they are existing but unreadable, not empty. The versioned
 `memory/DREAM.md` prompt defines the operational detail, including the three
 failure modes: an authentication failure (key missing, unreadable or wrong)
 skips and counts the entry; malformed ciphertext is left untouched and
-reported unreadable; a re-encryption failure aborts the write, keeps the
-original entry and reports that the consolidation is not done. Never leave
-plaintext or a partial ciphertext in the tree.
+reported unreadable; a re-encryption failure removes the temporary
+ciphertext, keeps the original entry and reports that the consolidation is
+not done. Never leave plaintext or a partial ciphertext in the tree.
 
 ## Authority and invocation
 

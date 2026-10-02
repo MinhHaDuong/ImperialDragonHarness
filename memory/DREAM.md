@@ -71,7 +71,12 @@ per-project key as capture — there is no second mechanism:
 Without the key, skip `.age` entries, record the skipped count in the report
 and never treat them as empty. With the key, decrypt in memory only —
 plaintext is never written to the working tree — consolidate, then
-re-encrypt the consolidated entry; sources preserved.
+re-encrypt: write the consolidated entry to a sibling temporary ciphertext
+(`age -r <recipient> -o <entry>.age.new`) and only after success atomically
+rename it over the original; sources preserved. `age -o` overwrites an
+existing destination silently, so writing in place could destroy the
+original mid-write — the temporary ciphertext is what keeps the contract
+below.
 
 Failure handling — stop and report; never leave plaintext or a partial
 ciphertext in the tree:
@@ -83,9 +88,9 @@ ciphertext in the tree:
 - **malformed ciphertext** (`age -d` fails): leave the `.age` file untouched
   and mark it unreadable in the report with its path and error class; never
   delete or overwrite it.
-- **re-encryption failure** (`age -r` fails): abort the write, keep the
-  original `.age` entry in place untouched, and report the failure — that
-  entry's consolidation is not done.
+- **re-encryption failure** (`age -r` fails): remove the temporary
+  ciphertext, keep the original `.age` entry in place untouched, and report
+  the failure — that entry's consolidation is not done.
 
 ## Report
 

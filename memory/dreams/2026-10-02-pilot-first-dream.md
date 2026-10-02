@@ -23,6 +23,15 @@ Examined sources (git blob revisions):
 - memory/journal/2026/2026-10-02-memory-v8-pilot-established.md blob 795fa66bf1ba14b89da54485b9e907a248a4396f
 - memory/journal/2026/2026-10-02-reviewer-attribution-design.md blob d1a855d95eb5a2002e4e4f0e6f7b35bd1e5c653d
 
+Authority files read for coherence (git blob revisions):
+
+- AGENTS.md blob 762bfdeb894d7716ec164e28fd3f79702fd0864d
+- rules/git.md blob 463f756ad42bd70a2f51af12b16e3717104607b9
+- rules/coding-python.md blob 9b964ec82f7e131b05635c6751018f1381627083
+- rules/prose/_all.md blob c159259a1aa82945e7998321241a2fc643e60df5
+- docs/memory-v8/pilot.md blob 1b15748313856b8482384dc7aaf7abf9c32068d9
+- docs/memory-v8/README.md blob 2adeb0eb670734645ae43bd30fd1cf55b75715ae
+
 Encrypted entries skipped: 0 — the pilot memory carries no `.age` file yet;
 the decrypt/consolidate/re-encrypt path is defined by the prompt and stays
 unexercised on real material (see unresolved questions).
@@ -51,9 +60,10 @@ Editorial changes:
   shortened) to keep it inside the 2100-character session-injection budget
   the resident census enforces on `memory/MEMORY.md`.
 
-Coherence: the five indexed topics were compared with each other and with the
-applicable rules read as authority (the AGENTS.md project-memory section,
-rules/git.md, and the scoped rules the topics touch). The four non-governance
+Coherence: the five indexed topics were compared with each other and with
+the applicable harness rules read as authority and pinned above by revision
+(AGENTS.md, rules/git.md, rules/coding-python.md, rules/prose/_all.md, the
+pilot declaration and the convention README). The four non-governance
 topics are attributed, dated, scoped notes with their exceptions stated; no
 contradiction among them or with a rule was found. The governance correction
 above was the one conflict between an indexed memory and the applicable
@@ -88,6 +98,15 @@ Re-examined sources (git blob revisions):
 - memory/journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md blob 1616e1d4ddf4c350d125265720a30c4f5dae2bf1
 - memory/journal/2026/2026-10-02-memory-v8-pilot-established.md blob 795fa66bf1ba14b89da54485b9e907a248a4396f
 - memory/journal/2026/2026-10-02-reviewer-attribution-design.md blob d1a855d95eb5a2002e4e4f0e6f7b35bd1e5c653d
+
+Authority files read for coherence (git blob revisions):
+
+- AGENTS.md blob 762bfdeb894d7716ec164e28fd3f79702fd0864d
+- rules/git.md blob 463f756ad42bd70a2f51af12b16e3717104607b9
+- rules/coding-python.md blob 9b964ec82f7e131b05635c6751018f1381627083
+- rules/prose/_all.md blob c159259a1aa82945e7998321241a2fc643e60df5
+- docs/memory-v8/pilot.md blob 1b15748313856b8482384dc7aaf7abf9c32068d9
+- docs/memory-v8/README.md blob 2adeb0eb670734645ae43bd30fd1cf55b75715ae
 
 Imported as new: none. Every revision above was examined in pass 1 or
 produced by it — the governance topic and the index carry their pass-1

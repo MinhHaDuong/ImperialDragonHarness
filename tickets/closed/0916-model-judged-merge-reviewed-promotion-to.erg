@@ -2,6 +2,7 @@
 Title: Version the v8 dreaming prompt and source-preserving editorial workflow
 Created: 2026-09-10
 Author: claude
+Closed: delivered by PR #1119 — versioned DREAM.md prompt (v8-r1), dream skill reconciled with encrypted-in-repo policy, pilot dream with two-pass report and journal pinned
 
 --- log ---
 2026-09-10T16:24Z claude created
@@ -19,6 +20,7 @@ Author: claude
 2026-10-02T08:02Z MinhHaDuong note External review of PR #1112 (openrouter-frontier seat, gpt-5.6-luna via OpenRouter, 10.6s) raised a consider finding owned here: DREAM's decrypt/consolidate/re-encrypt path needs documented handling for authentication failures, malformed ciphertext and re-encryption failures; the dreaming prompt and workflow must define them. Filed at the author's direction.
 2026-10-02T08:45Z vibe note Detached hunt executed on branch t0916-dream-prompt-v8: versioned prompt memory/DREAM.md (v8-r1) with encrypted-entry policy and authentication/malformed-ciphertext/re-encryption failure handling; dream skill reconciled with encrypted-in-repo policy (private-companion destination dropped); pilot dream run — governance topic corrected (superseded companion clause), index refreshed, two-pass report memory/dreams/2026-10-02-pilot-first-dream.md with git blob ledgers; journal untouched, pinned by tests/test_dream_v8.py.
 
+2026-10-02T08:56Z MinhHaDuong closed — delivered by PR #1119 — versioned DREAM.md prompt (v8-r1), dream skill reconciled with encrypted-in-repo policy, pilot dream with two-pass report and journal pinned
 --- body ---
 
 ## Context

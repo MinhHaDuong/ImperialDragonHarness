@@ -25,6 +25,10 @@ REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
 DREAM_PROMPT = MEMORY / "DREAM.md"
 DREAMS = MEMORY / "dreams"
+# The pilot dream's own report, pinned by name: a later dated report must not
+# hijack these pilot-specific expectations (they describe this dream's
+# correction, ledgers and passes).
+PILOT_REPORT = DREAMS / "2026-10-02-pilot-first-dream.md"
 SKILL = REPO / "skills" / "dream" / "SKILL.md"
 
 # Journal entries on origin/main before the pilot dream. Their blob pins
@@ -49,14 +53,11 @@ def git_blob_sha(path: Path) -> str:
     return hashlib.sha1(b"blob %d\x00" % len(data) + data).hexdigest()
 
 
-def reports() -> list[Path]:
-    return sorted(DREAMS.glob("*.md"))
-
-
 def report_text() -> str:
-    found = reports()
-    assert found, "no dream report under memory/dreams/"
-    return found[-1].read_text(encoding="utf-8")
+    assert PILOT_REPORT.is_file(), (
+        f"the pilot dream report is missing: {PILOT_REPORT}"
+    )
+    return PILOT_REPORT.read_text(encoding="utf-8")
 
 
 def pass_sections(text: str) -> dict[str, str]:
