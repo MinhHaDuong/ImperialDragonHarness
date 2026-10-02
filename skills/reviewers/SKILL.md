@@ -73,11 +73,16 @@ away from the regular panel's sidecars. The regular roster and its paid seats
 are not invoked by this path. The local client fails loud for diffs above
 32,768 bytes so the bounded trial never silently truncates a large PR.
 
-`skills/reviewers/benchmark-board.yml` is the frozen audition board: ~10
-already-merged multi-file code PRs of this repo, each with `base`/`head` commit
-SHAs (immutable, so the diff is reconstructable forever) and ground-truth
-`panel`/`defects` anchors recovered from the PR's gate verdict. It is a data
-artifact — `audition` reads it, never edits it. Schema in its header.
+`skills/reviewers/benchmark-board.yml` is the frozen audition board: the frozen
+10 already-merged multi-file code PRs of this repo plus mined defect-bearing
+games appended on top (ticket 1008), each entry with `base`/`head` commit SHAs
+(immutable, so the diff is reconstructable forever) and ground-truth
+`panel`/`defects` anchors. Panel anchors are recovered from the PR's gate
+verdict where one is available; defect anchors are mined from confirmed
+post-merge fixes under the pre-registered CONFIRMED rule; some entries carry
+an empty panel by record. The board's size is asserted by the tests, not
+stated here as a literal. It is a data artifact — `audition` reads it, never
+edits it. Schema in its header.
 
 ## Dependencies
 

@@ -28,9 +28,11 @@
 #            panel-miss has surfaced; append anchors here as they do.
 #   A candidate finding matching NEITHER set is UNIQUE-HALLUCINATED.
 #
-# Anchor form: `basename[:LINE]` or `basename:*`.
+# Anchor form: `basename:LINE` or `basename:*`.
 #   - `basename:LINE`  matches a finding at that file (by basename) and line.
-#   - `basename:*` or bare `basename`  matches any line in that file.
+#   - `basename:*`     matches any line in that file. A bare basename without
+#                      the colon is out of grammar — rejected by the
+#                      data-integrity test (wildcard must be explicit).
 #   Anchors are stored BASENAME-normalized (no directory prefix) so the board
 #   stays forge/stack-agnostic (the agnostic gate forbids repo-relative
 #   `scripts/*.sh` literals in skills/); the classifier likewise reduces each
@@ -47,8 +49,10 @@
 # the fix's parent) to a commit introduced by the PR (ancestor of head, not of
 # base). Defect anchors are head-SHA `basename:LINE` mapped back from the
 # confirming fix, degrading to `basename:*` when the line mapping is not
-# mechanical. Confirming evidence per anchor (fix commit or citing ticket) is
-# recorded in the seeding merge request body, never in this file. An empty
+# mechanical. Each populated entry carries its confirming fix commit(s) as
+# `# confirmed: <full-fix-sha>` comment lines inside the block (parser-skipped,
+# agnostic-clean — bare SHAs only, no URLs/paths); the substantive adjudication
+# behind each fix is recorded in the seeding merge request body. An empty
 # defects set carries a `none confirmed` justification comment on its own line
 # directly above the key (never inline — the scalar parser would read an
 # inline comment into the anchor field). Panel anchors for mined entries are
@@ -80,12 +84,16 @@ board:
     base: 458f49e94968b36e54c6126ad9d2a0cd2e7431ef
     head: d765d99183c652cf55b5afdbf4d8890e7b808a4c
     panel: bash-env.sh:53 bash-env.sh:55 bash-env.sh:225 bash-env.sh:234 test_bash_env_keys_selection.sh:* test_bash_env_keys_selection_explicit.sh:*
+    # confirmed: 650198e19a962aa9fac5657379d9a22734dd838f
+    # confirmed: 0b136eebe4af54660ec6d90493bcc26011566e63
     defects: bash-env.sh:67 test_bash_env_keys_selection_explicit.sh:*
   - pr: 588
     title: "fix(0323): strict-parse project .env, refuse GUARD_* keys"
     base: cd92b7baf86c948c1e17b2a2bd27b10d3b9edfd6
     head: 46a7fe17cb3a13490b3315a9b8e9a9f1cfe8cfb6
     panel: bash-env.sh:64 bash-env.sh:72 pretooluse-worktree-path-guard.sh:49 pretooluse-worktree-path-guard.sh:50 pretooluse-worktree-path-guard.sh:83 pretooluse-worktree-path-guard.sh:105 test_bash_env_project_env_parse.sh:*
+    # confirmed: bf25669735908a678c79b16001d88b20dc8b3d6c
+    # confirmed: 6372a9fb35a08a6397ff02c5f23f567f3de9d622
     defects: bash-env.sh:17 bash-env.sh:27
   - pr: 584
     title: "fix(0329): replace flaky grep-here-string boolean checks with pure-bash"
@@ -109,6 +117,9 @@ board:
     base: baf8e45495a758bab901291dc2690180b7a74d8f
     head: 72659a14025a5ab20aca5c480e96893c5f4a66c4
     panel: seat-runner.sh:* test_seat_runner.sh:* reviewers.sh:*
+    # confirmed: 2367fec170ed583d2dfdac47ec5f746a8ed5a1b6
+    # confirmed: 8be2fdb139184bd1a270d8731ed2ad57a35b2590
+    # confirmed: e8cb0caa3bd47a9657368883959fbd55b6d620c6
     defects: seat-runner.sh:265 test_reviewers.sh:23 reviewers.sh:118
   - pr: 573
     title: "feat(0326): offline A/B harvest CLI, replay runbook, measure-A sample"
@@ -123,6 +134,7 @@ board:
     base: 4c302dfc3080378aad0f479c7368889cca58efc8
     head: 2a4a2d0095b6fed5df1d747f6fe1e228efc0de76
     panel: test_verify_fork_contracts.py:*
+    # confirmed: 0cff089f4ed9b686dcb57ceb50c6c86b01129c52
     defects: SKILL.md:247
   - pr: 570
     title: "fix(0322): extend agnostic gate to scripts/ dir"
@@ -133,95 +145,102 @@ board:
     # to extend coverage to another directory; it repaired no defect in them.
     defects:
   # ── mined defect-bearing entries (ticket 1008), descending by pr ────────────
-  # Confirming evidence (fix commit / citing ticket per anchor) lives in the
-  # seeding merge request body for ticket 1008.
+  # Confirming-fix SHAs are versioned per entry as `# confirmed:` lines; the
+  # substantive adjudication per anchor lives in the seeding merge request body.
   - pr: 956
     title: "fix(0947): converge keystore extraction invariants"
     base: d3401d5ecf6d53dfde5613df0655ba0fd91e1868
     head: 4d8c05d63dc9493170107e1c3599d6b2366eab3b
     panel: reviewers.sh:*
+    # confirmed: 6ea9af02783191b78f263fa36d3007fe80e9d86a
     defects: peer_review.py:122
   - pr: 942
     title: "0943: peer_review.py resolves its OpenRouter credential from the keystore"
     base: ef1662a4dc09fd8fcf0aeef7217a30590f29fcae
     head: 89f0b257ae0805c256cf05099a1494e9b123b300
     panel:
+    # confirmed: 6ea9af02783191b78f263fa36d3007fe80e9d86a
+    # confirmed: 59c659add07285948da635319ac489f35487f7ec
     defects: peer_review.py:119 test_external_peer_review_skill.py:122
   - pr: 812
     title: "feat(0854): SessionEnd scratch cleanup, temp-usage healthcheck, orphan sweep"
     base: 90742f0158327b9968a9e4ed928eabbfac27494c
     head: 268bc15ce3595d3999e1aabb9deba18806e4da94
     panel: SKILL.md:72 SKILL.md:110 session_scratch.py:195 session_scratch.py:263 session_scratch.py:272 session_scratch.py:288 on-end.sh:66
+    # confirmed: af64db7753841cb973438dfbcc6dd370e5bb9769
     defects: on-end.sh:42
   - pr: 811
     title: "fix(0500): revive the leading-dash and silent-fallback fixes abandoned on 14 August"
     base: f753061f2588d00f5fee69e7193dbc2f8b7dc2fa
     head: 6ac3d6570e4078b9610cfad177f8107c113d90b2
     panel: commit.py:* read-index.py:* SKILL.md:*
+    # confirmed: ad33697b6207306064e0d6ee27b0ef6660745be9
     defects: SKILL.md:80 test_roar_step2_attribution.py:44
   - pr: 718
     title: "zotero-import: injection API directe (items + PDFs), RIS en repli"
     base: 4a9483feecfbf97ee2d1bd5d0ced4b6db9c626e2
     head: 06191a4b6a1d7329ae6e37b7b8fa458f2001c85b
     panel:
+    # confirmed: cb2fa2492da5ade3a3c3bf9c008e3b4f0a6b9559
+    # confirmed: a1bb93a379dfb52ba02084c8d993e3d0fe350ca9
     defects: zotero-import.py:435 zotero-import.py:*
   - pr: 627
     title: "gc: active-session rails in worktree-gc.sh; roar and molt scoped to their own trees"
     base: 9016de4ec0f2a3cc922f09cc23bed397050efb62
     head: 236b246e88d7ee48695b88f5e5cb2f951adad3cd
     panel:
+    # confirmed: a6a06967d85c481cdc6d917adba10712761a38f1
     defects: worktree-gc.sh:90
   - pr: 589
     title: "feat(roar): log one celebration per merged PR since last sha"
     base: cf1da844387857bccde4508cb5e46a43e65e087f
     head: 677e36b7734aab8e03767778cd6e23ebc91725f7
     panel: enumerate-merges.py:* SKILL.md:*
+    # confirmed: a50f37f2a9b9e24d7b2e25bb597948be75a495b0
     defects: enumerate-merges.py:60
   - pr: 564
     title: "feat(0217): OS-network-isolate the reviewer seat-runner"
     base: 21becc3efe91f9e76f57b3670ceb2f4012ba246e
     head: 4b2a46bd87670bdb0bfc7ee277fb7d559b2d1324
     panel: seat-runner.sh:83 seat-runner.sh:226 test_seat_runner.sh:76 Containerfile:* net-relay.py:* SKILL.md:*
+    # confirmed: 6f180cf3592fd952d324d6d5a3b7bf69209a8501
+    # confirmed: 2367fec170ed583d2dfdac47ec5f746a8ed5a1b6
+    # confirmed: 22f12b85d6a8825ece7f1b7a062047613964a5dc
     defects: seat-runner.sh:143 seat-runner.sh:219 test_seat_runner.sh:87
   - pr: 316
     title: "feat(0219): handcuff + scope mutation modes, discovery phase, for fang-audit"
     base: 9aafa1c2cf66b6c6ff6412e65bd4233d68f16ec0
     head: feeec90d8958481cbd462e942b636c19b20c50ae
     panel:
+    # confirmed: e1d2ed25cca9c6128be63ba3d1535a4f478a288c
     defects: fang-audit.js:115
   - pr: 305
     title: "skill(0182): extract fang-audit test-quality workflow (fang-only v1)"
     base: 7996359188cdc624204f04aea8d75a74a3926a10
     head: ff2b0f01f9028a3d2343ae2c9e951411fc1e8107
     panel: fang-audit.js:309 fang-audit.js:367 fang-audit.js:368 fang-audit.js:400
+    # confirmed: 55636b58c59f57a4f1a429a4404c6606d4c39157
+    # confirmed: 43579f4ee59186826dedb93ce550b2c855be8001
     defects: fang-audit.js:24 SKILL.md:6
   - pr: 302
     title: "skill(0165): dream v2 — memory hierarchy and earned promotion"
     base: 910753b16dca0660dfd1691de283c9ea509fc19d
     head: de58c52b26d3c4bbe42b6442e9eb15dc5ad6d88c
     panel: provenance.py:* SKILL.md:*
+    # confirmed: 057440f1c6f89dcba12166b66a96befefd4c25f4
+    # confirmed: 11c25f6d01b08258b32c3ebe2577a309a50a07aa
     defects: provenance.py:32 commit.py:48
   - pr: 292
     title: "skill(0208): /reviewers panel management wired to the 0217 seat-runner"
     base: d48d4f6b38191ad88d579629523caad58b9654c4
     head: e1f97ecb8fefb8367b733cfec6235a55d83ad16b
     panel:
+    # confirmed: 9084156cf0fcdec7d5e791dac502f1245b173386
     defects: reviewers.sh:114
-  - pr: 258
-    title: "ticket(0195): worktree-gc removes any-path stale worktrees — drop agent-* filter, add self-skip rail"
-    base: 397d6ea42052f38bf53fff96180a35bda6e51b92
-    head: b0ac9805893f2bbb8c745e6ab7a5120e694c2f94
-    panel: test_worktree_tools.py:*
-    defects: test_worktree_tools.py:120
   - pr: 214
     title: "feat(0167-0169): mechanical raid worktree hygiene — salvage, GC, coordination PR"
     base: 91438bfef7e6189502a44924a3701fa5cefdb0e6
     head: fc51c4c0594cbce8940f6167ab12c70d7c6681fe
     panel:
     defects: worktree-gc.sh:34 guard-worktree-remove-wip.sh:12
-  - pr: 21
-    title: "fix: tier 1 review findings — bug fix and security hardening"
-    base: 5f62d799737115d034f36b01a154c674a83eda91
-    head: e16c852a8b641820c299dc2e6190b7f766e06138
-    panel: guard-destructive-bash.sh:*
-    defects: on-start.sh:*
+    # confirmed: 25f8152ab2436e0a861ab0517dcca0ea1fe93017
