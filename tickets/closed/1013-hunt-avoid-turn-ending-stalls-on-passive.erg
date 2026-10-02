@@ -1,0 +1,38 @@
+%erg 0.1
+Title: hunt: avoid turn-ending stalls on passive-notify runtimes
+Created: 2026-10-02
+Author: MinhHaDuong
+Closed: autoclosed — PR #1124
+
+--- log ---
+2026-10-02T09:23Z MinhHaDuong created
+
+2026-10-02T09:23Z MinhHaDuong note Probe reproduced and measured in-session: wait returns the runner report; client interrupt aborts the watch with 'Interrupted: client interrupt' and queues the author's messages; the runner survives the interrupt (pendingTurn stayed true). Evidence recorded in the ticket body.
+2026-10-02T09:31Z MinhHaDuong closed — autoclosed — PR #1124
+--- body ---
+
+## Context
+
+Observed 2026-10-02 across three detached hunts (0920, 0988, 0916) on the Vibe
+runtime: hunt's detach branch reports the handoff and ends the turn; the runner
+finishes later; the completion notification is a passive stream event that cannot
+start a parent turn; the session sits idle until the author prompts. The author
+had to watch runners terminate and relay readiness by hand.
+
+## Probe evidence (2026-10-02)
+
+1. Blocking `agent.wait` holds the turn and returns the runner's final report on
+   completion (240 s sleeper, clean return).
+2. A client interrupt aborts the wait with `Interrupted: client interrupt`, ends
+   the parent turn, and the author's messages queue — the session stays responsive.
+3. The runner survives the interrupt (still `pendingTurn: true` after the parent
+   turn ended) — worst case is ping retrieval, never a killed executor.
+
+## Exit criteria
+
+- [ ] hunt's detach branch blocks on the runner (`agent.wait`, bounded slices) when
+      the author is hands-off or notifications cannot wake the parent; otherwise
+      ends the turn with the ping-retrieval note.
+- [ ] Interrupt semantics stated: cancels the watch, not the runner — re-attach.
+- [ ] The 5.4x inline-cost rationale preserved for the interactive case.
+- [ ] `make check`, `make lint`, `make check-skills-drift` pass.
