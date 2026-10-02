@@ -269,6 +269,23 @@ appended in the same fixed-line form
 conductor runtime's spawn limitation means perspectives that require
 subagents record status: skipped, not silence.
 
+This PR's own review round (round 1, posted 2026-10-02 on #1142, review
+contract blobs as above):
+
+```
+kind: review-attribution
+pr: 1142 · project: .agents
+writer: runtime=vibe · model=mistral-vibe · effort=standard
+reviewer: seat=correctness · runtime=none · status: skipped
+reviewer: seat=consistency · runtime=none · status: skipped
+  finding: none — PANEL-INTEGRITY: DEGRADED, spawn capability absent
+```
+
+Zero findings were recorded because no perspective ran; the seats stay
+unresolved, and no `adopted:` line exists for findings that do not exist.
+The mechanical synthesis in the posted review records the anchor, the
+`make check` result (1314 passed, 2 skipped) and the verify-adherence pass.
+
 No reviewer perspective ran on the STEP A diff and none runs on this one;
 the constraint is the runtime's tool surface, recorded as an observation,
 not a pass. Findings from the merge-request review of this PR, if any, will
