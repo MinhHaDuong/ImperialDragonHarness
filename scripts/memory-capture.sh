@@ -55,12 +55,12 @@ project_key() {
     url=$(git -C "$repo" remote get-url origin 2>/dev/null) \
         || die "private capture needs an origin remote to derive the project key"
     norm=$(printf '%s' "$url" \
-        | sed -e 's|^\([a-z+]*://\)git@||' -e 's|^[a-z+]*://||' \
+        | sed -e 's|^\([^/@:]*@[^/:]*\):\([^/]\)|\1/\2|' \
+              -e 's|^\([a-z+]*://\)git@||' -e 's|^[a-z+]*://||' \
               -e 's|^\([^/]*\)@||' -e 's|^git@||' \
               -e 's|^\([^/:]*\):22/|\1/|' \
               -e 's|^\([^/:]*\):443/|\1/|' \
-              -e 's|^\([^/:]*\):80/|\1/|' \
-              -e 's|:\([^/]\)|/\1|' -e 's|\.git$||' \
+              -e 's|^\([^/:]*\):80/|\1/|' -e 's|\.git$||' \
               | tr '[:upper:]' '[:lower:]')
     keydir=$HOME/.config/keys/memory
     mkdir -p "$keydir"

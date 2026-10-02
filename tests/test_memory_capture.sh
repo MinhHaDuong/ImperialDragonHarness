@@ -133,6 +133,16 @@ else
     _fail "non-default port did not derive its own key"
 fi
 
+# key selection: a non-default port and a same-named path segment are distinct
+# origins — host:2222/path (SSH port) must not share a key with host/2222/path.
+_mkproject ports-pathseg https://port.example.com/2222/owner/proj.git
+printf 'path-segment 2222 entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+if [ "$(count_keys)" = 5 ]; then
+    _pass "port-carrying and slash-carrying origins derive distinct keys"
+else
+    _fail "port-carrying and slash-carrying origins share a key"
+fi
+
 # first private capture stays silent: age-keygen's public-key banner must not
 # reach the caller's stderr on success.
 _mkproject quiet git@quiet.example.com:owner/proj.git
