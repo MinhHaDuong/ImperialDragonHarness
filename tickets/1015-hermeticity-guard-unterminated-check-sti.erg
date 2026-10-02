@@ -1,0 +1,46 @@
+%erg 0.1
+Title: hermeticity guard: UNTERMINATED check still re-parses the awk stream with grep — the 0875 blocker's class
+Created: 2026-10-02
+Author: reviewer
+
+--- log ---
+2026-10-02T10:40Z reviewer created
+
+--- body ---
+## Context
+
+Found by the step-3 sweep after the ticket-0875 hunt merged (PR #1133,
+2026-10-02). The blocker that review caught: the guard's suite-wide
+`export BASH_ENV=` exemption was decided by `grep -E` re-parsing the
+`\x01`-delimited stream the awk state machine had built — a cross-tool byte
+contract that produced a BAD verdict on one CI runner allocation and EXEMPT
+on another, on identical bytes and tool versions (GNU Awk 5.2.1, grep 3.11,
+bash 5.2.21 printed by the diagnostic cycle). The fix moved the exemption
+into the same read loop that scans the file.
+
+Two members of the same class remain in tests/test_bash_tests_are_hermetic.sh:
+
+1. **Verdict-deciding (this ticket's target):** the UNTERMINATED check at
+   line 333 — `printf '%s\n' "$ll" | grep -qE -- '^-1'"$LL"` — still greps the
+   awk-built stream. The same runner nondeterminism, if it strikes this
+   pattern, makes the guard answer UNTERMINATED for a healthy file
+   (fail-loud, but a confusing false verdict that would mask the real
+   answer).
+2. Diagnostic-only (record, not blocking): the `diag_tok` probe at line 595
+   re-parses the stream the same way, but it only decorates the FAIL message.
+
+## Actions
+
+1. Move the UNTERMINATED detection into the same awk pass that builds the
+   logical-lines stream (emit a sentinel token, e.g. a `-1`-prefixed record,
+   consumed by the read loop) — one implementation, no second tool over the
+   raw stream, mirroring the merged exemption fix.
+2. Red control first: a fixture whose heredoc heuristic loses track must
+   still answer UNTERMINATED after the change.
+
+## Exit criteria
+
+- [ ] No verdict-deciding path in the guard re-parses the awk-built stream
+      with grep; the UNTERMINATED check consumes the same read loop
+- [ ] A red control pins UNTERMINATED detection before the fix and passes
+      after
