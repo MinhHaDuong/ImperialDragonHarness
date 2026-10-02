@@ -79,23 +79,51 @@ def test_every_cell_verdict_is_in_the_predeclared_vocabulary():
         assert verdict in CELL_VERDICTS, f"{cell}: verdict {verdict!r} not predeclared"
 
 
+def scenario_verdict_from_ledger(rows):
+    """The protocol's scenario rule, applied to one scenario's cell verdicts.
+
+    A scenario passes when every cell is pass or no-event; one fail fails
+    it; more than one near-miss fails it; a single near-miss is its own
+    verdict. Absent cells are observations, never silent passes, so they
+    keep a scenario from passing too.
+    """
+    verdicts = [verdict for _, verdict in rows]
+    if "fail" in verdicts or verdicts.count("near-miss") > 1:
+        return "fail"
+    if verdicts.count("near-miss") == 1:
+        return "near-miss"
+    if all(v in ("pass", "no-event") for v in verdicts):
+        return "pass"
+    return "fail"
+
+
 def test_every_scenario_has_a_verdict_line():
     text = RESULTS.read_text(encoding="utf-8")
-    for prefix in EXPECTED_CELLS:
-        match = re.search(rf"^\| {re.escape(prefix)}[.0]? \| (\w[\w-]*)", text, re.MULTILINE)
-        if match is None:
-            # S1.1/S6.1/S7.1/S8.1/S10.1 are their own cells; scenario verdict
-            # equals cell verdict unless stated otherwise.
-            continue
-        assert match.group(1).lower() in SCENARIO_VERDICTS | CELL_VERDICTS, (
-            f"{prefix}: scenario verdict {match.group(1)!r} not predeclared"
-        )
-    # Each scenario section names its verdict explicitly.
+    rows = ledger_rows(text)
     for scenario in ("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10"):
-        section = re.search(rf"^## {scenario} — .*?(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+        section = re.search(
+            rf"^## {scenario} — .*?(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
         assert section, f"results lost their {scenario} section"
-        assert re.search(r"verdict[^\n]*", section.group(0), re.IGNORECASE), (
-            f"{scenario} section states no verdict"
+        # The word "verdict" in a table header is not a verdict: the section
+        # must carry an explicit verdict line, in the predeclared vocabulary,
+        # and it must agree with the ledger (external review finding on
+        # #1142, tests/test_memory_v8_evaluation_results.py:92).
+        stated = re.search(
+            rf"^Scenario {scenario} verdict: (pass|fail|near-miss)\b",
+            section.group(0),
+            re.MULTILINE,
+        )
+        assert stated, f"{scenario} section carries no explicit 'Scenario {scenario} verdict:' line"
+        cells = [
+            (cell, verdict) for cell, verdict in rows
+            if cell.startswith(scenario + ".")
+        ]
+        assert cells, f"{scenario} has no cells in the ledger"
+        expected = scenario_verdict_from_ledger(cells)
+        assert stated.group(1) == expected, (
+            f"{scenario} states verdict {stated.group(1)!r} but its ledger "
+            f"cells imply {expected!r}"
         )
 
 

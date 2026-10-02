@@ -279,12 +279,21 @@ writer: runtime=vibe · model=mistral-vibe · effort=standard
 reviewer: seat=correctness · runtime=none · status: skipped
 reviewer: seat=consistency · runtime=none · status: skipped
   finding: none — PANEL-INTEGRITY: DEGRADED, spawn capability absent
+reviewer: seat=external-decorrelated · runtime=openrouter-frontier · status: ran
+  finding: verifiable · tests/test_memory_v8_evaluation_results.py:92 · adopted: yes
 ```
 
-Zero findings were recorded because no perspective ran; the seats stay
-unresolved, and no `adopted:` line exists for findings that do not exist.
-The mechanical synthesis in the posted review records the anchor, the
-`make check` result (1314 passed, 2 skipped) and the verify-adherence pass.
+Zero findings were recorded by the conductor-side seats because no
+perspective ran; they stay unresolved. The external decorrelated seat
+(openrouter-frontier, curing the degraded panel) found one verifiable
+defect — the scenario-verdict check accepted the word "verdict" in a table
+header, so a missing explicit per-scenario verdict line would go
+undetected — and it was adopted and fixed on this branch: the check now
+requires an explicit "Scenario SN verdict: pass|fail|near-miss" line in
+every section and cross-checks it against the ledger cells under the
+protocol's scenario rule. The mechanical synthesis in the posted review
+records the anchor, the `make check` result (1314 passed, 2 skipped) and
+the verify-adherence pass.
 
 No reviewer perspective ran on the STEP A diff and none runs on this one;
 the constraint is the runtime's tool surface, recorded as an observation,
