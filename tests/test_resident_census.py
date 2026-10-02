@@ -42,9 +42,9 @@ BUDGETS = {
     # fail on anything the chain could plausibly do.
     # Raised 2026-10-02 (ticket 0920): the v8 pilot merges the 0911 reading
     # section into AGENTS.md, as the adopted convention requires. The section
-    # was trimmed against this gate; the remaining abridgement is recorded in
-    # docs/memory-v8/pilot.md, so the budget moves to the measured value plus
-    # thin headroom instead.
+    # was trimmed against this gate; the abridgement is stated in
+    # docs/memory-v8/pilot.md, with the template as the reference, so the
+    # budget moves to the measured value plus thin headroom instead.
     "import": 4500,  # canonical harness instructions and supporting references
     # Both lowered 2026-09-10 by the title-only index pass: the index line is a
     # title and a link, the trailing hook having been a third copy of a sentence
