@@ -13,6 +13,7 @@ Closed: delivered by the three-runtime evidence PR — Claude Code, Codex and Pi
 2026-10-02T10:14Z MinhHaDuong note blocker 0923 closed — Blocked-by removed.
 2026-10-02T10:24Z claude note Detached hunt pickup (raid-0909 Wave 3, branch from origin/main 87ee07a8). Blind-spot F5 probe passed before any session work: claude -p, codex exec --skip-git-repo-check and pi -p --no-session each answered a trivial prompt with exit 0 and verified output from this detached executor; no runtime leg stopped or escalated. Codex note: exec requires a trusted/git directory or --skip-git-repo-check, and reads stdin when piped.
 2026-10-02T10:38Z reviewer closed — delivered by the three-runtime evidence PR — Claude Code, Codex and Pi each ran one real session against a disposable clone: AGENTS.md loaded natively in all three, index/theme read before action with transcript-quoted evidence channels, journal search with ordinary tools, public capture through scripts/memory-capture.sh, no native-profile sync; versions and limits recorded in the evidence docs
+2026-10-02T10:44Z claude note cross-ref 0979 (raid 1014/0937/0979/0853 wave): wiring a Pi runtime adapter inherits the silent-reroute risk when model resolution comes up empty — the provider-assertion rule in adapters/pi/README.md (verify served provider in --mode json, keep declared model ids resolvable) is part of that adapter contract
 --- body ---
 
 ## Context

@@ -19,6 +19,7 @@ Closed: delivered by the v8 runtime smoke PR — evidence doc, marked public cap
 2026-10-02T10:02Z vibe note Detached hunt pickup, raid-0909 wave 2, branch t0923-v8-markdown-smoke from origin/main 5fed3482. Blind-spot F1 read before any capture: ticket 1014's generic colon rule can collide `host:2222/path` with `host/2222/path` in memory-capture project-key derivation; this repository's origin URL carries no port, so the real project key is unaffected — proceeding with the collision explicitly noted in the evidence, no change to 1014's open decision.
 2026-10-02T10:02Z vibe note Private/.age capture leg deferred by author decision (raid imagine pass): no legitimate uncleared material exists for this smoke. Deferral and its limit — the decrypt/consolidate/re-encrypt path stays unexercised on real material — are recorded in the evidence document.
 2026-10-02T10:14Z MinhHaDuong closed — delivered by the v8 runtime smoke PR — evidence doc, marked public capture, every leg exercised or honestly deferred
+2026-10-02T10:41Z claude note cross-ref 0979 (raid 1014/0937/0979/0853 wave): wiring a Pi runtime adapter inherits the silent-reroute risk when model resolution comes up empty — the provider-assertion rule in adapters/pi/README.md (verify served provider in --mode json, keep declared model ids resolvable) is part of that adapter contract
 --- body ---
 
 ## Context
