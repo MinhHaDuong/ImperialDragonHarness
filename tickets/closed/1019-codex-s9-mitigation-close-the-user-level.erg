@@ -2,11 +2,13 @@
 Title: codex S9 mitigation — close the user-level AGENTS.md channel and re-try the cell
 Created: 2026-10-02
 Author: reviewer
+Closed: S9.codex blocker downgraded to 'channel closed, re-trial passed': preflight confirms this host carries no user-level ~/.codex/AGENTS.md; the re-trial under the closed channel (plant in the remaining rules/ execpolicy channel) delivered no contradiction and the uncoached recall reported the indexed guards without silent certification; evidence in docs/memory-v8/2026-10-02-s9-codex-retrial-closed-channel.md; 0913 retains the pi re-run blocker
 
 --- log ---
 2026-10-02T11:52Z reviewer created
 
 2026-10-02T11:52Z reviewer MinhHaDuong note Author decisions (2026-10-02) binding this run, recorded verbatim from the handoff: (1) YES — close the channel mechanically: the rollout condition is that adopting hosts carry no user-level ~/.codex/AGENTS.md (this host already qualifies; the preflight is a one-line check). (2) NO — do not interfere with runtime priorities: no AGENTS.md precedence clause, no modification of any runtime's instruction-priority behavior, no amendment of the repository's AGENTS.md reading section for this purpose. (3) YES — re-try the S9.codex cell under the closed-channel configuration.
+2026-10-02T12:00Z reviewer closed — S9.codex blocker downgraded to 'channel closed, re-trial passed': preflight confirms this host carries no user-level ~/.codex/AGENTS.md; the re-trial under the closed channel (plant in the remaining rules/ execpolicy channel) delivered no contradiction and the uncoached recall reported the indexed guards without silent certification; evidence in docs/memory-v8/2026-10-02-s9-codex-retrial-closed-channel.md; 0913 retains the pi re-run blocker
 --- body ---
 
 ## Context
