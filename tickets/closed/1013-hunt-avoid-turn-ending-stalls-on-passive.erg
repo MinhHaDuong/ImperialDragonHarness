@@ -2,11 +2,13 @@
 Title: hunt: avoid turn-ending stalls on passive-notify runtimes
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: autoclosed — PR #1124
 
 --- log ---
 2026-10-02T09:23Z MinhHaDuong created
 
 2026-10-02T09:23Z MinhHaDuong note Probe reproduced and measured in-session: wait returns the runner report; client interrupt aborts the watch with 'Interrupted: client interrupt' and queues the author's messages; the runner survives the interrupt (pendingTurn stayed true). Evidence recorded in the ticket body.
+2026-10-02T09:31Z MinhHaDuong closed — autoclosed — PR #1124
 --- body ---
 
 ## Context
