@@ -181,12 +181,13 @@ fi
 # ── the shipped benchmark board parses and its anchors stay agnostic-clean ───
 SHIPPED="${REPO_ROOT}/skills/reviewers/benchmark-board.yml"
 if [ -f "$SHIPPED" ]; then
-    # It must carry the expected ~10 board entries.
+    # It must carry at least the frozen 10 entries (ticket 0346 froze 10;
+    # ticket 1008 appends mined defect-bearing games on top).
     n=$(grep -cE '^[[:space:]]*-[[:space:]]*pr:' "$SHIPPED" || true)
-    if [ "$n" -ge 8 ]; then
-        echo "PASS: benchmark board ships >=8 PRs ($n)"; PASS=$((PASS+1))
+    if [ "$n" -ge 10 ]; then
+        echo "PASS: benchmark board ships >=10 PRs ($n)"; PASS=$((PASS+1))
     else
-        echo "FAIL: benchmark board ships only $n PRs (<8)"; FAIL=$((FAIL+1))
+        echo "FAIL: benchmark board ships only $n PRs (<10)"; FAIL=$((FAIL+1))
     fi
     # A smoke audition over the SHIPPED board proves it parses and runs
     # end-to-end (no real seat needed). Uses a generic stub that emits one
@@ -208,7 +209,9 @@ STUBEOF
                 --board "$SHIPPED" --endpoint http://127.0.0.1:9/v1 \
                 --trial-ticket "$TRIAL" 2>/dev/null )"
         assert_contains "shipped board: audition runs end-to-end" "audition candidate=" "$smoke"
-        assert_contains "shipped board: 10-PR board size" "board=10MR" "$smoke"
+        # board size is derived from the file (dynamic), not a literal: the
+        # board grew past the frozen 10 with the ticket-1008 mined entries.
+        assert_contains "shipped board: board size matches the file" "board=${n}MR" "$smoke"
     fi
 else
     echo "FAIL: skills/reviewers/benchmark-board.yml missing"; FAIL=$((FAIL+1))
