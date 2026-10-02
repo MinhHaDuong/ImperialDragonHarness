@@ -8,6 +8,7 @@ Blocked-by: 0909
 2026-10-02T08:00Z MinhHaDuong created
 
 2026-10-02T08:21Z MinhHaDuong note author sequencing decision (2026-10-02): capture waits for the memory v8 rollout to complete — the attribution record is a memory-journal entry, so its format, location and write path follow whatever v8 settles (tracker 0909); downstream 1006/1007/1009 inherit the gate through this ticket
+2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
 --- body ---
 ## Context
 
