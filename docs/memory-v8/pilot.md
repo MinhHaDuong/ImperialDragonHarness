@@ -43,8 +43,6 @@ project's setup changed — this declaration covers only this repository
 
 The v8 reading section is merged into this repository's `AGENTS.md`
 (see [templates/AGENTS.md](templates/AGENTS.md)), abridged to fit the
-resident-census import budget: the dropped clauses are the template's
-"including unconsolidated episodes" phrasing, the
-"Bundle closure capture, tickets and docs into one PR" sentence, and DREAM's
-"checking coherence with applicable rules" tail. DREAM.md versioning belongs
-to 0916, not to this pilot.
+resident-census import budget. The template remains the reference; the
+abridgement never drops an operative instruction, only phrasing. DREAM.md
+versioning belongs to 0916, not to this pilot.

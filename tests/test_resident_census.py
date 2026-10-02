@@ -53,7 +53,8 @@ BUDGETS = {
     # index 950 -> 367. Lowering these is the deliverable of that pass.
     # Raised 2026-10-02 (ticket 0920): the v8 pilot index links the real
     # topic, journal and reference surface, so it can no longer fit the
-    # legacy 500-char stub. In exchange the hook channel stopped being
+    # legacy 500-char stub (measured 2007 chars at the close of 0920,
+    # headroom 93). In exchange the hook channel stopped being
     # cross-project: scripts/on-start.sh now injects it only into sessions
     # whose project is this harness repository, so no other session pays it.
     "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start.sh

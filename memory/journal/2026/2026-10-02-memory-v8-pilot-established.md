@@ -17,7 +17,7 @@ path it linked is still linked. The SessionStart hook stopped injecting the
 harness index into unrelated projects' sessions — the cross-project channel
 the PR #1102 review had flagged — and now injects it only where the session's
 project is this repository or one of its worktrees. The resident census hook
-budget was raised accordingly, from 500 to 1900 chars.
+budget was raised accordingly, from 500 to 2100 chars.
 
 A mechanical relocated-clone test now proves the first exit criterion:
 `tests/test_memory_v8_pilot.py` clones the repository, moves the clone
