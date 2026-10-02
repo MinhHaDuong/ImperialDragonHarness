@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Tracker: deliver repository Markdown memory v8
+Created: 2026-09-10
+Author: claude
+Blocked-by: 0913
+Closed: all five exit criteria verified by the recorded integration review (docs/memory-v8/integration-review.md); 0913 stays open under the author's 2026-10-02 scope decision on the No-rollout verdict (PR #1142)
+
+--- log ---
+2026-09-10T15:50Z claude created
+2026-09-11T07:04Z codex note Realigned to v6 after design-review merge #903; retain IDs, add delivery workpackages 0920–0925, defer optional experiments.
+
+2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+
+2026-09-16T15:55Z claude note author settled where the canonical roots live: the harness project's own memory and the collective memory both stay central in ~/.idh, separated from each other. Recorded in the body with its consequence, that step 3 alone does not close the disjoint-roots row and the relocation out of ~/.claude is the remaining half
+2026-09-16T16:05Z claude note ran the three relocation probes with positive controls: the runtime follows a symlinked rules/ and a symlinked CLAUDE.md, both confirmed. The memory probe's own control did not fire, so it is recorded as an invalid probe rather than a negative, with the experiment that would settle it named
+2026-09-16T16:21Z claude note round 1 review: section sign restored to the corpus spelling, and the blast-radius figure reconciled -- the named directories account for 94 of about 104, the rest sit in no single category. Siblings 0920 and 0923 still assert the store cannot leave ~/.claude, which this decision reverses; they need a cross-reference before either is picked up
+2026-09-28T05:49Z claude The relocation out of ~/.claude — the remaining half of the disjoint-roots row — is now ticketed as 0978, child of this tracker.
+2026-10-01T19:03Z MinhHaDuong codex note Author decision: the reference clone is ~/.agents and the repository must remain portable; 0999 replaces the ~/.idh relocation premise.
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
+2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
+2026-10-02T08:19Z MinhHaDuong note blocker 0988 closed — Blocked-by removed.
+2026-10-02T09:42Z MinhHaDuong note Author decision (blind-spot F3): the integration review records the per-machine key story and its cross-machine limit.
+2026-10-02T11:34Z reviewer closed — all five exit criteria verified by the recorded integration review (docs/memory-v8/integration-review.md); 0913 stays open under the author's 2026-10-02 scope decision on the No-rollout verdict (PR #1142)
+--- body ---
+
+## Context
+
+Intégrer la convention, le pilote, capture à roar, rêve suggéré en conclusion de lair et invoqué séparément, preuves sur quatre runtimes, migration progressive et frontière d’autorité. V8 remplace v7 par décision de l’auteur du 2026-10-01 ; le plan v8 est la carte de livraison.
+
+Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
+
+## Actions et vérification
+
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
+
+## Exit criteria
+
+- [x] Tous les livrables actifs du plan ont une réalisation vérifiée ou une décision de périmètre explicite. — integration-review.md § Criterion 1: PRs #1102/#1109/#1117/#1119/#1127/#1134/#1135/#1137/#1142; 0925 + seven deferred tickets scoped per plan; 0913 under the author's explicit scope decision
+- [x] Résultat intégré vérifié : sources, corrections, rappels récents, connaissances retirées et procédures amendées. — integration-review.md § Criterion 2: index 35/100, topics with provenance, append-only journal verified on first-parent history, corrections linking unchanged originals, dream reports v8-r1, legacy machinery retired with regression check, AGENTS.md/roar/lair amended
+- [x] 0988 prouve conservation, intégration et mise à jour du harness sans pull bloqué par la capture. — integration-review.md § Criterion 3: tests/test_memory_stall_reproduction.sh positive control + treatment arm, PR #1117
+- [x] Évaluation relue, coûts et limites explicites ; conception et plan décrivent le livré. — integration-review.md § Criterion 4: predeclared protocol #1137, trials and No-rollout verdict #1142, single-session limits, S9/S3-S4 blockers, F3 per-machine key limit citing 0937
+- [x] Revue d’intégration enregistrée avant clôture ; cette réécriture ne clôt rien. — docs/memory-v8/integration-review.md, dated 2026-10-02, committed before this close
+
+## Raid annotation (2026-10-02, imagine pass)
+
+## 0909 Imagine annotation (tracker)
+PREMISE: Holds. Framing matches the tree: v8 plan is the delivery map; Blocked-by 0913 alone; superseded premises logged (0978/0986 WONTDO, 0999 closed #1104). Every regime claim verified: pilot #1109, policy #1112, capture #1117 (stall reproduction with positive control), DREAM v8-r1 + pilot dream #1119, lair step 11 prose #1097, hunt blocking #1124.
+REIMAGINE: One linear chain from closable, head free. Closed: 0911/0917 #1102, 0920 #1109, 0988 #1117, 0916 #1119. Scoped out: 0925 + 0908/0912/0914/0915/0919/0921/0922 deferred per plan. Remaining: 0910 -> 0923 -> 0924 -> 0918 -> 0913 -> 0909. 0910 is the unblocked entry point. Tracker adds no deliverables; it is a verification-and-closure gate: execute the chain, then a recorded integration review before closure.
+ANTIPATTERNS: one minor hit — 0910's exit criteria last realigned at v7; criterion 2 ("Passage hors ligne...branche durable") carries v7-era phrasing, re-readable in v8 terms (durable dream branch; unavailable sources unknown, not empty). No rewording warranted; the 0910 pickup note should record the v8 reading before implementation so a worker doesn't reconstruct a v7 offline-capture path.
+EXIT-CRITERIA: 1 OPEN (5 open, rest done or scoped); 2 OPEN, surfaces coherent (MEMORY.md 34/100, DREAM.md v8-r1, pilot dream, journal, topics with provenance; roar/lair/dream amended); 3 MET (0988 closed #1117, blocker removal logged); 4 OPEN (0918's protocol absent); 5 OPEN — correctly so (gate holds, no review recorded, closure blocked).
