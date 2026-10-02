@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Child sessions lack the agent connector: reviewer seats need a documented detached-CLI pattern
+Created: 2026-10-02
+Author: reviewer
+
+--- log ---
+2026-10-02T11:05Z reviewer created
+
+--- body ---
+## Context
+
+Observed across all four executors and all four gaze runs of the 2026-10-02
+raid on 0853/0937/0979/1014 (Vibe runtime, PRs #1129-#1132). Subagent
+sessions spawned via the runtime's agent connector do not expose the agent
+connector themselves: tools.agent is absent in every child session. Every
+skill that asks a child to spawn reviewer seats (hunt step 11's review-pr,
+gaze phases 2-4/6) therefore fails its panel in child sessions.
+
+Three of four executors reported PANEL-INTEGRITY: DEGRADED with all
+perspectives "no report" and escalated; the fourth (PR #1129's executor)
+instead ran its three reviewers as detached headless `claude -p` processes
+pinned read-only to the review worktree, polled by artifact — and got a full
+3/3 panel. All four gaze orchestrators then independently rediscovered the
+same detached-CLI pattern to run their batteries; two of them mis-launched it
+first (word-split deny rules, default-opus model instead of the intended
+sonnet) and had to relaunch. The pattern works; it is just undocumented, so
+every session pays its own discovery and first-launch failures.
+
+## Actions
+
+1. Document the detached-seat pattern where the spawn contract fails: one
+   section in skills/review-pr/SKILL.md (and cross-referenced from gaze's
+   reviewer-spawn phase) stating the substitution — headless CLI process per
+   seat, prompt embedding the seat's contract, cwd/--add-dir pinned to the
+   review worktree, read-only rails restated in the prompt, completion
+   observed by artifact polling, never by trusting the spawn's exit status
+   (memory: raid-1008 spawn-under-cap recorded spawn returning success while
+   the child never registered).
+2. Pin the quoting discipline (deny-rules passed as one string) and the
+   model-pinning note (per-seat model selection may not be enforceable
+   through the detached CLI on every runtime — record the limitation
+   instead of silently running a different model).
+
+## Test
+
+A doc-pin test asserting the pattern section exists and names its load
+-bearing elements (detached CLI, artifact polling, read-only rails,
+spawn-success-not-trust), in the established doc-pin style
+(cf. tests/test_pi_provider_assertion_rule.py).
+
+## Exit criteria
+
+- [ ] The substitution pattern is documented in the review-pr skill with its
+      failure modes, so a child session without tools.agent runs its panel
+      instead of reporting DEGRADED
+- [ ] A doc-pin test keeps the section from drifting
+
+## Invariants
+
+- Fail-open stays for seats; nothing here makes a seat blocking.
+- A seat that cannot run is recorded as no-report with PANEL-INTEGRITY
+  status, never simulated (that held in all eight runs).
