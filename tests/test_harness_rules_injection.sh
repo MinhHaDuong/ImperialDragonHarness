@@ -20,7 +20,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 fail=0
 
-out=$(bash scripts/on-start.sh 2>&1 || true)
+# The hook is spawned with `env -i` (ticket 0875): a plain `bash FILE` child
+# inherits BASH_ENV and re-runs the project .env loader inside the very hook
+# whose output is under test — an ambient value could mask the leak this
+# suite exists to catch. HOME and PATH are the whole contract the hook needs
+# (settings.json, jq, git); CLAUDE_PROJECT_DIR is deliberately NOT passed, so
+# the hook runs its no-project stdout path exactly as it does under pytest's
+# loader-cleared child env.
+out=$(env -i HOME="$HOME" PATH="$PATH" bash scripts/on-start.sh 2>&1 || true)
 
 # 1. Rule-body sentences must not appear in hook output. One distinctive
 #    sentence per file; these are resident by other means, never by this hook.

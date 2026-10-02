@@ -11,6 +11,14 @@
 # after settle) and the check-registration race ("no checks reported" watch is
 # retried before merging).
 set -euo pipefail
+
+# Hermetic children (ticket 0875): the merge driver is exercised as
+# `bash "$SCRIPT"` against stubbed git/gh, and such a child inherits BASH_ENV —
+# re-running the project .env loader inside the very process whose merge
+# decisions are under test. Nothing here reads project .env values, so clear
+# the loader suite-wide (tests/test_bash_tests_are_hermetic.sh).
+export BASH_ENV=
+
 cd "$(dirname "$0")/.."
 REPO_ROOT=$(git rev-parse --show-toplevel)
 SCRIPT="$REPO_ROOT/skills/merge/erg-pr-merge"
