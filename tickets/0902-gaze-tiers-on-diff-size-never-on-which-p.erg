@@ -190,3 +190,141 @@ two-axis discipline as action 3, applied to the module).
   battery drops below its old battery's floor. Report in the PR body;
   if the day-14 window contradicts it, a band-tuning follow-up — the
   mechanism is not re-held.
+
+### Plan (phase 3 — executor contract; grounded in the live tree)
+
+**Code — `scripts/prose_predicate.py`**
+- C1: `RISK_HIGH_GLOBS` constant = panel-width.json `pipeline_paths` in order
+  (`.github/**`, `.gitlab-ci.yml`, `Makefile`, `Dockerfile`, `.claude/hooks/**`,
+  `scripts/**`, `skills/**`, `rules/**`) + `"hooks/**"` + `"settings*.json"`.
+  `RISK_LOW_GLOBS = ("docs/**", "*.bib", "**/fixtures/**")`.
+  `risk_band(paths) -> str`: "high" if ANY path matches a high glob (via the
+  existing `glob_match`); "low" only if EVERY path matches a low glob; else
+  "normal"; explicit `if not paths: return "normal"` (vacuous-all guard).
+  Pure string match, no disk. Docstring: scope the "never keyed on a directory"
+  claim to the format axis; state the risk axis is directory-keyed by design
+  and `--risk` reads no disk (hence no refusal).
+- C2: `--risk` flag in `main()`: early branch between `parse_args()` and the
+  `missing =` block → `print(risk_band(args.files)); return 0` with a comment
+  stating why the refusal is deliberately not inherited (the anchor roster
+  lists deleted/renamed paths absent at HEAD; no disk to misread). Everything
+  below the insertion point stays byte-identical.
+
+**Skill text — `skills/gaze/SKILL.md`**
+- S1: insertion point: inside the "Compute PR size … Classify the battery
+  tier" bullet, immediately AFTER the sentence "Carry the resolved `tier`
+  into the telemetry footer and the output-shape template (see § Telemetry,
+  § Output shape)." (line ~229) — append-only, before the `- **Preflight
+  before spawning phases 2–5.**` bullet. Content: the third cwd-anchored
+  call (`cd $primary_root/.claude/worktrees/review-<pr-number> && python3
+  "$IDH_ROOT/scripts/prose_predicate.py" --risk <changed files>`), stating it
+  reads no disk so the missing-path refusal does not apply; what the band
+  means (high/low/normal); breaker precedence phrased as "the 15+ files
+  un-reviewable breaker is checked before the band" — NO literal
+  `pr_files >= 15` in the new text (keeps `test_gaze_refuses_unreviewable_prs`
+  regex matching the original breaker bullet); the combination table (high →
+  raise one rung tiny→small, small→full, clamped at full; low → lower one rung
+  full→small, small→tiny, floored at tiny; normal → unchanged; round-1 size
+  classification only — round ≥ 2 stays full, review:standard pre-empts);
+  the invariant sentence (battery never drops below Agent A + Agent C + the
+  phase-6 gate, at every tier and band); the stated side effects of a
+  tiny→small raise (arms Agent B and phase-5 /simplify, fires the external
+  reviewer panel — the battery follows the tier, no special case); the
+  two-axes statement (size and risk are two axes; never collapsed into one);
+  one sentence noting the residual gap closed is the battery tier, not panel
+  width (0392's width gate already reads pipeline_paths). The existing
+  `**tiny** →` / `**small** →` bullet lines stay verbatim (they are inside
+  `test_gaze_always_runs_agent_c_and_defers_width_to_review_pr`'s
+  "Per-tier battery:"…"- If any of these" span).
+- S2: `risk_band` in BOTH machine-visible templates: verdict footer line
+  `telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<s>s
+  agents=<n> tokens=<in+out> cost~=$<usd>` + a `risk_band` entry in the
+  "Fields:" sentence; and `risk_band: high|low|normal` directly after
+  `tier: tiny|small|full` in the `## /gaze actions` fenced template (plus the
+  same field in that block's telemetry line).
+
+**Tests (RED first — T0 and T1 proven red on the pre-fix tree, per the
+ticket's Test section; note T0 is `integration`-marked via module pytestmark,
+so prove it red by running the test file directly, not via check-fast)**
+- T0 `test_prose_predicate_emits_a_risk_band` in tests/test_prose_predicate_cli.py
+  (integration): fixture files are NEVER created (proof of no-disk-read):
+  `--risk <repo>/scripts/on-end.sh` → "high" (file absent);
+  `--risk <repo>/docs/a.md <repo>/docs/b.md` → "low";
+  `--risk <repo>/scripts/removed.sh` (deleted/renamed shape, absent) → "high",
+  no refusal; `--risk <repo>/scripts/x.sh <repo>/docs/y.md` → "high".
+  Assert rc 0 and stdout.strip() equals the whole word.
+- T1 `test_gaze_raises_tier_on_high_risk_paths` in tests/test_verify_fork_contracts.py
+  (unmarked → check-fast): Setup-section ratchet — the `--risk` call, the rung
+  moves (tiny → small, small → full, full → small, small → tiny), clamp +
+  floor, the "Agent A + Agent C + the phase-6 gate" invariant, the
+  breaker-before-band sentence, the side-effect names (Agent B, /simplify,
+  external reviewer panel), the two-axes statement.
+- T2 `test_gaze_risk_band_recorded_in_telemetry_and_output_shape` in
+  tests/test_verify_fork_contracts.py (unmarked): sibling of
+  test_gaze_tier_recorded_in_telemetry_and_output_shape — footer telemetry line
+  and output-shape fenced block both carry `risk_band`.
+- T3 `test_risk_high_globs_cover_the_pipeline_registry` in
+  tests/test_gaze_prose_routing.py (adherence): every panel-width.json
+  pipeline_paths glob ∈ RISK_HIGH_GLOBS; "hooks/**" and "settings*.json" ∈
+  RISK_HIGH_GLOBS (0901 registry-drift pattern; one-directional: a new
+  pipeline_paths glob fails until the constant catches up).
+- T4 `test_0902_replay_of_the_ticket_shapes` in tests/test_gaze_prose_routing.py
+  (adherence): code-side band assertions — #812 path set (incl.
+  scripts/on-end.sh + settings.shared.json) → "high"; #177 set (tests/test_beat.py
+  + one ordinary file) → "normal"; guard shape (scripts/on-end.sh alone) →
+  "high"; docs-only set → "low" (Verification §2: a 1 000-line docs-only diff
+  is lowered, never raised); anchoring pin: `slides/docs/x.md` → "normal"
+  (docs/** is top-level anchored) and `tests/fixtures/f.json` → "low"
+  (**/fixtures/** matches nested). Plus one text-ratchet line: § 1. Setup
+  states the raise rung `tiny → small`. The perspective-count arithmetic
+  (#812 shape: full battery + Agent C ≥ Correctness+Consistency > #177 shape:
+  Correctness-only + A + gate) is reported in the M1 report, not asserted in
+  code — the tier→battery mapping lives in skill prose, not a function.
+- T5 (no new test): existing tests/test_prose_predicate_cli.py and
+  tests/test_gaze_prose_routing.py pass unmodified (byte-identity invariant),
+  then full `make check`.
+
+**Measurement M1 (Part 2 — population replay, after code lands in the
+worktree; output = report block for the PR body; scratch-only, no committed
+per-run data)**
+Window 2026-09-23 → 2026-10-02 (9 of 14 days — state it).
+1. Runs: walk `~/.claude/projects/*/*.jsonl` (gate traces live in
+   review-worktree project dirs); keep files whose first line matches
+   "You are the verify-gate agent (phase 6"; extract "on PR (\d+) \(GitHub
+   repo (\S+)"; window-filter; group by (repo, pr), price the round-1 ruling.
+2. Perspectives: in the same project dir, the top-level jsonl whose first line
+   is "You are Agent C (PR review panel seat)"; its `<session>/subagents/*.meta.json`
+   descriptions (`"<Perspective> review PR <n>"`, spawnDepth 2) are the
+   perspectives that ran; forge tie-break: the posted Agent C verdict roster
+   via `gh api repos/<owner>/<repo>/issues/<n>/comments`.
+3. Size + paths: `gh api repos/<owner>/<repo>/pulls/<n>/files?per_page=100`
+   (paginate) → filenames, additions, deletions (trace-pr-join.py is the
+   auth/cache pattern to imitate, not reuse).
+4. Recompute old tier (size thresholds + round) vs new (risk_band + the S1
+   table); report per-run table + aggregates (how many raised/lowered) +
+   floor invariant (no run loses Agent C or the phase-6 gate).
+
+**Ordering**: T0+T1 red (direct run) → C1 → C2 → T0/T3/T4 green → S1 → S2 →
+T1/T2 green → T5 (`make check`) → PR. M1 after code lands (needs risk_band +
+network), report appended to the PR body before /gaze.
+
+**Risks (verified against the tree)**
+- R1: `test_gaze_refuses_unreviewable_prs` regex `pr_files\s*>=\s*(\d+)`
+  searches the whole Setup section — no `pr_files >= N` literal in new text.
+- R2: glob semantics pinned by T0/T4 — `settings*.json` matches at any depth
+  (slash-less → basename fallback); `docs/**` and `scripts/**` are top-level
+  anchored (nested → normal); `**/fixtures/**` matches nested.
+- R3: T0's red on the pre-fix tree is unambiguous (argparse rc 2,
+  "unrecognized arguments: --risk").
+- R4: main() diff is a pure insertion above the `missing =` block; zero
+  changed lines below it.
+- R5: empty path list → "normal" explicitly (unreachable via CLI, nargs="+").
+- R6: ratchet tokens (`tiny → small` with U+2192, `two axes`, `risk_band`)
+  must match house style exactly; run T1/T2 immediately after S1/S2.
+- R7: M1 corpus quirks — gate/perspective traces in review-worktree project
+  dirs, perspectives only in subagents/*.meta.json (spawnDepth 2), a PR
+  gated twice yields two gate traces (group by (repo, pr)); the 9/14-day
+  window is stated in the report.
+- R8: do NOT widen Agent C's panel for the band (0392's width gate already
+  reads pipeline_paths); the only link is T3's one-directional registry
+  ratchet.
