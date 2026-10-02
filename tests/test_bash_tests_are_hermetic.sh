@@ -32,7 +32,7 @@
 # runtime. So the coverage is stated here rather than implied.
 #
 # What it does look at, and why each step exists (each is pinned by a static
-# negative control in section (0c)–(0p) below, which fails against the naive
+# negative control in section (0c)–(0r) below, which fails against the naive
 # implementation and passes against this one):
 #
 #   * Heredoc BODIES are excluded before anything else. Their text is data, so
@@ -58,11 +58,17 @@
 #     treating them as command boundaries would cut an `env -i` prefix at an
 #     array expansion (control 0o) — brace GROUPS always carry a `;` or
 #     newline that already delimits.
-#   * The suite-wide `export BASH_ENV=` exemption is matched against the
-#     STRIPPED logical lines, so the spelling only counts where it executes —
-#     parsed in the same read pass that scans the file. No second tool re-reads
-#     the raw \001-delimited stream: a cross-tool byte contract there is what
-#     made the same file BAD on one CI runner and EXEMPT on another (0875).
+#   * The suite-wide `export BASH_ENV=` exemption and the UNTERMINATED
+#     sentinel are matched in the same read pass that scans the file, so the
+#     spelling only counts where it executes. No VERDICT-DECIDING path has a
+#     second tool re-read the raw \001-delimited stream: a cross-tool byte
+#     contract there is what made the same file BAD on one CI runner and
+#     EXEMPT on another (0875), and grepping the stream for the sentinel
+#     would answer UNTERMINATED for a healthy file the same way (1015). The
+#     one stream re-parse that remains is the diag_tok probe in the BAD
+#     diagnostic below — a deliberate independent cross-check by the
+#     distrusted tool, decorating a FAIL message only, never deciding a
+#     verdict.
 #   * The spawn shape covers `bash -c`, `bash -lc`, `bash -ec`, long options
 #     before it (`bash --posix -c`), an absolute path (`/bin/bash -c`), the
 #     `$BASH` / `$SHELL` variable forms, and one level of `eval`/`su`/`sudo`/
@@ -330,17 +336,21 @@ _file_verdict() {
     local f="$1" ll lineno s u scanned bad spawns last line_total line_bad exempt
     ll="$(_logical_lines "$f")"
 
-    if printf '%s\n' "$ll" | grep -qE -- '^-1'"$LL"; then
-        printf 'UNTERMINATED\n'
-        return 0
-    fi
-
     bad=""
     spawns=0
     last=""
     exempt=0
     while IFS="$LL" read -r lineno s u; do
         [ -n "$lineno" ] || continue
+        # Sentinel record from the awk END block: the heredoc heuristic lost
+        # track, so the rest of the file was skipped unread. Consumed here, in
+        # the same read loop, so no second tool re-parses the stream (1015).
+        # Real linenos are awk NR, always >= 1; the sentinel splits as
+        # lineno="-1", s="", u="".
+        if [ "$lineno" = "-1" ]; then
+            printf 'UNTERMINATED\n'
+            return 0
+        fi
         # Suite-wide exemption, matched on the CODE field of the stripped
         # logical line — parsed in THIS read loop, the same pass that scans
         # the spawns. It used to be a second tool (grep -E over the raw
@@ -351,7 +361,13 @@ _file_verdict() {
         # so an `export BASH_ENV=` inside one still does not exempt (0d).
         if [[ "$s" =~ ^[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*$ ]]; then
             exempt=1
-            break
+            # No break here, and it must not come back: breaking would end the
+            # read loop before the UNTERMINATED sentinel, silently flipping an
+            # exempt-but-unread file to EXEMPT — a clean verdict on a file the
+            # scanner never finished reading (1015, control 0q). The loop runs
+            # on: the sentinel returns first if it appears, and otherwise the
+            # exempt flag decides once the loop ends, so scanning an exempt
+            # file's remaining lines changes no verdict.
         fi
         scanned="$s"
         [[ "$s" =~ $_EXEC_RE ]] && scanned="$u"
@@ -398,7 +414,7 @@ _file_verdict() {
     fi
 }
 
-# --- (0c)-(0p) static negative controls -----------------------------------------
+# --- (0c)-(0r) static negative controls -----------------------------------------
 # The runtime probes above prove the ENFORCED IDIOM works. These prove the
 # DETECTOR works, which is a separate claim and the one that rotted: every
 # fixture below is a real non-hermetic spawn that the pre-2026-09-07 scanner
@@ -407,7 +423,10 @@ _file_verdict() {
 # plus the script-path class the pre-0875 scanner could not see at all — both
 # its leak (0l) and its accepted remedy (0m) — plus the silence that must stay
 # silent (0n), plus the expansion-prefix and inert-data shapes the 0875
-# widening must not start rejecting (0o, 0p).
+# widening must not start rejecting (0o, 0p), plus the unterminated-heredoc
+# answers that must survive the sentinel move — the exempt file that must
+# still not be reported clean unread (0q) and the plain sentinel round-trip
+# (0r).
 # Fixtures live in a mktemp dir, never under tests/, so they are not themselves
 # discovered as suites. They contain no secret and no real credential.
 _FIXDIR="$(mktemp -d)"
@@ -561,6 +580,34 @@ env HOME=/tmp SHELL="/bin/bash" ./run.sh
 FIXTURE
 _expect_verdict 0p "NONE" script_inert_quoted.sh \
     "inert quoted text naming a script path is data, not a spawn"
+
+# (0q) pins the priority the verdict must keep: UNTERMINATED outranks EXEMPT.
+# A suite-wide `export BASH_ENV=` decided BEFORE the unterminated check would
+# silently flip exactly this file to EXEMPT — a clean verdict on a file the
+# scanner never finished reading, the hazard of 1015. The `export BASH_ENV=`
+# sits BEFORE the heredoc opening, not inside the body (an in-body export does
+# not exempt, 0d).
+_fixture exempt_unterminated.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+export BASH_ENV=
+cat > /dev/null <<'DOC'
+never terminated
+FIXTURE
+_expect_verdict 0q "UNTERMINATED" exempt_unterminated.sh \
+    "an exempt suite with an unterminated heredoc still answers UNTERMINATED"
+
+# (0r) green-stay-green pin for the sentinel round-trip itself: the awk END
+# emission, the \001 field split, and the -1 recognition in the read loop,
+# with no exemption present that could mask the sentinel.
+_fixture unterminated.sh <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+cat > /dev/null <<'DOC'
+never terminated
+FIXTURE
+_expect_verdict 0r "UNTERMINATED" unterminated.sh \
+    "an unterminated heredoc with no exemption answers UNTERMINATED"
 
 # --- the scan ------------------------------------------------------------------
 for f in "$TESTS_DIR"/test_*.sh; do
