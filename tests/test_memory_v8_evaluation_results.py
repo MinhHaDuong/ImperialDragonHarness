@@ -36,8 +36,13 @@ ROW = re.compile(r"^\|\s*(S[0-9]+[^|]*?)\s*\|\s*([a-z-]+)\s*\|", re.MULTILINE)
 
 
 def ledger_rows(text):
-    """(cell_id, verdict) pairs from the cell ledger table."""
-    return [(cell.strip(), verdict) for cell, verdict in ROW.findall(text)]
+    """(cell_id, verdict) pairs from the cell ledger table only."""
+    section = re.search(
+        r"^## Cell ledger.*?(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+    )
+    if section is None:
+        return []
+    return [(cell.strip(), verdict) for cell, verdict in ROW.findall(section.group(0))]
 
 
 def test_results_document_exists_with_protocol_reference():

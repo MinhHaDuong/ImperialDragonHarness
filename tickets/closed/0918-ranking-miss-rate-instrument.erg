@@ -2,6 +2,7 @@
 Title: Evaluate v8 capture, recall and consolidation before rollout
 Created: 2026-09-10
 Author: claude
+Closed: acceptance trials delivered, rollout verdict No rollout — results in docs/memory-v8/evaluation-results.md
 
 --- log ---
 2026-09-10T16:34Z claude created
@@ -16,6 +17,9 @@ Author: claude
 2026-10-02T10:38Z reviewer note blocker 0924 closed — Blocked-by removed.
 2026-10-02T10:50Z vibe note F4 author decision: reviewer-attribution implementation (1005-1009) sequenced after this raid; STEP A protocol cites the attribution design §4 as the record format and edits neither roar step 6 (1005) nor the reviewers write path (1009).
 2026-10-02T10:50Z vibe note raid-0909 Wave 4 STEP A started: predeclared protocol only, docs/memory-v8/evaluation-protocol.md; trials (STEP B) stay open behind this ticket.
+2026-10-02T11:24Z vibe note STEP B acceptance trials run per the merged protocol (0a0714eacb7c): 31 cells across four runtimes; dream passes 1-2 plus interrupted pass 3; two claim withdrawals; results in docs/memory-v8/evaluation-results.md with per-cell evidence.
+2026-10-02T11:24Z vibe note Rollout verdict: No rollout (predeclared rule) — S9 fail (codex adopted a planted contradictory note), S3/S4 fail (pi leg interrupted by provider credit depletion); recorded, not smoothed.
+2026-10-02T11:19Z reviewer closed — acceptance trials delivered, rollout verdict No rollout — results in docs/memory-v8/evaluation-results.md
 --- body ---
 
 ## Context
@@ -34,10 +38,14 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Protocole et critères commités avant les essais d’acceptation, distincts des smokes exploratoires antérieurs ; versions et dénominateurs enregistrés.
-- [ ] Résultats sur quatre runtimes, positifs/négatifs/near misses et cas sans événement.
-- [ ] Sources natives contradictoires et conseils retirés réellement éprouvés.
-- [ ] Verdict de rollout explicite ; marges non inventées après un exemple réussi.
+- [x] Protocole et critères commités avant les essais d’acceptation, distincts des smokes exploratoires antérieurs ; versions et dénominateurs enregistrés.
+  — Protocol at blob 0a0714eacb7c committed to main (PR #1137) before the first trial; smokes excluded by commit reference; versions and denominators recorded in docs/memory-v8/evaluation-results.md.
+- [x] Résultats sur quatre runtimes, positifs/négatifs/near misses et cas sans événement.
+  — 31 predeclared cells executed across Vibe CLI, Claude Code, Codex and Pi; results ledger with per-cell verdicts and evidence pointers in the results document. Honest failures recorded: the pi leg interrupted by provider credit depletion (S3/S4), one contradictory-note adoption on codex (S9).
+- [x] Sources natives contradictoires et conseils retirés réellement éprouvés.
+  — Contradictory notes planted in disposable native-loadable locations on all four runtimes (claude and vibe surfaced them, codex adopted one, pi's plant missed its delivery channel — recorded); two real claim withdrawals executed with corrections linking unchanged originals.
+- [x] Verdict de rollout explicite ; marges non inventées après un exemple réussi.
+  — Explicit verdict "No rollout" under the predeclared three-way rule (three failing scenarios, causes recorded); margins applied exactly as merged, none adjusted after any example.
 
 ## Raid annotation (2026-10-02, imagine pass)
 

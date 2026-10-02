@@ -7,14 +7,15 @@ samples, not runtime certifications; each fact is dated and sourced below.
 
 ## Supported observations
 
-The relocated-clone readability proof caught the freshly merged evaluation
-protocol's directory links post-merge: CI's pytest-guard failed where the
-pre-merge local gate had passed, the fix pointed the references at concrete
-files, and the original entry's muddled cause ("not yet on main in earlier
-rounds") was later withdrawn by a correction entry — the gate ran before
-the document was committed, and the proof clones committed HEAD, so an
-untracked file was invisible to it; the withdrawal is traceable to the
-original entry, which stands unchanged.
+The relocated-clone readability proof caught the evaluation protocol's
+directory links on the protocol PR's own CI run, before the merge: CI's
+pytest-guard failed at head cf6c3f61 where the pre-merge local gate had
+passed (the gate ran before the commit; the proof clones committed HEAD,
+so the untracked protocol was invisible to it), the fix pointed the
+references at concrete files, and the merge happened only on the green new
+head. The original capture's "freshly merged" framing and its "earlier
+rounds" cause were both corrected by later journal entries, which the
+original links to; it stands unchanged.
 
 Detached launches: on Claude Code 2.1.286 and Vibe CLI 2.25.8, a flag with
 an optional value (--allowedTools, --trust) silently consumed the positional
@@ -66,7 +67,7 @@ as single-sample evidence; no runtime is certified by these observations.
 
 ## Sources and exceptions
 
-- [Relocated-clone proof caught the protocol post-merge](../journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — its cause claim withdrawn by [the withdrawal entry](../journal/2026/2026-10-02-memory-v8-0918-withdrawn-claim-local-gate-cause.md); original unchanged.
+- [Relocated-clone proof caught the protocol pre-merge](../journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — its cause claim withdrawn by [the withdrawal entry](../journal/2026/2026-10-02-memory-v8-0918-withdrawn-claim-local-gate-cause.md) and its post-merge framing corrected by [the second correction](../journal/2026/2026-10-02-memory-v8-0918-correction-link-catch-was-pre-merge.md); original unchanged.
 - [Detached flags consumed positional prompts](../journal/2026/2026-10-02-memory-v8-0918-detached-flags-consume-positional-prompt.md) — exception: Codex unaffected.
 - [Concurrent detached Claude sessions](../journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md) — launcher error, recorded as such.
 - [Background launch without cwd](../journal/2026/2026-10-02-memory-v8-0918-background-launch-without-cwd.md)
