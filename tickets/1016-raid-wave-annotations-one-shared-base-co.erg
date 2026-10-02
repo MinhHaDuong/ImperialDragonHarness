@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Raid wave annotations: one shared base commit, branches must not fork divergent annotation copies
+Created: 2026-10-02
+Author: reviewer
+
+--- log ---
+2026-10-02T11:05Z reviewer created
+
+--- body ---
+## Context
+
+Observed in the 2026-10-02 raid on 0853/0937/0979/1014 (PRs #1129-#1132).
+The raid's Imagine/Plan/Feasibility phases append annotation log lines to
+ticket files and commit them on main between executor spawns. Four executor
+agents then branched at different moments while parallel sessions advanced
+main, so the same annotation patch existed as three distinct commits
+(26c8ab73 native, 635cf70c cherry-picked, and reproduced inline in the #1132
+executor's conflict resolution). Git cannot use patch-equivalence as a merge
+base, so every pair of wave PRs carrying different SHAs of the same patch
+collided on the ticket files at merge time (verified pairwise by the wave
+integration review with git merge-tree).
+
+Cost during the raid: one wave-PR rebase to drop a duplicate, one full manual
+rebase of #1132 with conflict resolution across three ticket files, and one
+rebase redo after origin/main advanced again mid-merge. No content was lost,
+but every conflict was a bookkeeping artifact, not a substantive disagreement.
+
+## Actions
+
+1. In the raid skill, land the wave's ticket annotations as ONE commit before
+   Phase 5 spawns executors, and require every wave branch to base on it (the
+   way the verify-adherence annotations already ride the first merge today).
+   If a parallel session advances main mid-wave, the wave rebases the shared
+   annotation commit once, together — never per-branch.
+2. Alternatively or additionally: move raid-phase annotations out of the
+   shared tickets/ files entirely during the wave (a sidecar log collected
+   into the tickets at wrap-up), so mid-wave merges cannot collide on them.
+   Decide the smaller mechanism, not both.
+
+## Test
+
+A wave of two or more PRs branched after the fix must show no ticket-file
+conflict at merge time when the annotation commit is an ancestor of every
+wave branch (mechanically: git merge-tree pairwise clean).
+
+## Exit criteria
+
+- [ ] The raid skill's annotation flow produces one shared, mergeable base
+      for all wave branches, or annotations land outside the shared files
+      during the wave
+- [ ] The chosen mechanism is documented where the raid skill phases
+      describe ticket commits
+
+## Invariants
+
+- Ticket log lines stay append-only and attributed (2026-10-02 raid
+  annotations all reached main intact, just via conflict-prone paths).
