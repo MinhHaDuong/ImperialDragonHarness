@@ -15,6 +15,7 @@ Author: claude
 2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
 2026-10-02T08:19Z MinhHaDuong note blocker 0988 closed — Blocked-by removed.
 2026-10-02T08:56Z MinhHaDuong note blocker 0916 closed — Blocked-by removed.
+2026-10-02T09:40Z vibe note Criterion-2 v8 reading recorded before implementation: 'Passage hors ligne avec sources disponibles produit une branche durable' is v7-era phrasing; its v8 reading is a separate dream invocation produces a durable branch with available sources, and unavailable sources are explicitly reported, never treated as empty (docs/memory-v8/README.md, memory/DREAM.md v8-r1).
 --- body ---
 
 ## Context
@@ -37,3 +38,24 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Passage hors ligne avec sources disponibles produit une branche durable ; source absente explicitement signalée.
 - [ ] Interruption ou refus d’intégration conserve le travail et expose un échec visible.
 - [ ] Aucune fusion automatique des propositions ; pas d’écriture dans le checkout partagé utilisé pour les pulls.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+- PREMISE: lair step 11 (skills/lair/SKILL.md, landed via #1097) already
+  implements the suggestion prose: count journal experiences not covered by an
+  accepted report in memory/dreams/, suggest /dream at 5+, no
+  question/waiting/invocation/timer. The residue this ticket owns —
+  docs/memory-v8/README.md reserves counting and live validation under
+  0910/0916 — is: no counting helper, no test pinning step 11, no live-run
+  evidence.
+- DELIVERABLES: (a) an inline counting method in step 11 — journal entry blob
+  ids compared against the accepted reports' ledgers (DREAM.md v8-r1 requires
+  every report to record '<path> blob <40-hex>' lines), not a scripts/ helper;
+  (b) an adherence test pinning step 11's negative semantics (no question, no
+  waiting, no invocation, no timer) in the pattern of
+  tests/test_lair_state_via_pr.py — not a grep for the string '5'; (c) one live
+  lair run as validation evidence, with the experience count pinned against a
+  named commit of main in the record.
+- ANTIPATTERNS to respect: no counting script or library (data already lives in
+  report ledgers); hardcode the threshold 5, no config knob; no timer or
+  automatic invocation anywhere.
