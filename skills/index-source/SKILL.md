@@ -1,6 +1,6 @@
 ---
 name: index-source
-description: "Import a document from a URL into Zotero: verify metadata and item type, deduplicate, and attach the source file. URL counterpart to zotero-import in the EDM workflow."
+description: "Import a document from a URL into Zotero: verify metadata and item type, deduplicate, and attach the source file. URL counterpart to zotero-import in the Zotero-management workflow."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<url>..."
@@ -15,9 +15,9 @@ type, real author/date/title, identifiers, page count — with the document
 itself archived as an attachment. The probe script is the mechanical half; you
 are the brains: resolve identifiers, classify the type, clean the metadata.
 
-This is the URL sibling of `zotero-import` (which does PDFs). It follows the EDM
+This is the URL sibling of `zotero-import` (which does PDFs). It follows the Zotero-management
 workflow: stage in `docs/`, store in Zotero; `docs/` and `.bib` are git-ignored
-staging, never the home (see `rules/edm.md`).
+staging, never the home (see `rules/zotero.md`).
 
 ## Happy path
 

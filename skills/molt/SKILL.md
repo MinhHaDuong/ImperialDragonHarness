@@ -125,7 +125,7 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the healthcheck
    names the knob).
 
-1.8. **Reconcile EDM staging with Zotero.** In the current project checkout,
+1.8. **Reconcile document staging with Zotero.** In the current project checkout,
    run only when a `.bib` exists at the root or one level below, or `docs/`
    exists. With neither, stay silent. Use the harness helper so unattended
    `beat` and interactive `/lair` take the same path:

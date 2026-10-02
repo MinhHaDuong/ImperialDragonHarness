@@ -56,7 +56,7 @@ agreement on it before searching. It states:
   `id, found_by, type, authors, year, title, doi, url, keep, read_note,
   justification`. The justification is short and names the scoping criterion
   it applies.
-- **Full text** for kept sources follows the `rules/edm.md` chain (`docs/` →
+- **Full text** for kept sources follows the `rules/zotero.md` chain (`docs/` →
   Zotero → ISTEX → open web → author). A source is not inaccessible until that
   chain has run; record which step failed in `justification`.
 - **Intake** of kept sources into Zotero goes through `zotero-import` (PDFs)
@@ -147,7 +147,7 @@ the object:
 
 Analytical throughout: "X's argument naturalizes Z by framing it as W", not
 "X argues Y". Every specific claim cited, with a page locator read on the page
-(`rules/edm.md`). Name actors, cite documents.
+(`rules/zotero.md`). Name actors, cite documents.
 
 ## 8. Bibliography
 
@@ -155,12 +155,12 @@ Annotated bibliography of the works the report cites, and only those:
 organized by theme to show the field's structure, two to four sentences per
 entry on contribution and position, a resolving DOI or URL for every entry.
 Every cited work is already in Zotero from the intake in step 2; a project
-`.bib` is staging exported from it (`rules/edm.md`).
+`.bib` is staging exported from it (`rules/zotero.md`).
 
 ## Output to the user
 
 The run directory's files (`scoping.md`, `consultation.csv`, reading-note
 items, `report.md`, bibliography), one line each; the corpus funnel (pooled,
 kept, read); the saturation critic's verdict; the lacuna as stated; and any
-source that stayed inaccessible after the full edm.md chain, with where it
+source that stayed inaccessible after the full zotero.md chain, with where it
 failed.

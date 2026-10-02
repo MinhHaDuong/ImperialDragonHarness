@@ -132,7 +132,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
 | `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
-| `/index-source` | Import a document from a URL into Zotero: verify metadata and item type, deduplicate, and attach the source file. URL counterpart to zotero-import in the EDM workflow. |
+| `/index-source` | Import a document from a URL into Zotero: verify metadata and item type, deduplicate, and attach the source file. URL counterpart to zotero-import in the Zotero-management workflow. |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/memory-sweep` | Review a project's repository memory for stale or contradictory claims. |

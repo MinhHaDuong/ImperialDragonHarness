@@ -2,6 +2,7 @@
 Title: EDM: dédoublonner la bibliothèque Zotero existante — détection locale, fusion dans le client
 Created: 2026-08-14
 Author: Minh Ha-Duong
+Closed: tool delivered and live-validated; sample arbitrated 2026-10-02; residue is author-side library hygiene
 
 --- log ---
 2026-08-14T19:10Z claude created — 269 grappes de fichiers md5-identiques sous des parents distincts, invisibles au volet Doublons de Zotero
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-09-23T19:15Z Minh Ha-Duong note blocker 0455 closed — Blocked-by removed.
 2026-09-23T19:30Z Codex note Roster audit: 0455's guarded import and matcher are merged, so this ticket now concerns the existing-library duplicate clusters only. The 269-cluster/7293-parent counts are the 2026-08-14 baseline and must be remeasured before deciding the work size. Reuse review remains mandatory; no automatic client-side merge was delivered by 0455.
 2026-09-25T11:55Z Minh-Ha-Duong note 2026-09-25 read-only census: 269 cross-parent storageHash groups in user library (252 PDF, 17 other), all files local. Tool review: Zotero native omits hashes; ajdavis hash-finder stops at Zotero 9 while installed client is 10.0.3; Zoplicate and Zoteus do not document this hash audit. Added dedup-report HTML/JSON command, 269 groups and 540 Zotero links in live report, fixture and focused tests green. Author sample arbitration and merge remain outstanding; see docs/zotero-dedup-report.md.
+2026-10-02T13:45Z MinhHaDuong closed — engineering complete and live-validated: reuse statement settled (docs/zotero-dedup-report.md), dedup-report command delivered (266 groups in the live 2026-10-02 run vs 269 at the 2026-09-25 census — live measurement, not staleness). Sample arbitration done 2026-10-02: attachments confirmed real duplicates (identical hash by construction), parent items mostly correspond; the report locates the clusters, the cure is client-side merges (select both parents, right-click → Merge n Items) — an author chore recorded in STATE.md Author actions, not harness work. No automatic merge was ever applied. Title's "EDM:" prefix is the retired acronym (now "Zotero management"); left as history.
 --- body ---
 ## Context
 
@@ -123,7 +125,8 @@ correspondances exactes par hash ou par DOI, et sous le contrat de sûreté de
 - Les relations `dc:replaces` existantes ne sont ni réécrites ni contredites.
 
 ## Exit criteria
-- [ ] La déclaration de réutilisation est écrite et tranchée
-- [ ] Si code il y a : les 269 grappes par hash sont énumérées avec un lien
+- [x] La déclaration de réutilisation est écrite et tranchée
+- [x] Si code il y a : les 269 grappes par hash sont énumérées avec un lien
       cliquable de chaque côté, et l'auteur a pu en arbitrer un échantillon
-- [ ] Rien n'a été fusionné automatiquement sans son accord
+      (arbitré le 2026-10-02 sur le rapport régénéré, 266 groupes)
+- [x] Rien n'a été fusionné automatiquement sans son accord

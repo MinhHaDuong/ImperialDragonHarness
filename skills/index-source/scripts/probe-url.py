@@ -8,9 +8,9 @@ page count. Emits one JSON record per URL on stdout.
 
 Stdlib only — nothing to install. The model reads the records, resolves
 identifiers online when present, picks the Zotero item type with judgment, then
-hands attachments + metadata to ~/.idh/scripts/zotero-import.py (RIS write +
-dedupe). This is the URL sibling of the zotero-import skill; it implements the
-EDM workflow (docs/ staging -> Zotero)."""
+hands attachments + metadata to $IDH_ROOT/scripts/zotero-import.py (RIS write
++ dedupe). This is the URL sibling of the zotero-import skill; it implements the
+Zotero-management workflow (docs/ staging -> Zotero)."""
 
 import argparse
 import json

@@ -15,7 +15,7 @@ zotero-import.py sync-index          # ~1 min per 10k items; re-pulls every time
 zotero-import.py audit docs/ --out /tmp/audit.json
 ```
 
-For EDM projects with BibTeX, use `reconcile` to discover `.bib` files at the
+For projects with BibTeX, use `reconcile` to discover `.bib` files at the
 repository root and one level below it, follow their `file=` paths, and report
 both linked files and unlinked staging files. It uses the BibTeX metadata when
 matching linked files. The command is **report-only**: it never injects or

@@ -14,11 +14,11 @@ the author's manuscript against a referee; a reading note serves the work, not
 a paragraph. `critical-lit-review` fans out to this skill for the works it
 selects.
 
-Discipline: `rules/edm.md`. Zotero is the system of record; `docs/` is staging.
+Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is staging.
 
 ## 1. Get the work and its metadata
 
-- **Full text first.** Follow the edm.md chain: `docs/` → Zotero → ISTEX →
+- **Full text first.** Follow the zotero.md chain: `docs/` → Zotero → ISTEX →
   open web → author. A paywall is not inaccessibility until ISTEX has answered;
   a scan without a text layer goes through `ocrmypdf`. Never write a note from
   an abstract and say so if the full text could not be had.
@@ -48,7 +48,7 @@ template cannot enforce:
   (taken for granted), naturalized (presented as technical or self-evident
   when contingent or political). The third is what the note exists for.
 - **Position it** in the conversation it joins: whom it answers, cites, ignores.
-- **Every quotation carries the page read on the page**, per edm.md: extract
+- **Every quotation carries the page read on the page**, per zotero.md: extract
   the single page (`pdftotext -f N -l N`) and read its folio. An interpolated
   locator is worse than none. When a claim turns on formal content, check that
   the extraction kept the equations.

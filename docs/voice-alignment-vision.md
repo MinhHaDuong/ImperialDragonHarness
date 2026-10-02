@@ -165,10 +165,10 @@ the author's voice evolves) does not require backfilling history that was
 never captured.
 
 PDFs and HTML sources stay in Zotero + project `docs/` staging per
-[edm.md](../rules/edm.md), unchanged. Extraction (`pdftotext` → paragraph
+[zotero.md](../rules/zotero.md), unchanged. Extraction (`pdftotext` → paragraph
 segmentation → filter headers/captions/tables → role-tag → co-author check)
 is a one-time-per-source script; the corpus is derived data, not the source
-of record, and follows the same retention discipline as other EDM staging —
+of record, and follows the same retention discipline as other Zotero-management staging —
 purge or re-derive rather than treat as permanent.
 
 ### Counter-examples — two sourcing methods, not interchangeable
@@ -277,7 +277,7 @@ vision note if pursued; it does not share v1's corpus, auditor, or gate.
 
 Stored corpus entries are derived data (see Corpus storage), not a system of
 record — no indefinite-accumulation assumption. A periodic review pass
-(mirroring `edm.md`'s sync/purge discipline) should be able to remove or
+(mirroring `zotero.md`'s sync/purge discipline) should be able to remove or
 down-weight retracted, embargoed, or simply outdated entries; this is a
 requirement to design into the extraction/storage step when it's built, not
 an afterthought.

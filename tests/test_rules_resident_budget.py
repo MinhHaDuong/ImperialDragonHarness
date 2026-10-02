@@ -36,7 +36,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 import resident_census as rc  # noqa: E402
 
 # 35292 chars measured 2026-09-09, after the last task-triggered bodies became
-# skills (/pdf-finish, /cut-prose, /submission-event), edm.md was scoped, the three file-triggered
+# skills (/pdf-finish, /cut-prose, /submission-event), zotero.md was scoped, the three file-triggered
 # bodies (systemd units, knowledge hints, manuscript builds), the 0572 pass and the
 # no-shell-recipe rule below: workflow.md and git.md cut by half, skill
 # authoring made conditional, runtime specifics split into claude-code.md, and
