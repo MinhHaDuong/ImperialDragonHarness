@@ -2,7 +2,6 @@
 Title: Verify the common Markdown contract across all four runtimes
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0923
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -10,6 +9,7 @@ Blocked-by: 0923
 
 2026-09-16T06:48Z claude note Pi capability declaration recorded at docs/2026-09-16-runtime-capability-survey.md: subagent definitions (third-party extension, md+YAML, inherit_context) and 36 lifecycle events covering all five hook classes this harness registers. Documentation only, no smoke evidence; Codex hooks still unverified.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-02T10:14Z MinhHaDuong note blocker 0923 closed — Blocked-by removed.
 --- body ---
 
 ## Context
