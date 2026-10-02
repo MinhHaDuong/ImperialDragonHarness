@@ -80,6 +80,8 @@ Closed: autoclosed — PR #987
 2026-09-23T17:15Z codex note MR #1391 seat=openrouter-frontier verdict: PASS — project=climate-finance-het, 0 findings on a compact merged code diff; latency=21.8s
 2026-09-23T17:15Z codex note OpenRouter config trial criterion met: existing IDH frontier scorecards cover at least MRs #614, #615, #616, #617 and #618, with a verified parser bug caught on #618; the two bounded PUBLIC cross-project replays above extend that to 7 merged MRs across 3 projects. Recommendation for 0205: RETAIN openrouter-frontier as the primary on-demand advisory seat for substantive code review; its useful IDH catches and cleaner specificity beat this Padmé qwen trial. Do not make it required or invoke it on trivial diffs without a separate cost/benefit decision. The budget OpenRouter seat remains noisy in the existing IDH log and is not recommended for promotion. Both endpoint configs now meet the five-MR, three-project trial, and no active ticket criterion remains.
 2026-09-23T17:17Z Minh Ha-Duong closed — autoclosed — PR #987
+2026-10-02T10:22Z claude note MR #1129 seat=openrouter-frontier verdict: 1 verifiable, 0 consider, of which 1 adopted — verifiable finding (userless scp origin key split) drove gaze REROLL round 1; fixed in 4af6dfac
+2026-10-02T10:22Z claude note MR #1129 seat=copilot verdict: 0 verifiable, 2 consider, of which 0 adopted — ordering-coverage premise partially incorrect (existing port test fails under reorder mutant); ticket-closure finding muted (close-claim carried by merge)
 --- body ---
 ## Context
 
