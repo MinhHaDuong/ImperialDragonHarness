@@ -59,6 +59,9 @@ PI_SENTINEL='fake-or-pi-sentinel-0937'
 ALBERT_SENTINEL='fake-albert-sentinel-0937'
 DIV_SENTINEL='fake-or-divergent-sentinel-0937'
 NEW_SENTINEL='fake-or-new-sentinel-0937'
+EXP_L_SENTINEL='fake-exported-local-sentinel-0937'
+EXP_R_SENTINEL='fake-exported-remote-sentinel-0937'
+UNSRC_SENTINEL='fake-unsourced-sentinel-0937'
 
 printf 'OPENROUTER_API_KEY_IDH=%s\nOPENROUTER_API_KEY_PI=%s\n' \
     "$IDH_SENTINEL" "$PI_SENTINEL" > "$LOCAL_HOME/.config/keys/openrouter.env"
@@ -126,7 +129,8 @@ err_has()   { grep -qF -- "$1" "$ERR"; }
 assert_no_sentinel_leak() {  # $1 = case label
     local hit=no s
     for s in "$IDH_SENTINEL" "$PI_SENTINEL" "$ALBERT_SENTINEL" \
-             "$DIV_SENTINEL" "$NEW_SENTINEL"; do
+             "$DIV_SENTINEL" "$NEW_SENTINEL" "$EXP_L_SENTINEL" \
+             "$EXP_R_SENTINEL" "$UNSRC_SENTINEL"; do
         if grep -qF -- "$s" "$OUT" || grep -qF -- "$s" "$ERR"; then hit=yes; fi
     done
     if [ "$hit" = "no" ]; then
@@ -284,6 +288,69 @@ else
     bad "(5b) the oversize fixture is below the cap — the case would prove nothing"
 fi
 rm -f "$HUGE"
+
+# --- (6) a provider file that cannot be sourced is could-not-look --------------
+# Each fingerprint must be exactly 12 hex characters; anything else means the
+# scanner could not look at that name. Both sides failing the same way used
+# to emit the same placeholder, which compared equal and printed agreement.
+# Agreement fixtures from case (2) are still in place.
+LK="$LOCAL_HOME/.config/keys"
+RK="$REMOTE_HOME/.config/keys"
+printf 'UNSRC_API_KEY=%s\nfalse\n' "$UNSRC_SENTINEL" > "$LK/unsourced.env"
+cp "$LK/unsourced.env" "$RK/unsourced.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 2 ] && err_has "unsourced.env" && out_lacks "agree: unsourced.env"; then
+    ok "(6a) a file unsourceable on BOTH sides exits 2, named on stderr, never agreement"
+else
+    bad "(6a) a file unsourceable on both sides: expected exit 2 naming it, got $rc"
+fi
+assert_no_sentinel_leak "(6a)"
+
+printf 'UNSRC_API_KEY=%s\n' "$UNSRC_SENTINEL" > "$RK/unsourced.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 2 ] && err_has "unsourced.env" && out_lacks "mismatch"; then
+    ok "(6b) a file unsourceable on ONE side exits 2, not a fingerprint mismatch"
+else
+    bad "(6b) a file unsourceable on one side: expected exit 2 naming it, got $rc"
+fi
+
+printf 'UNSRC_API_KEY=%s\nexit 0\n' "$UNSRC_SENTINEL" > "$LK/unsourced.env"
+cp "$LK/unsourced.env" "$RK/unsourced.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 2 ] && err_has "unsourced.env" && out_lacks "agree: unsourced.env"; then
+    ok "(6c) a file that exits while sourced (empty fingerprint) exits 2, never agreement"
+else
+    bad "(6c) a file that exits while sourced: expected exit 2 naming it, got $rc"
+fi
+assert_no_sentinel_leak "(6c)"
+rm -f "$LK/unsourced.env" "$RK/unsourced.env"
+
+# --- (7) export-prefixed and indented assignments are scanned ---------------
+printf 'export EXP_API_KEY=%s\n  INDENTED_API_KEY=%s\n' \
+    "$EXP_L_SENTINEL" "$EXP_L_SENTINEL" > "$LK/exported.env"
+printf 'export EXP_API_KEY=%s\n  INDENTED_API_KEY=%s\n' \
+    "$EXP_R_SENTINEL" "$EXP_R_SENTINEL" > "$RK/exported.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 1 ] && out_has "exported.env EXP_API_KEY fingerprint mismatch" \
+        && out_has "exported.env INDENTED_API_KEY fingerprint mismatch"; then
+    ok "(7) diverging export-prefixed and indented values are reported as mismatches"
+else
+    bad "(7) diverging export-prefixed or indented values were not reported (exit $rc)"
+fi
+assert_no_sentinel_leak "(7)"
+rm -f "$LK/exported.env" "$RK/exported.env"
+
+# --- (8) a provider file yielding zero records is named, never silent -----------
+# Present locally, absent remotely, comments only: without the guard it drops
+# out of both presence lists and the run reads as agreement.
+printf '# no assignments here\n' > "$LK/empty.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 2 ] && err_has "empty.env"; then
+    ok "(8) a zero-record provider file exits 2, named on stderr"
+else
+    bad "(8) a zero-record provider file: expected exit 2 naming it, got $rc"
+fi
+rm -f "$LK/empty.env"
 
 echo "--- $(basename "$0"): $fail failing case(s) ---" >&2
 exit "$fail"

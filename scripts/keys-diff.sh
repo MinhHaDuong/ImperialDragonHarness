@@ -51,8 +51,14 @@ KEYS_DIFF_SSH="${KEYS_DIFF_SSH:-ssh -F "$HOME/.ssh/config" -o BatchMode=yes}"
 # every other variable the provider file defines is confined to a subshell
 # that dies immediately. `set -a` because the provider files hold bare
 # assignments with no `export`.
+#
+# Every fingerprint must be exactly 12 hex characters and every provider file
+# must yield at least one record; anything else is a could-not-look for that
+# file (return 2, named on stderr). Both sides failing the same way would
+# otherwise compare equal, and a zero-record file would drop out of both
+# presence lists — either way, agreement over a file never looked at.
 scan_keystore() {  # $1 = keystore directory; prints file|name|fingerprint records
-    local dir="$1" f name fp oversize
+    local dir="$1" f name fp oversize records
     [ -d "$dir" ] || return 1
     for f in "$dir"/*.env; do
         [ -e "$f" ] || continue
@@ -76,27 +82,37 @@ scan_keystore() {  # $1 = keystore directory; prints file|name|fingerprint recor
             return 2
         fi
         unset -v oversize
-        # Names only, from the assignment lines: `grep -oE` matches the exact
-        # variable-declaration prefix, `tr` strips the `=`.
+        # Names only, from the assignment lines, optionally indented and
+        # optionally `export`-prefixed: `sed` prints the captured name alone,
+        # never the rest of the line.
+        records=0
         while IFS= read -r name; do
             [ -n "$name" ] || continue
             # The child's stdin is /dev/null so a provider file that reads
             # stdin cannot eat the script text this process may itself be
             # executing (the remote runs `bash -s` off a pipe). PATH is
             # snapshotted and restored because sha256sum resolves through it
-            # and a sourced file may overwrite it. A file that cannot be
-            # sourced yields the literal UNSOURCED — not 12 hex characters,
-            # so it surfaces as a mismatch rather than as agreement.
+            # and a sourced file may overwrite it. A file that fails to
+            # source, or exits while sourced, yields no fingerprint.
             fp="$(env -i PATH="$PATH" bash -c '
                 p="$PATH"
                 set -a
-                . "$1" >/dev/null 2>&1 || { printf "UNSOURCED"; exit 0; }
+                . "$1" >/dev/null 2>&1 || exit 1
                 set +a
                 PATH="$p"
                 printf %s "${!2}" | sha256sum | cut -c1-12
             ' _ "$f" "$name" </dev/null 2>/dev/null)" || true
+            if [[ ! "$fp" =~ ^[0-9a-f]{12}$ ]]; then
+                echo "keys-diff: could not fingerprint $name in $f (the file did not source cleanly), refusing to compare it" >&2
+                return 2
+            fi
             printf '%s|%s|%s\n' "${f##*/}" "$name" "$fp"
-        done < <(grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' "$f" | tr -d = || true)
+            records=$((records + 1))
+        done < <(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=.*/\2/p' "$f")
+        if [ "$records" -eq 0 ]; then
+            echo "keys-diff: $f defines no variable names, refusing to treat it as compared" >&2
+            return 2
+        fi
     done
 }
 
