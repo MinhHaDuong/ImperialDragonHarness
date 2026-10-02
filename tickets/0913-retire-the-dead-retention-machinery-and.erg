@@ -14,6 +14,7 @@ Author: claude
 2026-10-02T09:42Z MinhHaDuong note Author decision (blind-spot F3, 2026-10-02): per-machine keys stand; cross-machine unreadability of .age entries is declared as a known limit in the 0909 integration review, citing 0937's refusal to sync secrets.
 2026-10-02T11:19Z reviewer note blocker 0918 closed — Blocked-by removed.
 2026-10-02T11:34Z MinhHaDuong note SCOPE DECISION (author, 2026-10-02, on the predeclared No-rollout verdict from PR #1142): 0913 stays open as the standing rollout workpackage, gated on the recorded blockers — codex's native-note conflict-surfacing behavior (S9, external to this repo) and the pi re-run (S3/S4, provider credits). No rollout proceeds under this tracker.
+2026-10-02T11:59Z reviewer note S9.codex blocker downgraded to 'channel closed, re-trial passed' (ticket 1019, evidence: docs/memory-v8/2026-10-02-s9-codex-retrial-closed-channel.md); rollout condition now standing: adopting hosts carry no user-level ~/.codex/AGENTS.md, one-line preflight
 --- body ---
 
 ## Context
