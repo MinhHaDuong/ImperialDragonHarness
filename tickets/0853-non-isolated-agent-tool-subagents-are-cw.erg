@@ -7,6 +7,8 @@ Author: claude
 2026-09-04T07:41Z claude created
 
 2026-09-29T15:50Z claude note 2026-09-29 raid 0984/0987, PR #1061: /gaze launched from a raid background agent hit this defect again — the isolation guard blocked every git command and write aimed at the review worktree, two of three review agents stopped, verdict ESCALATE (PANEL-INTEGRITY: DEGRADED). Raid-level contract filed separately as 0990.
+2026-10-02T09:55Z MinhHaDuong claude note raid imagine 2026-10-02: premise partially expired — Agent-tool cwd-pinning/EnterWorktree are not the active mechanism on this Vibe runtime, but the Claude Code adapter (inert until 0999 registration) keeps multi-runtime in scope, so the fix must be runtime-portable. Holding hazard: gaze reviewer prompts (SKILL.md ~313-317) never forbid working-tree overwrites; 2026-09-29 recurrence post-anchor. Reimagined: (1) add destructive-checkout ban (git show per rules/git.md) + NOT-RUN refusal when review tree unreachable to gaze reviewer/gate prompts; (2) replace pinned-cwd phrasing with the portable git -C "$review_tree" + review-pr-anchor contract; (3) extend tests/test_verify_fork_contracts.py ratchets to assert both. Action 1's marker-file fixture dropped (no spawn tool in CI); options 2a/2b dead tokens on this runtime.
+2026-10-02T09:55Z MinhHaDuong claude note blind-spot disposition: extending scripts/guard-destructive-bash.sh to checkout/restore was deliberately rejected by ticket 0976 (narrowed to reset --hard only) — keep prompt+ratchet enforcement, and note the 0233 invariant tension (prompt-enforced read-only) in the PR body for the author. 0990 (raid-level contract) stays owned separately, not closed by this.
 --- body ---
 ## Context
 
