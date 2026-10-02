@@ -37,6 +37,16 @@ verdict. Routing picks *which panel* reviews a diff; the axes tell a reviewer
 *which rulebook* to hold it to. Agent B had neither, and guessed: it checked a
 manuscript against ``rules/doctype/book.md`` where the manifest declares
 ``techreport`` (audit of 2026-08-17, MR 136).
+
+``--risk`` prints the path-risk band for the whole changed set instead of the
+verdict: ``high`` if any file matches a pipeline or guard path (the repo's
+existing dangerous-path registry — see ``RISK_HIGH_GLOBS``), ``low`` only if
+every file is documentation or a fixture, ``normal`` otherwise. Unlike the
+routing and axes modes it reads no disk — a pure path-pattern match — so it
+carries no missing-path refusal: the anchor roster lists deleted and renamed
+paths that do not exist at HEAD (ticket 0902). The format axis stays keyed on
+the filename suffix, never on a directory; the risk axis is directory-keyed
+by design. Two axes, never collapsed into one.
 """
 
 import argparse
@@ -45,7 +55,9 @@ import tomllib
 from pathlib import Path
 
 # Extension -> format axis value. Project-agnostic by design: keyed on the
-# filename suffix, never on a directory like src/ or scripts/.
+# filename suffix, never on a directory like src/ or scripts/ — the scoping
+# holds for the format axis; the risk axis (--risk) is directory-keyed by
+# design (ticket 0902).
 EXT_FORMAT = {
     ".py": "python",
     ".sh": "bash",
@@ -55,6 +67,32 @@ EXT_FORMAT = {
     ".txt": "txt",
 }
 PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
+
+# Risk axis (ticket 0902): the paths the repo already treats as dangerous.
+# RISK_HIGH_GLOBS is the review-pr width registry (the ``pipeline_paths`` list
+# in skills/review-pr/panel-width.json, in order) plus the two classes the
+# ticket names that the registry lacks: ``hooks/**`` (top-level; holds
+# hooks/pre-commit, the main-branch guard activated by scripts/on-start.sh)
+# and ``settings*.json`` (root shared settings; the slash-less glob matches on
+# the basename at any depth). It is held as a constant, not read from
+# panel-width.json, because a read from scripts/ would invert the repo's
+# dependency direction; tests/test_gaze_prose_routing.py ratchets the two
+# lists against each other (one-directional: a new pipeline_paths glob fails
+# until this constant catches up).
+RISK_HIGH_GLOBS = (
+    ".github/**",
+    ".gitlab-ci.yml",
+    "Makefile",
+    "Dockerfile",
+    ".claude/hooks/**",
+    "scripts/**",
+    "skills/**",
+    "rules/**",
+    "hooks/**",
+    "settings*.json",
+)
+# Low band: documentation and fixtures carry no execution path.
+RISK_LOW_GLOBS = ("docs/**", "*.bib", "**/fixtures/**")
 
 # \documentclass{X} -> doctype axis value.
 DOCUMENTCLASS_DOCTYPE = {
@@ -213,6 +251,25 @@ def diff_is_prose(paths: list[str]) -> bool:
     return any(is_manuscript(p) for p in paths)
 
 
+def risk_band(paths: list[str]) -> str:
+    """Risk band for a changed-file set (ticket 0902).
+
+    "high" if ANY path matches a high glob (the repo's existing
+    dangerous-path registry); "low" only if EVERY path matches a low glob;
+    "normal" otherwise. A pure path-pattern match: it reads no disk, so it
+    deliberately does not inherit the missing-path refusal of the
+    disk-reading modes — the anchor roster lists deleted/renamed paths that
+    do not exist at HEAD, and refusing them would ESCALATE routine PRs.
+    """
+    if not paths:
+        return "normal"  # vacuous-all guard (unreachable via the CLI: nargs=+)
+    if any(any(glob_match(p, g) for g in RISK_HIGH_GLOBS) for p in paths):
+        return "high"
+    if all(any(glob_match(p, g) for g in RISK_LOW_GLOBS) for p in paths):
+        return "low"
+    return "normal"
+
+
 def axes_for(path: str) -> dict[str, str]:
     """The file's resolved axes — which house rulebooks apply to it.
 
@@ -240,7 +297,21 @@ def main() -> int:
         "'<path> doctype=<v> lang=<v>' line per file — what a reviewer must be "
         "told so it reads the declared rulebooks rather than guessing them",
     )
+    parser.add_argument(
+        "--risk",
+        action="store_true",
+        help="instead of the routing verdict, print the path-risk band "
+        "'high|low|normal' for the changed set — a pure path-pattern match "
+        "that reads no disk (ticket 0902)",
+    )
     args = parser.parse_args()
+    if args.risk:
+        # --risk matches path patterns only; it reads no disk, so the
+        # missing-path refusal below is deliberately NOT inherited: the
+        # anchor roster lists deleted/renamed paths that do not exist at
+        # HEAD, and refusing them would ESCALATE routine PRs (ticket 0902).
+        print(risk_band(args.files))
+        return 0
     missing = [f for f in args.files if not Path(f).exists()]
     if missing:
         parser.error(

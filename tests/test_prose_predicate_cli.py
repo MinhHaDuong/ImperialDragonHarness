@@ -31,12 +31,13 @@ lang = "en"
 """
 
 
-def _run(*files: str) -> subprocess.CompletedProcess:
+def _run(*files: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(CLI), *files],
         capture_output=True,
         text=True,
         env=child_env(),
+        cwd=cwd,
     )
 
 
@@ -87,30 +88,31 @@ def test_prose_predicate_emits_a_risk_band(tmp_path):
     """--risk emits the path-risk band from path patterns alone (ticket 0902).
 
     The fixture files below are NEVER created — their absence is the test:
-    the anchor roster (`git diff --name-only --no-renames`) lists deleted and
-    renamed paths that do not exist at HEAD, so --risk must not inherit the
-    missing-path refusal (exit 2) of the disk-reading prose/axes modes, or it
-    would ESCALATE routine PRs. A disk-reading mode would refuse them.
+    the anchor roster (`git diff --name-only --no-renames`) lists repo-relative
+    paths, deleted and renamed among them, that do not exist at HEAD, so --risk
+    must not inherit the missing-path refusal (exit 2) of the disk-reading
+    prose/axes modes, or it would ESCALATE routine PRs. The paths are passed
+    exactly as the roster lists them: repo-relative, with the cwd anchored to
+    the repo root — an empty dir, so every fixture stays absent.
     """
     repo = tmp_path / "repo"
-    guard = str(repo / "scripts" / "on-end.sh")
-    assert not Path(guard).exists(), "the fixture must be absent — that is the point"
+    repo.mkdir()
+    guard = repo / "scripts" / "on-end.sh"
+    assert not guard.exists(), "the fixture must be absent — that is the point"
 
-    high = _run("--risk", guard)
+    high = _run("--risk", "scripts/on-end.sh", cwd=repo)
     assert high.returncode == 0, (high.returncode, high.stderr)
     assert high.stdout.strip() == "high", (high.stdout, high.stderr)
 
-    docs = _run("--risk", str(repo / "docs" / "a.md"), str(repo / "docs" / "b.md"))
+    docs = _run("--risk", "docs/a.md", "docs/b.md", cwd=repo)
     assert docs.returncode == 0, (docs.returncode, docs.stderr)
     assert docs.stdout.strip() == "low", (docs.stdout, docs.stderr)
 
-    removed = _run("--risk", str(repo / "scripts" / "removed.sh"))
+    removed = _run("--risk", "scripts/removed.sh", cwd=repo)
     assert removed.returncode == 0, (removed.returncode, removed.stderr)
     assert removed.stdout.strip() == "high", (removed.stdout, removed.stderr)
 
-    mixed = _run(
-        "--risk", str(repo / "scripts" / "x.sh"), str(repo / "docs" / "y.md")
-    )
+    mixed = _run("--risk", "scripts/x.sh", "docs/y.md", cwd=repo)
     assert mixed.returncode == 0, (mixed.returncode, mixed.stderr)
     assert mixed.stdout.strip() == "high", (mixed.stdout, mixed.stderr)
 
