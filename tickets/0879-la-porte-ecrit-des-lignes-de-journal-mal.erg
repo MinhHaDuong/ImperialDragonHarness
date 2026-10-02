@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
 
+2026-10-02T06:50Z MinhHaDuong note Current Gaze and verify-gate reroll recipes use erg log, which records the standardized note verb; malformed-log validation and isolated-checkout safety remain unverified.
 --- body ---
 ## Context
 
@@ -46,28 +47,25 @@ produit systematiquement une entree invalide.
 
 ## Actions
 
-1. Faire ecrire la ligne par `erg log` plutot qu'a la main. Un controle positif
-   fait pendant l'incident montre qu'`erg log` horodate correctement en UTC et
-   place l'entree dans la section — la recette contourne un outil qui fait deja
-   le travail.
-2. Employer `note`, qui est le verbe prevu pour ceci.
+1. **Résolu le 2026-10-02 :** les recettes actuelles de Gaze et verify-gate
+   passent par `erg log` plutôt que d'écrire la ligne à la main.
+2. **Résolu le 2026-10-02 :** `erg log` consigne la ligne avec le verbe `note`.
 3. Ne pas ecrire dans un checkout partage depuis une porte isolee. Si la ligne
    ne peut pas etre ecrite proprement depuis la ou tourne la porte, la rendre
    dans le verdict et laisser l'appelant la poser.
 
 ## Test
 
-Controle positif d'abord, et il doit exister avant le correctif : un ticket
-dont le journal recoit une ligne apres la ligne vide terminale doit faire
-**echouer** `erg check`. Aujourd'hui il passe. Sans cette assertion, un
-correctif de la recette laisserait le validateur aussi aveugle qu'avant, et la
-prochaine recette qui derape ne serait pas plus visible que celle-ci.
+Au moment du signalement, `erg check` acceptait une ligne de journal placée
+après la ligne vide terminale. Ce comportement n'a pas été revalidé depuis ;
+un contrôle négatif reste nécessaire avant de considérer le validateur corrigé.
 
 ## Verification
 
 - [ ] `erg check` rejette une entree de journal placee hors de la section
 - [ ] `erg check` rejette un verbe hors specification
-- [ ] La recette de bump passe par `erg log` et emploie `note`
+- [x] La recette de bump passe par `erg log` et emploie `note` (Gaze et
+      verify-gate, vérifiés le 2026-10-02)
 - [ ] Un REROLL sur une porte isolee ne salit aucun checkout partage
 
 ## Invariants

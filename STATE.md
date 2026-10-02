@@ -1,20 +1,19 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-02T06:27Z
+Last updated: 2026-10-02T06:50Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-02T06:24Z · as of 7546c576 -->
+<!-- generated 2026-10-02T06:50Z · as of 48d8d836 -->
 
-**Tickets:** 18 ready · 21 blocked — `erg ready tickets/` for full list
+**Tickets:** 17 ready · 19 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
-**In flight:** 1 open PR, oldest #1102 0d · CI main: success
 **Recent (first-parent):**
-  7546c576 Merge pull request #1106 from MinhHaDuong/housekeeping-20261002
-  b1971d66 Merge pull request #1105 from MinhHaDuong/housekeeping-state-2026-10-02
-  bfade35d Merge pull request #1104 from MinhHaDuong/close-0999-integration
+  48d8d836 Merge pull request #1108 from MinhHaDuong/roar-1102-merge
+  c596f3bb Merge pull request #1102 from MinhHaDuong/memory-v8-0911-0917
+  1e3c451c Merge pull request #1107 from MinhHaDuong/housekeeping-state-2026-10-02
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Tracker 0999 recorded portable installation and runtime registration, and closed after integration review. The old relocation and cutover tickets 0978 and 0986 are closed WONTDO.

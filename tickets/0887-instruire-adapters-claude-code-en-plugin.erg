@@ -11,6 +11,7 @@ Author: claude
 2026-09-09T19:02Z note Go donne par l'auteur le 2026-09-09 sur l'action 4. Adaptateur verse INERTE : sur cette machine le depot EST ~/.claude, donc un dossier plugin atteignable sous skills/ est auto-decouvert a la session suivante pendant que le settings.json vif porte encore ses propres hooks — chaque garde tirerait deux fois, et le git sync de on-start.sh aussi. Le lien symbolique est donc le commutateur, et scripts/adapter-claude-code-activate.sh refuse de le poser tant que le fichier vif porte un bloc hooks. Il n'edite pas ce fichier : c'est celui de l'operateur
 2026-09-09T19:02Z note Disposition tranchee par consequence : adapters/claude-code/ plus lien, la variante que l'experience B rendait possible. Mesure decisive ajoutee au passage : CLAUDE_PLUGIN_ROOT vaut le chemin de DECOUVERTE, pas la cible resolue — un plugin atteint par lien recoit le chemin du lien. Un nombre fixe de .. n'est donc juste que tant que lien et cible sont a la meme profondeur, et sur la couche de garde une resolution muette qui rate echoue en ouverture. Remplace par bin/idh-hook, qui resout sa propre localisation reelle et sort 1 — jamais 2, qui refuserait chaque appel d'outil, jamais 0, qui rendrait un lanceur casse indiscernable d'un hook silencieux correct
 2026-09-09T19:02Z note Deux controles positifs joues, pas supposes : profondeur de resolution sabotee (../../.. -> ../..) fait tomber le cas symlink et deux autres ; hook ajoute a settings.shared.json sans regeneration fait tomber les deux gardes de derive. Le guard de derive tourne en processus plutot qu'en sous-processus, sinon le crible de test-quality le classait integration et l'excluait de make check-fast — un stale adapter doit etre pris avant le push, pas au gate lent
+2026-10-02T06:50Z MinhHaDuong note README no longer contains the former Why not a plugin statement or line-158 pointer. Local Claude Code is 2.1.286; the plugin probe was not rerun, so 2.1.266 remains the only measurement.
 --- body ---
 ## Context
 
@@ -155,7 +156,6 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
 - `scripts/probe-plugin-hook-loading.sh` — les trois experiences, rejouables
 - `settings.shared.json` — la surface a decouper
 - `skills/hunt/SKILL.md:38,100` — le consommateur de `claude -p`
-- `README.md:158` — la decision « Why not a plugin? » a reecrire
 - `tickets/0800-...erg` — coeur/config/adaptateurs, et la revue qui mesure le couplage
 - `tickets/0809-...erg` — le normaliseur, ou est le travail reel
 - `tickets/0810-...erg` — action 7, reconciliation du discours plugin
@@ -177,9 +177,9 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
    **confirmer qu'une garde tire vraiment dans une nouvelle session** — lire un
    fichier de configuration n'en est pas la preuve. Le bloc `hooks` du
    `settings.shared.json` canonique ne part qu'apres cette confirmation.
-5. Reecrire `README.md:158` dans le meme mouvement, ou renvoyer explicitement
-   la reecriture a l'action 7 de 0810. Ne pas laisser le README affirmer le
-   contraire de ce que fait le depot.
+5. **Résolu le 2026-10-02 :** le README actuel ne contient plus la décision
+   « Why not a plugin? » ni l'affirmation à corriger ; aucun changement au
+   README n'est nécessaire pour ce ticket.
 6. Laisser le normaliseur a 0809. Ne pas l'ouvrir ici.
 
 ## Test
@@ -199,7 +199,8 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
 - [x] Hooks portes dans le plugin, adaptateur inerte, commutateur qui refuse le double-tir
 - [x] Controles positifs joues : profondeur sabotee, derive sabotee
 - [ ] Une garde confirmee tirante depuis le plugin sur une vraie session — attend 0886 et un acte operateur
-- [ ] `README.md:158` reecrit ou explicitement renvoye a 0810
+- [x] Aucun ancien énoncé « Why not a plugin? » ne subsiste dans le README ;
+      le pointeur historique vers la ligne 158 est retiré (2026-10-02)
 
 ## Invariants
 
