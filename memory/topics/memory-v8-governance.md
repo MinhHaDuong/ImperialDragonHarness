@@ -24,7 +24,13 @@ treating it as empty. Roar captures facts; DREAM consolidates without rule
 promotion; the journal is append-only. The pilot declaration is
 [docs/memory-v8/pilot.md](../../docs/memory-v8/pilot.md); this correction
 was made by the [first dream](../dreams/2026-10-02-pilot-first-dream.md),
-which cites the sources below.
+which cites the sources below. The pilot's evaluation protocol was
+committed to main before its acceptance trials on 2026-10-02
+([evaluation protocol](../../docs/memory-v8/evaluation-protocol.md), PR
+#1137); the trial experiences are consolidated under
+[acceptance trial](memory-v8-acceptance-trial.md) and their cell verdicts
+live in the [results document](../../docs/memory-v8/evaluation-results.md),
+not in memory.
 
 ## Sources and exceptions
 
