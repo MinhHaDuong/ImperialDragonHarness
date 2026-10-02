@@ -39,9 +39,9 @@ manuscript against ``rules/doctype/book.md`` where the manifest declares
 ``techreport`` (audit of 2026-08-17, MR 136).
 
 ``--risk`` prints the path-risk band for the whole changed set instead of the
-verdict: ``high`` if any file matches a pipeline or guard path (the repo's
-existing dangerous-path registry — see ``RISK_HIGH_GLOBS``), ``low`` only if
-every file is documentation or a fixture, ``normal`` otherwise. Unlike the
+verdict: ``high`` if any file matches a pipeline or guard path
+(the repo's dangerous-path registry plus ``hooks/**`` and ``settings*.json`` — see ``RISK_HIGH_GLOBS``),
+``low`` only if every file is documentation or a fixture, ``normal`` otherwise. Unlike the
 routing and axes modes it reads no disk — a pure path-pattern match — so it
 carries no missing-path refusal: the anchor roster lists deleted and renamed
 paths that do not exist at HEAD (ticket 0902). The format axis stays keyed on

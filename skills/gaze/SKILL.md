@@ -228,8 +228,9 @@ fi
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
   Size and risk are two axes, never collapsed
-  into one. The 15+ files un-reviewable breaker is checked before the band —
-  a band never applies to an un-reviewable PR. Classify the changed-file
+  into one. The 15+ files un-reviewable breaker pre-empts the band — its
+  ESCALATE fires before any battery spawns, so a band never sets a battery
+  tier on an un-reviewable PR. Classify the changed-file
   roster with a third, cwd-anchored call — it reads no disk (pure
   path-pattern match), so the missing-path refusal does not apply, and
   deleted or renamed paths still get a band:

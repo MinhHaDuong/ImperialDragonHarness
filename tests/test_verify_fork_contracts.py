@@ -201,9 +201,12 @@ def test_gaze_raises_tier_on_high_risk_paths():
     assert "Agent A + Agent C + the phase-6 gate" in norm, (
         "gaze setup dropped the battery floor invariant"
     )
-    # Breaker precedence: the 15+ files breaker is checked before the band.
-    assert "checked before the band" in norm, (
-        "gaze setup must state the 15+ files breaker is checked before the band"
+    # Breaker precedence: the 15+ files breaker pre-empts the band — its
+    # ESCALATE fires before any battery spawns, so a band never sets a
+    # battery tier on an un-reviewable PR.
+    assert "never sets a battery tier" in norm, (
+        "gaze setup must state the 15+ files breaker pre-empts the band — a "
+        "band never sets a battery tier on an un-reviewable PR"
     )
     # Stated side effects of a tiny → small raise.
     for name in ("Agent B", "/simplify", "external reviewer panel"):
