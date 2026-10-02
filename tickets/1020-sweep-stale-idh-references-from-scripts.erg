@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Sweep stale ~/.idh references from scripts/ and the agnostic gate comments after the layout retirement
+Created: 2026-10-02
+Author: claude
+
+--- log ---
+2026-10-02T12:20Z claude created — filed by /roar after PR #1143 (sweep of the stale-path fix class)
+
+--- body ---
+## Context
+
+The ~/.idh layout was retired by the portable lifecycle (0987/0999, PR #1091);
+the reference checkout is ~/.agents. The zotero-arch session (PR #1143) fixed one
+such stale path in skills/ (probe-url.py docstring) — and the skills agnostic
+gate caught the overcorrected bare form. But the gate's jurisdiction is
+`skills/**` only: the same retirement has live survivors in `scripts/`, both
+operator-facing, and the gate's own pattern comments recommend the retired
+layout.
+
+## Findings (origin/main @ 267cde2f)
+
+- `scripts/census/README.md:21,25` — `C=~/.idh/scripts/census`,
+  `--root ~/.idh`: an operator following the README runs against a path that no
+  longer exists on this machine.
+- `scripts/check-primary-checkout.sh:14` — comment documents `REPO_DIR`
+  defaults to `$HOME/.idh`.
+- `scripts/check-agnostic.sh:18,46` — the forbidden-pattern comments recommend
+  `~/.idh/scripts/` (and `/home/[a-z]` advises "use ~/.idh"): the gate steers
+  writers toward the retired layout.
+
+## Actions
+
+1. Census README: point at the harness checkout (`$IDH_ROOT/scripts/census`,
+   `--root "$IDH_ROOT"`), keeping the agnostic-safe form.
+2. check-primary-checkout.sh comment: state the actual default.
+3. check-agnostic.sh pattern comments: recommend `$IDH_ROOT/scripts/` (or the
+   `$HARNESS_DIR` form, see 1021-adjacent PR #1143 review) instead of ~/.idh.
+4. Decide whether a scripts/-level equivalent of the skills agnostic gate is
+   warranted, or record that scripts/ is out of its jurisdiction by design.
+
+## Exit criteria
+
+- [ ] No live `~/.idh` reference remains in scripts/ or the gate comments
+      (historical docs and tickets untouched)
+- [ ] The census README instructions run as written from a harness checkout
+- [ ] make check-fast passes
+
+## Test
+
+- `grep -rn "\.idh" scripts/` returns only historical/provenance mentions, if any.
