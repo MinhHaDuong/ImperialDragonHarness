@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Worker-safety audit: pytest-xdist parallelization of the full check
+Created: 2026-10-02
+Author: vibe
+
+--- log ---
+2026-10-02T08:42Z vibe created
+2026-10-02T09:05Z vibe audit executed on origin/main 49400cfa: static census over all three hazard axes, then three live xdist trials from a venv (repo untouched)
+
+--- body ---
+## Context
+
+The author runs coding agents all day; the 81s full `make check` is paid once
+per pre-PR gate and once in CI. `pytest-xdist` is the only remaining lever
+after the 1010 re-tiering (check-fast 2.9s, lint 2.1s, both at the pytest
+boot+collection floor). This audit answers: is the suite worker-safe, and what
+does parallelism actually buy?
+
+## Static census (source-level, all three axes)
+
+| Axis | Finding |
+|---|---|
+| Environment | Clean by construction — the 0940/0359 hermeticity discipline (explicit `env=` dicts, `child_env()`, no ambient mutation). `os.environ[...]` hits in tests are reads (PATH composition) only |
+| Filesystem | Clean. 21/21 shell suites use `mktemp -d`; the Python side uses `tmp_path`. Fixed-path hits are read-only globs (`test_on_end_hook.py:306` inspects the live `/tmp/claude-<uid>` root without writing) or never-executed translation strings (`/tmp/pwn` in `test_hook_launchers.py`) |
+| Git state | Clean. No `git config --global` anywhere in tests/ or scripts. All git operations run in per-test tmp fixtures; the two heaviest suites (`test_erg_pr_merge.sh`, `test_seat_runner.sh`) are `mktemp`+trap isolated with env-var-pointed capture files under `$WORK` |
+
+No session-scoped mutating fixtures (one module-scoped read-only census fixture,
+per-worker under xdist). No fixed ports. No shared fixed paths written.
+
+## Live trials (venv with pytest-xdist 3.8.0 + system pytest 9.0.3, 24-core host)
+
+| Run | Result | Wall |
+|---|---|---|
+| Serial baseline | 1263 passed, 2 skipped | 81.0s |
+| `-n 4` | 1263 passed, 2 skipped | 38.6s (2.1x) |
+| `-n 8` | 1263 passed, 2 skipped | 37.2s (2.2x) |
+| `-n 8` repeat | 1263 passed, 2 skipped | 37.4s |
+
+Three parallel executions, zero collisions, zero count drift, no flaky
+failures. Scaling plateaus at ~37s: the critical path is the three shell
+monoliths, which parallelism cannot touch — `test_erg_pr_merge.sh` (12.2s),
+`test_seat_runner.sh` (9.6s), `test_sync_local_main.sh` (3.7s) are single
+sequential `.sh` files each driven as one parametrized case.
+
+## Recommendation
+
+Adopt: add `pytest-xdist` to `requirements-dev.txt` (pinned, the same
+range-pinning discipline as ruff in 0470) and wire `check-tests` to
+`python3 -m pytest tests/ -n 4`. Expected: pre-PR gate 81s -> ~39s, CI
+pytest-guard 1m26s -> ~50s. The audit found no hazard that requires a
+conservative default; if the author prefers caution, land the dependency and
+keep `make check` serial with a `check-par` opt-in target first, flipping the
+default after a week of clean parallel runs.
+
+Floor note: going below ~37s requires splitting the three shell monoliths
+into independently schedulable cases — a separate ticket, worth it only if
+CI latency ever matters beyond that.
+
+## Exit criteria
+- [ ] Census recorded (this ticket) with all three axes covered
+- [ ] Live trials recorded with exact pass/skip counts matching serial
+- [ ] Adoption decision recorded by the author: wire -n 4 into check-tests, or dependency + opt-in target
