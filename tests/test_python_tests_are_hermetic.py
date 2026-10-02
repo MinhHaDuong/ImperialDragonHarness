@@ -27,7 +27,9 @@ Accepted shapes, all already in the tree:
 It reports FILE NAMES and LINE NUMBERS only — never the offending text, never
 an environment value. A guard that echoed what it found would reproduce the
 defect it exists to prevent (ticket 0359's discipline).
-See rules/coding-bash.md § "BASH_ENV / hook scripts" and § hermetic children.
+See rules/coding-bash.md § "BASH_ENV / hook scripts: test via a real
+subprocess, never source-in-shell" and its subsection § "Unsetting a variable
+in the parent does not unset it in the child".
 
 ---------------------------------------------------------------------------
 HOW IT LOOKS, AND WHAT IT STILL CANNOT SEE
@@ -40,23 +42,36 @@ unparseable file fails LOUDLY rather than being reported clean (a file the
 guard cannot read is a file it did not check; `(0f)`).
 
 What is judged, per CALL NODE:
-  * `subprocess.run|Popen|call|check_call|check_output`, including names
-    bound by `from subprocess import run` / `import subprocess as sp`;
+  * `subprocess.run|Popen|call|check_call|check_output|getoutput|
+    getstatusoutput`, including names bound by `from subprocess import run`,
+    `import subprocess as sp`, and — conservatively, since a star import can
+    bind any of them — every spawn function under `from subprocess import *`;
   * the spawn's own `env=` expression, never the whole file: an unrelated
     hermetic spawn on the line above launders nothing, and one leaky call
     beside three clean ones is still reported;
   * "wholesale" derivation means the env expression IS the inherited mapping:
-    bare `os.environ`, `.copy()`, `dict(os.environ, …)`, `{**os.environ, …}`,
-    `os.environ | {…}`, `{k: v for k, v in os.environ.items()}`. Reading one
-    variable (`os.environ.get("PATH")`) is NOT wholesale — the child gets
-    one string, not the loader.
+    bare `os.environ` (also as `from os import environ`, and `import os as o`
+    followed by `o.environ`), `.copy()` and `copy.copy(…)`, `dict(os.environ,
+    …)`, `{**os.environ, …}`, `os.environ | {…}`, and a comprehension over
+    `os.environ.items()` — recursing through `if`/`else` expression branches
+    and boolean operators, so one wholesale branch launders nothing. Reading
+    one variable (`os.environ.get("PATH")`) is NOT wholesale — the child gets
+    one string, not the loader;
+  * a wholesale env counts as clearing `BASH_ENV` only when the mention is in
+    a NEUTRALIZING POSITION: a dict key mapping to an empty-string constant
+    (`{**os.environ, "BASH_ENV": ""}` or `dict(os.environ, BASH_ENV="")`), or
+    a `k != "BASH_ENV"` comprehension filter. A `"BASH_ENV"` constant in any
+    other position launders nothing.
 
 BLIND SPOTS — shapes this scanner does NOT detect. Listed so a reader knows
 what a PASS is worth; none is closed by pretending otherwise:
-  * `env=<variable>` built out of sight. The guard judges the call site, so
-    `env = os.environ.copy()` earlier in the function defeats it. Chasing
-    assignments is dataflow analysis, not a hygiene ratchet; the remedy is
-    review plus the fact that every current site inlines its env.
+  * `env=<variable>` or `env=<helper call>` built out of sight. The guard
+    judges the call site, so `env = os.environ.copy()` earlier in the
+    function, or a helper returning `os.environ` verbatim, defeats it.
+    Chasing assignments is dataflow analysis, not a hygiene ratchet; the
+    remedy is review — five converted suites already assign their env to a
+    local first, so acceptance rests on reading those assignments, not on
+    this scan.
   * `subprocess.run(cmd, **kwargs)` with `env` arriving through `**kwargs`.
   * A spawn function reached through a variable (`r = subprocess.run; r(…)`),
     or any second-order aliasing the import scan does not bind.
@@ -84,79 +99,176 @@ from child_env import child_env
 TESTS_DIR = Path(__file__).resolve().parent
 SELF = Path(__file__).name
 
-SPAWN_FUNCS = {"run", "Popen", "call", "check_call", "check_output"}
+SPAWN_FUNCS = {
+    "run",
+    "Popen",
+    "call",
+    "check_call",
+    "check_output",
+    "getoutput",
+    "getstatusoutput",
+}
 
 
 # --- the scanner ---------------------------------------------------------------
 
 
-def _spawn_names(tree: ast.Module) -> set[str]:
-    """Names this module can call to spawn a subprocess."""
-    names = {"subprocess"}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name == "subprocess":
-                    names.add(alias.asname or "subprocess")
-        elif isinstance(node, ast.ImportFrom) and node.module == "subprocess":
-            for alias in node.names:
-                if alias.name in SPAWN_FUNCS:
-                    names.add(alias.asname or alias.name)
-    return names
+class _Scanner:
+    """Import-aware verdicts for one module's subprocess spawns.
 
-
-def _is_environ_ref(node: ast.expr) -> bool:
-    return (
-        isinstance(node, ast.Attribute)
-        and node.attr == "environ"
-        and isinstance(node.value, ast.Name)
-        and node.value.id == "os"
-    )
-
-
-def _wholesale(node: ast.expr) -> bool:
-    """The expression IS the inherited `os.environ` mapping (a copy of it).
-
-    Reading one variable (`os.environ.get("PATH")`, `os.environ["HOME"]`) is
-    not wholesale: the child receives that one string, not the loader.
+    The import scan binds names, not spellings: `from subprocess import run`,
+    `import subprocess as sp`, `from os import environ`, and `import os as o`
+    all rebind the tokens the verdicts match, so a module's verdicts must be
+    computed against the names THAT module binds. A star import
+    (`from subprocess import *`) can bind any spawn function, so all of
+    SPAWN_FUNCS are recognized conservatively.
     """
-    if _is_environ_ref(node):
-        return True
-    if isinstance(node, ast.Call):
-        func = node.func
-        if isinstance(func, ast.Attribute) and func.attr in ("copy", "items"):
-            return _wholesale(func.value)
-        if isinstance(func, ast.Name) and func.id == "dict":
-            args = list(node.args) + [k.value for k in node.keywords if k.arg is None]
-            return any(_wholesale(a) for a in args)
-    if isinstance(node, ast.Dict):
-        return any(_wholesale(v) for v in node.values)
-    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
-        return _wholesale(node.left) or _wholesale(node.right)
-    if isinstance(node, ast.DictComp):
-        for generator in node.generators:
+
+    def __init__(self, tree: ast.Module) -> None:
+        self.os_aliases = {"os"}
+        self.environ_names: set[str] = set()
+        self.spawn_names = {"subprocess"}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "os":
+                        self.os_aliases.add(alias.asname or "os")
+                    elif alias.name == "subprocess":
+                        self.spawn_names.add(alias.asname or "subprocess")
+            elif isinstance(node, ast.ImportFrom):
+                if node.module == "subprocess":
+                    for alias in node.names:
+                        if alias.name == "*":
+                            self.spawn_names.update(SPAWN_FUNCS)
+                        elif alias.name in SPAWN_FUNCS:
+                            self.spawn_names.add(alias.asname or alias.name)
+                elif node.module == "os":
+                    for alias in node.names:
+                        if alias.name == "environ":
+                            self.environ_names.add(alias.asname or "environ")
+
+    def _is_environ_ref(self, node: ast.expr) -> bool:
+        if isinstance(node, ast.Attribute) and node.attr == "environ":
+            return (
+                isinstance(node.value, ast.Name)
+                and node.value.id in self.os_aliases
+            )
+        return isinstance(node, ast.Name) and node.id in self.environ_names
+
+    def _wholesale(self, node: ast.expr) -> bool:
+        """The expression IS the inherited `os.environ` mapping (a copy of it).
+
+        Reading one variable (`os.environ.get("PATH")`, `os.environ["HOME"]`)
+        is not wholesale: the child receives that one string, not the loader.
+        """
+        if self._is_environ_ref(node):
+            return True
+        if isinstance(node, ast.Call):
+            func = node.func
             if (
-                isinstance(generator.iter, ast.Call)
-                and isinstance(generator.iter.func, ast.Attribute)
-                and generator.iter.func.attr == "items"
+                isinstance(func, ast.Attribute)
+                and func.attr == "copy"
+                and isinstance(func.value, ast.Name)
+                and func.value.id == "copy"
             ):
-                return _wholesale(generator.iter.func.value)
-    return False
-
-
-def _mentions_key(node: ast.expr, key: str) -> bool:
-    return any(
-        isinstance(n, ast.Constant) and n.value == key for n in ast.walk(node)
-    )
-
-
-def _is_spawn_call(node: ast.expr, names: set[str]) -> bool:
-    if not isinstance(node, ast.Call):
+                return any(self._wholesale(a) for a in node.args)
+            if isinstance(func, ast.Attribute) and func.attr in ("copy", "items"):
+                return self._wholesale(func.value)
+            if isinstance(func, ast.Name) and func.id == "dict":
+                args = list(node.args) + [
+                    k.value for k in node.keywords if k.arg is None
+                ]
+                return any(self._wholesale(a) for a in args)
+        if isinstance(node, ast.Dict):
+            return any(self._wholesale(v) for v in node.values)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            return self._wholesale(node.left) or self._wholesale(node.right)
+        if isinstance(node, ast.IfExp):
+            # One wholesale branch launders nothing: either arm may execute.
+            return self._wholesale(node.body) or self._wholesale(node.orelse)
+        if isinstance(node, ast.BoolOp):
+            return any(self._wholesale(v) for v in node.values)
+        if isinstance(node, ast.DictComp):
+            for generator in node.generators:
+                if (
+                    isinstance(generator.iter, ast.Call)
+                    and isinstance(generator.iter.func, ast.Attribute)
+                    and generator.iter.func.attr == "items"
+                ):
+                    return self._wholesale(generator.iter.func.value)
         return False
-    func = node.func
-    if isinstance(func, ast.Attribute) and func.attr in SPAWN_FUNCS:
-        return isinstance(func.value, ast.Name) and func.value.id in names
-    return isinstance(func, ast.Name) and func.id in names
+
+    def _clears_bash_env(self, node: ast.expr) -> bool:
+        """The env expression visibly empties or filters out `BASH_ENV`.
+
+        Only two mention positions neutralize: a dict key mapping to an
+        empty-string constant (a dict-literal entry or a `dict(…)` keyword),
+        and a `k != "BASH_ENV"` comprehension filter. A `"BASH_ENV"` constant
+        anywhere else — as a value, inside a nested call — launders nothing.
+        """
+        for n in ast.walk(node):
+            if isinstance(n, ast.Dict):
+                for key, value in zip(n.keys, n.values):
+                    if (
+                        isinstance(key, ast.Constant)
+                        and key.value == "BASH_ENV"
+                        and isinstance(value, ast.Constant)
+                        and value.value == ""
+                    ):
+                        return True
+            elif (
+                isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Name)
+                and n.func.id == "dict"
+            ):
+                for kw in n.keywords:
+                    if (
+                        kw.arg == "BASH_ENV"
+                        and isinstance(kw.value, ast.Constant)
+                        and kw.value.value == ""
+                    ):
+                        return True
+            elif isinstance(n, ast.DictComp):
+                for generator in n.generators:
+                    for cond in generator.ifs:
+                        if (
+                            isinstance(cond, ast.Compare)
+                            and any(
+                                isinstance(op, (ast.NotEq, ast.NotIn))
+                                for op in cond.ops
+                            )
+                            and any(
+                                isinstance(side, ast.Constant)
+                                and side.value == "BASH_ENV"
+                                for side in [cond.left, *cond.comparators]
+                            )
+                        ):
+                            return True
+        return False
+
+    def is_spawn_call(self, node: ast.expr) -> bool:
+        if not isinstance(node, ast.Call):
+            return False
+        func = node.func
+        if isinstance(func, ast.Attribute) and func.attr in SPAWN_FUNCS:
+            return (
+                isinstance(func.value, ast.Name)
+                and func.value.id in self.spawn_names
+            )
+        return isinstance(func, ast.Name) and func.id in self.spawn_names
+
+    def hermetic(self, call: ast.Call) -> bool:
+        if _command_neutralizes_env(call):
+            return True
+        env = next((k for k in call.keywords if k.arg == "env"), None)
+        if env is None:
+            return False  # no env= -> the child inherits os.environ verbatim
+        value = env.value
+        if isinstance(value, ast.Constant) and value.value is None:
+            return False  # env=None is the same inheritance, spelled out
+        if self._wholesale(value) and not self._clears_bash_env(value):
+            return False
+        return True
 
 
 def _command_words(call: ast.Call) -> list:
@@ -179,32 +291,18 @@ def _command_neutralizes_env(call: ast.Call) -> bool:
     return any(w in ("-i", "--ignore-environment") for w in words[1:3])
 
 
-def _hermetic(call: ast.Call) -> bool:
-    if _command_neutralizes_env(call):
-        return True
-    env = next((k for k in call.keywords if k.arg == "env"), None)
-    if env is None:
-        return False  # no env= -> the child inherits os.environ verbatim
-    value = env.value
-    if isinstance(value, ast.Constant) and value.value is None:
-        return False  # env=None is the same inheritance, spelled out
-    if _wholesale(value) and not _mentions_key(value, "BASH_ENV"):
-        return False
-    return True
-
-
 def scan_file(path: Path) -> tuple[str, list[int]]:
     """Verdict over one file: `OK` | `BAD` + line numbers | `UNPARSEABLE`."""
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except SyntaxError:
         return "UNPARSEABLE", []
-    names = _spawn_names(tree)
+    scanner = _Scanner(tree)
     bad = sorted(
         {
             node.lineno
             for node in ast.walk(tree)
-            if _is_spawn_call(node, names) and not _hermetic(node)
+            if scanner.is_spawn_call(node) and not scanner.hermetic(node)
         }
     )
     return ("BAD", bad) if bad else ("OK", [])
@@ -348,6 +446,83 @@ _CONTROLS: list[tuple[str, str, str]] = [
         "docs: subprocess.run(['bash', '-c', 'true'])\n"
         '"""\n',
     ),
+    # --- round-2 controls: shapes the shipped scanner wrongly cleared ---------
+    # Each of these leaked a fake sentinel at runtime while scanning OK
+    # (PR #1111 round-2 review): a "BASH_ENV" constant in a non-neutralizing
+    # position, an environ spelling or branch the wholesale match missed, and
+    # spawn bindings the import scan did not see.
+    (
+        "c19_bad_laundered_bash_env_refill",
+        "BAD",
+        "import os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "    env={**os.environ,\n"
+        "         'BASH_ENV': os.environ.get('BASH_ENV', '')})\n",
+    ),
+    (
+        "c20_bad_laundered_bash_env_value",
+        "BAD",
+        "import os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env={**os.environ, 'NOTE': 'BASH_ENV'})\n",
+    ),
+    (
+        "c21_bad_from_os_import_environ",
+        "BAD",
+        "import subprocess\n"
+        "from os import environ\n"
+        "subprocess.run(['bash', '-c', 'true'], env=environ)\n",
+    ),
+    (
+        "c28_ok_from_os_import_environ_cleared",
+        "OK",
+        "import subprocess\n"
+        "from os import environ\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env={**environ, 'BASH_ENV': ''})\n",
+    ),
+    (
+        "c22_bad_ifexp_wholesale_branch",
+        "BAD",
+        "import os, subprocess\n"
+        "from child_env import child_env\n"
+        "flag = True\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "    env=os.environ.copy() if flag else child_env())\n",
+    ),
+    (
+        "c23_bad_boolop_wholesale_branch",
+        "BAD",
+        "import os, subprocess\n"
+        "flag = True\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env=flag or os.environ)\n",
+    ),
+    (
+        "c24_bad_copy_copy_environ",
+        "BAD",
+        "import copy, os, subprocess\n"
+        "subprocess.run(['bash', '-c', 'true'],\n"
+        "               env=copy.copy(os.environ))\n",
+    ),
+    (
+        "c25_bad_star_import_spawn",
+        "BAD",
+        "from subprocess import *\n"
+        "run(['bash', '-c', 'true'])\n",
+    ),
+    (
+        "c26_bad_getoutput",
+        "BAD",
+        "import subprocess\n"
+        "subprocess.getoutput(\"bash -c 'true'\")\n",
+    ),
+    (
+        "c27_bad_getstatusoutput",
+        "BAD",
+        "import subprocess\n"
+        "subprocess.getstatusoutput(\"bash -c 'true'\")\n",
+    ),
 ]
 
 
@@ -429,7 +604,7 @@ def test_a_python_child_passes_the_loader_to_its_grandchild(tmp_path, monkeypatc
     """Probe (0c): the leak crosses a Python child, exactly as the ticket says.
 
     A plain `env=None` Python child gets BASH_ENV from os.environ and hands it
-    to the bash grandchild it spawns — this is the exposure path the 20-suite
+    to the bash grandchild it spawns — this is the exposure path the ticket's
     defect class was about. The same grandchild under `env=child_env()` sees
     nothing (probe 0b's property, one level deeper).
     """

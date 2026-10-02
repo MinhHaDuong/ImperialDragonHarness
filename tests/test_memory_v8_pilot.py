@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
 INDEX = MEMORY / "MEMORY.md"
@@ -136,14 +138,14 @@ def test_relocated_clone_remains_readable(tmp_path):
     checkout = tmp_path / "checkout"
     subprocess.run(
         ["git", "clone", "--quiet", "--no-hardlinks", str(REPO), str(checkout)],
-        check=True,
+        check=True, env=child_env(),
     )
     relocated = tmp_path / "elsewhere" / "moved-clone"
     relocated.parent.mkdir()
     shutil.move(str(checkout), str(relocated))
     subprocess.run(
         ["git", "-C", str(relocated), "remote", "remove", "origin"],
-        check=True,
+        check=True, env=child_env(),
     )
 
     assert (relocated / "memory" / "MEMORY.md").is_file()

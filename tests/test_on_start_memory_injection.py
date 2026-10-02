@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parents[1]
@@ -47,6 +49,7 @@ def test_index_injected_for_a_worktree_of_this_repository(tmp_path):
         cwd=REPO,
         check=True,
         capture_output=True,
+        env=child_env(),
     )
     try:
         assert SENTINEL in hook_stdout(worktree)
@@ -56,13 +59,15 @@ def test_index_injected_for_a_worktree_of_this_repository(tmp_path):
             cwd=REPO,
             check=True,
             capture_output=True,
+            env=child_env(),
         )
 
 
 def test_index_not_injected_for_an_unrelated_git_repo(tmp_path):
     repo = tmp_path / "unrelated"
     repo.mkdir()
-    subprocess.run(["git", "init", "--quiet", str(repo)], check=True)
+    subprocess.run(["git", "init", "--quiet", str(repo)], check=True,
+                   env=child_env())
     assert SENTINEL not in hook_stdout(repo)
 
 
