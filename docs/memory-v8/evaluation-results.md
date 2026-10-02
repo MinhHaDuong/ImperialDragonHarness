@@ -225,7 +225,9 @@ and one a withdrawn claim, both originals unchanged), all written through
 audience declared at capture, committed on the trial branch, journal
 append-only (the three flawed or superseded entries stand unchanged with
 corrections linking them). Consolidation evidence: the three dream reports
-under [memory/dreams/](../../memory/dreams/) and the resulting topic and
+under [memory/dreams/](../../memory/dreams/2026-10-02-0918-trial-dream-pass1.md)
+(passes 1 and 2, plus the interrupted pass 3, all in that directory) and the
+resulting topic and
 index state. Obedience evidence: commit hashes on the trial branch — no
 rule proposal in any capture or topic (grep-verifiable), no write outside
 the authorized branch, MEMORY.md at 39 lines ending in a newline
