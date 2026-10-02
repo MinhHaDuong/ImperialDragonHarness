@@ -355,5 +355,9 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
         assert "git checkout <ref> --" in sec, f"{name}: no destructive-checkout ban"
         assert "git show <ref>:<path>" in sec, f"{name}: no read-only alternative named"
         assert "NOT-RUN" in sec, f"{name}: no refusal on unreachable review tree"
-    assert "never falls back to the session cwd" in battery
-    assert 'git -C "$primary_root' in battery
+        assert "git restore ." in sec, f"{name}: git restore . not banned"
+        assert "git reset --hard" in sec, f"{name}: git reset --hard not banned"
+        assert 'git -C "$primary_root' in sec, f"{name}: no git -C reach contract"
+        assert re.search(r"never falls? back to the session cwd", sec), (
+            f"{name}: no never-fall-back-to-session-cwd clause"
+        )
