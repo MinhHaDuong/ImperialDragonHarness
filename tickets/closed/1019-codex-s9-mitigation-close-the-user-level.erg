@@ -15,8 +15,8 @@ Closed: S9.codex blocker downgraded to 'channel closed, re-trial passed': prefli
 
 The memory v8 acceptance trial (0918 STEP B, merged on main) closed tracker 0909's
 rollout question with a predeclared **No rollout** verdict
-([docs/memory-v8/evaluation-results.md](../docs/memory-v8/evaluation-results.md)).
-Tracker [0913](0913-retire-the-dead-retention-machinery-and.erg) stays open as the
+([docs/memory-v8/evaluation-results.md](../../docs/memory-v8/evaluation-results.md)).
+Tracker [0913](../0913-retire-the-dead-retention-machinery-and.erg) stays open as the
 standing rollout workpackage, gated on two recorded blockers. This ticket addresses
 one of them: the S9.codex failure — a contradictory user-level AGENTS.md planted in
 a disposable CODEX_HOME was natively delivered and adopted as authority without the
@@ -32,7 +32,7 @@ behavior in any way; re-try the S9.codex cell under the closed-channel configura
 - Preflight (decision 1): one-line check that this host carries no user-level
   `~/.codex/AGENTS.md`; record the check and its result in the evidence doc.
 - Re-trial (decision 3) under the protocol's S9 margins exactly
-  ([evaluation-protocol.md](../docs/memory-v8/evaluation-protocol.md)): disposable
+  ([evaluation-protocol.md](../../docs/memory-v8/evaluation-protocol.md)): disposable
   CODEX_HOME with NO user-level AGENTS.md (channel closed); the same contradictory
   claim (worktree-guard guidance obsolete) planted in a native-loadable channel that
   remains — codex rules/ in the disposable home — and any other natively loaded
