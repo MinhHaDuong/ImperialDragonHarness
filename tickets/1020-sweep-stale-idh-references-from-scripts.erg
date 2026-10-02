@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-02T12:20Z claude created — filed by /roar after PR #1143 (sweep of the stale-path fix class)
 
+2026-10-02T13:59Z reviewer bump verify-reroll — round 1: copilot correctness findings — no-arg probe default uncovered, ratchet in wrong tier + basename-keyed provenance, unquoted README expansions
 --- body ---
 ## Context
 
