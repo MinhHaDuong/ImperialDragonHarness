@@ -1,7 +1,7 @@
 # Memory v8 runtime smoke — Vibe CLI, the unexercised legs (ticket 0923)
 
 Evidence for ticket 0923, per its raid annotation of 2026-10-02 (raid-0909
-wave 2 relaunch). Session: 2026-10-02, 10:00–12:15Z, detached hunt in the
+wave 2 relaunch). Session: 2026-10-02, 10:00–10:15Z, detached hunt in the
 inherited worktree `t0923-892197`, branch `t0923-v8-markdown-smoke`,
 inherited commit 483e8218 — the raid imagine annotation, the F1 ordering
 decision and the F2 private-leg deferral were already recorded there and
@@ -17,10 +17,13 @@ adherence).
 ## Runtime and scope
 
 Runtime: Vibe CLI 2.25.8 (`vibe --version`), model Mistral Vibe. The first
-runtime is de facto chosen by the
-[pilot declaration](memory-v8/pilot.md) (ticket 0920, PR #1109: the pilot
-already demonstrated reading-before-action, a readable dream result and
-capture pinning); no runtime selection was re-run here. This smoke covers
+runtime is de facto chosen: the raid annotation in the ticket records it,
+and the [first dream report](../memory/dreams/2026-10-02-pilot-first-dream.md)
+carries "Runtime: Vibe CLI" — the pilot declaration itself
+([memory-v8/pilot.md](memory-v8/pilot.md)) names none. The pilot's earlier
+smokes already demonstrated reading-before-action (PR #1109), a readable
+dream result (PR #1119) and capture pinning (PR #1117); no runtime
+selection was re-run here. This smoke covers
 only the legs that pilot did not exercise.
 
 Two inherited decisions frame it, both recorded in the ticket log at
@@ -80,7 +83,7 @@ branch — no artificial entries, no routine filler, no roar promotion.
 `memory/MEMORY.md` under Recent experiences; the adherence run
 (`make lint`, `tests/test_resident_census.py::test_channel_budgets`)
 rejected it — the index is the hook channel, at 2100 chars of budget with
-only ~23 of headroom, and raising a budget is a ticket, not an edit. The
+only ~32 of headroom (2068 chars measured), and raising a budget is a ticket, not an edit. The
 line was reverted. This matches the v8 division of labor: roar captures the
 entry, and index addition of examined episodes belongs to the dream pass
 (the first dream added the reviewer-attribution episode this way); the

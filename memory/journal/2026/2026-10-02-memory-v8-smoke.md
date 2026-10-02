@@ -23,7 +23,7 @@ covered, from worktree t0923-892197 on branch t0923-v8-markdown-smoke:
   symlink) or absent in a disposable clone, the SessionStart injection
   silently emitted nothing — the honest failure appeared only on the
   consuming side (visible ENOENT, git status flagging the tracked surface,
-  link check) — so the honest failure is behavioral, not mechanical.
+  link check) — so the honest failure is behavioural, not mechanical.
 - Private .age leg: deferred by author decision (blind-spot F2) — no
   legitimate uncleared material exists; no ciphertext was written and the
   decrypt/consolidate/re-encrypt path stays unexercised.
