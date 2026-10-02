@@ -43,7 +43,8 @@ The concrete mechanics are pinned in [README.md](README.md) § Audience and
 source handling (ticket 0988): the audience is judged at capture, before the
 first byte is written; not-cleared entries are piped from stdin straight into
 `age`; the per-project key is derived from the repository's own origin URL
-under `~/.config/keys/memory/`, created on first private capture and never
+(transport, user, default port and `.git` suffix stripped) under
+`~/.config/keys/memory/`, created on first private capture and never
 tracked. `scripts/memory-capture.sh` is the harness's implementation.
 
 ## Rollback and old-path correspondence

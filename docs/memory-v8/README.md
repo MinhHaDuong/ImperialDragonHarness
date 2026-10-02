@@ -87,9 +87,13 @@ not-cleared entries are piped from stdin straight into
 `age -r <recipient> -o <entry>.age`, so plaintext never exists in the working
 tree; decrypt with `age -d -i <key> <entry>.age`. The per-project key is one
 age X25519 identity at `~/.config/keys/memory/<sha256[:16] of the normalized
-origin URL>.age` — normalized by stripping scheme, user and `.git` suffix and
-lowercasing, so every transport of the same project derives one key — created
-by `age-keygen -o` on first private capture and never tracked. Repository
+origin URL>.age` — normalized by stripping scheme, user, default ports
+(22 for ssh, 443 for https, 80 for http) and `.git` suffix, then lowercasing,
+so every transport of the same project derives one key — created by
+`age-keygen -o` on first private capture and never tracked. A non-default
+port is deliberately not stripped: it participates in the project identity,
+so a remote that moves to a non-default port derives a new key and older
+ciphertext stays readable only under the old one. Repository
 content names this derivation mechanism, not any key file, and computing the
 filename aids no decryption (the ciphertext-at-rest limit is recorded in the
 [pilot declaration](pilot.md)).

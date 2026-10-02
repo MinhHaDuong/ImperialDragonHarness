@@ -151,69 +151,94 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Arm 3: capture at roar — the same host fast-forwards the next night
+# Arm 3: capture at roar applied to the SAME dirty host the positive control
+# refused — the transition the stall blocked. Roar's single wrap-up branch
+# carries the host sessions' uncommitted writes (the stall source) plus a new
+# private entry through the pinned helper; the merged capture PR makes the
+# host's bytes upstream, so the next night's pull fast-forwards the still
+# dirty host, absorbing the converged writes without losing a byte.
 # ---------------------------------------------------------------------------
 if [ ! -x "$CAPTURE" ]; then
     _fail "treatment: capture helper $CAPTURE is missing"
 elif [ "$HAVE_AGE" = 1 ]; then
-    _setup roar
     DATE=$(date +%Y-%m-%d)
     YEAR=$(date +%Y)
-    PUBLIC_ENTRY="memory/journal/$YEAR/$DATE-treatment-public.md"
     PRIVATE_ENTRY="memory/journal/$YEAR/$DATE-treatment-private.age"
 
-    # The wrap-up branch/worktree roar uses: capture never touches the host
-    # checkout, so nothing lands uncommitted in the pulled tree.
-    WT="$SANDBOX/roar-wrapup"
+    WT="$SANDBOX/padme-wrapup"
     git -C "$HOST" worktree add --quiet -b wrap-up "$WT"
 
-    printf 'Treatment public note: committed at roar on the wrap-up branch.\n' \
-        | "$CAPTURE" "$WT" public treatment-public
+    # The bundle: the host's own uncommitted memory (three new notes, one
+    # edited note, the index lines — exactly what refused the control sync)
+    # plus one new private entry captured through the helper.
+    mkdir -p "$WT/memory/journal/2026"
+    cp "$HOST/memory/journal/2026/2026-10-02-note-a.md" "$WT/memory/journal/2026/"
+    cp "$HOST/memory/journal/2026/2026-10-02-note-b.md" "$WT/memory/journal/2026/"
+    cp "$HOST/memory/journal/2026/2026-10-02-note-c.md" "$WT/memory/journal/2026/"
+    cp "$HOST/memory/journal/2026/2026-10-01-edit-me.md" "$WT/memory/journal/2026/"
+    cp "$HOST/memory/MEMORY.md" "$WT/memory/MEMORY.md"
     PRIVATE_TEXT='Treatment private note: uncleared, ciphertext from birth.'
     printf '%s\n' "$PRIVATE_TEXT" | "$CAPTURE" "$WT" private treatment-private
 
-    # The committed note set — what the session wrote, before integration.
-    NOTES_WRITTEN=$(snapshot "$WT")
-    if printf '%s\n' "$NOTES_WRITTEN" | grep -q "treatment-private.age" \
-       && [ ! -e "$WT/$PRIVATE_ENTRY.plain" ]; then
-        _pass "private entry committed as .age ciphertext"
-    else
-        _fail "private entry did not land as .age ciphertext"
-    fi
+    # Plaintext residue, the real check: no file in the wrap-up tree may
+    # carry the private text — the .age ciphertext is excluded because it is
+    # the committed form. A regression that ever wrote a plaintext file (any
+    # name, any extension) trips this grep.
     if grep -rFq "$PRIVATE_TEXT" "$WT" --exclude='*.age'; then
         _fail "private plaintext leaked into the wrap-up tree"
     else
         _pass "private plaintext never in the wrap-up tree"
     fi
 
-    # One branch, one bundled PR: commit the bundle, push, merge through origin.
+    # One branch, one bundled PR: commit, push, merge through origin. Content
+    # conflicts resolve toward the capture — the host's own record wins in
+    # its own PR, as the 2026-09-29 rescue did by hand.
     git -C "$WT" add memory
-    git -C "$WT" commit --quiet -m "roar wrap-up: capture journal entries (0988)"
+    git -C "$WT" commit --quiet -m "roar wrap-up: bundle the host's uncommitted memory (0988)"
     git -C "$WT" push --quiet origin wrap-up
     (
         cd "$SANDBOX"
-        git clone --quiet "$ORIGIN" roar-forge
-        cd roar-forge
+        git clone --quiet "$ORIGIN" padme-forge
+        cd padme-forge
         git fetch --quiet origin wrap-up
-        git merge --quiet --no-ff -m "Merge pull request #N from wrap-up" FETCH_HEAD
+        git merge --quiet --no-ff -X theirs -m "Merge pull request #N from wrap-up" FETCH_HEAD
         git push --quiet origin main
     )
 
-    # The next night's pull on the same host: clean tree, capture integrated.
+    # The next night's pull on the SAME dirty host: its uncommitted writes
+    # are now upstream bytes, so the sync absorbs them and fast-forwards.
     TREAT_OUT=$("$SYNC" "$HOST")
     if printf '%s\n' "$TREAT_OUT" | grep -q "fast-forwarded"; then
-        _pass "treatment: the host fast-forwards the next night"
+        _pass "treatment: the dirty host fast-forwards the next night"
     else
-        _fail "treatment: sync did not fast-forward — got: $TREAT_OUT"
+        _fail "treatment: sync did not fast-forward the dirty host — got: $TREAT_OUT"
+    fi
+    if printf '%s\n' "$TREAT_OUT" | grep -q "absorbed"; then
+        _pass "treatment: the host's converged writes were absorbed, not discarded"
+    else
+        _fail "treatment: converged writes not absorbed — got: $TREAT_OUT"
     fi
 
-    # Byte comparison across the reproduction: what was committed is what the
-    # host now carries — nothing lost, duplicated or altered.
+    # Byte comparison across the reproduction: every note the host had before
+    # the capture survives byte-identical after the pull, and the only new
+    # file is the private entry — nothing lost, duplicated or altered.
     NOTES_PULLED=$(snapshot "$HOST")
-    if [ "$NOTES_WRITTEN" = "$NOTES_PULLED" ]; then
-        _pass "note set byte-identical across the reproduction"
+    missing=0
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        printf '%s\n' "$NOTES_PULLED" | grep -qxF -- "$line" || missing=1
+    done <<< "$NOTES_BEFORE"
+    BEFORE_COUNT=$(printf '%s\n' "$NOTES_BEFORE" | grep -c .)
+    PULLED_COUNT=$(printf '%s\n' "$NOTES_PULLED" | grep -c .)
+    if [ "$missing" = 0 ]; then
+        _pass "no note lost or altered across the reproduction (all pre-pull notes byte-identical)"
     else
-        _fail "note set differs across the reproduction"
+        _fail "a pre-pull note is missing or altered after the pull"
+    fi
+    if [ "$PULLED_COUNT" = "$((BEFORE_COUNT + 1))" ]; then
+        _pass "no note duplicated: exactly one new file, the private entry"
+    else
+        _fail "note count moved unexpectedly (before=$BEFORE_COUNT after=$PULLED_COUNT)"
     fi
 
     # The pulled ciphertext is readable with the per-project key.

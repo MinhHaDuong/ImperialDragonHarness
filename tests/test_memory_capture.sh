@@ -107,6 +107,59 @@ else
     _fail "different projects share or lose keys"
 fi
 
+# key selection: default ports are stripped — ssh://host:22 and ssh://host,
+# https://host:443 and https://host derive the same key.
+_mkproject ports ssh://git@port.example.com:22/owner/proj.git
+printf 'explicit default port entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+KEYS_AFTER_22=$(count_keys)
+_mkproject ports-noport ssh://git@port.example.com/owner/proj.git
+printf 'implicit default port entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+KEYS_AFTER_NO=$(count_keys)
+_mkproject ports-https https://Port.Example.com:443/owner/proj.git
+printf 'https default port entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+KEYS_AFTER_443=$(count_keys)
+if [ "$KEYS_AFTER_22" = 3 ] && [ "$KEYS_AFTER_NO" = 3 ] && [ "$KEYS_AFTER_443" = 3 ]; then
+    _pass "default ports (22, 443) stripped in key derivation"
+else
+    _fail "default-port variants derived different keys ($KEYS_AFTER_22/$KEYS_AFTER_NO/$KEYS_AFTER_443)"
+fi
+
+# key selection: a non-default port participates in project identity (documented).
+_mkproject ports-2222 ssh://git@port.example.com:2222/owner/proj.git
+printf 'non-default port entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+if [ "$(count_keys)" = 4 ]; then
+    _pass "non-default port keeps a distinct project identity"
+else
+    _fail "non-default port did not derive its own key"
+fi
+
+# first private capture stays silent: age-keygen's public-key banner must not
+# reach the caller's stderr on success.
+_mkproject quiet git@quiet.example.com:owner/proj.git
+ERR_TEXT=$(printf 'quiet capture entry\n' | "$CAPTURE" "$P" private note-quiet 2>&1 >/dev/null)
+if printf '%s\n' "$ERR_TEXT" | grep -q "Public key"; then
+    _fail "first private capture leaked the age-keygen banner to stderr"
+else
+    _pass "first private capture is stderr-silent"
+fi
+
+# a failed key creation surfaces age-keygen's stderr in full, not just the
+# refusal line: a read-only key directory makes age-keygen fail inside the
+# capture helper.
+_mkproject failing git@failing.example.com:owner/proj.git
+mkdir -p "$HOME/.config/keys/memory" && chmod 555 "$HOME/.config/keys/memory"
+FAIL_TEXT=$(printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed 2>&1 >/dev/null) || true
+FAIL_RC=0
+printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed >/dev/null 2>&1 || FAIL_RC=$?
+chmod 755 "$HOME/.config/keys/memory"
+if [ "$FAIL_RC" -ne 0 ] && [ -n "$FAIL_TEXT" ] \
+   && printf '%s\n' "$FAIL_TEXT" | grep -qv "memory-capture:"; then
+    _pass "failed key creation surfaces age-keygen's own stderr"
+else
+    _fail "failed key creation did not surface age-keygen stderr (rc=$FAIL_RC)"
+fi
+
+
 # append-only: capturing the same slug on the same day is refused, the
 # original entry untouched.
 if printf 'second write\n' | "$CAPTURE" "$PUB" public note-one >/dev/null 2>&1; then

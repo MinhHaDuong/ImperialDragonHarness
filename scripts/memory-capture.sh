@@ -28,11 +28,14 @@
 # Key selection — one age X25519 identity per project at
 #   ~/.config/keys/memory/<sha256(normalized origin URL)[:16]>.age
 # derived at capture time from the repository's own origin remote: scheme,
-# user and .git suffix stripped, lowercased (so https and ssh clones of the
-# same project share one key). Repository content names this derivation
-# mechanism, never a key file; computing the filename aids no decryption (the
-# ciphertext-at-rest limit is recorded in docs/memory-v8/pilot.md). The key is
-# created with age-keygen on first private capture, mode 600, never tracked.
+# user, default ports (22, 443, 80) and .git suffix stripped, lowercased (so
+# https and ssh clones of the same project share one key). A non-default port
+# is not stripped and participates in the project identity. Repository content
+# names this derivation mechanism, never a key file; computing the filename
+# aids no decryption (the ciphertext-at-rest limit is recorded in
+# docs/memory-v8/pilot.md). The key is created with age-keygen on first private
+# capture, mode 600, never tracked. age-keygen's success banner (the public
+# key) is swallowed; its stderr is surfaced in full when it fails.
 set -euo pipefail
 
 die() { echo "memory-capture: $*" >&2; exit 1; }
@@ -43,24 +46,37 @@ usage() {
 }
 
 # The per-project key path: sha256[:16] of the normalized origin URL, under
-# ~/.config/keys/memory/. Normalization strips scheme and user, converts the
-# scp-like git@host:path form, drops a .git suffix and lowercases, so every
-# transport of the same project derives one key. Created on first use.
+# ~/.config/keys/memory/. Normalization strips scheme, user and default ports
+# (22/443/80), converts the scp-like git@host:path form, drops a .git suffix
+# and lowercases, so every transport of the same project derives one key; a
+# non-default port stays and makes the identity distinct. Created on first use.
 project_key() {
-    local repo=$1 url norm keydir
+    local repo=$1 url norm keydir key err
     url=$(git -C "$repo" remote get-url origin 2>/dev/null) \
         || die "private capture needs an origin remote to derive the project key"
     norm=$(printf '%s' "$url" \
         | sed -e 's|^\([a-z+]*://\)git@||' -e 's|^[a-z+]*://||' \
               -e 's|^\([^/]*\)@||' -e 's|^git@||' \
+              -e 's|^\([^/:]*\):22/|\1/|' \
+              -e 's|^\([^/:]*\):443/|\1/|' \
+              -e 's|^\([^/:]*\):80/|\1/|' \
               -e 's|:\([^/]\)|/\1|' -e 's|\.git$||' \
               | tr '[:upper:]' '[:lower:]')
     keydir=$HOME/.config/keys/memory
     mkdir -p "$keydir"
     key="$keydir/$(printf '%s' "$norm" | sha256sum | cut -c1-16).age"
     if [ ! -f "$key" ]; then
-        (umask 077 && age-keygen -o "$key" >/dev/null) \
-            || die "could not create the project key at $key"
+        # age-keygen prints its success banner (the public key) to stderr;
+        # keep stderr out of a successful capture, but surface it in full
+        # when the key cannot be created — a silent failure here would look
+        # exactly like a successful private capture.
+        err=$(mktemp) || die "could not create a temporary error file"
+        if ! (umask 077 && age-keygen -o "$key" 2>"$err"); then
+            cat "$err" >&2
+            rm -f "$err" "$key"
+            die "could not create the project key at $key"
+        fi
+        rm -f "$err"
         chmod 600 "$key"
     fi
     printf '%s' "$key"
