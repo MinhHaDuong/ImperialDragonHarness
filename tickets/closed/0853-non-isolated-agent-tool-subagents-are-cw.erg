@@ -2,6 +2,7 @@
 Title: Non-isolated Agent-tool subagents are cwd-pinned to the parent's worktree and cannot reach a separate review-* worktree
 Created: 2026-09-04
 Author: claude
+Closed: autoclosed — PR #1130
 
 --- log ---
 2026-09-04T07:41Z claude created
@@ -16,6 +17,7 @@ Author: claude
 
 2026-10-02T10:14Z MinhHaDuong bump verify-reroll — round 1: ratchet asserts git -C contract only for phases 2-4, not the phase-6 gate; PR body misstates 26c8ab73 scope
 
+2026-10-02T10:42Z reviewer closed — autoclosed — PR #1130
 --- body ---
 ## Context
 
