@@ -2,12 +2,14 @@
 Title: Ground-truth seeding: mine and backfill defect anchors (absorbs 0356)
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: autoclosed — PR #1121
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
 2026-10-02T08:05Z MinhHaDuong note absorbs tickets/0356 (cross-project PR benchmark, mined-defect sample) — 0356 was filed for exactly this label bottleneck; its challenger-vs-squad criterion maps onto the 1007 correlation and marginal-coverage surfaces
 
 2026-10-02T09:18Z MinhHaDuong note round-2 fix: removed pr 21 (blame-move artifact, defect predates PR) and pr 258 (formatting revert, not defect repair) from the board per gate REROLL
+2026-10-02T09:24Z MinhHaDuong closed — autoclosed — PR #1121
 --- body ---
 ## Context
 
