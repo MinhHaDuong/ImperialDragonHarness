@@ -26,6 +26,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
 spec = importlib.util.spec_from_file_location(
@@ -300,15 +302,16 @@ def test_live_and_dead_pids_against_the_real_proc(tmp_path):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True,
+        env=child_env(),
     )
     namer = subprocess.Popen(
         [sys.executable, "-c", "import time; time.sleep(120)"],
-        env={**os.environ, "CLAUDE_CODE_SESSION_ID": env_id},
+        env={**child_env(), "CLAUDE_CODE_SESSION_ID": env_id},
     )
     # A process that really did exist and really is gone.
     exited = subprocess.run(
         [sys.executable, "-c", "pass"],
-        env={**os.environ, "CLAUDE_CODE_SESSION_ID": dead_id},
+        env={**child_env(), "CLAUDE_CODE_SESSION_ID": dead_id},
         check=False,
     )
     assert exited.returncode == 0
@@ -344,6 +347,7 @@ def test_cli_reports_the_machines_own_root_without_touching_it():
         capture_output=True,
         text=True,
         timeout=120,
+        env=child_env(),
     )
 
     assert result.returncode == 0, result.stderr
@@ -386,6 +390,7 @@ def test_sweep_refuses_a_symlinked_root(tmp_path):
         capture_output=True,
         text=True,
         timeout=60,
+        env=child_env(),
     )
 
     assert result.returncode == 0, result.stderr
@@ -426,6 +431,7 @@ def test_scan_survives_an_unreadable_cwd_key_directory(tmp_path):
             capture_output=True,
             text=True,
             timeout=60,
+            env=child_env(),
         )
         assert result.returncode == 0, result.stderr
     finally:

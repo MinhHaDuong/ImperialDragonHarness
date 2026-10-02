@@ -21,6 +21,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ENUMERATE = REPO_ROOT / "skills" / "roar" / "enumerate-merges.py"
 
@@ -32,7 +34,8 @@ pytestmark = [
 
 def run(args, cwd=None, check=True):
     return subprocess.run(
-        args, cwd=cwd, check=check, capture_output=True, text=True
+        args, cwd=cwd, check=check, capture_output=True, text=True,
+        env=child_env(),
     )
 
 

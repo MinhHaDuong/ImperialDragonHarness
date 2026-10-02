@@ -1,12 +1,13 @@
 import importlib.util
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 from tracked_tree import tracked_checkout
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
@@ -24,10 +25,10 @@ def make_repo(tmp_path: Path) -> Path:
         (repo / "skills" / name / "SKILL.md").write_text(f"# {name}\n")
     (repo / "scripts").mkdir()
     (repo / "scripts" / "consumer.py").write_text('SKILL = "dependency"\n')
-    subprocess.run(["git", "init", "-q", str(repo)], check=True)
-    subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+    subprocess.run(["git", "init", "-q", str(repo)], check=True, env=child_env())
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, env=child_env())
     env = dict(
-        os.environ,
+        child_env(),
         GIT_AUTHOR_NAME="Test",
         GIT_AUTHOR_EMAIL="test@example.org",
         GIT_COMMITTER_NAME="Test",
@@ -98,7 +99,7 @@ def test_housekeeping_edit_does_not_count_as_usage(tmp_path):
     write_trace(projects)
     (repo / "skills" / "dead" / "SKILL.md").write_text("# dead\n\nReformatted.\n")
     env = {
-        **os.environ,
+        **child_env(),
         "GIT_AUTHOR_NAME": "Test",
         "GIT_AUTHOR_EMAIL": "test@example.org",
         "GIT_COMMITTER_NAME": "Test",
@@ -124,7 +125,7 @@ def test_housekeeping_edit_does_not_count_as_usage(tmp_path):
 def test_installed_audit_launcher_runs_without_scheduler(tmp_path):
     fake_home = tmp_path / "home"
     env = {
-        **os.environ,
+        **child_env(),
         "HOME": str(fake_home),
         "XDG_CONFIG_HOME": str(fake_home / "config"),
         "XDG_BIN_HOME": str(fake_home / "custom bin"),

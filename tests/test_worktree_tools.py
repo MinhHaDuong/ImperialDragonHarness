@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
 
@@ -31,7 +33,8 @@ pytestmark = pytest.mark.skipif(
 
 def run(args, cwd=None, check=True):
     return subprocess.run(
-        args, cwd=cwd, check=check, capture_output=True, text=True
+        args, cwd=cwd, check=check, capture_output=True, text=True,
+        env=child_env(),
     )
 
 
@@ -428,7 +431,7 @@ def test_gc_warns_when_worktrees_dir_unreadable(origin):
 def _preflight(path):
     return subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), str(path)],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=child_env(),
     )
 
 
@@ -560,7 +563,7 @@ def test_preflight_defaults_to_cwd(origin):
 
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh")],
-        cwd=str(wt), capture_output=True, text=True,
+        cwd=str(wt), capture_output=True, text=True, env=child_env(),
     )
     assert res.returncode != 0
     assert "0998-draft.erg" in res.stderr
@@ -570,7 +573,7 @@ def test_preflight_defaults_to_cwd(origin):
 def test_preflight_errors_on_missing_path():
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=child_env(),
     )
     assert res.returncode != 0
 
@@ -597,7 +600,7 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     GC unlocks it and lets the rails decide (2026-09-28: a dead-pid lock had
     frozen a worktree holding the last on-disk copy of purged T2 memory)."""
     remote, primary = origin
-    dead = subprocess.Popen(["true"])
+    dead = subprocess.Popen(["true"], env=child_env())
     dead.wait()  # pid exists no more (no live process holds it)
     wt = make_agent_worktree(primary, "agent-dead-lock", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason",
@@ -616,7 +619,7 @@ def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""
     remote, primary = origin
-    live = subprocess.Popen(["sleep", "30"])
+    live = subprocess.Popen(["sleep", "30"], env=child_env())
     try:
         wt = make_agent_worktree(primary, "agent-live-lock", dirty=False)
         git(primary, "worktree", "lock", str(wt), "--reason",
@@ -644,7 +647,7 @@ def test_gc_skips_live_process_cwd_worktree(origin):
     report.write_text("live review\n")
     make_branch_gone(remote, primary, "agent-session")
 
-    proc = subprocess.Popen(["sleep", "60"], cwd=str(wt))
+    proc = subprocess.Popen(["sleep", "60"], cwd=str(wt), env=child_env())
     try:
         res = _gc(primary)
         assert res.returncode == 0

@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parent.parent
@@ -117,11 +119,11 @@ def test_installed_launcher_runs_the_guard(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
     git = ["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t"]
-    subprocess.run([*git[:3], "init", "-q"], check=True)
+    subprocess.run([*git[:3], "init", "-q"], check=True, env=child_env())
     subprocess.run([*git, "-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "i"],
-                   check=True)
+                   check=True, env=child_env())
     (repo / "f.txt").write_text("dirty\n")
-    subprocess.run([*git[:3], "add", "f.txt"], check=True)
+    subprocess.run([*git[:3], "add", "f.txt"], check=True, env=child_env())
     (command,) = [c for e, c in LAUNCHER_HOOKS if e == "PreToolUse"]
     result = subprocess.run(
         ["sh", "-c", command],

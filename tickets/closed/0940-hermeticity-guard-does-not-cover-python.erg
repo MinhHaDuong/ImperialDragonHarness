@@ -1,0 +1,59 @@
+%erg 0.1
+Title: Hermeticity guard does not cover Python test suites
+Created: 2026-09-16
+Author: claude
+Closed: autoclosed — PR #1111
+
+--- log ---
+2026-09-16T13:24Z claude created
+
+2026-10-02T08:19Z claude note Re-scoped by author ruling (2026-10-02): the premise of real harness keys overriding fixture credentials is dead — 0945 removed ambient credential residency. The guard now serves the post-0945 threat model: machine-independence of tests (ambient inheritance produces false confidence — green on one machine, testing nothing on another), project `.env` values still reaching children through BASH_ENV, and the ratchet against re-introducing ambient residency. The adversarial spelling tail is accepted-and-disclosed: the terminal state is a working guard with honestly disclosed blind spots, not an exhaustive scanner.
+
+2026-10-02T08:26Z MinhHaDuong closed — autoclosed — PR #1111
+--- body ---
+## Context
+
+`tests/test_bash_tests_are_hermetic.sh` (0359) makes BASH_ENV hermeticity
+mechanical — but it is a textual scanner over shell source, discovered by a
+`tests/*.sh` glob. Its own header is explicit that coverage is stated rather
+than implied, and it never mentions Python.
+
+Python suites spawn subprocesses the same way shells do, and `tests/*.py`
+spawned them without clearing `BASH_ENV` — 74 sites across 32 files at close,
+per the guard's own AST census. After 0945 removed ambient credential
+residency, the threat model is no longer a live key overriding a fixture
+credential at child startup. What remains, and what this guard protects
+against:
+
+- **Machine-independence.** A child that inherits the parent's environment
+  carries whatever the developer's machine happens to hold. The suite passes
+  locally and fails in CI — or passes everywhere while testing the ambient
+  values instead of the fixture. Either way the green run certifies nothing:
+  false confidence is the defect.
+- **Project `.env` reach.** `bash-env.sh` still strictly parses the project
+  `.env` and assigns its values in every child bash. A test child that
+  inherits `BASH_ENV` gets those values injected at startup, so the child's
+  view differs from what the test fixture set up — the assertion may test the
+  project file rather than the code under test.
+- **The ratchet.** Ambient residency was removed once (0945); the guard keeps
+  it from creeping back. Every new `subprocess` spawn in `tests/*.py` must
+  neutralize `BASH_ENV` or the gate goes red — re-introducing ambient
+  inheritance becomes a deliberate, reviewable act.
+
+Same remedy as the shell side: pass an env with `BASH_ENV` cleared (or
+`env -i`) to every `subprocess.run`/`Popen`, and ratchet it with a guard over
+`tests/*.py` — an AST scan, not a text grep, so its stated coverage and blind
+spots are real rather than implied.
+
+Sibling of 0939 (xtrace tracing of the same loader), which covers a different
+exposure path of the same mechanism.
+
+## Exit criteria
+- [ ] A guard covers `tests/*.py` subprocess spawns for `BASH_ENV` neutralization
+- [ ] It reports file names and line numbers only, never the offending text and
+      never an environment value, per 0359's own discipline
+- [ ] It states its coverage and blind spots explicitly, and fails loudly rather
+      than reporting clean a file it could not parse
+- [ ] It carries a static negative control that fails against a naive implementation
+- [ ] The existing offenders are fixed, verified by a fake sentinel, never a real key
+- [ ] `make check` passes

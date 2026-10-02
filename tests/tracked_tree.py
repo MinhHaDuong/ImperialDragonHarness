@@ -19,6 +19,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from child_env import child_env
+
 SOURCE = Path(__file__).resolve().parents[1]
 
 
@@ -29,6 +31,7 @@ def tracked_checkout() -> Path:
             ["git", "-C", str(SOURCE), "ls-files", "-z"],
             capture_output=True,
             check=True,
+            env=child_env(),
         )
         .stdout.decode()
         .split("\0")

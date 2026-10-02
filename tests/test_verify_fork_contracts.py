@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 
@@ -222,7 +224,8 @@ def test_gaze_close_claim_count_ignores_refs_none_and_duplicate_ids():
         ]
     )
     result = subprocess.run(
-        match.group(1), shell=True, input=body, text=True, capture_output=True, check=True
+        match.group(1), shell=True, input=body, text=True, capture_output=True,
+        check=True, env=child_env(),
     )
     assert result.stdout.splitlines() == ["0901", "0902"]
 

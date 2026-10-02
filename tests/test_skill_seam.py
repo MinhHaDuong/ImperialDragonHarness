@@ -36,6 +36,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parent.parent
 
 SEAM_LINE = 'IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"'
@@ -58,7 +60,7 @@ def run_idiom(projected_skill_path):
         capture_output=True,
         text=True,
         timeout=10,
-        env={**os.environ, "LC_ALL": "C"},
+        env={**child_env(), "LC_ALL": "C"},
     )
 
 
@@ -172,7 +174,8 @@ def test_probe_script_is_reachable_through_the_seam(tmp_path):
         + '\npython3 "$IDH_ROOT/scripts/project-state.py"\n'
     )
     r = subprocess.run(
-        ["bash", "-c", script], capture_output=True, text=True, timeout=10
+        ["bash", "-c", script], capture_output=True, text=True, timeout=10,
+        env=child_env(),
     )
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == "probe-found"

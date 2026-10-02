@@ -8,12 +8,15 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "scoped-check.py"
 
 
 def _git(repo: Path, *args: str) -> None:
-    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True,
+                   env=child_env())
 
 
 @pytest.mark.integration
@@ -42,7 +45,7 @@ def test_doc_code_unmapped_and_mixed_diffs(tmp_path: Path) -> None:
     def run() -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(SCRIPT), "--dry-run"], cwd=repo,
-            capture_output=True, text=True, check=True, env={**os.environ, "RTK_DISABLED": "1"},
+            capture_output=True, text=True, check=True, env={**child_env(), "RTK_DISABLED": "1"},
         )
 
     (repo / "DECISIONS.md").write_text("changed\n")
@@ -122,7 +125,7 @@ def test_failed_selected_target_still_prints_skipped_targets(tmp_path: Path) -> 
     fake_make.chmod(0o755)
     result = subprocess.run(
         [sys.executable, str(SCRIPT)], cwd=repo, capture_output=True, text=True,
-        env={**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "RTK_DISABLED": "1"},
+        env={**child_env(), "PATH": f"{tmp_path}:{os.environ['PATH']}", "RTK_DISABLED": "1"},
     )
     assert result.returncode == 7
     assert "skipped: check-fast" in result.stdout

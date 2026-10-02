@@ -42,6 +42,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parents[1]
 GUARD = REPO / "scripts" / "guard-destructive-bash.sh"
 PI_EXT = REPO / "adapters" / "pi" / "extensions" / "idh-guard.ts"
@@ -182,13 +184,14 @@ def test_guard_diagnostics_do_not_leak_command_text(tmp_path):
     for args in (["init", "-q"], ["commit", "--allow-empty", "-qm", "init"]):
         subprocess.run(
             ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(repo), *args],
-            check=True, capture_output=True,
+            check=True, capture_output=True, env=child_env(),
         )
     (repo / "f.txt").write_text("committed\n")
-    subprocess.run(["git", "-C", str(repo), "add", "f.txt"], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "f.txt"], check=True,
+                   env=child_env())
     subprocess.run(
         ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(repo), "commit", "-qm", "t"],
-        check=True, capture_output=True,
+        check=True, capture_output=True, env=child_env(),
     )
     (repo / "f.txt").write_text("committed\nUNCOMMITTED\n")  # dirty tracked file
 
@@ -202,6 +205,7 @@ def test_guard_diagnostics_do_not_leak_command_text(tmp_path):
     r = subprocess.run(
         ["bash", str(GUARD)],
         input=json.dumps(payload), capture_output=True, text=True, timeout=10,
+        env=child_env(),
     )
     assert r.returncode == 2, "guard did not block a dirty tracked reset"
     assert canary not in r.stdout

@@ -19,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 RELAY = Path(__file__).resolve().parent.parent / "scripts" / "seat-runner" / "net-relay.py"
 
 
@@ -57,6 +59,7 @@ def _spawn_relay(listen: str, connect: str) -> subprocess.Popen:
         [sys.executable, str(RELAY), "--listen", listen, "--connect", connect],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=child_env(),
     )
     return proc
 

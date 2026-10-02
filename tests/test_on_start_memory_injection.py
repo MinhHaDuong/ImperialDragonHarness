@@ -7,11 +7,12 @@ gate when it landed, so a regression back to the unconditional cat passed
 the whole suite; this module is that regression test.
 """
 
-import os
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 
 pytestmark = pytest.mark.integration
 
@@ -21,7 +22,7 @@ SENTINEL = "Search the journal for older or unprocessed experiences."
 
 
 def hook_stdout(project_dir):
-    env = os.environ.copy()
+    env = child_env()
     if project_dir is None:
         env.pop("CLAUDE_PROJECT_DIR", None)
     else:
@@ -47,6 +48,7 @@ def test_index_injected_for_a_worktree_of_this_repository(tmp_path):
         cwd=REPO,
         check=True,
         capture_output=True,
+        env=child_env(),
     )
     try:
         assert SENTINEL in hook_stdout(worktree)
@@ -56,13 +58,15 @@ def test_index_injected_for_a_worktree_of_this_repository(tmp_path):
             cwd=REPO,
             check=True,
             capture_output=True,
+            env=child_env(),
         )
 
 
 def test_index_not_injected_for_an_unrelated_git_repo(tmp_path):
     repo = tmp_path / "unrelated"
     repo.mkdir()
-    subprocess.run(["git", "init", "--quiet", str(repo)], check=True)
+    subprocess.run(["git", "init", "--quiet", str(repo)], check=True,
+                   env=child_env())
     assert SENTINEL not in hook_stdout(repo)
 
 

@@ -20,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parent.parent
 ADAPTER = REPO / "adapters" / "claude-code"
 LAUNCHER = ADAPTER / "bin" / "idh-hook"
@@ -109,7 +111,7 @@ def _tree(tmp_path: Path, marker: str) -> Path:
 
 def _run(argv, root):
     return subprocess.run(
-        argv, capture_output=True, text=True, cwd=root, env={**os.environ, "HOME": str(root)}
+        argv, capture_output=True, text=True, cwd=root, env={**child_env(), "HOME": str(root)}
     )
 
 
@@ -181,7 +183,7 @@ def _run_activator(root: Path, *args: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         cwd=root,
-        env={**os.environ, "HARNESS_DIR": str(root), "HOME": str(root.parent / "runtime-home")},
+        env={**child_env(), "HARNESS_DIR": str(root), "HOME": str(root.parent / "runtime-home")},
     )
 
 
@@ -417,7 +419,7 @@ def _run_loading_probe(tmp_path: Path, **extra_env: str) -> subprocess.Completed
         capture_output=True,
         text=True,
         env={
-            **os.environ,
+            **child_env(),
             "PATH": f"{bindir}:{os.environ['PATH']}",
             "PROBE_TIMEOUT": "5",
             **extra_env,

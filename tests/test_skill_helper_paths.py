@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 @pytest.mark.integration
@@ -19,5 +21,6 @@ def test_loaded_skill_root_survives_a_symlink_and_spaces(tmp_path):
         capture_output=True,
         text=True,
         check=True,
+        env=child_env(),
     )
     assert result.stdout.splitlines() == [str(REPO), str(tmp_path)]

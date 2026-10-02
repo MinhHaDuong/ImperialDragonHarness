@@ -1,11 +1,12 @@
 """Exercise /molt's documented close/archive staging against both erg contracts."""
 
-import os
 import re
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -65,13 +66,14 @@ def test_molt_closure_commit_tracks_archive_without_strays(tmp_path, old_binary,
     if old_binary:
         old = tmp_path / "old-erg"
         old.write_bytes(subprocess.run(
-            ["git", "show", "51ee49c:tickets/erg"], cwd=ROOT, check=True, capture_output=True
+            ["git", "show", "51ee49c:tickets/erg"], cwd=ROOT, check=True, capture_output=True,
+            env=child_env()
         ).stdout)
         old.chmod(0o755)
         erg = old
     else:
         erg = ROOT / "tickets/erg"
-    env = os.environ.copy()
+    env = child_env()
     env["MOLT_ERG"] = str(erg)
     if recorded_close:
         run("bash", "-c", close_commands().replace("tickets/erg", '"$MOLT_ERG"'), cwd=repo, env=env)
@@ -114,7 +116,7 @@ def test_failed_close_does_not_stage_colliding_archive(tmp_path):
     run("git", "commit", "-qm", "fixture", cwd=repo)
     collision = tickets / "closed/0001-probe.erg"
     collision.write_text("pre-existing untracked file\n")
-    env = os.environ.copy()
+    env = child_env()
     env["MOLT_ERG"] = str(ROOT / "tickets/erg")
 
     result = subprocess.run(

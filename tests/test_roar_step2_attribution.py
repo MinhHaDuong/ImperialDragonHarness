@@ -36,7 +36,6 @@ integration-tier.
 """
 
 import json
-import os
 import re
 import shlex
 import shutil
@@ -45,6 +44,8 @@ import subprocess
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ROAR_DIR = REPO_ROOT / "skills" / "roar"
@@ -193,7 +194,7 @@ def render_snippet(project=DASH_PROJECT, enumerate_cmd=None, skill_md=SKILL_MD) 
 
 
 def run_step2(cwd, telemetry_dir, project=DASH_PROJECT, enumerate_cmd=None, skill_md=SKILL_MD):
-    env = dict(os.environ)
+    env = dict(child_env())
     env["CLAUDE_TELEMETRY_DIR"] = str(telemetry_dir)
     return run(
         ["bash", "-c", render_snippet(project=project, enumerate_cmd=enumerate_cmd, skill_md=skill_md)],

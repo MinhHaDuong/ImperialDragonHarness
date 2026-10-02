@@ -8,12 +8,16 @@ import sys
 
 import pytest
 
+from child_env import child_env
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "review-pr-anchor.py"
 
 
 def git(cwd, *args):
-    return subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(["git", "-C", str(cwd), *args], check=True,
+                          capture_output=True, text=True,
+                          env=child_env()).stdout.strip()
 
 
 @pytest.fixture
@@ -47,7 +51,7 @@ def invoke(tmp_path, checkout, tree):
         'printf \'%s\\n\' "$MOCK_PR_JSON"\n'
     )
     shim.chmod(0o755)
-    env = dict(os.environ, PATH=f"{tmp_path}:{os.environ['PATH']}",
+    env = dict(child_env(), PATH=f"{tmp_path}:{os.environ['PATH']}",
                MOCK_GH_CWD=str(tree), MOCK_PR_JSON=json.dumps({
         "headRefOid": git(right, "rev-parse", "HEAD"), "baseRefName": "main",
     }))
