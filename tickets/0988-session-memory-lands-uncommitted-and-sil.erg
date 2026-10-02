@@ -15,6 +15,7 @@ Author: claude
 2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
+2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): capture commits uncleared material in the same repository as age ciphertext from birth (.age suffix); plaintext never lands in the working tree, and the key in ~/.config/keys is never tracked or named by repository content. Filenames of encrypted entries remain public metadata.
 --- body ---
 
 ## Context

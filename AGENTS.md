@@ -46,7 +46,7 @@ relevant themes before acting; search themes and the journal with `rg` or
 `grep` when recall is needed, and again if the task changes materially.
 Missing memory does not block work; report a known incomplete installation.
 
-At roar, commit significant facts here or in the explicit private companion;
+At roar, commit significant facts here; uncleared material only as encrypted `.age`;
 preserve journal entries and link corrections from new entries. Do not derive
 lessons, propose rules, or write into the harness for another project; DREAM
 separately prunes, merges and refreshes themes, preserving sources. MEMORY.md
@@ -76,7 +76,7 @@ For shell tooling conventions, read and follow [RTK.md](RTK.md).
 ## Project memory boundary
 
 Project experiences and consolidated memories belong only in that project's
-repository, or its explicitly configured private companion. Loading a harness
+repository; uncleared material stays encrypted. Loading a harness
 skill does not authorize writing into the harness, its shared memory, or another
 project. Resolve the project repository before writing; stop and report an
 unavailable destination instead of falling back to the harness or native store.

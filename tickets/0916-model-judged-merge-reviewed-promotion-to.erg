@@ -15,6 +15,7 @@ Author: claude
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 2026-10-01T21:28Z codex note Author requires coherence among indexed memories and with applicable harness rules, without modifying those rules.
 2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
+2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): dream skips age-encrypted journal/topics when the key in ~/.config/keys is unavailable, records the skipped count in its report and never treats them as empty; with the key it decrypts, consolidates and re-encrypts, sources preserved.
 --- body ---
 
 ## Context
