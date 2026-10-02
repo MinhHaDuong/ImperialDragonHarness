@@ -3,6 +3,7 @@ Title: Tracker: deliver repository Markdown memory v8
 Created: 2026-09-10
 Author: claude
 Blocked-by: 0913
+Closed: all five exit criteria verified by the recorded integration review (docs/memory-v8/integration-review.md); 0913 stays open under the author's 2026-10-02 scope decision on the No-rollout verdict (PR #1142)
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -21,6 +22,7 @@ Blocked-by: 0913
 2026-10-01T21:20Z codex note Lair completes all work and only suggests dream in conclusion at five new experiences; no question, waiting or invocation.
 2026-10-02T08:19Z MinhHaDuong note blocker 0988 closed — Blocked-by removed.
 2026-10-02T09:42Z MinhHaDuong note Author decision (blind-spot F3): the integration review records the per-machine key story and its cross-machine limit.
+2026-10-02T11:34Z reviewer closed — all five exit criteria verified by the recorded integration review (docs/memory-v8/integration-review.md); 0913 stays open under the author's 2026-10-02 scope decision on the No-rollout verdict (PR #1142)
 --- body ---
 
 ## Context
@@ -39,11 +41,11 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Tous les livrables actifs du plan ont une réalisation vérifiée ou une décision de périmètre explicite.
-- [ ] Résultat intégré vérifié : sources, corrections, rappels récents, connaissances retirées et procédures amendées.
-- [ ] 0988 prouve conservation, intégration et mise à jour du harness sans pull bloqué par la capture.
-- [ ] Évaluation relue, coûts et limites explicites ; conception et plan décrivent le livré.
-- [ ] Revue d’intégration enregistrée avant clôture ; cette réécriture ne clôt rien.
+- [x] Tous les livrables actifs du plan ont une réalisation vérifiée ou une décision de périmètre explicite. — integration-review.md § Criterion 1: PRs #1102/#1109/#1117/#1119/#1127/#1134/#1135/#1137/#1142; 0925 + seven deferred tickets scoped per plan; 0913 under the author's explicit scope decision
+- [x] Résultat intégré vérifié : sources, corrections, rappels récents, connaissances retirées et procédures amendées. — integration-review.md § Criterion 2: index 35/100, topics with provenance, append-only journal verified on first-parent history, corrections linking unchanged originals, dream reports v8-r1, legacy machinery retired with regression check, AGENTS.md/roar/lair amended
+- [x] 0988 prouve conservation, intégration et mise à jour du harness sans pull bloqué par la capture. — integration-review.md § Criterion 3: tests/test_memory_stall_reproduction.sh positive control + treatment arm, PR #1117
+- [x] Évaluation relue, coûts et limites explicites ; conception et plan décrivent le livré. — integration-review.md § Criterion 4: predeclared protocol #1137, trials and No-rollout verdict #1142, single-session limits, S9/S3-S4 blockers, F3 per-machine key limit citing 0937
+- [x] Revue d’intégration enregistrée avant clôture ; cette réécriture ne clôt rien. — docs/memory-v8/integration-review.md, dated 2026-10-02, committed before this close
 
 ## Raid annotation (2026-10-02, imagine pass)
 
