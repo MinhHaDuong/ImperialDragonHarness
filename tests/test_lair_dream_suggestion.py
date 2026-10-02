@@ -8,13 +8,13 @@ the author. These tests pin those negatives against drift of the skill text,
 in the pattern of ``tests/test_lair_state_via_pr.py`` (string-match ratchet
 on the skill text; not a grep for the string '5').
 
-The residue method (hardened after the round-1 review's mutant evidence): a
-prohibition is deleted only with its own scope — from the marker to the next
-sentence or clause boundary — so a forbidden verb sharing a sentence with a
-hedge ("Ask the user whether to run dream, no more than once.") survives the
-deletion and fails the ratchet. Dropping whole sentences on a substring
-marker let exactly those mutants through; the markers are word-boundary
-anchored so "piano" or "know" cannot shield a sentence either.
+The residue method: a prohibition is deleted only with its own scope — from
+the marker to the next sentence or clause boundary — so a forbidden verb
+sharing a sentence with a hedge ("Ask the user whether to run dream, no more
+than once.") still fails the ratchet. Dropping whole sentences on a marker
+would let that phrasing through, and bare-substring markers would let
+unrelated words ("piano", "know") shield a sentence, so the markers are
+word-boundary anchored.
 """
 
 import re
@@ -31,9 +31,10 @@ STEP_11_HEADING = "**Suggest a dream in the conclusion when relevant.**"
 # "know" from matching the "no" marker.
 PROHIBITION_SCOPE = re.compile(r"\b(?:do(?:es)? not|never|omit|no)\b[^.;:]*")
 
-# The forbidden instruction vocabulary, broadened after the round-1 mutants
-# ("Run /dream now.", "Prompt the user to confirm.", "Set a reminder",
-# "Run it via CronCreate." all passed the first, narrow vocabulary).
+# The forbidden instruction vocabulary, named wider than the contract's own
+# words: run/start/execute/spawn are invocations, prompt/confirm/answer are
+# questions, poll/block are waiting, reminder/alarm/wakeup are timers — a
+# rephrased regression must not slip through on a synonym.
 QUESTION = re.compile(r"\bask\b|\bquestion|\bprompt\b|\bconfirm\b|\banswer")
 WAITING = re.compile(r"\bwait|\bpoll\b|\bblock\b|\bpause\b")
 LAUNCH = re.compile(r"\blaunch|\binvok|\brun|\bstart\b|\bexecut|\bspawn")
