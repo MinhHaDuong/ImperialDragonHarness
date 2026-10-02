@@ -1,6 +1,6 @@
 ## Key insights
 
-Legacy reference notes for this project. No cross-project pooling or rule promotion.
+Legacy reference notes for this project. No pooling or rule promotion, but SessionStart still injects this index cross-project (scripts/on-start.sh) — a legacy channel pending retirement.
 
 ## Entries
 

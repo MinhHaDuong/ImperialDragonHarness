@@ -48,8 +48,10 @@ fi
 # auto-load is what must inject it — that is the adapter's job, not this
 # hook's (tickets 0800, 0802).
 
-# Inject harness-level memory (cross-project lessons promoted by /dream).
-# Kept tight — decay pass removes stale entries so injection cost stays bounded.
+# Inject harness-level memory into every Claude Code session, including
+# unrelated projects — a legacy channel pending retirement under memory v8
+# (no cross-project pooling or rule promotion). Kept tight; the resident
+# census budgets this file.
 cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
 
 # Surface the previous session start's local-main sync report when it needed

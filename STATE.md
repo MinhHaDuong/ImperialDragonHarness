@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-02T06:24Z
+Last updated: 2026-10-02T06:27Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
@@ -19,11 +19,11 @@ A reusable, science-backed personal harness for AI-assisted research across proj
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Tracker 0999 recorded portable installation and runtime registration, and closed after integration review. The old relocation and cutover tickets 0978 and 0986 are closed WONTDO.
 Academic skills are integrated: reading-note, critical-lit-review, slides, choose-venue, conference-submission-prep and message-framing. Claude.ai skill sync is off.
-Planning and documentation landed in PRs #1089/#1090. Runtime registration, launch guards and safe operator docs landed in PR #1091 (child 1003). Child 1002 was closed WONTDO in #1099; its extracted legacy helper patch remains historical and unapproved. PR #1101 retired obsolete 0934 provenance machinery while preserving memory data and source history. Parent 0999's integration review is complete and it closed in #1104; the memory v8 pilot is downstream, not a prerequisite.
+Planning and documentation landed in PRs #1089/#1090. Runtime registration, launch guards and safe operator docs landed in PR #1091 (child 1003). Child 1002 was closed WONTDO in #1099; its extracted legacy helper patch remains historical and unapproved. PR #1101 retired obsolete 0934 provenance machinery while preserving memory data and source history. Parent 0999's integration review is complete and it closed in #1104; the memory v8 pilot is downstream, not a prerequisite. PR #1102 delivers the v8 convention and inventory (0911/0917) and deletes the remaining legacy dream helpers.
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for workstreams and `erg ready tickets/` for executable tickets.
-Continue the memory v8 session on 0911/0917; pilot 0920 follows once both blockers close. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
+Convention 0911 and inventory 0917 are delivered in #1102; pilot 0920 is next. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
 Memory v8 is drafted: repository Markdown, factual roar capture and dream suggested by lair after five new experiences. Native packaging and opt-in shell integration remain follow-on design; scheduling is external.
 The old library/compiler/loader train is superseded; runtime behaviour is unchanged.
 
