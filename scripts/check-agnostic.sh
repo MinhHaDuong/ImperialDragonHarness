@@ -15,7 +15,7 @@ fi
 # Patterns checked everywhere (skills + tickets + scripts).
 # Use class-level patterns — never hardcode a specific username, path, or project name.
 GLOBAL_PATTERNS=(
-    '/home/[a-z]'   # any absolute home path (use ~/.idh or $HOME instead)
+    '/home/[a-z]'   # any absolute home path (use $HOME, or $IDH_ROOT for the harness checkout, instead)
     '/Users/[A-Z]'  # macOS equivalent
 )
 
@@ -33,7 +33,12 @@ PROSE_PATTERNS=(
 # Patterns checked only in skills/ (ticket bodies may legitimately name consumer projects
 # when documenting mis-filed or related work). NOT applied to rules/: rules/git.md
 # documents forge mechanics concretely by design, and retrofitting the forge patterns
-# there is a separate cleanup, not this gate's job.
+# there is a separate cleanup, not this gate's job. scripts/ is likewise outside
+# SKILL_PATTERNS (ticket 1020, pinned by test_skill_patterns_do_not_fire_in_scripts_dir):
+# it is scanned for GLOBAL_PATTERNS via check-agnostic-scripts, and retired-layout
+# survivors in it are swept and ratcheted (tests/test_stale_idh_layout.py), not gated —
+# a pattern pinning one retired layout is instance-specific and would fire on its own
+# provenance.
 # Note: consumer project *names* cannot be caught by static grep — the list would be
 # instance-specific and go stale. Project names are caught by human review instead.
 SKILL_PATTERNS=(
@@ -43,7 +48,7 @@ SKILL_PATTERNS=(
     'uv[[:space:]]\+run[[:space:]]\+\(python3\?[[:space:]]\+-m[[:space:]]\+\)\?pytest\b'  # stack-specific test runner
     '\bgh '           # GitHub CLI; skills must be forge-agnostic
     'github\.com'     # GitHub URL; skills must be forge-agnostic
-    '\(^\|[^.~/]\)scripts/[A-Za-z0-9_-]\+\.\(sh\|py\)'  # repo-relative script path; use ~/.idh/scripts/ or $HARNESS_DIR
+    '\(^\|[^.~/]\)scripts/[A-Za-z0-9_-]\+\.\(sh\|py\)'  # repo-relative script path; use $IDH_ROOT/scripts/ or $HARNESS_DIR
 )
 
 fail=0

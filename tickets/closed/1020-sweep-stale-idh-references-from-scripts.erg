@@ -2,10 +2,13 @@
 Title: Sweep stale ~/.idh references from scripts/ and the agnostic gate comments after the layout retirement
 Created: 2026-10-02
 Author: claude
+Closed: autoclosed — PR #1153
 
 --- log ---
 2026-10-02T12:20Z claude created — filed by /roar after PR #1143 (sweep of the stale-path fix class)
 
+2026-10-02T13:59Z reviewer bump verify-reroll — round 1: copilot correctness findings — no-arg probe default uncovered, ratchet in wrong tier + basename-keyed provenance, unquoted README expansions
+2026-10-02T14:03Z reviewer closed — autoclosed — PR #1153
 --- body ---
 ## Context
 
