@@ -66,7 +66,10 @@ After completing its work, lair suggests a separate DREAM invocation when at
 least five new experiences remain uncovered by accepted reports, including on
 a session with no new commit. It does not ask, wait or launch. No timer.
 A pending report does not consume experiences; changed source revisions need
-re-examination. Counting and live validation remain under 0910/0916.
+re-examination. Counting and live validation are delivered under 0910/0916:
+lair step 11 counts journal blob ids against the accepted reports' ledger
+lines, and a live step-11 run at a named commit of main is recorded on
+ticket 0910.
 
 ## Audience and source handling
 

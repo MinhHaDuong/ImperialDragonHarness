@@ -2,7 +2,6 @@
 Title: Demonstrate the v8 Markdown workflow in one runtime
 Created: 2026-09-11
 Author: codex
-Blocked-by: 0910
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -15,6 +14,7 @@ Blocked-by: 0910
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 2026-10-01T19:03Z MinhHaDuong codex note Rebased adapter acceptance on 0999's resolved-checkout contract; no adapter may infer the canonical store from a fixed home path.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-02T09:52Z MinhHaDuong note blocker 0910 closed — Blocked-by removed.
 --- body ---
 
 ## Context
