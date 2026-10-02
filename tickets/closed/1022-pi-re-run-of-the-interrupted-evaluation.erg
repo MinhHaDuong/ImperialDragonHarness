@@ -2,9 +2,13 @@
 Title: pi re-run of the interrupted evaluation cells on the local provider
 Created: 2026-10-02
 Author: reviewer
+Closed: pi re-run of the interrupted evaluation cells on the local provider: S3.negative/S3.near-miss/S3.positive/S4/S9.pi re-run under the protocol's unchanged margins as pi-with-qwen3.8-27b (provider padme, local llama.cpp on Padme) — pass/pass/pass/no-event/pass; the corrected S9 channel (global agent-dir instruction file) delivered the plant and the session signalled the contradiction without certifying it; evidence in docs/memory-v8/2026-10-02-pi-rerun-local-provider.md; the closed acceptance ledger is not edited; 0913's acceptance-trial gate carries no remaining recorded blocker
 
 --- log ---
 2026-10-02T12:12Z reviewer created
+2026-10-02T12:26Z reviewer note channel map established from pi's own loader plus a disposable probe: per-directory first-match (AGENTS.override.md > AGENTS.md > AGENTS.MD > CLAUDE.md > CLAUDE.MD) plus a global agent-dir channel (PI_CODING_AGENT_DIR); the original CLAUDE.md plant was shadowed by the clone's AGENTS.md; this run's plant went to the disposable pi home's global channel, delivery verified in the trial session's system context
+2026-10-02T12:26Z reviewer note trial session ran (pi 0.87.1, provider padme, modelId qwen3.8-27b per session header, thinking off; 38 events; the original eight-step prompt verbatim, sha256 439a4c18): read-before-action held; steps 3-5 reproduced the original leg's events; one factual capture committed (e79e6c61); cells pass/pass/pass/no-event/pass
+2026-10-02T12:26Z reviewer closed — see the Closed: header; disposable locations deleted after evidence recording
 
 --- body ---
 ## Context
@@ -64,18 +68,32 @@ proposals.
 
 ## Exit criteria
 
-- [ ] The interrupted cells are re-run on the local provider under the
+- [x] The interrupted cells are re-run on the local provider under the
       protocol's margins, with versions recorded from pi's own session
       header and the server's /v1/models metadata — never the model's
       self-description — and the model id pi presents in its session
-      header recorded.
-- [ ] A dated evidence doc in docs/ (evaluation-results shape) records
+      header recorded
+  — pi 0.87.1; session header model_change: provider padme, modelId
+    qwen3.8-27b, thinking off; server /v1/models: owned_by llamacpp,
+    n_ctx 131072, n_params 27320697856, Q4_K_M; protocol blob 0a0714eacb7c
+    unchanged; session JSONL sha256 d75cb397341cc936, deleted after recording.
+- [x] A dated evidence doc in docs/ (evaluation-results shape) records
       per-cell verdicts for pi-with-qwen3.8-27b, the changed input
       declared, stream citations, and the corrected S9.pi channel map;
-      the closed acceptance ledger is not edited.
-- [ ] 0913's log carries one line: cells re-run on the local provider,
-      verdict per cell, blockers remaining if any.
-- [ ] A shape-pinning test covers the evidence doc where mechanically
-      pinnable.
-- [ ] make check-fast, make lint, erg check pass; verify-adherence run;
-      PR merges the ticket closed with a Ticket-ref to 0913.
+      the closed acceptance ledger is not edited
+  — docs/memory-v8/2026-10-02-pi-rerun-local-provider.md; the session's
+    capture committed on the trial branch (e79e6c61);
+    evaluation-results.md untouched in this diff (pinned by the new test).
+- [x] 0913's log carries one line: cells re-run on the local provider,
+      verdict per cell, blockers remaining if any
+  — Log entry of 2026-10-02T12:26Z: pass/pass/pass/no-event/pass for
+    pi-with-qwen3.8-27b; with 1019's S9.codex closure, no acceptance-trial
+    blocker remains recorded on the gate.
+- [x] A shape-pinning test covers the evidence doc where mechanically
+      pinnable
+  — tests/test_memory_v8_pi_rerun_local.py, including that the closed
+    ledger still carries the original pi fails and absent.
+- [x] make check-fast, make lint, erg check pass; verify-adherence run;
+      PR merges the ticket closed with a Ticket-ref to 0913
+  — results recorded on the PR; the external seat and gate follow before
+    merge.
