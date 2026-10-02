@@ -16,6 +16,7 @@ Author: claude
 2026-10-01T21:28Z codex note Author requires coherence among indexed memories and with applicable harness rules, without modifying those rules.
 2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
 2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): dream skips age-encrypted journal/topics when the key in ~/.config/keys is unavailable, records the skipped count in its report and never treats them as empty; with the key it decrypts, consolidates and re-encrypts, sources preserved.
+2026-10-02T08:02Z MinhHaDuong note External review of PR #1112 (openrouter-frontier seat, gpt-5.6-luna via OpenRouter, 10.6s) raised a consider finding owned here: DREAM's decrypt/consolidate/re-encrypt path needs documented handling for authentication failures, malformed ciphertext and re-encryption failures; the dreaming prompt and workflow must define them. Filed at the author's direction.
 --- body ---
 
 ## Context
