@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-02T11:05Z reviewer created
 
+2026-10-02T11:30Z reviewer MinhHaDuong note Keep the documented pattern runtime-portable: define a runtime-neutral detached-seat contract (headless non-interactive CLI per seat, prompt embedding the seat contract, worktree-pinned cwd, read-only rails, artifact polling) with per-runtime substitution examples, not a claude-only recipe
 --- body ---
 ## Context
 
