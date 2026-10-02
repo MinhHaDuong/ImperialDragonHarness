@@ -45,7 +45,18 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 11. **Suggest a dream in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/dreams/`. An unmerged report does not mark experiences
-    processed. With **5 or more new experiences**, include in the final summary:
+    processed. Count inline, on the journal blobs against the accepted
+    reports' ledgers — no counting script, no library, no configuration
+    knob, the threshold stays hardcoded at 5. Every report records its
+    examined sources as `<path> blob <40-hex>` lines (DREAM.md v8-r1):
+    - Current blob id of every `memory/journal/YYYY/*.md` entry at HEAD:
+      `git ls-tree -r HEAD memory/journal/` (the 40-hex column).
+    - Blob ids already examined by the accepted reports present at HEAD:
+      the `<path> blob <40-hex>` lines in `memory/dreams/*.md`.
+    - An entry is covered only when its current blob id appears in an
+      accepted report's ledger; a journal blob examined only by an unmerged
+      report is still new, and a changed blob is new again.
+    With **5 or more new experiences**, include in the final summary:
     “N nouvelles expériences depuis le dernier rêve accepté. Follow-up suggéré :
     `/dream <project-repository>`.” Then finish. Do not ask a question, wait for
     a response, launch dream or mark the experiences processed. Below the
