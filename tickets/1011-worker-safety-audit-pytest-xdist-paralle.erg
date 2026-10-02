@@ -60,3 +60,32 @@ CI latency ever matters beyond that.
 - [ ] Census recorded (this ticket) with all three axes covered
 - [ ] Live trials recorded with exact pass/skip counts matching serial
 - [ ] Adoption decision recorded by the author: wire -n 4 into check-tests, or dependency + opt-in target
+
+## Monolith investigation (ordered by the author, 2026-10-02)
+
+Per-case wall profile via xtrace timestamps (PS4=$EPOCHREALTIME, per-PASS deltas):
+
+- `test_erg_pr_merge.sh` — 11.7s / 47 cases, median 0.27s, max 0.37s.
+  **Uniform fixture cost**: every case builds a tmp git repo with commits,
+  stubs gh/erg, and runs the real merge script. No hot spot. Only parallelism
+  (the 47 cases are independent) or cheaper fixtures help. To shard under
+  xdist the suite must expose per-case selection (a case-index argument);
+  `test_bash_suites.py` then parametrizes per case. Moderate refactor of a
+  1154-line suite.
+- `test_seat_runner.sh` — 9.6s / 68 cases, median **0.00s**. Bimodal: 66
+  assertions are free (grep/static probes); two wait cases hold 7.2s:
+  - reasoning-probe body-build failure (5.09s): the relay-socket readiness
+    loop at `scripts/seat-runner.sh:314` is bounded at 50 x sleep 0.1 = 5s and
+    burns its full budget because the test arranges the relay not to start.
+    One env knob (a tunable bound) set ~0.5s in the test saves ~4.5s per run,
+    serial AND parallel. Cheapest single win in the suite.
+  - hung-seat timeout (2.13s): a deliberate timeout-fires test, already
+    tightened to a 2s bound (asserted 2s < 15s). Compressible to ~1s at most;
+    diminishing returns.
+- `test_sync_local_main.sh` — 3.5s / 26 cases, median 0.14s. Same uniform
+  fixture class as erg_pr_merge, an order of magnitude cheaper. Low priority.
+
+Combined projection: the seat-runner knob (-6.5s) plus `-n 4` takes the full
+check from 81s to ~31s; erg_pr_merge's 12.2s becomes the parallel floor. The
+per-case refactor of erg_pr_merge would take the floor to ~4s but is worth it
+only if CI latency below ~30s ever matters.
