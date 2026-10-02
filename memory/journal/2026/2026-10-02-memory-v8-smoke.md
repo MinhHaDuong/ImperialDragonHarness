@@ -31,4 +31,4 @@ covered, from worktree t0923-892197 on branch t0923-v8-markdown-smoke:
 Evidence, commands and outputs:
 [smoke document](../../../docs/2026-10-02-memory-v8-runtime-smoke.md);
 ticket:
-[tickets/0923-first-runtime-adapter-offline-pilot.erg](../../../tickets/0923-first-runtime-adapter-offline-pilot.erg).
+[tickets/closed/0923-first-runtime-adapter-offline-pilot.erg](../../../tickets/closed/0923-first-runtime-adapter-offline-pilot.erg).
