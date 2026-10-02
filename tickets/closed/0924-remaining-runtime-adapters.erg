@@ -19,8 +19,8 @@ Closed: delivered by the three-runtime evidence PR — Claude Code, Codex and Pi
 
 Répéter les scénarios du pilote sur les trois autres runtimes pour couvrir Claude Code, Codex, Pi et Vibe. Garder une instruction commune ; enregistrer les différences de chargement et confiance, sans introduire MCP ou serveur.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification
