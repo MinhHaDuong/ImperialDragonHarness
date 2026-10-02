@@ -2,6 +2,7 @@
 Title: memory-capture project key: generic colon sed eats non-default ports, colliding distinct origins
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: autoclosed — PR #1129
 
 --- log ---
 2026-10-02T09:32Z MinhHaDuong created
@@ -12,6 +13,7 @@ Author: MinhHaDuong
 2026-10-02T09:59Z MinhHaDuong vibe note implemented the logged decision branch (honor the comment): scp-conversion rule now runs first in project_key()'s sed chain (feasibility-corrected position), generic colon rule deleted; non-default ports stay and make identity distinct. Regression test pins port.example.com:2222/owner/proj.git vs port.example.com/2222/owner/proj.git distinct (key count 5); scp-form git@host:22/owner/proj.git normalizes to host/22/owner/proj.git (scp syntax has no port slot, accepted residual).
 2026-10-02T10:14Z MinhHaDuong bump verify-reroll — round 1: userless scp origin host:o/p.git no longer unifies with https form (verifiable: regression, unaddressed)
 2026-10-02T10:14Z MinhHaDuong vibe note reroll fix (path a, behavior change): scp-conversion rule widened to optional userinfo ^\(\([^/@:]*@\)\{0,1\}[^/@:]*\):\([^/]\) → \1/\3, still first in the chain on the raw URL; scheme URLs never match (the char after their first colon is /), so ssh://git@host:2222/... keeps its port. Sed simulation: host:o/p.git → host/o/p (= https form, pre-PR key restored, no orphan); host:2222/o/p.git → host/2222/o/p (git's own scp reading, same as git@host:2222/...); port-vs-pathseg count 5 unchanged. New test pins userless scp/https key sharing.
+2026-10-02T10:39Z reviewer closed — autoclosed — PR #1129
 --- body ---
 ## Context
 
