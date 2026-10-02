@@ -27,6 +27,6 @@ Rollback is reverting this PR's merge; no other project's setup changed
 (no global rollout).
 
 Evidence: ticket
-[tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg](../../tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg)
-(decisions of 2026-10-02 in its log); [pilot declaration](../../docs/memory-v8/pilot.md);
-[source inventory](../../docs/memory-v8/source-inventory.md); PR #1109.
+[tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg](../../../tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg)
+(decisions of 2026-10-02 in its log); [pilot declaration](../../../docs/memory-v8/pilot.md);
+[source inventory](../../../docs/memory-v8/source-inventory.md); PR #1109.
