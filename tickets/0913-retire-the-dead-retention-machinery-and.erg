@@ -12,6 +12,7 @@ Blocked-by: 0918
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T21:35Z codex note Author explicitly directed RETIRE LEGACY: removed unused native/shared-store DREAM helpers and consumer tests; 0934/1002/0991 superseded, not implemented. Batch record: docs/memory-v8/legacy-retirement.md. Broad rollout remains open.
+2026-10-02T09:42Z MinhHaDuong note Author decision (blind-spot F3, 2026-10-02): per-machine keys stand; cross-machine unreadability of .age entries is declared as a known limit in the 0909 integration review, citing 0937's refusal to sync secrets.
 --- body ---
 
 ## Context

@@ -14,6 +14,7 @@ Blocked-by: 0924
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: commit the evaluation protocol before acceptance trials; earlier exploratory smokes are not retroactively counted as predeclared trials.
 2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
+2026-10-02T09:42Z MinhHaDuong note Author decision (blind-spot F4, 2026-10-02): the reviewer-attribution implementation (1005-1009) is sequenced after raid-0909; this wave proceeds on the live review machinery. Needs of that programme, met by this wave: the protocol cites docs/2026-10-02-reviewer-attribution-design.md section 4 so trial review facts (reviewer runtime/model/version, findings with repo-relative path:line anchors, adopted yes/no) are recorded convertible to attribution records; no edits to roar step 6 (owned by 1005) or the reviewers write path (owned by 1009); journal stays append-only.
 --- body ---
 
 ## Context
