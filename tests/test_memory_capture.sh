@@ -145,18 +145,23 @@ fi
 
 # a failed key creation surfaces age-keygen's stderr in full, not just the
 # refusal line: a read-only key directory makes age-keygen fail inside the
-# capture helper.
-_mkproject failing git@failing.example.com:owner/proj.git
-mkdir -p "$HOME/.config/keys/memory" && chmod 555 "$HOME/.config/keys/memory"
-FAIL_TEXT=$(printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed 2>&1 >/dev/null) || true
-FAIL_RC=0
-printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed >/dev/null 2>&1 || FAIL_RC=$?
-chmod 755 "$HOME/.config/keys/memory"
-if [ "$FAIL_RC" -ne 0 ] && [ -n "$FAIL_TEXT" ] \
-   && printf '%s\n' "$FAIL_TEXT" | grep -qv "memory-capture:"; then
-    _pass "failed key creation surfaces age-keygen's own stderr"
+# capture helper. Root ignores mode 0555, so the injection only works
+# unprivileged — skip visibly rather than report a false failure as root.
+if [ "$(id -u)" = 0 ]; then
+    echo "SKIP: running as root — mode-0555 injection cannot deny key creation"
 else
-    _fail "failed key creation did not surface age-keygen stderr (rc=$FAIL_RC)"
+    _mkproject failing git@failing.example.com:owner/proj.git
+    mkdir -p "$HOME/.config/keys/memory" && chmod 555 "$HOME/.config/keys/memory"
+    FAIL_TEXT=$(printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed 2>&1 >/dev/null) || true
+    FAIL_RC=0
+    printf 'doomed entry\n' | "$CAPTURE" "$P" private note-doomed >/dev/null 2>&1 || FAIL_RC=$?
+    chmod 755 "$HOME/.config/keys/memory"
+    if [ "$FAIL_RC" -ne 0 ] && [ -n "$FAIL_TEXT" ] \
+       && printf '%s\n' "$FAIL_TEXT" | grep -qv "memory-capture:"; then
+        _pass "failed key creation surfaces age-keygen's own stderr"
+    else
+        _fail "failed key creation did not surface age-keygen stderr (rc=$FAIL_RC)"
+    fi
 fi
 
 
