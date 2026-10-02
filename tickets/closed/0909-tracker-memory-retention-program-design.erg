@@ -29,8 +29,8 @@ Closed: all five exit criteria verified by the recorded integration review (docs
 
 Intégrer la convention, le pilote, capture à roar, rêve suggéré en conclusion de lair et invoqué séparément, preuves sur quatre runtimes, migration progressive et frontière d’autorité. V8 remplace v7 par décision de l’auteur du 2026-10-01 ; le plan v8 est la carte de livraison.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification

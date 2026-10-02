@@ -26,8 +26,8 @@ Closed: delivered by the v8 runtime smoke PR — evidence doc, marked public cap
 
 Choisir et justifier le premier runtime accessible. Vérifier en session réelle les instructions communes, lecture à la demande, capture factuelle committée et résultat de rêve relisible. Le choix ne privilégie pas durablement ce runtime.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification

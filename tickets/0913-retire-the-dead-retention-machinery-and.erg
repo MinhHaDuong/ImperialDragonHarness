@@ -50,4 +50,4 @@ EXIT-CRITERIA: 1 open (pilot baseline done: source-revisions.tsv, pilot.md rollb
 
 ## Raid blind-spot finding (2026-10-02) — orchestrator disposition
 
-- F3 (per-machine keys, cross-machine unreadability): AUTHOR DECISION PENDING — accept per-machine keys with declared cross-machine unreadability (citing 0937's refusal to sync secrets), or open a sync decision. The 0909 integration review must record the chosen story either way.
+- F3 (per-machine keys, cross-machine unreadability): decided 2026-10-02 — per-machine keys stand; cross-machine unreadability of .age entries is declared as a known limit, citing 0937's refusal to sync secrets; recorded in the 0909 integration review.

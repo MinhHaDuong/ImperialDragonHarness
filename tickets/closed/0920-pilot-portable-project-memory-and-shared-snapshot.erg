@@ -25,8 +25,8 @@ Closed: delivered by the v8 pilot PR (index, themes with provenance, reading sec
 
 Choisir un projet représentatif et établir memory/MEMORY.md, topics/, journal/AAAA/ et dreams/. Réutiliser les sources inventoriées avec liens relatifs ; distinguer les sources natives du dépôt canonique.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification

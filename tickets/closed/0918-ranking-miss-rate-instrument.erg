@@ -26,8 +26,8 @@ Closed: acceptance trials delivered, rollout verdict No rollout — results in d
 
 Fixer un protocole de scénarios répétés avant essais : lecture pré-action, rappel d’épisodes récents, capture sélective, contradictions et absence de proposition de règles. Mesurer omissions, utilité et coût, sans confondre accès aux fichiers avec obéissance.
 
-Baseline : [v8](../docs/2026-09-10-dragon-memory-design.md) et
-[plan de livraison](../docs/2026-09-11-memory-implementation-plan.md).
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
 Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
 
 ## Actions et vérification
