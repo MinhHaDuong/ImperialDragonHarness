@@ -2,6 +2,7 @@
 Title: Version the v8 dreaming prompt and source-preserving editorial workflow
 Created: 2026-09-10
 Author: claude
+Closed: delivered by PR #1119 — versioned DREAM.md prompt (v8-r1), dream skill reconciled with encrypted-in-repo policy, pilot dream with two-pass report and journal pinned
 
 --- log ---
 2026-09-10T16:24Z claude created
@@ -17,6 +18,9 @@ Author: claude
 2026-10-02T06:51Z MinhHaDuong note blocker 0920 closed — Blocked-by removed.
 2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): dream skips age-encrypted journal/topics when the key in ~/.config/keys is unavailable, records the skipped count in its report and never treats them as empty; with the key it decrypts, consolidates and re-encrypts, sources preserved.
 2026-10-02T08:02Z MinhHaDuong note External review of PR #1112 (openrouter-frontier seat, gpt-5.6-luna via OpenRouter, 10.6s) raised a consider finding owned here: DREAM's decrypt/consolidate/re-encrypt path needs documented handling for authentication failures, malformed ciphertext and re-encryption failures; the dreaming prompt and workflow must define them. Filed at the author's direction.
+2026-10-02T08:45Z vibe note Detached hunt executed on branch t0916-dream-prompt-v8: versioned prompt memory/DREAM.md (v8-r1) with encrypted-entry policy and authentication/malformed-ciphertext/re-encryption failure handling; dream skill reconciled with encrypted-in-repo policy (private-companion destination dropped); pilot dream run — governance topic corrected (superseded companion clause), index refreshed, two-pass report memory/dreams/2026-10-02-pilot-first-dream.md with git blob ledgers; journal untouched, pinned by tests/test_dream_v8.py.
+
+2026-10-02T08:56Z MinhHaDuong closed — delivered by PR #1119 — versioned DREAM.md prompt (v8-r1), dream skill reconciled with encrypted-in-repo policy, pilot dream with two-pass report and journal pinned
 --- body ---
 
 ## Context
@@ -35,15 +39,15 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 
 ## Exit criteria
 
-- [ ] Deux passages ne réimportent pas les mêmes révisions comme nouvelles ; une correction est réexaminée.
-- [ ] Cas positifs/négatifs liés, exceptions et contradictions préservées.
-- [ ] Journal non déplacé ni réécrit ; traitement consigné dans les rapports acceptés.
-- [ ] Sources natives attribuées et texte utilisé conservé dans un rapport ou une annexe versionnée ; absence signalée ; hypothèses et décisions canoniques distinguées.
-- [ ] Rapport référence source/prompt/révisions et runtime/modèle ; connaissance proposée soumise à PR.
+- [x] Deux passages ne réimportent pas les mêmes révisions comme nouvelles ; une correction est réexaminée.
+- [x] Cas positifs/négatifs liés, exceptions et contradictions préservées.
+- [x] Journal non déplacé ni réécrit ; traitement consigné dans les rapports acceptés.
+- [x] Sources natives attribuées et texte utilisé conservé dans un rapport ou une annexe versionnée ; absence signalée ; hypothèses et décisions canoniques distinguées.
+- [x] Rapport référence source/prompt/révisions et runtime/modèle ; connaissance proposée soumise à PR.
 
-- [ ] Aucune règle proposée ou modifiée, aucune sortie de projet écrite dans le harnais.
+- [x] Aucune règle proposée ou modifiée, aucune sortie de projet écrite dans le harnais.
 
-- [ ] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
-- [ ] Pruning retire les informations périmées/non pertinentes/remplacées ; merging réunit les doublons ; refreshing actualise le contexte encore pertinent, sources et exceptions conservées.
+- [x] MEMORY.md ne dépasse pas 100 lignes, titres et lignes vides compris.
+- [x] Pruning retire les informations périmées/non pertinentes/remplacées ; merging réunit les doublons ; refreshing actualise le contexte encore pertinent, sources et exceptions conservées.
 
-- [ ] Cohérence vérifiée entre toutes les mémoires indexées et les règles applicables du harnais ; conflits corrigés ou signalés, règles et journal brut inchangés.
+- [x] Cohérence vérifiée entre toutes les mémoires indexées et les règles applicables du harnais ; conflits corrigés ou signalés, règles et journal brut inchangés.

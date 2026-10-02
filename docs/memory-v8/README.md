@@ -27,8 +27,10 @@ memory/journal/YYYY/YYYY-MM-DD-<slug>.md
 memory/dreams/YYYY-MM-DD-<slug>.md
 ```
 
-DREAM.md and the accepted-report convention are delivered under 0916, not by
-these templates. Journal files stay in their original year directory. Choose a
+DREAM.md and the accepted-report convention are delivered under 0916: the
+versioned consolidation prompt is the pilot's live copy at
+[memory/DREAM.md](../../memory/DREAM.md); adopting projects copy and adapt it,
+keeping its revision line, and reports live in `memory/dreams/`. Journal files stay in their original year directory. Choose a
 new descriptive slug or distinguishing suffix on collision; never overwrite.
 Corrections are new entries linking to the original, which remains unchanged.
 Concurrent captures preserve both files and resolve conflicting claims explicitly.
