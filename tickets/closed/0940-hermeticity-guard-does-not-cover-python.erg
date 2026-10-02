@@ -2,12 +2,14 @@
 Title: Hermeticity guard does not cover Python test suites
 Created: 2026-09-16
 Author: claude
+Closed: autoclosed — PR #1111
 
 --- log ---
 2026-09-16T13:24Z claude created
 
 2026-10-02T08:19Z claude note Re-scoped by author ruling (2026-10-02): the premise of real harness keys overriding fixture credentials is dead — 0945 removed ambient credential residency. The guard now serves the post-0945 threat model: machine-independence of tests (ambient inheritance produces false confidence — green on one machine, testing nothing on another), project `.env` values still reaching children through BASH_ENV, and the ratchet against re-introducing ambient residency. The adversarial spelling tail is accepted-and-disclosed: the terminal state is a working guard with honestly disclosed blind spots, not an exhaustive scanner.
 
+2026-10-02T08:26Z MinhHaDuong closed — autoclosed — PR #1111
 --- body ---
 ## Context
 
