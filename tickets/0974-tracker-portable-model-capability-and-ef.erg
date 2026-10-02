@@ -27,7 +27,9 @@ Open design points to settle inside the phases, not before:
 - `decorrelated-from` resolution rule per adapter (invariant 5).
 
 ## Children
-- 0975 — Phase 0: vocabulary + behaviour-preserving Claude mapping (open)
+- 0975 — Phase 0: vocabulary + behaviour-preserving Claude mapping
+  (closed 2026-09-25; accepted with sandbox-only full-gate failures waived;
+  see `tickets/closed/0975-phase-0-semantic-model-level-and-effort.erg`)
 
 ## Exit criteria
 - [ ] Every phase child closed, and the integration review run per `/roar`
