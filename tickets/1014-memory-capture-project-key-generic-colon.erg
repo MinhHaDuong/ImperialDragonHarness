@@ -1,0 +1,41 @@
+%erg 0.1
+Title: memory-capture project key: generic colon sed eats non-default ports, colliding distinct origins
+Created: 2026-10-02
+Author: MinhHaDuong
+
+--- log ---
+2026-10-02T09:32Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Found by the openrouter-frontier external reviewer seat during the ticket-1008
+raid's gaze run on PR #1121 (2026-10-02), dispositioned out-of-diff there and
+verified on main afterwards. `scripts/memory-capture.sh` `project_key()` derives
+the private-capture key directory from the origin URL. Its comment states "a
+non-default port stays and makes the identity distinct", and the sed strips
+only the default ports (`:22/`, `:443/`, `:80/`) — but the generic rule that
+follows (`-e 's|:\([^/]\)|/\1|'`, scripts/memory-capture.sh:62) rewrites every
+remaining colon to a slash.
+
+Consequence: `host:2222/path` and `host/2222/path` (two distinct origins — a
+non-default SSH port versus an org-or-owner path segment named `2222`) hash to
+the same project key. Private captures for distinct projects then share one
+age key under `~/.config/keys/memory/`, contradicting the documented identity
+requirement and the function's own comment.
+
+## Actions
+
+1. Decide the identity rule: either honor the comment (keep non-default ports
+   distinct — remove the generic colon rule and handle the remaining
+   scp-like `git@host:path` case explicitly), or update the comment and accept
+   the collision, documenting why.
+2. Add a test to tests/test_memory_capture.sh covering the two-origins case
+   (`host:2222/path` vs `host/2222/path`) pinning whichever rule is chosen.
+
+## Exit criteria
+
+- [ ] project_key() behavior matches its comment, or the comment matches the
+      behavior, with the decision recorded here
+- [ ] A regression test pins the distinctness (or the accepted collision) of
+      port-carrying vs slash-carrying origins
