@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 2026-09-23T16:21Z Minh Ha-Duong note blocker 0901 closed — Blocked-by removed.
 2026-09-23T19:30Z Codex note Roster audit: 0392 changed panel width for tiny/small diffs, and 0901 capped unreviewable PRs, but gaze still has no path-risk band from prose_predicate.py. The core proposal remains open. The requested fortnight of post-0901 measurement cannot yet be complete on 2026-09-23; calibrate after enough runs rather than treating blocker removal as finished evidence.
 2026-10-02T18:41Z reviewer note raid 2026-10-02 — phases 2-3: reimagined (Imagine + Blind-Spot passes); drift guard: proceed, exit criteria preserved verbatim
+2026-10-02T19:46Z reviewer note raid — phase 4 feasibility: WARN→PASS with R9 (fork-blocking launch-paragraph ratchet); Phase 5.0 not triggered
 --- body ---
 ## Context
 
@@ -328,3 +329,31 @@ network), report appended to the PR body before /gaze.
 - R8: do NOT widen Agent C's panel for the band (0392's width gate already
   reads pipeline_paths); the only link is T3's one-directional registry
   ratchet.
+
+### Phase 4 — feasibility: WARN (one plan gap, mitigated) — 2026-10-02
+
+- Glob semantics verified deterministically: 21/21 cases pass (settings*.json
+  any-depth via basename fallback; docs/** and scripts/** top-level anchored;
+  **/fixtures/** nested; high-beats-low; mixed low+other → normal).
+- Consumers (9 files referencing prose_predicate): all safe — --risk is a new
+  flag (no argparse clash with --axes), bare/--axes stdout and exit-2 refusal
+  untouched; no test ratchets the module docstring or EXT_FORMAT comment.
+- Text spans: S1 lands inside the Setup span (regex-safe per R1) and inside
+  the "Per-tier battery:"…"- If any of these" span of
+  tests/test_review_first_round_width.py — safe because the **tiny**/**small**
+  bullet lines stay verbatim and the assertions are `in`-based.
+- No cross-cutting registry conflict: no open PRs; the only new coupling is
+  T3's one-directional registry ratchet (intentional, 0901 pattern).
+- Agnostic gate: no pattern fires on the planned strings (keep the $IDH_ROOT/
+  prefix in S1; tests/ is fully exempt).
+- R9 (plan gap found by the feasibility pass):
+  tests/test_gaze_fork_blocking.py::test_launch_paragraph_carries_local_wait_contract
+  flags any blank-line paragraph containing \bparallel\b + \bagents?\b +
+  \b(spin|spawn|launch|run)\b unless it (or the next paragraph) carries a
+  non-negated wait token (poll/artifact/manifest/bounded/deadline/…). The
+  "Per-tier battery" paragraph (SKILL.md lines 223–229, where S1 is appended)
+  already contains "agents run" — so S1 must NOT use the word "parallel"
+  (use "concurrently") and must not add a spawn verb to it. Run
+  test_gaze_fork_blocking.py after S1 (T5's make check covers it).
+- Verdict: PASS with R9. Phase 5.0 coordination PR: not triggered (single
+  ticket, no shared registry edited by 3+ PRs).
