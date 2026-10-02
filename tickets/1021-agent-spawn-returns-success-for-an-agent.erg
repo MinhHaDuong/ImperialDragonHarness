@@ -1,0 +1,58 @@
+%erg 0.1
+Title: agent.spawn returns success for an agent that never runs — docprop seat vanished from agent.list with no error
+Created: 2026-10-02
+Author: claude
+
+--- log ---
+2026-10-02T12:22Z claude created — filed by /roar after PR #1143 (panel integrity observation)
+
+--- body ---
+## Context
+
+The review-pr panel on PR #1143 ran two full five-seat rounds
+(2026-10-02, Vibe runtime, `tools.agent.spawn` fan-out with the
+`.md.part`-then-rename artifact contract). The docprop seat never produced a
+report in either round.
+
+Observable facts:
+
+- Round 1: `agent.spawn` returned `{type: "success"}` for `r1143-docprop`.
+  The subsequent `agent.list` polls showed only the other four seats
+  (correctness, consistency, scope, redteam) — `r1143-docprop` was absent from
+  the list entirely, while its four siblings appeared with live statuses.
+- Round 2: same pattern for `r1143r2-docprop` — spawn success, no report, and
+  the seat missing when listed.
+- Both reviews degraded correctly by design (`PANEL-INTEGRITY: DEGRADED`,
+  docprop named missing, `dissent: unavailable`) — the manifest check caught
+  what the spawn result hid. But the root cause is a spawn that reports success
+  for an agent that never exists.
+
+Separately, in round 3 all four spawned seats vanished from `agent.list` after
+the parent program's polling loop was interrupted (`client interrupt`) —
+children do not survive an interrupted parent program. That behavior is
+defensible; the silent-success spawn is not.
+
+## Actions
+
+1. Reproduce: spawn N agents in one program, poll `agent.list` immediately and
+   after completion; find whether a success return can correspond to no agent.
+2. If reproducible, make `agent.spawn` fail loudly (error result) when the
+   agent cannot be created or listed, so the review-pr preflight
+   ("a launch returns a depth-limit, permission, or other spawn error") can
+   catch it — that preflight currently trusts the success return.
+3. If not reproducible, record the runtime conditions of the two failures
+   (Vibe unified harness, 2026-10-02, parallel 8-agent panel) as a known
+   intermittent.
+
+## Exit criteria
+
+- [ ] Reproduction attempted with a written outcome
+- [ ] Spawn success implies the agent exists in `agent.list`, or the failure
+      is documented as intermittent with the observed conditions
+- [ ] If a runtime-side fix is possible, the review-pr preflight note is
+      updated to match what spawn results actually guarantee
+
+## Test
+
+- A scripted spawn-then-list check that fails when a success return has no
+  corresponding agent entry.
