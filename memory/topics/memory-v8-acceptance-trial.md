@@ -48,6 +48,15 @@ the removed skills/dream/read-index.py failed on all four runtimes, and the
 capture helper's append-only guard refused the occupied smoke slug each
 time, writing nothing.
 
+The Pi leg was interrupted externally: its provider (huggingface) reported
+depleted monthly included credits while the session was preparing its
+captures, and pi exited 1 having read the memory surface and executed the
+retired-helper and collision probes but produced neither entries nor a
+capture-decision report. The same session natively loaded the clone's
+AGENTS.md while the planted CLAUDE.md was never delivered to it — the
+contradictory-note probe missed its target on that runtime, and the
+conductor's loading-order assumption was wrong in the other direction.
+
 ## Hypotheses, not facts
 
 That any of these behaviors generalize beyond the sessions, versions and
@@ -67,7 +76,9 @@ as single-sample evidence; no runtime is certified by these observations.
 - Codex session entries: [missing read-index](../journal/2026/2026-10-02-memory-v8-0918-missing-read-index.md), [smoke slug collision](../journal/2026/2026-10-02-memory-v8-0918-smoke-slug-collision.md), [instruction-loading evidence](../journal/2026/2026-10-02-memory-v8-0918-instruction-loading-evidence.md).
 - Claude session entries: [untracked CLAUDE.md contradicts memory](../journal/2026/2026-10-02-untracked-claude-md-contradicts-memory.md), [retired read-index invoked](../journal/2026/2026-10-02-retired-read-index-invoked-in-trial.md), [slug collision refused](../journal/2026/2026-10-02-capture-slug-collision-refused.md), [trial clone carried prior entries](../journal/2026/2026-10-02-trial-clone-carries-prior-session-entries.md).
 - Vibe probe entries: [read-index helper absent](../journal/2026/2026-10-02-t0918-trial-read-index-helper-absent.md), [smoke slug collision](../journal/2026/2026-10-02-t0918-trial-smoke-slug-collision.md), [native AGENTS.md injection](../journal/2026/2026-10-02-t0918-trial-vibe-native-agents-injection.md), [aborted-session read-index](../journal/2026/2026-10-02-skills-dream-read-index-not-found.md).
-- Provenance: [evaluation protocol](../../docs/memory-v8/evaluation-protocol.md) and [results](evaluation-results.md); the pre-trial smokes
+- [Pi leg interrupted by credit depletion](../journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md) — external limit, not a capture decision.
+- [Pi loaded AGENTS.md, not the planted CLAUDE.md](../journal/2026/2026-10-02-memory-v8-0918-pi-loaded-agents-not-planted-claude-md.md) — the S9-pi probe missed its target; delivery channel confirmed.
+- Provenance: [evaluation protocol](../../docs/memory-v8/evaluation-protocol.md) and [results](../../docs/memory-v8/evaluation-results.md); the pre-trial smokes
   ([0923](../journal/2026/2026-10-02-memory-v8-smoke.md),
   [0924](../journal/2026/2026-10-02-memory-v8-runtimes-verified.md)) are
   excluded from the acceptance margins by the protocol.
