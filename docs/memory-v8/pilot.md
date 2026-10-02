@@ -19,16 +19,23 @@ text stays accessible, and originals are not rewritten.
 The public repository carries the themes (`memory/topics/`), the factual
 journal (`memory/journal/YYYY/`) and the reference notes. Every pilot source
 was already tracked in this public repository before the pilot; none was
-newly disclosed by it. Material not cleared for the public audience never
-enters the public repository — an ignored directory or a public branch is
-insufficient as private storage.
+newly disclosed by it. Author decision of 2026-10-02: material not cleared
+for the public audience enters the repository only as ciphertext, never
+plaintext — an ignored directory or a public branch remains insufficient
+as private storage.
 
-## Private companion (declared, not created)
+## Private material (encrypted in-repo, author decision 2026-10-02)
 
-Uncleared material belongs in a versioned private companion store with its
-own access and versioning convention. Concrete arrangement proposed in the
-0920 merge request for author review; this pilot creates no companion and
-invents no content for it. Nothing currently awaits that audience.
+The separate private companion proposed in the 0920 merge request is
+superseded; the author accepted the encrypted-in-repo costs. Uncleared
+journal entries and themes are committed in this repository as `age`
+ciphertext from birth (`.age` suffix); plaintext is never written to the
+working tree. The key lives in `~/.config/keys` outside the repository,
+is never tracked and is not named by repository content. Without the key
+an entry is existing but unreadable; DREAM skips `.age` files and reports
+the skipped count rather than treating them as empty. Filenames of
+encrypted entries remain public metadata. Nothing currently awaits that
+audience.
 
 ## Rollback and old-path correspondence
 

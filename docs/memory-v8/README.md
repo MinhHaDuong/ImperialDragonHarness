@@ -70,8 +70,11 @@ re-examination. Counting and live validation remain under 0910/0916.
 
 The pilot's tracked material has a public repository audience, not a
 certificate of privacy clearance. Review each source before including text.
-For private material, configure a versioned private companion and a local pointer;
-an ignored directory or a branch in a public repository is insufficient.
+For private material, commit age-encrypted `.age` ciphertext in the same
+repository — author decision of 2026-10-02, superseding the private companion;
+plaintext never enters the tree and the key stays in `~/.config/keys`, untracked
+and unnamed by repository content.
+An ignored directory or a branch in a public repository is insufficient.
 Unavailable native sources are unknown, not empty. Interpreted native notes stay
 attributed notes, never reconstructed factual journal entries. See the
 [source inventory](source-inventory.md) before selecting pilot material.
