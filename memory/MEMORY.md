@@ -9,15 +9,16 @@ v8 repository memory. Pilot and audience: [pilot.md](../docs/memory-v8/pilot.md)
 - [git in a worktree session](topics/git-worktree-session-guards.md) — two guards, two remedies.
 - [Branch-cleanup incidents](topics/branch-cleanup-incidents.md) — evidence behind the cleanup guards.
 - [Memory v8 governance](topics/memory-v8-governance.md) — design boundaries, legacy retirement.
+- [Memory v8 acceptance trial](topics/memory-v8-acceptance-trial.md) — 0918 runtime evidence, single-session samples.
 
 ## Recent experiences
 
-- [Reviewer attribution, celebration teardown](journal/2026/2026-10-02-reviewer-attribution-design.md) — coaching by attribution.
-- [Memory v8 pilot established](journal/2026/2026-10-02-memory-v8-pilot-established.md) — activation, audience, sources.
-- [PR 1102 merge under parallel housekeeping](journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md) — v8 delivery merge record.
-- [Legacy provenance helper retirement](journal/2026/2026-10-01-memory-helper-retirement.md) — helper removal with controls.
-- [Memory v8 design and boundaries](journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption record.
-- [Portable registration review](journal/2026/2026-10-01-portable-registration-review.md) — registration PR review and split.
+- [Contradiction surfaced by Claude](journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md) — planted note flagged, provenance verified.
+- [Pre-merge link catch](journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — relocated-clone proof caught the protocol.
+- [Concurrent detached sessions](journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md) — both preserved.
+- [Pi leg interrupted](journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md) — provider credits, outcomes recorded.
+
+Older experiences live in their topics; search the journal.
 
 ## Dreams
 
