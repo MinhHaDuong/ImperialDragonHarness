@@ -25,9 +25,11 @@ def test_check_runs_full_pytest_suite():
     rule = target_recipe("check")
     if "check-tests" in rule.splitlines()[0]:
         rule = target_recipe("check-tests")
-    assert re.search(r"pytest tests/\s*$", rule, re.MULTILINE), (
-        "coding-python.md defines 'make check' as the full test suite — "
-        "pytest over tests/ with no marker filter or other trailing args; "
+    assert re.search(r"pytest tests/(?: -n \d+)?\s*$", rule, re.MULTILINE), (
+        "coding-python.md defines 'make check' as everything — pytest over "
+        "tests/ with no marker filter or test-selection args. Parallel "
+        "execution (`-n N`, ticket 1011) is the one permitted trailing form: "
+        "it still runs every test; "
         f"current rule:\n{rule}"
     )
 

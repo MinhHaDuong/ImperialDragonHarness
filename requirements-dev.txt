@@ -18,3 +18,8 @@ requests>=2.28,<3
 # Range-pinned; tests/test_ruff.py asserts the running series matches, so an
 # ambient ruff outside 0.15.x fails loud instead of changing rules (ticket 0470).
 ruff>=0.15,<0.16
+# Parallel test execution for the full suite (ticket 1011): -n 4 measured
+# 81s -> 38.6s with zero collisions across three trials; check-fast and lint
+# stay serial — both sit at the pytest boot+collection floor where xdist
+# overhead is pure loss.
+pytest-xdist>=3.8,<4
