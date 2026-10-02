@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Verify the common Markdown contract across all four runtimes
+Created: 2026-09-11
+Author: codex
+Closed: delivered by the three-runtime evidence PR — Claude Code, Codex and Pi each ran one real session against a disposable clone: AGENTS.md loaded natively in all three, index/theme read before action with transcript-quoted evidence channels, journal search with ordinary tools, public capture through scripts/memory-capture.sh, no native-profile sync; versions and limits recorded in the evidence docs
+
+--- log ---
+2026-09-11T07:04Z codex created
+2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
+
+2026-09-16T06:48Z claude note Pi capability declaration recorded at docs/2026-09-16-runtime-capability-survey.md: subagent definitions (third-party extension, md+YAML, inherit_context) and 36 lifecycle events covering all five hook classes this harness registers. Documentation only, no smoke evidence; Codex hooks still unverified.
+2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
+2026-10-02T10:14Z MinhHaDuong note blocker 0923 closed — Blocked-by removed.
+2026-10-02T10:24Z claude note Detached hunt pickup (raid-0909 Wave 3, branch from origin/main 87ee07a8). Blind-spot F5 probe passed before any session work: claude -p, codex exec --skip-git-repo-check and pi -p --no-session each answered a trivial prompt with exit 0 and verified output from this detached executor; no runtime leg stopped or escalated. Codex note: exec requires a trusted/git directory or --skip-git-repo-check, and reads stdin when piped.
+2026-10-02T10:38Z reviewer closed — delivered by the three-runtime evidence PR — Claude Code, Codex and Pi each ran one real session against a disposable clone: AGENTS.md loaded natively in all three, index/theme read before action with transcript-quoted evidence channels, journal search with ordinary tools, public capture through scripts/memory-capture.sh, no native-profile sync; versions and limits recorded in the evidence docs
+--- body ---
+
+## Context
+
+Répéter les scénarios du pilote sur les trois autres runtimes pour couvrir Claude Code, Codex, Pi et Vibe. Garder une instruction commune ; enregistrer les différences de chargement et confiance, sans introduire MCP ou serveur.
+
+Baseline : [v8](../../docs/2026-09-10-dragon-memory-design.md) et
+[plan de livraison](../../docs/2026-09-11-memory-implementation-plan.md).
+Les anciennes obligations v7 sont remplacées, pas déclarées implémentées.
+
+## Actions et vérification
+
+Exécuter ce périmètre par branche/PR, préserver les sources et enregistrer les
+preuves pertinentes. Vérifier les cas d’échec, les liens et les commits ;
+exécuter les checks applicables au diff. Aucun package hoard requis.
+
+## Exit criteria
+
+- [x] Preuves et versions pour les quatre runtimes, avec limites et omissions observées.
+- [x] AGENTS.md source unique ; éventuel CLAUDE.md relatif n’ajoute pas de contenu divergent.
+- [x] Lecture thématique, recherche du journal et capture effective vérifiées sur chacun.
+- [x] Aucun besoin de synchroniser les quatre profils natifs pour lire la mémoire commune.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+- PREMISE: contract frozen (#1102 convention, #1109 pilot, #1117 capture, #1119 dream v8-r1) — a stable runtime-agnostic target. Capture leg shape: 'capture effective' means the runtime's shell runs the pinned age commands and reaches ~/.config/keys/memory/<sha256[:16]>; a sandboxed HOME is a new observable to record, not a failure to hide. Dream leg names prompt v8-r1.
+- DELIVERABLES: per runtime, ONE real session against a disposable clone (disposable HOME where the runtime's isolation requires): verify (1) the runtime loads AGENTS.md and reads the memory index/theme before action, with an evidence channel INDEPENDENT of the agent's own claim (access trace, behavior tied to a specific theme, observed rg journal hit); (2) journal search works with the runtime's ordinary tools; (3) a public capture through scripts/memory-capture.sh as roar step 6 prescribes, clearly marked smoke evidence — public only, the private/.age leg is deferred by author decision F2 (recorded on 0923); (4) no native-profile sync needed to read the common memory; (5) AGENTS.md is the single source — no divergent CLAUDE.md content. One dated evidence doc per runtime in docs/, capability-survey shape; versions and limits recorded.
+- ANTIPATTERNS: no runtime plumbing or adapter extensions; no four-runtime framework — four hand-written evidence docs; no restating-what-it-was-handed proofs — independent evidence channels only.
+
+Sequencing note (author decision F4): the reviewer-attribution programme is sequenced after this raid; do not touch roar step 6, the reviewers write path, or seat-runner surfaces.
