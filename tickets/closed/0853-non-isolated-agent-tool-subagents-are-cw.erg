@@ -2,6 +2,7 @@
 Title: Non-isolated Agent-tool subagents are cwd-pinned to the parent's worktree and cannot reach a separate review-* worktree
 Created: 2026-09-04
 Author: claude
+Closed: autoclosed — PR #1130
 
 --- log ---
 2026-09-04T07:41Z claude created
@@ -11,6 +12,12 @@ Author: claude
 2026-10-02T09:55Z MinhHaDuong claude note blind-spot disposition: extending scripts/guard-destructive-bash.sh to checkout/restore was deliberately rejected by ticket 0976 (narrowed to reset --hard only) — keep prompt+ratchet enforcement, and note the 0233 invariant tension (prompt-enforced read-only) in the PR body for the author. 0990 (raid-level contract) stays owned separately, not closed by this.
 2026-10-02T09:56Z MinhHaDuong claude note raid plan 2026-10-02: red-first ratchet test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run in tests/test_verify_fork_contracts.py (section-sliced: phases 2-4 + phase 6 must each carry the destructive-checkout ban, git show alternative, NOT-RUN refusal, and git -C contract); then edit skills/gaze/SKILL.md only (intro L300-301, bullets L310-318, spawn sites L337/L361/L441, gate L506-510, REROLL L565, fence comment L168); keep isolation-prohibition strings verbatim (ratchets L112, L135 expect exactly 4 isolation:worktree tokens); do not touch guard-destructive-bash.sh (0976).
 2026-10-02T09:57Z MinhHaDuong claude note raid feasibility PASS 2026-10-02: all plan anchors verified on main — gaze SKILL L168/L300-301/L310-318/L337/L361/L441/L500-510/L565, section headers L293/L479/L496/L556, ratchet anchors in test_verify_fork_contracts.py (VERIFY L23, _normalize, isolation prohibition, count==4), no cross-ticket file conflicts.
+
+2026-10-02T09:59Z claude note hunt t0853 landed scope: gaze SKILL.md prompt edits only — portable git -C reach contract replaces pinned-cwd phrasing (intro, bullets, A/B/C spawn sites, phase-6 gate block, REROLL re-spawn, phase-1 fence comment); destructive-checkout ban (no `git checkout <ref> -- `, `git restore .`, `git reset --hard`; use `git show <ref>:<path>` per rules/git.md) + NOT-RUN refusal when the review tree is unreachable or its HEAD differs from the anchor; red-first ratchet test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run added to tests/test_verify_fork_contracts.py. guard-destructive-bash.sh deliberately untouched (0976); isolation-prohibition strings verbatim (count==4 preserved); marker-file fixture dropped (no spawn tool in CI); 0990 stays open, owned separately.
+
+2026-10-02T10:14Z MinhHaDuong bump verify-reroll — round 1: ratchet asserts git -C contract only for phases 2-4, not the phase-6 gate; PR body misstates 26c8ab73 scope
+
+2026-10-02T10:42Z reviewer closed — autoclosed — PR #1130
 --- body ---
 ## Context
 

@@ -165,7 +165,7 @@ if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_t
     echo "gaze: cannot create isolated review worktree for PR <pr-number>; refusing to fall back into the invoking tree" >&2
     exit 1
 fi
-# The cwd-pinned reviewer agents and the REROLL fix agent run inside
+# The reviewer agents (review worktree via git -C) and the REROLL fix agent run inside
 # $primary_root/.claude/worktrees/review-<pr-number>; the main repo is never
 # switched, never dirtied. (Exception: phase 5 /simplify is still a direct
 # invocation and runs from the fork's own cwd, not review-<pr> — see its note below.)
@@ -297,9 +297,12 @@ invocations** (ticket 0216). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
-deterministically: each reviewer is a **read-only** Agent whose
-cwd is **pinned to the existing review worktree** `$primary_root/.claude/worktrees/review-<pr-number>`
-(created in phase 1). Waiting on a written artifact, not on a return value, is
+deterministically: each reviewer is a **read-only** Agent that
+operates on the existing review worktree
+`$primary_root/.claude/worktrees/review-<pr-number>`
+(created in phase 1) via `git -C` — never assume the spawned agent's
+own cwd is the review tree; how a runtime sets a spawned agent's cwd
+is not portable, `git -C` is (ticket 0853). Waiting on a written artifact, not on a return value, is
 load-bearing, not incidental — see **Fork execution contract** below: this
 skill runs as a `context: fork`, and a fork cannot wait on background
 agents. Do **not** give these agents `isolation: "worktree"` —
@@ -310,8 +313,18 @@ agent (a mutator) gets `isolation: "worktree"`.
 Every reviewer agent's prompt:
 - opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
   procedure it runs and the PR;
-- forbids `cd` out of the pinned cwd, and forbids commits, pushes, new
-  branches, new PRs, and any write to `tickets/*.erg` (read-only role);
+- forbids commits, pushes, new branches, new PRs, and any write to
+  `tickets/*.erg` (read-only role);
+- runs every git read as
+  `git -C "$primary_root/.claude/worktrees/review-<pr-number>" ...` —
+  it never assumes its own cwd is the review tree (portable across
+  runtimes);
+- bans working-tree overwrites outright: no `git checkout <ref> -- `,
+  no `git restore .`, no `git reset --hard`; inspect another version
+  with `git show <ref>:<path>` (rules/git.md);
+- refuses and reports NOT-RUN if the review worktree is unreachable, or
+  its HEAD differs from the anchor HEAD carried in the prompt — it never
+  falls back to the session cwd;
 - imperatively embeds the sub-skill's operating procedure (the steps below),
   except Agent A, which invokes the live adherence contract as specified below;
 - ends by **returning a single structured block as its final message**, which
@@ -334,8 +347,8 @@ model, so on a top-tier session this fan-out is silently a top-model wave.
 **Label-skip:** if the PR carries the
 `verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
 do **not** spawn this agent — the adherence check already ran clean before the
-PR was opened. Otherwise spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
-whose FIRST action is to invoke the live contract:
+PR was opened. Otherwise spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
+(all git via `git -C`), whose FIRST action is to invoke the live contract:
 
 <!-- harness-extension-point: runtime skill-loader invocation. -->
 ```
@@ -358,8 +371,8 @@ phase artifact using the same completion protocol as the other reviewers.
 the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup
 summary; it runs on the **small** and **full** tiers. This is a built-in slash command
 whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
-embedded**: spawn a read-only Agent, cwd pinned to `$primary_root/.claude/worktrees/review-<pr-number>`,
-same containment rails, whose prompt first runs `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
+embedded**: spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
+(all git via `git -C`), same containment rails, whose prompt first runs `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
 them.** `/review` checks prose against a house rulebook, and told nothing it
 picks one by inference — on a manuscript merge request it read
 `rules/doctype/book.md` where the project manifest declares `techreport`
@@ -438,8 +451,8 @@ sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
 path that does not exist under that cwd (exit 2, no verdict) — treat a
 refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
-the audit measured as correct for it (ticket 0550). Spawn a read-only Agent, cwd `$primary_root/.claude/worktrees/review-<pr-number>`,
-whose embedded procedure is: read the linked ticket's exit criteria and the
+the audit measured as correct for it (ticket 0550). Spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
+(all git via `git -C`), whose embedded procedure is: read the linked ticket's exit criteria and the
 diff, assess risk, apply the Width-gate for round-1 code, and run the selected
 perspective set in parallel —
 **code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
@@ -496,18 +509,28 @@ to the PR branch. Wait for its fixes (if any) to land before the gate reads stat
 ### 6. Gate (the non-rubber-stamp step)
 
 Pass this run's `gate_session_id` and `review_tree` to the gate agent. It must
-read the tip SHA from the pinned review worktree immediately before ruling and
-put all three values in its PR verdict comment. If the worktree is unavailable
-or its HEAD cannot be read, ESCALATE without posting an approval.
+read the tip SHA from the review worktree immediately before ruling and
+put all three values in its PR verdict comment. If the worktree is unavailable,
+its HEAD cannot be read, or its HEAD differs from the anchor HEAD carried in
+the prompt, the gate agent refuses and reports NOT-RUN — it never falls back
+to the session cwd — and the orchestrator ESCALATEs without posting an approval.
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
 Agent (waited for by polling its written verdict artifact),
-**`model-level: standard`** (a reviewer, below the coder tier), cwd **pinned to**
+**`model-level: standard`** (a reviewer, below the coder tier), operating on
+the review worktree
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
-`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`); never
-`isolation: "worktree"`. Containment rails as above: no `cd` out of the pinned
-cwd, no commits/pushes/branches/PRs; the gate's **one** permitted write is the
+`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`)
+— every git read runs as `git -C "$primary_root/.claude/worktrees/review-<pr-number>" ...`,
+never assuming its own cwd is the review tree; never
+`isolation: "worktree"`. Containment rails: no `cd` into or out of another
+tree, no commits/pushes/branches/PRs; working-tree overwrites are banned
+outright — no `git checkout <ref> -- `, no `git restore .`, no
+`git reset --hard`; inspect another version with `git show <ref>:<path>`
+(rules/git.md); if the review worktree is unreachable or its HEAD differs from
+the anchor HEAD, report NOT-RUN — never fall back to the session cwd. The
+gate's **one** permitted write is the
 `${ERG:-erg} log <ticket-id> …` reroll-bump line (and its PR verdict comment) —
 it edits no other `tickets/*.erg`. The agent's prompt embeds the gate procedure
 imperatively and returns the YAML verdict block below as its **final message**;
@@ -562,7 +585,7 @@ breaker.
   intentions through the active runtime), waited for by polling
   the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
-  re-spawning the read-only gate Agent** (pinned cwd `$primary_root/.claude/worktrees/review-<pr-number>`, as in
+  re-spawning the read-only gate Agent** (review worktree `$primary_root/.claude/worktrees/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
   still-unresolved items and the gate's rationale. End the skill.

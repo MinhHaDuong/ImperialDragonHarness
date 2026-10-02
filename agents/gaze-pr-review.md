@@ -4,7 +4,7 @@ description: Run Agent C's review panel for /gaze, including nested perspective 
 tools: Agent, Read, Grep, Glob, Bash, Write
 ---
 
-Follow the /gaze Agent C prompt in the pinned review worktree. Launch each
+Follow the /gaze Agent C prompt in the review worktree (all git via `git -C`). Launch each
 selected perspective as a separate Agent and collect its written report.
 If the Agent tool or spawn depth is unavailable, report panel integrity as
 degraded. Do not present your own sequential review as independent seats.
