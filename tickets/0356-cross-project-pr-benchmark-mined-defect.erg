@@ -9,6 +9,7 @@ Label: deferred
 2026-07-15T06:09Z claude note child of tickets/0205 (external-reviewer panel tracker); deferred at author's request, no active work planned yet
 2026-07-15T06:25Z Minh Ha-Duong note adapted to the squad-management model per author review of PR #639 — pairwise unseating verdict replaced by challenger-vs-squad non-redundant-coverage criterion
 
+2026-10-02T08:01Z MinhHaDuong note absorbed by tickets/1008 (ground-truth seeding) per the 2026-10-02 reviewer-attribution design — the mined-defect sample is the label bottleneck fix; challenger-vs-squad criterion maps onto 1007's correlation and marginal-coverage surfaces
 --- body ---
 ## Context
 

@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Attribution record template and roar step-6 capture
+Created: 2026-10-02
+Author: MinhHaDuong
+Blocked-by: 1004
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/1004. The attribution record (spec §4) is the coaching
+system's only capture: one journal entry per reviewed merge, fixed
+grep-able lines, findings anchored basename:line, model versions pinned,
+writer included.
+
+## Actions
+
+1. Define the record template (spec §4 shape) as the canonical example in
+   the spec or a roar reference file; fixed field names, no prose in
+   fact lines.
+2. Extend roar step 6: when the merged PR was reviewed, write the
+   attribution entry under the project's memory/journal/, including
+   writer line (runtime, model, effort), one reviewer line per reviewer
+   with findings and anchors, and `defects-confirmed-post-merge: none`
+   initially.
+3. Fail-loud capture: a reviewed PR whose record cannot name its
+   reviewers is reported, never filled in from memory (spec §4.6).
+4. Tests: template parses with a fixed-line reader; anchors normalize
+   basename:line; version fields present.
+
+## Exit criteria
+
+- [ ] Roar on a reviewed merge writes a valid attribution record
+- [ ] A fixed-line reader (groundwork for 1007) parses it without prose
+      heuristics

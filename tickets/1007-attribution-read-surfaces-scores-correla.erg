@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Attribution read surfaces: scores, correlation, marginal coverage
+Created: 2026-10-02
+Author: MinhHaDuong
+Blocked-by: 1005
+
+--- log ---
+2026-10-02T08:00Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Child of tickets/1004, blocked by 1005. All coaching numbers are derived
+at read time (spec §6); nothing judged is ever stored in the records.
+
+## Actions
+
+1. One query tool over a project's attribution records producing the
+   three surfaces: per-seat scores (labeled-game catch rate, noise rate,
+   run-failure rate, Beta-Binomial credible intervals), pairwise
+   concordance tables including writer-reviewer pairs (conditioned on
+   defect-bearing games), and marginal unique-catch coverage of seat B
+   given seat A.
+2. Migrate skills/roar/enumerate-merges.py here (per the celebration
+   teardown, spec §9): enumerate merged PRs since a reference is exactly
+   the enumeration the query needs; the write path is deleted in 1009,
+   the read capability survives here.
+3. Malformed record lines WARN on stderr, never silently dropped (the
+   harvest convention).
+4. Act-on thresholds follow spec §7: report always, act only when
+   intervals justify it.
+
+## Exit criteria
+
+- [ ] Scores table renders from real records with credible intervals
+- [ ] Correlation table renders with the four concordance cells per pair
+- [ ] Marginal coverage column distinguishes a duplicate seat from a
+      complementary one on the same records
