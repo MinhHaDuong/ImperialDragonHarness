@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-02T11:05Z reviewer created
 
+2026-10-02T11:30Z reviewer MinhHaDuong decision Approved option 1: land wave annotations as ONE commit before Phase 5 spawns executors, all wave branches base on it, wave rebases the shared commit once together; option 2 sidecar is rejected
 --- body ---
 ## Context
 
