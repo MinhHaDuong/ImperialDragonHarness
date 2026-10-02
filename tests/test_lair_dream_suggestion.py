@@ -8,10 +8,13 @@ the author. These tests pin those negatives against drift of the skill text,
 in the pattern of ``tests/test_lair_state_via_pr.py`` (string-match ratchet
 on the skill text; not a grep for the string '5').
 
-The residue method: split the step into sentences, drop every sentence that
-is itself a prohibition ("do not", "no ", "never", "omit"), and assert the
-remaining instructions carry none of the forbidden behaviors. A raw
-substring match would false-positive on the very prohibitions it guards.
+The residue method (hardened after the round-1 review's mutant evidence): a
+prohibition is deleted only with its own scope — from the marker to the next
+sentence or clause boundary — so a forbidden verb sharing a sentence with a
+hedge ("Ask the user whether to run dream, no more than once.") survives the
+deletion and fails the ratchet. Dropping whole sentences on a substring
+marker let exactly those mutants through; the markers are word-boundary
+anchored so "piano" or "know" cannot shield a sentence either.
 """
 
 import re
@@ -23,54 +26,77 @@ LAIR_SKILL = (REPO / "skills" / "lair" / "SKILL.md").read_text()
 
 STEP_11_HEADING = "**Suggest a dream in the conclusion when relevant.**"
 
-# A sentence carrying one of these markers is itself a prohibition
-# (e.g. "No timer or automatic invocation."), not an instruction to forbid.
-PROHIBITION_MARKERS = ("do not", "does not", "no ", "never", "omit")
+# A prohibition deletes only its own scope: the marker plus the text up to the
+# next sentence or clause boundary (. ; :). Word boundaries keep "piano" or
+# "know" from matching the "no" marker.
+PROHIBITION_SCOPE = re.compile(r"\b(?:do(?:es)? not|never|omit|no)\b[^.;:]*")
+
+# The forbidden instruction vocabulary, broadened after the round-1 mutants
+# ("Run /dream now.", "Prompt the user to confirm.", "Set a reminder",
+# "Run it via CronCreate." all passed the first, narrow vocabulary).
+QUESTION = re.compile(r"\bask\b|\bquestion|\bprompt\b|\bconfirm\b|\banswer")
+WAITING = re.compile(r"\bwait|\bpoll\b|\bblock\b|\bpause\b")
+LAUNCH = re.compile(r"\blaunch|\binvok|\brun|\bstart\b|\bexecut|\bspawn")
+TIMER = re.compile(r"\btimer|\bsleep\b|\bcron|\bschedul|\bremind|\balarm\b|\bwakeup")
 
 
 def step_11() -> str:
-    """The dream-suggestion step, up to any later numbered step."""
+    """The dream-suggestion step, up to any later step or heading."""
     step = LAIR_SKILL.split(STEP_11_HEADING, 1)[1]
-    return step.split("\n12. ", 1)[0]
+    return re.split(r"\n(?=\d+\. |# )", step, 1)[0]
 
 
 def instruction_residue(text: str) -> str:
-    """Lowercased instructions left after prohibition sentences are dropped."""
-    kept = [
-        sentence
-        for sentence in re.split(r"(?<=[.;])\s+", text.lower())
-        if not any(marker in sentence for marker in PROHIBITION_MARKERS)
-    ]
-    return " ".join(kept)
+    """Lowercased text with each prohibition's scope deleted from it."""
+    return PROHIBITION_SCOPE.sub(" ", text.lower())
 
 
 def test_step_11_asks_no_question():
-    assert not re.search(r"\bask\b|\bquestion", instruction_residue(step_11())), (
-        "lair step 11 must not ask a question — the dream suggestion is "
-        "informational, the session finishes without a response"
+    assert not QUESTION.search(instruction_residue(step_11())), (
+        "lair step 11 must not ask a question or prompt for confirmation — "
+        "the dream suggestion is informational, the session finishes "
+        "without a response"
     )
 
 
 def test_step_11_does_not_wait():
-    assert not re.search(r"\bwait", instruction_residue(step_11())), (
-        "lair step 11 must not wait for a reply — lair completes all its "
-        "work and finishes"
+    assert not WAITING.search(instruction_residue(step_11())), (
+        "lair step 11 must not wait, poll or block for a reply — lair "
+        "completes all its work and finishes"
     )
 
 
 def test_step_11_does_not_launch_dream():
-    assert not re.search(r"\blaunch|\binvok", instruction_residue(step_11())), (
-        "lair step 11 must not launch or invoke dream — a separate "
-        "invocation by the author is the whole point of the suggestion"
+    assert not LAUNCH.search(instruction_residue(step_11())), (
+        "lair step 11 must not launch, invoke, run, start or spawn dream — "
+        "a separate invocation by the author is the whole point of the "
+        "suggestion"
     )
 
 
 def test_step_11_has_no_timer():
-    residue = instruction_residue(step_11())
-    assert not re.search(r"\btimer|\bsleep\b|\bcron\b|\bschedul", residue), (
-        "lair step 11 must not set or schedule anything — no timer, no "
-        "automatic invocation, the threshold check runs only inside a lair "
-        "session"
+    assert not TIMER.search(instruction_residue(step_11())), (
+        "lair step 11 must not set or schedule anything — no timer, "
+        "reminder, alarm or automatic invocation; the threshold check runs "
+        "only inside a lair session"
+    )
+
+
+def test_step_11_keeps_threshold_and_suggestion_text():
+    text = step_11()
+    assert "5 or more new experiences" in text, (
+        "lair step 11 must keep the hardcoded five-experience threshold in "
+        "its own words — the suggestion appears only above it and the "
+        "summary stays silent below"
+    )
+    assert "/dream <project-repository>" in text, (
+        "lair step 11 must keep the suggestion's `/dream "
+        "<project-repository>` quote — the author's separate invocation is "
+        "the follow-up being suggested"
+    )
+    assert "final summary" in text, (
+        "the suggestion belongs to lair's final summary — after all lair "
+        "work, not mid-run"
     )
 
 
