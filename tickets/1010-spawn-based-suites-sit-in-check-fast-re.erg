@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Spawn-based suites sit in check-fast: re-tier the marking drift
+Created: 2026-10-02
+Author: vibe
+
+--- log ---
+2026-10-02T08:42Z vibe created
+
+--- body ---
+## Context
+
+`pytest.ini` defines the `integration` marker as "spawns subprocesses or uses
+sleep-based timing (excluded from check-fast)". Two suites violate that
+definition from inside the fast tier, and they are the fast tier's cost:
+
+- `tests/test_worktree_tools.py` — every test spawns: the `origin` fixture
+  runs `git init`/`push`, and each test calls `run()`/`git()` (subprocess).
+  26 of its 37 tests carry no `integration` mark (10 later ones do — pure
+  marking drift). The unmarked 26 measured **13.55s** — 73% of the entire
+  18.4s `make check-fast`.
+- `tests/test_adapter_inventory.py` — `collect_nodeids()` runs a full
+  `pytest --collect-only` subprocess; its callers are unmarked
+  (~1s, second-slowest fast-tier test).
+
+Measured on origin/main 5e600151: `make check-fast` 816 passed in 18.4s;
+durations top-12 all `test_gc_*` at ~0.82s. The full `make check` already runs
+every test in both files, so re-tiering moves cost out of the edit loop
+without growing the pre-PR gate.
+
+## Exit criteria
+- [ ] Every test in `tests/test_worktree_tools.py` carries the `integration`
+      mark (module-level `pytestmark` list alongside the existing skipif),
+      with the now-redundant per-test decorators removed
+- [ ] The spawn-based tests in `tests/test_adapter_inventory.py` carry the
+      `integration` mark
+- [ ] `make check-fast` drops to roughly half or less (target: under 10s) and
+      still passes
+- [ ] Both suites still pass in full `make check`
+- [ ] `make check` passes

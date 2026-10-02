@@ -25,10 +25,16 @@ from child_env import child_env
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("git") is None or shutil.which("jq") is None,
-    reason="git and jq required",
-)
+# Every test in this suite spawns git subprocesses (the `origin` fixture runs
+# `git init`/`push`; each test calls `run()`/`git()`), so the whole file is
+# `integration` by pytest.ini's definition — it does not belong in check-fast.
+pytestmark = [
+    pytest.mark.skipif(
+        shutil.which("git") is None or shutil.which("jq") is None,
+        reason="git and jq required",
+    ),
+    pytest.mark.integration,
+]
 
 
 def run(args, cwd=None, check=True):
@@ -308,7 +314,6 @@ def test_gc_keeps_dirty_out_of_tree_worktree(origin, tmp_path):
     assert str(wt) in _worktree_paths(primary)
 
 
-@pytest.mark.integration
 def test_gc_reports_unregistered_husk_dir(origin):
     """A husk dir under .claude/worktrees/ that is NOT a registered worktree
     (a deregistered session base cwd, only a scratch .claude/ left behind) must
@@ -324,7 +329,6 @@ def test_gc_reports_unregistered_husk_dir(origin):
     assert "husk" in res.stdout
 
 
-@pytest.mark.integration
 def test_gc_reports_husk_when_run_from_linked_worktree(origin):
     """The husk scan must root on the PRIMARY repo, not on the `repo` arg's own
     toplevel — else running gc from a linked worktree (the harness's normal cwd,
@@ -340,7 +344,6 @@ def test_gc_reports_husk_when_run_from_linked_worktree(origin):
     assert "husk" in res.stdout
 
 
-@pytest.mark.integration
 def test_gc_does_not_report_registered_worktree_under_claude_worktrees(origin):
     """A REGISTERED worktree living directly under .claude/worktrees/ (the real
     harness layout) must NOT be flagged as a husk — it is in the registered set,
@@ -358,7 +361,6 @@ def test_gc_does_not_report_registered_worktree_under_claude_worktrees(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
-@pytest.mark.integration
 def test_gc_does_not_report_container_of_nested_registered_worktree(origin):
     """A registered worktree at .claude/worktrees/g/leaf (multi-segment names are
     allowed by EnterWorktree's schema) must NOT make the container dir `g` be
@@ -378,7 +380,6 @@ def test_gc_does_not_report_container_of_nested_registered_worktree(origin):
     assert str(leaf) in _worktree_paths(primary)
 
 
-@pytest.mark.integration
 def test_gc_husk_name_with_newline_cannot_forge_line(origin):
     """A husk dirname with an embedded newline must not forge an extra output
     line: raw interpolation of $(basename) / $dir would split the message and let
@@ -395,7 +396,6 @@ def test_gc_husk_name_with_newline_cannot_forge_line(origin):
             assert line.startswith("worktree-gc:"), f"forged line: {line!r}"
 
 
-@pytest.mark.integration
 def test_gc_warns_when_worktrees_dir_unreadable(origin):
     """When .claude/worktrees/ is unreadable, `find` inside the process
     substitution fails invisibly to set -e and the scan silently reports zero
@@ -552,7 +552,6 @@ def test_preflight_never_purges_non_git_directory(tmp_path):
     assert base.read_text() == "keep\n"
 
 
-@pytest.mark.integration
 def test_preflight_defaults_to_cwd(origin):
     """No arg → check the current directory. Mirrors how skill prose invokes
     it from inside the worktree it is about to exit."""
@@ -569,7 +568,6 @@ def test_preflight_defaults_to_cwd(origin):
     assert "0998-draft.erg" in res.stderr
 
 
-@pytest.mark.integration
 def test_preflight_errors_on_missing_path():
     res = subprocess.run(
         [str(SCRIPTS / "worktree-exit-preflight.sh"), "/no/such/dir"],
@@ -593,7 +591,6 @@ def test_gc_skips_locked_gone_worktree(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
-@pytest.mark.integration
 def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     """A harness lock records the owning session's pid in its reason; a lock
     whose pid is dead is a stale in-use marker, not an active session — the
@@ -614,7 +611,6 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
-@pytest.mark.integration
 def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""
@@ -635,7 +631,6 @@ def test_gc_keeps_live_pid_locked_worktree(origin):
         live.wait()
 
 
-@pytest.mark.integration
 def test_gc_skips_live_process_cwd_worktree(origin):
     """A clean worktree on a gone branch whose dir is a live process's cwd is
     an ACTIVE session's base, not an abandoned tree — the exact state the

@@ -20,6 +20,8 @@ along with an unchanged support claim.
 
 import json
 import subprocess
+
+import pytest
 from pathlib import Path
 
 from child_env import child_env
@@ -75,6 +77,7 @@ def inconsistencies(doc, nodeids):
     return problems
 
 
+@pytest.mark.integration  # collect_nodeids() runs a pytest --collect-only subprocess
 def test_every_assertion_is_covered():
     problems = inconsistencies(inventory(), collect_nodeids())
     assert problems == [], "uncovered or inconsistent inventory entries"
