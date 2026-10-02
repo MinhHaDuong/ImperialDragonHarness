@@ -12,7 +12,7 @@ The closed acceptance ledger
 edited by this document: the original cell verdict S9.codex = **fail**
 stands as recorded. This document records a new observation under a
 changed configuration, per the author decisions of 2026-10-02 recorded in
-[ticket 1019](../../tickets/1019-codex-s9-mitigation-close-the-user-level.erg).
+[ticket 1019](../../tickets/closed/1019-codex-s9-mitigation-close-the-user-level.erg).
 
 ## Context
 
