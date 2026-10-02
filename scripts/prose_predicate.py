@@ -55,9 +55,7 @@ import tomllib
 from pathlib import Path
 
 # Extension -> format axis value. Project-agnostic by design: keyed on the
-# filename suffix, never on a directory like src/ or scripts/ — the scoping
-# holds for the format axis; the risk axis (--risk) is directory-keyed by
-# design (ticket 0902).
+# filename suffix, never on a directory like src/ or scripts.
 EXT_FORMAT = {
     ".py": "python",
     ".sh": "bash",
@@ -306,10 +304,8 @@ def main() -> int:
     )
     args = parser.parse_args()
     if args.risk:
-        # --risk matches path patterns only; it reads no disk, so the
-        # missing-path refusal below is deliberately NOT inherited: the
-        # anchor roster lists deleted/renamed paths that do not exist at
-        # HEAD, and refusing them would ESCALATE routine PRs (ticket 0902).
+        # --risk reads no disk: the missing-path refusal below is
+        # deliberately not inherited (ticket 0902).
         print(risk_band(args.files))
         return 0
     missing = [f for f in args.files if not Path(f).exists()]

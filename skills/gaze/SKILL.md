@@ -227,7 +227,7 @@ fi
     `review:standard` request runs all five Agent C perspectives.
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
-  The band is the second axis: size and risk are two axes, never collapsed
+  Size and risk are two axes, never collapsed
   into one. The 15+ files un-reviewable breaker is checked before the band —
   a band never applies to an un-reviewable PR. Classify the changed-file
   roster with a third, cwd-anchored call — it reads no disk (pure
@@ -241,7 +241,7 @@ fi
   Combine band and tier on the round-1 size classification only — a round ≥ 2
   stays **full**, and an explicit `review:standard` pre-empts both:
   - band `high` → raise one rung: tiny → small, small → full — clamped at
-    `full` (at `full` the band is a no-op).
+    `full`.
   - band `low` → lower one rung: full → small, small → tiny — floored at
     `tiny`; the battery never drops below Agent A + Agent C + the phase-6
     gate, at every tier and every band.
