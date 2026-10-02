@@ -18,11 +18,12 @@ which is the test it should be held to, like everything else it measures.
 ## The pipeline
 
 ```bash
-C=~/.idh/scripts/census
+IDH_ROOT="$(git rev-parse --show-toplevel)"   # the harness checkout, from anywhere inside it
+C=$IDH_ROOT/scripts/census
 OUT=/tmp/census
 
 python3 $C/traces.py          --out $OUT/census.json         # the main pass
-python3 $C/deps.py            --root ~/.idh --out $OUT/deps.json
+python3 $C/deps.py            --root "$IDH_ROOT" --out $OUT/deps.json
 python3 $C/memory-recall.py   --out $OUT/memory.json         # does the resident index get followed?
 python3 $C/report.py --census $OUT/census.json --gitmeta $OUT/gitmeta.json \
                      --start 2026-06-01 --end 2026-09-09 --out $OUT/report.json
