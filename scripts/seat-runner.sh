@@ -83,6 +83,9 @@
 #                          /health); empty string skips the reachability probe.
 #
 # Env: SEAT_TIMEOUT (per-seat wall-clock cap, seconds; default 600)
+#      SEAT_RELAY_WAIT_TICKS (relay-socket readiness poll bound, 0.1s ticks;
+#      default 50 = 5s) — tests that deliberately stub the relay down set this
+#      low so they don't pay the full bound (ticket 1012).
 #      AIDER_API_TIMEOUT (aider/litellm per-request API timeout, seconds; default
 #      120) — a backstop that converts a silent litellm hang into a stderr
 #      exception the failure tail surfaces, instead of a SEAT_TIMEOUT SIGKILL with
@@ -100,6 +103,7 @@ MODEL="openai/devstral-small-2"
 OUT="/dev/stdout"
 IMAGE="localhost/seat-runner:v1"   # ubuntu:24.04 + python3 + git + ca-certs
 SEAT_TIMEOUT="${SEAT_TIMEOUT:-600}"
+SEAT_RELAY_WAIT_TICKS="${SEAT_RELAY_WAIT_TICKS:-50}"
 SELF_TEST_ONLY=0
 CREDENTIAL_ENV=""          # env var holding the endpoint's API key (never argv)
 HEALTH_PATH="/health"      # probe path appended to the origin; "" skips the probe
@@ -311,7 +315,7 @@ fi
 python3 "$RELAY" --listen "unix:${WORK}/relay.sock" \
                  --connect "tcp:${ENDPOINT_HOST}:${ENDPOINT_PORT}" &
 RELAY_PID=$!
-for _ in $(seq 1 50); do [[ -S "${WORK}/relay.sock" ]] && break; sleep 0.1; done
+for _ in $(seq 1 "${SEAT_RELAY_WAIT_TICKS}"); do [[ -S "${WORK}/relay.sock" ]] && break; sleep 0.1; done
 [[ -S "${WORK}/relay.sock" ]] || { echo "seat-runner: FATAL relay socket never appeared" >&2; exit 1; }
 
 # ── Read-only checkout + review prompt (skipped for --self-test-only) ─────────

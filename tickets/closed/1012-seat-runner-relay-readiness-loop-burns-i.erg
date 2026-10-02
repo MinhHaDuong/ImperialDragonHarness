@@ -1,0 +1,12 @@
+%erg 0.1
+Title: seat-runner relay readiness loop burns its full 5s in stubbed test runs
+Created: 2026-10-02
+Author: vibe
+Closed: autoclosed — PR #1122
+
+--- log ---
+2026-10-02T09:09Z vibe created
+
+2026-10-02T09:09Z MinhHaDuong Profiled via xtrace per-command timestamps (ticket 1011 monolith investigation): the reasoning-probe body-build case stubs python3, the host relay therefore never binds, and the readiness loop at scripts/seat-runner.sh:314 burns its full 50x0.1s bound every run — 5.09 of the suite's 9.6s.
+2026-10-02T09:12Z MinhHaDuong closed — autoclosed — PR #1122
+--- body ---

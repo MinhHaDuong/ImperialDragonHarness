@@ -627,7 +627,7 @@ case "$script" in
 esac
 STUB
     chmod +x "$_rpB/curl" "$_rpB/python3"
-    errB="$(MY_TEST_VAR="probe-key-${RANDOM}" PATH="$_rpB:$PATH" \
+    errB="$(MY_TEST_VAR="probe-key-${RANDOM}" SEAT_RELAY_WAIT_TICKS=5 PATH="$_rpB:$PATH" \
         bash "$SR" --base origin/main --branch feature \
         --model openai/devstral-small-2 --endpoint http://127.0.0.1:9/v1 --health-path "" \
         --credential-env MY_TEST_VAR --out "$_rpB/out" 2>&1 >/dev/null || true)"
