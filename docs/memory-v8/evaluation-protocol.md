@@ -102,8 +102,10 @@ blocks a harness pull, and no branch is silently abandoned.
 Expected: sources et exceptions conservées ; hypothèses distinguées des
 faits.
 Setup: one dream run whose journal pool contains at least two similar cases
-with opposite results. Observation: the accepted report in
-[memory/dreams/](../../memory/dreams/) keeps both sources and the exception,
+with opposite results. Observation: the accepted report in `memory/dreams/`
+(surface instance:
+[2026-10-02-pilot-first-dream.md](../../memory/dreams/2026-10-02-pilot-first-dream.md))
+keeps both sources and the exception,
 distinguishes hypotheses from facts, and prunes nothing to force coherence.
 
 **S7 — Deux passages et une source corrigée.**
@@ -189,12 +191,16 @@ margin stays as predeclared here.
 
 Trials reuse the existing v8 surfaces; nothing new is instrumented:
 
-- **Capture evidence** = journal entries in
-  [memory/journal/](../../memory/journal/), written through
+- **Capture evidence** = journal entries in `memory/journal/YYYY/` (entry
+  instance:
+  [2026-10-02-memory-v8-pilot-established.md](../../memory/journal/2026/2026-10-02-memory-v8-pilot-established.md)),
+  written through
   [scripts/memory-capture.sh](../../scripts/memory-capture.sh) with the
   audience declared at capture; the journal is append-only.
-- **Consolidation evidence** = accepted dream reports in
-  [memory/dreams/](../../memory/dreams/) plus the resulting index state.
+- **Consolidation evidence** = accepted dream reports in `memory/dreams/`
+  (surface instance:
+  [2026-10-02-pilot-first-dream.md](../../memory/dreams/2026-10-02-pilot-first-dream.md))
+  plus the resulting index state.
 - **Obedience evidence** = commit hashes on the trial branches (the absence
   of a rule proposal and of harness writes is inspectable in the diff), plus
   the runtime's own event stream or transcript where it records one.
