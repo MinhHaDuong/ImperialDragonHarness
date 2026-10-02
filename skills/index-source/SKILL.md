@@ -17,7 +17,7 @@ are the brains: resolve identifiers, classify the type, clean the metadata.
 
 This is the URL sibling of `zotero-import` (which does PDFs). It follows the EDM
 workflow: stage in `docs/`, store in Zotero; `docs/` and `.bib` are git-ignored
-staging, never the home (see `rules/edm.md`).
+staging, never the home (see `rules/zotero.md`).
 
 ## Happy path
 

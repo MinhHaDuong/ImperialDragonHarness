@@ -5,12 +5,13 @@ paths:
   - "**/docs/**"
 last-reviewed: 2026-08-14
 ---
-# Electronic document management (EDM)
+# Zotero management
 
 Loaded when you touch a bibliography or a staging directory. The other half of
 its trigger is a task, which no glob reaches: `/zotero-import` and
-`/index-source` name this file, and a session doing EDM work by hand should
-read it.
+`/index-source` name this file, and a session doing Zotero management by hand
+should read it. (Formerly titled "Electronic document management (EDM)" — the
+acronym is retired; the discipline is Zotero-specific.)
 
 Discipline for source documents and bibliography across writing and research
 projects. Zotero is the system of record; git holds neither the sources nor the

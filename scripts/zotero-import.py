@@ -2667,7 +2667,7 @@ def audit_one(path: Path, idx: dict[str, Any],
 def cmd_audit(args: argparse.Namespace) -> int:
     """Reconcile a staging directory against the library — the count check.
 
-    edm.md requires checking docs/ staging *and* Zotero before declaring a
+    zotero.md requires checking docs/ staging *and* Zotero before declaring a
     source missing or present. Doing that by hand over a few hundred files is
     where the miscounts come from; this is the mechanical form.
     """

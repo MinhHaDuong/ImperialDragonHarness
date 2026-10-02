@@ -36,7 +36,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [lang/fr.md](./lang/fr.md) | prose files | French language norms: guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
-| [edm.md](./edm.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | EDM discipline — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
+| [zotero.md](./zotero.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | Zotero management — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero-import` and `/index-source`. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
