@@ -38,8 +38,11 @@ and tickets/0205 is closed with its integration-review note.
 
 ## Ordering
 
-Capture first (1005), then 1006/1007/1008 in any order, teardown (1009)
-last: a teardown-first sequencing creates a recording gap.
+1008 is independent and can run at any time — it seeds the frozen
+benchmark board, not memory. Capture (1005) waits for the memory v8
+rollout (0909, author decision 2026-10-02), then 1006/1007 in any
+order; teardown (1009) last: a teardown-first sequencing creates a
+recording gap.
 
 ## Exit criteria
 
