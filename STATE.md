@@ -1,19 +1,20 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-01T22:24Z
+Last updated: 2026-10-02T06:24Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-01T22:24Z · as of b1971d66 -->
+<!-- generated 2026-10-02T06:24Z · as of 7546c576 -->
 
 **Tickets:** 18 ready · 21 blocked — `erg ready tickets/` for full list
   next: 0205 External-reviewer panel for verify — contract, … · 0485 EDM: dédoublonner la bibliothèque Zotero exista…
+**In flight:** 1 open PR, oldest #1102 0d · CI main: success
 **Recent (first-parent):**
+  7546c576 Merge pull request #1106 from MinhHaDuong/housekeeping-20261002
   b1971d66 Merge pull request #1105 from MinhHaDuong/housekeeping-state-2026-10-02
   bfade35d Merge pull request #1104 from MinhHaDuong/close-0999-integration
-  3d796179 Merge pull request #1103 from MinhHaDuong/roar-1101
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Tracker 0999 recorded portable installation and runtime registration, and closed after integration review. The old relocation and cutover tickets 0978 and 0986 are closed WONTDO.
@@ -22,7 +23,7 @@ Planning and documentation landed in PRs #1089/#1090. Runtime registration, laun
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for workstreams and `erg ready tickets/` for executable tickets.
-Continue the memory v8 session on 0911/0917; pilot 0920 is now unblocked and next. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
+Continue the memory v8 session on 0911/0917; pilot 0920 follows once both blockers close. Then address 0988 integration and 0916/0910 prompt/follow-up work; 0913 retains rollout.
 Memory v8 is drafted: repository Markdown, factual roar capture and dream suggested by lair after five new experiences. Native packaging and opt-in shell integration remain follow-on design; scheduling is external.
 The old library/compiler/loader train is superseded; runtime behaviour is unchanged.
 
