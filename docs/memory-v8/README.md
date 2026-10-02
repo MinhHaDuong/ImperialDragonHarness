@@ -79,6 +79,21 @@ Unavailable native sources are unknown, not empty. Interpreted native notes stay
 attributed notes, never reconstructed factual journal entries. See the
 [source inventory](source-inventory.md) before selecting pilot material.
 
+Pinned capture mechanics (ticket 0988): the audience judgment happens at
+capture, before the first byte is written — the capturing agent declares each
+entry public or not-cleared, and `scripts/memory-capture.sh` enforces the
+consequence. Public entries are written as plaintext Markdown;
+not-cleared entries are piped from stdin straight into
+`age -r <recipient> -o <entry>.age`, so plaintext never exists in the working
+tree; decrypt with `age -d -i <key> <entry>.age`. The per-project key is one
+age X25519 identity at `~/.config/keys/memory/<sha256[:16] of the normalized
+origin URL>.age` — normalized by stripping scheme, user and `.git` suffix and
+lowercasing, so every transport of the same project derives one key — created
+by `age-keygen -o` on first private capture and never tracked. Repository
+content names this derivation mechanism, not any key file, and computing the
+filename aids no decryption (the ciphertext-at-rest limit is recorded in the
+[pilot declaration](pilot.md)).
+
 ## Legacy retirement
 
 The native/shared-store DREAM helpers are retired. See the
