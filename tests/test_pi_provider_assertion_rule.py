@@ -55,5 +55,8 @@ def test_pi_characterization_doc_records_trigger_and_versions():
 
 def test_pi_adapter_tickets_carry_cross_reference():
     for tid in ("0923-first-runtime-adapter-offline-pilot", "0924-remaining-runtime-adapters"):
-        log = (REPO / "tickets" / (tid + ".erg")).read_text().split("--- log ---")[1]
+        # A ticket may since have been closed and archived to tickets/closed/.
+        candidates = [REPO / "tickets" / (tid + ".erg"), REPO / "tickets" / "closed" / (tid + ".erg")]
+        path = next(p for p in candidates if p.exists())
+        log = path.read_text().split("--- log ---")[1]
         assert "0979" in log
