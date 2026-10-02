@@ -1,0 +1,74 @@
+"""
+Ticket 1020: the retired ~/.idh layout must not survive in scripts/ as a live
+reference.
+
+The ~/.idh layout was retired by the portable lifecycle (0987/0999, PR #1091);
+the reference checkout is wherever the harness is installed. The agnostic gate
+(check-agnostic.sh) checks class-level patterns, not retired layout names, so
+this ratchet is the mechanical guard for the sweep: any NEW `~/.idh`-style
+reference in scripts/ fails, and the survivors that legitimately remain are
+pinned line-by-line as provenance.
+"""
+
+import re
+from pathlib import Path
+
+SCRIPTS = Path(__file__).parent.parent / "scripts"
+
+# A path-component `.idh` (the retired layout dir): `~/.idh`, `$HOME/.idh`,
+# `<home>/.idh`, `"$HOMEDIR"/.idh` — but NOT the `.idh-checks.json` filename,
+# which is a live convention, not a layout reference (the lookahead excludes it).
+STALE_LAYOUT = re.compile(r"\.idh(?!-)")
+
+# Provenance: file -> substrings each surviving line must carry. A match in
+# any other file, or a surviving line that no longer carries one of its
+# substrings, is a new live reference: red.
+PROVENANCE = {
+    # The 0984 probe emulates the pre-retirement layout in a disposable HOME
+    # (a .idh symlink over the real checkout); the rig name is a fixture, not
+    # a pointer at the live layout.
+    "probe-memory-symlink.py": (
+        "launch from <home>/.idh -> <home>/.claude",
+        "Launch through <home>/.idh -> <home>/.claude",
+        'link = rig_home / ".idh"',
+    ),
+    # Translates the retired `$HOME/.idh/scripts/...` hook-command form that
+    # pre-0982 settings still carry; removing the translator is a separate
+    # retirement, not this sweep.
+    "gen-claude-code-adapter-hooks.py": (
+        "`$HOME/.idh/scripts/x.sh a`",
+        "when the ~/.idh pointer is missing",
+        ".idh/scripts/(?P<name>",
+        ".idh/scripts/(?P=name)",
+    ),
+    # Containment self-test (0217): the sandbox must block secret reads from
+    # every location, retired ones included.
+    "seat-runner.sh": (
+        "'/.idh/scripts/bash-env.sh",
+    ),
+}
+
+
+def _stale_matches():
+    for path in sorted(SCRIPTS.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if STALE_LAYOUT.search(line):
+                yield path.relative_to(SCRIPTS).name, lineno, line
+
+
+def test_no_live_stale_layout_references_in_scripts():
+    offenders = []
+    for name, lineno, line in _stale_matches():
+        if name in PROVENANCE and any(sub in line for sub in PROVENANCE[name]):
+            continue
+        offenders.append(f"{name}:{lineno}: {line.strip()}")
+    assert not offenders, (
+        "Live ~/.idh layout reference(s) in scripts/ (ticket 1020):\n"
+        + "\n".join(offenders)
+    )
