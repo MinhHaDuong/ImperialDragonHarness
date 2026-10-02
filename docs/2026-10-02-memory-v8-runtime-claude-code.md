@@ -1,6 +1,6 @@
 # Memory v8 runtime evidence — Claude Code (ticket 0924)
 
-Evidence for [ticket 0924](../tickets/0924-remaining-runtime-adapters.erg), raid-0909
+Evidence for [ticket 0924](../tickets/closed/0924-remaining-runtime-adapters.erg), raid-0909
 Wave 3 (Vibe was smoked by
 [0923](2026-10-02-memory-v8-runtime-smoke.md); this wave covers Claude Code,
 Codex and Pi with one session each). Session: 2026-10-02, headless
@@ -128,6 +128,11 @@ no-alias probe) and the `ls -la CLAUDE.md` symlink record.
 - Claude Code's live profile (hooks) fired because the host profile is
   configured; a clean machine may not show the coherence hook. This leg's
   finding does not depend on that hook.
+- The raw event files quoted here (`events.jsonl`, `noalias-events.jsonl`,
+  `alias-events.jsonl` under `/tmp/mem0924/claude-code/`, plus the
+  `~/.claude/projects/` transcript) are ephemeral on the executing host and
+  are not preserved in the repository; the quotations in this document are
+  the surviving record.
 - The capture entry lives in a disposable clone; it is quoted here and the
   raw clone is deleted after this document records the evidence. The
   journal of record carries the wave's own capture entry

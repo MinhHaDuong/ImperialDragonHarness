@@ -36,7 +36,6 @@ HUNT_ENTRY = (
 )
 
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
-VERSION = re.compile(r"\d+\.\d+")
 
 # The five per-runtime verification legs of the raid annotation, as the
 # evidence docs must section them.
@@ -64,10 +63,19 @@ def test_evidence_document_exists_per_runtime():
 
 
 def test_each_document_declares_runtime_and_version():
+    # The exact versions this wave actually ran, so a doc that loses them
+    # (or drifts into a generic "2.x" claim) fails the pin.
+    versions = {
+        "Claude Code": "2.1.286",
+        "Codex": "0.159.3",
+        "Pi": "0.87.1",
+    }
     for runtime, doc in RUNTIME_DOCS.items():
         text = doc.read_text(encoding="utf-8")
         assert runtime in text, f"{doc.name}: runtime {runtime!r} not named"
-        assert VERSION.search(text), f"{doc.name}: no version recorded"
+        assert versions[runtime] in text, (
+            f"{doc.name}: version {versions[runtime]!r} not recorded"
+        )
         # Limits and omissions are reported, not converted into pass marks.
         assert re.search(r"\blimit", text, re.IGNORECASE), (
             f"{doc.name}: observed limits not recorded"
@@ -82,25 +90,40 @@ def test_each_document_records_every_leg():
 
 
 def test_each_leg_names_an_independent_evidence_channel():
-    # Antipattern: restating what the agent was handed. Each read-before-action
-    # and journal-search leg must name its evidence channel explicitly, and
-    # that channel must be one of the independent ones the annotation allows
-    # (transcript/access trace, behaviour tied to a theme, observed search
-    # hit) — never the agent's own restatement of the prompt.
+    # Antipattern: restating what the agent was handed. Every leg section of
+    # every evidence doc must carry its own "Evidence channel:" line naming
+    # the channel the observation came from — a transcript, an access trace,
+    # an observed search hit — never the agent's own restatement of the
+    # prompt. Requiring it per section (not just a global count) is what
+    # keeps legs (1) and (2), the behavioural legs, pinned.
     for doc in RUNTIME_DOCS.values():
         text = doc.read_text(encoding="utf-8")
-        assert text.count("Evidence channel:") >= len(LEGS) - 3, (
-            f"{doc.name}: legs do not name independent evidence channels"
-        )
+        sections = re.split(r"(?m)^## ", text)
+        for leg in LEGS:
+            matching = [s for s in sections if s.startswith(leg)]
+            assert len(matching) == 1, (
+                f"{doc.name}: expected exactly one {leg!r} section"
+            )
+            assert "Evidence channel:" in matching[0], (
+                f"{doc.name}: {leg!r} leg does not name its evidence channel"
+            )
 
 
 def test_each_document_records_the_disposable_clone():
     # One real session per runtime, against a disposable clone — the evidence
-    # doc must say where the session ran and that nothing was committed from
-    # the clone.
+    # doc must say where the session ran (this wave's scratch root) and that
+    # nothing was committed from the clone. Whitespace is normalised first
+    # so a phrase wrapped across lines still matches.
     for doc in RUNTIME_DOCS.values():
         text = doc.read_text(encoding="utf-8")
-        assert "clone" in text, f"{doc.name}: disposable clone not recorded"
+        flat = re.sub(r"\s+", " ", text)
+        assert "clone" in flat, f"{doc.name}: disposable clone not recorded"
+        assert "/tmp/mem0924/" in flat, (
+            f"{doc.name}: the clone's scratch root is not recorded"
+        )
+        assert re.search(r"[Nn]othing was committed", flat), (
+            f"{doc.name}: the no-commit-from-the-clone fact is not recorded"
+        )
 
 
 def test_hunt_capture_exists_and_is_marked():

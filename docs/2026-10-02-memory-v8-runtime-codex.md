@@ -1,6 +1,6 @@
 # Memory v8 runtime evidence — Codex (ticket 0924)
 
-Evidence for [ticket 0924](../tickets/0924-remaining-runtime-adapters.erg), raid-0909
+Evidence for [ticket 0924](../tickets/closed/0924-remaining-runtime-adapters.erg), raid-0909
 Wave 3 (Vibe was smoked by
 [0923](2026-10-02-memory-v8-runtime-smoke.md)). Session: 2026-10-02,
 headless (`codex exec --json --sandbox workspace-write
@@ -115,6 +115,10 @@ session transcript; absence of `CLAUDE.md` in the clone.
   loading and tool-use of the common surface.
 - The sandbox observation covers `workspace-write` only; other sandbox
   modes were not tried.
+- The raw transcripts quoted here (the `--json` event stream under
+  `/tmp/mem0924/codex/` and the `~/.codex/sessions/` rollout) are ephemeral
+  on the executing host and are not preserved in the repository; the
+  quotations in this document are the surviving record.
 - The capture entry lives in a disposable clone, quoted here; the raw
   clone is deleted after this document records the evidence. The journal
   of record carries the wave's own entry

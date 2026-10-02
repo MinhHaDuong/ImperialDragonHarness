@@ -1,6 +1,6 @@
 # Memory v8 runtime evidence — Pi (ticket 0924)
 
-Evidence for [ticket 0924](../tickets/0924-remaining-runtime-adapters.erg), raid-0909
+Evidence for [ticket 0924](../tickets/closed/0924-remaining-runtime-adapters.erg), raid-0909
 Wave 3 (Vibe was smoked by
 [0923](2026-10-02-memory-v8-runtime-smoke.md)). Session: 2026-10-02,
 headless (`pi -p --session-dir <dir> --name mem0924-pi-smoke`), one real
@@ -19,7 +19,7 @@ Runtime: pi 0.87.1 (`pi --version`), provider `huggingface`, model
 `moonshotai/Kimi-K2.6` (the session's `model_change` header; the host's
 default provider configuration, not selected for this ticket). Pi was
 the slowest of the three legs: the session ran about eight minutes
-(10:26:10Z start, capture written 12:33:56 local).
+(10:26Z start, capture written 10:33:56Z).
 
 ## (1) Read-before-action
 
@@ -115,6 +115,9 @@ Evidence channel: the system message in the session JSONL; absence of
 - Pi's extension surface (subagents, hooks — the capability survey of
   2026-09-16) was not exercised: this ticket verifies the Markdown
   contract, and no runtime plumbing was added.
+- The session JSONL quoted here (under `/tmp/mem0924/pi/sessions/`) is
+  ephemeral on the executing host and is not preserved in the repository;
+  the quotations in this document are the surviving record.
 - The capture entry lives in a disposable clone, quoted here; the raw clone
   is deleted after this document records the evidence. The journal of
   record carries the wave's own entry
