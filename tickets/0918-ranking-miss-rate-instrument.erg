@@ -14,6 +14,8 @@ Author: claude
 2026-10-01T20:47Z MinhHaDuong codex note Astra clarification adopted: commit the evaluation protocol before acceptance trials; earlier exploratory smokes are not retroactively counted as predeclared trials.
 2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
 2026-10-02T10:38Z reviewer note blocker 0924 closed — Blocked-by removed.
+2026-10-02T10:50Z vibe note F4 author decision: reviewer-attribution implementation (1005-1009) sequenced after this raid; STEP A protocol cites the attribution design §4 as the record format and edits neither roar step 6 (1005) nor the reviewers write path (1009).
+2026-10-02T10:50Z vibe note raid-0909 Wave 4 STEP A started: predeclared protocol only, docs/memory-v8/evaluation-protocol.md; trials (STEP B) stay open behind this ticket.
 --- body ---
 
 ## Context
@@ -36,3 +38,20 @@ exécuter les checks applicables au diff. Aucun package hoard requis.
 - [ ] Résultats sur quatre runtimes, positifs/négatifs/near misses et cas sans événement.
 - [ ] Sources natives contradictoires et conseils retirés réellement éprouvés.
 - [ ] Verdict de rollout explicite ; marges non inventées après un exemple réussi.
+
+## Raid annotation (2026-10-02, imagine pass)
+
+- The protocol is observational Markdown — no numeric scorer, no
+  instrumentation, no runtime-adapter framework. The filename slug
+  "ranking-miss-rate-instrument" is pre-realignment residue; the ticket ID is
+  the identity and the title and body are the v8 evaluation. Do not rebuild a
+  scorer.
+- Trial evidence reuses existing surfaces: journal entries are capture
+  evidence, `memory/dreams/` reports are consolidation evidence, commit hashes
+  are obedience evidence. Mechanical checks (links, commits,
+  `wc -l memory/MEMORY.md`) stay scripted.
+- The protocol's margins are predeclared: nothing invented after a successful
+  example; positive, negative, near-miss and no-event cases are all named; the
+  contradictory-native-note and withdrawn-claim trials are explicit; the
+  exploratory smokes are excluded by commit reference.
+
