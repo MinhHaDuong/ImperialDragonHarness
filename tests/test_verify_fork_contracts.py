@@ -104,7 +104,7 @@ def _normalize(text: str) -> str:
 
 
 def test_gaze_phase_2_4_reviewers_forbid_isolation():
-    """Phases 2–4 reviewer agents are pinned-cwd read-only; giving them
+    """Phases 2–4 reviewer agents are read-only (review worktree via git -C); giving them
     `isolation: "worktree"` cuts a fresh tree from the session repo on main,
     re-introducing the wrong-branch failure (ticket 0216, rogue PR #243).
     The prohibition must stay in the phase 2–4 block."""
@@ -115,7 +115,7 @@ def test_gaze_phase_2_4_reviewers_forbid_isolation():
 
 
 def test_gaze_phase_6_gate_forbids_isolation():
-    """The phase-6 gate agent is likewise read-only pinned-cwd; the prohibition
+    """The phase-6 gate agent is likewise read-only (review worktree via git -C); the prohibition
     is phrased differently here (`never isolation: "worktree"`) and wraps a
     newline, so normalize before matching."""
     norm = _normalize(VERIFY)
