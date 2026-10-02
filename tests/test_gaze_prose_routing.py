@@ -21,6 +21,8 @@ skill text that must name it:
 """
 
 import importlib.util
+import json
+import re
 from pathlib import Path
 
 import pytest
@@ -151,6 +153,77 @@ def test_simplify_prose_guard_documented():
     )
     assert "Prose workpackages" in section and "rules/git.md" in section, (
         "the guard must cite rules/git.md § Prose workpackages as its motive"
+    )
+
+
+def test_risk_high_globs_cover_the_pipeline_registry():
+    """The high band covers the repo's existing dangerous-path registry
+    (ticket 0902): every panel-width.json pipeline_paths glob is a high glob,
+    plus the two classes the ticket names that the registry lacks
+    (hooks/**, settings*.json). One-directional on purpose (the 0901
+    registry-drift pattern): a new pipeline_paths glob fails this test until
+    RISK_HIGH_GLOBS catches up; the reverse is never asserted.
+    """
+    mod = _load_predicate()
+    config = json.loads(
+        (REPO / "skills" / "review-pr" / "panel-width.json").read_text()
+    )
+    for glob in config["pipeline_paths"]:
+        assert glob in mod.RISK_HIGH_GLOBS, (
+            f"pipeline path {glob!r} is not in RISK_HIGH_GLOBS — the band would "
+            "under-rank the repo's own dangerous paths"
+        )
+    for glob in ("hooks/**", "settings*.json"):
+        assert glob in mod.RISK_HIGH_GLOBS, (
+            f"{glob!r} is not in RISK_HIGH_GLOBS — the ticket's named class "
+            "must be high"
+        )
+
+
+def test_0902_replay_of_the_ticket_shapes():
+    """Replay the ticket's named PR shapes through the band (ticket 0902).
+
+    The #812 shape (critical paths, mid size), the #177 shape (trivial paths,
+    tiny size), the docs-only shape (Verification §2), and the
+    small-and-critical shape that proves the band does work: under size rules
+    alone it classifies tiny. The perspective-count arithmetic (#812 shape:
+    full battery + Agent C ≥ Correctness+Consistency vs #177 shape:
+    Correctness-only + A + gate) is reported in the M1 measurement, not
+    asserted here — the tier→battery mapping lives in skill prose, not a
+    function.
+    """
+    mod = _load_predicate()
+    # harness#812 shape: 1 480 lines / 9 files incl. scripts/on-end.sh and
+    # settings.shared.json → high.
+    s812 = [
+        "scripts/on-end.sh",
+        "settings.shared.json",
+        "scripts/on-start.sh",
+        "skills/merge/SKILL.md",
+        "rules/workflow.md",
+        "Makefile",
+        "tests/test_gate.py",
+        "README.md",
+        "tickets/0901-x.erg",
+    ]
+    assert mod.risk_band(s812) == "high"
+    # harness#177 shape: 7 lines / 2 files, tests/test_beat.py + an ordinary
+    # file → normal (band-insensitive; the size rules decide it).
+    assert mod.risk_band(["tests/test_beat.py", "README.md"]) == "normal"
+    # The small-and-critical shape: 4 lines in a guard script → high (this is
+    # the shape that no longer classifies tiny once the band applies).
+    assert mod.risk_band(["scripts/on-end.sh"]) == "high"
+    # Verification §2: a 1 000-line docs-only diff is lowered, never raised.
+    assert mod.risk_band(["docs/a.md", "docs/b.md", "refs.bib"]) == "low"
+    # Anchoring pins: docs/** is top-level anchored (nested docs/ → normal);
+    # **/fixtures/** matches nested.
+    assert mod.risk_band(["slides/docs/x.md"]) == "normal"
+    assert mod.risk_band(["tests/fixtures/f.json"]) == "low"
+    # Text ratchet: § 1. Setup states the raise rung (house-style U+2192).
+    setup = GAZE.read_text(encoding="utf-8")
+    setup = setup.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    assert "tiny → small" in re.sub(r"\s+", " ", setup), (
+        "gaze § 1. Setup must state the high-band raise rung tiny → small"
     )
 
 

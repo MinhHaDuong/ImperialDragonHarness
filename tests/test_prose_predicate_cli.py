@@ -83,6 +83,38 @@ def test_cli_axes_reports_the_declared_rulebooks(tmp_path):
     ], result.stdout
 
 
+def test_prose_predicate_emits_a_risk_band(tmp_path):
+    """--risk emits the path-risk band from path patterns alone (ticket 0902).
+
+    The fixture files below are NEVER created — their absence is the test:
+    the anchor roster (`git diff --name-only --no-renames`) lists deleted and
+    renamed paths that do not exist at HEAD, so --risk must not inherit the
+    missing-path refusal (exit 2) of the disk-reading prose/axes modes, or it
+    would ESCALATE routine PRs. A disk-reading mode would refuse them.
+    """
+    repo = tmp_path / "repo"
+    guard = str(repo / "scripts" / "on-end.sh")
+    assert not Path(guard).exists(), "the fixture must be absent — that is the point"
+
+    high = _run("--risk", guard)
+    assert high.returncode == 0, (high.returncode, high.stderr)
+    assert high.stdout.strip() == "high", (high.stdout, high.stderr)
+
+    docs = _run("--risk", str(repo / "docs" / "a.md"), str(repo / "docs" / "b.md"))
+    assert docs.returncode == 0, (docs.returncode, docs.stderr)
+    assert docs.stdout.strip() == "low", (docs.stdout, docs.stderr)
+
+    removed = _run("--risk", str(repo / "scripts" / "removed.sh"))
+    assert removed.returncode == 0, (removed.returncode, removed.stderr)
+    assert removed.stdout.strip() == "high", (removed.stdout, removed.stderr)
+
+    mixed = _run(
+        "--risk", str(repo / "scripts" / "x.sh"), str(repo / "docs" / "y.md")
+    )
+    assert mixed.returncode == 0, (mixed.returncode, mixed.stderr)
+    assert mixed.stdout.strip() == "high", (mixed.stdout, mixed.stderr)
+
+
 def test_cli_refuses_missing_path(tmp_path):
     """Wrong cwd → missing path → exit 2 and no verdict, never a silent code."""
     ghost = tmp_path / "no-such-checkout" / "manuscrit.tex"
