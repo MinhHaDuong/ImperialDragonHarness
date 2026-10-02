@@ -9,9 +9,14 @@ v8 repository memory. Pilot and audience: [pilot.md](../docs/memory-v8/pilot.md)
 - [git in a worktree session](topics/git-worktree-session-guards.md) — two guards, two remedies.
 - [Branch-cleanup incidents](topics/branch-cleanup-incidents.md) — evidence behind the cleanup guards.
 - [Memory v8 governance](topics/memory-v8-governance.md) — design boundaries, legacy retirement.
+- [Memory v8 acceptance trial](topics/memory-v8-acceptance-trial.md) — 0918 runtime evidence, single-session samples.
 
 ## Recent experiences
 
+- [Contradiction surfaced by Claude session](journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md) — planted note flagged, provenance verified.
+- [Post-merge link catch](journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — relocated-clone proof caught the protocol.
+- [Concurrent detached sessions](journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md) — both preserved, overlap resolved.
+- [Detached flags absorb prompts](journal/2026/2026-10-02-memory-v8-0918-detached-flags-consume-positional-prompt.md) — Claude Code and Vibe, one relaunch each.
 - [Reviewer attribution, celebration teardown](journal/2026/2026-10-02-reviewer-attribution-design.md) — coaching by attribution.
 - [Memory v8 pilot established](journal/2026/2026-10-02-memory-v8-pilot-established.md) — activation, audience, sources.
 - [PR 1102 merge under parallel housekeeping](journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md) — v8 delivery merge record.
