@@ -59,7 +59,10 @@
 #     array expansion (control 0o) — brace GROUPS always carry a `;` or
 #     newline that already delimits.
 #   * The suite-wide `export BASH_ENV=` exemption is matched against the
-#     STRIPPED logical lines, so the spelling only counts where it executes.
+#     STRIPPED logical lines, so the spelling only counts where it executes —
+#     parsed in the same read pass that scans the file. No second tool re-reads
+#     the raw \001-delimited stream: a cross-tool byte contract there is what
+#     made the same file BAD on one CI runner and EXEMPT on another (0875).
 #   * The spawn shape covers `bash -c`, `bash -lc`, `bash -ec`, long options
 #     before it (`bash --posix -c`), an absolute path (`/bin/bash -c`), the
 #     `$BASH` / `$SHELL` variable forms, and one level of `eval`/`su`/`sudo`/
@@ -324,23 +327,32 @@ _line_spawn_verdicts() {
 # One file, one verdict: EXEMPT | "OK <n>" | "BAD <linenos>" | NONE |
 # UNTERMINATED (the heredoc heuristic lost track — the file was NOT fully read).
 _file_verdict() {
-    local f="$1" ll lineno s u scanned bad spawns last line_total line_bad
+    local f="$1" ll lineno s u scanned bad spawns last line_total line_bad exempt
     ll="$(_logical_lines "$f")"
 
     if printf '%s\n' "$ll" | grep -qE -- '^-1'"$LL"; then
         printf 'UNTERMINATED\n'
         return 0
     fi
-    if printf '%s\n' "$ll" | grep -qE -- "$LL"'[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*'"$LL"; then
-        printf 'EXEMPT\n'
-        return 0
-    fi
 
     bad=""
     spawns=0
     last=""
+    exempt=0
     while IFS="$LL" read -r lineno s u; do
         [ -n "$lineno" ] || continue
+        # Suite-wide exemption, matched on the CODE field of the stripped
+        # logical line — parsed in THIS read loop, the same pass that scans
+        # the spawns. It used to be a second tool (grep -E over the raw
+        # \001-delimited stream); that cross-tool byte contract is what
+        # diverged between CI runners (0875: same bytes, same script, BAD on
+        # one runner image, EXEMPT on another), so the exemption now lives in
+        # one implementation only. Heredoc bodies never reach a field here,
+        # so an `export BASH_ENV=` inside one still does not exempt (0d).
+        if [[ "$s" =~ ^[[:space:]]*export[[:space:]]+BASH_ENV=[[:space:]]*$ ]]; then
+            exempt=1
+            break
+        fi
         scanned="$s"
         [[ "$s" =~ $_EXEC_RE ]] && scanned="$u"
         line_total=0
@@ -373,6 +385,10 @@ _file_verdict() {
         fi
     done <<< "$ll"
 
+    if [ "$exempt" -eq 1 ]; then
+        printf 'EXEMPT\n'
+        return 0
+    fi
     if [ -n "$bad" ]; then
         printf 'BAD %s\n' "$bad"
     elif [ "$spawns" -gt 0 ]; then
@@ -566,9 +582,12 @@ for f in "$TESTS_DIR"/test_*.sh; do
         "BAD "*)
             spawners=$((spawners + 1))
             # Failure diagnostic (0875 CI divergence): a suite that looks
-            # exempt yet lands BAD means the exemption token never reached the
-            # grep, and these fields split raw-file vs logical-stream vs line
-            # accounting in one read of the log. Names and numbers only.
+            # exempt yet lands BAD means the exemption pattern never reached
+            # the verdict's read loop. raw-export-line reads the FILE;
+            # stream-exempt-token is an INDEPENDENT re-check of the logical
+            # stream by grep — the tool the verdict no longer trusts — so a
+            # disagreement between the two names the diverging layer in one
+            # read of the log. Names and numbers only.
             diag_raw=0
             if grep -qE '^[[:space:]]*export[[:space:]]+BASH_ENV=' "$f"; then diag_raw=1; fi
             diag_tok=0
