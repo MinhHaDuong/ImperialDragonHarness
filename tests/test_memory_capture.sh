@@ -143,6 +143,16 @@ else
     _fail "port-carrying and slash-carrying origins share a key"
 fi
 
+# key selection: the userless scp form host:owner/proj.git is the same project
+# as https://host/owner/proj.git — it reuses that key (count stays 5).
+_mkproject scp-userless Port.Example.com:owner/proj.git
+printf 'userless scp entry\n' | "$CAPTURE" "$P" private note-ports >/dev/null
+if [ "$(count_keys)" = 5 ]; then
+    _pass "userless scp origin shares the key of its https form"
+else
+    _fail "userless scp origin derived its own key"
+fi
+
 # first private capture stays silent: age-keygen's public-key banner must not
 # reach the caller's stderr on success.
 _mkproject quiet git@quiet.example.com:owner/proj.git
