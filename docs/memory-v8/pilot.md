@@ -2,7 +2,8 @@
 
 Activated 2026-10-02 by the author's batched decisions, recorded in the 0920
 ticket log. This document declares the pilot's audience and companion policy
-for author review; it installs no runtime behavior.
+for author review. Its only runtime change is the SessionStart index injection
+becoming project-scoped (see Rollback below).
 
 ## Pilot project
 
@@ -31,7 +32,7 @@ invents no content for it. Nothing currently awaits that audience.
 
 ## Rollback and old-path correspondence
 
-Rollback is reverting the pilot commit: the legacy index and the
+Rollback is reverting this PR's merge: the legacy index and the
 cross-project hook injection remain in Git history. Every path the legacy
 index linked is still linked from the v8 surface at its original location.
 The journal is append-only; no entry was moved or rewritten. No other
@@ -41,5 +42,9 @@ project's setup changed — this declaration covers only this repository
 ## Reading
 
 The v8 reading section is merged into this repository's `AGENTS.md`
-(see [templates/AGENTS.md](templates/AGENTS.md)). DREAM.md versioning belongs
+(see [templates/AGENTS.md](templates/AGENTS.md)), abridged to fit the
+resident-census import budget: the dropped clauses are the template's
+"including unconsolidated episodes" phrasing, the
+"Bundle closure capture, tickets and docs into one PR" sentence, and DREAM's
+"checking coherence with applicable rules" tail. DREAM.md versioning belongs
 to 0916, not to this pilot.

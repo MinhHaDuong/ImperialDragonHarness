@@ -68,7 +68,7 @@ re-examination. Counting and live validation remain under 0910/0916.
 
 ## Audience and source handling
 
-The candidate pilot's tracked material has a public repository audience, not a
+The pilot's tracked material has a public repository audience, not a
 certificate of privacy clearance. Review each source before including text.
 For private material, configure a versioned private companion and a local pointer;
 an ignored directory or a branch in a public repository is insufficient.

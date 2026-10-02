@@ -12,13 +12,13 @@ v8 repository memory. Pilot and audience: [docs/memory-v8/pilot.md](../docs/memo
 
 ## Recent experiences
 
-- [2026-10-02: memory v8 pilot established](journal/2026/2026-10-02-memory-v8-pilot-established.md)
-- [2026-10-02: PR 1102 merge under parallel housekeeping](journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md)
-- [2026-10-01: legacy provenance helper retirement](journal/2026/2026-10-01-memory-helper-retirement.md)
-- [2026-10-01: memory v8 design and boundaries](journal/2026/2026-10-01-memory-v8-design-and-boundaries.md)
-- [2026-10-01: portable registration review](journal/2026/2026-10-01-portable-registration-review.md)
+- [2026-10-02: memory v8 pilot established](journal/2026/2026-10-02-memory-v8-pilot-established.md) — activation, audience and source decisions.
+- [2026-10-02: PR 1102 merge under parallel housekeeping](journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md) — v8 delivery merge record.
+- [2026-10-01: legacy provenance helper retirement](journal/2026/2026-10-01-memory-helper-retirement.md) — helper removal with controls.
+- [2026-10-01: memory v8 design and boundaries](journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption record.
+- [2026-10-01: portable registration review](journal/2026/2026-10-01-portable-registration-review.md) — registration PR review and split.
 
-## Reference notes
+## Reference notes (sources of the topics above)
 
 - [Zotero library](reference_zotero.md)
 - [Subagent model/effort levers](feedback_subagent_model_effort_levers.md)

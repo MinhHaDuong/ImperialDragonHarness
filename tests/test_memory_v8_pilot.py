@@ -21,7 +21,8 @@ INDEX = MEMORY / "MEMORY.md"
 
 # The ten tracked memory/ root sources inventoried by 0917 in
 # docs/memory-v8/source-inventory.md (PR #1102). Old-path correspondence:
-# the pilot links these sources but never moves or rewrites them.
+# the nine sources stay at their inventory paths, unrewritten; MEMORY.md is
+# the index itself, replaced by design with its legacy text in Git history.
 PILOT_SOURCES = (
     "MEMORY.md",
     "feedback_rules_come_from_memory_consolidation.md",
@@ -91,7 +92,14 @@ def test_v8_surface_links_sources_and_journal():
         assert not unresolved_links(REPO, doc)
 
 
-def test_topics_cite_provenance():
+def test_index_links_every_topic():
+    index_text = INDEX.read_text(encoding="utf-8")
+    for topic in sorted((MEMORY / "topics").glob("*.md")):
+        assert f"(topics/{topic.name})" in index_text, topic.name
+
+
+def test_topics_cite_sources_and_provenance():
+    memory_root = MEMORY.resolve()
     topics = sorted((MEMORY / "topics").glob("*.md"))
     assert topics
     for topic in topics:
@@ -99,10 +107,16 @@ def test_topics_cite_provenance():
         assert (
             "source-revisions.tsv" in text or "source-inventory.md" in text
         ), topic.name
-        assert any(
-            (topic.parent / target).is_file()
+        source_links = [
+            (topic.parent / target).resolve()
             for target in relative_links(text)
-        ), topic.name
+        ]
+        assert any(
+            p.is_file()
+            and p.is_relative_to(memory_root)
+            and not p.is_relative_to((MEMORY / "topics").resolve())
+            for p in source_links
+        ), f"{topic.name} cites no source outside topics/"
 
 
 def test_agents_md_merges_memory_reading_section():
@@ -116,7 +130,8 @@ def test_relocated_clone_remains_readable(tmp_path):
 
     Clone the repository, move the clone elsewhere, drop the origin remote —
     then read the memory surface with plain file access only: every relative
-    link in the index and the themes must resolve inside the relocated clone.
+    link in every Markdown file under memory/ and docs/memory-v8/ must
+    resolve inside the relocated clone.
     """
     checkout = tmp_path / "checkout"
     subprocess.run(
@@ -131,9 +146,12 @@ def test_relocated_clone_remains_readable(tmp_path):
         check=True,
     )
 
-    clone_index = relocated / "memory" / "MEMORY.md"
-    assert clone_index.is_file()
-    docs = [clone_index, *sorted((relocated / "memory" / "topics").glob("*.md"))]
+    assert (relocated / "memory" / "MEMORY.md").is_file()
+    docs = [
+        *sorted((relocated / "memory").rglob("*.md")),
+        *sorted((relocated / "docs" / "memory-v8").glob("*.md")),
+    ]
+    assert docs
     for doc in docs:
         broken = unresolved_links(relocated, doc)
         assert not broken, f"{doc}: {broken}"

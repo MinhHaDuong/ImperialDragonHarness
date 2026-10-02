@@ -23,5 +23,10 @@ A mechanical relocated-clone test now proves the first exit criterion:
 `tests/test_memory_v8_pilot.py` clones the repository, moves the clone
 elsewhere, drops its origin remote, and reads the whole memory surface
 through relative links alone — no original home, no harness installation.
-Rollback is reverting the pilot commit; no other project's setup changed
+Rollback is reverting this PR's merge; no other project's setup changed
 (no global rollout).
+
+Evidence: ticket
+[tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg](../../tickets/closed/0920-pilot-portable-project-memory-and-shared-snapshot.erg)
+(decisions of 2026-10-02 in its log); [pilot declaration](../../docs/memory-v8/pilot.md);
+[source inventory](../../docs/memory-v8/source-inventory.md); PR #1109.
