@@ -2,12 +2,14 @@
 Title: Worker-safety audit: pytest-xdist parallelization of the full check
 Created: 2026-10-02
 Author: vibe
+Closed: autoclosed — PR #1120
 
 --- log ---
 2026-10-02T08:42Z vibe created
 2026-10-02T09:05Z vibe audit executed on origin/main 49400cfa: static census over all three hazard axes, then three live xdist trials from a venv (repo untouched)
 
 2026-10-02T09:01Z MinhHaDuong Author decision (2026-10-02): Option 1 — pin pytest-xdist in requirements-dev.txt and wire -n 4 into check-tests and CI pytest-guard now; implemented in this PR. check-fast and lint stay serial (both at the boot+collection floor).
+2026-10-02T09:04Z MinhHaDuong closed — autoclosed — PR #1120
 --- body ---
 ## Context
 
