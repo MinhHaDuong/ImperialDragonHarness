@@ -6,6 +6,8 @@ Author: MinhHaDuong
 --- log ---
 2026-10-02T09:32Z MinhHaDuong created
 
+2026-10-02T09:55Z MinhHaDuong claude note raid imagine 2026-10-02: premise holds, verified on current main. Decision branch: honor the comment — convert the scp-like git@host:path form explicitly before stripping scheme/user, delete the generic colon rule, so non-default ports stay and make identity distinct (matches the header docs and docs/memory-v8/pilot.md; the accept-collision branch would require editing those too — larger, not smaller). Residual ambiguity documented: scp-form git@host:2222/... vs a port is inherently indistinguishable post-scheme-strip (git itself cannot disambiguate); accepted. Regression test pins ssh://git@host:2222/owner/proj.git vs https://host/2222/owner/proj.git distinct, keeping scp/https unification green. probe-memory-symlink.py confirmed not a project_key consumer (own _project_keys on .claude.json). Migration check: no harness origin uses a non-default port (github.com over https), so no orphaned keys expected.
+2026-10-02T09:56Z MinhHaDuong claude note raid plan 2026-10-02: red-first block in tests/test_memory_capture.sh after L134 (count 5 vs collision 4, port.example.com/2222 vs :2222); then sed reorder in scripts/memory-capture.sh project_key() L58-63: insert scp-conversion rule anchored on @ between scheme and user rules, delete generic colon rule; no comment edits (code converges to comment); scp git@host:22/... now normalizes to host/22/... (correct, scp has no port slot).
 --- body ---
 ## Context
 

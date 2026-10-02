@@ -2,11 +2,14 @@
 Title: Le fichier settings.json vif n'a qu'un detecteur de derive, pas de reconciliateur
 Created: 2026-09-09
 Author: claude
+Closed: superseded — reconciler landed with the portable lifecycle (register_settings + idh check, PR #1091); live repair verified 2026-10-02
 
 --- log ---
 2026-09-09T18:05Z claude created successeur mecanique de 0873 : la case « la garde de derive nomme SessionEnd avant correction, et se tait apres » y etait laissee non construite, et 0883/0884 ont ajoute une seconde dette d'alignement pendant qu'elle l'etait. Depose sur demande de l'auteur, qui leve la doctrine de refroidissement du 2026-07-14 pour ce point
 
 2026-09-24T16:16Z Codex note Rebased after 0976 deleted check-settings-drift.sh; live hooks were manually aligned after the missing knowledge_hints.py blocked UserPromptSubmit. A durable reconciler is still needed.
+2026-10-02T09:57Z MinhHaDuong note Investigation 2026-10-02 (portable-context audit, session on padme): the durable reconciler this ticket asked for landed with the portable lifecycle (0987/0999, PR #1091) after the 2026-09-24 rebase note. adapters/lifecycle.py register_settings() implements the apply side under explicit 'idh install': merges only managed hook identities into the live settings.json, preserves CLI-owned top-level keys, repairs legacy ~/.idh statusLine/env values, refuses symlinks, unwritable and foreign files. The check side exists as 'idh check claude' plus validate-projections before runtime start (0983); tests cover install/check round-trip, idempotence and independent-profile survival (tests/test_idh_lifecycle.py). Live evidence the same day: the 2026-09-24 manual alignment had fully decayed (hooks pointed at the retired ~/.idh layout, SessionEnd absent — 8 orphan session scratch dirs swept); 'idh install' repaired it and the projection swap (60 FOREIGN stale copies quarantined to ~/.claude/.idh-quarantine-2026-10-02, 28 verified byte-identical to old git revisions) brought the machine to idh-check ok. Residue, below the severity floor, recorded not ticketed: the check reports a blanket 'harness hooks missing' rather than naming individual missing/changed hook commands (ticket action 3 granularity).
+2026-10-02T09:57Z MinhHaDuong closed — superseded — reconciler landed with the portable lifecycle (register_settings + idh check, PR #1091); live repair verified 2026-10-02
 --- body ---
 ## Context
 
