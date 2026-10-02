@@ -46,9 +46,11 @@ Do not infer a new rule from a repeated experience or manufacture agreement.
 ## Procedure
 
 1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted dream reports
-   and new entries in `journal/YYYY/`. Read native notes only as attributed
-   sources when available; report unavailable sources. Native notes are not the
-   canonical reference or a write destination.
+   and new entries in `journal/YYYY/`. Skip age-encrypted `.age` entries when
+   the project key is unavailable, recording the skipped count in the report;
+   never treat a skipped or unavailable source as empty. Read native notes only
+   as attributed sources when available; report unavailable sources. Native
+   notes are not the canonical reference or a write destination.
 2. In dry-run mode, report candidate thematic updates and contradictions, then
    stop without writes, branches or commits. Do not propose rules.
 3. For a writing run, use an isolated project checkout and dedicated branch;
@@ -66,10 +68,27 @@ Do not infer a new rule from a repeated experience or manufacture agreement.
    merge automatically. Preserve and report the branch if submission fails.
    Only accepted reports count as completed processing on subsequent runs.
 
+## Encrypted entries
+
+Uncleared material lives in the project repository as `.age` ciphertext. Dream
+uses the same pinned age commands and the same per-project key as capture —
+decrypt with `age -d -i <key>`, re-encrypt with
+`age -r <recipient> -o <entry>.age` — and never writes plaintext to the
+working tree. Without the key, skip `.age` entries and record the skipped
+count: they are existing but unreadable, not empty. The versioned
+`memory/DREAM.md` prompt defines the operational detail, including the three
+failure modes: an authentication failure (key missing, unreadable or wrong)
+skips and counts the entry; malformed ciphertext is left untouched and
+reported unreadable; a re-encryption failure aborts the write, keeps the
+original entry and reports that the consolidation is not done. Never leave
+plaintext or a partial ciphertext in the tree.
+
 ## Authority and invocation
 
 Dream writes only `memory/MEMORY.md`, `memory/topics/` and `memory/dreams/`
-within the project or its explicitly configured private companion. It does not
+within the project repository. Uncleared material stays in that same
+repository as age-encrypted `.age` ciphertext — there is no separate
+companion store. It does not
 modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,
 propose promotions, or write cross-project provenance into the harness.
 Crystallisation requires a separate explicit user request naming its scope and

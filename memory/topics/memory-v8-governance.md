@@ -12,11 +12,19 @@ then the convention and source inventory (0911/0917) through PR #1102, which
 also retired the native/shared-store DREAM helpers (`commit.py`,
 `read-index.py`, `provenance.py`) with their consumer tests. The pilot
 activating the convention in this repository was decided 2026-10-02: public
-audience for themes and journal, a declared private companion for uncleared
-material, and initial sources limited to the ten `memory/` root files in the
-inventory. Roar captures facts; DREAM consolidates without rule promotion;
-the journal is append-only. The pilot declaration is
-[docs/memory-v8/pilot.md](../../docs/memory-v8/pilot.md).
+audience for themes and journal, and initial sources limited to the ten
+`memory/` root files in the inventory. As first recorded, uncleared material
+was to go to a separate private companion; that clause was superseded the
+same day by the author's encrypted-in-repo decision — uncleared material
+stays in this repository as age-encrypted `.age` ciphertext from birth,
+plaintext never in the tree, the key under `~/.config/keys` and never
+tracked (PR #1112, mechanics pinned by 0988). Without the key an entry is
+existing but unreadable: dream skips it and reports the count, never
+treating it as empty. Roar captures facts; DREAM consolidates without rule
+promotion; the journal is append-only. The pilot declaration is
+[docs/memory-v8/pilot.md](../../docs/memory-v8/pilot.md); this correction
+was made by the [first dream](../dreams/2026-10-02-pilot-first-dream.md),
+which cites the sources below.
 
 ## Sources and exceptions
 
