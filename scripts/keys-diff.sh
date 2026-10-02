@@ -35,6 +35,9 @@
 # Exit codes: 0 agree, 1 divergence, 2 could-not-look (ssh or keystore
 # failure, or bad usage).
 set -euo pipefail
+# Byte-exact size counting below (the cap check counts characters, and with
+# LC_ALL=C a character is a byte), and deterministic grep behavior.
+export LC_ALL=C
 
 KEYS_DIFF_LOCAL_DIR="${KEYS_DIFF_LOCAL_DIR:-$HOME/.config/keys}"
 KEYS_DIFF_SSH="${KEYS_DIFF_SSH:-ssh -F "$HOME/.ssh/config" -o BatchMode=yes}"
@@ -49,10 +52,30 @@ KEYS_DIFF_SSH="${KEYS_DIFF_SSH:-ssh -F "$HOME/.ssh/config" -o BatchMode=yes}"
 # that dies immediately. `set -a` because the provider files hold bare
 # assignments with no `export`.
 scan_keystore() {  # $1 = keystore directory; prints file|name|fingerprint records
-    local dir="$1" f name fp
+    local dir="$1" f name fp oversize
     [ -d "$dir" ] || return 1
     for f in "$dir"/*.env; do
         [ -e "$f" ] || continue
+        # Refuse before reading, the 0944 resolver discipline: a FIFO or
+        # device would block the open, a directory makes grep fail into
+        # silence (no records, no error — agreement over a file never
+        # looked at), and an unbounded read is how a pathological file
+        # reaches the source step at all.
+        if [ ! -f "$f" ] || [ ! -r "$f" ]; then
+            echo "keys-diff: $f is not a readable regular file, refusing to scan it" >&2
+            return 2
+        fi
+        # Size cap at bash-env.sh's own 256 KiB figure, counted with a
+        # builtin (LC_ALL=C is exported above, so characters are bytes):
+        # `wc -c` resolves through PATH, so a shim earlier on it would
+        # defeat the very guard this line exists to be.
+        oversize=""
+        read -r -N 262145 oversize < "$f" || true
+        if [ "${#oversize}" -gt 262144 ]; then
+            echo "keys-diff: $f exceeds the size cap (262144 bytes), refusing to scan it" >&2
+            return 2
+        fi
+        unset -v oversize
         # Names only, from the assignment lines: `grep -oE` matches the exact
         # variable-declaration prefix, `tr` strips the `=`.
         while IFS= read -r name; do

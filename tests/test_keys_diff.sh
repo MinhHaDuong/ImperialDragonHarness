@@ -240,5 +240,50 @@ else
     bad "(4) the recorded ssh args do not carry the option and the host"
 fi
 
+# --- (5) a keystore entry that cannot be scanned is could-not-look -------------
+# The 0944 resolver discipline: a non-regular or oversized file is refused
+# BEFORE it is read or sourced, because the alternative is a silent miss — a
+# directory matching *.env yields no records and no error, so a version of
+# the scanner without the guard reports agreement over a file it never
+# looked at. That is exactly the failure shape this ticket exists to remove.
+# Agreement fixtures from case (2) are still in place, so a silent miss
+# would show up as a green exit 0.
+mkdir "$LOCAL_HOME/.config/keys/trap.env"
+run_keys_diff "$WORK/bin/ssh" live
+if [ "$rc" -eq 2 ]; then
+    ok "(5a) a non-regular file at a keystore path exits 2, not silent agreement"
+else
+    bad "(5a) a non-regular file at a keystore path: expected exit 2, got $rc"
+fi
+if err_has "trap.env"; then
+    ok "(5a) stderr names the refused file"
+else
+    bad "(5a) stderr does not name the refused file"
+fi
+rmdir "$LOCAL_HOME/.config/keys/trap.env"
+
+# Oversized fixture, over the 0944 resolver's own 256 KiB figure. The name is
+# defined first so a scanner without the cap would happily succeed — the case
+# discriminates.
+HUGE="$LOCAL_HOME/.config/keys/huge.env"
+printf 'HUGE_API_KEY=%s\n' "$IDH_SENTINEL" > "$HUGE"
+printf '# %0.spadding' $(seq 1 30000) >> "$HUGE"
+if [ "$(wc -c < "$HUGE")" -gt 262144 ]; then
+    run_keys_diff "$WORK/bin/ssh" live
+    if [ "$rc" -eq 2 ]; then
+        ok "(5b) an oversized keystore file is refused (exit 2) before it is sourced"
+    else
+        bad "(5b) an oversized keystore file returned exit $rc, expected 2"
+    fi
+    if err_has "huge.env"; then
+        ok "(5b) stderr names the refused file"
+    else
+        bad "(5b) stderr does not name the refused file"
+    fi
+else
+    bad "(5b) the oversize fixture is below the cap — the case would prove nothing"
+fi
+rm -f "$HUGE"
+
 echo "--- $(basename "$0"): $fail failing case(s) ---" >&2
 exit "$fail"
