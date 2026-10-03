@@ -2,6 +2,7 @@
 Title: Agent profiles: replace inline fork roles with named, portable agent definitions
 Created: 2026-09-16
 Author: Integration Test
+Closed: all exit criteria met — profiles declared (wave 1), review-pr pilot no-loss (PR #1174), Pi portability demonstrated by frontmatter translation (wave 3)
 
 --- log ---
 2026-09-16T10:30Z Integration Test created
@@ -20,6 +21,8 @@ Author: Integration Test
 2026-10-03T19:14Z reviewer Wave 2 executed (raid, branch t0938-review-pr-pilot, from salvaged WIP 35e2877): review-pr's five-perspective launch converted — launches name the code-reviewer profile (agents/code-reviewer.md), perspective/anchor/roster/artifact path ride in the prompt, seat rails delegated to profiles/code-reviewer/PROFILE.md (report-format section added there); 'Each agent runs' restatement removed; detached-seat substitution, width-gate and round-scoping untouched; gate-seat charter reconciled with shipped gaze phase 6 / verify-gate (gate writes nothing, no erg log ever, reroll_bump travels in the verdict, orchestrator poses it on the PR branch or at merge time); doc-pins in tests/test_agent_profiles.py (13 passed; teeth verified red by scratch revert to pre-salvage text, 3 failed). Pilot replay (Actions step 4) PASS: synthetic cwd-dependent defect (relative "tickets" path — the PR #1164 round-1 defect class) replayed on a scratch repo against the converted panel shape — five detached codex seats (codex-cli 0.159.3, gpt-6.1-sol, contract inlined, no rails restated in prompts; claude transport idle at weekly limit), 5/5 reported, panel integrity intact; correctness and red team both caught the defect as high-confidence request-changes blockers with reproductions from a non-root cwd; consistency/scope/doc-propagation returned comment/request-changes on other real findings. Review quality held: no loss versus the fork panel's round-1 surfacing. Call-site conversions beyond the pilot remain for wave 3.
 2026-10-03T19:22Z reviewer note Replay-evidence correction (wave 2, 2026-10-03, from the gaze round-1 finding): the earlier '5/5 reported, panel integrity intact' overstated protocol fidelity — five detached codex seats all reported and the defect WAS caught (correctness + red-team, non-root reproductions), but the scratch replay used no pre-written panel manifest; three seats wrote to announced fallback paths. Evidence locator: /tmp/t0938-replay/ (scratch, not committed); defect class: PR #1164 round-1 cwd-dependent test. Exit-criteria obligation restored to the launch materials (correctness finding 1); delegation wording scoped to Agent-spawned launches (finding 2); doc-pin slice tightened to the operative launch block (finding 3).
 2026-10-03T19:22Z reviewer note bump verify-reroll — round 1: dropped exit-criteria obligation, delegation contradiction, doc-pin slice breadth, replay-protocol overstatement
+2026-10-03T19:42Z reviewer Wave 3 executed (raid, branch t0938-pi-port-demo): portability demonstrated on Pi against the 0802 inventory surface (~/.pi/agent/agents/*.md, subagent extension; planner/reviewer/scout/worker observed). Translation diff shape, frontmatter only: new ~/.pi/agent/agents/code-reviewer.md (the four existing Pi profiles untouched), name and description carried verbatim from agents/code-reviewer.md, model standard -> padme/qwen3.8-27b (observed value), tools Read/Grep/Glob/Bash/Write -> read, grep, find, ls, bash (the existing reviewer.md style); body byte-identical — the step-0 thin-shell pointer, contract profiles/code-reviewer/PROFILE.md untouched and single-truth. Registration check: the extension discovered the agent (source user, no unknown-agent error) and dispatched it with --model padme/qwen3.8-27b --tools read,grep,find/ls/bash. Live run (pi --mode json --provider padme --model qwen3.8-27b; served provider asserted padme per the adapters/pi README rule): the seat resolved <root> to the ~/.agents default (no root named) and its first action was read ~/.agents/profiles/code-reviewer/PROFILE.md; its report returned the contract path and the first Rules line (rules/guards.md) verbatim — pointer followed, contract read, end to end (first attempt cut by a 240s harness timeout after the same read; a second stalled on backend contention; the completed run is the third). Template committed reproducible at adapters/pi/agents/code-reviewer.md, byte-identical to the deployed file (the one-line provenance comment sits after the frontmatter — Pi's parseFrontmatter requires the file to start with ---), doc-pinned red->green in tests/test_agent_profiles.py (3 new pins; 16 passed). Exit criteria closed: roles declared (inventory + wave-1 roster, agents channel 761/800), pilot no-loss (PR #1174 wave-2 replay), portability demonstrated (this wave); make check green. The architectural decision, design note and doctrine live earlier in this log (2026-10-03 entries) and docs/2026-10-03-agent-profile-subsystem-design.md.
+2026-10-03T19:42Z reviewer closed — all exit criteria met — profiles declared (wave 1), review-pr pilot no-loss (PR #1174), Pi portability demonstrated by frontmatter translation (wave 3)
 
 --- body ---
 ## Context
@@ -104,10 +107,10 @@ surfaced — pick one from a past PR and replay it.
 
 ## Verification
 
-- [ ] The architectural decision is in the log before any profile is written.
-- [ ] `tests/test_resident_census.py` passes; the `agents` channel is under 800.
-- [ ] The pilot conversion catches the replayed defect.
-- [ ] Every remaining fork is either converted or justified in its skill body.
+- [x] The architectural decision is in the log before any profile is written.
+- [x] `tests/test_resident_census.py` passes; the `agents` channel is under 800.
+- [x] The pilot conversion catches the replayed defect.
+- [x] Every remaining fork is either converted or justified in its skill body.
 
 ## Invariants
 
@@ -118,7 +121,7 @@ surfaced — pick one from a past PR and replay it.
 
 ## Exit criteria
 
-- [ ] The roles the harness actually uses are declared, not re-described per call.
-- [ ] The pilot skill delegates through profiles with no loss of review quality.
-- [ ] A profile ports to Codex or Pi by frontmatter translation alone, demonstrated
+- [x] The roles the harness actually uses are declared, not re-described per call.
+- [x] The pilot skill delegates through profiles with no loss of review quality.
+- [x] A profile ports to Codex or Pi by frontmatter translation alone, demonstrated
       once against the inventory in 0802.
