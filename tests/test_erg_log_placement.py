@@ -133,5 +133,5 @@ def test_control_fixture_draws_no_warning_and_keeps_shape(store):
 @pytest.mark.integration
 def test_real_corpus_check_still_passes():
     """The advisory warnings must not break the corpus gate (exit 0)."""
-    result = run_erg("check", "tickets")
+    result = run_erg("check", str(REPO / "tickets"))
     assert result.returncode == 0, result.stdout + result.stderr
