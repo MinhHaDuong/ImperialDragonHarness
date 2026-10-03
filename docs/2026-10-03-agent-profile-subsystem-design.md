@@ -182,9 +182,8 @@ the survey pending the 0938 demonstration):
 The pointer is the invariant; shell format varies. Pi's four existing
 profiles are the cheapest cross-runtime conversion pilot alongside
 `review-pr`. Both Pi and Vibe (and Codex, Gemini, OpenCode) read
-`AGENTS.md`, which carries the one-line index: "Named-role profile
-contracts live in `profiles/<name>/PROFILE.md`; runtime shells point to
-them." Vibe additionally reads `~/.agents/skills/` natively — a pickup
+`AGENTS.md`, which carries the one-line index: "Profile contracts live in
+`profiles/<name>/PROFILE.md`; shells point to them." Vibe additionally reads `~/.agents/skills/` natively — a pickup
 precedent for the harness root, for skills only.
 
 ## Portability discussion
