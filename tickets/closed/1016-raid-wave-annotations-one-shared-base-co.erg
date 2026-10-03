@@ -2,6 +2,7 @@
 Title: Raid wave annotations: one shared base commit, branches must not fork divergent annotation copies
 Created: 2026-10-02
 Author: reviewer
+Closed: autoclosed — PR #1166
 
 --- log ---
 2026-10-02T11:05Z reviewer created
@@ -14,6 +15,7 @@ Author: reviewer
 2026-10-03T12:05Z reviewer claude note implemented (raid 2026-10-03): tests/test_raid_wave_base.py (5 tests, bounded Phase 4-6 slices); raid SKILL.md Phase 4 records WAVE_BASE after pull --rebase as the last annotation commit; Phase 5 wave-base block (Phase 5.0 When/Why/How framing) forks executors from WAVE_BASE, mid-wave advance = ONE collective rebase with explicit --force-with-lease authorization; Phase 6 fourth integration bullet runs merge-tree --write-tree pairwise over tickets/. No sidecar.
 2026-10-03T13:03Z reviewer gate round 1 REROLL (PR #1161): pin mid-wave mechanism (rebase WAVE_BASE once, then git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>), define WAVE_BASE refresh after Phase 5.0 and per wave, tighten test to pin old/new base and --onto, apply simplify must-fix (single _slice helper)
 2026-10-03T13:53Z reviewer bump verify-reroll — round 1: mid-wave 'git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>' fails from orchestrator checkout (branch checked out in executor worktree — fatal already-used-by-worktree); target each executor worktree with -C; also apply simplify must-fix (guard test docstring/name residue)
+2026-10-03T14:09Z reviewer closed — autoclosed — PR #1166
 --- body ---
 ## Context
 
