@@ -70,6 +70,10 @@ make check-skills-drift  # Fails if README.md is out of sync
 
 This check is run in CI to catch forgotten regeneration before merge.
 
+## Agent profiles
+
+Named-role profile contracts live in `profiles/<name>/PROFILE.md`; runtime shells point to them.
+
 For ticket operations, read and follow [tickets/AGENTS.md](tickets/AGENTS.md).
 For shell tooling conventions, read and follow [RTK.md](RTK.md).
 

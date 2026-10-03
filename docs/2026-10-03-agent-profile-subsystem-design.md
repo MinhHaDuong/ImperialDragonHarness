@@ -166,6 +166,27 @@ Corrected per review findings; claims scoped to the cited survey.
 - Body support and default file-read per runtime are unverified until
   the 0938 demonstration.
 
+## Pickup surfaces
+
+Verified per runtime (Pi and Vibe on this machine, 2026-10-03; others from
+the survey pending the 0938 demonstration):
+
+| Runtime | Shell pickup | Format | Pointer lives in |
+|---|---|---|---|
+| Claude Code | `.claude/agents/` + `~/.claude/agents/` | markdown + frontmatter | body |
+| Gemini CLI / OpenCode | `.gemini/`, `.opencode/agent/` | markdown + frontmatter | body |
+| Codex | `~/.codex/config.toml` | TOML, no body | launch prompt |
+| Pi | `~/.pi/agent/agents/` (subagent extension) | markdown + frontmatter | body — verified; 4 profiles live (planner, reviewer, scout, worker) |
+| Vibe | `~/.vibe/agents/`, `.vibe/agents/`, `agent_paths` | TOML | `instructions` field |
+
+The pointer is the invariant; shell format varies. Pi's four existing
+profiles are the cheapest cross-runtime conversion pilot alongside
+`review-pr`. Both Pi and Vibe (and Codex, Gemini, OpenCode) read
+`AGENTS.md`, which carries the one-line index: "Named-role profile
+contracts live in `profiles/<name>/PROFILE.md`; runtime shells point to
+them." Vibe additionally reads `~/.agents/skills/` natively — a pickup
+precedent for the harness root, for skills only.
+
 ## Portability discussion
 
 Frontmatter translation per the survey's table is the only per-runtime
@@ -203,9 +224,10 @@ not silently absorbed by design.
 
 ## Open questions
 
-1. Naming: `profile/` (author's sketch) vs `profiles/` (house plural).
-2. Pilot: `review-pr`'s 16 forks (the ticket's named pilot) vs the
-   existing `gaze-pr-review.md` shell as a first bootstrap check.
+1. ~~Naming: `profile/` vs `profiles/`~~ — closed 2026-10-03: `profiles/`
+   (house plural convention: `rules/`, `skills/`, `tickets/`).
+2. Pilot: `review-pr`'s 16 forks (the ticket's named pilot), with Pi's four
+   existing profiles as the cheapest cross-runtime conversion companion.
 3. Whether `idh sync` deploys shells or they stay hand-written.
 4. Census recount and role inventory before any profile is written
    (implementation-phase gate, ticket Actions 2).
