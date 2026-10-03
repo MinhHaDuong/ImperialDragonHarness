@@ -8,6 +8,7 @@ Author: claude
 
 2026-10-03T11:49Z claude note Reimagined (raid 2026-10-03): premise holds — preflight skills/review-pr/SKILL.md:110-114 still trusts spawn success; raid-1008 journal names the silent child cap as likely root cause. Path: scripted spawn-then-list reproduction (8 parallel) run by the raid orchestrator — top-level session, child executors lack the agent connector (blind-spot F5); outcome recorded here. Preflight fixed to state spawn success does not imply existence — poll agent.list, trust manifest+artifact roster; doc-pin test per test_gaze_panel_integrity.py style; no new roster/polling helper.
 2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03): no runtime-side fix possible from this repo (agent.spawn is Vibe CLI). An upstream GitHub issue filing is an author decision, not an executor deliverable — listed in the raid wrap-up.
+2026-10-03T11:56Z claude note plan (raid 2026-10-03): orchestrator-run reproduction script scripts/repro-spawn-then-list.ts (committed artifact, not CI; run by the raid orchestrator pre-execution); preflight trust-sentence fix after L112 (proposed final text recorded); doc-pin test added to tests/test_gaze_panel_integrity.py with end-anchor split so 1017's section cannot satisfy it vacuously. 4 files.
 --- body ---
 ## Context
 
