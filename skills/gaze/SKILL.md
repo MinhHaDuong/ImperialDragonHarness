@@ -334,6 +334,22 @@ that cuts a *fresh* tree from the session repo on main/HEAD, which is exactly
 the wrong-branch failure this conversion eliminates; only the REROLL fix
 agent (a mutator) gets `isolation: "worktree"`.
 
+If the battery cannot be launched at all — the isolation guard refuses the
+spawn, the agent connector is absent, or the spawn-depth limit is hit — first
+attempt the detached-seat substitution documented in
+`skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line
+`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the verdict
+comment. The boundary with the seat-level signal: no seat launched at all is
+a battery NOT-RUN; seats launched but reports missing stays seat-level
+`PANEL-INTEGRITY:` (whose name is unchanged). The NOT-RUN line names a launch
+failure, not a review finding: never fabricate findings — the gate reports
+the criteria unverified, and the verdict is capped at ESCALATE, never
+APPROVED. When the phase-6 gate itself cannot launch — under the same
+causes: the isolation guard refuses the spawn, the agent connector is
+absent, or the spawn-depth limit is hit — the gaze orchestrator emits the
+capped verdict directly with `gate: skipped (gate launch failure — see
+battery NOT-RUN)` and the criteria reported unverified — never fabricated.
+
 Every reviewer agent's prompt:
 - opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
   procedure it runs and the PR;
@@ -576,7 +592,11 @@ must-fix simplify finding is APPLIED (diff shows it) or has a validated
 rationale. Any `blocking` adherence violation → REROLL. Run `git log
 origin/main..origin/<branch> --stat` (two-dot) and report files not traceable
 to an exit criterion as `scope_overflow` (report only — never rebase/amend to
-excise). Decision: any MISSING criterion, any unresolved human comment, any
+excise). At verdict time, re-check the changed-file count against the
+breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
+14-file PR past it after the phase-1 check has passed; if the diff against
+main now meets the breaker, report `circuit_breaker: un-reviewable` in the
+verdict comment and rule ESCALATE, never APPROVED. Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
@@ -832,14 +852,15 @@ tier: tiny|small|full
 risk_band: high|low|normal
 circuit_breaker: un-reviewable | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
-adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable)
-review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable)
-review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable)
+adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (battery NOT-RUN)
+review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable) | skipped (battery NOT-RUN)
+review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable) | skipped (battery NOT-RUN)
 review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable)
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
-gate: ran | skipped (un-reviewable) | skipped (--force-approve)
+gate: ran | skipped (un-reviewable) | skipped (--force-approve) | skipped (gate launch failure — see battery NOT-RUN)
 
 ## /verify-gate verdict
 

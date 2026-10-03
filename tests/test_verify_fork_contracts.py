@@ -144,6 +144,121 @@ def test_gaze_only_reroll_fix_agent_gets_isolation():
     )
 
 
+def test_gaze_battery_not_run_names_cause():
+    """Ticket 0990: a battery that cannot launch at all must say so in one
+    line naming the cause, composed AFTER the detached-seat substitution —
+    first attempt the substitution documented in skills/review-pr/SKILL.md,
+    and only if that also cannot run emit the battery NOT-RUN line. The line
+    is a launch failure, distinct from review findings and from seat-level
+    PANEL-INTEGRITY (whose name is unchanged); findings are never fabricated
+    and the gate reports the criteria unverified."""
+    battery = VERIFY.split("### 2–4. Read-only review fan-out", 1)[1].split(
+        "### 5. Simplify", 1
+    )[0]
+    norm = _normalize(battery)
+    assert "detached-seat substitution" in norm and "skills/review-pr/SKILL.md" in norm, (
+        "gaze/SKILL.md: the battery section must first attempt the detached-seat "
+        "substitution documented in skills/review-pr/SKILL.md before declaring "
+        "the battery NOT-RUN"
+    )
+    assert re.search(
+        r"battery: NOT-RUN — cause: <guard\|no-agent-tool\|depth>", norm
+    ), (
+        "gaze/SKILL.md: the battery section must carry the one-line "
+        "`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` signal"
+    )
+    # Composition order: the substitution is attempted BEFORE the NOT-RUN line.
+    assert norm.index("detached-seat substitution") < norm.index("battery: NOT-RUN"), (
+        "gaze/SKILL.md: the NOT-RUN line is composed only after the detached-seat "
+        "substitution was attempted and also failed"
+    )
+    assert "PANEL-INTEGRITY" in norm and "BATTERY-INTEGRITY" not in VERIFY, (
+        "gaze/SKILL.md: the battery NOT-RUN line must not rename or absorb "
+        "seat-level PANEL-INTEGRITY"
+    )
+    assert "never fabricate" in norm, (
+        "gaze/SKILL.md: a battery that cannot launch must never fabricate findings"
+    )
+    # A NOT-RUN battery has a verdict consequence: capped at ESCALATE —
+    # otherwise a no-battery run could still return APPROVED (round-1 review).
+    assert "capped at ESCALATE" in norm and "never APPROVED" in norm, (
+        "gaze/SKILL.md: a battery NOT-RUN must cap the verdict at ESCALATE, "
+        "never APPROVED — an unlaunched battery must not read as a pass"
+    )
+    # The output-shape actions block carries the battery line, after — and
+    # distinct from — the panel integrity line.
+    output = VERIFY.split("## Output shape", 1)[1]
+    fenced = re.findall(r"```(.*?)```", output, re.DOTALL)
+    block = next((b for b in fenced if "panel integrity:" in b), None)
+    assert block is not None, (
+        "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
+    )
+    m = re.search(
+        r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth> \| skipped \(un-reviewable\)",
+        block,
+    )
+    assert m, (
+        "gaze/SKILL.md: the output-shape actions block must carry "
+        "`battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> "
+        "| skipped (un-reviewable)`"
+    )
+    assert block.index("panel integrity:") < m.start(), (
+        "gaze/SKILL.md: the battery line must follow the panel integrity line — "
+        "the two signals are distinct"
+    )
+
+
+def test_output_shape_lines_define_battery_not_run_value():
+    """reviewsub#1 (round 1): the adherence/review/review-pr output-shape
+    lines enumerated no value for a battery that could not launch — a
+    NOT-RUN run had to fabricate a count or write out-of-enum. Each of the
+    three lines must carry `skipped (battery NOT-RUN)` as an option."""
+    _, _, after = VERIFY.partition("## Output shape")
+    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
+    block = next((b for b in fenced if "panel integrity:" in b), None)
+    assert block is not None, (
+        "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
+    )
+    for name in ("adherence:", "review:", "review-pr:"):
+        lines = [ln for ln in block.splitlines() if ln.strip().startswith(name)]
+        assert lines, f"gaze/SKILL.md: output-shape block lost the {name} line"
+        assert "skipped (battery NOT-RUN)" in lines[0], (
+            f"gaze/SKILL.md: the {name} output-shape line has no value for a "
+            "battery that could not launch — it must enumerate "
+            "`skipped (battery NOT-RUN)`"
+        )
+
+
+def test_gate_rechecks_size_breaker_at_verdict_time():
+    """V2 (round 1): `pr_files >= 15` was evaluated only at phase 1, before
+    re-entry — a round-2 fix can grow a 14-file PR past the breaker with the
+    gate never re-checking it. The embedded phase-6 gate procedure must
+    re-check the changed-file count against the breaker at verdict time and
+    report `circuit_breaker: un-reviewable` if it is exceeded."""
+    gate = VERIFY.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
+    norm = _normalize(gate)
+    assert re.search(r"re-check\w* the changed-file count", norm), (
+        "gaze/SKILL.md: the phase-6 gate procedure must re-check the "
+        "changed-file count at verdict time, not only at phase 1"
+    )
+    assert "circuit_breaker: un-reviewable" in norm, (
+        "gaze/SKILL.md: the phase-6 gate re-check must report "
+        "`circuit_breaker: un-reviewable` when the breaker is exceeded"
+    )
+    m = re.search(r"pr_files\s*>=\s*(\d+)", norm)
+    assert m, (
+        "gaze/SKILL.md: the phase-6 gate re-check must name the breaker "
+        "threshold it re-checks (`pr_files >= <n>`)"
+    )
+    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    breaker = re.search(r"pr_files\s*>=\s*(\d+)", setup)
+    assert breaker, "gaze setup lost its pr_files un-reviewable breaker"
+    assert m.group(1) == breaker.group(1), (
+        f"the phase-6 gate re-check threshold ({m.group(1)}) drifted from "
+        f"gaze setup's breaker ({breaker.group(1)})"
+    )
+
+
 def test_gaze_tier_recorded_in_telemetry_and_output_shape():
     """The graduated battery tier (ticket 0320) must be auditable: the per-run
     tier has to surface in BOTH the verdict-footer telemetry template and the

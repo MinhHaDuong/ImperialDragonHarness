@@ -195,6 +195,13 @@ below):
 - Cross-cutting registries: a file holding a shared hash-set / dict / dispatch
   table (test allowlist, dispatch keys, config conventions) that 3+ PRs will
   edit. Flag any you find — they trigger the Phase 5.0 coordination PR.
+- Planned-PR size: for each plan, count every path its PR diff will touch
+  (ticket and test files included — the breaker counts them) and compare with
+  the `/gaze` un-reviewable breaker (`skills/gaze/SKILL.md` phase 1 Setup;
+  threshold (15+ files) owned by `rules/workflow.md` § Ticket discipline for
+  multi-PR work, restated here only so the drift-pin test can catch it). A
+  planned PR reaching the breaker gets WARN plus a proposed split into child
+  PRs before Phase 5 spawns executors.
 
 Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
 
@@ -283,11 +290,27 @@ Wait for wave to complete.
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** launch per-ticket `/gaze` runs in parallel (background agents,
-one per merge request) when the PR branches touch disjoint files. Verify
-file-sharing PRs sequentially to avoid concurrent-fix collisions. Respect the
-max-concurrent-agents cap (see `rules/claude-code.md` § Subagent levers). Phase 7 merges
-stay strictly sequential.
+**Per-ticket:** run `/gaze` on every merge request — the orchestrator itself
+runs it inline, one per PR (an inline run is serial; only the detached shape
+below adds concurrency, and disjoint-file PRs may run concurrently through
+it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
+Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
+levers). When the runtime's nesting blocks the inline run — a raid is itself
+an agent orchestration, and child sessions do not inherit the agent connector
+(PRs #1060/#1061, #1129-#1132; ticket 1017); detect it by the inline run
+reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
+or by a known absent agent connector — substitute one detached, headless, non-interactive
+CLI session per PR per the detached-seat contract
+(`skills/review-pr/SKILL.md` § Detached-seat substitution, ticket 1017): cwd
+pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
+caller prerequisites and the containment rails (no merges, no writes outside
+the PR branch); the result is observed by polling the written verdict
+artifact — the `## /verify-gate verdict` PR comment per the output shape of
+`skills/gaze/SKILL.md`, accepted only when its `ruled_tip_sha` matches the
+branch tip — under that contract's bounded wait, never a spawn exit status,
+and the structured verdict must return to the orchestrator. A REROLL
+bump/fix runs in the PR's worktree so its commits land on the PR branch,
+never on main mid-wave. Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
 subagent (read-only; `model-level: standard` per § Model policy) to check:
