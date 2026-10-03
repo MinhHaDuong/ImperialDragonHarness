@@ -34,6 +34,12 @@ propagation seats, round 1).
   it should point at the reroll_bump posing rule (orchestrator poses onto the
   PR branch or defers to merge time).
 
+- A manual `/verify-gate` run outside the raid/gaze flow (round-2 panel
+  note): the verdict comment keeps a durable copy, but nothing names the
+  caller who poses the line onto the PR branch. State it in
+  `skills/verify-gate/SKILL.md` (the caller of a bare gate run poses the
+  reroll_bump line, or defers to the merge).
+
 ## Exit criteria
 
 - [ ] The wrap-up tally counts `note verify-reroll` bumps

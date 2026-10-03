@@ -579,9 +579,9 @@ unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
 forbidden. On REROLL include `reroll_bump:` in the verdict — value `note
-verify-reroll — round {n}: {top unresolved criterion}` — only after the live
-`verdict` state check; never run `erg log` (the gate writes no ticket file);
-then post the PR verdict comment. Return:
+verify-reroll — round {n}: {top unresolved criterion}`, never `none` — only
+after the live `verdict` state check; never run `erg log` (the gate writes no
+ticket file); then post the PR verdict comment. Return:
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE
