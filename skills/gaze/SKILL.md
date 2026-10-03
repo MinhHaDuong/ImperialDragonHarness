@@ -435,7 +435,9 @@ spawn failed; independent perspectives not run` and `dissent: unavailable`;
 return those same lines in Agent C's structured block. The /gaze orchestrator
 must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
 and use `panel integrity: DEGRADED` in the actions section. Never write
-`dissent: none` for this path.
+`dissent: none` for this path. When Agent C's own toolset lacks the
+`Agent` tool, apply the detached-seat substitution in
+skills/review-pr/SKILL.md instead of degrading.
 If a launched perspective is still missing at the bounded collection deadline,
 name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
 perspective report: <name>`, and use `dissent: unavailable` there too.

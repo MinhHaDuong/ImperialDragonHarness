@@ -2,6 +2,7 @@
 Title: Child sessions lack the agent connector: reviewer seats need a documented detached-CLI pattern
 Created: 2026-10-02
 Author: reviewer
+Closed: autoclosed — PR #1162
 
 --- log ---
 2026-10-02T11:05Z reviewer created
@@ -15,6 +16,9 @@ Author: reviewer
 2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03): 0980 closes WONTDO with 1009 in the parallel wave — absorb the slot-budget/child-cap concern into this section (or 1021's documented conditions), do not defer it to 0980.
 2026-10-03T11:56Z claude note plan (raid 2026-10-03): detached-seat substitution section inserted after the perspective table (~L131), pointer sentence appended at the preflight paragraph end, gaze Agent C pointer; first test tests/test_review_detached_seat_pattern.py (heading-anchored section slice, contract-element pins, 2-runtime pin, fail-open pin). 4 files. Disjoint lines from 1021 in the same preflight paragraph — composes under either merge order.
 2026-10-03T12:02Z claude note feasibility (raid 2026-10-03): PASS, all anchors verified. Corrections: preflight paragraph is L110-122 (pointer appended after the 'unchanged.' sentence at L122); section inserted before '### Proportional depth' at L132; gaze Agent C pointer after the 'Never write dissent: none' line (L437-438). Disjoint from 1021 in the same paragraph (merge-file simulated, 0 conflicts).
+2026-10-03T12:05Z reviewer note Executed (raid 2026-10-03): detached-seat substitution section inserted in skills/review-pr/SKILL.md after the perspective table (non-interactive detached CLI per seat, prompt-embedded seat contract, worktree-pinned cwd, read-only rails, deny-rules as one string, model-pin limitation recorded, artifact polling under the concurrency contract, spawn-success never trusted, slot budget/child cap, seat-runner.sh optional); pointer sentences in the fan-out preflight and gaze Agent C; doc-pin test tests/test_review_detached_seat_pattern.py
+2026-10-03T12:31Z reviewer note Review rounds 1-3 run via the detached-seat substitution itself (claude transport, vibe transport blocked by its approval policy for detached -p sessions — recorded limitation, no-report round 1 doc-propagation, approved on claude in round 2). All findings fixed in d47765c2 and 5325e270; round 3 consistency and regression both approve.
+2026-10-03T14:13Z reviewer closed — autoclosed — PR #1162
 --- body ---
 ## Context
 

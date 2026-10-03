@@ -128,6 +128,9 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    artifact. If no reviewer launched, skip the collection wait; if some
    launched, collect those reports under the normal deadline before synthesis.
    The remaining review content and perspective judgments are unchanged.
+   When the `Agent` tool is absent because the session is itself a child
+   (the runtime's agent connector is not inherited), apply the
+   detached-seat substitution section below instead of stopping at DEGRADED.
 
 | Agent | Focus | Key question |
 |---|---|---|
@@ -136,6 +139,41 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
 | **Scope** | Over-engineering, unrelated changes | Does this change *only* what the ticket asks? |
 | **Red team** | Adversarial inputs, broken invariants | How can this break? |
 | **Doc propagation** | Downstream text accuracy | Do docs and configs still match the code? |
+
+### Detached-seat substitution
+
+Child sessions do not inherit the runtime's agent connector: a reviewer
+launched through `Agent` finds no `Agent` tool of its own (observed across
+all four executors of the 2026-10-02 raid, PRs #1129-#1132). When the
+preflight above finds the tool absent for that reason, substitute one
+detached, headless, non-interactive CLI process per seat — never
+sequential self-review — launched from the orchestrating session. The
+command shape is per-runtime; the contract is not: a Vibe headless
+invocation (`vibe -p "<prompt>"`) or a Claude Code `-p` style invocation
+(`claude -p "<prompt>"`) both qualify, as does any runtime offering a
+headless non-interactive CLI.
+
+Embed the full seat contract in that prompt: the perspective and its exit
+criteria, the anchor HEAD and changed-file roster from review-pr-anchor.py,
+and the exact `<panel>/<perspective>.md` path the seat writes. Restate the
+read-only rails there too: the seat writes nothing outside its panel
+artifact, posts nothing to the forge, and holds no credentials. Pin each
+process's cwd to the review worktree, and pass deny-rules as one string —
+quoted, never word-split (a recorded mis-launch). Request the model pin
+explicitly; when the detached CLI cannot enforce per-seat model selection,
+record that limitation in the report front-matter instead of silently
+running a different model.
+
+Completion is observed by artifact polling under the concurrency contract
+above (manifest, `.part`-then-rename, bounded wait) — reference it, do
+not restate it — and never trust the spawn's success: a spawn beyond a
+silent child cap can return success while the child never registers
+(memory: raid-1008). Cap concurrent detached seats to the runtime's slot
+budget / child cap and stagger launches; a beyond-budget or deadline-missed
+seat is `no report` with `PANEL-INTEGRITY`, never simulated.
+`$IDH_ROOT/scripts/seat-runner.sh` is an optional heavier transport (one
+OS-sandboxed process per seat) — cite it, never require it, and never
+extend it for this substitution.
 
 ### Proportional depth
 
