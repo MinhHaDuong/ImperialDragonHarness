@@ -104,10 +104,13 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    message, per the concurrency contract above. Each launch is **the
    code-reviewer profile** (`agents/code-reviewer.md`), whose contract is
    `profiles/code-reviewer/PROFILE.md`; the perspective, the anchor HEAD, the
-   changed-file roster, and the exact `<panel>/<perspective>.md` path the seat
-   writes ride in the launch prompt — the seat's role rails (read-only,
-   `git -C` discipline, artifact protocol, report format) are the contract's
-   and are never restated here or in the prompt. An agent that only *returns*
+   changed-file roster, the linked issue's exit criteria, and the exact
+   `<panel>/<perspective>.md` path the seat writes ride in the launch prompt —
+   the seat's role rails (read-only, `git -C` discipline, artifact protocol,
+   report format) are the contract's and are not restated in this launch
+   block; the detached-seat substitution below intentionally restates the
+   read-only rails in its prompts — a detached CLI seat cannot be relied on
+   to read a shell. An agent that only *returns*
    its findings has reported to a fork that is already gone. On round ≥ 2,
    scope the set per § Round scoping below before launching, and let the
    manifest list exactly that scoped set:
@@ -248,8 +251,10 @@ which model runs them (`rules/claude-code.md` § Subagent levers and
 Every seat launched above is the code-reviewer profile; what it does — how it
 reads, how it judges and reports, and how it lands its one artifact — is its
 contract, `profiles/code-reviewer/PROFILE.md`. Do not restate those rails
-here or in a launch prompt; the perspective and materials ride in the prompt,
-the rails ride in the contract.
+in this skill or in an Agent-spawned launch prompt; the perspective, the
+materials — including the linked issue's exit criteria — ride in the prompt,
+the rails ride in the contract, and the detached-seat substitution keeps its
+intentional restatement.
 
 ## Collection
 

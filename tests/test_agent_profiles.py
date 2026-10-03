@@ -230,7 +230,7 @@ def test_review_pr_launch_names_the_code_reviewer_profile():
     review = REVIEW_PR.read_text(encoding="utf-8")
     launch = " ".join(
         review.split("Spin multiple agents", 1)[1]
-        .split("### Detached-seat substitution", 1)[0]
+        .split("**Fan-out preflight:**", 1)[0]
         .split()
     )
     assert "the code-reviewer profile" in launch, (
