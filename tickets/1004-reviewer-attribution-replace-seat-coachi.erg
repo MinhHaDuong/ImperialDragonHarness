@@ -7,6 +7,7 @@ Author: MinhHaDuong
 2026-10-02T08:00Z MinhHaDuong created
 2026-10-02T08:05Z MinhHaDuong note approved design (author, 2026-10-02 session): coaching by attribution, defer to runtime harnesses, roar captures reviewer facts, ex-post offline ranking; spec at docs/2026-10-02-reviewer-attribution-design.md; supersedes 0205's seat-runner panel contract (0205 closes at teardown with integration-review note)
 
+2026-10-03T08:22Z qwen3.8-27b note 0205 closed with its integration-review note (tickets/closed/0205-external-reviewer-panel-for-verify-contr.erg) — the '0205 closed with integration-review note' exit criterion is now a verification
 --- body ---
 ## Context
 

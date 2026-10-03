@@ -3,6 +3,7 @@ Title: Cross-project PR benchmark: mined-defect sample + challenger-vs-squad aud
 Created: 2026-07-15
 Author: Minh Ha-Duong
 Label: deferred
+Closed: absorbed by 1008 (closed) — deferred, no active work; disposition per 1009 action 3
 
 --- log ---
 2026-07-15T06:09Z Minh Ha-Duong created
@@ -10,6 +11,8 @@ Label: deferred
 2026-07-15T06:25Z Minh Ha-Duong note adapted to the squad-management model per author review of PR #639 — pairwise unseating verdict replaced by challenger-vs-squad non-redundant-coverage criterion
 
 2026-10-02T08:01Z MinhHaDuong note absorbed by tickets/1008 (ground-truth seeding) per the 2026-10-02 reviewer-attribution design — the mined-defect sample is the label bottleneck fix; challenger-vs-squad criterion maps onto 1007's correlation and marginal-coverage surfaces
+2026-10-03T08:21Z qwen3.8-27b note closed in the 0205 tracker-closure pass — absorbed by 1008 (ground-truth seeding, closed): the mined-defect sample and challenger-vs-squad audition are subsumed by the reviewer-attribution design (docs/2026-10-02-reviewer-attribution-design.md); the governing frame (0205 ## Squad-management model) now lives in tickets/closed/0205-external-reviewer-panel-for-verify-contr.erg
+2026-10-03T08:21Z qwen3.8-27b closed — absorbed by 1008 (closed) — deferred, no active work; disposition per 1009 action 3
 --- body ---
 ## Context
 

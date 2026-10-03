@@ -10,6 +10,7 @@ Blocked-by: 1007
 2026-10-02T08:00Z MinhHaDuong created
 
 2026-10-02T09:24Z MinhHaDuong note blocker 1008 closed — Blocked-by removed.
+2026-10-03T08:22Z qwen3.8-27b note 0205 and 0356 closed ahead of this ticket (2026-10-03 pass, author-approved) — action 3 dispositions for both are now verifications; action 3 remainder: close 0980 WONTDO + annotation lines on the seven closed trial tickets (0206/0207/0217/0208/0346/0348/0353); action 4: workflow.md decorrelation rule rewrite
 --- body ---
 ## Context
 

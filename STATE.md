@@ -1,20 +1,20 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-02T12:31Z
+Last updated: 2026-10-03T08:22Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-02T12:31Z · as of 071b88c8 -->
+<!-- generated 2026-10-03T08:22Z · as of 4c927f35 -->
 
-**Tickets:** 16 ready · 15 blocked — `erg ready tickets/` for full list
-  next: 0205 External-reviewer panel for verify — contract, … · 0879 La porte ecrit des lignes de journal malformees…
-**In flight:** no open PRs · CI main: in progress
+**Tickets:** 13 ready · 14 blocked — `erg ready tickets/` for full list
+  next: 0879 La porte ecrit des lignes de journal malformees… · 0887 Instruire adapters/claude-code en plugin skills…
+**In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  071b88c8 Merge pull request #1150 from MinhHaDuong/t1022-pi-local-rerun
-  6cc7c6e4 Merge pull request #1149 from MinhHaDuong/roadmap-refresh-2026-10-02
-  7cca68c5 Merge pull request #1148 from MinhHaDuong/roar-1143-2026-10-02
+  4c927f35 Merge pull request #1156 from MinhHaDuong/roar-wrapup-20261003
+  c65d2284 Merge pull request #1155 from MinhHaDuong/t0902-gaze-risk-band
+  dbab9d59 Merge pull request #1154 from MinhHaDuong/roar-wrapup-20261002
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
@@ -22,7 +22,7 @@ Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), 
 The Zotero interface architecture landed in #1143: principles, per-skill transports, the one-`zotero` verb surface as target state, `rules/zotero.md` (EDM acronym retired), and 0485 closed on a live-validated hash-dedup report with the author's sample arbitration. Zotero follow-ups: 1018 (consolidation), 1020 (`~/.idh` sweep). Roadmap refreshed from the open set in #1149.
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for the eight trains. After memory 0913: attribution 1004→1009 (gated on 0913), runtime policy 0974/0938 (+1017/0980/1021), verification 0990/0205/0902/0879, Claude adapter 0887/0888, raid annotations 1016, then Zotero 1018 with the 1020 rider.
+See [ROADMAP.md](ROADMAP.md) for the eight trains. After memory 0913: attribution 1004→1009 (gated on 0913), runtime policy 0974/0938 (+1017/0980/1021), verification 0990/0902/0879, Claude adapter 0887/0888, raid annotations 1016, then Zotero 1018 with the 1020 rider.
 The primary checkout is clean and based on `origin/main`.
 
 ## Author actions
