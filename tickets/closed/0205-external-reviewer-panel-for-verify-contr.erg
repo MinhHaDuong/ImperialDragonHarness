@@ -2,6 +2,7 @@
 Title: External-reviewer panel for verify — contract, decorrelation rule, trial tracker
 Created: 2026-06-04
 Author: MinhHaDuong
+Closed: integration review — contract + decorrelation rule landed (PR #638), trial verdicts stand, residual work owned by 1009; panel contract superseded by 1004
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
@@ -23,6 +24,8 @@ Author: MinhHaDuong
 2026-09-23T17:17Z Minh Ha-Duong note blocker 0207 closed — Blocked-by removed.
 2026-09-23T19:30Z Codex note Roster audit: 0207's local Padmé qwen3.8-27b seat completed the required five-PR/three-project trial, but had zero verified catches and four noisy reviews; it remains on demand and is not promoted. The older qwen3.6 prototype sentence below is historical evidence, not a current seat recommendation. The panel contract and continuous squad-management work in this ticket remain open.
 2026-10-02T08:01Z MinhHaDuong note design successor filed: tickets/1004 replaces the seat-runner panel contract with reviewer-attribution capture (spec docs/2026-10-02-reviewer-attribution-design.md); this tracker closes at 1009's integration-review note; recorded trial verdicts stand
+2026-10-03T08:21Z qwen3.8-27b note integration review (tracker-closure pass, author-approved): criteria 1-2 verified in-repo — PR #638 landed the decorrelation gradient in rules/workflow.md § Delegation and the panel-extension contract in skills/gaze/SKILL.md (## External reviewer panel: finding shape, advisory→required protocol, scorecard trial, fail-open); criterion 3 — all children closed (0356 closed in this pass as absorbed by 1008), trial verdicts stand (Codex roster audit 2026-09-23: local qwen3.8-27b seat completed the 5-PR/3-project trial with zero verified catches, remains on demand, not promoted); the seat-runner panel contract is superseded by the reviewer-attribution design (1004, docs/2026-10-02-reviewer-attribution-design.md); residual dispositions are owned by 1009 actions 3-4; the squad-management design anchor remains in this body (## Squad-management model)
+2026-10-03T08:21Z qwen3.8-27b closed — integration review — contract + decorrelation rule landed (PR #638), trial verdicts stand, residual work owned by 1009; panel contract superseded by 1004
 --- body ---
 ## Context
 
@@ -157,6 +160,6 @@ Consequences for this tracker:
 
 ## Exit criteria
 
-- [ ] Decorrelation rule reworded (agnostic, gradient stated)
-- [ ] Panel-extension contract documented in skills/gaze/SKILL.md
-- [ ] All children merged; trial scorecards reviewed; promote/drop decided
+- [x] Decorrelation rule reworded (agnostic, gradient stated)
+- [x] Panel-extension contract documented in skills/gaze/SKILL.md
+- [x] All children merged; trial scorecards reviewed; promote/drop decided
