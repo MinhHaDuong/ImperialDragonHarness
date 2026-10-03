@@ -68,7 +68,8 @@ single source for prose/code review routing.
 
 ## Resident rules
 
-`workflow.md` `git.md` `claude-code.md` — the whole resident set. Bodies in
+`workflow.md` `git.md` `claude-code.md` `guards.md` — the whole resident set.
+Bodies in
 context already, listed here only so an adapter knows what to ship, and
 `claude-code.md` is the one an adapter on another runtime skips. This index is
 itself conditional (`paths:` on the rules tree): it was 20% of the resident set
