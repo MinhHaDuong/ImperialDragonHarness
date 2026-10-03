@@ -13,7 +13,7 @@ from child_env import child_env
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "zotero-import.py"
+SCRIPT = ROOT / "scripts" / "zotero.py"
 spec = importlib.util.spec_from_file_location("zotero_dedup_import", SCRIPT)
 zi = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = zi

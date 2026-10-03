@@ -36,11 +36,11 @@ staging, never the home (see `rules/zotero.md`).
 5. **Clean the metadata.** Real byline (personal authors `Last, First`;
    institutions verbatim with a trailing comma so they aren't reordered), full
    date, publication/publisher. Reports **get a page count** (`numPages`).
-6. **Dedupe.** `python3 "$IDH_ROOT/scripts/zotero-import.py" match --title "<refined title>" [--doi D]`
+6. **Dedupe.** `python3 "$IDH_ROOT/scripts/zotero.py" match --title "<refined title>" [--doi D]`
    — warn and ask before importing a likely duplicate. The user's own works are
    usually already in Zotero; check before adding.
 7. **Write + import.** Build the entries JSON and
-   `python3 "$IDH_ROOT/scripts/zotero-import.py" write --out <file>.ris --entries-json '<json>'`,
+   `python3 "$IDH_ROOT/scripts/zotero.py" write --out <file>.ris --entries-json '<json>'`,
    then `xdg-open` (or `setsid -f zotero`) the RIS. Attachments archive in Zotero
    (`attach_pdf: true`, `pdf: <staged_path>` — works for HTML snapshots too).
 8. **Update the `.bib` (staging).** Optionally append a biblatex entry to the
@@ -73,7 +73,7 @@ substitution in the entry.
 - `"$IDH_ROOT/skills/index-source/scripts/probe-url.py" <url>... [--staging-dir docs] [--timeout 60]` — fetch +
   stage + metadata. Stdlib only (no install). Uses `pdfinfo`/`pdftotext` for PDF
   page count and first-page text when available.
-- `"$IDH_ROOT/scripts/zotero-import.py"` (global) — `match` (dedupe vs the Zotero
+- `"$IDH_ROOT/scripts/zotero.py"` (global) — `match` (dedupe vs the Zotero
   DB) and `write` (RIS + `L1` attachment, `numPages`→page count on report types).
 
 ## Output to the user

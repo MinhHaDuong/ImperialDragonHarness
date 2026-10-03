@@ -1,4 +1,4 @@
-"""Tests for scripts/zotero-import.py.
+"""Tests for scripts/zotero.py.
 
 Covers the pure extraction/formatting helpers (identifier regexes, RIS
 emission) plus the Zotero matcher against a real in-memory SQLite database
@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
-spec = importlib.util.spec_from_file_location("zotero_import", SCRIPTS / "zotero-import.py")
+spec = importlib.util.spec_from_file_location("zotero_import", SCRIPTS / "zotero.py")
 zi = importlib.util.module_from_spec(spec)
 sys.modules["zotero_import"] = zi
 spec.loader.exec_module(zi)

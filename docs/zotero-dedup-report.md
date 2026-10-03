@@ -18,12 +18,12 @@ supports Zotero 10 but documents import-time and native-pane duplicate handling,
 not a library-wide attachment-hash report. [Zoteus](https://zoteus.com/docs/zoteus-and-zotero-mcp/)
 documents search and acquisition, not this hash audit. No reviewed existing
 tool covers the measured gap in the installed client; retain Zotero for the
-actual merge and reuse `zotero-import.py` for a read-only report.
+actual merge and reuse `zotero.py` for a read-only report.
 
 ## Run
 
 ```bash
-python3 scripts/zotero-import.py dedup-report --out /tmp/zotero-duplicates.html
+python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
 ```
 
 The report is local HTML with `zotero://select/library/items/<key>` links for

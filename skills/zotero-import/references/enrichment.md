@@ -8,7 +8,7 @@ supersedes, which is backwards. (Measured once: nine items in one library
 held no DOI while the project `.bib` carried one for each.)
 
 ```bash
-zotero-import.py enrich --item-key XRWZU4DZ \
+zotero.py enrich --item-key XRWZU4DZ \
   --expect-title "Optimum Utilization" --set DOI=10.2307/1907301
 ```
 

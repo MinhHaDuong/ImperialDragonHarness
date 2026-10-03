@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Helper for the zotero-import skill.
+"""Backend helper scripts/zotero.py for the zotero-import skill.
 
 Subcommands: probe, match, dedup-report, write, inject, enrich, sync-index,
 audit, reconcile, attach.
@@ -1760,6 +1760,9 @@ def cmd_probe(args: argparse.Namespace) -> int:
 # asks — is this exact file already stored in Zotero?
 # ---------------------------------------------------------------------------
 
+# Keeps the historical "zotero-import" cache segment (ticket 1018): renaming
+# it would orphan the existing index and force a full library re-pull; the
+# cache dir rename is deliberately out of scope.
 INDEX_CACHE_DIR = (
     Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache"))
     / "zotero-import"
@@ -2982,7 +2985,7 @@ def cmd_attach(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(prog="zotero-import.py")
+    p = argparse.ArgumentParser(prog="zotero.py")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     pp = sub.add_parser("probe", help="extract metadata + Zotero dup hits")
