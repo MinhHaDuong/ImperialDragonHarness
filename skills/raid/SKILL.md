@@ -241,10 +241,19 @@ whatever origin/main has drifted to since.
 the annotation commits, and patch-equivalent commits are not merge-equivalent —
 divergent copies collide on `tickets/` at merge time.
 
-**How**: the orchestrator rebases ALL wave branches onto the new main together,
-once — one collective wave rebase, never per-branch — and pushes each rewritten
-branch with `git push --force-with-lease`, explicitly authorized for this
-rewrite of pushed branch SHAs. WAVE_BASE moves to the rebased tip.
+**How**: the orchestrator first rebases WAVE_BASE itself: create a temporary
+branch at OLD_WAVE_BASE and rebase it once onto the new main; its rebased tip is
+NEW_WAVE_BASE. Then move each wave branch with
+`git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>`, which replays only the
+branch's own commits, so the shared annotation commits replay exactly once and
+every branch carries the same objects. The shared-base replay happens once,
+never per-branch. Push each rewritten branch with `git push --force-with-lease`,
+explicitly authorized for this rewrite of pushed branch SHAs. WAVE_BASE moves
+to NEW_WAVE_BASE.
+
+**Refresh**: the Phase 4 recording is only the initial value. When a Phase 5.0
+coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
+main tip before the next wave's branches fork.
 
 For each wave, launch agents with `isolation: "worktree"` and `model-level: strong`
 (per § Model policy — coding workers; `effort: standard`, resolved through the active runtime).
@@ -282,9 +291,10 @@ subagent (read-only; `model-level: standard` per § Model policy) to check:
 - Does `make check` still pass if we imagine them all merged?
 - Are there testing gaps visible only at wave granularity (e.g., two PRs touching the
   same test file in incompatible ways)?
-- Run `git merge-tree --write-tree` pairwise across the wave's PRs over
-  `tickets/`: a ticket-file conflict there means divergent annotation copies —
-  a WAVE_BASE violation — even when the conflicting lines carry identical prose.
+- Run `git merge-tree --write-tree <headA> <headB>` pairwise on the wave's PR
+  head refs (it takes no path filter). A conflicted path under `tickets/` means
+  divergent annotation copies — a WAVE_BASE violation — even when the
+  conflicting lines carry identical prose; conflicts elsewhere are ordinary.
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
 individual `/gaze` verdicts.
