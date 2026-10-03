@@ -9,7 +9,7 @@
 # Prints the value on stdout, alone and with no trailing newline, so the
 # documented call is a command substitution into ONE shell variable:
 #
-#   HAL_ID_VALUE="$(~/.idh/skills/update-publist/resolve_hal_credentials.sh HAL_ID)" || exit $?
+#   HAL_ID_VALUE="$($IDH_ROOT/skills/update-publist/resolve_hal_credentials.sh HAL_ID)" || exit $?
 #
 # The ambient environment is NOT consulted. A pre-set HAL_ID or HAL_PASSWORD has
 # no effect here, which is the point: the `KEYS=` selection layer made the
@@ -47,7 +47,7 @@
 # WHY THE PROVIDER FILE IS AN ARGUMENT AND NOT AN ENVIRONMENT OVERRIDE.
 # The obvious shape is a `HAL_KEYSTORE_FILE` variable honoured "for tests only".
 # Nothing enforces such a label: the protected-name
-# predicate of the harness env loader (~/.idh/scripts/bash-env.sh,
+# predicate of the harness env loader ($IDH_ROOT/scripts/bash-env.sh,
 # `_be_is_protected_name`) does not list it, so an UNTRUSTED project `.env` — the
 # threat model that loader is built around — could point this resolver at a file
 # of its choosing, and the `.` below would then execute it. A second positional

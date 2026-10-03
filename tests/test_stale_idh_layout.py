@@ -1,13 +1,13 @@
 """
 Ticket 1020: the retired ~/.idh layout must not survive in scripts/ as a live
-reference.
+reference. Ticket 1025 extends the same ratchet to skills/.
 
 The ~/.idh layout was retired by the portable lifecycle (0987/0999, PR #1091);
 the reference checkout is wherever the harness is installed. The agnostic gate
 (check-agnostic.sh) checks class-level patterns, not retired layout names, so
 this ratchet is the mechanical guard for the sweep: any NEW `~/.idh`-style
-reference in scripts/ fails, and the survivors that legitimately remain are
-pinned line-by-line as provenance.
+reference in scripts/ or skills/ fails, and the survivors that legitimately
+remain are pinned line-by-line as provenance.
 """
 
 import re
@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 SCRIPTS = Path(__file__).parent.parent / "scripts"
+SKILLS = Path(__file__).parent.parent / "skills"
 
 # A path-component `.idh` (the retired layout dir): `~/.idh`, `$HOME/.idh`,
 # `<home>/.idh`, `"$HOMEDIR"/.idh` — but NOT the `.idh-checks.json` filename,
@@ -52,9 +53,21 @@ PROVENANCE = {
     ),
 }
 
+# Provenance for skills/ (ticket 1025): path relative to skills/ -> substrings
+# each surviving line must carry. Same path-scoped keying as PROVENANCE.
+SKILLS_PROVENANCE = {
+    # The erg-pr-merge comment must stay accurate to the live operator-owned
+    # settings, which still carry the retired-layout allow rule as a legacy
+    # alias for migrated installs; quoting the rule means quoting its path.
+    # The line is legitimate ONLY as that legacy-alias record.
+    "merge/erg-pr-merge": (
+        "legacy alias",
+    ),
+}
 
-def _stale_matches():
-    for path in sorted(SCRIPTS.rglob("*")):
+
+def _stale_matches_under(root):
+    for path in sorted(root.rglob("*")):
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         try:
@@ -63,7 +76,11 @@ def _stale_matches():
             continue
         for lineno, line in enumerate(text.splitlines(), 1):
             if STALE_LAYOUT.search(line):
-                yield path.relative_to(SCRIPTS).as_posix(), lineno, line
+                yield path.relative_to(root).as_posix(), lineno, line
+
+
+def _stale_matches():
+    return _stale_matches_under(SCRIPTS)
 
 
 def _is_exempt(name, line):
@@ -79,6 +96,21 @@ def test_no_live_stale_layout_references_in_scripts():
         offenders.append(f"{name}:{lineno}: {line.strip()}")
     assert not offenders, (
         "Live ~/.idh layout reference(s) in scripts/ (ticket 1020):\n"
+        + "\n".join(offenders)
+    )
+
+
+@pytest.mark.adherence
+def test_no_live_stale_layout_references_in_skills():
+    offenders = []
+    for name, lineno, line in _stale_matches_under(SKILLS):
+        if name in SKILLS_PROVENANCE and any(
+            sub in line for sub in SKILLS_PROVENANCE[name]
+        ):
+            continue
+        offenders.append(f"{name}:{lineno}: {line.strip()}")
+    assert not offenders, (
+        "Live ~/.idh layout reference(s) in skills/ (ticket 1025):\n"
         + "\n".join(offenders)
     )
 
