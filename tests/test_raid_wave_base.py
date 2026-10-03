@@ -5,44 +5,38 @@ distinct commits (26c8ab73 native vs 635cf70c cherry-pick) because four
 executors forked while parallel sessions advanced main — patch-equivalent
 commits are not merge-equivalent. Phase 4 must therefore record WAVE_BASE as
 the last annotation commit, every wave branch must fork from that exact SHA,
-a mid-wave main advance is one collective wave rebase, and the Phase 6
-integration review must run git merge-tree pairwise over tickets/. Text-grep
-only → fast tier, no marker.
+a mid-wave main advance rebases WAVE_BASE once onto the new main and then
+moves each wave branch with git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE,
+and the Phase 6 integration review must run git merge-tree pairwise on the
+wave's PR heads. Text-grep only → fast tier, no marker.
 """
 
+import re
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent / "skills" / "raid" / "SKILL.md"
 
 
-def _phase45() -> str:
-    """Return the text from Phase 4 through the end of Phase 5."""
+def _slice(start_hdr: str, end_hdr: str) -> str:
+    """Return the SKILL.md text from start_hdr up to (not including) end_hdr."""
     text = SKILL.read_text()
-    start = text.find("## Phase 4: Verify feasibility")
-    assert start != -1, "Phase 4 (Verify feasibility) header missing"
-    end = text.find("## Phase 6", start)
-    assert end != -1, "Phase 6 header missing (cannot bound the Phase 4-5 slice)"
+    start = text.find(start_hdr)
+    assert start != -1, f"{start_hdr!r} header missing"
+    end = text.find(end_hdr, start)
+    assert end != -1, f"{end_hdr!r} header missing (cannot bound the slice)"
     return text[start:end]
+
+
+def _phase45() -> str:
+    return _slice("## Phase 4: Verify feasibility", "## Phase 6")
 
 
 def _phase5() -> str:
-    """Return the text of Phase 5 (Execute), up to Phase 6."""
-    text = SKILL.read_text()
-    start = text.find("## Phase 5: Execute")
-    assert start != -1, "Phase 5 (Execute) header missing"
-    end = text.find("## Phase 6", start)
-    assert end != -1, "Phase 6 header missing (cannot bound Phase 5)"
-    return text[start:end]
+    return _slice("## Phase 5: Execute", "## Phase 6")
 
 
 def _phase6() -> str:
-    """Return the text of Phase 6, up to Phase 7."""
-    text = SKILL.read_text()
-    start = text.find("## Phase 6")
-    assert start != -1, "Phase 6 header missing"
-    end = text.find("## Phase 7: Merge", start)
-    assert end != -1, "Phase 7 (Merge) header missing (cannot bound Phase 6)"
-    return text[start:end]
+    return _slice("## Phase 6", "## Phase 7: Merge")
 
 
 def test_phase4_records_wave_base_as_last_annotation_commit():
@@ -87,17 +81,30 @@ def test_phase5_branches_must_fork_from_wave_base():
     )
 
 
-def test_midwave_advance_is_one_collective_rebase_with_authorized_push():
-    """A mid-wave main advance rebases all wave branches together, force-with-lease."""
+def test_midwave_advance_rebases_wave_base_once_then_onto():
+    """A mid-wave main advance replays WAVE_BASE once, then moves each branch --onto it."""
     phase5 = _phase5()
-    assert "once" in phase5, (
-        "Phase 5 must state the mid-wave rebase happens once, not per branch"
+    assert "OLD_WAVE_BASE" in phase5 and "NEW_WAVE_BASE" in phase5, (
+        "Phase 5 must name the old/new base pair of the mid-wave transition"
     )
-    assert "together" in phase5, (
-        "Phase 5 must state the collective rebase rebases all wave branches together"
+    assert re.search(r"rebase[^.]*WAVE_BASE[^.]*onto the new main", phase5), (
+        "Phase 5 must rebase the WAVE_BASE branch itself onto the new main first"
+    )
+    assert re.search(
+        r"git -C <worktree-path> rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE", phase5
+    ), (
+        "Each wave branch must move with git -C <worktree-path> rebase --onto "
+        "NEW_WAVE_BASE OLD_WAVE_BASE inside its executor worktree, where the branch "
+        "is already HEAD, so the shared annotation commits replay exactly once"
+    )
+    assert (
+        "git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>" not in phase5
+    ), (
+        "The <branch>-argument form fails from the orchestrator checkout — the branch "
+        "is already checked out in the executor worktree"
     )
     assert "never per-branch" in phase5, (
-        "Phase 5 must forbid per-branch rebases of the shared annotation commit"
+        "Phase 5 must forbid per-branch replays of the shared annotation commits"
     )
     assert "--force-with-lease" in phase5, (
         "Phase 5 must authorize the rewritten-SHA push explicitly with --force-with-lease, or executors stall"
