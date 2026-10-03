@@ -151,7 +151,12 @@ sequential self-review — launched from the orchestrating session. The
 command shape is per-runtime; the contract is not: a Vibe headless
 invocation (`vibe -p "<prompt>"`) or a Claude Code `-p` style invocation
 (`claude -p "<prompt>"`) both qualify, as does any runtime offering a
-headless non-interactive CLI.
+headless non-interactive CLI. Transport limitation, observed 2026-10-02
+(ticket 1017): the Vibe CLI cannot currently serve as a detached seat —
+its approval policy denies file tools to headless `vibe -p` sessions even
+with trust/auto-approve flags, so the seat reads nothing and produces no
+artifact; use another CLI transport (the `claude -p` form is measured
+working) or record the seat as `no report`, never simulate it.
 
 Embed the full seat contract in that prompt: the perspective and its exit
 criteria, the anchor HEAD and changed-file roster from review-pr-anchor.py,
