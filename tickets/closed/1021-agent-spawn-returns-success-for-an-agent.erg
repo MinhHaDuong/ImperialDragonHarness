@@ -16,6 +16,8 @@ Closed: autoclosed — PR #1163
 2026-10-03T13:00Z vibe note correction: PR #1143 rounds 1-2 ran five-seat panels (docprop spawned, never reported); the seven-seat silent-cap fan-out was PR #1121 (raid-1008). The 11:58Z line's "8-agent panel" and skills/review-pr/SKILL.md's "eight-seat" (also the repro script header's "eight-agent") are corrected in this commit; body lines under Exit criteria/Resolution still carry the 8-agent wording.
 2026-10-03T13:00Z reviewer bump verify-reroll — round 1: repro script false-positive REPRODUCED branch + eight-seat misattribution in SKILL.md preflight
 2026-10-03T14:11Z reviewer closed — autoclosed — PR #1163
+2026-10-03T15:05Z claude note Author decision (2026-10-03, raid wrap-up): no upstream Vibe CLI issue filed for the silent spawn success — the intermittent stays documented here with its observed conditions (PR #1143 rounds 1-2) and the committed reproduction method (scripts/repro-spawn-then-list.ts).
+
 --- body ---
 ## Context
 
