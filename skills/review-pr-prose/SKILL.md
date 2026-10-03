@@ -70,19 +70,25 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
 
 1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate? Run `python3 "$IDH_ROOT/scripts/prose_predicate.py" <file>` from the merge request's checkout — the predicate reads the disk (manifest walk-up, `\documentclass` sniff), so the paths must exist under the cwd; it refuses a missing path (exit 2, no verdict) rather than guessing, and a refusal is a cwd error to fix, never an answer. It prints `prose` for a manuscript: a file with a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists. What is the target venue?
 2. Read the diff of the merge request.
-3. Recruit the panel: select agents appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it.
+3. Recruit the panel: select roles appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it. Every launch is **the prose-reviewer profile** (`agents/prose-reviewer.md`), whose contract is `profiles/prose-reviewer/PROFILE.md`; the seat's role — adversarial referee, AI-tells auditor, or venue expert — the rulebook or axes it holds, the anchor HEAD, the changed-file roster, and the exact `<panel>/<reviewer>.md` path the seat writes ride in the launch prompt — the seat's role rails (read-only on the review tree, `git -C` discipline, report format) are the contract's and are not restated in this skill or in a launch prompt.
 
-## Each agent runs
+## The seats are the prose-reviewer profile
 
-1. Read the **full text** (not just the diff).
-2. Report **confidence** + **severity** (major / minor / suggestion).
-3. Verdict: **accept**, **minor revision**, or **major revision**.
-
-Agents with relevant expertise should use available tools (web search for literature, linting tools if installed, etc.).
+Every seat launched above is the prose-reviewer profile; what it does — how it
+reads, how it judges and reports, and how it lands its one artifact — is its
+contract, `profiles/prose-reviewer/PROFILE.md`. Do not restate those rails
+here or in a launch prompt; the role, the rulebook or axes, and the materials
+ride in the prompt, the rails ride in the contract. Agents with relevant
+expertise should use available tools (web search for literature, linting
+tools if installed, etc.) — that guidance rides in the launch prompt with the
+role. The editorial-brief auditor below is the one inline seat, by inventory:
+an optional, project-specific seat is overhead as a shell — its audit and its
+verdict table stay in this skill.
 
 ## AI-tells auditor (always included)
 
-One agent is always the **AI-tells auditor**. It reads `config/ai-tells.yml` for blacklisted words, phrases, conditional words, density limits, and patterns to flag. It scans the full text (not just the diff) and reports every violation with line number, context, and severity. This agent has no other role — it is a specialized lint pass.
+One seat is always the **AI-tells auditor** — a prose-reviewer launch whose
+prompt carries this rulebook. It reads `config/ai-tells.yml` for blacklisted words, phrases, conditional words, density limits, and patterns to flag. It scans the full text (not just the diff) and reports every violation with line number, context, and severity. This seat has no other role — it is a specialized lint pass.
 
 ## Editorial-brief auditor (when present)
 

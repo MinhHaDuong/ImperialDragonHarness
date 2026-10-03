@@ -538,19 +538,32 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
     """Ticket 0853: a read-only reviewer/gate agent must never reach a
     working-tree overwrite, and must refuse (NOT-RUN) when the review
     worktree is unreachable rather than silently falling back to the
-    session cwd. Both the phase 2–4 battery and the phase 6 gate carry
-    the portable git -C reach contract, the destructive-checkout ban,
-    and the NOT-RUN refusal themselves (not by reference "as above")."""
+    session cwd. The phase 2–4 battery carries the portable git -C reach
+    contract, the destructive-checkout ban, and the NOT-RUN refusal
+    itself (not by reference "as above"). Since ticket 0938's profile
+    conversion, the phase 6 gate seat's containment rails live in its
+    contract, profiles/gate-seat/PROFILE.md — the launch names the
+    profile, so the contract (not the skill body) must carry them."""
     norm = _normalize(VERIFY)
     battery = norm.split("### 2–4.", 1)[1].split("### 5.", 1)[0]
     gate = norm.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
-    for name, sec in (("phases 2-4", battery), ("phase 6", gate)):
+    gate_contract = _normalize(
+        (REPO / "profiles" / "gate-seat" / "PROFILE.md").read_text(encoding="utf-8")
+    )
+    for name, sec in (("phases 2-4", battery), ("phase 6", gate_contract)):
         assert "git checkout <ref> --" in sec, f"{name}: no destructive-checkout ban"
         assert "git show <ref>:<path>" in sec, f"{name}: no read-only alternative named"
         assert "NOT-RUN" in sec, f"{name}: no refusal on unreachable review tree"
         assert "git restore ." in sec, f"{name}: git restore . not banned"
         assert "git reset --hard" in sec, f"{name}: git reset --hard not banned"
-        assert 'git -C "$primary_root' in sec, f"{name}: no git -C reach contract"
+        assert "git -C" in sec, f"{name}: no git -C reach contract"
         assert re.search(r"never falls? back to the session cwd", sec), (
             f"{name}: no never-fall-back-to-session-cwd clause"
         )
+    assert 'git -C "$primary_root' in battery, (
+        "phases 2-4: no git -C reach contract against the primary_root path"
+    )
+    assert "the gate-seat profile" in gate, (
+        "phase 6: the gate launch no longer names the gate-seat profile "
+        "whose contract carries the containment rails"
+    )

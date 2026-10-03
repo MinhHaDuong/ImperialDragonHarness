@@ -266,8 +266,10 @@ this rewrite of pushed branch SHAs. WAVE_BASE moves to NEW_WAVE_BASE.
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
 main tip before the next wave's branches fork.
 
-For each wave, launch agents with `isolation: "worktree"` and `model-level: strong`
-(per § Model policy — coding workers; `effort: standard`, resolved through the active runtime).
+For each wave, launch agents with `isolation: "worktree"` — the **coder
+profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
+frontmatter sets `model-level: strong` per § Model policy — coding workers;
+`effort: standard`, resolved through the active runtime).
 
 The execute-agent contract's FIRST action is mechanical. The agent invokes the
 hunt skill with the ticket ID:
