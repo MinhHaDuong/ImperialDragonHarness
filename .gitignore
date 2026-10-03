@@ -49,6 +49,8 @@ tickets/tools/go/*.test
 !rules/**
 !agents/
 !agents/**
+!profiles/
+!profiles/**
 
 # Makefile for harness targets (skills catalog, checks, etc.)
 !Makefile
