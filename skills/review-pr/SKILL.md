@@ -113,7 +113,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    A spawn that returns success is not a guarantee the agent exists: under
    this runtime's silent child cap, `agent.spawn` has returned success for
    seats that never appeared in `agent.list` (observed twice on PR #1143,
-   2026-10-02, eight-seat parallel fan-out). When an `agent.list` tool is
+   2026-10-02, five-seat parallel fan-out). When an `agent.list` tool is
    available, poll it after the launch and treat a seat that never lists as
    unlaunched — `no report`, never a simulated verdict; the manifest and the
    landed `.md` artifacts, not the spawn return values, are the source of truth

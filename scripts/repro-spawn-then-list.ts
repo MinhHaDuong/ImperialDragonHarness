@@ -10,7 +10,11 @@
 // NOT-REPRODUCED — 8/8 seats listed at every poll t+0..t+60s. Contrast in the
 // same session: over-cap spawns returned loud errors ('subagent_concurrency_
 // limit'), never silent success. Silent-success remains a known intermittent
-// (PR #1143 rounds 1-2, 2026-10-02, eight-agent parallel panel).
+// (PR #1143 rounds 1-2, 2026-10-02, five-seat parallel panel).
+//
+// RESULT lines: REPRODUCED only when a tracked spawn-success id never appears
+// in agent.list; UNDETERMINED when a successful spawn returned no correlatable
+// id (it cannot be diffed against the list, so it never counts either way).
 
 declare namespace tools.agent {
   // Shape is defensive: the exact return schema varies across runtimes.
@@ -41,11 +45,14 @@ async function main(): Promise<string> {
 
   // 2. Collect spawn returns; keep only the ids the runtime reported success for.
   const spawnedIds: string[] = [];
+  let idlessSuccesses = 0;
   spawns.forEach((r, i) => {
     const value = r.status === "fulfilled" ? r.value : null;
     const id = value && (value.id ?? value.agentId ?? value.agent_id);
     if (id !== undefined && id !== null) {
       spawnedIds.push(String(id));
+    } else if (value) {
+      idlessSuccesses++; // success with no id: cannot be correlated to the list
     }
     // A rejected or error-typed spawn is a loud failure, not the silent-success
     // defect under test; it is reported, not counted as a vanished seat.
@@ -74,6 +81,18 @@ async function main(): Promise<string> {
   if (spawnedIds.length === SEATS && absent.size === 0) {
     return (
       "RESULT: NOT-REPRODUCED — " + listed + "/" + SEATS + " listed; " + CONDITIONS
+    );
+  }
+  if (absent.size === 0) {
+    return (
+      "RESULT: UNDETERMINED — " +
+      idlessSuccesses +
+      " spawn-success seats returned no correlatable id, " +
+      listed +
+      "/" +
+      SEATS +
+      " tracked seats listed; " +
+      CONDITIONS
     );
   }
   return (
