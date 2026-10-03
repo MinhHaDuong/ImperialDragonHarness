@@ -2,7 +2,6 @@
 Title: Attribution record template and roar step-6 capture
 Created: 2026-10-02
 Author: MinhHaDuong
-Blocked-by: 0913
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -11,6 +10,7 @@ Blocked-by: 0913
 2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
 2026-10-02T11:34Z reviewer note blocker 0909 closed — Blocked-by removed.
 2026-10-02T11:52Z reviewer note mechanical unblock by 0909's close corrected to the true remaining gate: re-gated on 0913, where the v8 rollout now stands under the author's 2026-10-02 scope decision (No rollout, PR #1142). Author sequencing unchanged: attribution implementation follows the v8 work.
+2026-10-03T10:16Z reviewer note author decision (instructed via qwen3.8-27b, raid 2026-10-03): 0913 gate LIFTED — spec §4/§11 fixes the record contract (format, fixed lines, project memory/journal/ location) independent of per-project rollout; 0909 closed with No-rollout verdict; the harness journal is already v8 (pilot #1109, audience #1112, capture #1117); 0913's residual scope is adopting projects only and changes no convention this contract depends on. Attribution capture proceeds.
 --- body ---
 ## Context
 
