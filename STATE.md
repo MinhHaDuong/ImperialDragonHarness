@@ -1,28 +1,29 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-03T08:22Z
+Last updated: 2026-10-03T08:51Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-03T08:22Z · as of 4c927f35 -->
+<!-- generated 2026-10-03T08:51Z · as of 99ab3620 -->
 
 **Tickets:** 13 ready · 14 blocked — `erg ready tickets/` for full list
   next: 0879 La porte ecrit des lignes de journal malformees… · 0887 Instruire adapters/claude-code en plugin skills…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
+  99ab3620 Merge pull request #1158 from MinhHaDuong/roar-wrapup-20261003-0205
+  76a5ff9a Merge pull request #1157 from MinhHaDuong/t0205-tracker-closure-20261003
   4c927f35 Merge pull request #1156 from MinhHaDuong/roar-wrapup-20261003
-  c65d2284 Merge pull request #1155 from MinhHaDuong/t0902-gaze-risk-band
-  dbab9d59 Merge pull request #1154 from MinhHaDuong/roar-wrapup-20261002
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
 Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 0913 holds the per-project migration.
 The Zotero interface architecture landed in #1143: principles, per-skill transports, the one-`zotero` verb surface as target state, `rules/zotero.md` (EDM acronym retired), and 0485 closed on a live-validated hash-dedup report with the author's sample arbitration. Zotero follow-ups: 1018 (consolidation), 1020 (`~/.idh` sweep). Roadmap refreshed from the open set in #1149.
+The external-reviewer panel train is closed: 0902's gaze risk band merged (#1155), and 0205's tracker was retired at its integration review (PR #1157 — close note in `tickets/closed/0205-external-reviewer-panel-for-verify-contr.erg`; 0356 absorbed by 1008). The residual teardown lives in the attribution train (1004→1009).
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for the eight trains. After memory 0913: attribution 1004→1009 (gated on 0913), runtime policy 0974/0938 (+1017/0980/1021), verification 0990/0902/0879, Claude adapter 0887/0888, raid annotations 1016, then Zotero 1018 with the 1020 rider.
+See [ROADMAP.md](ROADMAP.md) for the eight trains. After memory 0913: attribution 1004→1009 (gated on 0913), runtime policy 0974/0938 (+1017/0980/1021), verification 0990/0879, Claude adapter 0887/0888, raid annotations 1016, then Zotero 1018 with the 1020 rider.
 The primary checkout is clean and based on `origin/main`.
 
 ## Author actions
