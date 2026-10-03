@@ -187,10 +187,14 @@ def test_gaze_battery_not_run_names_cause():
     assert block is not None, (
         "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
     )
-    m = re.search(r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth>", block)
+    m = re.search(
+        r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth> \| skipped \(un-reviewable\)",
+        block,
+    )
     assert m, (
         "gaze/SKILL.md: the output-shape actions block must carry "
-        "`battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth>`"
+        "`battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> "
+        "| skipped (un-reviewable)`"
     )
     assert block.index("panel integrity:") < m.start(), (
         "gaze/SKILL.md: the battery line must follow the panel integrity line — "

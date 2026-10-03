@@ -136,3 +136,13 @@ def test_phase4_flags_planned_pr_size():
         f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
         f"rules/workflow.md's ({w.group(1)}+ files)"
     )
+    # The authoritative breaker lives in gaze phase 1 Setup — pin all three
+    # statements of the threshold to one number.
+    gaze = (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
+    setup = gaze.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    breaker = re.search(r"pr_files\s*>=\s*(\d+)", setup)
+    assert breaker, "gaze setup lost its pr_files un-reviewable breaker"
+    assert m.group(1) == breaker.group(1), (
+        f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
+        f"gaze's breaker (pr_files >= {breaker.group(1)})"
+    )
