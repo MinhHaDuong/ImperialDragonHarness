@@ -41,3 +41,14 @@ def test_review_pr_does_not_substitute_sequential_self_review():
     assert "do not run the perspectives sequentially yourself" in review
     assert "no report" in review
     assert "PANEL-INTEGRITY:" in review
+
+
+def test_preflight_does_not_trust_spawn_success():
+    review = (ROOT / "skills/review-pr/SKILL.md").read_text()
+    preflight = review.split("**Fan-out preflight:**", 1)[1].split(
+        "The remaining review content", 1
+    )[0]
+    assert "not a guarantee the agent exists" in preflight
+    assert "agent.list" in preflight
+    assert "source of truth" in preflight
+    assert "#1143" in preflight
