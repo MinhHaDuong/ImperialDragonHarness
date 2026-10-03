@@ -7,6 +7,10 @@ Author: claude
 2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
 
 2026-10-02T06:50Z MinhHaDuong note Current Gaze and verify-gate reroll recipes use erg log, which records the standardized note verb; malformed-log validation and isolated-checkout safety remain unverified.
+2026-10-03T11:49Z claude note Reimagined (raid 2026-10-03): premise verified by execution — vendored binary 91e1f848 PASSes both malformed shapes (log line after the log block's terminal blank line; regressive timestamp). Path: fix the two validator rules upstream in git-erg, re-vendor tickets/erg per the 91e1f848 pattern, add harness negative controls that PASS today and must fail after; route the REROLL bump out of the isolated gate (verify-gate SKILL.md:178, gaze SKILL.md:558,580) — gate emits the bump in its verdict comment, the orchestrator poses the line.
+2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03, F1): the orchestrator-posed bump must commit onto the PR branch (with the REROLL fix) or defer to merge time — an erg log on main mid-wave collides at the same insertion point with the branch's own ticket commits (1016's collision class re-entering).
+2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03, F2): the monotonicity rule needs normative backing — add the ordering norm to tickets/spec-erg-v1.md in the same PR or drop the rule; a collective wave rebase legitimately replays older-stamped lines after newer ones, so the rule must not erg-check-reject routine wave merges. Advisory vs blocking decided at plan.
+2026-10-03T11:49Z claude note Premise objection (verb criterion only, raid 2026-10-03): spec-erg-v1.md now declares verbs an open set (any single token), so the reject-out-of-spec-verb checkbox no longer matches the spec — strict-subset narrowing recorded; author to drop or reword it.
 --- body ---
 ## Context
 
