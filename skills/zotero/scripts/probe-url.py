@@ -9,8 +9,9 @@ page count. Emits one JSON record per URL on stdout.
 Stdlib only — nothing to install. The model reads the records, resolves
 identifiers online when present, picks the Zotero item type with judgment, then
 hands attachments + metadata to $IDH_ROOT/scripts/zotero.py (RIS write
-+ dedupe). This is the URL sibling of the zotero-import skill; it implements the
-Zotero-management workflow (docs/ staging -> Zotero)."""
++ dedupe). This is the URL intake of the zotero skill's import verb (the
+former index-source skill, absorbed 2026-10-03, ticket 1018); it implements
+the Zotero-management workflow (docs/ staging -> Zotero)."""
 
 import argparse
 import json
@@ -28,7 +29,7 @@ log = logging.getLogger("probe-url")
 
 DOI_BARE_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", re.I)
 # Anchor on doi.org/ or "DOI:" preamble so a document's own DOI is preferred
-# over the first bare DOI cited in the body (mirrors zotero-import.py's
+# over the first bare DOI cited in the body (mirrors zotero.py's
 # DOI_ANCHORED_RE / find_doi()).
 DOI_ANCHORED_RE = re.compile(r"(?:doi\.org/|doi[:\s]+)(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)", re.I)
 ARXIV_RE = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5}(v\d+)?)\b", re.I)

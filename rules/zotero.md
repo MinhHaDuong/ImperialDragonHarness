@@ -8,8 +8,8 @@ last-reviewed: 2026-08-14
 # Zotero management
 
 Loaded when you touch a bibliography or a staging directory. The other half of
-its trigger is a task, which no glob reaches: `/zotero-import` and
-`/index-source` name this file, and a session doing Zotero management by hand
+its trigger is a task, which no glob reaches: `/zotero` names this file, and a
+session doing Zotero management by hand
 should read it. (Formerly titled "Electronic document management (EDM)" — the
 acronym is retired; the discipline is Zotero-specific.)
 
@@ -66,7 +66,7 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   item type, scraped metadata, file attachment), and **purge staging on
   archival after publication** — Zotero retains everything.
 - **Reports carry a page count** — pass `numPages` on the entry. The Zotero
-  `report` type has no `numPages` field, so `zotero-import` files it in Extra
+  `report` type has no `numPages` field, so the `zotero` skill's import flow files it in Extra
   as the CSL variable `number-of-pages`; that is the correct home, not a
   fallback.
 
@@ -74,8 +74,8 @@ Why: git repos stay lean (no binary bloat, no report PDFs in history) and
 durable provenance is centralized in Zotero, where it persists and syncs.
 Staging is transient by design.
 
-Two skills implement this workflow: `zotero-import` (PDFs) and `index-source`
-(URLs) — fetch → stage in `docs/` → archive in Zotero (RIS + attachment) →
+One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
+intake alike) — fetch → stage in `docs/` → archive in Zotero (RIS + attachment) →
 record the citation.
 
 This rule governs *source documents and bibliography staging*. It does not
