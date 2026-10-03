@@ -33,7 +33,7 @@ Record the reviewer identity, route, evidence, and any unavailable perspective.
 
 ## Harness instructions
 
-Never display API keys, tokens, passwords, or any credentials in chat text — not even partially, not even in "here's what I found" summaries.
+Guards every agent: rules/guards.md.
 
 Current status, blockers, next actions: `STATE.md`.
 
@@ -79,12 +79,9 @@ For shell tooling conventions, read and follow [RTK.md](RTK.md).
 ## Project memory boundary
 
 Project experiences and consolidated memories belong only in that project's
-repository; uncleared material stays encrypted. Loading a harness
-skill does not authorize writing into the harness, its shared memory, or another
-project. Resolve the project repository before writing; stop and report an
-unavailable destination instead of falling back to the harness or native store.
-When the harness itself is the explicitly assigned project, its own project
-memory follows the same convention.
+repository; uncleared material stays encrypted. When the harness itself is
+the explicitly assigned project, its own project memory follows the same
+convention.
 
 Roar records significant facts only. Dream consolidates project memory only.
 Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into

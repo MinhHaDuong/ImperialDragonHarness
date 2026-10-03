@@ -45,7 +45,15 @@ import resident_census as rc  # noqa: E402
 # 16729 chars measured 2026-09-24 (ticket 0973): rules/README.md scoped to the
 # rules tree, and the three resident bodies deduplicated against each other and
 # against the skills that already hold the procedures.
-RESIDENT_BUDGET = 17500
+# Raised 2026-10-03 (ticket 0938 wave 0): rules/guards.md (733 chars) hoists
+# the credential-display ban and the no-write guard out of AGENTS.md so
+# bare-context profiles load both guards as one resident file. The raw
+# sentences plus the marker fit the 452-char headroom (429 normalized
+# chars); the framing does not — H1, the top sentence stating both guards
+# apply to every agent role, bullet layout. Measured 17781, set at measured
+# plus thin headroom. The 359 chars AGENTS.md net-freed are on the import
+# channel, a different budget that grants no credit here.
+RESIDENT_BUDGET = 17800
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.
