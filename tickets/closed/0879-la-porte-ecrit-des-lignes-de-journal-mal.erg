@@ -2,6 +2,7 @@
 Title: La porte ecrit des lignes de journal malformees dans le checkout partage, et erg validate ne les voit pas
 Created: 2026-09-08
 Author: claude
+Closed: autoclosed — PR #1164
 
 --- log ---
 2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
@@ -18,6 +19,7 @@ Author: claude
 2026-10-03T12:37Z reviewer note review-pr round 2 on PR #1164 (scoped: four objecting seats + regression for scope): all five approve. Took the two consider-tier tightenings: gaze's embedded procedure now says reroll_bump is never none on REROLL; ticket 1023 also names the bare /verify-gate caller as a poser. Remaining consider/nofollow notes accepted as-is (verify-gate keeps its own omit-with-comment schema convention; pre-existing CRLF and echo-separator behaviors unchanged). Panel clean through round 2.
 2026-10-03T13:20Z reviewer note verify-reroll — round 1: test_real_corpus_check_still_passes depends on cwd (tests/test_erg_log_placement.py:136-137)
 
+2026-10-03T14:21Z reviewer closed — autoclosed — PR #1164
 --- body ---
 ## Context
 
