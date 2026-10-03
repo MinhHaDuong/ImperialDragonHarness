@@ -7,6 +7,7 @@ Author: Integration Test
 2026-09-16T10:30Z Integration Test created
 2026-09-16T10:34Z claude note Measurements in the body were taken on this tree, not carried from a report. The architectural decision in Actions step 1 is the author's, not the executor's.
 2026-09-23T19:30Z Codex note Roster audit: PR #980 added agents/gaze-pr-review.md, so the one-profile and 86-fork figures below are a 2026-09-16 baseline, not current inventory. Recount before implementation and keep the new profile in the resident-channel budget. The bare-context design decision, broader role inventory, pilot, and Codex/Pi portability proof remain open; this ticket is not already done.
+2026-10-03T16:35Z reviewer note Design note drafted for the bare-context/portability decision (2026-10-03): docs/2026-10-03-agent-profile-subsystem-design.md — option B, thin runtime shells pointing to harness-side profile/<name>/PROFILE.md contracts; two external strong reviews requested on the note before the decision is recorded here.
 
 --- body ---
 ## Context
